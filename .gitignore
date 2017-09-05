@@ -1,0 +1,10 @@
+/bitrix/
+/upload/
+/.vagrant/
+/local/cache/
+/local/modules/sprint.migration/
+/local/php_interface/vendor/
+node_modules/
+sitemap*.xml
+!/robots.txt
+
