@@ -42,9 +42,22 @@
     "symfony/http-foundation": "~3.2.8",
     "symfony/event-dispatcher": "~3.2.8",
     "symfony/http-kernel": "~3.2.8",
-    "symfony/expression-language": "~3.2.8"
+    "symfony/expression-language": "~3.2.8",
+    "webarchitect609/bitrix-neverinclude": "^0.2",
+    "webarchitect609/bitrix-cache": "^1.0",
+    "adv/bitrix-tools": "^1.0"
   },
   "require-dev": {
     "phpunit/phpunit": "^5.7"
+  },
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "ssh://git@scm.adv.ru:7999/adv/bitrix-tools.git"
+    }
+  ],
+  "scripts": {
+    "pre-install-cmd": "\\Adv\\DeployScripts::installBitrixStubs",
+    "pre-update-cmd": "\\Adv\\DeployScripts::installBitrixStubs"
   }
 }

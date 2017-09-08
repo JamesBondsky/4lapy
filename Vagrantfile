@@ -5,55 +5,6 @@
 # Demand hostupdater plugin to be installed
 # +%x(vagrant plugin install vagrant-hostsupdater) unless Vagrant.has_plugin?('vagrant-hostsupdater')
 
-# Sub provision script - apply to compiled box only
-$subprov = <<SCRIPT
-
-    # Basic variables
-    DOCUMENT_ROOT="/home/vagrant/htdocs"
-    SUBPROV_ROOT="/home/vagrant/.subprovision"
-
-    # Create unversioned files
-    BITRIX_FOLDER_CHECK="${DOCUMENT_ROOT}/bitrix/index.php"
-    UNVER_FOLDER_ARCHIVE="${SUBPROV_ROOT}/unversioned-files.tar.gz"
-
-    if [[ -f "${BITRIX_FOLDER_CHECK}" ]] ; then
-        printf "Unversioned files seems to be OKay. \n"
-        printf "To refresh unversioned files, please, remove following files and directories, but be careful!\n"
-        printf "\t\t${BITRIX_FOLDER_CHECK}\n"
-        printf "\t\t${DOCUMENT_ROOT}/upload/iblock\n"
-
-    else
-        printf "Unversioned files seems to be missing. \nUnpacking. Please, wait for a few minutes...\n"
-        tar --overwrite --same-permissions --directory "${DOCUMENT_ROOT}" --gunzip --extract --file "${UNVER_FOLDER_ARCHIVE}"
-    fi
-
-    # Run composer install for the first time
-    if (shopt -s nullglob dotglob; f=(/home/vagrant/htdocs/local/php_interface/vendor/*); ((${#f[@]}))) ; then
-        printf "Composer folder is OKay.\n"
-    else
-        printf "Need composer first install\n"
-        cd "${DOCUMENT_ROOT}"
-        sudo --user=vagrant composer install
-        cd -
-    fi
-
-    #TODO Возможно, понадобится добавить начальную сборку статики или инициализацию субмодулей сюда
-
-    # Grant execution of migrations
-    MIGRATION_RUNNER="${DOCUMENT_ROOT}/migrate.php"
-    if [[ -x "${MIGRATION_RUNNER}" ]] ; then
-        printf "Migrations runner is OKay"
-    else
-        if [[ -f "${MIGRATION_RUNNER}" ]]; then
-            printf "Mark ${MIGRATION_RUNNER} as executable \n"
-            chmod a+x "${MIGRATION_RUNNER}"
-        fi
-    fi
-
-    printf "Subprovision done. \nVisit http://4lapy.vag and welcome aboard!\n"
-
-SCRIPT
-
 Vagrant.configure("2") do |config|
 
   # Base box and provisioning for first setup
@@ -71,7 +22,11 @@ Vagrant.configure("2") do |config|
   #end
 
   # Sub provision - apply to compiled box only
-  config.vm.provision "shell", inline: $subprov
+  config.vm.provision "shell",
+    path: "local/php_interface/subprovision.sh",
+    privileged: false,
+    keep_color: true
+
 
   # Please, don't change vm.define. It could lead to problems with already running machines!
   config.vm.define "4lapy"
