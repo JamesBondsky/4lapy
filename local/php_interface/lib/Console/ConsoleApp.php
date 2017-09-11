@@ -54,8 +54,9 @@ class ConsoleApp
         }
 
         defined('NO_KEEP_STATISTIC') || define('NO_KEEP_STATISTIC', 'Y');
-        defined('NO_AGENT_STATISTIC') || define('NO_AGENT_STATISTIC', 'Y');
         defined('NOT_CHECK_PERMISSIONS') || define('NOT_CHECK_PERMISSIONS', true);
+        defined('NO_AGENT_CHECK') || define('NO_AGENT_CHECK', true);
+        defined('PUBLIC_AJAX_MODE') || define('PUBLIC_AJAX_MODE', true);
 
         if (empty($_SERVER['DOCUMENT_ROOT'])) {
             $_SERVER['DOCUMENT_ROOT'] = $this->documentRoot;
