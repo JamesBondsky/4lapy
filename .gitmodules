@@ -1,0 +1,3 @@
+[submodule "static"]
+	path = static
+	url = ssh://git@scm.adv.ru:7999/the4lp/4lp-static.git
