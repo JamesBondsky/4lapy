@@ -1,6 +1,6 @@
 <?php
 
-namespace Adv\Console\Command;
+namespace FourPaws\Console\Command;
 
 use Bitrix\Main\Data\Cache;
 use Bitrix\Main\Data\StaticHtmlCache;

@@ -1,12 +1,12 @@
 <?php
 
-namespace Adv;
+namespace FourPaws;
 
 use RuntimeException;
 
 class DeployScripts
 {
-    public static function installBitrixStubs($eventObject)
+    public static function installBitrixStubs()
     {
         $DOC_ROOT = realpath(__DIR__ . '/../../..');
 

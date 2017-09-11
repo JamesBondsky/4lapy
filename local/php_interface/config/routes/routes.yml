@@ -1,0 +1,15 @@
+---
+
+
+# AJAX запросы
+ajax_routes:
+    resource: "ajax.yml"
+    prefix:   /ajax
+
+#TODO Запросы на каталог
+# Запросы на каталог, каталожные лендинги и прочие беспрефиксные запросы неопределённого типа и вида
+#all_other_queries:
+#    path: /{path}
+#    defaults: { _controller: '\Adv\Routing\Controllers\MainController::main' }
+#    requirements:
+#        path: .+
