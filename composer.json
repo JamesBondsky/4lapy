@@ -18,8 +18,8 @@
   },
   "autoload": {
     "psr-4": {
-      "Adv\\": "local/php_interface/lib",
-      "Adv\\Test\\": "local/php_interface/test"
+      "FourPaws\\": "local/php_interface/lib",
+      "FourPaws\\Test\\": "local/php_interface/test"
     }
   },
   "extra": {
@@ -57,7 +57,7 @@
     }
   ],
   "scripts": {
-    "pre-install-cmd": "\\Adv\\DeployScripts::installBitrixStubs",
-    "pre-update-cmd": "\\Adv\\DeployScripts::installBitrixStubs"
+    "pre-install-cmd": "\\FourPaws\\DeployScripts::installBitrixStubs",
+    "pre-update-cmd": "\\FourPaws\\DeployScripts::installBitrixStubs"
   }
 }

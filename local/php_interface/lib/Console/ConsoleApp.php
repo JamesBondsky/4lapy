@@ -1,6 +1,6 @@
 <?php
 
-namespace Adv\Console;
+namespace FourPaws\Console;
 
 use Symfony\Component\Console\Application;
 use Symfony\Component\Finder\Finder;
@@ -106,7 +106,7 @@ class ConsoleApp
                 $file->getRealPath()
             );
 
-            $command = "\\Adv" . str_replace('/', '\\', $classPath);
+            $command = "\\FourPaws" . str_replace('/', '\\', $classPath);
 
             $this->application->add(new $command);
         }

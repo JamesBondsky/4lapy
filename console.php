@@ -1,7 +1,7 @@
 #!/usr/bin/env php
 <?php
 
-use Adv\Console\ConsoleApp;
+use FourPaws\Console\ConsoleApp;
 
 $DOCUMENT_ROOT = realpath(__DIR__);
 
