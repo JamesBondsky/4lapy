@@ -2,6 +2,7 @@
 
 namespace FourPaws\Console\Command;
 
+use FourPaws\Migrator\Factory;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use Psr\Log\LoggerAwareInterface;
@@ -24,17 +25,22 @@ class MigrateData extends Command implements LoggerAwareInterface
 {
     use LoggerAwareTrait;
     
+    const ARG_MIGRATE_LIST = 'migrate-list';
+    
     public function __construct($name = null) {
         parent::__construct($name);
         $this->setLogger(new Logger('Migrator', [new StreamHandler(STDOUT, Logger::DEBUG)]));
     }
     
     protected function configure() {
-        /**
-         * @todo add migrations into configuration
-         */
+        $this->setName('migrate')
+             ->setDescription('Migrate data via rest')
+             ->addArgument(self::ARG_MIGRATE_LIST,
+                           InputArgument::IS_ARRAY,
+                           'Migration type, one or more of this: users, news, articles, shops, sale')
+             ->addOption('force', 'f', InputOption::VALUE_NONE, 'Force migrate (disable time period check)');
     }
-    
+
     /**
      * @param \Symfony\Component\Console\Input\InputInterface   $input
      * @param \Symfony\Component\Console\Output\OutputInterface $output
@@ -44,11 +50,16 @@ class MigrateData extends Command implements LoggerAwareInterface
     protected function execute(InputInterface $input, OutputInterface $output) {
         $this->log(LogLevel::INFO, 'Migration start');
         
+        foreach ($input->getArgument(self::ARG_MIGRATE_LIST) as $type) {
+            $client = (new Factory())->getClient($type);
+            $client->save();
+        }
+        
         $this->logResult();
         
         return null;
     }
-    
+
     /**
      * @param        $level
      * @param string $message
@@ -59,7 +70,7 @@ class MigrateData extends Command implements LoggerAwareInterface
             $this->logger->log($level, $message, $context);
         }
     }
-    
+
     /**
      * Log final result of migration
      */
