@@ -46,7 +46,10 @@
     "webarchitect609/bitrix-neverinclude": "^0.2",
     "webarchitect609/bitrix-cache": "^1.0",
     "adv/bitrix-tools": "^1.0",
-    "ci/restclientbundle": "~2.0.0"
+    "ci/restclientbundle": "~2.0.2",
+    "friendsofsymfony/rest-bundle": "~2.2.0",
+    "nelmio/api-doc-bundle": "^2.13",
+    "codeception/codeception": "~2.3.5"
   },
   "require-dev": {
     "phpunit/phpunit": "^5.7"
