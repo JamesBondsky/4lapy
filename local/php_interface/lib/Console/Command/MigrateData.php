@@ -49,12 +49,12 @@ class MigrateData extends Command implements LoggerAwareInterface
      */
     protected function execute(InputInterface $input, OutputInterface $output) {
         $this->log(LogLevel::INFO, 'Migration start');
-        
+
         foreach ($input->getArgument(self::ARG_MIGRATE_LIST) as $type) {
             $client = (new Factory())->getClient($type);
             $client->save();
         }
-        
+
         $this->logResult();
         
         return null;

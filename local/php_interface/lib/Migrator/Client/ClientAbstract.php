@@ -3,8 +3,7 @@
 namespace FourPaws\Migrator\Client;
 
 use Circle\RestClientBundle\Services\RestClient;
-use FourPaws\App\App;
-use FourPaws\Migrator\Client\ClientInterface;
+use FourPaws\App\Application;
 use FourPaws\Migrator\Provider\ProviderInterface;
 
 abstract class ClientAbstract implements ClientInterface
@@ -68,7 +67,7 @@ abstract class ClientAbstract implements ClientInterface
      * Set client from DI
      */
     protected function setClient() {
-        $this->client = App::container()->get('rest.client');
+        $this->client = Application()->get('rest.client');
     }
     
     /**

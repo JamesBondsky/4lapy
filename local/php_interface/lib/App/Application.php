@@ -36,12 +36,17 @@ class Application extends Kernel
      * @var string
      */
     protected static $documentRoot;
-
+    
     /**
      * @var MarkupBuild
      */
     private static $markupBuild;
-    
+
+    /**
+     * @var \FourPaws\App\Application
+     */
+    private static $instance;
+
     /**
      * @return BundleInterface[] An array of bundle instances
      */
@@ -129,5 +134,19 @@ class Application extends Kernel
         $response = $instance->handle($request);
         $response->send();
         $instance->terminate($request, $response);
+    }
+    
+    /**
+     * @return \FourPaws\App\Application
+     */
+    public static function getInstance() : Application {
+        /**
+         * Можем себе позволить, в общем случае объект иммутабелен.
+         */
+        if (!static::$instance) {
+            static::$instance = new Application(EnvType::getServerType(), EnvType::isDev());
+        }
+
+        return static::$instance;
     }
 }
