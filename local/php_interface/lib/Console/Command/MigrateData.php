@@ -3,6 +3,7 @@
 namespace FourPaws\Console\Command;
 
 use FourPaws\Migrator\Factory;
+use FourPaws\Migrator\Installer;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use Psr\Log\LoggerAwareInterface;
@@ -30,6 +31,12 @@ class MigrateData extends Command implements LoggerAwareInterface
     public function __construct($name = null) {
         parent::__construct($name);
         $this->setLogger(new Logger('Migrator', [new StreamHandler(STDOUT, Logger::DEBUG)]));
+
+        $migratorInstaller = new Installer($this->logger);
+        if (!$migratorInstaller->isInstalled()) {
+            $this->logger->warning('Migrator tables is not installed. Installing...');
+            $migratorInstaller->doInstall();
+        }
     }
     
     protected function configure() {
