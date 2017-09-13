@@ -1,4 +1,4 @@
-<?
+<?php
 
 namespace FourPaws\App;
 
@@ -50,7 +50,8 @@ class Application extends Kernel
     /**
      * @return BundleInterface[] An array of bundle instances
      */
-    public function registerBundles() {
+    public function registerBundles() : array
+    {
         $bundles = [
             new CircleRestClientBundle(),
             new NelmioApiDocBundle(),
@@ -65,8 +66,9 @@ class Application extends Kernel
      *
      * @param \Symfony\Component\Config\Loader\LoaderInterface $loader
      */
-    public function registerContainerConfiguration(LoaderInterface $loader) {
-        $loader->load(__DIR__ . '/../../../config.yml');
+    public function registerContainerConfiguration(LoaderInterface $loader)
+    {
+        $loader->load(self::getAbsolutePath(self::CONFIG_DIR));
     }
     
     /**
@@ -75,7 +77,8 @@ class Application extends Kernel
      *
      * TODO Изменить под 4 лапы
      */
-    public static function markup() {
+    public static function markup() : MarkupBuild
+    {
         if (null === self::$markupBuild) {
             //TODO Позже эту строчку вынести в отдельный метод, возвращающий настроенный пул файлового кеша
             $cache = new FilesystemAdapter('4lapy', 86400, self::getDocumentRoot() . self::BITRIX_CACHE_DIR);
@@ -109,14 +112,15 @@ class Application extends Kernel
             /** @noinspection PhpUndefinedMethodInspection */
             self::$markupBuild = $markupBuildItem->get();
         }
-        
+
         return self::$markupBuild;
     }
-    
+
     /**
      * @return string
      */
-    public static function getDocumentRoot() {
+    public static function getDocumentRoot() : string
+    {
         if (is_null(self::$documentRoot)) {
             self::$documentRoot = realpath(__DIR__ . '/../../../..');
         }
@@ -125,11 +129,22 @@ class Application extends Kernel
     }
     
     /**
+     * @param string $path
+     *
+     * @return string
+     */
+    public static function getAbsolutePath(string $path) : string
+    {
+        return self::getDocumentRoot() . $path;
+    }
+    
+    /**
      * Handle current request
      *
      * @param \Symfony\Component\HttpFoundation\Request $request
      */
-    public static function HandleRequest(Request $request) {
+    public static function HandleRequest(Request $request)
+    {
         $instance = new self(EnvType::getServerType(), EnvType::isDev());
         $response = $instance->handle($request);
         $response->send();

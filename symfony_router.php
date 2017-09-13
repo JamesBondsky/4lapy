@@ -1,4 +1,4 @@
-<?
+<?php
 
 use FourPaws\App\Application;
 use Symfony\Component\HttpFoundation\Request;
