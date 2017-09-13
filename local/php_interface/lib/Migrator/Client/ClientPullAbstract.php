@@ -2,14 +2,31 @@
 
 namespace FourPaws\Migrator\Client;
 
-abstract class ClientPullAbstract implements ClientPullInterface
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerInterface;
+
+/**
+ * Class ClientPullAbstract
+ *
+ * @package FourPaws\Migrator\Client
+ */
+abstract class ClientPullAbstract implements ClientPullInterface, LoggerAwareInterface
 {
-    protected $limit;
+    protected $limit = 0;
     
-    protected $force;
+    protected $force = false;
+
+    protected $logger;
     
+    /**
+     * @return \FourPaws\Migrator\Client\ClientInterface[] array
+     */
     public abstract function getBaseClientList() : array;
     
+    /**
+     * @return \FourPaws\Migrator\Client\ClientInterface[] array
+     */
     public abstract function getClientList() : array;
     
     /**
@@ -20,6 +37,8 @@ abstract class ClientPullAbstract implements ClientPullInterface
     public function __construct(array $options = []) {
         $this->limit = (int)$options['limit'];
         $this->force = (bool)$options['force'];
+
+        $this->setLogger(LoggerFactory::create('migrator_' . str_replace('\\', '_', static::class)));
     }
     
     /**
@@ -28,20 +47,36 @@ abstract class ClientPullAbstract implements ClientPullInterface
     public function save() : bool {
         try {
             /** @var \FourPaws\Migrator\Client\ClientInterface $client */
-            
             foreach ($this->getBaseClientList() as $client) {
+                var_dump('1');
                 $client->getProvider()->save($client->query());
             }
             
             foreach ($this->getClientList() as $client) {
+                var_dump('2');
                 $client->getProvider()->save($client->query());
             }
             
             return true;
         } catch (\Exception $e) {
-            /** @todo implement exception */
-            
+            $this->getLogger()->error($e->getMessage(), $e->getTrace());
+
             return false;
         }
+    }
+    
+    /**
+     * @param \Psr\Log\LoggerInterface $logger
+     */
+    public function setLogger(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
+    }
+    
+    /**
+     * @return LoggerInterface
+     */
+    public function getLogger() {
+        return $this->logger;
     }
 }
