@@ -37,7 +37,7 @@ final class Installer implements LoggerAwareInterface
             $this->getLogger()->error($e->getMessage(), $e->getTrace());
         }
     }
-
+    
     /**
      * Uninstall tables
      */
@@ -57,31 +57,35 @@ final class Installer implements LoggerAwareInterface
      */
     public function createTables()
     {
-        $query = <<<query
-CREATE TABLE IF NOT EXISTS
-  `adv_migrator_entity`
+        $queries = [
+            'CREATE TABLE IF NOT EXISTS adv_migrator_map
 (
-  `ID` INT NOT NULL AUTO_INCREMENT,
-  `ENTITY` VARCHAR(32) NOT NULL,
-  `TIMESTAMP` DATETIME NULL,
-  `BROKEN` LONGTEXT
-);
-
-CREATE TABLE IF NOT EXISTS
-  `adv_migrator_entity`
+  ID INT NOT NULL AUTO_INCREMENT,
+  ENTITY_ID INT NOT NULL,
+  INTERNAL_ID INT,
+  EXTERNAL_ID INT NOT NULL,
+  LAZY CHAR(1) NOT NULL DEFAULT \'Y\',
+  PRIMARY KEY (ID),
+  INDEX internal_entity_index (ENTITY_ID, EXTERNAL_ID),
+  INDEX internal_index (INTERNAL_ID),
+  INDEX external_index (EXTERNAL_ID)
+);',
+            'CREATE TABLE IF NOT EXISTS adv_migrator_entity
 (
-  `ID` INT NOT NULL AUTO_INCREMENT,
-  `ENTITY_ID` INT NOT NULL,
-  `INTERNAL_ID` INT,
-  `EXTERNAL_ID` INT NOT NULL,
-  `ACTIVE` CHAR(1) NOT NULL DEFAULT 'Y'
-);
-
-query;
+  ID INT NOT NULL AUTO_INCREMENT,
+  ENTITY VARCHAR(32) NOT NULL,
+  TIMESTAMP DATETIME NULL,
+  BROKEN LONGTEXT,
+  PRIMARY KEY (ID)
+);',
+        ];
         
         try {
-            $this->connection->query($query);
+            foreach ($queries as $query) {
+                $this->connection->query($query);
+            }
         } catch (\Throwable $e) {
+            $this->dropTables();
             throw new InstallerException($e->getMessage(), $e->getCode(), $e);
         }
     }
@@ -125,7 +129,8 @@ query;
     /**
      * @return bool
      */
-    public function isInstalled() : bool {
-        return $this->connection->query('SHOW TABLES LIKE `adv_migrator_%`')->getCount() === 2;
+    public function isInstalled() : bool
+    {
+        return $this->connection->query('SHOW TABLES LIKE \'adv_migrator_%\'')->getSelectedRowsCount() === 2;
     }
 }
