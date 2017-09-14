@@ -7,7 +7,10 @@ use Circle\RestClientBundle\CircleRestClientBundle;
 use FOS\RestBundle\FOSRestBundle;
 use FourPaws\App\MarkupBuild\JsonFileLoader;
 use FourPaws\App\MarkupBuild\MarkupBuild;
+use JMS\SerializerBundle\JMSSerializerBundle;
 use Nelmio\ApiDocBundle\NelmioApiDocBundle;
+use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
+use Symfony\Bundle\TwigBundle\TwigBundle;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\Config\Loader\LoaderInterface;
@@ -43,17 +46,36 @@ class Application extends Kernel
     private static $markupBuild;
     
     /**
+     * @var \FourPaws\App\Application
+     */
+    private static $instance;
+    
+    /**
      * @return BundleInterface[] An array of bundle instances
      */
     public function registerBundles() : array
     {
         $bundles = [
+            new FrameworkBundle(),
+            new TwigBundle(),
             new CircleRestClientBundle(),
             new NelmioApiDocBundle(),
+            new JMSSerializerBundle(),
             new FOSRestBundle(),
         ];
         
         return $bundles;
+    }
+    
+    /**
+     * Application constructor.
+     *
+     * @param string $environment
+     * @param bool   $debug
+     */
+    public function __construct($environment, $debug)
+    {
+        self::$instance = parent::__construct($environment, $debug);
     }
     
     /**
@@ -63,7 +85,7 @@ class Application extends Kernel
      */
     public function registerContainerConfiguration(LoaderInterface $loader)
     {
-        $loader->load(self::getAbsolutePath(self::CONFIG_DIR));
+        $loader->load(self::getAbsolutePath(self::CONFIG_DIR . '/config.yml'));
     }
     
     /**
@@ -107,10 +129,10 @@ class Application extends Kernel
             /** @noinspection PhpUndefinedMethodInspection */
             self::$markupBuild = $markupBuildItem->get();
         }
-
+        
         return self::$markupBuild;
     }
-
+    
     /**
      * @return string
      */
@@ -121,6 +143,30 @@ class Application extends Kernel
         }
         
         return self::$documentRoot;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getRootDir()
+    {
+        return self::getDocumentRoot();
+    }
+    
+    /**
+     * @return string
+     */
+    public function getCacheDir()
+    {
+        return $this->getRootDir() . '/bitrix/cache/symfony';
+    }
+
+    /**
+     * @return string
+     */
+    public function getLogDir()
+    {
+        return $this->getRootDir() . '/logs';
     }
     
     /**
@@ -144,5 +190,24 @@ class Application extends Kernel
         $response = $instance->handle($request);
         $response->send();
         $instance->terminate($request, $response);
+    }
+    
+    /**
+     * @return \FourPaws\App\Application
+     */
+    public static function getInstance() : Application
+    {
+        /**
+         * Можем себе позволить, в общем случае объект иммутабелен.
+         */
+        if (!static::$instance) {
+            static::$instance = new Application(EnvType::getServerType(), EnvType::isDev());
+            
+            if (!static::$instance->booted) {
+                static::$instance->boot();
+            }
+        }
+        
+        return static::$instance;
     }
 }
