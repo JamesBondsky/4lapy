@@ -1,3 +1,7 @@
+.idea
+*.iml
+
+/logs/
 /bitrix/
 /upload/
 /.vagrant/
@@ -7,4 +11,3 @@
 node_modules/
 sitemap*.xml
 !/robots.txt
-
