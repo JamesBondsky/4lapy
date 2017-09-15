@@ -32,13 +32,10 @@ class EntityTable extends DataManager
     public static function getMap() : array
     {
         return [
-            'ID'        => new IntegerField('ID', [
-                'primary'      => true,
-                'autocomplete' => true,
-                'title'        => 'Идентификатор',
-            ]),
             'ENTITY'    => new StringField('ENTITY', [
                 'title'      => 'Код сущности',
+                'unique'     => true,
+                'primary'    => true,
                 'validation' => [
                     __CLASS__,
                     'validateEntity',
@@ -55,7 +52,7 @@ class EntityTable extends DataManager
         ];
     }
     
-    /**
+    /**@noinspection
      * @return \Bitrix\Main\Entity\IValidator[] array
      */
     public function validateEntity() : array
@@ -69,5 +66,60 @@ class EntityTable extends DataManager
              */
             new RegExp('^[a-zA-Z](?>(?!\W))$'),
         ];
+    }
+    
+    /**
+     * @param string $entity
+     * @param string $timestamp
+     * @param string $broken
+     *
+     * @return \Bitrix\Main\Entity\AddResult
+     */
+    public static function addEntity(string $entity, string $timestamp, string $broken)
+    {
+        return parent::add([
+                               'ENTITY'    => $entity,
+                               'TIMESTAMP' => $timestamp,
+                               'BROKEN'    => $broken,
+                           ]);
+    }
+    
+    /**
+     * @param string $entity
+     * @param string $timestamp
+     * @param string $broken
+     *
+     * @return \Bitrix\Main\Entity\UpdateResult
+     */
+    public static function updateEntity(string $entity, string $timestamp, string $broken)
+    {
+        return parent::update($entity,
+                              [
+                                  'TIMESTAMP' => $timestamp,
+                                  'BROKEN'    => $broken,
+                              ]);
+    }
+
+    /** @noinspection PhpDocMissingReturnTagInspection */
+    /**
+     * @param array $data
+     *
+     * @throws \Exception
+     */
+    public static function add(array $data)
+    {
+        throw new \Exception('Use addEntity');
+    }
+    
+    /** @noinspection PhpDocMissingReturnTagInspection */
+    /**
+     * @param mixed $primary
+     * @param array $data
+     *
+     * @throws \Exception
+     */
+    public static function update($primary, array $data)
+    {
+        throw new \Exception('Use updateEntity');
     }
 }
