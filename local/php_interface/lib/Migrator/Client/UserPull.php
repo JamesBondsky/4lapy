@@ -12,7 +12,7 @@ class UserPull extends ClientPullAbstract
      */
     public function getBaseClientList() : array {
         return [
-            new UserGroup(new UserGroupProvider(), ['force' => $this->force]),
+            new UserGroup(new UserGroupProvider(UserGroup::ENTITY_NAME), ['force' => $this->force]),
         ];
     }
     
@@ -21,7 +21,7 @@ class UserPull extends ClientPullAbstract
      */
     public function getClientList() : array {
         return [
-            new User(new UserProvider(), ['limit' => $this->limit, 'force' => $this->force]),
+            new User(new UserProvider(User::ENTITY_NAME), ['limit' => $this->limit, 'force' => $this->force]),
         ];
     }
 }

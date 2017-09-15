@@ -14,7 +14,7 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
     /**
      * @todo move it to settings
      */
-    const BASE_PATH   = '/migrate';
+    const BASE_PATH   = 'http://old4lapy.e.adv.ru/migrate';
     
     const API_PATH    = '';
     

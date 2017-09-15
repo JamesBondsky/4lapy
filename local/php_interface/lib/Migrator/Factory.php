@@ -41,10 +41,10 @@ final class Factory
                 $client = new UserPull($options);
                 break;
             case 'news':
-                $client = new News(new NewsProvider(), $options);
+                $client = new News(new NewsProvider(News::ENTITY_NAME), $options);
                 break;
             case 'articles':
-                $client = new Articles(new ArticlesProvider(), $options);
+                $client = new Articles(new ArticlesProvider(Articles::ENTITY_NAME), $options);
                 break;
             case 'shops':
                 $client = new ShopPull($options);

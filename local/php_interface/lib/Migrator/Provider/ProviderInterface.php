@@ -12,7 +12,19 @@ interface ProviderInterface
     public function getMap() : array;
     
     /**
+     * @return string
+     */
+    public function getPrimary() : string;
+    
+    /**
      * @param \Symfony\Component\HttpFoundation\Response $response
      */
     public function save(Response $response);
+    
+    /**
+     * @param string $entityName
+     *
+     * @return void
+     */
+    public function setEntityName(string $entityName);
 }
