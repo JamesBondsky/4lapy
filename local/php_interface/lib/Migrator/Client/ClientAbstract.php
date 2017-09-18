@@ -20,7 +20,12 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
     
     const ENTITY_NAME = '';
     
+    /**
+     * @var RestClient
+     */
     protected $client;
+    
+    protected $options;
     
     protected $limit;
     
@@ -57,7 +62,7 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
         $this->limit    = (int)$options['limit'];
         $this->force    = (bool)$options['force'];
         $this->provider = $provider;
-
+        
         $this->setClient();
         $this->setLogger(LoggerFactory::create('migrator_' . static::ENTITY_NAME));
     }
@@ -91,7 +96,16 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
      */
     protected function setClient()
     {
-        $this->client = Application::getInstance()->getContainer()->get('circle.restclient');
+        $container = Application::getInstance()->getContainer();
+        
+        $this->client = $container->get('circle.restclient');
+        $options      = $container->getParameter('migrator');
+        
+        foreach ($options as $key => $value) {
+            if (constant($key)) {
+                $this->options[constant($key)] = $value;
+            }
+        }
     }
     
     /**
@@ -123,8 +137,8 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
         if (!$this->force) {
             $options['timestamp'] = $this->getLastTimestamp();
         }
-        
-        return $client->get($this->getBaseUrl($options));
+
+        return $client->get($this->getBaseUrl($options), $this->options);
     }
     
     /**

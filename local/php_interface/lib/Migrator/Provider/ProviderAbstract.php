@@ -6,11 +6,31 @@ use Bitrix\Main\Entity\ScalarField;
 use FourPaws\Migrator\Entity\MapTable;
 use FourPaws\Migrator\Entity\Result;
 use FourPaws\Migrator\Provider\Exceptions\FailResponse;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Response;
 
-abstract class ProviderAbstract implements ProviderInterface
+abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterface
 {
     protected $entity;
+    
+    protected $logger;
+    
+    /**
+     * @param \Psr\Log\LoggerInterface $logger
+     */
+    public function setLogger(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
+    }
+    
+    /**
+     * @return LoggerInterface
+     */
+    public function getLogger()
+    {
+        return $this->logger;
+    }
     
     /**
      * @return array
@@ -28,6 +48,14 @@ abstract class ProviderAbstract implements ProviderInterface
      * @throws \Exception
      */
     abstract public function save(Response $response);
+    
+    /**
+     * @return string
+     */
+    public function getTimestampKey() : string
+    {
+        return '';
+    }
     
     /**
      * @param string $entityName
@@ -67,6 +95,8 @@ abstract class ProviderAbstract implements ProviderInterface
     }
     
     /**
+     * @todo убрать прочь в какие-нибудь utils для ORM
+     *
      * @return \Closure
      */
     public function getScalarEntityMapFilter() : \Closure
@@ -80,6 +110,8 @@ abstract class ProviderAbstract implements ProviderInterface
     }
     
     /**
+     * @todo непонятно, нахера тут. Отрефакторить?
+     *
      * @param bool $result
      * @param int  $timestamp
      *
@@ -89,4 +121,42 @@ abstract class ProviderAbstract implements ProviderInterface
     {
         return new Result($result, $timestamp);
     }
+    
+    /**
+     * @todo single responsibility?! Вынести в Entity.
+     *
+     * @param array $item
+     *
+     * @return \FourPaws\Migrator\Entity\Result
+     */
+    public function addOrUpdateItem(array $item) : Result
+    {
+        $primary = $item[$this->getPrimary()];
+        unset($item[$primary]);
+        
+        if (MapTable::isInternalEntityExists($item[$this->getPrimary()], $this->entity)) {
+            return $this->addItem($item);
+        } else {
+            return $this->updateItem($primary, $item);
+        }
+    }
+    
+    /**
+     * @todo single responsibility?! Вынести в Entity.
+     *
+     * @param array $data
+     *
+     * @return \FourPaws\Migrator\Entity\Result
+     */
+    abstract function addItem(array $data) : Result;
+    
+    /**
+     * @todo single responsibility?! Вынести в Entity.
+     *
+     * @param string $primary
+     * @param array  $data
+     *
+     * @return \FourPaws\Migrator\Entity\Result
+     */
+    abstract function updateItem(string $primary, array $data) : Result;
 }
