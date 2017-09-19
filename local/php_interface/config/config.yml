@@ -3,3 +3,50 @@
 imports:
   - { resource: parameters.yml }
   - { resource: services.yml }
+
+framework:
+  esi: { enabled: true }
+  translator: { fallbacks: ['%locale%'] }
+  secret: '%secret%'
+  default_locale: '%locale%'
+  router:
+    resource: '%kernel.project_dir%/local/php_interface/config/routes/routes.yml'
+    strict_requirements: ~
+  form: ~
+  csrf_protection: ~
+  validation: { enable_annotations: true }
+  serializer: { enable_annotations: true }
+  trusted_hosts: ~
+  session:
+    # https://symfony.com/doc/current/reference/configuration/framework.html#handler-id
+    storage_id: session.storage.php_bridge
+    handler_id: ~
+  fragments: ~
+  http_method_override: true
+  php_errors:
+    log: true
+  templating:
+    engines: ['php', 'twig']
+
+circle_rest_client:
+  curl:
+    defaults:
+      CURLOPT_HTTPHEADER: ['Content-Type: application/json']
+
+fos_rest:
+  disable_csrf_role:    null
+
+nelmio_api_doc:
+  models: { use_jms: false }
+  routes:
+    path_patterns:
+      - ^/api
+  documentation:
+    info:
+      title: 4lapy
+      description: 4 lapy mobile api
+      version: 1.0.0
+
+twig:
+    debug: '%kernel.debug%'
+    strict_variables: '%kernel.debug%'
