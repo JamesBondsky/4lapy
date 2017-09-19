@@ -5,8 +5,9 @@ namespace FourPaws\Migrator\Provider;
 use FourPaws\Migrator\Entity\Result;
 use Symfony\Component\HttpFoundation\Response;
 
-class News extends IBlockProvider
+class Metro extends IBlockProvider
 {
+    
     /**
      * @return array
      */

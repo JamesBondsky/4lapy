@@ -1,4 +1,4 @@
-<?
+<?php
 
 namespace FourPaws\Migrator\Provider;
 

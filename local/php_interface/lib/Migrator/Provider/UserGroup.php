@@ -1,4 +1,4 @@
-<?
+<?php
 
 namespace FourPaws\Migrator\Provider;
 
@@ -46,7 +46,6 @@ class UserGroup extends ProviderAbstract
                 }
             } catch (\Throwable $e) {
                 $this->getLogger()->error($e->getMessage(), $e->getTrace());
-                
             }
         }
     }

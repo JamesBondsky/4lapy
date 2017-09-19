@@ -61,22 +61,22 @@ final class Installer implements LoggerAwareInterface
             'CREATE TABLE IF NOT EXISTS adv_migrator_map
 (
   ID INT NOT NULL AUTO_INCREMENT,
-  ENTITY_ID INT NOT NULL,
+  ENTITY VARCHAR(32) NOT NULL,
   INTERNAL_ID INT,
   EXTERNAL_ID INT NOT NULL,
   LAZY CHAR(1) NOT NULL DEFAULT \'Y\',
   PRIMARY KEY (ID),
-  INDEX internal_entity_index (ENTITY_ID, EXTERNAL_ID),
+  INDEX internal_entity (ENTITY),
+  INDEX internal_entity_index (ENTITY, EXTERNAL_ID),
   INDEX internal_index (INTERNAL_ID),
   INDEX external_index (EXTERNAL_ID)
 );',
             'CREATE TABLE IF NOT EXISTS adv_migrator_entity
 (
-  ID INT NOT NULL AUTO_INCREMENT,
   ENTITY VARCHAR(32) NOT NULL,
   TIMESTAMP DATETIME NULL,
   BROKEN LONGTEXT,
-  PRIMARY KEY (ID)
+  PRIMARY KEY (ENTITY)
 );',
         ];
         

@@ -1,7 +1,8 @@
-<?
+<?php
 
 namespace FourPaws\Migrator\Provider;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Entity\ScalarField;
 use FourPaws\Migrator\Entity\MapTable;
 use FourPaws\Migrator\Entity\Result;
@@ -73,6 +74,7 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
     public function __construct(string $entityName)
     {
         $this->setEntityName($entityName);
+        $this->setLogger(LoggerFactory::create('migrate_provider_' . $entityName));
     }
     
     /**

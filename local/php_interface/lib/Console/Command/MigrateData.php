@@ -1,4 +1,4 @@
-<?
+<?php
 
 namespace FourPaws\Console\Command;
 
@@ -42,6 +42,9 @@ class MigrateData extends Command implements LoggerAwareInterface
     
     protected function configure()
     {
+        /**
+         * @todo переделать подсказку для addArgument на Reflection
+         */
         $this->setName('migrate')
              ->setDescription('Migrate data via rest')
              ->addArgument(self::ARG_MIGRATE_LIST,
@@ -49,7 +52,7 @@ class MigrateData extends Command implements LoggerAwareInterface
                            'Migration type, one or more of this: users, news, articles, shops, sale')
              ->addOption('force', 'f', InputOption::VALUE_NONE, 'Force migrate (disable time period check)');
     }
-    
+
     /**
      * @param \Symfony\Component\Console\Input\InputInterface   $input
      * @param \Symfony\Component\Console\Output\OutputInterface $output

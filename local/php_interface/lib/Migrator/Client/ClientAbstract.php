@@ -1,4 +1,4 @@
-<?
+<?php
 
 namespace FourPaws\Migrator\Client;
 
@@ -62,7 +62,7 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
         $this->limit    = (int)$options['limit'];
         $this->force    = (bool)$options['force'];
         $this->provider = $provider;
-        
+
         $this->setClient();
         $this->setLogger(LoggerFactory::create('migrator_' . static::ENTITY_NAME));
     }
