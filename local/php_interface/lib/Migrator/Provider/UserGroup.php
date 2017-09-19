@@ -2,8 +2,8 @@
 
 namespace FourPaws\Migrator\Provider;
 
-use Bitrix\Main\UserGroupTable;
-use FourPaws\Migrator\Entity\Result;
+use Bitrix\Main\GroupTable;
+use Bitrix\Main\Type\DateTime;
 
 class UserGroup extends ProviderAbstract
 {
@@ -12,34 +12,21 @@ class UserGroup extends ProviderAbstract
      */
     public function getMap() : array
     {
-        $map = array_keys(array_filter(UserGroupTable::getMap(), self::getScalarEntityMapFilter()));
+        $map = array_diff(array_keys(array_filter(GroupTable::getMap(), self::getScalarEntityMapFilter())),
+                          [$this->entity->getPrimary()]);
         
         return array_combine($map, $map);
     }
-    
-    /**
-     * @return string
-     */
-    public function getTimestamp() : string
-    {
-        return 'TIMESTAMP_X';
-    }
-    
-    /**
-     * @return string
-     */
-    public function getPrimary() : string
-    {
-        return 'ID';
-    }
 
-    public function addItem(array $data) : Result
+    /**
+     * @param array $data
+     *
+     * @return array
+     */
+    public function prepareData(array $data)
     {
-    
-    }
-    
-    public function updateItem(string $primary, array $data) : Result
-    {
+        $data['TIMESTAMP_X'] = new DateTime($data['TIMESTAMP_X']);
         
+        return parent::prepareData($data);
     }
 }

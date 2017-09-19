@@ -2,44 +2,19 @@
 
 namespace FourPaws\Migrator\Provider;
 
+use FourPaws\Migrator\Entity\IblockEntity;
+
 abstract class IblockProvider extends ProviderAbstract
 {
-    private $iblockId = 0;
     
     /**
-     * @return string
-     */
-    public function getPrimary() : string
-    {
-        return 'ID';
-    }
-    
-    /**
-     * @return int
-     */
-    public function getIblockId() : int
-    {
-        return $this->iblockId;
-    }
-    
-    /**
-     * @param int $iblockId
-     */
-    private function setIblockId(int $iblockId)
-    {
-        $this->iblockId = $iblockId;
-    }
-    
-    /**
-     * ProviderIblock constructor.
+     * IblockProvider constructor.
      *
-     * @param string $entityName
-     * @param int    $iblockId
+     * @param string                                 $entityName
+     * @param \FourPaws\Migrator\Entity\IblockEntity $entity
      */
-    public function __construct(string $entityName, int $iblockId)
+    public function __construct(string $entityName, IblockEntity $entity)
     {
-        $this->setIblockId($iblockId);
-        
-        parent::__construct($entityName);
+        parent::__construct($entityName, $entity);
     }
 }

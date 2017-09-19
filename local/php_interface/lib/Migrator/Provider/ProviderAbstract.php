@@ -4,9 +4,8 @@ namespace FourPaws\Migrator\Provider;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Entity\ScalarField;
-use FourPaws\Migrator\Entity\MapTable;
-use FourPaws\Migrator\Entity\Result;
-use FourPaws\Migrator\Provider\Exceptions\FailResponse;
+use FourPaws\Migrator\Entity\EntityInterface;
+use FourPaws\Migrator\Provider\Exceptions\FailResponseException;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Response;
@@ -14,7 +13,12 @@ use FourPaws\Migrator\Entity\EntityTable;
 
 abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterface
 {
+    /**
+     * @var EntityInterface
+     */
     protected $entity;
+    
+    protected $entityName;
     
     protected $logger;
     
@@ -40,26 +44,28 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
     abstract public function getMap() : array;
     
     /**
-     * @return string
-     */
-    abstract public function getPrimary() : string;
-    
-    /**
      * @param string $entityName
      */
     public function setEntityName(string $entityName)
     {
-        $this->entity = $entityName;
+        $this->entityName = $entityName;
+    }
+    
+    public function setEntity(EntityInterface $entity)
+    {
+        $this->entity = $entity;
     }
     
     /**
      * ProviderAbstract constructor.
      *
-     * @param string $entityName
+     * @param string                                    $entityName
+     * @param \FourPaws\Migrator\Entity\EntityInterface $entity
      */
-    public function __construct(string $entityName)
+    public function __construct(string $entityName, EntityInterface $entity)
     {
         $this->setEntityName($entityName);
+        $this->setEntity($entity);
         $this->setLogger(LoggerFactory::create('migrate_provider_' . $entityName));
     }
     
@@ -67,12 +73,12 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
      * @param \Symfony\Component\HttpFoundation\Response $response
      *
      * @return mixed
-     * @throws \FourPaws\Migrator\Provider\Exceptions\FailResponse
+     * @throws \FourPaws\Migrator\Provider\Exceptions\FailResponseException
      */
     protected function parseResponse(Response $response)
     {
         if (!$response->isOk()) {
-            throw new FailResponse($response->getContent(), $response->getStatusCode());
+            throw new FailResponseException($response->getContent(), $response->getStatusCode());
         }
         
         /**
@@ -98,87 +104,54 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
     }
     
     /**
-     * @todo непонятно, нахера тут. Отрефакторить?
-     *
-     * @param bool $result
-     * @param int  $timestamp
-     *
-     * @return \FourPaws\Migrator\Entity\Result
-     */
-    public function getItemResultObject(bool $result, int $timestamp = null) : Result
-    {
-        return new Result($result, $timestamp);
-    }
-    
-    /**
-     * @todo single responsibility?! Вынести в Entity.
-     *
-     * @param array $item
-     *
-     * @return \FourPaws\Migrator\Entity\Result
-     */
-    public function addOrUpdateItem(array $item) : Result
-    {
-        $primary = $item[$this->getPrimary()];
-        unset($item[$primary]);
-        
-        if (MapTable::isInternalEntityExists($item[$this->getPrimary()], $this->entity)) {
-            return $this->updateItem($primary, $item);
-        } else {
-            return $this->addItem($item);
-        }
-    }
-    
-    /**
-     * @todo single responsibility?! Вынести в Entity.
-     *
      * @param array $data
      *
-     * @return \FourPaws\Migrator\Entity\Result
+     * @return array
      */
-    abstract function addItem(array $data) : Result;
+    public function prepareData(array $data)
+    {
+        $result = [];
+        
+        foreach ($this->getMap() as $from => $to) {
+            $result[$to] = $data[$from];
+        }
+        
+        return $result;
+    }
     
-    /**
-     * @todo single responsibility?! Вынести в Entity.
-     *
-     * @param string $primary
-     * @param array  $data
-     *
-     * @return \FourPaws\Migrator\Entity\Result
-     */
-    abstract function updateItem(string $primary, array $data) : Result;
-
     /**
      * @param \Symfony\Component\HttpFoundation\Response $response
      */
     public function save(Response $response)
     {
         $lastTimestamp = 0;
+        $entity        = $this->entity;
         
-        foreach ($this->parseResponse($response) as $item) {
+        foreach (($this->parseResponse($response))[$this->entityName] as $item) {
+            $primary   = $entity->getPrimaryByItem($item);
+            $timestamp = $entity->getTimestampByItem($item);
+            $item      = $this->prepareData($item);
             
             try {
-                $result = $this->addOrUpdateItem($item);
+                $result = $entity->addOrUpdateItem($primary, $item);
                 
                 if (!$result->getResult()) {
                     /**
                      * @todo придумать сюда нормальный exception
                      */
-                    throw new \Exception('Something happened with entity' . $this->entity . ' and primary '
-                                         . $item[$this->getPrimary()]);
+                    throw new \Exception('Something happened with entity' . $this->entityName . ' and primary '
+                                         . $primary);
                 }
-
-                $lastTimestamp =
-                    strtotime($item[$this->getTimestamp()])
-                    > $lastTimestamp ? strtotime($item[$this->getTimestamp()]) : $lastTimestamp;
+                
+                $lastTimestamp = strtotime($timestamp) > $lastTimestamp ? strtotime($timestamp) : $lastTimestamp;
             } catch (\Throwable $e) {
-                EntityTable::pushBroken($this->entity, $item[$this->getPrimary()]);
+                EntityTable::pushBroken($this->entity, $primary);
                 $this->getLogger()->error($e->getMessage(), $e->getTrace());
             }
         }
         
         if ($lastTimestamp) {
-            EntityTable::update($this->entity, ['TIMESTAMP' => $lastTimestamp]);
+            EntityTable::updateEntity($this->entity, $lastTimestamp);
         }
     }
 }

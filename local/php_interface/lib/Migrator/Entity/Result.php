@@ -6,7 +6,7 @@ class Result
 {
     private $result;
     
-    private $timestamp;
+    private $internalId;
     
     /**
      * @return bool
@@ -27,28 +27,28 @@ class Result
     /**
      * @return string
      */
-    public function getTimestamp() : string
+    public function getInternalId() : string
     {
-        return $this->timestamp;
+        return $this->internalId;
     }
     
     /**
-     * @param string $timestamp
+     * @param string $internalId
      */
-    private function setTimestamp(string $timestamp)
+    private function setInternalId(string $internalId)
     {
-        $this->timestamp = $timestamp;
+        $this->internalId = $internalId;
     }
     
     /**
      * Result constructor.
      *
-     * @param bool $result
-     * @param int  $timestamp
+     * @param bool   $result
+     * @param string $internalId
      */
-    public function __construct($result, $timestamp = null)
+    public function __construct($result, $internalId = null)
     {
         $this->setResult($result);
-        $this->setTimestamp($timestamp);
+        $this->setInternalId($internalId);
     }
 }

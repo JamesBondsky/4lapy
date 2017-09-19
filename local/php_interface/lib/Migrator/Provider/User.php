@@ -45,14 +45,6 @@ class User extends ProviderAbstract
         return array_combine($map, $map);
     }
     
-    /**
-     * @return string
-     */
-    public function getPrimary() : string
-    {
-        return 'ID';
-    }
-    
     public function save(Response $response)
     {
     

@@ -22,29 +22,4 @@ class Articles extends IblockProvider
     {
         // TODO: Implement save() method.
     }
-    
-    /**
-     * @todo унести в модели
-     *
-     * @param array $data
-     *
-     * @return \FourPaws\Migrator\Entity\Result
-     */
-    public function addItem(array $data) : Result
-    {
-        // TODO: Implement addItem() method.
-    }
-    
-    /**
-     * @todo унести в модели
-     *
-     * @param string $primary
-     * @param array  $data
-     *
-     * @return \FourPaws\Migrator\Entity\Result
-     */
-    public function updateItem(string $primary, array $data) : Result
-    {
-        // TODO: Implement updateItem() method.
-    }
 }

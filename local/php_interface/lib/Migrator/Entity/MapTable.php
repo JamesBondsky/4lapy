@@ -33,10 +33,6 @@ class MapTable extends DataManager
             'ENTITY'        => new StringField('ENTITY', [
                 'title'      => 'Сущность',
                 'required'   => true,
-                'validation' => [
-                    __CLASS__,
-                    'validateEntityId',
-                ],
             ]),
             'INTERNAL_ID'   => new StringField('INTERNAL_ID', [
                 'title' => 'Внутренний идентификатор',
@@ -57,17 +53,6 @@ class MapTable extends DataManager
                                                   '\FourPaws\Migrator\Entity\Entity',
                                                   ['=this.ENTITY' => 'ref.ENTITY'],
                                                   ['join_type' => 'left']),
-        ];
-    }
-    
-    /**
-     * @return \Bitrix\Main\Entity\IValidator[] array
-     */
-    public function validateEntity() : array
-    {
-        return [
-            /** Сущность должна существовать */
-            new Foreign(EntityTable::getEntity()->getField('ENTITY')),
         ];
     }
 

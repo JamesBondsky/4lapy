@@ -2,7 +2,7 @@
 
 namespace FourPaws\Migrator\Provider\Exceptions;
 
-class FailResponse extends \Exception
+class FailResponseException extends \Exception
 {
     
 }

@@ -23,29 +23,4 @@ class Shops extends IBlockProvider
     {
         // TODO: Implement save() method.
     }
-    
-    /**
-     * @todo унести в модель
-     *
-     * @param array $data
-     *
-     * @return \FourPaws\Migrator\Entity\Result
-     */
-    public function addItem(array $data) : Result
-    {
-        // TODO: Implement addItem() method.
-    }
-    
-    /**
-     * @todo унести в модель
-     *
-     * @param string $primary
-     * @param array  $data
-     *
-     * @return \FourPaws\Migrator\Entity\Result
-     */
-    public function updateItem(string $primary, array $data) : Result
-    {
-        // TODO: Implement updateItem() method.
-    }
 }

@@ -4,10 +4,10 @@ namespace FourPaws\Migrator\Entity;
 
 use Bitrix\Main\Entity\DataManager;
 use Bitrix\Main\Entity\DatetimeField;
-use Bitrix\Main\Entity\IntegerField;
 use Bitrix\Main\Entity\StringField;
 use Bitrix\Main\Entity\Validator\Length;
 use Bitrix\Main\Entity\Validator\RegExp;
+use Bitrix\Main\Type\DateTime;
 
 /**
  * Class EntityTable
@@ -100,21 +100,13 @@ class EntityTable extends DataManager
      * @return \Bitrix\Main\Entity\UpdateResult
      * @throws \Exception
      */
-    public static function updateEntity(string $entity, string $timestamp, string $broken)
+    public static function updateEntity(string $entity, string $timestamp)
     {
-        if (!self::validateBroken($broken)) {
-            /**
-             * @todo придумать сюда exception
-             */
-            throw new \Exception('Invalit broken format');
+        if (!self::getByPrimary($entity)->fetch()) {
+            parent::add(['ENTITY' => $entity]);
         }
         
-        $fields = ['TIMESTAMP' => $timestamp,];
-        
-        if ($broken) {
-            
-            $fields['BROKEN'] = $broken;
-        }
+        $fields = ['TIMESTAMP' => new DateTime($timestamp),];
         
         return parent::update($entity, $fields);
     }
@@ -157,13 +149,12 @@ class EntityTable extends DataManager
             throw new \Exception('Wrong entity');
         }
         
-        $broken =
-            array_merge([
-                            self::decodeBroken($entity['BROKEN']),
-                            $primary,
-                        ]);
+        $broken = array_merge([
+                                  self::decodeBroken($entity['BROKEN']),
+                                  $primary,
+                              ]);
         
-        return self::update($entity, ['BROKEN' => self::encodeBroken($broken)]);
+        return parent::update($entity, ['BROKEN' => self::encodeBroken($broken)]);
     }
     
     /**
@@ -183,7 +174,7 @@ class EntityTable extends DataManager
         
         $broken = array_diff(self::decodeBroken($entity['BROKEN']), [$primary]);
         
-        return self::update($entity, ['BROKEN' => self::encodeBroken($broken)]);
+        return parent::update($entity, ['BROKEN' => self::encodeBroken($broken)]);
     }
     
     /**
