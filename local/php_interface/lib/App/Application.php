@@ -17,7 +17,7 @@ use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Kernel;
 use Symfony\Component\HttpKernel\Bundle\BundleInterface;
-use FourPaws\App\Exceptions\ApplicationCreate;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 
 final class Application extends Kernel
 {
@@ -52,19 +52,19 @@ final class Application extends Kernel
     private static $instance;
     
     /**
-     * @throws \FourPaws\App\Exceptions\ApplicationCreate
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
     public function __clone()
     {
-        throw new ApplicationCreate('It`s a singleton.');
+        throw new ApplicationCreateException('It`s a singleton.');
     }
     
     /**
-     * @throws \FourPaws\App\Exceptions\ApplicationCreate
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
     public function __invoke()
     {
-        throw new ApplicationCreate('It`s a singleton.');
+        throw new ApplicationCreateException('It`s a singleton.');
     }
     
     /**
@@ -90,7 +90,7 @@ final class Application extends Kernel
      * @param string $environment
      * @param bool   $debug
      *
-     * @throws \FourPaws\App\Exceptions\ApplicationCreate
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
     public function __construct($environment, $debug)
     {
@@ -99,7 +99,7 @@ final class Application extends Kernel
         if (!self::$instance) {
             self::$instance = $this;
         } else {
-            throw new ApplicationCreate('It`s a singleton.');
+            throw new ApplicationCreateException('It`s a singleton.');
         }
     }
 
