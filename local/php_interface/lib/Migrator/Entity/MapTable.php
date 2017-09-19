@@ -79,24 +79,9 @@ class MapTable extends DataManager
      */
     public static function isInternalEntityExists(string $external, string $entity) : bool
     {
-        try {
-            var_dump(self::getList([
-                                       'filter' => [
-                                           'EXTERNAL_ID'  => $external,
-                                           '!INTERNAL_ID' => false,
-                                           'ENTITY'       => $entity,
-                                       ],
-                                       'select' => ['ID'],
-                                   ]));
-        } catch (\Throwable $e) {
-            var_dump($e);
-        }
-        
-        die;
-
         return self::getList([
                                  'filter' => [
-                                     'EXTERNAL_ID'  => $external,
+                                      'EXTERNAL_ID'  => $external,
                                      '!INTERNAL_ID' => false,
                                      'ENTITY'       => $entity,
                                  ],

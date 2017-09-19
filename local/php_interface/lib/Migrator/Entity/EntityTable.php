@@ -144,26 +144,46 @@ class EntityTable extends DataManager
     
     /**
      * @param string $entity
-     * @param string $id
+     * @param string $primary
+     *
+     * @return \Bitrix\Main\Entity\UpdateResult
+     * @throws \Exception
      */
-    public static function pushBroken(string $entity, string $id)
+    public static function pushBroken(string $entity, string $primary)
     {
         $entity = self::getByPrimary($entity)->fetch();
-
+        
         if (!$entity) {
             throw new \Exception('Wrong entity');
         }
-
-        $broken = json_decode($entity['BROKEN'], JSON_FORCE_OBJECT | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_APOS);
+        
+        $broken =
+            array_merge([
+                            self::decodeBroken($entity['BROKEN']),
+                            $primary,
+                        ]);
+        
+        return self::update($entity, ['BROKEN' => self::encodeBroken($broken)]);
     }
     
     /**
      * @param string $entity
-     * @param string $id
+     * @param string $primary
+     *
+     * @return \Bitrix\Main\Entity\UpdateResult
+     * @throws \Exception
      */
-    public function popBroken(string $entity, string $id)
+    public function popBroken(string $entity, string $primary)
     {
-    
+        $entity = self::getByPrimary($entity)->fetch();
+        
+        if (!$entity) {
+            throw new \Exception('Wrong entity');
+        }
+        
+        $broken = array_diff(self::decodeBroken($entity['BROKEN']), [$primary]);
+        
+        return self::update($entity, ['BROKEN' => self::encodeBroken($broken)]);
     }
     
     /**
@@ -177,7 +197,26 @@ class EntityTable extends DataManager
             return true;
         }
         
-        return json_decode($broken, JSON_FORCE_OBJECT | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_APOS)
-               !== null;
+        return self::decodeBroken($broken) !== null;
+    }
+    
+    /**
+     * @param string $broken
+     *
+     * @return array
+     */
+    public static function decodeBroken(string $broken) : array
+    {
+        return json_decode($broken, JSON_OBJECT_AS_ARRAY | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_APOS);
+    }
+    
+    /**
+     * @param array $broken
+     *
+     * @return string
+     */
+    public static function encodeBroken(array $broken) : string
+    {
+        return json_encode($broken, JSON_OBJECT_AS_ARRAY | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_APOS);
     }
 }

@@ -12,9 +12,18 @@ interface ProviderInterface
     public function getMap() : array;
     
     /**
+     * Get primary table name
+     *
      * @return string
      */
     public function getPrimary() : string;
+    
+    /**
+     * Get timestamp field name
+     *
+     * @return string
+     */
+    public function getTimestamp() : string;
     
     /**
      * @param \Symfony\Component\HttpFoundation\Response $response

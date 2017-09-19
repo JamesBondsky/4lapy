@@ -10,6 +10,7 @@ use FourPaws\Migrator\Provider\Exceptions\FailResponse;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Response;
+use FourPaws\Migrator\Entity\EntityTable;
 
 abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterface
 {
@@ -42,21 +43,6 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
      * @return string
      */
     abstract public function getPrimary() : string;
-    
-    /**
-     * @param \Symfony\Component\HttpFoundation\Response $response
-     *
-     * @throws \Exception
-     */
-    abstract public function save(Response $response);
-    
-    /**
-     * @return string
-     */
-    public function getTimestampKey() : string
-    {
-        return '';
-    }
     
     /**
      * @param string $entityName
@@ -99,7 +85,7 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
     /**
      * @todo убрать прочь в какие-нибудь utils для ORM
      *
-     * @return \Closure
+     * @return \Closure to use in array_filter()
      */
     public function getScalarEntityMapFilter() : \Closure
     {
@@ -137,9 +123,9 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
         unset($item[$primary]);
         
         if (MapTable::isInternalEntityExists($item[$this->getPrimary()], $this->entity)) {
-            return $this->addItem($item);
-        } else {
             return $this->updateItem($primary, $item);
+        } else {
+            return $this->addItem($item);
         }
     }
     
@@ -161,4 +147,38 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
      * @return \FourPaws\Migrator\Entity\Result
      */
     abstract function updateItem(string $primary, array $data) : Result;
+
+    /**
+     * @param \Symfony\Component\HttpFoundation\Response $response
+     */
+    public function save(Response $response)
+    {
+        $lastTimestamp = 0;
+        
+        foreach ($this->parseResponse($response) as $item) {
+            
+            try {
+                $result = $this->addOrUpdateItem($item);
+                
+                if (!$result->getResult()) {
+                    /**
+                     * @todo придумать сюда нормальный exception
+                     */
+                    throw new \Exception('Something happened with entity' . $this->entity . ' and primary '
+                                         . $item[$this->getPrimary()]);
+                }
+
+                $lastTimestamp =
+                    strtotime($item[$this->getTimestamp()])
+                    > $lastTimestamp ? strtotime($item[$this->getTimestamp()]) : $lastTimestamp;
+            } catch (\Throwable $e) {
+                EntityTable::pushBroken($this->entity, $item[$this->getPrimary()]);
+                $this->getLogger()->error($e->getMessage(), $e->getTrace());
+            }
+        }
+        
+        if ($lastTimestamp) {
+            EntityTable::update($this->entity, ['TIMESTAMP' => $lastTimestamp]);
+        }
+    }
 }
