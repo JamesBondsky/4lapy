@@ -26,9 +26,9 @@ class UserGroup extends AbstractEntity
         
         foreach ($map as $key => $item) {
             MapTable::add([
-                              'ENTITY'   => $this->entity,
-                              'EXTERNAL' => $key,
-                              'INTERNAL' => $item,
+                              'ENTITY'      => $this->entity,
+                              'EXTERNAL_ID' => $key,
+                              'INTERNAL_ID' => $item,
                           ]);
         }
     }
@@ -42,7 +42,7 @@ class UserGroup extends AbstractEntity
     public function updateItem(string $primary, array $data) : Result
     {
         $result = GroupTable::add($data);
-    
+        
         if ($result->isSuccess()) {
             MapTable::add([
                               'ENTITY'      => $this->entity,
@@ -50,7 +50,7 @@ class UserGroup extends AbstractEntity
                               'INTERNAL_ID' => $result->getId(),
                           ]);
         }
-    
+        
         return new Result($result->isSuccess(), $result->getId());
     }
     
@@ -63,7 +63,7 @@ class UserGroup extends AbstractEntity
     public function addItem(string $primary, array $data) : Result
     {
         $result = GroupTable::update($primary, $data);
-    
+        
         return new Result($result->isSuccess(), $result->getId());
     }
 }

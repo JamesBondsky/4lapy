@@ -127,6 +127,8 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
         $lastTimestamp = 0;
         $entity        = $this->entity;
         
+        $this->installEntity();
+        
         foreach (($this->parseResponse($response))[$this->entityName] as $item) {
             $primary   = $entity->getPrimaryByItem($item);
             $timestamp = $entity->getTimestampByItem($item);
@@ -153,5 +155,29 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
         if ($lastTimestamp) {
             EntityTable::updateEntity($this->entity, $lastTimestamp);
         }
+    }
+    
+    /**
+     * Install default entity
+     */
+    public function installEntity()
+    {
+        if (!$this->entityAlreadyExists()) {
+            $result = EntityTable::addEntity($this->entityName);
+            
+            if (!$result->isSuccess()) {
+                $this->getLogger()->error("Entity add error: \n" . implode("\n", $result->getErrors()));
+            }
+            
+            $this->entity->setDefaults();
+        }
+    }
+    
+    /**
+     * @return bool
+     */
+    public function entityAlreadyExists() : bool
+    {
+        return EntityTable::getByPrimary($this->entityName, ['select' => ['ENTITY']])->getSelectedRowsCount() === 1;
     }
 }
