@@ -23,13 +23,13 @@ class UserGroup extends AbstractEntity
             6 => 3,
             7 => 4,
         ];
-
+        
         foreach ($map as $key => $item) {
-            MapTable::add([
-                              'ENTITY'      => $this->entity,
-                              'EXTERNAL_ID' => $key,
-                              'INTERNAL_ID' => $item,
-                          ]);
+            $result = MapTable::addEntity($this->entity, $key, $item);
+            
+            if (!$result->isSuccess()) {
+                throw new \Exception("Error: \n" . implode("\n", $result->getErrorMessages()));
+            }
         }
     }
     
@@ -41,15 +41,7 @@ class UserGroup extends AbstractEntity
      */
     public function updateItem(string $primary, array $data) : Result
     {
-        $result = GroupTable::add($data);
-        
-        if ($result->isSuccess()) {
-            MapTable::add([
-                              'ENTITY'      => $this->entity,
-                              'EXTERNAL_ID' => $primary,
-                              'INTERNAL_ID' => $result->getId(),
-                          ]);
-        }
+        $result = GroupTable::update($primary, $data);
         
         return new Result($result->isSuccess(), $result->getId());
     }
@@ -59,10 +51,20 @@ class UserGroup extends AbstractEntity
      * @param array  $data
      *
      * @return \FourPaws\Migrator\Entity\Result
+     * @throws \Exception
      */
     public function addItem(string $primary, array $data) : Result
     {
-        $result = GroupTable::update($primary, $data);
+        $result = GroupTable::add($data);
+        
+        if ($result->isSuccess()) {
+            if (!MapTable::addEntity($this->entity, $primary, $result->getId())->isSuccess()) {
+                /**
+                 * @todo впилить нормальный exception
+                 */
+                throw new \Exception("Error: errrrrror");
+            }
+        }
         
         return new Result($result->isSuccess(), $result->getId());
     }

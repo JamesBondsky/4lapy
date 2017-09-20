@@ -2,12 +2,12 @@
 
 namespace FourPaws\Migrator\Entity;
 
+use Bitrix\Main\Entity\AddResult;
 use Bitrix\Main\Entity\BooleanField;
 use Bitrix\Main\Entity\DataManager;
 use Bitrix\Main\Entity\IntegerField;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Entity\StringField;
-use Bitrix\Main\Entity\Validator\Foreign;
 
 class MapTable extends DataManager
 {
@@ -31,8 +31,8 @@ class MapTable extends DataManager
                 'title'        => 'Идентификатор',
             ]),
             'ENTITY'        => new StringField('ENTITY', [
-                'title'      => 'Сущность',
-                'required'   => true,
+                'title'    => 'Сущность',
+                'required' => true,
             ]),
             'INTERNAL_ID'   => new StringField('INTERNAL_ID', [
                 'title' => 'Внутренний идентификатор',
@@ -55,7 +55,7 @@ class MapTable extends DataManager
                                                   ['join_type' => 'left']),
         ];
     }
-
+    
     /**
      * @param string $external
      * @param string $entity
@@ -66,14 +66,14 @@ class MapTable extends DataManager
     {
         return self::getList([
                                  'filter' => [
-                                      'EXTERNAL_ID'  => $external,
+                                     'EXTERNAL_ID'  => $external,
                                      '!INTERNAL_ID' => false,
                                      'ENTITY'       => $entity,
                                  ],
                                  'select' => ['ID'],
                              ])->getSelectedRowsCount() === 1;
     }
-
+    
     /**
      * @param string $external
      * @param string $entity
@@ -101,10 +101,64 @@ class MapTable extends DataManager
     {
         return self::getList([
                                  'filter' => [
-                                     'EXTERNAL_ID' => $internal,
+                                     'INTERNAL_ID' => $internal,
                                      'ENTITY'      => $entity,
                                  ],
                                  'select' => ['EXTERNAL_ID'],
                              ])['EXTERNAL_ID'];
+    }
+    
+    /**
+     * @param array  $external
+     * @param string $entity
+     *
+     * @return array
+     */
+    public static function getInternalIdListByExternalIdList(array $external, string $entity) : array
+    {
+        $result = self::getList([
+                                    'filter' => [
+                                        '@EXTERNAL_ID' => $external,
+                                        'ENTITY'       => $entity,
+                                    ],
+                                    'select' => ['INTERNAL_ID'],
+                                ])->fetchAll();
+        
+        return array_column($result, 'INTERNAL_ID');
+    }
+    
+    /**
+     * @param array  $internal
+     * @param string $entity
+     *
+     * @return array
+     */
+    public static function getExternalListIdByInternalIdList(array $internal, string $entity) : array
+    {
+        $result = self::getList([
+                                    'filter' => [
+                                        '@INTERNAL_ID' => $internal,
+                                        'ENTITY'       => $entity,
+                                    ],
+                                    'select' => ['EXTERNAL_ID'],
+                                ])->fetchAll();
+        
+        return array_column($result, 'EXTERNAL_ID');
+    }
+    
+    /**
+     * @param string $entity
+     * @param string $externalId
+     * @param string $internalId
+     *
+     * @return \Bitrix\Main\Entity\AddResult
+     */
+    public static function addEntity(string $entity, string $externalId, string $internalId) : AddResult
+    {
+        return parent::add([
+                               'ENTITY'      => $entity,
+                               'EXTERNAL_ID' => $externalId,
+                               'INTERNAL_ID' => $internalId,
+                           ]);
     }
 }

@@ -147,33 +147,33 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
                 
                 $lastTimestamp = strtotime($timestamp) > $lastTimestamp ? strtotime($timestamp) : $lastTimestamp;
             } catch (\Throwable $e) {
-                EntityTable::pushBroken($this->entity, $primary);
+                EntityTable::pushBroken($this->entityName, $primary);
                 $this->getLogger()->error($e->getMessage(), $e->getTrace());
             }
         }
         
         if ($lastTimestamp) {
             $result = EntityTable::updateEntity($this->entityName, $lastTimestamp);
-
+            
             if (!$result) {
                 $this->getLogger()->error("Entity update error: \n" . implode("\n", $result->getErrors()));
             }
         }
     }
-
+    
     /**
      * Install default entity
      */
     public function installEntity()
     {
         if (!$this->entityAlreadyExists()) {
+            $this->entity->setDefaults();
+            
             $result = EntityTable::addEntity($this->entityName);
             
             if (!$result->isSuccess()) {
                 $this->getLogger()->error("Entity add error: \n" . implode("\n", $result->getErrors()));
             }
-            
-            $this->entity->setDefaults();
         }
     }
     

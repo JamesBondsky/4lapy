@@ -19,7 +19,7 @@ class UserPull extends ClientPullAbstract
                           ['force' => $this->force]),
         ];
     }
-    
+
     /**
      * @return \FourPaws\Migrator\Client\ClientInterface[] array
      */

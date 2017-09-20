@@ -146,10 +146,10 @@ class EntityTable extends DataManager
             throw new \Exception('Wrong entity');
         }
         
-        $broken = array_merge([
-                                  self::decodeBroken($entity['BROKEN']),
-                                  $primary,
-                              ]);
+        $broken = $entity['BROKEN'] ? array_merge([
+                                                      self::decodeBroken($entity['BROKEN']),
+                                                      $primary,
+                                                  ]) : self::decodeBroken($primary);
         
         return parent::update($entity, ['BROKEN' => self::encodeBroken($broken)]);
     }
@@ -171,7 +171,7 @@ class EntityTable extends DataManager
         
         $broken = array_diff(self::decodeBroken($entity['BROKEN']), [$primary]);
         
-        return parent::update($entity, ['BROKEN' => self::encodeBroken($broken)]);
+        return parent::update($entity, ['BROKEN' => $broken ? self::encodeBroken($broken) : '']);
     }
     
     /**

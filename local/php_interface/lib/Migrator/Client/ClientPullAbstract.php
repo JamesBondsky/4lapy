@@ -45,12 +45,14 @@ abstract class ClientPullAbstract implements ClientPullInterface, LoggerAwareInt
      * @return bool
      */
     public function save() : bool {
+
         try {
             /** @var \FourPaws\Migrator\Client\ClientInterface $client */
+
             foreach ($this->getBaseClientList() as $client) {
                 $client->getProvider()->save($client->query());
             }
-            
+
             foreach ($this->getClientList() as $client) {
                 $client->getProvider()->save($client->query());
             }
