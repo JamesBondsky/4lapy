@@ -28,6 +28,8 @@ class MigrateData extends Command implements LoggerAwareInterface
     
     const ARG_MIGRATE_LIST = 'migrate-list';
     
+    const ARG_LIMIT        = 'limit';
+    
     public function __construct($name = null)
     {
         parent::__construct($name);
@@ -47,12 +49,15 @@ class MigrateData extends Command implements LoggerAwareInterface
          */
         $this->setName('migrate')
              ->setDescription('Migrate data via rest')
+             ->addArgument(self::ARG_LIMIT,
+                           InputArgument::REQUIRED,
+                           'Limit of entities, 100 by default')
              ->addArgument(self::ARG_MIGRATE_LIST,
                            InputArgument::IS_ARRAY,
                            'Migration type, one or more of this: users, news, articles, shops, sale')
              ->addOption('force', 'f', InputOption::VALUE_NONE, 'Force migrate (disable time period check)');
     }
-
+    
     /**
      * @param \Symfony\Component\Console\Input\InputInterface   $input
      * @param \Symfony\Component\Console\Output\OutputInterface $output
@@ -63,8 +68,15 @@ class MigrateData extends Command implements LoggerAwareInterface
     {
         $this->log(LogLevel::INFO, 'Migration start');
         
+        $limit = $input->getArgument(self::ARG_LIMIT);
+
+        if ($limit && !(int)$limit) {
+            $input->setArgument(self::ARG_MIGRATE_LIST, [$limit]);
+            $limit = 100;
+        }
+
         foreach ($input->getArgument(self::ARG_MIGRATE_LIST) as $type) {
-            $client = (new Factory())->getClient($type);
+            $client = (new Factory())->getClient($type, ['limit' => $limit]);
             $client->save();
         }
         

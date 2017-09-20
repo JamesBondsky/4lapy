@@ -45,7 +45,7 @@ final class Factory
             'news'     => 0,
             'articles' => 0,
         ];
-        
+
         switch ($type) {
             case 'users':
                 $client = new UserPull($options);
