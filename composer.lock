@@ -8,11 +8,11 @@
     "packages": [
         {
             "name": "adv/bitrix-tools",
-            "version": "v1.0.0",
+            "version": "v1.0.2",
             "source": {
                 "type": "git",
                 "url": "ssh://git@scm.adv.ru:7999/adv/bitrix-tools.git",
-                "reference": "287a759d5e534a1098d9b51a1d36d0dd27ddbd38"
+                "reference": "058e52587bab715f38d43b42075889000652f0fa"
             },
             "require": {
                 "andreyryabin/sprint.migration": "^2.0",
@@ -33,7 +33,7 @@
                 }
             ],
             "description": "Bitrix tools",
-            "time": "2017-09-07T14:58:03+00:00"
+            "time": "2017-09-20T13:28:38+00:00"
         },
         {
             "name": "andreyryabin/sprint.migration",
