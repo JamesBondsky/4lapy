@@ -46,8 +46,7 @@ class EntityTable extends DataManager
             
             ]),
             'BROKEN'    => new StringField('BROKEN', [
-                'title'    => 'Проблемные записи',
-                'required' => true,
+                'title' => 'Проблемные записи',
             ]),
         ];
     }
@@ -64,49 +63,47 @@ class EntityTable extends DataManager
              * должно начинаться с латинской буквы
              * и не должно содержать ничего, кроме латинских букв в любом регистре, _ и цифр
              */
-            new RegExp('^[a-zA-Z](?>(?!\W))$'),
+            new RegExp('~^[a-zA-Z]\w+$~'),
         ];
     }
     
     /**
      * @param string $entity
-     * @param string $timestamp
+     * @param int    $timestamp
      * @param string $broken
      *
      * @return \Bitrix\Main\Entity\AddResult
      * @throws \Exception
      */
-    public static function addEntity(string $entity, string $timestamp, string $broken)
+    public static function addEntity(string $entity, int $timestamp = 0, string $broken = '')
     {
-        if (!self::validateBroken($broken)) {
-            /**
-             * @todo придумать сюда exception
-             */
-            throw new \Exception('Invalit broken format');
+        $fields = ['ENTITY' => $entity];
+        
+        if ($timestamp) {
+            $fields['TIMESTAMP'] = DateTime::createFromTimestamp($timestamp);
         }
         
-        return parent::add([
-                               'ENTITY'    => $entity,
-                               'TIMESTAMP' => $timestamp,
-                               'BROKEN'    => $broken,
-                           ]);
+        if ($broken) {
+            $fields['BROKEN'] = $broken;
+        }
+        
+        return parent::add($fields);
     }
     
     /**
      * @param string $entity
-     * @param string $timestamp
-     * @param string $broken
+     * @param int    $timestamp
      *
      * @return \Bitrix\Main\Entity\UpdateResult
      * @throws \Exception
      */
-    public static function updateEntity(string $entity, string $timestamp)
+    public static function updateEntity(string $entity, int $timestamp)
     {
         if (!self::getByPrimary($entity)->fetch()) {
             parent::add(['ENTITY' => $entity]);
         }
         
-        $fields = ['TIMESTAMP' => new DateTime($timestamp),];
+        $fields = ['TIMESTAMP' => DateTime::createFromTimestamp($timestamp),];
         
         return parent::update($entity, $fields);
     }
@@ -175,20 +172,6 @@ class EntityTable extends DataManager
         $broken = array_diff(self::decodeBroken($entity['BROKEN']), [$primary]);
         
         return parent::update($entity, ['BROKEN' => self::encodeBroken($broken)]);
-    }
-    
-    /**
-     * @param string $broken
-     *
-     * @return bool
-     */
-    public static function validateBroken(string $broken = '')
-    {
-        if (!$broken) {
-            return true;
-        }
-        
-        return self::decodeBroken($broken) !== null;
     }
     
     /**

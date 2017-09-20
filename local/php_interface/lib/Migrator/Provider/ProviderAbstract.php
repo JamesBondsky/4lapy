@@ -153,10 +153,14 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
         }
         
         if ($lastTimestamp) {
-            EntityTable::updateEntity($this->entity, $lastTimestamp);
+            $result = EntityTable::updateEntity($this->entityName, $lastTimestamp);
+
+            if (!$result) {
+                $this->getLogger()->error("Entity update error: \n" . implode("\n", $result->getErrors()));
+            }
         }
     }
-    
+
     /**
      * Install default entity
      */

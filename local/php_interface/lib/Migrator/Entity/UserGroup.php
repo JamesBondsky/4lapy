@@ -23,7 +23,7 @@ class UserGroup extends AbstractEntity
             6 => 3,
             7 => 4,
         ];
-        
+
         foreach ($map as $key => $item) {
             MapTable::add([
                               'ENTITY'      => $this->entity,

@@ -3,8 +3,10 @@
 namespace FourPaws\Migrator\Client;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\Type\DateTime;
 use Circle\RestClientBundle\Services\RestClient;
 use FourPaws\App\Application;
+use FourPaws\Migrator\Entity\EntityTable;
 use FourPaws\Migrator\Provider\ProviderInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
@@ -147,8 +149,10 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
     public function getLastTimestamp() : int
     {
         /**
-         * @todo
+         * @var \Bitrix\Main\Type\DateTime $timestamp
          */
-        return 0;
+        $timestamp = EntityTable::getByPrimary(static::ENTITY_NAME, ['select' => ['TIMESTAMP']])->fetch();
+
+        return $timestamp['TIMESTAMP'] instanceof DateTime ? $timestamp['TIMESTAMP']->getTimestamp() : 0;
     }
 }
