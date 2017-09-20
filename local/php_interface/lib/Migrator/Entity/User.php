@@ -2,6 +2,8 @@
 
 namespace FourPaws\Migrator\Entity;
 
+use \FourPaws\Migrator\Client\UserGroup as UserGroupClient;
+
 class User extends AbstractEntity
 {
     public function setDefaults()
@@ -21,12 +23,12 @@ class User extends AbstractEntity
      */
     public function updateItem(string $primary, array $data) : Result
     {
-        $user   = new \CUser();
-    
-        if(!($success = $user->Update($primary, $data))) {
+        $user = new \CUser();
+        
+        if (!($success = $user->Update($primary, $data))) {
             $this->getLogger()->error("User #{$primary} update error: $user->LAST_ERROR");
         }
-
+        
         return (new Result($success, $primary));
     }
     
@@ -42,9 +44,11 @@ class User extends AbstractEntity
         $user   = new \CUser();
         
         $id = $user->Add($data);
-        
+
         if ($id) {
-            $groups = MapTable::getInternalIdListByExternalIdList($groups, $this->entity);
+            MapTable::addEntity($this->entity, $primary, $id)->isSuccess();
+            $groups = MapTable::getInternalIdListByExternalIdList($groups, UserGroupClient::ENTITY_NAME);
+
             $user->SetUserGroup($id, $groups);
         } else {
             $this->getLogger()->error("User #{$primary} add error: $user->LAST_ERROR");

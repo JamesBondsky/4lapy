@@ -16,7 +16,7 @@ abstract class ClientPullAbstract implements ClientPullInterface, LoggerAwareInt
     protected $limit = 0;
     
     protected $force = false;
-
+    
     protected $logger;
     
     /**
@@ -34,33 +34,35 @@ abstract class ClientPullAbstract implements ClientPullInterface, LoggerAwareInt
      *
      * @param array $options
      */
-    public function __construct(array $options = []) {
+    public function __construct(array $options = [])
+    {
         $this->limit = (int)$options['limit'];
         $this->force = (bool)$options['force'];
-
+        
         $this->setLogger(LoggerFactory::create('migrator_' . str_replace('\\', '_', static::class)));
     }
     
     /**
      * @return bool
      */
-    public function save() : bool {
-
+    public function save() : bool
+    {
+        
         try {
             /** @var \FourPaws\Migrator\Client\ClientInterface $client */
-
+            
             foreach ($this->getBaseClientList() as $client) {
-                $client->getProvider()->save($client->query());
+                $client->save();
             }
-
+            
             foreach ($this->getClientList() as $client) {
-                $client->getProvider()->save($client->query());
+                $client->save();
             }
             
             return true;
         } catch (\Exception $e) {
             $this->getLogger()->error($e->getMessage());
-
+            
             return false;
         }
     }
@@ -76,7 +78,8 @@ abstract class ClientPullAbstract implements ClientPullInterface, LoggerAwareInt
     /**
      * @return LoggerInterface
      */
-    public function getLogger() {
+    public function getLogger()
+    {
         return $this->logger;
     }
 }

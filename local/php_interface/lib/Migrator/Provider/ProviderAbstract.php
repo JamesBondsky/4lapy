@@ -133,10 +133,10 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
             $primary   = $entity->getPrimaryByItem($item);
             $timestamp = $entity->getTimestampByItem($item);
             $item      = $this->prepareData($item);
-            
+
             try {
                 $result = $entity->addOrUpdateItem($primary, $item);
-                
+
                 if (!$result->getResult()) {
                     /**
                      * @todo придумать сюда нормальный exception
@@ -148,7 +148,7 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
                 $lastTimestamp = strtotime($timestamp) > $lastTimestamp ? strtotime($timestamp) : $lastTimestamp;
             } catch (\Throwable $e) {
                 EntityTable::pushBroken($this->entityName, $primary);
-                $this->getLogger()->error($e->getMessage(), $e->getTrace());
+                $this->getLogger()->error($e->getMessage());
             }
         }
         

@@ -140,16 +140,14 @@ class EntityTable extends DataManager
      */
     public static function pushBroken(string $entity, string $primary)
     {
-        $entity = self::getByPrimary($entity)->fetch();
+        $entityEntity = self::getByPrimary($entity)->fetch();
         
-        if (!$entity) {
+        if (!$entityEntity) {
             throw new \Exception('Wrong entity');
         }
         
-        $broken = $entity['BROKEN'] ? array_merge([
-                                                      self::decodeBroken($entity['BROKEN']),
-                                                      $primary,
-                                                  ]) : self::decodeBroken($primary);
+        $broken =
+            $entityEntity['BROKEN'] ? array_merge(self::decodeBroken($entityEntity['BROKEN']), [$primary]) : [$primary];
         
         return parent::update($entity, ['BROKEN' => self::encodeBroken($broken)]);
     }
@@ -163,13 +161,13 @@ class EntityTable extends DataManager
      */
     public function popBroken(string $entity, string $primary)
     {
-        $entity = self::getByPrimary($entity)->fetch();
+        $entityEntity = self::getByPrimary($entity)->fetch();
         
-        if (!$entity) {
+        if (!$entityEntity) {
             throw new \Exception('Wrong entity');
         }
         
-        $broken = array_diff(self::decodeBroken($entity['BROKEN']), [$primary]);
+        $broken = array_diff(self::decodeBroken($entityEntity['BROKEN']), [$primary]);
         
         return parent::update($entity, ['BROKEN' => $broken ? self::encodeBroken($broken) : '']);
     }

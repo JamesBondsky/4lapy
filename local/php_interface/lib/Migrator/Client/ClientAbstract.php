@@ -87,7 +87,7 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
             
             return true;
         } catch (\Throwable $e) {
-            $this->getLogger()->error($e->getMessage(), $e->getTrace());
+            $this->getLogger()->error($e->getMessage() . "\n" . $e->getTraceAsString());
             
             return false;
         }
