@@ -61,6 +61,51 @@ class User extends ProviderAbstract
     {
         $data['PASSWORD'] .= '.';
         
+        if ($data['EMAIL'] == $data['LOGIN']) {
+            $data['LOGIN'] = $this->normalizeEmail($data['LOGIN']);
+        }
+        
+        $data['EMAIL'] = $this->normalizeEmail($data['EMAIL']);
+        
+        $data['PERSONAL_PHONE'] = $this->normalizePhone((string)$data['PERSONAL_PHONE']);
+        
+        if ($this->isLoginPhone((string)$data['LOGIN'])) {
+            $data['LOGIN'] = $this->normalizePhone($data['LOGIN']);
+        }
+        
         return parent::prepareData($data);
+    }
+    
+    /**
+     * @param string $phone
+     *
+     * @return bool
+     */
+    public function isLoginPhone(string $phone)
+    {
+        return (strlen(preg_replace('~\D~', '', $phone)) == strlen($phone)) && strlen($phone) >= 10;
+    }
+    
+    /**
+     * @param string $phone
+     *
+     * @return bool|mixed|string
+     */
+    public function normalizePhone(string $phone)
+    {
+        return NormalizePhone($phone);
+    }
+    
+    /**
+     * @param string $email
+     *
+     * @return string
+     */
+    public function normalizeEmail(string $email)
+    {
+        $email    = explode('@', $email);
+        $email[0] = preg_replace('~\.~', '', $email[0]);
+        
+        return implode('@', $email);
     }
 }
