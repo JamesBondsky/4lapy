@@ -41,14 +41,6 @@ class MapTable extends DataManager
                 'title'    => 'Внешний идентификатор',
                 'required' => true,
             ]),
-            'LAZY'          => new BooleanField('LAZY', [
-                'values'        => [
-                    'N',
-                    'Y',
-                ],
-                'default_value' => 'N',
-                'title'         => 'Запись ещё не создана',
-            ]),
             'ENTITY_ENTITY' => new ReferenceField('ENTITY_ENTITY',
                                                   '\FourPaws\Migrator\Entity\Entity',
                                                   ['=this.ENTITY' => 'ref.ENTITY'],

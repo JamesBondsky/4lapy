@@ -64,7 +64,6 @@ final class Installer implements LoggerAwareInterface
   ENTITY VARCHAR(32) NOT NULL,
   INTERNAL_ID INT,
   EXTERNAL_ID INT NOT NULL,
-  LAZY CHAR(1) NOT NULL DEFAULT \'Y\',
   PRIMARY KEY (ID),
   INDEX internal_entity (ENTITY),
   INDEX internal_entity_index (ENTITY, EXTERNAL_ID),
@@ -77,6 +76,17 @@ final class Installer implements LoggerAwareInterface
   TIMESTAMP DATETIME NULL,
   BROKEN LONGTEXT,
   PRIMARY KEY (ENTITY)
+);',
+            'CREATE TABLE IF NOT EXISTS adv_migrator_lazy
+(
+  ENTITY_FROM VARCHAR(32) NOT NULL,
+  ENTITY_TO VARCHAR(32) NOT NULL,
+  FIELD VARCHAR(64) NOT NULL,
+  INTERNAL_ID INT,
+  EXTERNAL_ID INT NOT NULL,
+  PRIMARY KEY (ENTITY_FROM, ENTITY_TO, INTERNAL_ID),
+  INDEX internal_index (ENTITY_FROM, INTERNAL_ID),
+  INDEX external_index (ENTITY_TO, EXTERNAL_ID)
 );',
         ];
         
@@ -100,7 +110,8 @@ final class Installer implements LoggerAwareInterface
         $query = <<<query
 DROP TABLE IF EXISTS
   adv_migrator_entity,
-  adv_migrator_map
+  adv_migrator_map,
+  adv_migrator_lazy
 query;
         
         try {
@@ -131,6 +142,6 @@ query;
      */
     public function isInstalled() : bool
     {
-        return $this->connection->query('SHOW TABLES LIKE \'adv_migrator_%\'')->getSelectedRowsCount() === 2;
+        return $this->connection->query('SHOW TABLES LIKE \'adv_migrator_%\'')->getSelectedRowsCount() === 3;
     }
 }
