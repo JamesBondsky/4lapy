@@ -147,7 +147,7 @@ class EntityTable extends DataManager
         }
         
         $broken =
-            $entityEntity['BROKEN'] ? array_merge(self::decodeBroken($entityEntity['BROKEN']), [$primary]) : [$primary];
+            $entityEntity['BROKEN'] ? array_unique(array_merge(self::decodeBroken($entityEntity['BROKEN']), [$primary])) : [$primary];
         
         return parent::update($entity, ['BROKEN' => self::encodeBroken($broken)]);
     }

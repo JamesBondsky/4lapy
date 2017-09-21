@@ -12,7 +12,13 @@ class News extends IBlockProvider
      */
     public function getMap() : array
     {
-        // TODO: Implement getMap() method.
+        $map = parent::getMap();
+
+        $map = array_merge($map, [
+            'PROPERTY_'
+        ]);
+
+        return $map;
     }
     
     /**

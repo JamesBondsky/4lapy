@@ -82,13 +82,13 @@ class MapTable extends DataManager
      */
     public static function getInternalIdByExternalId(string $external, string $entity) : string
     {
-        return self::getList([
-                                 'filter' => [
-                                     'EXTERNAL_ID' => $external,
-                                     'ENTITY'      => $entity,
-                                 ],
-                                 'select' => ['INTERNAL_ID'],
-                             ])['INTERNAL_ID'];
+        return (self::getList([
+                                  'filter' => [
+                                      'EXTERNAL_ID' => $external,
+                                      'ENTITY'      => $entity,
+                                  ],
+                                  'select' => ['INTERNAL_ID'],
+                              ])->fetch())['INTERNAL_ID'];
     }
     
     /**
@@ -99,13 +99,13 @@ class MapTable extends DataManager
      */
     public static function getExternalIdByInternalId(string $internal, string $entity) : string
     {
-        return self::getList([
-                                 'filter' => [
-                                     'INTERNAL_ID' => $internal,
-                                     'ENTITY'      => $entity,
-                                 ],
-                                 'select' => ['EXTERNAL_ID'],
-                             ])['EXTERNAL_ID'];
+        return (self::getList([
+                                  'filter' => [
+                                      'INTERNAL_ID' => $internal,
+                                      'ENTITY'      => $entity,
+                                  ],
+                                  'select' => ['EXTERNAL_ID'],
+                              ])->fetch())['EXTERNAL_ID'];
     }
     
     /**

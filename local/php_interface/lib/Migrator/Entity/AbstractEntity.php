@@ -98,7 +98,7 @@ abstract class AbstractEntity implements EntityInterface, LoggerAwareInterface
     {
         if (MapTable::isInternalEntityExists($primary, $this->entity)) {
             $this->getLogger()->info("Update {$this->entity} with id {$primary}...\n");
-            $result = $this->updateItem($primary, $item);
+            $result = $this->updateItem(MapTable::getInternalIdByExternalId($primary, $this->entity), $item);
         } else {
             $this->getLogger()->info("Create {$this->entity} with id {$primary}...\n");
             $result = $this->addItem($primary, $item);

@@ -18,7 +18,7 @@ class User extends ProviderAbstract
                               $this->entity->getPrimary(),
                               'LID',
                           ]);
-    
+        
         $map = array_combine($map, $map);
         
         $map = array_merge($map,
@@ -46,8 +46,21 @@ class User extends ProviderAbstract
                                'UF_PUSH_ORD_STAT'     => 'UF_PUSH_ORD_STAT',
                                'UF_PUSH_NEWS'         => 'UF_PUSH_NEWS',
                                'GROUPS'               => 'GROUPS',
+                               'CHECKWORD'            => 'CHECKWORD',
                            ]);
-
+        
         return $map;
+    }
+    
+    /**
+     * @param array $data
+     *
+     * @return array
+     */
+    public function prepareData(array $data)
+    {
+        $data['PASSWORD'] .= '.';
+        
+        return parent::prepareData($data);
     }
 }

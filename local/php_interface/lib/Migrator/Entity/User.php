@@ -2,6 +2,7 @@
 
 namespace FourPaws\Migrator\Entity;
 
+use \Bitrix\Main\Application;
 use \FourPaws\Migrator\Client\UserGroup as UserGroupClient;
 
 class User extends AbstractEntity
@@ -27,6 +28,8 @@ class User extends AbstractEntity
         
         if (!($success = $user->Update($primary, $data))) {
             $this->getLogger()->error("User #{$primary} update error: $user->LAST_ERROR");
+        } else {
+            $this->setPassword($primary, $data['PASSWORD'], $data['CHECKWORD']);
         }
         
         return (new Result($success, $primary));
@@ -44,16 +47,32 @@ class User extends AbstractEntity
         $user   = new \CUser();
         
         $id = $user->Add($data);
-
+        
         if ($id) {
+            $this->setPassword($id, $data['PASSWORD'], $data['CHECKWORD']);
+            
             MapTable::addEntity($this->entity, $primary, $id)->isSuccess();
             $groups = MapTable::getInternalIdListByExternalIdList($groups, UserGroupClient::ENTITY_NAME);
-
+            
             $user->SetUserGroup($id, $groups);
         } else {
             $this->getLogger()->error("User #{$primary} add error: $user->LAST_ERROR");
         }
         
         return (new Result($id > 0, $id));
+    }
+    
+    /**
+     * @param int    $id
+     * @param string $password
+     * @param string $checkword
+     *
+     * @return \Bitrix\Main\DB\Result
+     */
+    public function setPassword(int $id, string $password, string $checkword)
+    {
+        $query = vsprintf('UPDATE b_user SET PASSWORD=\'%2$s\', CHECKWORD=\'%3$s\' WHERE id=\'%1$d\'', func_get_args());
+
+        return Application::getConnection()->query($query);
     }
 }
