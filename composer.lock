@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "c67d33b31e847c64a7342bab29a1b297",
+    "content-hash": "65c5dd09e0843f8ba69cfa7e63e3db68",
     "packages": [
         {
             "name": "adv/bitrix-tools",
