@@ -43,7 +43,7 @@
     "symfony/event-dispatcher": "~3.2.8",
     "symfony/http-kernel": "~3.2.8",
     "symfony/expression-language": "~3.2.8",
-    "webarchitect609/bitrix-neverinclude": "^0.2",
+    "webarchitect609/bitrix-neverinclude": "^0.3",
     "webarchitect609/bitrix-cache": "^1.0",
     "adv/bitrix-tools": "^1.0",
     "ci/restclientbundle": "~2.0.2",

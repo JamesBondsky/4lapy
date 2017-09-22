@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "b1615bbe24b88d6f08a0d3c81caa8e0e",
+    "content-hash": "ef5def9a74ac9b7ed1f038ba717eafdf",
     "packages": [
         {
             "name": "adv/bitrix-tools",
@@ -4219,16 +4219,16 @@
         },
         {
             "name": "webarchitect609/bitrix-neverinclude",
-            "version": "v0.2.0",
+            "version": "v0.3.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/webarchitect609/bitrix-neverinclude.git",
-                "reference": "f791aec8bf0a118458b0a2b3de8eae5b6b2bc423"
+                "reference": "94f222f0f9aa324f6788b6dff8f62029af516059"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/webarchitect609/bitrix-neverinclude/zipball/f791aec8bf0a118458b0a2b3de8eae5b6b2bc423",
-                "reference": "f791aec8bf0a118458b0a2b3de8eae5b6b2bc423",
+                "url": "https://api.github.com/repos/webarchitect609/bitrix-neverinclude/zipball/94f222f0f9aa324f6788b6dff8f62029af516059",
+                "reference": "94f222f0f9aa324f6788b6dff8f62029af516059",
                 "shasum": ""
             },
             "require": {
@@ -4258,7 +4258,7 @@
                 "bitrix",
                 "module"
             ],
-            "time": "2017-05-07T19:25:46+00:00"
+            "time": "2017-09-21T15:30:25+00:00"
         },
         {
             "name": "webmozart/assert",
