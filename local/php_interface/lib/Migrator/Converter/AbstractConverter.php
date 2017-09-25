@@ -21,11 +21,24 @@ abstract class AbstractConverter implements ConverterInterface
     {
         $this->fieldName = $fieldName;
     }
-
+    
+    /**
+     * AbstractConverter constructor.
+     *
+     * @param string $fieldName
+     */
     public function __construct(string $fieldName)
     {
         $this->fieldName = $fieldName;
     }
-
     
+    /**
+     * @param array $data
+     *
+     * @return array
+     */
+    public function convert(array $data) : array
+    {
+        return $data;
+    }
 }

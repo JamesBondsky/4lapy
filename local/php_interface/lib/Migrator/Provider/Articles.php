@@ -2,24 +2,48 @@
 
 namespace FourPaws\Migrator\Provider;
 
-use FourPaws\Migrator\Entity\Result;
-use Symfony\Component\HttpFoundation\Response;
+use FourPaws\Migrator\Converter\StringToReference;
 
 class Articles extends IblockProvider
 {
-    /**
-     * @return array
-     */
     public function getMap() : array
     {
-        // TODO: Implement getMap() method.
+        $map = parent::getMap();
+        
+        /**
+         * На PROPERTY_PRODUCTS не существует отображения, его мы собираем из детального описания,
+         * прогоняя через конвертер
+         */
+        $map = array_merge($map,
+                           [
+                               'PROPERTY_animal_type' => 'PROPERTY_TYPE',
+                               'PROPERTY_PRODUCTS'    => 'PROPERTY_PRODUCTS',
+                           ]);
+        
+        return $map;
     }
     
     /**
-     * @param \Symfony\Component\HttpFoundation\Response $response
+     * Конвертеры для статей:
+     *
+     * - тип - загоняем в справочник
+     * - артикулы (XML_ID, на самом деле) продуктов извлекаем из детального описания и добавляем в отдельное свойство
+     *
+     * @return array
      */
-    public function save(Response $response)
+    public function getConverters() : array
     {
-        // TODO: Implement save() method.
+        $type = new StringToReference('PROPERTY_TYPE');
+        $detailTextConverter = new DetailToProduct('DETAIL_TEXT');
+        /**
+         * @todo плохо! Завязать на проект.
+         */
+        $type->setReferenceCode('ForWho');
+        $detailTextConverter->setProductFieldName('PROPERTY_PRODUCTS');
+    
+        return [
+            $typeConverter,
+            $detailTextConverter,
+        ];
     }
 }

@@ -5,10 +5,68 @@ namespace FourPaws\Migrator\Converter;
 use Bitrix\Highloadblock\HighloadBlockTable;
 use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
+use Bitrix\Highloadblock\DataManager;
 
-class StringToReference extends AbstractConverter
+/**
+ * Class StringToReference
+ *
+ * Конвертация строковых значений в значения из справочника. Сравнение по $fieldToSearch (UF_NAME по умолчанию).
+ * В случае, если значений не найдено, значения добавляются в справочник.
+ *
+ * @package FourPaws\Migrator\Converter
+ */
+final class StringToReference extends AbstractConverter
 {
-    private        $referenceCode;
+    private $referenceCode;
+    
+    private $fieldToSearch;
+    
+    /**
+     * @return string
+     */
+    public function getFieldToSearch() : string
+    {
+        return $this->fieldToSearch;
+    }
+    
+    /**
+     * @param string $fieldToSearch
+     */
+    public function setFieldToSearch(string $fieldToSearch = 'UF_NAME')
+    {
+        $this->fieldToSearch = $fieldToSearch;
+    }
+    
+    /**
+     * @var DataManager
+     */
+    private $dataClass;
+    
+    /**
+     * @return DataManager
+     */
+    private function getDataClass() : DataManager
+    {
+        return $this->dataClass;
+    }
+    
+    /**
+     * @throws \Exception
+     */
+    private function setDataClass()
+    {
+        $table = HighloadBlockTable::getList(['filter' => ['=NAME' => $this->getReferenceCode()]])->fetch();
+        
+        if (!$table) {
+            /**
+             * @todo придумать сюда нормальный Exception
+             */
+            throw new \Exception('Highloadblock with name ' . $this->getReferenceCode() . ' is not found.');
+        }
+        
+        $entity          = HighloadBlockTable::compileEntity($table);
+        $this->dataClass = $entity->getDataClass();
+    }
     
     private static $referenceValues = [];
     
@@ -29,14 +87,48 @@ class StringToReference extends AbstractConverter
     }
     
     /**
-     * @param mixed  $value
-     * @param string $fieldToSearch
+     * @param array $data
      *
-     * @return mixed
+     * @return array
      */
-    public function convert($value, $fieldToSearch = 'UF_NAME')
+    public function convert(array $data) : array
     {
-        return $this->searchValue($value, $fieldToSearch);
+        $isArray   = true;
+        $fieldName = $this->getFieldName();
+        
+        if (!$data[$fieldName]) {
+            return $data;
+        }
+        
+        $fieldToSearch = $this->getFieldToSearch();
+        
+        if (!is_array($data[$fieldName])) {
+            $isArray          = false;
+            $data[$fieldName] = [$data[$fieldName]];
+        }
+        
+        foreach ($data[$fieldName] as $value) {
+            $r = $this->searchValue($value, $fieldToSearch);
+            
+            if (!$r) {
+                $r = $this->addValue($value, $fieldToSearch);
+            }
+            
+            $result[] = $r;
+        }
+        
+        $data[$fieldName] = $isArray ? $data[$fieldName] : array_shift($data[$fieldName]);
+        
+        return $data;
+    }
+    
+    /**
+     * @param $value
+     * @param $fieldName
+     */
+    public function addValue($value, $fieldName)
+    {
+        $this->getDataClass()::add([$fieldName => $value]);
     }
     
     /**
@@ -62,19 +154,9 @@ class StringToReference extends AbstractConverter
     private function getReferenceValues() : array
     {
         if (!self::$referenceValues) {
-            $table = HighloadBlockTable::getList(['filter' => ['=NAME' => $this->getReferenceCode()]])->fetch();
             
-            if (!$table) {
-                /**
-                 * @todo придумать сюда нормальный Exception
-                 */
-                throw new \Exception('Highloadblock with name ' . $this->getReferenceCode() . ' is not found.');
-            }
             
-            $entity         = HighloadBlockTable::compileEntity($table);
-            $referenceClass = $entity->getDataClass();
-            
-            self::$referenceValues = $referenceClass::getList()->fetchAll();
+            self::$referenceValues = $this->getDataClass()::getList()->fetchAll();
         }
         
         return self::$referenceValues;
@@ -92,6 +174,9 @@ class StringToReference extends AbstractConverter
         if (!Loader::includeModule('highloadblock')) {
             throw new LoaderException('Module highloadblock must be installed');
         }
+        
+        $this->setFieldToSearch();
+        $this->setDataClass();
         
         parent::__construct($fieldName);
     }

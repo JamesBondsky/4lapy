@@ -2,8 +2,8 @@
 
 namespace FourPaws\Migrator\Provider;
 
-use FourPaws\Migrator\Entity\Result;
-use Symfony\Component\HttpFoundation\Response;
+use FourPaws\Migrator\Converter\DetailToProduct;
+use FourPaws\Migrator\Converter\StringToReference;
 
 class News extends IBlockProvider
 {
@@ -13,19 +13,41 @@ class News extends IBlockProvider
     public function getMap() : array
     {
         $map = parent::getMap();
-
-        $map = array_merge($map, [
-            'PROPERTY_'
-        ]);
-
+        
+        /**
+         * На PROPERTY_PRODUCTS не существует отображения, его мы собираем из детального описания,
+         * прогоняя через конвертер
+         */
+        $map = array_merge($map,
+                           [
+                               'PROPERTY_animal_type' => 'PROPERTY_TYPE',
+                               'PROPERTY_PRODUCTS'    => 'PROPERTY_PRODUCTS',
+                           ]);
+        
         return $map;
     }
     
     /**
-     * @param \Symfony\Component\HttpFoundation\Response $response
+     * Конвертеры для новостей:
+     *
+     * - тип - загоняем в справочник
+     * - артикулы (XML_ID, на самом деле) продуктов извлекаем из детального описания и добавляем в отдельное свойство
+     *
+     * @return array
      */
-    public function save(Response $response)
+    public function getConverters() : array
     {
-        // TODO: Implement save() method.
+        $typeConverter       = new StringToReference('PROPERTY_TYPE');
+        $detailTextConverter = new DetailToProduct('DETAIL_TEXT');
+        /**
+         * @todo плохо! Завязать на проект.
+         */
+        $typeConverter->setReferenceCode('PublicationType');
+        $detailTextConverter->setProductFieldName('PROPERTY_PRODUCTS');
+        
+        return [
+            $typeConverter,
+            $detailTextConverter,
+        ];
     }
 }
