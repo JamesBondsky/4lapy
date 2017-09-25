@@ -40,7 +40,7 @@
     "nelmio/api-doc-bundle": "~3.0@beta",
     "symfony/symfony": "3.3.*",
     "twig/twig": "^1.0",
-    "webarchitect609/bitrix-neverinclude": "^0.2",
+    "webarchitect609/bitrix-neverinclude": "^0.3.0",
     "webarchitect609/bitrix-cache": "^1.0"
   },
   "require-dev": {

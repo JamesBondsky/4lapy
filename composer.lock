@@ -4,15 +4,15 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "6e73552f36b97eb3293059e1f41db2b4",
+    "content-hash": "c67d33b31e847c64a7342bab29a1b297",
     "packages": [
         {
             "name": "adv/bitrix-tools",
-            "version": "v1.0.0",
+            "version": "v1.0.2",
             "source": {
                 "type": "git",
                 "url": "ssh://git@scm.adv.ru:7999/adv/bitrix-tools.git",
-                "reference": "287a759d5e534a1098d9b51a1d36d0dd27ddbd38"
+                "reference": "058e52587bab715f38d43b42075889000652f0fa"
             },
             "require": {
                 "andreyryabin/sprint.migration": "^2.0",
@@ -33,7 +33,7 @@
                 }
             ],
             "description": "Bitrix tools",
-            "time": "2017-09-07T14:58:03+00:00"
+            "time": "2017-09-20T13:28:38+00:00"
         },
         {
             "name": "andreyryabin/sprint.migration",
@@ -3901,16 +3901,16 @@
         },
         {
             "name": "webarchitect609/bitrix-neverinclude",
-            "version": "v0.2.0",
+            "version": "v0.3.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/webarchitect609/bitrix-neverinclude.git",
-                "reference": "f791aec8bf0a118458b0a2b3de8eae5b6b2bc423"
+                "reference": "94f222f0f9aa324f6788b6dff8f62029af516059"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/webarchitect609/bitrix-neverinclude/zipball/f791aec8bf0a118458b0a2b3de8eae5b6b2bc423",
-                "reference": "f791aec8bf0a118458b0a2b3de8eae5b6b2bc423",
+                "url": "https://api.github.com/repos/webarchitect609/bitrix-neverinclude/zipball/94f222f0f9aa324f6788b6dff8f62029af516059",
+                "reference": "94f222f0f9aa324f6788b6dff8f62029af516059",
                 "shasum": ""
             },
             "require": {
@@ -3940,7 +3940,7 @@
                 "bitrix",
                 "module"
             ],
-            "time": "2017-05-07T19:25:46+00:00"
+            "time": "2017-09-21T15:30:25+00:00"
         },
         {
             "name": "webmozart/assert",

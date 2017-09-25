@@ -17,8 +17,9 @@ use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Kernel;
 use Symfony\Component\HttpKernel\Bundle\BundleInterface;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 
-class Application extends Kernel
+final class Application extends Kernel
 {
     /**
      * Папка с конфигами сайта
@@ -51,6 +52,22 @@ class Application extends Kernel
     private static $instance;
     
     /**
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
+    public function __clone()
+    {
+        throw new ApplicationCreateException('It`s a singleton.');
+    }
+    
+    /**
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
+    public function __invoke()
+    {
+        throw new ApplicationCreateException('It`s a singleton.');
+    }
+    
+    /**
      * @return BundleInterface[] An array of bundle instances
      */
     public function registerBundles() : array
@@ -72,12 +89,20 @@ class Application extends Kernel
      *
      * @param string $environment
      * @param bool   $debug
+     *
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
     public function __construct($environment, $debug)
     {
-        self::$instance = parent::__construct($environment, $debug);
+        parent::__construct($environment, $debug);
+
+        if (!self::$instance) {
+            self::$instance = $this;
+        } else {
+            throw new ApplicationCreateException('It`s a singleton.');
+        }
     }
-    
+
     /**
      * Load main config
      *
@@ -160,13 +185,13 @@ class Application extends Kernel
     {
         return $this->getRootDir() . '/bitrix/cache/symfony';
     }
-
+    
     /**
      * @return string
      */
     public function getLogDir()
     {
-        return $this->getRootDir() . '/logs';
+        return getenv('WWW_LOG_DIR');
     }
     
     /**
@@ -200,14 +225,14 @@ class Application extends Kernel
         /**
          * Можем себе позволить, в общем случае объект иммутабелен.
          */
-        if (!static::$instance) {
-            static::$instance = new Application(EnvType::getServerType(), EnvType::isDev());
-            
-            if (!static::$instance->booted) {
-                static::$instance->boot();
-            }
+        if (!self::$instance) {
+            self::$instance = new self(EnvType::getServerType(), EnvType::isDev());
         }
-        
-        return static::$instance;
+
+        if (!self::$instance->booted) {
+            self::$instance->boot();
+        }
+
+        return self::$instance;
     }
 }
