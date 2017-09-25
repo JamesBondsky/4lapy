@@ -5,6 +5,7 @@ namespace FourPaws\Migrator\Provider;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Entity\ScalarField;
 use FourPaws\Migrator\Entity\EntityInterface;
+use FourPaws\Migrator\Entity\LazyTable;
 use FourPaws\Migrator\Provider\Exceptions\FailResponseException;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
@@ -21,6 +22,8 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
     protected $entityName;
     
     protected $logger;
+    
+    protected $external;
     
     /**
      * @param \Psr\Log\LoggerInterface $logger
@@ -39,9 +42,28 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
     }
     
     /**
+     * $map - однозначное отображение ['поле на сервере' => 'поле на клиенте']
+     * Так же возможно однозначное указание сущности для позднего связывания.
+     *
+     * Работает следующим образом:
+     *
+     * Отображение задаётся в виде ['имя сущности'.'поле на сервере' => 'поле на клиенте']
+     *
+     * При разборе ответа вместо записи в это поле осуществляется запись в таблицу adv_migrator_lazy
+     * При любом импорте провайдер после завершения импорта разбирает относящиеся к своей сущности id'шники и, если
+     * у него есть, что отдать, записывает значение, удаляя его из таблицы.
+     *
      * @return array
      */
     abstract public function getMap() : array;
+    
+    /**
+     * @return array
+     */
+    public function getConverters() : array
+    {
+        return [];
+    }
     
     /**
      * @param string $entityName
@@ -112,6 +134,8 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
     {
         $result = [];
         
+        $data = $this->setLazyEntities($data);
+        
         foreach ($this->getMap() as $from => $to) {
             $result[$to] = $data[$from];
         }
@@ -133,16 +157,18 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
             $primary   = $entity->getPrimaryByItem($item);
             $timestamp = $entity->getTimestampByItem($item);
             $item      = $this->prepareData($item);
-
+            
             try {
                 $result = $entity->addOrUpdateItem($primary, $item);
-
+                
                 if (!$result->getResult()) {
                     /**
                      * @todo придумать сюда нормальный exception
                      */
-                    throw new \Exception('Something happened with entity' . $this->entityName . ' and primary '
+                    throw new \Exception('Something happened with entity ' . $this->entityName . ' and primary '
                                          . $primary);
+                } elseif ($this->external[$primary]) {
+                    $this->external[$primary]['INTERNAL_ID'] = $result->getInternalId();
                 }
                 
                 $lastTimestamp = strtotime($timestamp) > $lastTimestamp ? strtotime($timestamp) : $lastTimestamp;
@@ -151,6 +177,8 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
                 $this->getLogger()->error($e->getMessage());
             }
         }
+        
+        $this->saveLazy();
         
         if ($lastTimestamp) {
             $result = EntityTable::updateEntity($this->entityName, $lastTimestamp);
@@ -183,5 +211,42 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
     public function entityAlreadyExists() : bool
     {
         return EntityTable::getByPrimary($this->entityName, ['select' => ['ENTITY']])->getSelectedRowsCount() === 1;
+    }
+    
+    /**
+     * @param array $data
+     *
+     * @return array
+     */
+    public function setLazyEntities(array $data) : array
+    {
+        foreach ($this->getMap() as $from => $to) {
+            if (strpos($from, '.')) {
+                $ef = explode('.', $from);
+                
+                $this->external[$data[$this->entity->getPrimary()]] = [
+                    'EXTERNAL_ID' => $data[$this->entity->getPrimary()],
+                    'FIELD'       => $ef[1],
+                    'ENTITY_FROM' => $this->entityName,
+                    'ENTITY_TO'   => $ef[0],
+                ];
+                
+                unset($data[$from]);
+            }
+        }
+        
+        return $data;
+    }
+    
+    /**
+     * Save lazy fields from $this->external
+     */
+    public function saveLazy()
+    {
+        foreach ($this->external as $entity) {
+            if ($entity['INTERNAL_ID']) {
+                LazyTable::add($entity);
+            }
+        }
     }
 }

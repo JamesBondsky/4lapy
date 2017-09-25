@@ -13,6 +13,11 @@ interface ProviderInterface
     public function getMap() : array;
     
     /**
+     * @return \FourPaws\Migrator\Converter\ConverterInterface[] array
+     */
+    public function getConverters() : array;
+
+    /**
      * @param \Symfony\Component\HttpFoundation\Response $response
      */
     public function save(Response $response);

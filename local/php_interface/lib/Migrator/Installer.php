@@ -84,7 +84,7 @@ final class Installer implements LoggerAwareInterface
   FIELD VARCHAR(64) NOT NULL,
   INTERNAL_ID INT,
   EXTERNAL_ID INT NOT NULL,
-  PRIMARY KEY (ENTITY_FROM, ENTITY_TO, INTERNAL_ID),
+  PRIMARY KEY (ENTITY_FROM, ENTITY_TO, FIELD, INTERNAL_ID),
   INDEX internal_index (ENTITY_FROM, INTERNAL_ID),
   INDEX external_index (ENTITY_TO, EXTERNAL_ID)
 );',
@@ -120,7 +120,7 @@ query;
             throw new InstallerException($e->getMessage(), $e->getCode(), $e);
         }
     }
-    
+
     /**
      * @param \Psr\Log\LoggerInterface $logger
      */

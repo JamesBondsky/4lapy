@@ -16,7 +16,7 @@ use Symfony\Component\Console\Exception\InvalidArgumentException;
 final class Factory
 {
     const AVAILABLE_TYPES = [
-        'users',
+        'user',
         'news',
         'articles',
         'shops',
@@ -47,7 +47,7 @@ final class Factory
         ];
 
         switch ($type) {
-            case 'users':
+            case 'user':
                 $client = new UserPull($options);
                 break;
             case 'news':

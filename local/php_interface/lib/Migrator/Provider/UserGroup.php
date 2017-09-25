@@ -12,10 +12,16 @@ class UserGroup extends ProviderAbstract
      */
     public function getMap() : array
     {
-        $map = array_diff(array_keys(array_filter(GroupTable::getMap(), self::getScalarEntityMapFilter())),
-                          [$this->entity->getPrimary()]);
-        
-        return array_combine($map, $map);
+        static $map;
+
+        if (!$map) {
+            $map = array_diff(array_keys(array_filter(GroupTable::getMap(), self::getScalarEntityMapFilter())),
+                              [$this->entity->getPrimary()]);
+    
+            $map = array_combine($map, $map);
+        }
+
+        return $map;
     }
 
     /**
