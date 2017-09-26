@@ -6,6 +6,7 @@ use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Entity\ScalarField;
 use FourPaws\Migrator\Entity\EntityInterface;
 use FourPaws\Migrator\Entity\LazyTable;
+use FourPaws\Migrator\Entity\MapTable;
 use FourPaws\Migrator\Provider\Exceptions\FailResponseException;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
@@ -24,6 +25,8 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
     protected $logger;
     
     protected $external;
+    
+    protected $savedIds = [];
     
     /**
      * @param \Psr\Log\LoggerInterface $logger
@@ -133,19 +136,19 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
     public function prepareData(array $data)
     {
         $result = [];
-
+        
         $data = $this->setLazyEntities($data);
-
+        
         foreach ($this->getMap() as $from => $to) {
             if ($data[$from]) {
                 $result[$to] = $data[$from];
             }
         }
-
+        
         foreach ($this->getConverters() as $converter) {
             $result = $converter->convert($result);
         }
-        var_dump($result);die;
+
         return $result;
     }
     
@@ -163,7 +166,7 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
             $primary   = $entity->getPrimaryByItem($item);
             $timestamp = $entity->getTimestampByItem($item);
             $item      = $this->prepareData($item);
-
+            
             try {
                 $result = $entity->addOrUpdateItem($primary, $item);
                 
@@ -177,21 +180,20 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
                     $this->external[$primary]['INTERNAL_ID'] = $result->getInternalId();
                 }
                 
+                $this->savedIds[$primary] = $result->getInternalId();
+                
                 $lastTimestamp = strtotime($timestamp) > $lastTimestamp ? strtotime($timestamp) : $lastTimestamp;
             } catch (\Throwable $e) {
                 EntityTable::pushBroken($this->entityName, $primary);
                 $this->getLogger()->error($e->getMessage());
             }
         }
-        
+
         $this->saveLazy();
-        
+        $this->handleLazy();
+
         if ($lastTimestamp) {
-            $result = EntityTable::updateEntity($this->entityName, $lastTimestamp);
-            
-            if (!$result) {
-                $this->getLogger()->error("Entity update error: \n" . implode("\n", $result->getErrors()));
-            }
+            EntityTable::updateEntity($this->entityName, $lastTimestamp);
         }
     }
     
@@ -226,18 +228,29 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
      */
     public function setLazyEntities(array $data) : array
     {
+        $primaryKey = $this->entity->getPrimary();
+        
         foreach ($this->getMap() as $from => $to) {
             if (strpos($from, '.')) {
                 $ef = explode('.', $from);
                 
-                $this->external[$data[$this->entity->getPrimary()]] = [
-                    'EXTERNAL_ID' => $data[$this->entity->getPrimary()],
-                    'FIELD'       => $ef[1],
-                    'ENTITY_FROM' => $this->entityName,
-                    'ENTITY_TO'   => $ef[0],
-                ];
+                /**
+                 * @todo оптимизировать - криво, на одну запись - один запрос в БД
+                 */
+                $exists = MapTable::getInternalIdByExternalId($data[$ef[1]], $ef[0]);
                 
-                unset($data[$from]);
+                if ($exists) {
+                    $data[$ef[1]] = $exists;
+                } else {
+                    $this->external[$data[$primaryKey]] = [
+                        'EXTERNAL_ID' => $data[$primaryKey],
+                        'FIELD'       => $ef[1],
+                        'ENTITY_FROM' => $this->entityName,
+                        'ENTITY_TO'   => $ef[0],
+                    ];
+                    
+                    unset($data[$from]);
+                }
             }
         }
         
@@ -254,5 +267,20 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
                 LazyTable::add($entity);
             }
         }
+    }
+    
+    /**
+     * Обрабатываем сохранённые сущности - вдруг у нас что-то ссылается на них
+     */
+    public function handleLazy()
+    {
+        if (!$this->savedIds) {
+            return;
+        }
+        
+        $lazyCollection = LazyTable::getLazyByIdList($this->entityName, $this->savedIds);
+        /**
+         * @todo implement this
+         */
     }
 }

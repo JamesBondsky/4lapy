@@ -5,7 +5,7 @@ namespace FourPaws\Migrator\Provider;
 use FourPaws\Migrator\Entity\Result;
 use Symfony\Component\HttpFoundation\Response;
 
-class Shops extends IBlockProvider
+class Shops extends IBlock
 {
     
     /**

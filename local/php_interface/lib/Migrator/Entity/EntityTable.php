@@ -104,8 +104,13 @@ class EntityTable extends DataManager
         }
         
         $fields = ['TIMESTAMP' => DateTime::createFromTimestamp($timestamp),];
+        $result = parent::update($entity, $fields);
+
+        if (!$result->isSuccess()) {
+            throw new \Exception("Entity update error: \n" . implode("\n", $result->getErrors()));
+        }
         
-        return parent::update($entity, $fields);
+        return $result;
     }
     
     /** @noinspection PhpDocMissingReturnTagInspection */
@@ -147,7 +152,8 @@ class EntityTable extends DataManager
         }
         
         $broken =
-            $entityEntity['BROKEN'] ? array_unique(array_merge(self::decodeBroken($entityEntity['BROKEN']), [$primary])) : [$primary];
+            $entityEntity['BROKEN'] ? array_unique(array_merge(self::decodeBroken($entityEntity['BROKEN']),
+                                                               [$primary])) : [$primary];
         
         return parent::update($entity, ['BROKEN' => self::encodeBroken($broken)]);
     }

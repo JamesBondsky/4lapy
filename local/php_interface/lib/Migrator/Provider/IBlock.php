@@ -6,8 +6,13 @@ use Bitrix\Iblock\ElementTable;
 use Bitrix\Main\Loader;
 use FourPaws\Migrator\Entity\IblockEntity;
 
-abstract class IBlockProvider extends ProviderAbstract
+abstract class IBlock extends ProviderAbstract
 {
+    /**
+     * @var IblockEntity
+     */
+    protected $entity;
+
     public function getMap() : array
     {
         $map = array_diff(array_keys(array_filter(ElementTable::getMap(), self::getScalarEntityMapFilter())),
@@ -25,8 +30,30 @@ abstract class IBlockProvider extends ProviderAbstract
                                'user.CREATED_BY'  => 'CREATED_BY',
                                'user.MODIFIED_BY' => 'MODIFIED_BY',
                            ]);
-
+        
         return $map;
+    }
+    
+    /**
+     * @param array $data
+     *
+     * @return array
+     */
+    public function prepareData(array $data)
+    {
+        $data = parent::prepareData($data);
+        
+        foreach ($data as $k => $v) {
+            if (strpos($k, 'PROPERTY_') === 0) {
+                $data['PROPERTY_VALUES'][str_replace('PROPERTY_', '', $k)] = $v;
+                
+                unset($data[$k]);
+            }
+        }
+
+        $data['IBLOCK_ID'] = $this->entity->getIblockId();
+
+        return $data;
     }
     
     /**
@@ -40,10 +67,5 @@ abstract class IBlockProvider extends ProviderAbstract
         Loader::includeModule('iblock');
         
         parent::__construct($entityName, $entity);
-    }
-    
-    public function prepareData(array $data)
-    {
-        return parent::prepareData($data);
     }
 }

@@ -2,9 +2,9 @@
 
 namespace FourPaws\Migrator\Client;
 
-class Shops extends ClientAbstract
+class Shop extends ClientAbstract
 {
-    const ENTITY_NAME = 'shops';
+    const ENTITY_NAME = 'shop';
 
     const API_PATH    = '/shops/list/';
 }

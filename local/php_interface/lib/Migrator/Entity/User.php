@@ -51,7 +51,7 @@ class User extends AbstractEntity
         if ($id) {
             $this->setPassword($id, $data['PASSWORD'], $data['CHECKWORD']);
             
-            MapTable::addEntity($this->entity, $primary, $id)->isSuccess();
+            MapTable::addEntity($this->entity, $primary, $id);
             $groups = MapTable::getInternalIdListByExternalIdList($groups, UserGroupClient::ENTITY_NAME);
             
             $user->SetUserGroup($id, $groups);

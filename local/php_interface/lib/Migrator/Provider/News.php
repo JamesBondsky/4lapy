@@ -6,7 +6,7 @@ use FourPaws\Migrator\Converter\DetailToProduct;
 use FourPaws\Migrator\Converter\File;
 use FourPaws\Migrator\Converter\StringToReference;
 
-class News extends IBlockProvider
+class News extends IBlock
 {
     /**
      * @return array
