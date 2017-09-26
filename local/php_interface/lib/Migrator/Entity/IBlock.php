@@ -3,11 +3,11 @@
 namespace FourPaws\Migrator\Entity;
 
 /**
- * Class IBlockEntity
+ * Class IBlock
  *
  * @package FourPaws\Migrator\Entity
  */
-abstract class IBlockEntity extends AbstractEntity
+abstract class IBlock extends AbstractEntity
 {
     private $iblockId = 0;
     
@@ -28,7 +28,7 @@ abstract class IBlockEntity extends AbstractEntity
     }
     
     /**
-     * IBlockEntity constructor.
+     * IBlock constructor.
      *
      * @param string $entity
      * @param int    $iblockId

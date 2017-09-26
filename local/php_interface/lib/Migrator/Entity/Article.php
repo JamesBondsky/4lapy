@@ -2,7 +2,7 @@
 
 namespace FourPaws\Migrator\Entity;
 
-class Article extends IBlockEntity
+class Article extends IBlock
 {
     public function setDefaults()
     {

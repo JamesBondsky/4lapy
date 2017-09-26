@@ -3,19 +3,25 @@
 namespace FourPaws\Migrator\Provider;
 
 use Bitrix\Iblock\ElementTable;
+use Bitrix\Iblock\SectionTable;
 use Bitrix\Main\Loader;
 use FourPaws\Migrator\Entity\IBlock;
 
-abstract class IBlock extends ProviderAbstract
+/**
+ * Class IBlockSection
+ *
+ * @package FourPaws\Migrator\Provider
+ */
+abstract class IBlockSection extends IBlock
 {
     /**
      * @var IBlock
      */
     protected $entity;
-
+    
     public function getMap() : array
     {
-        $map = array_diff(array_keys(array_filter(ElementTable::getMap(), self::getScalarEntityMapFilter())),
+        $map = array_diff(array_keys(array_filter(SectionTable::getMap(), self::getScalarEntityMapFilter())),
                           [
                               $this->entity->getPrimary(),
                               'IBLOCK_SECTION_ID',
@@ -27,33 +33,12 @@ abstract class IBlock extends ProviderAbstract
         
         $map = array_merge($map,
                            [
-                               'user.CREATED_BY'  => 'CREATED_BY',
-                               'user.MODIFIED_BY' => 'MODIFIED_BY',
+                               $this->entityName . '.IBLOCK_SECTION_ID' => 'IBLOCK_SECTION_ID',
+                               'user.CREATED_BY'                        => 'CREATED_BY',
+                               'user.MODIFIED_BY'                       => 'MODIFIED_BY',
                            ]);
         
         return $map;
-    }
-    
-    /**
-     * @param array $data
-     *
-     * @return array
-     */
-    public function prepareData(array $data)
-    {
-        $data = parent::prepareData($data);
-        
-        foreach ($data as $k => $v) {
-            if (strpos($k, 'PROPERTY_') === 0) {
-                $data['PROPERTY_VALUES'][str_replace('PROPERTY_', '', $k)] = $v;
-                
-                unset($data[$k]);
-            }
-        }
-
-        $data['IBLOCK_ID'] = $this->entity->getIblockId();
-
-        return $data;
     }
     
     /**

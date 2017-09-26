@@ -7,7 +7,12 @@ use FourPaws\Migrator\Converter\DetailToProduct;
 use FourPaws\Migrator\Converter\File;
 use FourPaws\Migrator\Converter\StringToReference;
 
-class Article extends IBlock
+/**
+ * Class Article
+ *
+ * @package FourPaws\Migrator\Provider
+ */
+class Article extends IBlockElement
 {
     public function getMap() : array
     {
