@@ -4,7 +4,6 @@ namespace FourPaws\Migrator\Provider;
 
 use Bitrix\Iblock\ElementTable;
 use Bitrix\Main\Loader;
-use FourPaws\Migrator\Entity\IBlock;
 
 /**
  * Class IBlockElement

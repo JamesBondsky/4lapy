@@ -2,10 +2,8 @@
 
 namespace FourPaws\Migrator\Provider;
 
-use Bitrix\Iblock\ElementTable;
 use Bitrix\Iblock\SectionTable;
 use Bitrix\Main\Loader;
-use FourPaws\Migrator\Entity\IBlock;
 
 /**
  * Class IBlockSection

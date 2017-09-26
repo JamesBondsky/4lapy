@@ -2,7 +2,12 @@
 
 namespace FourPaws\Migrator\Entity;
 
-class Article extends IBlockElement
+/**
+ * Class Catalog
+ *
+ * @package FourPaws\Migrator\Entity
+ */
+class Catalog extends IBlockElement
 {
     public function setDefaults()
     {

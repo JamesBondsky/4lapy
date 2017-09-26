@@ -2,7 +2,7 @@
 
 namespace FourPaws\Migrator\Entity;
 
-class News extends IBlock
+class News extends IBlockElement
 {
     const ENTITY_NAME = 'news';
 

@@ -24,11 +24,24 @@ final class File extends AbstractConverter
      */
     public function convert(array $data) : array
     {
+        $result    = [];
+        $isArray   = true;
         $fieldName = $this->getFieldName();
         
-        if ($data[$fieldName]) {
-            $data[$fieldName] = $this->getPicture($data[$fieldName]);
+        if (!$data[$fieldName]) {
+            return $data;
         }
+        
+        if (!is_array($data[$fieldName])) {
+            $isArray          = false;
+            $data[$fieldName] = [$data[$fieldName]];
+        }
+        
+        foreach ($data[$fieldName] as $value) {
+            $result[] = $this->getPicture($value);
+        }
+        
+        $data[$fieldName] = $isArray ? $result : array_shift($result);
         
         return $data;
     }
@@ -46,7 +59,7 @@ final class File extends AbstractConverter
         if (strpos($path, 'old4lapy.e.adv.ru') !== false) {
             $path = str_replace('old4lapy.e.adv.ru', '4lapy.ru', $path);
         }
-
+        
         return \CFile::MakeFileArray($path);
     }
 }

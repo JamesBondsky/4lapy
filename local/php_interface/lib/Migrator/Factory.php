@@ -2,26 +2,28 @@
 
 namespace FourPaws\Migrator;
 
-use FourPaws\Migrator\Client\Article;
+use FourPaws\Migrator\Client\ArticlePull;
 use FourPaws\Migrator\Client\SalePull;
 use FourPaws\Migrator\Client\Saveable;
 use FourPaws\Migrator\Client\ShopPull;
 use FourPaws\Migrator\Entity\News as NewsEntity;
-use FourPaws\Migrator\Entity\Article as ArticleEntity;
-use FourPaws\Migrator\Provider\Article as ArticlesProvider;
+use FourPaws\Migrator\Entity\Catalog as CatalogEntity;
 use FourPaws\Migrator\Client\News;
+use FourPaws\Migrator\Client\Catalog;
 use FourPaws\Migrator\Provider\News as NewsProvider;
+use FourPaws\Migrator\Provider\Catalog as CatalogProvider;
 use FourPaws\Migrator\Client\UserPull;
 use Symfony\Component\Console\Exception\InvalidArgumentException;
 
 final class Factory
 {
     const AVAILABLE_TYPES = [
-        'user',
-        'news',
         'article',
-        'shop',
+        'catalog',
+        'news',
         'sale',
+        'shop',
+        'user',
     ];
     
     /**
@@ -40,24 +42,27 @@ final class Factory
         }
         
         switch ($type) {
-            case 'user':
-                $client = new UserPull($options);
+            case 'article':
+                $client = new ArticlePull($options);
+                break;
+            case 'catalog':
+                $entity = new CatalogEntity(Catalog::ENTITY_NAME, Utils::getIblockId('publications', 'offers'));
+                
+                $client = new Catalog(new CatalogProvider(Catalog::ENTITY_NAME, $entity), $options);
                 break;
             case 'news':
                 $entity = new NewsEntity(News::ENTITY_NAME, Utils::getIblockId('publications', 'news'));
                 
                 $client = new News(new NewsProvider(News::ENTITY_NAME, $entity), $options);
                 break;
-            case 'article':
-                $entity = new ArticleEntity(Article::ENTITY_NAME, Utils::getIblockId('publications', 'articles'));
-                
-                $client = new Article(new ArticlesProvider(Article::ENTITY_NAME, $entity), $options);
+            case 'sale':
+                $client = new SalePull($options);
                 break;
             case 'shop':
                 $client = new ShopPull($options);
                 break;
-            case 'sale':
-                $client = new SalePull($options);
+            case 'user':
+                $client = new UserPull($options);
                 break;
         }
         
