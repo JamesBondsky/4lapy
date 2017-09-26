@@ -3,6 +3,7 @@
 namespace FourPaws\Migrator\Provider;
 
 use FourPaws\Migrator\Converter\DetailToProduct;
+use FourPaws\Migrator\Converter\File;
 use FourPaws\Migrator\Converter\StringToReference;
 
 class News extends IBlockProvider
@@ -13,14 +14,14 @@ class News extends IBlockProvider
     public function getMap() : array
     {
         $map = parent::getMap();
-        
+
         /**
          * На PROPERTY_PRODUCTS не существует отображения, его мы собираем из детального описания,
          * прогоняя через конвертер
          */
         $map = array_merge($map,
                            [
-                               'PROPERTY_animal_type' => 'PROPERTY_TYPE',
+                               'PROPERTY_type_animal' => 'PROPERTY_TYPE',
                                'PROPERTY_PRODUCTS'    => 'PROPERTY_PRODUCTS',
                            ]);
         
@@ -37,8 +38,9 @@ class News extends IBlockProvider
      */
     public function getConverters() : array
     {
-        $typeConverter       = new StringToReference('PROPERTY_TYPE');
-        $detailTextConverter = new DetailToProduct('DETAIL_TEXT');
+        $typeConverter          = new StringToReference('PROPERTY_TYPE');
+        $detailTextConverter    = new DetailToProduct('DETAIL_TEXT');
+        $detailPictureConverter = new File('DETAIL_PICTURE');
         /**
          * @todo плохо! Завязать на проект.
          */
@@ -48,6 +50,7 @@ class News extends IBlockProvider
         return [
             $typeConverter,
             $detailTextConverter,
+            $detailPictureConverter,
         ];
     }
 }

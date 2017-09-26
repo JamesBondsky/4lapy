@@ -58,7 +58,7 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
     abstract public function getMap() : array;
     
     /**
-     * @return array
+     * @return \FourPaws\Migrator\Converter\ConverterInterface[] array
      */
     public function getConverters() : array
     {
@@ -133,13 +133,19 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
     public function prepareData(array $data)
     {
         $result = [];
-        
+
         $data = $this->setLazyEntities($data);
-        
+
         foreach ($this->getMap() as $from => $to) {
-            $result[$to] = $data[$from];
+            if ($data[$from]) {
+                $result[$to] = $data[$from];
+            }
         }
-        
+
+        foreach ($this->getConverters() as $converter) {
+            $result = $converter->convert($result);
+        }
+        var_dump($result);die;
         return $result;
     }
     
@@ -157,7 +163,7 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
             $primary   = $entity->getPrimaryByItem($item);
             $timestamp = $entity->getTimestampByItem($item);
             $item      = $this->prepareData($item);
-            
+
             try {
                 $result = $entity->addOrUpdateItem($primary, $item);
                 

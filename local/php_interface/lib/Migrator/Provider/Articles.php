@@ -2,9 +2,11 @@
 
 namespace FourPaws\Migrator\Provider;
 
+use FourPaws\Migrator\Converter\DetailToProduct;
+use FourPaws\Migrator\Converter\File;
 use FourPaws\Migrator\Converter\StringToReference;
 
-class Articles extends IblockProvider
+class Articles extends IBlockProvider
 {
     public function getMap() : array
     {
@@ -33,17 +35,21 @@ class Articles extends IblockProvider
      */
     public function getConverters() : array
     {
-        $type = new StringToReference('PROPERTY_TYPE');
-        $detailTextConverter = new DetailToProduct('DETAIL_TEXT');
+        $typeConverter           = new StringToReference('PROPERTY_TYPE');
+        $detailTextConverter     = new DetailToProduct('DETAIL_TEXT');
+        $detailPictureConverter  = new File('DETAIL_PICTURE');
+        $previewPictureConverter = new File('PREVIEW_PICTURE');
         /**
          * @todo плохо! Завязать на проект.
          */
-        $type->setReferenceCode('ForWho');
+        $typeConverter->setReferenceCode('ForWho');
         $detailTextConverter->setProductFieldName('PROPERTY_PRODUCTS');
-    
+        
         return [
             $typeConverter,
             $detailTextConverter,
+            $detailPictureConverter,
+            $previewPictureConverter,
         ];
     }
 }

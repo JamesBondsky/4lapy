@@ -14,11 +14,11 @@ class NewsEntity extends IblockEntity
     
     public function addItem(string $primary, array $data) : Result
     {
-        // TODO: Implement addItem() method.
+        parent::addItem($primary, $data);
     }
 
     public function updateItem(string $primary, array $data) : Result
     {
-        // TODO: Implement updateItem() method.
+        parent::updateItem($primary, $data);
     }
 }

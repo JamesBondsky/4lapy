@@ -16,24 +16,6 @@ use Bitrix\Highloadblock\DataManager;
  */
 final class File extends AbstractConverter
 {
-    private $host = '';
-    
-    /**
-     * @return string
-     */
-    public function getHost() : string
-    {
-        return $this->host;
-    }
-    
-    /**
-     * @param string $host
-     */
-    public function setHost(string $host)
-    {
-        $this->host = $host;
-    }
-    
     /**
      * @param array $data
      *
@@ -45,7 +27,7 @@ final class File extends AbstractConverter
         $fieldName = $this->getFieldName();
         
         if ($data[$fieldName]) {
-            $data[$fieldName] = trim(($this->getHost() ?: ''), ' /') . $this->getPicture($data[$fieldName]);
+            $data[$fieldName] = $this->getPicture($data[$fieldName]);
         }
         
         return $data;
@@ -58,6 +40,13 @@ final class File extends AbstractConverter
      */
     public function getPicture(string $path) : array
     {
+        /**
+         * Костыль - на old4lapy.e.adv.ru не загружены файлы
+         */
+        if (strpos($path, 'old4lapy.e.adv.ru') !== false) {
+            $path = str_replace('old4lapy.e.adv.ru', '4lapy.ru', $path);
+        }
+
         return \CFile::MakeFileArray($path);
     }
 }
