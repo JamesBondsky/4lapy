@@ -20,7 +20,7 @@ abstract class AbstractEntity implements EntityInterface, LoggerAwareInterface
     {
         return EntityTable::getList([
                                         'select' => ['ENTITY'],
-                                        'filter' => ['ENTITY' => $this->entity],
+                                        'filter' => ['=ENTITY' => $this->entity],
                                         'limit'  => 1,
                                     ])->getSelectedRowsCount() === 1;
     }

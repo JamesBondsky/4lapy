@@ -23,6 +23,8 @@ final class StringToReference extends AbstractConverter
     
     private $fieldToSearch;
     
+    private static $referenceValues = [];
+    
     /**
      * @return string
      */
@@ -74,8 +76,6 @@ final class StringToReference extends AbstractConverter
         
         $this->dataClass = $dataClass;
     }
-    
-    private static $referenceValues = [];
     
     /**
      * @return string
@@ -143,19 +143,23 @@ final class StringToReference extends AbstractConverter
     public function addValue($value, $fieldName) : string
     {
         $externalKey = md5($value);
-        
-        $result = $this->getDataClass()::add([
-                                                 $fieldName               => $value,
-                                                 self::FIELD_EXTERNAL_KEY => $externalKey,
-                                             ]);
-        
+
+        $fields = [
+            $fieldName               => $value,
+            self::FIELD_EXTERNAL_KEY => $externalKey,
+        ];
+
+        $result = $this->getDataClass()::add($fields);
+
         if (!$result->isSuccess()) {
             /**
              * @todo придумать сюда нормальный Exception
              */
             throw new \Exception('Reference value add error: ' . implode(', ', $result->getErrorMessages()));
         }
-        
+
+        self::$referenceValues[] = $fields;
+
         return $externalKey;
     }
     
