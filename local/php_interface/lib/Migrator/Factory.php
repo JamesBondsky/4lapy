@@ -8,7 +8,7 @@ use FourPaws\Migrator\Client\Saveable;
 use FourPaws\Migrator\Client\ShopPull;
 use FourPaws\Migrator\Entity\News as NewsEntity;
 use FourPaws\Migrator\Entity\Article as ArticleEntity;
-use FourPaws\Migrator\Provider\Articles as ArticlesProvider;
+use FourPaws\Migrator\Provider\Article as ArticlesProvider;
 use FourPaws\Migrator\Client\News;
 use FourPaws\Migrator\Provider\News as NewsProvider;
 use FourPaws\Migrator\Client\UserPull;

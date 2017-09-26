@@ -63,7 +63,7 @@ final class DetailToProduct extends AbstractConverter
             $data[$fieldName]        = $this->removeProducts($data[$fieldName]);
             $data[$productFieldName] = $products;
         }
-        
+
         return $data;
     }
     

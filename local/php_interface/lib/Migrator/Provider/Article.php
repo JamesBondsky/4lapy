@@ -2,11 +2,12 @@
 
 namespace FourPaws\Migrator\Provider;
 
+use FourPaws\Migrator\Converter\Decode;
 use FourPaws\Migrator\Converter\DetailToProduct;
 use FourPaws\Migrator\Converter\File;
 use FourPaws\Migrator\Converter\StringToReference;
 
-class Articles extends IBlock
+class Article extends IBlock
 {
     public function getMap() : array
     {
@@ -35,10 +36,12 @@ class Articles extends IBlock
      */
     public function getConverters() : array
     {
-        $typeConverter           = new StringToReference('PROPERTY_TYPE');
-        $detailTextConverter     = new DetailToProduct('DETAIL_TEXT');
-        $detailPictureConverter  = new File('DETAIL_PICTURE');
-        $previewPictureConverter = new File('PREVIEW_PICTURE');
+        $typeConverter              = new StringToReference('PROPERTY_TYPE');
+        $detailTextConverter        = new DetailToProduct('DETAIL_TEXT');
+        $detailTextDecodeConverter  = new Decode('DETAIL_TEXT');
+        $previewTextDecodeConverter = new Decode('PREVIEW_TEXT');
+        $detailPictureConverter     = new File('DETAIL_PICTURE');
+        $previewPictureConverter    = new File('PREVIEW_PICTURE');
         /**
          * @todo плохо! Завязать на проект.
          */
@@ -50,6 +53,8 @@ class Articles extends IBlock
             $detailTextConverter,
             $detailPictureConverter,
             $previewPictureConverter,
+            $detailTextDecodeConverter,
+            $previewTextDecodeConverter,
         ];
     }
 }
