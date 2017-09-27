@@ -2,8 +2,15 @@
 
 namespace FourPaws\BitrixIblockORM\Model;
 
+use Adv\Bitrixtools\Tools\BitrixUtils;
+
 abstract class BitrixArrayItemBase
 {
+    /**
+     * @var bool
+     */
+    protected $active = true;
+
     /**
      * @var int
      */
@@ -34,6 +41,11 @@ abstract class BitrixArrayItemBase
      */
     protected $NAME = '';
 
+    /**
+     * @var string
+     */
+    protected $LIST_PAGE_URL = '';
+
     public function __construct(array $fields = [])
     {
         $strLenOfProperty = 9;
@@ -60,7 +72,19 @@ abstract class BitrixArrayItemBase
                 if (property_exists($this, $propertyCode)) {
                     $this->$propertyCode = $value;
                 }
+            } /**
+             * Инициализация пользовательских полей (используется для Section и HLBItem)
+             */
+            elseif ('UF_' === substr($field, 0, 3)) {
+                $fieldName = substr($field, 3);
+                if (property_exists($this, $fieldName)) {
+                    $this->$fieldName = $value;
+                }
             }
+        }
+
+        if (isset($fields['ACTIVE'])) {
+            $this->withActive(BitrixUtils::bitrixBool2bool($fields['ACTIVE']));
         }
     }
 
@@ -184,6 +208,44 @@ abstract class BitrixArrayItemBase
         return $this;
     }
 
+    /**
+     * @return bool
+     */
+    public function isActive(): bool
+    {
+        return $this->active;
+    }
 
+    /**
+     * @param bool $active
+     *
+     * @return $this
+     */
+    public function withActive(bool $active)
+    {
+        $this->active = $active;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getListPageUrl(): string
+    {
+        return $this->LIST_PAGE_URL;
+    }
+
+    /**
+     * @param string $url
+     *
+     * @return $this
+     */
+    public function withListPageUrl(string $url)
+    {
+        $this->LIST_PAGE_URL = $url;
+
+        return $this;
+    }
 
 }

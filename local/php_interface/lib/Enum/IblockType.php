@@ -5,4 +5,6 @@ namespace FourPaws\Enum;
 class IblockType
 {
     const CATALOG = 'catalog';
+
+    const MENU = 'menu';
 }
