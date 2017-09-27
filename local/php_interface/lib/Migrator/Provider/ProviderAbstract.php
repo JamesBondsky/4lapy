@@ -254,7 +254,7 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
                     $data[$ef[1]] = $exists;
                 } else {
                     $this->external[$data[$primaryKey]] = [
-                        'EXTERNAL_ID' => $data[$primaryKey],
+                        'EXTERNAL_ID' => $data[$ef[1]],
                         'FIELD'       => $ef[1],
                         'ENTITY_FROM' => $this->entityName,
                         'ENTITY_TO'   => $ef[0],
