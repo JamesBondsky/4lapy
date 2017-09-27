@@ -38,6 +38,8 @@ abstract class CollectionBase extends ArrayCollection
     }
 
     /**
+     * Создание объекта
+     *
      * @return BitrixArrayItemBase
      */
     abstract protected function doFetch();

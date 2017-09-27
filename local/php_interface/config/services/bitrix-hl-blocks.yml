@@ -1,0 +1,16 @@
+---
+
+services:
+
+  bx.hlblock.factory:
+    class: 'Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory'
+
+  bx.hlblock.base:
+    class: '\SomeTable'
+    factory: 'bx.hlblock.factory:createTableObject'
+
+  bx.hlblock.filter:
+    class: '\FilterTable'
+    arguments: ['Filter']
+    parent: bx.hlblock.base
+

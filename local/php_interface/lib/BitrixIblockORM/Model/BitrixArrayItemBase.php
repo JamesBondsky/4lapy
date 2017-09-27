@@ -7,6 +7,11 @@ abstract class BitrixArrayItemBase
     /**
      * @var int
      */
+    protected $IBLOCK_ID = 0;
+
+    /**
+     * @var int
+     */
     protected $ID = 0;
 
     /**
@@ -57,6 +62,26 @@ abstract class BitrixArrayItemBase
                 }
             }
         }
+    }
+
+    /**
+     * @return int
+     */
+    public function getIblockId(): int
+    {
+        return (int)$this->IBLOCK_ID;
+    }
+
+    /**
+     * @param int $iblockId
+     *
+     * @return $this
+     */
+    public function withIblockId(int $iblockId)
+    {
+        $this->IBLOCK_ID = $iblockId;
+
+        return $this;
     }
 
     /**
