@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "c67d33b31e847c64a7342bab29a1b297",
+    "content-hash": "0e3a030c2f070c2e058ca0d261d6cb91",
     "packages": [
         {
             "name": "adv/bitrix-tools",
@@ -2317,16 +2317,16 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "5.7.21",
+            "version": "5.7.22",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "3b91adfb64264ddec5a2dee9851f354aa66327db"
+                "reference": "10df877596c9906d4110b5b905313829043f2ada"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/3b91adfb64264ddec5a2dee9851f354aa66327db",
-                "reference": "3b91adfb64264ddec5a2dee9851f354aa66327db",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/10df877596c9906d4110b5b905313829043f2ada",
+                "reference": "10df877596c9906d4110b5b905313829043f2ada",
                 "shasum": ""
             },
             "require": {
@@ -2395,7 +2395,7 @@
                 "testing",
                 "xunit"
             ],
-            "time": "2017-06-21T08:11:54+00:00"
+            "time": "2017-09-24T07:23:38+00:00"
         },
         {
             "name": "phpunit/phpunit-mock-objects",
@@ -3901,16 +3901,16 @@
         },
         {
             "name": "webarchitect609/bitrix-neverinclude",
-            "version": "v0.3.0",
+            "version": "v0.4.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/webarchitect609/bitrix-neverinclude.git",
-                "reference": "94f222f0f9aa324f6788b6dff8f62029af516059"
+                "reference": "e3c7ea2e105f2c8f2f4dae64f584a0e62befa784"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/webarchitect609/bitrix-neverinclude/zipball/94f222f0f9aa324f6788b6dff8f62029af516059",
-                "reference": "94f222f0f9aa324f6788b6dff8f62029af516059",
+                "url": "https://api.github.com/repos/webarchitect609/bitrix-neverinclude/zipball/e3c7ea2e105f2c8f2f4dae64f584a0e62befa784",
+                "reference": "e3c7ea2e105f2c8f2f4dae64f584a0e62befa784",
                 "shasum": ""
             },
             "require": {
@@ -3940,7 +3940,7 @@
                 "bitrix",
                 "module"
             ],
-            "time": "2017-09-21T15:30:25+00:00"
+            "time": "2017-09-27T11:01:14+00:00"
         },
         {
             "name": "webmozart/assert",

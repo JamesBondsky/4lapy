@@ -1,3 +1,12 @@
 ---
 
+imports:
+  - { resource: services/bitrix-hl-blocks.yml }
+
 services:
+
+  catalog.service:
+    class: FourPaws\Catalog\CatalogService
+    arguments: ['@bx.hlblock.filter']
+
+
