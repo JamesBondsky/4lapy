@@ -4,12 +4,12 @@ namespace FourPaws\Migrator\Provider;
 
 use Bitrix\Iblock\ElementTable;
 use Bitrix\Main\Loader;
-use FourPaws\Migrator\Entity\IBlock;
+use FourPaws\Migrator\Entity\IBlock as IBlockEntity;
 
 abstract class IBlock extends ProviderAbstract
 {
     /**
-     * @var IBlock
+     * @var \FourPaws\Migrator\Entity\IBlock
      */
     protected $entity;
 
@@ -62,7 +62,7 @@ abstract class IBlock extends ProviderAbstract
      * @param string                           $entityName
      * @param \FourPaws\Migrator\Entity\IBlock $entity
      */
-    public function __construct(string $entityName, IBlock $entity)
+    public function __construct(string $entityName, IBlockEntity $entity)
     {
         Loader::includeModule('iblock');
         

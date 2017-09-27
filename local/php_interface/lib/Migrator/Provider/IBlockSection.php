@@ -3,7 +3,7 @@
 namespace FourPaws\Migrator\Provider;
 
 use Bitrix\Iblock\SectionTable;
-use Bitrix\Main\Loader;
+use FourPaws\Migrator\Entity\IBlockSection as IBlockSectionEntity;
 
 /**
  * Class IBlockSection
@@ -13,7 +13,7 @@ use Bitrix\Main\Loader;
 abstract class IBlockSection extends IBlock
 {
     /**
-     * @var IBlock
+     * @var IBlockSectionEntity
      */
     protected $entity;
     
@@ -42,13 +42,11 @@ abstract class IBlockSection extends IBlock
     /**
      * IblockProvider constructor.
      *
-     * @param string                           $entityName
-     * @param \FourPaws\Migrator\Entity\IBlock $entity
+     * @param string              $entityName
+     * @param IBlockSectionEntity $entity
      */
-    public function __construct(string $entityName, IBlock $entity)
+    public function __construct(string $entityName, IBlockSectionEntity $entity)
     {
-        Loader::includeModule('iblock');
-        
         parent::__construct($entityName, $entity);
     }
 }
