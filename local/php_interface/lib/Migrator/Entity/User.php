@@ -52,9 +52,8 @@ class User extends AbstractEntity
             $this->setPassword($id, $data['PASSWORD'], $data['CHECKWORD']);
             
             MapTable::addEntity($this->entity, $primary, $id);
-            $groups = MapTable::getInternalIdListByExternalIdList($groups, UserGroupClient::ENTITY_NAME);
             
-            $user->SetUserGroup($id, $groups);
+            $this->setInternalKeys(['groups' => $groups], $id, UserGroupClient::ENTITY_NAME);
         } else {
             $this->getLogger()->error("User #{$primary} add error: $user->LAST_ERROR");
         }
@@ -72,7 +71,21 @@ class User extends AbstractEntity
     public function setPassword(int $id, string $password, string $checkword)
     {
         $query = vsprintf('UPDATE b_user SET PASSWORD=\'%2$s\', CHECKWORD=\'%3$s\' WHERE id=\'%1$d\'', func_get_args());
-
+        
         return Application::getConnection()->query($query);
+    }
+    
+    /**
+     * @param array  $data
+     * @param string $internal
+     * @param string $entity
+     */
+    public function setInternalKeys(array $data, string $internal, string $entity)
+    {
+        if ($data['groups']) {
+            $groups = MapTable::getInternalIdListByExternalIdList($data['groups'], $entity);
+            
+            (new \CUser())->SetUserGroup($internal, $groups);
+        }
     }
 }

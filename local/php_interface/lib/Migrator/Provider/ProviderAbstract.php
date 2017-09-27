@@ -148,12 +148,14 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
         foreach ($this->getConverters() as $converter) {
             $result = $converter->convert($result);
         }
-
+        
         return $result;
     }
     
     /**
      * @param \Symfony\Component\HttpFoundation\Response $response
+     *
+     * @throws \FourPaws\Migrator\Provider\Exceptions\FailResponseException
      */
     public function save(Response $response)
     {
@@ -161,12 +163,17 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
         $entity        = $this->entity;
         
         $this->installEntity();
-        
-        foreach (($this->parseResponse($response))[$this->entityName] as $item) {
+        $parsed = $this->parseResponse($response);
+
+        if (!isset($parsed[$this->entityName])) {
+            throw new FailResponseException('Entity name is not found in response.');
+        }
+
+        foreach ($parsed[$this->entityName] as $item) {
             $primary   = $entity->getPrimaryByItem($item);
             $timestamp = $entity->getTimestampByItem($item);
             $item      = $this->prepareData($item);
-
+            
             try {
                 $result = $entity->addOrUpdateItem($primary, $item);
                 
@@ -188,10 +195,10 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
                 $this->getLogger()->error($e->getMessage());
             }
         }
-
+        
         $this->saveLazy();
         $this->handleLazy();
-
+        
         if ($lastTimestamp) {
             EntityTable::updateEntity($this->entityName, $lastTimestamp);
         }
@@ -229,15 +236,15 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
     public function setLazyEntities(array $data) : array
     {
         $primaryKey = $this->entity->getPrimary();
-
+        
         foreach ($this->getMap() as $from => $to) {
             if (strpos($from, '.')) {
                 $ef = explode('.', $from);
-
+                
                 if (!$data[$ef[1]]) {
                     continue;
                 }
-
+                
                 /**
                  * @todo оптимизировать - криво, на одну запись - один запрос в БД
                  */

@@ -22,7 +22,6 @@ abstract class IBlockElement extends IBlock
         $map = array_diff(array_keys(array_filter(ElementTable::getMap(), self::getScalarEntityMapFilter())),
                           [
                               $this->entity->getPrimary(),
-                              'IBLOCK_SECTION_ID',
                               'CREATED_BY',
                               'MODIFIED_BY',
                           ]);
@@ -31,9 +30,9 @@ abstract class IBlockElement extends IBlock
         
         $map = array_merge($map,
                            [
-                               $this->entityName . '_section.IBLOCK_SECTION_ID' => 'IBLOCK_SECTION_ID',
-                               'user.CREATED_BY'                                => 'CREATED_BY',
-                               'user.MODIFIED_BY'                               => 'MODIFIED_BY',
+                               'user.CREATED_BY'  => 'CREATED_BY',
+                               'user.MODIFIED_BY' => 'MODIFIED_BY',
+                               'SECTIONS'         => 'SECTIONS',
                            ]);
         
         return $map;

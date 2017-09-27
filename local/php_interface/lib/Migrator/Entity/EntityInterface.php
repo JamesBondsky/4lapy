@@ -8,7 +8,7 @@ interface EntityInterface
      * @return array
      */
     public function setDefaults();
-
+    
     /**
      * @return string
      */
@@ -18,7 +18,7 @@ interface EntityInterface
      * @return string
      */
     public function getTimestamp() : string;
-
+    
     /**
      * @param string $primary
      * @param array  $item
@@ -56,4 +56,11 @@ interface EntityInterface
      * @return string
      */
     public function getTimestampByItem(array $item) : string;
+    
+    /**
+     * @param array  $data
+     * @param string $internal
+     * @param string $entity
+     */
+    public function setInternalKeys(array $data, string $internal, string $entity);
 }

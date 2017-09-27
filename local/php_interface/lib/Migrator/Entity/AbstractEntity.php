@@ -20,7 +20,7 @@ abstract class AbstractEntity implements EntityInterface, LoggerAwareInterface
     {
         return EntityTable::getList([
                                         'select' => ['ENTITY'],
-                                        'filter' => ['=ENTITY' => $this->entity],
+                                        'filter' => ['ENTITY' => $this->entity],
                                         'limit'  => 1,
                                     ])->getSelectedRowsCount() === 1;
     }
@@ -127,5 +127,16 @@ abstract class AbstractEntity implements EntityInterface, LoggerAwareInterface
     public function getTimestampByItem(array $item) : string
     {
         return $item[$this->getTimestamp()];
+    }
+    
+    /**
+     * @param array  $data
+     * @param string $internal
+     * @param string $entity
+     */
+    public function setInternalKeys(array $data, string $internal, string $entity) {
+        /**
+         * Заглушка
+         */
     }
 }
