@@ -7,11 +7,28 @@ use \FourPaws\Migrator\Client\UserGroup as UserGroupClient;
 
 class User extends AbstractEntity
 {
+    /**
+     * Считаем удалённого со старого сайта администратора нашим админом
+     *
+     * EXTERNAL -> INTERNAL
+     */
     public function setDefaults()
     {
-        /**
-         * Нечего связывать по умолчанию
-         */
+        if ($this->checkEntity()) {
+            return;
+        }
+        
+        $map = [
+            529643 => 1,
+        ];
+        
+        foreach ($map as $key => $item) {
+            $result = MapTable::addEntity($this->entity, $key, $item);
+            
+            if (!$result->isSuccess()) {
+                throw new \Exception("Error: \n" . implode("\n", $result->getErrorMessages()));
+            }
+        }
     }
     
     /**

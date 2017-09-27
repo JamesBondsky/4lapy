@@ -164,11 +164,11 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
         
         $this->installEntity();
         $parsed = $this->parseResponse($response);
-
+        
         if (!isset($parsed[$this->entityName])) {
             throw new FailResponseException('Entity name is not found in response.');
         }
-
+        
         foreach ($parsed[$this->entityName] as $item) {
             $primary   = $entity->getPrimaryByItem($item);
             $timestamp = $entity->getTimestampByItem($item);
@@ -253,7 +253,7 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
                 if ($exists) {
                     $data[$ef[1]] = $exists;
                 } else {
-                    $this->external[$data[$primaryKey]] = [
+                    $this->external[$data[$primaryKey]]['ENTITIES'][] = [
                         'EXTERNAL_ID' => $data[$ef[1]],
                         'FIELD'       => $ef[1],
                         'ENTITY_FROM' => $this->entityName,
@@ -273,9 +273,11 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
      */
     public function saveLazy()
     {
-        foreach ($this->external as $entity) {
-            if ($entity['INTERNAL_ID']) {
-                LazyTable::add($entity);
+        foreach ($this->external as $externalList) {
+            foreach ($externalList['ENTITIES'] as $entity) {
+                if ($externalList['INTERNAL_ID']) {
+                    LazyTable::add(array_merge(['INTERNAL_ID' => $externalList['INTERNAL_ID']], $entity));
+                }
             }
         }
     }
