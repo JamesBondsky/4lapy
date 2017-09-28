@@ -4,6 +4,8 @@ namespace FourPaws\Migrator\Entity;
 
 use \Bitrix\Main\Application;
 use \FourPaws\Migrator\Client\UserGroup as UserGroupClient;
+use FourPaws\Migrator\Provider\Exceptions\AddException;
+use FourPaws\Migrator\Provider\Exceptions\UpdateException;
 
 class User extends AbstractEntity
 {
@@ -38,18 +40,19 @@ class User extends AbstractEntity
      * @param array  $data
      *
      * @return \FourPaws\Migrator\Entity\Result
+     * @throws \FourPaws\Migrator\Provider\Exceptions\UpdateException
      */
     public function updateItem(string $primary, array $data) : Result
     {
         $user = new \CUser();
         
-        if (!($success = $user->Update($primary, $data))) {
-            $this->getLogger()->error("User #{$primary} update error: $user->LAST_ERROR");
+        if (!$user->Update($primary, $data)) {
+            throw new UpdateException("User #{$primary} update error: $user->LAST_ERROR");
         } else {
             $this->setPassword($primary, $data['PASSWORD'], $data['CHECKWORD']);
         }
         
-        return (new Result($success, $primary));
+        return (new UpdateResult(true, $primary));
     }
     
     /**
@@ -57,6 +60,7 @@ class User extends AbstractEntity
      * @param array  $data
      *
      * @return \FourPaws\Migrator\Entity\Result
+     * @throws \FourPaws\Migrator\Provider\Exceptions\AddException
      */
     public function addItem(string $primary, array $data) : Result
     {
@@ -72,10 +76,10 @@ class User extends AbstractEntity
             
             $this->setInternalKeys(['groups' => $groups], $id, UserGroupClient::ENTITY_NAME);
         } else {
-            $this->getLogger()->error("User #{$primary} add error: $user->LAST_ERROR");
+            throw new AddException("User #{$primary} add error: $user->LAST_ERROR");
         }
         
-        return (new Result($id > 0, $id));
+        return (new AddResult(true, $id));
     }
     
     /**

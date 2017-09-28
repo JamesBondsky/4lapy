@@ -7,7 +7,9 @@ use Bitrix\Main\Entity\ScalarField;
 use FourPaws\Migrator\Entity\EntityInterface;
 use FourPaws\Migrator\Entity\LazyTable;
 use FourPaws\Migrator\Entity\MapTable;
+use FourPaws\Migrator\Entity\UpdateResult;
 use FourPaws\Migrator\Provider\Exceptions\FailResponseException;
+use FourPaws\Migrator\StateTrait;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,6 +17,8 @@ use FourPaws\Migrator\Entity\EntityTable;
 
 abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterface
 {
+    use StateTrait;
+    
     /**
      * @var EntityInterface
      */
@@ -162,6 +166,7 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
         $lastTimestamp = 0;
         $entity        = $this->entity;
         
+        $this->startTimer();
         $this->installEntity();
         $parsed = $this->parseResponse($response);
         
@@ -190,15 +195,30 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
                 $this->savedIds[$primary] = $result->getInternalId();
                 
                 $lastTimestamp = strtotime($timestamp) > $lastTimestamp ? strtotime($timestamp) : $lastTimestamp;
+                
+                if ($result instanceof UpdateResult) {
+                    $this->incUpdate();
+                } else {
+                    $this->incAdd();
+                }
             } catch (\Throwable $e) {
                 EntityTable::pushBroken($this->entityName, $primary);
+                $this->incError();
                 $this->getLogger()->error($e->getMessage());
             }
         }
         
         $this->saveLazy();
         $this->handleLazy();
-        
+        $this->getLogger()->info(sprintf('Migration %s cleared: time - %s, full count %d, add %d, update %d, error %d',
+                                         [
+                                             $this->entity,
+                                             $this->getFormattedTime(),
+                                             $this->getAddCount(),
+                                             $this->getUpdateCount(),
+                                             $this->getErrorCount(),
+                                         ]));
+
         if ($lastTimestamp) {
             EntityTable::updateEntity($this->entityName, $lastTimestamp);
         }

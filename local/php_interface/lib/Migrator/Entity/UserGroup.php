@@ -3,9 +3,16 @@
 namespace FourPaws\Migrator\Entity;
 
 use Bitrix\Main\GroupTable;
+use FourPaws\Migrator\Provider\Exceptions\AddException;
 
 class UserGroup extends AbstractEntity
 {
+    const EXCLUDED_GROUPS = [
+        1,
+        2,
+        6,
+    ];
+    
     /**
      * Установим маппинг существующих групп по умолчанию
      *
@@ -20,8 +27,8 @@ class UserGroup extends AbstractEntity
         $map = [
             1 => 1,
             2 => 2,
-            6 => 3,
-            7 => 4,
+            6 => 6,
+            7 => 6,
         ];
         
         foreach ($map as $key => $item) {
@@ -41,9 +48,13 @@ class UserGroup extends AbstractEntity
      */
     public function updateItem(string $primary, array $data) : Result
     {
+        if (in_array($primary, self::EXCLUDED_GROUPS)) {
+            return new Result(true, $primary);
+        }
+        
         $result = GroupTable::update($primary, $data);
         
-        return new Result($result->isSuccess(), $result->getId());
+        return new UpdateResult($result->isSuccess(), $result->getId());
     }
     
     /**
@@ -51,7 +62,7 @@ class UserGroup extends AbstractEntity
      * @param array  $data
      *
      * @return \FourPaws\Migrator\Entity\Result
-     * @throws \Exception
+     * @throws \FourPaws\Migrator\Provider\Exceptions\AddException
      */
     public function addItem(string $primary, array $data) : Result
     {
@@ -59,13 +70,10 @@ class UserGroup extends AbstractEntity
         
         if ($result->isSuccess()) {
             if (!MapTable::addEntity($this->entity, $primary, $result->getId())->isSuccess()) {
-                /**
-                 * @todo впилить нормальный exception
-                 */
-                throw new \Exception("Error: errrrrror");
+                throw new AddException("Error: add entity was broken");
             }
         }
         
-        return new Result($result->isSuccess(), $result->getId());
+        return new AddResult($result->isSuccess(), $result->getId());
     }
 }

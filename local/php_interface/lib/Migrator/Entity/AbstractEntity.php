@@ -6,13 +6,11 @@ use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LoggerAwareInterface;
 
-abstract class AbstractEntity implements EntityInterface, LoggerAwareInterface
+abstract class AbstractEntity implements EntityInterface
 {
     protected $entity;
     
     protected $provider;
-    
-    protected $logger;
     
     abstract public function setDefaults();
     
@@ -23,22 +21,6 @@ abstract class AbstractEntity implements EntityInterface, LoggerAwareInterface
                                         'filter' => ['ENTITY' => $this->entity],
                                         'limit'  => 1,
                                     ])->getSelectedRowsCount() === 1;
-    }
-    
-    /**
-     * @param \Psr\Log\LoggerInterface $logger
-     */
-    public function setLogger(LoggerInterface $logger)
-    {
-        $this->logger = $logger;
-    }
-    
-    /**
-     * @return LoggerInterface
-     */
-    public function getLogger()
-    {
-        return $this->logger;
     }
     
     /**
@@ -68,8 +50,7 @@ abstract class AbstractEntity implements EntityInterface, LoggerAwareInterface
      */
     public function __construct(string $entity)
     {
-        $this->entity   = $entity;
-        $this->setLogger(LoggerFactory::create('migrate_provider_' . $entity));
+        $this->entity = $entity;
     }
     
     /**
@@ -97,14 +78,10 @@ abstract class AbstractEntity implements EntityInterface, LoggerAwareInterface
     public function addOrUpdateItem(string $primary, array $item) : Result
     {
         if (MapTable::isInternalEntityExists($primary, $this->entity)) {
-            $this->getLogger()->info("Update {$this->entity} with id {$primary}...\n");
             $result = $this->updateItem(MapTable::getInternalIdByExternalId($primary, $this->entity), $item);
         } else {
-            $this->getLogger()->info("Create {$this->entity} with id {$primary}...\n");
             $result = $this->addItem($primary, $item);
         }
-        
-        $result->getResult() ? $this->getLogger()->info("success\n\n") : $this->getLogger()->error("error\n\n");
         
         return $result;
     }
@@ -134,7 +111,8 @@ abstract class AbstractEntity implements EntityInterface, LoggerAwareInterface
      * @param string $internal
      * @param string $entity
      */
-    public function setInternalKeys(array $data, string $internal, string $entity) {
+    public function setInternalKeys(array $data, string $internal, string $entity)
+    {
         /**
          * Заглушка
          */

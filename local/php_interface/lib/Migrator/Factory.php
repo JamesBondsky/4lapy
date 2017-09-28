@@ -47,7 +47,7 @@ final class Factory
                 break;
             case 'catalog':
                 $entity = new CatalogEntity(Catalog::ENTITY_NAME, Utils::getIblockId('publications', 'offers'));
-                
+
                 $client = new Catalog(new CatalogProvider(Catalog::ENTITY_NAME, $entity), $options);
                 break;
             case 'news':

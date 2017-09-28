@@ -2,6 +2,9 @@
 
 namespace FourPaws\Migrator\Entity;
 
+use FourPaws\Migrator\Provider\Exceptions\AddException;
+use FourPaws\Migrator\Provider\Exceptions\UpdateException;
+
 /**
  * Class IBlock
  *
@@ -44,6 +47,7 @@ abstract class IBlock extends AbstractEntity
      * @param array  $data
      *
      * @return \FourPaws\Migrator\Entity\Result
+     * @throws \FourPaws\Migrator\Provider\Exceptions\AddException
      */
     public function addItem(string $primary, array $data) : Result
     {
@@ -51,14 +55,13 @@ abstract class IBlock extends AbstractEntity
         
         $id = $cIBlockElement->Add($data, false, false, false);
         
-        if ($id) {
-            MapTable::addEntity($this->entity, $primary, $id);
-        } else {
-            $this->getLogger()
-                 ->error("IBlock {$this->getIblockId()} element #{$primary} add error: $cIBlockElement->LAST_ERROR");
+        if (!$id) {
+            throw new AddException("IBlock {$this->getIblockId()} element #{$primary} add error: $cIBlockElement->LAST_ERROR");
         }
         
-        return (new Result($id > 0, $id));
+        MapTable::addEntity($this->entity, $primary, $id);
+        
+        return (new AddResult(true, $id));
     }
     
     /**
@@ -66,16 +69,16 @@ abstract class IBlock extends AbstractEntity
      * @param array  $data
      *
      * @return \FourPaws\Migrator\Entity\Result
+     * @throws \FourPaws\Migrator\Provider\Exceptions\UpdateException
      */
     public function updateItem(string $primary, array $data) : Result
     {
         $cIBlockElement = new \CIBlockElement();
         
-        if (!($success = $cIBlockElement->Update($primary, $data, false, false, false, false))) {
-            $this->getLogger()
-                 ->error("IBlock {$this->getIblockId()} element #{$primary} update error: $cIBlockElement->LAST_ERROR");
+        if (!$cIBlockElement->Update($primary, $data, false, false, false, false)) {
+            throw new UpdateException("IBlock {$this->getIblockId()} element #{$primary} update error: $cIBlockElement->LAST_ERROR");
         }
-
-        return (new Result($success, $primary));
+        
+        return (new UpdateResult(true, $primary));
     }
 }
