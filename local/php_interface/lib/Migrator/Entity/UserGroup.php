@@ -4,6 +4,7 @@ namespace FourPaws\Migrator\Entity;
 
 use Bitrix\Main\GroupTable;
 use FourPaws\Migrator\Entity\Exceptions\AddException;
+use FourPaws\Migrator\Entity\Exceptions\UpdateException;
 
 class UserGroup extends AbstractEntity
 {
@@ -75,5 +76,26 @@ class UserGroup extends AbstractEntity
         }
         
         return new AddResult($result->isSuccess(), $result->getId());
+    }
+    
+    /**
+     * @param string $field
+     * @param string $primary
+     * @param        $value
+     *
+     * @return \FourPaws\Migrator\Entity\UpdateResult
+     * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateException
+     */
+    public function setFieldValue(string $field, string $primary, $value) : UpdateResult
+    {
+        $result = GroupTable::update($primary, [$field => $value]);
+        
+        if ($result->isSuccess()) {
+            return new UpdateResult(true, $result->getId());
+        }
+        
+        $errors = $result->getErrorMessages();
+        
+        throw new UpdateException("Update field with primary {$primary} error: {$errors}");
     }
 }

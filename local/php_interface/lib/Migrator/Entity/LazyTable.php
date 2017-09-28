@@ -2,12 +2,16 @@
 
 namespace FourPaws\Migrator\Entity;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Entity\DataManager;
 use Bitrix\Main\Entity\StringField;
 use Bitrix\Main\Entity\AddResult;
+use FourPaws\Migrator\Factory;
 
 class LazyTable extends DataManager
 {
+    static $entityStack;
+    
     /**
      * @return string
      */
@@ -62,11 +66,11 @@ class LazyTable extends DataManager
             'FIELD'       => $data['FIELD'],
             'INTERNAL_ID' => $data['INTERNAL_ID'],
         ];
-
+        
         if (self::getByPrimary($primary)->getSelectedRowsCount() === 1) {
             return new AddResult();
         }
-
+        
         return parent::add($data);
     }
     
@@ -76,17 +80,56 @@ class LazyTable extends DataManager
      *
      * @return array
      */
-    public static function getLazyByIdList(string $entity, array $idList) :array {
-        return self::getList(['filter' => ['ENTITY_TO' => $entity, '@EXTERNAL_ID' => $idList]])->fetchAll();
+    public static function getLazyByIdList(string $entity, array $idList) : array
+    {
+        return self::getList([
+                                 'filter' => [
+                                     'ENTITY_TO'    => $entity,
+                                     '@EXTERNAL_ID' => $idList,
+                                 ],
+                             ])->fetchAll();
     }
     
     /**
      * @param string $entity
      * @param array  $idList
      */
-    public static function handleLazy(string $entity, array $idList) {
-        $lazyCollection = LazyTable::getLazyByIdList($entity, $idList);
+    public static function handleLazy(string $entity, array $idList)
+    {
+        $lazyList = LazyTable::getLazyByIdList($entity, $idList);
+        
+        foreach ($lazyList as $lazyElement) {
+            $targetEntity = self::getEntityByName($lazyElement['ENTITY_FROM']);
+            
+            try {
+                $internalId =
+                    MapTable::getInternalIdByExternalId($lazyElement['EXTERNAL_ID'], $lazyElement['ENTITY_FROM']);
+                $targetEntity->setFieldValue($lazyElement['FIELD'], $lazyElement['INTERNAL_ID'], $internalId);
 
-        var_dump($lazyCollection);
+                self::delete([
+                                 'ENTITY_FROM' => $lazyElement['ENTITY_FROM'],
+                                 'ENTITY_TO'   => $lazyElement['ENTITY_TO'],
+                                 'FIELD'       => $lazyElement['FIELD'],
+                                 'INTERNAL_ID' => $lazyElement['INTERNAL_ID'],
+                             ]);
+            } catch (\Throwable $e) {
+                (LoggerFactory::create('migrator_lazy'))->error($e->getMessage());
+            }
+        }
+        var_dump($lazyList);
+    }
+    
+    /**
+     * @param string $entityName
+     *
+     * @return \FourPaws\Migrator\Entity\EntityInterface
+     */
+    public static function getEntityByName(string $entityName) : EntityInterface
+    {
+        if (!self::$entityStack[$entityName]) {
+            self::$entityStack[$entityName] = (new Factory())->getEntityByEntityName($entityName);
+        }
+        
+        return self::$entityStack[$entityName];
     }
 }

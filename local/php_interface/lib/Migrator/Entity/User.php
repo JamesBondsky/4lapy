@@ -19,10 +19,16 @@ class User extends AbstractEntity
         if ($this->checkEntity()) {
             return;
         }
-        
+    
+        /**
+         * todo магию потом в конфигурацию
+         */
         $map = [
             529643 => 1,
         ];
+        
+        LazyTable::handleLazy($this->entity, array_keys($map));
+        throw new \Exception();
         
         foreach ($map as $key => $item) {
             $result = MapTable::addEntity($this->entity, $key, $item);
@@ -110,5 +116,24 @@ class User extends AbstractEntity
             
             (new \CUser())->SetUserGroup($internal, $groups);
         }
+    }
+    
+    /**
+     * @param string $field
+     * @param string $primary
+     * @param        $value
+     *
+     * @return \FourPaws\Migrator\Entity\UpdateResult
+     * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateException
+     */
+    public function setFieldValue(string $field, string $primary, $value) : UpdateResult
+    {
+        $cUser = new \CUser();
+        
+        if ($cUser->Update($primary, [$field => $value])) {
+            return new UpdateResult(true, $primary);
+        }
+        
+        throw new UpdateException("Update field with primary {$primary} error: {$cUser->LAST_ERROR}");
     }
 }

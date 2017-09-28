@@ -6,6 +6,7 @@ use FourPaws\Migrator\Client\ArticlePull;
 use FourPaws\Migrator\Client\SalePull;
 use FourPaws\Migrator\Client\Saveable;
 use FourPaws\Migrator\Client\ShopPull;
+use FourPaws\Migrator\Entity\EntityInterface;
 use FourPaws\Migrator\Entity\News as NewsEntity;
 use FourPaws\Migrator\Entity\Catalog as CatalogEntity;
 use FourPaws\Migrator\Client\News;
@@ -72,10 +73,10 @@ final class Factory
     /**
      * @param string $entityName
      *
-     * @return \FourPaws\Migrator\Entity\AbstractEntity
+     * @return \FourPaws\Migrator\Entity\EntityInterface
      * @throws \Exception
      */
-    public function getEntityByEntityName(string $entityName)
+    public function getEntityByEntityName(string $entityName) : EntityInterface
     {
         $entityName = explode('_', $entityName);
         

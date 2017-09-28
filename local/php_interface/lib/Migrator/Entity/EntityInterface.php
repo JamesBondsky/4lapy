@@ -63,4 +63,13 @@ interface EntityInterface
      * @param string $entity
      */
     public function setInternalKeys(array $data, string $internal, string $entity);
+    
+    /**
+     * @param string $field
+     * @param string $primary
+     * @param        $value
+     *
+     * @return \FourPaws\Migrator\Entity\UpdateResult
+     */
+    public function setFieldValue(string $field, string $primary, $value) : UpdateResult;
 }
