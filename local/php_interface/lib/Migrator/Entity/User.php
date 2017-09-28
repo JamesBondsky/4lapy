@@ -44,10 +44,10 @@ class User extends AbstractEntity
      * @param string $primary
      * @param array  $data
      *
-     * @return \FourPaws\Migrator\Entity\Result
+     * @return \FourPaws\Migrator\Entity\UpdateResult
      * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateException
      */
-    public function updateItem(string $primary, array $data) : Result
+    public function updateItem(string $primary, array $data) : UpdateResult
     {
         $user = new \CUser();
         
@@ -64,10 +64,10 @@ class User extends AbstractEntity
      * @param string $primary
      * @param array  $data
      *
-     * @return \FourPaws\Migrator\Entity\Result
+     * @return \FourPaws\Migrator\Entity\AddResult
      * @throws \FourPaws\Migrator\Entity\Exceptions\AddException
      */
-    public function addItem(string $primary, array $data) : Result
+    public function addItem(string $primary, array $data) : AddResult
     {
         $groups = $data['GROUPS'];
         $user   = new \CUser();

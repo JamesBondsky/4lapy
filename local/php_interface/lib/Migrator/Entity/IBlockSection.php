@@ -12,22 +12,26 @@ use FourPaws\Migrator\Entity\Exceptions\UpdateException;
  */
 abstract class IBlockSection extends IBlock
 {
+    private $isUpdated = false;
+    
     /**
      * @param string $primary
      * @param array  $data
      *
-     * @return \FourPaws\Migrator\Entity\Result
+     * @return \FourPaws\Migrator\Entity\AddResult
      * @throws \FourPaws\Migrator\Entity\Exceptions\AddException
      */
-    public function addItem(string $primary, array $data) : Result
+    public function addItem(string $primary, array $data) : AddResult
     {
         $cIBlockSection = new \CIBlockSection();
         
-        $id = $cIBlockSection->Add($data, true, false, false);
+        $id = $cIBlockSection->Add($data, false, false, false);
         
         if (!$id) {
             throw new AddException("IBlock {$this->getIblockId()} section #{$primary} add error: $cIBlockSection->LAST_ERROR");
         }
+        
+        $this->isUpdated = true;
         
         MapTable::addEntity($this->entity, $primary, $id);
         
@@ -41,14 +45,26 @@ abstract class IBlockSection extends IBlock
      * @return \FourPaws\Migrator\Entity\Result
      * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateException
      */
-    public function updateItem(string $primary, array $data) : Result
+    public function updateItem(string $primary, array $data) : UpdateResult
     {
         $cIBlockSection = new \CIBlockSection();
         
-        if (!$cIBlockSection->Update($primary, $data, true, false, false)) {
+        if (!$cIBlockSection->Update($primary, $data, false, false, false)) {
             throw new UpdateException("IBlock {$this->getIblockId()} section #{$primary} update error: $cIBlockSection->LAST_ERROR");
         }
         
+        $this->isUpdated = true;
+        
         return (new UpdateResult(true, $primary));
+    }
+    
+    /**
+     * Пересчитываем разделы ТОЛЬКО по окончании миграции
+     */
+    public function __destruct()
+    {
+        if ($this->isUpdated) {
+            \CIBlockSection::ReSort($this->getIblockId());
+        }
     }
 }

@@ -45,12 +45,12 @@ class UserGroup extends AbstractEntity
      * @param string $primary
      * @param array  $data
      *
-     * @return \FourPaws\Migrator\Entity\Result
+     * @return \FourPaws\Migrator\Entity\UpdateResult
      */
-    public function updateItem(string $primary, array $data) : Result
+    public function updateItem(string $primary, array $data) : UpdateResult
     {
         if (in_array($primary, self::EXCLUDED_GROUPS)) {
-            return new Result(true, $primary);
+            return new UpdateResult(true, $primary);
         }
         
         $result = GroupTable::update($primary, $data);
@@ -62,10 +62,10 @@ class UserGroup extends AbstractEntity
      * @param string $primary
      * @param array  $data
      *
-     * @return \FourPaws\Migrator\Entity\Result
+     * @return \FourPaws\Migrator\Entity\AddResult
      * @throws \FourPaws\Migrator\Entity\Exceptions\AddException
      */
-    public function addItem(string $primary, array $data) : Result
+    public function addItem(string $primary, array $data) : AddResult
     {
         $result = GroupTable::add($data);
         

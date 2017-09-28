@@ -16,10 +16,10 @@ abstract class IBlockElement extends IBlock
      * @param string $primary
      * @param array  $data
      *
-     * @return \FourPaws\Migrator\Entity\Result
+     * @return \FourPaws\Migrator\Entity\AddResult
      * @throws \FourPaws\Migrator\Entity\Exceptions\AddException
      */
-    public function addItem(string $primary, array $data) : Result
+    public function addItem(string $primary, array $data) : AddResult
     {
         $cIBlockElement = new \CIBlockElement();
         
@@ -40,10 +40,10 @@ abstract class IBlockElement extends IBlock
      * @param string $primary
      * @param array  $data
      *
-     * @return \FourPaws\Migrator\Entity\Result
+     * @return \FourPaws\Migrator\Entity\UpdateResult
      * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateException
      */
-    public function updateItem(string $primary, array $data) : Result
+    public function updateItem(string $primary, array $data) : UpdateResult
     {
         $cIBlockElement = new \CIBlockElement();
         

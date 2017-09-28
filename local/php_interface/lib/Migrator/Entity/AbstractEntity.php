@@ -57,17 +57,17 @@ abstract class AbstractEntity implements EntityInterface
      * @param string $primary
      * @param array  $data
      *
-     * @return \FourPaws\Migrator\Entity\Result
+     * @return \FourPaws\Migrator\Entity\AddResult
      */
-    abstract public function addItem(string $primary, array $data) : Result;
+    abstract public function addItem(string $primary, array $data) : AddResult;
     
     /**
      * @param string $primary
      * @param array  $data
      *
-     * @return \FourPaws\Migrator\Entity\Result
+     * @return \FourPaws\Migrator\Entity\UpdateResult
      */
-    abstract public function updateItem(string $primary, array $data) : Result;
+    abstract public function updateItem(string $primary, array $data) : UpdateResult;
     
     /**
      * @param string $primary
