@@ -1,6 +1,6 @@
 <?php
 
-namespace FourPaws\Migrator\Provider\Exceptions;
+namespace FourPaws\Migrator\Entity\Exceptions;
 
 class UpdateException extends \Exception
 {

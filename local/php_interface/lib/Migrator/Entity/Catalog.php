@@ -19,6 +19,12 @@ class Catalog extends IBlockElement
         return;
     }
     
+    /**
+     * Catalog constructor.
+     *
+     * @param string $entity
+     * @param int    $iblockId
+     */
     public function __construct($entity, $iblockId = 0)
     {
         if (!$iblockId) {

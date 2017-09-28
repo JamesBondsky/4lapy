@@ -2,10 +2,10 @@
 
 namespace FourPaws\Migrator\Entity;
 
-use \Bitrix\Main\Application;
-use \FourPaws\Migrator\Client\UserGroup as UserGroupClient;
-use FourPaws\Migrator\Provider\Exceptions\AddException;
-use FourPaws\Migrator\Provider\Exceptions\UpdateException;
+use Bitrix\Main\Application;
+use FourPaws\Migrator\Client\UserGroup as UserGroupClient;
+use FourPaws\Migrator\Entity\Exceptions\AddException;
+use FourPaws\Migrator\Entity\Exceptions\UpdateException;
 
 class User extends AbstractEntity
 {
@@ -31,6 +31,8 @@ class User extends AbstractEntity
                 throw new \Exception("Error: \n" . implode("\n", $result->getErrorMessages()));
             }
         }
+        
+        LazyTable::handleLazy($this->entity, array_keys($map));
     }
     
     /**
@@ -40,7 +42,7 @@ class User extends AbstractEntity
      * @param array  $data
      *
      * @return \FourPaws\Migrator\Entity\Result
-     * @throws \FourPaws\Migrator\Provider\Exceptions\UpdateException
+     * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateException
      */
     public function updateItem(string $primary, array $data) : Result
     {
@@ -60,7 +62,7 @@ class User extends AbstractEntity
      * @param array  $data
      *
      * @return \FourPaws\Migrator\Entity\Result
-     * @throws \FourPaws\Migrator\Provider\Exceptions\AddException
+     * @throws \FourPaws\Migrator\Entity\Exceptions\AddException
      */
     public function addItem(string $primary, array $data) : Result
     {

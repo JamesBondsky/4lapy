@@ -79,4 +79,14 @@ class LazyTable extends DataManager
     public static function getLazyByIdList(string $entity, array $idList) :array {
         return self::getList(['filter' => ['ENTITY_TO' => $entity, '@EXTERNAL_ID' => $idList]])->fetchAll();
     }
+    
+    /**
+     * @param string $entity
+     * @param array  $idList
+     */
+    public static function handleLazy(string $entity, array $idList) {
+        $lazyCollection = LazyTable::getLazyByIdList($entity, $idList);
+
+        var_dump($lazyCollection);
+    }
 }

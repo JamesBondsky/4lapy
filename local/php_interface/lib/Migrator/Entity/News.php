@@ -16,6 +16,12 @@ class News extends IBlockElement
         return;
     }
     
+    /**
+     * News constructor.
+     *
+     * @param string $entity
+     * @param int    $iblockId
+     */
     public function __construct($entity, $iblockId = 0)
     {
         if (!$iblockId) {

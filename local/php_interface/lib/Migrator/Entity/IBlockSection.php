@@ -2,8 +2,8 @@
 
 namespace FourPaws\Migrator\Entity;
 
-use FourPaws\Migrator\Provider\Exceptions\AddException;
-use FourPaws\Migrator\Provider\Exceptions\UpdateException;
+use FourPaws\Migrator\Entity\Exceptions\AddException;
+use FourPaws\Migrator\Entity\Exceptions\UpdateException;
 
 /**
  * Class IBlockSection
@@ -17,7 +17,7 @@ abstract class IBlockSection extends IBlock
      * @param array  $data
      *
      * @return \FourPaws\Migrator\Entity\Result
-     * @throws \FourPaws\Migrator\Provider\Exceptions\AddException
+     * @throws \FourPaws\Migrator\Entity\Exceptions\AddException
      */
     public function addItem(string $primary, array $data) : Result
     {
@@ -39,7 +39,7 @@ abstract class IBlockSection extends IBlock
      * @param array  $data
      *
      * @return \FourPaws\Migrator\Entity\Result
-     * @throws \FourPaws\Migrator\Provider\Exceptions\UpdateException
+     * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateException
      */
     public function updateItem(string $primary, array $data) : Result
     {

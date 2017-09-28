@@ -3,7 +3,7 @@
 namespace FourPaws\Migrator\Entity;
 
 use Bitrix\Main\GroupTable;
-use FourPaws\Migrator\Provider\Exceptions\AddException;
+use FourPaws\Migrator\Entity\Exceptions\AddException;
 
 class UserGroup extends AbstractEntity
 {
@@ -62,7 +62,7 @@ class UserGroup extends AbstractEntity
      * @param array  $data
      *
      * @return \FourPaws\Migrator\Entity\Result
-     * @throws \FourPaws\Migrator\Provider\Exceptions\AddException
+     * @throws \FourPaws\Migrator\Entity\Exceptions\AddException
      */
     public function addItem(string $primary, array $data) : Result
     {

@@ -312,10 +312,7 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
         if (!$this->savedIds) {
             return;
         }
-        
-        $lazyCollection = LazyTable::getLazyByIdList($this->entityName, $this->savedIds);
-        /**
-         * @todo implement this
-         */
+
+        LazyTable::handleLazy($this->entityName, $this->savedIds);
     }
 }
