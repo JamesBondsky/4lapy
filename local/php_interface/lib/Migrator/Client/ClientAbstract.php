@@ -37,6 +37,24 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
     
     protected $logger;
     
+    protected $token = '';
+    
+    /**
+     * @return string
+     */
+    public function getToken() : string
+    {
+        return $this->token;
+    }
+    
+    /**
+     * Set token from options
+     */
+    private function setToken()
+    {
+        $this->token = Application::getInstance()->getContainer()->getParameter('migrator')['token'];
+    }
+    
     /**
      * @param \Psr\Log\LoggerInterface $logger
      */
@@ -64,8 +82,9 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
         $this->limit    = (int)$options['limit'];
         $this->force    = (bool)$options['force'];
         $this->provider = $provider;
-
+        
         $this->setClient();
+        $this->setToken();
         $this->setLogger(LoggerFactory::create('migrator_' . static::ENTITY_NAME));
     }
     
@@ -88,7 +107,7 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
             return true;
         } catch (\Throwable $e) {
             $this->getLogger()->error($e->getMessage());
-
+            
             return false;
         }
     }
@@ -104,7 +123,7 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
         $options      = $container->getParameter('migrator');
         
         foreach ($options as $key => $value) {
-            if (constant($key)) {
+            if (strpos($key, 'CURLOPT_') === 0 && constant($key)) {
                 $this->options[constant($key)] = $value;
             }
         }
@@ -125,6 +144,8 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
      */
     protected function getBaseUrl(array $options = []) : string
     {
+        $options['token'] = $this->getToken();
+        
         return $this::BASE_PATH . static::API_PATH . ($options ? '?' . http_build_query($options) : '');
     }
     
@@ -139,7 +160,7 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
         if (!$this->force) {
             $options['timestamp'] = $this->getLastTimestamp();
         }
-
+        
         return $client->get($this->getBaseUrl($options), $this->options);
     }
     
@@ -152,7 +173,7 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
          * @var \Bitrix\Main\Type\DateTime $timestamp
          */
         $timestamp = EntityTable::getByPrimary(static::ENTITY_NAME, ['select' => ['TIMESTAMP']])->fetch();
-
+        
         return $timestamp['TIMESTAMP'] instanceof DateTime ? $timestamp['TIMESTAMP']->getTimestamp() : 0;
     }
 }

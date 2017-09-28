@@ -5,6 +5,7 @@ parameters:
   secret: 7371018148815e9de0f88dba6a44126524d6a80e
 
   migrator:
+    token: c81789b482ecbe6976f496a9697d75de
     CURLOPT_FAILONERROR: true
     CURLOPT_FORBID_REUSE: true
     CURLOPT_FRESH_CONNECT: true

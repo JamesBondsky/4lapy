@@ -183,7 +183,7 @@ final class Application extends Kernel
      */
     public function getCacheDir()
     {
-        return $this->getRootDir() . '/bitrix/cache/symfony';
+        return $this->getRootDir() . '/local/cache/symfony';
     }
     
     /**
@@ -228,7 +228,7 @@ final class Application extends Kernel
         if (!self::$instance) {
             self::$instance = new self(EnvType::getServerType(), EnvType::isDev());
         }
-
+        
         if (!self::$instance->booted) {
             self::$instance->boot();
         }
