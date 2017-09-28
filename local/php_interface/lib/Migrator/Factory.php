@@ -46,12 +46,12 @@ final class Factory
                 $client = new ArticlePull($options);
                 break;
             case 'catalog':
-                $entity = new CatalogEntity(Catalog::ENTITY_NAME, Utils::getIblockId('publications', 'offers'));
-
+                $entity = new CatalogEntity(Catalog::ENTITY_NAME);
+                
                 $client = new Catalog(new CatalogProvider(Catalog::ENTITY_NAME, $entity), $options);
                 break;
             case 'news':
-                $entity = new NewsEntity(News::ENTITY_NAME, Utils::getIblockId('publications', 'news'));
+                $entity = new NewsEntity(News::ENTITY_NAME);
                 
                 $client = new News(new NewsProvider(News::ENTITY_NAME, $entity), $options);
                 break;
@@ -67,5 +67,31 @@ final class Factory
         }
         
         return $client;
+    }
+    
+    /**
+     * @param string $entityName
+     *
+     * @return \FourPaws\Migrator\Entity\AbstractEntity
+     * @throws \Exception
+     */
+    public function getEntityByEntityName(string $entityName)
+    {
+        $entityName = explode('_', $entityName);
+        
+        foreach ($entityName as &$v) {
+            $v = ucfirst($v);
+        }
+        
+        $entityName = implode('', $entityName);
+        
+        $client = '\FourPaws\Migrator\Client\\' . $entityName;
+        $entity = '\FourPaws\Migrator\Entity\\' . $entityName;
+        
+        if (!(class_exists($client) && class_exists($entity))) {
+            throw new \Exception("Classes to entity {$entityName} is not found.");
+        }
+        
+        return new $entity($client::ENTITY_NAME);
     }
 }

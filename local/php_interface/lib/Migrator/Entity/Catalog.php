@@ -2,6 +2,8 @@
 
 namespace FourPaws\Migrator\Entity;
 
+use FourPaws\Migrator\Utils;
+
 /**
  * Class Catalog
  *
@@ -15,5 +17,14 @@ class Catalog extends IBlockElement
          * У нас нет значений по умолчанию для этой сущности
          */
         return;
+    }
+    
+    public function __construct($entity, $iblockId = 0)
+    {
+        if (!$iblockId) {
+            $iblockId = Utils::getIblockId('publications', 'offers');
+        }
+        
+        parent::__construct($entity, $iblockId);
     }
 }
