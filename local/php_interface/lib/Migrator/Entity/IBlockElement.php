@@ -106,7 +106,7 @@ abstract class IBlockElement extends IBlock
         
         throw new UpdateException("Update field with primary {$primary} error: {$cIblockElement->LAST_ERROR}");
     }
-    
+
     /**
      * @param string $property
      * @param string $primary

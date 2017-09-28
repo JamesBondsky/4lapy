@@ -103,9 +103,10 @@ class LazyTable extends DataManager
             
             try {
                 $internalId =
-                    MapTable::getInternalIdByExternalId($lazyElement['EXTERNAL_ID'], $lazyElement['ENTITY_FROM']);
+                    MapTable::getInternalIdByExternalId($lazyElement['EXTERNAL_ID'], $lazyElement['ENTITY_TO']);
+                
                 $targetEntity->setFieldValue($lazyElement['FIELD'], $lazyElement['INTERNAL_ID'], $internalId);
-
+                
                 self::delete([
                                  'ENTITY_FROM' => $lazyElement['ENTITY_FROM'],
                                  'ENTITY_TO'   => $lazyElement['ENTITY_TO'],
@@ -116,7 +117,6 @@ class LazyTable extends DataManager
                 (LoggerFactory::create('migrator_lazy'))->error($e->getMessage());
             }
         }
-        var_dump($lazyList);
     }
     
     /**

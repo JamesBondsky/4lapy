@@ -19,16 +19,13 @@ class User extends AbstractEntity
         if ($this->checkEntity()) {
             return;
         }
-    
+        
         /**
          * todo магию потом в конфигурацию
          */
         $map = [
             529643 => 1,
         ];
-        
-        LazyTable::handleLazy($this->entity, array_keys($map));
-        throw new \Exception();
         
         foreach ($map as $key => $item) {
             $result = MapTable::addEntity($this->entity, $key, $item);
