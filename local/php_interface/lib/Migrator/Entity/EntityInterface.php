@@ -23,7 +23,7 @@ interface EntityInterface
      * @param string $primary
      * @param array  $item
      *
-     * @return \FourPaws\Migrator\Entity\Result
+     * @return \FourPaws\Migrator\Entity\AddResult
      */
     public function addItem(string $primary, array $item) : AddResult;
     
@@ -31,7 +31,7 @@ interface EntityInterface
      * @param string $primary
      * @param array  $item
      *
-     * @return \FourPaws\Migrator\Entity\Result
+     * @return \FourPaws\Migrator\Entity\UpdateResult
      */
     public function updateItem(string $primary, array $item) : UpdateResult;
     
