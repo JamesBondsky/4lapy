@@ -210,15 +210,17 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
         
         $this->saveLazy();
         $this->handleLazy();
-        $this->getLogger()->info(sprintf('Migration %s cleared: time - %s, full count %d, add %d, update %d, error %d',
-                                         [
-                                             $this->entity,
-                                             $this->getFormattedTime(),
-                                             $this->getAddCount(),
-                                             $this->getUpdateCount(),
-                                             $this->getErrorCount(),
-                                         ]));
-
+        
+        $this->getLogger()->info(vsprintf('Migration %s cleared: time - %s, full count %d, add %d, update %d, error %d',
+                                          [
+                                              $this->entityName,
+                                              $this->getFormattedTime(),
+                                              $this->getFullCount(),
+                                              $this->getAddCount(),
+                                              $this->getUpdateCount(),
+                                              $this->getErrorCount(),
+                                          ]));
+        
         if ($lastTimestamp) {
             EntityTable::updateEntity($this->entityName, $lastTimestamp);
         }

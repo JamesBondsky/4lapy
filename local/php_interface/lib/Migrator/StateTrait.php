@@ -94,9 +94,16 @@ trait StateTrait
      * @param string $format
      *
      * @return string
+     * @throws \Exception
      */
-    public function getFormattedTime(string $format = 'h\h i\m s\s')
+    public function getFormattedTime(string $format = '%hh %im %ss')
     {
-        return (new \DateTime())->diff(new \DateTime())->format($format);
+        if ($this->timer) {
+            return \DateTime::createFromFormat('U', time())
+                            ->diff(\DateTime::createFromFormat('U', $this->timer))
+                            ->format($format);
+        }
+        
+        throw new \Exception('Timer is empty');
     }
 }
