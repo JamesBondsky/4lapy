@@ -2,7 +2,6 @@
 
 namespace FourPaws\Migrator\Entity;
 
-use FourPaws\Migrator\Entity\Exceptions\UpdateException;
 use FourPaws\Migrator\Utils;
 
 class ArticleSection extends IBlockSection
@@ -28,18 +27,5 @@ class ArticleSection extends IBlockSection
         }
         
         parent::__construct($entity, $iblockId);
-    }
-    
-    /**
-     * @param string $field
-     * @param string $primary
-     * @param        $value
-     *
-     * @return \FourPaws\Migrator\Entity\UpdateResult
-     * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateException
-     */
-    public function setFieldValue(string $field, string $primary, $value) : UpdateResult
-    {
-        return $this->updateItem($primary, [$field => $value]);
     }
 }

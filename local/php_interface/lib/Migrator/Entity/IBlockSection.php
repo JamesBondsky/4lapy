@@ -42,7 +42,7 @@ abstract class IBlockSection extends IBlock
      * @param string $primary
      * @param array  $data
      *
-     * @return \FourPaws\Migrator\Entity\Result
+     * @return \FourPaws\Migrator\Entity\UpdateResult
      * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateException
      */
     public function updateItem(string $primary, array $data) : UpdateResult
@@ -66,5 +66,18 @@ abstract class IBlockSection extends IBlock
         if ($this->isUpdated) {
             \CIBlockSection::ReSort($this->getIblockId());
         }
+    }
+
+    /**
+     * @param string $field
+     * @param string $primary
+     * @param        $value
+     *
+     * @return \FourPaws\Migrator\Entity\UpdateResult
+     * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateException
+     */
+    public function setFieldValue(string $field, string $primary, $value) : UpdateResult
+    {
+        return $this->updateItem($primary, [$field => $value]);
     }
 }
