@@ -50,7 +50,7 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
     
     /**
      * $map - однозначное отображение ['поле на сервере' => 'поле на клиенте']
-     * Так же возможно однозначное указание сущности для позднего связывания.
+     * Также возможно однозначное указание сущности для позднего связывания.
      *
      * Работает следующим образом:
      *
@@ -173,15 +173,15 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
         if (!isset($parsed[$this->entityName])) {
             throw new FailResponseException('Entity name is not found in response.');
         }
-        
+
         foreach ($parsed[$this->entityName] as $item) {
             $primary   = $entity->getPrimaryByItem($item);
             $timestamp = $entity->getTimestampByItem($item);
             $item      = $this->prepareData($item);
-            
+
             try {
                 $result = $entity->addOrUpdateItem($primary, $item);
-                
+
                 if (!$result->getResult()) {
                     /**
                      * @todo придумать сюда нормальный exception
@@ -195,7 +195,7 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
                 $this->savedIds[$primary] = $result->getInternalId();
                 
                 $lastTimestamp = strtotime($timestamp) > $lastTimestamp ? strtotime($timestamp) : $lastTimestamp;
-                
+
                 if ($result instanceof UpdateResult) {
                     $this->incUpdate();
                 } else {
@@ -220,9 +220,9 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
                                               $this->getUpdateCount(),
                                               $this->getErrorCount(),
                                           ]));
-        
+
         if ($lastTimestamp) {
-            EntityTable::updateEntity($this->entityName, $lastTimestamp);
+            EntityTable::updateEntity($this->entityName, $lastTimestamp)->getErrorMessages();
         }
     }
     

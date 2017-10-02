@@ -15,7 +15,7 @@ use Bitrix\Highloadblock\DataManager;
  *
  * @package FourPaws\Migrator\Converter
  */
-final class StringToReference extends AbstractConverter
+class StringToReference extends AbstractConverter
 {
     const FIELD_EXTERNAL_KEY = 'UF_XML_ID';
     
@@ -23,7 +23,7 @@ final class StringToReference extends AbstractConverter
     
     private $fieldToSearch;
     
-    private static $referenceValues = [];
+    protected static $referenceValues = [];
     
     /**
      * @return string
@@ -49,7 +49,7 @@ final class StringToReference extends AbstractConverter
     /**
      * @return DataManager
      */
-    private function getDataClass() : DataManager
+    protected function getDataClass() : DataManager
     {
         return $this->dataClass;
     }
@@ -57,7 +57,7 @@ final class StringToReference extends AbstractConverter
     /**
      * @throws \Exception
      */
-    private function setDataClass()
+    protected function setDataClass()
     {
         $table = HighloadBlockTable::getList(['filter' => ['=NAME' => $this->getReferenceCode()]])->fetch();
         
@@ -140,7 +140,7 @@ final class StringToReference extends AbstractConverter
      * @return string
      * @throws \Exception
      */
-    public function addValue($value, $fieldName) : string
+    protected function addValue(string $value, string $fieldName) : string
     {
         $externalKey = md5($value);
 
@@ -184,7 +184,7 @@ final class StringToReference extends AbstractConverter
      *
      * @throws \Exception
      */
-    private function getReferenceValues() : array
+    protected function getReferenceValues() : array
     {
         if (!self::$referenceValues) {
             
