@@ -125,7 +125,7 @@ class Catalog extends IBlockElement
     {
         if ($data['CATALOG']['TYPE']) {
             /**
-             * Торговый каталог всегда - предложение
+             * Торговый каталог для элемента инфоблока у нас всегда - предложение
              */
             $data['CATALOG']['TYPE'] = ProductTable::TYPE_OFFER;
         }
@@ -148,10 +148,10 @@ class Catalog extends IBlockElement
         $producedConverter = new StringToYesNo('PROPERTY_PRODUCED_BY_HOLDER');
         
         $licenseConverter = new StringToYesNo('PROPERTY_LICENSE');
-        $licenseConverter->setYes('да');
+        $licenseConverter->setYes($licenseConverter::YES_TYPE_RU);
         
         $lowTemperatureConverter = new StringToYesNo('PROPERTY_LOW_TEMPERATURE');
-        $lowTemperatureConverter->setYes('да');
+        $lowTemperatureConverter->setYes($lowTemperatureConverter::YES_TYPE_RU);
         
         $kindOfPackingConverter = new StringToReference('PROPERTY_KIND_OF_PACKING');
         $kindOfPackingConverter->setReferenceCode('PackageType');

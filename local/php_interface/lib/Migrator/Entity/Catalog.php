@@ -14,6 +14,10 @@ class Catalog extends IBlockElement
 {
     const UNSORTED_SECTION_CODE = 'unsorted';
     
+    const PROPERTY_SKU_LIST_KEY = 'PROPERTY_GOODS_AND_SIZES';
+    
+    const IS_MAIN_PRODUCT_KEY   = 'PROPERTY_ALPHA_PRODUCT';
+    
     private $catalogId = 0;
     
     public function setDefaults()
@@ -40,24 +44,36 @@ class Catalog extends IBlockElement
         parent::__construct($entity, $iblockId);
     }
     
+    /**
+     * Мы считаем основным товаром тот, у которого:
+     * - поле "Основной продукт" === Y
+     * - ИЛИ поле "Связанные товары и размеры" не заполнено (в этом случае - т.к. единственное предложение)
+     *
+     * @param array $data
+     *
+     * @return bool
+     */
     public function isMainProduct(array $data) : bool
     {
-        $result = [];
-        
-        /**
-         * @todo implement this
-         */
-        
-        return !!$result;
+        return $data[self::IS_MAIN_PRODUCT_KEY] === 'Y' || empty($data[self::PROPERTY_SKU_LIST_KEY]);
     }
     
+    /**
+     * @param string $primary
+     * @param array  $data
+     *
+     * @return \FourPaws\Migrator\Entity\AddResult
+     */
     public function addItem(string $primary, array $data) : AddResult
     {
         if ($this->isMainProduct($data)) {
             $mainProductData              = array_diff_key($data, ['CATALOG' => null]);
             $mainProductData['IBLOCK_ID'] = $this->catalogId;
             
-            $mainProductResult = parent::addItem('main_' . $primary, $data);
+            $mainProductResult          = parent::addItem('main_' . $primary, $data);
+            $data['PROPERTY_CML2_LINK'] = $mainProductResult->getInternalId();
+        } else {
+            $data['PROPERTY_CML2_LINK'] = $this->findMainProductInternalId($this->getSkuListFromData($data));
         }
         
         $result = parent::addItem($primary, $data);
@@ -81,15 +97,36 @@ class Catalog extends IBlockElement
             $mainProductData                      = array_diff_key($data, ['CATALOG' => null]);
             $mainProductData['IBLOCK_ID']         = $this->catalogId;
             $mainProductData['IBLOCK_SECTION_ID'] = $this->getUnsortedSectionIdByCode();
-
+            
             if ($mainProductData['PROPERTY_COMMON_NAME']) {
                 $mainProductData['NAME'] = $mainProductData['PROPERTY_COMMON_NAME'];
             }
             
-            parent::updateItem('main_' . $primary, $data);
+            $mainProductResult          = parent::updateItem($primary, $data);
+            $data['PROPERTY_CML2_LINK'] = $mainProductResult->getInternalId();
         }
         
-        return parent::updateItem($primary, $data);
+        $result = parent::updateItem($primary, $data);
+        
+        if ($this->isMainProduct($data)) {
+            $this->addSku($mainProductResult->getInternalId(), $this->getSkuListFromData($data));
+        }
+        
+        return $result;
+    }
+    
+    /**
+     * @param $skuExternalIds
+     *
+     * @return int
+     */
+    public function findMainProductInternalId($skuExternalIds) : int
+    {
+        foreach ($skuExternalIds as &$id) {
+            $id = 'main_' . $id;
+        }
+        
+        return (int)array_shift(MapTable::getInternalIdListByExternalIdList($skuExternalIds, $this->entity));
     }
     
     /**
@@ -98,9 +135,11 @@ class Catalog extends IBlockElement
      */
     public function addSku(int $productId, array $skuList)
     {
-        /**
-         * @todo implement this
-         */
+        foreach ($skuList as $skuExternalId) {
+            if ($skuInternalId = MapTable::getInternalIdByExternalId($this->entity, $skuExternalId)) {
+                $this->updateField('CML2_LINK', $skuInternalId, $productId);
+            }
+        }
     }
     
     /**
@@ -110,13 +149,7 @@ class Catalog extends IBlockElement
      */
     public function getSkuListFromData(array $data) : array
     {
-        $result = [];
-        
-        /**
-         * @todo implement this
-         */
-        
-        return $result;
+        return $data[self::PROPERTY_SKU_LIST_KEY];
     }
     
     /**

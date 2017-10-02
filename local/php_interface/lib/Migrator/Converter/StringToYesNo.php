@@ -6,14 +6,19 @@ namespace FourPaws\Migrator\Converter;
  * Class StringToYesNo
  *
  * Преобразует битриксовый Y/N (или произвольный) в 1/0 для YesNoProperty
- * @see \Adv\Bitrixtools\IBlockPropertyType\YesNoPropertyType
+ *
+ * @see     \Adv\Bitrixtools\IBlockPropertyType\YesNoPropertyType
  *
  * @package FourPaws\Migrator\Converter
  */
 final class StringToYesNo extends AbstractConverter
 {
-    private $yes = 'Y';
-
+    const YES_TYPE_BITRIX = 'Y';
+    
+    const YES_TYPE_RU     = 'да';
+    
+    private $yes = self::YES_TYPE_BITRIX;
+    
     /**
      * @param array $data
      *
@@ -27,9 +32,9 @@ final class StringToYesNo extends AbstractConverter
         if (!$data[$fieldName]) {
             return $data;
         }
-
+        
         $data[$fieldName] = $data[$fieldName] == $this->yes ? '1' : '0';
-
+        
         return $data;
     }
     
@@ -38,7 +43,8 @@ final class StringToYesNo extends AbstractConverter
      *
      * @param $yes
      */
-    public function setYes($yes) {
+    public function setYes($yes)
+    {
         $this->yes = $yes;
     }
 }
