@@ -33,6 +33,7 @@ circle_rest_client:
     defaults:
       CURLOPT_HTTPHEADER: ['Content-Type: application/json']
 
+
 fos_rest:
   disable_csrf_role:    null
 
