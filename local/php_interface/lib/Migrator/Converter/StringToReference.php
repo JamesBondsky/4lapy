@@ -104,7 +104,7 @@ class StringToReference extends AbstractConverter
         
         $isArray   = true;
         $fieldName = $this->getFieldName();
-        var_dump([$data[$fieldName], $data]);
+
         if (!$data[$fieldName]) {
             return $data;
         }
@@ -150,6 +150,7 @@ class StringToReference extends AbstractConverter
         ];
 
         $result = $this->getDataClass()::add($fields);
+
 
         if (!$result->isSuccess()) {
             /**
