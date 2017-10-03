@@ -173,22 +173,22 @@ class Catalog extends IBlockElement
         $purposeConverter = new StringToReference('PROPERTY_PURPOSE');
         $purposeConverter->setReferenceCode('Purpose');
         
-        $makerConverter = new StringToReference('MAKER');
+        $makerConverter = new StringToReference('PROPERTY_MAKER');
         $makerConverter->setReferenceCode('Maker');
         
-        $tradeNameConverter = new StringToReference('TRADE_NAME');
+        $tradeNameConverter = new StringToReference('PROPERTY_TRADE_NAME');
         $tradeNameConverter->setReferenceCode('TradeName');
         
-        $managerConverter = new StringToReference('MANAGER_OF_CATEGORY');
+        $managerConverter = new StringToReference('PROPERTY_MANAGER_OF_CATEGORY');
         $managerConverter->setReferenceCode('CategoryManager');
         
-        $materialConverter = new StringToReference('MANUFACTURE_MATERIAL');
+        $materialConverter = new StringToReference('PROPERTY_MANUFACTURE_MATERIAL');
         $materialConverter->setReferenceCode('Material');
         
-        $productFormConverter = new StringToReference('PRODUCT_FORM');
+        $productFormConverter = new StringToReference('PROPERTY_PRODUCT_FORM');
         $productFormConverter->setReferenceCode('ProductForm');
         
-        $parasiteTypeConverter = new StringToReference('TYPE_OF_PARASITE');
+        $parasiteTypeConverter = new StringToReference('PROPERTY_TYPE_OF_PARASITE');
         $parasiteTypeConverter->setReferenceCode('ParasiteType');
         
         $countryConverter = new CountryToReference('PROPERTY_COUNTRY');
@@ -208,7 +208,7 @@ class Catalog extends IBlockElement
         
         $brandConverter = new StringToIblock('PROPERTY_BRAND');
         $brandConverter->setIblockId(Utils::getIblockId('catalog', 'brands'));
-        
+
         return [
             $detailPictureConverter,
             $pictureConverter,

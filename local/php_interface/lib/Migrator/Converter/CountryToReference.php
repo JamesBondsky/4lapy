@@ -59,7 +59,7 @@ final class CountryToReference extends StringToReference
             throw new \Exception('Reference value add error: ' . implode(', ', $result->getErrorMessages()));
         }
         
-        self::$referenceValues[] = $fields;
+        self::$referenceValues[$this->getReferenceCode()] = $fields;
         
         return $code;
     }

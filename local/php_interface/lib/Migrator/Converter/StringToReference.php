@@ -104,7 +104,7 @@ class StringToReference extends AbstractConverter
         
         $isArray   = true;
         $fieldName = $this->getFieldName();
-
+        var_dump([$data[$fieldName], $data]);
         if (!$data[$fieldName]) {
             return $data;
         }
@@ -157,8 +157,8 @@ class StringToReference extends AbstractConverter
              */
             throw new \Exception('Reference value add error: ' . implode(', ', $result->getErrorMessages()));
         }
-
-        self::$referenceValues[] = $fields;
+        
+        self::$referenceValues[$this->getReferenceCode()][] = $fields;
 
         return $externalKey;
     }
@@ -187,13 +187,11 @@ class StringToReference extends AbstractConverter
      */
     protected function getReferenceValues() : array
     {
-        if (!self::$referenceValues) {
-            
-            
-            self::$referenceValues = $this->getDataClass()::getList()->fetchAll();
+        if (!self::$referenceValues[$this->getReferenceCode()]) {
+            self::$referenceValues[$this->getReferenceCode()] = $this->getDataClass()::getList()->fetchAll();
         }
-        
-        return self::$referenceValues;
+
+        return self::$referenceValues[$this->getReferenceCode()];
     }
     
     /**
