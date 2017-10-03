@@ -67,13 +67,14 @@ class Catalog extends IBlockElement
     public function addItem(string $primary, array $data) : AddResult
     {
         if ($this->isMainProduct($data)) {
-            $mainProductData              = array_diff_key($data, ['CATALOG' => null]);
-            $mainProductData['IBLOCK_ID'] = $this->catalogId;
+            $mainProductData                      = array_diff_key($data, ['CATALOG' => null]);
+            $mainProductData['IBLOCK_ID']         = $this->catalogId;
+            $mainProductData['IBLOCK_SECTION_ID'] = $this->getUnsortedSectionIdByCode();
             
-            $mainProductResult          = parent::addItem('main_' . $primary, $data);
-            $data['PROPERTY_CML2_LINK'] = $mainProductResult->getInternalId();
+            $mainProductResult                    = parent::addItem('main_' . $primary, $mainProductData);
+            $data['PROPERTY_VALUES']['CML2_LINK'] = $mainProductResult->getInternalId();
         } else {
-            $data['PROPERTY_CML2_LINK'] = $this->findMainProductInternalId($this->getSkuListFromData($data));
+            $data['PROPERTY_VALUES']['CML2_LINK'] = $this->findMainProductInternalId($this->getSkuListFromData($data));
         }
         
         $result = parent::addItem($primary, $data);
@@ -102,8 +103,8 @@ class Catalog extends IBlockElement
                 $mainProductData['NAME'] = $mainProductData['PROPERTY_COMMON_NAME'];
             }
             
-            $mainProductResult          = parent::updateItem($primary, $data);
-            $data['PROPERTY_CML2_LINK'] = $mainProductResult->getInternalId();
+            $mainProductResult                    = parent::updateItem($primary, $mainProductData);
+            $data['PROPERTY_VALUES']['CML2_LINK'] = $mainProductResult->getInternalId();
         }
         
         $result = parent::updateItem($primary, $data);
@@ -149,7 +150,7 @@ class Catalog extends IBlockElement
      */
     public function getSkuListFromData(array $data) : array
     {
-        return $data[self::PROPERTY_SKU_LIST_KEY];
+        return $data[self::PROPERTY_SKU_LIST_KEY] ?: [];
     }
     
     /**

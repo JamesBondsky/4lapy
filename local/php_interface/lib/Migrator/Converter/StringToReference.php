@@ -172,6 +172,7 @@ class StringToReference extends AbstractConverter
     protected function searchValue($value, $fieldToSearch) : string
     {
         $referenceValues = $this->getReferenceValues();
+
         $position = array_search($value,
                                  array_column($referenceValues, $fieldToSearch),
                                  true);

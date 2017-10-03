@@ -12,7 +12,7 @@ namespace FourPaws\Migrator\Converter;
  */
 final class CountryToReference extends StringToReference
 {
-    const CODE_FIELD_NAME = 'PROPERTY_COUNTRY';
+    const CODE_FIELD_NAME = 'PROPERTY_COUNTRY_NAME';
     
     public function convert(array $data) : array
     {
@@ -46,8 +46,8 @@ final class CountryToReference extends StringToReference
     protected function addValue(string $code, string $name) : string
     {
         $fields = [
-            $this->getFieldName()    => $name,
-            self::FIELD_EXTERNAL_KEY => $code,
+            $this->getFieldToSearch() => $code,
+            self::FIELD_EXTERNAL_KEY  => $name,
         ];
         
         $result = $this->getDataClass()::add($fields);

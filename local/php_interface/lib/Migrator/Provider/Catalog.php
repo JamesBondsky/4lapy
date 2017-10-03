@@ -35,16 +35,6 @@ class Catalog extends IBlockElement
      */
     public function getMap() : array
     {
-        /**
-         * @todo
-         *
-         * Добавить в map
-         *
-         * 'PROPERTY_BRAND_NAME' => 'PROPERTY_BRAND_NAME',
-         *
-         * и разобрать, что эта херня значит
-         */
-        
         $map = [
             'ID'                 => 'ID',
             'NAME'               => 'NAME',
@@ -110,7 +100,8 @@ class Catalog extends IBlockElement
             'PROPERTY_COUNTRY_NAME'            => 'PROPERTY_COUNTRY_NAME',
             'PROPERTY_COUNTRY'                 => 'PROPERTY_COUNTRY',
             
-            'CATALOG' => 'CATALOG',
+            'CATALOG'        => 'CATALOG',
+            'DETAIL_PICTURE' => 'DETAIL_PICTURE',
         ];
         
         return $map;
@@ -143,9 +134,14 @@ class Catalog extends IBlockElement
      */
     public function getConverters() : array
     {
-        $pictureConverter  = new File('PROPERTY_IMG');
         $stmConverter      = new Stm('PROPERTY_STM_S_KORM');
         $producedConverter = new StringToYesNo('PROPERTY_PRODUCED_BY_HOLDER');
+        
+        $detailPictureConverter = new File('DETAIL_PICTURE');
+        $detailPictureConverter->setToProperty();
+        
+        $pictureConverter = new File('PROPERTY_IMG');
+        $pictureConverter->setToProperty();
         
         $licenseConverter = new StringToYesNo('PROPERTY_LICENSE');
         $licenseConverter->setYes($licenseConverter::YES_TYPE_RU);
@@ -155,9 +151,6 @@ class Catalog extends IBlockElement
         
         $kindOfPackingConverter = new StringToReference('PROPERTY_KIND_OF_PACKING');
         $kindOfPackingConverter->setReferenceCode('PackageType');
-        
-        $volumeConverter = new StringToReference('PROPERTY_VOLUME');
-        $volumeConverter->setReferenceCode('Volume');
         
         $clothingSizeConverter = new StringToReference('PROPERTY_CLOTHING_SIZE');
         $clothingSizeConverter->setReferenceCode('ClothingSize');
@@ -217,12 +210,12 @@ class Catalog extends IBlockElement
         $brandConverter->setIblockId(Utils::getIblockId('catalog', 'brands'));
         
         return [
+            $detailPictureConverter,
             $pictureConverter,
             $stmConverter,
             $producedConverter,
             $licenseConverter,
             $lowTemperatureConverter,
-            $volumeConverter,
             $clothingSizeConverter,
             $kindOfPackingConverter,
             $seasonClothesConverter,

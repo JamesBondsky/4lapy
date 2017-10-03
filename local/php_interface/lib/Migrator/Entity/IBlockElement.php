@@ -70,7 +70,9 @@ abstract class IBlockElement extends IBlock
 
         MapTable::addEntity($this->entity, $primary, $id);
 
-        $this->setInternalKeys(['sections' => $data['SECTIONS']], $id, $this->entity . '_section');
+        if ($data['SECTIONS']) {
+            $this->setInternalKeys(['sections' => $data['SECTIONS']], $id, $this->entity . '_section');
+        }
         
         return (new AddResult(true, $id));
     }
