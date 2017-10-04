@@ -65,14 +65,20 @@ class Catalog extends IBlockElement
      *
      * @return \FourPaws\Migrator\Entity\AddResult
      */
-    public function addMainProduct(string $primary, array $data) : AddResult {
-        $data                      = array_diff_key($data, ['CATALOG' => null]);
-        $data['IBLOCK_ID']         = $this->catalogId;
+    public function addMainProduct(string $primary, array $data) : AddResult
+    {
+        $data = array_diff_key($data,
+                               [
+                                   'CATALOG' => null,
+                               ]);
+        
+        unset($data['PROPERTY_VALUES']['IMG']);
+        
         $data['IBLOCK_SECTION_ID'] = $this->getUnsortedSectionIdByCode();
-    
+        
         return parent::addItem('main_' . $primary, $data);
     }
-
+    
     /**
      * @param string $primary
      * @param array  $data
@@ -89,7 +95,7 @@ class Catalog extends IBlockElement
         }
         
         $result = parent::addItem($primary, $data);
-
+        
         if ($mainProductResult) {
             $this->addSku($mainProductResult->getInternalId(), $this->getSkuListFromData($data));
         }
@@ -109,19 +115,23 @@ class Catalog extends IBlockElement
             /**
              * @TODO переписать на один запрос
              */
-            $mainProductId = MapTable::getInternalIdByExternalId('main_' . MapTable::getExternalIdByInternalId($primary, $this->entity), $this->entity);
-
+            $mainProductId = MapTable::getInternalIdByExternalId('main_' . MapTable::getExternalIdByInternalId($primary,
+                                                                                                               $this->entity),
+                                                                 $this->entity);
+            
             $mainProductData = array_diff_key($data,
                                               [
                                                   'CATALOG'           => null,
                                                   'IBLOCK_SECTION_ID' => null,
                                                   'IBLOCK_ID'         => null,
                                               ]);
-
+            
+            unset($mainProductData['PROPERTY_VALUES']['IMG']);
+            
             if ($mainProductData['PROPERTY_COMMON_NAME']) {
                 $mainProductData['NAME'] = $mainProductData['PROPERTY_COMMON_NAME'];
             }
-
+            
             $mainProductResult                    = parent::updateItem($mainProductId, $mainProductData);
             $data['PROPERTY_VALUES']['CML2_LINK'] = $mainProductResult->getInternalId();
         }
@@ -134,7 +144,7 @@ class Catalog extends IBlockElement
         
         return $result;
     }
-
+    
     /**
      * @param $skuExternalIds
      *
