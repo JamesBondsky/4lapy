@@ -139,9 +139,6 @@ class Catalog extends IBlockElement
         $producedConverter = new StringToYesNo('PROPERTY_PRODUCED_BY_HOLDER');
         $skuConverters     = new Trim('PROPERTY_GOODS_AND_SIZES');
         
-        $detailPictureConverter = new File('DETAIL_PICTURE');
-        $detailPictureConverter->setToProperty();
-        
         $pictureConverter = new File('PROPERTY_IMG');
         $pictureConverter->setToProperty();
         
@@ -212,7 +209,6 @@ class Catalog extends IBlockElement
         $brandConverter->setIblockId(Utils::getIblockId('catalog', 'brands'));
         
         return [
-            $detailPictureConverter,
             $pictureConverter,
             $skuConverters,
             $stmConverter,
