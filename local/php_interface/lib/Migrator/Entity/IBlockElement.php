@@ -16,6 +16,8 @@ use FourPaws\Migrator\Entity\Exceptions\UpdateProductException;
  */
 abstract class IBlockElement extends IBlock
 {
+    const PROPERTY_PREFIX = 'PROPERTY_';
+    
     /**
      * @param string $primary
      * @param array  $data
@@ -42,34 +44,34 @@ abstract class IBlockElement extends IBlock
             
             $price = $data['CATALOG']['PRICE'];
             unset($data['CATALOG']['PRICE'], $data['CATALOG']['TIMESTAMP_X']);
-
+            
             foreach ($data['CATALOG'] as $k => $v) {
                 if (strpos($k, '_ORIG') !== false) {
                     unset($data['CATALOG'][$k]);
                 }
             }
-
+            
             $data['CATALOG']['ID'] = $id;
-
+            
             try {
                 $result = ProductTable::add($data['CATALOG']);
-    
+                
                 if (!$result->isSuccess()) {
                     throw new AddProductException("IBlock {$this->getIblockId()} element product #{$primary} add error: $cIBlockElement->LAST_ERROR");
                 }
             } catch (AddProductException $e) {
                 $cIBlockElement::Delete($id);
-
+                
                 throw new AddException("IBlock {$this->getIblockId()} element product #{$primary} add error: {$e->getMessage()}");
             } catch (\Throwable $e) {
                 throw new AddException("IBlock {$this->getIblockId()} element product #{$primary} add error: {$e->getMessage()}");
             }
-
+            
             \CPrice::SetBasePrice($id, $price, 'RUB');
         }
-
+        
         MapTable::addEntity($this->entity, $primary, $id);
-
+        
         if ($data['SECTIONS']) {
             $this->setInternalKeys(['sections' => $data['SECTIONS']], $id, $this->entity . '_section');
         }
@@ -95,10 +97,34 @@ abstract class IBlockElement extends IBlock
             $this->setInternalKeys(['sections' => $data['SECTIONS']], $primary, $this->entity . '_section');
         }
         
-        $result = ProductTable::add($data['CATALOG']);
-        
-        if (!$result->isSuccess()) {
-            throw new UpdateProductException("IBlock {$this->getIblockId()} element product #{$primary} update error: $cIBlockElement->LAST_ERROR");
+        /**
+         * @todo переписать к чертям
+         */
+        if ($data['CATALOG']) {
+            Loader::includeModule('catalog');
+            
+            $price = $data['CATALOG']['PRICE'];
+            unset($data['CATALOG']['PRICE'], $data['CATALOG']['TIMESTAMP_X']);
+            
+            foreach ($data['CATALOG'] as $k => $v) {
+                if (strpos($k, '_ORIG') !== false) {
+                    unset($data['CATALOG'][$k]);
+                }
+            }
+            
+            $data['CATALOG']['ID'] = $primary;
+            
+            try {
+                $result = ProductTable::update($primary, $data['CATALOG']);
+                
+                if (!$result->isSuccess()) {
+                    throw new UpdateProductException("IBlock {$this->getIblockId()} element product #{$primary} update error: {$result->getErrorMessages()}");
+                }
+            } catch (\Throwable $e) {
+                throw new UpdateException("IBlock {$this->getIblockId()} element product #{$primary} update error: {$e->getMessage()}");
+            }
+            
+            \CPrice::SetBasePrice($primary, $price, 'RUB');
         }
         
         return (new UpdateResult(true, $primary));
@@ -129,10 +155,10 @@ abstract class IBlockElement extends IBlock
      */
     public function setFieldValue(string $field, string $primary, $value) : UpdateResult
     {
-        if (strpos($field, 'PROPERTY_') === false) {
+        if (strpos($field, self::PROPERTY_PREFIX) === false) {
             return $this->updateField($field, $primary, $value);
         } else {
-            return $this->updateProperty(str_replace('PROPERTY_', '', $field), $primary, $value);
+            return $this->updateProperty(substr($field, strlen(self::PROPERTY_PREFIX)), $primary, $value);
         }
     }
     
@@ -164,8 +190,8 @@ abstract class IBlockElement extends IBlock
      */
     public function updateProperty(string $property, string $primary, $value) : UpdateResult
     {
-        (new \CIBlockElement())->SetPropertyValues($primary, $this->getIblockId(), [$property => $value]);
-        
+        (new \CIBlockElement())->SetPropertyValues($primary, $this->getIblockId(), $value, $property);
+
         /**
          * А вот здесь хер что мы отследим, Битрикс ничего не возвращаем. Считаем, что у нас никаких проблем нет.
          */

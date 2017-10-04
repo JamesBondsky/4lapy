@@ -14,9 +14,9 @@ class Catalog extends IBlockElement
 {
     const UNSORTED_SECTION_CODE = 'unsorted';
     
-    const PROPERTY_SKU_LIST_KEY = 'PROPERTY_GOODS_AND_SIZES';
+    const PROPERTY_SKU_LIST_KEY = 'GOODS_AND_SIZES';
     
-    const IS_MAIN_PRODUCT_KEY   = 'PROPERTY_ALPHA_PRODUCT';
+    const IS_MAIN_PRODUCT_KEY   = 'ALPHA_PRODUCT';
     
     private $catalogId = 0;
     
@@ -55,9 +55,24 @@ class Catalog extends IBlockElement
      */
     public function isMainProduct(array $data) : bool
     {
-        return $data[self::IS_MAIN_PRODUCT_KEY] === 'Y' || empty($data[self::PROPERTY_SKU_LIST_KEY]);
+        return $data['PROPERTY_VALUES'][self::IS_MAIN_PRODUCT_KEY] === 'Y'
+               || empty($data['PROPERTY_VALUES'][self::PROPERTY_SKU_LIST_KEY]);
     }
     
+    /**
+     * @param string $primary
+     * @param array  $data
+     *
+     * @return \FourPaws\Migrator\Entity\AddResult
+     */
+    public function addMainProduct(string $primary, array $data) : AddResult {
+        $data                      = array_diff_key($data, ['CATALOG' => null]);
+        $data['IBLOCK_ID']         = $this->catalogId;
+        $data['IBLOCK_SECTION_ID'] = $this->getUnsortedSectionIdByCode();
+    
+        return parent::addItem('main_' . $primary, $data);
+    }
+
     /**
      * @param string $primary
      * @param array  $data
@@ -67,19 +82,15 @@ class Catalog extends IBlockElement
     public function addItem(string $primary, array $data) : AddResult
     {
         if ($this->isMainProduct($data)) {
-            $mainProductData                      = array_diff_key($data, ['CATALOG' => null]);
-            $mainProductData['IBLOCK_ID']         = $this->catalogId;
-            $mainProductData['IBLOCK_SECTION_ID'] = $this->getUnsortedSectionIdByCode();
-            
-            $mainProductResult                    = parent::addItem('main_' . $primary, $mainProductData);
+            $mainProductResult                    = $this->addMainProduct($primary, $data);
             $data['PROPERTY_VALUES']['CML2_LINK'] = $mainProductResult->getInternalId();
         } else {
             $data['PROPERTY_VALUES']['CML2_LINK'] = $this->findMainProductInternalId($this->getSkuListFromData($data));
         }
         
         $result = parent::addItem($primary, $data);
-        
-        if ($this->isMainProduct($data)) {
+
+        if ($mainProductResult) {
             $this->addSku($mainProductResult->getInternalId(), $this->getSkuListFromData($data));
         }
         
@@ -95,27 +106,35 @@ class Catalog extends IBlockElement
     public function updateItem(string $primary, array $data) : UpdateResult
     {
         if ($this->isMainProduct($data)) {
-            $mainProductData                      = array_diff_key($data, ['CATALOG' => null]);
-            $mainProductData['IBLOCK_ID']         = $this->catalogId;
-            $mainProductData['IBLOCK_SECTION_ID'] = $this->getUnsortedSectionIdByCode();
-            
+            /**
+             * @TODO переписать на один запрос
+             */
+            $mainProductId = MapTable::getInternalIdByExternalId('main_' . MapTable::getExternalIdByInternalId($primary, $this->entity), $this->entity);
+
+            $mainProductData = array_diff_key($data,
+                                              [
+                                                  'CATALOG'           => null,
+                                                  'IBLOCK_SECTION_ID' => null,
+                                                  'IBLOCK_ID'         => null,
+                                              ]);
+
             if ($mainProductData['PROPERTY_COMMON_NAME']) {
                 $mainProductData['NAME'] = $mainProductData['PROPERTY_COMMON_NAME'];
             }
-            
-            $mainProductResult                    = parent::updateItem($primary, $mainProductData);
+
+            $mainProductResult                    = parent::updateItem($mainProductId, $mainProductData);
             $data['PROPERTY_VALUES']['CML2_LINK'] = $mainProductResult->getInternalId();
         }
         
         $result = parent::updateItem($primary, $data);
         
-        if ($this->isMainProduct($data)) {
-            $this->addSku($mainProductResult->getInternalId(), $this->getSkuListFromData($data));
+        if ($mainProductId) {
+            $this->addSku($mainProductId, $this->getSkuListFromData($data));
         }
         
         return $result;
     }
-    
+
     /**
      * @param $skuExternalIds
      *
@@ -137,8 +156,8 @@ class Catalog extends IBlockElement
     public function addSku(int $productId, array $skuList)
     {
         foreach ($skuList as $skuExternalId) {
-            if ($skuInternalId = MapTable::getInternalIdByExternalId($this->entity, $skuExternalId)) {
-                $this->updateField('CML2_LINK', $skuInternalId, $productId);
+            if ($skuInternalId = MapTable::getInternalIdByExternalId($skuExternalId, $this->entity)) {
+                $this->setFieldValue('PROPERTY_CML2_LINK', $skuInternalId, $productId);
             }
         }
     }
@@ -150,7 +169,7 @@ class Catalog extends IBlockElement
      */
     public function getSkuListFromData(array $data) : array
     {
-        return $data[self::PROPERTY_SKU_LIST_KEY] ?: [];
+        return $data['PROPERTY_VALUES'][self::PROPERTY_SKU_LIST_KEY] ?: [];
     }
     
     /**

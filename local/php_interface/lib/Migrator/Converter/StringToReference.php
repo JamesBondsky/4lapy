@@ -108,7 +108,7 @@ class StringToReference extends AbstractConverter
         if (!$data[$fieldName]) {
             return $data;
         }
-        
+
         $fieldToSearch = $this->getFieldToSearch();
         
         if (!is_array($data[$fieldName])) {

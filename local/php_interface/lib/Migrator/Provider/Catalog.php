@@ -10,6 +10,7 @@ use FourPaws\Migrator\Converter\Stm;
 use FourPaws\Migrator\Converter\StringToIblock;
 use FourPaws\Migrator\Converter\StringToReference;
 use FourPaws\Migrator\Converter\StringToYesNo;
+use FourPaws\Migrator\Converter\Trim;
 use FourPaws\Migrator\Utils;
 
 /**
@@ -136,6 +137,7 @@ class Catalog extends IBlockElement
     {
         $stmConverter      = new Stm('PROPERTY_STM_S_KORM');
         $producedConverter = new StringToYesNo('PROPERTY_PRODUCED_BY_HOLDER');
+        $skuConverters     = new Trim('PROPERTY_GOODS_AND_SIZES');
         
         $detailPictureConverter = new File('DETAIL_PICTURE');
         $detailPictureConverter->setToProperty();
@@ -208,10 +210,11 @@ class Catalog extends IBlockElement
         
         $brandConverter = new StringToIblock('PROPERTY_BRAND');
         $brandConverter->setIblockId(Utils::getIblockId('catalog', 'brands'));
-
+        
         return [
             $detailPictureConverter,
             $pictureConverter,
+            $skuConverters,
             $stmConverter,
             $producedConverter,
             $licenseConverter,
