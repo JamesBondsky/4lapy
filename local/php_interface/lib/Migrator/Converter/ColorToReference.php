@@ -19,17 +19,17 @@ final class ColorToReference extends StringToReference
     public function convert(array $data) : array
     {
         $this->setDataClass();
-        
+
         $fieldName = $this->getFieldName();
         
         if (!$data[$fieldName]) {
             return $data;
         }
-        
-        $result = $this->searchValue($data[self::CODE_FIELD_NAME], $this->getFieldToSearch());
+
+        $result = $this->searchValue($data[$fieldName], $this->getFieldToSearch());
         
         if (!$result) {
-            $result = $this->addValue($data[self::CODE_FIELD_NAME], $this->getFieldToSearch(), $data[$fieldName]);
+            $result = $this->addValue($data[$fieldName], $this->getFieldToSearch(), $data[self::CODE_FIELD_NAME]);
             unset($data[self::CODE_FIELD_NAME]);
         }
         
@@ -65,7 +65,7 @@ final class ColorToReference extends StringToReference
             throw new \Exception('Reference value add error: ' . implode(', ', $result->getErrorMessages()));
         }
         
-        self::$referenceValues[$this->getReferenceCode()] = $fields;
+        self::$referenceValues[$this->getReferenceCode()][] = $fields;
         
         return $externalKey;
     }

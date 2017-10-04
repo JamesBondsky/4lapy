@@ -24,7 +24,7 @@ final class CountryToReference extends StringToReference
             return $data;
         }
         
-        $result = $this->searchValue($data[self::CODE_FIELD_NAME]);
+        $result = $this->searchValue($data[$fieldName]);
         
         if (!$result) {
             $result = $this->addValue($data[self::CODE_FIELD_NAME], $data[$fieldName]);
@@ -59,7 +59,7 @@ final class CountryToReference extends StringToReference
             throw new \Exception('Reference value add error: ' . implode(', ', $result->getErrorMessages()));
         }
         
-        self::$referenceValues[$this->getReferenceCode()] = $fields;
+        self::$referenceValues[$this->getReferenceCode()][] = $fields;
         
         return $code;
     }
