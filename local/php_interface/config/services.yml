@@ -9,4 +9,6 @@ services:
     class: FourPaws\Catalog\CatalogService
     arguments: ['@bx.hlblock.filter']
 
+  user.service:
+    class: FourPaws\User\UserService
 
