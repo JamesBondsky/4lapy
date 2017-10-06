@@ -97,6 +97,8 @@ class StringToReference extends AbstractConverter
      * @param array $data
      *
      * @return array
+     *
+     * @throws \Exception
      */
     public function convert(array $data) : array
     {
@@ -169,8 +171,10 @@ class StringToReference extends AbstractConverter
      * @param $fieldToSearch
      *
      * @return mixed
+     *
+     * @throws \Exception
      */
-    protected function searchValue($value, $fieldToSearch) : string
+    protected function searchValue($value, $fieldToSearch)
     {
         $referenceValues = $this->getReferenceValues();
 

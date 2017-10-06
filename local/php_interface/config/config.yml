@@ -32,6 +32,10 @@ circle_rest_client:
   curl:
     defaults:
       CURLOPT_HTTPHEADER: ['Content-Type: application/json']
+      CURLOPT_FAILONERROR: true
+      CURLOPT_FORBID_REUSE: true
+      CURLOPT_FRESH_CONNECT: true
+      CURLOPT_USERPWD: old4lapy:8J7tQHPpN9
 
 
 fos_rest:

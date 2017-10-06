@@ -11,6 +11,8 @@ class UserPull extends ClientPullAbstract
 {
     /**
      * @return \FourPaws\Migrator\Client\ClientInterface[] array
+     *
+     * @throws \RuntimeException
      */
     public function getBaseClientList() : array
     {
@@ -22,6 +24,8 @@ class UserPull extends ClientPullAbstract
 
     /**
      * @return \FourPaws\Migrator\Client\ClientInterface[] array
+     *
+     * @throws \RuntimeException
      */
     public function getClientList() : array
     {

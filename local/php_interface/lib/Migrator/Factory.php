@@ -37,7 +37,7 @@ final class Factory
     {
         $client = null;
         
-        if (!in_array($type, self::AVAILABLE_TYPES)) {
+        if (!in_array($type, self::AVAILABLE_TYPES, true)) {
             throw new InvalidArgumentException('Client must have a compatibility type, one of this: ' . implode(', ',
                                                                                                                 self::AVAILABLE_TYPES));
         }
@@ -78,13 +78,12 @@ final class Factory
      */
     public function getEntityByEntityName(string $entityName) : EntityInterface
     {
-        $entityName = explode('_', $entityName);
+        $entityNameParts = explode('_', $entityName);
+        $entityNameParts = array_map(function($part) {
+            return ucfirst($part);
+        }, $entityNameParts);
         
-        foreach ($entityName as &$v) {
-            $v = ucfirst($v);
-        }
-        
-        $entityName = implode('', $entityName);
+        $entityName = implode('', $entityNameParts);
         
         $client = '\FourPaws\Migrator\Client\\' . $entityName;
         $entity = '\FourPaws\Migrator\Entity\\' . $entityName;
@@ -92,6 +91,10 @@ final class Factory
         if (!(class_exists($client) && class_exists($entity))) {
             throw new \Exception("Classes to entity {$entityName} is not found.");
         }
+    
+        /**
+         * @var \FourPaws\Migrator\Client\ClientInterface $client
+         */
         
         return new $entity($client::ENTITY_NAME);
     }

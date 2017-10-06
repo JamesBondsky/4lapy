@@ -16,6 +16,9 @@ class ArticlePull extends ClientPullAbstract
 {
     /**
      * @return \FourPaws\Migrator\Client\ClientInterface[] array
+     *
+     * @throws \FourPaws\Migrator\IblockNotFoundException
+     * @throws \RuntimeException
      */
     public function getBaseClientList() : array
     {
@@ -29,6 +32,9 @@ class ArticlePull extends ClientPullAbstract
     
     /**
      * @return \FourPaws\Migrator\Client\ClientInterface[] array
+     *
+     * @throws \FourPaws\Migrator\IblockNotFoundException
+     * @throws \RuntimeException
      */
     public function getClientList() : array
     {

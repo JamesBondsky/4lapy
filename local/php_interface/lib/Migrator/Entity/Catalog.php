@@ -3,6 +3,7 @@
 namespace FourPaws\Migrator\Entity;
 
 use Bitrix\Iblock\SectionTable;
+use FourPaws\Migrator\IblockNotFoundException;
 use FourPaws\Migrator\Utils;
 
 /**
@@ -25,7 +26,6 @@ class Catalog extends IBlockElement
         /**
          * У нас нет значений по умолчанию для этой сущности
          */
-        return;
     }
     
     /**
@@ -33,12 +33,18 @@ class Catalog extends IBlockElement
      *
      * @param string $entity
      * @param int    $iblockId
+     *
+     * @throws \FourPaws\Migrator\IblockNotFoundException
      */
     public function __construct($entity, $iblockId = 0)
     {
         if (!$iblockId) {
-            $iblockId        = Utils::getIblockId('catalog', 'offers');
-            $this->catalogId = Utils::getIblockId('catalog', 'products');
+            try {
+                $iblockId        = Utils::getIblockId('catalog', 'offers');
+                $this->catalogId = Utils::getIblockId('catalog', 'products');
+            } catch (\Exception $e) {
+                throw new IblockNotFoundException($e->getMessage());
+            }
         }
         
         parent::__construct($entity, $iblockId);
@@ -63,6 +69,9 @@ class Catalog extends IBlockElement
      * @param string $primary
      * @param array  $data
      *
+     * @throws \FourPaws\Migrator\Entity\Exceptions\AddException
+     * @throws \FourPaws\Migrator\Entity\Exceptions\AddProductException
+     *
      * @return \FourPaws\Migrator\Entity\AddResult
      */
     public function addMainProduct(string $primary, array $data) : AddResult
@@ -82,6 +91,9 @@ class Catalog extends IBlockElement
     /**
      * @param string $primary
      * @param array  $data
+     *
+     * @throws \FourPaws\Migrator\Entity\Exceptions\AddException
+     * @throws \FourPaws\Migrator\Entity\Exceptions\AddProductException
      *
      * @return \FourPaws\Migrator\Entity\AddResult
      */
@@ -106,6 +118,9 @@ class Catalog extends IBlockElement
     /**
      * @param string $primary
      * @param array  $data
+     *
+     * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateException
+     * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateProductException
      *
      * @return \FourPaws\Migrator\Entity\UpdateResult
      */
@@ -150,13 +165,15 @@ class Catalog extends IBlockElement
      *
      * @return int
      */
-    public function findMainProductInternalId($skuExternalIds) : int
+    public function findMainProductInternalId(array $skuExternalIds) : int
     {
         foreach ($skuExternalIds as &$id) {
             $id = 'main_' . $id;
         }
         
-        return (int)array_shift(MapTable::getInternalIdListByExternalIdList($skuExternalIds, $this->entity));
+        $result = MapTable::getInternalIdListByExternalIdList($skuExternalIds, $this->entity);
+        
+        return (int)array_shift($result);
     }
     
     /**
@@ -184,19 +201,21 @@ class Catalog extends IBlockElement
     
     /**
      * @return int
+     *
+     * @throws \Bitrix\Main\ArgumentException
      */
-    public function getUnsortedSectionIdByCode()
+    public function getUnsortedSectionIdByCode() : int
     {
         static $sectionId;
         
         if (!$sectionId) {
-            $sectionId = (SectionTable::getList([
-                                                    'filter' => [
-                                                        'CODE'      => self::UNSORTED_SECTION_CODE,
-                                                        'IBLOCK_ID' => $this->catalogId,
-                                                    ],
-                                                    'select' => ['ID'],
-                                                ])->fetch())['ID'];
+            $sectionId = SectionTable::getList([
+                                                   'filter' => [
+                                                       'CODE'      => self::UNSORTED_SECTION_CODE,
+                                                       'IBLOCK_ID' => $this->catalogId,
+                                                   ],
+                                                   'select' => ['ID'],
+                                               ])->fetch()['ID'];
         }
         
         return (int)$sectionId;

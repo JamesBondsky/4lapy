@@ -19,7 +19,7 @@ class User extends ProviderAbstract
         static $map;
         
         if (!$map) {
-            $map = array_diff(array_keys(array_filter(UserTable::getMap(), self::getScalarEntityMapFilter())),
+            $map = array_diff(array_keys(array_filter(UserTable::getMap(), $this->getScalarEntityMapFilter())),
                               [
                                   $this->entity->getPrimary(),
                                   'LID',
@@ -64,11 +64,11 @@ class User extends ProviderAbstract
      *
      * @return array
      */
-    public function prepareData(array $data)
+    public function prepareData(array $data) : array
     {
         $data['PASSWORD'] = randString(13) . '.';
         
-        if ($data['EMAIL'] == $data['LOGIN']) {
+        if ($data['EMAIL'] === $data['LOGIN']) {
             $data['LOGIN'] = $this->normalizeEmail($data['LOGIN']);
         }
         
@@ -88,9 +88,9 @@ class User extends ProviderAbstract
      *
      * @return bool
      */
-    public function isLoginPhone(string $phone)
+    public function isLoginPhone(string $phone) : bool
     {
-        return (strlen(preg_replace('~\D~', '', $phone)) == strlen($phone)) && strlen($phone) >= 10;
+        return (strlen(preg_replace('~\D~', '', $phone)) === strlen($phone)) && strlen($phone) >= 10;
     }
     
     /**
@@ -108,11 +108,11 @@ class User extends ProviderAbstract
      *
      * @return string
      */
-    public function normalizeEmail(string $email)
+    public function normalizeEmail(string $email) : string
     {
-        $email    = explode('@', $email);
-        $email[0] = preg_replace('~\.~', '', $email[0]);
+        $emailParts    = explode('@', $email);
+        $emailParts[0] = preg_replace('~\.~', '', $emailParts[0]);
         
-        return implode('@', $email);
+        return implode('@', $emailParts);
     }
 }

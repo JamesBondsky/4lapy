@@ -10,7 +10,7 @@ use FourPaws\Migrator\Factory;
 
 class LazyTable extends DataManager
 {
-    static $entityStack;
+    protected static $entityStack;
     
     /**
      * @return string
@@ -57,8 +57,10 @@ class LazyTable extends DataManager
      * @param array $data
      *
      * @return \Bitrix\Main\Entity\AddResult
+     *
+     * @throws \Exception
      */
-    public static function add(array $data)
+    public static function add(array $data) : AddResult
     {
         $primary = [
             'ENTITY_FROM' => $data['ENTITY_FROM'],
@@ -79,6 +81,8 @@ class LazyTable extends DataManager
      * @param array  $idList
      *
      * @return array
+     *
+     * @throws \Exception
      */
     public static function getLazyByIdList(string $entity, array $idList) : array
     {
@@ -93,10 +97,12 @@ class LazyTable extends DataManager
     /**
      * @param string $entity
      * @param array  $idList
+     *
+     * @throws \Exception
      */
     public static function handleLazy(string $entity, array $idList)
     {
-        $lazyList = LazyTable::getLazyByIdList($entity, $idList);
+        $lazyList = self::getLazyByIdList($entity, $idList);
         
         foreach ($lazyList as $lazyElement) {
             $targetEntity = self::getEntityByName($lazyElement['ENTITY_FROM']);
@@ -114,7 +120,7 @@ class LazyTable extends DataManager
                                  'INTERNAL_ID' => $lazyElement['INTERNAL_ID'],
                              ]);
             } catch (\Throwable $e) {
-                (LoggerFactory::create('migrator_lazy'))->error($e->getMessage());
+                LoggerFactory::create('migrator_lazy')->error($e->getMessage());
             }
         }
     }
@@ -123,6 +129,8 @@ class LazyTable extends DataManager
      * @param string $entityName
      *
      * @return \FourPaws\Migrator\Entity\EntityInterface
+     *
+     * @throws \Exception
      */
     public static function getEntityByName(string $entityName) : EntityInterface
     {

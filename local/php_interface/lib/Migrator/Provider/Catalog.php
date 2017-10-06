@@ -113,7 +113,7 @@ class Catalog extends IBlockElement
      *
      * @return array
      */
-    public function prepareData(array $data)
+    public function prepareData(array $data) : array
     {
         if ($data['CATALOG']['TYPE']) {
             /**

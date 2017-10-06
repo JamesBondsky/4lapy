@@ -33,7 +33,7 @@ final class StringToYesNo extends AbstractConverter
             return $data;
         }
         
-        $data[$fieldName] = $data[$fieldName] == $this->yes ? '1' : '0';
+        $data[$fieldName] = $data[$fieldName] === $this->yes ? '1' : '0';
         
         return $data;
     }

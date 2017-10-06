@@ -6,6 +6,8 @@ use FourPaws\Migrator\Provider\ProviderInterface;
 
 interface ClientInterface extends Saveable
 {
+    const ENTITY_NAME = '';
+    
     public function query();
 
     public function getProvider() : ProviderInterface;
