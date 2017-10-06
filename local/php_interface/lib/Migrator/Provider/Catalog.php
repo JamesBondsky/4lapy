@@ -10,6 +10,7 @@ use FourPaws\Migrator\Converter\Stm;
 use FourPaws\Migrator\Converter\StringToIblock;
 use FourPaws\Migrator\Converter\StringToReference;
 use FourPaws\Migrator\Converter\StringToYesNo;
+use FourPaws\Migrator\Converter\Trim;
 use FourPaws\Migrator\Utils;
 
 /**
@@ -35,16 +36,6 @@ class Catalog extends IBlockElement
      */
     public function getMap() : array
     {
-        /**
-         * @todo
-         *
-         * Добавить в map
-         *
-         * 'PROPERTY_BRAND_NAME' => 'PROPERTY_BRAND_NAME',
-         *
-         * и разобрать, что эта херня значит
-         */
-        
         $map = [
             'ID'                 => 'ID',
             'NAME'               => 'NAME',
@@ -110,7 +101,8 @@ class Catalog extends IBlockElement
             'PROPERTY_COUNTRY_NAME'            => 'PROPERTY_COUNTRY_NAME',
             'PROPERTY_COUNTRY'                 => 'PROPERTY_COUNTRY',
             
-            'CATALOG' => 'CATALOG',
+            'CATALOG'        => 'CATALOG',
+            'DETAIL_PICTURE' => 'DETAIL_PICTURE',
         ];
         
         return $map;
@@ -143,9 +135,12 @@ class Catalog extends IBlockElement
      */
     public function getConverters() : array
     {
-        $pictureConverter  = new File('PROPERTY_IMG');
         $stmConverter      = new Stm('PROPERTY_STM_S_KORM');
         $producedConverter = new StringToYesNo('PROPERTY_PRODUCED_BY_HOLDER');
+        $skuConverters     = new Trim('PROPERTY_GOODS_AND_SIZES');
+        
+        $pictureConverter = new File('PROPERTY_IMG');
+        $pictureConverter->setToProperty();
         
         $licenseConverter = new StringToYesNo('PROPERTY_LICENSE');
         $licenseConverter->setYes($licenseConverter::YES_TYPE_RU);
@@ -155,9 +150,6 @@ class Catalog extends IBlockElement
         
         $kindOfPackingConverter = new StringToReference('PROPERTY_KIND_OF_PACKING');
         $kindOfPackingConverter->setReferenceCode('PackageType');
-        
-        $volumeConverter = new StringToReference('PROPERTY_VOLUME');
-        $volumeConverter->setReferenceCode('Volume');
         
         $clothingSizeConverter = new StringToReference('PROPERTY_CLOTHING_SIZE');
         $clothingSizeConverter->setReferenceCode('ClothingSize');
@@ -180,22 +172,22 @@ class Catalog extends IBlockElement
         $purposeConverter = new StringToReference('PROPERTY_PURPOSE');
         $purposeConverter->setReferenceCode('Purpose');
         
-        $makerConverter = new StringToReference('MAKER');
+        $makerConverter = new StringToReference('PROPERTY_MAKER');
         $makerConverter->setReferenceCode('Maker');
         
-        $tradeNameConverter = new StringToReference('TRADE_NAME');
+        $tradeNameConverter = new StringToReference('PROPERTY_TRADE_NAME');
         $tradeNameConverter->setReferenceCode('TradeName');
         
-        $managerConverter = new StringToReference('MANAGER_OF_CATEGORY');
+        $managerConverter = new StringToReference('PROPERTY_MANAGER_OF_CATEGORY');
         $managerConverter->setReferenceCode('CategoryManager');
         
-        $materialConverter = new StringToReference('MANUFACTURE_MATERIAL');
+        $materialConverter = new StringToReference('PROPERTY_MANUFACTURE_MATERIAL');
         $materialConverter->setReferenceCode('Material');
         
-        $productFormConverter = new StringToReference('PRODUCT_FORM');
+        $productFormConverter = new StringToReference('PROPERTY_PRODUCT_FORM');
         $productFormConverter->setReferenceCode('ProductForm');
         
-        $parasiteTypeConverter = new StringToReference('TYPE_OF_PARASITE');
+        $parasiteTypeConverter = new StringToReference('PROPERTY_TYPE_OF_PARASITE');
         $parasiteTypeConverter->setReferenceCode('ParasiteType');
         
         $countryConverter = new CountryToReference('PROPERTY_COUNTRY');
@@ -218,11 +210,11 @@ class Catalog extends IBlockElement
         
         return [
             $pictureConverter,
+            $skuConverters,
             $stmConverter,
             $producedConverter,
             $licenseConverter,
             $lowTemperatureConverter,
-            $volumeConverter,
             $clothingSizeConverter,
             $kindOfPackingConverter,
             $seasonClothesConverter,

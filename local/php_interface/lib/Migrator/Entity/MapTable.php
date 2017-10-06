@@ -115,7 +115,7 @@ class MapTable extends DataManager
                                     ],
                                     'select' => ['INTERNAL_ID'],
                                 ])->fetchAll();
-        
+
         return array_column($result, 'INTERNAL_ID');
     }
     

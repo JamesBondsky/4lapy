@@ -40,6 +40,20 @@ abstract class IBlockSection extends IBlock
     }
     
     /**
+     * @param array $data
+     *
+     * @return array
+     */
+    public function prepareData(array $data)
+    {
+        $data = parent::prepareData($data);
+
+        $data['IBLOCK_ID'] = $this->entity->getIblockId();
+    
+        return $data;
+    }
+    
+    /**
      * IblockProvider constructor.
      *
      * @param string              $entityName

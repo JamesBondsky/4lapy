@@ -2,11 +2,6 @@
 
 namespace FourPaws\Migrator\Converter;
 
-use Bitrix\Highloadblock\HighloadBlockTable;
-use Bitrix\Main\Loader;
-use Bitrix\Main\LoaderException;
-use Bitrix\Highloadblock\DataManager;
-
 /**
  * Class Encode
  *

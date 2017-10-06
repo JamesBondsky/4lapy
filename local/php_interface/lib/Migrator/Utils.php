@@ -76,7 +76,7 @@ class Utils
             return trim(self::getAllIblockInfo()[$type][$code][$field]);
         }
         
-        throw new \Exception(
+        throw new IblockNotFoundException(
             sprintf(
                 'Iblock `%s\%s` not found',
                 $type,

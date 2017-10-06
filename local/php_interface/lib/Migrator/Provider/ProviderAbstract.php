@@ -222,7 +222,7 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
                                           ]));
 
         if ($lastTimestamp) {
-            EntityTable::updateEntity($this->entityName, $lastTimestamp)->getErrorMessages();
+            EntityTable::updateEntity($this->entityName, $lastTimestamp);
         }
     }
     
