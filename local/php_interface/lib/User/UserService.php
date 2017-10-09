@@ -15,6 +15,8 @@ class UserService
     
     const FIELD_PHONE = 'PERSONAL_PHONE';
     
+    const SOCSERV_EXTERNAL_ID = 'socservices';
+    
     /**
      * UserService constructor.
      */
@@ -62,6 +64,7 @@ class UserService
      * @return bool
      * @throws \FourPaws\User\Exceptions\NotFoundException
      * @throws \FourPaws\User\Exceptions\WrongPasswordException
+     * @throws \Bitrix\Main\ArgumentException
      */
     public function login(string $login, string $password) : bool
     {
@@ -118,5 +121,25 @@ class UserService
     public function register(array $data)
     {
     
+    }
+    
+    /**
+     * @param array $fields
+     *
+     * @return bool
+     */
+    public static function checkSocserviseRegisterHandler(array $fields) : bool {
+        /**
+         * @todo может, можно как-то иначе?
+         */
+        global $APPLICATION;
+        
+        if ($fields['EXTERNAL_AUTH_ID'] === 'socservices' && !$fields['PERSONAL_PHONE']) {
+            $APPLICATION->ThrowException('Phone number must be defined');
+            
+            return false;
+        }
+
+        return true;
     }
 }
