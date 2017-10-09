@@ -23,7 +23,7 @@ class User extends AbstractEvent
                                $sort);
     }
     
-    public function handleEvents()
+    public function addEvents()
     {
         $this->addMainEventHandler('OnBeforeUserAdd', ['\FourPaws\User\UserService', 'checkSocserviseRegisterHandler']);
     }

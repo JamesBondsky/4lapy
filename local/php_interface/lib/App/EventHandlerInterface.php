@@ -6,7 +6,7 @@ use Bitrix\Main\EventManager;
 
 interface EventHandlerInterface
 {
-    public function handleEvents();
+    public function addEvents();
     
     /**
      * EventHandlerInterface constructor.

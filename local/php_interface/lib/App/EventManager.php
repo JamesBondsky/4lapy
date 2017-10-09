@@ -61,10 +61,10 @@ final class EventManager
     /**
      * @param \Bitrix\Main\EventManager $eventManager
      */
-    public function handleEvents(\Bitrix\Main\EventManager $eventManager)
+    public function addEvents(\Bitrix\Main\EventManager $eventManager)
     {
         foreach ($this->getClassesList($eventManager) as $object) {
-            $object->handleEvents();
+            $object->addEvents();
         }
     }
 }
