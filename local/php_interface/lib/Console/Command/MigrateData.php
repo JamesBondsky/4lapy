@@ -34,12 +34,6 @@ class MigrateData extends Command implements LoggerAwareInterface
     {
         parent::__construct($name);
         $this->setLogger(new Logger('Migrator', [new StreamHandler(STDOUT, Logger::DEBUG)]));
-        
-        $migratorInstaller = new Installer($this->logger);
-        if (!$migratorInstaller->isInstalled()) {
-            $this->logger->warning('Migrator tables is not installed. Installing...');
-            $migratorInstaller->doInstall();
-        }
     }
     
     protected function configure()
@@ -54,7 +48,7 @@ class MigrateData extends Command implements LoggerAwareInterface
                            'Limit of entities, 100 by default')
              ->addArgument(self::ARG_MIGRATE_LIST,
                            InputArgument::IS_ARRAY,
-                           'Migration type, one or more of this: users, news, articles, shops, sale')
+                           'Migration type, one or more of this: user, news, articles, shops, sale')
              ->addOption('force', 'f', InputOption::VALUE_NONE, 'Force migrate (disable time period check)');
     }
     
@@ -66,6 +60,13 @@ class MigrateData extends Command implements LoggerAwareInterface
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        $migratorInstaller = new Installer($this->logger);
+
+        if (!$migratorInstaller->isInstalled()) {
+            $this->logger->warning('Migrator tables is not installed. Installing...');
+            $migratorInstaller->doInstall();
+        }
+
         $this->log(LogLevel::INFO, 'Migration start');
         
         $limit = $input->getArgument(self::ARG_LIMIT);

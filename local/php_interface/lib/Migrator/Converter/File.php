@@ -2,11 +2,6 @@
 
 namespace FourPaws\Migrator\Converter;
 
-use Bitrix\Highloadblock\HighloadBlockTable;
-use Bitrix\Main\Loader;
-use Bitrix\Main\LoaderException;
-use Bitrix\Highloadblock\DataManager;
-
 /**
  * Class File
  *
@@ -14,8 +9,10 @@ use Bitrix\Highloadblock\DataManager;
  *
  * @package FourPaws\Migrator\Converter
  */
-final class File extends AbstractConverter
+class File extends AbstractConverter
 {
+    private $toProperty = false;
+    
     /**
      * @param array $data
      *
@@ -60,6 +57,16 @@ final class File extends AbstractConverter
             $path = str_replace('old4lapy.e.adv.ru', '4lapy.ru', $path);
         }
         
-        return \CFile::MakeFileArray($path);
+        $fileArray = \CFile::MakeFileArray($path);
+        
+        return $this->toProperty ? ['VALUE' => $fileArray] : $fileArray;
+    }
+    
+    /**
+     * Для свойств элемента иблока другой массив (Bitrix. No way.)
+     */
+    public function setToProperty()
+    {
+        $this->toProperty = true;
     }
 }

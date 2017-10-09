@@ -12,7 +12,7 @@ abstract class IBlock extends ProviderAbstract
      * @var \FourPaws\Migrator\Entity\IBlock
      */
     protected $entity;
-
+    
     public function getMap() : array
     {
         $map = array_diff(array_keys(array_filter(ElementTable::getMap(), self::getScalarEntityMapFilter())),
@@ -32,28 +32,6 @@ abstract class IBlock extends ProviderAbstract
                            ]);
         
         return $map;
-    }
-    
-    /**
-     * @param array $data
-     *
-     * @return array
-     */
-    public function prepareData(array $data)
-    {
-        $data = parent::prepareData($data);
-        
-        foreach ($data as $k => $v) {
-            if (strpos($k, 'PROPERTY_') === 0) {
-                $data['PROPERTY_VALUES'][str_replace('PROPERTY_', '', $k)] = $v;
-                
-                unset($data[$k]);
-            }
-        }
-
-        $data['IBLOCK_ID'] = $this->entity->getIblockId();
-
-        return $data;
     }
     
     /**

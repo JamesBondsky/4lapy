@@ -34,7 +34,7 @@ abstract class IBlockElement extends IBlock
                                'user.MODIFIED_BY' => 'MODIFIED_BY',
                                'SECTIONS'         => 'SECTIONS',
                            ]);
-        
+
         return $map;
     }
     
@@ -46,7 +46,7 @@ abstract class IBlockElement extends IBlock
     public function prepareData(array $data)
     {
         $data = parent::prepareData($data);
-        
+
         foreach ($data as $k => $v) {
             if (strpos($k, 'PROPERTY_') === 0) {
                 $data['PROPERTY_VALUES'][str_replace('PROPERTY_', '', $k)] = $v;
@@ -56,7 +56,7 @@ abstract class IBlockElement extends IBlock
         }
         
         $data['IBLOCK_ID'] = $this->entity->getIblockId();
-        
+
         return $data;
     }
     

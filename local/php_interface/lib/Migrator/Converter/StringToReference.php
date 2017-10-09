@@ -108,7 +108,7 @@ class StringToReference extends AbstractConverter
         if (!$data[$fieldName]) {
             return $data;
         }
-        
+
         $fieldToSearch = $this->getFieldToSearch();
         
         if (!is_array($data[$fieldName])) {
@@ -151,14 +151,15 @@ class StringToReference extends AbstractConverter
 
         $result = $this->getDataClass()::add($fields);
 
+
         if (!$result->isSuccess()) {
             /**
              * @todo придумать сюда нормальный Exception
              */
             throw new \Exception('Reference value add error: ' . implode(', ', $result->getErrorMessages()));
         }
-
-        self::$referenceValues[] = $fields;
+        
+        self::$referenceValues[$this->getReferenceCode()][] = $fields;
 
         return $externalKey;
     }
@@ -172,6 +173,7 @@ class StringToReference extends AbstractConverter
     protected function searchValue($value, $fieldToSearch) : string
     {
         $referenceValues = $this->getReferenceValues();
+
         $position = array_search($value,
                                  array_column($referenceValues, $fieldToSearch),
                                  true);
@@ -186,13 +188,11 @@ class StringToReference extends AbstractConverter
      */
     protected function getReferenceValues() : array
     {
-        if (!self::$referenceValues) {
-            
-            
-            self::$referenceValues = $this->getDataClass()::getList()->fetchAll();
+        if (!self::$referenceValues[$this->getReferenceCode()]) {
+            self::$referenceValues[$this->getReferenceCode()] = $this->getDataClass()::getList()->fetchAll();
         }
-        
-        return self::$referenceValues;
+
+        return self::$referenceValues[$this->getReferenceCode()];
     }
     
     /**
