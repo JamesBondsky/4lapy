@@ -3,17 +3,22 @@
 namespace FourPaws\Catalog\Collection;
 
 use FourPaws\BitrixIblockORM\Collection\CollectionBase;
-use FourPaws\BitrixIblockORM\Model\BitrixArrayItemBase;
 use FourPaws\Catalog\Model\Product;
 
 class ProductCollection extends CollectionBase
 {
     /**
-     * @return Product
+     * @return Product|false
      */
     protected function doFetch()
     {
-        return new Product($this->getCDBResult()->GetNext());
+        $fields = $this->getCDBResult()->GetNext();
+
+        if (false == $fields) {
+            return false;
+        }
+
+        return new Product($fields);
     }
 
 }

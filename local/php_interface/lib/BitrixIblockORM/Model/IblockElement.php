@@ -9,7 +9,7 @@ namespace FourPaws\BitrixIblockORM\Model;
  * TODO Добавить DATE_ACTIVE_FROM и DATE_ACTIVE_TO
  * Но где они нужны? И не будет ли тормозить, если использовать DateTimeImmutable? Или сделать его создание через lazy?
  */
-abstract class IblockElement extends IblockEntityBase
+abstract class IblockElement extends BitrixArrayItemBase
 {
     /**
      * @var string

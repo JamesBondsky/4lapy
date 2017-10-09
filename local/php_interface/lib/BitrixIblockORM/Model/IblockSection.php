@@ -2,7 +2,7 @@
 
 namespace FourPaws\BitrixIblockORM\Model;
 
-abstract class IblockSection extends IblockEntityBase
+abstract class IblockSection extends BitrixArrayItemBase
 {
     /**
      * @var int
