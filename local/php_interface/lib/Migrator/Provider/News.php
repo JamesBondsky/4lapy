@@ -29,6 +29,7 @@ class News extends IBlockElement
                            [
                                'PROPERTY_type_animal' => 'PROPERTY_TYPE',
                                'PROPERTY_PRODUCTS'    => 'PROPERTY_PRODUCTS',
+                               'DETAIL_PAGE_URL'      => 'PROPERTY_OLD_URL',
                            ]);
         
         return $map;
@@ -39,6 +40,8 @@ class News extends IBlockElement
      *
      * - тип - загоняем в справочник
      * - артикулы (XML_ID, на самом деле) продуктов извлекаем из детального описания и добавляем в отдельное свойство
+     *
+     * @throws \Bitrix\Main\LoaderException
      *
      * @return array
      */
