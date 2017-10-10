@@ -3,6 +3,7 @@
 namespace FourPaws\Migrator\Entity;
 
 use Bitrix\Iblock\SectionTable;
+use FourPaws\Migrator\IblockNotFoundException;
 use FourPaws\Migrator\Utils;
 
 /**
@@ -25,7 +26,6 @@ class Catalog extends IBlockElement
         /**
          * У нас нет значений по умолчанию для этой сущности
          */
-        return;
     }
     
     /**
@@ -33,12 +33,18 @@ class Catalog extends IBlockElement
      *
      * @param string $entity
      * @param int    $iblockId
+     *
+     * @throws \FourPaws\Migrator\IblockNotFoundException
      */
     public function __construct($entity, $iblockId = 0)
     {
         if (!$iblockId) {
-            $iblockId        = Utils::getIblockId('catalog', 'offers');
-            $this->catalogId = Utils::getIblockId('catalog', 'products');
+            try {
+                $iblockId        = Utils::getIblockId('catalog', 'offers');
+                $this->catalogId = Utils::getIblockId('catalog', 'products');
+            } catch (\Exception $e) {
+                throw new IblockNotFoundException($e->getMessage());
+            }
         }
         
         parent::__construct($entity, $iblockId);
@@ -63,6 +69,13 @@ class Catalog extends IBlockElement
      * @param string $primary
      * @param array  $data
      *
+     * @throws \FourPaws\Migrator\Entity\Exceptions\AddException
+     * @throws \FourPaws\Migrator\Entity\Exceptions\AddProductException
+     * @throws \InvalidArgumentException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Exception
+     *
      * @return \FourPaws\Migrator\Entity\AddResult
      */
     public function addMainProduct(string $primary, array $data) : AddResult
@@ -75,6 +88,7 @@ class Catalog extends IBlockElement
         unset($data['PROPERTY_VALUES']['IMG']);
         
         $data['IBLOCK_SECTION_ID'] = $this->getUnsortedSectionIdByCode();
+        $data['IBLOCK_ID']         = $this->catalogId;
         
         return parent::addItem('main_' . $primary, $data);
     }
@@ -82,6 +96,13 @@ class Catalog extends IBlockElement
     /**
      * @param string $primary
      * @param array  $data
+     *
+     * @throws \FourPaws\Migrator\Entity\Exceptions\AddException
+     * @throws \FourPaws\Migrator\Entity\Exceptions\AddProductException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Exception
+     * @throws \InvalidArgumentException
+     * @throws \Bitrix\Main\ArgumentException
      *
      * @return \FourPaws\Migrator\Entity\AddResult
      */
@@ -106,6 +127,12 @@ class Catalog extends IBlockElement
     /**
      * @param string $primary
      * @param array  $data
+     *
+     * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateException
+     * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateProductException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Exception
      *
      * @return \FourPaws\Migrator\Entity\UpdateResult
      */
@@ -148,20 +175,29 @@ class Catalog extends IBlockElement
     /**
      * @param $skuExternalIds
      *
+     * @throws \Bitrix\Main\ArgumentException
+     *
      * @return int
      */
-    public function findMainProductInternalId($skuExternalIds) : int
+    public function findMainProductInternalId(array $skuExternalIds) : int
     {
         foreach ($skuExternalIds as &$id) {
             $id = 'main_' . $id;
         }
+
+        unset($id);
         
-        return (int)array_shift(MapTable::getInternalIdListByExternalIdList($skuExternalIds, $this->entity));
+        $result = MapTable::getInternalIdListByExternalIdList($skuExternalIds, $this->entity);
+        
+        return (int)array_shift($result);
     }
     
     /**
      * @param int   $productId
      * @param array $skuList
+     *
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateException
      */
     public function addSku(int $productId, array $skuList)
     {
@@ -184,19 +220,21 @@ class Catalog extends IBlockElement
     
     /**
      * @return int
+     *
+     * @throws \Bitrix\Main\ArgumentException
      */
-    public function getUnsortedSectionIdByCode()
+    public function getUnsortedSectionIdByCode() : int
     {
         static $sectionId;
         
         if (!$sectionId) {
-            $sectionId = (SectionTable::getList([
-                                                    'filter' => [
-                                                        'CODE'      => self::UNSORTED_SECTION_CODE,
-                                                        'IBLOCK_ID' => $this->catalogId,
-                                                    ],
-                                                    'select' => ['ID'],
-                                                ])->fetch())['ID'];
+            $sectionId = SectionTable::getList([
+                                                   'filter' => [
+                                                       'CODE'      => self::UNSORTED_SECTION_CODE,
+                                                       'IBLOCK_ID' => $this->catalogId,
+                                                   ],
+                                                   'select' => ['ID'],
+                                               ])->fetch()['ID'];
         }
         
         return (int)$sectionId;

@@ -2,10 +2,6 @@
 
 namespace FourPaws\Migrator\Entity;
 
-use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use Psr\Log\LoggerInterface;
-use Psr\Log\LoggerAwareInterface;
-
 abstract class AbstractEntity implements EntityInterface
 {
     protected $entity;

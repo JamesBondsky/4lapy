@@ -18,6 +18,8 @@ class UserGroup extends AbstractEntity
      * Установим маппинг существующих групп по умолчанию
      *
      * EXTERNAL -> INTERNAL
+     *
+     * @throws \Exception
      */
     public function setDefaults()
     {
@@ -46,10 +48,12 @@ class UserGroup extends AbstractEntity
      * @param array  $data
      *
      * @return \FourPaws\Migrator\Entity\UpdateResult
+     *
+     * @throws \Exception
      */
     public function updateItem(string $primary, array $data) : UpdateResult
     {
-        if (in_array($primary, self::EXCLUDED_GROUPS)) {
+        if (in_array($primary, self::EXCLUDED_GROUPS, false)) {
             return new UpdateResult(true, $primary);
         }
         
@@ -63,16 +67,16 @@ class UserGroup extends AbstractEntity
      * @param array  $data
      *
      * @return \FourPaws\Migrator\Entity\AddResult
+     *
      * @throws \FourPaws\Migrator\Entity\Exceptions\AddException
+     * @throws \Exception
      */
     public function addItem(string $primary, array $data) : AddResult
     {
         $result = GroupTable::add($data);
         
-        if ($result->isSuccess()) {
-            if (!MapTable::addEntity($this->entity, $primary, $result->getId())->isSuccess()) {
-                throw new AddException("Error: add entity was broken");
-            }
+        if ($result->isSuccess() && !MapTable::addEntity($this->entity, $primary, $result->getId())->isSuccess()) {
+            throw new AddException("Error: add entity was broken");
         }
         
         return new AddResult($result->isSuccess(), $result->getId());
@@ -84,7 +88,9 @@ class UserGroup extends AbstractEntity
      * @param        $value
      *
      * @return \FourPaws\Migrator\Entity\UpdateResult
+     *
      * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateException
+     * @throws \Exception
      */
     public function setFieldValue(string $field, string $primary, $value) : UpdateResult
     {

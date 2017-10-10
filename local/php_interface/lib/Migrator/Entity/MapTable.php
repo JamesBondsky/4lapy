@@ -3,7 +3,6 @@
 namespace FourPaws\Migrator\Entity;
 
 use Bitrix\Main\Entity\AddResult;
-use Bitrix\Main\Entity\BooleanField;
 use Bitrix\Main\Entity\DataManager;
 use Bitrix\Main\Entity\IntegerField;
 use Bitrix\Main\Entity\ReferenceField;
@@ -21,6 +20,8 @@ class MapTable extends DataManager
     
     /**
      * @return array
+     *
+     * @throws \Bitrix\Main\ArgumentException
      */
     public static function getMap() : array
     {
@@ -53,6 +54,8 @@ class MapTable extends DataManager
      * @param string $entity
      *
      * @return bool
+     *
+     * @throws \Bitrix\Main\ArgumentException
      */
     public static function isInternalEntityExists(string $external, string $entity) : bool
     {
@@ -71,16 +74,18 @@ class MapTable extends DataManager
      * @param string $entity
      *
      * @return string
+     *
+     * @throws \Bitrix\Main\ArgumentException
      */
     public static function getInternalIdByExternalId(string $external, string $entity) : string
     {
-        return (string)(self::getList([
-                                          'filter' => [
-                                              'EXTERNAL_ID' => $external,
-                                              'ENTITY'      => $entity,
-                                          ],
-                                          'select' => ['INTERNAL_ID'],
-                                      ])->fetch())['INTERNAL_ID'];
+        return (string)self::getList([
+                                         'filter' => [
+                                             'EXTERNAL_ID' => $external,
+                                             'ENTITY'      => $entity,
+                                         ],
+                                         'select' => ['INTERNAL_ID'],
+                                     ])->fetch()['INTERNAL_ID'];
     }
     
     /**
@@ -88,16 +93,18 @@ class MapTable extends DataManager
      * @param string $entity
      *
      * @return string
+     *
+     * @throws \Bitrix\Main\ArgumentException
      */
     public static function getExternalIdByInternalId(string $internal, string $entity) : string
     {
-        return (string)(self::getList([
-                                          'filter' => [
-                                              'INTERNAL_ID' => $internal,
-                                              'ENTITY'      => $entity,
-                                          ],
-                                          'select' => ['EXTERNAL_ID'],
-                                      ])->fetch())['EXTERNAL_ID'];
+        return (string)self::getList([
+                                         'filter' => [
+                                             'INTERNAL_ID' => $internal,
+                                             'ENTITY'      => $entity,
+                                         ],
+                                         'select' => ['EXTERNAL_ID'],
+                                     ])->fetch()['EXTERNAL_ID'];
     }
     
     /**
@@ -105,6 +112,8 @@ class MapTable extends DataManager
      * @param string $entity
      *
      * @return array
+     *
+     * @throws \Bitrix\Main\ArgumentException
      */
     public static function getInternalIdListByExternalIdList(array $external, string $entity) : array
     {
@@ -115,7 +124,7 @@ class MapTable extends DataManager
                                     ],
                                     'select' => ['INTERNAL_ID'],
                                 ])->fetchAll();
-
+        
         return array_column($result, 'INTERNAL_ID');
     }
     
@@ -124,6 +133,8 @@ class MapTable extends DataManager
      * @param string $entity
      *
      * @return array
+     *
+     * @throws \Bitrix\Main\ArgumentException
      */
     public static function getExternalListIdByInternalIdList(array $internal, string $entity) : array
     {
@@ -144,6 +155,8 @@ class MapTable extends DataManager
      * @param string $internalId
      *
      * @return \Bitrix\Main\Entity\AddResult
+     *
+     * @throws \Exception
      */
     public static function addEntity(string $entity, string $externalId, string $internalId) : AddResult
     {

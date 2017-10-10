@@ -22,17 +22,19 @@ abstract class ClientPullAbstract implements ClientPullInterface, LoggerAwareInt
     /**
      * @return \FourPaws\Migrator\Client\ClientInterface[] array
      */
-    public abstract function getBaseClientList() : array;
+    abstract public function getBaseClientList() : array;
     
     /**
      * @return \FourPaws\Migrator\Client\ClientInterface[] array
      */
-    public abstract function getClientList() : array;
+    abstract public function getClientList() : array;
     
     /**
      * ClientPullAbstract constructor.
      *
      * @param array $options
+     *
+     * @throws \RuntimeException
      */
     public function __construct(array $options = [])
     {
@@ -78,7 +80,7 @@ abstract class ClientPullAbstract implements ClientPullInterface, LoggerAwareInt
     /**
      * @return LoggerInterface
      */
-    public function getLogger()
+    public function getLogger() : LoggerInterface
     {
         return $this->logger;
     }

@@ -2,10 +2,10 @@
 
 namespace FourPaws\Migrator\Converter;
 
+use Bitrix\Highloadblock\DataManager;
 use Bitrix\Highloadblock\HighloadBlockTable;
 use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
-use Bitrix\Highloadblock\DataManager;
 
 /**
  * Class StringToReference
@@ -19,9 +19,9 @@ class StringToReference extends AbstractConverter
 {
     const FIELD_EXTERNAL_KEY = 'UF_XML_ID';
     
-    private $referenceCode;
+    private          $referenceCode;
     
-    private $fieldToSearch;
+    private          $fieldToSearch;
     
     protected static $referenceValues = [];
     
@@ -97,6 +97,8 @@ class StringToReference extends AbstractConverter
      * @param array $data
      *
      * @return array
+     *
+     * @throws \Exception
      */
     public function convert(array $data) : array
     {
@@ -104,30 +106,32 @@ class StringToReference extends AbstractConverter
         
         $isArray   = true;
         $fieldName = $this->getFieldName();
-
+        
         if (!$data[$fieldName]) {
             return $data;
         }
-
+        
         $fieldToSearch = $this->getFieldToSearch();
         
         if (!is_array($data[$fieldName])) {
             $isArray          = false;
             $data[$fieldName] = [$data[$fieldName]];
         }
-    
+        
         $result = [];
-
+        
         foreach ($data[$fieldName] as $value) {
+            $value = trim($value);
+            
             $r = $this->searchValue($value, $fieldToSearch);
-
+            
             if (!$r) {
                 $r = $this->addValue($value, $fieldToSearch);
             }
-
+            
             $result[] = $r;
         }
-
+        
         $data[$fieldName] = $isArray ? $result : array_shift($result);
         
         return $data;
@@ -143,15 +147,23 @@ class StringToReference extends AbstractConverter
     protected function addValue(string $value, string $fieldName) : string
     {
         $externalKey = md5($value);
-
+        
         $fields = [
             $fieldName               => $value,
             self::FIELD_EXTERNAL_KEY => $externalKey,
         ];
-
+        
+        $exists = $this->getDataClass()::getList([
+                                                     'filter' => [self::FIELD_EXTERNAL_KEY => $externalKey],
+                                                     'select' => [self::FIELD_EXTERNAL_KEY],
+                                                 ])->fetch();
+        
+        if ($exists[self::FIELD_EXTERNAL_KEY]) {
+            return $exists[self::FIELD_EXTERNAL_KEY];
+        }
+        
         $result = $this->getDataClass()::add($fields);
-
-
+        
         if (!$result->isSuccess()) {
             /**
              * @todo придумать сюда нормальный Exception
@@ -160,7 +172,7 @@ class StringToReference extends AbstractConverter
         }
         
         self::$referenceValues[$this->getReferenceCode()][] = $fields;
-
+        
         return $externalKey;
     }
     
@@ -169,15 +181,17 @@ class StringToReference extends AbstractConverter
      * @param $fieldToSearch
      *
      * @return mixed
+     *
+     * @throws \Exception
      */
-    protected function searchValue($value, $fieldToSearch) : string
+    protected function searchValue($value, $fieldToSearch)
     {
         $referenceValues = $this->getReferenceValues();
-
+        
         $position = array_search($value,
                                  array_column($referenceValues, $fieldToSearch),
                                  true);
-
+        
         return $position === false ? '' : $referenceValues[$position][self::FIELD_EXTERNAL_KEY];
     }
     
@@ -191,7 +205,7 @@ class StringToReference extends AbstractConverter
         if (!self::$referenceValues[$this->getReferenceCode()]) {
             self::$referenceValues[$this->getReferenceCode()] = $this->getDataClass()::getList()->fetchAll();
         }
-
+        
         return self::$referenceValues[$this->getReferenceCode()];
     }
     

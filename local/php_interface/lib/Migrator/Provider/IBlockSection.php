@@ -12,11 +12,6 @@ use FourPaws\Migrator\Entity\IBlockSection as IBlockSectionEntity;
  */
 abstract class IBlockSection extends IBlock
 {
-    /**
-     * @var IBlockSectionEntity
-     */
-    protected $entity;
-    
     public function getMap() : array
     {
         $map = array_diff(array_keys(array_filter(SectionTable::getMap(), self::getScalarEntityMapFilter())),
@@ -44,12 +39,12 @@ abstract class IBlockSection extends IBlock
      *
      * @return array
      */
-    public function prepareData(array $data)
+    public function prepareData(array $data) : array
     {
         $data = parent::prepareData($data);
-
+        
         $data['IBLOCK_ID'] = $this->entity->getIblockId();
-    
+        
         return $data;
     }
     

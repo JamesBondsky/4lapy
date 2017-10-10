@@ -8,15 +8,12 @@ use FourPaws\Migrator\Entity\IBlockElement as IBlockElementEntity;
 /**
  * Class IBlockElement
  *
+ * @property $entity IBlockElementEntity
+ *
  * @package FourPaws\Migrator\Provider
  */
 abstract class IBlockElement extends IBlock
 {
-    /**
-     * @var IBlockElementEntity
-     */
-    protected $entity;
-    
     public function getMap() : array
     {
         $map = array_diff(array_keys(array_filter(ElementTable::getMap(), self::getScalarEntityMapFilter())),
@@ -34,7 +31,7 @@ abstract class IBlockElement extends IBlock
                                'user.MODIFIED_BY' => 'MODIFIED_BY',
                                'SECTIONS'         => 'SECTIONS',
                            ]);
-
+        
         return $map;
     }
     
@@ -43,10 +40,10 @@ abstract class IBlockElement extends IBlock
      *
      * @return array
      */
-    public function prepareData(array $data)
+    public function prepareData(array $data) : array
     {
         $data = parent::prepareData($data);
-
+        
         foreach ($data as $k => $v) {
             if (strpos($k, 'PROPERTY_') === 0) {
                 $data['PROPERTY_VALUES'][str_replace('PROPERTY_', '', $k)] = $v;
@@ -56,7 +53,7 @@ abstract class IBlockElement extends IBlock
         }
         
         $data['IBLOCK_ID'] = $this->entity->getIblockId();
-
+        
         return $data;
     }
     

@@ -86,7 +86,10 @@ trait StateTrait
         if ($this->timer) {
             return time() - $this->timer;
         }
-        
+    
+        /**
+         * @todo Впилить нормальный Exception
+         */
         throw new \Exception('Timer is empty');
     }
     
@@ -96,7 +99,7 @@ trait StateTrait
      * @return string
      * @throws \Exception
      */
-    public function getFormattedTime(string $format = '%hh %im %ss')
+    public function getFormattedTime(string $format = '%hh %im %ss') : string
     {
         if ($this->timer) {
             return \DateTime::createFromFormat('U', time())
@@ -104,6 +107,9 @@ trait StateTrait
                             ->format($format);
         }
         
+        /**
+         * @todo Впилить нормальный Exception
+         */
         throw new \Exception('Timer is empty');
     }
 }

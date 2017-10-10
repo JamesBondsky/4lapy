@@ -30,8 +30,10 @@ class Utils
      *
      * @return int
      * @throws IblockNotFoundException
+     * @throws \InvalidArgumentException
+     * @throws \Bitrix\Main\ArgumentException
      */
-    public static function getIblockId($type, $code)
+    public static function getIblockId($type, $code) : int
     {
         return (int)self::getIblockField($type, $code, 'ID');
     }
@@ -44,8 +46,10 @@ class Utils
      *
      * @return string
      * @throws IblockNotFoundException
+     * @throws \InvalidArgumentException
+     * @throws \Bitrix\Main\ArgumentException
      */
-    public static function getIblockXmlId($type, $code)
+    public static function getIblockXmlId($type, $code) : string
     {
         return trim(self::getIblockField($type, $code, 'XML_ID'));
     }
@@ -56,14 +60,17 @@ class Utils
      * @param $field
      *
      * @return string
-     * @throws IblockNotFoundException
+     *
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \InvalidArgumentException
+     * @throws \FourPaws\Migrator\IblockNotFoundException
      */
-    private static function getIblockField($type, $code, $field)
+    private static function getIblockField($type, $code, $field) : string
     {
         $type = trim($type);
         $code = trim($code);
         
-        if ($type == '' || $code == '') {
+        if (!$type || !$code) {
             throw new \InvalidArgumentException('Iblock type and code must be specified');
         }
         
@@ -89,11 +96,13 @@ class Utils
     /**
      * Возвращает краткую информацию обо всех инфоблоках в виде многомерного массива.
      *
+     * @throws \Bitrix\Main\ArgumentException
+     *
      * @return array <iblock type> => <iblock code> => array of iblock fields
      */
-    private static function getAllIblockInfo()
+    private static function getAllIblockInfo() : array
     {
-        if (is_null(self::$iblockInfo)) {
+        if (self::$iblockInfo === null) {
             $iblockList = (new Query(IblockTable::getEntity()))
                 ->setSelect(['ID', 'IBLOCK_TYPE_ID', 'CODE', 'XML_ID'])
                 ->exec();

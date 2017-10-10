@@ -23,14 +23,17 @@ abstract class IBlockElement extends IBlock
      * @param array  $data
      *
      * @return \FourPaws\Migrator\Entity\AddResult
+     *
      * @throws \FourPaws\Migrator\Entity\Exceptions\AddException
      * @throws \FourPaws\Migrator\Entity\Exceptions\AddProductException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Exception
      */
     public function addItem(string $primary, array $data) : AddResult
     {
         $cIBlockElement = new \CIBlockElement();
-        
-        $id = $cIBlockElement->Add($data, false, false, false);
+
+        $id = $cIBlockElement->Add($data, false, false);
         
         if (!$id) {
             throw new AddException("IBlock {$this->getIblockId()} element #{$primary} add error: $cIBlockElement->LAST_ERROR");
@@ -39,7 +42,7 @@ abstract class IBlockElement extends IBlock
         /**
          * @todo переписать к чертям
          */
-        if ($data['CATALOG']) {
+        if (is_array($data['CATALOG']) && $data['CATALOG']) {
             Loader::includeModule('catalog');
             
             $price = $data['CATALOG']['PRICE'];
@@ -76,7 +79,7 @@ abstract class IBlockElement extends IBlock
             $this->setInternalKeys(['sections' => $data['SECTIONS']], $id, $this->entity . '_section');
         }
         
-        return (new AddResult(true, $id));
+        return new AddResult(true, $id);
     }
     
     /**
@@ -84,8 +87,11 @@ abstract class IBlockElement extends IBlock
      * @param array  $data
      *
      * @return \FourPaws\Migrator\Entity\UpdateResult
+     *
      * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateException
      * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateProductException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Exception
      */
     public function updateItem(string $primary, array $data) : UpdateResult
     {
@@ -100,7 +106,7 @@ abstract class IBlockElement extends IBlock
         /**
          * @todo переписать к чертям
          */
-        if ($data['CATALOG']) {
+        if (is_array($data['CATALOG']) && $data['CATALOG']) {
             Loader::includeModule('catalog');
             
             $price = $data['CATALOG']['PRICE'];
@@ -127,7 +133,7 @@ abstract class IBlockElement extends IBlock
             \CPrice::SetBasePrice($primary, $price, 'RUB');
         }
         
-        return (new UpdateResult(true, $primary));
+        return new UpdateResult(true, $primary);
     }
     
     /**
@@ -152,14 +158,16 @@ abstract class IBlockElement extends IBlock
      * @param        $value
      *
      * @return \FourPaws\Migrator\Entity\UpdateResult
+     *
+     * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateException
      */
     public function setFieldValue(string $field, string $primary, $value) : UpdateResult
     {
         if (strpos($field, self::PROPERTY_PREFIX) === false) {
             return $this->updateField($field, $primary, $value);
-        } else {
-            return $this->updateProperty(substr($field, strlen(self::PROPERTY_PREFIX)), $primary, $value);
         }
+        
+        return $this->updateProperty(substr($field, strlen(self::PROPERTY_PREFIX)), $primary, $value);
     }
     
     /**
@@ -191,7 +199,7 @@ abstract class IBlockElement extends IBlock
     public function updateProperty(string $property, string $primary, $value) : UpdateResult
     {
         (new \CIBlockElement())->SetPropertyValues($primary, $this->getIblockId(), $value, $property);
-
+        
         /**
          * А вот здесь хер что мы отследим, Битрикс ничего не возвращаем. Считаем, что у нас никаких проблем нет.
          */
