@@ -4,6 +4,7 @@ namespace FourPaws\Migrator\Provider;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Entity\ScalarField;
+use FourPaws\Migrator\Converter\ConverterInterface;
 use FourPaws\Migrator\Entity\EntityInterface;
 use FourPaws\Migrator\Entity\EntityTable;
 use FourPaws\Migrator\Entity\LazyTable;
@@ -138,6 +139,7 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
      * @param array $data
      *
      * @return array
+     * @throws \RuntimeException
      */
     public function prepareData(array $data) : array
     {
@@ -152,6 +154,10 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
         }
         
         foreach ($this->getConverters() as $converter) {
+            if (!$converter instanceof ConverterInterface) {
+                throw new \RuntimeException("Unknown converter: {$converter}");
+            }
+            
             $result = $converter->convert($result);
         }
         
