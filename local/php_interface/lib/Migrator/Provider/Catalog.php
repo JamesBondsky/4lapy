@@ -178,7 +178,6 @@ class Catalog extends IBlockElement
         $makerConverter = new StringToReference('PROPERTY_MAKER');
         $makerConverter->setReferenceCode('Maker');
         
-        $tradeNameTrimConverter = new Trim('PROPERTY_TRADE_NAME');
         $tradeNameConverter     = new StringToReference('PROPERTY_TRADE_NAME');
         $tradeNameConverter->setReferenceCode('TradeName');
         
@@ -226,7 +225,6 @@ class Catalog extends IBlockElement
             $categoryConverter,
             $purposeConverter,
             $makerConverter,
-            $tradeNameTrimConverter,
             $tradeNameConverter,
             $managerConverter,
             $materialConverter,
