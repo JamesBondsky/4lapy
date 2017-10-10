@@ -178,7 +178,8 @@ class Catalog extends IBlockElement
         $makerConverter = new StringToReference('PROPERTY_MAKER');
         $makerConverter->setReferenceCode('Maker');
         
-        $tradeNameConverter = new StringToReference('PROPERTY_TRADE_NAME');
+        $tradeNameTrimConverter = new Trim('PROPERTY_TRADE_NAME');
+        $tradeNameConverter     = new StringToReference('PROPERTY_TRADE_NAME');
         $tradeNameConverter->setReferenceCode('TradeName');
         
         $managerConverter = new StringToReference('PROPERTY_MANAGER_OF_CATEGORY');
@@ -208,10 +209,7 @@ class Catalog extends IBlockElement
         $petAgeAdditionalConverter = new StringToReference('PROPERTY_PET_AGE_ADDITIONAL');
         $petAgeAdditionalConverter->setReferenceCode('PetAgeAdditional');
         
-        $brandConverter = new StringToIblock('PROPERTY_BRAND');
-        $brandConverter->setIblockId(Utils::getIblockId('catalog', 'brands'));
-        
-        return [
+        $converters = [
             $pictureConverter,
             $skuTrimConverter,
             $skuIntConverter,
@@ -228,6 +226,7 @@ class Catalog extends IBlockElement
             $categoryConverter,
             $purposeConverter,
             $makerConverter,
+            $tradeNameTrimConverter,
             $tradeNameConverter,
             $managerConverter,
             $materialConverter,
@@ -237,8 +236,16 @@ class Catalog extends IBlockElement
             $petAgeConverter,
             $petAgeAdditionalConverter,
             $colorConverter,
-            $brandConverter,
             $rewardTypeConverter,
         ];
+        
+        try {
+            $brandConverter = new StringToIblock('PROPERTY_BRAND');
+            $converters[]   = $brandConverter->setIblockId(Utils::getIblockId('catalog', 'brands'));
+        } catch (\Exception $e) {
+            $this->getLogger()->error("Brand convert error: {$e->getMessage()}");
+        }
+        
+        return $converters;
     }
 }
