@@ -69,6 +69,8 @@ final class CountryToReference extends StringToReference
      * @param $fieldToSearch
      *
      * @return mixed
+     *
+     * @throws \Exception
      */
     protected function searchValue($code, $fieldToSearch = self::FIELD_EXTERNAL_KEY) : string
     {

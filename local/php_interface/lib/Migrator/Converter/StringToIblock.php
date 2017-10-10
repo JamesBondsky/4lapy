@@ -61,6 +61,8 @@ class StringToIblock extends AbstractConverter
      * @param array $data
      *
      * @return array
+     *
+     * @throws \Exception
      */
     public function convert(array $data) : array
     {
@@ -119,7 +121,7 @@ class StringToIblock extends AbstractConverter
             'IBLOCK_ID' => $this->getIblockId(),
         ];
         
-        if ($fieldName != self::DEFAULT_VALUE_KEY) {
+        if ($fieldName !== self::DEFAULT_VALUE_KEY) {
             $fields[self::DEFAULT_VALUE_KEY] = '-';
         }
         
@@ -144,8 +146,10 @@ class StringToIblock extends AbstractConverter
      * @param $fieldToSearch
      *
      * @return mixed
+     *
+     * @throws \Exception
      */
-    protected function searchValue($value, $fieldToSearch) : string
+    protected function searchValue($value, $fieldToSearch)
     {
         $referenceValues = $this->getReferenceValues();
         $position        = array_search($value,

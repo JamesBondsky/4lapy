@@ -25,7 +25,7 @@ abstract class IBlockSection extends IBlock
     {
         $cIBlockSection = new \CIBlockSection();
         
-        $id = $cIBlockSection->Add($data, false, false, false);
+        $id = $cIBlockSection->Add($data, false, false);
         
         if (!$id) {
             throw new AddException("IBlock {$this->getIblockId()} section #{$primary} add error: $cIBlockSection->LAST_ERROR");
@@ -35,7 +35,7 @@ abstract class IBlockSection extends IBlock
         
         MapTable::addEntity($this->entity, $primary, $id);
         
-        return (new AddResult(true, $id));
+        return new AddResult(true, $id);
     }
     
     /**
@@ -49,13 +49,13 @@ abstract class IBlockSection extends IBlock
     {
         $cIBlockSection = new \CIBlockSection();
         
-        if (!$cIBlockSection->Update($primary, $data, false, false, false)) {
+        if (!$cIBlockSection->Update($primary, $data, false, false)) {
             throw new UpdateException("IBlock {$this->getIblockId()} section #{$primary} update error: $cIBlockSection->LAST_ERROR");
         }
         
         $this->isUpdated = true;
         
-        return (new UpdateResult(true, $primary));
+        return new UpdateResult(true, $primary);
     }
     
     /**
@@ -67,7 +67,7 @@ abstract class IBlockSection extends IBlock
             \CIBlockSection::ReSort($this->getIblockId());
         }
     }
-
+    
     /**
      * @param string $field
      * @param string $primary

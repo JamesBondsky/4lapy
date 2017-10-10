@@ -4,7 +4,9 @@ namespace FourPaws\Migrator\Provider;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Entity\ScalarField;
+use FourPaws\Migrator\Converter\ConverterInterface;
 use FourPaws\Migrator\Entity\EntityInterface;
+use FourPaws\Migrator\Entity\EntityTable;
 use FourPaws\Migrator\Entity\LazyTable;
 use FourPaws\Migrator\Entity\MapTable;
 use FourPaws\Migrator\Entity\UpdateResult;
@@ -13,7 +15,6 @@ use FourPaws\Migrator\StateTrait;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Response;
-use FourPaws\Migrator\Entity\EntityTable;
 
 abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterface
 {
@@ -28,7 +29,7 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
     
     protected $logger;
     
-    protected $external;
+    protected $external = [];
     
     protected $savedIds = [];
     
@@ -43,7 +44,7 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
     /**
      * @return LoggerInterface
      */
-    public function getLogger()
+    public function getLogger() : LoggerInterface
     {
         return $this->logger;
     }
@@ -90,6 +91,8 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
      *
      * @param string                                    $entityName
      * @param \FourPaws\Migrator\Entity\EntityInterface $entity
+     *
+     * @throws \RuntimeException
      */
     public function __construct(string $entityName, EntityInterface $entity)
     {
@@ -136,8 +139,9 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
      * @param array $data
      *
      * @return array
+     * @throws \RuntimeException
      */
-    public function prepareData(array $data)
+    public function prepareData(array $data) : array
     {
         $result = [];
         
@@ -150,6 +154,10 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
         }
         
         foreach ($this->getConverters() as $converter) {
+            if (!$converter instanceof ConverterInterface) {
+                throw new \RuntimeException("Unknown converter: {$converter}");
+            }
+            
             $result = $converter->convert($result);
         }
         
@@ -160,6 +168,7 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
      * @param \Symfony\Component\HttpFoundation\Response $response
      *
      * @throws \FourPaws\Migrator\Provider\Exceptions\FailResponseException
+     * @throws \Exception
      */
     public function save(Response $response)
     {
@@ -173,15 +182,15 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
         if (!isset($parsed[$this->entityName])) {
             throw new FailResponseException('Entity name is not found in response.');
         }
-
+        
         foreach ($parsed[$this->entityName] as $item) {
             $primary   = $entity->getPrimaryByItem($item);
             $timestamp = $entity->getTimestampByItem($item);
             $item      = $this->prepareData($item);
-
+            
             try {
                 $result = $entity->addOrUpdateItem($primary, $item);
-
+                
                 if (!$result->getResult()) {
                     /**
                      * @todo придумать сюда нормальный exception
@@ -195,7 +204,7 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
                 $this->savedIds[$primary] = $result->getInternalId();
                 
                 $lastTimestamp = strtotime($timestamp) > $lastTimestamp ? strtotime($timestamp) : $lastTimestamp;
-
+                
                 if ($result instanceof UpdateResult) {
                     $this->incUpdate();
                 } else {
@@ -220,7 +229,7 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
                                               $this->getUpdateCount(),
                                               $this->getErrorCount(),
                                           ]));
-
+        
         if ($lastTimestamp) {
             EntityTable::updateEntity($this->entityName, $lastTimestamp);
         }
@@ -228,6 +237,8 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
     
     /**
      * Install default entity
+     *
+     * @throws \Exception
      */
     public function installEntity()
     {
@@ -312,7 +323,7 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
         if (!$this->savedIds) {
             return;
         }
-
+        
         LazyTable::handleLazy($this->entityName, $this->savedIds);
     }
 }

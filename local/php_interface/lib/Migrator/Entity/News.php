@@ -2,6 +2,7 @@
 
 namespace FourPaws\Migrator\Entity;
 
+use FourPaws\Migrator\IblockNotFoundException;
 use FourPaws\Migrator\Utils;
 
 class News extends IBlockElement
@@ -13,7 +14,6 @@ class News extends IBlockElement
         /**
          * У нас нет значений по умолчанию для этой сущности
          */
-        return;
     }
     
     /**
@@ -21,11 +21,17 @@ class News extends IBlockElement
      *
      * @param string $entity
      * @param int    $iblockId
+     *
+     * @throws \FourPaws\Migrator\IblockNotFoundException
      */
     public function __construct($entity, $iblockId = 0)
     {
         if (!$iblockId) {
-            $iblockId = Utils::getIblockId('publications', 'news');
+            try {
+                $iblockId = Utils::getIblockId('publications', 'news');
+            } catch (\Exception $e) {
+                throw new IblockNotFoundException($e->getMessage());
+            }
         }
         
         parent::__construct($entity, $iblockId);

@@ -15,7 +15,7 @@ class UserGroup extends ProviderAbstract
         static $map;
 
         if (!$map) {
-            $map = array_diff(array_keys(array_filter(GroupTable::getMap(), self::getScalarEntityMapFilter())),
+            $map = array_diff(array_keys(array_filter(GroupTable::getMap(), $this->getScalarEntityMapFilter())),
                               [$this->entity->getPrimary()]);
     
             $map = array_combine($map, $map);
@@ -29,9 +29,11 @@ class UserGroup extends ProviderAbstract
      *
      * @return array
      */
-    public function prepareData(array $data)
+    public function prepareData(array $data) : array
     {
-        $data['TIMESTAMP_X'] = new DateTime($data['TIMESTAMP_X']);
+        try {
+            $data['TIMESTAMP_X'] = new DateTime($data['TIMESTAMP_X']);
+        } catch (\Exception $e) {}
         
         return parent::prepareData($data);
     }

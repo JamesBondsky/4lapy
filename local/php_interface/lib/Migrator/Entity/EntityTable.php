@@ -51,7 +51,9 @@ class EntityTable extends DataManager
         ];
     }
     
-    /**@noinspection
+    /**
+     * @throws \Bitrix\Main\ArgumentTypeException
+     *
      * @return \Bitrix\Main\Entity\IValidator[] array
      */
     public function validateEntity() : array
@@ -75,7 +77,7 @@ class EntityTable extends DataManager
      * @return \Bitrix\Main\Entity\AddResult
      * @throws \Exception
      */
-    public static function addEntity(string $entity, int $timestamp = 0, string $broken = '')
+    public static function addEntity(string $entity, int $timestamp = 0, string $broken = '') : \Bitrix\Main\Entity\AddResult
     {
         $fields = ['ENTITY' => $entity];
         
@@ -97,7 +99,7 @@ class EntityTable extends DataManager
      * @return \Bitrix\Main\Entity\UpdateResult
      * @throws \Exception
      */
-    public static function updateEntity(string $entity, int $timestamp)
+    public static function updateEntity(string $entity, int $timestamp) : \Bitrix\Main\Entity\UpdateResult
     {
         if (!self::getByPrimary($entity)->fetch()) {
             parent::add(['ENTITY' => $entity]);
@@ -105,8 +107,11 @@ class EntityTable extends DataManager
         
         $fields = ['TIMESTAMP' => DateTime::createFromTimestamp($timestamp),];
         $result = parent::update($entity, $fields);
-
+        
         if (!$result->isSuccess()) {
+            /**
+             * @todo добавить нормальный Exception
+             */
             throw new \Exception("Entity update error: \n" . implode("\n", $result->getErrors()));
         }
         
@@ -121,6 +126,9 @@ class EntityTable extends DataManager
      */
     public static function add(array $data)
     {
+        /**
+         * @todo добавить нормальный Exception
+         */
         throw new \Exception('Use addEntity');
     }
     
@@ -133,6 +141,9 @@ class EntityTable extends DataManager
      */
     public static function update($primary, array $data)
     {
+        /**
+         * @todo добавить нормальный Exception
+         */
         throw new \Exception('Use updateEntity');
     }
     
@@ -143,17 +154,19 @@ class EntityTable extends DataManager
      * @return \Bitrix\Main\Entity\UpdateResult
      * @throws \Exception
      */
-    public static function pushBroken(string $entity, string $primary)
+    public static function pushBroken(string $entity, string $primary) : \Bitrix\Main\Entity\UpdateResult
     {
         $entityEntity = self::getByPrimary($entity)->fetch();
         
         if (!$entityEntity) {
+            /**
+             * @todo добавить нормальный Exception
+             */
             throw new \Exception('Wrong entity');
         }
         
-        $broken =
-            $entityEntity['BROKEN'] ? array_unique(array_merge(self::decodeBroken($entityEntity['BROKEN']),
-                                                               [$primary])) : [$primary];
+        $broken = $entityEntity['BROKEN'] ? array_unique(array_merge(self::decodeBroken($entityEntity['BROKEN']),
+                                                                     [$primary])) : [$primary];
         
         return parent::update($entity, ['BROKEN' => self::encodeBroken($broken)]);
     }
@@ -165,11 +178,14 @@ class EntityTable extends DataManager
      * @return \Bitrix\Main\Entity\UpdateResult
      * @throws \Exception
      */
-    public function popBroken(string $entity, string $primary)
+    public function popBroken(string $entity, string $primary) : \Bitrix\Main\Entity\UpdateResult
     {
         $entityEntity = self::getByPrimary($entity)->fetch();
         
         if (!$entityEntity) {
+            /**
+             * @todo добавить нормальный Exception
+             */
             throw new \Exception('Wrong entity');
         }
         

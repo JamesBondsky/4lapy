@@ -13,6 +13,8 @@ class User extends AbstractEntity
      * Считаем удалённого со старого сайта администратора нашим админом
      *
      * EXTERNAL -> INTERNAL
+     *
+     * @throws \Exception
      */
     public function setDefaults()
     {
@@ -45,7 +47,9 @@ class User extends AbstractEntity
      * @param array  $data
      *
      * @return \FourPaws\Migrator\Entity\UpdateResult
+     *
      * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateException
+     * @throws \Bitrix\Main\DB\SqlQueryException
      */
     public function updateItem(string $primary, array $data) : UpdateResult
     {
@@ -53,11 +57,11 @@ class User extends AbstractEntity
         
         if (!$user->Update($primary, $data)) {
             throw new UpdateException("User #{$primary} update error: $user->LAST_ERROR");
-        } else {
-            $this->setPassword($primary, $data['PASSWORD'], $data['CHECKWORD']);
         }
         
-        return (new UpdateResult(true, $primary));
+        $this->setRawPassword($primary, $data['PASSWORD'], $data['CHECKWORD']);
+        
+        return new UpdateResult(true, $primary);
     }
     
     /**
@@ -65,7 +69,11 @@ class User extends AbstractEntity
      * @param array  $data
      *
      * @return \FourPaws\Migrator\Entity\AddResult
+     *
      * @throws \FourPaws\Migrator\Entity\Exceptions\AddException
+     * @throws \Bitrix\Main\DB\SqlQueryException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Exception
      */
     public function addItem(string $primary, array $data) : AddResult
     {
@@ -74,17 +82,17 @@ class User extends AbstractEntity
         
         $id = $user->Add($data);
         
-        if ($id) {
-            $this->setPassword($id, $data['PASSWORD'], $data['CHECKWORD']);
-            
-            MapTable::addEntity($this->entity, $primary, $id);
-            
-            $this->setInternalKeys(['groups' => $groups], $id, UserGroupClient::ENTITY_NAME);
-        } else {
+        if (!$id) {
             throw new AddException("User #{$primary} add error: $user->LAST_ERROR");
         }
         
-        return (new AddResult(true, $id));
+        $this->setRawPassword($id, $data['PASSWORD'], $data['CHECKWORD']);
+        
+        MapTable::addEntity($this->entity, $primary, $id);
+        
+        $this->setInternalKeys(['groups' => $groups], $id, UserGroupClient::ENTITY_NAME);
+        
+        return new AddResult(true, $id);
     }
     
     /**
@@ -92,26 +100,28 @@ class User extends AbstractEntity
      * @param string $password
      * @param string $checkword
      *
-     * @return \Bitrix\Main\DB\Result
+     * @throws \Bitrix\Main\DB\SqlQueryException
      */
-    public function setPassword(int $id, string $password, string $checkword)
+    public function setRawPassword(int $id, string $password, string $checkword)
     {
         $query = vsprintf('UPDATE b_user SET PASSWORD=\'%2$s\', CHECKWORD=\'%3$s\' WHERE id=\'%1$d\'', func_get_args());
         
-        return Application::getConnection()->query($query);
+        Application::getConnection()->query($query);
     }
     
     /**
      * @param array  $data
      * @param string $internal
      * @param string $entity
+     *
+     * @throws \Bitrix\Main\ArgumentException
      */
     public function setInternalKeys(array $data, string $internal, string $entity)
     {
         if ($data['groups']) {
             $groups = MapTable::getInternalIdListByExternalIdList($data['groups'], $entity);
             
-            (new \CUser())->SetUserGroup($internal, $groups);
+            \CUser::SetUserGroup($internal, $groups);
         }
     }
     

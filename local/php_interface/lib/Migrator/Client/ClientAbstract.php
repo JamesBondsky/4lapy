@@ -10,6 +10,7 @@ use FourPaws\Migrator\Entity\EntityTable;
 use FourPaws\Migrator\Provider\ProviderInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\HttpFoundation\Response;
 
 abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
 {
@@ -52,6 +53,9 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
      */
     private function setToken()
     {
+        /**
+         * @todo move into defaults
+         */
         $this->token = Application::getInstance()->getContainer()->getParameter('migrator')['token'];
     }
     
@@ -66,7 +70,7 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
     /**
      * @return LoggerInterface
      */
-    public function getLogger()
+    public function getLogger() : LoggerInterface
     {
         return $this->logger;
     }
@@ -76,6 +80,8 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
      *
      * @param \FourPaws\Migrator\Provider\ProviderInterface $provider
      * @param array                                         $options
+     *
+     * @throws \RuntimeException
      */
     public function __construct(ProviderInterface $provider, array $options = [])
     {
@@ -114,18 +120,20 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
     
     /**
      * Set client from DI
+     *
+     * \@throws \RuntimeException
      */
     protected function setClient()
     {
+        /**
+         * @var $container \Symfony\Component\DependencyInjection\ContainerInterface
+         */
         $container = Application::getInstance()->getContainer();
         
-        $this->client = $container->get('circle.restclient');
-        $options      = $container->getParameter('migrator');
-        
-        foreach ($options as $key => $value) {
-            if (strpos($key, 'CURLOPT_') === 0 && constant($key)) {
-                $this->options[constant($key)] = $value;
-            }
+        try {
+            $this->client = $container->get('circle.restclient');
+        } catch (\Exception $e) {
+            throw new \RuntimeException('What`s happened');
         }
     }
     
@@ -150,9 +158,9 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
     }
     
     /**
-     * @return \Symfony\Component\HttpFoundation\Response
+     * @return Response
      */
-    public function query()
+    public function query() : Response
     {
         $client  = $this->getClient();
         $options = ['limit' => $this->limit,];
@@ -161,7 +169,7 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
             $options['timestamp'] = $this->getLastTimestamp();
         }
         
-        return $client->get($this->getBaseUrl($options), $this->options);
+        return $client->get($this->getBaseUrl($options));
     }
     
     /**

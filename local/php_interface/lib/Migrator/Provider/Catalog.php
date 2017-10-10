@@ -8,6 +8,7 @@ use FourPaws\Migrator\Converter\CountryToReference;
 use FourPaws\Migrator\Converter\File;
 use FourPaws\Migrator\Converter\Stm;
 use FourPaws\Migrator\Converter\StringToIblock;
+use FourPaws\Migrator\Converter\StringToInt;
 use FourPaws\Migrator\Converter\StringToReference;
 use FourPaws\Migrator\Converter\StringToYesNo;
 use FourPaws\Migrator\Converter\Trim;
@@ -113,7 +114,7 @@ class Catalog extends IBlockElement
      *
      * @return array
      */
-    public function prepareData(array $data)
+    public function prepareData(array $data) : array
     {
         if ($data['CATALOG']['TYPE']) {
             /**
@@ -131,13 +132,15 @@ class Catalog extends IBlockElement
      * - тип - загоняем в справочник
      * - артикулы (XML_ID, на самом деле) продуктов извлекаем из детального описания и добавляем в отдельное свойство
      *
+     * @throws \Bitrix\Main\LoaderException
      * @return array
      */
     public function getConverters() : array
     {
         $stmConverter      = new Stm('PROPERTY_STM_S_KORM');
         $producedConverter = new StringToYesNo('PROPERTY_PRODUCED_BY_HOLDER');
-        $skuConverters     = new Trim('PROPERTY_GOODS_AND_SIZES');
+        $skuTrimConverter  = new Trim('PROPERTY_GOODS_AND_SIZES');
+        $skuIntConverter   = new StringToInt('PROPERTY_GOODS_AND_SIZES');
         
         $pictureConverter = new File('PROPERTY_IMG');
         $pictureConverter->setToProperty();
@@ -205,12 +208,10 @@ class Catalog extends IBlockElement
         $petAgeAdditionalConverter = new StringToReference('PROPERTY_PET_AGE_ADDITIONAL');
         $petAgeAdditionalConverter->setReferenceCode('PetAgeAdditional');
         
-        $brandConverter = new StringToIblock('PROPERTY_BRAND');
-        $brandConverter->setIblockId(Utils::getIblockId('catalog', 'brands'));
-        
-        return [
+        $converters = [
             $pictureConverter,
-            $skuConverters,
+            $skuTrimConverter,
+            $skuIntConverter,
             $stmConverter,
             $producedConverter,
             $licenseConverter,
@@ -233,8 +234,18 @@ class Catalog extends IBlockElement
             $petAgeConverter,
             $petAgeAdditionalConverter,
             $colorConverter,
-            $brandConverter,
             $rewardTypeConverter,
         ];
+        
+        try {
+            $brandConverter = new StringToIblock('PROPERTY_BRAND');
+            $brandConverter->setIblockId(Utils::getIblockId('catalog', 'brands'));
+            
+            $converters[] = $brandConverter;
+        } catch (\Exception $e) {
+            $this->getLogger()->error("Brand convert error: {$e->getMessage()}");
+        }
+        
+        return $converters;
     }
 }
