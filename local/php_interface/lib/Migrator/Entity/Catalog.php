@@ -71,6 +71,10 @@ class Catalog extends IBlockElement
      *
      * @throws \FourPaws\Migrator\Entity\Exceptions\AddException
      * @throws \FourPaws\Migrator\Entity\Exceptions\AddProductException
+     * @throws \InvalidArgumentException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Exception
      *
      * @return \FourPaws\Migrator\Entity\AddResult
      */
@@ -84,6 +88,7 @@ class Catalog extends IBlockElement
         unset($data['PROPERTY_VALUES']['IMG']);
         
         $data['IBLOCK_SECTION_ID'] = $this->getUnsortedSectionIdByCode();
+        $data['IBLOCK_ID']         = $this->catalogId;
         
         return parent::addItem('main_' . $primary, $data);
     }
@@ -94,6 +99,10 @@ class Catalog extends IBlockElement
      *
      * @throws \FourPaws\Migrator\Entity\Exceptions\AddException
      * @throws \FourPaws\Migrator\Entity\Exceptions\AddProductException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Exception
+     * @throws \InvalidArgumentException
+     * @throws \Bitrix\Main\ArgumentException
      *
      * @return \FourPaws\Migrator\Entity\AddResult
      */
@@ -121,6 +130,9 @@ class Catalog extends IBlockElement
      *
      * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateException
      * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateProductException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Exception
      *
      * @return \FourPaws\Migrator\Entity\UpdateResult
      */
@@ -163,6 +175,8 @@ class Catalog extends IBlockElement
     /**
      * @param $skuExternalIds
      *
+     * @throws \Bitrix\Main\ArgumentException
+     *
      * @return int
      */
     public function findMainProductInternalId(array $skuExternalIds) : int
@@ -170,6 +184,8 @@ class Catalog extends IBlockElement
         foreach ($skuExternalIds as &$id) {
             $id = 'main_' . $id;
         }
+
+        unset($id);
         
         $result = MapTable::getInternalIdListByExternalIdList($skuExternalIds, $this->entity);
         
@@ -179,6 +195,9 @@ class Catalog extends IBlockElement
     /**
      * @param int   $productId
      * @param array $skuList
+     *
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateException
      */
     public function addSku(int $productId, array $skuList)
     {

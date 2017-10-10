@@ -77,7 +77,7 @@ class EntityTable extends DataManager
      * @return \Bitrix\Main\Entity\AddResult
      * @throws \Exception
      */
-    public static function addEntity(string $entity, int $timestamp = 0, string $broken = '') : AddResult
+    public static function addEntity(string $entity, int $timestamp = 0, string $broken = '') : \Bitrix\Main\Entity\AddResult
     {
         $fields = ['ENTITY' => $entity];
         

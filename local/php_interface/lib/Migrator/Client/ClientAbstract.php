@@ -132,18 +132,8 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
         
         try {
             $this->client = $container->get('circle.restclient');
-            $options      = $container->getParameter('migrator');
         } catch (\Exception $e) {
             throw new \RuntimeException('What`s happened');
-        }
-        
-        /**
-         * @todo move to params
-         */
-        foreach ($options as $key => $value) {
-            if (strpos($key, 'CURLOPT_') === 0 && constant($key)) {
-                $this->options[constant($key)] = $value;
-            }
         }
     }
     
@@ -179,7 +169,7 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
             $options['timestamp'] = $this->getLastTimestamp();
         }
         
-        return $client->get($this->getBaseUrl($options), $this->options);
+        return $client->get($this->getBaseUrl($options));
     }
     
     /**

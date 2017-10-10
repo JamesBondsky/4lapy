@@ -32,7 +32,7 @@ abstract class IBlockElement extends IBlock
     public function addItem(string $primary, array $data) : AddResult
     {
         $cIBlockElement = new \CIBlockElement();
-        
+
         $id = $cIBlockElement->Add($data, false, false);
         
         if (!$id) {
