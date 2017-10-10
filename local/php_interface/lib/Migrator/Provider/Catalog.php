@@ -178,7 +178,7 @@ class Catalog extends IBlockElement
         $makerConverter = new StringToReference('PROPERTY_MAKER');
         $makerConverter->setReferenceCode('Maker');
         
-        $tradeNameConverter     = new StringToReference('PROPERTY_TRADE_NAME');
+        $tradeNameConverter = new StringToReference('PROPERTY_TRADE_NAME');
         $tradeNameConverter->setReferenceCode('TradeName');
         
         $managerConverter = new StringToReference('PROPERTY_MANAGER_OF_CATEGORY');
@@ -239,7 +239,9 @@ class Catalog extends IBlockElement
         
         try {
             $brandConverter = new StringToIblock('PROPERTY_BRAND');
-            $converters[]   = $brandConverter->setIblockId(Utils::getIblockId('catalog', 'brands'));
+            $brandConverter->setIblockId(Utils::getIblockId('catalog', 'brands'));
+            
+            $converters[] = $brandConverter;
         } catch (\Exception $e) {
             $this->getLogger()->error("Brand convert error: {$e->getMessage()}");
         }
