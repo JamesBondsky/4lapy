@@ -231,7 +231,7 @@ class UserService
     
     }
     
-    /** @noinspections PhpTooManyParametersInspection
+    /** @noinspection PhpTooManyParametersInspection
      *
      * @param string $rawLogin
      * @param string $checkword

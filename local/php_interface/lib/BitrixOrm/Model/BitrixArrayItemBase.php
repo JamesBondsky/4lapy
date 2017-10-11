@@ -6,7 +6,7 @@ use Adv\Bitrixtools\Tools\BitrixUtils;
 
 abstract class BitrixArrayItemBase implements ModelInterface
 {
-    const PATTERN_PROPERTY_VALUE = '~^(PROPERTY_\w+)_VALUE$~';
+    const PATTERN_PROPERTY_VALUE = '~^(?>(PROPERTY_\w+)_VALUE)$~';
     
     /**
      * @var bool

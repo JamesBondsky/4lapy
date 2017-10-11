@@ -3,6 +3,7 @@
 namespace FourPaws\BitrixOrm\Query;
 
 use FourPaws\BitrixOrm\Collection\CollectionBase;
+use FourPaws\BitrixOrm\Collection\UserCollection;
 
 class UserQuery extends QueryBase
 {
@@ -13,7 +14,7 @@ class UserQuery extends QueryBase
      */
     public function exec() : CollectionBase
     {
-        // TODO: Implement exec() method.
+        return new UserCollection($this->doExec());
     }
     
     /**
