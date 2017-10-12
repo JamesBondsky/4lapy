@@ -311,12 +311,10 @@ class ElementPropertyConditionUserType extends CUserTypeString
         return <<<END
 <script type="text/javascript" >
             BX.ready(function(){
-                myCode();
+                //TODO Paste JavaScript here!
             });
             
-            function myCode() {
-                window.alert('bzz!');
-            }
+            
             
 </script>
 END;

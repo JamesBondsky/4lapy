@@ -1,2 +1,8 @@
 ---
 
+autosort.property.hint:
+  path: /autosort/property-hint/{propertyId}
+  defaults: { _controller: '\FourPaws\ProductAutoSort\Controller\AutosortController::propertyHint' }
+  methods: [GET]
+  requirements:
+    propertyId: '\d+'
