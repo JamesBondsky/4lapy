@@ -3,6 +3,7 @@
 namespace FourPaws\Migrator\Provider;
 
 use Bitrix\Catalog\ProductTable;
+use FourPaws\Migrator\Converter\CodeBuilder;
 use FourPaws\Migrator\Converter\ColorToReference;
 use FourPaws\Migrator\Converter\CountryToReference;
 use FourPaws\Migrator\Converter\File;
@@ -137,6 +138,7 @@ class Catalog extends IBlockElement
      */
     public function getConverters() : array
     {
+        $codeConverter     = new CodeBuilder('CODE');
         $stmConverter      = new Stm('PROPERTY_STM_S_KORM');
         $producedConverter = new StringToYesNo('PROPERTY_PRODUCED_BY_HOLDER');
         $skuTrimConverter  = new Trim('PROPERTY_GOODS_AND_SIZES');
@@ -209,6 +211,7 @@ class Catalog extends IBlockElement
         $petAgeAdditionalConverter->setReferenceCode('PetAgeAdditional');
         
         $converters = [
+            $codeConverter,
             $pictureConverter,
             $skuTrimConverter,
             $skuIntConverter,
