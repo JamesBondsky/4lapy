@@ -140,7 +140,7 @@ abstract class BitrixArrayItemBase implements ModelInterface
     /**
      * @inheritDoc
      */
-    public static function createFromPrimary(int $primary) : ModelInterface
+    public static function createFromPrimary(string $primary) : ModelInterface
     {
         /**
          * @todo Заглушка. Удалить после реализации создания в более конкретных классах.

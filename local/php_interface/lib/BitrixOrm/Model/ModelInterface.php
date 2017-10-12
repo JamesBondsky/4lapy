@@ -12,9 +12,9 @@ interface ModelInterface
     public function __construct(array $fields = []);
     
     /**
-     * @param int $primary
+     * @param string $primary
      *
      * @return \FourPaws\BitrixOrm\Model\ModelInterface
      */
-    public static function createFromPrimary(int $primary) : self;
+    public static function createFromPrimary(string $primary) : self;
 }

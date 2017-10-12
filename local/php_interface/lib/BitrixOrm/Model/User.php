@@ -12,11 +12,9 @@ namespace FourPaws\BitrixOrm\Model;
 class User extends BitrixArrayItemBase
 {
     /**
-     * @param int $id
-     *
-     * @return \FourPaws\BitrixOrm\Model\ModelInterface
+     * @inheritDoc
      */
-    public static function createFromPrimary(int $id) : ModelInterface {
+    public static function createFromPrimary(string $id) : ModelInterface {
     
     }
 }
