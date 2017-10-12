@@ -14,13 +14,4 @@ interface ServiceHandlerInterface
      * @return mixed
      */
     public static function initHandlers(EventManager $eventManager);
-
-    /**
-     * Инициализация отдельного обработчика
-     *
-     * @param string $eventName
-     * @param string $method
-     * @param string $module
-     */
-    public static function initHandler(string $eventName, string $method, string $module);
 }
