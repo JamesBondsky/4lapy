@@ -42,7 +42,7 @@ final class EventInitializer
     private function getServiceHandlerClassList()
     {
         foreach (self::SERVICE_HANDLER_CLASSES as $serviceHandlerClass) {
-            $interfaces = (new \ReflectionClass($serviceHandlerClass))->getInterfaces();
+            $interfaces = (new \ReflectionClass($serviceHandlerClass))->getInterfaceNames();
 
             if (!in_array(ServiceHandlerInterface::class, $interfaces, true)) {
                 throw new \RuntimeException('Handler class must be an instance of ServiceHandlerInterface');
