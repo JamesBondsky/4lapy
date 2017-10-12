@@ -33,12 +33,6 @@ abstract class BitrixArrayItemBase implements ModelInterface
         foreach ($fields as $field => $value) {
             if ($this->isExists($field)) {
                 $this->{$field} = $value;
-            } elseif ($this->isUserField($field)) {
-                $ufName = $this->getUserFieldName($field);
-                
-                if ($this->isExists($ufName)) {
-                    $this->{$ufName} = $value;
-                }
             } elseif ($this->isProperty($field)) {
                 $propertyName = $this->getPropertyName($field);
                 
@@ -58,29 +52,9 @@ abstract class BitrixArrayItemBase implements ModelInterface
      *
      * @return string
      */
-    protected function getUserFieldName(string $fieldName) : string
-    {
-        return substr($fieldName, 3);
-    }
-    
-    /**
-     * @param string $fieldName
-     *
-     * @return string
-     */
     protected function getPropertyName(string $fieldName) : string
     {
         return preg_replace(self::PATTERN_PROPERTY_VALUE, '$1', $fieldName);
-    }
-    
-    /**
-     * @param string $fieldName
-     *
-     * @return bool
-     */
-    protected function isUserField(string $fieldName) : bool
-    {
-        return 0 === strpos('UF_', $fieldName);
     }
     
     /**

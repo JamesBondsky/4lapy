@@ -2,6 +2,9 @@
 
 namespace FourPaws\User;
 
+use Bitrix\Main\EventManager;
+use FourPaws\App\ServiceHandlerInterface;
+
 /**
  * Class UserServiceHandlers
  *
@@ -9,8 +12,35 @@ namespace FourPaws\User;
  *
  * @package FourPaws\User
  */
-class UserServiceHandlers
+abstract class UserServiceHandlers implements ServiceHandlerInterface
 {
+    /**
+     * @var EventManager
+     */
+    protected static $eventManager;
+    
+    public static function initHandlers(EventManager $eventManager)
+    {
+        self::$eventManager = $eventManager;
+        
+        self::initHandler('OnBeforeUserAdd', 'checkSocserviseRegisterHandler');
+    }
+    
+    /**
+     * @param string $eventName
+     * @param string $method
+     * @param string $module
+     */
+    public static function initHandler(string $eventName, string $method, string $module = 'main')
+    {
+        self::$eventManager->addEventHandler($module,
+                                             $eventName,
+                                             [
+                                                 self::class,
+                                                 $method,
+                                             ]);
+    }
+    
     /**
      * @param array $fields
      *
