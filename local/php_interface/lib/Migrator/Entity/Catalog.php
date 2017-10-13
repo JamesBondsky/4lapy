@@ -99,6 +99,7 @@ class Catalog extends IBlockElement
      *
      * @throws \FourPaws\Migrator\Entity\Exceptions\AddException
      * @throws \FourPaws\Migrator\Entity\Exceptions\AddProductException
+     * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateException
      * @throws \Bitrix\Main\LoaderException
      * @throws \Exception
      * @throws \InvalidArgumentException
@@ -108,6 +109,8 @@ class Catalog extends IBlockElement
      */
     public function addItem(string $primary, array $data) : AddResult
     {
+        $mainProductResult = null;
+        
         if ($this->isMainProduct($data)) {
             $mainProductResult                    = $this->addMainProduct($primary, $data);
             $data['PROPERTY_VALUES']['CML2_LINK'] = $mainProductResult->getInternalId();
@@ -138,6 +141,8 @@ class Catalog extends IBlockElement
      */
     public function updateItem(string $primary, array $data) : UpdateResult
     {
+        $mainProductId = 0;
+        
         if ($this->isMainProduct($data)) {
             /**
              * @TODO переписать на один запрос
