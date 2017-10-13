@@ -36,7 +36,7 @@ class UserQuery extends QueryBase
         
         return $result;
     }
-    
+
     /**
      * @inheritDoc
      */
@@ -49,8 +49,12 @@ class UserQuery extends QueryBase
         if ($this->nav) {
             $parameters['NAV_PARAMS'] = $this->getNav();
         }
+
+        foreach ($order as $by => $ord) {
+            break;
+        }
         
-        return \CUser::GetList($order, $filter, $parameters);
+        return \CUser::GetList($by, $ord, $filter, $parameters);
     }
     
     /**
@@ -67,10 +71,8 @@ class UserQuery extends QueryBase
     public function getBaseSelect() : array
     {
         return [
-            'ID',
-            'LOGIN',
-            'EMAIL',
-            'PERSONAL_PHONE',
+            '*',
+            'UF_*',
         ];
     }
 }

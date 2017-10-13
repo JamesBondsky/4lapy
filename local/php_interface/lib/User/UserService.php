@@ -36,8 +36,8 @@ class UserService
     public function getCurrentUser() : User
     {
         global $USER;
-        
-        return $this->getUserById($USER->GetID());
+
+        return $USER->IsAuthorized() ? $this->getUserById($USER->GetID()) : new User();
     }
     
     /**
@@ -47,7 +47,8 @@ class UserService
      */
     public function getUserById(int $id) : User
     {
-        return new User($id);
+        /** @noinspection PhpIncompatibleReturnTypeInspection */
+        return User::createFromPrimary($id);
     }
     
     /**
@@ -152,9 +153,16 @@ class UserService
         return $cUser->IsAuthorized();
     }
     
-    public function register(array $data)
+    /**
+     * @param array $data
+     *
+     * @return bool
+     */
+    public function register(array $data) : bool
     {
-    
+        
+        
+        return true;
     }
     
     /**
@@ -227,12 +235,12 @@ class UserService
         }
     }
     
-    public function restorePassword() {
+    public function restorePassword(string $rawLogin)
+    {
     
     }
     
-    /** @noinspection PhpTooManyParametersInspection
-     *
+    /**
      * @param string $rawLogin
      * @param string $checkword
      * @param string $password
@@ -324,5 +332,43 @@ class UserService
          * @todo implement this
          */
         return $email;
+    }
+    
+    /**
+     * @param int    $userId
+     * @param string $rawPhone
+     *
+     * @return \Bitrix\Main\Entity\UpdateResult
+     */
+    public function verifyPhone(int $userId, string $rawPhone) : UpdateResult
+    {
+        $phone = $this->normalizePhone($rawPhone);
+        
+        /**
+         * @todo implement $this
+         */
+        $result = new UpdateResult();
+        $result->setPrimary($userId);
+        
+        return $result;
+    }
+    
+    /**
+     * @param int    $userId
+     * @param string $rawEmail
+     *
+     * @return \Bitrix\Main\Entity\UpdateResult
+     */
+    public function verifyEmail(int $userId, string $rawEmail) : UpdateResult
+    {
+        $email = $this->normalizeEmail($rawEmail);
+        
+        /**
+         * @todo implement $this
+         */
+        $result = new UpdateResult();
+        $result->setPrimary($userId);
+        
+        return $result;
     }
 }

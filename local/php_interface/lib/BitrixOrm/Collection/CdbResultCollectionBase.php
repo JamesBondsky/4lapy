@@ -29,11 +29,11 @@ abstract class CdbResultCollectionBase extends CollectionBase
      */
     public function __construct(\CDBResult $cdbResult)
     {
+        parent::__construct();
+        
         $this->cdbResult = $cdbResult;
         
         $this->populateCollection();
-        
-        parent::__construct();
     }
     
     /**
