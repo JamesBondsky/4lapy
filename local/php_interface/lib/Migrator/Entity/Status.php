@@ -2,7 +2,6 @@
 
 namespace FourPaws\Migrator\Entity;
 
-use FourPaws\Migrator\Entity\Exceptions\AddException;
 use FourPaws\Migrator\Entity\Exceptions\UpdateException;
 
 /**
@@ -12,11 +11,16 @@ use FourPaws\Migrator\Entity\Exceptions\UpdateException;
  */
 class Status extends AbstractEntity
 {
+    /**
+     * @inheritDoc
+     */
+    public function getTimestampByItem(array $item) : string
+    {
+        return '';
+    }
     
     /**
-     * Установим маппинг существующих статусов по умолчанию
-     *
-     * EXTERNAL -> INTERNAL
+     * Установим маппинг свойств по-умолчанию
      *
      * @throws \Exception
      */
@@ -27,16 +31,14 @@ class Status extends AbstractEntity
         }
         
         $map = [
-            1 => 1,
+            'N' => 'N',
+            'F' => 'F',
         ];
         
         foreach ($map as $key => $item) {
             $result = MapTable::addEntity($this->entity, $key, $item);
             
             if (!$result->isSuccess()) {
-                /**
-                 * @todo нормлаьное исключение
-                 */
                 throw new \Exception("Error: \n" . implode("\n", $result->getErrorMessages()));
             }
         }
@@ -52,9 +54,13 @@ class Status extends AbstractEntity
      */
     public function updateItem(string $primary, array $data) : UpdateResult
     {
+        $result = \CSaleStatus::Update($primary, $data);
         
+        if (false !== $result) {
+            MapTable::addEntity($this->entity, $primary, $primary);
+        }
         
-        return new UpdateResult($result->isSuccess(), $result->getId());
+        return new UpdateResult(false !== $result, $result);
     }
     
     /**
@@ -62,19 +68,12 @@ class Status extends AbstractEntity
      * @param array  $data
      *
      * @return \FourPaws\Migrator\Entity\AddResult
-     *
-     * @throws \FourPaws\Migrator\Entity\Exceptions\AddException
-     * @throws \Exception
      */
     public function addItem(string $primary, array $data) : AddResult
     {
+        $result = \CSaleStatus::Add($data);
         
-        
-        if ($result->isSuccess()) {
-            throw new AddException("Error: add entity was broken");
-        }
-        
-        return new AddResult($result->isSuccess(), $result->getId());
+        return new AddResult(false !== $result, $primary);
     }
     
     /**
@@ -89,7 +88,17 @@ class Status extends AbstractEntity
      */
     public function setFieldValue(string $field, string $primary, $value) : UpdateResult
     {
+        /**
+         * Что произошло в случае ошибки мы узнать не сможем.
+         */
+        if (\CSaleStatus::Update($primary,
+                                 [
+                                     'ID'   => $primary,
+                                     $field => $value,
+                                 ])) {
+            return new UpdateResult(true, $primary);
+        }
         
-        throw new UpdateException("Update field with primary {$primary} error: {$errors}");
+        throw new UpdateException("Update field with primary {$primary} error.");
     }
 }
