@@ -3,6 +3,7 @@
 namespace FourPaws\App;
 
 use Bitrix\Main\EventManager;
+use FourPaws\ProductAutoSort\Event as ProductAutoSortEvent;
 use FourPaws\User\UserServiceHandlers;
 
 /**
@@ -16,6 +17,7 @@ final class EventInitializer
 {
     const SERVICE_HANDLER_CLASSES = [
         UserServiceHandlers::class,
+        ProductAutoSortEvent::class
     ];
     
     /**
