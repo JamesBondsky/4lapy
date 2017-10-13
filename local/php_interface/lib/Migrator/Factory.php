@@ -31,6 +31,10 @@ final class Factory
      * @param string $type
      * @param array  $options
      *
+     * @throws InvalidArgumentException
+     * @throws \RuntimeException
+     * @throws \FourPaws\Migrator\IblockNotFoundException
+     *
      * @return \FourPaws\Migrator\Client\Saveable
      */
     public function getClient(string $type, array $options = []) : Saveable
@@ -89,13 +93,15 @@ final class Factory
         $entity = '\FourPaws\Migrator\Entity\\' . $entityName;
         
         if (!(class_exists($client) && class_exists($entity))) {
+            /**
+             * @todo впилить нормальный exception
+             */
             throw new \Exception("Classes to entity {$entityName} is not found.");
         }
     
         /**
          * @var \FourPaws\Migrator\Client\ClientInterface $client
          */
-        
         return new $entity($client::ENTITY_NAME);
     }
 }

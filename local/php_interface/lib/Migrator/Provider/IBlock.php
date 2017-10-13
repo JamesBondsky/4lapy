@@ -39,6 +39,9 @@ abstract class IBlock extends ProviderAbstract
      *
      * @param string                           $entityName
      * @param \FourPaws\Migrator\Entity\IBlock $entity
+     *
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \RuntimeException
      */
     public function __construct(string $entityName, IBlockEntity $entity)
     {
