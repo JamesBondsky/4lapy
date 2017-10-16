@@ -139,6 +139,8 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
      * @param array $data
      *
      * @return array
+     *
+     * @throws \Bitrix\Main\ArgumentException
      * @throws \RuntimeException
      */
     public function prepareData(array $data) : array
@@ -210,7 +212,7 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
                 } else {
                     $this->incAdd();
                 }
-            } catch (\Throwable $e) {
+            } catch (\Exception $e) {
                 EntityTable::pushBroken($this->entityName, $primary);
                 $this->incError();
                 $this->getLogger()->error($e->getMessage());
@@ -265,6 +267,8 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
      * @param array $data
      *
      * @return array
+     *
+     * @throws \Bitrix\Main\ArgumentException
      */
     public function setLazyEntities(array $data) : array
     {
@@ -303,6 +307,10 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
     
     /**
      * Save lazy fields from $this->external
+     *
+     * @todo добавить LazyException
+     *
+     * @throws \Exception
      */
     public function saveLazy()
     {
@@ -317,6 +325,10 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
     
     /**
      * Обрабатываем сохранённые сущности - вдруг у нас что-то ссылается на них
+     *
+     * @todo добавить LazyException
+     *
+     * @throws \Exception
      */
     public function handleLazy()
     {

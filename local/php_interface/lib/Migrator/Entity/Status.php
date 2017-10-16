@@ -12,7 +12,7 @@ use FourPaws\Migrator\Entity\Exceptions\UpdateException;
 class Status extends AbstractEntity
 {
     /**
-     * @inheritDoc
+     * @inheritdoc
      */
     public function getTimestampByItem(array $item) : string
     {
@@ -56,10 +56,6 @@ class Status extends AbstractEntity
     {
         $result = \CSaleStatus::Update($primary, $data);
         
-        if (false !== $result) {
-            MapTable::addEntity($this->entity, $primary, $primary);
-        }
-        
         return new UpdateResult(false !== $result, $result);
     }
     
@@ -68,10 +64,16 @@ class Status extends AbstractEntity
      * @param array  $data
      *
      * @return \FourPaws\Migrator\Entity\AddResult
+     *
+     * @throws \Exception
      */
     public function addItem(string $primary, array $data) : AddResult
     {
         $result = \CSaleStatus::Add($data);
+    
+        if (false !== $result) {
+            MapTable::addEntity($this->entity, $primary, $primary);
+        }
         
         return new AddResult(false !== $result, $primary);
     }

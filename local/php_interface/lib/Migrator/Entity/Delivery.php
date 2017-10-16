@@ -2,6 +2,7 @@
 
 namespace FourPaws\Migrator\Entity;
 
+use Bitrix\Sale\Delivery\Services\Table;
 use FourPaws\Migrator\Entity\Exceptions\AddException;
 use FourPaws\Migrator\Entity\Exceptions\UpdateException;
 
@@ -12,34 +13,19 @@ use FourPaws\Migrator\Entity\Exceptions\UpdateException;
  */
 class Delivery extends AbstractEntity
 {
-    
     /**
-     * Установим маппинг существующих доставок по умолчанию
-     *
-     * EXTERNAL -> INTERNAL
-     *
-     * @throws \Exception
+     * @inheritdoc
      */
+    public function getTimestampByItem(array $item) : string
+    {
+        return '';
+    }
+    
     public function setDefaults()
     {
-        if ($this->checkEntity()) {
-            return;
-        }
-        
-        $map = [
-            1 => 1,
-        ];
-        
-        foreach ($map as $key => $item) {
-            $result = MapTable::addEntity($this->entity, $key, $item);
-            
-            if (!$result->isSuccess()) {
-                /**
-                 * @todo нормлаьное исключение
-                 */
-                throw new \Exception("Error: \n" . implode("\n", $result->getErrorMessages()));
-            }
-        }
+        /**
+         * У нас нет доставок по умолчанию
+         */
     }
     
     /**
@@ -52,7 +38,13 @@ class Delivery extends AbstractEntity
      */
     public function updateItem(string $primary, array $data) : UpdateResult
     {
+        $result = Table::update($primary, $data);
         
+        if (!$result->isSuccess()) {
+            throw new AddException(sprintf('Delivery #%s update error: %s',
+                                           $primary,
+                                           implode(', ', $result->getErrorMessages())));
+        }
         
         return new UpdateResult($result->isSuccess(), $result->getId());
     }
@@ -68,11 +60,15 @@ class Delivery extends AbstractEntity
      */
     public function addItem(string $primary, array $data) : AddResult
     {
+        $result = Table::add($data);
         
-        
-        if ($result->isSuccess()) {
-            throw new AddException("Error: add entity was broken");
+        if (!$result->isSuccess()) {
+            throw new AddException(sprintf('Delivery #%s addition error: %s',
+                                           $primary,
+                                           implode(', ', $result->getErrorMessages())));
         }
+        
+        MapTable::addEntity($this->entity, $primary, $result->getId());
         
         return new AddResult($result->isSuccess(), $result->getId());
     }
@@ -89,7 +85,14 @@ class Delivery extends AbstractEntity
      */
     public function setFieldValue(string $field, string $primary, $value) : UpdateResult
     {
+        $result = Table::update($primary, [$field => $value]);
         
-        throw new UpdateException("Update field with primary {$primary} error: {$errors}");
+        if ($result->isSuccess()) {
+            return new UpdateResult(true, $result->getId());
+        }
+        
+        $errors = implode(', ', $result->getErrorMessages());
+        
+        throw new UpdateException(sprintf('Update field with primary %s error: %s.', $primary, $errors));
     }
 }
