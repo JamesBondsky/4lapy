@@ -7,7 +7,7 @@ interface EntityInterface
     /**
      * @return array
      */
-    public function setDefaults();
+    public function setDefaults() : array;
     
     /**
      * @return string

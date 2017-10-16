@@ -41,6 +41,9 @@ abstract class IBlockSection extends IBlock
      * @param array $data
      *
      * @return array
+     *
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \RuntimeException
      */
     public function prepareData(array $data) : array
     {
@@ -56,6 +59,9 @@ abstract class IBlockSection extends IBlock
      *
      * @param string              $entityName
      * @param IBlockSectionEntity $entity
+     *
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \RuntimeException
      */
     public function __construct(string $entityName, IBlockSectionEntity $entity)
     {

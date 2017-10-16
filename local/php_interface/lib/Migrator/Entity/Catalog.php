@@ -21,11 +21,9 @@ class Catalog extends IBlockElement
     
     private $catalogId = 0;
     
-    public function setDefaults()
+    public function setDefaults() : array
     {
-        /**
-         * У нас нет значений по умолчанию для этой сущности
-         */
+        return [];
     }
     
     /**

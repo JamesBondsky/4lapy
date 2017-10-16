@@ -12,8 +12,9 @@ use FourPaws\Migrator\Entity\Exceptions\UpdateException;
  */
 class Order extends AbstractEntity
 {
-    public function setDefaults()
+    public function setDefaults() : array
     {
+        return [];
         /**
          * У нас нет заказов по умолчанию
          */

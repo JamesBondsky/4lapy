@@ -87,10 +87,7 @@ trait StateTrait
             return time() - $this->timer;
         }
     
-        /**
-         * @todo Впилить нормальный Exception
-         */
-        throw new \Exception('Timer is empty');
+        throw new \RuntimeException('Timer is empty');
     }
     
     /**
@@ -107,9 +104,6 @@ trait StateTrait
                             ->format($format);
         }
         
-        /**
-         * @todo Впилить нормальный Exception
-         */
-        throw new \Exception('Timer is empty');
+        throw new \RuntimeException('Timer is empty');
     }
 }

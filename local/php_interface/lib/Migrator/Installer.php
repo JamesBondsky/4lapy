@@ -4,17 +4,15 @@ namespace FourPaws\Migrator;
 
 use Bitrix\Main\Application;
 use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 
 final class Installer implements LoggerAwareInterface
 {
+    use LoggerAwareTrait;
+    
     private $connection;
-    
-    /**
-     * @var \Psr\Log\LoggerInterface
-     */
-    private $logger;
-    
+
     /**
      * Installer constructor.
      *
@@ -119,14 +117,6 @@ query;
         } catch (\Throwable $e) {
             throw new InstallerException($e->getMessage(), $e->getCode(), $e);
         }
-    }
-
-    /**
-     * @param \Psr\Log\LoggerInterface $logger
-     */
-    public function setLogger(LoggerInterface $logger)
-    {
-        $this->logger = $logger;
     }
     
     /**

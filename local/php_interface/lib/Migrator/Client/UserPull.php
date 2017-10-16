@@ -2,10 +2,10 @@
 
 namespace FourPaws\Migrator\Client;
 
-use FourPaws\Migrator\Provider\UserGroup as UserGroupProvider;
-use FourPaws\Migrator\Provider\User as UserProvider;
-use FourPaws\Migrator\Entity\UserGroup as UserGroupEntity;
 use FourPaws\Migrator\Entity\User as UserEntity;
+use FourPaws\Migrator\Entity\UserGroup as UserGroupEntity;
+use FourPaws\Migrator\Provider\User as UserProvider;
+use FourPaws\Migrator\Provider\UserGroup as UserGroupProvider;
 
 class UserPull extends ClientPullAbstract
 {
@@ -13,6 +13,7 @@ class UserPull extends ClientPullAbstract
      * @return \FourPaws\Migrator\Client\ClientInterface[] array
      *
      * @throws \RuntimeException
+     * @throws \Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
      */
     public function getBaseClientList() : array
     {
@@ -21,19 +22,20 @@ class UserPull extends ClientPullAbstract
                           ['force' => $this->force]),
         ];
     }
-
+    
     /**
      * @return \FourPaws\Migrator\Client\ClientInterface[] array
      *
      * @throws \RuntimeException
+     * @throws \Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
      */
     public function getClientList() : array
     {
         return [
             new User(new UserProvider(User::ENTITY_NAME, new UserEntity(User::ENTITY_NAME)), [
-                                                                                               'limit' => $this->limit,
-                                                                                               'force' => $this->force,
-                                                                                           ]),
+                'limit' => $this->limit,
+                'force' => $this->force,
+            ]),
         ];
     }
 }

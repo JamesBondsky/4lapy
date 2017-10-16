@@ -9,11 +9,12 @@ class News extends IBlockElement
 {
     const ENTITY_NAME = 'news';
     
-    public function setDefaults()
+    public function setDefaults() : array
     {
         /**
          * У нас нет значений по умолчанию для этой сущности
          */
+        return [];
     }
     
     /**

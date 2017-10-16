@@ -7,11 +7,12 @@ use FourPaws\Migrator\Utils;
 
 class Article extends IBlockElement
 {
-    public function setDefaults()
+    /**
+     * @inheritdoc
+     */
+    public function setDefaults() : array
     {
-        /**
-         * У нас нет значений по умолчанию для этой сущности
-         */
+        return [];
     }
     
     /**

@@ -21,8 +21,9 @@ class Delivery extends AbstractEntity
         return '';
     }
     
-    public function setDefaults()
+    public function setDefaults() : array
     {
+        return [];
         /**
          * У нас нет доставок по умолчанию
          */

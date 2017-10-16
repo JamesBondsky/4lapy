@@ -103,6 +103,10 @@ class Catalog extends IBlockElement
      * @param array $data
      *
      * @return array
+     *
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \RuntimeException
      */
     public function prepareData(array $data) : array
     {

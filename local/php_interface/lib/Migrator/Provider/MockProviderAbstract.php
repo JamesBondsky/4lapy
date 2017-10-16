@@ -9,12 +9,14 @@ use FourPaws\Migrator\Entity\EntityTable;
 use FourPaws\Migrator\Entity\MapTable;
 use FourPaws\Migrator\StateTrait;
 use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Response;
 
 abstract class MockProviderAbstract implements ProviderInterface, LoggerAwareInterface
 {
     use StateTrait;
+    use LoggerAwareTrait;
     
     /**
      * @var EntityInterface
@@ -23,19 +25,9 @@ abstract class MockProviderAbstract implements ProviderInterface, LoggerAwareInt
     
     protected $entityName;
     
-    protected $logger;
-    
     protected $external = [];
     
     protected $savedIds = [];
-    
-    /**
-     * @param \Psr\Log\LoggerInterface $logger
-     */
-    public function setLogger(LoggerInterface $logger)
-    {
-        $this->logger = $logger;
-    }
     
     /**
      * @return LoggerInterface

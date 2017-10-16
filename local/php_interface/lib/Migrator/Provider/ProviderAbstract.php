@@ -13,12 +13,14 @@ use FourPaws\Migrator\Entity\UpdateResult;
 use FourPaws\Migrator\Provider\Exceptions\FailResponseException;
 use FourPaws\Migrator\StateTrait;
 use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Response;
 
 abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterface
 {
     use StateTrait;
+    use LoggerAwareTrait;
     
     /**
      * @var EntityInterface
@@ -27,19 +29,9 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
     
     protected $entityName;
     
-    protected $logger;
-    
     protected $external = [];
     
     protected $savedIds = [];
-    
-    /**
-     * @param \Psr\Log\LoggerInterface $logger
-     */
-    public function setLogger(LoggerInterface $logger)
-    {
-        $this->logger = $logger;
-    }
     
     /**
      * @return LoggerInterface

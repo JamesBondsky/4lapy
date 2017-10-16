@@ -119,7 +119,7 @@ class LazyTable extends DataManager
                                  'FIELD'       => $lazyElement['FIELD'],
                                  'INTERNAL_ID' => $lazyElement['INTERNAL_ID'],
                              ]);
-            } catch (\Throwable $e) {
+            } catch (\Exception $e) {
                 LoggerFactory::create('migrator_lazy')->error($e->getMessage());
             }
         }

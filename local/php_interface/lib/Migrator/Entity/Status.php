@@ -22,12 +22,13 @@ class Status extends AbstractEntity
     /**
      * Установим маппинг свойств по-умолчанию
      *
+     * @return array
      * @throws \Exception
      */
-    public function setDefaults()
+    public function setDefaults() : array
     {
         if ($this->checkEntity()) {
-            return;
+            return [];
         }
         
         $map = [
