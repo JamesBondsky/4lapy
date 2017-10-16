@@ -3,6 +3,7 @@
 namespace FourPaws\ProductAutoSort\UserType;
 
 use Bitrix\Catalog\CatalogIblockTable;
+use Bitrix\Main\Page\Asset;
 use CIBlock;
 use CIBlockProperty;
 use CUserTypeString;
@@ -208,7 +209,9 @@ class ElementPropertyConditionUserType extends CUserTypeString
             htmlspecialcharsbx($propertyValue)
         );
 
-        return $selectHtml . ' = ' . $valueInput . self::getJsScript($arUserField['ID']);
+        self::getJsScript($arUserField['ID']);
+
+        return $selectHtml . ' = ' . $valueInput;
     }
 
     /**
@@ -308,16 +311,9 @@ class ElementPropertyConditionUserType extends CUserTypeString
         }
         self::$jsEngaged[$ufId] = true;
 
-        return <<<END
-<script type="text/javascript" >
-            BX.ready(function(){
-                //TODO Paste JavaScript here!
-            });
-            
-            
-            
-</script>
-END;
+        Asset::getInstance()->addJs('/local/include/js/element-property-condition-user-type.js');
+
+        return '';
 
     }
 
