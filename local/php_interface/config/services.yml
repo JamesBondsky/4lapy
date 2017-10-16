@@ -12,3 +12,5 @@ services:
   user.service:
     class: FourPaws\User\UserService
 
+  product.autosort.service:
+    class: FourPaws\ProductAutoSort\ProductAutoSortService

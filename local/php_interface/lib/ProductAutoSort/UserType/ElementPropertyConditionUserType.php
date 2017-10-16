@@ -7,15 +7,9 @@ use Bitrix\Main\Page\Asset;
 use CIBlock;
 use CIBlockProperty;
 use CUserTypeString;
-use FourPaws\ProductAutoSort\Table\ElementPropertyConditionTable;
+use FourPaws\App\Application;
+use FourPaws\ProductAutoSort\ProductAutoSortService;
 
-/**
- * Class ElementPropertyConditionUserType
- * @package FourPaws\ProductAutoSort\UserType
- *
- * TODO Обработка удаления значения свойства
- *
- */
 class ElementPropertyConditionUserType extends CUserTypeString
 {
     const USER_TYPE_ID = 'element_property_condition';
@@ -32,6 +26,27 @@ class ElementPropertyConditionUserType extends CUserTypeString
      * @var array
      */
     protected static $jsEngaged = [];
+
+    /**
+     * @var ProductAutoSortService
+     */
+    protected static $autosortService;
+
+    /**
+     * Возвращает сервис автосортировки.
+     *
+     * @internal Из-за статичности пользовательского свойства приходится делать вот такой ленивый getter.
+     *
+     * @return ProductAutoSortService|object
+     */
+    protected static function getAutosortService()
+    {
+        if (is_null(self::$autosortService)) {
+            self::$autosortService = Application::getInstance()->getContainer()->get('product.autosort.service');
+        }
+
+        return self::$autosortService;
+    }
 
     /**
      * @return array
@@ -95,7 +110,7 @@ class ElementPropertyConditionUserType extends CUserTypeString
             $valueList[$key] = self::onBeforeSave($arUserField, $rawValue);
         }
 
-        ElementPropertyConditionTable::syncRowMulti(
+        self::getAutosortService()->syncValueMulti(
             (int)$arUserField['ID'],
             (int)$arUserField['VALUE_ID'],
             $valueList
@@ -137,7 +152,7 @@ class ElementPropertyConditionUserType extends CUserTypeString
         //Только если не множественное
         if ($arUserField['MULTIPLE'] == 'N') {
 
-            ElementPropertyConditionTable::syncRow(
+            self::getAutosortService()->syncValue(
                 (int)$arUserField['ID'],
                 (int)$arUserField['VALUE_ID'],
                 (int)$realValue[self::VALUE_PROP_ID],
