@@ -42,6 +42,8 @@ class UserGroup extends AbstractEntity
                 throw new \Exception("Error: \n" . implode("\n", $result->getErrorMessages()));
             }
         }
+    
+        return $map;
     }
     
     /**

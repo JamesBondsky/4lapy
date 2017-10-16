@@ -24,7 +24,7 @@ class User extends AbstractEntity
         }
         
         /**
-         * todo магию потом в конфигурацию
+         * @todo магию потом в конфигурацию
          */
         $map = [
             529643 => 1,
@@ -39,6 +39,8 @@ class User extends AbstractEntity
         }
         
         LazyTable::handleLazy($this->entity, array_keys($map));
+        
+        return $map;
     }
     
     /**

@@ -18,7 +18,7 @@ class UserPull extends ClientPullAbstract
     public function getBaseClientList() : array
     {
         return [
-            new UserGroup(new UserGroupProvider(UserGroup::ENTITY_NAME, new UserGroupEntity(UserGroup::ENTITY_NAME)),
+            new UserGroup(new UserGroupProvider(new UserGroupEntity(UserGroup::ENTITY_NAME)),
                           ['force' => $this->force]),
         ];
     }
@@ -32,7 +32,7 @@ class UserPull extends ClientPullAbstract
     public function getClientList() : array
     {
         return [
-            new User(new UserProvider(User::ENTITY_NAME, new UserEntity(User::ENTITY_NAME)), [
+            new User(new UserProvider(new UserEntity(User::ENTITY_NAME)), [
                 'limit' => $this->limit,
                 'force' => $this->force,
             ]),

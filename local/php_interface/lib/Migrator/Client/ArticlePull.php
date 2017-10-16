@@ -18,15 +18,15 @@ class ArticlePull extends ClientPullAbstract
      * @return \FourPaws\Migrator\Client\ClientInterface[] array
      *
      * @throws \FourPaws\Migrator\IblockNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
      * @throws \Bitrix\Main\LoaderException
      * @throws \RuntimeException
      */
     public function getBaseClientList() : array
     {
-        $entity = new ArticleSectionEntity(ArticleSection::ENTITY_NAME);
-        
         return [
-            new ArticleSection(new ArticleSectionProvider(ArticleSection::ENTITY_NAME, $entity), ['force' => true]),
+            new ArticleSection(new ArticleSectionProvider(new ArticleSectionEntity(ArticleSection::ENTITY_NAME)),
+                               ['force' => true]),
         ];
     }
     
@@ -34,15 +34,14 @@ class ArticlePull extends ClientPullAbstract
      * @return \FourPaws\Migrator\Client\ClientInterface[] array
      *
      * @throws \FourPaws\Migrator\IblockNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
      * @throws \Bitrix\Main\LoaderException
      * @throws \RuntimeException
      */
     public function getClientList() : array
     {
-        $entity = new ArticleEntity(Article::ENTITY_NAME);
-        
         return [
-            new Article(new ArticleProvider(Article::ENTITY_NAME, $entity), [
+            new Article(new ArticleProvider(new ArticleEntity(Article::ENTITY_NAME)), [
                 'limit' => $this->limit,
                 'force' => $this->force,
             ]),

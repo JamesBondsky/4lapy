@@ -3,17 +3,17 @@
 namespace FourPaws\Migrator;
 
 use FourPaws\Migrator\Client\ArticlePull;
+use FourPaws\Migrator\Client\Catalog;
+use FourPaws\Migrator\Client\News;
 use FourPaws\Migrator\Client\SalePull;
 use FourPaws\Migrator\Client\Saveable;
 use FourPaws\Migrator\Client\ShopPull;
+use FourPaws\Migrator\Client\UserPull;
+use FourPaws\Migrator\Entity\Catalog as CatalogEntity;
 use FourPaws\Migrator\Entity\EntityInterface;
 use FourPaws\Migrator\Entity\News as NewsEntity;
-use FourPaws\Migrator\Entity\Catalog as CatalogEntity;
-use FourPaws\Migrator\Client\News;
-use FourPaws\Migrator\Client\Catalog;
-use FourPaws\Migrator\Provider\News as NewsProvider;
 use FourPaws\Migrator\Provider\Catalog as CatalogProvider;
-use FourPaws\Migrator\Client\UserPull;
+use FourPaws\Migrator\Provider\News as NewsProvider;
 use Symfony\Component\Console\Exception\InvalidArgumentException;
 
 final class Factory
@@ -31,11 +31,13 @@ final class Factory
      * @param string $type
      * @param array  $options
      *
+     * @return \FourPaws\Migrator\Client\Saveable
+     *
      * @throws InvalidArgumentException
      * @throws \RuntimeException
      * @throws \FourPaws\Migrator\IblockNotFoundException
-     *
-     * @return \FourPaws\Migrator\Client\Saveable
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
      */
     public function getClient(string $type, array $options = []) : Saveable
     {
@@ -51,14 +53,10 @@ final class Factory
                 $client = new ArticlePull($options);
                 break;
             case 'catalog':
-                $entity = new CatalogEntity(Catalog::ENTITY_NAME);
-                
-                $client = new Catalog(new CatalogProvider(Catalog::ENTITY_NAME, $entity), $options);
+                $client = new Catalog(new CatalogProvider(new CatalogEntity(Catalog::ENTITY_NAME)), $options);
                 break;
             case 'news':
-                $entity = new NewsEntity(News::ENTITY_NAME);
-                
-                $client = new News(new NewsProvider(News::ENTITY_NAME, $entity), $options);
+                $client = new News(new NewsProvider(new NewsEntity(News::ENTITY_NAME)), $options);
                 break;
             case 'sale':
                 $client = new SalePull($options);
@@ -83,9 +81,10 @@ final class Factory
     public function getEntityByEntityName(string $entityName) : EntityInterface
     {
         $entityNameParts = explode('_', $entityName);
-        $entityNameParts = array_map(function($part) {
+        $entityNameParts = array_map(function ($part) {
             return ucfirst($part);
-        }, $entityNameParts);
+        },
+            $entityNameParts);
         
         $entityName = implode('', $entityNameParts);
         
@@ -98,7 +97,7 @@ final class Factory
              */
             throw new \Exception("Classes to entity {$entityName} is not found.");
         }
-    
+        
         /**
          * @var \FourPaws\Migrator\Client\ClientInterface $client
          */

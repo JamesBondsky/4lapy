@@ -11,16 +11,15 @@ abstract class Sale extends ProviderAbstract
     /**
      * Sale constructor.
      *
-     * @param string                                   $entityName
      * @param \FourPaws\Migrator\Entity\AbstractEntity $entity
      *
      * @throws \Bitrix\Main\LoaderException
      * @throws \RuntimeException
      */
-    public function __construct(string $entityName, AbstractEntity $entity)
+    public function __construct(AbstractEntity $entity)
     {
         Loader::includeModule('sale');
         
-        parent::__construct($entityName, $entity);
+        parent::__construct($entity);
     }
 }

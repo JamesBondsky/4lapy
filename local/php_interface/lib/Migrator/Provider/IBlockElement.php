@@ -67,14 +67,13 @@ abstract class IBlockElement extends IBlock
     /**
      * IblockProvider constructor.
      *
-     * @param string              $entityName
      * @param IBlockElementEntity $entity
      *
      * @throws \Bitrix\Main\LoaderException
      * @throws \RuntimeException
      */
-    public function __construct(string $entityName, IBlockElementEntity $entity)
+    public function __construct(IBlockElementEntity $entity)
     {
-        parent::__construct($entityName, $entity);
+        parent::__construct($entity);
     }
 }

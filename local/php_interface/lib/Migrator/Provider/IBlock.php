@@ -40,16 +40,15 @@ abstract class IBlock extends ProviderAbstract
     /**
      * IblockProvider constructor.
      *
-     * @param string                           $entityName
      * @param \FourPaws\Migrator\Entity\IBlock $entity
      *
      * @throws \Bitrix\Main\LoaderException
      * @throws \RuntimeException
      */
-    public function __construct(string $entityName, IBlockEntity $entity)
+    public function __construct(IBlockEntity $entity)
     {
         Loader::includeModule('iblock');
         
-        parent::__construct($entityName, $entity);
+        parent::__construct($entity);
     }
 }

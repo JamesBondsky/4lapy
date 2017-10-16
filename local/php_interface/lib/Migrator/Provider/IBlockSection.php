@@ -57,14 +57,13 @@ abstract class IBlockSection extends IBlock
     /**
      * IblockProvider constructor.
      *
-     * @param string              $entityName
      * @param IBlockSectionEntity $entity
      *
      * @throws \Bitrix\Main\LoaderException
      * @throws \RuntimeException
      */
-    public function __construct(string $entityName, IBlockSectionEntity $entity)
+    public function __construct(IBlockSectionEntity $entity)
     {
-        parent::__construct($entityName, $entity);
+        parent::__construct($entity);
     }
 }

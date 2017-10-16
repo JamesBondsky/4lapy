@@ -17,6 +17,11 @@ interface EntityInterface
     /**
      * @return string
      */
+    public function getEntity() : string;
+    
+    /**
+     * @return string
+     */
     public function getTimestamp() : string;
     
     /**

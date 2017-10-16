@@ -55,13 +55,8 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
     }
     
     /**
-     * @param string $entityName
+     * @param \FourPaws\Migrator\Entity\EntityInterface $entity
      */
-    public function setEntityName(string $entityName)
-    {
-        $this->entityName = $entityName;
-    }
-    
     public function setEntity(EntityInterface $entity)
     {
         $this->entity = $entity;
@@ -70,16 +65,17 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
     /**
      * ProviderAbstract constructor.
      *
-     * @param string                                    $entityName
      * @param \FourPaws\Migrator\Entity\EntityInterface $entity
+     *
+     * @internal param string $entityName
      *
      * @throws \RuntimeException
      */
-    public function __construct(string $entityName, EntityInterface $entity)
+    public function __construct(EntityInterface $entity)
     {
-        $this->setEntityName($entityName);
         $this->setEntity($entity);
-        $this->setLogger(LoggerFactory::create('migrate_provider_' . $entityName));
+        $this->entityName = $entity->getEntity();
+        $this->setLogger(LoggerFactory::create('migrate_provider_' . $this->entityName));
     }
     
     /**
@@ -151,6 +147,8 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
      * @param \Symfony\Component\HttpFoundation\Response $response
      *
      * @throws \FourPaws\Migrator\Provider\Exceptions\FailResponseException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \RuntimeException
      * @throws \Exception
      */
     public function save(Response $response)

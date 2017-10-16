@@ -10,6 +10,14 @@ abstract class AbstractEntity implements EntityInterface
     
     abstract public function setDefaults() : array;
     
+    /**
+     * @return string
+     */
+    public function getEntity() : string
+    {
+        return $this->entity;
+    }
+    
     public function checkEntity()
     {
         return EntityTable::getList([

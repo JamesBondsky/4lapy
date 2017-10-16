@@ -53,14 +53,6 @@ abstract class MockProviderAbstract implements ProviderInterface, LoggerAwareInt
         return [];
     }
     
-    /**
-     * @param string $entityName
-     */
-    public function setEntityName(string $entityName)
-    {
-        $this->entityName = $entityName;
-    }
-    
     public function setEntity(EntityInterface $entity)
     {
         $this->entity = $entity;
@@ -69,16 +61,15 @@ abstract class MockProviderAbstract implements ProviderInterface, LoggerAwareInt
     /**
      * ProviderAbstract constructor.
      *
-     * @param string                                    $entityName
      * @param \FourPaws\Migrator\Entity\EntityInterface $entity
      *
      * @throws \RuntimeException
      */
-    public function __construct(string $entityName, EntityInterface $entity)
+    public function __construct(EntityInterface $entity)
     {
-        $this->setEntityName($entityName);
         $this->setEntity($entity);
-        $this->setLogger(LoggerFactory::create('migrate_provider_' . $entityName));
+        $this->entityName = $entity->getEntity();
+        $this->setLogger(LoggerFactory::create('migrate_provider_' . $this->entityName));
     }
     
     /**

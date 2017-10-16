@@ -63,11 +63,13 @@ class OrderProperty extends AbstractEntity
             
             if (!$result->isSuccess()) {
                 /**
-                 * @todo нормлаьное исключение
+                 * @todo нормальное исключение
                  */
                 throw new \Exception("Error: \n" . implode("\n", $result->getErrorMessages()));
             }
         }
+    
+        return $map;
     }
     
     /**

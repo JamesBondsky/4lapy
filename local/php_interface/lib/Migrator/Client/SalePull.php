@@ -18,11 +18,9 @@ class SalePull extends ClientPullAbstract
     public function getBaseClientList() : array
     {
         return [
-            new Status(new StatusProvider(Status::ENTITY_NAME, new StatusEntity(Status::ENTITY_NAME)),
-                       ['force' => true]),
-            new Delivery(new DeliveryProvider(Delivery::ENTITY_NAME, new DeliveryEntity(Delivery::ENTITY_NAME))),
-            new OrderProperty(new OrderPropertyProvider(OrderProperty::ENTITY_NAME,
-                                                        new OrderPropertyEntity(OrderProperty::ENTITY_NAME))),
+            new Status(new StatusProvider(new StatusEntity(Status::ENTITY_NAME)), ['force' => true]),
+            new Delivery(new DeliveryProvider(new DeliveryEntity(Delivery::ENTITY_NAME))),
+            new OrderProperty(new OrderPropertyProvider(new OrderPropertyEntity(OrderProperty::ENTITY_NAME))),
         ];
     }
     
