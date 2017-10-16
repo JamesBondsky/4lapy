@@ -6,8 +6,8 @@ use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use CIBlockElement;
 use CIBlockProperty;
 use FourPaws\App\Application;
+use FourPaws\App\Model\ResponseContent\JsonContent;
 use FourPaws\BitrixIblockORM\Query\QueryBase;
-use FourPaws\ProductAutoSort\ResponseContent\JsonContent;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 class AutosortController

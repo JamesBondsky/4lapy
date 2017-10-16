@@ -1,15 +1,9 @@
 <?php
 
-namespace FourPaws\ProductAutoSort\ResponseContent;
+namespace FourPaws\App\Model\ResponseContent;
 
 use JsonSerializable;
 
-/**
- * Class JsonContent
- * @package FourPaws\ProductAutoSort\ResponseContent
- *
- * TODO Объект может понадобиться и в других модулях. Как-то вынести его позже.
- */
 class JsonContent implements JsonSerializable
 {
     /**
