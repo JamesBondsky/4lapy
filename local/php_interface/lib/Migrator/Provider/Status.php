@@ -5,7 +5,7 @@ namespace FourPaws\Migrator\Provider;
 class Status extends Sale
 {
     /**
-     * @return array
+     * @inheritdoc
      */
     public function getMap() : array
     {

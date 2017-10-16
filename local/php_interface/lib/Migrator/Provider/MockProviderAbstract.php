@@ -3,20 +3,16 @@
 namespace FourPaws\Migrator\Provider;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use Bitrix\Main\Entity\ScalarField;
 use FourPaws\Migrator\Converter\ConverterInterface;
 use FourPaws\Migrator\Entity\EntityInterface;
 use FourPaws\Migrator\Entity\EntityTable;
-use FourPaws\Migrator\Entity\LazyTable;
 use FourPaws\Migrator\Entity\MapTable;
-use FourPaws\Migrator\Entity\UpdateResult;
-use FourPaws\Migrator\Provider\Exceptions\FailResponseException;
 use FourPaws\Migrator\StateTrait;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Response;
 
-abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterface
+abstract class MockProviderAbstract implements ProviderInterface, LoggerAwareInterface
 {
     use StateTrait;
     
@@ -52,7 +48,10 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
     /**
      * @inheritdoc
      */
-    abstract public function getMap() : array;
+    public function getMap() : array
+    {
+        return [];
+    }
     
     /**
      * @return \FourPaws\Migrator\Converter\ConverterInterface[] array
@@ -91,40 +90,6 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
     }
     
     /**
-     * @param \Symfony\Component\HttpFoundation\Response $response
-     *
-     * @return mixed
-     * @throws \FourPaws\Migrator\Provider\Exceptions\FailResponseException
-     */
-    protected function parseResponse(Response $response)
-    {
-        if (!$response->isOk()) {
-            throw new FailResponseException($response->getContent(), $response->getStatusCode());
-        }
-        
-        /**
-         * @todo переделать на специально обученные классы
-         */
-        return json_decode($response->getContent(),
-                           JSON_FORCE_OBJECT | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_APOS);
-    }
-    
-    /**
-     * @todo убрать прочь в какие-нибудь utils для ORM
-     *
-     * @return \Closure to use in array_filter()
-     */
-    public function getScalarEntityMapFilter() : \Closure
-    {
-        return function ($value) {
-            $whenArray  = is_array($value) && !$value['expression'] && !$value['reference'];
-            $whenObject = $value instanceof ScalarField;
-            
-            return $whenArray || $whenObject;
-        };
-    }
-    
-    /**
      * @param array $data
      *
      * @return array
@@ -146,7 +111,7 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
         
         foreach ($this->getConverters() as $converter) {
             if (!$converter instanceof ConverterInterface) {
-                throw new \RuntimeException("Unknown converter: {$converter}");
+                throw new \RuntimeException(sprintf('Unknown converter: %s', $converter));
             }
             
             $result = $converter->convert($result);
@@ -163,67 +128,12 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
      */
     public function save(Response $response)
     {
-        $lastTimestamp = 0;
-        $entity        = $this->entity;
-        
         $this->startTimer();
         $this->installEntity();
-        $parsed = $this->parseResponse($response);
-        
-        if (!isset($parsed[$this->entityName])) {
-            throw new FailResponseException('Entity name is not found in response.');
-        }
-        
-        foreach ($parsed[$this->entityName] as $item) {
-            $primary   = $entity->getPrimaryByItem($item);
-            $timestamp = $entity->getTimestampByItem($item);
-            $item      = $this->prepareData($item);
-            
-            try {
-                $result = $entity->addOrUpdateItem($primary, $item);
-                
-                if (!$result->getResult()) {
-                    /**
-                     * @todo придумать сюда нормальный exception
-                     */
-                    throw new \Exception('Something happened with entity ' . $this->entityName . ' and primary '
-                                         . $primary);
-                } elseif ($this->external[$primary]) {
-                    $this->external[$primary]['INTERNAL_ID'] = $result->getInternalId();
-                }
-                
-                $this->savedIds[$primary] = $result->getInternalId();
-                
-                $lastTimestamp = strtotime($timestamp) > $lastTimestamp ? strtotime($timestamp) : $lastTimestamp;
-                
-                if ($result instanceof UpdateResult) {
-                    $this->incUpdate();
-                } else {
-                    $this->incAdd();
-                }
-            } catch (\Exception $e) {
-                EntityTable::pushBroken($this->entityName, $primary);
-                $this->incError();
-                $this->getLogger()->error($e->getMessage());
-            }
-        }
-        
-        $this->saveLazy();
-        $this->handleLazy();
-        
-        $this->getLogger()->info(vsprintf('Migration %s cleared: time - %s, full count %d, add %d, update %d, error %d',
+        $this->getLogger()->info(vsprintf('Migration %s cleared: mapping.',
                                           [
                                               $this->entityName,
-                                              $this->getFormattedTime(),
-                                              $this->getFullCount(),
-                                              $this->getAddCount(),
-                                              $this->getUpdateCount(),
-                                              $this->getErrorCount(),
                                           ]));
-        
-        if ($lastTimestamp) {
-            EntityTable::updateEntity($this->entityName, $lastTimestamp);
-        }
     }
     
     /**
@@ -292,39 +202,5 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
         }
         
         return $data;
-    }
-    
-    /**
-     * Save lazy fields from $this->external
-     *
-     * @todo добавить LazyException
-     *
-     * @throws \Exception
-     */
-    public function saveLazy()
-    {
-        foreach ($this->external as $externalList) {
-            foreach ($externalList['ENTITIES'] as $entity) {
-                if ($externalList['INTERNAL_ID']) {
-                    LazyTable::add(array_merge(['INTERNAL_ID' => $externalList['INTERNAL_ID']], $entity));
-                }
-            }
-        }
-    }
-    
-    /**
-     * Обрабатываем сохранённые сущности - вдруг у нас что-то ссылается на них
-     *
-     * @todo добавить LazyException
-     *
-     * @throws \Exception
-     */
-    public function handleLazy()
-    {
-        if (!$this->savedIds) {
-            return;
-        }
-        
-        LazyTable::handleLazy($this->entityName, $this->savedIds);
     }
 }

@@ -14,6 +14,9 @@ use FourPaws\Migrator\Entity\IBlockElement as IBlockElementEntity;
  */
 abstract class IBlockElement extends IBlock
 {
+    /**
+     * @inheritdoc
+     */
     public function getMap() : array
     {
         $map = array_diff(array_keys(array_filter(ElementTable::getMap(), self::getScalarEntityMapFilter())),

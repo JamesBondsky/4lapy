@@ -15,7 +15,7 @@ use FourPaws\Migrator\Converter\StringToReference;
 class News extends IBlockElement
 {
     /**
-     * @return array
+     * @inheritdoc
      */
     public function getMap() : array
     {

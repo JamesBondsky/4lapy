@@ -56,7 +56,7 @@ class Status extends AbstractEntity
     {
         $result = \CSaleStatus::Update($primary, $data);
         
-        return new UpdateResult(false !== $result, $result);
+        return new UpdateResult(false !== $result, $primary);
     }
     
     /**
@@ -65,7 +65,7 @@ class Status extends AbstractEntity
      *
      * @return \FourPaws\Migrator\Entity\AddResult
      *
-     * @throws \Exception
+     * * @throws \Exception
      */
     public function addItem(string $primary, array $data) : AddResult
     {

@@ -18,6 +18,9 @@ class Delivery extends Sale
      */
     const DELIVERY_CLASS_NAME = Configurable::class;
     
+    /**
+     * @inheritdoc
+     */
     public function getMap() : array
     {
         static $map;

@@ -7,9 +7,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 class Shops extends IBlock
 {
-    
     /**
-     * @return array
+     * @inheritdoc
      */
     public function getMap() : array
     {

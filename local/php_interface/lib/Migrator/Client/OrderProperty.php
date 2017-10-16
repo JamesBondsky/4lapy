@@ -7,9 +7,7 @@ namespace FourPaws\Migrator\Client;
  *
  * @package FourPaws\Migrator\Client
  */
-class OrderProperty extends ClientAbstract
+class OrderProperty extends MockClientAbstract
 {
     const ENTITY_NAME = 'order_property';
-    
-    const API_PATH    = '/orderProperty/list/';
 }
