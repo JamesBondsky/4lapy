@@ -2,23 +2,16 @@
 
 namespace FourPaws\Catalog\Collection;
 
-use FourPaws\BitrixIblockORM\Collection\CollectionBase;
+use FourPaws\BitrixOrm\Collection\CdbResultCollectionBase;
 use FourPaws\Catalog\Model\Product;
+use Generator;
 
-class ProductCollection extends CollectionBase
+class ProductCollection extends CdbResultCollectionBase
 {
-    /**
-     * @return Product|false
-     */
-    protected function doFetch()
+    protected function fetchElement(): Generator
     {
-        $fields = $this->getCDBResult()->GetNext();
-
-        if (false == $fields) {
-            return false;
+        while ($fields = $this->getCdbResult()->GetNext()) {
+            yield new Product($fields);
         }
-
-        return new Product($fields);
     }
-
 }

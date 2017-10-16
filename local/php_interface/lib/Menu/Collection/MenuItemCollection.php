@@ -2,26 +2,16 @@
 
 namespace FourPaws\Menu\Collection;
 
-use FourPaws\BitrixIblockORM\Collection\CollectionBase;
+use FourPaws\BitrixOrm\Collection\CdbResultCollectionBase;
 use FourPaws\Menu\Model\MenuItem;
+use Generator;
 
-class MenuItemCollection extends CollectionBase
+class MenuItemCollection extends CdbResultCollectionBase
 {
-    /**
-     * @return MenuItem|false
-     */
-    protected function doFetch()
+    protected function fetchElement(): Generator
     {
-        //TODO Вообще-то этот код для меню пока не используется. Нужен ли он?
-
-        $fields = $this->getCDBResult()->GetNext();
-
-        if (false == $fields) {
-            return false;
+        while ($fields = $this->getCdbResult()->GetNext()) {
+            yield new MenuItem($fields);
         }
-
-        return new MenuItem($fields);
-
     }
-
 }

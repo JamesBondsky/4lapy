@@ -3,7 +3,7 @@
 namespace FourPaws\Catalog\Model;
 
 use FourPaws\App\Application;
-use FourPaws\BitrixIblockORM\Model\IblockSection;
+use FourPaws\BitrixOrm\Model\IblockSection;
 use FourPaws\Catalog\CatalogService;
 use FourPaws\Catalog\Filter\FilterBase;
 use FourPaws\Catalog\Filter\FilterInterface;

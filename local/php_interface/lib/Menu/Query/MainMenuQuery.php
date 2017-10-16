@@ -6,7 +6,8 @@ use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use CDBResult;
 use CIBlockElement;
 use CIBlockSection;
-use FourPaws\BitrixIblockORM\Query\QueryBase;
+use FourPaws\BitrixOrm\Collection\CollectionBase;
+use FourPaws\BitrixOrm\Query\QueryBase;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Menu\Collection\MenuItemCollection;
@@ -16,9 +17,9 @@ class MainMenuQuery extends QueryBase
 {
 
     /**
-     * @return MenuItemCollection
+     * @return CollectionBase
      */
-    public function exec()
+    public function exec(): CollectionBase
     {
         return new MenuItemCollection($this->doExec());
     }

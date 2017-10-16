@@ -2,22 +2,16 @@
 
 namespace FourPaws\Catalog\Collection;
 
-use FourPaws\BitrixIblockORM\Collection\CollectionBase;
+use FourPaws\BitrixOrm\Collection\CdbResultCollectionBase;
 use FourPaws\Catalog\Model\Category;
+use Generator;
 
-class CategoryCollection extends CollectionBase
+class CategoryCollection extends CdbResultCollectionBase
 {
-
-    /**
-     * @return Category|false
-     */
-    protected function doFetch()
+    protected function fetchElement(): Generator
     {
-        $fields = $this->getCDBResult()->GetNext();
-        if (false === $fields) {
-            return false;
+        while ($fields = $this->getCdbResult()->GetNext()) {
+            yield new Category($fields);
         }
-        return new Category($fields);
     }
-
 }

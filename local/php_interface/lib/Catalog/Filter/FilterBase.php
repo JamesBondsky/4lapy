@@ -2,7 +2,7 @@
 
 namespace FourPaws\Catalog\Filter;
 
-use FourPaws\BitrixIblockORM\Model\HLBItemBase;
+use FourPaws\BitrixOrm\Model\HlbItemBase;
 
 abstract class FilterBase extends HLBItemBase implements FilterInterface
 {

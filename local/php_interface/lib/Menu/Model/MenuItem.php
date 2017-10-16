@@ -4,34 +4,34 @@ namespace FourPaws\Menu\Model;
 
 use CIBlockElement;
 use CIBlockSection;
-use FourPaws\BitrixIblockORM\Model\IblockElement;
+use FourPaws\BitrixOrm\Model\IblockElement;
 
 class MenuItem extends IblockElement
 {
     /**
      * @var string
      */
-    protected $HREF = '';
+    protected $PROPERTY_HREF = '';
 
     /**
      * @var int
      */
-    protected $ELEMENT_HREF = 0;
+    protected $PROPERTY_ELEMENT_HREF = 0;
 
     /**
      * @var int
      */
-    protected $SECTION_HREF = 0;
+    protected $PROPERTY_SECTION_HREF = 0;
 
     /**
      * @var bool
      */
-    protected $TARGET_BLANK = false;
+    protected $PROPERTY_TARGET_BLANK = false;
 
     /**
      * @var bool
      */
-    protected $BRAND_MENU = false;
+    protected $PROPERTY_BRAND_MENU = false;
 
     public function __construct(array $fields = [])
     {
@@ -53,9 +53,9 @@ class MenuItem extends IblockElement
      */
     public function getHref(): string
     {
-        if ('' != $this->HREF) {
+        if ('' != $this->PROPERTY_HREF) {
 
-            return $this->HREF;
+            return $this->PROPERTY_HREF;
 
         } elseif ($this->getElementHref() > 0) {
 
@@ -93,7 +93,7 @@ class MenuItem extends IblockElement
      */
     public function withHref(string $href)
     {
-        $this->HREF = $href;
+        $this->PROPERTY_HREF = $href;
 
         return $this;
     }
@@ -103,7 +103,7 @@ class MenuItem extends IblockElement
      */
     public function getElementHref(): int
     {
-        return (int)$this->ELEMENT_HREF;
+        return (int)$this->PROPERTY_ELEMENT_HREF;
     }
 
     /**
@@ -113,7 +113,7 @@ class MenuItem extends IblockElement
      */
     public function withElementHref(int $elementId)
     {
-        $this->ELEMENT_HREF = $elementId;
+        $this->PROPERTY_ELEMENT_HREF = $elementId;
 
         return $this;
     }
@@ -123,7 +123,7 @@ class MenuItem extends IblockElement
      */
     public function getSectionHref(): int
     {
-        return (int)$this->SECTION_HREF;
+        return (int)$this->PROPERTY_SECTION_HREF;
     }
 
     /**
@@ -133,7 +133,7 @@ class MenuItem extends IblockElement
      */
     public function withSectionHref(int $sectionId)
     {
-        $this->SECTION_HREF = $sectionId;
+        $this->PROPERTY_SECTION_HREF = $sectionId;
 
         return $this;
     }
@@ -143,7 +143,7 @@ class MenuItem extends IblockElement
      */
     public function isTargetBlank(): bool
     {
-        return $this->TARGET_BLANK;
+        return $this->PROPERTY_TARGET_BLANK;
     }
 
     /**
@@ -153,7 +153,7 @@ class MenuItem extends IblockElement
      */
     public function withTargetBlank(bool $targetBlank)
     {
-        $this->TARGET_BLANK = $targetBlank;
+        $this->PROPERTY_TARGET_BLANK = $targetBlank;
 
         return $this;
     }
@@ -163,7 +163,7 @@ class MenuItem extends IblockElement
      */
     public function isBrandMenu(): bool
     {
-        return $this->BRAND_MENU;
+        return $this->PROPERTY_BRAND_MENU;
     }
 
     /**
@@ -173,7 +173,7 @@ class MenuItem extends IblockElement
      */
     public function withBrandMenu(bool $brandMenu)
     {
-        $this->BRAND_MENU = $brandMenu;
+        $this->PROPERTY_BRAND_MENU = $brandMenu;
 
         return $this;
     }

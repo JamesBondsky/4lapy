@@ -3,7 +3,8 @@
 namespace FourPaws\Catalog\Query;
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
-use FourPaws\BitrixIblockORM\Query\IblockSectionQuery;
+use FourPaws\BitrixOrm\Collection\CollectionBase;
+use FourPaws\BitrixOrm\Query\IblockSectionQuery;
 use FourPaws\Catalog\Collection\CategoryCollection;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
@@ -31,9 +32,9 @@ class CategoryQuery extends IblockSectionQuery
     }
 
     /**
-     * @return CategoryCollection
+     * @return CollectionBase
      */
-    public function exec(): CategoryCollection
+    public function exec(): CollectionBase
     {
         return new CategoryCollection($this->doExec());
     }

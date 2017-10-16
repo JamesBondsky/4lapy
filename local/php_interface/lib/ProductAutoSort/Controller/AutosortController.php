@@ -7,7 +7,7 @@ use CIBlockElement;
 use CIBlockProperty;
 use FourPaws\App\Application;
 use FourPaws\App\Model\ResponseContent\JsonContent;
-use FourPaws\BitrixIblockORM\Query\QueryBase;
+use FourPaws\BitrixOrm\Query\IblockQueryBase;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 class AutosortController
@@ -110,7 +110,7 @@ class AutosortController
             ['SORT' => 'ASC', 'NAME' => 'ASC'],
             array_merge(
                 ['=IBLOCK_ID' => $iblockId],
-                QueryBase::getActiveAccessableElementsFilter()
+                IblockQueryBase::getActiveAccessableElementsFilter()
             ),
             false,
             ['nTopCount' => 1000],

@@ -3,7 +3,8 @@
 namespace FourPaws\Catalog\Query;
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
-use FourPaws\BitrixIblockORM\Query\IblockElementQuery;
+use FourPaws\BitrixOrm\Collection\CollectionBase;
+use FourPaws\BitrixOrm\Query\IblockElementQuery;
 use FourPaws\Catalog\Collection\ProductCollection;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
@@ -33,9 +34,9 @@ class ProductQuery extends IblockElementQuery
     }
 
     /**
-     * @return ProductCollection
+     * @return CollectionBase
      */
-    public function exec(): ProductCollection
+    public function exec(): CollectionBase
     {
         return new ProductCollection($this->doExec());
     }
