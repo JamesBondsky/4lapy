@@ -208,7 +208,7 @@ class ElementPropertyConditionUserType extends CUserTypeString
         $uniqId = uniqid('propCond_');
 
         $selectHtml = sprintf(
-            '<select data-input-id="%s" name="%s[%s]" data-uf-id="%s" >%s</select>',
+            '<select class="PropertySelect" data-input-id="%s" name="%s[%s]" data-uf-id="%s" >%s</select>',
             $uniqId,
             $arHtmlControl['NAME'],
             self::VALUE_PROP_ID,
@@ -217,7 +217,7 @@ class ElementPropertyConditionUserType extends CUserTypeString
         );
 
         $valueInput = sprintf(
-            '<input id="%s" title="значение свойства" type="text" name="%s[%s]" size="20"  maxlength="225" value="%s" >',
+            '<input class="PropertyValue" id="%s" title="значение свойства" type="text" name="%s[%s]" size="20"  maxlength="225" value="%s" >',
             $uniqId,
             $arHtmlControl["NAME"],
             self::VALUE_PROP_VALUE,
@@ -226,7 +226,7 @@ class ElementPropertyConditionUserType extends CUserTypeString
 
         self::getJsScript($arUserField['ID']);
 
-        return $selectHtml . ' = ' . $valueInput;
+        return '<div class="ElemPropCondItem">'.$selectHtml . ' = ' . $valueInput.'</div>';
     }
 
     /**
