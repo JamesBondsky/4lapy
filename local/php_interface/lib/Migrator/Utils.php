@@ -4,6 +4,7 @@ namespace FourPaws\Migrator;
 
 use Bitrix\Iblock\IblockTable;
 use Bitrix\Main\Entity\Query;
+use Bitrix\Sale\Payment;
 
 /**
  * Class Utils
@@ -21,7 +22,7 @@ class Utils
      * @var array
      */
     private static $iblockInfo;
-
+    
     /**
      * Возвращает id инфоблока по его типу и символьному коду
      *
@@ -83,13 +84,9 @@ class Utils
             return trim(self::getAllIblockInfo()[$type][$code][$field]);
         }
         
-        throw new IblockNotFoundException(
-            sprintf(
-                'Iblock `%s\%s` not found',
-                $type,
-                $code
-            )
-        );
+        throw new IblockNotFoundException(sprintf('Iblock `%s\%s` not found',
+                                                  $type,
+                                                  $code));
         
     }
     
@@ -103,9 +100,12 @@ class Utils
     private static function getAllIblockInfo() : array
     {
         if (self::$iblockInfo === null) {
-            $iblockList = (new Query(IblockTable::getEntity()))
-                ->setSelect(['ID', 'IBLOCK_TYPE_ID', 'CODE', 'XML_ID'])
-                ->exec();
+            $iblockList = (new Query(IblockTable::getEntity()))->setSelect([
+                                                                               'ID',
+                                                                               'IBLOCK_TYPE_ID',
+                                                                               'CODE',
+                                                                               'XML_ID',
+                                                                           ])->exec();
             $iblockInfo = [];
             while ($iblock = $iblockList->fetch()) {
                 $iblockInfo[$iblock['IBLOCK_TYPE_ID']][$iblock['CODE']] = $iblock;
@@ -115,5 +115,79 @@ class Utils
         }
         
         return self::$iblockInfo;
+    }
+    
+    /**
+     * @param array $fields
+     * @param array $replace
+     *
+     * @return array
+     */
+    public static function replaceFields(array $fields, array $replace) : array
+    {
+        if (empty($replace)) {
+            return $fields;
+        }
+        
+        $replacedFields = $fields;
+        
+        foreach ($fields as $name => $value) {
+            if (array_key_exists($name, $replace)) {
+                $replacedFields[$replace[$name]] = $replacedFields[$name];
+                unset($replacedFields[$name]);
+            }
+        }
+        
+        return $replacedFields;
+    }
+    
+    /**
+     * @param array $fields
+     * @param array $availableFields
+     *
+     * @return array
+     */
+    public static function clearFields(array $fields, array $availableFields) : array
+    {
+        foreach ($fields as $fieldName => $fieldValue) {
+            if (!in_array($fieldName, $availableFields, true)) {
+                unset($fields[$fieldName]);
+            }
+        }
+        
+        return $fields;
+    }
+    
+    /**
+     * @return array
+     */
+    public static function getPaymentDateFields() : array
+    {
+        return [
+            'DATE_PAYED'       => 'datetime',
+            'DATE_PAID'        => 'datetime',
+            'PAY_VOUCHER_DATE' => 'date',
+            'PS_RESPONSE_DATE' => 'datetime',
+        ];
+    }
+    
+    /**
+     * @return array
+     */
+    public static function getPaymentReplaceFields() : array
+    {
+        return [
+            'PAYED'        => 'PAID',
+            'DATE_PAYED'   => 'DATE_PAID',
+            'EMP_PAYED_ID' => 'EMP_PAID_ID',
+        ];
+    }
+    
+    /**
+     * @return array
+     */
+    public static function getPaymentAvailableFields() : array
+    {
+        return Payment::getAvailableFields();
     }
 }

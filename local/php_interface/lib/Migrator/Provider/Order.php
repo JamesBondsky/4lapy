@@ -3,28 +3,27 @@
 namespace FourPaws\Migrator\Provider;
 
 /**
- * Class Status
+ * Class Order
  *
  * @package FourPaws\Migrator\Provider
  */
-class Status extends Sale
+class Order extends Sale
 {
     /**
      * @inheritdoc
      */
     public function getMap() : array
     {
-        return [
-            'ID'   => 'ID',
-            'SORT' => 'SORT',
-            'LANG' => 'LANG',
-        ];
+        return [];
     }
     
+    /**
+     * @param array $data
+     *
+     * @return array
+     */
     public function prepareData(array $data) : array
     {
-        $data['LANG'] = [$data['LANG']];
-        
-        return parent::prepareData($data);
+        return $data;
     }
 }
