@@ -27,7 +27,6 @@ $(document).ready(function () {
 
                         propertyValueSelect.append('<option value="' + v.value + '" ' + selected + ' >' + v.name + '</option>');
                     });
-
                 }
                 else {
                     window.alert('Ошибка подсказки значений: ' + data.message);

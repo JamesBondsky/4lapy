@@ -69,6 +69,10 @@ class AutosortController
             );
         }
 
+        if (is_array($hintList) && count($hintList) > 0) {
+            array_unshift($hintList, ['name' => '- выберите -', 'value' => '']);
+        }
+
         return JsonResponse::create((new JsonContent())->withData($hintList));
     }
 
