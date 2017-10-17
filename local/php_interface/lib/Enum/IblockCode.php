@@ -7,4 +7,6 @@ class IblockCode
     const PRODUCTS = 'products';
 
     const MAIN_MENU = 'main_menu';
+
+    const BRANDS = 'brands';
 }

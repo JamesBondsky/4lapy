@@ -4,13 +4,16 @@ namespace FourPaws\Catalog\Query;
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use FourPaws\BitrixOrm\Collection\CollectionBase;
-use FourPaws\BitrixOrm\Query\IblockSectionQuery;
-use FourPaws\Catalog\Collection\CategoryCollection;
+use FourPaws\BitrixOrm\Query\IblockElementQuery;
+use FourPaws\Catalog\Collection\BrandCollection;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 
-class CategoryQuery extends IblockSectionQuery
+class BrandQuery extends IblockElementQuery
 {
+    /**
+     * @inheritdoc
+     */
     public function getBaseSelect(): array
     {
         return [
@@ -19,16 +22,20 @@ class CategoryQuery extends IblockSectionQuery
             'NAME',
             'XML_ID',
             'CODE',
-            'DEPTH_LEVEL',
-            'LEFT_MARGIN',
-            'RIGHT_MARGIN',
-            //TODO Пользовательские свойства? UF_SYMLINK?
+            'DETAIL_PAGE_URL',
+            'SECTION_PAGE_URL',
+            'LIST_PAGE_URL',
+            'CANONICAL_PAGE_URL',
+            'PROPERTY_POPULAR',
         ];
     }
 
+    /**
+     * @inheritdoc
+     */
     public function getBaseFilter(): array
     {
-        return ['IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS)];
+        return ['IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::BRANDS)];
     }
 
     /**
@@ -36,7 +43,7 @@ class CategoryQuery extends IblockSectionQuery
      */
     public function exec(): CollectionBase
     {
-        return new CategoryCollection($this->doExec());
+        return new BrandCollection($this->doExec());
     }
 
 }

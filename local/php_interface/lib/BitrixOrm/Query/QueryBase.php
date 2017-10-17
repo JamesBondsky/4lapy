@@ -2,6 +2,8 @@
 
 namespace FourPaws\BitrixOrm\Query;
 
+use Bitrix\Main\DB\Result;
+use CDBResult;
 use FourPaws\BitrixOrm\Collection\CollectionBase;
 
 abstract class QueryBase
@@ -10,35 +12,35 @@ abstract class QueryBase
      * @var array
      */
     protected $select = [];
-    
+
     /**
      * @var array
      */
     protected $filter = [];
-    
+
     /**
      * @var array
      */
     protected $group = [];
-    
+
     /**
      * @var array
      */
     protected $order = [];
-    
+
     /**
      * @var array
      */
     protected $nav = [];
-    
+
     /**
      * @return array
      */
-    public function getSelect() : array
+    public function getSelect(): array
     {
         return $this->select;
     }
-    
+
     /**
      * @param array $select
      *
@@ -47,18 +49,18 @@ abstract class QueryBase
     public function withSelect(array $select)
     {
         $this->select = $select;
-        
+
         return $this;
     }
-    
+
     /**
      * @return array
      */
-    public function getFilter() : array
+    public function getFilter(): array
     {
         return $this->filter;
     }
-    
+
     /**
      * @param array $filter
      *
@@ -67,10 +69,10 @@ abstract class QueryBase
     public function withFilter(array $filter)
     {
         $this->filter = $filter;
-        
+
         return $this;
     }
-    
+
     /**
      * @param string $name
      * @param        $value
@@ -80,14 +82,14 @@ abstract class QueryBase
     public function withFilterParameter(string $name, $value)
     {
         $name = trim($name);
-        
+
         if ($name !== '') {
             $this->filter[$name] = $value;
         }
-        
+
         return $this;
     }
-    
+
     /**
      * @param string $name
      *
@@ -96,22 +98,22 @@ abstract class QueryBase
     public function withoutFilterParameter(string $name)
     {
         $name = trim($name);
-        
+
         if (isset($this->filter[$name])) {
             unset($this->filter[$name]);
         }
-        
+
         return $this;
     }
-    
+
     /**
      * @return array
      */
-    public function getGroup() : array
+    public function getGroup(): array
     {
         return $this->group;
     }
-    
+
     /**
      * @param array $group
      *
@@ -120,18 +122,18 @@ abstract class QueryBase
     public function withGroup(array $group)
     {
         $this->group = $group;
-        
+
         return $this;
     }
-    
+
     /**
      * @return array
      */
-    public function getOrder() : array
+    public function getOrder(): array
     {
         return $this->order;
     }
-    
+
     /**
      * @param array $order
      *
@@ -140,18 +142,18 @@ abstract class QueryBase
     public function withOrder(array $order)
     {
         $this->order = $order;
-        
+
         return $this;
     }
-    
+
     /**
      * @return array
      */
-    public function getNav() : array
+    public function getNav(): array
     {
         return $this->nav;
     }
-    
+
     /**
      * @param array $nav
      *
@@ -160,19 +162,21 @@ abstract class QueryBase
     public function withNav(array $nav)
     {
         $this->nav = $nav;
-        
+
         return $this;
     }
-    
+
     /**
      * Исполняет запрос и возвращает коллекцию сущностей. Например, элементов инфоблока.
      *
      * @return CollectionBase
      */
-    abstract public function exec() : CollectionBase;
-    
+    abstract public function exec(): CollectionBase;
+
     /**
      * Непосредственное выполнение запроса через API Битрикса
+     *
+     * @return mixed|CDBResult|Result
      */
     abstract public function doExec();
 
@@ -181,24 +185,24 @@ abstract class QueryBase
      *
      * @return array
      */
-    abstract public function getBaseFilter() : array;
-    
+    abstract public function getBaseFilter(): array;
+
     /**
      * Возвращает базовую выборку полей. Например, те поля, которые обязательно нужны для создания сущности.
      *
      * @return array
      */
-    abstract public function getBaseSelect() : array;
-    
-    public function getFilterWithBase() : array
+    abstract public function getBaseSelect(): array;
+
+    public function getFilterWithBase(): array
     {
         return array_merge($this->getFilter(), $this->getBaseFilter());
     }
-    
+
     /**
      * @return array
      */
-    public function getSelectWithBase() : array
+    public function getSelectWithBase(): array
     {
         return array_unique(array_merge($this->getSelect(), $this->getBaseSelect()));
     }

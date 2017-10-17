@@ -7,7 +7,7 @@ namespace FourPaws\BitrixOrm\Query;
  *
  * @package FourPaws\BitrixOrm\Query
  */
-abstract class IblockElementQuery extends QueryBase
+abstract class IblockElementQuery extends IblockQueryBase
 {
     /**
      * @return \CDBResult
