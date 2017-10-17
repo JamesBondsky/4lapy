@@ -60,6 +60,26 @@ class AutosortController
             $hintList = $this->getHintForIblock((int)$arProperty['LINK_IBLOCK_ID']);
         }
 
+        /**
+         * Для "Да/Нет"
+         */
+        if (
+            isset($arProperty['USER_TYPE'], $arProperty['PROPERTY_TYPE'])
+            && $arProperty['USER_TYPE'] === 'YesNoPropertyType'
+            && $arProperty['PROPERTY_TYPE'] === 'N'
+        ) {
+            $hintList = [
+                [
+                    'name'  => 'Да',
+                    'value' => '1',
+                ],
+                [
+                    'name'  => 'Нет',
+                    'value' => '0',
+                ],
+            ];
+        }
+
         if (!isset($hintList)) {
             return JsonResponse::create(
                 new JsonContent(

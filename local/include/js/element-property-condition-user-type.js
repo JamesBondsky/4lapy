@@ -43,7 +43,8 @@ $(document).ready(function () {
 
         var isDirectory =
             selectedOption.data('userType') === 'directory'
-            || ( selectedOption.data('propertyType') === 'E' && selectedOption.data('userType') === 'EAutocomplete' );
+            || ( selectedOption.data('propertyType') === 'E' && selectedOption.data('userType') === 'EAutocomplete' )
+            || ( selectedOption.data('propertyType') === 'N' && selectedOption.data('userType') === 'YesNoPropertyType' );
 
         item.find('select.PropertyValueSelect').remove();
 
