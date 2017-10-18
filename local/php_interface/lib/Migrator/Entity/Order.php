@@ -3,11 +3,9 @@
 namespace FourPaws\Migrator\Entity;
 
 use Bitrix\Sale\Basket;
-use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Compatible\Internals\EntityCompatibility;
 use Bitrix\Sale\Compatible\OrderCompatibility;
 use Bitrix\Sale\Delivery\Services\Manager as DeliveryManager;
-use Bitrix\Sale\Fuser;
 use Bitrix\Sale\Order as SaleOrder;
 use Bitrix\Sale\PaySystem\Manager;
 use FourPaws\Migrator\Client\Catalog;
@@ -107,13 +105,15 @@ class Order extends AbstractEntity
         $order = SaleOrder::load($primary);
         
         $this->_prepareOrder($data, $order);
-        $result = $this->saveOrder($order);
+        $result = $order->save();
         
         if (!$result->getResult()) {
-            throw new UpdateException(sprintf('Order with primary %s update error.', $primary));
+            throw new UpdateException(sprintf('Order with primary %s update errors: %s.',
+                                              $primary,
+                                              implode(', ', $result->getErrorMessages())));
         }
         
-        return new UpdateResult($result->getResult(), $result->getInternalId());
+        return new UpdateResult($result->isSuccess(), $primary);
     }
     
     /**
@@ -129,23 +129,6 @@ class Order extends AbstractEntity
     public function setFieldValue(string $field, string $primary, $value) : UpdateResult
     {
         throw new UpdateException('Order fields is not updated.');
-    }
-    
-    /**
-     * @param \Bitrix\Sale\Order $order
-     *
-     * @return \FourPaws\Migrator\Entity\Result
-     *
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Bitrix\Main\ArgumentNullException
-     * @throws \Bitrix\Main\ObjectNotFoundException
-     */
-    protected function saveOrder(SaleOrder $order) : Result
-    {
-        $order->doFinalAction(true);
-        $result = $order->save();
-        
-        return new Result($result->isSuccess(), $order->getId());
     }
     
     /**
@@ -225,6 +208,9 @@ class Order extends AbstractEntity
      * @throws \Bitrix\Main\NotSupportedException
      * @throws \Bitrix\Main\ObjectNotFoundException
      * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \FourPaws\Migrator\Entity\Exceptions\AddException
+     * @throws \Exception
      */
     protected function _addBasketToOrder(array $rawBasketList, SaleOrder $order) : SaleOrder
     {
@@ -237,9 +223,18 @@ class Order extends AbstractEntity
             $rawBasket            = $this->_prepareBasketData($rawBasket);
             
             if ($item = $basket->getExistsItem($rawBasket['MODULE'], $productId)) {
-                $item->setFields($rawBasket);
+                $item->setFieldsNoDemand($rawBasket);
+                $item->save();
             } else {
-                BasketItem::create($basket, $rawBasket['MODULE'], $productId);
+                $item = \Bitrix\Sale\BasketItem::create($basket, $rawBasket['MODULE'], $productId);
+                $item->setFieldsNoDemand($rawBasket);
+                $result = $item->save();
+                
+                if (!$result->isSuccess()) {
+                    throw new AddException(sprintf('Basket product #%s add error: %s',
+                                                   $productId,
+                                                   implode(', ', $result->getErrorMessages())));
+                }
             }
         }
         
@@ -296,11 +291,6 @@ class Order extends AbstractEntity
         
         $service = DeliveryManager::getObjectById($deliveryId);
         
-        var_dump([
-                     $service,
-                     $deliveryId,
-                 ]);
-        
         /**
          * @var \Bitrix\Sale\Shipment $shipment
          */
@@ -343,11 +333,11 @@ class Order extends AbstractEntity
         $service           = Manager::getObjectById($data['PAY_SYSTEM_ID']);
         
         $payment = $paymentCollection->count() > 0 ? $paymentCollection[0] : $paymentCollection->createItem($service);
-        $payment->setFields([
-                                'SUM'             => $sum,
-                                'PAY_SYSTEM_NAME' => $service->getField('NAME'),
-                                'PAY_SYSTEM_ID'   => $data['PAY_SYSTEM_ID'],
-                            ]);
+        $payment->setFieldsNoDemand([
+                                        'SUM'             => $sum,
+                                        'PAY_SYSTEM_NAME' => $service->getField('NAME'),
+                                        'PAY_SYSTEM_ID'   => $data['PAY_SYSTEM_ID'],
+                                    ]);
         
         $payment->setPaid($data['PAYED']);
         
@@ -393,8 +383,7 @@ class Order extends AbstractEntity
             return in_array($key, $fields, true);
         };
         
-        $data             = array_filter($data, $filter, ARRAY_FILTER_USE_KEY);
-        $data['FUSER_ID'] = Fuser::getIdByUserId($data['USER_ID']);
+        $data = array_filter($data, $filter, ARRAY_FILTER_USE_KEY);
         
         return $data;
     }
