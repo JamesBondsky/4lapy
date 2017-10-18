@@ -11,6 +11,7 @@ use Bitrix\Sale\Fuser;
 use Bitrix\Sale\Order as SaleOrder;
 use Bitrix\Sale\PaySystem\Manager;
 use FourPaws\Migrator\Client\Catalog;
+use FourPaws\Migrator\Client\Delivery;
 use FourPaws\Migrator\Client\OrderProperty;
 use FourPaws\Migrator\Client\User;
 use FourPaws\Migrator\Entity\Exceptions\AddException;
@@ -61,29 +62,6 @@ class Order extends AbstractEntity
      * @param string $primary
      * @param array  $data
      *
-     * @return \FourPaws\Migrator\Entity\UpdateResult
-     *
-     * @throws \Exception
-     */
-    public function updateItem(string $primary, array $data) : UpdateResult
-    {
-        unset($data['USER_ID']);
-        
-        $order = SaleOrder::load($primary);
-        $this->_prepareOrder($data, $order);
-        $result = $this->saveOrder($order);
-        
-        if (!$result->getResult()) {
-            throw new UpdateException(sprintf('Order with primary %s update error.', $primary));
-        }
-        
-        return new UpdateResult($result->getResult(), $result->getInternalId());
-    }
-    
-    /**
-     * @param string $primary
-     * @param array  $data
-     *
      * @return \FourPaws\Migrator\Entity\AddResult
      *
      * @throws \FourPaws\Migrator\Entity\Exceptions\AddException
@@ -98,19 +76,44 @@ class Order extends AbstractEntity
     public function addItem(string $primary, array $data) : AddResult
     {
         $userId = MapTable::getInternalIdByExternalId($data['USER_ID'], User::ENTITY_NAME);
-        unset($data['USER_ID']);
+        
+        if (!$userId) {
+            throw new AddException(sprintf('User with external id #%s is not found.', $data['USER_ID']));
+        }
         
         $order = SaleOrder::create(SITE_ID, $userId, $data['CURRENCY']);
         $this->_prepareOrder($data, $order);
         $result = $this->saveOrder($order);
         
-        if (!$result->getResult()) {
+        if (!$result->getInternalId()) {
             throw new AddException(sprintf('Order with primary %s add error.', $primary));
         }
-    
+        
         MapTable::addEntity($this->entity, $primary, $result->getInternalId());
         
         return new AddResult(true, $result->getInternalId());
+    }
+    
+    /**
+     * @param string $primary
+     * @param array  $data
+     *
+     * @return \FourPaws\Migrator\Entity\UpdateResult
+     *
+     * @throws \Exception
+     */
+    public function updateItem(string $primary, array $data) : UpdateResult
+    {
+        $order = SaleOrder::load($primary);
+        
+        $this->_prepareOrder($data, $order);
+        $result = $this->saveOrder($order);
+        
+        if (!$result->getResult()) {
+            throw new UpdateException(sprintf('Order with primary %s update error.', $primary));
+        }
+        
+        return new UpdateResult($result->getResult(), $result->getInternalId());
     }
     
     /**
@@ -134,9 +137,12 @@ class Order extends AbstractEntity
      * @return \FourPaws\Migrator\Entity\Result
      *
      * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ObjectNotFoundException
      */
     protected function saveOrder(SaleOrder $order) : Result
     {
+        $order->doFinalAction(true);
         $result = $order->save();
         
         return new Result($result->isSuccess(), $order->getId());
@@ -159,6 +165,16 @@ class Order extends AbstractEntity
      */
     protected function _prepareOrderData(array $rawData) : array
     {
+        $rawData = OrderCompatibility::convertDateFields($rawData, Utils::getOdrerDateFields());
+        
+        foreach ($rawData['PROPERTY_VALUES'] as $property) {
+            if ((int)$property['ORDER_PROPS_ID'] === 42) {
+                $rawData['COMMENTS'] .= ' ' . $property['VALUE'];
+                
+                break;
+            }
+        }
+        
         $filter = function ($key) {
             return in_array($key, SaleOrder::getAvailableFields(), true);
         };
@@ -183,11 +199,18 @@ class Order extends AbstractEntity
      */
     protected function _prepareOrder(array $rawData, SaleOrder $order) : SaleOrder
     {
+        unset($rawData['USER_ID']);
+        
         $order->setPersonTypeId($rawData['PERSON_TYPE_ID']);
         $order->setFields($this->_prepareOrderData($rawData));
-        $this->_addPaymentToOrder($rawData, $order);
-        $this->_addDeliveryToOrder($rawData, $order);
-        $this->_addBasketToOrder($rawData['BASKET'], $order);
+        try {
+            $this->_addBasketToOrder($rawData['BASKET'], $order);
+            $this->_addPaymentToOrder($rawData, $order);
+            $this->_addDeliveryToOrder($rawData, $order);
+            $this->_addPropertiesToOrder($rawData, $order);
+        } catch (\Exception $e) {
+            var_dump($e);
+        }
         
         return $order;
     }
@@ -199,6 +222,9 @@ class Order extends AbstractEntity
      * @return \Bitrix\Sale\Order
      *
      * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\NotSupportedException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws \Bitrix\Main\ArgumentNullException
      */
     protected function _addBasketToOrder(array $rawBasketList, SaleOrder $order) : SaleOrder
     {
@@ -215,6 +241,12 @@ class Order extends AbstractEntity
             } else {
                 BasketItem::create($basket, $rawBasket['MODULE'], $productId);
             }
+        }
+        
+        if ($order->isNotEmptyBasket()) {
+            $basket->setOrder($order);
+        } else {
+            $order->setBasket($basket);
         }
         
         $basket->save();
@@ -235,7 +267,7 @@ class Order extends AbstractEntity
     protected function _addPropertiesToOrder(array $properties, SaleOrder $order) : SaleOrder
     {
         $propertyCollection = $order->getPropertyCollection();
-        $propertyCollection->setValuesFromPost($this->_prepareOrderData($properties), []);
+        $propertyCollection->setValuesFromPost($this->_preparePropertiesData($properties['PROPERTY_VALUES']), []);
         $propertyCollection->save();
         
         return $order;
@@ -260,14 +292,20 @@ class Order extends AbstractEntity
     protected function _addDeliveryToOrder(array $data, SaleOrder $order) : SaleOrder
     {
         $shipmentCollection = $order->getShipmentCollection();
-        $deliveryId         = $data['DELIVERY_ID'];
-
+        $deliveryId         = MapTable::getInternalIdByExternalId($data['DELIVERY_ID'], Delivery::ENTITY_NAME);
+        
         $service = DeliveryManager::getObjectById($deliveryId);
+        
+        var_dump([
+                     $service,
+                     $deliveryId,
+                 ]);
+        
         /**
          * @var \Bitrix\Sale\Shipment $shipment
          */
         $shipment = $shipmentCollection->count() > 0 ? $shipmentCollection[0] : $shipmentCollection->createItem();
-        $fields = [
+        $fields   = [
             'DELIVERY_NAME'         => $service->getName(),
             'CURRENCY'              => $data['CURRENCY'],
             'PRICE_DELIVERY'        => $data['PRICE_DELIVERY'],
@@ -275,7 +313,9 @@ class Order extends AbstractEntity
             'CUSTOM_PRICE_DELIVERY' => 'Y',
             'TRACKING_NUMBER'       => $data['TRACKING_NUMBER'],
         ];
-        $shipment->setFields($fields);
+        $shipment->setFieldsNoDemand($fields);
+        $shipmentCollection->setOrder($order);
+        $shipmentCollection->save();
         
         return $order;
     }
@@ -294,27 +334,33 @@ class Order extends AbstractEntity
      */
     protected function _addPaymentToOrder(array $data, SaleOrder $order) : SaleOrder
     {
+        if (!$data['PAY_SYSTEM_ID']) {
+            return $order;
+        }
         
         $paymentCollection = $order->getPaymentCollection();
         $sum               = $data['PS_SUM'];
         $service           = Manager::getObjectById($data['PAY_SYSTEM_ID']);
-
+        
         $payment = $paymentCollection->count() > 0 ? $paymentCollection[0] : $paymentCollection->createItem($service);
         $payment->setFields([
                                 'SUM'             => $sum,
                                 'PAY_SYSTEM_NAME' => $service->getField('NAME'),
                                 'PAY_SYSTEM_ID'   => $data['PAY_SYSTEM_ID'],
                             ]);
+        
         $payment->setPaid($data['PAYED']);
-
+        
         $data = OrderCompatibility::convertDateFields($data, Utils::getPaymentDateFields());
         $data = Utils::replaceFields($data, Utils::getPaymentReplaceFields());
         $data = Utils::clearFields($data, Utils::getPaymentAvailableFields());
         
         unset($data['SUM'], $data['PAY_SYSTEM_NAME'], $data['PAY_SYSTEM_ID']);
-
-        $payment->setFields($data);
-
+        
+        $payment->setFieldsNoDemand($data);
+        $paymentCollection->setOrder($order);
+        $paymentCollection->save();
+        
         return $order;
     }
     
@@ -354,13 +400,13 @@ class Order extends AbstractEntity
     }
     
     /**
-     * @param array $rawData
+     * @param array $data
      *
      * @return array
      */
-    protected function _preparePropertiesData(array $rawData) : array
+    protected function _preparePropertiesData(array $data) : array
     {
-        return array_walk($rawData,
+        array_walk($data,
             function ($rawProperty) {
                 return [
                     'NAME'           => $rawProperty['NAME'],
@@ -368,5 +414,7 @@ class Order extends AbstractEntity
                     'VALUE'          => $rawProperty['VALUE'],
                 ];
             });
+        
+        return $data;
     }
 }

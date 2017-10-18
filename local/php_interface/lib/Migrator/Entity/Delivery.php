@@ -2,6 +2,7 @@
 
 namespace FourPaws\Migrator\Entity;
 
+use Bitrix\Sale\Delivery\Services\Manager;
 use Bitrix\Sale\Delivery\Services\Table;
 use FourPaws\Migrator\Entity\Exceptions\AddException;
 use FourPaws\Migrator\Entity\Exceptions\UpdateException;
@@ -13,6 +14,8 @@ use FourPaws\Migrator\Entity\Exceptions\UpdateException;
  */
 class Delivery extends AbstractEntity
 {
+    const DEFAULT_CONFIGURATION = 'a:1:{s:4:"MAIN";a:3:{s:8:"CURRENCY";s:3:"RUB";s:5:"PRICE";i:0;s:6:"PERIOD";a:3:{s:4:"FROM";i:0;s:2:"TO";i:0;s:4:"TYPE";s:1:"D";}}}';
+    
     /**
      * @inheritdoc
      */
@@ -39,7 +42,8 @@ class Delivery extends AbstractEntity
      */
     public function updateItem(string $primary, array $data) : UpdateResult
     {
-        $result = Table::update($primary, $data);
+        $data['CONFIG'] = unserialize(self::DEFAULT_CONFIGURATION, ['allowed_classes' => false]);
+        $result         = Table::update($primary, $data);
         
         if (!$result->isSuccess()) {
             throw new AddException(sprintf('Delivery #%s update error: %s',
@@ -57,11 +61,13 @@ class Delivery extends AbstractEntity
      * @return \FourPaws\Migrator\Entity\AddResult
      *
      * @throws \FourPaws\Migrator\Entity\Exceptions\AddException
+     * @throws \Bitrix\Main\SystemException
      * @throws \Exception
      */
     public function addItem(string $primary, array $data) : AddResult
     {
-        $result = Table::add($data);
+        $data['CONFIG'] = unserialize(self::DEFAULT_CONFIGURATION, ['allowed_classes' => false]);
+        $result         = Manager::add($data);
         
         if (!$result->isSuccess()) {
             throw new AddException(sprintf('Delivery #%s addition error: %s',
@@ -82,11 +88,12 @@ class Delivery extends AbstractEntity
      * @return \FourPaws\Migrator\Entity\UpdateResult
      *
      * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateException
+     * @throws \Bitrix\Main\SystemException
      * @throws \Exception
      */
     public function setFieldValue(string $field, string $primary, $value) : UpdateResult
     {
-        $result = Table::update($primary, [$field => $value]);
+        $result = Manager::update($primary, [$field => $value]);
         
         if ($result->isSuccess()) {
             return new UpdateResult(true, $result->getId());

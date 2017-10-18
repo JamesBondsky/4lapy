@@ -174,6 +174,18 @@ class Utils
     /**
      * @return array
      */
+    public static function getOdrerDateFields() : array
+    {
+        return [
+            'DATE_STATUS' => 'datetime',
+            'DATE_INSERT' => 'datetime',
+            'DATE_UPDATE' => 'datetime',
+        ];
+    }
+    
+    /**
+     * @return array
+     */
     public static function getPaymentReplaceFields() : array
     {
         return [
