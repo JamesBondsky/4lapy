@@ -2,7 +2,6 @@
 
 namespace FourPaws\Migrator\Entity;
 
-use FourPaws\Migrator\Entity\Exceptions\AddException;
 use FourPaws\Migrator\Entity\Exceptions\UpdateException;
 
 /**
@@ -13,20 +12,50 @@ use FourPaws\Migrator\Entity\Exceptions\UpdateException;
 class OrderProperty extends AbstractEntity
 {
     /**
+     * @inheritdoc
+     */
+    public function getTimestampByItem(array $item) : string
+    {
+        return '';
+    }
+    
+    /**
      * Установим маппинг существующих свойств заказа по умолчанию
      *
      * EXTERNAL -> INTERNAL
      *
+     * @return array
      * @throws \Exception
      */
-    public function setDefaults()
+    public function setDefaults() : array
     {
         if ($this->checkEntity()) {
-            return;
+            return [];
         }
         
         $map = [
-            1 => 1,
+            5  => 1,
+            7  => 2,
+            8  => 14,
+            10 => 24,
+            13 => 18,
+            14 => 12,
+            16 => 23,
+            17 => 5,
+            18 => 6,
+            19 => 7,
+            20 => 8,
+            21 => 9,
+            22 => 10,
+            23 => 11,
+            25 => 13,
+            26 => 19,
+            32 => 15,
+            36 => 20,
+            40 => 16,
+            46 => 22,
+            50 => 21,
+            53 => 17,
         ];
         
         foreach ($map as $key => $item) {
@@ -34,11 +63,13 @@ class OrderProperty extends AbstractEntity
             
             if (!$result->isSuccess()) {
                 /**
-                 * @todo нормлаьное исключение
+                 * @todo нормальное исключение
                  */
                 throw new \Exception("Error: \n" . implode("\n", $result->getErrorMessages()));
             }
         }
+    
+        return $map;
     }
     
     /**
@@ -51,9 +82,7 @@ class OrderProperty extends AbstractEntity
      */
     public function updateItem(string $primary, array $data) : UpdateResult
     {
-        
-        
-        return new UpdateResult($result->isSuccess(), $result->getId());
+        return new UpdateResult(true, $primary);
     }
     
     /**
@@ -67,13 +96,7 @@ class OrderProperty extends AbstractEntity
      */
     public function addItem(string $primary, array $data) : AddResult
     {
-        
-        
-        if ($result->isSuccess()) {
-            throw new AddException("Error: add entity was broken");
-        }
-        
-        return new AddResult($result->isSuccess(), $result->getId());
+        return new AddResult(true, $primary);
     }
     
     /**
@@ -88,7 +111,6 @@ class OrderProperty extends AbstractEntity
      */
     public function setFieldValue(string $field, string $primary, $value) : UpdateResult
     {
-        
-        throw new UpdateException("Update field with primary {$primary} error: {$errors}");
+        throw new UpdateException('Update field error: it`s mock entity.');
     }
 }

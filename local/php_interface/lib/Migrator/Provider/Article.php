@@ -14,6 +14,9 @@ use FourPaws\Migrator\Converter\StringToReference;
  */
 class Article extends IBlockElement
 {
+    /**
+     * @inheritdoc
+     */
     public function getMap() : array
     {
         $map = parent::getMap();

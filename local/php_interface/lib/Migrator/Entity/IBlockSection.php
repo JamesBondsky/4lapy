@@ -19,7 +19,9 @@ abstract class IBlockSection extends IBlock
      * @param array  $data
      *
      * @return \FourPaws\Migrator\Entity\AddResult
+     *
      * @throws \FourPaws\Migrator\Entity\Exceptions\AddException
+     * @throws \Exception
      */
     public function addItem(string $primary, array $data) : AddResult
     {

@@ -166,4 +166,32 @@ class MapTable extends DataManager
                                'INTERNAL_ID' => $internalId,
                            ]);
     }
+    
+    /**
+     * Возвращает полное отображение для сущности entity вида
+     *
+     * [
+     *   EXTERNAL_ID_1 => INTERNAL_ID_1,
+     *   EXTERNAL_ID_2 => INTERNAL_ID_2,
+     *   ...,
+     * ]
+     *
+     * @param string $entity
+     *
+     * @return array
+     *
+     * @throws \Bitrix\Main\ArgumentException
+     */
+    public static function getFullMapByEntity(string $entity) : array
+    {
+        $map = self::getList([
+                                 'filter' => ['=ENTITY' => $entity],
+                                 'select' => [
+                                     'EXTERNAL_ID',
+                                     'INTERNAL_ID',
+                                 ],
+                             ])->fetchAll();
+        
+        return array_combine(array_column($map, 'EXTERNAL_ID'), array_column($map, 'INTERNAL_ID'));
+    }
 }

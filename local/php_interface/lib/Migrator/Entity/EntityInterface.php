@@ -7,12 +7,17 @@ interface EntityInterface
     /**
      * @return array
      */
-    public function setDefaults();
+    public function setDefaults() : array;
     
     /**
      * @return string
      */
     public function getPrimary() : string;
+    
+    /**
+     * @return string
+     */
+    public function getEntity() : string;
     
     /**
      * @return string

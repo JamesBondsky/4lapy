@@ -27,12 +27,13 @@ abstract class IBlockElement extends IBlock
      * @throws \FourPaws\Migrator\Entity\Exceptions\AddException
      * @throws \FourPaws\Migrator\Entity\Exceptions\AddProductException
      * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\ArgumentException
      * @throws \Exception
      */
     public function addItem(string $primary, array $data) : AddResult
     {
         $cIBlockElement = new \CIBlockElement();
-
+        
         $id = $cIBlockElement->Add($data, false, false);
         
         if (!$id) {
@@ -66,7 +67,7 @@ abstract class IBlockElement extends IBlock
                 $cIBlockElement::Delete($id);
                 
                 throw new AddException("IBlock {$this->getIblockId()} element product #{$primary} add error: {$e->getMessage()}");
-            } catch (\Throwable $e) {
+            } catch (\Exception $e) {
                 throw new AddException("IBlock {$this->getIblockId()} element product #{$primary} add error: {$e->getMessage()}");
             }
             
@@ -91,6 +92,7 @@ abstract class IBlockElement extends IBlock
      * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateException
      * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateProductException
      * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\ArgumentException
      * @throws \Exception
      */
     public function updateItem(string $primary, array $data) : UpdateResult
@@ -99,9 +101,9 @@ abstract class IBlockElement extends IBlock
         
         if (!$cIBlockElement->Update($primary, $data, false, false, false, false)) {
             throw new UpdateException("IBlock {$this->getIblockId()} element #{$primary} update error: $cIBlockElement->LAST_ERROR");
-        } else {
-            $this->setInternalKeys(['sections' => $data['SECTIONS']], $primary, $this->entity . '_section');
         }
+        
+        $this->setInternalKeys(['sections' => $data['SECTIONS']], $primary, $this->entity . '_section');
         
         /**
          * @todo переписать к чертям
@@ -126,7 +128,7 @@ abstract class IBlockElement extends IBlock
                 if (!$result->isSuccess()) {
                     throw new UpdateProductException("IBlock {$this->getIblockId()} element product #{$primary} update error: {$result->getErrorMessages()}");
                 }
-            } catch (\Throwable $e) {
+            } catch (\Exception $e) {
                 throw new UpdateException("IBlock {$this->getIblockId()} element product #{$primary} update error: {$e->getMessage()}");
             }
             
@@ -142,6 +144,8 @@ abstract class IBlockElement extends IBlock
      * @param array  $data
      * @param string $internal
      * @param string $entity
+     *
+     * @throws \Bitrix\Main\ArgumentException
      */
     public function setInternalKeys(array $data, string $internal, string $entity)
     {

@@ -8,7 +8,7 @@ use Bitrix\Main\Type\DateTime;
 class UserGroup extends ProviderAbstract
 {
     /**
-     * @return array
+     * @inheritdoc
      */
     public function getMap() : array
     {
@@ -28,6 +28,9 @@ class UserGroup extends ProviderAbstract
      * @param array $data
      *
      * @return array
+     *
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \RuntimeException
      */
     public function prepareData(array $data) : array
     {

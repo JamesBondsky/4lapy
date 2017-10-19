@@ -2,7 +2,6 @@
 
 namespace FourPaws\Migrator\Entity;
 
-use FourPaws\Migrator\Entity\Exceptions\AddException;
 use FourPaws\Migrator\Entity\Exceptions\UpdateException;
 
 /**
@@ -12,34 +11,40 @@ use FourPaws\Migrator\Entity\Exceptions\UpdateException;
  */
 class Status extends AbstractEntity
 {
+    /**
+     * @inheritdoc
+     */
+    public function getTimestampByItem(array $item) : string
+    {
+        return '';
+    }
     
     /**
-     * Установим маппинг существующих статусов по умолчанию
+     * Установим маппинг свойств по-умолчанию
      *
-     * EXTERNAL -> INTERNAL
-     *
+     * @return array
      * @throws \Exception
      */
-    public function setDefaults()
+    public function setDefaults() : array
     {
         if ($this->checkEntity()) {
-            return;
+            return [];
         }
         
         $map = [
-            1 => 1,
+            'N' => 'N',
+            'F' => 'F',
         ];
         
         foreach ($map as $key => $item) {
             $result = MapTable::addEntity($this->entity, $key, $item);
             
             if (!$result->isSuccess()) {
-                /**
-                 * @todo нормлаьное исключение
-                 */
                 throw new \Exception("Error: \n" . implode("\n", $result->getErrorMessages()));
             }
         }
+    
+        return $map;
     }
     
     /**
@@ -52,9 +57,9 @@ class Status extends AbstractEntity
      */
     public function updateItem(string $primary, array $data) : UpdateResult
     {
+        $result = \CSaleStatus::Update($primary, $data);
         
-        
-        return new UpdateResult($result->isSuccess(), $result->getId());
+        return new UpdateResult(false !== $result, $primary);
     }
     
     /**
@@ -63,18 +68,17 @@ class Status extends AbstractEntity
      *
      * @return \FourPaws\Migrator\Entity\AddResult
      *
-     * @throws \FourPaws\Migrator\Entity\Exceptions\AddException
-     * @throws \Exception
+     * * @throws \Exception
      */
     public function addItem(string $primary, array $data) : AddResult
     {
-        
-        
-        if ($result->isSuccess()) {
-            throw new AddException("Error: add entity was broken");
+        $result = \CSaleStatus::Add($data);
+    
+        if (false !== $result) {
+            MapTable::addEntity($this->entity, $primary, $primary);
         }
         
-        return new AddResult($result->isSuccess(), $result->getId());
+        return new AddResult(false !== $result, $primary);
     }
     
     /**
@@ -89,7 +93,17 @@ class Status extends AbstractEntity
      */
     public function setFieldValue(string $field, string $primary, $value) : UpdateResult
     {
+        /**
+         * Что произошло в случае ошибки мы узнать не сможем.
+         */
+        if (\CSaleStatus::Update($primary,
+                                 [
+                                     'ID'   => $primary,
+                                     $field => $value,
+                                 ])) {
+            return new UpdateResult(true, $primary);
+        }
         
-        throw new UpdateException("Update field with primary {$primary} error: {$errors}");
+        throw new UpdateException("Update field with primary {$primary} error.");
     }
 }

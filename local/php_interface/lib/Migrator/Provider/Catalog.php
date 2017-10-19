@@ -23,18 +23,7 @@ use FourPaws\Migrator\Utils;
 class Catalog extends IBlockElement
 {
     /**
-     * $map - однозначное отображение ['поле на сервере' => 'поле на клиенте']
-     * Также возможно однозначное указание сущности для позднего связывания.
-     *
-     * Работает следующим образом:
-     *
-     * Отображение задаётся в виде ['имя сущности'.'поле на сервере' => 'поле на клиенте']
-     *
-     * При разборе ответа вместо записи в это поле осуществляется запись в таблицу adv_migrator_lazy
-     * При любом импорте провайдер после завершения импорта разбирает относящиеся к своей сущности id'шники и, если
-     * у него есть, что отдать, записывает значение, удаляя его из таблицы.
-     *
-     * @return array
+     * @inheritdoc
      */
     public function getMap() : array
     {
@@ -114,6 +103,10 @@ class Catalog extends IBlockElement
      * @param array $data
      *
      * @return array
+     *
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \RuntimeException
      */
     public function prepareData(array $data) : array
     {

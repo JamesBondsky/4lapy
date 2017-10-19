@@ -8,7 +8,15 @@ abstract class AbstractEntity implements EntityInterface
     
     protected $provider;
     
-    abstract public function setDefaults();
+    abstract public function setDefaults() : array;
+    
+    /**
+     * @return string
+     */
+    public function getEntity() : string
+    {
+        return $this->entity;
+    }
     
     public function checkEntity()
     {
@@ -70,6 +78,8 @@ abstract class AbstractEntity implements EntityInterface
      * @param array  $item
      *
      * @return \FourPaws\Migrator\Entity\Result
+     *
+     * @throws \Bitrix\Main\ArgumentException
      */
     public function addOrUpdateItem(string $primary, array $item) : Result
     {

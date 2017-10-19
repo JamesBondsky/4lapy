@@ -12,7 +12,7 @@ use Bitrix\Main\UserTable;
 class User extends ProviderAbstract
 {
     /**
-     * @return array
+     * @inheritdoc
      */
     public function getMap() : array
     {

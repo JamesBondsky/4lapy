@@ -12,6 +12,9 @@ use FourPaws\Migrator\Entity\IBlockSection as IBlockSectionEntity;
  */
 abstract class IBlockSection extends IBlock
 {
+    /**
+     * @inheritdoc
+     */
     public function getMap() : array
     {
         $map = array_diff(array_keys(array_filter(SectionTable::getMap(), self::getScalarEntityMapFilter())),
@@ -38,6 +41,9 @@ abstract class IBlockSection extends IBlock
      * @param array $data
      *
      * @return array
+     *
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \RuntimeException
      */
     public function prepareData(array $data) : array
     {
@@ -51,11 +57,13 @@ abstract class IBlockSection extends IBlock
     /**
      * IblockProvider constructor.
      *
-     * @param string              $entityName
      * @param IBlockSectionEntity $entity
+     *
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \RuntimeException
      */
-    public function __construct(string $entityName, IBlockSectionEntity $entity)
+    public function __construct(IBlockSectionEntity $entity)
     {
-        parent::__construct($entityName, $entity);
+        parent::__construct($entity);
     }
 }

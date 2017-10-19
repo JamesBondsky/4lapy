@@ -7,11 +7,12 @@ use FourPaws\Migrator\Utils;
 
 class ArticleSection extends IBlockSection
 {
-    public function setDefaults()
+    public function setDefaults() : array
     {
         /**
          * У нас нет значений по умолчанию для этой сущности
          */
+        return [];
     }
     
     /**

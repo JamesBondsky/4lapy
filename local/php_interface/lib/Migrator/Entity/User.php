@@ -14,16 +14,17 @@ class User extends AbstractEntity
      *
      * EXTERNAL -> INTERNAL
      *
+     * @return array
      * @throws \Exception
      */
-    public function setDefaults()
+    public function setDefaults() : array
     {
         if ($this->checkEntity()) {
-            return;
+            return [];
         }
         
         /**
-         * todo магию потом в конфигурацию
+         * @todo магию потом в конфигурацию
          */
         $map = [
             529643 => 1,
@@ -38,6 +39,8 @@ class User extends AbstractEntity
         }
         
         LazyTable::handleLazy($this->entity, array_keys($map));
+        
+        return $map;
     }
     
     /**
