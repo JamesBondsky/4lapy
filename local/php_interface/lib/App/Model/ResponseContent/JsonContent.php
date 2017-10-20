@@ -61,7 +61,7 @@ class JsonContent implements JsonSerializable
      *
      * @return JsonContent
      */
-    public function withData($data)
+    public function withData($data) : JsonContent
     {
         $this->data = $data;
 
