@@ -4,6 +4,10 @@ imports:
   - { resource: services/bitrix-hl-blocks.yml }
 
 services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: true
 
   catalog.service:
     class: FourPaws\Catalog\CatalogService
@@ -11,4 +15,4 @@ services:
 
   user.service:
     class: FourPaws\User\UserService
-
+    arguments: ['@service_container']

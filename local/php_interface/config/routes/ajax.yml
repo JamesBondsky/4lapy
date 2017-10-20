@@ -1,2 +1,6 @@
 ---
 
+user.auth.login:
+  path: /user/auth/login/
+  defaults: { _controller: '\FourPaws\User\Controller\AuthController::loginAction' }
+  methods: [POST]

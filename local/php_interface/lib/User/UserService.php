@@ -56,7 +56,7 @@ class UserService
      *
      * @return bool
      */
-    protected function authenticateById(int $id) : bool
+    protected function _authenticateById(int $id) : bool
     {
         global $USER;
         
