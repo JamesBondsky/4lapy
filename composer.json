@@ -38,6 +38,7 @@
     "friendsofsymfony/rest-bundle": "~2.2.0",
     "jms/serializer-bundle": "~2.1.0",
     "nelmio/api-doc-bundle": "~3.0@beta",
+    "somework/expert-sender-api": "^0.4.5",
     "symfony/symfony": "3.3.*",
     "twig/twig": "^1.0",
     "webarchitect609/bitrix-neverinclude": "^0.4.2",
