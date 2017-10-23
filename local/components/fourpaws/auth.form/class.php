@@ -72,12 +72,18 @@ class FourPawsUserComponent extends \CBitrixComponent
         } catch (\Exception $e) {
             throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
         }
+        
+        return $this;
     }
     
     /**
-     * @todo implement this
+     * Set active social services
+     *
+     * @return $this
      */
     protected function _setAuthSocialServices() {
-        $this->arResult['socialServices'] = [];
+        $this->arResult['socialServices'] = (new CSocServAuthManager())->GetActiveAuthServices([]);
+    
+        return $this;
     }
 }

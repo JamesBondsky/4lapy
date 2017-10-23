@@ -26,7 +26,9 @@ if ($arResult['MODE'] === FourPawsUserComponent::MODE_FORM) { ?>
         <input name="password" type="password" placeholder="Пароль"><br>
         <input type="submit" value="Войти">
     </form>
-    
+    <? foreach ($arResult['socialServices'] as $service) { ?>
+        <?= $service['FORM_HTML'] ?>
+    <? } ?>
     <div id="result">
     
     </div>
