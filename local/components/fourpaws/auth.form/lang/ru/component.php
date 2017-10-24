@@ -2,4 +2,4 @@
     die();
 }
 
-$MESS['COMPONENTT_AUTH_FORM_NO_MODULE'] = 'Модуль "#MODULE#" не установлен.';
+$MESS['COMPONENT_AUTH_FORM_NO_MODULE'] = 'Модуль "#MODULE#" не установлен.';
