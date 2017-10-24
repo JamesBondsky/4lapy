@@ -7,6 +7,11 @@ use FourPaws\External\SmsTraffic\Client;
 use FourPaws\External\SmsTraffic\Exception\SmsTrafficApiException;
 use FourPaws\External\SmsTraffic\Sms\IndividualSms;
 
+/**
+ * Class SmsService
+ *
+ * @package FourPaws\External
+ */
 class SmsService
 {
     protected $client;

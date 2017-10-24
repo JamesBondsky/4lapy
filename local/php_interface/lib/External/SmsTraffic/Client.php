@@ -191,6 +191,7 @@ class Client
     {
         $this->preRequestCallback = $preRequestCallback;
         
+        
         return $this;
     }
     
