@@ -13,6 +13,7 @@ use FourPaws\External\SmsTraffic\Sms\IndividualSms;
  * @package FourPaws\External
  */
 class SmsService
+
 {
     protected $client;
     
@@ -30,14 +31,11 @@ class SmsService
     /**
      * @param string $text
      * @param string $number
-     * @param int    $userTime
      */
-    public function sendSms(string $text, string $number, int $userTime = 0)
+    public function sendSms(string $text, string $number)
     {
-        $userTime = $userTime ?: time();
-        
         try {
-            if ($this->isSendSmsAvailabilityPeriod($userTime)) {
+            if ($this->isSendSmsAvailabilityPeriod()) {
                 $this->sendSmsImmediate($text, $number);
             } else {
                 $this->addSmsIntoQueue($text, $number);
@@ -61,17 +59,13 @@ class SmsService
     }
     
     /**
-     * @param int $userTime
-     *
      * @return bool
      */
-    public function isSendSmsAvailabilityPeriod(int $userTime) : bool
+    public function isSendSmsAvailabilityPeriod() : bool
     {
-        /**
-         * @todo implement this
-         */
+        $time = date('G');
         
-        return true;
+        return 9 < $time && $time < 21;
     }
     
     /**
