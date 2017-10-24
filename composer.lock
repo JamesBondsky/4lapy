@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "0e3a030c2f070c2e058ca0d261d6cb91",
+    "content-hash": "314068170cd6f34e762a638c12aaf628",
     "packages": [
         {
             "name": "adv/bitrix-tools",
@@ -1511,6 +1511,182 @@
             "time": "2017-08-31T10:41:30+00:00"
         },
         {
+            "name": "meng-tian/async-soap-guzzle",
+            "version": "v0.2.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/meng-tian/async-soap-guzzle.git",
+                "reference": "0b88d00f81bdbeb2d9089670163260e63e8812b9"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/meng-tian/async-soap-guzzle/zipball/0b88d00f81bdbeb2d9089670163260e63e8812b9",
+                "reference": "0b88d00f81bdbeb2d9089670163260e63e8812b9",
+                "shasum": ""
+            },
+            "require": {
+                "guzzlehttp/guzzle": "^6.1",
+                "meng-tian/php-async-soap": "~1.0",
+                "meng-tian/soap-http-binding": "~0.2.0",
+                "php": ">=5.5.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "~4.8"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Meng\\AsyncSoap\\Guzzle\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Meng Tian",
+                    "email": "tianmeng94@hotmail.com"
+                }
+            ],
+            "description": "An asynchronous SOAP client build on top of Guzzle.",
+            "keywords": [
+                "Guzzle",
+                "asynchronous",
+                "soap"
+            ],
+            "time": "2016-12-03T16:54:21+00:00"
+        },
+        {
+            "name": "meng-tian/php-async-soap",
+            "version": "1.0.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/meng-tian/php-async-soap.git",
+                "reference": "7ad271a18b7a6be099b6ef64cf8c0575267c75d3"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/meng-tian/php-async-soap/zipball/7ad271a18b7a6be099b6ef64cf8c0575267c75d3",
+                "reference": "7ad271a18b7a6be099b6ef64cf8c0575267c75d3",
+                "shasum": ""
+            },
+            "suggest": {
+                "meng-tian/async-soap-artax": "A Artax implementation of meng-tian/php-async-soap.",
+                "meng-tian/async-soap-guzzle": "A Guzzle implementation of meng-tian/php-async-soap."
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Meng\\AsyncSoap\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Meng Tian",
+                    "email": "tianmeng94@hotmail.com"
+                }
+            ],
+            "description": "Interface for asynchronous SOAP client.",
+            "keywords": [
+                "asynchronous",
+                "soap"
+            ],
+            "time": "2016-05-21T12:54:23+00:00"
+        },
+        {
+            "name": "meng-tian/php-soap-interpreter",
+            "version": "1.0.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/meng-tian/php-soap-interpreter.git",
+                "reference": "e7a0c588af9e0076d89dc1e7c03206b27e9d1f3a"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/meng-tian/php-soap-interpreter/zipball/e7a0c588af9e0076d89dc1e7c03206b27e9d1f3a",
+                "reference": "e7a0c588af9e0076d89dc1e7c03206b27e9d1f3a",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.4.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "~4.8"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Meng\\Soap\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Meng Tian",
+                    "email": "tianmeng94@hotmail.com"
+                }
+            ],
+            "description": "A PHP library for interpreting SOAP messages.",
+            "keywords": [
+                "soap"
+            ],
+            "time": "2016-05-21T13:19:43+00:00"
+        },
+        {
+            "name": "meng-tian/soap-http-binding",
+            "version": "0.2.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/meng-tian/soap-http-binding.git",
+                "reference": "82144ced11ad66ec030f6e964799e667972b6a1b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/meng-tian/soap-http-binding/zipball/82144ced11ad66ec030f6e964799e667972b6a1b",
+                "reference": "82144ced11ad66ec030f6e964799e667972b6a1b",
+                "shasum": ""
+            },
+            "require": {
+                "meng-tian/php-soap-interpreter": "~1.0",
+                "php": ">=5.4.0",
+                "zendframework/zend-diactoros": "~1.3"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "~4.8"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Meng\\Soap\\HttpBinding\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Meng Tian",
+                    "email": "tianmeng94@hotmail.com"
+                }
+            ],
+            "description": "A PHP library for binding SOAP messages to PSR-7 HTTP messages.",
+            "keywords": [
+                "http",
+                "psr-7",
+                "soap"
+            ],
+            "time": "2016-05-21T14:04:22+00:00"
+        },
+        {
             "name": "monolog/monolog",
             "version": "1.23.0",
             "source": {
@@ -1590,37 +1766,40 @@
         },
         {
             "name": "myclabs/deep-copy",
-            "version": "1.6.1",
+            "version": "1.7.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/myclabs/DeepCopy.git",
-                "reference": "8e6e04167378abf1ddb4d3522d8755c5fd90d102"
+                "reference": "3b8a3a99ba1f6a3952ac2747d989303cbd6b7a3e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/myclabs/DeepCopy/zipball/8e6e04167378abf1ddb4d3522d8755c5fd90d102",
-                "reference": "8e6e04167378abf1ddb4d3522d8755c5fd90d102",
+                "url": "https://api.github.com/repos/myclabs/DeepCopy/zipball/3b8a3a99ba1f6a3952ac2747d989303cbd6b7a3e",
+                "reference": "3b8a3a99ba1f6a3952ac2747d989303cbd6b7a3e",
                 "shasum": ""
             },
             "require": {
-                "php": ">=5.4.0"
+                "php": "^5.6 || ^7.0"
             },
             "require-dev": {
-                "doctrine/collections": "1.*",
-                "phpunit/phpunit": "~4.1"
+                "doctrine/collections": "^1.0",
+                "doctrine/common": "^2.6",
+                "phpunit/phpunit": "^4.1"
             },
             "type": "library",
             "autoload": {
                 "psr-4": {
                     "DeepCopy\\": "src/DeepCopy/"
-                }
+                },
+                "files": [
+                    "src/DeepCopy/deep_copy.php"
+                ]
             },
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
             "description": "Create deep copies (clones) of your objects",
-            "homepage": "https://github.com/myclabs/DeepCopy",
             "keywords": [
                 "clone",
                 "copy",
@@ -1628,7 +1807,7 @@
                 "object",
                 "object graph"
             ],
-            "time": "2017-04-12T18:52:22+00:00"
+            "time": "2017-10-19T19:58:43+00:00"
         },
         {
             "name": "nelmio/api-doc-bundle",
@@ -3258,6 +3437,48 @@
             "time": "2016-10-03T07:35:21+00:00"
         },
         {
+            "name": "somework/expert-sender-api",
+            "version": "0.4.5",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/somework/expert-sender-api.git",
+                "reference": "f341cb245801f388eb0a559f15943bf1430fac5f"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/somework/expert-sender-api/zipball/f341cb245801f388eb0a559f15943bf1430fac5f",
+                "reference": "f341cb245801f388eb0a559f15943bf1430fac5f",
+                "shasum": ""
+            },
+            "require": {
+                "guzzlehttp/guzzle": "^6.3",
+                "php": ">=5.6.0",
+                "psr/http-message": "^1.0",
+                "psr/log": "^1.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^6|^5.7"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "LinguaLeo\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Igor Pinchuk",
+                    "email": "i.pinchuk.personal@gmail.com"
+                }
+            ],
+            "description": "Simple API for expert sender service",
+            "time": "2017-08-18T13:58:11+00:00"
+        },
+        {
             "name": "stecman/symfony-console-completion",
             "version": "0.7.0",
             "source": {
@@ -4085,6 +4306,58 @@
                 "negotiation"
             ],
             "time": "2017-05-14T17:21:12+00:00"
+        },
+        {
+            "name": "zendframework/zend-diactoros",
+            "version": "1.6.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/zendframework/zend-diactoros.git",
+                "reference": "c8664b92a6d5bc229e48b0923486c097e45a7877"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/zendframework/zend-diactoros/zipball/c8664b92a6d5bc229e48b0923486c097e45a7877",
+                "reference": "c8664b92a6d5bc229e48b0923486c097e45a7877",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^5.6 || ^7.0",
+                "psr/http-message": "^1.0"
+            },
+            "provide": {
+                "psr/http-message-implementation": "1.0"
+            },
+            "require-dev": {
+                "ext-dom": "*",
+                "ext-libxml": "*",
+                "phpunit/phpunit": "^5.7.16 || ^6.0.8",
+                "zendframework/zend-coding-standard": "~1.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.6-dev",
+                    "dev-develop": "1.7-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Zend\\Diactoros\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-2-Clause"
+            ],
+            "description": "PSR HTTP Message implementations",
+            "homepage": "https://github.com/zendframework/zend-diactoros",
+            "keywords": [
+                "http",
+                "psr",
+                "psr-7"
+            ],
+            "time": "2017-10-12T15:24:51+00:00"
         },
         {
             "name": "zircote/swagger-php",
