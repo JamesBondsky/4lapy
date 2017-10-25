@@ -2,9 +2,12 @@
 
 namespace FourPaws\Catalog\Model;
 
+use FourPaws\BitrixOrm\Collection\HlbReferenceItemCollection;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\BitrixOrm\Model\IblockElement;
+use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Query\BrandQuery;
+use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Utils;
 
 class Product extends IblockElement
@@ -26,22 +29,22 @@ class Product extends IblockElement
     protected $brand;
 
     /**
-     * @var string
+     * @var string[]
      */
-    protected $PROPERTY_FOR_WHO = '';
+    protected $PROPERTY_FOR_WHO = [];
 
     /**
-     * @var HlbReferenceItem
+     * @var HlbReferenceItemCollection
      */
     protected $forWho;
 
     /**
-     * @var string
+     * @var string[]
      */
-    protected $PROPERTY_PET_SIZE = '';
+    protected $PROPERTY_PET_SIZE = [];
 
     /**
-     * @var HlbReferenceItem
+     * @var HlbReferenceItemCollection
      */
     protected $petSize;
 
@@ -53,7 +56,15 @@ class Product extends IblockElement
 
     protected $PROPERTY_PET_GENDER;
 
-    protected $PROPERTY_CATEGORY;
+    /**
+     * @var string
+     */
+    protected $PROPERTY_CATEGORY = '';
+
+    /**
+     * @var HlbReferenceItem
+     */
+    protected $category;
 
     protected $PROPERTY_PURPOSE;
 
@@ -110,6 +121,26 @@ class Product extends IblockElement
     protected $PROPERTY_PRODUCED_BY_HOLDER;
 
     protected $PROPERTY_SPECIFICATIONS;
+
+    //TODO Дописать работу со свойствами товара
+
+    /**
+     * @var OfferCollection
+     */
+    protected $offers;
+
+    /**
+     * @return OfferCollection
+     */
+    public function getOffers(): OfferCollection
+    {
+        if (is_null($this->offers)) {
+            $this->offers = (new OfferQuery())->withFilterParameter('=PROPERTY_CML2_LINK', $this->getId())
+                                              ->exec();
+        }
+
+        return $this->offers;
+    }
 
     /**
      * @return int
@@ -178,29 +209,38 @@ class Product extends IblockElement
     }
 
     /**
-     * @return HlbReferenceItem
+     * @return HlbReferenceItemCollection
      */
     public function getForWho()
     {
         if (is_null($this->forWho)) {
-            //TODO Починить, т.к. множественное
-            $this->forWho = Utils::getReference('bx.hlblock.forwho', $this->PROPERTY_FOR_WHO);
+            $this->forWho = Utils::getReferenceMulti('bx.hlblock.forwho', $this->PROPERTY_FOR_WHO);
         }
 
         return $this->forWho;
     }
 
     /**
-     * @return HlbReferenceItem
+     * @return HlbReferenceItemCollection
      */
     public function getPetSize()
     {
-        if(is_null($this->petSize)) {
-            //TODO Починить, т.к. множественное
-            $this->petSize = Utils::getReference(, $this->PROPERTY_PET_SIZE);
+        if (is_null($this->petSize)) {
+            $this->petSize = Utils::getReferenceMulti('bx.hlblock.petsize', $this->PROPERTY_PET_SIZE);
         }
 
         return $this->petSize;
     }
 
+    /**
+     * @return HlbReferenceItem
+     */
+    public function getCategory()
+    {
+        if (is_null($this->category)) {
+            $this->category = Utils::getReference('bx.hlblock.productcategory', $this->PROPERTY_CATEGORY);
+        }
+
+        return $this->category;
+    }
 }

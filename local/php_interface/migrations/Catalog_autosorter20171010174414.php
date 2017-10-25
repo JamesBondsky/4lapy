@@ -15,7 +15,13 @@ class Catalog_autosorter20171010174414 extends SprintMigrationBase
 
     public function up()
     {
+        $this->createPropCondTable();
+        $this->createUfPropCond();
+        $this->createManualAutoSortProp();
+    }
 
+    private function createPropCondTable()
+    {
         $query = <<<END
 CREATE TABLE IF NOT EXISTS `4lp_elem_prop_cond` (
   `ID` INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -28,6 +34,10 @@ CREATE TABLE IF NOT EXISTS `4lp_elem_prop_cond` (
 END;
 
         Application::getConnection()->queryExecute($query);
+    }
+
+    private function createUfPropCond()
+    {
         $this->getHelper()->UserTypeEntity()->addUserTypeEntityIfNotExists(
             sprintf('IBLOCK_%s_SECTION', IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS)),
             'UF_PROP_COND',
@@ -73,7 +83,40 @@ END;
             ]
 
         );
+    }
 
+    private function createManualAutoSortProp()
+    {
+        $this->getHelper()->Iblock()->addPropertyIfNotExists(
+            IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS),
+            [
+
+                'NAME'               => 'Автоматически определить категории',
+                'ACTIVE'             => 'Y',
+                'SORT'               => '500',
+                'CODE'               => 'APPLY_AUTOSORT',
+                'DEFAULT_VALUE'      => 0,
+                'PROPERTY_TYPE'      => 'N',
+                'ROW_COUNT'          => '1',
+                'COL_COUNT'          => '30',
+                'LIST_TYPE'          => 'C',
+                'MULTIPLE'           => 'N',
+                'XML_ID'             => '',
+                'FILE_TYPE'          => '',
+                'MULTIPLE_CNT'       => '5',
+                'TMP_ID'             => null,
+                'LINK_IBLOCK_ID'     => '0',
+                'WITH_DESCRIPTION'   => 'N',
+                'SEARCHABLE'         => 'N',
+                'FILTRABLE'          => 'Y',
+                'IS_REQUIRED'        => 'N',
+                'VERSION'            => '2',
+                'USER_TYPE'          => 'YesNoPropertyType',
+                'USER_TYPE_SETTINGS' => null,
+                'HINT'               =>
+                    'Отметье, чтобы при сохранении товар был ' . 'автоматически определён в подходящие категории.',
+            ]
+        );
     }
 
 }

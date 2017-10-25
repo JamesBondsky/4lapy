@@ -3,18 +3,18 @@
 namespace FourPaws\Catalog\Collection;
 
 use FourPaws\BitrixOrm\Collection\CdbResultCollectionBase;
-use FourPaws\Catalog\Model\Product;
-use Generator;
+use FourPaws\Catalog\Model\Offer;
 
-class ProductCollection extends CdbResultCollectionBase
+class OfferCollection extends CdbResultCollectionBase
 {
     /**
      * @inheritdoc
      */
-    protected function fetchElement(): Generator
+    protected function fetchElement(): \Generator
     {
         while ($fields = $this->getCdbResult()->GetNext()) {
-            yield new Product($fields);
+            yield new Offer($fields);
         }
     }
+
 }

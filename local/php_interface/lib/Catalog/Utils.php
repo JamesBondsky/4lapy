@@ -2,11 +2,12 @@
 
 namespace FourPaws\Catalog;
 
+use Bitrix\Main\DB\ArrayResult;
 use Bitrix\Main\Entity\DataManager;
 use FourPaws\App\Application;
+use FourPaws\BitrixOrm\Collection\HlbReferenceItemCollection;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\BitrixOrm\Query\HlbReferenceQuery;
-use InvalidArgumentException;
 
 abstract class Utils
 {
@@ -18,8 +19,6 @@ abstract class Utils
      * @param string $xmlId
      *
      * @return HlbReferenceItem
-     *
-     * TODO Добавить такой же метод для множественных значений
      */
     public static function getReference(string $hlBlockServiceName, string $xmlId): HlbReferenceItem
     {
@@ -29,11 +28,6 @@ abstract class Utils
 
         /** @var DataManager $dataManager */
         $dataManager = Application::getInstance()->getContainer()->get($hlBlockServiceName);
-
-        // if (!($dataManager instanceof DataManager)) {
-        //     throw new InvalidArgumentException('Неверное имя сервиса: не является HL-блоком или чем-то совместимым.');
-        // }
-
         $reference = (new HlbReferenceQuery($dataManager::query()))
             ->withFilter(['=UF_XML_ID' => $xmlId])
             ->exec()
@@ -44,5 +38,36 @@ abstract class Utils
         }
 
         return new HlbReferenceItem();
+    }
+
+    /**
+     * @param string $hlBlockServiceName Название сервиса для этого HL-блока
+     * @param array $xmlIdList
+     *
+     * @return HlbReferenceItemCollection
+     */
+    public static function getReferenceMulti(string $hlBlockServiceName, array $xmlIdList): HlbReferenceItemCollection
+    {
+        $xmlIdList = array_filter(
+            $xmlIdList,
+            function ($xmlId) {
+                return trim($xmlId) != '';
+            }
+        );
+
+        if (empty($xmlIdList)) {
+            //Пустая коллекция
+            return new HlbReferenceItemCollection(new ArrayResult([]));
+        }
+
+        /** @var DataManager $dataManager */
+        $dataManager = Application::getInstance()->getContainer()->get($hlBlockServiceName);
+
+        /** @var HlbReferenceItemCollection $collectionBase */
+        $collectionBase = (new HlbReferenceQuery($dataManager::query()))
+            ->withFilter(['=UF_XML_ID' => $xmlIdList])
+            ->exec();
+
+        return $collectionBase;
     }
 }

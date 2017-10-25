@@ -155,6 +155,13 @@ class ValueHelper implements LoggerAwareInterface
                     continue;
                 }
 
+                /**
+                 * Пустая строка расценивается как незаполненное свойство
+                 */
+                if (trim($value[ElementPropertyConditionUserType::VALUE_PROP_VALUE]) == '') {
+                    $value[ElementPropertyConditionUserType::VALUE_PROP_VALUE] = null;
+                }
+
                 $newItem = [
                     'UF_ID'          => $ufId,
                     'SECTION_ID'     => $sectionId,
