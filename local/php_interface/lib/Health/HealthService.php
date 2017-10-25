@@ -2,19 +2,24 @@
 
 namespace FourPaws\Health;
 
-use Bitrix\Main\Config\Option;
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\Application;
 use FourPaws\Helpers\Exception\HealthException;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
 
 /**
  * Class HealthService
  *
  * @package FourPaws\Health
  */
-class HealthService
+class HealthService implements LoggerAwareInterface
 {
-    const STATUS_UNAVAILABLE = 0;
+    use LoggerAwareTrait;
     
-    const STATUS_AVAILABLE   = 1;
+    const STATUS_UNAVAILABLE = false;
+    
+    const STATUS_AVAILABLE   = true;
     
     const SERVICE_MANZANA    = 'manzana';
     
@@ -22,33 +27,86 @@ class HealthService
     
     const OPTION_MODULE_ID   = 'health';
     
+    const STATUS_LOG_NAME    = 'health';
+    
     public function __construct()
     {
+        $this->setLogger(LoggerFactory::create(self::STATUS_LOG_NAME, self::STATUS_LOG_NAME));
     }
     
     /**
      * @param string $service
-     * @param int    $status
+     * @param bool   $status
      *
      * @throws \FourPaws\Helpers\Exception\HealthException
      */
-    public function setStatus(string $service, int $status)
+    public function setStatus(string $service, bool $status)
     {
-        if ($status !== self::STATUS_AVAILABLE || $status !== self::STATUS_UNAVAILABLE) {
-            throw new HealthException('Unknown health status');
+        try {
+            switch ($service) {
+                case self::SERVICE_MANZANA:
+                case self::SERVICE_SMS:
+                    try {
+                        $this->saveStatus($service, $status);
+                    } catch (\Exception $e) {
+                        throw new HealthException(sprintf('Unknown error: %s.', $e->getMessage()));
+                    }
+                    break;
+                default:
+                    throw new HealthException(sprintf('Unknown service %s.', $service));
+            }
+        } catch (\Exception $e) {
+            $this->logger->error(sprintf('Health error: %s', $e->getMessage()));
+        }
+    }
+    
+    /**
+     * @param string $service
+     * @param bool   $status
+     *
+     * @throws \Bitrix\Main\DB\SqlQueryException
+     */
+    protected function saveStatus(string $service, bool $status)
+    {
+        if (!$this->checkStatus($service, $status)) {
+            $connection = Application::getConnection();
+            
+            $connection->query($sql = sprintf("UPDATE b_option SET VALUE = '%s'", (int)$status));
+            
+            $logMessage = sprintf('Сервис %s %s', $service, $status ? 'упал' : 'поднялся');
+            $this->logger->critical($logMessage);
+        }
+    }
+    
+    /**
+     * @param string $service
+     * @param bool   $status
+     *
+     * @return bool
+     *
+     * @throws \Bitrix\Main\DB\SqlQueryException
+     */
+    protected function checkStatus(string $service, bool $status) : bool
+    {
+        $connection = Application::getConnection();
+        
+        $sql = sprintf("SELECT VALUE FROM b_option WHERE MODULE_ID = '%s' AND NAME = '%s' AND SITE_ID = '%s'",
+                       self::OPTION_MODULE_ID,
+                       $service,
+                       SITE_ID);
+        
+        $option = $connection->query($sql)->fetch();
+        
+        if (null === $option) {
+            $sql = sprintf("INSERT INTO b_option(SITE_ID, MODULE_ID, NAME) VALUES ('%s','%s','%s')",
+                           SITE_ID,
+                           self::OPTION_MODULE_ID,
+                           $service);
+            $connection->query($sql);
         }
         
-        switch ($service) {
-            case self::SERVICE_MANZANA:
-            case self::SERVICE_SMS:
-                try {
-                    Option::set(self::OPTION_MODULE_ID, $service, $status);
-                } catch (\Exception $e) {
-                    throw new HealthException(sprintf('Unknown error: %s.', $e->getMessage()));
-                }
-                break;
-            default:
-                throw new HealthException(sprintf('Unknown service %s.', $service));
-        }
+        $value = (int)($option['VALUE'] ?? -1);
+        
+        return $value === (int)$status;
     }
 }
