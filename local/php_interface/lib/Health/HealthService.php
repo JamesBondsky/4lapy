@@ -71,7 +71,13 @@ class HealthService implements LoggerAwareInterface
         if (!$this->checkStatus($service, $status)) {
             $connection = Application::getConnection();
             
-            $connection->query($sql = sprintf("UPDATE b_option SET VALUE = '%s'", (int)$status));
+            $sql = sprintf("UPDATE b_option SET VALUE = '%s' WHERE MODULE_ID = '%s' AND NAME = '%s' AND SITE_ID = '%s'",
+                           (int)$status,
+                           self::OPTION_MODULE_ID,
+                           $service,
+                           SITE_ID);
+
+            $connection->query($sql);
             
             $logMessage = sprintf('Сервис %s %s', $service, $status ? 'упал' : 'поднялся');
             $this->logger->critical($logMessage);
