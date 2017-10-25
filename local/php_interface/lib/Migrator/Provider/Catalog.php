@@ -10,6 +10,7 @@ use FourPaws\Migrator\Converter\File;
 use FourPaws\Migrator\Converter\Stm;
 use FourPaws\Migrator\Converter\StringToIblock;
 use FourPaws\Migrator\Converter\StringToInt;
+use FourPaws\Migrator\Converter\StringToMultipleString;
 use FourPaws\Migrator\Converter\StringToReference;
 use FourPaws\Migrator\Converter\StringToYesNo;
 use FourPaws\Migrator\Converter\Trim;
@@ -131,11 +132,13 @@ class Catalog extends IBlockElement
      */
     public function getConverters() : array
     {
-        $codeConverter     = new CodeBuilder('CODE');
-        $stmConverter      = new Stm('PROPERTY_STM_S_KORM');
-        $producedConverter = new StringToYesNo('PROPERTY_PRODUCED_BY_HOLDER');
-        $skuTrimConverter  = new Trim('PROPERTY_GOODS_AND_SIZES');
-        $skuIntConverter   = new StringToInt('PROPERTY_GOODS_AND_SIZES');
+        $codeConverter           = new CodeBuilder('CODE');
+        $stmConverter            = new Stm('PROPERTY_STM_S_KORM');
+        $producedConverter       = new StringToYesNo('PROPERTY_PRODUCED_BY_HOLDER');
+        $skuTrimConverter        = new Trim('PROPERTY_GOODS_AND_SIZES');
+        $skuIntConverter         = new StringToInt('PROPERTY_GOODS_AND_SIZES');
+        $barcodeExplodeConverter = new StringToMultipleString('PROPERTY_BARCODE');
+        $barcodeTrimConverter    = new Trim('PROPERTY_BARCODE');
         
         $pictureConverter = new File('PROPERTY_IMG');
         $pictureConverter->setToProperty();
@@ -204,6 +207,8 @@ class Catalog extends IBlockElement
         $petAgeAdditionalConverter->setReferenceCode('PetAgeAdditional');
         
         $converters = [
+            $barcodeExplodeConverter,
+            $barcodeTrimConverter,
             $codeConverter,
             $pictureConverter,
             $skuTrimConverter,
