@@ -2,13 +2,11 @@
 
 namespace FourPaws\External\Manzana\Exception;
 
-use Exception;
-
 /**
- * Class ManzanaException
+ * Class ExecuteException
  *
  * @package FourPaws\External\Manzana\Exception
  */
-class ManzanaException extends Exception
+class ExecuteException extends ManzanaException
 {
 }

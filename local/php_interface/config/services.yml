@@ -15,4 +15,18 @@ services:
 
   user.service:
     class: FourPaws\User\UserService
-    arguments: ['@service_container']
+
+  health.service:
+    class: FourPaws\Health\HealthService
+
+  sms.service:
+    class: FourPaws\External\SmsService
+
+
+  manzana.service:
+    class: FourPaws\External\ManzanaService
+
+
+  expertender.service:
+    class: FourPaws\External\ExpertsenderService
+
