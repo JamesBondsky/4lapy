@@ -24,12 +24,12 @@ class SmsService implements LoggerAwareInterface
     /**
      * @var \FourPaws\External\SmsTraffic\Client
      */
-    protected $_client;
+    protected $client;
     
     /**
      * @var \FourPaws\Health\HealthService
      */
-    protected $_healthService;
+    protected $healthService;
     
     /**
      * SmsService constructor.
@@ -37,15 +37,17 @@ class SmsService implements LoggerAwareInterface
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws \Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
      * @throws \RuntimeException
      */
     public function __construct()
     {
-        /**
-         * @todo move into parameters
-         */
-        $this->_healthService = Application::getInstance()->getContainer()->get('health.service');
-        $this->_client        = new Client('', '', '4lapy');
+        $container = Application::getInstance()->getContainer();
+        
+        list($login, $password, $originator) = $container->getParameter('sms');
+        
+        $this->healthService = $container->get('health.service');
+        $this->client        = new Client($login, $password, $originator);
     }
     
     /**
@@ -62,14 +64,14 @@ class SmsService implements LoggerAwareInterface
             }
             
             try {
-                $this->_healthService->setStatus($this->_healthService::SERVICE_SMS,
-                                                 $this->_healthService::STATUS_AVAILABLE);
+                $this->healthService->setStatus($this->healthService::SERVICE_SMS,
+                                                $this->healthService::STATUS_AVAILABLE);
             } catch (HealthException $e) {
             }
         } catch (SmsSendErrorException $e) {
             try {
-                $this->_healthService->setStatus($this->_healthService::SERVICE_SMS,
-                                                 $this->_healthService::STATUS_UNAVAILABLE);
+                $this->healthService->setStatus($this->healthService::SERVICE_SMS,
+                                                $this->healthService::STATUS_UNAVAILABLE);
             } catch (HealthException $e) {
             }
             
@@ -108,7 +110,7 @@ class SmsService implements LoggerAwareInterface
     public function sendSmsImmediate(string $text, string $number)
     {
         try {
-            $this->_client->send(new IndividualSms([
+            $this->client->send(new IndividualSms([
                                                        $number,
                                                        $text,
                                                    ]));

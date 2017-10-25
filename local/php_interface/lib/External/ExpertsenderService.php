@@ -2,6 +2,7 @@
 
 namespace FourPaws\External;
 
+use FourPaws\App\Application;
 use GuzzleHttp\Client;
 use LinguaLeo\ExpertSender\ExpertSender;
 
@@ -16,18 +17,20 @@ class ExpertsenderService
     
     /**
      * SmsService constructor.
+     *
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
      */
     public function __construct()
     {
         $client = new Client();
         
-        /**
-         * @todo move into parameters
-         */
-        $this->client = new ExpertSender('endpointUrl', 'apiKey', $client);
+        list($url, $key) = Application::getInstance()->getContainer()->getParameter('expertsender');
+        $this->client = new ExpertSender($url, $key, $client);
     }
     
-    public function addUserToList(string $email, array $parameters) {
+    public function addUserToList(string $email, array $parameters)
+    {
     
     }
 }
