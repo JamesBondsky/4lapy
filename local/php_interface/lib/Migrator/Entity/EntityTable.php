@@ -213,4 +213,13 @@ class EntityTable extends DataManager
     {
         return json_encode($broken, JSON_OBJECT_AS_ARRAY | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_APOS);
     }
+    
+    /**
+     * @param string $entity
+     *
+     * @throws \Exception
+     */
+    public static function clearTimestampByEntity(string $entity) {
+        self::updateEntity($entity, 0);
+    }
 }
