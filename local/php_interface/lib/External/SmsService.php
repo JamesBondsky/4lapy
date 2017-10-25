@@ -73,6 +73,7 @@ class SmsService implements LoggerAwareInterface
             } catch (HealthException $e) {
             }
             
+            $this->logger->error(sprintf('Sms send error: %s.', $e->getMessage()));
             $this->addSmsIntoQueue($text, $number);
         }
     }

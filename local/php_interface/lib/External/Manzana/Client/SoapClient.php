@@ -62,8 +62,12 @@ class SoapClient
         
         try {
             $sessionId = $this->_client->call(self::METHOD_AUTHENTICATE, $arguments)->AuthenticateResult->SessionId;
-            $this->_healthService->setStatus($this->_healthService::SERVICE_MANZANA,
-                                             $this->_healthService::STATUS_AVAILABLE);
+            
+            try {
+                $this->_healthService->setStatus($this->_healthService::SERVICE_MANZANA,
+                                                 $this->_healthService::STATUS_AVAILABLE);
+            } catch (HealthException $e) {
+            }
         } catch (\Exception $e) {
             try {
                 $this->_healthService->setStatus($this->_healthService::SERVICE_MANZANA,
