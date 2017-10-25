@@ -2,30 +2,50 @@
 
 namespace FourPaws\External;
 
+use FourPaws\App\Application;
 use FourPaws\External\Exception\SmsSendErrorException;
 use FourPaws\External\SmsTraffic\Client;
 use FourPaws\External\SmsTraffic\Exception\SmsTrafficApiException;
 use FourPaws\External\SmsTraffic\Sms\IndividualSms;
+use FourPaws\Helpers\Exception\HealthException;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
 
 /**
  * Class SmsService
  *
  * @package FourPaws\External
  */
-class SmsService
+class SmsService implements LoggerAwareInterface
 
 {
-    protected $client;
+    use LoggerAwareTrait;
+    
+    /**
+     * @var \FourPaws\External\SmsTraffic\Client
+     */
+    protected $_client;
+    
+    /**
+     * @var \FourPaws\Health\HealthService
+     */
+    protected $_healthService;
     
     /**
      * SmsService constructor.
+     *
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws \RuntimeException
      */
     public function __construct()
     {
         /**
          * @todo move into parameters
          */
-        $this->client = new Client('', '', '4lapy');
+        $this->_healthService = Application::getInstance()->getContainer()->get('health.service');
+        $this->_client        = new Client('', '', '4lapy');
     }
     
     /**
@@ -40,10 +60,20 @@ class SmsService
             } else {
                 $this->addSmsIntoQueue($text, $number);
             }
+            
+            try {
+                $this->_healthService->setStatus($this->_healthService::SERVICE_SMS,
+                                                 $this->_healthService::STATUS_AVAILABLE);
+            } catch (HealthException $e) {
+            }
         } catch (SmsSendErrorException $e) {
-            /**
-             * @todo log and add into queue
-             */
+            try {
+                $this->_healthService->setStatus($this->_healthService::SERVICE_SMS,
+                                                 $this->_healthService::STATUS_UNAVAILABLE);
+            } catch (HealthException $e) {
+            }
+            
+            $this->addSmsIntoQueue($text, $number);
         }
     }
     
@@ -77,10 +107,10 @@ class SmsService
     public function sendSmsImmediate(string $text, string $number)
     {
         try {
-            $this->client->send(new IndividualSms([
-                                                      $number,
-                                                      $text,
-                                                  ]));
+            $this->_client->send(new IndividualSms([
+                                                       $number,
+                                                       $text,
+                                                   ]));
         } catch (SmsTrafficApiException $e) {
             throw new SmsSendErrorException($e->getMessage(), $e->getCode(), $e);
         }

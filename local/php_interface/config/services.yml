@@ -15,4 +15,6 @@ services:
 
   user.service:
     class: FourPaws\User\UserService
-    arguments: ['@service_container']
+
+  health.service:
+    class: FourPaws\Health\HealthService
