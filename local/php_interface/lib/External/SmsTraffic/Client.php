@@ -21,12 +21,12 @@ class Client
     /**
      * API Url by default
      */
-    const DEFAULT_API_URL = 'https://sds.intervale.ru/smartdelivery-in/multi.php';
+    const DEFAULT_API_URL = 'http://sds.intervale.ru/smartdelivery-in/multi.php';
     
     /**
      * Reserved API Url
      */
-    const RESERVE_API_URL = 'https://91.238.120.150/smartdelivery-in/multi.php';
+    const RESERVE_API_URL = 'http://91.238.120.150/smartdelivery-in/multi.php';
     
     /**
      * Sms Traffic Login

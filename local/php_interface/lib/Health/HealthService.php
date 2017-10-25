@@ -31,7 +31,7 @@ class HealthService implements LoggerAwareInterface
     
     public function __construct()
     {
-        $this->setLogger(LoggerFactory::create(self::STATUS_LOG_NAME, self::STATUS_LOG_NAME));
+        $this->setLogger(LoggerFactory::create(self::STATUS_LOG_NAME));
     }
     
     /**

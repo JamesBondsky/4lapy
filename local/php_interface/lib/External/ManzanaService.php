@@ -45,9 +45,9 @@ class ManzanaService implements LoggerAwareInterface
     public function __construct()
     {
         $container = Application::getInstance()->getContainer();
-        $wdsl      = $container->getParameter('manzana');
+        $wdsl      = $container->getParameter('manzana')['wdsl'];
         
-        $this->healthService = $container->get('health.service')['wdsl'];
+        $this->healthService = $container->get('health.service');
         
         $this->client = new SoapClient((new Factory())->create(new Client(), $wdsl), $this->healthService);
         
