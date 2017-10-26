@@ -48,7 +48,7 @@ class MigrateData extends Command implements LoggerAwareInterface
                            'Limit of entities, 100 by default')
              ->addArgument(self::ARG_MIGRATE_LIST,
                            InputArgument::IS_ARRAY,
-                           'Migration type, one or more of this: user, news, articles, shops, sale')
+                           'Migration type, one or more of this: user, news, articles, catalog, shops, sale')
              ->addOption('force', 'f', InputOption::VALUE_NONE, 'Force migrate (disable time period check)');
     }
     

@@ -6,11 +6,11 @@ use Bitrix\Main\Entity\AddResult;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\UpdateResult;
 use Bitrix\Main\UserTable;
+use FourPaws\BitrixOrm\Model\User;
 use FourPaws\BitrixOrm\Type\ResultContent;
 use FourPaws\User\Exceptions\NotFoundException;
 use FourPaws\User\Exceptions\TooManyUserFoundException;
 use FourPaws\User\Exceptions\WrongPasswordException;
-use FourPaws\User\Model\User;
 
 class UserService
 {
@@ -31,19 +31,23 @@ class UserService
     }
     
     /**
-     * @return \FourPaws\User\Model\User
+     * @return \FourPaws\BitrixOrm\Model\User
+     *
+     * @throws \FourPaws\User\Exceptions\NotFoundException
      */
     public function getCurrentUser() : User
     {
         global $USER;
-
+        
         return $USER->IsAuthorized() ? $this->getUserById($USER->GetID()) : new User();
     }
     
     /**
      * @param int $id
      *
-     * @return \FourPaws\User\Model\User
+     * @return \FourPaws\BitrixOrm\Model\User
+     *
+     * @throws \FourPaws\User\Exceptions\NotFoundException
      */
     public function getUserById(int $id) : User
     {
@@ -56,7 +60,7 @@ class UserService
      *
      * @return bool
      */
-    protected function authenticateById(int $id) : bool
+    protected function _authenticateById(int $id) : bool
     {
         global $USER;
         
@@ -150,7 +154,19 @@ class UserService
         $cUser = new \CUser();
         $cUser->Logout();
         
-        return $cUser->IsAuthorized();
+        return $this->isAuthorized();
+    }
+    
+    /**
+     * Current user is authorized
+     *
+     * @return bool
+     */
+    public function isAuthorized() : bool
+    {
+        global $USER;
+        
+        return $USER->IsAuthorized();
     }
     
     /**
@@ -221,7 +237,7 @@ class UserService
                                         'runtime' => [
                                             new ExpressionField('CNT', 'COUNT(*)'),
                                         ],
-                                    ])->fetchAll();
+                                    ])->fetch();
         
         if ($count['CNT'] < 1) {
             throw new NotFoundException(sprintf('User with raw login %s is not found.',

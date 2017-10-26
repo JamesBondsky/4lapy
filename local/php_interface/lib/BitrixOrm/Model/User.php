@@ -26,6 +26,8 @@ class User extends BitrixArrayItemBase
     
     protected $PERSONAL_PHONE;
     
+    protected $CHECKWORD;
+    
     /**
      * @return string
      */
@@ -72,6 +74,29 @@ class User extends BitrixArrayItemBase
     public function getPersonalPhone() : string
     {
         return $this->PERSONAL_PHONE;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getCheckword() : string
+    {
+        return $this->CHECKWORD;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getFullName()
+    {
+        return trim(str_replace('  ',
+                                ' ',
+                                implode(' ',
+                                        [
+                                            $this->getName(),
+                                            $this->getSecondName(),
+                                            $this->getLastName(),
+                                        ])));
     }
     
     /**
@@ -142,6 +167,18 @@ class User extends BitrixArrayItemBase
     public function withPersonalPhone(string $phone) : User
     {
         $this->PERSONAL_PHONE = $phone;
+        
+        return $this;
+    }
+    
+    /**
+     * @param string $checkword
+     *
+     * @return \FourPaws\BitrixOrm\Model\User
+     */
+    public function withCheckword(string $checkword) : User
+    {
+        $this->CHECKWORD = $checkword;
         
         return $this;
     }

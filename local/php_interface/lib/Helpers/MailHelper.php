@@ -53,7 +53,7 @@ class MailHelper
      */
     public static function logBitrixMail(...$arguments) : bool
     {
-        LoggerFactory::create('mail')->info(implode(' | ', $arguments));
+        LoggerFactory::create('mail', 'mail')->info(implode(' | ', $arguments));
         
         return true;
     }
