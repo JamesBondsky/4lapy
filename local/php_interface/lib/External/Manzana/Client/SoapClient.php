@@ -32,7 +32,7 @@ class SoapClient
     
     public function __construct(SoapClientInterface $client, HealthService $healthService)
     {
-        $container = Application::getInstance()->getContainer();
+        $container  = Application::getInstance()->getContainer();
         $parameters = $container->getParameter('manzana');
         
         $this->client        = $client;
@@ -62,7 +62,9 @@ class SoapClient
         }
         
         try {
-            $sessionId = $this->client->call(self::METHOD_AUTHENTICATE, $arguments)->AuthenticateResult->SessionId;
+            $sessionId =
+                $this->client->call(self::METHOD_AUTHENTICATE,
+                                    ['request_options' => $arguments])->AuthenticateResult->SessionId;
             
             try {
                 $this->healthService->setStatus($this->healthService::SERVICE_MANZANA,
@@ -103,8 +105,8 @@ class SoapClient
                 'parameters'   => $parameters,
             ];
             
-            $result =
-                simplexml_load_string($this->client->call(self::METHOD_EXECUTE, $arguments)->ExecuteResult->Value);
+            $result = $this->client->call(self::METHOD_EXECUTE, ['request_options' => $arguments]);
+            $result = simplexml_load_string($result->ExecuteResult->Value);
         } catch (\Exception $e) {
             throw new ExecuteException(sprintf('Execute error: %s', $e->getMessage()), $e->getCode(), $e);
         }

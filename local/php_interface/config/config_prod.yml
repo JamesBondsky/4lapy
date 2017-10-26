@@ -1,7 +1,7 @@
 parameters:
   manzana:
     login: admin
-    password: r4T5y6U7
+    password: Cp46hwUm
     pos_wdsl: http://37.230.152.90:8083/POSProcessing.asmx?WSDL
     wdsl: http://37.230.152.90:8182/PrivateOfficeDataService.asmx?WSDL
     pos: kuvi_pos

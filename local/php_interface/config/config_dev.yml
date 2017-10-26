@@ -2,8 +2,8 @@ parameters:
   manzana:
     login: admin
     password: r4T5y6U7
-    pos_wdsl: http://37.18.75.71:8083/POSProcessing.asmx
-    wdsl: http://37.18.75.71:8182/PrivateOfficeDataService.asmx
+    pos_wdsl: http://37.18.75.71:8083/POSProcessing.asmx?WSDL
+    wdsl: http://37.18.75.71:8182/PrivateOfficeDataService.asmx?WSDL
     pos: kuvi_pos
     business_unit: kuvi_shop
 
