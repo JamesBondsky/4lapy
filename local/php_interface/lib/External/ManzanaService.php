@@ -71,8 +71,8 @@ class ManzanaService implements LoggerAwareInterface
         ];
         
         $result = $this->execute(self::CONTRACT_CARD_VALIDATE, $parameters);
-        
-        return (bool)$result->cardvalidateresult->isvalid->textContent();
+
+        return $result->cardid->__toString() !== '';
     }
     
     /**
