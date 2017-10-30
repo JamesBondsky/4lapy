@@ -8,7 +8,7 @@ use Symfony\Component\HttpFoundation\Response;
 class Metro extends IBlockElement
 {
     /**
-     * @return array
+     * @inheritdoc
      */
     public function getMap() : array
     {

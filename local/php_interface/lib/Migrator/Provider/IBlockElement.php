@@ -14,6 +14,9 @@ use FourPaws\Migrator\Entity\IBlockElement as IBlockElementEntity;
  */
 abstract class IBlockElement extends IBlock
 {
+    /**
+     * @inheritdoc
+     */
     public function getMap() : array
     {
         $map = array_diff(array_keys(array_filter(ElementTable::getMap(), self::getScalarEntityMapFilter())),
@@ -39,6 +42,10 @@ abstract class IBlockElement extends IBlock
      * @param array $data
      *
      * @return array
+     *
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \RuntimeException
      */
     public function prepareData(array $data) : array
     {
@@ -60,11 +67,13 @@ abstract class IBlockElement extends IBlock
     /**
      * IblockProvider constructor.
      *
-     * @param string              $entityName
      * @param IBlockElementEntity $entity
+     *
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \RuntimeException
      */
-    public function __construct(string $entityName, IBlockElementEntity $entity)
+    public function __construct(IBlockElementEntity $entity)
     {
-        parent::__construct($entityName, $entity);
+        parent::__construct($entity);
     }
 }

@@ -9,11 +9,14 @@ use FourPaws\App\Application;
 use FourPaws\Migrator\Entity\EntityTable;
 use FourPaws\Migrator\Provider\ProviderInterface;
 use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Response;
 
 abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
 {
+    use LoggerAwareTrait;
+
     /**
      * @todo move it to settings
      */
@@ -36,8 +39,6 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
     
     protected $provider;
     
-    protected $logger;
-    
     protected $token = '';
     
     /**
@@ -50,6 +51,8 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
     
     /**
      * Set token from options
+     *
+     * @throws \Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
      */
     private function setToken()
     {
@@ -57,14 +60,6 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
          * @todo move into defaults
          */
         $this->token = Application::getInstance()->getContainer()->getParameter('migrator')['token'];
-    }
-    
-    /**
-     * @param \Psr\Log\LoggerInterface $logger
-     */
-    public function setLogger(LoggerInterface $logger)
-    {
-        $this->logger = $logger;
     }
     
     /**
@@ -82,6 +77,7 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
      * @param array                                         $options
      *
      * @throws \RuntimeException
+     * @throws \Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
      */
     public function __construct(ProviderInterface $provider, array $options = [])
     {
@@ -111,7 +107,7 @@ abstract class ClientAbstract implements ClientInterface, LoggerAwareInterface
             $this->getProvider()->save($this->query());
             
             return true;
-        } catch (\Throwable $e) {
+        } catch (\Exception $e) {
             $this->getLogger()->error($e->getMessage());
             
             return false;

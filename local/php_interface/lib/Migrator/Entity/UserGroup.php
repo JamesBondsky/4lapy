@@ -19,12 +19,13 @@ class UserGroup extends AbstractEntity
      *
      * EXTERNAL -> INTERNAL
      *
+     * @return array
      * @throws \Exception
      */
-    public function setDefaults()
+    public function setDefaults() : array
     {
         if ($this->checkEntity()) {
-            return;
+            return [];
         }
         
         $map = [
@@ -41,6 +42,8 @@ class UserGroup extends AbstractEntity
                 throw new \Exception("Error: \n" . implode("\n", $result->getErrorMessages()));
             }
         }
+    
+        return $map;
     }
     
     /**
@@ -76,7 +79,7 @@ class UserGroup extends AbstractEntity
         $result = GroupTable::add($data);
         
         if ($result->isSuccess() && !MapTable::addEntity($this->entity, $primary, $result->getId())->isSuccess()) {
-            throw new AddException("Error: add entity was broken");
+            throw new AddException('Error: add entity was broken');
         }
         
         return new AddResult($result->isSuccess(), $result->getId());

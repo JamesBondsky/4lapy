@@ -5,6 +5,7 @@ namespace FourPaws\App;
 use Adv\Bitrixtools\Tools\EnvType;
 use Circle\RestClientBundle\CircleRestClientBundle;
 use FOS\RestBundle\FOSRestBundle;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\MarkupBuild\JsonFileLoader;
 use FourPaws\App\MarkupBuild\MarkupBuild;
 use JMS\SerializerBundle\JMSSerializerBundle;
@@ -15,9 +16,8 @@ use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Kernel;
 use Symfony\Component\HttpKernel\Bundle\BundleInterface;
-use FourPaws\App\Exceptions\ApplicationCreateException;
+use Symfony\Component\HttpKernel\Kernel;
 
 final class Application extends Kernel
 {
@@ -56,6 +56,8 @@ final class Application extends Kernel
      */
     public function __clone()
     {
+        parent::__clone();
+        
         throw new ApplicationCreateException('It`s a singleton.');
     }
     
@@ -95,22 +97,24 @@ final class Application extends Kernel
     public function __construct($environment, $debug)
     {
         parent::__construct($environment, $debug);
-
+        
         if (!self::$instance) {
             self::$instance = $this;
         } else {
             throw new ApplicationCreateException('It`s a singleton.');
         }
     }
-
+    
     /**
      * Load main config
      *
      * @param \Symfony\Component\Config\Loader\LoaderInterface $loader
+     *
+     * @throws \Exception
      */
     public function registerContainerConfiguration(LoaderInterface $loader)
     {
-        $loader->load(self::getAbsolutePath(self::CONFIG_DIR . '/config.yml'));
+        $loader->load(self::getAbsolutePath(self::CONFIG_DIR . '/config_' . EnvType::getServerType() . '.yml'));
     }
     
     /**
@@ -163,8 +167,8 @@ final class Application extends Kernel
      */
     public static function getDocumentRoot() : string
     {
-        if (is_null(self::$documentRoot)) {
-            self::$documentRoot = realpath(__DIR__ . '/../../../..');
+        if (null === self::$documentRoot) {
+            self::$documentRoot = dirname(__DIR__, 4);
         }
         
         return self::$documentRoot;
@@ -173,7 +177,7 @@ final class Application extends Kernel
     /**
      * @return string
      */
-    public function getRootDir()
+    public function getRootDir() : string
     {
         return self::getDocumentRoot();
     }
@@ -181,7 +185,7 @@ final class Application extends Kernel
     /**
      * @return string
      */
-    public function getCacheDir()
+    public function getCacheDir() : string
     {
         return $this->getRootDir() . '/local/cache/symfony';
     }
@@ -189,7 +193,7 @@ final class Application extends Kernel
     /**
      * @return string
      */
-    public function getLogDir()
+    public function getLogDir() : string
     {
         return getenv('WWW_LOG_DIR');
     }
@@ -208,6 +212,9 @@ final class Application extends Kernel
      * Handle current request
      *
      * @param \Symfony\Component\HttpFoundation\Request $request
+     *
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \Exception
      */
     public static function HandleRequest(Request $request)
     {
@@ -219,6 +226,8 @@ final class Application extends Kernel
     
     /**
      * @return \FourPaws\App\Application
+     *
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
     public static function getInstance() : Application
     {
@@ -232,7 +241,7 @@ final class Application extends Kernel
         if (!self::$instance->booted) {
             self::$instance->boot();
         }
-
+        
         return self::$instance;
     }
 }

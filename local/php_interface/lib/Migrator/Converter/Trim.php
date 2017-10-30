@@ -11,7 +11,7 @@ namespace FourPaws\Migrator\Converter;
  */
 final class Trim extends AbstractConverter
 {
-    const CHARS = ' ';
+    const CHARS = " \t\n\r\0\x0B";
     
     private $chars = self::CHARS;
     

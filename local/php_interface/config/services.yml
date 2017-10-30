@@ -4,6 +4,10 @@ imports:
   - { resource: services/bitrix-hl-blocks.yml }
 
 services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: true
 
   catalog.service:
     class: FourPaws\Catalog\CatalogService
@@ -11,6 +15,20 @@ services:
 
   user.service:
     class: FourPaws\User\UserService
+
+  health.service:
+    class: FourPaws\Health\HealthService
+
+  sms.service:
+    class: FourPaws\External\SmsService
+
+
+  manzana.service:
+    class: FourPaws\External\ManzanaService
+
+
+  expertender.service:
+    class: FourPaws\External\ExpertsenderService
 
   product.autosort.service:
     class: FourPaws\ProductAutoSort\ProductAutoSortService

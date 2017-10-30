@@ -13,12 +13,14 @@ use FourPaws\Migrator\Entity\UpdateResult;
 use FourPaws\Migrator\Provider\Exceptions\FailResponseException;
 use FourPaws\Migrator\StateTrait;
 use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Response;
 
 abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterface
 {
     use StateTrait;
+    use LoggerAwareTrait;
     
     /**
      * @var EntityInterface
@@ -27,19 +29,9 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
     
     protected $entityName;
     
-    protected $logger;
-    
     protected $external = [];
     
     protected $savedIds = [];
-    
-    /**
-     * @param \Psr\Log\LoggerInterface $logger
-     */
-    public function setLogger(LoggerInterface $logger)
-    {
-        $this->logger = $logger;
-    }
     
     /**
      * @return LoggerInterface
@@ -50,18 +42,7 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
     }
     
     /**
-     * $map - однозначное отображение ['поле на сервере' => 'поле на клиенте']
-     * Также возможно однозначное указание сущности для позднего связывания.
-     *
-     * Работает следующим образом:
-     *
-     * Отображение задаётся в виде ['имя сущности'.'поле на сервере' => 'поле на клиенте']
-     *
-     * При разборе ответа вместо записи в это поле осуществляется запись в таблицу adv_migrator_lazy
-     * При любом импорте провайдер после завершения импорта разбирает относящиеся к своей сущности id'шники и, если
-     * у него есть, что отдать, записывает значение, удаляя его из таблицы.
-     *
-     * @return array
+     * @inheritdoc
      */
     abstract public function getMap() : array;
     
@@ -74,13 +55,8 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
     }
     
     /**
-     * @param string $entityName
+     * @param \FourPaws\Migrator\Entity\EntityInterface $entity
      */
-    public function setEntityName(string $entityName)
-    {
-        $this->entityName = $entityName;
-    }
-    
     public function setEntity(EntityInterface $entity)
     {
         $this->entity = $entity;
@@ -89,16 +65,17 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
     /**
      * ProviderAbstract constructor.
      *
-     * @param string                                    $entityName
      * @param \FourPaws\Migrator\Entity\EntityInterface $entity
+     *
+     * @internal param string $entityName
      *
      * @throws \RuntimeException
      */
-    public function __construct(string $entityName, EntityInterface $entity)
+    public function __construct(EntityInterface $entity)
     {
-        $this->setEntityName($entityName);
         $this->setEntity($entity);
-        $this->setLogger(LoggerFactory::create('migrate_provider_' . $entityName));
+        $this->entityName = $entity->getEntity();
+        $this->setLogger(LoggerFactory::create('migrate_provider_' . $this->entityName));
     }
     
     /**
@@ -139,6 +116,8 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
      * @param array $data
      *
      * @return array
+     *
+     * @throws \Bitrix\Main\ArgumentException
      * @throws \RuntimeException
      */
     public function prepareData(array $data) : array
@@ -168,6 +147,8 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
      * @param \Symfony\Component\HttpFoundation\Response $response
      *
      * @throws \FourPaws\Migrator\Provider\Exceptions\FailResponseException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \RuntimeException
      * @throws \Exception
      */
     public function save(Response $response)
@@ -210,7 +191,7 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
                 } else {
                     $this->incAdd();
                 }
-            } catch (\Throwable $e) {
+            } catch (\Exception $e) {
                 EntityTable::pushBroken($this->entityName, $primary);
                 $this->incError();
                 $this->getLogger()->error($e->getMessage());
@@ -265,6 +246,8 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
      * @param array $data
      *
      * @return array
+     *
+     * @throws \Bitrix\Main\ArgumentException
      */
     public function setLazyEntities(array $data) : array
     {
@@ -303,6 +286,10 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
     
     /**
      * Save lazy fields from $this->external
+     *
+     * @todo добавить LazyException
+     *
+     * @throws \Exception
      */
     public function saveLazy()
     {
@@ -317,6 +304,10 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
     
     /**
      * Обрабатываем сохранённые сущности - вдруг у нас что-то ссылается на них
+     *
+     * @todo добавить LazyException
+     *
+     * @throws \Exception
      */
     public function handleLazy()
     {

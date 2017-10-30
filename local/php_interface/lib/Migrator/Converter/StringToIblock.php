@@ -2,6 +2,7 @@
 
 namespace FourPaws\Migrator\Converter;
 
+use Bitrix\Iblock\ElementTable;
 use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
 
@@ -106,6 +107,7 @@ class StringToIblock extends AbstractConverter
      */
     protected function addValue(string $value, string $fieldName) : string
     {
+        
         $cIBlockElement = new \CIBlockElement();
         
         $code = \CUtil::translit($value,
@@ -114,6 +116,18 @@ class StringToIblock extends AbstractConverter
                                      'replace_space' => '-',
                                      'replace_other' => '-',
                                  ]);
+        
+        $exists = ElementTable::getList([
+                                            'filter' => [
+                                                'CODE'      => $code,
+                                                'IBLOCK_ID' => $this->getIblockId(),
+                                            ],
+                                            'select' => [self::FIELD_EXTERNAL_KEY],
+                                        ])->fetch();
+        
+        if ($exists[self::FIELD_EXTERNAL_KEY]) {
+            return $exists[self::FIELD_EXTERNAL_KEY];
+        }
         
         $fields = [
             $fieldName  => $value,

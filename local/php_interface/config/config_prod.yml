@@ -1,0 +1,11 @@
+parameters:
+  manzana:
+    login: admin
+    password: Cp46hwUm
+    pos_wdsl: http://37.230.152.90:8083/POSProcessing.asmx?WSDL
+    wdsl: http://37.230.152.90:8182/PrivateOfficeDataService.asmx?WSDL
+    pos: kuvi_pos
+    business_unit: kuvi_shop
+
+imports:
+  - { resource: config.yml }

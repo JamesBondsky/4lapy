@@ -10,6 +10,7 @@ use FourPaws\Migrator\Converter\File;
 use FourPaws\Migrator\Converter\Stm;
 use FourPaws\Migrator\Converter\StringToIblock;
 use FourPaws\Migrator\Converter\StringToInt;
+use FourPaws\Migrator\Converter\StringToMultipleString;
 use FourPaws\Migrator\Converter\StringToReference;
 use FourPaws\Migrator\Converter\StringToYesNo;
 use FourPaws\Migrator\Converter\Trim;
@@ -23,18 +24,7 @@ use FourPaws\Migrator\Utils;
 class Catalog extends IBlockElement
 {
     /**
-     * $map - однозначное отображение ['поле на сервере' => 'поле на клиенте']
-     * Также возможно однозначное указание сущности для позднего связывания.
-     *
-     * Работает следующим образом:
-     *
-     * Отображение задаётся в виде ['имя сущности'.'поле на сервере' => 'поле на клиенте']
-     *
-     * При разборе ответа вместо записи в это поле осуществляется запись в таблицу adv_migrator_lazy
-     * При любом импорте провайдер после завершения импорта разбирает относящиеся к своей сущности id'шники и, если
-     * у него есть, что отдать, записывает значение, удаляя его из таблицы.
-     *
-     * @return array
+     * @inheritdoc
      */
     public function getMap() : array
     {
@@ -114,6 +104,10 @@ class Catalog extends IBlockElement
      * @param array $data
      *
      * @return array
+     *
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \RuntimeException
      */
     public function prepareData(array $data) : array
     {
@@ -138,11 +132,13 @@ class Catalog extends IBlockElement
      */
     public function getConverters() : array
     {
-        $codeConverter     = new CodeBuilder('CODE');
-        $stmConverter      = new Stm('PROPERTY_STM_S_KORM');
-        $producedConverter = new StringToYesNo('PROPERTY_PRODUCED_BY_HOLDER');
-        $skuTrimConverter  = new Trim('PROPERTY_GOODS_AND_SIZES');
-        $skuIntConverter   = new StringToInt('PROPERTY_GOODS_AND_SIZES');
+        $codeConverter           = new CodeBuilder('CODE');
+        $stmConverter            = new Stm('PROPERTY_STM_S_KORM');
+        $producedConverter       = new StringToYesNo('PROPERTY_PRODUCED_BY_HOLDER');
+        $skuTrimConverter        = new Trim('PROPERTY_GOODS_AND_SIZES');
+        $skuIntConverter         = new StringToInt('PROPERTY_GOODS_AND_SIZES');
+        $barcodeExplodeConverter = new StringToMultipleString('PROPERTY_BARCODE');
+        $barcodeTrimConverter    = new Trim('PROPERTY_BARCODE');
         
         $pictureConverter = new File('PROPERTY_IMG');
         $pictureConverter->setToProperty();
@@ -211,6 +207,8 @@ class Catalog extends IBlockElement
         $petAgeAdditionalConverter->setReferenceCode('PetAgeAdditional');
         
         $converters = [
+            $barcodeExplodeConverter,
+            $barcodeTrimConverter,
             $codeConverter,
             $pictureConverter,
             $skuTrimConverter,
