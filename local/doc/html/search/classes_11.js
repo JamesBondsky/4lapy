@@ -1,0 +1,23 @@
+var searchData=
+[
+  ['sale',['Sale',['../classFourPaws_1_1Migrator_1_1Provider_1_1Sale.html',1,'FourPaws::Migrator::Provider']]],
+  ['salepull',['SalePull',['../classFourPaws_1_1Migrator_1_1Client_1_1SalePull.html',1,'FourPaws::Migrator::Client']]],
+  ['saveable',['Saveable',['../interfaceFourPaws_1_1Migrator_1_1Client_1_1Saveable.html',1,'FourPaws::Migrator::Client']]],
+  ['sendingexception',['SendingException',['../classFourPaws_1_1External_1_1SmsTraffic_1_1Exception_1_1SendingException.html',1,'FourPaws::External::SmsTraffic::Exception']]],
+  ['servicehandlerinterface',['ServiceHandlerInterface',['../interfaceFourPaws_1_1App_1_1ServiceHandlerInterface.html',1,'FourPaws::App']]],
+  ['shop',['Shop',['../classFourPaws_1_1Migrator_1_1Client_1_1Shop.html',1,'FourPaws::Migrator::Client']]],
+  ['shoppull',['ShopPull',['../classFourPaws_1_1Migrator_1_1Client_1_1ShopPull.html',1,'FourPaws::Migrator::Client']]],
+  ['shops',['Shops',['../classFourPaws_1_1Migrator_1_1Provider_1_1Shops.html',1,'FourPaws::Migrator::Provider']]],
+  ['sms',['Sms',['../classFourPaws_1_1External_1_1SmsTraffic_1_1Sms_1_1Sms.html',1,'FourPaws::External::SmsTraffic::Sms']]],
+  ['smssenderrorexception',['SmsSendErrorException',['../classFourPaws_1_1External_1_1Exception_1_1SmsSendErrorException.html',1,'FourPaws::External::Exception']]],
+  ['smsservice',['SmsService',['../classFourPaws_1_1External_1_1SmsService.html',1,'FourPaws::External']]],
+  ['smstrafficapiexception',['SmsTrafficApiException',['../classFourPaws_1_1External_1_1SmsTraffic_1_1Exception_1_1SmsTrafficApiException.html',1,'FourPaws::External::SmsTraffic::Exception']]],
+  ['soapclient',['SoapClient',['../classFourPaws_1_1External_1_1Manzana_1_1Client_1_1SoapClient.html',1,'FourPaws::External::Manzana::Client']]],
+  ['status',['Status',['../classFourPaws_1_1Migrator_1_1Provider_1_1Status.html',1,'FourPaws\Migrator\Provider\Status'],['../classFourPaws_1_1Migrator_1_1Client_1_1Status.html',1,'FourPaws\Migrator\Client\Status'],['../classFourPaws_1_1Migrator_1_1Entity_1_1Status.html',1,'FourPaws\Migrator\Entity\Status']]],
+  ['stm',['Stm',['../classFourPaws_1_1Migrator_1_1Converter_1_1Stm.html',1,'FourPaws::Migrator::Converter']]],
+  ['stringtoiblock',['StringToIblock',['../classFourPaws_1_1Migrator_1_1Converter_1_1StringToIblock.html',1,'FourPaws::Migrator::Converter']]],
+  ['stringtoint',['StringToInt',['../classFourPaws_1_1Migrator_1_1Converter_1_1StringToInt.html',1,'FourPaws::Migrator::Converter']]],
+  ['stringtomultiplestring',['StringToMultipleString',['../classFourPaws_1_1Migrator_1_1Converter_1_1StringToMultipleString.html',1,'FourPaws::Migrator::Converter']]],
+  ['stringtoreference',['StringToReference',['../classFourPaws_1_1Migrator_1_1Converter_1_1StringToReference.html',1,'FourPaws::Migrator::Converter']]],
+  ['stringtoyesno',['StringToYesNo',['../classFourPaws_1_1Migrator_1_1Converter_1_1StringToYesNo.html',1,'FourPaws::Migrator::Converter']]]
+];
