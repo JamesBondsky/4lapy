@@ -4,8 +4,11 @@ namespace FourPaws\Migrator\Converter;
 
 use Bitrix\Highloadblock\DataManager;
 use Bitrix\Highloadblock\HighloadBlockTable;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
+use Bitrix\Main\SystemException;
+use FourPaws\Migrator\Converter\Exception\ReferenceException;
 
 /**
  * Class StringToReference
@@ -55,17 +58,15 @@ class StringToReference extends AbstractConverter
     }
     
     /**
-     * @throws \Exception
+     * @throws ReferenceException
+     * @throws SystemException
      */
     protected function setDataClass()
     {
         $table = HighloadBlockTable::getList(['filter' => ['=NAME' => $this->getReferenceCode()]])->fetch();
         
         if (!$table) {
-            /**
-             * @todo придумать сюда нормальный Exception
-             */
-            throw new \Exception('Highloadblock with name ' . $this->getReferenceCode() . ' is not found.');
+            throw new ReferenceException('Highloadblock with name ' . $this->getReferenceCode() . ' is not found.');
         }
         
         $dataClass = HighloadBlockTable::compileEntity($table)->getDataClass();
@@ -98,7 +99,8 @@ class StringToReference extends AbstractConverter
      *
      * @return array
      *
-     * @throws \Exception
+     * @throws ReferenceException
+     * @throws SystemException
      */
     public function convert(array $data) : array
     {
@@ -142,7 +144,9 @@ class StringToReference extends AbstractConverter
      * @param $fieldName
      *
      * @return string
-     * @throws \Exception
+     *
+     * @throws ReferenceException
+     * @throws ArgumentException
      */
     protected function addValue(string $value, string $fieldName) : string
     {
@@ -165,10 +169,7 @@ class StringToReference extends AbstractConverter
         $result = $this->getDataClass()::add($fields);
         
         if (!$result->isSuccess()) {
-            /**
-             * @todo придумать сюда нормальный Exception
-             */
-            throw new \Exception('Reference value add error: ' . implode(', ', $result->getErrorMessages()));
+            throw new ReferenceException('Reference value add error: ' . implode(', ', $result->getErrorMessages()));
         }
         
         self::$referenceValues[$this->getReferenceCode()][] = $fields;
@@ -182,7 +183,7 @@ class StringToReference extends AbstractConverter
      *
      * @return mixed
      *
-     * @throws \Exception
+     * @throws ArgumentException
      */
     protected function searchValue($value, $fieldToSearch)
     {
@@ -198,7 +199,7 @@ class StringToReference extends AbstractConverter
     /**
      * @return array
      *
-     * @throws \Exception
+     * @throws ArgumentException
      */
     protected function getReferenceValues() : array
     {

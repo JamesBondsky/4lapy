@@ -2,6 +2,8 @@
 
 namespace FourPaws\Migrator\Converter;
 
+use FourPaws\Migrator\Converter\Exception\ReferenceException;
+
 /**
  * Class DetailToProduct
  *
@@ -37,15 +39,12 @@ final class DetailToProduct extends AbstractConverter
      * @param array $data
      *
      * @return array
-     * @throws \Exception
+     * @throws ReferenceException
      */
     public function convert(array $data) : array
     {
         if (!($productFieldName = $this->getProductFieldName())) {
-            /**
-             * @todo придумать нормальный Exception
-             */
-            throw new \Exception('Empty product field name');
+            throw new ReferenceException('Empty product field name');
         }
         
         $fieldName = $this->getFieldName();

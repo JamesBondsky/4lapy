@@ -15,28 +15,35 @@ class Store extends ProviderAbstract
     public function getMap() : array
     {
         return [
-            'NAME' => 'NAME',
-            'PROPERTY_code' => 'XML_ID',
-            'SORT' => 'SORT',
-            'PROPERTY_phone' => 'PHONE',
-            'PROPERTY_address' => 'ADDRESS',
-            'PROPERTY_work_time' => '',
-            '' => '',
-            '' => '',
-            '' => '',
-            '' => '',
-            '' => '',
-            '' => '',
-            '' => '',
-            '' => '',
-            '' => '',
-            '' => '',
-            '' => '',
-            '' => '',
-            '' => '',
-            '' => '',
-            '' => '',
-            '' => '',
+            'NAME'                     => 'NAME',
+            'SORT'                     => 'SORT',
+            'XML_ID'                   => 'XML_ID',
+            'ACTIVE'                   => 'ACTIVE',
+            'PROPERTY_ADDRESS'         => 'ADDRESS',
+            'PROPERTY_CITY'            => 'UF_LOCATION',
+            'PROPERTY_PHONE'           => 'PHONE',
+            'PROPERTY_PHONE_DOB'       => 'PHONE',
+            'PROPERTY_WORK_TIME'       => 'SCHEDULE',
+            'PROPERTY_GPS'             => 'GPS',
+            'PROPERTY_EMAIL'           => 'EMAIL',
+            'PROPERTY_PICKUP'          => 'ISSUING_CENTER',
+            'PROPERTY_ADD_INFORMATION' => 'DESCRIPTION',
+            'PROPERTY_ID_SHOP_YM'      => 'UF_YANDEX_SHOP_ID',
+            'IS_SHOP'                  => 'UF_IS_SHOP',
         ];
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function getConverters() : array
+    {
+        
+        
+        $converters = [
+        
+        ];
+        
+        return $converters;
     }
 }

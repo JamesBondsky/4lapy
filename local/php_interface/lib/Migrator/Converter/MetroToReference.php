@@ -2,19 +2,20 @@
 
 namespace FourPaws\Migrator\Converter;
 
-use Bitrix\Main\ArgumentException;
 use FourPaws\Migrator\Converter\Exception\ReferenceException;
 
 /**
- * Class CountryToReference
+ * Class MetroToReference
  *
  * Специфичный для проекта конвертер
- * Сохраняет в справочник пару код страны/название страны
+ * Сохраняет в справочники связку метро/ветка
  *
  * @package FourPaws\Migrator\Converter
  */
-final class CountryToReference extends StringToReference
+final class MetroToReference extends StringToReference
 {
+    private $branchReference;
+    
     const CODE_FIELD_NAME = 'PROPERTY_COUNTRY_NAME';
     
     public function convert(array $data) : array
@@ -44,6 +45,7 @@ final class CountryToReference extends StringToReference
      * @param $name
      *
      * @return string
+     *
      * @throws ReferenceException
      */
     protected function addValue(string $code, string $name) : string
@@ -70,11 +72,15 @@ final class CountryToReference extends StringToReference
      *
      * @return mixed
      *
-     * @throws ReferenceException
-     * @throws ArgumentException
+     * @throws \Exception
      */
     protected function searchValue($code, $fieldToSearch = self::FIELD_EXTERNAL_KEY) : string
     {
         return parent::searchValue($code, self::FIELD_EXTERNAL_KEY);
+    }
+    
+    public function __construct(string $fieldName)
+    {
+        parent::__construct($fieldName);
     }
 }
