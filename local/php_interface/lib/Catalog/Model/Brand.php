@@ -17,7 +17,7 @@ class Brand extends IblockElement
      */
     public function isPopular(): bool
     {
-        return (bool)$this->PROPERTY_POPULAR;
+        return (bool)(int)$this->PROPERTY_POPULAR;
     }
 
     /**

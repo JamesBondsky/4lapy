@@ -139,9 +139,9 @@ services:
     arguments: ['ParasiteType']
     parent: bx.hlblock.base
 
-  bx.hlblock.lable:
-    class: 'LableTable'
-    arguments: ['Lable']
+  bx.hlblock.label:
+    class: 'LabelTable'
+    arguments: ['Label']
     parent: bx.hlblock.base
 
   bx.hlblock.filter:

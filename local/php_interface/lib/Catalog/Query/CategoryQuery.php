@@ -22,7 +22,7 @@ class CategoryQuery extends IblockSectionQuery
             'DEPTH_LEVEL',
             'LEFT_MARGIN',
             'RIGHT_MARGIN',
-            //TODO Пользовательские свойства? UF_SYMLINK?
+            'UF_SYMLINK',
         ];
     }
 

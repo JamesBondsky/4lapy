@@ -17,9 +17,14 @@ class Category extends IblockSection implements FilterInterface
     use FilterTrait;
 
     /**
-     * @var array
+     * @var int
      */
-    protected $propertyLinks;
+    protected $UF_SYMLINK = 0;
+
+    /**
+     * @var Category
+     */
+    protected $symlink;
 
     /**
      * @var CatalogService
@@ -35,6 +40,39 @@ class Category extends IblockSection implements FilterInterface
     {
         parent::__construct($fields);
         $this->catalogService = Application::getInstance()->getContainer()->get('catalog.service');
+    }
+
+    /**
+     * @return Category
+     */
+    public function getSymlink()
+    {
+        if (is_null($this->symlink)) {
+            /**
+             * Обязательно запрашивается активный раздел, т.к. на него будет ссылка
+             * и при деактивации целевого раздела показывать битую ссылку плохо.
+             */
+            $this->symlink = (new CategoryQuery())->withFilterParameter('=ID', (int)$this->UF_SYMLINK)
+                                                  ->exec()
+                                                  ->current();
+        }
+
+        return $this->symlink;
+    }
+
+    /**
+     * Возвращает ссылку на категорию с подменой, если используется связка с другой категорией.
+     *
+     * @return string
+     */
+    public function getSectionPageUrl(): string
+    {
+        $symlink = $this->getSymlink();
+        if (is_null($symlink)) {
+            return parent::getSectionPageUrl();
+        }
+
+        return $symlink->getSectionPageUrl();
     }
 
     /**

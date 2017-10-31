@@ -5,10 +5,11 @@ namespace FourPaws\Catalog\Model;
 use FourPaws\BitrixOrm\Collection\HlbReferenceItemCollection;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\BitrixOrm\Model\IblockElement;
+use FourPaws\BitrixOrm\Model\TextContent;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Query\BrandQuery;
 use FourPaws\Catalog\Query\OfferQuery;
-use FourPaws\Catalog\Utils;
+use FourPaws\Catalog\ReferenceUtils;
 
 class Product extends IblockElement
 {
@@ -48,13 +49,45 @@ class Product extends IblockElement
      */
     protected $petSize;
 
-    protected $PROPERTY_PET_AGE;
+    /**
+     * @var string[]
+     */
+    protected $PROPERTY_PET_AGE = [];
 
-    protected $PROPERTY_PET_AGE_ADDITIONAL;
+    /**
+     * @var HlbReferenceItemCollection
+     */
+    protected $petAge;
 
-    protected $PROPERTY_PET_BREED;
+    /**
+     * @var string[]
+     */
+    protected $PROPERTY_PET_AGE_ADDITIONAL = [];
 
-    protected $PROPERTY_PET_GENDER;
+    /**
+     * @var HlbReferenceItemCollection
+     */
+    protected $petAgeAdditional;
+
+    /**
+     * @var string
+     */
+    protected $PROPERTY_PET_BREED = '';
+
+    /**
+     * @var HlbReferenceItem
+     */
+    protected $petBreed;
+
+    /**
+     * @var string
+     */
+    protected $PROPERTY_PET_GENDER = '';
+
+    /**
+     * @var HlbReferenceItem
+     */
+    protected $petGender;
 
     /**
      * @var string
@@ -66,63 +99,229 @@ class Product extends IblockElement
      */
     protected $category;
 
-    protected $PROPERTY_PURPOSE;
+    /**
+     * @var string
+     */
+    protected $PROPERTY_PURPOSE = '';
 
+    /**
+     * @var HlbReferenceItem
+     */
+    protected $purpose;
+
+    //TODO Изображения
     protected $PROPERTY_IMG = [];
 
-    protected $PROPERTY_LABEL;
+    /**
+     * @var string[]
+     */
+    protected $PROPERTY_LABEL = [];
 
-    protected $PROPERTY_STM;
+    /**
+     * @var HlbReferenceItemCollection
+     */
+    protected $label;
 
-    protected $PROPERTY_COUNTRY;
+    /**
+     * @var bool
+     */
+    protected $PROPERTY_STM = false;
 
-    protected $PROPERTY_TRADE_NAME;
+    /**
+     * @var string
+     */
+    protected $PROPERTY_COUNTRY = '';
 
-    protected $PROPERTY_MAKER;
+    /**
+     * @var HlbReferenceItem
+     */
+    protected $country;
 
-    protected $PROPERTY_MANAGER_OF_CATEGORY;
+    /**
+     * @var string[]
+     */
+    protected $PROPERTY_TRADE_NAME = [];
 
-    protected $PROPERTY_MANUFACTURE_MATERIAL;
+    /**
+     * @var HlbReferenceItemCollection
+     */
+    protected $tradeName;
 
-    protected $PROPERTY_SEASON_CLOTHES;
+    /**
+     * @var string[]
+     */
+    protected $PROPERTY_MAKER = [];
 
-    protected $PROPERTY_WEIGHT_CAPACITY_PACKING;
+    /**
+     * @var HlbReferenceItemCollection
+     */
+    protected $maker;
 
-    protected $PROPERTY_LICENSE;
+    /**
+     * @var string[]
+     */
+    protected $PROPERTY_MANAGER_OF_CATEGORY = [];
 
-    protected $PROPERTY_LOW_TEMPERATURE;
+    /**
+     * @var HlbReferenceItemCollection
+     */
+    protected $managerOfCategory;
 
-    protected $PROPERTY_PET_TYPE;
+    /**
+     * @var string[]
+     */
+    protected $PROPERTY_MANUFACTURE_MATERIAL = [];
 
-    protected $PROPERTY_PHARMA_GROUP;
+    /**
+     * @var HlbReferenceItemCollection
+     */
+    protected $manufactureMaterial;
 
-    protected $PROPERTY_FEED_SPECIFICATION;
+    /**
+     * @var string[]
+     */
+    protected $PROPERTY_SEASON_CLOTHES = [];
 
-    protected $PROPERTY_FOOD;
+    /**
+     * @var HlbReferenceItemCollection
+     */
+    protected $seasonClothes;
 
-    protected $PROPERTY_CONSISTENCE;
+    /**
+     * @var string
+     */
+    protected $PROPERTY_WEIGHT_CAPACITY_PACKING = '';
 
-    protected $PROPERTY_FLAVOUR;
+    /**
+     * @var bool
+     */
+    protected $PROPERTY_LICENSE = false;
 
-    protected $PROPERTY_FEATURES_OF_INGREDIENTS;
+    /**
+     * @var bool
+     */
+    protected $PROPERTY_LOW_TEMPERATURE = false;
 
-    protected $PROPERTY_PRODUCT_FORM;
+    /**
+     * @var string
+     */
+    protected $PROPERTY_PET_TYPE = '';
 
-    protected $PROPERTY_TYPE_OF_PARASITE;
+    /**
+     * @var HlbReferenceItem
+     */
+    protected $petType;
 
-    protected $PROPERTY_YML_NAME;
+    /**
+     * @var string
+     * TODO Есть риск, что это свойство окажется множественным
+     */
+    protected $PROPERTY_PHARMA_GROUP = '';
 
-    protected $PROPERTY_SALES_NOTES;
+    /**
+     * @var HlbReferenceItem
+     */
+    protected $pharmaGroup;
 
-    protected $PROPERTY_GROUP;
+    /**
+     * @var string
+     */
+    protected $PROPERTY_FEED_SPECIFICATION = '';
 
-    protected $PROPERTY_GROUP_NAME;
+    /**
+     * @var HlbReferenceItem
+     */
+    protected $feedSpecification;
 
-    protected $PROPERTY_PRODUCED_BY_HOLDER;
+    /**
+     * @var bool
+     */
+    protected $PROPERTY_FOOD = false;
 
-    protected $PROPERTY_SPECIFICATIONS;
+    /**
+     * @var string
+     */
+    protected $PROPERTY_CONSISTENCE = '';
 
-    //TODO Дописать работу со свойствами товара
+    /**
+     * @var HlbReferenceItem
+     */
+    protected $consistence;
+
+    /**
+     * @var string[]
+     */
+    protected $PROPERTY_FLAVOUR = [];
+
+    /**
+     * @var HlbReferenceItemCollection
+     */
+    protected $flavour;
+
+    /**
+     * @var string[]
+     */
+    protected $PROPERTY_FEATURES_OF_INGREDIENTS = [];
+
+    /**
+     * @var HlbReferenceItemCollection
+     */
+    protected $featuresOfIngredients;
+
+    /**
+     * @var string[]
+     */
+    protected $PROPERTY_PRODUCT_FORM = [];
+
+    /**
+     * @var HlbReferenceItemCollection
+     */
+    protected $productForm;
+
+    /**
+     * @var string[]
+     */
+    protected $PROPERTY_TYPE_OF_PARASITE = [];
+
+    /**
+     * @var HlbReferenceItemCollection
+     */
+    protected $typeOfParasite;
+
+    /**
+     * @var string
+     */
+    protected $PROPERTY_YML_NAME = '';
+
+    /**
+     * @var string
+     */
+    protected $PROPERTY_SALES_NOTES = '';
+
+    /**
+     * @var string
+     */
+    protected $PROPERTY_GROUP = '';
+
+    /**
+     * @var string
+     */
+    protected $PROPERTY_GROUP_NAME = '';
+
+    /**
+     * @var bool
+     */
+    protected $PROPERTY_PRODUCED_BY_HOLDER = false;
+
+    /**
+     * @var array
+     */
+    protected $PROPERTY_SPECIFICATIONS = [];
+
+    /**
+     * @var TextContent
+     */
+    protected $specifications;
 
     /**
      * @var OfferCollection
@@ -214,7 +413,7 @@ class Product extends IblockElement
     public function getForWho()
     {
         if (is_null($this->forWho)) {
-            $this->forWho = Utils::getReferenceMulti('bx.hlblock.forwho', $this->PROPERTY_FOR_WHO);
+            $this->forWho = ReferenceUtils::getReferenceMulti('bx.hlblock.forwho', $this->PROPERTY_FOR_WHO);
         }
 
         return $this->forWho;
@@ -226,21 +425,415 @@ class Product extends IblockElement
     public function getPetSize()
     {
         if (is_null($this->petSize)) {
-            $this->petSize = Utils::getReferenceMulti('bx.hlblock.petsize', $this->PROPERTY_PET_SIZE);
+            $this->petSize = ReferenceUtils::getReferenceMulti('bx.hlblock.petsize', $this->PROPERTY_PET_SIZE);
         }
 
         return $this->petSize;
     }
 
     /**
+     * Возвращает категорию товара.
+     *
+     * @attention Это всего лишь одноимённое свойство из SAP и никак не связано с категориями каталога на сайте.
+     *
      * @return HlbReferenceItem
      */
     public function getCategory()
     {
         if (is_null($this->category)) {
-            $this->category = Utils::getReference('bx.hlblock.productcategory', $this->PROPERTY_CATEGORY);
+            $this->category = ReferenceUtils::getReference('bx.hlblock.productcategory', $this->PROPERTY_CATEGORY);
         }
 
         return $this->category;
+    }
+
+    /**
+     * @return HlbReferenceItem
+     */
+    public function getPurpose()
+    {
+        if (is_null($this->purpose)) {
+            $this->purpose = ReferenceUtils::getReference('bx.hlblock.purpose', $this->PROPERTY_PURPOSE);
+        }
+
+        return $this->purpose;
+    }
+
+    /**
+     * @return HlbReferenceItemCollection
+     */
+    public function getPetAge()
+    {
+        if (is_null($this->petAge)) {
+            $this->petAge = ReferenceUtils::getReferenceMulti('bx.hlblock.petage', $this->PROPERTY_PET_AGE);
+        }
+
+        return $this->petAge;
+    }
+
+    /**
+     * @return HlbReferenceItemCollection
+     */
+    public function getPetAgeAdditional()
+    {
+        if (is_null($this->petAgeAdditional)) {
+            $this->petAgeAdditional = ReferenceUtils::getReferenceMulti(
+                'bx.hlblock.petageadditional',
+                $this->PROPERTY_PET_AGE_ADDITIONAL
+            );
+        }
+
+        return $this->petAgeAdditional;
+    }
+
+    /**
+     * @return HlbReferenceItem
+     */
+    public function getPetBreed()
+    {
+        if (is_null($this->petBreed)) {
+            $this->petBreed = ReferenceUtils::getReference('bx.hlblock.petbreed', $this->PROPERTY_PET_BREED);
+        }
+
+        return $this->petBreed;
+    }
+
+    /**
+     * @return HlbReferenceItem
+     */
+    public function getPetGender()
+    {
+        if (is_null($this->petGender)) {
+            $this->petGender = ReferenceUtils::getReference('bx.hlblock.petgender', $this->PROPERTY_PET_GENDER);
+        }
+
+        return $this->petGender;
+    }
+
+    /**
+     * @return HlbReferenceItemCollection
+     */
+    public function getLabels()
+    {
+        if (is_null($this->label)) {
+            $this->label = ReferenceUtils::getReferenceMulti('bx.hlblock.label', $this->PROPERTY_LABEL);
+            //TODO Добавить динамический запрос шильдиков по акциям, в которых в данном регионе участвует этот продукт
+            //TODO Сделать, чтобы это была отдельная коллекция объектов "Шильдик", а не просто элемент справочника.
+        }
+
+        return $this->label;
+    }
+
+    /**
+     * Возвращает признак "товар собственной торговой марки"
+     *
+     * @return bool
+     */
+    public function isSTM()
+    {
+        return (bool)(int)$this->PROPERTY_STM;
+    }
+
+    /**
+     * @return HlbReferenceItem
+     */
+    public function getCountry()
+    {
+        if (is_null($this->country)) {
+            $this->country = ReferenceUtils::getReference('bx.hlblock.country', $this->PROPERTY_COUNTRY);
+        }
+
+        return $this->country;
+    }
+
+    /**
+     * @return HlbReferenceItemCollection
+     */
+    public function getTradeNames()
+    {
+        if (is_null($this->tradeName)) {
+            $this->tradeName = ReferenceUtils::getReferenceMulti('bx.hlblock.tradename', $this->PROPERTY_TRADE_NAME);
+        }
+
+        return $this->tradeName;
+    }
+
+    /**
+     * @return HlbReferenceItemCollection
+     */
+    public function getMakers()
+    {
+        if (is_null($this->maker)) {
+            $this->maker = ReferenceUtils::getReferenceMulti('bx.hlblock.maker', $this->PROPERTY_MAKER);
+        }
+
+        return $this->maker;
+    }
+
+    /**
+     * @return HlbReferenceItemCollection
+     */
+    public function getManagersOfCategory()
+    {
+        if (is_null($this->managerOfCategory)) {
+            $this->managerOfCategory = ReferenceUtils::getReferenceMulti(
+                'bx.hlblock.categorymanager',
+                $this->PROPERTY_MANAGER_OF_CATEGORY
+            );
+        }
+
+        return $this->managerOfCategory;
+    }
+
+    /**
+     * @return HlbReferenceItemCollection
+     */
+    public function getManufactureMaterials()
+    {
+        if (is_null($this->manufactureMaterial)) {
+            $this->manufactureMaterial = ReferenceUtils::getReferenceMulti(
+                'bx.hlblock.material',
+                $this->PROPERTY_MANUFACTURE_MATERIAL
+            );
+        }
+
+        return $this->manufactureMaterial;
+    }
+
+    /**
+     * @return HlbReferenceItemCollection
+     */
+    public function getClothesSeasons()
+    {
+        if (is_null($this->seasonClothes)) {
+            $this->seasonClothes = ReferenceUtils::getReferenceMulti(
+                'bx.hlblock.season',
+                $this->PROPERTY_SEASON_CLOTHES
+            );
+        }
+
+        return $this->seasonClothes;
+    }
+
+    /**
+     * @return string
+     */
+    public function getWeightCapacityPacking()
+    {
+        return $this->PROPERTY_WEIGHT_CAPACITY_PACKING;
+    }
+
+    /**
+     * Возвращает признак "Требуется лицензия"
+     *
+     * @return bool
+     */
+    public function isLicenseRequired()
+    {
+        return (bool)(int)$this->PROPERTY_LICENSE;
+    }
+
+    /**
+     * Возвращает признак "Требуется хранение при низкой температуре"
+     *
+     * @return bool
+     */
+    public function isLowTemperatureRequired()
+    {
+        return (bool)(int)$this->PROPERTY_LOW_TEMPERATURE;
+    }
+
+    /**
+     * @return HlbReferenceItem
+     */
+    public function getPetType()
+    {
+        if (is_null($this->petType)) {
+            $this->petType = ReferenceUtils::getReference('bx.hlblock.pettype', $this->PROPERTY_PET_TYPE);
+        }
+
+        return $this->petType;
+    }
+
+    /**
+     * @return HlbReferenceItem
+     */
+    public function getPharmaGroup()
+    {
+        if (is_null($this->pharmaGroup)) {
+            $this->pharmaGroup = ReferenceUtils::getReference('bx.hlblock.pharmagroup', $this->PROPERTY_PHARMA_GROUP);
+        }
+
+        return $this->pharmaGroup;
+    }
+
+    /**
+     * Возвращает специализацию корма
+     *
+     * @return HlbReferenceItem
+     */
+    public function getFeedSpecification()
+    {
+        if (is_null($this->feedSpecification)) {
+            $this->feedSpecification = ReferenceUtils::getReference(
+                'bx.hlblock.feedspec',
+                $this->PROPERTY_FEED_SPECIFICATION
+            );
+        }
+
+        return $this->feedSpecification;
+    }
+
+    /**
+     * Возвращает признак "Еда", т.е. является ли продукт съедобным.
+     *
+     * @return bool
+     */
+    public function isFood()
+    {
+        return (bool)(int)$this->PROPERTY_FOOD;
+    }
+
+    /**
+     * @return HlbReferenceItem
+     */
+    public function getConsistence()
+    {
+        if (is_null($this->consistence)) {
+            $this->consistence = ReferenceUtils::getReference('bx.hlblock.consistence', $this->PROPERTY_CONSISTENCE);
+        }
+
+        return $this->consistence;
+    }
+
+    /**
+     * @return HlbReferenceItemCollection
+     */
+    public function getFlavour()
+    {
+        if (is_null($this->flavour)) {
+            $this->flavour = ReferenceUtils::getReferenceMulti('bx.hlblock.flavour', $this->PROPERTY_FLAVOUR);
+        }
+
+        return $this->flavour;
+    }
+
+    /**
+     * Возвращает особенности ингридиентов
+     *
+     * @return HlbReferenceItemCollection
+     */
+    public function getFeaturesOfIngredients()
+    {
+        if (is_null($this->featuresOfIngredients)) {
+            $this->featuresOfIngredients = ReferenceUtils::getReferenceMulti(
+                'bx.hlblock.ingridientfeatures',
+                $this->PROPERTY_FEATURES_OF_INGREDIENTS
+            );
+        }
+
+        return $this->featuresOfIngredients;
+    }
+
+    /**
+     * Возвращает формы выпуска продукта
+     *
+     * @return HlbReferenceItemCollection
+     */
+    public function getProductForms()
+    {
+        if (is_null($this->productForm)) {
+            $this->productForm = ReferenceUtils::getReferenceMulti(
+                'bx.hlblock.productform',
+                $this->PROPERTY_PRODUCT_FORM
+            );
+        }
+
+        return $this->productForm;
+    }
+
+    /**
+     * Возвращает типы паразитов.
+     *
+     * @return HlbReferenceItemCollection
+     */
+    public function getTypesOfParasites()
+    {
+        if (is_null($this->typeOfParasite)) {
+            $this->typeOfParasite = ReferenceUtils::getReferenceMulti(
+                'bx.hlblock.parasitetype',
+                $this->PROPERTY_TYPE_OF_PARASITE
+            );
+        }
+
+        return $this->typeOfParasite;
+    }
+
+    /**
+     * Возвращает имя товара для Яндекс.Маркет
+     *
+     * @return string
+     */
+    public function getYmlName()
+    {
+        return $this->PROPERTY_YML_NAME;
+    }
+
+    /**
+     * Возвращает примечания о товаре (sales notes) для Яндекс.Маркет
+     *
+     * @return string
+     */
+    public function getSalesNotes()
+    {
+        return $this->PROPERTY_SALES_NOTES;
+    }
+
+    /**
+     * Возвращает id группы товаров.
+     *
+     * @remark Скорее всего, ненужное на текущем сайте свойство товара.
+     *
+     * @return string
+     */
+    public function getGroupId()
+    {
+        return $this->PROPERTY_GROUP;
+    }
+
+    /**
+     * Возвращает название группы товаров.
+     *
+     * @remark Скорее всего, ненужное на текущем сайте свойство товара.
+     *
+     * @return string
+     */
+    public function getGroupName()
+    {
+        return $this->PROPERTY_GROUP_NAME;
+    }
+
+    /**
+     * Возвращает признак "Произведено по заказу правообладателя"
+     *
+     * @return bool
+     */
+    public function isProducedByHolderRequest()
+    {
+        return (bool)(int)$this->PROPERTY_PRODUCED_BY_HOLDER;
+    }
+
+    /**
+     * Возвращает технические характеристики товара.
+     *
+     * @return TextContent
+     */
+    public function getSpecifications()
+    {
+        if (is_null($this->specifications)) {
+            $this->specifications = new TextContent($this->PROPERTY_SPECIFICATIONS);
+        }
+
+        return $this->specifications;
     }
 }

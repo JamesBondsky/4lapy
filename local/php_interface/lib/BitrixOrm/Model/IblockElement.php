@@ -52,12 +52,6 @@ abstract class IblockElement extends BitrixArrayItemBase
 
     /**
      * @var string
-     * TODO Проверить, а это для элемента вообще доступно? Ну и как-то объединить section и element? IblockItemBase?
-     */
-    protected $SECTION_PAGE_URL = '';
-
-    /**
-     * @var string
      */
     protected $DETAIL_PAGE_URL = '';
 
@@ -87,26 +81,6 @@ abstract class IblockElement extends BitrixArrayItemBase
     public function withDetailPageUrl(string $url)
     {
         $this->DETAIL_PAGE_URL = $url;
-
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getSectionPageUrl(): string
-    {
-        return $this->SECTION_PAGE_URL;
-    }
-
-    /**
-     * @param string $url
-     *
-     * @return $this
-     */
-    public function withSectionPageUrl(string $url)
-    {
-        $this->SECTION_PAGE_URL = $url;
 
         return $this;
     }

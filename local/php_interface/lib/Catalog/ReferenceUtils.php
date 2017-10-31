@@ -9,7 +9,7 @@ use FourPaws\BitrixOrm\Collection\HlbReferenceItemCollection;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\BitrixOrm\Query\HlbReferenceQuery;
 
-abstract class Utils
+abstract class ReferenceUtils
 {
     /**
      * Возвращает элемент справочника для любого HL-блока. Если элемент не найден или передан пустой код, возвращается
