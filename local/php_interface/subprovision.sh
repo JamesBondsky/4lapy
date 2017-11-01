@@ -25,6 +25,8 @@ UNVER_FOLDER_ARCHIVE="${SUBPROV_ROOT}/unversioned-files.tar.gz"
 SITE_URI="http://4lapy.vag"
 MIGRATION_RUNNER="${DOCUMENT_ROOT}/migrate.php"
 CONSOLE_RUNNER="${DOCUMENT_ROOT}/console.php"
+STATIC_ROOT="${DOCUMENT_ROOT}/static"
+BEMTO_SETTINGS="${STATIC_ROOT}/node_modules/bemto.pug/lib/settings.pug"
 
 # Create unversioned files
 if [[ -f "${BITRIX_FOLDER_CHECK}" ]] ; then
@@ -79,7 +81,33 @@ else
     fi
 fi
 
-#TODO Возможно, понадобится добавить начальную сборку статики или инициализацию субмодулей сюда
+# Install bower and npm modules
+if [[ -d "${STATIC_ROOT}/node_modules" ]] ; then
+    printGreen "Node modules are OKay"
+else
+    printRed "Node modules are missing"
+    printBlue "Installing node modules... Please, be patient."
+    cd "${STATIC_ROOT}"
+    bower i
+    npm i
+    sed -re "s/('prefix'\s*:\s*')[^']*(')/\1b-\2/" "${BEMTO_SETTINGS}" \
+    | sed -re "s/('element'\s*:\s*')[^']*(')/\1__\2/" \
+    | sed -re "s/('modifier'\s*:\s*')[^']*(')/\1--\2/" > "${BEMTO_SETTINGS}_new"
+    mv --force "${BEMTO_SETTINGS}_new" "${BEMTO_SETTINGS}"
+    cd - >/dev/null
+fi
+
+# Build static for the first time
+if [[ -d "${STATIC_ROOT}/build" ]] ; then
+    printGreen "Static build is OKay"
+else
+    printRed "Static build is missing"
+    printBlue "Building static for the first time... Please, be patient."
+    cd "${STATIC_ROOT}"
+    gulp init
+    gulp build
+    cd - >/dev/null
+fi
 
 printGreen "Subprovision is done."
 printf "\e[0;32mVisit \e[0m\e[1;34;4;34m${SITE_URI}\e[0m \e[0;32mand welcome aboard!\e[0m\n"
