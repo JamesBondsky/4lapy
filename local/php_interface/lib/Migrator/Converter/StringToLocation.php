@@ -2,6 +2,9 @@
 
 namespace FourPaws\Migrator\Converter;
 
+use Bitrix\Main\ArgumentException;
+use Bitrix\Sale\Location\Name\LocationTable;
+
 /**
  * Class StringToLocation
  *
@@ -15,7 +18,8 @@ final class StringToLocation extends AbstractConverter
      * @param array $data
      *
      * @return array
-     * @throws \Exception
+     *
+     * @throws ArgumentException
      */
     public function convert(array $data) : array
     {
@@ -34,12 +38,42 @@ final class StringToLocation extends AbstractConverter
      * @param string $string
      *
      * @return string
+     *
+     * @throws ArgumentException
      */
     public function getLocationByString(string $string) : string
     {
+        $locationCode = '';
+    
         /**
-         * @todo implement this
+         * Ищем сёла и посёлки по кодам
          */
-        return $string;
+        switch (strtoupper($string)) {
+            case 'БЫКОВО':
+                $locationCode = '0000059219';
+                break;
+            case 'КРАСКОВО':
+                $locationCode = '0000046135';
+                break;
+            case 'ТОМИЛИНО':
+                $locationCode = '0000046724';
+                break;
+        }
+    
+        if ($locationCode) {
+            $location = \Bitrix\Sale\Location\LocationTable::getList([
+                                                                         'filter' => ['=CODE' => $locationCode],
+                                                                         'select' => ['ID'],
+                                                                     ])->fetch();
+        
+            return $location['ID'];
+        }
+        
+        $location = LocationTable::getList([
+                                               'filter' => ['=NAME_UPPER' => strtoupper($string)],
+                                               'select' => ['LOCATION_ID'],
+                                           ])->fetch();
+        
+        return $location['LOCATION_ID'];
     }
 }

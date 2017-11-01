@@ -24,6 +24,8 @@ interface ProviderInterface
     public function getMap() : array;
     
     /**
+     * Должен вернуть набор конвертеров
+     *
      * @return \FourPaws\Migrator\Converter\ConverterInterface[] array
      */
     public function getConverters() : array;

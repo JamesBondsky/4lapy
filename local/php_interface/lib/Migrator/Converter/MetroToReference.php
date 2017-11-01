@@ -2,6 +2,9 @@
 
 namespace FourPaws\Migrator\Converter;
 
+use Bitrix\Highloadblock\DataManager;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\SystemException;
 use FourPaws\Migrator\Converter\Exception\ReferenceException;
 
 /**
@@ -10,50 +13,89 @@ use FourPaws\Migrator\Converter\Exception\ReferenceException;
  * Специфичный для проекта конвертер
  * Сохраняет в справочники связку метро/ветка
  *
+ * @todo    ужасно написано
+ *
  * @package FourPaws\Migrator\Converter
  */
 final class MetroToReference extends StringToReference
 {
-    private $branchReference;
+    const WAY_FIELD_NAME       = 'METRO_WAY';
     
-    const CODE_FIELD_NAME = 'PROPERTY_COUNTRY_NAME';
+    const WAY_COLOR_FIELD_NAME = 'METRO_WAY_COLOR';
+    
+    private $branch;
     
     public function convert(array $data) : array
     {
-        $this->setDataClass();
-        
         $fieldName = $this->getFieldName();
         
         if (!$data[$fieldName]) {
             return $data;
         }
         
-        $result = $this->searchValue($data[$fieldName]);
-        
-        if (!$result) {
-            $result = $this->addValue($data[self::CODE_FIELD_NAME], $data[$fieldName]);
-            unset($data[self::CODE_FIELD_NAME]);
+        if ($data[self::WAY_FIELD_NAME]) {
+            $this->branch = $this->getBranch($data[self::WAY_FIELD_NAME], $data[self::WAY_COLOR_FIELD_NAME]);
         }
         
-        $data[$fieldName] = $result;
+        unset($data[self::WAY_FIELD_NAME], $data[self::WAY_COLOR_FIELD_NAME]);
         
-        return $data;
+        return parent::convert($data);
     }
     
     /**
-     * @param $code
-     * @param $name
+     * @param string $name
+     * @param string $color
+     *
+     * @return string
+     *
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws ReferenceException
+     */
+    private function getBranch(string $name, string $color) : string
+    {
+        $dataClass = $this->getDataClass('MetroWays');
+        
+        $exists = $dataClass::getList([
+                                          'filter' => ['=UF_XML_ID' => md5($name)],
+                                          'select' => ['ID'],
+                                      ])->fetch();
+        
+        if ($exists['ID']) {
+            return $exists['ID'];
+        }
+        
+        return $this->setBranch($dataClass, $name, $color);
+    }
+    
+    /**
+     * @param $value
+     * @param $fieldName
      *
      * @return string
      *
      * @throws ReferenceException
+     * @throws ArgumentException
+     * @throws SystemException
      */
-    protected function addValue(string $code, string $name) : string
+    protected function addValue(string $value, string $fieldName) : string
     {
+        $externalKey = md5($value);
+        
         $fields = [
-            $this->getFieldToSearch() => $code,
-            self::FIELD_EXTERNAL_KEY  => $name,
+            $fieldName               => $value,
+            self::FIELD_EXTERNAL_KEY => $externalKey,
+            'UF_BRANCH'              => $this->branch,
         ];
+        
+        $exists = $this->getDataClass()::getList([
+                                                     'filter' => [self::FIELD_EXTERNAL_KEY => $externalKey],
+                                                     'select' => [self::FIELD_EXTERNAL_KEY],
+                                                 ])->fetch();
+        
+        if ($exists[self::FIELD_EXTERNAL_KEY]) {
+            return $exists[self::FIELD_EXTERNAL_KEY];
+        }
         
         $result = $this->getDataClass()::add($fields);
         
@@ -63,24 +105,30 @@ final class MetroToReference extends StringToReference
         
         self::$referenceValues[$this->getReferenceCode()][] = $fields;
         
-        return $code;
+        return $externalKey;
     }
     
     /**
-     * @param $code
-     * @param $fieldToSearch
+     * @param DataManager $dataManager
+     * @param string      $name
+     * @param string      $color
      *
-     * @return mixed
+     * @return string
      *
-     * @throws \Exception
+     * @throws ReferenceException
      */
-    protected function searchValue($code, $fieldToSearch = self::FIELD_EXTERNAL_KEY) : string
+    private function setBranch(DataManager $dataManager, string $name, string $color) : string
     {
-        return parent::searchValue($code, self::FIELD_EXTERNAL_KEY);
-    }
-    
-    public function __construct(string $fieldName)
-    {
-        parent::__construct($fieldName);
+        $result = $dataManager::add([
+                                        'UF_XML_ID'      => md5($name),
+                                        'UF_NAME'        => $name,
+                                        'UF_COLOUR_CODE' => $color,
+                                    ]);
+        
+        if ($result->isSuccess()) {
+            return $result->getId();
+        }
+        
+        throw new ReferenceException(sprintf('Branch create error: %s', implode(', ', $result->getErrorMessages())));
     }
 }

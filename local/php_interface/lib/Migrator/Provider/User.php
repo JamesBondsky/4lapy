@@ -32,7 +32,7 @@ class User extends ProviderAbstract
                                    'UF_DISC'              => 'UF_DISCOUNT_CARD',
                                    'UF_ADDR'              => 'UF_ADDRESS',
                                    'UF_CORRECTION_BASKET' => 'UF_CORRECTION_BASKET',
-                                   'shops.UF_SHOP'        => 'UF_SHOP',
+                                   'store.UF_SHOP'        => 'UF_SHOP',
                                    'UF_IS_ACTUAL_EMAIL'   => 'UF_EMAIL_CONFIRMED',
                                    'UF_IS_ACTUAL_PHONE'   => 'UF_PHONE_CONFIRMED',
                                    'UF_ADDR_TOWN'         => 'UF_ADDR_TOWN',

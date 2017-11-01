@@ -5,6 +5,8 @@ namespace FourPaws\Migrator\Entity;
 interface EntityInterface
 {
     /**
+     * Метод должен вернуть маппинг сущностей по умолчанию, которые не нужно импортировать (или которые уже существуют)
+     *
      * @return array
      */
     public function setDefaults() : array;
@@ -15,11 +17,15 @@ interface EntityInterface
     public function getPrimary() : string;
     
     /**
+     * Метод должен вернуть имя сущности
+     *
      * @return string
      */
     public function getEntity() : string;
     
     /**
+     * Метод должен вернуть имя поля, в котором передаётся timestamp
+     *
      * @return string
      */
     public function getTimestamp() : string;

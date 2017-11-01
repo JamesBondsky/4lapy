@@ -22,9 +22,19 @@ class StringToReference extends AbstractConverter
 {
     const FIELD_EXTERNAL_KEY = 'UF_XML_ID';
     
-    private          $referenceCode;
+    private $referenceCode;
     
-    private          $fieldToSearch;
+    private $fieldToSearch;
+    
+    private $returnFieldName = '';
+    
+    /**
+     * @param string $returnFieldName
+     */
+    public function setReturnFieldName(string $returnFieldName)
+    {
+        $this->returnFieldName = $returnFieldName;
+    }
     
     protected static $referenceValues = [];
     
@@ -50,23 +60,28 @@ class StringToReference extends AbstractConverter
     private $dataClass;
     
     /**
+     * @param string $dataClassName
+     *
      * @return DataManager
-     */
-    protected function getDataClass() : DataManager
-    {
-        return $this->dataClass;
-    }
-    
-    /**
+     *
      * @throws ReferenceException
      * @throws SystemException
+     * @throws ArgumentException
      */
-    protected function setDataClass()
+    protected function getDataClass(string $dataClassName = '') : DataManager
     {
-        $table = HighloadBlockTable::getList(['filter' => ['=NAME' => $this->getReferenceCode()]])->fetch();
+        if (!$dataClassName && $this->dataClass) {
+            return $this->dataClass;
+        }
+        
+        $externalCall = (bool)$dataClassName;
+        
+        $dataClassName = $dataClassName ?: $this->getReferenceCode();
+        
+        $table = HighloadBlockTable::getList(['filter' => ['=NAME' => $dataClassName]])->fetch();
         
         if (!$table) {
-            throw new ReferenceException('Highloadblock with name ' . $this->getReferenceCode() . ' is not found.');
+            throw new ReferenceException('Highloadblock with name ' . $dataClassName . ' is not found.');
         }
         
         $dataClass = HighloadBlockTable::compileEntity($table)->getDataClass();
@@ -75,7 +90,14 @@ class StringToReference extends AbstractConverter
             $dataClass = new $dataClass();
         }
         
-        $this->dataClass = $dataClass;
+        if (!$externalCall) {
+            $this->dataClass = $dataClass;
+        }
+        
+        /**
+         * @var DataManager $dataClass
+         */
+        return $dataClass;
     }
     
     /**
@@ -101,11 +123,10 @@ class StringToReference extends AbstractConverter
      *
      * @throws ReferenceException
      * @throws SystemException
+     * @throws ArgumentException
      */
     public function convert(array $data) : array
     {
-        $this->setDataClass();
-        
         $isArray   = true;
         $fieldName = $this->getFieldName();
         
@@ -147,6 +168,7 @@ class StringToReference extends AbstractConverter
      *
      * @throws ReferenceException
      * @throws ArgumentException
+     * @throws SystemException
      */
     protected function addValue(string $value, string $fieldName) : string
     {
@@ -157,13 +179,19 @@ class StringToReference extends AbstractConverter
             self::FIELD_EXTERNAL_KEY => $externalKey,
         ];
         
+        $select = [self::FIELD_EXTERNAL_KEY];
+        
+        if ($this->returnFieldName) {
+            $select[] = $this->returnFieldName;
+        }
+        
         $exists = $this->getDataClass()::getList([
                                                      'filter' => [self::FIELD_EXTERNAL_KEY => $externalKey],
-                                                     'select' => [self::FIELD_EXTERNAL_KEY],
+                                                     'select' => $select,
                                                  ])->fetch();
         
-        if ($exists[self::FIELD_EXTERNAL_KEY]) {
-            return $exists[self::FIELD_EXTERNAL_KEY];
+        if ($exists[$this->returnFieldName ?: self::FIELD_EXTERNAL_KEY]) {
+            return $exists[$this->returnFieldName ?: self::FIELD_EXTERNAL_KEY];
         }
         
         $result = $this->getDataClass()::add($fields);
@@ -174,7 +202,7 @@ class StringToReference extends AbstractConverter
         
         self::$referenceValues[$this->getReferenceCode()][] = $fields;
         
-        return $externalKey;
+        return $this->returnFieldName ? $result->getId() : $externalKey;
     }
     
     /**
@@ -184,6 +212,8 @@ class StringToReference extends AbstractConverter
      * @return mixed
      *
      * @throws ArgumentException
+     * @throws SystemException
+     * @throws ReferenceException
      */
     protected function searchValue($value, $fieldToSearch)
     {
@@ -193,13 +223,16 @@ class StringToReference extends AbstractConverter
                                  array_column($referenceValues, $fieldToSearch),
                                  true);
         
-        return $position === false ? '' : $referenceValues[$position][self::FIELD_EXTERNAL_KEY];
+        return $position
+               === false ? '' : $referenceValues[$position][$this->returnFieldName ?: self::FIELD_EXTERNAL_KEY];
     }
     
     /**
      * @return array
      *
      * @throws ArgumentException
+     * @throws SystemException
+     * @throws ReferenceException
      */
     protected function getReferenceValues() : array
     {
