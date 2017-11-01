@@ -4,15 +4,15 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "314068170cd6f34e762a638c12aaf628",
+    "content-hash": "bd8129efcc4a9e581ecab1b79b09babe",
     "packages": [
         {
             "name": "adv/bitrix-tools",
-            "version": "v1.0.4",
+            "version": "v1.0.6",
             "source": {
                 "type": "git",
                 "url": "ssh://git@scm.adv.ru:7999/adv/bitrix-tools.git",
-                "reference": "c8de764440039ee6b1f1472ad6e795dae9f63398"
+                "reference": "34ef7938152efe5243236e3acebc610c0c21be56"
             },
             "require": {
                 "andreyryabin/sprint.migration": "^2.0",
@@ -33,7 +33,7 @@
                 }
             ],
             "description": "Bitrix tools",
-            "time": "2017-10-17T12:42:15+00:00"
+            "time": "2017-11-01T14:52:08+00:00"
         },
         {
             "name": "andreyryabin/sprint.migration",
@@ -1351,16 +1351,16 @@
         },
         {
             "name": "jms/serializer",
-            "version": "1.9.0",
+            "version": "1.9.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/schmittjoh/serializer.git",
-                "reference": "f4683f41ebf21e60667447bb49939bee35807c3c"
+                "reference": "e708d6ef549044974b60a57fdcec2fa165436d57"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/schmittjoh/serializer/zipball/f4683f41ebf21e60667447bb49939bee35807c3c",
-                "reference": "f4683f41ebf21e60667447bb49939bee35807c3c",
+                "url": "https://api.github.com/repos/schmittjoh/serializer/zipball/e708d6ef549044974b60a57fdcec2fa165436d57",
+                "reference": "e708d6ef549044974b60a57fdcec2fa165436d57",
                 "shasum": ""
             },
             "require": {
@@ -1430,7 +1430,7 @@
                 "serialization",
                 "xml"
             ],
-            "time": "2017-09-28T15:17:28+00:00"
+            "time": "2017-10-27T07:15:54+00:00"
         },
         {
             "name": "jms/serializer-bundle",

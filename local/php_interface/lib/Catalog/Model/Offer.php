@@ -6,11 +6,47 @@ use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Catalog\ReferenceUtils;
+use JMS\Serializer\Annotation\Groups;
+use JMS\Serializer\Annotation\Type;
 
 class Offer extends IblockElement
 {
     /**
+     * @var string
+     * @Groups({"elastic"})
+     */
+    protected $XML_ID = '';
+
+    /**
+     * @var bool
+     * @Type("bool")
+     * @Groups({"elastic"})
+     */
+    protected $active = true;
+
+    /**
      * @var int
+     * @Type("int")
+     * @Groups({"elastic"})
+     */
+    protected $ID = 0;
+
+    /**
+     * @var string
+     * @Groups({"elastic"})
+     */
+    protected $NAME = '';
+
+    /**
+     * @var int
+     * @Type("int")
+     * @Groups({"elastic"})
+     */
+    protected $SORT = 500;
+
+    /**
+     * @var int
+     * @Type("int")
      */
     protected $PROPERTY_CML2_LINK = 0;
 
@@ -21,6 +57,8 @@ class Offer extends IblockElement
 
     /**
      * @var string
+     * @Groups({"elastic"})
+     *
      */
     protected $PROPERTY_COLOUR = '';
 
@@ -31,6 +69,7 @@ class Offer extends IblockElement
 
     /**
      * @var string
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_VOLUME_REFERENCE = '';
 
@@ -41,11 +80,14 @@ class Offer extends IblockElement
 
     /**
      * @var float
+     * @Type("float")
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_VOLUME = 0.0;
 
     /**
      * @var string
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_CLOTHING_SIZE = '';
 
@@ -59,11 +101,13 @@ class Offer extends IblockElement
 
     /**
      * @var string[]
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_BARCODE = [];
 
     /**
      * @var string
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_KIND_OF_PACKING = '';
 
@@ -74,6 +118,7 @@ class Offer extends IblockElement
 
     /**
      * @var string
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_SEASON_YEAR = '';
 
@@ -84,11 +129,14 @@ class Offer extends IblockElement
 
     /**
      * @var int
+     * @Type("int")
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_MULTIPLICITY = 0;
 
     /**
      * @var string
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_REWARD_TYPE = '';
 

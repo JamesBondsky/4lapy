@@ -17,15 +17,21 @@ class ProductQuery extends IblockElementQuery
     public function getBaseSelect(): array
     {
         return [
+            'ACTIVE',
+            'DATE_ACTIVE_FROM',
+            'DATE_ACTIVE_TO',
             'IBLOCK_ID',
             'ID',
             'NAME',
             'XML_ID',
             'CODE',
+            'SORT',
             'DETAIL_PAGE_URL',
             'SECTION_PAGE_URL',
             'LIST_PAGE_URL',
             'CANONICAL_PAGE_URL',
+            'PREVIEW_TEXT',
+            'DETAIL_TEXT',
             'PROPERTY_BRAND',
             'PROPERTY_BRAND.NAME',
             'PROPERTY_FOR_WHO',

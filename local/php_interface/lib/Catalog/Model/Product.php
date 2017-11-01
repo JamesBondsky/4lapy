@@ -2,6 +2,7 @@
 
 namespace FourPaws\Catalog\Model;
 
+use DateTimeImmutable;
 use FourPaws\BitrixOrm\Collection\HlbReferenceItemCollection;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\BitrixOrm\Model\IblockElement;
@@ -10,11 +11,99 @@ use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Query\BrandQuery;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\ReferenceUtils;
+use JMS\Serializer\Annotation\Accessor;
+use JMS\Serializer\Annotation\Groups;
+use JMS\Serializer\Annotation\Type;
 
+/**
+ * Class Product
+ * @package FourPaws\Catalog\Model
+ *
+ */
 class Product extends IblockElement
 {
     /**
+     * @var bool
+     * @Groups({"elastic"})
+     */
+    protected $active = true;
+
+    /**
+     * @var DateTimeImmutable
+     * @Type("DateTimeImmutable")
+     * @Accessor(getter="getDateActiveFrom")
+     * @Groups({"elastic"})
+     */
+    protected $dateActiveFrom;
+
+    /**
+     * @var DateTimeImmutable
+     * @Type("DateTimeImmutable")
+     * @Accessor(getter="getDateActiveTo")
+     * @Groups({"elastic"})
+     */
+    protected $dateActiveTo;
+
+    /**
      * @var int
+     * @Type("int")
+     * @Groups({"elastic"})
+     */
+    protected $ID = 0;
+
+    /**
+     * @var string
+     * @Groups({"elastic"})
+     */
+    protected $NAME = '';
+
+    /**
+     * @var int
+     * @Type("int")
+     * @Groups({"elastic"})
+     */
+    protected $SORT = 500;
+
+    /**
+     * @var string
+     * @Groups({"elastic"})
+     */
+    protected $PREVIEW_TEXT = '';
+
+    /**
+     * @var string
+     * @Groups({"elastic"})
+     */
+    protected $PREVIEW_TEXT_TYPE = '';
+
+    /**
+     * @var string
+     * @Groups({"elastic"})
+     */
+    protected $DETAIL_TEXT = '';
+
+    /**
+     * @var string
+     * @Groups({"elastic"})
+     */
+    protected $DETAIL_TEXT_TYPE = '';
+
+    /**
+     * @var string
+     * @Groups({"elastic"})
+     */
+    protected $CANONICAL_PAGE_URL = '';
+
+    /**
+     * @var string
+     * @Groups({"elastic"})
+     */
+    protected $DETAIL_PAGE_URL = '';
+
+    /**
+     * @var int
+     * @Type("int")
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_BRAND = 0;
 
@@ -31,6 +120,7 @@ class Product extends IblockElement
 
     /**
      * @var string[]
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_FOR_WHO = [];
 
@@ -41,6 +131,7 @@ class Product extends IblockElement
 
     /**
      * @var string[]
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_PET_SIZE = [];
 
@@ -51,6 +142,7 @@ class Product extends IblockElement
 
     /**
      * @var string[]
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_PET_AGE = [];
 
@@ -61,6 +153,7 @@ class Product extends IblockElement
 
     /**
      * @var string[]
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_PET_AGE_ADDITIONAL = [];
 
@@ -71,6 +164,7 @@ class Product extends IblockElement
 
     /**
      * @var string
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_PET_BREED = '';
 
@@ -81,6 +175,7 @@ class Product extends IblockElement
 
     /**
      * @var string
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_PET_GENDER = '';
 
@@ -91,6 +186,7 @@ class Product extends IblockElement
 
     /**
      * @var string
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_CATEGORY = '';
 
@@ -101,6 +197,7 @@ class Product extends IblockElement
 
     /**
      * @var string
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_PURPOSE = '';
 
@@ -114,6 +211,7 @@ class Product extends IblockElement
 
     /**
      * @var string[]
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_LABEL = [];
 
@@ -124,6 +222,8 @@ class Product extends IblockElement
 
     /**
      * @var bool
+     * @Type("bool")
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_STM = false;
 
@@ -139,6 +239,7 @@ class Product extends IblockElement
 
     /**
      * @var string[]
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_TRADE_NAME = [];
 
@@ -149,6 +250,7 @@ class Product extends IblockElement
 
     /**
      * @var string[]
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_MAKER = [];
 
@@ -159,6 +261,7 @@ class Product extends IblockElement
 
     /**
      * @var string[]
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_MANAGER_OF_CATEGORY = [];
 
@@ -169,6 +272,7 @@ class Product extends IblockElement
 
     /**
      * @var string[]
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_MANUFACTURE_MATERIAL = [];
 
@@ -179,6 +283,7 @@ class Product extends IblockElement
 
     /**
      * @var string[]
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_SEASON_CLOTHES = [];
 
@@ -189,21 +294,27 @@ class Product extends IblockElement
 
     /**
      * @var string
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_WEIGHT_CAPACITY_PACKING = '';
 
     /**
      * @var bool
+     * @Type("bool")
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_LICENSE = false;
 
     /**
      * @var bool
+     * @Type("bool")
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_LOW_TEMPERATURE = false;
 
     /**
      * @var string
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_PET_TYPE = '';
 
@@ -214,6 +325,7 @@ class Product extends IblockElement
 
     /**
      * @var string
+     * @Groups({"elastic"})
      * TODO Есть риск, что это свойство окажется множественным
      */
     protected $PROPERTY_PHARMA_GROUP = '';
@@ -225,6 +337,7 @@ class Product extends IblockElement
 
     /**
      * @var string
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_FEED_SPECIFICATION = '';
 
@@ -235,11 +348,14 @@ class Product extends IblockElement
 
     /**
      * @var bool
+     * @Type("bool")
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_FOOD = false;
 
     /**
      * @var string
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_CONSISTENCE = '';
 
@@ -250,6 +366,7 @@ class Product extends IblockElement
 
     /**
      * @var string[]
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_FLAVOUR = [];
 
@@ -260,6 +377,7 @@ class Product extends IblockElement
 
     /**
      * @var string[]
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_FEATURES_OF_INGREDIENTS = [];
 
@@ -270,6 +388,7 @@ class Product extends IblockElement
 
     /**
      * @var string[]
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_PRODUCT_FORM = [];
 
@@ -280,6 +399,7 @@ class Product extends IblockElement
 
     /**
      * @var string[]
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_TYPE_OF_PARASITE = [];
 
@@ -290,31 +410,38 @@ class Product extends IblockElement
 
     /**
      * @var string
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_YML_NAME = '';
 
     /**
      * @var string
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_SALES_NOTES = '';
 
     /**
      * @var string
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_GROUP = '';
 
     /**
      * @var string
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_GROUP_NAME = '';
 
     /**
      * @var bool
+     * @Type("bool")
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_PRODUCED_BY_HOLDER = false;
 
     /**
      * @var array
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_SPECIFICATIONS = [];
 
@@ -434,7 +561,7 @@ class Product extends IblockElement
     /**
      * Возвращает категорию товара.
      *
-     * @attention Это всего лишь одноимённое свойство из SAP и никак не связано с категориями каталога на сайте.
+     * \attention Это всего лишь одноимённое свойство из SAP и никак не связано с категориями каталога на сайте.
      *
      * @return HlbReferenceItem
      */
@@ -792,7 +919,7 @@ class Product extends IblockElement
     /**
      * Возвращает id группы товаров.
      *
-     * @remark Скорее всего, ненужное на текущем сайте свойство товара.
+     * \remark Скорее всего, ненужное на текущем сайте свойство товара.
      *
      * @return string
      */
@@ -804,7 +931,7 @@ class Product extends IblockElement
     /**
      * Возвращает название группы товаров.
      *
-     * @remark Скорее всего, ненужное на текущем сайте свойство товара.
+     * \remark Скорее всего, ненужное на текущем сайте свойство товара.
      *
      * @return string
      */

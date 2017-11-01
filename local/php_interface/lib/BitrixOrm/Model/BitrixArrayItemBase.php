@@ -4,22 +4,41 @@ namespace FourPaws\BitrixOrm\Model;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
 
+/**
+ * Class BitrixArrayItemBase
+ *
+ * Из-за того, что JMS-serializer не видит трейты и может использоваться не везде, где будет использоваться BitrixOrm,
+ * а сам Битрикс числа и все остальные типы данных возвращает как строки, решено:
+ *
+ * 1 Снабдить модельные классы BitrixOrm явными аннотациями для строгого соблюдения типа.
+ *
+ * 2 В таких аннотациях использовать полное имя класса аннотации, чтобы не требовать обязательной установки пакета
+ * jms/serializer для работоспособности.
+ *
+ * 3 При использовании трейта дублировать свойства с аннотацией типа.
+ *
+ * @package FourPaws\BitrixOrm\Model
+ *
+ */
 abstract class BitrixArrayItemBase implements ModelInterface
 {
     const PATTERN_PROPERTY_VALUE = '~^(?>(PROPERTY_\w+)_VALUE)$~';
 
     /**
      * @var bool
+     * @JMS\Serializer\Annotation\Type("bool")
      */
     protected $active = true;
 
     /**
      * @var int
+     * @JMS\Serializer\Annotation\Type("int")
      */
     protected $ID = 0;
 
     /**
      * @var string
+     * @JMS\Serializer\Annotation\Type("string")
      */
     protected $XML_ID = '';
 

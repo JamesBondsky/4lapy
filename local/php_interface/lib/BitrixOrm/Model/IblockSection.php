@@ -10,6 +10,27 @@ abstract class IblockSection extends BitrixArrayItemBase
 
     /**
      * @var int
+     * @JMS\Serializer\Annotation\Type("int")
+     * @see BitrixArrayItemBase
+     */
+    protected $IBLOCK_ID = 0;
+
+    /**
+     * @var int
+     * @JMS\Serializer\Annotation\Type("int")
+     * @see BitrixArrayItemBase
+     */
+    protected $ID = 0;
+
+    /**
+     * @var int
+     * @JMS\Serializer\Annotation\Type("int")
+     * @see BitrixArrayItemBase
+     */
+    protected $SORT = 500;
+
+    /**
+     * @var int
      */
     protected $DEPTH_LEVEL = 0;
 
