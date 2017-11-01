@@ -7,13 +7,16 @@ use FourPaws\Migrator\Client\Catalog;
 use FourPaws\Migrator\Client\News;
 use FourPaws\Migrator\Client\SalePull;
 use FourPaws\Migrator\Client\Saveable;
-use FourPaws\Migrator\Client\ShopPull;
+use FourPaws\Migrator\Client\Store;
 use FourPaws\Migrator\Client\UserPull;
 use FourPaws\Migrator\Entity\Catalog as CatalogEntity;
 use FourPaws\Migrator\Entity\EntityInterface;
 use FourPaws\Migrator\Entity\News as NewsEntity;
+use FourPaws\Migrator\Entity\Store as StoreEntity;
+use FourPaws\Migrator\Exception\MigratorException;
 use FourPaws\Migrator\Provider\Catalog as CatalogProvider;
 use FourPaws\Migrator\Provider\News as NewsProvider;
+use FourPaws\Migrator\Provider\Store as StoreProvider;
 use Symfony\Component\Console\Exception\InvalidArgumentException;
 
 final class Factory
@@ -23,7 +26,7 @@ final class Factory
         'catalog',
         'news',
         'sale',
-        'shop',
+        'store',
         'user',
     ];
     
@@ -61,8 +64,8 @@ final class Factory
             case 'sale':
                 $client = new SalePull($options);
                 break;
-            case 'shop':
-                $client = new ShopPull($options);
+            case 'store':
+                $client = new Store(new StoreProvider(new StoreEntity(Store::ENTITY_NAME)), $options);
                 break;
             case 'user':
                 $client = new UserPull($options);
@@ -76,7 +79,8 @@ final class Factory
      * @param string $entityName
      *
      * @return \FourPaws\Migrator\Entity\EntityInterface
-     * @throws \Exception
+     *
+     * @throws \FourPaws\Migrator\Exception\MigratorException
      */
     public function getEntityByEntityName(string $entityName) : EntityInterface
     {
@@ -92,10 +96,7 @@ final class Factory
         $entity = '\FourPaws\Migrator\Entity\\' . $entityName;
         
         if (!(class_exists($client) && class_exists($entity))) {
-            /**
-             * @todo впилить нормальный exception
-             */
-            throw new \Exception("Classes to entity {$entityName} is not found.");
+            throw new MigratorException(sprintf('Classes to entity %s is not found.', $entityName));
         }
         
         /**
