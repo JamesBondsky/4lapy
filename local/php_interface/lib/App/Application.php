@@ -10,6 +10,7 @@ use FourPaws\App\MarkupBuild\JsonFileLoader;
 use FourPaws\App\MarkupBuild\MarkupBuild;
 use JMS\SerializerBundle\JMSSerializerBundle;
 use Nelmio\ApiDocBundle\NelmioApiDocBundle;
+use OldSound\RabbitMqBundle\OldSoundRabbitMqBundle;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Bundle\TwigBundle\TwigBundle;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
@@ -75,12 +76,13 @@ final class Application extends Kernel
     public function registerBundles() : array
     {
         $bundles = [
-            new FrameworkBundle(),
-            new TwigBundle(),
             new CircleRestClientBundle(),
-            new NelmioApiDocBundle(),
-            new JMSSerializerBundle(),
             new FOSRestBundle(),
+            new FrameworkBundle(),
+            new JMSSerializerBundle(),
+            new NelmioApiDocBundle(),
+            new OldSoundRabbitMqBundle(),
+            new TwigBundle(),
         ];
         
         return $bundles;
