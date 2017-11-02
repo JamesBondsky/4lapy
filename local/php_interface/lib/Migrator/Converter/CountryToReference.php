@@ -2,6 +2,9 @@
 
 namespace FourPaws\Migrator\Converter;
 
+use Bitrix\Main\ArgumentException;
+use FourPaws\Migrator\Converter\Exception\ReferenceException;
+
 /**
  * Class CountryToReference
  *
@@ -41,7 +44,7 @@ final class CountryToReference extends StringToReference
      * @param $name
      *
      * @return string
-     * @throws \Exception
+     * @throws ReferenceException
      */
     protected function addValue(string $code, string $name) : string
     {
@@ -53,10 +56,7 @@ final class CountryToReference extends StringToReference
         $result = $this->getDataClass()::add($fields);
         
         if (!$result->isSuccess()) {
-            /**
-             * @todo придумать сюда нормальный Exception
-             */
-            throw new \Exception('Reference value add error: ' . implode(', ', $result->getErrorMessages()));
+            throw new ReferenceException('Reference value add error: ' . implode(', ', $result->getErrorMessages()));
         }
         
         self::$referenceValues[$this->getReferenceCode()][] = $fields;
@@ -70,7 +70,8 @@ final class CountryToReference extends StringToReference
      *
      * @return mixed
      *
-     * @throws \Exception
+     * @throws ReferenceException
+     * @throws ArgumentException
      */
     protected function searchValue($code, $fieldToSearch = self::FIELD_EXTERNAL_KEY) : string
     {

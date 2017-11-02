@@ -3,8 +3,10 @@
 namespace FourPaws\Migrator\Entity;
 
 use Bitrix\Main\GroupTable;
+use Exception;
 use FourPaws\Migrator\Entity\Exceptions\AddException;
 use FourPaws\Migrator\Entity\Exceptions\UpdateException;
+use FourPaws\Migrator\Exception\MigratorException;
 
 class UserGroup extends AbstractEntity
 {
@@ -20,7 +22,8 @@ class UserGroup extends AbstractEntity
      * EXTERNAL -> INTERNAL
      *
      * @return array
-     * @throws \Exception
+     * @throws MigratorException
+     * @throws Exception
      */
     public function setDefaults() : array
     {
@@ -39,10 +42,10 @@ class UserGroup extends AbstractEntity
             $result = MapTable::addEntity($this->entity, $key, $item);
             
             if (!$result->isSuccess()) {
-                throw new \Exception("Error: \n" . implode("\n", $result->getErrorMessages()));
+                throw new MigratorException(sprintf('Error: %s', implode(', ', $result->getErrorMessages())));
             }
         }
-    
+        
         return $map;
     }
     
@@ -52,7 +55,7 @@ class UserGroup extends AbstractEntity
      *
      * @return \FourPaws\Migrator\Entity\UpdateResult
      *
-     * @throws \Exception
+     * @throws Exception
      */
     public function updateItem(string $primary, array $data) : UpdateResult
     {
@@ -72,7 +75,7 @@ class UserGroup extends AbstractEntity
      * @return \FourPaws\Migrator\Entity\AddResult
      *
      * @throws \FourPaws\Migrator\Entity\Exceptions\AddException
-     * @throws \Exception
+     * @throws Exception
      */
     public function addItem(string $primary, array $data) : AddResult
     {
@@ -93,7 +96,7 @@ class UserGroup extends AbstractEntity
      * @return \FourPaws\Migrator\Entity\UpdateResult
      *
      * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateException
-     * @throws \Exception
+     * @throws Exception
      */
     public function setFieldValue(string $field, string $primary, $value) : UpdateResult
     {
@@ -105,6 +108,6 @@ class UserGroup extends AbstractEntity
         
         $errors = $result->getErrorMessages();
         
-        throw new UpdateException("Update field with primary {$primary} error: {$errors}");
+        throw new UpdateException(sprintf('Update field with primary %s error: %s', $primary, $errors));
     }
 }

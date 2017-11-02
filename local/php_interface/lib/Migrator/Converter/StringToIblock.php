@@ -5,6 +5,7 @@ namespace FourPaws\Migrator\Converter;
 use Bitrix\Iblock\ElementTable;
 use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
+use FourPaws\Migrator\Converter\Exception\ReferenceException;
 
 /**
  * Class StringToIblock
@@ -103,7 +104,9 @@ class StringToIblock extends AbstractConverter
      * @param $fieldName
      *
      * @return string
-     * @throws \Exception
+     *
+     * @throws ReferenceException
+     * @throws \Bitrix\Main\ArgumentException
      */
     protected function addValue(string $value, string $fieldName) : string
     {
@@ -142,10 +145,7 @@ class StringToIblock extends AbstractConverter
         $result = $cIBlockElement->Add($fields);
         
         if (!$result) {
-            /**
-             * @todo придумать сюда нормальный Exception
-             */
-            throw new \Exception('Iblock element add error: ' . $cIBlockElement->LAST_ERROR);
+            throw new ReferenceException('Iblock element add error: ' . $cIBlockElement->LAST_ERROR);
         }
         
         $fields['ID'] = $result;

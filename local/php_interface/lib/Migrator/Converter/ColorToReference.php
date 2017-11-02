@@ -2,6 +2,8 @@
 
 namespace FourPaws\Migrator\Converter;
 
+use FourPaws\Migrator\Converter\Exception\ReferenceException;
+
 /**
  * Class ColorToReference
  *
@@ -70,10 +72,7 @@ final class ColorToReference extends StringToReference
         $result = $this->getDataClass()::add($fields);
         
         if (!$result->isSuccess()) {
-            /**
-             * @todo придумать сюда нормальный Exception
-             */
-            throw new \Exception('Reference value add error: ' . implode(', ', $result->getErrorMessages()));
+            throw new ReferenceException('Reference value add error: ' . implode(', ', $result->getErrorMessages()));
         }
         
         self::$referenceValues[$this->getReferenceCode()][] = $fields;

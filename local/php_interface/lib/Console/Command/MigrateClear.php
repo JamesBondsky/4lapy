@@ -54,7 +54,7 @@ class MigrateClear extends Command implements LoggerAwareInterface
     {
         $entity = $input->getArgument(self::ARG_ENTITY);
         
-        $available = 'user, news, articles, catalog, shops, sale';
+        $available = 'user, news, articles, catalog, store, sale';
         
         if (!strpos($available, $entity)) {
             $this->logger->error(sprintf('Entity name must be one of it: %s.', $available));
