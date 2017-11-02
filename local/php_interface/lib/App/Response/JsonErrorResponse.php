@@ -1,6 +1,6 @@
 <?php
 
-namespace FourPaws\App\Model;
+namespace FourPaws\App\Response;
 
 use FourPaws\App\Model\ResponseContent\JsonContent;
 use Symfony\Component\HttpFoundation\JsonResponse;

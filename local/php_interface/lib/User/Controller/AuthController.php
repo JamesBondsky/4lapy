@@ -3,9 +3,9 @@
 namespace FourPaws\User\Controller;
 
 use FourPaws\App\Application;
-use FourPaws\App\Model\JsonErrorResponse;
-use FourPaws\App\Model\JsonSuccessResponse;
 use FourPaws\App\Model\ResponseContent\JsonContent;
+use FourPaws\App\Response\JsonErrorResponse;
+use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\User\Exceptions\ChangePasswordException;
 use FourPaws\User\Exceptions\RegisterException;
 use FourPaws\User\Exceptions\TooManyUserFoundException;
