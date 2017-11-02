@@ -13,10 +13,10 @@ imports:
 old_sound_rabbit_mq:
     connections:
         default:
-            host:     'localhost'
-            port:     5672
-            user:     'guest'
-            password: 'guest'
+            host:     "%env(AMQP_HOST)%"
+            port:     "%env(AMQP_PORT)%"
+            user:     "%env(AMQP_USER)%"
+            password: "%env(AMQP_PASSWORD)%"
             vhost:    '/'
             lazy:     false
             connection_timeout: 3
