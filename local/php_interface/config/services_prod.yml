@@ -1,0 +1,10 @@
+---
+
+imports:
+  - { resource: services.yml }
+
+services:
+  application.exception_listener:
+    class: FourPaws\App\ExceptionListener
+    tags:
+      - { name: kernel.event_listener, event: kernel.exception, method: handle404Exception }
