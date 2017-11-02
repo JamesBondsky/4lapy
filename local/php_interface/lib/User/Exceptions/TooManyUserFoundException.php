@@ -2,7 +2,7 @@
 
 namespace FourPaws\User\Exceptions;
 
-class TooManyUserFoundException extends \Exception
+class TooManyUserFoundException extends UserException
 {
     
 }

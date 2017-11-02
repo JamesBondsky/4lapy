@@ -70,9 +70,14 @@ abstract class TemplateAbstract
         return $this->path === $page;
     }
     
-    public function isAjaxRequest()
+    /**
+     * @return bool
+     */
+    public function isAjaxRequest() : bool
     {
-    
+        $server = $this->getServer();
+        
+        return $server->get('HTTP_X_REQUESTED_WITH') === 'XMLHttpRequest' || $server->get('HTTP_BX_AJAX') === 'true';
     }
     
     /**

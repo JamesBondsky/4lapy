@@ -96,4 +96,8 @@ class ManzanaService implements LoggerAwareInterface
         
         return $result;
     }
+    
+    public function getUserByPhoneNumber() {
+    
+    }
 }
