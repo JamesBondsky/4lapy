@@ -11,14 +11,11 @@ services:
 
   catalog.service:
     class: FourPaws\Catalog\CatalogService
-    arguments: ['@bx.hlblock.filter', '@catalog.serializer']
+    arguments: ['@bx.hlblock.filter', '@jms_serializer']
 
-  catalog.serializer:
-    class: JMS\Serializer\Serializer
-    factory: ['FourPaws\Catalog\Factory', buildSerializer]
-
-  update_product_service:
-    class: FourPaws\Catalog\CatalogConsumer
+  catalog.sync_consumer:
+    class: FourPaws\Catalog\Consumer\CatalogSyncConsumer
+    arguments: ['@jms_serializer']
 
   user.service:
     class: FourPaws\User\UserService
@@ -37,3 +34,6 @@ services:
 
   product.autosort.service:
     class: FourPaws\ProductAutoSort\ProductAutoSortService
+
+  jms_identical_naming_strategy:
+    class: JMS\Serializer\Naming\IdenticalPropertyNamingStrategy
