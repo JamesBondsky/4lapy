@@ -62,9 +62,8 @@ class SoapClient
         }
         
         try {
-            $sessionId =
-                $this->client->call(self::METHOD_AUTHENTICATE,
-                                    ['request_options' => $arguments])->AuthenticateResult->SessionId;
+            $sessionId = $this->client->call(self::METHOD_AUTHENTICATE,
+                                             ['request_options' => $arguments])->AuthenticateResult->SessionId;
             
             try {
                 $this->healthService->setStatus($this->healthService::SERVICE_MANZANA,
@@ -106,9 +105,18 @@ class SoapClient
             ];
             
             $result = $this->client->call(self::METHOD_EXECUTE, ['request_options' => $arguments]);
+
             $result = simplexml_load_string($result->ExecuteResult->Value);
         } catch (\Exception $e) {
-            throw new ExecuteException(sprintf('Execute error: %s', $e->getMessage()), $e->getCode(), $e);
+            try {
+                $detail = $e->detail->details->description;
+            } catch (\Throwable $e) {
+                $detail = 'none';
+            }
+            
+            throw new ExecuteException(sprintf('Execute error: %s, detail: %s', $e->getMessage(), $detail),
+                                       $e->getCode(),
+                                       $e);
         }
         
         return $result;

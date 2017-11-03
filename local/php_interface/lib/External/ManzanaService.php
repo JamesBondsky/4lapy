@@ -7,6 +7,7 @@ use FourPaws\App\Application;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Client\SoapClient;
 use FourPaws\External\Manzana\Exception\ManzanaException;
+use FourPaws\External\Manzana\Model\ParameterBag;
 use GuzzleHttp\Client;
 use Meng\AsyncSoap\Guzzle\Factory;
 use Psr\Log\LoggerAwareInterface;
@@ -21,7 +22,29 @@ class ManzanaService implements LoggerAwareInterface
 {
     use LoggerAwareTrait;
     
-    const CONTRACT_CARD_VALIDATE = 'card_validate';
+    const CONTRACT_ADVANCED_BALANCE       = 'advanced_balance';
+    
+    const CONTRACT_CARD_ATTACH            = 'card_attach';
+    
+    const CONTRACT_CARD_VALIDATE          = 'card_validate';
+    
+    const CONTRACT_CARDS                  = 'cards';
+    
+    const CONTRACT_CHANGE_CARD            = 'change_card';
+    
+    const CONTRACT_CLIENT_SEARCH          = 'client_search';
+    
+    const CONTRACT_CONTACT                = 'contact';
+    
+    const CONTRACT_CONTACT_CHEQUES        = 'contact_cheques';
+    
+    const CONTRACT_CONTACT_REFERRAL_CARDS = 'contact_Referral_Cards';
+    
+    const CONTRACT_CONTACT_UPDATE         = 'contact_update';
+    
+    const CONTRACT_CHEQUE_ITEMS           = 'cheque_items';
+    
+    const CONTRACT_SEARCH_CARD_BY_NUMBER  = 'search_cards_by_number';
     
     /**
      * @var \FourPaws\External\Manzana\Client\SoapClient
@@ -60,10 +83,19 @@ class ManzanaService implements LoggerAwareInterface
      * - после верификации номера телефона
      * - заказ в один клик
      * - регистрация бонусной карты в ЛК магазина
+     *
+     * @throws ManzanaServiceException
      */
     public function sendPhone(string $phone)
     {
-    
+        $bag = new ParameterBag([
+                                    'maxresultsnumber' => '1',
+                                    'mobilephone'      => $phone,
+                                ]);
+        
+        $result = $this->execute(self::CONTRACT_SEARCH_CARD_BY_NUMBER, $bag->getParameters());
+        
+        return $result;
     }
     
     /**
@@ -201,14 +233,9 @@ class ManzanaService implements LoggerAwareInterface
      */
     public function validateCardByNumber(string $cardNumber) : bool
     {
-        $parameters = [
-            [
-                'Name'  => 'cardnumber',
-                'Value' => $cardNumber,
-            ],
-        ];
+        $bag = new ParameterBag(['cardnumber' => $cardNumber]);
         
-        $result = $this->execute(self::CONTRACT_CARD_VALIDATE, $parameters);
+        $result = $this->execute(self::CONTRACT_CARD_VALIDATE, $bag->getParameters());
         
         return $result->cardid->__toString() !== '';
     }
@@ -220,10 +247,18 @@ class ManzanaService implements LoggerAwareInterface
      *
      * -
      * - ЛК магазина, просмотр истории по карте
+     *
+     * @return
+     *
+     * @throws ManzanaServiceException
      */
     public function searchCardByNumber(string $cardNumber)
     {
-    
+        $bag = new ParameterBag(['cardnumber' => $cardNumber]);
+        
+        $result = $this->execute(self::CONTRACT_SEARCH_CARD_BY_NUMBER, $bag->getParameters());
+        
+        return $result;
     }
     
     /**
@@ -231,7 +266,8 @@ class ManzanaService implements LoggerAwareInterface
      *
      * @param $contactId
      */
-    public function getContactByContactId($contactId) {
+    public function getContactByContactId($contactId)
+    {
     
     }
     
@@ -247,7 +283,7 @@ class ManzanaService implements LoggerAwareInterface
         try {
             $result = $this->client->execute($contract, $parameters);
         } catch (ManzanaException $e) {
-            $this->logger->error(sprintf('Manzana execution error: error %s, code $s',
+            $this->logger->error(sprintf('Manzana execution error: error %s, code %s',
                                          $e->getMessage(),
                                          $e->getCode()));
             
@@ -257,7 +293,7 @@ class ManzanaService implements LoggerAwareInterface
         return $result;
     }
     
-    public function getUserByPhoneNumber()
+    protected function clientSearch(array $data)
     {
     
     }

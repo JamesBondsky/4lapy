@@ -8,8 +8,10 @@ parameters:
     token: c81789b482ecbe6976f496a9697d75de
 
   sms:
-    login: 4lapy
-    password: hoxiqaney
+    start_messaging: '09:00'
+    stop_messaging: '21:00'
+    login: "%env(SMS_LOGIN)%"
+    password: "%env(SMS_PASSWORD)%"
     originator: 4lapy
 
   expertsender:
