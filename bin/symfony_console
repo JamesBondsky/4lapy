@@ -14,10 +14,6 @@ require __DIR__ . '/../local/php_interface/vendor/autoload.php';
 
 $fourPawsApp = Application::getInstance();
 $input = new ArgvInput();
-$debug = ($_SERVER['APP_DEBUG'] ?? true) !== '0' && !$input->hasParameterOption(['--no-debug', '']);
-if ($debug && class_exists(Debug::class)) {
-    Debug::enable();
-}
 
 $application = new BundleConsoleApplication($fourPawsApp);
 $application->run($input);

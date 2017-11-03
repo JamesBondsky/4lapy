@@ -11,7 +11,14 @@ services:
 
   catalog.service:
     class: FourPaws\Catalog\CatalogService
-    arguments: ['@bx.hlblock.filter']
+    arguments: ['@bx.hlblock.filter', '@catalog.serializer']
+
+  catalog.serializer:
+    class: JMS\Serializer\Serializer
+    factory: ['FourPaws\Catalog\Factory', buildSerializer]
+
+  update_product_service:
+    class: FourPaws\Catalog\CatalogConsumer
 
   user.service:
     class: FourPaws\User\UserService
@@ -21,7 +28,6 @@ services:
 
   sms.service:
     class: FourPaws\External\SmsService
-
 
   manzana.service:
     class: FourPaws\External\ManzanaService
