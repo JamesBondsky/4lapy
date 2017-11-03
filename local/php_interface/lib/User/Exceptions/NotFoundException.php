@@ -2,7 +2,7 @@
 
 namespace FourPaws\User\Exceptions;
 
-class NotFoundException extends \Exception
+class NotFoundException extends UserException
 {
     
 }

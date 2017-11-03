@@ -2,7 +2,6 @@
 
 imports:
   - { resource: parameters.yml }
-  - { resource: services.yml }
 
 framework:
   esi: { enabled: true }
@@ -36,7 +35,6 @@ circle_rest_client:
       CURLOPT_FORBID_REUSE: true
       CURLOPT_FRESH_CONNECT: true
       CURLOPT_USERPWD: old4lapy:8J7tQHPpN9
-
 
 fos_rest:
   disable_csrf_role:    null

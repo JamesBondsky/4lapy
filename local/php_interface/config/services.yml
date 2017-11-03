@@ -26,7 +26,6 @@ services:
   manzana.service:
     class: FourPaws\External\ManzanaService
 
-
   expertender.service:
     class: FourPaws\External\ExpertsenderService
 

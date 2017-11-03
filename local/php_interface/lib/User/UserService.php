@@ -11,15 +11,10 @@ use FourPaws\BitrixOrm\Type\ResultContent;
 use FourPaws\User\Exceptions\NotFoundException;
 use FourPaws\User\Exceptions\TooManyUserFoundException;
 use FourPaws\User\Exceptions\WrongPasswordException;
+use FourPaws\User\Exceptions\WrongPhoneNumberException;
 
 class UserService
 {
-    const FIELD_LOGIN         = 'LOGIN';
-    
-    const FIELD_EMAIL         = 'EMAIL';
-    
-    const FIELD_PHONE         = 'PERSONAL_PHONE';
-    
     const SOCSERV_EXTERNAL_ID = 'socservices';
     
     /**
@@ -81,16 +76,16 @@ class UserService
         $userList = $this->getUserListByRawLogin($rawLogin);
         
         foreach ($userList as $user) {
-            if ($user[self::FIELD_LOGIN] === $rawLogin) {
-                $result[0] = $user[self::FIELD_LOGIN];
+            if ($user['LOGIN'] === $rawLogin) {
+                $result[0] = $user['LOGIN'];
             }
             
-            if ($user[self::FIELD_PHONE] === $rawLogin) {
-                $result[1] = $user[self::FIELD_LOGIN];
+            if ($user['PERSONAL_PHONE'] === $rawLogin) {
+                $result[1] = $user['LOGIN'];
             }
             
-            if ($user[self::FIELD_EMAIL] === $rawLogin) {
-                $result[2] = $user[self::FIELD_LOGIN];
+            if ($user['EMAIL'] === $rawLogin) {
+                $result[2] = $user['LOGIN'];
             }
         }
         
@@ -111,12 +106,12 @@ class UserService
     public function getUserListByRawLogin(string $rawLogin) : array
     {
         return UserTable::getList([
-                                      'filter' => $this->getLoginFilter($rawLogin),
+                                      'filter' => Utils::getLoginFilterByRaw($rawLogin),
                                       'select' => [
                                           'ID',
-                                          self::FIELD_LOGIN,
-                                          self::FIELD_PHONE,
-                                          self::FIELD_EMAIL,
+                                          'LOGIN',
+                                          'EMAIL',
+                                          'PERSONAL_PHONE',
                                       ],
                                   ])->fetchAll();
     }
@@ -232,7 +227,7 @@ class UserService
     public function checkLoginCount(string $login)
     {
         $count = UserTable::getList([
-                                        'filter'  => $this->getLoginFilter($login),
+                                        'filter'  => Utils::getLoginFilterByRaw($login),
                                         'select'  => ['CNT'],
                                         'runtime' => [
                                             new ExpressionField('CNT', 'COUNT(*)'),
@@ -291,66 +286,6 @@ class UserService
     }
     
     /**
-     * @param string $login
-     *
-     * @return array
-     */
-    public function getLoginFilter(string $login) : array
-    {
-        $filter = [
-            'ACTIVE' => 'Y',
-            [
-                'LOGIC' => 'OR',
-                [
-                    '=' . self::FIELD_EMAIL => $login,
-                ],
-                [
-                    '=' . self::FIELD_PHONE => $login,
-                ],
-                [
-                    '=' . self::FIELD_LOGIN => $login,
-                ],
-            ],
-        ];
-        
-        if ($email = $this->normalizeEmail($login)) {
-            $filter[0][] = ['=' . self::FIELD_EMAIL => $email];
-        }
-        
-        if ($phone = $this->normalizePhone($login)) {
-            $filter[0][] = ['=' . self::FIELD_PHONE => $phone];
-        }
-        
-        return $filter;
-    }
-    
-    /**
-     * @param string $phone
-     *
-     * @return string
-     */
-    public function normalizePhone(string $phone) : string
-    {
-        /**
-         * @todo implement this
-         */
-        return $phone;
-    }
-    
-    /**
-     * @param string $email
-     *
-     * @return string
-     */
-    public function normalizeEmail(string $email) : string
-    {
-        /**
-         * @todo implement this
-         */
-        return $email;
-    }
-    
-    /**
      * @param int    $userId
      * @param string $rawPhone
      *
@@ -358,7 +293,13 @@ class UserService
      */
     public function verifyPhone(int $userId, string $rawPhone) : UpdateResult
     {
-        $phone = $this->normalizePhone($rawPhone);
+        try {
+            $phone = Utils::normalizePhone($rawPhone);
+        } catch (WrongPhoneNumberException $e) {
+            /**
+             * @todo впилить проброс исключения
+             */
+        }
         
         /**
          * @todo implement $this
@@ -377,7 +318,7 @@ class UserService
      */
     public function verifyEmail(int $userId, string $rawEmail) : UpdateResult
     {
-        $email = $this->normalizeEmail($rawEmail);
+        $email = filter_var($rawEmail, FILTER_SANITIZE_EMAIL);
         
         /**
          * @todo implement $this

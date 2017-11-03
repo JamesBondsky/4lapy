@@ -23,8 +23,9 @@ LOCAL_ENV_FILE="${DOCUMENT_ROOT}/bitrix/php_interface/local.env.php"
 BITRIX_FOLDER_CHECK="${DOCUMENT_ROOT}/bitrix/index.php"
 UNVER_FOLDER_ARCHIVE="${SUBPROV_ROOT}/unversioned-files.tar.gz"
 SITE_URI="http://4lapy.vag"
-MIGRATION_RUNNER="${DOCUMENT_ROOT}/migrate.php"
-CONSOLE_RUNNER="${DOCUMENT_ROOT}/console.php"
+MIGRATION_RUNNER="${DOCUMENT_ROOT}/bin/migrate"
+CONSOLE_RUNNER="${DOCUMENT_ROOT}/bin/console"
+SYMFONY_CONSOLE_RUNNER="${DOCUMENT_ROOT}/bin/symfony_console"
 STATIC_ROOT="${DOCUMENT_ROOT}/static"
 BEMTO_SETTINGS="${STATIC_ROOT}/node_modules/bemto.pug/lib/settings.pug"
 
@@ -70,7 +71,7 @@ else
     fi
 fi
 
-# Grant execution of migrations
+# Grant execution of console
 if [[ -x "${CONSOLE_RUNNER}" ]] ; then
     printGreen "Console runner script execution permissions are OKay"
 else
@@ -78,6 +79,17 @@ else
     if [[ -f "${CONSOLE_RUNNER}" ]]; then
         printBlue "Mark ${CONSOLE_RUNNER} as executable "
         chmod a+x "${CONSOLE_RUNNER}"
+    fi
+fi
+
+# Grant execution of symfony console
+if [[ -x "${SYMFONY_CONSOLE_RUNNER}" ]] ; then
+    printGreen "Symfony console runner script execution permissions are OKay"
+else
+    printRed "Symfony console runner is not executable."
+    if [[ -f "${SYMFONY_CONSOLE_RUNNER}" ]]; then
+        printBlue "Mark ${SYMFONY_CONSOLE_RUNNER} as executable "
+        chmod a+x "${SYMFONY_CONSOLE_RUNNER}"
     fi
 fi
 

@@ -9,6 +9,7 @@ parameters:
 
 imports:
   - { resource: config.yml }
+  - { resource: services_prod.yml }
 
 old_sound_rabbit_mq:
     connections:

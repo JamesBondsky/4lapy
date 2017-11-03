@@ -4,27 +4,30 @@ namespace FourPaws\User\Controller;
 
 use FourPaws\App\Application;
 use FourPaws\App\Model\ResponseContent\JsonContent;
+use FourPaws\App\Response\JsonErrorResponse;
+use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\User\Exceptions\ChangePasswordException;
 use FourPaws\User\Exceptions\RegisterException;
 use FourPaws\User\Exceptions\TooManyUserFoundException;
+use FourPaws\User\UserService;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
 class AuthController extends Controller
 {
-    /**@var \FourPaws\User\UserService */
-    protected $_userService;
+    /**@var UserService */
+    protected $userService;
     
     public function __construct()
     {
-        $this->_userService = Application::getInstance()->getContainer()->get('user.service');
+        $this->userService = Application::getInstance()->getContainer()->get('user.service');
     }
     
     /**
-     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @param Request $request
      *
-     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @return JsonResponse
      */
     public function loginAction(Request $request) : JsonResponse
     {
@@ -32,74 +35,71 @@ class AuthController extends Controller
         $password = $request->request->get('password') ?? '';
         
         try {
-            $this->_userService->login($rawLogin, $password);
+            $this->userService->login($rawLogin, $password);
         } catch (TooManyUserFoundException $e) {
-            return JsonResponse::create(new JsonContent('Системная ошибка при попытке авторизации. Пожалуйста, обратитесь к администратору сайта.',
-                                                        false));
+            return JsonErrorResponse::create('Системная ошибка при попытке авторизации. Пожалуйста, обратитесь к администратору сайта.');
         } catch (\Exception $e) {
-            return JsonResponse::create(new JsonContent('Неверный логин или пароль.', false));
+            return JsonErrorResponse::create('Неверный логин или пароль.');
         }
         
-        return JsonResponse::create(new JsonContent('Вы успешно авторизованы.', true));
+        return JsonSuccessResponse::create('Вы успешно авторизованы.');
     }
     
     /**
-     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @param Request $request
      *
-     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @return JsonResponse
      */
     public function forgotPasswordAction(Request $request) : JsonResponse
     {
         $rawLogin = $request->request->get('login') ?? '';
         
         try {
-            $this->_userService->restorePassword($rawLogin);
+            $this->userService->restorePassword($rawLogin);
         } catch (TooManyUserFoundException $e) {
-            return JsonResponse::create(new JsonContent('Системная ошибка при попытке авторизации. Пожалуйста, обратитесь к администратору сайта.',
-                                                        false));
+            return JsonErrorResponse::create('Системная ошибка при попытке авторизации. Пожалуйста, обратитесь к администратору сайта.');
         } catch (\Exception $e) {
-            return JsonResponse::create(new JsonContent('Неверный логин или пароль.', false));
+            return JsonErrorResponse::create(new JsonContent('Неверный логин или пароль.'));
         }
         
-        return JsonResponse::create(new JsonContent('Инструкция по восстановлению пароля успешно отправлена.', true));
+        return JsonSuccessResponse::create('Инструкция по восстановлению пароля успешно отправлена.');
     }
     
     /**
-     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @param Request $request
      *
-     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @return JsonResponse
      */
     public function registerAction(Request $request) : JsonResponse
     {
         $data = [];
         
         try {
-            $this->_userService->register($data);
+            $this->userService->register($data);
         } catch (RegisterException $e) {
         
         } catch (\Exception $e) {
-            return JsonResponse::create(new JsonContent('Системная ошибка при попытке регистрации. Пожалуйста, обратитесь к администратору сайта.',
-                                                        false));
+            return JsonErrorResponse::create('Системная ошибка при попытке регистрации. Пожалуйста, обратитесь к администратору сайта.');
         }
         
-        return JsonResponse::create(new JsonContent('Вы успешно Зарегистрированы.', true));
+        return JsonSuccessResponse::create('Вы успешно Зарегистрированы.');
     }
     
     /**
-     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @param Request $request
      *
-     * @return \Symfony\Component\HttpFoundation\JsonResponse
+     * @return JsonResponse
      */
     public function changePasswordAction(Request $request) : JsonResponse
     {
         $password = $request->request->get('password') ?? '';
         $confirm  = $request->request->get('confirm') ?? '';
         
-        $isAuthorized = $this->_userService->isAuthorized();
+        $isAuthorized = $this->userService->isAuthorized();
         
         try {
             if ($isAuthorized) {
-                $user = $this->_userService->getCurrentUser();
+                $user = $this->userService->getCurrentUser();
                 
                 $login     = $user->getLogin();
                 $checkword = $user->getCheckword();
@@ -108,19 +108,18 @@ class AuthController extends Controller
                 $checkword = $request->request->get('checkword') ?? '';
             }
             
-            $result = $this->_userService->changePassword($login, $checkword, $password, $confirm);
+            $result = $this->userService->changePassword($login, $checkword, $password, $confirm);
             
             if (!$result->isSuccess()) {
                 throw new ChangePasswordException(implode($result->getErrorMessages()));
             }
         } catch (ChangePasswordException $e) {
-            return JsonResponse::create(new JsonContent($e->getMessage(), false));
+            return JsonErrorResponse::create($e->getMessage());
         } catch (\Exception $e) {
-            return JsonResponse::create(new JsonContent('Системная ошибка при попытке изменении пароля. Пожалуйста, обратитесь к администратору сайта.',
-                                                        false));
+            return JsonErrorResponse::create('Системная ошибка при попытке изменении пароля. Пожалуйста, обратитесь к администратору сайта.');
         }
         
-        return JsonResponse::create(new JsonContent('Пароль успешно изменен', true));
+        return JsonSuccessResponse::create('Пароль успешно изменен');
     }
     
 }

@@ -2,7 +2,7 @@
 
 namespace FourPaws\User\Exceptions;
 
-class ChangePasswordException extends UserException
+class UserException extends \Exception
 {
     
 }
