@@ -1,6 +1,6 @@
 <?php
 
-namespace FourPaws\Catalog;
+namespace FourPaws\Search;
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
@@ -8,9 +8,9 @@ use Bitrix\Main\EventManager;
 use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\ServiceHandlerInterface;
-use FourPaws\Catalog\Consumer\Message\CatalogSyncMsg;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\Search\Model\CatalogSyncMsg;
 use JMS\Serializer\Serializer;
 use OldSound\RabbitMqBundle\RabbitMq\Producer;
 use Psr\Log\LoggerAwareInterface;
@@ -55,9 +55,6 @@ class Event implements ServiceHandlerInterface, LoggerAwareInterface
             $eventManager->addEventHandler('iblock', $eventType, [$myself, 'updateInElastic']);
         }
         $eventManager->addEventHandler('iblock', 'OnAfterIBlockElementDelete', [$myself, 'deleteInElastic']);
-
-        //TODO Изменения в HL-инфоблоках, связанных с каталогом???
-
     }
 
     /**

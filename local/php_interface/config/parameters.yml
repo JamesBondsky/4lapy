@@ -16,3 +16,9 @@ parameters:
     url: https://api.esv2.com
     key: ivaacmVjzakOzRLeYjKy
 
+  # See \Elastica\Client::$_config for more options
+  elastica.client_options:
+    - timeout: 60
+    - log: false
+    - bigintConversion: false
+    - retryOnConflict: 0

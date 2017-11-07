@@ -1,6 +1,6 @@
 <?php
 
-namespace FourPaws\Catalog\Consumer\Message;
+namespace FourPaws\Search\Model;
 
 use JMS\Serializer\Annotation\Type;
 

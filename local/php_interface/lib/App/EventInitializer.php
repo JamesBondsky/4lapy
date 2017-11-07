@@ -3,8 +3,8 @@
 namespace FourPaws\App;
 
 use Bitrix\Main\EventManager;
-use FourPaws\Catalog\Event as CatalogEvent;
 use FourPaws\ProductAutoSort\Event as ProductAutoSortEvent;
+use FourPaws\Search\Event as CatalogEvent;
 use FourPaws\User\UserServiceHandlers;
 
 /**

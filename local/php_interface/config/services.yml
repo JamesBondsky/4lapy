@@ -13,9 +13,20 @@ services:
     class: FourPaws\Catalog\CatalogService
     arguments: ['@bx.hlblock.filter', '@jms_serializer']
 
-  catalog.sync_consumer:
-    class: FourPaws\Catalog\Consumer\CatalogSyncConsumer
+  search.factory:
+    class: FourPaws\Search\Factory
+
+  elastica.client:
+    class: Elastica\Client
+    factory: 'search.factory:createElasticaClient'
+    arguments: ['%elastica.client_options%']
+
+  search.sync_consumer:
+    class: FourPaws\Search\Consumer\CatalogSyncConsumer
     arguments: ['@jms_serializer']
+
+  search.service:
+    class: FourPaws\Search\SearchService
 
   user.service:
     class: FourPaws\User\UserService

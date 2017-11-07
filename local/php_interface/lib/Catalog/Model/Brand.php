@@ -2,7 +2,9 @@
 
 namespace FourPaws\Catalog\Model;
 
+use DateTimeImmutable;
 use FourPaws\BitrixOrm\Model\IblockElement;
+use JMS\Serializer\Annotation\Accessor;
 use JMS\Serializer\Annotation\Groups;
 use JMS\Serializer\Annotation\Type;
 
@@ -13,6 +15,22 @@ class Brand extends IblockElement
      * @Groups({"elastic"})
      */
     protected $active = true;
+
+    /**
+     * @var DateTimeImmutable
+     * @Type("DateTimeImmutable")
+     * @Accessor(getter="getDateActiveFrom")
+     * @Groups({"elastic"})
+     */
+    protected $dateActiveFrom;
+
+    /**
+     * @var DateTimeImmutable
+     * @Type("DateTimeImmutable")
+     * @Accessor(getter="getDateActiveTo")
+     * @Groups({"elastic"})
+     */
+    protected $dateActiveTo;
 
     /**
      * @var int

@@ -17,6 +17,9 @@ class BrandQuery extends IblockElementQuery
     public function getBaseSelect(): array
     {
         return [
+            'ACTIVE',
+            'DATE_ACTIVE_FROM',
+            'DATE_ACTIVE_TO',
             'IBLOCK_ID',
             'ID',
             'NAME',

@@ -115,6 +115,9 @@ class Product extends IblockElement
 
     /**
      * @var Brand
+     * @Type("FourPaws\Catalog\Model\Brand")
+     * @Accessor(getter="getBrand")
+     * @Groups({"elastic"})
      */
     protected $brand;
 
@@ -452,8 +455,19 @@ class Product extends IblockElement
 
     /**
      * @var OfferCollection
+     * @Type("FourPaws\Catalog\Collection\OfferCollection")
+     * @Accessor(getter="getOffers")
+     * @Groups({"elastic"})
      */
     protected $offers;
+
+    /**
+     * @var string[]
+     * @Type("array<string>")
+     * @Accessor(getter="getSuggest")
+     * @Groups({"elastic"})
+     */
+    protected $suggest;
 
     /**
      * @return OfferCollection
@@ -962,5 +976,49 @@ class Product extends IblockElement
         }
 
         return $this->specifications;
+    }
+
+    /**
+     * Возвращает информацию, на основе которой Elasticsearch будет строить механизм автодополнения
+     *
+     * @return string[]
+     */
+    protected function getSuggest()
+    {
+        if (is_null($this->suggest)) {
+            $fullName = $this->getFullName();
+            $this->suggest = explode(' ', $fullName);
+            $suggest[] = $fullName;
+
+            /** @var Offer $offer */
+            foreach ($this->getOffers() as $offer) {
+                $suggest[] = $offer->getSkuId();
+            }
+
+            $this->suggest = array_filter(
+                $this->suggest,
+                function ($token) {
+                    return trim($token) != '';
+                }
+            );
+
+            /**
+             * в suggest обязательно должен быть массив с числовыми индексами от 0 до count($suggest)-1 ,
+             * иначе json_encode в недрах пакета elastica превратит его в объект, а Elasticsearch упадёт с ошибкой
+             * `java.lang.IllegalArgumentException: unknown field name [0], must be one of [input, weight, contexts]`
+             */
+            $this->suggest = array_values($this->suggest);
+
+        }
+
+        return $this->suggest;
+    }
+
+    /**
+     * @return string
+     */
+    private function getFullName(): string
+    {
+        return trim($this->getBrandName() . ' ' . $this->getName());
     }
 }
