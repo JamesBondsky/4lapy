@@ -20,8 +20,6 @@ final class ColorToReference extends StringToReference
     
     public function convert(array $data) : array
     {
-        $this->setDataClass();
-        
         $fieldName = $this->getFieldName();
         
         if (!$data[$fieldName]) {
