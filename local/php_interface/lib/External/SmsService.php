@@ -61,11 +61,32 @@ class SmsService implements LoggerAwareInterface
     /**
      * @param string $text
      * @param string $number
+     * @param bool   $immediate
      */
-    public function sendSms(string $text, string $number)
+    public function sendSms(string $text, string $number, bool $immediate = false)
     {
         try {
-            $this->sendSmsImmediate($text, $number);
+            $sms = new IndividualSms([
+                                         [
+                                             $this->clearPhone($number),
+                                             $text,
+                                         ],
+                                     ]);
+            
+            if (!$immediate) {
+                $sms->updateParameters([
+                                           'start_date'          => $this->buildQueueTime($this->startMessaging),
+                                           'stop_date'           => $this->buildQueueTime($this->stopMessaging),
+                                           'isSendNextDay'       => '1',
+                                           'isAbonentLocaleTime' => '1',
+                                       ]);
+            }
+            
+            try {
+                $this->client->send($sms);
+            } catch (SmsTrafficApiException $e) {
+                throw new SmsSendErrorException($e->getMessage(), $e->getCode(), $e);
+            }
             
             try {
                 $this->healthService->setStatus($this->healthService::SERVICE_SMS,
@@ -91,24 +112,7 @@ class SmsService implements LoggerAwareInterface
      */
     public function sendSmsImmediate(string $text, string $number)
     {
-        $sms = new IndividualSms([
-                                     [
-                                         $this->clearPhone($number),
-                                         $text,
-                                     ],
-                                 ]);
-        $sms->updateParameters([
-                                   'start_date'          => $this->buildQueueTime($this->startMessaging),
-                                   'stop_date'           => $this->buildQueueTime($this->stopMessaging),
-                                   'isSendNextDay'       => '1',
-                                   'isAbonentLocaleTime' => '1',
-                               ]);
-        
-        try {
-            $this->client->send($sms);
-        } catch (SmsTrafficApiException $e) {
-            throw new SmsSendErrorException($e->getMessage(), $e->getCode(), $e);
-        }
+        $this->sendSms($text, $number, true);
     }
     
     /**
