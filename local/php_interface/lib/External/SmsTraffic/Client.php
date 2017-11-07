@@ -100,7 +100,8 @@ class Client
      * @param AbstractSms $sms
      *
      * @return array
-     * @throws SmsSendErrorException
+     *
+     * @throws ParsingException
      * @throws SendingException
      * @throws TransportException
      */
@@ -129,7 +130,7 @@ class Client
         } catch (Exception $e) {
             throw new TransportException($e->getMessage(), $e->getCode(), $e);
         }
-        
+
         $ret = $this->parseSendingResult($result);
         
         if (is_callable($this->postRequestCallback)) {
@@ -231,7 +232,7 @@ class Client
                 throw new ParsingException("Incorrect answer. Key '" . $field . "' does not exist.");
             }
         }
-        if ($ret['code'] !== 0) {
+        if ($ret['code'] !== '0') {
             $message = empty($ret['description']) ? 'Unknown Error' : $ret['description'];
             throw (new SendingException($message, (int)$ret['code']))->setAnswer($result);
         }

@@ -3,7 +3,6 @@
 namespace FourPaws\User\Controller;
 
 use FourPaws\App\Application;
-use FourPaws\App\Model\ResponseContent\JsonContent;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\User\Exceptions\ChangePasswordException;
@@ -59,7 +58,7 @@ class AuthController extends Controller
         } catch (TooManyUserFoundException $e) {
             return JsonErrorResponse::create('Системная ошибка при попытке авторизации. Пожалуйста, обратитесь к администратору сайта.');
         } catch (\Exception $e) {
-            return JsonErrorResponse::create(new JsonContent('Неверный логин или пароль.'));
+            return JsonErrorResponse::create('Неверный логин или пароль.');
         }
         
         return JsonSuccessResponse::create('Инструкция по восстановлению пароля успешно отправлена.');

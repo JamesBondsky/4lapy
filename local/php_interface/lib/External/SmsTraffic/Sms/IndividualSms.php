@@ -18,6 +18,7 @@ class IndividualSms extends AbstractSms
     {
         parent::__construct([self::PARAMETER_INDIVIDUAL_MESSAGES => '1']);
         $this->phoneMessages = $phoneMessages;
+        
     }
     
     /**
@@ -57,6 +58,7 @@ class IndividualSms extends AbstractSms
     protected function generatePhoneParameter() : string
     {
         $ret = [];
+
         foreach ($this->phoneMessages as $param) {
             $ret[] = implode(' ', $param);
         }
