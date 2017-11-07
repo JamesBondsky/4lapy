@@ -1,9 +1,9 @@
 <?php
 
-namespace FourPaws\Catalog\Consumer;
+namespace FourPaws\Search\Consumer;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use FourPaws\Catalog\Consumer\Message\CatalogSyncMsg;
+use FourPaws\Search\Model\CatalogSyncMsg;
 use JMS\Serializer\Serializer;
 use OldSound\RabbitMqBundle\RabbitMq\ConsumerInterface;
 use PhpAmqpLib\Message\AMQPMessage;

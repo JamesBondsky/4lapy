@@ -82,7 +82,7 @@ old_sound_rabbit_mq:
         connection: default
         exchange_options: {name: "catalog_sync", type: "direct"}
         queue_options: {name: "catalog_sync"}
-        callback: catalog.sync_consumer
+        callback: search.sync_consumer
 
 jms_serializer:
   property_naming:
