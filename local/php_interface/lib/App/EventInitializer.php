@@ -3,6 +3,8 @@
 namespace FourPaws\App;
 
 use Bitrix\Main\EventManager;
+use FourPaws\Catalog\Event as CatalogEvent;
+use FourPaws\ProductAutoSort\Event as ProductAutoSortEvent;
 use FourPaws\User\UserServiceHandlers;
 
 /**
@@ -16,8 +18,10 @@ final class EventInitializer
 {
     const SERVICE_HANDLER_CLASSES = [
         UserServiceHandlers::class,
+        ProductAutoSortEvent::class,
+        CatalogEvent::class,
     ];
-    
+
     /**
      * Исполняем хендлеры
      *
@@ -32,7 +36,7 @@ final class EventInitializer
             $class::initHandlers($eventManager);
         }
     }
-    
+
     /**
      * @return \Generator
      *
@@ -47,7 +51,7 @@ final class EventInitializer
             if (!in_array(ServiceHandlerInterface::class, $interfaces, true)) {
                 throw new \RuntimeException('Handler class must be an instance of ServiceHandlerInterface');
             }
-            
+
             yield $serviceHandlerClass;
         }
     }

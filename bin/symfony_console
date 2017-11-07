@@ -1,0 +1,19 @@
+#!/usr/bin/env php
+<?php
+
+use FourPaws\App\Application;
+use Symfony\Bundle\FrameworkBundle\Console\Application as BundleConsoleApplication;
+use Symfony\Component\Console\Input\ArgvInput;
+use Symfony\Component\Debug\Debug;
+
+umask(0000);
+set_time_limit(0);
+
+require __DIR__ . '/../bitrix/php_interface/local.env.php';
+require __DIR__ . '/../local/php_interface/vendor/autoload.php';
+
+$fourPawsApp = Application::getInstance();
+$input = new ArgvInput();
+
+$application = new BundleConsoleApplication($fourPawsApp);
+$application->run($input);

@@ -13,7 +13,7 @@ trait IblockModelTrait
     /**
      * @var int
      */
-    protected $SORT = 0;
+    protected $SORT = 500;
     
     /**
      * @var string

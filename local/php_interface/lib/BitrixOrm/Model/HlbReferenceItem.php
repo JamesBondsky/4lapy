@@ -2,23 +2,38 @@
 
 namespace FourPaws\BitrixOrm\Model;
 
-abstract class HlbReferenceItem extends HLBItemBase
+class HlbReferenceItem extends HlbItemBase
 {
     /**
      * @var string
      */
-    protected $LINK = '';
+    protected $UF_NAME = '';
+
+    /**
+     * @var string
+     */
+    protected $UF_LINK = '';
     
     /**
      * @var string
      */
-    protected $DESCRIPTION = '';
+    protected $UF_DESCRIPTION = '';
     
     /**
      * @var string
      */
-    protected $FULL_DESCRIPTION = '';
-    
+    protected $UF_FULL_DESCRIPTION = '';
+
+    /**
+     * @var int
+     */
+    protected $UF_SORT = 500;
+
+    /**
+     * @var string
+     */
+    protected $UF_XML_ID = '';
+
     //TODO UF_DEF типа "Да/Нет"
     //TODO UF_FILE типа "Файл"
     
@@ -27,7 +42,7 @@ abstract class HlbReferenceItem extends HLBItemBase
      */
     public function getLink() : string
     {
-        return $this->LINK;
+        return $this->UF_LINK;
     }
     
     /**
@@ -37,7 +52,7 @@ abstract class HlbReferenceItem extends HLBItemBase
      */
     public function withLink(string $link)
     {
-        $this->LINK = $link;
+        $this->UF_LINK = $link;
         
         return $this;
     }
@@ -47,7 +62,7 @@ abstract class HlbReferenceItem extends HLBItemBase
      */
     public function getDescription() : string
     {
-        return $this->DESCRIPTION;
+        return $this->UF_DESCRIPTION;
     }
     
     /**
@@ -57,7 +72,7 @@ abstract class HlbReferenceItem extends HLBItemBase
      */
     public function withDescription(string $description)
     {
-        $this->DESCRIPTION = $description;
+        $this->UF_DESCRIPTION = $description;
         
         return $this;
     }
@@ -67,7 +82,7 @@ abstract class HlbReferenceItem extends HLBItemBase
      */
     public function getFullDescription() : string
     {
-        return $this->FULL_DESCRIPTION;
+        return $this->UF_FULL_DESCRIPTION;
     }
     
     /**
@@ -77,9 +92,71 @@ abstract class HlbReferenceItem extends HLBItemBase
      */
     public function withFullDescription(string $fullDescription)
     {
-        $this->FULL_DESCRIPTION = $fullDescription;
+        $this->UF_FULL_DESCRIPTION = $fullDescription;
         
         return $this;
     }
-    
+
+    /**
+     * @return string
+     */
+    public function getName(): string
+    {
+        return $this->UF_NAME;
+    }
+
+    /**
+     * @param string $name
+     *
+     * @return $this
+     */
+    public function withName(string $name)
+    {
+        $this->UF_NAME = $name;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getSort(): int
+    {
+        return (int)$this->UF_SORT;
+    }
+
+    /**
+     * @param int $sort
+     *
+     * @return $this
+     */
+    public function withSort(int $sort)
+    {
+        $this->UF_SORT = $sort;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getXmlId(): string
+    {
+        return $this->UF_XML_ID;
+    }
+
+    /**
+     * @param string $xmlId
+     *
+     * @return $this
+     */
+    public function withXmlId(string $xmlId)
+    {
+        $this->UF_XML_ID = $xmlId;
+
+        return $this;
+    }
+
+
+
 }

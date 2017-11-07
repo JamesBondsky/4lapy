@@ -13,6 +13,7 @@ use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use JMS\Serializer\Serializer;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\Request;
 use WebArch\BitrixCache\BitrixCache;
@@ -29,9 +30,15 @@ class CatalogService
      */
     protected $filterHelper;
 
-    public function __construct($filterTable)
+    /**
+     * @var Serializer
+     */
+    private $serializer;
+
+    public function __construct($filterTable, Serializer $serializer)
     {
         $this->filterTable = $filterTable;
+        $this->serializer = $serializer;
     }
 
     /**
@@ -203,4 +210,13 @@ class CatalogService
          */
 
     }
+
+    /**
+     * @return Serializer
+     */
+    public function getSerializer(): Serializer
+    {
+        return $this->serializer;
+    }
+
 }
