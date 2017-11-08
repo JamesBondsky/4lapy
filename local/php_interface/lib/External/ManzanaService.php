@@ -72,7 +72,9 @@ class ManzanaService implements LoggerAwareInterface
         
         $this->healthService = $container->get('health.service');
         
-        $this->client = new SoapClient((new Factory())->create(new Client(), $wdsl), $this->healthService);
+        $clientOptions = ['curl' => [CURLOPT_CONNECTTIMEOUT => 3]];
+        
+        $this->client =new SoapClient((new Factory())->create(new Client($clientOptions), $wdsl), $this->healthService);
         
         $this->setLogger(LoggerFactory::create('manzana'));
     }
