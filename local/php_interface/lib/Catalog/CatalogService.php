@@ -30,11 +30,6 @@ class CatalogService
      */
     protected $filterHelper;
 
-    /**
-     * @var Serializer
-     */
-    private $serializer;
-
     public function __construct($filterTable, Serializer $serializer)
     {
         $this->filterTable = $filterTable;
@@ -209,14 +204,6 @@ class CatalogService
          *
          */
 
-    }
-
-    /**
-     * @return Serializer
-     */
-    public function getSerializer(): Serializer
-    {
-        return $this->serializer;
     }
 
 }

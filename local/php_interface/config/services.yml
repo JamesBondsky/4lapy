@@ -15,6 +15,7 @@ services:
 
   search.factory:
     class: FourPaws\Search\Factory
+    arguments: ['@jms_serializer']
 
   elastica.client:
     class: Elastica\Client
@@ -23,10 +24,15 @@ services:
 
   search.sync_consumer:
     class: FourPaws\Search\Consumer\CatalogSyncConsumer
-    arguments: ['@jms_serializer']
+    arguments: ['@jms_serializer', '@search.service']
 
   search.service:
     class: FourPaws\Search\SearchService
+    arguments:
+      - '@elastica.client'
+      - '@jms_serializer'
+      - '@search.factory'
+      - '@old_sound_rabbit_mq.catalog_sync_producer'
 
   user.service:
     class: FourPaws\User\UserService
@@ -46,5 +52,9 @@ services:
   product.autosort.service:
     class: FourPaws\ProductAutoSort\ProductAutoSortService
 
-  jms_identical_naming_strategy:
+  jms_identical_property_naming_strategy:
     class: JMS\Serializer\Naming\IdenticalPropertyNamingStrategy
+
+  jms_serialized_name_annotation_strategy:
+    class: JMS\Serializer\Naming\SerializedNameAnnotationStrategy
+    arguments: ['@jms_identical_property_naming_strategy']

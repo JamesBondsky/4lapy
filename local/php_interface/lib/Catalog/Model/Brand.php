@@ -12,6 +12,7 @@ class Brand extends IblockElement
 {
     /**
      * @var bool
+     * @Type("bool")
      * @Groups({"elastic"})
      */
     protected $active = true;
@@ -41,6 +42,7 @@ class Brand extends IblockElement
 
     /**
      * @var string
+     * @Type("string")
      * @Groups({"elastic"})
      */
     protected $NAME = '';
@@ -54,36 +56,42 @@ class Brand extends IblockElement
 
     /**
      * @var string
+     * @Type("string")
      * @Groups({"elastic"})
      */
     protected $PREVIEW_TEXT = '';
 
     /**
      * @var string
+     * @Type("string")
      * @Groups({"elastic"})
      */
     protected $PREVIEW_TEXT_TYPE = '';
 
     /**
      * @var string
+     * @Type("string")
      * @Groups({"elastic"})
      */
     protected $DETAIL_TEXT = '';
 
     /**
      * @var string
+     * @Type("string")
      * @Groups({"elastic"})
      */
     protected $DETAIL_TEXT_TYPE = '';
 
     /**
      * @var string
+     * @Type("string")
      * @Groups({"elastic"})
      */
     protected $CANONICAL_PAGE_URL = '';
 
     /**
      * @var string
+     * @Type("string")
      * @Groups({"elastic"})
      */
     protected $DETAIL_PAGE_URL = '';
