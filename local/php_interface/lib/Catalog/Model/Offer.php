@@ -7,6 +7,7 @@ use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Catalog\ReferenceUtils;
+use JMS\Serializer\Annotation as Serializer;
 use JMS\Serializer\Annotation\Accessor;
 use JMS\Serializer\Annotation\Groups;
 use JMS\Serializer\Annotation\Type;
@@ -15,6 +16,7 @@ class Offer extends IblockElement
 {
     /**
      * @var string
+     * @Type("string")
      * @Groups({"elastic"})
      */
     protected $XML_ID = '';
@@ -51,6 +53,7 @@ class Offer extends IblockElement
 
     /**
      * @var string
+     * @Type("string")
      * @Groups({"elastic"})
      */
     protected $NAME = '';
@@ -65,18 +68,20 @@ class Offer extends IblockElement
     /**
      * @var int
      * @Type("int")
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_CML2_LINK = 0;
 
     /**
      * @var Product
+     * @Type("FourPaws\Catalog\Model\Product")
      */
     protected $product;
 
     /**
      * @var string
+     * @Type("string")
      * @Groups({"elastic"})
-     *
      */
     protected $PROPERTY_COLOUR = '';
 
@@ -87,6 +92,7 @@ class Offer extends IblockElement
 
     /**
      * @var string
+     * @Type("string")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_VOLUME_REFERENCE = '';
@@ -105,6 +111,7 @@ class Offer extends IblockElement
 
     /**
      * @var string
+     * @Type("string")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_CLOTHING_SIZE = '';
@@ -119,12 +126,14 @@ class Offer extends IblockElement
 
     /**
      * @var string[]
+     * @Type("array")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_BARCODE = [];
 
     /**
      * @var string
+     * @Type("string")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_KIND_OF_PACKING = '';
@@ -136,6 +145,7 @@ class Offer extends IblockElement
 
     /**
      * @var string
+     * @Type("string")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_SEASON_YEAR = '';
@@ -154,6 +164,7 @@ class Offer extends IblockElement
 
     /**
      * @var string
+     * @Type("string")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_REWARD_TYPE = '';
@@ -189,7 +200,9 @@ class Offer extends IblockElement
     public function getProduct()
     {
         if (is_null($this->product)) {
-            (new ProductQuery())->withFilter(['=ID' => (int)$this->PROPERTY_CML2_LINK])->exec()->current();
+            $this->product = (new ProductQuery())->withFilter(['=ID' => (int)$this->PROPERTY_CML2_LINK])
+                                                 ->exec()
+                                                 ->current();
 
             if (!($this->product instanceof Product)) {
                 $this->product = new Product();
