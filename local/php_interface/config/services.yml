@@ -39,6 +39,7 @@ services:
 
   manzana.service:
     class: FourPaws\External\ManzanaService
+    arguments: ['@jms_serializer', '@health.service']
 
   expertender.service:
     class: FourPaws\External\ExpertsenderService
@@ -46,5 +47,9 @@ services:
   product.autosort.service:
     class: FourPaws\ProductAutoSort\ProductAutoSortService
 
-  jms_identical_naming_strategy:
+  jms_identical_property_naming_strategy:
     class: JMS\Serializer\Naming\IdenticalPropertyNamingStrategy
+
+  jms_serialized_name_annotation_strategy:
+    class: JMS\Serializer\Naming\SerializedNameAnnotationStrategy
+    arguments: ['@jms_identical_property_naming_strategy']

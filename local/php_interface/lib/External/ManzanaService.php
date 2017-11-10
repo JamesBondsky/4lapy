@@ -4,14 +4,27 @@ namespace FourPaws\External;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Client\SoapClient;
+use FourPaws\External\Manzana\Exception\CardNotFoundException;
+use FourPaws\External\Manzana\Exception\ContactNotFoundException;
 use FourPaws\External\Manzana\Exception\ManzanaException;
+use FourPaws\External\Manzana\Model\Card;
+use FourPaws\External\Manzana\Model\Cards;
+use FourPaws\External\Manzana\Model\Contact;
+use FourPaws\External\Manzana\Model\Contacts;
 use FourPaws\External\Manzana\Model\ParameterBag;
+use FourPaws\Health\HealthService;
 use GuzzleHttp\Client;
+use JMS\Serializer\Serializer;
 use Meng\AsyncSoap\Guzzle\Factory;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
+use RuntimeException;
+use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /**
  * Class ManzanaService
@@ -47,33 +60,40 @@ class ManzanaService implements LoggerAwareInterface
     const CONTRACT_SEARCH_CARD_BY_NUMBER  = 'search_cards_by_number';
     
     /**
-     * @var \FourPaws\External\Manzana\Client\SoapClient
+     * @var SoapClient
      */
     protected $client;
     
     /**
-     * @var \FourPaws\Health\HealthService
+     * @var HealthService
      */
     protected $healthService;
+    
+    protected $serializer;
     
     /**
      * ManzanaService constructor.
      *
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws \Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
-     * @throws \RuntimeException
+     * @param Serializer    $serializer
+     * @param HealthService $healthService
+     *
+     * @throws ApplicationCreateException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
      */
-    public function __construct()
+    public function __construct(Serializer $serializer, HealthService $healthService)
     {
         $container = Application::getInstance()->getContainer();
-        $wdsl      = $container->getParameter('manzana')['wdsl'];
         
-        $this->healthService = $container->get('health.service');
+        $this->serializer    = $serializer;
+        $this->healthService = $healthService;
         
-        $this->client = new SoapClient((new Factory())->create(new Client(), $wdsl), $this->healthService);
-        
+        $wdsl          = $container->getParameter('manzana')['pos_wdsl'];
+        $clientOptions = ['curl' => [CURLOPT_CONNECTTIMEOUT => 3]];
+        $client        = (new Factory())->create(new Client($clientOptions), $wdsl);
+        $this->client  = new SoapClient($client, $this->healthService);
         $this->setLogger(LoggerFactory::create('manzana'));
     }
     
@@ -84,9 +104,13 @@ class ManzanaService implements LoggerAwareInterface
      * - заказ в один клик
      * - регистрация бонусной карты в ЛК магазина
      *
+     * @param string $phone
+     *
+     * @return string
+     *
      * @throws ManzanaServiceException
      */
-    public function sendPhone(string $phone)
+    public function sendPhone(string $phone) : string
     {
         $bag = new ParameterBag([
                                     'maxresultsnumber' => '1',
@@ -248,37 +272,69 @@ class ManzanaService implements LoggerAwareInterface
      * -
      * - ЛК магазина, просмотр истории по карте
      *
-     * @return
+     * @return Card
      *
      * @throws ManzanaServiceException
+     * @throws CardNotFoundException
      */
-    public function searchCardByNumber(string $cardNumber)
+    public function searchCardByNumber(string $cardNumber) : Card
     {
-        $bag = new ParameterBag(['cardnumber' => $cardNumber]);
+        $card = null;
+        $bag  = new ParameterBag(['cardnumber' => $cardNumber]);
         
         $result = $this->execute(self::CONTRACT_SEARCH_CARD_BY_NUMBER, $bag->getParameters());
         
-        return $result;
+        try {
+            $card = $this->serializer->deserialize($result, Cards::class, 'xml')->cards[0];
+        } catch (\Exception $e) {
+            throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
+        }
+        
+        if (!($card instanceof Card)) {
+            throw new CardNotFoundException(sprintf('Карта %s не найдена', $cardNumber));
+        }
+        
+        return $card;
     }
     
     /**
      * Получение контакта по Contact_ID
      *
      * @param $contactId
+     *
+     * @return Contact
+     *
+     * @throws ManzanaServiceException
+     * @throws ContactNotFoundException
      */
-    public function getContactByContactId($contactId)
+    public function getContactByContactId($contactId) : Contact
     {
-    
+        $contact = null;
+        $bag     = new ParameterBag(['contact_id' => $contactId]);
+        
+        $result = $this->execute(self::CONTRACT_CONTACT, $bag->getParameters());
+        
+        try {
+            $contact = $this->serializer->deserialize($result, Contacts::class, 'xml')->contacts[0];
+        } catch (\Exception $e) {
+            throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
+        }
+        
+        if (!($contact instanceof Contact)) {
+            throw new ContactNotFoundException(sprintf('Контакт %s не найден', $contactId));
+        }
+        
+        return $contact;
     }
     
     /**
      * @param string $contract
      * @param array  $parameters
      *
-     * @return \SimpleXMLElement
+     * @return string
      * @throws ManzanaServiceException
      */
-    protected function execute(string $contract, array $parameters) : \SimpleXMLElement
+    protected function execute(string $contract, array $parameters) : string
     {
         try {
             $result = $this->client->execute($contract, $parameters);
