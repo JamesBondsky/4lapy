@@ -9,9 +9,18 @@ use FourPaws\BitrixOrm\Collection\HlbReferenceItemCollection;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\BitrixOrm\Query\HlbReferenceQuery;
 
+/**
+ * @todo Move into a BitrixOrm
+ *
+ * Class ReferenceUtils
+ *
+ * @package FourPaws\Catalog
+ */
 abstract class ReferenceUtils
 {
     /**
+     * @todo Change signature from service name to datamanager
+     *
      * Возвращает элемент справочника для любого HL-блока. Если элемент не найден или передан пустой код, возвращается
      * пустой элемент справочника, чтобы не повреждать работе каталога.
      *
@@ -39,8 +48,11 @@ abstract class ReferenceUtils
 
         return new HlbReferenceItem();
     }
-
+    
+    
     /**
+     * @todo Change signature from service name to datamanager
+     *
      * @param string $hlBlockServiceName Название сервиса для этого HL-блока
      * @param array $xmlIdList
      *

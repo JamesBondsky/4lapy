@@ -47,7 +47,7 @@ class SoapClient
      *
      * @return string
      *
-     * @throws \FourPaws\External\Manzana\Exception\AuthenticationException
+     * @throws AuthenticationException
      */
     protected function authenticate(string $login = '') : string
     {
@@ -88,12 +88,12 @@ class SoapClient
      * @param array  $parameters
      * @param string $login
      *
-     * @return \SimpleXMLElement
+     * @return string
      *
-     * @throws \FourPaws\External\Manzana\Exception\AuthenticationException
-     * @throws \FourPaws\External\Manzana\Exception\ExecuteException
+     * @throws AuthenticationException
+     * @throws ExecuteException
      */
-    public function execute(string $contract, array $parameters = [], string $login = '') : \SimpleXMLElement
+    public function execute(string $contract, array $parameters = [], string $login = '') : string
     {
         $sessionId = $this->authenticate($login);
         
@@ -106,7 +106,7 @@ class SoapClient
             
             $result = $this->client->call(self::METHOD_EXECUTE, ['request_options' => $arguments]);
 
-            $result = simplexml_load_string($result->ExecuteResult->Value);
+            $result = $result->ExecuteResult->Value;
         } catch (\Exception $e) {
             try {
                 $detail = $e->detail->details->description;

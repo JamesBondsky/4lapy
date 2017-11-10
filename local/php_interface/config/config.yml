@@ -86,5 +86,5 @@ old_sound_rabbit_mq:
 
 jms_serializer:
   property_naming:
-    id: jms_identical_naming_strategy
+    id: jms_serialized_name_annotation_strategy
     enable_cache: true
