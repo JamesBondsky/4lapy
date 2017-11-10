@@ -5,4 +5,4 @@ use Symfony\Component\HttpFoundation\Request;
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include.php';
 
-Application::HandleRequest(Request::createFromGlobals());
+Application::handleRequest(Request::createFromGlobals());
