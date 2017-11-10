@@ -4,7 +4,6 @@ namespace FourPaws\App;
 
 use Circle\RestClientBundle\CircleRestClientBundle;
 use FOS\RestBundle\FOSRestBundle;
-use FourPaws\MobileApiBundle\FourPawsMobileApiBundle;
 use JMS\SerializerBundle\JMSSerializerBundle;
 use Nelmio\ApiDocBundle\NelmioApiDocBundle;
 use OldSound\RabbitMqBundle\OldSoundRabbitMqBundle;
