@@ -68,3 +68,81 @@ if ($arResult['MODE'] === FourPawsUserComponent::MODE_FORM) { ?>
         <a href="?logout=yes">Выйти</a>
     </div>
 <?php }
+
+
+$c = <<<c
+<div class="b-header-info__item b-header-info__item--person">
+                                <a class="b-header-info__link js-open-popover" href="javascript:void(0);" title="Войти"><span
+                                            class="b-icon"><svg class="b-icon__svg" viewBox="0 0 16 16 " width="16px" height="16px"><use
+                                                    class="b-icon__use"
+                                                    xlink:href="icons.svg#icon-person"></use></svg></span><span class="b-header-info__inner">Войти</span><span
+                                            class="b-icon b-icon--header b-icon--left-3"><svg class="b-icon__svg"
+                                                                                              viewBox="0 0 10 12 "
+                                                                                              width="10px"
+                                                                                              height="12px"><use class="b-icon__use"
+                                                                                                                 xlink:href="icons.svg#icon-arrow-down"></use></svg></span></a>
+                                <div
+                                        class="b-popover b-popover--person js-popover">
+                                    <div class="b-person">
+                                        <ul class="b-link-block">
+                                            <li class="b-link-block__item"><a class="b-link-block__link"
+                                                                              href="javascript:void(0);"
+                                                                              title="Мои заказы"><span class="b-icon"><svg class="b-icon__svg"
+                                                                                                                           viewBox="0 0 16 16 "
+                                                                                                                           width="16px"
+                                                                                                                           height="16px"><use
+                                                                    class="b-icon__use"
+                                                                    xlink:href="icons.svg#icon-order"></use></svg></span>Мои заказы</a>
+                                            </li>
+                                            <li class="b-link-block__item"><a class="b-link-block__link"
+                                                                              href="javascript:void(0);"
+                                                                              title="Адреса доставки"><span class="b-icon"><svg
+                                                                class="b-icon__svg"
+                                                                viewBox="0 0 16 16 "
+                                                                width="16px"
+                                                                height="16px"><use class="b-icon__use"
+                                                                                   xlink:href="icons.svg#icon-delivery-header"></use></svg></span>Адреса
+                                                                                                                                                  доставки</a>
+                                            </li>
+                                            <li class="b-link-block__item"><a class="b-link-block__link"
+                                                                              href="javascript:void(0);"
+                                                                              title="Мои питомцы"><span class="b-icon"><svg
+                                                                class="b-icon__svg"
+                                                                viewBox="0 0 16 16 "
+                                                                width="16px"
+                                                                height="16px"><use class="b-icon__use"
+                                                                                   xlink:href="icons.svg#icon-pet"></use></svg></span>Мои
+                                                                                                                                      питомцы</a>
+                                            </li>
+                                            <li class="b-link-block__item"><a class="b-link-block__link"
+                                                                              href="javascript:void(0);"
+                                                                              title="Бонусы"><span class="b-icon"><svg class="b-icon__svg"
+                                                                                                                       viewBox="0 0 16 16 "
+                                                                                                                       width="16px"
+                                                                                                                       height="16px"><use
+                                                                    class="b-icon__use"
+                                                                    xlink:href="icons.svg#icon-bonus"></use></svg></span>Бонусы</a>
+                                            </li>
+                                            <li class="b-link-block__item"><a class="b-link-block__link"
+                                                                              href="javascript:void(0);"
+                                                                              title="Профиль"><span class="b-icon"><svg class="b-icon__svg"
+                                                                                                                        viewBox="0 0 16 16 "
+                                                                                                                        width="16px"
+                                                                                                                        height="16px"><use
+                                                                    class="b-icon__use"
+                                                                    xlink:href="icons.svg#icon-profile"></use></svg></span>Профиль</a>
+                                            </li>
+                                            <li class="b-link-block__item"><a class="b-link-block__link"
+                                                                              href="javascript:void(0);"
+                                                                              title="Выход"><span class="b-icon"><svg class="b-icon__svg"
+                                                                                                                      viewBox="0 0 16 16 "
+                                                                                                                      width="16px"
+                                                                                                                      height="16px"><use
+                                                                    class="b-icon__use"
+                                                                    xlink:href="icons.svg#icon-exit"></use></svg></span>Выход</a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+c;
