@@ -9,42 +9,49 @@ class Session
     /**
      * @var int
      * @Serializer\SerializedName("ID")
+     * @Serializer\Type("int")
      */
     protected $id;
 
     /**
      * @var \DateTime
      * @Serializer\SerializedName("DATE_INSERT")
+     * @Serializer\Type("DateTime<'d.m.Y H:i:s'>")
      */
     protected $dateInsert;
 
     /**
      * @var \DateTime
      * @Serializer\SerializedName("DATE_UPDATE")
+     * @Serializer\Type("DateTime<'d.m.Y H:i:s'>")
      */
     protected $dateUpdate;
 
     /**
      * @var null|int
      * @Serializer\SerializedName("USER_ID")
+     * @Serializer\Type("int")
      */
     protected $userId;
 
     /**
      * @var null|string
      * @Serializer\SerializedName("USER_AGENT")
+     * @Serializer\Type("string")
      */
     protected $userAgent;
 
     /**
      * @var int
      * @Serializer\SerializedName("FUSER_ID")
+     * @Serializer\Type("int")
      */
     protected $fUserId;
 
     /**
      * @var string
      * @Serializer\SerializedName("TOKEN")
+     * @Serializer\Type("string")
      */
     protected $token;
 
