@@ -2,7 +2,13 @@
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
-} ?>
+}
+
+/**
+ * @var \CMain $APPLICATION
+ *
+ */
+?>
 </main>
 <footer class="b-footer">
     <div class="b-footer__communication">
@@ -96,136 +102,22 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         <div class="b-container">
             <div class="b-footer__line">
                 <div class="b-footer__column js-here-permutantion">
-                    <nav class="b-footer-nav">
-                        <div class="b-footer-nav__list">
-                            <h4 class="b-footer-nav__header"><a class="b-footer-nav__header-link"
-                                                                href="javascript:void(0);"
-                                                                title="Каталог">Каталог</a></h4>
-                            <ul class="b-footer-nav__list-inner">
-                                <li class="b-footer-nav__item"><a class="b-footer-nav__link"
-                                                                  href="javascript:void(0);"
-                                                                  title="Кошки">Кошки</a>
-                                </li>
-                                <li class="b-footer-nav__item"><a class="b-footer-nav__link"
-                                                                  href="javascript:void(0);"
-                                                                  title="Собаки">Собаки</a>
-                                </li>
-                                <li class="b-footer-nav__item"><a class="b-footer-nav__link"
-                                                                  href="javascript:void(0);"
-                                                                  title="Грызуны и хорьки">Грызуны и хорьки</a>
-                                </li>
-                                <li class="b-footer-nav__item"><a class="b-footer-nav__link"
-                                                                  href="javascript:void(0);"
-                                                                  title="Птицы">Птицы</a>
-                                </li>
-                                <li class="b-footer-nav__item"><a class="b-footer-nav__link"
-                                                                  href="javascript:void(0);"
-                                                                  title="Рыбы">Рыбы</a>
-                                </li>
-                                <li class="b-footer-nav__item"><a class="b-footer-nav__link"
-                                                                  href="javascript:void(0);"
-                                                                  title="Рептилии">Рептилии</a>
-                                </li>
-                                <li class="b-footer-nav__item"><a class="b-footer-nav__link"
-                                                                  href="javascript:void(0);"
-                                                                  title="Ветеринарная аптека">Ветеринарная аптека</a>
-                                </li>
-                                <li class="b-footer-nav__item"><a class="b-footer-nav__link"
-                                                                  href="javascript:void(0);"
-                                                                  title="Котята">Котята</a>
-                                </li>
-                                <li class="b-footer-nav__item"><a class="b-footer-nav__link"
-                                                                  href="javascript:void(0);"
-                                                                  title="Щенки">Щенки</a>
-                                </li>
-                                <li class="b-footer-nav__item"><a class="b-footer-nav__link"
-                                                                  href="javascript:void(0);"
-                                                                  title="От блох и клещей">От блох и клещей</a>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="b-footer-nav__list">
-                            <h4 class="b-footer-nav__header"><a class="b-footer-nav__header-link"
-                                                                href="javascript:void(0);"
-                                                                title="Покупателям">Покупателям</a></h4>
-                            <ul class="b-footer-nav__list-inner">
-                                <li class="b-footer-nav__item"><a class="b-footer-nav__link"
-                                                                  href="javascript:void(0);"
-                                                                  title="Акции">Акции</a>
-                                </li>
-                                <li class="b-footer-nav__item"><a class="b-footer-nav__link"
-                                                                  href="javascript:void(0);"
-                                                                  title="Бренды">Бренды</a>
-                                </li>
-                                <li class="b-footer-nav__item"><a class="b-footer-nav__link"
-                                                                  href="javascript:void(0);"
-                                                                  title="Как купить">Как купить</a>
-                                </li>
-                                <li class="b-footer-nav__item"><a class="b-footer-nav__link"
-                                                                  href="javascript:void(0);"
-                                                                  title="Бонусная программа">Бонусная программа</a>
-                                </li>
-                                <li class="b-footer-nav__item"><a class="b-footer-nav__link"
-                                                                  href="javascript:void(0);"
-                                                                  title="Доставка и оплата">Доставка и оплата</a>
-                                </li>
-                                <li class="b-footer-nav__item"><a class="b-footer-nav__link"
-                                                                  href="javascript:void(0);"
-                                                                  title="Возврат товара">Возврат товара</a>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="b-footer-nav__list">
-                            <h4 class="b-footer-nav__header"><a class="b-footer-nav__header-link"
-                                                                href="javascript:void(0);"
-                                                                title="Сервисы">Сервисы</a></h4>
-                            <ul class="b-footer-nav__list-inner">
-                                <li class="b-footer-nav__item"><a class="b-footer-nav__link"
-                                                                  href="javascript:void(0);"
-                                                                  title="Клубы и питомники">Клубы и питомники</a>
-                                </li>
-                                <li class="b-footer-nav__item"><a class="b-footer-nav__link"
-                                                                  href="javascript:void(0);"
-                                                                  title="Доска объявлений">Доска объявлений</a>
-                                </li>
-                                <li class="b-footer-nav__item"><a class="b-footer-nav__link"
-                                                                  href="javascript:void(0);"
-                                                                  title="Зоогостиницы">Зоогостиницы</a>
-                                </li>
-                                <li class="b-footer-nav__item"><a class="b-footer-nav__link"
-                                                                  href="javascript:void(0);"
-                                                                  title="Статьи">Статьи</a>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="b-footer-nav__list">
-                            <h4 class="b-footer-nav__header"><a class="b-footer-nav__header-link"
-                                                                href="javascript:void(0);"
-                                                                title="Компания">Компания</a></h4>
-                            <ul class="b-footer-nav__list-inner">
-                                <li class="b-footer-nav__item"><a class="b-footer-nav__link"
-                                                                  href="javascript:void(0);"
-                                                                  title="Магазины">Магазины</a>
-                                </li>
-                                <li class="b-footer-nav__item"><a class="b-footer-nav__link"
-                                                                  href="javascript:void(0);"
-                                                                  title="Новости">Новости</a>
-                                </li>
-                                <li class="b-footer-nav__item"><a class="b-footer-nav__link"
-                                                                  href="javascript:void(0);"
-                                                                  title="О нас">О нас</a>
-                                </li>
-                                <li class="b-footer-nav__item"><a class="b-footer-nav__link"
-                                                                  href="javascript:void(0);"
-                                                                  title="Вакансии">Вакансии</a>
-                                </li>
-                                <li class="b-footer-nav__item"><a class="b-footer-nav__link"
-                                                                  href="javascript:void(0);"
-                                                                  title="Партнерам">Партнерам</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </nav>
+                    <?php $APPLICATION->IncludeComponent('bitrix:menu',
+                                                         'footer.menu',
+                                                         [
+                                                             'COMPONENT_TEMPLATE'    => 'footer.menu',
+                                                             'ROOT_MENU_TYPE'        => 'top',
+                                                             'MENU_CACHE_TYPE'       => 'A',
+                                                             'MENU_CACHE_TIME'       => '360000',
+                                                             'MENU_CACHE_USE_GROUPS' => 'N',
+                                                             'MENU_CACHE_GET_VARS'   => [],
+                                                             'MAX_LEVEL'             => '2',
+                                                             'CHILD_MENU_TYPE'       => 'left',
+                                                             'USE_EXT'               => 'N',
+                                                             'DELAY'                 => 'N',
+                                                             'ALLOW_MULTI_SELECT'    => 'N',
+                                                         ],
+                                                         false); ?>
                     <?php
                     /**
                      * @todo Подписка. Заменить компонентом и удалить файл.
