@@ -12,3 +12,6 @@ app.swagger:
 ajax.routes:
     resource: "ajax.yml"
     prefix:   /ajax
+
+app.api:
+    resource: "@FourPawsMobileApiBundle/Resources/config/routing.yml"

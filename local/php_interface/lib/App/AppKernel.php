@@ -4,9 +4,12 @@ namespace FourPaws\App;
 
 use Circle\RestClientBundle\CircleRestClientBundle;
 use FOS\RestBundle\FOSRestBundle;
+use FourPaws\AppBundle\FourPawsAppBundle;
+use FourPaws\MobileApiBundle\FourPawsMobileApiBundle;
 use JMS\SerializerBundle\JMSSerializerBundle;
 use Nelmio\ApiDocBundle\NelmioApiDocBundle;
 use OldSound\RabbitMqBundle\OldSoundRabbitMqBundle;
+use Sensio\Bundle\DistributionBundle\SensioDistributionBundle;
 use Sensio\Bundle\FrameworkExtraBundle\SensioFrameworkExtraBundle;
 use Symfony\Bundle\DebugBundle\DebugBundle;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
@@ -52,11 +55,16 @@ class AppKernel extends Kernel
             new FOSRestBundle(),
             new JMSSerializerBundle(),
             new NelmioApiDocBundle(),
+
+            /** Internal bundles */
+            new FourPawsAppBundle(),
+            new FourPawsMobileApiBundle(),
         ];
 
-        if (in_array($this->getEnvironment(), ['dev', 'test'], true)) {
+        if (\in_array($this->getEnvironment(), ['dev', 'test'], true)) {
             $bundles[] = new DebugBundle();
             $bundles[] = new WebProfilerBundle();
+            $bundles[] = new SensioDistributionBundle();
         }
         return $bundles;
     }
@@ -87,7 +95,7 @@ class AppKernel extends Kernel
     public static function getDocumentRoot(): string
     {
         if (null === static::$documentRoot) {
-            static::$documentRoot = dirname(__DIR__, 4);
+            static::$documentRoot = \dirname(__DIR__, 4);
         }
 
         return static::$documentRoot;

@@ -60,7 +60,14 @@
     }
   ],
   "scripts": {
-    "pre-install-cmd": "\\FourPaws\\DeployScripts::installBitrixStubs",
-    "pre-update-cmd": "\\FourPaws\\DeployScripts::installBitrixStubs"
+    "bitrix-scripts": [
+      "\\FourPaws\\DeployScripts::installBitrixStubs"
+    ],
+    "pre-install-cmd": [
+      "@bitrix-scripts"
+    ],
+    "pre-update-cmd": [
+      "@bitrix-scripts"
+    ]
   }
 }

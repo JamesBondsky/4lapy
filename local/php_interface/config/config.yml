@@ -37,6 +37,16 @@ circle_rest_client:
       CURLOPT_USERPWD: old4lapy:8J7tQHPpN9
 
 fos_rest:
+  body_listener: true
+  body_converter:
+    enabled: true
+  view:
+    view_response_listener: true
+  serializer:
+      serialize_null: true
+  format_listener:
+    rules:
+      - { path: '^/mobile_app_v2',  priorities: ['json'], fallback_format: json, prefer_extension: true }
   disable_csrf_role:    null
 
 nelmio_api_doc:
