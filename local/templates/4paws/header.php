@@ -322,6 +322,6 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
     /**
      * @todo Меню. Заменить компонентом и удалить файл.
      */
-    require 'menu.php';
+    require_once 'temp_menu.php';
     ?>
     <main class="b-wrapper" role="main">
