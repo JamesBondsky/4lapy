@@ -2,32 +2,67 @@
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
-} ?>
-    
-        </main>
-        <footer class="b-footer">
-            <div class="b-footer__communication">
-                <div class="b-container">
-                    <div class="b-footer__inner">
-                        <?php
-                        /**
-                         * @todo implement footer communication
-                         */
-                        ?>
-                    </div>
+}
+
+/**
+ * @var \CMain $APPLICATION
+ */
+?>
+</main>
+<footer class="b-footer">
+    <div class="b-footer__communication">
+        <div class="b-container">
+            <div class="b-footer__inner">
+                <div class="b-footer-communication">
+                    <?php require_once 'blocks/footer/communication_area.php' ?>
                 </div>
+                <?php require_once 'blocks/footer/social_links.php' ?>
             </div>
-            <div class="b-footer__nav">
-                <div class="b-container">
+        </div>
+    </div>
+    <div class="b-footer__nav">
+        <div class="b-container">
+            <div class="b-footer__line">
+                <div class="b-footer__column js-here-permutantion">
+                    <?php $APPLICATION->IncludeComponent('bitrix:menu',
+                                                         'footer.menu',
+                                                         [
+                                                             'COMPONENT_TEMPLATE'    => 'footer.menu',
+                                                             'ROOT_MENU_TYPE'        => 'top',
+                                                             'MENU_CACHE_TYPE'       => 'A',
+                                                             'MENU_CACHE_TIME'       => '360000',
+                                                             'MENU_CACHE_USE_GROUPS' => 'N',
+                                                             'MENU_CACHE_GET_VARS'   => [],
+                                                             'MAX_LEVEL'             => '2',
+                                                             'CHILD_MENU_TYPE'       => 'left',
+                                                             'USE_EXT'               => 'N',
+                                                             'DELAY'                 => 'N',
+                                                             'ALLOW_MULTI_SELECT'    => 'N',
+                                                         ],
+                                                         false); ?>
                     <?php
                     /**
-                     * @todo implement footer navigation
+                     * @todo Подписка. Заменить компонентом и удалить файл.
                      */
+                    require_once 'temp_subscription.php';
                     ?>
                 </div>
+                <?php require_once 'blocks/footer/application_links.php'; ?>
             </div>
-        </footer>
+            <div class="b-footer__line">
+                <div class="b-footer__column">
+                    <?php require_once 'blocks/footer/copyright.php' ?>
+                </div>
+                <div class="b-footer__column b-footer__column--small">
+                    <?php require_once 'blocks/footer/creator.php' ?>
+                </div>
+            </div>
+        </div>
     </div>
-
+</footer>
+</div>
+<?php /** @todo Markup */ ?>
+<script src="/static/build/js/external.js"></script>
+<script src="/static/build/js/internal.js"></script>
 </body>
 </html>

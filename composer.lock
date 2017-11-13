@@ -37,16 +37,16 @@
         },
         {
             "name": "andreyryabin/sprint.migration",
-            "version": "2.5.1",
+            "version": "2.5.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/andreyryabin/sprint.migration.git",
-                "reference": "5eb363ab976d3c1fc64fc9d58f364c0c2aaec897"
+                "reference": "0a411515a83b400e7acebc59aefeb4950034d2cb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/andreyryabin/sprint.migration/zipball/5eb363ab976d3c1fc64fc9d58f364c0c2aaec897",
-                "reference": "5eb363ab976d3c1fc64fc9d58f364c0c2aaec897",
+                "url": "https://api.github.com/repos/andreyryabin/sprint.migration/zipball/0a411515a83b400e7acebc59aefeb4950034d2cb",
+                "reference": "0a411515a83b400e7acebc59aefeb4950034d2cb",
                 "shasum": ""
             },
             "require": {
@@ -64,7 +64,7 @@
                 "bitrix",
                 "migration"
             ],
-            "time": "2017-07-30T19:36:44+00:00"
+            "time": "2017-11-07T19:11:59+00:00"
         },
         {
             "name": "behat/gherkin",
