@@ -3,6 +3,7 @@
 namespace FourPaws\MobileApiBundle\Entity;
 
 use JMS\Serializer\Annotation as Serializer;
+use Symfony\Component\Validator\Constraints as Assert;
 
 class Session
 {
@@ -10,6 +11,9 @@ class Session
      * @var int
      * @Serializer\SerializedName("ID")
      * @Serializer\Type("int")
+     * @Serializer\Groups(groups={"read"})
+     * @Assert\Type(type="int",groups={"update","delete"})
+     * @Assert\GreaterThanOrEqual(value="1",groups={"update","delete"})
      */
     protected $id;
 
@@ -17,6 +21,8 @@ class Session
      * @var \DateTime
      * @Serializer\SerializedName("DATE_INSERT")
      * @Serializer\Type("DateTime<'d.m.Y H:i:s'>")
+     * @Serializer\Groups(groups={"read"})
+     * @Assert\DateTime(groups={"update"})
      */
     protected $dateInsert;
 
@@ -24,6 +30,8 @@ class Session
      * @var \DateTime
      * @Serializer\SerializedName("DATE_UPDATE")
      * @Serializer\Type("DateTime<'d.m.Y H:i:s'>")
+     * @Serializer\Groups(groups={"read"})
+     * @Assert\DateTime(groups={"update"})
      */
     protected $dateUpdate;
 
@@ -31,6 +39,7 @@ class Session
      * @var null|int
      * @Serializer\SerializedName("USER_ID")
      * @Serializer\Type("int")
+     * @Serializer\Groups(groups={"read","update","create"})
      */
     protected $userId;
 
@@ -38,6 +47,7 @@ class Session
      * @var null|string
      * @Serializer\SerializedName("USER_AGENT")
      * @Serializer\Type("string")
+     * @Serializer\Groups(groups={"read","update","create"})
      */
     protected $userAgent;
 
@@ -45,6 +55,9 @@ class Session
      * @var int
      * @Serializer\SerializedName("FUSER_ID")
      * @Serializer\Type("int")
+     * @Serializer\Groups(groups={"read","update","create"})
+     * @Assert\GreaterThanOrEqual(value="1", groups={"update","create"})
+     * @Assert\Type(type="int", groups={"update","create"})
      */
     protected $fUserId;
 
@@ -52,6 +65,9 @@ class Session
      * @var string
      * @Serializer\SerializedName("TOKEN")
      * @Serializer\Type("string")
+     * @Serializer\Groups(groups={"read","update","create"})
+     * @Assert\Type(type="string",groups={"update","create"})
+     * @Assert\Uuid(groups={"update","create"})
      */
     protected $token;
 
