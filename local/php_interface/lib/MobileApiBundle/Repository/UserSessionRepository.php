@@ -14,7 +14,7 @@ use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\SerializationContext;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-class SessionRepository
+class UserSessionRepository implements UserSessionRepositoryInterface
 {
 
     /**
