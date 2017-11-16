@@ -100,12 +100,13 @@ class ConsoleApp
 
             $classPath = str_replace(
                 [
-                    $_SERVER['DOCUMENT_ROOT'] . '/local/php_interface/lib',
+                    \dirname(__DIR__),
                     '.php',
                 ],
                 '',
                 $file->getRealPath()
             );
+
 
             $command = "\\FourPaws" . str_replace('/', '\\', $classPath);
 
