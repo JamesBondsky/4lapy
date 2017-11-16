@@ -4,6 +4,7 @@ namespace FourPaws\App;
 
 use Circle\RestClientBundle\CircleRestClientBundle;
 use FOS\RestBundle\FOSRestBundle;
+use FourPaws\AppBundle\FourPawsAppBundle;
 use JMS\SerializerBundle\JMSSerializerBundle;
 use Nelmio\ApiDocBundle\NelmioApiDocBundle;
 use OldSound\RabbitMqBundle\OldSoundRabbitMqBundle;
@@ -52,6 +53,9 @@ class AppKernel extends Kernel
             new FOSRestBundle(),
             new JMSSerializerBundle(),
             new NelmioApiDocBundle(),
+
+            /** Internal bundles */
+            new FourPawsAppBundle(),
         ];
 
         if (in_array($this->getEnvironment(), ['dev', 'test'], true)) {

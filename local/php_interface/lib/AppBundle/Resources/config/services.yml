@@ -1,0 +1,29 @@
+services:
+    # default configuration for services in *this* file
+    _defaults:
+        # automatically injects dependencies in your services
+        autowire: true
+        # automatically registers your services as commands, event subscribers, etc.
+        autoconfigure: true
+        # this means you cannot fetch services directly from the container via $container->get()
+        # if you need to do this, you can override this setting on individual services
+        public: false
+
+    FourPaws\AppBundle\:
+        resource: '../../*'
+        # you can exclude directories or files
+        # but if a service is unused, it's removed anyway
+        exclude: '../../{Entity,Tests}'
+
+#    FourPaws\AppBundle\Controller\:
+#        resource: '../../Controller'
+#        public: true
+#        tags: ['controller.service_arguments']
+
+    # Fix "FOS Rest Bundle is incompatible with Sensio Framework Extra Bundle v4.0"
+    # @see https://github.com/FriendsOfSymfony/FOSRestBundle/issues/1768
+    sensio_framework_extra.view.listener:
+        alias: Sensio\Bundle\FrameworkExtraBundle\EventListener\TemplateListener
+
+    sensio_framework_extra.converter.listener:
+        alias: Sensio\Bundle\FrameworkExtraBundle\EventListener\ParamConverterListener
