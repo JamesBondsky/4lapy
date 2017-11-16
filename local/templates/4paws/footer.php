@@ -7,6 +7,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 /**
  * @var \CMain $APPLICATION
  */
+
+use FourPaws\App\Application as PawsApplication;
+
+$markup = PawsApplication::markup();
 ?>
 </main>
 <footer class="b-footer">
@@ -62,7 +66,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 </footer>
 </div>
 <?php /** @todo Markup */ ?>
-<script src="/static/build/js/external.js"></script>
-<script src="/static/build/js/internal.js"></script>
+<script src="<?= $markup->getJsFile() ?>"></script>
 </body>
 </html>

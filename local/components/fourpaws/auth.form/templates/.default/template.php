@@ -19,20 +19,18 @@
  * @global CDatabase              $DB
  */
 
+use FourPaws\Decorators\SvgDecorator;
+
 ?>
 <div class="b-header-info__item b-header-info__item--person">
     <div class="b-header-info__item b-header-info__item--person">
         <a class="b-header-info__link js-open-popover" href="javascript:void(0);" title="Войти">
             <span class="b-icon">
-                <svg class="b-icon__svg" viewBox="0 0 16 16 " width="16px" height="16px">
-                    <use class="b-icon__use" xlink:href="/static/build/icons.svg#icon-person"></use>
-                </svg>
+                <?= new SvgDecorator('icon-person', 16, 16) ?>
             </span>
             <span class="b-header-info__inner">Войти</span>
             <span class="b-icon b-icon--header b-icon--left-3">
-                <svg class="b-icon__svg" viewBox="0 0 10 12 " width="10px" height="12px">
-                    <use class="b-icon__use" xlink:href="/static/build/icons.svg#icon-arrow-down"></use>
-                </svg>
+                <?= new SvgDecorator('icon-arrow-down', 10, 12) ?>
             </span>
         </a>
         <?php if ($arResult['MODE'] === FourPawsUserComponent::MODE_FORM) {

@@ -2,7 +2,11 @@
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
-} ?>
+}
+
+use FourPaws\Decorators\SvgDecorator;
+
+?>
 <span class="b-footer-communication__item">
     <a class="b-footer-communication__link" href="tel:84732027626" title="+7 473 202-76-26">
         +7 473 202-76-26
@@ -10,18 +14,19 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     <span class="b-footer-communication__description">(доступен до 21:00)</span>
 </span>
 <span class="b-footer-communication__item">
-    <a class="b-footer-communication__link" href="tel:88007700022" title="+7 800 770-00-22">
-        +7 800 770-00-22
+    <a class="b-footer-communication__link"
+       href="tel:<?= preg_replace('[^+\d]', '', tplvar('phone_main')) ?>"
+       title="<?= tplvar('phone_main') ?>">
+        <?= tplvar('phone_main') ?>
     </a>
-    <span class="b-footer-communication__description">(круглосуточно)</span>
+    <?= tplinvis('phone_main') ?>
+    <span class="b-footer-communication__description"><?= tplvar('phone_sign_footer', true) ?></span>
 </span>
 <span class="b-footer-communication__link-block">
     <span class="b-footer-communication__item">
         <a class="b-footer-communication__link" href="javascript:void(0);" title="Перезвоните мне">
             <span class="b-icon b-icon--footer">
-                <svg class="b-icon__svg" viewBox="0 0 10 16 " width="10px" height="16px">
-                    <use class="b-icon__use" xlink:href="/static/build/icons.svg#icon-phone-white"></use>
-                </svg>
+                <?= new SvgDecorator('icon-phone-white', 10, 16) ?>
             </span>
             Перезвоните мне
         </a>
@@ -29,9 +34,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     <span class="b-footer-communication__item">
         <a class="b-footer-communication__link" href="javascript:void(0);" title="Обратная связь">
             <span class="b-icon b-icon--footer">
-                <svg class="b-icon__svg" viewBox="0 0 16 11 " width="16px" height="11px">
-                    <use class="b-icon__use" xlink:href="/static/build/icons.svg#icon-feedback"></use>
-                </svg>
+                <?= new SvgDecorator('icon-feedback', 16, 11) ?>
             </span>
             Обратная связь
         </a>
@@ -40,9 +43,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         <a class="b-footer-communication__link"
            href="javascript:void(0);" title="Чат с консультантом">
             <span class="b-icon b-icon--footer">
-                <svg class="b-icon__svg" viewBox="0 0 16 16 " width="16px" height="16px">
-                    <use class="b-icon__use" xlink:href="/static/build/icons.svg#icon-chat-white"></use>
-                </svg>
+                <?= new SvgDecorator('icon-chat-white', 16, 16) ?>
             </span>
             Чат с консультантом
         </a>
