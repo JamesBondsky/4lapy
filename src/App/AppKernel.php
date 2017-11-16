@@ -102,6 +102,12 @@ class AppKernel extends Kernel
      */
     public function getCacheDir()
     {
+        /**
+         * Ввиду использования вагранта симфони не может очистить директорию, которая используется по умолчанию
+         */
+        if ($this->getEnvironment() === 'dev') {
+            return '/tmp/sfcache/' . $this->getEnvironment();
+        }
         return $this->getRootDir() . static::CACHE_DIR . '/' . $this->getEnvironment();
     }
 
