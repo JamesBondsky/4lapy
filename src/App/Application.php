@@ -5,6 +5,7 @@ namespace FourPaws\App;
 use Adv\Bitrixtools\Tools\EnvType;
 use FourPaws\App\MarkupBuild\JsonFileLoader;
 use FourPaws\App\MarkupBuild\MarkupBuild;
+use Psr\Cache\InvalidArgumentException;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\HttpFoundation\Request;
@@ -32,7 +33,7 @@ class Application extends AppKernel
     private static $instance;
 
     /**
-     * @throws \Psr\Cache\InvalidArgumentException
+     * @throws InvalidArgumentException
      *
      * TODO Изменить под 4 лапы
      * @return MarkupBuild

@@ -19,13 +19,13 @@
  * @global CDatabase              $DB
  */
 
+use FourPaws\Decorators\SvgDecorator;
+
 ?>
 <div class="b-header-info__item b-header-info__item--cart">
     <a class="b-header-info__link" href="<?= $arParams['PATH_TO_BASKET'] ?>" title="Корзина">
         <span class="b-icon">
-            <svg class="b-icon__svg" viewBox="0 0 16 16" width="16px" height="16px">
-                <use class="b-icon__use" xlink:href="/static/build/icons.svg#icon-cart"></use>
-            </svg>
+            <?= new SvgDecorator('icon-cart', 16, 16) ?>
         </span>
         <span class="b-header-info__inner">Корзина</span>
         <span class="b-header-info__number"><?= $arResult['NUM_PRODUCTS'] ?></span>

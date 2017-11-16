@@ -4,9 +4,14 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
-use Bitrix\Main\Application;use FourPaws\App\MainTemplate;
+/**
+ * @var \CMain $APPLICATION
+ */
+
+use Bitrix\Main\Application;use FourPaws\App\MainTemplate;use FourPaws\Decorators\SvgDecorator;use FourPaws\App\Application as PawsApplication;
 
 $template = MainTemplate::getInstance(Application::getInstance()->getContext());
+$markup = PawsApplication::markup();
 
 ?><!DOCTYPE html>
 <html lang="ru">
@@ -16,8 +21,8 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="google" value="notranslate">
     <meta name="format-detection" content="telephone=no">
-    <?php /** @todo Markup */ ?>
-    <link href="/static/build/css/main.css?#{new Date().getTime()}" rel="stylesheet">
+    
+    <link href="<?= $markup->getCssFile() ?>" rel="stylesheet">
     <script src="/static/build/js/jquery/jquery.min.js"></script>
     <?php $APPLICATION->ShowHead(); ?>
     <title><?php $APPLICATION->ShowTitle() ?></title>
@@ -32,9 +37,7 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
             <div class="b-header__info">
                 <a class="b-hamburger js-hamburger-menu-main" href="javascript:void(0);" title="">
                     <span class="b-icon">
-                        <svg class="b-icon__svg" viewBox="0 0 24 18 " width="24px" height="18px">
-                            <use class="b-icon__use" xlink:href="/static/build/icons.svg#icon-hamburger"></use>
-                        </svg>
+                        <?= new SvgDecorator('icon-hamburger', 24, 18) ?>
                     </span>
                 </a>
                 <a class="b-logo" href="/" title="">
