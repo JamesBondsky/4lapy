@@ -4,17 +4,20 @@ namespace FourPaws\Migrator;
 
 use FourPaws\Migrator\Client\ArticlePull;
 use FourPaws\Migrator\Client\Catalog;
+use FourPaws\Migrator\Client\CityPhone;
 use FourPaws\Migrator\Client\News;
 use FourPaws\Migrator\Client\SalePull;
 use FourPaws\Migrator\Client\Saveable;
 use FourPaws\Migrator\Client\Store;
 use FourPaws\Migrator\Client\UserPull;
 use FourPaws\Migrator\Entity\Catalog as CatalogEntity;
+use FourPaws\Migrator\Entity\CityPhone as CityPhoneEntity;
 use FourPaws\Migrator\Entity\EntityInterface;
 use FourPaws\Migrator\Entity\News as NewsEntity;
 use FourPaws\Migrator\Entity\Store as StoreEntity;
 use FourPaws\Migrator\Exception\MigratorException;
 use FourPaws\Migrator\Provider\Catalog as CatalogProvider;
+use FourPaws\Migrator\Provider\CityPhone as CityPhoneProvider;
 use FourPaws\Migrator\Provider\News as NewsProvider;
 use FourPaws\Migrator\Provider\Store as StoreProvider;
 use Symfony\Component\Console\Exception\InvalidArgumentException;
@@ -25,6 +28,7 @@ final class Factory
         'article',
         'catalog',
         'news',
+        'city_phone',
         'sale',
         'store',
         'user',
@@ -60,6 +64,9 @@ final class Factory
                 break;
             case 'news':
                 $client = new News(new NewsProvider(new NewsEntity(News::ENTITY_NAME)), $options);
+                break;
+            case 'city_phone':
+                $client = new CityPhone(new CityPhoneProvider(new CityPhoneEntity(CityPhone::ENTITY_NAME)), $options);
                 break;
             case 'sale':
                 $client = new SalePull($options);

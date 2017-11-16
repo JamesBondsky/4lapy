@@ -127,14 +127,22 @@ abstract class ProviderAbstract implements ProviderInterface, LoggerAwareInterfa
         $data = $this->setLazyEntities($data);
         
         foreach ($this->getMap() as $from => $to) {
-            if ($data[$from]) {
-                $result[$to] = $data[$from];
+            if (strpos($to, '|')) {
+                foreach (explode('|', $to) as $toPartial) {
+                    if ($data[$from]) {
+                        $result[$toPartial] = $data[$from];
+                    }
+                }
+            } else {
+                if ($data[$from]) {
+                    $result[$to] = $data[$from];
+                }
             }
         }
         
         foreach ($this->getConverters() as $converter) {
             if (!$converter instanceof ConverterInterface) {
-                throw new \RuntimeException("Unknown converter: {$converter}");
+                throw new \RuntimeException(sprintf('Unknown converter: %s', $converter));
             }
             
             $result = $converter->convert($result);
