@@ -10,6 +10,7 @@ use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LogLevel;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Exception\InvalidArgumentException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -48,34 +49,36 @@ class MigrateData extends Command implements LoggerAwareInterface
                            'Limit of entities, 100 by default')
              ->addArgument(self::ARG_MIGRATE_LIST,
                            InputArgument::IS_ARRAY,
-                           'Migration type, one or more of this: user, news, articles, catalog, shops, sale')
+                           'Migration type, one or more of this: articles, catalog, city_phone, news, shops, sale, user')
              ->addOption('force', 'f', InputOption::VALUE_NONE, 'Force migrate (disable time period check)');
     }
     
     /**
-     * @param \Symfony\Component\Console\Input\InputInterface   $input
-     * @param \Symfony\Component\Console\Output\OutputInterface $output
+     * @param InputInterface  $input
+     * @param OutputInterface $output
      *
      * @return null
+     *
+     * @throws InvalidArgumentException
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $migratorInstaller = new Installer($this->logger);
-
+        
         if (!$migratorInstaller->isInstalled()) {
-            $this->logger->warning('Migrator tables is not installed. Installing...');
+            $this->logger->info('Migrator tables is not installed. Installing...');
             $migratorInstaller->doInstall();
         }
-
-        $this->log(LogLevel::INFO, 'Migration start');
+        
+        $this->logger->info('Migration start');
         
         $limit = $input->getArgument(self::ARG_LIMIT);
-
+        
         if ($limit && !(int)$limit) {
             $input->setArgument(self::ARG_MIGRATE_LIST, [$limit]);
             $limit = 100;
         }
-
+        
         foreach ($input->getArgument(self::ARG_MIGRATE_LIST) as $type) {
             $client = (new Factory())->getClient($type, ['limit' => $limit]);
             $client->save();

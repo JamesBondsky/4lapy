@@ -58,7 +58,10 @@ abstract class IBlock extends AbstractEntity
         $id = $cIBlockElement->Add($data, false, false);
         
         if (!$id) {
-            throw new AddException("IBlock {$this->getIblockId()} element #{$primary} add error: $cIBlockElement->LAST_ERROR");
+            throw new AddException(sprintf('IBlock %s element #%s add error: %s',
+                                           $this->getIblockId(),
+                                           $primary,
+                                           $cIBlockElement->LAST_ERROR));
         }
         
         MapTable::addEntity($this->entity, $primary, $id);
@@ -78,7 +81,10 @@ abstract class IBlock extends AbstractEntity
         $cIBlockElement = new \CIBlockElement();
         
         if (!$cIBlockElement->Update($primary, $data, false, false, false, false)) {
-            throw new UpdateException("IBlock {$this->getIblockId()} element #{$primary} update error: $cIBlockElement->LAST_ERROR");
+            throw new UpdateException(sprintf('IBlock %s element #%s update error: %s',
+                                              $this->getIblockId(),
+                                              $primary,
+                                              $cIBlockElement->LAST_ERROR));
         }
         
         return new UpdateResult(true, $primary);
