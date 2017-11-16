@@ -19,12 +19,30 @@
   "minimum-stability": "stable",
   "autoload": {
     "psr-4": {
-      "FourPaws\\": "src",
-      "FourPaws\\Test\\": "tests"
+      "FourPaws\\": "src"
     }
   },
+  "autoload-dev": {
+    "psr-4": {
+      "FourPaws\\Test\\": "tests"
+    },
+    "files": [
+      "vendor/symfony/symfony/src/Symfony/Component/VarDumper/Resources/functions/dump.php"
+    ]
+  },
+  "config": {
+    "sort-packages": true
+  },
   "extra": {
+    "symfony-app-dir": "app",
+    "symfony-bin-dir": "bin",
+    "symfony-var-dir": "var",
+    "symfony-web-dir": "web",
+    "symfony-tests-dir": "tests",
     "symfony-assets-install": "relative",
+    "incenteev-parameters": {
+      "file": "app/config/parameters.yml"
+    },
     "somework/composer-symlinks": {
       "symlinks": {
         "common/local": "web/local",
