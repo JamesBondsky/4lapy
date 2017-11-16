@@ -4,7 +4,8 @@
 use FourPaws\Console\ConsoleApp;
 
 $PROJECT_ROOT = dirname(__DIR__);
+$_SERVER['DOCUMENT_ROOT'] = $PROJECT_ROOT . '/web';
 
 require_once $PROJECT_ROOT . '/vendor/autoload.php';
 
-(new ConsoleApp($PROJECT_ROOT))->run();
+(new ConsoleApp($_SERVER['DOCUMENT_ROOT']))->run();
