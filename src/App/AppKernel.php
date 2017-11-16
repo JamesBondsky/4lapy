@@ -21,12 +21,12 @@ class AppKernel extends Kernel
     /**
      * Папка с конфигами сайта
      */
-    const CONFIG_DIR = '/local/php_interface/config';
+    const CONFIG_DIR = '/app/config';
 
     /**
      * Папка с кешем symfony
      */
-    const CACHE_DIR = '/local/cache/symfony';
+    const CACHE_DIR = '/var/cache';
 
     /**
      * @var string
@@ -54,7 +54,7 @@ class AppKernel extends Kernel
             new NelmioApiDocBundle(),
         ];
 
-        if (in_array($this->getEnvironment(), ['dev', 'test'], true)) {
+        if (\in_array($this->getEnvironment(), ['dev', 'test'], true)) {
             $bundles[] = new DebugBundle();
             $bundles[] = new WebProfilerBundle();
         }
@@ -78,7 +78,7 @@ class AppKernel extends Kernel
      */
     public function getRootDir()
     {
-        return static::getDocumentRoot();
+        return \dirname(static::getDocumentRoot());
     }
 
     /**
@@ -87,7 +87,7 @@ class AppKernel extends Kernel
     public static function getDocumentRoot(): string
     {
         if (null === static::$documentRoot) {
-            static::$documentRoot = dirname(__DIR__, 4);
+            static::$documentRoot = \dirname(__DIR__, 2) . '/web';
         }
 
         return static::$documentRoot;
@@ -98,7 +98,7 @@ class AppKernel extends Kernel
      */
     public function getCacheDir()
     {
-        return $this->getRootDir() . static::CACHE_DIR;
+        return $this->getRootDir() . static::CACHE_DIR . '/' . $this->getEnvironment();
     }
 
     /**
@@ -106,6 +106,6 @@ class AppKernel extends Kernel
      */
     public function getLogDir()
     {
-        return getenv('WWW_LOG_DIR') ?: $this->getRootDir() . '/local/logs/symfony/';
+        return getenv('WWW_LOG_DIR') ?: $this->getRootDir() . '/var/logs/';
     }
 }
