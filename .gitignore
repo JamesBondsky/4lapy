@@ -18,7 +18,10 @@ node_modules/
 /var/logs/*
 !var/logs/.gitkeep
 
-#Symlinks
+### Symlinks
 /web/bitrix
 /web/static
 /web/local
+
+### Php Unit
+phpunit.xml
