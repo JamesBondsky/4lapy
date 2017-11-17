@@ -42,7 +42,11 @@ class Application extends AppKernel
     {
         if (null === self::$markupBuild) {
             //TODO Позже эту строчку вынести в отдельный метод, возвращающий настроенный пул файлового кеша
-            $cache = new FilesystemAdapter('4lapy', 86400, self::getDocumentRoot() . self::BITRIX_CACHE_DIR);
+            $cache = new FilesystemAdapter(
+                '4lapy',
+                86400,
+                self::getDocumentRoot() . self::BITRIX_CACHE_DIR
+            );
 
             $markupBuildItem = $cache->getItem('markup_build');
 

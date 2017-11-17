@@ -6,7 +6,7 @@ use FourPaws\App\EventInitializer;
 use FourPaws\Helpers\MailHelper;
 use WebArch\BitrixNeverInclude\BitrixNeverInclude;
 
-require_once $_SERVER['DOCUMENT_ROOT'] . '/local/php_interface/vendor/autoload.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/../vendor/autoload.php';
 
 BitrixNeverInclude::registerModuleAutoload();
 

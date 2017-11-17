@@ -9,7 +9,7 @@ framework:
   secret: '%secret%'
   default_locale: '%locale%'
   router:
-    resource: '%kernel.project_dir%/local/php_interface/config/routes/routes.yml'
+    resource: '%kernel.project_dir%/app/config/routes/routes.yml'
     strict_requirements: ~
   form: ~
   csrf_protection: ~

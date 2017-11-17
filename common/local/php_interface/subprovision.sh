@@ -17,16 +17,21 @@ printYellow () {
 }
 
 # Basic variables
-DOCUMENT_ROOT="/home/vagrant/htdocs"
-SUBPROV_ROOT="/home/vagrant/.subprovision"
-LOCAL_ENV_FILE="${DOCUMENT_ROOT}/bitrix/php_interface/local.env.php"
-BITRIX_FOLDER_CHECK="${DOCUMENT_ROOT}/bitrix/index.php"
-UNVER_FOLDER_ARCHIVE="${SUBPROV_ROOT}/unversioned-files.tar.gz"
 SITE_URI="http://4lapy.vag"
-MIGRATION_RUNNER="${DOCUMENT_ROOT}/bin/migrate"
-CONSOLE_RUNNER="${DOCUMENT_ROOT}/bin/console"
-SYMFONY_CONSOLE_RUNNER="${DOCUMENT_ROOT}/bin/symfony_console"
-STATIC_ROOT="${DOCUMENT_ROOT}/static"
+
+PROJECT_ROOT="/home/vagrant/htdocs"
+COMMON_ROOT="${PROJECT_ROOT}/common"
+DOCUMENT_ROOT="${PROJECT_ROOT}/web"
+SUBPROV_ROOT="/home/vagrant/.subprovision"
+LOCAL_ENV_FILE="${COMMON_ROOT}/bitrix/php_interface/local.env.php"
+BITRIX_FOLDER_CHECK="${COMMON_ROOT}/bitrix/index.php"
+UNVER_FOLDER_ARCHIVE="${SUBPROV_ROOT}/unversioned-files.tar.gz"
+
+MIGRATION_RUNNER="${PROJECT_ROOT}/bin/migrate"
+CONSOLE_RUNNER="${PROJECT_ROOT}/bin/console"
+SYMFONY_CONSOLE_RUNNER="${PROJECT_ROOT}/bin/symfony_console"
+
+STATIC_ROOT="${COMMON_ROOT}/static"
 BEMTO_SETTINGS="${STATIC_ROOT}/node_modules/bemto.pug/lib/settings.pug"
 
 # Create unversioned files
@@ -34,17 +39,17 @@ if [[ -f "${BITRIX_FOLDER_CHECK}" ]] ; then
     printGreen "Unversioned files seems to be OKay."
     printYellow "To refresh unversioned files, please, remove following files and directories, but be careful!"
     printYellow "\t\t${BITRIX_FOLDER_CHECK}"
-    printYellow "\t\t${DOCUMENT_ROOT}/upload/"
+    printYellow "\t\t${COMMON_ROOT}/upload/"
 
 else
     printRed "Unversioned files missing. "
     printBlue "Unpacking. Please, wait for a few minutes..."
-    tar --overwrite --same-permissions --directory "${DOCUMENT_ROOT}" --gunzip --extract --file "${UNVER_FOLDER_ARCHIVE}"
+    tar --overwrite --same-permissions --directory "${COMMON_ROOT}" --gunzip --extract --file "${UNVER_FOLDER_ARCHIVE}"
 fi
 
 # Refresh local.env.php
 printBlue "Refresh local env file."
-sed -re "s/^#/\/\//g" "${DOCUMENT_ROOT}/local/php_interface/.env" \
+sed -re "s/^#/\/\//g" "${COMMON_ROOT}/local/php_interface/.env" \
     | sed -re "s/^[[:alnum:]_]+=.+$/putenv\('\0'\);/ig" \
     | sed -re "1s/^.*$/<?php \n\n\0/" \
     | sed -re "\$s/^.*$/\0\n/" > "${LOCAL_ENV_FILE}"
@@ -55,7 +60,7 @@ if (shopt -s nullglob dotglob; f=(/home/vagrant/htdocs/local/php_interface/vendo
 else
     printRed "Need composer packages first install"
     printBlue "Installing composer packages for the first time..."
-    cd "${DOCUMENT_ROOT}"
+    cd "${PROJECT_ROOT}"
     sudo -u vagrant composer install --optimize-autoloader --quiet --no-interaction
     cd - > /dev/null
 fi

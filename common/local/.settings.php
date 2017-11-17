@@ -7,9 +7,9 @@ use Adv\Bitrixtools\Tools\Log\LoggerFactory;
  * Обязательно нужно подключить vendor/autoload.php ,
  * чтобы автозагрузка классов позволила настроить перехват логирования
  */
-require_once $_SERVER["DOCUMENT_ROOT"] . '/local/php_interface/vendor/autoload.php';
+require_once dirname(__DIR__, 2) . '/vendor/autoload.php';
 
-require_once $_SERVER["DOCUMENT_ROOT"] . '/bitrix/php_interface/local.env.php';
+require_once dirname(__DIR__) . '/bitrix/php_interface/local.env.php';
 
 return [
     'utf_mode'           =>
