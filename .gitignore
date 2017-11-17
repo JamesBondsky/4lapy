@@ -2,6 +2,7 @@
 /upload/
 /.vagrant/
 /local/cache/
+/local/doc/html/
 /local/modules/sprint.migration/
 /local/php_interface/vendor/
 node_modules/
