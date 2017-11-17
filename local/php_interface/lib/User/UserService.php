@@ -2,6 +2,7 @@
 
 namespace FourPaws\User;
 
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\AddResult;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\UpdateResult;
@@ -26,9 +27,9 @@ class UserService
     }
     
     /**
-     * @return \FourPaws\BitrixOrm\Model\User
+     * @return User
      *
-     * @throws \FourPaws\User\Exceptions\NotFoundException
+     * @throws NotFoundException
      */
     public function getCurrentUser() : User
     {
@@ -40,9 +41,9 @@ class UserService
     /**
      * @param int $id
      *
-     * @return \FourPaws\BitrixOrm\Model\User
+     * @return User
      *
-     * @throws \FourPaws\User\Exceptions\NotFoundException
+     * @throws NotFoundException
      */
     public function getUserById(int $id) : User
     {
@@ -55,7 +56,7 @@ class UserService
      *
      * @return bool
      */
-    protected function _authenticateById(int $id) : bool
+    protected function authenticateById(int $id) : bool
     {
         global $USER;
         
@@ -67,8 +68,8 @@ class UserService
      *
      * @return string
      *
-     * @throws \FourPaws\User\Exceptions\NotFoundException
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws NotFoundException
+     * @throws ArgumentException
      */
     public function getLoginByRawLogin(string $rawLogin) : string
     {
@@ -99,7 +100,7 @@ class UserService
     /**
      * @param string $rawLogin
      *
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      *
      * @return array
      */
@@ -122,10 +123,10 @@ class UserService
      *
      * @return bool
      *
-     * @throws \FourPaws\User\Exceptions\NotFoundException
-     * @throws \FourPaws\User\Exceptions\WrongPasswordException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \FourPaws\User\Exceptions\TooManyUserFoundException
+     * @throws NotFoundException
+     * @throws WrongPasswordException
+     * @throws ArgumentException
+     * @throws TooManyUserFoundException
      */
     public function login(string $rawLogin, string $password) : bool
     {
@@ -179,7 +180,7 @@ class UserService
     /**
      * @param array $data
      *
-     * @return \Bitrix\Main\Entity\AddResult
+     * @return AddResult
      */
     public static function add(array $data) : AddResult
     {
@@ -201,7 +202,7 @@ class UserService
      * @param mixed $primary
      * @param array $data
      *
-     * @return \Bitrix\Main\Entity\UpdateResult
+     * @return UpdateResult
      */
     public static function update($primary, array $data) : UpdateResult
     {
@@ -220,9 +221,9 @@ class UserService
     /**
      * @param string $login
      *
-     * @throws \FourPaws\User\Exceptions\NotFoundException
-     * @throws \FourPaws\User\Exceptions\TooManyUserFoundException
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws NotFoundException
+     * @throws TooManyUserFoundException
+     * @throws ArgumentException
      */
     public function checkLoginCount(string $login)
     {
@@ -257,11 +258,11 @@ class UserService
      * @param string $password
      * @param string $confirmPassword
      *
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \FourPaws\User\Exceptions\NotFoundException
-     * @throws \FourPaws\User\Exceptions\TooManyUserFoundException
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws TooManyUserFoundException
      *
-     * @return \Bitrix\Main\Entity\UpdateResult
+     * @return UpdateResult
      */
     public function changePassword(
         string $rawLogin,
@@ -289,12 +290,15 @@ class UserService
      * @param int    $userId
      * @param string $rawPhone
      *
-     * @return \Bitrix\Main\Entity\UpdateResult
+     * @return UpdateResult
      */
     public function verifyPhone(int $userId, string $rawPhone) : UpdateResult
     {
         try {
             $phone = Utils::normalizePhone($rawPhone);
+            /**
+             * @todo implement this
+             */
         } catch (WrongPhoneNumberException $e) {
             /**
              * @todo впилить проброс исключения
@@ -314,14 +318,14 @@ class UserService
      * @param int    $userId
      * @param string $rawEmail
      *
-     * @return \Bitrix\Main\Entity\UpdateResult
+     * @return UpdateResult
      */
     public function verifyEmail(int $userId, string $rawEmail) : UpdateResult
     {
         $email = filter_var($rawEmail, FILTER_SANITIZE_EMAIL);
         
         /**
-         * @todo implement $this
+         * @todo implement this
          */
         $result = new UpdateResult();
         $result->setPrimary($userId);

@@ -47,7 +47,7 @@ services:
     class: FourPaws\External\ManzanaService
     arguments: ['@jms_serializer', '@health.service']
 
-  expertender.service:
+  expertsender.service:
     class: FourPaws\External\ExpertsenderService
 
   product.autosort.service:
