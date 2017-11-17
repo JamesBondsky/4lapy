@@ -44,12 +44,11 @@ $markup = PawsApplication::markup();
                                                              'ALLOW_MULTI_SELECT'    => 'N',
                                                          ],
                                                          false); ?>
-                    <?php
-                    /**
-                     * @todo Подписка. Заменить компонентом и удалить файл.
-                     */
-                    require_once 'temp_subscription.php';
-                    ?>
+                    <?php $APPLICATION->IncludeComponent('fourpaws:expertsender.form',
+                                                         '',
+                                                         [],
+                                                         false,
+                                                         ['HIDE_ICONS' => 'Y']); ?>
                 </div>
                 <?php require_once 'blocks/footer/application_links.php'; ?>
             </div>
