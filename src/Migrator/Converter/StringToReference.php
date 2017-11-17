@@ -29,6 +29,11 @@ class StringToReference extends AbstractConverter
     private $returnFieldName = '';
     
     /**
+     * @var DataManager
+     */
+    private $dataClass;
+    
+    /**
      * @param string $returnFieldName
      */
     public function setReturnFieldName(string $returnFieldName)
@@ -53,11 +58,6 @@ class StringToReference extends AbstractConverter
     {
         $this->fieldToSearch = $fieldToSearch;
     }
-    
-    /**
-     * @var DataManager
-     */
-    private $dataClass;
     
     /**
      * @param string $dataClassName
