@@ -53,3 +53,11 @@ services:
   jms_serialized_name_annotation_strategy:
     class: JMS\Serializer\Naming\SerializedNameAnnotationStrategy
     arguments: ['@jms_identical_property_naming_strategy']
+
+  # Fix "FOS Rest Bundle is incompatible with Sensio Framework Extra Bundle v4.0"
+  # @see https://github.com/FriendsOfSymfony/FOSRestBundle/issues/1768
+  sensio_framework_extra.view.listener:
+      alias: Sensio\Bundle\FrameworkExtraBundle\EventListener\TemplateListener
+
+  sensio_framework_extra.converter.listener:
+      alias: Sensio\Bundle\FrameworkExtraBundle\EventListener\ParamConverterListener

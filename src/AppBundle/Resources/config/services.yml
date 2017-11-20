@@ -7,7 +7,7 @@ services:
         autoconfigure: true
         # this means you cannot fetch services directly from the container via $container->get()
         # if you need to do this, you can override this setting on individual services
-        public: false
+        public: true
 
     FourPaws\AppBundle\:
         resource: '../../*'
@@ -20,10 +20,3 @@ services:
 #        public: true
 #        tags: ['controller.service_arguments']
 
-    # Fix "FOS Rest Bundle is incompatible with Sensio Framework Extra Bundle v4.0"
-    # @see https://github.com/FriendsOfSymfony/FOSRestBundle/issues/1768
-    sensio_framework_extra.view.listener:
-        alias: Sensio\Bundle\FrameworkExtraBundle\EventListener\TemplateListener
-
-    sensio_framework_extra.converter.listener:
-        alias: Sensio\Bundle\FrameworkExtraBundle\EventListener\ParamConverterListener
