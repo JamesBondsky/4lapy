@@ -1,0 +1,74 @@
+<?
+$aMenuLinks = Array(
+    Array(
+        "Кошки",
+        "#",
+        Array(),
+        Array(),
+        ""
+    ),
+    Array(
+        "Собаки",
+        "#",
+        Array(),
+        Array(),
+        ""
+    ),
+    Array(
+        "Грызуны и хорьки",
+        "#",
+        Array(),
+        Array(),
+        ""
+    ),
+    Array(
+        "Птицы",
+        "#",
+        Array(),
+        Array(),
+        ""
+    ),
+    Array(
+        "Рыбы",
+        "#",
+        Array(),
+        Array(),
+        ""
+    ),
+    Array(
+        "Рептилии",
+        "#",
+        Array(),
+        Array(),
+        ""
+    ),
+    Array(
+        "Ветеринарная аптека",
+        "#",
+        Array(),
+        Array(),
+        ""
+    ),
+    Array(
+        "Котята",
+        "#",
+        Array(),
+        Array(),
+        ""
+    ),
+    Array(
+        "Щенки",
+        "#",
+        Array(),
+        Array(),
+        ""
+    ),
+    Array(
+        "От блох и клещей",
+        "#",
+        Array(),
+        Array(),
+        ""
+    ),
+);
+?>

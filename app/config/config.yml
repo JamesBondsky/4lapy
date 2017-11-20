@@ -1,0 +1,100 @@
+---
+
+imports:
+  - { resource: parameters.yml }
+
+framework:
+  esi: { enabled: true }
+  translator: { fallbacks: ['%locale%'] }
+  secret: '%secret%'
+  default_locale: '%locale%'
+  router:
+    resource: '%kernel.project_dir%/app/config/routes/routes.yml'
+    strict_requirements: ~
+  form: ~
+  csrf_protection: ~
+  validation: { enable_annotations: true }
+  serializer: { enable_annotations: true }
+  trusted_hosts: ~
+  session:
+    # https://symfony.com/doc/current/reference/configuration/framework.html#handler-id
+    storage_id: session.storage.php_bridge
+    handler_id: ~
+  fragments: ~
+  http_method_override: true
+  php_errors:
+    log: true
+  templating:
+    engines: ['php', 'twig']
+
+circle_rest_client:
+  curl:
+    defaults:
+      CURLOPT_HTTPHEADER: ['Content-Type: application/json']
+      CURLOPT_FAILONERROR: true
+      CURLOPT_FORBID_REUSE: true
+      CURLOPT_FRESH_CONNECT: true
+      CURLOPT_USERPWD: old4lapy:8J7tQHPpN9
+
+fos_rest:
+  body_listener: true
+  body_converter:
+    enabled: true
+  view:
+    view_response_listener: true
+  serializer:
+      serialize_null: true
+  format_listener:
+    rules:
+      - { path: '^/mobile_app_v2',  priorities: ['json'], fallback_format: json, prefer_extension: true }
+  disable_csrf_role:    null
+
+nelmio_api_doc:
+  models: { use_jms: false }
+  routes:
+    path_patterns:
+      - ^/api
+  documentation:
+    info:
+      title: 4lapy
+      description: 4 lapy mobile api
+      version: 1.0.0
+
+twig:
+    debug: '%kernel.debug%'
+    strict_variables: '%kernel.debug%'
+
+old_sound_rabbit_mq:
+    connections:
+        default:
+            host:     "%env(AMQP_HOST)%"
+            port:     "%env(AMQP_PORT)%"
+            user:     "%env(AMQP_USER)%"
+            password: "%env(AMQP_PASSWORD)%"
+            vhost:    '%env(AMQP_VHOST)%'
+            lazy:     true
+            connection_timeout: 3
+            read_write_timeout: 3
+            keepalive: false
+            heartbeat: 0
+            #Использование сокета быстрее, но он не работает из-за бага "Error reading data. Received 0 instead of expected 7 bytes"
+            #See https://github.com/php-amqplib/php-amqplib/issues/72
+            #See https://github.com/php-amqplib/RabbitMqBundle/issues/447
+            use_socket: false
+
+    producers:
+      catalog_sync:
+        connection: default
+        exchange_options: {name: "catalog_sync", type: "direct"}
+
+    consumers:
+      catalog_sync:
+        connection: default
+        exchange_options: {name: "catalog_sync", type: "direct"}
+        queue_options: {name: "catalog_sync"}
+        callback: search.sync_consumer
+
+jms_serializer:
+  property_naming:
+    id: jms_serialized_name_annotation_strategy
+    enable_cache: true

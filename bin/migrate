@@ -1,4 +1,4 @@
 #!/usr/bin/env php
 <?php
 
-require_once __DIR__ . '/../local/modules/sprint.migration/tools/migrate.php';
+require_once dirname(__DIR__) . '/common/local/modules/sprint.migration/tools/migrate.php';

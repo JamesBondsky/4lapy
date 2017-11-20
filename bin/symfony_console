@@ -8,10 +8,10 @@ use Symfony\Component\Console\Input\ArgvInput;
 umask(0000);
 set_time_limit(0);
 
-$_SERVER['DOCUMENT_ROOT'] = dirname(__DIR__);
+$_SERVER['DOCUMENT_ROOT'] = dirname(__DIR__) . '/web';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include.php';
-require_once __DIR__ . '/../bitrix/php_interface/local.env.php';
-require_once __DIR__ . '/../local/php_interface/vendor/autoload.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/php_interface/local.env.php';
+require_once dirname(__DIR__) . '/vendor/autoload.php';
 
 $fourPawsApp = Application::getInstance();
 $input = new ArgvInput();
