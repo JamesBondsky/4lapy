@@ -16,7 +16,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class GenerateHlBlockServicesDefinition extends Command implements LoggerAwareInterface
 {
-    const HL_BLOCK_SERVICE_YML_FILE_PATH = 'local/php_interface/config/services/bitrix-hl-blocks.yml';
+    const HL_BLOCK_SERVICE_YML_FILE_PATH = '../app/config/services/bitrix-hl-blocks.yml';
 
     use LoggerAwareTrait;
 
