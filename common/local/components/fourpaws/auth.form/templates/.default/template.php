@@ -33,7 +33,7 @@ use FourPaws\Decorators\SvgDecorator;
                 <?= new SvgDecorator('icon-arrow-down', 10, 12) ?>
             </span>
         </a>
-        <?php if ($arResult['MODE'] === FourPawsUserComponent::MODE_FORM) {
+        <?php if ($arResult['MODE'] === FourPawsAuthFormComponent::MODE_FORM) {
             <<<example
     <form name="login_form">
         <input name="login" type="text" placeholder="Логин"><br>
