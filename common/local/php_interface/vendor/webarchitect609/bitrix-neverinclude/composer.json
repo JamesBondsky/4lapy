@@ -1,0 +1,26 @@
+{
+  "name": "webarchitect609/bitrix-neverinclude",
+  "description": "Automatic Bitrix modules loader helps you forget about CModule::IncludeModule and Loader::includeModule FOREVER!",
+  "homepage": "https://github.com/webarchitect609/bitrix-neverinclude",
+  "keywords": [
+    "bitrix",
+    "module",
+    "autoloading"
+  ],
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Sergey Gripinskiy",
+      "email": "web-architect@mail.ru"
+    }
+  ],
+  "require": {
+    "php": ">=5.5.0",
+    "webarchitect609/bitrix-cache": "^1.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "WebArch\\BitrixNeverInclude\\": "src/main"
+    }
+  }
+}

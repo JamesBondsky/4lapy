@@ -10,27 +10,60 @@
     {
       "name": "Panychev Dmitry",
       "email": "panychev@adv.ru"
+    },
+    {
+      "name": "Igor Pinchuk",
+      "email": "pinchuk@adv.ru"
     }
   ],
   "minimum-stability": "stable",
-  "config": {
-    "vendor-dir": "local/php_interface/vendor"
-  },
   "autoload": {
     "psr-4": {
-      "FourPaws\\": "local/php_interface/lib",
-      "FourPaws\\Test\\": "local/php_interface/test"
+      "FourPaws\\": "src"
     }
   },
+  "autoload-dev": {
+    "psr-4": {
+      "FourPaws\\Test\\": "tests"
+    },
+    "files": [
+      "vendor/symfony/symfony/src/Symfony/Component/VarDumper/Resources/functions/dump.php"
+    ]
+  },
+  "config": {
+    "sort-packages": true
+  },
   "extra": {
+    "symfony-app-dir": "app",
+    "symfony-bin-dir": "bin",
+    "symfony-var-dir": "var",
+    "symfony-web-dir": "web",
+    "symfony-tests-dir": "tests",
     "symfony-assets-install": "relative",
+    "incenteev-parameters": {
+      "file": "app/config/parameters.yml"
+    },
+    "somework/composer-symlinks": {
+      "symlinks": {
+        "common/local": "web/local",
+        "common/bitrix": "web/bitrix",
+        "common/upload": "web/upload",
+        "common/static": "web/static",
+        "common/local/.settings.php": "common/bitrix/.settings.php",
+        "common/local/php_interface/dbconn.php": "common/bitrix/php_interface/dbconn.php",
+        "common/local/php_interface/after_connect.php": "common/bitrix/php_interface/after_connect.php",
+        "common/local/php_interface/after_connect_d7.php": "common/bitrix/php_interface/after_connect_d7.php"
+      },
+      "skip-missing-target": true
+    },
     "installer-paths": {
-      "local/modules/{$name}/": [
+      "common/local/modules/{$name}/": [
         "type:bitrix-module"
       ]
     }
   },
   "require": {
+    "roave/security-advisories": "dev-master",
     "adv/bitrix-tools": "^1.0",
     "andreyryabin/sprint.migration": "^2.3",
     "ci/restclientbundle": "~2.0.2",
@@ -48,10 +81,12 @@
     "doctrine/collections": "^1.4",
     "jms/serializer": "^1.9",
     "ruflin/elastica": "^5.3",
-    "sensio/framework-extra-bundle": "^5.0"
+    "sensio/framework-extra-bundle": "^5.0",
+    "somework/composer-symlinks": "^0.3.0"
   },
   "require-dev": {
-    "phpunit/phpunit": "^5.7"
+    "phpunit/phpunit": "^5.7",
+    "friendsofphp/php-cs-fixer": "@stable"
   },
   "repositories": [
     {
@@ -60,7 +95,11 @@
     }
   ],
   "scripts": {
-    "pre-install-cmd": "\\FourPaws\\DeployScripts::installBitrixStubs",
-    "pre-update-cmd": "\\FourPaws\\DeployScripts::installBitrixStubs"
+    "post-install-cmd": [
+      "SomeWork\\Composer\\Symlinks::create"
+    ],
+    "post-update-cmd": [
+      "SomeWork\\Composer\\Symlinks::create"
+    ]
   }
 }

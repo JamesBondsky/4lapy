@@ -3,8 +3,9 @@
 
 use FourPaws\Console\ConsoleApp;
 
-$DOCUMENT_ROOT = realpath(__DIR__ . '/..');
+$PROJECT_ROOT = dirname(__DIR__);
+$_SERVER['DOCUMENT_ROOT'] = $PROJECT_ROOT . '/web';
 
-require_once $DOCUMENT_ROOT . '/local/php_interface/vendor/autoload.php';
+require_once $PROJECT_ROOT . '/vendor/autoload.php';
 
-(new ConsoleApp($DOCUMENT_ROOT))->run();
+(new ConsoleApp($_SERVER['DOCUMENT_ROOT']))->run();
