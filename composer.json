@@ -49,10 +49,10 @@
         "common/bitrix": "web/bitrix",
         "common/upload": "web/upload",
         "common/static": "web/static",
-        "common/local/php_interface/migration_sources/bitrix-stub/.settings.php": "common/bitrix/.settings.php",
-        "common/local/php_interface/migration_sources/bitrix-stub/dbconn.php": "common/bitrix/php_interface/dbconn.php",
-        "common/local/php_interface/migration_sources/bitrix-stub/after_connect.php": "common/bitrix/php_interface/after_connect.php",
-        "common/local/php_interface/migration_sources/bitrix-stub/after_connect_d7.php": "common/bitrix/php_interface/after_connect_d7.php"
+        "common/local/.settings.php": "common/bitrix/.settings.php",
+        "common/local/php_interface/dbconn.php": "common/bitrix/php_interface/dbconn.php",
+        "common/local/php_interface/after_connect.php": "common/bitrix/php_interface/after_connect.php",
+        "common/local/php_interface/after_connect_d7.php": "common/bitrix/php_interface/after_connect_d7.php"
       },
       "skip-missing-target": true
     },
