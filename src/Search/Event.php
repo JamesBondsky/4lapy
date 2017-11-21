@@ -11,8 +11,6 @@ use FourPaws\App\ServiceHandlerInterface;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Search\Model\CatalogSyncMsg;
-use JMS\Serializer\Serializer;
-use OldSound\RabbitMqBundle\RabbitMq\Producer;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Throwable;
@@ -22,23 +20,13 @@ class Event implements ServiceHandlerInterface, LoggerAwareInterface
     use LoggerAwareTrait;
 
     /**
-     * @var Producer
+     * @var SearchService
      */
-    protected $catalogSyncProducer;
-
-    /**
-     * @var Serializer
-     */
-    protected $serializer;
+    protected $searchService;
 
     public function __construct()
     {
-        $this->catalogSyncProducer = Application::getInstance()
-                                                ->getContainer()
-                                                ->get('old_sound_rabbit_mq.catalog_sync_producer');
-        $this->serializer = Application::getInstance()
-                                       ->getContainer()
-                                       ->get('jms_serializer');
+        $this->searchService = Application::getInstance()->getContainer()->get('search.service');
         $this->setLogger(LoggerFactory::create('CatalogEvent'));
     }
 
@@ -55,6 +43,8 @@ class Event implements ServiceHandlerInterface, LoggerAwareInterface
             $eventManager->addEventHandler('iblock', $eventType, [$myself, 'updateInElastic']);
         }
         $eventManager->addEventHandler('iblock', 'OnAfterIBlockElementDelete', [$myself, 'deleteInElastic']);
+
+        //TODO При обновлении цены, остатков, сущности товара в торговом каталоге тоже нужно обновлять продукт
     }
 
     /**
@@ -116,12 +106,7 @@ class Event implements ServiceHandlerInterface, LoggerAwareInterface
      */
     private function publishCatSyncMsg(string $action, string $entityType, int $entityId)
     {
-        $this->catalogSyncProducer->publish(
-            $this->serializer->serialize(
-                new CatalogSyncMsg($action, $entityType, $entityId),
-                'json'
-            )
-        );
+        $this->searchService->publishSyncMessage(new CatalogSyncMsg($action, $entityType, $entityId));
     }
 
     /**

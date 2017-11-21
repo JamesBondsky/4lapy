@@ -3,11 +3,11 @@
 namespace FourPaws\Catalog\Model;
 
 use DateTimeImmutable;
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\BitrixOrm\Collection\HlbReferenceItemCollection;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\BitrixOrm\Model\TextContent;
-use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Query\BrandQuery;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\ReferenceUtils;
@@ -19,11 +19,15 @@ use JMS\Serializer\Annotation\Type;
  * Class Product
  * @package FourPaws\Catalog\Model
  *
+ *
+ * TODO Не хватает цен
+ * TODO Не хватает привязок ко всем разделам инфоблока
  */
 class Product extends IblockElement
 {
     /**
      * @var bool
+     * @Type("bool")
      * @Groups({"elastic"})
      */
     protected $active = true;
@@ -53,6 +57,7 @@ class Product extends IblockElement
 
     /**
      * @var string
+     * @Type("string")
      * @Groups({"elastic"})
      */
     protected $NAME = '';
@@ -66,36 +71,42 @@ class Product extends IblockElement
 
     /**
      * @var string
+     * @Type("string")
      * @Groups({"elastic"})
      */
     protected $PREVIEW_TEXT = '';
 
     /**
      * @var string
+     * @Type("string")
      * @Groups({"elastic"})
      */
     protected $PREVIEW_TEXT_TYPE = '';
 
     /**
      * @var string
+     * @Type("string")
      * @Groups({"elastic"})
      */
     protected $DETAIL_TEXT = '';
 
     /**
      * @var string
+     * @Type("string")
      * @Groups({"elastic"})
      */
     protected $DETAIL_TEXT_TYPE = '';
 
     /**
      * @var string
+     * @Type("string")
      * @Groups({"elastic"})
      */
     protected $CANONICAL_PAGE_URL = '';
 
     /**
      * @var string
+     * @Type("string")
      * @Groups({"elastic"})
      */
     protected $DETAIL_PAGE_URL = '';
@@ -123,6 +134,7 @@ class Product extends IblockElement
 
     /**
      * @var string[]
+     * @Type("string")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_FOR_WHO = [];
@@ -134,6 +146,7 @@ class Product extends IblockElement
 
     /**
      * @var string[]
+     * @Type("array")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_PET_SIZE = [];
@@ -145,6 +158,7 @@ class Product extends IblockElement
 
     /**
      * @var string[]
+     * @Type("array")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_PET_AGE = [];
@@ -156,6 +170,7 @@ class Product extends IblockElement
 
     /**
      * @var string[]
+     * @Type("array")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_PET_AGE_ADDITIONAL = [];
@@ -167,6 +182,7 @@ class Product extends IblockElement
 
     /**
      * @var string
+     * @Type("string")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_PET_BREED = '';
@@ -178,6 +194,7 @@ class Product extends IblockElement
 
     /**
      * @var string
+     * @Type("string")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_PET_GENDER = '';
@@ -189,6 +206,7 @@ class Product extends IblockElement
 
     /**
      * @var string
+     * @Type("string")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_CATEGORY = '';
@@ -200,6 +218,7 @@ class Product extends IblockElement
 
     /**
      * @var string
+     * @Type("string")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_PURPOSE = '';
@@ -214,6 +233,7 @@ class Product extends IblockElement
 
     /**
      * @var string[]
+     * @Type("array")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_LABEL = [];
@@ -242,6 +262,7 @@ class Product extends IblockElement
 
     /**
      * @var string[]
+     * @Type("array")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_TRADE_NAME = [];
@@ -253,6 +274,7 @@ class Product extends IblockElement
 
     /**
      * @var string[]
+     * @Type("array")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_MAKER = [];
@@ -264,6 +286,7 @@ class Product extends IblockElement
 
     /**
      * @var string[]
+     * @Type("array")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_MANAGER_OF_CATEGORY = [];
@@ -275,6 +298,7 @@ class Product extends IblockElement
 
     /**
      * @var string[]
+     * @Type("array")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_MANUFACTURE_MATERIAL = [];
@@ -286,6 +310,7 @@ class Product extends IblockElement
 
     /**
      * @var string[]
+     * @Type("array")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_SEASON_CLOTHES = [];
@@ -297,6 +322,7 @@ class Product extends IblockElement
 
     /**
      * @var string
+     * @Type("string")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_WEIGHT_CAPACITY_PACKING = '';
@@ -317,6 +343,7 @@ class Product extends IblockElement
 
     /**
      * @var string
+     * @Type("string")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_PET_TYPE = '';
@@ -340,6 +367,7 @@ class Product extends IblockElement
 
     /**
      * @var string
+     * @Type("string")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_FEED_SPECIFICATION = '';
@@ -358,6 +386,7 @@ class Product extends IblockElement
 
     /**
      * @var string
+     * @Type("string")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_CONSISTENCE = '';
@@ -369,6 +398,7 @@ class Product extends IblockElement
 
     /**
      * @var string[]
+     * @Type("array")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_FLAVOUR = [];
@@ -380,6 +410,7 @@ class Product extends IblockElement
 
     /**
      * @var string[]
+     * @Type("array")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_FEATURES_OF_INGREDIENTS = [];
@@ -391,6 +422,7 @@ class Product extends IblockElement
 
     /**
      * @var string[]
+     * @Type("array")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_PRODUCT_FORM = [];
@@ -402,6 +434,7 @@ class Product extends IblockElement
 
     /**
      * @var string[]
+     * @Type("array")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_TYPE_OF_PARASITE = [];
@@ -413,24 +446,28 @@ class Product extends IblockElement
 
     /**
      * @var string
+     * @Type("string")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_YML_NAME = '';
 
     /**
      * @var string
+     * @Type("string")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_SALES_NOTES = '';
 
     /**
      * @var string
+     * @Type("string")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_GROUP = '';
 
     /**
      * @var string
+     * @Type("string")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_GROUP_NAME = '';
@@ -444,6 +481,7 @@ class Product extends IblockElement
 
     /**
      * @var array
+     * @Type("array")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_SPECIFICATIONS = [];
@@ -454,8 +492,8 @@ class Product extends IblockElement
     protected $specifications;
 
     /**
-     * @var OfferCollection
-     * @Type("FourPaws\Catalog\Collection\OfferCollection")
+     * @var ArrayCollection
+     * @Type("ArrayCollection<FourPaws\Catalog\Model\Offer>")
      * @Accessor(getter="getOffers")
      * @Groups({"elastic"})
      */
@@ -469,14 +507,38 @@ class Product extends IblockElement
      */
     protected $suggest;
 
+    public function __construct(array $fields = [])
+    {
+        parent::__construct($fields);
+        /**
+         * Если свойство не заполнено, битрикс для его значения возвращает bool false. А если это заполненное свойство
+         * типа "HTML/текст", то его значение - массив из двух строк. Однако, mapping для Elasticsearch не может
+         * одновременно относиться к свойству и как к boolean и как к объекту.
+         */
+        if (false === $this->PROPERTY_SPECIFICATIONS) {
+            $this->PROPERTY_SPECIFICATIONS = [
+                'TYPE' => '',
+                'TEXT' => '',
+            ];
+        }
+    }
+
     /**
-     * @return OfferCollection
+     * @internal Специально для Elasitcsearch храним коллецию без ключей, т.к. ассоциативный массив с торговыми
+     * предложениями туда передавать нельзя: это будет объект, а не массив объектов.
+     *
+     * @return ArrayCollection
      */
-    public function getOffers(): OfferCollection
+    public function getOffers(): ArrayCollection
     {
         if (is_null($this->offers)) {
-            $this->offers = (new OfferQuery())->withFilterParameter('=PROPERTY_CML2_LINK', $this->getId())
-                                              ->exec();
+            $this->offers = new ArrayCollection(
+                array_values(
+                    (new OfferQuery())->withFilterParameter('=PROPERTY_CML2_LINK', $this->getId())
+                                      ->exec()
+                                      ->toArray()
+                )
+            );
         }
 
         return $this->offers;
@@ -971,7 +1033,7 @@ class Product extends IblockElement
      */
     public function getSpecifications()
     {
-        if (is_null($this->specifications)) {
+        if (!($this->specifications instanceof TextContent)) {
             $this->specifications = new TextContent($this->PROPERTY_SPECIFICATIONS);
         }
 
@@ -983,22 +1045,27 @@ class Product extends IblockElement
      *
      * @return string[]
      */
-    protected function getSuggest()
+    public function getSuggest()
     {
         if (is_null($this->suggest)) {
-            $fullName = $this->getFullName();
-            $this->suggest = explode(' ', $fullName);
-            $suggest[] = $fullName;
+            $fullName = $this->getName();
+            $suggest = explode(' ', $fullName);
+            array_unshift($suggest, $fullName);
 
             /** @var Offer $offer */
             foreach ($this->getOffers() as $offer) {
                 $suggest[] = $offer->getSkuId();
+                if (is_array($offer->getBarcodes())) {
+                    foreach ($offer->getBarcodes() as $barcode) {
+                        $suggest[] = $barcode;
+                    }
+                }
             }
 
-            $this->suggest = array_filter(
-                $this->suggest,
+            $suggest = array_filter(
+                $suggest,
                 function ($token) {
-                    return trim($token) != '';
+                    return trim($token) != '' && strlen($token) >= 3;
                 }
             );
 
@@ -1007,18 +1074,10 @@ class Product extends IblockElement
              * иначе json_encode в недрах пакета elastica превратит его в объект, а Elasticsearch упадёт с ошибкой
              * `java.lang.IllegalArgumentException: unknown field name [0], must be one of [input, weight, contexts]`
              */
-            $this->suggest = array_values($this->suggest);
+            $this->suggest = array_values(array_unique($suggest));
 
         }
 
         return $this->suggest;
-    }
-
-    /**
-     * @return string
-     */
-    private function getFullName(): string
-    {
-        return trim($this->getBrandName() . ' ' . $this->getName());
     }
 }

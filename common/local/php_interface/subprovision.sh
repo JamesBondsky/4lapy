@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -eu
+
 printRed () {
     printf "\e[0;31m$1\e[0m\n"
 }
@@ -19,9 +21,10 @@ printYellow () {
 # Basic variables
 SITE_URI="http://4lapy.vag"
 
-PROJECT_ROOT="/home/vagrant/htdocs"
+PROJECT_ROOT="/home/vagrant/project"
 COMMON_ROOT="${PROJECT_ROOT}/common"
 DOCUMENT_ROOT="${PROJECT_ROOT}/web"
+COMPOSER_ROOT="${PROJECT_ROOT}/vendor"
 SUBPROV_ROOT="/home/vagrant/.subprovision"
 LOCAL_ENV_FILE="${COMMON_ROOT}/bitrix/php_interface/local.env.php"
 BITRIX_FOLDER_CHECK="${COMMON_ROOT}/bitrix/index.php"
@@ -48,14 +51,15 @@ else
 fi
 
 # Refresh local.env.php
-printBlue "Refresh local env file."
+printBlue "Refresh ${LOCAL_ENV_FILE} file."
 sed -re "s/^#/\/\//g" "${COMMON_ROOT}/local/php_interface/.env" \
     | sed -re "s/^[[:alnum:]_]+=.+$/putenv\('\0'\);/ig" \
     | sed -re "1s/^.*$/<?php \n\n\0/" \
     | sed -re "\$s/^.*$/\0\n/" > "${LOCAL_ENV_FILE}"
+printGreen "Done."
 
 # Run composer install for the first time
-if (shopt -s nullglob dotglob; f=(/home/vagrant/htdocs/local/php_interface/vendor/*); ((${#f[@]}))) ; then
+if (shopt -s nullglob dotglob; f=(${COMPOSER_ROOT}*); ((${#f[@]}))) ; then
     printGreen "Composer folder is OKay."
 else
     printRed "Need composer packages first install"

@@ -1,7 +1,7 @@
 /common/bitrix/
 /common/upload/
 /.vagrant/
-/local/cache/
+/common/local/cache/
 /common/local/doc/html/
 /common/local/modules/sprint.migration/
 /vendor/
@@ -23,6 +23,7 @@ node_modules/
 /web/bitrix
 /web/static
 /web/local
+/web/upload
 
 ### Php Unit
 phpunit.xml

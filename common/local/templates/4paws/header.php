@@ -88,8 +88,7 @@ $markup = PawsApplication::markup();
             <div class="b-header__menu js-minimal-menu">
                 <?php
                 /**
-                 * @todo Основное меню. Заменить компонентом и удалить файл.
-                 *       Разница между temp_header_menu.php и temp_menu.php пока неясна.
+                 * @todo Основное меню. Чать без dropdown Заменить компонентом и удалить файл.
                  */
                 require_once 'temp_header_menu.php';
                 ?>
@@ -110,9 +109,8 @@ $markup = PawsApplication::markup();
     </header>
     <?php
     /**
-     * @todo Меню. Заменить компонентом и удалить файл.
-     *       Разница между temp_header_menu.php и temp_menu.php пока неясна.
+     * @todo добавить @see на место установки header_dropdown_menu
      */
-    require_once 'temp_menu.php';
+    $APPLICATION->ShowViewContent('header_dropdown_menu');
     ?>
     <main class="b-wrapper" role="main">

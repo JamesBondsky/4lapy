@@ -6,12 +6,8 @@ use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Application;
 
-class FourPawsAuthFormComponent extends \CBitrixComponent
+class FourPawsExpertsenderFormComponent extends \CBitrixComponent
 {
-    const MODE_PROFILE = 0;
-    
-    const MODE_FORM    = 1;
-    
     /** {@inheritdoc} */
     public function onPrepareComponentParams($params) : array
     {
@@ -41,47 +37,13 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      */
     protected function prepareResult()
     {
-        global $USER;
-        
-        $this->arResult['MODE'] = $USER->IsAuthorized() ? self::MODE_PROFILE : self::MODE_FORM;
-        
-        if ($this->arResult['MODE'] === self::MODE_FORM) {
-            $this->setAuthSocialServices();
-        } else {
-            $this->setUser();
-        }
-        
-        return $this;
-    }
-    
-    /**
-     * Set current user and user service
-     *
-     * @throws SystemException
-     */
-    protected function setUser()
-    {
         try {
-            $userService = Application::getInstance()->getContainer()->get('user.service');
-    
-            $this->arResult['userService'] = $userService;
-            $this->arResult['user']        = $userService->getCurrentUser();
+            $userService            = Application::getInstance()->getContainer()->get('user.service');
+            $this->arResult['user'] = $userService->getCurrentUser();
         } catch (\Exception $e) {
             throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
         }
         
-        return $this;
-    }
-    
-    /**
-     * Set active social services
-     *
-     * @return $this
-     */
-    protected function setAuthSocialServices()
-    {
-        $this->arResult['socialServices'] = (new CSocServAuthManager())->GetActiveAuthServices([]);
-    
         return $this;
     }
 }

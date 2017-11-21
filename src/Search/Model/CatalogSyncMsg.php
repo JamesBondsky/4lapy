@@ -103,4 +103,51 @@ class CatalogSyncMsg
         return $this;
     }
 
+    /**
+     * @return bool
+     */
+    public function isForProductEntity(): bool
+    {
+        return self::ENTITY_TYPE_PRODUCT === $this->getEntityType();
+    }
+
+    /**
+     * @return bool
+     */
+    public function isForOfferEntity(): bool
+    {
+        return self::ENTITY_TYPE_OFFER === $this->getEntityType();
+    }
+
+    /**
+     * @return bool
+     */
+    public function isForBrandEntity(): bool
+    {
+        return self::ENTITY_TYPE_BRAND === $this->getEntityType();
+    }
+
+    /**
+     * @return bool
+     */
+    public function isForAddAction(): bool
+    {
+        return self::ACTION_ADD === $this->getAction();
+    }
+
+    /**
+     * @return bool
+     */
+    public function isForUpdateAction(): bool
+    {
+        return self::ACTION_UPDATE === $this->getAction();
+    }
+
+    /**
+     * @return bool
+     */
+    public function isForDeleteAction(): bool
+    {
+        return self::ACTION_DELETE === $this->getAction();
+    }
 }

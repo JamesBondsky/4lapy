@@ -4,8 +4,17 @@ namespace FourPaws\Search;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Elastica\Client;
+use Elastica\Document;
+use Elastica\Result;
+use FourPaws\Catalog\Model\Product;
+use FourPaws\Search\Enum\DocumentType;
+use InvalidArgumentException;
+use JMS\Serializer\DeserializationContext;
+use JMS\Serializer\SerializationContext;
+use JMS\Serializer\Serializer;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
+use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\EnvNotFoundException;
 
 class Factory
@@ -13,6 +22,16 @@ class Factory
     const ENV_HOST = 'ELS_HOST';
 
     const ENV_PORT = 'ELS_PORT';
+
+    /**
+     * @var Serializer
+     */
+    private $serializer;
+
+    public function __construct(Serializer $serializer)
+    {
+        $this->serializer = $serializer;
+    }
 
     /**
      * @param array $configParams
@@ -58,6 +77,52 @@ class Factory
         }
 
         return $client;
+    }
+
+    /**
+     * @param Product $product
+     *
+     * @return Document
+     */
+    public function makeProductDocument(Product $product)
+    {
+        return new Document(
+            $product->getId(),
+            $this->serializer->serialize(
+                $product,
+                'json',
+                SerializationContext::create()->setGroups(['elastic'])
+            ),
+            DocumentType::PRODUCT
+        );
+    }
+
+    public function makeProductObject(Result $result)
+    {
+        if (DocumentType::PRODUCT !== $result->getType()) {
+            throw new InvalidArgumentException(
+                sprintf(
+                    'Ожидается тип документа `%s` , а получен `%s`',
+                    DocumentType::PRODUCT,
+                    $result->getType()
+                )
+            );
+        }
+
+        $source = json_encode($result->getSource());
+
+        $product = $this->serializer->deserialize(
+            $source,
+            Product::class,
+            'json',
+            DeserializationContext::create()->setGroups(['elastic'])
+        );
+
+        if (!($product instanceof Product)) {
+            throw new RuntimeException('Ошибка десериализации продукта');
+        }
+
+        return $product;
     }
 
 }

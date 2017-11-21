@@ -43,6 +43,6 @@ Vagrant.configure("2") do |config|
       v.cpus = 2
   end
 
-  config.vm.synced_folder ".", "/home/vagrant/htdocs", owner: "vagrant", group: "vagrant", create: true
+  config.vm.synced_folder ".", "/home/vagrant/project", owner: "vagrant", group: "vagrant", create: true
 
 end

@@ -164,3 +164,18 @@ services:
     arguments: ['PetAgeAdditional']
     parent: bx.hlblock.base
 
+  bx.hlblock.storeservices:
+    class: 'StoreServicesTable'
+    arguments: ['StoreServices']
+    parent: bx.hlblock.base
+
+  bx.hlblock.metrostations:
+    class: 'MetroStationsTable'
+    arguments: ['MetroStations']
+    parent: bx.hlblock.base
+
+  bx.hlblock.metroways:
+    class: 'MetroWaysTable'
+    arguments: ['MetroWays']
+    parent: bx.hlblock.base
+

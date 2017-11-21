@@ -49,6 +49,9 @@ class ConsoleApp
 
     private function init()
     {
+        /**
+         * TODO Вынести подключение Битрикса в пакет adv/bitrix-tools ?
+         */
         if (php_sapi_name() != 'cli') {
             die('Can not run in this mode. Bye!');
         }

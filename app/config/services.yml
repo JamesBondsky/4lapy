@@ -15,6 +15,7 @@ services:
 
   search.factory:
     class: FourPaws\Search\Factory
+    arguments: ['@jms_serializer']
 
   elastica.client:
     class: Elastica\Client
@@ -23,10 +24,15 @@ services:
 
   search.sync_consumer:
     class: FourPaws\Search\Consumer\CatalogSyncConsumer
-    arguments: ['@jms_serializer']
+    arguments: ['@jms_serializer', '@search.service']
 
   search.service:
     class: FourPaws\Search\SearchService
+    arguments:
+      - '@elastica.client'
+      - '@jms_serializer'
+      - '@search.factory'
+      - '@old_sound_rabbit_mq.catalog_sync_producer'
 
   user.service:
     class: FourPaws\User\UserService
@@ -41,7 +47,7 @@ services:
     class: FourPaws\External\ManzanaService
     arguments: ['@jms_serializer', '@health.service']
 
-  expertender.service:
+  expertsender.service:
     class: FourPaws\External\ExpertsenderService
 
   product.autosort.service:

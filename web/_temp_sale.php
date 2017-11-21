@@ -44,13 +44,13 @@
                                 <a class="b-weight-container__link js-price active-link"
                                    href="javascript:void(0);"
                                    data-price="100"
-                                   data-image="images/content/royal-canin-2.jpg">4 кг</a>
+                                   data-image="/static/build/images/content/royal-canin-2.jpg">4 кг</a>
                             </li>
                             <li class="b-weight-container__item">
                                 <a class="b-weight-container__link js-price"
                                    href="javascript:void(0);"
                                    data-price="4 199"
-                                   data-image="images/content/abba.png">15 кг</a>
+                                   data-image="/static/build/images/content/abba.png">15 кг</a>
                             </li>
                         </ul>
                     </div>
@@ -111,13 +111,13 @@
                                 <a class="b-weight-container__link js-price active-link"
                                    href="javascript:void(0);"
                                    data-price="2 585"
-                                   data-image="images/content/hills-cat.jpg">3,5 кг</a>
+                                   data-image="/static/build/images/content/hills-cat.jpg">3,5 кг</a>
                             </li>
                             <li class="b-weight-container__item">
                                 <a class="b-weight-container__link js-price"
                                    href="javascript:void(0);"
                                    data-price="2 585"
-                                   data-image="images/content/brit.png">8 кг</a>
+                                   data-image="/static/build/images/content/brit.png">8 кг</a>
                             </li>
                         </ul>
                     </div>
@@ -180,13 +180,13 @@
                                 <a class="b-weight-container__link js-price active-link"
                                    href="javascript:void(0);"
                                    data-price="353"
-                                   data-image="images/content/clean-cat.jpg">5 л</a>
+                                   data-image="/static/build/images/content/clean-cat.jpg">5 л</a>
                             </li>
                             <li class="b-weight-container__item">
                                 <a class="b-weight-container__link js-price"
                                    href="javascript:void(0);"
                                    data-price="915"
-                                   data-image="images/content/pro-plan.jpg">10 л</a>
+                                   data-image="/static/build/images/content/pro-plan.jpg">10 л</a>
                             </li>
                         </ul>
                     </div>
@@ -247,25 +247,25 @@
                                 <a class="b-weight-container__link js-price active-link"
                                    href="javascript:void(0);"
                                    data-price="167"
-                                   data-image="images/content/pro-plan.jpg">400 г</a>
+                                   data-image="/static/build/images/content/pro-plan.jpg">400 г</a>
                             </li>
                             <li class="b-weight-container__item">
                                 <a class="b-weight-container__link js-price"
                                    href="javascript:void(0);"
                                    data-price="167"
-                                   data-image="images/content/bozita.png">1,5 кг</a>
+                                   data-image="/static/build/images/content/bozita.png">1,5 кг</a>
                             </li>
                             <li class="b-weight-container__item">
                                 <a class="b-weight-container__link js-price unavailable-link"
                                    href="javascript:void(0);"
                                    data-price="167"
-                                   data-image="images/content/bozita.png">3 кг</a>
+                                   data-image="/static/build/images/content/bozita.png">3 кг</a>
                             </li>
                             <li class="b-weight-container__item">
                                 <a class="b-weight-container__link js-price"
                                    href="javascript:void(0);"
                                    data-price="5 199"
-                                   data-image="images/content/hills-dog.jpg">10 кг</a>
+                                   data-image="/static/build/images/content/hills-dog.jpg">10 кг</a>
                             </li>
                         </ul>
                     </div>
@@ -325,7 +325,7 @@
                                 <a class="b-weight-container__link js-price active-link"
                                    href="javascript:void(0);"
                                    data-price="3 749"
-                                   data-image="images/content/hills-dog.jpg">12 кг</a>
+                                   data-image="/static/build/images/content/hills-dog.jpg">12 кг</a>
                             </li>
                         </ul>
                     </div>
@@ -382,25 +382,25 @@
                                 <a class="b-weight-container__link js-price active-link"
                                    href="javascript:void(0);"
                                    data-price="167"
-                                   data-image="images/content/bozita.png">400 г</a>
+                                   data-image="/static/build/images/content/bozita.png">400 г</a>
                             </li>
                             <li class="b-weight-container__item">
                                 <a class="b-weight-container__link js-price"
                                    href="javascript:void(0);"
                                    data-price="167"
-                                   data-image="images/content/bozita.png">1,5 кг</a>
+                                   data-image="/static/build/images/content/bozita.png">1,5 кг</a>
                             </li>
                             <li class="b-weight-container__item">
                                 <a class="b-weight-container__link js-price unavailable-link"
                                    href="javascript:void(0);"
                                    data-price="167"
-                                   data-image="images/content/bozita.png">3 кг</a>
+                                   data-image="/static/build/images/content/bozita.png">3 кг</a>
                             </li>
                             <li class="b-weight-container__item">
                                 <a class="b-weight-container__link js-price"
                                    href="javascript:void(0);"
                                    data-price="5 199"
-                                   data-image="images/content/bozita.png">10 кг</a>
+                                   data-image="/static/build/images/content/bozita.png">10 кг</a>
                             </li>
                         </ul>
                     </div>

@@ -3,6 +3,7 @@
 namespace FourPaws\BitrixOrm\Collection;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\BitrixOrm\Model\BitrixArrayItemBase;
 
 /**
  * Class CollectionBase
@@ -28,7 +29,7 @@ abstract class CollectionBase extends ArrayCollection
     {
         foreach ($this->fetchElement() as $element) {
             /**
-             * @var \FourPaws\BitrixOrm\Model\BitrixArrayItemBase
+             * @var BitrixArrayItemBase
              */
             $this->set($element->getId(), $element);
         }
