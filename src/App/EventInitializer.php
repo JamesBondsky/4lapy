@@ -5,6 +5,7 @@ namespace FourPaws\App;
 use Bitrix\Main\EventManager;
 use FourPaws\ProductAutoSort\Event as ProductAutoSortEvent;
 use FourPaws\Search\Event as CatalogEvent;
+use FourPaws\UserProps\Event as UserPropLocationEvent;
 use FourPaws\User\UserServiceHandlers;
 
 /**
@@ -20,6 +21,7 @@ final class EventInitializer
         UserServiceHandlers::class,
         ProductAutoSortEvent::class,
         CatalogEvent::class,
+        UserPropLocationEvent::class,
     ];
 
     /**

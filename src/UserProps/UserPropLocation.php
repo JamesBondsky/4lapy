@@ -9,13 +9,6 @@
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 
-\Bitrix\Main\EventManager::getInstance()->addEventHandler('main',
-                                                          'OnUserTypeBuildList',
-                                                          [
-                                                              'UserPropLocation',
-                                                              'GetUserTypeDescription',
-                                                          ]);
-
 Loc::loadMessages(__FILE__);
 
 class UserPropLocation extends CUserTypeInteger
@@ -124,7 +117,13 @@ class UserPropLocation extends CUserTypeInteger
         $return = '&nbsp;';
         if ($arUserField['EDIT_IN_LIST'] === 'Y') {
             $originalControlName   = $arHtmlControl['NAME'];
-            $arHtmlControl['NAME'] = str_replace(['[',']'], '_', $arHtmlControl['NAME']);
+            $arHtmlControl['NAME'] =
+                str_replace([
+                                '[',
+                                ']',
+                            ],
+                            '_',
+                            $arHtmlControl['NAME']);
             //$settings = static::PrepareSettings($arProperty);
             
             ob_start();
@@ -138,8 +137,8 @@ class UserPropLocation extends CUserTypeInteger
             $APPLICATION->IncludeComponent('adv:sale.location.selector.system',
                                            '',
                                            [
-                                               'CACHE_TYPE' => 'N',
-                                               'CACHE_TIME' => '0',
+                                               'CACHE_TYPE'               => 'N',
+                                               'CACHE_TIME'               => '0',
                                                'INPUT_NAME'               => $tmpInputName,
                                                'SELECTED_IN_REQUEST'      => ['L' => $arHtmlControl['VALUE']],
                                                'PROP_LOCATION'            => 'Y',
@@ -364,6 +363,7 @@ class UserPropLocation extends CUserTypeInteger
     public function GetAdminListEditHTMLMulty($arUserField, $arHtmlControl) : string
     {
         $class = new static();
+        
         return $class->GetEditFormHTMLMulty($arUserField, $arHtmlControl);
     }
     

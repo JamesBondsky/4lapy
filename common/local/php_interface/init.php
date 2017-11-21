@@ -46,16 +46,3 @@ YesNoPropertyType::init();
  * Регистрируем события
  */
 (new EventInitializer())(EventManager::getInstance());
-
-if (file_exists(__DIR__ . '/init/UserPropLocation.php')) {
-    require_once __DIR__ . '/init/UserPropLocation.php';
-}
-
-if (file_exists(__DIR__ . '/init/IblockPropLocation.php')) {
-    require_once __DIR__ . '/init/IblockPropLocation.php';
-}
-
-AddEventHandler('main', 'OnEpilog', 'AddAdminScript');
-function AddAdminScript(){
-    \Bitrix\Main\Page\Asset::getInstance()->addJs('/local/templates/.default/components/bitrix/system.field.edit/sale_location/editScript.js');
-}

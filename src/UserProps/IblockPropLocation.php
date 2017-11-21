@@ -9,13 +9,6 @@
 use Bitrix\Iblock;
 use Bitrix\Main\Localization\Loc;
 
-\Bitrix\Main\EventManager::getInstance()->addEventHandler('iblock',
-                                                          'OnIBlockPropertyBuildList',
-                                                          [
-                                                              'IblockPropLocation',
-                                                              'GetUserTypeDescription',
-                                                          ]);
-
 Loc::loadMessages(__FILE__);
 
 class IblockPropLocation
