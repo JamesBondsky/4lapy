@@ -194,4 +194,52 @@ class SearchService implements LoggerAwareInterface
         return $this->logger;
     }
 
+    /**
+     * @param int $brandId
+     *
+     * @return bool
+     */
+    public function deleteBrand(int $brandId)
+    {
+        $overallResult = true;
+
+        $productSearch = $this->createProductSearch();
+
+        $productSearch->getQuery()
+                      ->setFrom(0)
+                      ->setSize(500)
+                      ->setSource(false)
+                      ->setSort(['_doc'])
+                      ->setParam('query', ['term' => ['brand.ID' => $brandId]]);
+
+        $scroll = $productSearch->scroll();
+
+        foreach ($scroll as $resultSet) {
+
+            $documentsToDelete = [];
+
+            foreach ($resultSet as $result) {
+
+                $documentsToDelete[] = new Document($result->getId());
+
+            }
+
+            $responseSet = $this->getCatalogIndex()->deleteDocuments($documentsToDelete);
+
+            if (!$responseSet->isOk()) {
+                $this->log()->error(
+                    $responseSet->getError(),
+                    [
+                        'brandId' => $brandId,
+                    ]
+                );
+
+                $overallResult = false;
+            }
+
+        }
+
+        return $overallResult;
+    }
+
 }
