@@ -6,12 +6,14 @@
  * Time: 18:22
  */
 
+namespace FourPaws\UserProps;
+
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
-class UserPropLocation extends CUserTypeInteger
+class UserPropLocation extends \CUserTypeInteger
 {
     const USER_TYPE = 'sale_location';
     
@@ -117,13 +119,12 @@ class UserPropLocation extends CUserTypeInteger
         $return = '&nbsp;';
         if ($arUserField['EDIT_IN_LIST'] === 'Y') {
             $originalControlName   = $arHtmlControl['NAME'];
-            $arHtmlControl['NAME'] =
-                str_replace([
-                                '[',
-                                ']',
-                            ],
-                            '_',
-                            $arHtmlControl['NAME']);
+            $arHtmlControl['NAME'] = str_replace([
+                                                     '[',
+                                                     ']',
+                                                 ],
+                                                 '_',
+                                                 $arHtmlControl['NAME']);
             //$settings = static::PrepareSettings($arProperty);
             
             ob_start();
@@ -214,9 +215,13 @@ class UserPropLocation extends CUserTypeInteger
 				});
 			</script>
    
+            <!--suppress HtmlUnknownTarget -->
 			<link rel="stylesheet" type="text/css" href="/bitrix/panel/main/adminstyles_fixed.css">
+			<!--suppress HtmlUnknownTarget -->
 			<link rel="stylesheet" type="text/css" href="/bitrix/panel/main/admin.css">
+			<!--suppress HtmlUnknownTarget -->
 			<link rel="stylesheet" type="text/css" href="/bitrix/panel/main/admin-public.css">
+			<!--suppress HtmlUnknownTarget -->
 			<link rel="stylesheet" type="text/css" href="/local/templates/.default/components/bitrix/system.field.edit/sale_location/_style.css">
 		' . $result . '</div>';
             ob_end_clean();

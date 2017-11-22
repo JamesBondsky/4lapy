@@ -8,8 +8,9 @@
 
 namespace FourPaws\UserProps;
 
-use Bitrix\Main\EventManager;
-use Bitrix\Main\Page\Asset;
+use Bitrix\Main\{
+    EventManager, Page\Asset
+};
 use FourPaws\App\ServiceHandlerInterface;
 
 abstract class Event implements ServiceHandlerInterface
@@ -31,7 +32,7 @@ abstract class Event implements ServiceHandlerInterface
         $eventManager->addEventHandler('iblock',
                                        'OnIBlockPropertyBuildList',
                                        [
-                                           'IblockPropLocation',
+                                           IblockPropLocation::class,
                                            'GetUserTypeDescription',
                                        ]);
         

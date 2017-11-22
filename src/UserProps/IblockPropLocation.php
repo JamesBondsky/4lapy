@@ -6,6 +6,8 @@
  * Time: 18:22
  */
 
+namespace FourPaws\UserProps;
+
 use Bitrix\Iblock;
 use Bitrix\Main\Localization\Loc;
 
@@ -57,8 +59,14 @@ class IblockPropLocation
      * @param $strHTMLControlName
      *
      * @return string
+     * @throws \Bitrix\Main\LoaderException
      */
-    public static function GetPublicViewHTML($arProperty, $value, $strHTMLControlName) : string
+    public static function GetPublicViewHTML(
+        $arProperty,
+        $value,
+        /** @noinspection PhpUnusedParameterInspection */
+        $strHTMLControlName
+    ) : string
     {
         if (!is_array($value['VALUE'])) {
             $value = static::ConvertFromDB($arProperty, $value);
@@ -76,6 +84,7 @@ class IblockPropLocation
      * @param $strHTMLControlName
      *
      * @return string
+     * @throws \Bitrix\Main\LoaderException
      */
     public static function GetPublicEditHTML($arProperty, $value, $strHTMLControlName) : string
     {
@@ -137,8 +146,14 @@ class IblockPropLocation
      * @param $strHTMLControlName
      *
      * @return string
+     * @throws \Bitrix\Main\LoaderException
      */
-    public static function GetAdminListViewHTML($arProperty, $value, $strHTMLControlName) : string
+    public static function GetAdminListViewHTML(
+        $arProperty,
+        $value,
+        /** @noinspection PhpUnusedParameterInspection */
+        $strHTMLControlName
+    ) : string
     {
         if (!is_array($value['VALUE'])) {
             $value = static::ConvertFromDB($arProperty, $value);
@@ -157,7 +172,12 @@ class IblockPropLocation
      *
      * @return string
      */
-    public static function GetPropertyFieldHtml($arProperty, $value, $strHTMLControlName) : string
+    public static function GetPropertyFieldHtml(
+        /** @noinspection PhpUnusedParameterInspection */
+        $arProperty,
+        $value,
+        $strHTMLControlName
+    ) : string
     {
         ob_start();
         ?>
@@ -222,7 +242,12 @@ class IblockPropLocation
      * @return string
      * @throws \Bitrix\Main\LoaderException
      */
-    public static function GetPropertyFieldHtmlMulty($arProperty, $value, $strHTMLControlName) : string
+    public static function GetPropertyFieldHtmlMulty(
+        /** @noinspection PhpUnusedParameterInspection */
+        $arProperty,
+        $value,
+        $strHTMLControlName
+    ) : string
     {
         $originalControlName         = $strHTMLControlName['VALUE'];
         $strHTMLControlName['VALUE'] = str_replace('[]', '', $strHTMLControlName['VALUE']);
@@ -303,9 +328,13 @@ class IblockPropLocation
     
 			</script>
    
-			<link rel="stylesheet" type="text/css" href="/bitrix/panel/main/adminstyles_fixed.css">
+			<!--suppress HtmlUnknownTarget -->
+            <link rel="stylesheet" type="text/css" href="/bitrix/panel/main/adminstyles_fixed.css">
+            <!--suppress HtmlUnknownTarget -->
 			<link rel="stylesheet" type="text/css" href="/bitrix/panel/main/admin.css">
+			<!--suppress HtmlUnknownTarget -->
 			<link rel="stylesheet" type="text/css" href="/bitrix/panel/main/admin-public.css">
+			<!--suppress HtmlUnknownTarget -->
 			<link rel="stylesheet" type="text/css" href="/bitrix/components/bitrix/sale.location.selector.system/templates/.default/style.css">
 		' . $result;
         ob_end_clean();
@@ -324,7 +353,11 @@ class IblockPropLocation
      * @return array|bool
      * @throws \Bitrix\Main\LoaderException
      */
-    public static function ConvertFromDB($arProperty, $value)
+    public static function ConvertFromDB(
+        /** @noinspection PhpUnusedParameterInspection */
+        $arProperty,
+        $value
+    )
     {
         $return = false;
         if (!is_array($value['VALUE'])) {
