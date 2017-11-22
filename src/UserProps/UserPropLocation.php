@@ -10,6 +10,7 @@ namespace FourPaws\UserProps;
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Sale\Location\Admin\LocationHelper;
 
 Loc::loadMessages(__FILE__);
 
@@ -43,8 +44,15 @@ class UserPropLocation extends \CUserTypeInteger
     {
         //return '<pre>' . print_r($arHtmlControl, true) . '</pre>';
         $return = '&nbsp;';
+        //$arHtmlControl['NAME'] = $arUserField['FIELD_CODE'];
+        $replacedName = str_replace([
+                                                 '[',
+                                                 ']',
+                                             ],
+                                             '_',
+                                             $arHtmlControl['NAME']);
         if ($arUserField['EDIT_IN_LIST'] === 'Y') {
-            if ($arUserField['ENTITY_VALUE_ID'] < 1 && strlen($arUserField['SETTINGS']['DEFAULT_VALUE']) > 0) {
+            if ($arUserField['ENTITY_VALUE_ID'] < 1 && !empty($arUserField['SETTINGS']['DEFAULT_VALUE'])) {
                 $arHtmlControl['VALUE'] = $arUserField['SETTINGS']['DEFAULT_VALUE'];
             }
             /** @var \CMain $APPLICATION */
@@ -64,7 +72,8 @@ class UserPropLocation extends \CUserTypeInteger
                                                    'INITIALIZE_BY_GLOBAL_EVENT' => '',
                                                    'INPUT_NAME'                 => $arHtmlControl['NAME'],
                                                    'JS_CALLBACK'                => '',
-                                                   'JS_CONTROL_GLOBAL_ID'       => '',
+                                                   'JS_CONTROL_GLOBAL_ID'       => 'locationSelectors_'.$replacedName,
+                                                   //'JS_CONTROL_DEFERRED_INIT'       => 'defered_'.$replacedName,
                                                    'PROVIDE_LINK_BY'            => 'id',
                                                    //"SHOW_DEFAULT_LOCATIONS" => "Y",
                                                    'SUPPRESS_ERRORS'            => 'N',
@@ -83,7 +92,8 @@ class UserPropLocation extends \CUserTypeInteger
                                                    'INITIALIZE_BY_GLOBAL_EVENT' => '',
                                                    'INPUT_NAME'                 => $arHtmlControl['NAME'],
                                                    'JS_CALLBACK'                => '',
-                                                   'JS_CONTROL_GLOBAL_ID'       => '',
+                                                   'JS_CONTROL_GLOBAL_ID'       => 'locationSelectors_'.$replacedName,
+                                                   //'JS_CONTROL_DEFERRED_INIT'       => 'defered_'.$replacedName,
                                                    'PRECACHE_LAST_LEVEL'        => 'N',
                                                    'PRESELECT_TREE_TRUNK'       => 'N',
                                                    'PROVIDE_LINK_BY'            => 'id',
@@ -118,23 +128,22 @@ class UserPropLocation extends \CUserTypeInteger
         //return '<pre>' . print_r($arHtmlControl, true) . '</pre>';
         $return = '&nbsp;';
         if ($arUserField['EDIT_IN_LIST'] === 'Y') {
-            $originalControlName   = $arHtmlControl['NAME'];
-            $arHtmlControl['NAME'] = str_replace([
-                                                     '[',
-                                                     ']',
-                                                 ],
-                                                 '_',
-                                                 $arHtmlControl['NAME']);
+            $replacedName = str_replace([
+                                            '[',
+                                            ']',
+                                        ],
+                                        '_',
+                                        $arHtmlControl['NAME']);
             //$settings = static::PrepareSettings($arProperty);
             
             ob_start();
-            \Bitrix\Main\Loader::includeModule('sale');
+            Loader::includeModule('sale');
             global $APPLICATION;
             
             ob_start();
             
-            $deferedControlName = 'DEFERED_LOAD_LOCATION_PROP_' . $arHtmlControl['NAME'];
-            $tmpInputName       = $arHtmlControl['NAME'] . '_TMP';
+            $deferedControlName = 'defered_'.$replacedName;
+            $tmpInputName       = $replacedName . '_TMP';
             $APPLICATION->IncludeComponent('adv:sale.location.selector.system',
                                            '',
                                            [
@@ -144,74 +153,76 @@ class UserPropLocation extends \CUserTypeInteger
                                                'SELECTED_IN_REQUEST'      => ['L' => $arHtmlControl['VALUE']],
                                                'PROP_LOCATION'            => 'Y',
                                                'JS_CONTROL_DEFERRED_INIT' => $deferedControlName,
+                                               'JS_CONTROL_GLOBAL_ID'       => 'locationSelectors_'.$replacedName,
                                            ],
                                            false);
             
             $result = ob_get_contents();
             $result = '<div class="location_type_prop_multi_html">
 			<script type="text/javascript" data-skip-moving="true">
-				var bxInputdeliveryLocMultiStep3 = function()
-				{
-                    BX.loadScript("/local/templates/.default/components/bitrix/system.field.edit/sale_location/_script.js", function(){
-						BX.ready(function() {
-						    BX.onCustomEvent("deliveryGetRestrictionHtmlScriptsReady");
-						    BX.locationsDeferred["' . $deferedControlName . '"]();
-						});
-                    });
-				};
-    
-				var bxInputdeliveryLocMultiStep2 = function()
-				{
-					BX.load([
-						"/bitrix/js/sale/core_ui_etc.js",
-						"/bitrix/js/sale/core_ui_autocomplete.js",
-						"/bitrix/js/sale/core_ui_itemtree.js"
-						],
-						bxInputdeliveryLocMultiStep3
-					);
-				};
-    
-				BX.loadScript("/bitrix/js/sale/core_ui_widget.js", bxInputdeliveryLocMultiStep2);
-    
-				//at first we must load some scripts in the right order
-				//window["deliveryGetRestrictionHtmlScriptsLoadingStarted"] = true;
-				  
-                if(typeof initPropLocationRealVals !== "function"){
-                    function initPropLocationRealVals(){
-                        var inputName = "input[name=\'' . $tmpInputName . '[L]\']";
-                        var inputElJq = $(inputName);
-                        setPropLocationRealVals(inputElJq);
-                        $("body").on("change", inputName, function(){
-                            setPropLocationRealVals(this);
+			    if(typeof window["LoadLocationMultyScripts"] !== "boolean" || (typeof window["LoadLocationMultyScripts"] === "boolean" && !window["LoadLocationMultyScripts"])){
+			        window["LoadLocationMultyScripts"] = true;
+                    var bxInputdeliveryLocMultiStep3 = function()
+                    {
+                        BX.loadScript("/local/templates/.default/components/bitrix/system.field.edit/sale_location/_script.js", function(){
+                            BX.ready(function() {
+                                BX.onCustomEvent("deliveryGetRestrictionHtmlScriptsReady");
+                                BX.locationsDeferred["' . $deferedControlName . '"]();
+                            });
                         });
+                    };
+        
+                    var bxInputdeliveryLocMultiStep2 = function()
+                    {
+                        BX.load([
+                            "/bitrix/js/sale/core_ui_etc.js",
+                            "/bitrix/js/sale/core_ui_autocomplete.js",
+                            "/bitrix/js/sale/core_ui_itemtree.js"
+                            ],
+                            bxInputdeliveryLocMultiStep3
+                        );
+                    };
+        
+                    BX.loadScript("/bitrix/js/sale/core_ui_widget.js", bxInputdeliveryLocMultiStep2);
+                    
+                    if(typeof initPropLocationRealVals !== "function"){
+                        function initPropLocationRealVals(name, realName){
+                            setPropLocationRealVals($("input[name=\'"+name+"[L]\']"), realName);
+                        }
                     }
-                }
-                if(typeof setPropLocationRealVals !== "function"){
-                    function setPropLocationRealVals(el){
-                        if($(el).length > 0){
-                            var firstVal = $(el).val();
-                            if(firstVal.length > 0){
-                                var items = $(el).val().split(":");
-                                var index, val, html;
-                                var div_jq = $(el).closest("div");
-                                div_jq.find(".real_inputs").remove();
-                                for(index in items){
-                                    if (items.hasOwnProperty(index)){
-                                        val = items[index];
-                                        if(val > 0){
-                                            html = "<input type=\'hidden\' name=\'' . $originalControlName . ' \'" +
-                                             " class=\'real_inputs\' value=\'"+val+"\'>";
-                                            div_jq.append(html);
+                    if(typeof setPropLocationRealVals !== "function"){
+                        function setPropLocationRealVals(el, realName){
+                            if($(el).length > 0){
+                                var firstVal = $(el).val();
+                                if(firstVal.length > 0){
+                                    var items = $(el).val().split(":");
+                                    var index, val, html;
+                                    var div_jq = $(el).closest("div");
+                                    div_jq.find(".real_inputs").remove();
+                                    for(index in items){
+                                        if (items.hasOwnProperty(index)){
+                                            val = items[index];
+                                            if(val > 0){
+                                                html = "<input type=\'hidden\' name=\'"+realName+" \'" +
+                                                 " class=\'real_inputs\' value=\'"+val+"\'>";
+                                                div_jq.append(html);
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
                     }
-                }
+				}
+				else{
+				    BX.ready(function() {
+                        //BX.onCustomEvent("deliveryGetRestrictionHtmlScriptsReady");
+                        BX.locationsDeferred["' . $deferedControlName . '"]();
+                    });
+				}
                 
                 BX.ready(function() {
-				   initPropLocationRealVals();
+				   initPropLocationRealVals("'.$tmpInputName.'", "'.$arHtmlControl['NAME'].'");
 				});
 			</script>
    
@@ -244,6 +255,13 @@ class UserPropLocation extends \CUserTypeInteger
      */
     public function GetFilterHTML($arUserField, $arHtmlControl) : string
     {
+        $replacedName = str_replace([
+                                        '[',
+                                        ']',
+                                    ],
+                                    '_',
+                                    $arHtmlControl['NAME']);
+        
         /** @var \CMain $APPLICATION */
         global $APPLICATION;
         ob_start();
@@ -261,7 +279,8 @@ class UserPropLocation extends \CUserTypeInteger
                                                'INITIALIZE_BY_GLOBAL_EVENT' => '',
                                                'INPUT_NAME'                 => $arHtmlControl['NAME'],
                                                'JS_CALLBACK'                => '',
-                                               'JS_CONTROL_GLOBAL_ID'       => '',
+                                               'JS_CONTROL_GLOBAL_ID'       => 'locationSelectors_'.$replacedName,
+                                               //'JS_CONTROL_DEFERRED_INIT'       => 'defered_'.$replacedName,
                                                'PROVIDE_LINK_BY'            => 'id',
                                                //"SHOW_DEFAULT_LOCATIONS" => "Y",
                                                'SUPPRESS_ERRORS'            => 'N',
@@ -280,7 +299,8 @@ class UserPropLocation extends \CUserTypeInteger
                                                'INITIALIZE_BY_GLOBAL_EVENT' => '',
                                                'INPUT_NAME'                 => $arHtmlControl['NAME'],
                                                'JS_CALLBACK'                => '',
-                                               'JS_CONTROL_GLOBAL_ID'       => '',
+                                               'JS_CONTROL_GLOBAL_ID'       => 'locationSelectors_'.$replacedName,
+                                               //'JS_CONTROL_DEFERRED_INIT'       => 'defered_'.$replacedName,
                                                'PRECACHE_LAST_LEVEL'        => 'N',
                                                'PRESELECT_TREE_TRUNK'       => 'N',
                                                'PROVIDE_LINK_BY'            => 'id',
@@ -307,7 +327,7 @@ class UserPropLocation extends \CUserTypeInteger
             Loader::includeModule('sale');
             
             return '[' . $arHtmlControl['VALUE'] . ']'
-                   . \Bitrix\Sale\Location\Admin\LocationHelper::getLocationStringById($arHtmlControl['VALUE']);
+                   . LocationHelper::getLocationStringById($arHtmlControl['VALUE']);
         }
         
         return '&nbsp;';
@@ -329,11 +349,11 @@ class UserPropLocation extends \CUserTypeInteger
         if (!empty($arHtmlControl['VALUE'])) {
             Loader::includeModule('sale');
             $arPrint = [];
-            if (is_array($arHtmlControl['VALUE']) && !empty($arHtmlControl['VALUE'])) {
+            if (\is_array($arHtmlControl['VALUE']) && !empty($arHtmlControl['VALUE'])) {
                 foreach ($arHtmlControl['VALUE'] as $val) {
                     if (!empty($val) && (int)$val > 0) {
                         $arPrint[] =
-                            '[' . $val . ']' . \Bitrix\Sale\Location\Admin\LocationHelper::getLocationStringById($val);
+                            '[' . $val . ']' . LocationHelper::getLocationStringById($val);
                     }
                 }
             }
@@ -381,7 +401,7 @@ class UserPropLocation extends \CUserTypeInteger
     public function OnSearchIndex($arUserField) : string
     {
         $class = new static();
-        if (is_array($arUserField['VALUE'])) {
+        if (\is_array($arUserField['VALUE'])) {
             return $class->GetAdminListViewHTMLMulty($arUserField, ['VALUE' => $arUserField['VALUE']]);
         }
         
