@@ -10,50 +10,116 @@ namespace FourPaws\UserProps;
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UserField\TypeBase;
 use Bitrix\Sale\Location\Admin\LocationHelper;
 
 Loc::loadMessages(__FILE__);
 
-class UserPropLocation extends \CUserTypeInteger
+class UserPropLocation extends TypeBase
 {
     const USER_TYPE = 'sale_location';
     
     /**
      * @return array
      */
-    public function GetUserTypeDescription() : array
+    public static function getUserTypeDescription() : array
     {
         return [
             'USER_TYPE_ID' => self::USER_TYPE,
             'CLASS_NAME'   => __CLASS__,
             'DESCRIPTION'  => Loc::getMessage('UserPropLocationMess'),
-            'BASE_TYPE'    => 'int',
+            'BASE_TYPE'    => \CUserTypeManager::BASE_TYPE_INT,
             //"EDIT_CALLBACK" => array(__CLASS__, 'GetPublicEdit'),
             //"VIEW_CALLBACK" => array(__CLASS__, 'GetPublicView'),
         ];
     }
     
     /**
-     * @param $arUserField
-     * @param $arHtmlControl
+     * Return internal type for storing url_preview user type values
+     *
+     * @param array $userField Array containing parameters of the user field.
+     * @return string
+     */
+    public static function getDBColumnType(/** @noinspection PhpUnusedParameterInspection */$userField){
+        global $DB;
+        switch(strtolower($DB->type))
+        {
+            case 'oracle':
+                return 'number(18)';
+            case 'mssql':
+                return 'int';
+            case 'mysql':
+            default:
+                return 'int(11)';
+        }
+    }
+    
+    /**
+     * @param array $userField
+     * @return array
+     */
+    public static function prepareSettings(/** @noinspection PhpUnusedParameterInspection */$userField) : array
+    {
+        return array(
+            'DEFAULT_VALUE' => (int)$userField['SETTINGS']['DEFAULT_VALUE'] > 0 ? (int)$userField['SETTINGS']['DEFAULT_VALUE']: ''
+        );
+    }
+    
+    /**
+     * @param array $userField Array containing parameters of the user field.
+     * @param $htmlControl
+     * @param $varsFromForm
+     * @return string
+     */
+    public static function getSettingsHTML(/** @noinspection PhpUnusedParameterInspection */$userField, $htmlControl, $varsFromForm) : string
+    {
+        $result = '';
+        $value = '';
+        if($varsFromForm) {
+            $value = $GLOBALS[$htmlControl['NAME']]['DEFAULT_VALUE'];
+        }
+        elseif(\is_array($userField)) {
+            $value = $userField['SETTINGS']['DEFAULT_VALUE'];
+        }
+        elseif((int)$value > 0) {
+            $value = (int)$value;
+        }
+        $result .= '
+		<tr>
+			<td>'.GetMessage('USER_TYPE_INTEGER_DEFAULT_VALUE') . ':</td>
+			<td>
+				<input type="text" name="'. $htmlControl['NAME'] . '[DEFAULT_VALUE]" size="20"  maxlength="225" value="' . $value . '">
+			</td>
+		</tr>
+		';
+        
+        return $result;
+    }
+    
+    
+    /**
+     * @param $userField
+     * @param $htmlControl
      *
      * @return string
      * @throws \Bitrix\Main\LoaderException
      */
-    public function GetEditFormHTML($arUserField, $arHtmlControl) : string
+    public static function getEditFormHTML($userField, $htmlControl) : string
     {
-        //return '<pre>' . print_r($arHtmlControl, true) . '</pre>';
+        //$fieldName = static::getFieldName($userField, []);
+        //    $value = static::getFieldValue($userField, []);
+        //return '<pre>' . print_r($htmlControl, true) . '</pre>';
         $return = '&nbsp;';
-        //$arHtmlControl['NAME'] = $arUserField['FIELD_CODE'];
+        //$htmlControl['NAME'] = $userField['FIELD_CODE'];
         $replacedName = str_replace([
                                                  '[',
                                                  ']',
                                              ],
                                              '_',
-                                             $arHtmlControl['NAME']);
-        if ($arUserField['EDIT_IN_LIST'] === 'Y') {
-            if ($arUserField['ENTITY_VALUE_ID'] < 1 && !empty($arUserField['SETTINGS']['DEFAULT_VALUE'])) {
-                $arHtmlControl['VALUE'] = $arUserField['SETTINGS']['DEFAULT_VALUE'];
+                                             $htmlControl['NAME']);
+        if ($userField['EDIT_IN_LIST'] === 'Y') {
+            if ($userField['ENTITY_VALUE_ID'] < 1 && !empty($userField['SETTINGS']['DEFAULT_VALUE'])) {
+                $htmlControl['VALUE'] = $userField['SETTINGS']['DEFAULT_VALUE'];
             }
             /** @var \CMain $APPLICATION */
             global $APPLICATION;
@@ -68,9 +134,9 @@ class UserPropLocation extends \CUserTypeInteger
                                                    'CODE'                       => '',
                                                    //"FILTER_BY_SITE" => "Y",
                                                    //"FILTER_SITE_ID" => "current",
-                                                   'ID'                         => $arHtmlControl['VALUE'],
+                                                   'ID'                         => $htmlControl['VALUE'],
                                                    'INITIALIZE_BY_GLOBAL_EVENT' => '',
-                                                   'INPUT_NAME'                 => $arHtmlControl['NAME'],
+                                                   'INPUT_NAME'                 => $htmlControl['NAME'],
                                                    'JS_CALLBACK'                => '',
                                                    'JS_CONTROL_GLOBAL_ID'       => 'locationSelectors_'.$replacedName,
                                                    //'JS_CONTROL_DEFERRED_INIT'       => 'defered_'.$replacedName,
@@ -88,9 +154,9 @@ class UserPropLocation extends \CUserTypeInteger
                                                    'DISABLE_KEYBOARD_INPUT'     => 'N',
                                                    //"FILTER_BY_SITE" => "Y",
                                                    //"FILTER_SITE_ID" => "current",
-                                                   'ID'                         => $arHtmlControl['VALUE'],
+                                                   'ID'                         => $htmlControl['VALUE'],
                                                    'INITIALIZE_BY_GLOBAL_EVENT' => '',
-                                                   'INPUT_NAME'                 => $arHtmlControl['NAME'],
+                                                   'INPUT_NAME'                 => $htmlControl['NAME'],
                                                    'JS_CALLBACK'                => '',
                                                    'JS_CONTROL_GLOBAL_ID'       => 'locationSelectors_'.$replacedName,
                                                    //'JS_CONTROL_DEFERRED_INIT'       => 'defered_'.$replacedName,
@@ -103,9 +169,9 @@ class UserPropLocation extends \CUserTypeInteger
             }
             
             $return = '<div class="location_type_prop_html">' . ob_get_clean() . '</div>';
-        } elseif (!empty($arHtmlControl['VALUE'])) {
-            $class  = new static();
-            $return = $class->GetAdminListViewHTML($arUserField, $arHtmlControl);
+        } elseif (!empty($htmlControl['VALUE'])) {
+            //$class  = new static();
+            $return = static::getAdminListViewHTML($userField, $htmlControl);
         }
         
         return $return;
@@ -113,27 +179,27 @@ class UserPropLocation extends \CUserTypeInteger
     }
     
     /**
-     * @param $arUserField
-     * @param $arHtmlControl
+     * @param $userField
+     * @param $htmlControl
      *
      * @return string
      * @throws \Bitrix\Main\LoaderException
      */
-    public function GetEditFormHTMLMulty(
+    public static function getEditFormHTMLMulty(
         /** @noinspection PhpUnusedParameterInspection */
-        $arUserField,
-        $arHtmlControl
+        $userField,
+        $htmlControl
     ) : string
     {
-        //return '<pre>' . print_r($arHtmlControl, true) . '</pre>';
+        //return '<pre>' . print_r($htmlControl, true) . '</pre>';
         $return = '&nbsp;';
-        if ($arUserField['EDIT_IN_LIST'] === 'Y') {
+        if ($userField['EDIT_IN_LIST'] === 'Y') {
             $replacedName = str_replace([
                                             '[',
                                             ']',
                                         ],
                                         '_',
-                                        $arHtmlControl['NAME']);
+                                        $htmlControl['NAME']);
             //$settings = static::PrepareSettings($arProperty);
             
             ob_start();
@@ -150,7 +216,7 @@ class UserPropLocation extends \CUserTypeInteger
                                                'CACHE_TYPE'               => 'N',
                                                'CACHE_TIME'               => '0',
                                                'INPUT_NAME'               => $tmpInputName,
-                                               'SELECTED_IN_REQUEST'      => ['L' => $arHtmlControl['VALUE']],
+                                               'SELECTED_IN_REQUEST'      => ['L' => $htmlControl['VALUE']],
                                                'PROP_LOCATION'            => 'Y',
                                                'JS_CONTROL_DEFERRED_INIT' => $deferedControlName,
                                                'JS_CONTROL_GLOBAL_ID'       => 'locationSelectors_'.$replacedName,
@@ -160,11 +226,12 @@ class UserPropLocation extends \CUserTypeInteger
             $result = ob_get_contents();
             $result = '<div class="location_type_prop_multi_html">
 			<script type="text/javascript" data-skip-moving="true">
-			    if(typeof window["LoadLocationMultyScripts"] !== "boolean" || (typeof window["LoadLocationMultyScripts"] === "boolean" && !window["LoadLocationMultyScripts"])){
-			        window["LoadLocationMultyScripts"] = true;
+			    if(typeof window["LoadedLocationMultyScripts"] !== "boolean" || (typeof window["LoadedLocationMultyScripts"] === "boolean" && !window["LoadedLocationMultyScripts"])){
+			        window["LoadedLocationMultyScripts"] = true;
                     var bxInputdeliveryLocMultiStep3 = function()
                     {
                         BX.loadScript("/local/templates/.default/components/bitrix/system.field.edit/sale_location/_script.js", function(){
+                            window["LoadedLocationMultyScriptMain"] = true;
                             BX.ready(function() {
                                 BX.onCustomEvent("deliveryGetRestrictionHtmlScriptsReady");
                                 BX.locationsDeferred["' . $deferedControlName . '"]();
@@ -215,14 +282,24 @@ class UserPropLocation extends \CUserTypeInteger
                     }
 				}
 				else{
-				    BX.ready(function() {
-                        //BX.onCustomEvent("deliveryGetRestrictionHtmlScriptsReady");
-                        BX.locationsDeferred["' . $deferedControlName . '"]();
-                    });
+			        if(typeof window["LoadedLocationMultyScriptMain"] !== "boolean" || (typeof window["LoadedLocationMultyScriptMain"] === "boolean" && !window["LoadedLocationMultyScriptMain"])){
+			            BX.loadScript("/local/templates/.default/components/bitrix/system.field.edit/sale_location/_script.js", function(){
+			                BX.ready(function() {
+                                //BX.onCustomEvent("deliveryGetRestrictionHtmlScriptsReady");
+                                BX.locationsDeferred["' . $deferedControlName . '"]();
+                            });
+			            });
+			        }
+			        else{
+			            BX.ready(function() {
+                            //BX.onCustomEvent("deliveryGetRestrictionHtmlScriptsReady");
+                            BX.locationsDeferred["' . $deferedControlName . '"]();
+                        });
+			        }
 				}
                 
                 BX.ready(function() {
-				   initPropLocationRealVals("'.$tmpInputName.'", "'.$arHtmlControl['NAME'].'");
+				   initPropLocationRealVals("'.$tmpInputName.'", "'.$htmlControl['NAME'].'");
 				});
 			</script>
    
@@ -239,28 +316,28 @@ class UserPropLocation extends \CUserTypeInteger
             echo $result;
             
             $return = ob_get_clean();
-        } elseif (!empty($arHtmlControl['VALUE'])) {
-            $class  = new static();
-            $return = $class->GetAdminListViewHTMLMulty($arUserField, $arHtmlControl);
+        } elseif (!empty($htmlControl['VALUE'])) {
+            //$class  = new static();
+            $return = static::getAdminListViewHTMLMulty($userField, $htmlControl);
         }
         
         return $return;
     }
     
     /**
-     * @param $arUserField
-     * @param $arHtmlControl
+     * @param $userField
+     * @param $htmlControl
      *
      * @return string
      */
-    public function GetFilterHTML($arUserField, $arHtmlControl) : string
+    public static function getFilterHTML(/** @noinspection PhpUnusedParameterInspection */$userField, $htmlControl) : string
     {
         $replacedName = str_replace([
                                         '[',
                                         ']',
                                     ],
                                     '_',
-                                    $arHtmlControl['NAME']);
+                                    $htmlControl['NAME']);
         
         /** @var \CMain $APPLICATION */
         global $APPLICATION;
@@ -275,9 +352,9 @@ class UserPropLocation extends \CUserTypeInteger
                                                'CODE'                       => '',
                                                //"FILTER_BY_SITE" => "Y",
                                                //"FILTER_SITE_ID" => "current",
-                                               'ID'                         => $arHtmlControl['VALUE'],
+                                               'ID'                         => $htmlControl['VALUE'],
                                                'INITIALIZE_BY_GLOBAL_EVENT' => '',
-                                               'INPUT_NAME'                 => $arHtmlControl['NAME'],
+                                               'INPUT_NAME'                 => $htmlControl['NAME'],
                                                'JS_CALLBACK'                => '',
                                                'JS_CONTROL_GLOBAL_ID'       => 'locationSelectors_'.$replacedName,
                                                //'JS_CONTROL_DEFERRED_INIT'       => 'defered_'.$replacedName,
@@ -295,9 +372,9 @@ class UserPropLocation extends \CUserTypeInteger
                                                'DISABLE_KEYBOARD_INPUT'     => 'N',
                                                //"FILTER_BY_SITE" => "Y",
                                                //"FILTER_SITE_ID" => "current",
-                                               'ID'                         => $arHtmlControl['VALUE'],
+                                               'ID'                         => $htmlControl['VALUE'],
                                                'INITIALIZE_BY_GLOBAL_EVENT' => '',
-                                               'INPUT_NAME'                 => $arHtmlControl['NAME'],
+                                               'INPUT_NAME'                 => $htmlControl['NAME'],
                                                'JS_CALLBACK'                => '',
                                                'JS_CONTROL_GLOBAL_ID'       => 'locationSelectors_'.$replacedName,
                                                //'JS_CONTROL_DEFERRED_INIT'       => 'defered_'.$replacedName,
@@ -313,44 +390,45 @@ class UserPropLocation extends \CUserTypeInteger
     }
     
     //Этот метод вызывается для показа значений в списке
+    /** @noinspection PhpUnusedParameterInspection */
     
     /**
-     * @param $arUserField
-     * @param $arHtmlControl
+     * @param $userField
+     * @param $htmlControl
      *
      * @return string
      * @throws \Bitrix\Main\LoaderException
      */
-    public function GetAdminListViewHTML($arUserField, $arHtmlControl) : string
+    public static function getAdminListViewHTML(/** @noinspection PhpUnusedParameterInspection */$userField, $htmlControl) : string
     {
-        if (!empty($arHtmlControl['VALUE']) && (int)$arHtmlControl['VALUE'] > 0) {
+        if (!empty($htmlControl['VALUE']) && (int)$htmlControl['VALUE'] > 0) {
             Loader::includeModule('sale');
             
-            return '[' . $arHtmlControl['VALUE'] . ']'
-                   . LocationHelper::getLocationStringById($arHtmlControl['VALUE']);
+            return '[' . $htmlControl['VALUE'] . ']'
+                   . LocationHelper::getLocationStringById($htmlControl['VALUE']);
         }
         
         return '&nbsp;';
     }
     
     /**
-     * @param $arUserField
-     * @param $arHtmlControl
+     * @param $userField
+     * @param $htmlControl
      *
      * @return string
      * @throws \Bitrix\Main\LoaderException
      */
-    public function GetAdminListViewHTMLMulty(
+    public static function getAdminListViewHTMLMulty(
         /** @noinspection PhpUnusedParameterInspection */
-        $arUserField,
-        $arHtmlControl
+        $userField,
+        $htmlControl
     ) : string
     {
-        if (!empty($arHtmlControl['VALUE'])) {
+        if (!empty($htmlControl['VALUE'])) {
             Loader::includeModule('sale');
             $arPrint = [];
-            if (\is_array($arHtmlControl['VALUE']) && !empty($arHtmlControl['VALUE'])) {
-                foreach ($arHtmlControl['VALUE'] as $val) {
+            if (\is_array($htmlControl['VALUE']) && !empty($htmlControl['VALUE'])) {
+                foreach ($htmlControl['VALUE'] as $val) {
                     if (!empty($val) && (int)$val > 0) {
                         $arPrint[] =
                             '[' . $val . ']' . LocationHelper::getLocationStringById($val);
@@ -365,46 +443,216 @@ class UserPropLocation extends \CUserTypeInteger
     }
     
     /**
-     * @param $arUserField
-     * @param $arHtmlControl
+     * @param $userField
+     * @param $htmlControl
      *
      * @return string
      * @throws \Bitrix\Main\LoaderException
      */
-    public function GetAdminListEditHTML($arUserField, $arHtmlControl) : string
+    public static function getAdminListEditHTML($userField, $htmlControl) : string
     {
-        $class = new static();
+        //$class = new static();
         
-        return $class->GetEditFormHTML($arUserField, $arHtmlControl);
+        return static::getEditFormHTML($userField, $htmlControl);
     }
     
     /**
-     * @param $arUserField
-     * @param $arHtmlControl
+     * @param $userField
+     * @param $htmlControl
      *
      * @return mixed
      * @throws \Bitrix\Main\LoaderException
      */
-    public function GetAdminListEditHTMLMulty($arUserField, $arHtmlControl) : string
+    public static function getAdminListEditHTMLMulty($userField, $htmlControl) : string
     {
-        $class = new static();
+        //return '<pre>'. print_r($userField,true). '</pre>';
+        //$class = new static();
         
-        return $class->GetEditFormHTMLMulty($arUserField, $arHtmlControl);
+        return static::getEditFormHTMLMulty($userField, $htmlControl);
     }
     
     /**
-     * @param $arUserField
+     * @param $userField
      *
      * @return string
      * @throws \Bitrix\Main\LoaderException
      */
-    public function OnSearchIndex($arUserField) : string
+    public static function onSearchIndex($userField) : string
     {
-        $class = new static();
-        if (\is_array($arUserField['VALUE'])) {
-            return $class->GetAdminListViewHTMLMulty($arUserField, ['VALUE' => $arUserField['VALUE']]);
+        //$class = new static();
+        if (\is_array($userField['VALUE'])) {
+            return static::getAdminListViewHTMLMulty($userField, ['VALUE' => $userField['VALUE']]);
         }
         
-        return $class->GetAdminListViewHTML($arUserField, ['VALUE' => $arUserField['VALUE']]);
+        return static::getAdminListViewHTML($userField, ['VALUE' => $userField['VALUE']]);
     }
+    
+    /**
+     * @param array $userField Array containing parameters of the user field.
+     * @param array $params
+     * @param array $setting
+     * @return string
+     */
+    //public static function getPublicViewHTML($userField, $id, $params = "", $settings = array())
+    //{
+    //    return UrlPreview::showView($userField, $params, $cacheTag);
+    //}
+    /** @noinspection ArrayTypeOfParameterByDefaultValueInspection */
+    
+    /**
+     * @param       $arUserField
+     * @param array $arAdditionalParameters
+     *
+     * @return string
+     */
+    //public static function getPublicEdit($arUserField, $arAdditionalParameters = array()) : string
+    //{
+    //    $fieldName = static::getFieldName($arUserField, $arAdditionalParameters);
+    //    $value = static::getFieldValue($arUserField, $arAdditionalParameters);
+    //
+    //    $html = '';
+    //
+    //    foreach($value as $res)
+    //    {
+    //        $attrList = array();
+    //
+    //        if($arUserField["EDIT_IN_LIST"] != "Y")
+    //        {
+    //            $attrList['disabled'] = 'disabled';
+    //        }
+    //
+    //        if($arUserField["SETTINGS"]["SIZE"] > 0)
+    //        {
+    //            $attrList['size'] = intval($arUserField["SETTINGS"]["SIZE"]);
+    //        }
+    //
+    //        if(array_key_exists('attribute', $arAdditionalParameters))
+    //        {
+    //            $attrList = array_merge($attrList, $arAdditionalParameters['attribute']);
+    //        }
+    //
+    //        if(isset($attrList['class']) && is_array($attrList['class']))
+    //        {
+    //            $attrList['class'] = implode(' ', $attrList['class']);
+    //        }
+    //
+    //        $attrList['class'] = static::getHelper()->getCssClassName().(isset($attrList['class']) ? ' '.$attrList['class'] : '');
+    //
+    //        $attrList['name'] = $fieldName;
+    //
+    //        $attrList['type'] = 'text';
+    //        $attrList['value'] = $res;
+    //        $attrList['tabindex'] = '0';
+    //
+    //        $html .= static::getHelper()->wrapSingleField('<input '.static::buildTagAttributes($attrList).'/>');
+    //    }
+    //
+    //    if($arUserField["MULTIPLE"] == "Y" && $arAdditionalParameters["SHOW_BUTTON"] != "N")
+    //    {
+    //        $html .= static::getHelper()->getCloneButton($fieldName);
+    //    }
+    //
+    //    static::initDisplay();
+    //
+    //    return static::getHelper()->wrapDisplayResult($html);
+    //}
+    
+    /**
+     * Checks for current user's access to $value.
+     *
+     * @param array $userField Array containing parameters of the user field.
+     * @param int $value
+     * @return array
+     */
+    //public static function checkfields($userField, $value)
+    //{
+    //    $value = (int)$value;
+    //    $result = array();
+    //    if($value === 0)
+    //        return $result;
+    //
+    //    $metadata = UrlMetadataTable::getById($value)->fetch();
+    //    if(!is_array($metadata))
+    //    {
+    //        $result[] = array(
+    //            "id" => $userField["FIELD_NAME"],
+    //            "text" => GetMessage("MAIN_URL_PREVIEW_VALUE_NOT_FOUND")
+    //        );
+    //    }
+    //    else if($metadata['TYPE'] === UrlMetadataTable::TYPE_DYNAMIC
+    //            && !UrlPreview::checkDynamicPreviewAccess($metadata['URL']))
+    //    {
+    //        $result[] = array(
+    //            "id" => $userField["FIELD_NAME"],
+    //            "text" => GetMessage("MAIN_URL_PREVIEW_VALUE_NO_ACCESS",
+    //                                 array('#URL#' => $metadata['URL'])
+    //            )
+    //        );
+    //    }
+    //
+    //    return $result;
+    //}
+    
+    /**
+     * Hook executed before saving url_preview user type value. Checks and removes signature of the $value.
+     * If signature is correct, checks current user's access to $value.
+     *
+     * @param array $userField Array containing parameters of the user field.
+     * @param string $value Signed value of the user field.
+     * @return int Unsigned value of the user field, or null in case of errors.
+     */
+    //public static function onBeforeSave($userField, $value)
+    //{
+    //    $imageUrl = null;
+    //    if(strpos($value, ';') !== false)
+    //    {
+    //        list($value, $imageUrl) = explode(';', $value);
+    //    }
+    //
+    //    $signer = new Signer();
+    //    try
+    //    {
+    //        $value = $signer->unsign($value, UrlPreview::SIGN_SALT);
+    //    }
+    //    catch (SystemException $e)
+    //    {
+    //        return null;
+    //    }
+    //    $metadata = UrlMetadataTable::getById($value)->fetch();
+    //    if(!is_array($metadata))
+    //        return null;
+    //
+    //    if($metadata['TYPE'] === UrlMetadataTable::TYPE_STATIC)
+    //    {
+    //        if($imageUrl && is_array($metadata['EXTRA']['IMAGES']) && in_array($imageUrl, $metadata['EXTRA']['IMAGES']))
+    //        {
+    //            UrlPreview::setMetadataImage((int)$value, $imageUrl);
+    //        }
+    //        return $value;
+    //    }
+    //    else if($metadata['TYPE'] === UrlMetadataTable::TYPE_DYNAMIC
+    //            && UrlPreview::checkDynamicPreviewAccess($metadata['URL']))
+    //    {
+    //        return $value;
+    //    }
+    //
+    //    return null;
+    //}
+    
+    /**
+     * Hook executed after fetching value of the user type. Signs returned value.
+     * @param array $userField Array containing parameters of the user field.
+     * @param array $value Unsigned value of the user field.
+     * @return string Signed value of the user field.
+     */
+    //public static function onAfterFetch($userField, $value)
+    //{
+    //    $result = null;
+    //    if(isset($value['VALUE']))
+    //    {
+    //        $result = UrlPreview::sign($value['VALUE']);
+    //    }
+    //
+    //    return $result;
+    //}
 }

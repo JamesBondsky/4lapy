@@ -26,14 +26,14 @@ abstract class Event implements ServiceHandlerInterface
                                        'OnUserTypeBuildList',
                                        [
                                            UserPropLocation::class,
-                                           'GetUserTypeDescription',
+                                           'getUserTypeDescription',
                                        ]);
         
         $eventManager->addEventHandler('iblock',
                                        'OnIBlockPropertyBuildList',
                                        [
                                            IblockPropLocation::class,
-                                           'GetUserTypeDescription',
+                                           'getUserTypeDescription',
                                        ]);
         
         $eventManager->addEventHandler('main',

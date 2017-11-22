@@ -20,7 +20,7 @@ class IblockPropLocation
     /**
      * @return array
      */
-    public static function GetUserTypeDescription() : array
+    public static function getUserTypeDescription() : array
     {
         return [
             'PROPERTY_TYPE'             => Iblock\PropertyTable::TYPE_STRING,

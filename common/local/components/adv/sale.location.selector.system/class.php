@@ -128,6 +128,7 @@ class CBitrixLocationSelectorSystemComponentPropLocation extends CBitrixLocation
             );
         }
     }/** @noinspection MoreThanThreeArgumentsInspection */
+    /** @noinspection ArrayTypeOfParameterByDefaultValueInspection */
     
     /**
      * Returns a list of items by supplying a set of their IDs or CODEs
