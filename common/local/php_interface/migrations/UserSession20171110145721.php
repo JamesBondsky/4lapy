@@ -21,14 +21,17 @@ class UserSession20171110145721 extends SprintMigrationBase
          * Compile from d7 DataManager will return only not null table fields structure
          */
         $tableStructure = <<<SQL
-CREATE TABLE `$tableName` (
-  `ID`          INT          NOT NULL AUTO_INCREMENT,
-  `DATE_INSERT` DATETIME     NOT NULL,
-  `DATE_UPDATE` DATETIME     NOT NULL,
-  `USER_ID`     INT,
-  `USER_AGENT`  VARCHAR(255),
-  `FUSER_ID`    INT          NOT NULL,
-  `TOKEN`       VARCHAR(255) NOT NULL,
+CREATE TABLE `${$tableName}` (
+  `ID`                   INT          NOT NULL AUTO_INCREMENT,
+  `DATE_INSERT`          DATETIME     NOT NULL,
+  `DATE_UPDATE`          DATETIME     NOT NULL,
+  `USER_AGENT`           VARCHAR(255),
+  `REMOTE_ADDR`          VARCHAR(255),
+  `HTTP_CLIENT_IP`       VARCHAR(255),
+  `HTTP_X_FORWARDED_FOR` VARCHAR(255),
+  `USER_ID`              INT,
+  `FUSER_ID`             INT          NOT NULL,
+  `TOKEN`                VARCHAR(255) NOT NULL,
   PRIMARY KEY (`ID`)
 )
 SQL;

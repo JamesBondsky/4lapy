@@ -16,6 +16,8 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class UserSessionRepository implements UserSessionRepositoryInterface
 {
+    const FIELD_TOKEN = 'TOKEN';
+    const FIELD_ID = 'ID';
 
     /**
      * @var ArrayTransformerInterface
@@ -41,21 +43,24 @@ class UserSessionRepository implements UserSessionRepositoryInterface
     public function find(int $id)
     {
         if ($id > 0) {
-            $dbResult = UserSessionTable::query()
-                ->addSelect('*')
-                ->addFilter('ID', $id)
-                ->exec();
-
-            if (0 === $dbResult->getSelectedRowsCount()) {
-                return null;
-            }
-            return $this->transformer->fromArray(
-                $dbResult->fetch(),
-                Session::class,
-                DeserializationContext::create()->setGroups([CrudGroups::READ])
-            );
+            $sessions = $this->findBy([static::FIELD_ID => $id], [], 1);
+            return reset($sessions);
         }
         throw new InvalidIdentifierException('Wrong identifier passed: ' . $id);
+    }
+
+    /**
+     * @param string $token
+     * @throws InvalidIdentifierException
+     * @return null|Session
+     */
+    public function findByToken(string $token)
+    {
+        if ($token) {
+            $sessions = $this->findBy([static::FIELD_TOKEN => $token], [], 1);
+            return reset($sessions);
+        }
+        throw new InvalidIdentifierException('Wrong identifier passed: ' . $token);
     }
 
     /**
@@ -117,9 +122,12 @@ class UserSessionRepository implements UserSessionRepositoryInterface
             throw new WrongTransformerResultException('Wrong transform result for session');
         }
         try {
-            $result = UserSessionTable::update($session->getId(), $data);
+            $result = UserSessionTable::add($data);
         } catch (\Exception $exception) {
             throw new BitrixException($exception->getMessage(), $exception->getCode(), $exception);
+        }
+        if ($result->isSuccess()) {
+            $session->setId($result->getId());
         }
         return $result->isSuccess();
     }

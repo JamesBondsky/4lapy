@@ -67,9 +67,33 @@ class Session
      * @Serializer\Type("string")
      * @Serializer\Groups(groups={"read","update","create"})
      * @Assert\Type(type="string",groups={"update","create"})
-     * @Assert\Uuid(groups={"update","create"})
+     * @Assert\Length(groups={"update","create"},min="32",max="32")
      */
     protected $token;
+
+    /**
+     * @Serializer\SerializedName("REMOTE_ADDR")
+     * @Serializer\Type("string")
+     * @Serializer\Groups(groups={"read","update","create"})
+     * @var string
+     */
+    protected $remoteAddress;
+
+    /**
+     * @Serializer\SerializedName("HTTP_CLIENT_IP")
+     * @Serializer\Type("string")
+     * @Serializer\Groups(groups={"read","update","create"})
+     * @var string
+     */
+    protected $httpClientIp;
+
+    /**
+     * @Serializer\SerializedName("HTTP_X_FORWARDED_FOR")
+     * @Serializer\Type("string")
+     * @Serializer\Groups(groups={"read","update","create"})
+     * @var string
+     */
+    protected $httpXForwardedFor;
 
     /**
      * @return int
@@ -86,6 +110,60 @@ class Session
     public function setId(int $id): Session
     {
         $this->id = $id;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getRemoteAddress(): string
+    {
+        return $this->remoteAddress;
+    }
+
+    /**
+     * @param string $remoteAddress
+     * @return Session
+     */
+    public function setRemoteAddress(string $remoteAddress): Session
+    {
+        $this->remoteAddress = $remoteAddress;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getHttpClientIp()
+    {
+        return $this->httpClientIp;
+    }
+
+    /**
+     * @param mixed $httpClientIp
+     * @return Session
+     */
+    public function setHttpClientIp($httpClientIp): Session
+    {
+        $this->httpClientIp = $httpClientIp;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getHttpXForwardedFor()
+    {
+        return $this->httpXForwardedFor;
+    }
+
+    /**
+     * @param mixed $httpXForwardedFor
+     * @return Session
+     */
+    public function setHttpXForwardedFor($httpXForwardedFor): Session
+    {
+        $this->httpXForwardedFor = $httpXForwardedFor;
         return $this;
     }
 

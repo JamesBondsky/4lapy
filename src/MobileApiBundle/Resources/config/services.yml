@@ -19,3 +19,6 @@ services:
         resource: '../../Controller'
         public: true
         tags: ['controller.service_arguments']
+
+    FourPaws\MobileApiBundle\Services\Security\TokenGeneratorInterface:
+        class: FourPaws\MobileApiBundle\Services\Security\Md5TokenGenerator

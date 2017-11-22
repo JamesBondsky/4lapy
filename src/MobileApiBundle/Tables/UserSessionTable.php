@@ -27,29 +27,40 @@ class UserSessionTable extends DataManager
     public static function getMap(): array
     {
         return [
-            'ID'          => new IntegerField('ID', [
+            'ID'                   => new IntegerField('ID', [
                 'primary'      => true,
                 'autocomplete' => true,
             ]),
-            'DATE_INSERT' => new DatetimeField('DATE_INSERT', [
+            'DATE_INSERT'          => new DatetimeField('DATE_INSERT', [
                 'required'      => true,
                 'default_value' => new DateTime(),
             ]),
-            'DATE_UPDATE' => new DatetimeField('DATE_UPDATE', [
+            'DATE_UPDATE'          => new DatetimeField('DATE_UPDATE', [
                 'required'      => true,
                 'default_value' => new DateTime(),
             ]),
-            'USER_ID'     => new IntegerField('USER_ID', [
-                'default_value' => null,
-            ]),
-            'USER_AGENT'  => new StringField('USER_AGENT', [
+            'USER_AGENT'           => new StringField('USER_AGENT', [
                 'default_value' => '',
             ]),
-            'FUSER_ID'    => new IntegerField('FUSER_ID', [
+            'REMOTE_ADDR'          => new StringField('REMOTE_ADDR', [
+                'default_value' => $_SERVER['REMOTE_ADDR'],
+            ]),
+            'HTTP_CLIENT_IP'       => new StringField('HTTP_CLIENT_IP', [
+                'default_value' => $_SERVER['HTTP_CLIENT_IP'],
+            ]),
+            'HTTP_X_FORWARDED_FOR' => new StringField('HTTP_X_FORWARDED_FOR', [
+                'default_value' => $_SERVER['HTTP_X_FORWARDED_FOR'],
+            ]),
+            'USER_ID'              => new IntegerField('USER_ID', [
                 'default_value' => null,
             ]),
-            'TOKEN'       => new StringField('TOKEN', [
-                'required' => true,
+            'FUSER_ID'             => new IntegerField('FUSER_ID', [
+                'default_value' => null,
+            ]),
+            'TOKEN'                => new StringField('TOKEN', [
+                'required'      => true,
+                'unique'        => true,
+                'default_value' => md5(random_bytes(32)),
             ]),
         ];
     }
@@ -78,5 +89,36 @@ class UserSessionTable extends DataManager
         if (!isset($data['DATE_UPDATE'])) {
             $result->modifyFields(['DATE_UPDATE' => new DateTime()]);
         }
+    }
+
+    /**
+     * @param Event $event
+     * @return EventResult
+     */
+    public static function onBeforeAdd(Event $event): EventResult
+    {
+        $result = new EventResult();
+        static::uniqueToken($event, $result);
+        return $result;
+    }
+
+    /**
+     * @param Event       $event
+     * @param EventResult $result
+     */
+    protected static function uniqueToken(Event $event, EventResult $result)
+    {
+        $data = $event->getParameter('fields');
+
+        $token = $data['TOKEN'] ?? md5(random_bytes(32));
+
+        do {
+            $count = static::query()
+                ->addFilter('TOKEN', $token)
+                ->exec()
+                ->getSelectedRowsCount();
+            $token = md5(random_bytes(32));
+        } while ($count);
+        $result->modifyFields(['TOKEN' => $token]);
     }
 }
