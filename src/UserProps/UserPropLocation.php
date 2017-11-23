@@ -273,6 +273,7 @@ class UserPropLocation extends TypeBase
             //$settings = static::PrepareSettings($arProperty);
             
             ob_start();
+            //echo '<pre>', print_r($htmlControl,true), '</pre>';
             Loader::includeModule('sale');
             global $APPLICATION;
             

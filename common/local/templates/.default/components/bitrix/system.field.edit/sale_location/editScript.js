@@ -17,15 +17,17 @@ if (typeof afterShowEditLocationPropMultiple !== "function") {
                 }
                 html = $(this).html();
                 var firstInput = $(this).find('input:first');
-                var beginval = firstInput.val();
+                // var beginVal = firstInput.val();
                 firstInput.val('');
+                // var realInputName = $(this).data('realinputname');
+                // var tmpInputName = realInputName.replace('[', '_').replace(']', '_');
                 res  = BX.processHTML(html);
-                // console.log(res, 'res');
                 if (!!res.SCRIPT && res.SCRIPT.length > 0) {
                     BX.ajax.processScripts(res.SCRIPT);
+                    // $(this).find('bx-ui-slss-input-pool input[name="'+tmpInputName+'[L]"]').val(beginVal);
+                    // initPropLocationRealVals(tmpInputName, realInputName);
                 }
             });
-            // console.log(window['LocationTypePropMulty'], "window['LocationTypePropMulty']");
         }
     }
 }
