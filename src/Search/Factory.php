@@ -8,6 +8,7 @@ use Elastica\Document;
 use Elastica\Result;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Search\Enum\DocumentType;
+use FourPaws\Search\Model\HitMetaInfo;
 use InvalidArgumentException;
 use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\SerializationContext;
@@ -37,6 +38,7 @@ class Factory
      * @param array $configParams
      *
      * @return Client
+     * @throws RuntimeException
      */
     public function createElasticaClient(array $configParams = []): Client
     {
@@ -97,7 +99,13 @@ class Factory
         );
     }
 
-    public function makeProductObject(Result $result)
+    /**
+     * @param Result $result
+     *
+     * @return Product
+     * @throws RuntimeException
+     */
+    public function makeProductObject(Result $result): Product
     {
         if (DocumentType::PRODUCT !== $result->getType()) {
             throw new InvalidArgumentException(
@@ -121,6 +129,8 @@ class Factory
         if (!($product instanceof Product)) {
             throw new RuntimeException('Ошибка десериализации продукта');
         }
+
+        $product->withHitMetaInfo(HitMetaInfo::create($result));
 
         return $product;
     }

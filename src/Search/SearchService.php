@@ -2,31 +2,26 @@
 
 namespace FourPaws\Search;
 
-use Adv\Bitrixtools\Tools\EnvType;
-use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Elastica\Client;
-use Elastica\Document;
-use Elastica\Index;
-use Elastica\Query;
-use Elastica\Search;
-use FourPaws\Catalog\Model\Product;
-use FourPaws\Search\Enum\DocumentType;
-use FourPaws\Search\Model\CatalogSyncMsg;
+use Elastica\Query\AbstractQuery;
+use Elastica\Query\BoolQuery;
+use Elastica\QueryBuilder;
+use Exception;
+use FourPaws\Catalog\CatalogService;
+use FourPaws\Catalog\Collection\FilterCollection;
+use FourPaws\Catalog\Model\Filter\FilterInterface;
+use FourPaws\Catalog\Model\Sorting;
+use FourPaws\Search\Helper\AggsHelper;
+use FourPaws\Search\Helper\IndexHelper;
+use FourPaws\Search\Model\Navigation;
 use FourPaws\Search\Model\ProductSearchResult;
-use JMS\Serializer\Serializer;
-use OldSound\RabbitMqBundle\RabbitMq\Producer;
 use Psr\Log\LoggerAwareInterface;
-use Psr\Log\LoggerAwareTrait;
-use Psr\Log\LoggerInterface;
+use RuntimeException;
 
 class SearchService implements LoggerAwareInterface
 {
-    use LoggerAwareTrait;
-
-    /**
-     * @var Index
-     */
-    protected $catalogIndex;
+    use LazyLoggerAwareTrait;
 
     /**
      * @var Client
@@ -34,212 +29,307 @@ class SearchService implements LoggerAwareInterface
     private $client;
 
     /**
-     * @var Serializer
+     * @var CatalogService
      */
-    private $serializer;
+    private $catalogService;
 
     /**
-     * @var Factory
+     * @var IndexHelper
      */
-    private $factory;
+    private $indexHelper;
 
     /**
-     * @var Producer
+     * @var AggsHelper
      */
-    private $catalogSyncProducer;
+    private $aggsHelper;
 
-    public function __construct(Client $client, Serializer $serializer, Factory $factory, Producer $catalogSyncProducer)
+    /**
+     * SearchService constructor.
+     *
+     * @param Client $client
+     * @param CatalogService $catalogService
+     * @param IndexHelper $indexHelper
+     */
+    public function __construct(Client $client, CatalogService $catalogService, IndexHelper $indexHelper)
     {
         $this->client = $client;
-        $this->serializer = $serializer;
-        $this->setLogger(LoggerFactory::create('SearchService'));
-        $this->factory = $factory;
-        $this->catalogSyncProducer = $catalogSyncProducer;
+        $this->catalogService = $catalogService;
+        $this->indexHelper = $indexHelper;
     }
 
     /**
-     * @return Index
-     */
-    public function getCatalogIndex()
-    {
-        if (is_null($this->catalogIndex)) {
-            $this->catalogIndex = $this->client->getIndex($this->getIndexName('catalog'));
-        }
-
-        return $this->catalogIndex;
-    }
-
-    /**
-     * @param Product $product
+     * Возвращает результат поиска товаров, а также обновляет состояние коллекции фильтров так, что учитываются
+     * аггрегации: и фильтры соответствующим образом "схлопываются", обеспечивая настоящий фасетный поиск по каталогу.
      *
-     * @return bool
+     * @param FilterCollection $filters
+     * @param Sorting $sorting
+     * @param Navigation $navigation
+     * @param string $searchString
+     *
+     * @return ProductSearchResult
+     * @throws RuntimeException
      */
-    public function indexProduct(Product $product)
-    {
-        $responseSet = $this->getCatalogIndex()->addDocuments(
-            [$this->factory->makeProductDocument($product)]
-        );
-
-        if (!$responseSet->isOk()) {
-
-            $this->log()->error(
-                $responseSet->getError(),
-                [
-                    'productId' => $product->getId(),
-                ]
-            );
-
-            return false;
-        }
-
-        return true;
-    }
-
-    public function deleteProduct(int $productId)
-    {
-
-        $responseSet = $this->getCatalogIndex()->deleteDocuments([new Document($productId)]);
-
-        if (!$responseSet->isOk()) {
-            $this->log()->error(
-                $responseSet->getError(),
-                [
-                    'productId' => $productId,
-                ]
-            );
-
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * @param CatalogSyncMsg $catalogSyncMsg
-     */
-    public function publishSyncMessage(CatalogSyncMsg $catalogSyncMsg)
-    {
-        $this->catalogSyncProducer->publish(
-            $this->serializer->serialize($catalogSyncMsg, 'json')
-        );
-    }
-
     public function searchProducts(
-        array $filter,
-        array $sort,
-        array $nav,
-        array $aggs = [],
+        FilterCollection $filters,
+        Sorting $sorting,
+        Navigation $navigation,
         string $searchString = ''
     ): ProductSearchResult {
 
-        $search = $this->createProductSearch();
+        try {
 
-        $search->getQuery()
-               ->setFrom(0)
-               ->setSize(25);
+            $search = $this->getIndexHelper()->createProductSearch();
 
-        //$this->setPagination($search->getQuery(), $nav);
+            if ($searchString != '') {
+                $search->getQuery()->setMinScore(0.9);
+            }
 
-        $resultSet = $search->search();
+            $search->getQuery()
+                   ->setFrom($navigation->getFrom())
+                   ->setSize($navigation->getSize())
+                   ->setSort($sorting->getRule())
+                   ->setParam('query', $this->getFullQueryRule($filters, $searchString));
 
-        /**
-         * TODO Постепенно усложнять код метода, чтобы получить готовый универсальный код
-         */
+            $this->getAggsHelper()->setAggs($search->getQuery(), $filters);
 
-        // $multiSearch = new \Elastica\Multi\Search($this->client);
-        //
-        // $multiSearch->addSearch($this->createProductSearch())
+            $resultSet = $search->search();
 
-        return new ProductSearchResult($resultSet);
+            $this->getAggsHelper()->collapseFilters($filters, $resultSet);
+
+            return new ProductSearchResult($resultSet);
+
+        } catch (Exception $exception) {
+
+            $this->log()->error(
+                sprintf(
+                    '[%s] %s (%s)',
+                    get_class($exception),
+                    $exception->getMessage(),
+                    $exception->getCode()
+                )
+            );
+
+            throw new RuntimeException('Произошла ошибка поиска товаров. Попробуйте позже.');
+
+        }
+
     }
 
     /**
-     * @return Search
+     * Возвращает массив с условиями фильтрации для категории с её выбранными фильтрами на языке Elasticsearch
+     *
+     * @param FilterCollection $filterCollection
+     *
+     * @return AbstractQuery[]
      */
-    protected function createProductSearch(): Search
+    public function getFilterRule(FilterCollection $filterCollection): array
     {
+        $filterSet = [];
+
+        /** @var FilterInterface $filter */
+        foreach ($filterCollection as $filter) {
+            if ($filter->hasCheckedVariants()) {
+                $filterSet[] = $filter->getFilterRule();
+            }
+        }
+
+        return $filterSet;
+    }
+
+    /**
+     * @param string $searchString
+     *
+     * @return BoolQuery
+     */
+    public function getQueryRule(string $searchString): BoolQuery
+    {
+        $queryBuilder = new QueryBuilder();
+        $boolQuery = $queryBuilder->query()->bool();
+
+        if ($searchString == '') {
+            return $boolQuery;
+        }
+
+        $textFields = [
+            'PREVIEW_TEXT',
+            'DETAIL_TEXT',
+            'PROPERTY_SPECIFICATIONS.TEXT',
+        ];
+
         /*
-         * Обязательно надо создавать явно новый объект Query,
-         * иначе даже при создании новых объектов Search они
-         * будут разделять общий объект Query и выставление
-         * size = 0 для дозапросов аггрегаций будет ломать
-         * постраничную навигацию каталога.
+         * 0 Артикул и штрихкод
          */
-        return (new Search($this->client))
-            ->setQuery(new Query())
-            ->addIndex($this->getCatalogIndex())
-            ->addType(DocumentType::PRODUCT);
+
+        //Точное по артикулу
+        $boolQuery->addShould(
+            $queryBuilder->query()->term(
+                [
+                    'offers.XML_ID' => [
+                        'value' => $searchString,
+                        'boost' => 100.0,
+                        '_name' => 'skuId',
+                    ],
+                ]
+            )
+        );
+
+        //Точное по штрихкоду
+        $boolQuery->addShould(
+            $queryBuilder->query()->term(
+                [
+                    'offers.PROPERTY_BARCODE' => [
+                        'value' => $searchString,
+                        'boost' => 100.0,
+                        '_name' => 'barcode',
+                    ],
+                ]
+            )
+        );
+
+        /*
+         * 1 Бренд
+         */
+
+        //Нечёткое по бренду
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                         ->setQuery($searchString)
+                         ->setFields(['brand.NAME'])
+                         ->setType('best_fields')
+                         ->setFuzziness('AUTO')
+                         ->setAnalyzer('full-text-search')
+                         ->setParam('boost', 90.0)
+                         ->setParam('_name', 'brand-fuzzy')
+        );
+
+        /*
+         * 2 Название товара
+         */
+
+        //Точное по фразе в названии
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                         ->setQuery($searchString)
+                         ->setFields(['product.NAME'])
+                         ->setType('phrase')
+                         ->setAnalyzer('full-text-search')
+                         ->setParam('boost', 80.0)
+                         ->setParam('_name', 'name-phrase')
+        );
+
+        //Точное по слову в названии
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                         ->setQuery($searchString)
+                         ->setFields(['product.NAME'])
+                         ->setType('best_fields')
+                         ->setFuzziness(0)
+                         ->setAnalyzer('full-text-search')
+                         ->setParam('boost', 70.0)
+                         ->setParam('_name', 'name-exact-word')
+
+        );
+
+        //Нечёткое совпадение с учётом опечаток в названии
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                         ->setQuery($searchString)
+                         ->setFields(['product.NAME'])
+                         ->setType('best_fields')
+                         ->setFuzziness('AUTO')
+                         ->setAnalyzer('full-text-search')
+                         ->setParam('boost', 60.0)
+                         ->setParam('_name', 'name-fuzzy-word')
+
+        );
+
+        //Совпадение по звучанию в названии
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                         ->setQuery($searchString)
+                         ->setFields(['product.NAME.phonetic'])
+                         ->setParam('boost', 50.0)
+                         ->setParam('_name', 'name-sounds-similar')
+        );
+
+        /*
+         * 4 Описание товара
+         */
+
+        //Точное по фразе
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                         ->setQuery($searchString)
+                         ->setFields($textFields)
+                         ->setType('phrase')
+                         ->setAnalyzer('full-text-search')
+                         ->setParam('boost', 0.5)
+                         ->setParam('_name', 'desc-phrase')
+        );
+
+        //Точное по тексту
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                         ->setQuery($searchString)
+                         ->setFields($textFields)
+                         ->setType('best_fields')
+                         ->setFuzziness(0)
+                         ->setAnalyzer('full-text-search')
+                         ->setParam('boost', 0.5)
+                         ->setParam('_name', 'desc-exact-word')
+        );
+
+        //Нечёткое совпадение с учётом опечаток
+        $boolQuery->addShould(
+            $queryBuilder->query()->multi_match()
+                         ->setQuery($searchString)
+                         ->setFields($textFields)
+                         ->setType('best_fields')
+                         ->setFuzziness('AUTO')
+                         ->setAnalyzer('full-text-search')
+                         ->setParam('boost', 0.5)
+                         ->setParam('_name', 'desc-fuzzy-word')
+        );
+
+        return $boolQuery;
     }
 
     /**
-     * @param string $indexName
+     * @param FilterCollection $filters
+     * @param string $searchString
      *
-     * @return string
+     * @return BoolQuery
      */
-    private function getIndexName(string $indexName)
+    public function getFullQueryRule(FilterCollection $filters, string $searchString = ''): BoolQuery
     {
-        $prefix = '';
-        if (EnvType::isDev()) {
-            $prefix = EnvType::DEV . '-';
+        $boolQuery = $this->getQueryRule($searchString);
+
+        /** @var AbstractQuery[] $filterSet */
+        $filterSet = $this->getFilterRule($filters);
+        foreach ($filterSet as $filterQuery) {
+            $boolQuery->addFilter($filterQuery);
         }
 
-        return $prefix . $indexName;
+        return $boolQuery;
     }
 
     /**
-     * @return LoggerInterface
+     * @return IndexHelper
      */
-    protected function log()
+    public function getIndexHelper(): IndexHelper
     {
-        return $this->logger;
+        return $this->indexHelper;
     }
 
     /**
-     * @param int $brandId
-     *
-     * @return bool
+     * @return AggsHelper
      */
-    public function deleteBrand(int $brandId)
+    public function getAggsHelper(): AggsHelper
     {
-        $overallResult = true;
-
-        $productSearch = $this->createProductSearch();
-
-        $productSearch->getQuery()
-                      ->setFrom(0)
-                      ->setSize(500)
-                      ->setSource(false)
-                      ->setSort(['_doc'])
-                      ->setParam('query', ['term' => ['brand.ID' => $brandId]]);
-
-        $scroll = $productSearch->scroll();
-
-        foreach ($scroll as $resultSet) {
-
-            $documentsToDelete = [];
-
-            foreach ($resultSet as $result) {
-
-                $documentsToDelete[] = new Document($result->getId());
-
-            }
-
-            $responseSet = $this->getCatalogIndex()->deleteDocuments($documentsToDelete);
-
-            if (!$responseSet->isOk()) {
-                $this->log()->error(
-                    $responseSet->getError(),
-                    [
-                        'brandId' => $brandId,
-                    ]
-                );
-
-                $overallResult = false;
-            }
-
+        if (is_null($this->aggsHelper)) {
+            $this->aggsHelper = new AggsHelper();
         }
 
-        return $overallResult;
+        return $this->aggsHelper;
     }
-
 }

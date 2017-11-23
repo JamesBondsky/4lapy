@@ -30,8 +30,15 @@ services:
     class: FourPaws\Search\SearchService
     arguments:
       - '@elastica.client'
-      - '@jms_serializer'
+      - '@catalog.service'
+      - '@search.index_helper'
+
+  search.index_helper:
+    class: FourPaws\Search\Helper\IndexHelper
+    arguments:
+      - '@elastica.client'
       - '@search.factory'
+      - '@jms_serializer'
       - '@old_sound_rabbit_mq.catalog_sync_producer'
 
   user.service:

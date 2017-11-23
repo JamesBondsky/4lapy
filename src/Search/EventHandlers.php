@@ -182,7 +182,7 @@ class EventHandlers implements ServiceHandlerInterface, LoggerAwareInterface
             return;
         }
 
-        $this->searchService->publishSyncMessage($newCatSyncMsg);
+        $this->searchService->getIndexHelper()->publishSyncMessage($newCatSyncMsg);
         self::$lastSyncMessage = $newCatSyncMsg;
     }
 

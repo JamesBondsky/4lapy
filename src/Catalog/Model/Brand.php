@@ -45,6 +45,20 @@ class Brand extends IblockElement
      * @Type("string")
      * @Groups({"elastic"})
      */
+    protected $CODE = '';
+
+    /**
+     * @var string
+     * @Type("string")
+     * @Groups({"elastic"})
+     */
+    protected $XML_ID = '';
+
+    /**
+     * @var string
+     * @Type("string")
+     * @Groups({"elastic"})
+     */
     protected $NAME = '';
 
     /**

@@ -4,18 +4,19 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "9c0c03a8577382c84003bd6997c32f46",
+    "content-hash": "77161a44857a8e0868825907ba3d0bb6",
     "packages": [
         {
             "name": "adv/bitrix-tools",
-            "version": "v1.0.6",
+            "version": "v1.0.11",
             "source": {
                 "type": "git",
                 "url": "ssh://git@scm.adv.ru:7999/adv/bitrix-tools.git",
-                "reference": "34ef7938152efe5243236e3acebc610c0c21be56"
+                "reference": "966ef47476de25bb2bd49cfce1e50e13c5255c72"
             },
             "require": {
                 "andreyryabin/sprint.migration": "^2.0",
+                "doctrine/collections": "^1.4",
                 "monolog/monolog": "^1.22",
                 "php": "^7.0",
                 "psr/log": "^1.0"
@@ -33,7 +34,7 @@
                 }
             ],
             "description": "Bitrix tools",
-            "time": "2017-11-01T14:52:08+00:00"
+            "time": "2017-12-06T10:42:33+00:00"
         },
         {
             "name": "andreyryabin/sprint.migration",

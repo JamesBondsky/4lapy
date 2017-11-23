@@ -1,42 +1,34 @@
 <?php
 
-namespace FourPaws\Catalog;
+namespace FourPaws\BitrixOrm\Utils;
 
 use Bitrix\Main\DB\ArrayResult;
 use Bitrix\Main\Entity\DataManager;
-use FourPaws\App\Application;
 use FourPaws\BitrixOrm\Collection\HlbReferenceItemCollection;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\BitrixOrm\Query\HlbReferenceQuery;
 
 /**
- * @todo Move into a BitrixOrm
- *
  * Class ReferenceUtils
  *
- * @package FourPaws\Catalog
+ * Облегчение работы с HL-инфоблоками в режиме справочников.
+ *
+ * @package FourPaws\BitrixOrm\Utils
  */
 abstract class ReferenceUtils
 {
     /**
-     * @todo Change signature from service name to datamanager
-     *
-     * Возвращает элемент справочника для любого HL-блока. Если элемент не найден или передан пустой код, возвращается
-     * пустой элемент справочника, чтобы не повреждать работе каталога.
-     *
-     * @param string $hlBlockServiceName Название сервиса для этого HL-блока
+     * @param DataManager $dataManager
      * @param string $xmlId
      *
      * @return HlbReferenceItem
      */
-    public static function getReference(string $hlBlockServiceName, string $xmlId): HlbReferenceItem
+    public static function getReference(DataManager $dataManager, string $xmlId): HlbReferenceItem
     {
         if (trim($xmlId) == '') {
             return new HlbReferenceItem();
         }
 
-        /** @var DataManager $dataManager */
-        $dataManager = Application::getInstance()->getContainer()->get($hlBlockServiceName);
         $reference = (new HlbReferenceQuery($dataManager::query()))
             ->withFilter(['=UF_XML_ID' => $xmlId])
             ->exec()
@@ -48,17 +40,14 @@ abstract class ReferenceUtils
 
         return new HlbReferenceItem();
     }
-    
-    
+
     /**
-     * @todo Change signature from service name to datamanager
-     *
-     * @param string $hlBlockServiceName Название сервиса для этого HL-блока
+     * @param DataManager $dataManager
      * @param array $xmlIdList
      *
      * @return HlbReferenceItemCollection
      */
-    public static function getReferenceMulti(string $hlBlockServiceName, array $xmlIdList): HlbReferenceItemCollection
+    public static function getReferenceMulti(DataManager $dataManager, array $xmlIdList): HlbReferenceItemCollection
     {
         $xmlIdList = array_filter(
             $xmlIdList,
@@ -71,9 +60,6 @@ abstract class ReferenceUtils
             //Пустая коллекция
             return new HlbReferenceItemCollection(new ArrayResult([]));
         }
-
-        /** @var DataManager $dataManager */
-        $dataManager = Application::getInstance()->getContainer()->get($hlBlockServiceName);
 
         /** @var HlbReferenceItemCollection $collectionBase */
         $collectionBase = (new HlbReferenceQuery($dataManager::query()))
