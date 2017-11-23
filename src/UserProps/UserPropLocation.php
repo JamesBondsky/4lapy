@@ -38,12 +38,16 @@ class UserPropLocation extends TypeBase
      * Return internal type for storing url_preview user type values
      *
      * @param array $userField Array containing parameters of the user field.
+     *
      * @return string
      */
-    public static function getDBColumnType(/** @noinspection PhpUnusedParameterInspection */$userField){
+    public static function getDBColumnType(
+        /** @noinspection PhpUnusedParameterInspection */
+        $userField
+    )
+    {
         global $DB;
-        switch(strtolower($DB->type))
-        {
+        switch (strtolower($DB->type)) {
             case 'oracle':
                 return 'number(18)';
             case 'mssql':
@@ -56,46 +60,101 @@ class UserPropLocation extends TypeBase
     
     /**
      * @param array $userField
+     *
      * @return array
      */
-    public static function prepareSettings(/** @noinspection PhpUnusedParameterInspection */$userField) : array
+    public static function prepareSettings(
+        /** @noinspection PhpUnusedParameterInspection */
+        $userField
+    ) : array
     {
-        return array(
-            'DEFAULT_VALUE' => (int)$userField['SETTINGS']['DEFAULT_VALUE'] > 0 ? (int)$userField['SETTINGS']['DEFAULT_VALUE']: ''
-        );
+        return [
+            'DEFAULT_VALUE' => (int)$userField['SETTINGS']['DEFAULT_VALUE']
+                               > 0 ? (int)$userField['SETTINGS']['DEFAULT_VALUE'] : '',
+        ];
     }
     
     /**
      * @param array $userField Array containing parameters of the user field.
-     * @param $htmlControl
-     * @param $varsFromForm
+     * @param       $htmlControl
+     * @param       $varsFromForm
+     *
      * @return string
      */
-    public static function getSettingsHTML(/** @noinspection PhpUnusedParameterInspection */$userField, $htmlControl, $varsFromForm) : string
+    public static function getSettingsHTML(
+        /** @noinspection PhpUnusedParameterInspection */
+        $userField,
+        $htmlControl,
+        $varsFromForm
+    ) : string
     {
         $result = '';
-        $value = '';
-        if($varsFromForm) {
+        $value  = '';
+        if ($varsFromForm) {
             $value = $GLOBALS[$htmlControl['NAME']]['DEFAULT_VALUE'];
-        }
-        elseif(\is_array($userField)) {
+        } elseif (\is_array($userField)) {
             $value = $userField['SETTINGS']['DEFAULT_VALUE'];
-        }
-        elseif((int)$value > 0) {
+        } elseif ((int)$value > 0) {
             $value = (int)$value;
         }
+        ob_start();
+        $type = 'search';
+        global $APPLICATION;
+        if ($type === 'search') {
+            $APPLICATION->IncludeComponent('bitrix:sale.location.selector.search',
+                                           '',
+                                           [
+                                               'CACHE_TIME'                 => '36000000',
+                                               'CACHE_TYPE'                 => 'N',
+                                               'CODE'                       => '',
+                                               //"FILTER_BY_SITE" => "Y",
+                                               //"FILTER_SITE_ID" => "current",
+                                               'ID'                         => $value,
+                                               'INITIALIZE_BY_GLOBAL_EVENT' => '',
+                                               'INPUT_NAME'                 => $htmlControl['NAME'],
+                                               'JS_CALLBACK'                => '',
+                                               //'JS_CONTROL_GLOBAL_ID'       => 'locationSelectors_' . $replacedName,
+                                               //'JS_CONTROL_DEFERRED_INIT'       => 'defered_'.$replacedName,
+                                               'PROVIDE_LINK_BY'            => 'id',
+                                               //"SHOW_DEFAULT_LOCATIONS" => "Y",
+                                               'SUPPRESS_ERRORS'            => 'N',
+                                           ]);
+        } else {
+            $APPLICATION->IncludeComponent('bitrix:sale.location.selector.steps',
+                                           '',
+                                           [
+                                               'CACHE_TIME'                 => '36000000',
+                                               'CACHE_TYPE'                 => 'N',
+                                               'CODE'                       => '',
+                                               'DISABLE_KEYBOARD_INPUT'     => 'N',
+                                               //"FILTER_BY_SITE" => "Y",
+                                               //"FILTER_SITE_ID" => "current",
+                                               'ID'                         => $htmlControl['VALUE'],
+                                               'INITIALIZE_BY_GLOBAL_EVENT' => '',
+                                               'INPUT_NAME'                 => $htmlControl['NAME'],
+                                               'JS_CALLBACK'                => '',
+                                               'JS_CONTROL_GLOBAL_ID'       => 'locationSelectors_' . $replacedName,
+                                               //'JS_CONTROL_DEFERRED_INIT'       => 'defered_'.$replacedName,
+                                               'PRECACHE_LAST_LEVEL'        => 'N',
+                                               'PRESELECT_TREE_TRUNK'       => 'N',
+                                               'PROVIDE_LINK_BY'            => 'id',
+                                               //"SHOW_DEFAULT_LOCATIONS" => "Y",
+                                               'SUPPRESS_ERRORS'            => 'N',
+                                           ]);
+        }
+    
+        $return =  ob_get_clean();
         $result .= '
 		<tr>
-			<td>'.GetMessage('USER_TYPE_INTEGER_DEFAULT_VALUE') . ':</td>
+			<td>' . GetMessage('USER_TYPE_INTEGER_DEFAULT_VALUE') . ':</td>
 			<td>
-				<input type="text" name="'. $htmlControl['NAME'] . '[DEFAULT_VALUE]" size="20"  maxlength="225" value="' . $value . '">
+				'.$return.'
 			</td>
 		</tr>
 		';
         
         return $result;
     }
-    
     
     /**
      * @param $userField
@@ -112,11 +171,11 @@ class UserPropLocation extends TypeBase
         $return = '&nbsp;';
         //$htmlControl['NAME'] = $userField['FIELD_CODE'];
         $replacedName = str_replace([
-                                                 '[',
-                                                 ']',
-                                             ],
-                                             '_',
-                                             $htmlControl['NAME']);
+                                        '[',
+                                        ']',
+                                    ],
+                                    '_',
+                                    $htmlControl['NAME']);
         if ($userField['EDIT_IN_LIST'] === 'Y') {
             if ($userField['ENTITY_VALUE_ID'] < 1 && !empty($userField['SETTINGS']['DEFAULT_VALUE'])) {
                 $htmlControl['VALUE'] = $userField['SETTINGS']['DEFAULT_VALUE'];
@@ -125,6 +184,8 @@ class UserPropLocation extends TypeBase
             global $APPLICATION;
             ob_start();
             $type = 'search';
+            $deferedControlName = 'defered_'.$replacedName;
+            $globalControlName = 'locationSelectors_' . $replacedName;
             if ($type === 'search') {
                 $APPLICATION->IncludeComponent('bitrix:sale.location.selector.search',
                                                '',
@@ -138,8 +199,8 @@ class UserPropLocation extends TypeBase
                                                    'INITIALIZE_BY_GLOBAL_EVENT' => '',
                                                    'INPUT_NAME'                 => $htmlControl['NAME'],
                                                    'JS_CALLBACK'                => '',
-                                                   'JS_CONTROL_GLOBAL_ID'       => 'locationSelectors_'.$replacedName,
-                                                   //'JS_CONTROL_DEFERRED_INIT'       => 'defered_'.$replacedName,
+                                                   'JS_CONTROL_GLOBAL_ID'       => $globalControlName,
+                                                   'JS_CONTROL_DEFERRED_INIT'       => $deferedControlName,
                                                    'PROVIDE_LINK_BY'            => 'id',
                                                    //"SHOW_DEFAULT_LOCATIONS" => "Y",
                                                    'SUPPRESS_ERRORS'            => 'N',
@@ -158,17 +219,26 @@ class UserPropLocation extends TypeBase
                                                    'INITIALIZE_BY_GLOBAL_EVENT' => '',
                                                    'INPUT_NAME'                 => $htmlControl['NAME'],
                                                    'JS_CALLBACK'                => '',
-                                                   'JS_CONTROL_GLOBAL_ID'       => 'locationSelectors_'.$replacedName,
-                                                   //'JS_CONTROL_DEFERRED_INIT'       => 'defered_'.$replacedName,
+                                                   'JS_CONTROL_GLOBAL_ID'       => $globalControlName,
+                                                   'JS_CONTROL_DEFERRED_INIT'       => $deferedControlName,
                                                    'PRECACHE_LAST_LEVEL'        => 'N',
                                                    'PRESELECT_TREE_TRUNK'       => 'N',
                                                    'PROVIDE_LINK_BY'            => 'id',
                                                    //"SHOW_DEFAULT_LOCATIONS" => "Y",
                                                    'SUPPRESS_ERRORS'            => 'N',
                                                ]);
-            }
-            
-            $return = '<div class="location_type_prop_html">' . ob_get_clean() . '</div>';
+            }?>
+            <script>
+                if (!window.BX && top.BX) {
+                    window.BX = top.BX;
+                }
+                BX.loadScript("/bitrix/components/bitrix/sale.location.selector.search/templates/.default/script.js", function() {
+                    BX.ready(function () {
+                        BX.locationsDeferred["<?=$deferedControlName?>"]();
+                    });
+                });
+            </script>
+            <?$return = '<div class="location_type_prop_html">' . ob_get_clean() . '</div>';
         } elseif (!empty($htmlControl['VALUE'])) {
             //$class  = new static();
             $return = static::getAdminListViewHTML($userField, $htmlControl);
@@ -208,7 +278,7 @@ class UserPropLocation extends TypeBase
             
             ob_start();
             
-            $deferedControlName = 'defered_'.$replacedName;
+            $deferedControlName = 'defered_' . $replacedName;
             $tmpInputName       = $replacedName . '_TMP';
             $APPLICATION->IncludeComponent('adv:sale.location.selector.system',
                                            '',
@@ -219,13 +289,17 @@ class UserPropLocation extends TypeBase
                                                'SELECTED_IN_REQUEST'      => ['L' => $htmlControl['VALUE']],
                                                'PROP_LOCATION'            => 'Y',
                                                'JS_CONTROL_DEFERRED_INIT' => $deferedControlName,
-                                               'JS_CONTROL_GLOBAL_ID'       => 'locationSelectors_'.$replacedName,
+                                               'JS_CONTROL_GLOBAL_ID'     => 'locationSelectors_' . $replacedName,
                                            ],
                                            false);
             
             $result = ob_get_contents();
-            $result = '<div class="location_type_prop_multi_html">
+            $result = '<div class="location_type_prop_multi_html" data-realInputName="' . $htmlControl['NAME'] . '">
 			<script type="text/javascript" data-skip-moving="true">
+                if (!window.BX && top.BX) {
+                    window.BX = top.BX;
+                }
+               
 			    if(typeof window["LoadedLocationMultyScripts"] !== "boolean" || (typeof window["LoadedLocationMultyScripts"] === "boolean" && !window["LoadedLocationMultyScripts"])){
 			        window["LoadedLocationMultyScripts"] = true;
                     var bxInputdeliveryLocMultiStep3 = function()
@@ -235,6 +309,7 @@ class UserPropLocation extends TypeBase
                             BX.ready(function() {
                                 BX.onCustomEvent("deliveryGetRestrictionHtmlScriptsReady");
                                 BX.locationsDeferred["' . $deferedControlName . '"]();
+                                initPropLocationRealVals("' . $tmpInputName . '", "' . $htmlControl['NAME'] . '");
                             });
                         });
                     };
@@ -251,28 +326,67 @@ class UserPropLocation extends TypeBase
                     };
         
                     BX.loadScript("/bitrix/js/sale/core_ui_widget.js", bxInputdeliveryLocMultiStep2);
-                    
-                    if(typeof initPropLocationRealVals !== "function"){
-                        function initPropLocationRealVals(name, realName){
-                            setPropLocationRealVals($("input[name=\'"+name+"[L]\']"), realName);
+				}
+				else{
+			        if(typeof window["LoadedLocationMultyScriptMain"] !== "boolean" || (typeof window["LoadedLocationMultyScriptMain"] === "boolean" && !window["LoadedLocationMultyScriptMain"])){
+			            BX.loadScript("/local/templates/.default/components/bitrix/system.field.edit/sale_location/_script.js", function(){
+			                BX.ready(function() {
+                                BX.onCustomEvent("deliveryGetRestrictionHtmlScriptsReady");
+                                BX.locationsDeferred["' . $deferedControlName . '"]();
+                                initPropLocationRealVals("' . $tmpInputName . '", "' . $htmlControl['NAME'] . '");
+                            });
+			            });
+			        }
+			        else{
+			            BX.ready(function() {
+                            BX.onCustomEvent("deliveryGetRestrictionHtmlScriptsReady");
+                            BX.locationsDeferred["' . $deferedControlName . '"]();
+                            initPropLocationRealVals("' . $tmpInputName . '", "' . $htmlControl['NAME'] . '");
+                        });
+			        }
+				}
+				if(typeof initPropLocationRealVals !== "function"){
+                    function initPropLocationRealVals(name, realName){
+                        var el = document.querySelector( "input[name=\'"+name+"[L]\']" );
+                        if(!el || typeof el === "null"){
+                            el = top.document.querySelector( "input[name=\'"+name+"[L]\']" );
+                        }
+                        if(!!el) {
+                            setPropLocationRealVals(el, realName);
+                            //setPropLocationRealVals($("input[name=\'"+name+"[L]\']"), realName);
                         }
                     }
-                    if(typeof setPropLocationRealVals !== "function"){
-                        function setPropLocationRealVals(el, realName){
-                            if($(el).length > 0){
-                                var firstVal = $(el).val();
-                                if(firstVal.length > 0){
-                                    var items = $(el).val().split(":");
-                                    var index, val, html;
-                                    var div_jq = $(el).closest("div");
-                                    div_jq.find(".real_inputs").remove();
+                }
+                if(typeof setPropLocationRealVals !== "function"){
+                    function setPropLocationRealVals(el, realName){
+                        //if($(el).length > 0){
+                        // console.log(el, "el");
+                        if(!!el){
+                            var firstVal = el.getAttribute("value");
+                            if(firstVal.length > 0){
+                                var items = firstVal.split(":");
+                                var index, val, html;
+                                var div = el.closest("div");
+                                var delItems = div.querySelectorAll("input.real_inputs");
+                                if(delItems.length>0){
+                                    for(index in delItems){
+                                        if(delItems.hasOwnProperty(index)){
+                                            delItems[index].parentNode.removeChild(delItems[index]);
+                                        }
+                                    }
+                                }
+                                if(items.length > 0){
                                     for(index in items){
                                         if (items.hasOwnProperty(index)){
                                             val = items[index];
                                             if(val > 0){
-                                                html = "<input type=\'hidden\' name=\'"+realName+" \'" +
-                                                 " class=\'real_inputs\' value=\'"+val+"\'>";
-                                                div_jq.append(html);
+                                                var newInput = document.createElement("input");
+                                                newInput.setAttribute("name", realName);
+                                                newInput.setAttribute("value", val);
+                                                newInput.setAttribute("type", "hidden");
+                                                newInput.className = "real_inputs";
+                                                
+                                                div.appendChild(newInput);
                                             }
                                         }
                                     }
@@ -280,27 +394,7 @@ class UserPropLocation extends TypeBase
                             }
                         }
                     }
-				}
-				else{
-			        if(typeof window["LoadedLocationMultyScriptMain"] !== "boolean" || (typeof window["LoadedLocationMultyScriptMain"] === "boolean" && !window["LoadedLocationMultyScriptMain"])){
-			            BX.loadScript("/local/templates/.default/components/bitrix/system.field.edit/sale_location/_script.js", function(){
-			                BX.ready(function() {
-                                //BX.onCustomEvent("deliveryGetRestrictionHtmlScriptsReady");
-                                BX.locationsDeferred["' . $deferedControlName . '"]();
-                            });
-			            });
-			        }
-			        else{
-			            BX.ready(function() {
-                            //BX.onCustomEvent("deliveryGetRestrictionHtmlScriptsReady");
-                            BX.locationsDeferred["' . $deferedControlName . '"]();
-                        });
-			        }
-				}
-                
-                BX.ready(function() {
-				   initPropLocationRealVals("'.$tmpInputName.'", "'.$htmlControl['NAME'].'");
-				});
+                }
 			</script>
    
             <!--suppress HtmlUnknownTarget -->
@@ -330,7 +424,11 @@ class UserPropLocation extends TypeBase
      *
      * @return string
      */
-    public static function getFilterHTML(/** @noinspection PhpUnusedParameterInspection */$userField, $htmlControl) : string
+    public static function getFilterHTML(
+        /** @noinspection PhpUnusedParameterInspection */
+        $userField,
+        $htmlControl
+    ) : string
     {
         $replacedName = str_replace([
                                         '[',
@@ -356,7 +454,7 @@ class UserPropLocation extends TypeBase
                                                'INITIALIZE_BY_GLOBAL_EVENT' => '',
                                                'INPUT_NAME'                 => $htmlControl['NAME'],
                                                'JS_CALLBACK'                => '',
-                                               'JS_CONTROL_GLOBAL_ID'       => 'locationSelectors_'.$replacedName,
+                                               'JS_CONTROL_GLOBAL_ID'       => 'locationSelectors_' . $replacedName,
                                                //'JS_CONTROL_DEFERRED_INIT'       => 'defered_'.$replacedName,
                                                'PROVIDE_LINK_BY'            => 'id',
                                                //"SHOW_DEFAULT_LOCATIONS" => "Y",
@@ -376,7 +474,7 @@ class UserPropLocation extends TypeBase
                                                'INITIALIZE_BY_GLOBAL_EVENT' => '',
                                                'INPUT_NAME'                 => $htmlControl['NAME'],
                                                'JS_CALLBACK'                => '',
-                                               'JS_CONTROL_GLOBAL_ID'       => 'locationSelectors_'.$replacedName,
+                                               'JS_CONTROL_GLOBAL_ID'       => 'locationSelectors_' . $replacedName,
                                                //'JS_CONTROL_DEFERRED_INIT'       => 'defered_'.$replacedName,
                                                'PRECACHE_LAST_LEVEL'        => 'N',
                                                'PRESELECT_TREE_TRUNK'       => 'N',
@@ -399,13 +497,16 @@ class UserPropLocation extends TypeBase
      * @return string
      * @throws \Bitrix\Main\LoaderException
      */
-    public static function getAdminListViewHTML(/** @noinspection PhpUnusedParameterInspection */$userField, $htmlControl) : string
+    public static function getAdminListViewHTML(
+        /** @noinspection PhpUnusedParameterInspection */
+        $userField,
+        $htmlControl
+    ) : string
     {
         if (!empty($htmlControl['VALUE']) && (int)$htmlControl['VALUE'] > 0) {
             Loader::includeModule('sale');
             
-            return '[' . $htmlControl['VALUE'] . ']'
-                   . LocationHelper::getLocationStringById($htmlControl['VALUE']);
+            return '[' . $htmlControl['VALUE'] . ']' . LocationHelper::getLocationStringById($htmlControl['VALUE']);
         }
         
         return '&nbsp;';
@@ -430,8 +531,7 @@ class UserPropLocation extends TypeBase
             if (\is_array($htmlControl['VALUE']) && !empty($htmlControl['VALUE'])) {
                 foreach ($htmlControl['VALUE'] as $val) {
                     if (!empty($val) && (int)$val > 0) {
-                        $arPrint[] =
-                            '[' . $val . ']' . LocationHelper::getLocationStringById($val);
+                        $arPrint[] = '[' . $val . ']' . LocationHelper::getLocationStringById($val);
                     }
                 }
             }
@@ -491,6 +591,7 @@ class UserPropLocation extends TypeBase
      * @param array $userField Array containing parameters of the user field.
      * @param array $params
      * @param array $setting
+     *
      * @return string
      */
     //public static function getPublicViewHTML($userField, $id, $params = "", $settings = array())
@@ -561,7 +662,8 @@ class UserPropLocation extends TypeBase
      * Checks for current user's access to $value.
      *
      * @param array $userField Array containing parameters of the user field.
-     * @param int $value
+     * @param int   $value
+     *
      * @return array
      */
     //public static function checkfields($userField, $value)
@@ -597,8 +699,9 @@ class UserPropLocation extends TypeBase
      * Hook executed before saving url_preview user type value. Checks and removes signature of the $value.
      * If signature is correct, checks current user's access to $value.
      *
-     * @param array $userField Array containing parameters of the user field.
-     * @param string $value Signed value of the user field.
+     * @param array  $userField Array containing parameters of the user field.
+     * @param string $value     Signed value of the user field.
+     *
      * @return int Unsigned value of the user field, or null in case of errors.
      */
     //public static function onBeforeSave($userField, $value)
@@ -641,8 +744,10 @@ class UserPropLocation extends TypeBase
     
     /**
      * Hook executed after fetching value of the user type. Signs returned value.
+     *
      * @param array $userField Array containing parameters of the user field.
-     * @param array $value Unsigned value of the user field.
+     * @param array $value     Unsigned value of the user field.
+     *
      * @return string Signed value of the user field.
      */
     //public static function onAfterFetch($userField, $value)

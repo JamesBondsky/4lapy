@@ -1,5 +1,5 @@
-/common/bitrix/
-/common/upload/
+/common/bitrix
+/common/upload
 /.vagrant/
 /common/local/cache/
 /common/local/doc/html/

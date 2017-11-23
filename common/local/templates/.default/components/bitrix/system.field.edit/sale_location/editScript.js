@@ -17,7 +17,7 @@ if (typeof afterShowEditLocationPropMultiple !== "function") {
                 }
                 html = $(this).html();
                 var firstInput = $(this).find('input:first');
-                beginval = firstInput.val();
+                var beginval = firstInput.val();
                 firstInput.val('');
                 res  = BX.processHTML(html);
                 // console.log(res, 'res');
@@ -65,11 +65,6 @@ BX.addCustomEvent(
     "Grid::thereEditedRows",
     afterShowEditLocationProp
 );
-// BX.onCustomEvent(
-//     window,
-//     "Grid::beforeRequest",
-//     [this, eventArgs]
-// );
 
 if (typeof beforeRequestPropLocation !== "function") {
     function beforeRequestPropLocation(gridClass, eventArgs) {
@@ -111,8 +106,8 @@ if (typeof beforeRequestPropLocation !== "function") {
             //
             // });
         }
-        console.log(gridClass, 'gridClass');
-        console.log(eventArgs, 'eventArgs');
+        //console.log(gridClass, 'gridClass');
+        //console.log(eventArgs, 'eventArgs');
         // console.log(window['haveLocationTypeProp'], "window['haveLocationTypeProp']");
     }
 }

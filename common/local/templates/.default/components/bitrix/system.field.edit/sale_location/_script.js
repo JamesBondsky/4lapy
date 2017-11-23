@@ -1013,7 +1013,8 @@ if(typeof BX.Sale.component.location.selector.system === 'undefined' && typeof B
 			// noinspection JSUnresolvedVariable
             if (typeof setPropLocationRealVals === 'function' && !!this.opts.prop_location && this.opts.prop_location === 'Y') {
                 // noinspection JSUnresolvedFunction
-                setPropLocationRealVals($(this.ctrls.inputPool.children[0]));
+				console.log(this.ctrls.inputPool.children[0], "this.ctrls.inputPool.children[0]");
+                setPropLocationRealVals(this.ctrls.inputPool.children[0], this.ctrls.inputPool.children[0].closest('div.location_type_prop_multi_html').getAttribute('data-realinputname'));
             }
 		},
 
@@ -1134,4 +1135,55 @@ if(typeof BX.Sale.component.location.selector.system.tree === 'undefined' && typ
 		}
 	});
 
+}
+
+if(typeof initPropLocationRealVals !== "function"){
+    function initPropLocationRealVals(name, realName){
+        var el = document.querySelector( "input[name='"+name+"[L]']" );
+        if(!el || typeof el === "null"){
+            el = top.document.querySelector( "input[name='"+name+"[L]']" );
+        }
+        if(!!el) {
+            setPropLocationRealVals(el, realName);
+            //setPropLocationRealVals($("input[name='"+name+"[L]']"), realName);
+        }
+    }
+}
+if(typeof setPropLocationRealVals !== "function"){
+    function setPropLocationRealVals(el, realName){
+        //if($(el).length > 0){
+        // console.log(el, "el");
+        if(!!el){
+            var firstVal = el.getAttribute("value");
+            if(firstVal.length > 0){
+                var items = firstVal.split(":");
+                var index, val, html;
+                var div = el.closest("div");
+                var delItems = div.querySelectorAll("input.real_inputs");
+                if(delItems.length>0){
+                    for(index in delItems){
+                        if(delItems.hasOwnProperty(index)){
+                            delItems[index].parentNode.removeChild(delItems[index]);
+                        }
+                    }
+                }
+                if(items.length > 0){
+                    for(index in items){
+                        if (items.hasOwnProperty(index)){
+                            val = items[index];
+                            if(val > 0){
+                                var newInput = document.createElement("input");
+                                newInput.setAttribute("name", realName);
+                                newInput.setAttribute("value", val);
+                                newInput.setAttribute("type", "hidden");
+                                newInput.className = "real_inputs";
+                                
+                                div.appendChild(newInput);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
