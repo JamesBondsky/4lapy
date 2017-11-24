@@ -43,7 +43,6 @@ if [[ -f "${BITRIX_FOLDER_CHECK}" ]] ; then
     printYellow "To refresh unversioned files, please, remove following files and directories, but be careful!"
     printYellow "\t\t${BITRIX_FOLDER_CHECK}"
     printYellow "\t\t${COMMON_ROOT}/upload/"
-
 else
     printRed "Unversioned files missing. "
     printBlue "Unpacking. Please, wait for a few minutes..."

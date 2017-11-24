@@ -20,13 +20,11 @@ use Bitrix\Main\{
 };
 
 /** @noinspection AutoloadingIssuesInspection */
-class CNewsFullComponent extends CBitrixComponent
+class CNewsFullCompressedComponent extends CBitrixComponent
 {
     protected $arrFilter = [];
     
     protected $arNavParams;
-    
-    protected $pagerParameters;
     
     /**
      * @param $arParams
@@ -112,18 +110,9 @@ class CNewsFullComponent extends CBitrixComponent
         if (strlen($arParams['ACTIVE_DATE_FORMAT']) <= 0) {
             $arParams['ACTIVE_DATE_FORMAT'] = \Bitrix\Main\Type\Date::getFormat();
         }
-        $arParams['PREVIEW_TRUNCATE_LEN']     = (int)$arParams['PREVIEW_TRUNCATE_LEN'];
-        $arParams['HIDE_LINK_WHEN_NO_DETAIL'] = $arParams['HIDE_LINK_WHEN_NO_DETAIL'] === 'Y';
+        $arParams['PREVIEW_TRUNCATE_LEN'] = (int)$arParams['PREVIEW_TRUNCATE_LEN'];
         
-        $arParams['DISPLAY_TOP_PAGER']               = $arParams['DISPLAY_TOP_PAGER'] === 'Y';
-        $arParams['DISPLAY_BOTTOM_PAGER']            = $arParams['DISPLAY_BOTTOM_PAGER'] !== 'N';
-        $arParams['PAGER_TITLE']                     = trim($arParams['PAGER_TITLE']);
-        $arParams['PAGER_SHOW_ALWAYS']               = $arParams['PAGER_SHOW_ALWAYS'] === 'Y';
-        $arParams['PAGER_TEMPLATE']                  = trim($arParams['PAGER_TEMPLATE']);
-        $arParams['PAGER_DESC_NUMBERING']            = $arParams['PAGER_DESC_NUMBERING'] === 'Y';
-        $arParams['PAGER_DESC_NUMBERING_CACHE_TIME'] = (int)$arParams['PAGER_DESC_NUMBERING_CACHE_TIME'];
-        $arParams['PAGER_SHOW_ALL']                  = $arParams['PAGER_SHOW_ALL'] === 'Y';
-        $arParams['CHECK_PERMISSIONS']               = $arParams['CHECK_PERMISSIONS'] !== 'N';
+        $arParams['CHECK_PERMISSIONS'] = $arParams['CHECK_PERMISSIONS'] !== 'N';
         
         return $arParams;
     }
@@ -138,7 +127,10 @@ class CNewsFullComponent extends CBitrixComponent
         $this->arResult['IBLOCK_TYPE_ID'] = $this->arParams['IBLOCK_TYPE'];
         
         $this->setFilter();
-        list($this->arNavParams, $arNavigation, $this->pagerParameters) = $this->setPageParams();
+        $this->arNavParams = [
+            'nTopCount' => $this->arParams['NEWS_COUNT'],
+        ];
+        $arNavigation      = false;
         
         $bUSER_HAVE_ACCESS = $this->checkPermission($USER);
         
@@ -148,7 +140,6 @@ class CNewsFullComponent extends CBitrixComponent
                                         $bUSER_HAVE_ACCESS,
                                         $arNavigation,
                                         $this->arrFilter,
-                                        $this->pagerParameters,
                                     ])) {
             $this->checkModule();
             
@@ -220,48 +211,6 @@ class CNewsFullComponent extends CBitrixComponent
         if (!$this->arParams['CACHE_FILTER'] && count($this->arrFilter) > 0) {
             $this->arParams['CACHE_TIME'] = 0;
         }
-    }
-    
-    /**
-     * @return array
-     */
-    protected function setPageParams() : array
-    {
-        if ($this->arParams['DISPLAY_TOP_PAGER'] || $this->arParams['DISPLAY_BOTTOM_PAGER']) {
-            $arNavParams = [
-                'nPageSize'          => $this->arParams['NEWS_COUNT'],
-                'bDescPageNumbering' => $this->arParams['PAGER_DESC_NUMBERING'],
-                'bShowAll'           => $this->arParams['PAGER_SHOW_ALL'],
-            ];
-            /** @noinspection PhpUndefinedClassInspection */
-            $arNavigation = \CDBResult::GetNavParams($arNavParams);
-            if ($arNavigation['PAGEN'] === 0 && $this->arParams['PAGER_DESC_NUMBERING_CACHE_TIME'] > 0) {
-                $this->arParams['CACHE_TIME'] = $this->arParams['PAGER_DESC_NUMBERING_CACHE_TIME'];
-            }
-        } else {
-            $arNavParams  = [
-                'nTopCount'          => $this->arParams['NEWS_COUNT'],
-                'bDescPageNumbering' => $this->arParams['PAGER_DESC_NUMBERING'],
-            ];
-            $arNavigation = false;
-        }
-        
-        if (empty($this->arParams['PAGER_PARAMS_NAME'])
-            || !preg_match('/^[A-Za-z_][A-Za-z01-9_]*$/',
-                           $this->arParams['PAGER_PARAMS_NAME'])) {
-            $pagerParameters = [];
-        } else {
-            $pagerParameters = $GLOBALS[$this->arParams['PAGER_PARAMS_NAME']];
-            if (!is_array($pagerParameters)) {
-                $pagerParameters = [];
-            }
-        }
-        
-        return [
-            $arNavParams,
-            $arNavigation,
-            $pagerParameters,
-        ];
     }
     
     /**
@@ -385,36 +334,9 @@ class CNewsFullComponent extends CBitrixComponent
             $this->arResult['ELEMENTS'][] = $arItem['ID'];
         }
         
-        $navComponentParameters = [];
-        if ($this->arParams['PAGER_BASE_LINK_ENABLE'] === 'Y') {
-            $pagerBaseLink = trim($this->arParams['PAGER_BASE_LINK']);
-            if ($pagerBaseLink === '') {
-                $pagerBaseLink = $listPageUrlEl;
-            }
-            
-            if ($this->pagerParameters && isset($this->pagerParameters['BASE_LINK'])) {
-                $pagerBaseLink = $this->pagerParameters['BASE_LINK'];
-                unset($this->pagerParameters['BASE_LINK']);
-            }
-            
-            $navComponentParameters['BASE_LINK'] =
-                CHTTP::urlAddParams($pagerBaseLink, $this->pagerParameters, ['encode' => true]);
-        }
-        
-        $this->arResult['NAV_STRING']      = $rsElement->GetPageNavStringEx($navComponentObject,
-                                                                            $this->arParams['PAGER_TITLE'],
-                                                                            $this->arParams['PAGER_TEMPLATE'],
-                                                                            $this->arParams['PAGER_SHOW_ALWAYS'],
-                                                                            $this,
-                                                                            $navComponentParameters);
-        $this->arResult['NAV_CACHED_DATA'] = null;
-        $this->arResult['NAV_RESULT']      = $rsElement;
-        $this->arResult['NAV_PARAM']       = $navComponentParameters;
-        
         $this->setResultCacheKeys([
                                       'IBLOCK_TYPE_ID',
                                       'IBLOCK_ID',
-                                      'NAV_CACHED_DATA',
                                       'ELEMENTS',
                                       'IPROPERTY_VALUES',
                                       'ITEMS_TIMESTAMP_X',

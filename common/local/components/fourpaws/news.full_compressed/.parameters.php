@@ -93,8 +93,8 @@ while ($arr = $res->fetch()) {
 $arComponentParameters = [
     'GROUPS'     => [],
     'PARAMETERS' => [
-        'AJAX_MODE'                => [],
-        'IBLOCK_TYPE'              => [
+        'AJAX_MODE'            => [],
+        'IBLOCK_TYPE'          => [
             'PARENT'   => 'BASE',
             'NAME'     => Loc::getMessage('T_IBLOCK_DESC_LIST_TYPE'),
             'TYPE'     => 'LIST',
@@ -103,7 +103,7 @@ $arComponentParameters = [
             'REFRESH'  => 'Y',
             'MULTIPLE' => 'Y',
         ],
-        'IBLOCK_ID'                => [
+        'IBLOCK_ID'            => [
             'PARENT'            => 'BASE',
             'NAME'              => Loc::getMessage('T_IBLOCK_DESC_LIST_ID'),
             'TYPE'              => 'LIST',
@@ -113,13 +113,13 @@ $arComponentParameters = [
             'REFRESH'           => 'Y',
             'MULTIPLE'          => 'Y',
         ],
-        'NEWS_COUNT'               => [
+        'NEWS_COUNT'           => [
             'PARENT'  => 'BASE',
             'NAME'    => Loc::getMessage('T_IBLOCK_DESC_LIST_CONT'),
             'TYPE'    => 'STRING',
             'DEFAULT' => '20',
         ],
-        'SORT_BY1'                 => [
+        'SORT_BY1'             => [
             'PARENT'            => 'DATA_SOURCE',
             'NAME'              => Loc::getMessage('T_IBLOCK_DESC_IBORD1'),
             'TYPE'              => 'LIST',
@@ -127,7 +127,7 @@ $arComponentParameters = [
             'VALUES'            => $arSortFields,
             'ADDITIONAL_VALUES' => 'Y',
         ],
-        'SORT_ORDER1'              => [
+        'SORT_ORDER1'          => [
             'PARENT'            => 'DATA_SOURCE',
             'NAME'              => Loc::getMessage('T_IBLOCK_DESC_IBBY1'),
             'TYPE'              => 'LIST',
@@ -135,7 +135,7 @@ $arComponentParameters = [
             'VALUES'            => $arSorts,
             'ADDITIONAL_VALUES' => 'Y',
         ],
-        'SORT_BY2'                 => [
+        'SORT_BY2'             => [
             'PARENT'            => 'DATA_SOURCE',
             'NAME'              => Loc::getMessage('T_IBLOCK_DESC_IBORD2'),
             'TYPE'              => 'LIST',
@@ -143,7 +143,7 @@ $arComponentParameters = [
             'VALUES'            => $arSortFields,
             'ADDITIONAL_VALUES' => 'Y',
         ],
-        'SORT_ORDER2'              => [
+        'SORT_ORDER2'          => [
             'PARENT'            => 'DATA_SOURCE',
             'NAME'              => Loc::getMessage('T_IBLOCK_DESC_IBBY2'),
             'TYPE'              => 'LIST',
@@ -151,14 +151,14 @@ $arComponentParameters = [
             'VALUES'            => $arSorts,
             'ADDITIONAL_VALUES' => 'Y',
         ],
-        'FILTER_NAME'              => [
+        'FILTER_NAME'          => [
             'PARENT'  => 'DATA_SOURCE',
             'NAME'    => Loc::getMessage('T_IBLOCK_FILTER'),
             'TYPE'    => 'STRING',
             'DEFAULT' => '',
         ],
-        'FIELD_CODE'               => CIBlockParameters::GetFieldCode(Loc::getMessage('IBLOCK_FIELD'), 'DATA_SOURCE'),
-        'PROPERTY_CODE'            => [
+        'FIELD_CODE'           => CIBlockParameters::GetFieldCode(Loc::getMessage('IBLOCK_FIELD'), 'DATA_SOURCE'),
+        'PROPERTY_CODE'        => [
             'PARENT'            => 'DATA_SOURCE',
             'NAME'              => Loc::getMessage('T_IBLOCK_PROPERTY'),
             'TYPE'              => 'LIST',
@@ -166,40 +166,34 @@ $arComponentParameters = [
             'VALUES'            => $arProperty_LNS,
             'ADDITIONAL_VALUES' => 'Y',
         ],
-        'CHECK_DATES'              => [
+        'CHECK_DATES'          => [
             'PARENT'  => 'DATA_SOURCE',
             'NAME'    => Loc::getMessage('T_IBLOCK_DESC_CHECK_DATES'),
             'TYPE'    => 'CHECKBOX',
             'DEFAULT' => 'Y',
         ],
-        'PREVIEW_TRUNCATE_LEN'     => [
+        'PREVIEW_TRUNCATE_LEN' => [
             'PARENT'  => 'ADDITIONAL_SETTINGS',
             'NAME'    => Loc::getMessage('T_IBLOCK_DESC_PREVIEW_TRUNCATE_LEN'),
             'TYPE'    => 'STRING',
             'DEFAULT' => '',
         ],
-        'ACTIVE_DATE_FORMAT'       => CIBlockParameters::GetDateFormat(Loc::getMessage('T_IBLOCK_DESC_ACTIVE_DATE_FORMAT'),
-                                                                       'ADDITIONAL_SETTINGS'),
-        'SET_LAST_MODIFIED'        => [
+        'ACTIVE_DATE_FORMAT'   => CIBlockParameters::GetDateFormat(Loc::getMessage('T_IBLOCK_DESC_ACTIVE_DATE_FORMAT'),
+                                                                   'ADDITIONAL_SETTINGS'),
+        'SET_LAST_MODIFIED'    => [
             'PARENT'  => 'ADDITIONAL_SETTINGS',
             'NAME'    => Loc::getMessage('CP_BNL_SET_LAST_MODIFIED'),
             'TYPE'    => 'CHECKBOX',
             'DEFAULT' => 'N',
         ],
-        'HIDE_LINK_WHEN_NO_DETAIL' => [
-            'PARENT'  => 'ADDITIONAL_SETTINGS',
-            'NAME'    => Loc::getMessage('T_IBLOCK_DESC_HIDE_LINK_WHEN_NO_DETAIL'),
-            'TYPE'    => 'CHECKBOX',
-            'DEFAULT' => 'N',
-        ],
-        'CACHE_TIME'               => ['DEFAULT' => 36000000],
-        'CACHE_FILTER'             => [
+        'CACHE_TIME'           => ['DEFAULT' => 36000000],
+        'CACHE_FILTER'         => [
             'PARENT'  => 'CACHE_SETTINGS',
             'NAME'    => Loc::getMessage('IBLOCK_CACHE_FILTER'),
             'TYPE'    => 'CHECKBOX',
             'DEFAULT' => 'N',
         ],
-        'CACHE_GROUPS'             => [
+        'CACHE_GROUPS'         => [
             'PARENT'  => 'CACHE_SETTINGS',
             'NAME'    => Loc::getMessage('CP_BNL_CACHE_GROUPS'),
             'TYPE'    => 'CHECKBOX',
@@ -207,11 +201,3 @@ $arComponentParameters = [
         ],
     ],
 ];
-
-CIBlockParameters::AddPagerSettings($arComponentParameters,
-                                    Loc::getMessage('T_IBLOCK_DESC_PAGER_NEWS'), //$pager_title
-                                    true, //$bDescNumbering
-                                    true, //$bShowAllParam
-                                    true, //$bBaseLink
-                                    $arCurrentValues['PAGER_BASE_LINK_ENABLE'] === 'Y' //$bBaseLinkEnabled
-);
