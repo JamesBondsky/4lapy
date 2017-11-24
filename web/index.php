@@ -11,7 +11,7 @@ $APPLICATION->IncludeComponent('bitrix:news.list',
                                [
                                    'COMPONENT_TEMPLATE'              => 'index.slider',
                                    'IBLOCK_TYPE'                     => 'publications',
-                                   'IBLOCK_ID'                       => '8',
+                                   'IBLOCK_ID'                       => \Adv\Bitrixtools\Tools\Iblock\IblockUtils::getIblockId('publications', 'banners'),
                                    'NEWS_COUNT'                      => '7',
                                    'SORT_BY1'                        => 'SORT',
                                    'SORT_ORDER1'                     => 'ASC',
@@ -136,9 +136,9 @@ $APPLICATION->IncludeComponent(
         ),
         'FILTER_NAME'            => '',
         'IBLOCK_ID'                => array(
-            '5',
-            '6',
-            '9'
+            \Adv\Bitrixtools\Tools\Iblock\IblockUtils::getIblockId('publications', 'news'),
+            \Adv\Bitrixtools\Tools\Iblock\IblockUtils::getIblockId('publications', 'articles'),
+            \Adv\Bitrixtools\Tools\Iblock\IblockUtils::getIblockId('publications', 'cloubs_and_nurderis'),
         ),
         'IBLOCK_TYPE'              => 'publications',
         'NEWS_COUNT'                => '7',
