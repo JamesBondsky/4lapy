@@ -52,23 +52,23 @@ if(is_array($arResult['IBLOCKS']) && !empty($arResult['IBLOCKS'])):?>
                         <a class="b-news-item__link"
                            href="<?= $item['DETAIL_PAGE_URL'] ?>"
                            title="Мастер-классы – встречи друзей!">
-                            <span class="b-news-item__image-wrapper js-image-cover">
-                                <?if(!empty($item['PREVIEW_PICTURE']['SRC'])):?>
-                                    <img class="b-news-item__image"
-                                         src="<?= $item['PREVIEW_PICTURE']['SRC'] ?>"
-                                         alt="<?= $item['PREVIEW_PICTURE']['ALT'] ?>"
-                                         title="<?= $item['PREVIEW_PICTURE']['TITLE'] ?>" />
-                                    <?if(!empty($item['DISPLAY_PROPERTIES']['VIDEO']['DISPLAY_VALUE'])):?>
-                                        <span class="b-news-item__video">
-                                            <span class="b-icon">
-                                                <svg class="b-icon__svg" viewBox="0 0 60 60 " width="60px" height="60px">
-                                                    <use class="b-icon__use" xlink:href="/static/build/icons.svg#icon-play-video"></use>
-                                                </svg>
+                            <?if(!empty($item['PREVIEW_PICTURE']['SRC'])):?>
+                                <span class="b-news-item__image-wrapper js-image-cover">
+                                        <img class="b-news-item__image"
+                                             src="<?= $item['PREVIEW_PICTURE']['SRC'] ?>"
+                                             alt="<?= $item['PREVIEW_PICTURE']['ALT'] ?>"
+                                             title="<?= $item['PREVIEW_PICTURE']['TITLE'] ?>" />
+                                        <?if(!empty($item['DISPLAY_PROPERTIES']['VIDEO']['DISPLAY_VALUE'])):?>
+                                            <span class="b-news-item__video">
+                                                <span class="b-icon">
+                                                    <svg class="b-icon__svg" viewBox="0 0 60 60 " width="60px" height="60px">
+                                                        <use class="b-icon__use" xlink:href="/static/build/icons.svg#icon-play-video"></use>
+                                                    </svg>
+                                                </span>
                                             </span>
-                                        </span>
-                                    <?endif;?>
-                                <?endif;?>
-                            </span>
+                                        <?endif;?>
+                                </span>
+                            <?endif;?>
                             <?php if (!empty($item['DISPLAY_PROPERTIES']['PUBLICATION_TYPE']['DISPLAY_VALUE'])): ?>
                                 <span class="b-news-item__label"><?=$item['DISPLAY_PROPERTIES']['PUBLICATION_TYPE']['DISPLAY_VALUE']?></span>
                             <? endif; ?>
