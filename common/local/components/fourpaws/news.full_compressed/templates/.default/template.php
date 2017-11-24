@@ -1,12 +1,5 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: Vampi
- * Date: 23.11.2017
- * Time: 16:09
- */
-
-/**
  * @var \CBitrixComponentTemplate $this
  *
  * @var array                     $arParams
