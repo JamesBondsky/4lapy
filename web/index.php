@@ -11,7 +11,7 @@ $APPLICATION->IncludeComponent('bitrix:news.list',
                                [
                                    'COMPONENT_TEMPLATE'              => 'index.slider',
                                    'IBLOCK_TYPE'                     => 'publications',
-                                   'IBLOCK_ID'                       => \Adv\Bitrixtools\Tools\Iblock\IblockUtils::getIblockId('publications', 'news'),
+                                   'IBLOCK_ID'                       => \Adv\Bitrixtools\Tools\Iblock\IblockUtils::getIblockId('publications', 'banners'),
                                    'NEWS_COUNT'                      => '7',
                                    'SORT_BY1'                        => 'SORT',
                                    'SORT_ORDER1'                     => 'ASC',
