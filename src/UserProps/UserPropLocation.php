@@ -1,11 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Vampi
- * Date: 16.11.2017
- * Time: 18:22
- */
-
 namespace FourPaws\UserProps;
 
 use Bitrix\Main\Loader;
