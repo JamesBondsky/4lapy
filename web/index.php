@@ -11,7 +11,7 @@ $APPLICATION->IncludeComponent('bitrix:news.list',
                                [
                                    'COMPONENT_TEMPLATE'              => 'index.slider',
                                    'IBLOCK_TYPE'                     => 'publications',
-                                   'IBLOCK_ID'                       => \Adv\Bitrixtools\Tools\Iblock\IblockUtils::getIblockId('publications', 'banners'),
+                                   'IBLOCK_ID'                       => \Adv\Bitrixtools\Tools\Iblock\IblockUtils ::getIblockId('publications', 'banners'),//не проставлен символьный код
                                    'NEWS_COUNT'                      => '7',
                                    'SORT_BY1'                        => 'SORT',
                                    'SORT_ORDER1'                     => 'ASC',
@@ -138,7 +138,7 @@ $APPLICATION->IncludeComponent(
         'IBLOCK_ID'                => array(
             \Adv\Bitrixtools\Tools\Iblock\IblockUtils::getIblockId('publications', 'news'),
             \Adv\Bitrixtools\Tools\Iblock\IblockUtils::getIblockId('publications', 'articles'),
-            \Adv\Bitrixtools\Tools\Iblock\IblockUtils::getIblockId('publications', 'cloubs_and_nurderis'),
+            //\Adv\Bitrixtools\Tools\Iblock\IblockUtils::getIblockId('publications', 'cloubs_and_nurderis'),//Раскоментить когда добавится инфоблок
         ),
         'IBLOCK_TYPE'              => 'publications',
         'NEWS_COUNT'                => '7',
