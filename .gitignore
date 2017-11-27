@@ -25,5 +25,8 @@ node_modules/
 /web/local
 /web/upload
 
+### Symfony Assets install Path
+/web/bundles
+
 ### Php Unit
 phpunit.xml
