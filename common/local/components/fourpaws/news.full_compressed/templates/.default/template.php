@@ -20,16 +20,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
-use Bitrix\Main\Localization\Loc;
-
-Loc::loadMessages(__FILE__);
 if (!is_array($arResult['IBLOCKS']) || empty($arResult['IBLOCKS'])) {
     return;
 }
 $frame = $this->createFrame(); ?>
 <section class="b-common-section">
     <div class="b-common-section__title-box b-common-section__title-box--latest-event b-common-section__title-box--wrap">
-        <h2 class="b-title b-title--latest-event b-title--wrap"><?= Loc::getMessage('LAST_EVENTS_TEXT') ?></h2>
+        <h2 class="b-title b-title--latest-event b-title--wrap">Последние события</h2>
         <div class="b-common-section__link-block">
             <?php foreach ($arResult['IBLOCKS'] as $iblock) { ?>
                 <a class="b-link b-link--more"
