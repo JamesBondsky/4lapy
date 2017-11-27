@@ -8,7 +8,7 @@ class Error
 {
     /**
      * @Serializer\SerializedName("code")
-     * @Serializer\Type("int")
+     * @Serializer\Type("integer")
      * @var int
      */
     protected $code;

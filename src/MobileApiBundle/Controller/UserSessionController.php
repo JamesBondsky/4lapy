@@ -8,6 +8,8 @@ use FourPaws\MobileApiBundle\Dto\Data\Start;
 use FourPaws\MobileApiBundle\Dto\Error;
 use FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\MobileApiBundle\Services\UserSessionService;
+use Nelmio\ApiDocBundle\Annotation\Model;
+use Swagger\Annotations as SWG;
 
 class UserSessionController extends FOSRestController
 {
@@ -22,7 +24,17 @@ class UserSessionController extends FOSRestController
     }
 
     /**
-     * @Rest\Get(path="/start", name="start")
+     * @SWG\Get(
+     *     @SWG\Response(
+     *         response="200",
+     *         description="create new session and save it",
+     *         @SWG\Schema(
+     *              type="object",
+     *              @Model(type="FourPaws\MobileApiBundle\Dto\Data\Start"),
+     *         )
+     *     )
+     * )
+     * @Rest\Get(path="/start", name="start", methods={"GET"})
      */
     public function startAction()
     {

@@ -47,13 +47,14 @@ fos_rest:
   format_listener:
     rules:
       - { path: '^/mobile_app_v2',  priorities: ['json'], fallback_format: json, prefer_extension: true }
+      - { path: '^/', priorities: [ 'html', '*/*'], fallback_format: html, prefer_extension: true }
   disable_csrf_role:    null
 
 nelmio_api_doc:
-  models: { use_jms: false }
+  models: { use_jms: true }
   routes:
     path_patterns:
-      - ^/api
+      - ^/mobile_app_v2
   documentation:
     info:
       title: 4lapy
