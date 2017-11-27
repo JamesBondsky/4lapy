@@ -2,6 +2,7 @@
 
 namespace FourPaws\MobileApiBundle\Controller;
 
+use Bitrix\Main\DB\Exception;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\MobileApiBundle\Dto\Data\Start;
@@ -34,7 +35,7 @@ class UserSessionController extends FOSRestController
      *         )
      *     )
      * )
-     * @Rest\Get(path="/start", name="start", methods={"GET"})
+     * @Rest\Get(path="/start", name="start")
      */
     public function startAction()
     {
