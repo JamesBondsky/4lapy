@@ -23,34 +23,33 @@ class UserService
      */
     public function __construct()
     {
-    
     }
-    
+
     /**
+     * @throws NotFoundException
      * @return User
      *
-     * @throws NotFoundException
      */
     public function getCurrentUser() : User
     {
         global $USER;
-        
+
         return $USER->IsAuthorized() ? $this->getUserById($USER->GetID()) : new User();
     }
-    
+
     /**
      * @param int $id
      *
+     * @throws NotFoundException
      * @return User
      *
-     * @throws NotFoundException
      */
     public function getUserById(int $id) : User
     {
         /** @noinspection PhpIncompatibleReturnTypeInspection */
         return User::createFromPrimary($id);
     }
-    
+
     /**
      * @param int $id
      *
@@ -59,44 +58,59 @@ class UserService
     protected function authenticateById(int $id) : bool
     {
         global $USER;
-        
+
         return $USER->Authorize($id);
     }
-    
+
+    /**
+     * @param string $rawLogin
+     * @throws TooManyUserFoundException
+     * @return bool
+     */
+    public function isExist(string $rawLogin): bool
+    {
+        try {
+            $this->checkLoginCount($rawLogin);
+        } catch (NotFoundException $exception) {
+            return false;
+            return true;
+        }
+    }
+
     /**
      * @param string $rawLogin
      *
-     * @return string
-     *
      * @throws NotFoundException
      * @throws ArgumentException
+     * @return string
+     *
      */
     public function getLoginByRawLogin(string $rawLogin) : string
     {
         $result   = [];
         $userList = $this->getUserListByRawLogin($rawLogin);
-        
+
         foreach ($userList as $user) {
             if ($user['LOGIN'] === $rawLogin) {
                 $result[0] = $user['LOGIN'];
             }
-            
+
             if ($user['PERSONAL_PHONE'] === $rawLogin) {
                 $result[1] = $user['LOGIN'];
             }
-            
+
             if ($user['EMAIL'] === $rawLogin) {
                 $result[2] = $user['LOGIN'];
             }
         }
-        
+
         if ($result) {
             return array_shift($result);
         }
-        
+
         throw new NotFoundException(sprintf('Login %s is not found', $rawLogin));
     }
-    
+
     /**
      * @param string $rawLogin
      *
@@ -116,32 +130,32 @@ class UserService
                                       ],
                                   ])->fetchAll();
     }
-    
+
     /**
      * @param string $rawLogin
      * @param string $password
-     *
-     * @return bool
      *
      * @throws NotFoundException
      * @throws WrongPasswordException
      * @throws ArgumentException
      * @throws TooManyUserFoundException
+     * @return bool
+     *
      */
     public function login(string $rawLogin, string $password) : bool
     {
         $this->checkLoginCount($rawLogin);
         $login = $this->getLoginByRawLogin($rawLogin);
-        
+
         $result = (new \CUser())->Login($login, $password);
-        
+
         if ($result === true) {
             return true;
         }
-        
+
         throw new WrongPasswordException($result['MESSAGE']);
     }
-    
+
     /**
      * @return bool
      */
@@ -149,10 +163,10 @@ class UserService
     {
         $cUser = new \CUser();
         $cUser->Logout();
-        
+
         return $this->isAuthorized();
     }
-    
+
     /**
      * Current user is authorized
      *
@@ -161,10 +175,10 @@ class UserService
     public function isAuthorized() : bool
     {
         global $USER;
-        
+
         return $USER->IsAuthorized();
     }
-    
+
     /**
      * @param array $data
      *
@@ -172,11 +186,9 @@ class UserService
      */
     public function register(array $data) : bool
     {
-        
-        
         return true;
     }
-    
+
     /**
      * @param array $data
      *
@@ -185,19 +197,19 @@ class UserService
     public static function add(array $data) : AddResult
     {
         $result = new AddResult();
-        
+
         $cUser = new \CUser();
         $id    = $cUser->Add($data);
-        
+
         if ($id) {
             $result->setId($id);
         } else {
             $result->addErrors([$cUser->LAST_ERROR]);
         }
-        
+
         return $result;
     }
-    
+
     /**
      * @param mixed $primary
      * @param array $data
@@ -207,17 +219,17 @@ class UserService
     public static function update($primary, array $data) : UpdateResult
     {
         $result = new UpdateResult();
-        
+
         $cUser = new \CUser();
         $cUser->Update($primary, $data);
-        
+
         if (!$cUser->Update($primary, $data)) {
             $result->addErrors([$cUser->LAST_ERROR]);
         }
-        
+
         return $result;
     }
-    
+
     /**
      * @param string $login
      *
@@ -234,24 +246,27 @@ class UserService
                                             new ExpressionField('CNT', 'COUNT(*)'),
                                         ],
                                     ])->fetch();
-        
+
         if ($count['CNT'] < 1) {
-            throw new NotFoundException(sprintf('User with raw login %s is not found.',
-                                                $login));
+            throw new NotFoundException(sprintf(
+                'User with raw login %s is not found.',
+                $login
+            ));
         }
-        
+
         if ($count['CNT'] > 2) {
-            throw new TooManyUserFoundException(sprintf('Too many user with login %s, user count with current id is %s.',
-                                                        $login,
-                                                        $count['CNT']));
+            throw new TooManyUserFoundException(sprintf(
+                'Too many user with login %s, user count with current id is %s.',
+                $login,
+                $count['CNT']
+            ));
         }
     }
-    
+
     public function restorePassword(string $rawLogin)
     {
-    
     }
-    
+
     /**
      * @param string $rawLogin
      * @param string $checkword
@@ -269,8 +284,7 @@ class UserService
         string $checkword,
         string $password,
         string $confirmPassword
-    ) : UpdateResult
-    {
+    ) : UpdateResult {
         $result = new UpdateResult();
         
         $this->checkLoginCount($rawLogin);
