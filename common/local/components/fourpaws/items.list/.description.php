@@ -5,14 +5,14 @@
 use Bitrix\Main\Localization\Loc;
 
 $arComponentDescription = [
-    'NAME'        => Loc::getMessage('COMPONENT_NEWS_FULL_NAME'),
-    'DESCRIPTION' => Loc::getMessage('COMPONENT_NEWS_FULL_DESCRIPTION'),
+    'NAME'        => Loc::getMessage('COMPONENT_ITEMS_LIST_NAME'),
+    'DESCRIPTION' => Loc::getMessage('COMPONENT_ITEMS_LIST_DESCRIPTION'),
     'ICON'        => '/images/icon.gif',
     'PATH'        => [
         'ID'    => 'utility',
         'CHILD' => [
-            'ID'   => 'news_full',
-            'NAME' => Loc::getMessage('MAIN_NEWS_FULL_GROUP_NAME'),
+            'ID'   => 'items_list',
+            'NAME' => Loc::getMessage('MAIN_ITEMS_LIST_GROUP_NAME'),
         ],
     ],
 ];

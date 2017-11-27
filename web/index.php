@@ -115,10 +115,9 @@ $APPLICATION->IncludeComponent('bitrix:main.include',
 /**
  * @todo Новости и события. Заменить компонентом и удалить файл.
  */
-$APPLICATION->IncludeComponent(
-    'fourpaws:news.full_compressed',
-    '',
-    Array(
+$APPLICATION->IncludeComponent('fourpaws:items.list',
+                               '',
+                               Array(
         'ACTIVE_DATE_FORMAT'     => 'j F Y',
         'AJAX_MODE'              => 'N',
         'AJAX_OPTION_ADDITIONAL' => '',
@@ -131,7 +130,6 @@ $APPLICATION->IncludeComponent(
         'CACHE_TYPE'             => 'A',
         'CHECK_DATES'            => 'Y',
         'FIELD_CODE'             => array(
-            '',
             ''
         ),
         'FILTER_NAME'            => '',
