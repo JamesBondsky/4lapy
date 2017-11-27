@@ -30,6 +30,7 @@ class News extends IBlockElement
                                'PROPERTY_type_animal' => 'PROPERTY_TYPE',
                                'PROPERTY_PRODUCTS'    => 'PROPERTY_PRODUCTS',
                                'DETAIL_PAGE_URL'      => 'PROPERTY_OLD_URL',
+                               'PROPERTY_VIDEO'      => 'PROPERTY_VIDEO',
                            ]);
         
         return $map;

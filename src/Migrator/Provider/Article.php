@@ -30,6 +30,7 @@ class Article extends IBlockElement
                                'PROPERTY_animal_type' => 'PROPERTY_TYPE',
                                'PROPERTY_PRODUCTS'    => 'PROPERTY_PRODUCTS',
                                'DETAIL_PAGE_URL'      => 'PROPERTY_OLD_URL',
+                               'PROPERTY_VIDEO'      => 'PROPERTY_VIDEO',
                            ]);
         
         return $map;
