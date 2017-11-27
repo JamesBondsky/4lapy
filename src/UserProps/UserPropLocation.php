@@ -1,9 +1,10 @@
 <?php
+
 namespace FourPaws\UserProps;
 
-use Bitrix\Main\Loader;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\UserField\TypeBase;
+use Bitrix\Main\{
+    Loader, LoaderException, Localization\Loc, UserField\TypeBase
+};
 use Bitrix\Sale\Location\Admin\LocationHelper;
 
 Loc::loadMessages(__FILE__);
@@ -90,6 +91,12 @@ class UserPropLocation extends TypeBase
         } elseif ((int)$value > 0) {
             $value = (int)$value;
         }
+        $replacedName = str_replace([
+                                        '[',
+                                        ']',
+                                    ],
+                                    '_',
+                                    $htmlControl['NAME']);
         ob_start();
         $type = 'search';
         global $APPLICATION;
@@ -136,12 +143,12 @@ class UserPropLocation extends TypeBase
                                            ]);
         }
     
-        $return =  ob_get_clean();
+        $return = ob_get_clean();
         $result .= '
 		<tr>
 			<td>' . GetMessage('USER_TYPE_INTEGER_DEFAULT_VALUE') . ':</td>
 			<td>
-				'.$return.'
+				' . $return . '
 			</td>
 		</tr>
 		';
@@ -154,7 +161,7 @@ class UserPropLocation extends TypeBase
      * @param $htmlControl
      *
      * @return string
-     * @throws \Bitrix\Main\LoaderException
+     * @throws LoaderException
      */
     public static function getEditFormHTML($userField, $htmlControl) : string
     {
@@ -176,9 +183,9 @@ class UserPropLocation extends TypeBase
             /** @var \CMain $APPLICATION */
             global $APPLICATION;
             ob_start();
-            $type = 'search';
-            $deferedControlName = 'defered_'.$replacedName;
-            $globalControlName = 'locationSelectors_' . $replacedName;
+            $type               = 'search';
+            $deferedControlName = 'defered_' . $replacedName;
+            $globalControlName  = 'locationSelectors_' . $replacedName;
             if ($type === 'search') {
                 $APPLICATION->IncludeComponent('bitrix:sale.location.selector.search',
                                                '',
@@ -193,7 +200,7 @@ class UserPropLocation extends TypeBase
                                                    'INPUT_NAME'                 => $htmlControl['NAME'],
                                                    'JS_CALLBACK'                => '',
                                                    'JS_CONTROL_GLOBAL_ID'       => $globalControlName,
-                                                   'JS_CONTROL_DEFERRED_INIT'       => $deferedControlName,
+                                                   'JS_CONTROL_DEFERRED_INIT'   => $deferedControlName,
                                                    'PROVIDE_LINK_BY'            => 'id',
                                                    //"SHOW_DEFAULT_LOCATIONS" => "Y",
                                                    'SUPPRESS_ERRORS'            => 'N',
@@ -213,25 +220,25 @@ class UserPropLocation extends TypeBase
                                                    'INPUT_NAME'                 => $htmlControl['NAME'],
                                                    'JS_CALLBACK'                => '',
                                                    'JS_CONTROL_GLOBAL_ID'       => $globalControlName,
-                                                   'JS_CONTROL_DEFERRED_INIT'       => $deferedControlName,
+                                                   'JS_CONTROL_DEFERRED_INIT'   => $deferedControlName,
                                                    'PRECACHE_LAST_LEVEL'        => 'N',
                                                    'PRESELECT_TREE_TRUNK'       => 'N',
                                                    'PROVIDE_LINK_BY'            => 'id',
                                                    //"SHOW_DEFAULT_LOCATIONS" => "Y",
                                                    'SUPPRESS_ERRORS'            => 'N',
                                                ]);
-            }?>
+            } ?>
             <script>
                 if (!window.BX && top.BX) {
                     window.BX = top.BX;
                 }
-                BX.loadScript("/bitrix/components/bitrix/sale.location.selector.search/templates/.default/script.js", function() {
+                BX.loadScript("/bitrix/components/bitrix/sale.location.selector.search/templates/.default/script.js", function () {
                     BX.ready(function () {
                         BX.locationsDeferred["<?=$deferedControlName?>"]();
                     });
                 });
             </script>
-            <?$return = '<div class="location_type_prop_html">' . ob_get_clean() . '</div>';
+            <? $return = '<div class="location_type_prop_html">' . ob_get_clean() . '</div>';
         } elseif (!empty($htmlControl['VALUE'])) {
             //$class  = new static();
             $return = static::getAdminListViewHTML($userField, $htmlControl);
@@ -342,7 +349,7 @@ class UserPropLocation extends TypeBase
 				if(typeof initPropLocationRealVals !== "function"){
                     function initPropLocationRealVals(name, realName){
                         var el = document.querySelector( "input[name=\'"+name+"[L]\']" );
-                        if(!el || typeof el === "null"){
+                        if(!el || typeof el === "undefined"){
                             el = top.document.querySelector( "input[name=\'"+name+"[L]\']" );
                         }
                         if(!!el) {
@@ -353,13 +360,11 @@ class UserPropLocation extends TypeBase
                 }
                 if(typeof setPropLocationRealVals !== "function"){
                     function setPropLocationRealVals(el, realName){
-                        //if($(el).length > 0){
-                        // console.log(el, "el");
                         if(!!el){
                             var firstVal = el.getAttribute("value");
                             if(firstVal.length > 0){
                                 var items = firstVal.split(":");
-                                var index, val, html;
+                                var index, val;
                                 var div = el.closest("div");
                                 var delItems = div.querySelectorAll("input.real_inputs");
                                 if(delItems.length>0){
