@@ -45,16 +45,16 @@ $this->setFrameMode(true);
                                  title="<?= $arItem['PREVIEW_PICTURE']['TITLE'] ?>">
                         <?php } ?>
                     </div>
-                    <?php if (is_array($arItem['DISPLAY_PROPERTIES']['TYPE']['DISPLAY_VALUE'])
-                              && !empty($arItem['DISPLAY_PROPERTIES']['TYPE']['DISPLAY_VALUE'])) {
-                        foreach ($arItem['DISPLAY_PROPERTIES']['TYPE']['DISPLAY_VALUE'] as $val) {
+                    <?php if (is_array($arItem['DISPLAY_PROPERTIES']['PUBLICATION_TYPE']['DISPLAY_VALUE'])
+                              && !empty($arItem['DISPLAY_PROPERTIES']['PUBLICATION_TYPE']['DISPLAY_VALUE'])) {
+                        foreach ($arItem['DISPLAY_PROPERTIES']['PUBLICATION_TYPE']['DISPLAY_VALUE'] as $val) {
                             ?>
                             <div class="b-info-blocks__item-snippet"><?= $val ?></div>
                             <?php
                         }
-                    } else {
+                    } elseif(!empty($arItem['DISPLAY_PROPERTIES']['PUBLICATION_TYPE']['DISPLAY_VALUE'])) {
                         ?>
-                        <div class="b-info-blocks__item-snippet"><?= $arItem['DISPLAY_PROPERTIES']['TYPE']['DISPLAY_VALUE'] ?></div>
+                        <div class="b-info-blocks__item-snippet"><?= $arItem['DISPLAY_PROPERTIES']['PUBLICATION_TYPE']['DISPLAY_VALUE'] ?></div>
                     <?php } ?>
                     <div class="b-info-blocks__item-title"><?= $arItem['NAME'] ?></div>
                     <div class="b-info-blocks__item-description"><?= $arItem['DESCRIPTION'] ?></div>

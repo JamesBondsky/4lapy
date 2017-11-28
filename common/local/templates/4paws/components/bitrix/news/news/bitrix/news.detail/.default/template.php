@@ -28,20 +28,27 @@ $this->setFrameMode(true);
                                                  'SITE_ID'    => SITE_ID,
                                                  'START_FROM' => '0',
                                              ]); ?>
-        <h1 class="b-title b-title--h1"><?php $APPLICATION->ShowTitle() ?></h1>
+        <h1 class="b-title b-title--h1">
+            <?= (!empty($arResult['IPROPERTY_VALUES']['ELEMENT_PAGE_TITLE'])) ? $arResult['IPROPERTY_VALUES']['ELEMENT_PAGE_TITLE'] : $arResult['NAME'] ?>
+        </h1>
         <div class="b-detail-page__date"><?= $arResult['DISPLAY_ACTIVE_FROM'] ?></div>
     </div>
 </div>
 <div class="b-container">
     <div class="b-detail-page b-detail-page--bordered">
-        <?php if (is_array($arResult['DETAIL_PICTURE'])){ ?>
+        <?php if (is_array($arResult['DETAIL_PICTURE'])) { ?>
             <img src="<?= $arResult['DETAIL_PICTURE']['SRC'] ?>"
             />
         <?php } ?>
         <?= $arResult['DETAIL_TEXT'] ?>
-        <?/*php if (is_array($arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']) && !empty($arResult['DISPLAY_PROPERTIES']['MORE_PHOTO'])) { ?>
+        <?php if (!$arResult['NO_SHOW_VIDEO'] && !empty($arResult['DISPLAY_PROPERTIES']['VIDEO']['DISPLAY_VALUE'])) {
+            echo $arResult['DISPLAY_PROPERTIES']['VIDEO']['DISPLAY_VALUE'];
+        } ?>
+        <?php if (!$arResult['NO_SHOW_SLIDER']
+                  && is_array($arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'])
+                  && !empty($arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'])) { ?>
             <div class="b-detail-page-slider js-detail-slider">
-                <?php foreach ($arResult['DISPLAY_PROPERTIES']['MORE_PHOTO'] as $photo) {
+                <?php foreach ($arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'] as $photo) {
                     if (is_numeric($photo)) {
                         $photo = ['SRC' => \CFile::GetPath($photo)];
                     }
@@ -53,6 +60,6 @@ $this->setFrameMode(true);
                     <?php }
                 } ?>
             </div>
-        <?php }*/ ?>
+        <?php } ?>
     </div>
 </div>
