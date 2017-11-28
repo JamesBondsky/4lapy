@@ -7,6 +7,9 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 class User
 {
+    const BITRIX_TRUE = 'Y';
+    const BITRIX_FALSE = 'N';
+
     /**
      * @var int
      * @Serializer\Type("integer")
@@ -19,6 +22,17 @@ class User
     protected $id;
 
     /**
+     * @var bool
+     * @Serializer\AccessType(type="public_method")
+     * @Serializer\Accessor(getter="getRawActive", setter="setRawActive")
+     * @Serializer\SerializedName("ACTIVE")
+     * @Serializer\Type("string")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $active = true;
+
+    /**
+     * @Serializer\Type("string")
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("XML_ID")
@@ -126,6 +140,41 @@ class User
     {
         $this->id = $id;
         return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getActive()
+    {
+        return $this->active;
+    }
+
+    /**
+     * @param bool $active
+     * @return User
+     */
+    public function setActive(bool $active): User
+    {
+        $this->active = $active;
+        return $this;
+    }
+
+    /**
+     * @param string $active
+     * @return User
+     */
+    public function setRawActive(string $active)
+    {
+        return $this->setActive($active === static::BITRIX_TRUE);
+    }
+
+    /**
+     * @return string
+     */
+    public function getRawActive(): string
+    {
+        return $this->getActive() ? static::BITRIX_TRUE : static::BITRIX_FALSE;
     }
 
     /**
