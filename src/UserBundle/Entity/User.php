@@ -3,6 +3,7 @@
 namespace FourPaws\UserBundle\Entity;
 
 use JMS\Serializer\Annotation as Serializer;
+use Misd\PhoneNumberBundle\Validator\Constraints\PhoneNumber;
 use Symfony\Component\Validator\Constraints as Assert;
 
 class User
@@ -97,7 +98,7 @@ class User
      * @Serializer\Type("string")
      * @Serializer\SerializedName("EMAIL")
      * @Serializer\Groups(groups={"create","read","update","delete"})
-     * @Assert\Email()
+     * @Assert\Email(groups={"create","read","update","delete"})
      */
     protected $email = '';
 
@@ -106,6 +107,8 @@ class User
      * @Serializer\Type("string")
      * @Serializer\SerializedName("PERSONAL_PHONE")
      * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @PhoneNumber(defaultRegion="RU",type="mobile")
+     * @Assert\Email(groups={"create","read","update","delete"})
      */
     protected $personalPhone = '';
 
