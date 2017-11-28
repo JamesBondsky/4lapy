@@ -97,6 +97,7 @@ class User
      * @Serializer\Type("string")
      * @Serializer\SerializedName("EMAIL")
      * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Assert\Email()
      */
     protected $email = '';
 
