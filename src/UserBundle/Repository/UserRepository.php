@@ -5,12 +5,17 @@ namespace FourPaws\UserBundle\Repository;
 use Bitrix\Main\UserTable;
 use CUser;
 use FourPaws\UserBundle\Entity\User;
+use FourPaws\UserBundle\Exception\BitrixRuntimeException;
+use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
+use FourPaws\UserBundle\Exception\InvalidIdentifierException;
+use FourPaws\UserBundle\Exception\ValidationException;
 use JMS\Serializer\ArrayTransformerInterface;
 use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\SerializationContext;
 use Symfony\Component\Validator\Constraints\GreaterThanOrEqual;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Type;
+use Symfony\Component\Validator\Exception\ValidatorException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class UserRepository
@@ -21,31 +26,43 @@ class UserRepository
      * @var ArrayTransformerInterface
      */
     private $arrayTransformer;
+
     /**
      * @var ValidatorInterface
      */
     private $validator;
+
+    /**
+     * @var CUser
+     */
+    private $cuser;
+
+    /**
+     * @var \CAllMain|\CMain
+     */
+    private $cmain;
 
     public function __construct(ArrayTransformerInterface $arrayTransformer, ValidatorInterface $validator)
     {
         $this->arrayTransformer = $arrayTransformer;
         $this->cuser = new CUser();
         $this->validator = $validator;
+        global $APPLICATION;
+        $this->cmain = $APPLICATION;
     }
 
 
     /**
      * @param User $user
+     * @throws ValidationException
+     * @throws BitrixRuntimeException
      * @return bool
      */
     public function create(User $user): bool
     {
         $validationResult = $this->validator->validate($user, null, ['create']);
         if ($validationResult->count() > 0) {
-            /**
-             * todo change to package exception
-             */
-            throw new \InvalidArgumentException();
+            throw new ValidationException('Wrong entity passed to create');
         }
 
         $result = $this->cuser->Add(
@@ -56,14 +73,18 @@ class UserRepository
             return true;
         }
 
-        /**
-         * todo throw exception
-         */
-        throw new \RuntimeException($this->cuser->LAST_ERROR);
+        throw new BitrixRuntimeException($this->cuser->LAST_ERROR);
     }
 
+    /**
+     * @param int $id
+     * @return User|null
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     */
     public function find(int $id)
     {
+        $this->checkIdentifier($id);
         $result = $this->findBy([static::FIELD_ID => $id], [], 1);
         return reset($result);
     }
@@ -73,7 +94,7 @@ class UserRepository
      * @param array $orderBy
      * @param null|int $limit
      * @param null|int $offset
-     * @return array
+     * @return User[]
      */
     public function findBy(array $criteria = [], array $orderBy = [], int $limit = null, int $offset = null): array
     {
@@ -93,40 +114,60 @@ class UserRepository
          */
         return $this->arrayTransformer->fromArray(
             $result->fetchAll(),
-            sprintf('array<%s>', trim(User::class)),
+            sprintf('array<%s>', User::class),
             DeserializationContext::create()->setGroups(['read'])
         );
     }
 
     public function update(User $user)
     {
+        $this->checkIdentifier($user->getId());
         $validationResult = $this->validator->validate($user, null, ['update']);
         if ($validationResult->count() > 0) {
-            /**
-             * todo change to package exception
-             */
-            throw new \InvalidArgumentException();
+            throw new ValidationException('Wrong entity passed to update');
         }
+        if ($this->cuser->Update($user->getId(), $user)) {
+            return true;
+        }
+        throw new BitrixRuntimeException($this->cuser->LAST_ERROR);
     }
 
+    /**
+     * @param int $id
+     * @throws ConstraintDefinitionException
+     * @throws InvalidIdentifierException
+     * @throws BitrixRuntimeException
+     * @return bool
+     */
     public function delete(int $id)
     {
-        $validationResult = $this->validator->validate($id, [
-            new NotBlank(),
-            new GreaterThanOrEqual(['value' => 1]),
-            new Type(['type' => 'integer']),
-        ], ['delete']);
-        if ($validationResult->count() > 0) {
-            /**
-             * todo change to package exception
-             */
-            throw new \InvalidArgumentException();
-        }
+        $this->checkIdentifier($id);
         if (CUser::Delete($id)) {
             return true;
         }
-        /**
-         * todo throw exception
-         */
+
+        $bitrixException = $this->cmain->GetException();
+        throw new BitrixRuntimeException($bitrixException->GetString(), $bitrixException->GetID() ?: null);
+    }
+
+    /**
+     * @param int $id
+     * @throws ConstraintDefinitionException
+     * @throws InvalidIdentifierException
+     */
+    protected function checkIdentifier(int $id)
+    {
+        try {
+            $result = $this->validator->validate($id, [
+                new NotBlank(),
+                new GreaterThanOrEqual(['value' => 1]),
+                new Type(['type' => 'integer']),
+            ], ['delete']);
+        } catch (ValidatorException $exception) {
+            throw new ConstraintDefinitionException('Wrong constraint configuration');
+        }
+        if ($result->count()) {
+            throw new InvalidIdentifierException(sprintf('Wrong identifier %s passed', $id));
+        }
     }
 }
