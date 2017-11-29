@@ -12,6 +12,7 @@ $APPLICATION->SetTitle('404 Not Found'); ?>
 <main class="b-wrapper" role="main">
     <div class="b-container b-container--error">
         <div class="b-error-page">
+            <? /* @todo image resize helper */ ?>
             <img src="/static/build/images/content/404.png">
             <p class="b-title b-title--h1">Такой страницы нет</p>
             <p>Проверьте правильность адреса, воспользуйтесь поиском или начните с главной страницы</p><a href="/">Перейти на главную страницу</a>
