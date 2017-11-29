@@ -8,6 +8,8 @@ use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
+use FourPaws\UserBundle\Exception\TooManyUserFoundException;
+use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use JMS\Serializer\ArrayTransformerInterface;
 use JMS\Serializer\DeserializationContext;
@@ -54,6 +56,7 @@ class UserRepository
 
     /**
      * @param User $user
+     *
      * @throws ValidationException
      * @throws BitrixRuntimeException
      * @return bool
@@ -78,9 +81,10 @@ class UserRepository
 
     /**
      * @param int $id
-     * @return User|null
+     *
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
+     * @return null|User
      */
     public function find(int $id)
     {
@@ -94,6 +98,7 @@ class UserRepository
      * @param array $orderBy
      * @param null|int $limit
      * @param null|int $offset
+     *
      * @return User[]
      */
     public function findBy(array $criteria = [], array $orderBy = [], int $limit = null, int $offset = null): array
@@ -119,6 +124,57 @@ class UserRepository
         );
     }
 
+    /**
+     * @param string $rawLogin
+     *
+     * @return int
+     */
+    public function findIdentifierByRawLogin(string $rawLogin): int
+    {
+        return (int)$this->findIdAndLoginByRawLogin($rawLogin)['ID'];
+    }
+
+    /**
+     * @param string $rawLogin
+     *
+     * @return string
+     */
+    public function findLoginByRawLogin(string $rawLogin): string
+    {
+        return (string)$this->findIdAndLoginByRawLogin($rawLogin)['LOGIN'];
+    }
+
+    protected function findIdAndLoginByRawLogin(string $rawLogin)
+    {
+        $result = UserTable::query()
+            ->addSelect('ID')
+            ->addSelect('LOGIN')
+            ->setFilter([
+                'ACTIVE' => 'Y',
+                [
+                    'LOGIC' => 'OR',
+                    [
+                        '=LOGIN' => $rawLogin,
+                    ],
+                    [
+                        '=EMAIL' => $rawLogin,
+                    ],
+                    [
+                        '=PERSONAL_PHONE' => $rawLogin,
+                    ],
+                ],
+            ])
+            ->exec();
+        if (1 === $result->getSelectedRowsCount()) {
+            return $result->fetchRaw();
+        }
+        if (0 === $result->getSelectedRowsCount()) {
+            throw new UsernameNotFoundException(sprintf('No user with such raw login %s', $rawLogin));
+        }
+
+        throw new TooManyUserFoundException('Found more than one user with same raw login');
+    }
+
     public function update(User $user)
     {
         $this->checkIdentifier($user->getId());
@@ -134,6 +190,7 @@ class UserRepository
 
     /**
      * @param int $id
+     *
      * @throws ConstraintDefinitionException
      * @throws InvalidIdentifierException
      * @throws BitrixRuntimeException
@@ -152,6 +209,7 @@ class UserRepository
 
     /**
      * @param int $id
+     *
      * @throws ConstraintDefinitionException
      * @throws InvalidIdentifierException
      */
