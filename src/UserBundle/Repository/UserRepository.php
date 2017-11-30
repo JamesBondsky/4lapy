@@ -127,41 +127,46 @@ class UserRepository
     /**
      * @param string $rawLogin
      *
+     * @param bool $onlyActive
+     *
      * @throws \FourPaws\UserBundle\Exception\UsernameNotFoundException
      * @throws \FourPaws\UserBundle\Exception\TooManyUserFoundException
      * @return int
      */
-    public function findIdentifierByRawLogin(string $rawLogin): int
+    public function findIdentifierByRawLogin(string $rawLogin, bool $onlyActive = true): int
     {
-        return (int)$this->findIdAndLoginByRawLogin($rawLogin)['ID'];
+        return (int)$this->findIdAndLoginByRawLogin($rawLogin, $onlyActive)['ID'];
     }
 
     /**
      * @param string $rawLogin
+     *
+     * @param bool $onlyActive
      *
      * @throws \FourPaws\UserBundle\Exception\UsernameNotFoundException
      * @throws \FourPaws\UserBundle\Exception\TooManyUserFoundException
      * @return string
      */
-    public function findLoginByRawLogin(string $rawLogin): string
+    public function findLoginByRawLogin(string $rawLogin, bool $onlyActive = true): string
     {
-        return (string)$this->findIdAndLoginByRawLogin($rawLogin)['LOGIN'];
+        return (string)$this->findIdAndLoginByRawLogin($rawLogin, $onlyActive)['LOGIN'];
     }
 
     /**
      * @param string $rawLogin
      *
-     * @throws \FourPaws\UserBundle\Exception\TooManyUserFoundException
+     * @param bool $onlyActive
+     *
      * @throws \FourPaws\UserBundle\Exception\UsernameNotFoundException
+     * @throws \FourPaws\UserBundle\Exception\TooManyUserFoundException
      * @return array|false
      */
-    protected function findIdAndLoginByRawLogin(string $rawLogin)
+    protected function findIdAndLoginByRawLogin(string $rawLogin, bool $onlyActive = true)
     {
-        $result = UserTable::query()
+        $query = UserTable::query()
             ->addSelect('ID')
             ->addSelect('LOGIN')
             ->setFilter([
-                'ACTIVE' => 'Y',
                 [
                     'LOGIC' => 'OR',
                     [
@@ -171,11 +176,19 @@ class UserRepository
                         '=EMAIL' => $rawLogin,
                     ],
                     [
+                        /**
+                         * @todo Нормализация
+                         */
                         '=PERSONAL_PHONE' => $rawLogin,
                     ],
                 ],
-            ])
-            ->exec();
+            ]);
+        if ($onlyActive) {
+            $query->addFilter('ACTIVE', 'Y');
+        }
+        $result = $query->exec();
+
+
         if (1 === $result->getSelectedRowsCount()) {
             return $result->fetchRaw();
         }
