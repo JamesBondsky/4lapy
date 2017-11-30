@@ -5,9 +5,9 @@ namespace FourPaws\MobileApiBundle\Controller;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\MobileApiBundle\Dto\Error;
-use FourPaws\MobileApiBundle\FormType\UserLoginFormType;
-use FourPaws\User\Exceptions\WrongPasswordException;
-use FourPaws\User\UserService;
+use FourPaws\MobileApiBundle\Dto\Request\UserLoginRequest;
+use FourPaws\MobileApiBundle\Services\ApiRequestProcessor;
+use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use Swagger\Annotations\Parameter;
 use Swagger\Annotations\Response;
 use Symfony\Component\HttpFoundation\Request;
@@ -15,13 +15,19 @@ use Symfony\Component\HttpFoundation\Request;
 class UserController extends FOSRestController
 {
     /**
-     * @var UserService
+     * @var UserAuthorizationInterface
      */
-    private $userService;
+    private $userAuthorization;
 
-    public function __construct(UserService $userService)
+    /**
+     * @var ApiRequestProcessor
+     */
+    private $apiRequestProcessor;
+
+    public function __construct(UserAuthorizationInterface $userAuthorization, ApiRequestProcessor $apiRequestProcessor)
     {
-        $this->userService = $userService;
+        $this->userAuthorization = $userAuthorization;
+        $this->apiRequestProcessor = $apiRequestProcessor;
     }
 
     /**
@@ -38,43 +44,44 @@ class UserController extends FOSRestController
      * )
      * @Rest\View()
      * @param Request $request
-     * @throws \Symfony\Component\Form\Exception\AlreadySubmittedException
-     * @throws \FourPaws\User\Exceptions\TooManyUserFoundException
+     *
      * @return \FourPaws\MobileApiBundle\Dto\Response
      */
     public function userLoginAction(Request $request)
     {
         $result = new \FourPaws\MobileApiBundle\Dto\Response();
 
-        $form = $this->createForm(UserLoginFormType::class, null, ['csrf_protection' => false]);
-        $form->submit($request->request->all());
-        if ($form->isValid()) {
-            $data = $form->getData();
-            if ($this->userService->isExist($data['login'])) {
-                try {
-                    $this->userService->login($data['login'], $data['password']);
-                } catch (WrongPasswordException $exception) {
-                    /**
-                     * todo change code to constant
-                     */
-                    $result->addError(new Error(2344, 'Не верный логин или пароль'));
-                }
-            } else {
-                $isRegistred = $this->userService->register([
-                    'LOGIN' => $data['login'],
-                    'PASSWORD' => $data['password'],
-                ]);
-
-
-
-                /**
-                 * todo update session
-                 */
-            }
+        if ($this->userAuthorization->isAuthorized()) {
             /**
-             * todo login
+             * @todo change code
+             */
+            $result->addError(new Error(1, 'Вы уже авторизованы'));
+            return $result;
+        }
+
+
+
+        $userLoginRequest = $this->apiRequestProcessor->convert($request->request->all(), UserLoginRequest::class);
+        $validateResult = $this->apiRequestProcessor->validate($userLoginRequest);
+        if ($validateResult->count() === 0) {
+            /**
+             * @todo check exists
+             */
+
+            /**
+             * @todo login
+             */
+
+            /**
+             * @todo register
+             */
+
+            /**
+             * @todo session update
              */
         }
+
+
         /**
          * todo add error result
          */
