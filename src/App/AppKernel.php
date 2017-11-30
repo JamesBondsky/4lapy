@@ -6,7 +6,9 @@ use Circle\RestClientBundle\CircleRestClientBundle;
 use FOS\RestBundle\FOSRestBundle;
 use FourPaws\AppBundle\FourPawsAppBundle;
 use FourPaws\MobileApiBundle\FourPawsMobileApiBundle;
+use FourPaws\UserBundle\FourPawsUserBundle;
 use JMS\SerializerBundle\JMSSerializerBundle;
+use Misd\PhoneNumberBundle\MisdPhoneNumberBundle;
 use Nelmio\ApiDocBundle\NelmioApiDocBundle;
 use OldSound\RabbitMqBundle\OldSoundRabbitMqBundle;
 use Sensio\Bundle\DistributionBundle\SensioDistributionBundle;
@@ -55,10 +57,12 @@ class AppKernel extends Kernel
             new FOSRestBundle(),
             new JMSSerializerBundle(),
             new NelmioApiDocBundle(),
+            new MisdPhoneNumberBundle(),
 
             /** Internal bundles */
             new FourPawsAppBundle(),
             new FourPawsMobileApiBundle(),
+            new FourPawsUserBundle(),
         ];
 
         if (\in_array($this->getEnvironment(), ['dev', 'test'], true)) {

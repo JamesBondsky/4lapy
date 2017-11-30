@@ -1,29 +1,49 @@
-<?php if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
+<?php
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Application;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 
 class FourPawsAuthFormComponent extends \CBitrixComponent
 {
     const MODE_PROFILE = 0;
-    
-    const MODE_FORM    = 1;
-    
-    /** {@inheritdoc} */
-    public function onPrepareComponentParams($params) : array
+
+    const MODE_FORM = 1;
+
+    /**
+     * @var CurrentUserProviderInterface
+     */
+    private $currentUserProvider;
+
+    /**
+     * @var UserAuthorizationInterface
+     */
+    private $userAuthorizationService;
+
+    public function __construct(CBitrixComponent $component = null)
     {
-        return $params;
+        parent::__construct($component);
+        try {
+            $container = Application::getInstance()->getContainer();
+        } catch (\FourPaws\App\Exceptions\ApplicationCreateException $e) {
+            $logger = LoggerFactory::create('component');
+            $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
+            /** @noinspection PhpUnhandledExceptionInspection */
+            throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
+        }
+        $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
+        $this->userAuthorizationService = $container->get(UserAuthorizationInterface::class);
     }
-    
+
     /** {@inheritdoc} */
     public function executeComponent()
     {
         try {
-            $this->prepareResult();
-            
             $this->includeComponentTemplate();
         } catch (\Exception $e) {
             try {
@@ -33,55 +53,36 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             }
         }
     }
-    
+
     /**
-     * @return $this
-     *
-     * @throws SystemException
+     * @return int
      */
-    protected function prepareResult()
+    public function getMode()
     {
-        global $USER;
-        
-        $this->arResult['MODE'] = $USER->IsAuthorized() ? self::MODE_PROFILE : self::MODE_FORM;
-        
-        if ($this->arResult['MODE'] === self::MODE_FORM) {
-            $this->setAuthSocialServices();
-        } else {
-            $this->setUser();
-        }
-        
-        return $this;
+        return $this->getUserAuthorizationService()->isAuthorized() ? static::MODE_PROFILE : static::MODE_FORM;
     }
-    
+
     /**
-     * Set current user and user service
-     *
-     * @throws SystemException
+     * @return array
      */
-    protected function setUser()
+    public function getAuthSocialService()
     {
-        try {
-            $userService = Application::getInstance()->getContainer()->get('user.service');
-    
-            $this->arResult['userService'] = $userService;
-            $this->arResult['user']        = $userService->getCurrentUser();
-        } catch (\Exception $e) {
-            throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
-        }
-        
-        return $this;
+        return (new CSocServAuthManager())->GetActiveAuthServices([]);
     }
-    
+
     /**
-     * Set active social services
-     *
-     * @return $this
+     * @return CurrentUserProviderInterface
      */
-    protected function setAuthSocialServices()
+    public function getCurrentUserProvider(): CurrentUserProviderInterface
     {
-        $this->arResult['socialServices'] = (new CSocServAuthManager())->GetActiveAuthServices([]);
-    
-        return $this;
+        return $this->currentUserProvider;
+    }
+
+    /**
+     * @return UserAuthorizationInterface
+     */
+    public function getUserAuthorizationService(): UserAuthorizationInterface
+    {
+        return $this->userAuthorizationService;
     }
 }
