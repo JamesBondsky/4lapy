@@ -127,6 +127,8 @@ class UserRepository
     /**
      * @param string $rawLogin
      *
+     * @throws \FourPaws\UserBundle\Exception\UsernameNotFoundException
+     * @throws \FourPaws\UserBundle\Exception\TooManyUserFoundException
      * @return int
      */
     public function findIdentifierByRawLogin(string $rawLogin): int
@@ -137,6 +139,8 @@ class UserRepository
     /**
      * @param string $rawLogin
      *
+     * @throws \FourPaws\UserBundle\Exception\UsernameNotFoundException
+     * @throws \FourPaws\UserBundle\Exception\TooManyUserFoundException
      * @return string
      */
     public function findLoginByRawLogin(string $rawLogin): string
@@ -144,6 +148,13 @@ class UserRepository
         return (string)$this->findIdAndLoginByRawLogin($rawLogin)['LOGIN'];
     }
 
+    /**
+     * @param string $rawLogin
+     *
+     * @throws \FourPaws\UserBundle\Exception\TooManyUserFoundException
+     * @throws \FourPaws\UserBundle\Exception\UsernameNotFoundException
+     * @return array|false
+     */
     protected function findIdAndLoginByRawLogin(string $rawLogin)
     {
         $result = UserTable::query()
@@ -175,6 +186,15 @@ class UserRepository
         throw new TooManyUserFoundException('Found more than one user with same raw login');
     }
 
+    /**
+     * @param User $user
+     *
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws ValidationException
+     * @throws BitrixRuntimeException
+     * @return bool
+     */
     public function update(User $user)
     {
         $this->checkIdentifier($user->getId());

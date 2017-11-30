@@ -3,12 +3,17 @@
 namespace FourPaws\UserBundle\Service;
 
 use FourPaws\UserBundle\Exception\InvalidCredentialException;
+use FourPaws\UserBundle\Exception\TooManyUserFoundException;
+use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 
 interface UserAuthorizationInterface
 {
     /**
      * @param string $login
      * @param string $password
+     *
+     * @throws UsernameNotFoundException
+     * @throws TooManyUserFoundException
      * @throws InvalidCredentialException
      * @return bool
      */
@@ -26,6 +31,7 @@ interface UserAuthorizationInterface
 
     /**
      * @param int $id
+     *
      * @return bool
      */
     public function authorize(int $id): bool;

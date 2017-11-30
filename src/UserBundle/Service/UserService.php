@@ -3,8 +3,12 @@
 namespace FourPaws\UserBundle\Service;
 
 use FourPaws\UserBundle\Entity\User;
+use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidCredentialException;
+use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Exception\TooManyUserFoundException;
+use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Repository\UserRepository;
 
 class UserService implements CurrentUserProviderInterface, UserAuthorizationInterface, UserRegistrationProviderInterface
@@ -34,6 +38,8 @@ class UserService implements CurrentUserProviderInterface, UserAuthorizationInte
      * @param string $rawLogin
      * @param string $password
      *
+     * @throws UsernameNotFoundException
+     * @throws TooManyUserFoundException
      * @throws InvalidCredentialException
      * @return bool
      */
@@ -67,6 +73,7 @@ class UserService implements CurrentUserProviderInterface, UserAuthorizationInte
 
     /**
      * @param int $id
+     *
      * @return bool
      */
     public function authorize(int $id): bool
@@ -76,6 +83,9 @@ class UserService implements CurrentUserProviderInterface, UserAuthorizationInte
     }
 
     /**
+     * @throws NotAuthorizedException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
      * @return User
      */
     public function getCurrentUser(): User

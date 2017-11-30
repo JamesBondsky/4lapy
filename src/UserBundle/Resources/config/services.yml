@@ -7,7 +7,7 @@ services:
         autoconfigure: true
         # this means you cannot fetch services directly from the container via $container->get()
         # if you need to do this, you can override this setting on individual services
-        public: true
+        public: false
 
     FourPaws\UserBundle\:
         resource: '../../*'
@@ -17,9 +17,16 @@ services:
 
     FourPaws\UserBundle\Service\CurrentUserProviderInterface:
         class: FourPaws\UserBundle\Service\UserService
+        public: true
 
     FourPaws\UserBundle\Service\UserAuthorizationInterface:
         class: FourPaws\UserBundle\Service\UserService
+        public: true
 
     FourPaws\UserBundle\Service\UserRegistrationProviderInterface:
         class: FourPaws\UserBundle\Service\UserService
+        public: true
+
+    # Временное решение. Ввиду вызова из компонентов
+#    FourPaws\UserBundle\Service\UserService:
+#        public: true

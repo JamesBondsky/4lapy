@@ -1,29 +1,9 @@
 ---
 
-user.auth.login:
-  path: /user/auth/login/
-  defaults: { _controller: '\FourPaws\User\Controller\AuthController::loginAction' }
-  methods: [POST]
-
-user.auth.forgotPassword:
-  path: /user/auth/forgotPassword/
-  defaults: { _controller: '\FourPaws\User\Controller\AuthController::forgotPasswordAction' }
-  methods: [POST]
-
-user.auth.register:
-  path: /user/auth/register/
-  defaults: { _controller: '\FourPaws\User\Controller\AuthController::registerAction' }
-  methods: [POST]
-
-user.auth.changePassword:
-  path: /user/auth/changePassword/
-  defaults: { _controller: '\FourPaws\User\Controller\AuthController::changePasswordAction' }
-  methods: [POST]
-
-user.auth.register:
-  path: /user/subscribe/subscribe/
-  defaults: { _controller: '\FourPaws\User\Controller\SubscribeController::subscribeAction' }
-  methods: [POST]
+user:
+    resource: '@FourPawsUserBundle/AjaxController'
+    type: annotation
+    prefix: '/user'
 
 autosort.property.hint:
   path: /autosort/property-hint/{propertyId}
