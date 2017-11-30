@@ -35,31 +35,41 @@ $this->setFrameMode(true);
                                        $arItem['DELETE_LINK'],
                                        CIBlock::GetArrayByID($arItem['IBLOCK_ID'], 'ELEMENT_DELETE'),
                                        ['CONFIRM' => GetMessage('CT_BNL_ELEMENT_DELETE_CONFIRM')]); ?>
-                <a class="b-info-blocks__item"
-                   href="<?= $arItem['DETAIL_PAGE_URL'] ?>"
-                   id="<?= $this->GetEditAreaId($arItem['ID']); ?>">
-                    <div class="b-info-blocks__item-img">
-                        <?php if (!empty($arItem['PREVIEW_PICTURE']['SRC'])) { ?>
-                            <img src="<?= $arItem['PREVIEW_PICTURE']['SRC'] ?>"
-                                 alt="<?= $arItem['PREVIEW_PICTURE']['ALT'] ?>"
-                                 title="<?= $arItem['PREVIEW_PICTURE']['TITLE'] ?>">
-                        <?php } ?>
-                    </div>
-                    <?php if (is_array($arItem['DISPLAY_PROPERTIES']['PUBLICATION_TYPE']['DISPLAY_VALUE'])
-                              && !empty($arItem['DISPLAY_PROPERTIES']['PUBLICATION_TYPE']['DISPLAY_VALUE'])) {
-                        foreach ($arItem['DISPLAY_PROPERTIES']['PUBLICATION_TYPE']['DISPLAY_VALUE'] as $val) {
-                            ?>
-                            <div class="b-info-blocks__item-snippet"><?= $val ?></div>
-                            <?php
-                        }
-                    } elseif(!empty($arItem['DISPLAY_PROPERTIES']['PUBLICATION_TYPE']['DISPLAY_VALUE'])) {
+                <?php if (!empty($arItem['DETAIL_PAGE_URL'])) { ?>
+                    <a class="b-info-blocks__item"
+                    href="<?= $arItem['DETAIL_PAGE_URL'] ?>"
+                    id="<?= $this->GetEditAreaId($arItem['ID']); ?>">
+                <?php } ?>
+                <div class="b-info-blocks__item-img">
+                    <?php if (!empty($arItem['PREVIEW_PICTURE']['SRC'])
+                              && file_exists($_SERVER['DOCUMENT_ROOT'] . $arItem['PREVIEW_PICTURE']['SRC'])) {
                         ?>
-                        <div class="b-info-blocks__item-snippet"><?= $arItem['DISPLAY_PROPERTIES']['PUBLICATION_TYPE']['DISPLAY_VALUE'] ?></div>
+                        <img src="<?= $arItem['PREVIEW_PICTURE']['SRC'] ?>"
+                             alt="<?= $arItem['PREVIEW_PICTURE']['ALT'] ?>"
+                             title="<?= $arItem['PREVIEW_PICTURE']['TITLE'] ?>">
                     <?php } ?>
-                    <div class="b-info-blocks__item-title"><?= $arItem['NAME'] ?></div>
+                </div>
+                <?php if (is_array($arItem['DISPLAY_PROPERTIES']['PUBLICATION_TYPE']['DISPLAY_VALUE'])
+                          && !empty($arItem['DISPLAY_PROPERTIES']['PUBLICATION_TYPE']['DISPLAY_VALUE'])) {
+                    foreach ($arItem['DISPLAY_PROPERTIES']['PUBLICATION_TYPE']['DISPLAY_VALUE'] as $val) {
+                        ?>
+                        <div class="b-info-blocks__item-snippet"><?= $val ?></div>
+                        <?php
+                    }
+                } elseif (!empty($arItem['DISPLAY_PROPERTIES']['PUBLICATION_TYPE']['DISPLAY_VALUE'])) {
+                    ?>
+                    <div class="b-info-blocks__item-snippet"><?= $arItem['DISPLAY_PROPERTIES']['PUBLICATION_TYPE']['DISPLAY_VALUE'] ?></div>
+                <?php } ?>
+                <div class="b-info-blocks__item-title"><?= $arItem['NAME'] ?></div>
+                <?php if (!empty($arItem['DESCRIPTION'])) { ?>
                     <div class="b-info-blocks__item-description"><?= $arItem['DESCRIPTION'] ?></div>
+                <?php } ?>
+                <?php if (!empty($arItem['DISPLAY_ACTIVE_FROM'])) { ?>
                     <div class="b-info-blocks__item-date"><?= $arItem['DISPLAY_ACTIVE_FROM'] ?></div>
-                </a>
+                <?php } ?>
+                <?php if (!empty($arItem['DETAIL_PAGE_URL'])) { ?>
+                    </a>
+                <?php } ?>
             <?php } ?>
         </div>
         <?php if ($arParams['DISPLAY_BOTTOM_PAGER']): ?>

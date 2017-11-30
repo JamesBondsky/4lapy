@@ -41,9 +41,11 @@ $frame = $this->createFrame(); ?>
             <div class="b-news-wrapper">
                 <?php foreach ($arResult['ITEMS'] as $key => $item) { ?>
                     <article class="b-news-item<?= ($key === 0) ? ' b-news-item--big' : '' ?>">
+                        <?php if (!empty($item['DETAIL_PAGE_URL'])){ ?>
                         <a class="b-news-item__link"
                            href="<?= $item['DETAIL_PAGE_URL'] ?>"
                            title="<?= $item['NAME'] ?>">
+                            <?php } ?>
                             <?php if (!empty($item['PREVIEW_PICTURE']['SRC'])
                                       && file_exists($_SERVER['DOCUMENT_ROOT'] . $item['PREVIEW_PICTURE']['SRC'])) { ?>
                                 <span class="b-news-item__image-wrapper js-image-cover">
@@ -65,10 +67,27 @@ $frame = $this->createFrame(); ?>
                             <?php if (!empty($item['DISPLAY_PROPERTIES']['PUBLICATION_TYPE']['DISPLAY_VALUE'])) { ?>
                                 <span class="b-news-item__label"><?= $item['DISPLAY_PROPERTIES']['PUBLICATION_TYPE']['DISPLAY_VALUE'] ?></span>
                             <?php } ?>
+                            <?php if (is_array($item['DISPLAY_PROPERTIES']['PUBLICATION_TYPE']['DISPLAY_VALUE'])
+                                      && !empty($item['DISPLAY_PROPERTIES']['PUBLICATION_TYPE']['DISPLAY_VALUE'])) {
+                                foreach ($item['DISPLAY_PROPERTIES']['PUBLICATION_TYPE']['DISPLAY_VALUE'] as $val) {
+                                    ?>
+                                    <span class="b-news-item__label"><?= $val ?></span>
+                                    <?php
+                                }
+                            } elseif (!empty($item['DISPLAY_PROPERTIES']['PUBLICATION_TYPE']['DISPLAY_VALUE'])) {
+                                ?>
+                                <span class="b-news-item__label"><?= $item['DISPLAY_PROPERTIES']['PUBLICATION_TYPE']['DISPLAY_VALUE'] ?></span>
+                            <?php } ?>
                             <h4 class="b-news-item__header"><?= $item['NAME'] ?></h4>
-                            <p class="b-news-item__description"><?= $item['PREVIEW_TEXT'] ?></p>
-                            <span class="b-news-item__date"><?= $item['DISPLAY_ACTIVE_FROM'] ?></span>
+                            <?php if (!empty($item['PREVIEW_TEXT'])) { ?>
+                                <p class="b-news-item__description"><?= $item['PREVIEW_TEXT'] ?></p>
+                            <?php } ?>
+                            <?php if (!empty($item['DISPLAY_ACTIVE_FROM'])) { ?>
+                                <span class="b-news-item__date"><?= $item['DISPLAY_ACTIVE_FROM'] ?></span>
+                            <?php } ?>
+                            <?php if (!empty($item['DETAIL_PAGE_URL'])){ ?>
                         </a>
+                    <?php } ?>
                     </article>
                 <?php } ?>
             </div>
