@@ -25,6 +25,16 @@ user.auth.register:
   defaults: { _controller: '\FourPaws\User\Controller\SubscribeController::subscribeAction' }
   methods: [POST]
 
+user.city.select:
+  path: /user/city/select/
+  defaults: { _controller: '\FourPaws\User\Controller\CitySelectController::selectAction' }
+  methods: [POST]
+
+user.city.getList:
+  path: /user/city/getList/
+  defaults: { _controller: '\FourPaws\User\Controller\CitySelectController::getListAction' }
+  methods: [GET]
+
 autosort.property.hint:
   path: /autosort/property-hint/{propertyId}
   defaults: { _controller: '\FourPaws\ProductAutoSort\Controller\AutosortController::propertyHint' }

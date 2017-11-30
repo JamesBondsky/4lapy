@@ -9,6 +9,7 @@ use Bitrix\Main\Entity\UpdateResult;
 use Bitrix\Main\UserTable;
 use FourPaws\BitrixOrm\Model\User;
 use FourPaws\BitrixOrm\Type\ResultContent;
+use FourPaws\User\Exceptions\CityNotFoundException;
 use FourPaws\User\Exceptions\NotFoundException;
 use FourPaws\User\Exceptions\TooManyUserFoundException;
 use FourPaws\User\Exceptions\WrongPasswordException;
@@ -17,7 +18,9 @@ use FourPaws\User\Exceptions\WrongPhoneNumberException;
 class UserService
 {
     const SOCSERV_EXTERNAL_ID = 'socservices';
-    
+
+    const FIAS_CODE_MOSCOW = '0c5b2444-70a0-4932-980c-b4dc0d3f02b5';
+
     /**
      * UserService constructor.
      */
@@ -330,6 +333,61 @@ class UserService
         $result = new UpdateResult();
         $result->setPrimary($userId);
         
+        return $result;
+    }
+
+    /**
+     * @param string $code
+     * @param string $name
+     *
+     * @return bool
+     * @throws \Exception
+     */
+    public function selectCity(string $code = '', string $name = '') : bool
+    {
+        $availableCities = $this->getAvailableCities();
+
+        if (!empty($code)) {
+            foreach ($availableCities as $type => $cities) {
+                if (isset($cities[$code])) {
+                    $_SESSION['USER_CITY'] = $code;
+                    return true;
+                }
+            }
+        } elseif (!empty($name)) {
+            foreach ($availableCities as $type => $cities) {
+                foreach ($cities as $code => $city) {
+                    if ($city['NAME'] == $name) {
+                        $_SESSION['USER_CITY'] = $code;
+                        return true;
+                    }
+                }
+            }
+        }
+
+        throw new CityNotFoundException('Город указан неверно.');
+    }
+
+    public function getAvailableCities() : array
+    {
+        /* @todo pick cities from dictionary iblock */
+        $result = [
+            'POPULAR' => [
+                '0c5b2444-70a0-4932-980c-b4dc0d3f02b5' => [
+                    'NAME' => 'Москва',
+                    'FIAS_CODE' => '0c5b2444-70a0-4932-980c-b4dc0d3f02b5'
+                ]
+            ],
+            'MOSCOW' => [],
+        ];
+
+        $result['DEFAULT'] = [
+            '0c5b2444-70a0-4932-980c-b4dc0d3f02b5' => [
+                'NAME' => 'Москва',
+                'FIAS_CODE' => '0c5b2444-70a0-4932-980c-b4dc0d3f02b5'
+            ]
+        ];
+
         return $result;
     }
 }

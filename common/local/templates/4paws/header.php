@@ -92,12 +92,7 @@ $markup = PawsApplication::markup();
                  */
                 require_once 'temp_header_menu.php';
                 ?>
-                <?php
-                /**
-                 * @todo Выбор региона. Заменить компонентом и удалить файл.
-                 */
-                require_once 'temp_header_region.php';
-                ?>
+                <?php $APPLICATION->IncludeComponent('fourpaws:city.selector') ?>
                 <?php
                 /**
                  * @todo Стоимость доставки (регионозависимая). Заменить компонентом и удалить файл.
