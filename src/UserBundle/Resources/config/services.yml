@@ -27,6 +27,11 @@ services:
         class: FourPaws\UserBundle\Service\UserService
         public: true
 
+    FourPaws\UserBundle\AjaxController\:
+        resource: '../../AjaxController'
+        public: true
+        tags: ['controller.service_arguments']
+
     # Временное решение. Ввиду вызова из компонентов
 #    FourPaws\UserBundle\Service\UserService:
 #        public: true
