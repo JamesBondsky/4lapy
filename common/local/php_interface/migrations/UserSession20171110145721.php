@@ -21,7 +21,7 @@ class UserSession20171110145721 extends SprintMigrationBase
          * Compile from d7 DataManager will return only not null table fields structure
          */
         $tableStructure = <<<SQL
-CREATE TABLE `${$tableName}` (
+CREATE TABLE `$tableName`(
   `ID`                   INT          NOT NULL AUTO_INCREMENT,
   `DATE_INSERT`          DATETIME     NOT NULL,
   `DATE_UPDATE`          DATETIME     NOT NULL,
@@ -48,6 +48,7 @@ SQL;
             Application::getConnection()->commitTransaction();
         } catch (\Exception $exception) {
             Application::getConnection()->rollbackTransaction();
+            throw  new \RuntimeException($exception->getMessage(), $exception->getCode(), $exception);
         }
     }
 
