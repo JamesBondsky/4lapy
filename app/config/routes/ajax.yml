@@ -20,7 +20,7 @@ user.auth.changePassword:
   defaults: { _controller: '\FourPaws\User\Controller\AuthController::changePasswordAction' }
   methods: [POST]
 
-user.auth.register:
+user.subscribe.subscribe:
   path: /user/subscribe/subscribe/
   defaults: { _controller: '\FourPaws\User\Controller\SubscribeController::subscribeAction' }
   methods: [POST]
