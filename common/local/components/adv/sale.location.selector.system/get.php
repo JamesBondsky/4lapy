@@ -24,12 +24,10 @@ try
 
 	if($_REQUEST['REQUEST_TYPE'] === 'get-path') {
         $data = CBitrixLocationSelectorSystemComponentPropLocation::processGetPathRequest($_REQUEST);
-        //$data = CBitrixLocationSelectorSystemComponent::processGetPathRequest($_REQUEST);
     }
 	else // else type === 'search'
     {
         $data = CBitrixLocationSelectorSystemComponentPropLocation::processSearchRequestV2($_REQUEST);
-        //$data = CBitrixLocationSelectorSystemComponent::processSearchRequestV2($_REQUEST);
     }
 }
 catch(Main\SystemException $e)
