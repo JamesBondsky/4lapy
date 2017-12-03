@@ -9,4 +9,6 @@ class IblockType
     const MENU        = 'menu';
     
     const PUBLICATION = 'publication';
+    
+    const PUBLICATIONS = 'publications';
 }
