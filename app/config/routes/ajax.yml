@@ -25,14 +25,24 @@ user.auth.register:
   defaults: { _controller: '\FourPaws\User\Controller\SubscribeController::subscribeAction' }
   methods: [POST]
 
-user.city.select:
-  path: /user/city/select/
-  defaults: { _controller: '\FourPaws\User\Controller\CitySelectController::selectAction' }
+user.city.set:
+  path: /user/city/set/
+  defaults: { _controller: '\FourPaws\User\Controller\CityController::setAction' }
   methods: [POST]
 
-user.city.getList:
-  path: /user/city/getList/
-  defaults: { _controller: '\FourPaws\User\Controller\CitySelectController::getListAction' }
+user.city.get:
+  path: /user/city/get/
+  defaults: { _controller: '\FourPaws\User\Controller\CityController::getAction' }
+  methods: [GET]
+
+location.city.autocomplete:
+  path: /location/city/autocomplete
+  defaults: { _controller: '\FourPaws\Location\Controller\CityController::autocompleteAction' }
+  methods: [GET]
+
+location.city.getList:
+  path: /location/city/list/
+  defaults: { _controller: '\FourPaws\Location\Controller\CityController::listAction' }
   methods: [GET]
 
 autosort.property.hint:

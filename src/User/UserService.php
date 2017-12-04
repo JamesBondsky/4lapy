@@ -9,7 +9,8 @@ use Bitrix\Main\Entity\UpdateResult;
 use Bitrix\Main\UserTable;
 use FourPaws\BitrixOrm\Model\User;
 use FourPaws\BitrixOrm\Type\ResultContent;
-use FourPaws\User\Exceptions\CityNotFoundException;
+use FourPaws\Location\Exception\CityNotFoundException;
+use FourPaws\Location\LocationService;
 use FourPaws\User\Exceptions\NotFoundException;
 use FourPaws\User\Exceptions\TooManyUserFoundException;
 use FourPaws\User\Exceptions\WrongPasswordException;
@@ -21,12 +22,15 @@ class UserService
 
     const FIAS_CODE_MOSCOW = '0c5b2444-70a0-4932-980c-b4dc0d3f02b5';
 
+    /** @var  LocationService */
+    protected $locationService;
+    
     /**
      * UserService constructor.
      */
-    public function __construct()
+    public function __construct(LocationService $locationService)
     {
-    
+        $this->locationService = $locationService;
     }
     
     /**
@@ -343,51 +347,41 @@ class UserService
      * @return bool
      * @throws \Exception
      */
-    public function selectCity(string $code = '', string $name = '') : bool
+    public function setSelectedCity(string $code = '', string $name = '') : bool
     {
-        $availableCities = $this->getAvailableCities();
-
-        if (!empty($code)) {
-            foreach ($availableCities as $type => $cities) {
-                if (isset($cities[$code])) {
-                    $_SESSION['USER_CITY'] = $code;
-                    return true;
-                }
-            }
-        } elseif (!empty($name)) {
-            foreach ($availableCities as $type => $cities) {
-                foreach ($cities as $code => $city) {
-                    if ($city['NAME'] == $name) {
-                        $_SESSION['USER_CITY'] = $code;
-                        return true;
-                    }
-                }
-            }
+        $city = null;
+        if ($code) {
+            $city = $this->locationService->findCityByCode($code);
+        } else {
+            $city = $this->locationService->findCity($name, 1,true);
         }
 
-        throw new CityNotFoundException('Город указан неверно.');
+        if (!$city) {
+            return false;
+        }
+        $_SESSION['USER_CITY'] = [
+            'CODE' => $city['CODE'],
+            'NAME' => $city['NAME']
+        ];
+
+        if ($this->isAuthorized()) {
+            $user = $this->getCurrentUser();
+            static::update($user->getId(), ['UF_LOCATION' =>$city['CODE']]);
+        }
+
+        return true;
     }
 
-    public function getAvailableCities() : array
+    public function getSelectedCity() : array
     {
-        /* @todo pick cities from dictionary iblock */
-        $result = [
-            'POPULAR' => [
-                '0c5b2444-70a0-4932-980c-b4dc0d3f02b5' => [
-                    'NAME' => 'Москва',
-                    'FIAS_CODE' => '0c5b2444-70a0-4932-980c-b4dc0d3f02b5'
-                ]
-            ],
-            'MOSCOW' => [],
-        ];
+        if ($_SESSION['USER_CITY']) {
+            return $_SESSION['USER_CITY'];
+        }
 
-        $result['DEFAULT'] = [
-            '0c5b2444-70a0-4932-980c-b4dc0d3f02b5' => [
-                'NAME' => 'Москва',
-                'FIAS_CODE' => '0c5b2444-70a0-4932-980c-b4dc0d3f02b5'
-            ]
-        ];
+        if (($user = $this->getCurrentUser()) && $user->getLocation()) {
+            return $this->locationService->findCityByCode($user->getLocation());
+        }
 
-        return $result;
+        return $this->locationService->getDefaultCity();
     }
 }

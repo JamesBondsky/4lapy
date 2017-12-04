@@ -28,6 +28,8 @@ class User extends BitrixArrayItemBase
     
     protected $CHECKWORD;
     
+    protected $UF_LOCATION;
+    
     /**
      * @return string
      */
@@ -82,6 +84,11 @@ class User extends BitrixArrayItemBase
     public function getCheckword() : string
     {
         return $this->CHECKWORD;
+    }
+    
+    public function getLocation() : string
+    {
+        return (string)$this->UF_LOCATION;
     }
     
     /**
@@ -179,6 +186,13 @@ class User extends BitrixArrayItemBase
     public function withCheckword(string $checkword) : User
     {
         $this->CHECKWORD = $checkword;
+        
+        return $this;
+    }
+    
+    public function withLocation(string $location) : User
+    {
+        $this->UF_LOCATION = $location;
         
         return $this;
     }

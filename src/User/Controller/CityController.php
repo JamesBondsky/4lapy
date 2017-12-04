@@ -5,12 +5,13 @@ namespace FourPaws\User\Controller;
 use FourPaws\App\Application;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\Location\Exception\CityNotFoundException;
 use FourPaws\User\UserService;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
-class CitySelectController extends Controller
+class CityController extends Controller
 {
     /**@var UserService */
     protected $userService;
@@ -25,14 +26,14 @@ class CitySelectController extends Controller
      *
      * @return JsonResponse
      */
-    public function selectAction(Request $request) : JsonResponse
+    public function setAction(Request $request): JsonResponse
     {
         $code = $request->request->get('code') ?? '';
         $name = $request->request->get('name') ?? '';
 
         try {
-            $this->userService->selectCity($code, $name);
-        } catch (\Exception $e) {
+            $this->userService->setSelectedCity($code, $name);
+        } catch (CityNotFoundException $e) {
             return JsonErrorResponse::create($e->getMessage());
         }
 
@@ -40,14 +41,16 @@ class CitySelectController extends Controller
     }
 
     /**
-     * @param Request $request
-     *
      * @return JsonResponse
      */
-    public function getListAction(Request $request) : JsonResponse
+    public function getAction() : JsonResponse
     {
-        $cityList = $this->userService->getAvailableCities();
+        try {
+            $city = $this->userService->getSelectedCity();
+        } catch (CityNotFoundException $e) {
+            return JsonErrorResponse::create($e->getMessage());
+        }
 
-        return JsonSuccessResponse::createWithData('', $cityList);
+        return JsonSuccessResponse::createWithData('', $city);
     }
 }

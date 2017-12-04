@@ -19,21 +19,13 @@
  * @global CDatabase              $DB
  */
 
-use Bitrix\Main\Page\Asset;
 use FourPaws\Decorators\SvgDecorator;
-
-// нужно для геолокации
-Asset::getInstance()->addJs('https://api-maps.yandex.ru/2.1/?lang=ru_RU');
 
 $this->setFrameMode(true);
 ?>
 
 <div class="b-header__wrapper-for-popover">
-    <a
-            class="b-combobox b-combobox--header js-open-popover js-city-title"
-            href="javascript:void(0);"
-            title="<?php $frame = $this->createFrame()->begin($arResult['DEFAULT_CITY']['NAME'])?><?= $arResult['SELECTED_CITY']['NAME'] ?><?php $frame->end() ?>"
-    >
+    <a class="b-combobox b-combobox--header js-open-popover" href="javascript:void(0);">
         <span class="b-icon b-icon--location">
             <?= new SvgDecorator('icon-delivery-header', 14, 16) ?>
         </span>
@@ -56,26 +48,4 @@ $this->setFrameMode(true);
         <a class="b-popover__link" href="javascript:void(0)" title="">Да</a>
         <a class="b-popover__link b-popover__link--last" href="javascript:void(0)" title="">Нет, выбрать другой</a>
     </div>
-</div>
-
-<?php $frame = $this->createFrame()->begin('')?>
-<script>
-    var selectedCity = '<?= $arResult['SELECTED_CITY']['NAME'] ?>';
-</script>
-<?php $frame->end() ?>
-
-<? /* todo fix this when markup is ready */ ?>
-<div class="js-city-list" data-type="popular" style="display: none">
-    <?php foreach ($arResult['POPULAR_CITIES'] as $city) { ?>
-        <div data-name="<?= $city['NAME'] ?>" data-code="<?= $city['FIAS_CODE'] ?>">
-            <?= $city['NAME'] ?>
-        </div>
-    <?php } ?>
-</div>
-<div class="js-city-list" data-type="popular" style="display: none">
-    <?php foreach ($arResult['MOSCOW_CITIES'] as $city) { ?>
-        <div data-name="<?= $city['NAME'] ?>" data-code="<?= $city['FIAS_CODE'] ?>">
-            <?= $city['NAME'] ?>
-        </div>
-    <?php } ?>
 </div>

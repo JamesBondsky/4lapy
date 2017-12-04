@@ -10,7 +10,7 @@ class FourPawsCitySelectorComponent extends \CBitrixComponent
 {
 
     /** {@inheritdoc} */
-    public function onPrepareComponentParams($params) : array
+    public function onPrepareComponentParams($params): array
     {
         return $params;
     }
@@ -38,18 +38,18 @@ class FourPawsCitySelectorComponent extends \CBitrixComponent
      */
     protected function prepareResult()
     {
-        global $USER;
+        $locationService = Application::getInstance()->getContainer()->get('location.service');
         $userService = Application::getInstance()->getContainer()->get('user.service');
-        $availableCities = $userService->getAvailableCities();
+        $availableCities = $locationService->getAvailableCities();
 
-        $this->arResult['POPULAR_CITIES'] = isset($availableCities['POPULAR']) ? $availableCities['POPULAR'] : [];
-        $this->arResult['MOSCOW_CITIES']  = isset($availableCities['MOSCOW']) ? $availableCities['MOSCOW'] : [];
-        $this->arResult['DEFAULT_CITY']   = reset($availableCities['DEFAULT']);
-
-        $this->arResult['SELECTED_CITY'] = $this->arResult['DEFAULT_CITY'];
-        if ($USER->isAuthorized()) {
-            /* @todo set user selected city */
-        }
+        $this->arResult['POPULAR_CITIES'] = isset($availableCities['popular'])
+            ? $availableCities['popular']
+            : [];
+        $this->arResult['MOSCOW_CITIES'] = isset($availableCities['moscow_region'])
+            ? $availableCities['moscow_region']
+            : [];
+        $this->arResult['DEFAULT_CITY'] = $locationService->getDefaultCity();
+        $this->arResult['SELECTED_CITY'] = $userService->getSelectedCity();
 
         return $this;
     }

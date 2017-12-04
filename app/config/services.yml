@@ -34,6 +34,9 @@ services:
       - '@search.factory'
       - '@old_sound_rabbit_mq.catalog_sync_producer'
 
+  location.service:
+    class: FourPaws\Location\LocationService
+
   user.service:
     class: FourPaws\User\UserService
 
