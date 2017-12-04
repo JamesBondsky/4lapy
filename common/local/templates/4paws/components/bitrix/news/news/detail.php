@@ -19,7 +19,7 @@
 /** @var CBitrixComponent $component */
 $this->setFrameMode(true);
 ?>
-<?php $ElementID = $APPLICATION->IncludeComponent('bitrix:news.detail',
+<?php $APPLICATION->IncludeComponent('bitrix:news.detail',
                                                   '',
                                                   [
                                                       'DISPLAY_DATE'              => $arParams['DISPLAY_DATE'],

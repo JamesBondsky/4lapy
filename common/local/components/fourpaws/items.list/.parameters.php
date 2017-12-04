@@ -179,12 +179,6 @@ $arComponentParameters = [
             'TYPE'    => 'CHECKBOX',
             'DEFAULT' => 'N',
         ],
-        'HIDE_LINK_WHEN_NO_DETAIL' => [
-            'PARENT'  => 'ADDITIONAL_SETTINGS',
-            'NAME'    => Loc::getMessage('T_IBLOCK_DESC_HIDE_LINK_WHEN_NO_DETAIL'),
-            'TYPE'    => 'CHECKBOX',
-            'DEFAULT' => 'N',
-        ],
         'CACHE_TIME'               => ['DEFAULT' => 36000000],
         'CACHE_FILTER'             => [
             'PARENT'  => 'CACHE_SETTINGS',

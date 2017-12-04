@@ -23,6 +23,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 if (!is_array($arResult['IBLOCKS']) || empty($arResult['IBLOCKS'])) {
     return;
 }
+
+use Bitrix\Main\Application;
+
 $frame = $this->createFrame(); ?>
 <section class="b-common-section">
     <div class="b-common-section__title-box b-common-section__title-box--latest-event b-common-section__title-box--wrap">
@@ -47,7 +50,8 @@ $frame = $this->createFrame(); ?>
                            title="<?= $item['NAME'] ?>">
                             <?php } ?>
                             <?php if (!empty($item['PREVIEW_PICTURE']['SRC'])
-                                      && file_exists($_SERVER['DOCUMENT_ROOT'] . $item['PREVIEW_PICTURE']['SRC'])) { ?>
+                                      && file_exists(Application::getDocumentRoot()
+                                                     . $item['PREVIEW_PICTURE']['SRC'])) { ?>
                                 <span class="b-news-item__image-wrapper js-image-cover">
                                         <img class="b-news-item__image"
                                              src="<?= $item['PREVIEW_PICTURE']['SRC'] ?>"
@@ -56,7 +60,7 @@ $frame = $this->createFrame(); ?>
                                     <?php if (!empty($item['DISPLAY_PROPERTIES']['VIDEO']['DISPLAY_VALUE'])) { ?>
                                         <span class="b-news-item__video">
                                                 <span class="b-icon">
-                                                    <?= new \FourPaws\Decorators\SvgDecorator('/static/build/icons.svg#icon-play-video',
+                                                    <?= new \FourPaws\Decorators\SvgDecorator('icon-play-video',
                                                                                               60,
                                                                                               60); ?>
                                                 </span>

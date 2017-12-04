@@ -29,7 +29,7 @@ $this->setFrameMode(true);
                                                  'START_FROM' => '0',
                                              ]); ?>
         <h1 class="b-title b-title--h1">
-            <?= (!empty($arResult['IPROPERTY_VALUES']['ELEMENT_PAGE_TITLE'])) ? $arResult['IPROPERTY_VALUES']['ELEMENT_PAGE_TITLE'] : $arResult['NAME'] ?>
+            <?= !empty($arResult['IPROPERTY_VALUES']['ELEMENT_PAGE_TITLE']) ? $arResult['IPROPERTY_VALUES']['ELEMENT_PAGE_TITLE'] : $arResult['NAME'] ?>
         </h1>
         <?php if (!empty($arResult['DISPLAY_ACTIVE_FROM'])) { ?>
             <div class="b-detail-page__date"><?= $arResult['DISPLAY_ACTIVE_FROM'] ?></div>
@@ -46,10 +46,11 @@ $this->setFrameMode(true);
             echo $arResult['DISPLAY_PROPERTIES']['VIDEO']['DISPLAY_VALUE'];
         } ?>
         <?php if (!$arResult['NO_SHOW_SLIDER']
-                  && is_array($arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'])
+                  && \is_array($arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'])
                   && !empty($arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'])) { ?>
             <div class="b-detail-page-slider js-detail-slider">
-                <?php foreach ($arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'] as $photo) {
+                <?php /** @noinspection ForeachSourceInspection - условие есть выше */
+                foreach ($arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'] as $photo) {
                     if (is_numeric($photo)) {
                         $photo = ['SRC' => \CFile::GetPath($photo)];
                     }

@@ -14,12 +14,12 @@ if (empty($arResult)) {
 
 $strReturn = '<nav class="b-breadcrumbs"><ul class="b-breadcrumbs__list">';
 
-foreach ($arResult as $index => $item) {
+foreach ($arResult as $item) {
     $strReturn .= '<li class="b-breadcrumbs__item">
-                    <a class="b-breadcrumbs__link"
-                                                   href="' . $item['LINK'] . '"
-                                                   title="' . $item['TITLE'] . '">' . $item['TITLE'] . '</a>
-                </li>';
+    <a class="b-breadcrumbs__link"
+       href="' . $item['LINK'] . '"
+       title="' . $item['TITLE'] . '">' . $item['TITLE'] . '</a>
+</li>';
 }
 
 $strReturn .= '</ul></nav>';

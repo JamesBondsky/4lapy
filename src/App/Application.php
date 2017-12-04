@@ -127,14 +127,4 @@ class Application extends AppKernel
     {
         return self::getDocumentRoot() . $path;
     }
-    
-    public static function getAbsolutePublicPath(string $path): string {
-        $context = \Bitrix\Main\Application::getInstance()->getContext();
-        $host    = $context->getServer()->getHttpHost();
-        $prefix  = 'http';
-        if ($context->getRequest()->isHttps()) {
-            $prefix .= 's';
-        }
-        return $prefix . '://' . $host . $path;
-    }
 }
