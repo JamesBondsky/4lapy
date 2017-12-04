@@ -6,7 +6,7 @@ use Bitrix\Main\{
 };
 use FourPaws\App\ServiceHandlerInterface;
 
-abstract class Event implements ServiceHandlerInterface
+class Event implements ServiceHandlerInterface
 {
     /**
      * @param EventManager $eventManager
