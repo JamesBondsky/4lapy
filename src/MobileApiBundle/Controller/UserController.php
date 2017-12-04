@@ -47,9 +47,10 @@ class UserController extends FOSRestController
      *
      * @return \FourPaws\MobileApiBundle\Dto\Response
      */
-    public function userLoginAction(Request $request)
+    public function loginAction(Request $request)
     {
         $result = new \FourPaws\MobileApiBundle\Dto\Response();
+
 
         if ($this->userAuthorization->isAuthorized()) {
             /**
@@ -58,7 +59,6 @@ class UserController extends FOSRestController
             $result->addError(new Error(1, 'Вы уже авторизованы'));
             return $result;
         }
-
 
 
         $userLoginRequest = $this->apiRequestProcessor->convert($request->request->all(), UserLoginRequest::class);
@@ -87,5 +87,81 @@ class UserController extends FOSRestController
          */
 
         return $result;
+    }
+
+    /**
+     * @Rest\Get(path="/logout")
+     */
+    public function logoutAction()
+    {
+        /**
+         * @todo logout bitrix
+         */
+
+        /**
+         * @todo update session - clear session
+         */
+    }
+
+    /**
+     * @Rest\Get(path="/user_info")
+     */
+    public function getAction()
+    {
+        /**
+         * @todo проверяем авторизован ли пользователь
+         */
+
+        /**
+         * @todo если авторизован - возвращаем пользователя
+         */
+
+        /**
+         * @todo если не авторизован возвращаем "user_not_authorized"
+         */
+    }
+
+    /**
+     * @Rest\Post(path="/user_info")
+     */
+    public function updateAction()
+    {
+        /**
+         * @todo covert $_POST to Dto UserInfoPost
+         */
+
+        /**
+         * @todo Проверяем авторизованность пользователя
+         */
+
+        /**
+         * @todo Обновляем логин если он равен телефону или емейлу
+         */
+
+        /**
+         * @todo Возвращаем результат
+         */
+    }
+
+    /**
+     * @Rest\Get(path="/login_exist")
+     * @Parameter(
+     *     name="login",
+     *     in="query",
+     *     type="string",
+     *     required=true,
+     *     description="Phone or Email of user"
+     * )
+     */
+    public function isExistAction()
+    {
+        /**
+         * @todo Необходимо предусмотреть максимальное кол-во попыток
+         */
+
+        return [
+            'exist'         => true,
+            'feedback_text' => '',
+        ];
     }
 }

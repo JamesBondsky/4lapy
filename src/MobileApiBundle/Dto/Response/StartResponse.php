@@ -1,6 +1,6 @@
 <?php
 
-namespace FourPaws\MobileApiBundle\Dto\Data;
+namespace FourPaws\MobileApiBundle\Dto\Response;
 
 use JMS\Serializer\Annotation as Serializer;
 
@@ -9,7 +9,7 @@ use JMS\Serializer\Annotation as Serializer;
  * Class StartData
  * @package FourPaws\MobileApiBundle\Dto
  */
-class Start
+class StartResponse
 {
     /**
      * @Serializer\SerializedName("access_id")
@@ -37,9 +37,9 @@ class Start
 
     /**
      * @param string $accessId
-     * @return Start
+     * @return StartResponse
      */
-    public function setAccessId(string $accessId): Start
+    public function setAccessId(string $accessId): StartResponse
     {
         $this->accessId = $accessId;
         return $this;
