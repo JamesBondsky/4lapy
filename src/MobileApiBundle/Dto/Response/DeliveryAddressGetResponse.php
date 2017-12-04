@@ -24,6 +24,7 @@ class DeliveryAddressGetResponse
 
     /**
      * @param DeliveryAddress[] $address
+     *
      * @return DeliveryAddressGetResponse
      */
     public function setAddress(array $address): DeliveryAddressGetResponse
@@ -34,21 +35,28 @@ class DeliveryAddressGetResponse
 
     /**
      * @param DeliveryAddress $address
+     *
      * @return $this
      */
     public function addAddress(DeliveryAddress $address)
     {
-        $this->address[$address->getId()] = $address;
+        if (!\in_array($address, $this->address, true)) {
+            $this->address[] = $address;
+        }
         return $this;
     }
 
     /**
      * @param DeliveryAddress $address
+     *
      * @return $this
      */
     public function removeAddress(DeliveryAddress $address)
     {
-        unset($this->address[$address->getId()]);
+        $key = array_search($address, $this->address, true);
+        if ($key !== false) {
+            unset($this->address[$key]);
+        }
         return $this;
     }
 }
