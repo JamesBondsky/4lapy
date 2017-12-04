@@ -3,8 +3,11 @@
 namespace FourPaws\MobileApiBundle\Services\Security;
 
 use Bitrix\Main\Loader;
+use Bitrix\Main\LoaderException;
 use FourPaws\MobileApiBundle\Entity\Session;
+use FourPaws\MobileApiBundle\Exception\BitrixException;
 use FourPaws\MobileApiBundle\Exception\InvalidIdentifierException;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 
 class SessionFactory
 {
@@ -12,13 +15,26 @@ class SessionFactory
      * @var TokenGeneratorInterface
      */
     private $tokenGenerator;
+    /**
+     * @var CurrentUserProviderInterface
+     */
+    private $currentUserProvider;
 
-    public function __construct(TokenGeneratorInterface $tokenGenerator)
+    public function __construct(TokenGeneratorInterface $tokenGenerator, CurrentUserProviderInterface $currentUserProvider)
     {
-        Loader::includeModule('sale');
+        try {
+            Loader::includeModule('sale');
+        } catch (LoaderException $e) {
+            throw new BitrixException($e->getMessage(), $e->getCode(), $e);
+        }
         $this->tokenGenerator = $tokenGenerator;
+        $this->currentUserProvider = $currentUserProvider;
     }
 
+    /**
+     * @throws \FourPaws\MobileApiBundle\Exception\InvalidIdentifierException
+     * @return Session
+     */
     public function create(): Session
     {
         $session = (new Session())
@@ -29,6 +45,11 @@ class SessionFactory
         return $session;
     }
 
+    /**
+     * @param Session $session
+     *
+     * @return Session
+     */
     public function update(Session $session): Session
     {
         $session
@@ -57,6 +78,11 @@ class SessionFactory
         throw new InvalidIdentifierException('Cant create basket user id');
     }
 
+    /**
+     * @param Session $session
+     *
+     * @return Session
+     */
     protected function configIp(Session $session): Session
     {
         return $session

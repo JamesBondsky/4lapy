@@ -2,15 +2,18 @@
 
 namespace FourPaws\MobileApiBundle\Dto\Request;
 
+use FourPaws\MobileApiBundle\Dto\Parts\Token;
 use JMS\Serializer\Annotation as Serializer;
 
 /**
  * Class UserLoginRequest
  * @package FourPaws\MobileApiBundle\Dto\Request
- * @todo constraint
+ * @todo    constraint
  */
 class UserLoginRequest
 {
+    use Token;
+
     /**
      * @var string
      * @Serializer\Type("string")

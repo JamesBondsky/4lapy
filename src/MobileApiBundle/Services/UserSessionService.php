@@ -6,6 +6,7 @@ use FourPaws\MobileApiBundle\Entity\Session;
 use FourPaws\MobileApiBundle\Exception\BitrixException;
 use FourPaws\MobileApiBundle\Exception\InvalidIdentifierException;
 use FourPaws\MobileApiBundle\Exception\SessionCreateException;
+use FourPaws\MobileApiBundle\Exception\TokenNotFoundException;
 use FourPaws\MobileApiBundle\Exception\ValidationException;
 use FourPaws\MobileApiBundle\Exception\WrongTransformerResultException;
 use FourPaws\MobileApiBundle\Repository\UserSessionRepository;
@@ -47,21 +48,27 @@ class UserSessionService
     }
 
     /**
-     * @param Session $session
-     * @throws WrongTransformerResultException
-     * @throws ValidationException
-     * @throws BitrixException
-     * @throws InvalidIdentifierException
+     * @param string $token
+     *
+     * @throws \FourPaws\MobileApiBundle\Exception\WrongTransformerResultException
+     * @throws \FourPaws\MobileApiBundle\Exception\ValidationException
+     * @throws \FourPaws\MobileApiBundle\Exception\TokenNotFoundException
+     * @throws \FourPaws\MobileApiBundle\Exception\BitrixException
+     * @throws \FourPaws\MobileApiBundle\Exception\InvalidIdentifierException
      * @return bool
      */
-    public function update(Session $session): bool
+    public function update(string $token): bool
     {
-        $this->sessionFactory->update($session);
-        return $this->userSessionRepository->update($session);
+        if ($session = $this->findByToken($token)) {
+            $this->sessionFactory->update($session);
+            return $this->userSessionRepository->update($session);
+        }
+        throw new TokenNotFoundException(sprintf('Token with identifier %s not found', $token));
     }
 
     /**
      * @param string $token
+     *
      * @throws InvalidIdentifierException
      * @return null|Session
      */
@@ -72,6 +79,7 @@ class UserSessionService
 
     /**
      * @param string $token
+     *
      * @throws InvalidIdentifierException
      * @return bool
      */

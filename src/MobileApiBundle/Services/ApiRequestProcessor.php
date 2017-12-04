@@ -29,7 +29,7 @@ class ApiRequestProcessor
      * @param $class
      * @param null|Context $context
      *
-     * @return $class|object
+     * @return object
      */
     public function convert(array $data, $class, Context $context = null)
     {
@@ -47,7 +47,7 @@ class ApiRequestProcessor
      *
      * @return \Symfony\Component\Validator\ConstraintViolationListInterface
      */
-    public function validate(object $data, $constraint = null, array $groups = null)
+    public function validate($data, $constraint = null, array $groups = null)
     {
         return $this->validator->validate($data, $constraint, $groups);
     }

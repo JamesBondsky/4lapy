@@ -154,6 +154,23 @@ class UserRepository
 
     /**
      * @param string $rawLogin
+     * @param bool $onlyActive
+     *
+     * @throws \FourPaws\UserBundle\Exception\TooManyUserFoundException
+     * @return bool
+     */
+    public function isExist(string $rawLogin, bool $onlyActive = true): bool
+    {
+        try {
+            $this->findIdAndLoginByRawLogin($rawLogin, $onlyActive);
+            return true;
+        } catch (UsernameNotFoundException $exception) {
+        }
+        return false;
+    }
+
+    /**
+     * @param string $rawLogin
      *
      * @param bool $onlyActive
      *
