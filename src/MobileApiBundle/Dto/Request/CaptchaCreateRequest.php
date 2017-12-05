@@ -2,12 +2,13 @@
 
 namespace FourPaws\MobileApiBundle\Dto\Request;
 
+use FourPaws\MobileApiBundle\Dto\Parts\Entity;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
 class CaptchaCreateRequest
 {
-    use FourPaws\MobileApiBundle\Dto\Parts\Entity;
+    use Entity;
 
     /**
      * @Assert\NotBlank()
@@ -28,6 +29,7 @@ class CaptchaCreateRequest
 
     /**
      * @param string $sender
+     *
      * @return CaptchaCreateRequest
      */
     public function setSender(string $sender): CaptchaCreateRequest

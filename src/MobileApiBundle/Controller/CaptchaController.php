@@ -37,7 +37,7 @@ class CaptchaController extends FOSRestController
     /**
      * @see \FourPaws\MobileApiBundle\Dto\Request\CaptchaVerifyRequest
      */
-    public function verify()
+    public function verifyAction()
     {
         /**
          * @todo Сериализация
@@ -51,7 +51,5 @@ class CaptchaController extends FOSRestController
          * @todo Проверка типа сущности
          *       Возможно в рамках Constraint
          */
-
-
     }
 }

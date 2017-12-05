@@ -16,7 +16,7 @@ class ProductController extends FOSRestController
      * @see SpecialOffersRequest
      * @see SpecialOffersResponse
      */
-    public function getSpecialOffers()
+    public function getSpecialOffersAction()
     {
         /**
          * @todo кеширование
@@ -28,7 +28,14 @@ class ProductController extends FOSRestController
      * @see GoodsListRequest
      * @see GoodsListResponse
      */
-    public function getGoodsList()
+    public function getGoodsListAction()
+    {
+    }
+
+    /**
+     * @Rest\Get("/filter_list")
+     */
+    public function getFilterListAction()
     {
     }
 }
