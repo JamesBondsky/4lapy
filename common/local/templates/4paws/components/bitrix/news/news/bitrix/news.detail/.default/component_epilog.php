@@ -15,4 +15,7 @@ $APPLICATION->AddViewContent('header_news_display_date', $html);
 /** добавляем для отправки в соц сети */
 
 $APPLICATION->AddViewContent('news-detail-description', $arResult['PREVIEW_TEXT'] ?? '');
-$APPLICATION->AddViewContent('news-detail-image', new \FourPaws\Decorators\FullHrefDecorator($arResult['DETAIL_PICTURE']['SRC']) ?? '');
+$APPLICATION->AddViewContent(
+    'news-detail-image',
+    new \FourPaws\Decorators\FullHrefDecorator($arResult['DETAIL_PICTURE']['SRC']) ?? ''
+);

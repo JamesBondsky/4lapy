@@ -11,9 +11,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 $arResult['NO_SHOW_VIDEO'] = false;
 if (stripos($arResult['DETAIL_TEXT'], '#video#') !== false) {
-    $arResult['DETAIL_TEXT']   = str_replace('#video#',
-                                             !empty($arResult['DISPLAY_PROPERTIES']['VIDEO']['DISPLAY_VALUE']) ? $arResult['DISPLAY_PROPERTIES']['VIDEO']['DISPLAY_VALUE'] : '',
-                                             $arResult['DETAIL_TEXT']);
+    $arResult['DETAIL_TEXT']   = str_replace(
+        '#video#',
+        !empty($arResult['DISPLAY_PROPERTIES']['VIDEO']['DISPLAY_VALUE']) ? $arResult['DISPLAY_PROPERTIES']['VIDEO']['DISPLAY_VALUE'] : '',
+        $arResult['DETAIL_TEXT']
+    );
     $arResult['NO_SHOW_VIDEO'] = true;
 }
 
@@ -40,4 +42,10 @@ if (is_array($arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'])
 }
 
 /**  DETAIL_PICTURE и PREVIEW_TEXT для отправки в соц сети */
-$this->__component->SetResultCacheKeys(['DISPLAY_ACTIVE_FROM', 'DETAIL_PICTURE', 'PREVIEW_TEXT']);
+$this->__component->SetResultCacheKeys(
+    [
+        'DISPLAY_ACTIVE_FROM',
+        'DETAIL_PICTURE',
+        'PREVIEW_TEXT',
+    ]
+);

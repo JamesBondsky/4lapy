@@ -18,19 +18,19 @@ if (!Loader::includeModule('iblock')) {
     return;
 }
 
-$arTypesEx = CIBlockParameters::GetIBlockTypes(['-' => ' ']);
+$typeEx = CIBlockParameters::GetIBlockTypes(['-' => ' ']);
 
-$arIBlocks = [];
-$params    = [
+$iblocks = [];
+$params  = [
     'select' => [
         'ID',
         'NAME',
     ],
     'order'  => ['SORT' => 'ASC'],
 ];
-$site_get  = Application::getInstance()->getContext()->getRequest()->get('site');
-if (!empty($site_get)) {
-    $params['filter']['SITE_ID'] = $site_get;
+$siteGet = Application::getInstance()->getContext()->getRequest()->get('site');
+if (!empty($siteGet)) {
+    $params['filter']['SITE_ID'] = $siteGet;
 }
 if ($arCurrentValues['IBLOCK_TYPE'] !== '-') {
     $params['filter']['TYPE'] = $arCurrentValues['IBLOCK_TYPE'];
@@ -38,14 +38,14 @@ if ($arCurrentValues['IBLOCK_TYPE'] !== '-') {
 $res = IblockTable::getList($params);
 
 while ($item = $res->fetch()) {
-    $arIBlocks[$item['ID']] = '[' . $item['ID'] . '] ' . $item['NAME'];
+    $iblocks[$item['ID']] = '[' . $item['ID'] . '] ' . $item['NAME'];
 }
 
-$arSorts      = [
+$sorts      = [
     'ASC'  => Loc::getMessage('T_IBLOCK_DESC_ASC'),
     'DESC' => Loc::getMessage('T_IBLOCK_DESC_DESC'),
 ];
-$arSortFields = [
+$sortFields = [
     'ID'          => Loc::getMessage('T_IBLOCK_DESC_FID'),
     'NAME'        => Loc::getMessage('T_IBLOCK_DESC_FNAME'),
     'ACTIVE_FROM' => Loc::getMessage('T_IBLOCK_DESC_FACT'),
@@ -53,8 +53,8 @@ $arSortFields = [
     'TIMESTAMP_X' => Loc::getMessage('T_IBLOCK_DESC_FTSAMP'),
 ];
 
-$arProperty_LNS = [];
-$params         = [
+$propertyLNS = [];
+$params      = [
     'select' => [
         'CODE',
         'NAME',
@@ -69,17 +69,16 @@ $params         = [
         'NAME' => 'asc',
     ],
 ];
-$res            = PropertyTable::getList($params);
-while ($arr = $res->fetch()) {
-    $arProperty[$arr['CODE']] = '[' . $arr['CODE'] . '] ' . $arr['NAME'];
-    if (in_array($arr['PROPERTY_TYPE'],
+$res         = PropertyTable::getList($params);
+while ($item = $res->fetch()) {
+    if (in_array($item['PROPERTY_TYPE'],
                  [
                      'L',
                      'N',
                      'S',
                  ],
                  true)) {
-        $arProperty_LNS[$arr['CODE']] = '[' . $arr['CODE'] . '] ' . $arr['NAME'];
+        $propertyLNS[$item['CODE']] = '[' . $item['CODE'] . '] ' . $item['NAME'];
     }
 }
 
@@ -91,7 +90,7 @@ $arComponentParameters = [
             'PARENT'   => 'BASE',
             'NAME'     => Loc::getMessage('T_IBLOCK_DESC_LIST_TYPE'),
             'TYPE'     => 'LIST',
-            'VALUES'   => $arTypesEx,
+            'VALUES'   => $typeEx,
             'DEFAULT'  => 'news',
             'REFRESH'  => 'Y',
             'MULTIPLE' => 'Y',
@@ -100,7 +99,7 @@ $arComponentParameters = [
             'PARENT'            => 'BASE',
             'NAME'              => Loc::getMessage('T_IBLOCK_DESC_LIST_ID'),
             'TYPE'              => 'LIST',
-            'VALUES'            => $arIBlocks,
+            'VALUES'            => $iblocks,
             'DEFAULT'           => '={$_REQUEST["ID"]}',
             'ADDITIONAL_VALUES' => 'Y',
             'REFRESH'           => 'Y',
@@ -117,7 +116,7 @@ $arComponentParameters = [
             'NAME'              => Loc::getMessage('T_IBLOCK_DESC_IBORD1'),
             'TYPE'              => 'LIST',
             'DEFAULT'           => 'ACTIVE_FROM',
-            'VALUES'            => $arSortFields,
+            'VALUES'            => $sortFields,
             'ADDITIONAL_VALUES' => 'Y',
         ],
         'SORT_ORDER1'              => [
@@ -125,7 +124,7 @@ $arComponentParameters = [
             'NAME'              => Loc::getMessage('T_IBLOCK_DESC_IBBY1'),
             'TYPE'              => 'LIST',
             'DEFAULT'           => 'DESC',
-            'VALUES'            => $arSorts,
+            'VALUES'            => $sorts,
             'ADDITIONAL_VALUES' => 'Y',
         ],
         'SORT_BY2'                 => [
@@ -133,7 +132,7 @@ $arComponentParameters = [
             'NAME'              => Loc::getMessage('T_IBLOCK_DESC_IBORD2'),
             'TYPE'              => 'LIST',
             'DEFAULT'           => 'SORT',
-            'VALUES'            => $arSortFields,
+            'VALUES'            => $sortFields,
             'ADDITIONAL_VALUES' => 'Y',
         ],
         'SORT_ORDER2'              => [
@@ -141,7 +140,7 @@ $arComponentParameters = [
             'NAME'              => Loc::getMessage('T_IBLOCK_DESC_IBBY2'),
             'TYPE'              => 'LIST',
             'DEFAULT'           => 'ASC',
-            'VALUES'            => $arSorts,
+            'VALUES'            => $sorts,
             'ADDITIONAL_VALUES' => 'Y',
         ],
         'FILTER_NAME'              => [
@@ -156,7 +155,7 @@ $arComponentParameters = [
             'NAME'              => Loc::getMessage('T_IBLOCK_PROPERTY'),
             'TYPE'              => 'LIST',
             'MULTIPLE'          => 'Y',
-            'VALUES'            => $arProperty_LNS,
+            'VALUES'            => $propertyLNS,
             'ADDITIONAL_VALUES' => 'Y',
         ],
         'CHECK_DATES'              => [

@@ -24,14 +24,6 @@ class FullHrefDecorator
     }
     
     /**
-     * @return string
-     */
-    public function __toString()
-    {
-        return $this->getFullPublicPath();
-    }
-    
-    /**
      * @param $path
      */
     public function setPath($path)
@@ -42,23 +34,31 @@ class FullHrefDecorator
     /**
      * @return string
      */
-    public function getStartPath() : string
+    public function __toString()
     {
-        return $this->path;
+        return $this->getFullPublicPath();
     }
     
     /**
      * @return string
      */
-    public function getFullPublicPath() :string{
+    public function getFullPublicPath() : string
+    {
         $context = Application::getInstance()->getContext();
-        $host   = $context->getServer()->getHttpHost();
-        $prefix = 'http';
+        $host    = $context->getServer()->getHttpHost();
+        $prefix  = 'http';
         if ($context->getRequest()->isHttps()) {
             $prefix .= 's';
         }
-    
-        return $prefix . '://' . $host . $this->path;
         
+        return $prefix . '://' . $host . $this->path;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getStartPath() : string
+    {
+        return $this->path;
     }
 }

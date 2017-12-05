@@ -34,13 +34,15 @@ class MainTemplate extends TemplateAbstract
             <div class="b-detail-page">
                 <?php
                 global $APPLICATION;
-                $APPLICATION->IncludeComponent('bitrix:breadcrumb',
-                                               'breadcrumb',
-                                               [
-                                                   'PATH'       => '',
-                                                   'SITE_ID'    => SITE_ID,
-                                                   'START_FROM' => '0',
-                                               ]); ?>
+        $APPLICATION->IncludeComponent(
+                    'bitrix:breadcrumb',
+                    'breadcrumb',
+                    [
+                        'PATH'       => '',
+                        'SITE_ID'    => SITE_ID,
+                        'START_FROM' => '0',
+                    ]
+                ); ?>
                 <h1 class="b-title b-title--h1">
                     <?php $APPLICATION->ShowTitle(false) ?>
                 </h1>

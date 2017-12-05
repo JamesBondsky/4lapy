@@ -31,35 +31,35 @@ if ((int)$arResult['NavPageNomer'] < (int)$arResult['NavPageCount']) {
 
 $arResult['URLS']   = [];
 $arResult['HIDDEN'] = [];
-$NavRecordGroup     = 1;
+$navRecordGroup     = 1;
 $i                  = 0;
-while ($NavRecordGroup <= (int)$arResult['NavPageCount']) {
+while ($navRecordGroup <= (int)$arResult['NavPageCount']) {
     $i++;
     $uri = new Uri($arResult['BASE_URI']);
-    $uri->addParams(['PAGEN_' . $arResult['NavNum'] => $NavRecordGroup]);
-    $arResult['URLS'][$NavRecordGroup] = $uri->getUri();
+    $uri->addParams(['PAGEN_' . $arResult['NavNum'] => $navRecordGroup]);
+    $arResult['URLS'][$navRecordGroup] = $uri->getUri();
     if ($i > 3 && (int)$arResult['nStartPage'] <= 1) {
-        $arResult['HIDDEN'][$NavRecordGroup] = ' hidden';
+        $arResult['HIDDEN'][$navRecordGroup] = ' hidden';
     }
     if ((int)$arResult['nStartPage'] > 1 && (int)$arResult['nEndPage'] < ((int)$arResult['NavPageCount'] - 1)
-        && ($NavRecordGroup === (int)$arResult['nStartPage'] || $NavRecordGroup === (int)$arResult['nEndPage'])) {
-        $arResult['HIDDEN'][$NavRecordGroup] = ' hidden';
+        && ($navRecordGroup === (int)$arResult['nStartPage'] || $navRecordGroup === (int)$arResult['nEndPage'])) {
+        $arResult['HIDDEN'][$navRecordGroup] = ' hidden';
     }
-    if ($NavRecordGroup > 1
-        && $NavRecordGroup <= (int)$arResult['NavPageCount'] - 3
-                   && (int)$arResult['nEndPage'] >= ((int)$arResult['NavPageCount'] - 1)) {
-        $arResult['HIDDEN'][$NavRecordGroup] = ' hidden';
+    if ($navRecordGroup > 1
+        && $navRecordGroup <= (int)$arResult['NavPageCount'] - 3
+        && (int)$arResult['nEndPage'] >= ((int)$arResult['NavPageCount'] - 1)) {
+        $arResult['HIDDEN'][$navRecordGroup] = ' hidden';
     }
     
-    if ($NavRecordGroup === 1 && (int)$arResult['nStartPage'] > 1
-        && (int)$arResult['nStartPage'] - $NavRecordGroup >= 0) {
-        $NavRecordGroup = (int)$arResult['nStartPage'];
+    if ($navRecordGroup === 1 && (int)$arResult['nStartPage'] > 1
+        && (int)$arResult['nStartPage'] - $navRecordGroup >= 0) {
+        $navRecordGroup = (int)$arResult['nStartPage'];
         $i              = 0;
-    } elseif ($NavRecordGroup === (int)$arResult['nEndPage']
+    } elseif ($navRecordGroup === (int)$arResult['nEndPage']
               && (int)$arResult['nEndPage'] < ((int)$arResult['NavPageCount'] - 1)) {
-        $NavRecordGroup = (int)$arResult['NavPageCount'];
+        $navRecordGroup = (int)$arResult['NavPageCount'];
         $i              = 0;
     } else {
-        $NavRecordGroup++;
+        $navRecordGroup++;
     }
 }
