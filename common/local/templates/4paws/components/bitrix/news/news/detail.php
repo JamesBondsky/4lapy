@@ -79,10 +79,7 @@ $APPLICATION->IncludeComponent('bitrix:news.detail',
 
 /** TODO сделать распродажу с каталогом после готовности каталога со списком товаров */
 
-use Bitrix\Main\Application;
-use FourPaws\App\MainTemplate;
-
-$template = MainTemplate::getInstance(Application::getInstance()->getContext()); ?>
+use Bitrix\Main\Application; ?>
     <div class="b-container">
         <div class="b-social-big">
             <p>Рассказать в соцсетях</p>
@@ -90,7 +87,7 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
                 <div class="ya-share2"
                      data-lang="en"
                      data-services="facebook,odnoklassniki,vkontakte"
-                     data-url="<?= $template->getAbsolutePublicPath($template->getRequest()->getRequestUri()) ?>"
+                     data-url="<?= new \FourPaws\Decorators\FullHrefDecorator(Application::getInstance()->getContext()->getRequest()->getRequestUri()) ?>"
                      data-title="<?php $APPLICATION->ShowTitle(false) ?>"
                      data-description="<?php $APPLICATION->ShowViewContent('news-detail-description') ?>"
                      data-image="<?php $APPLICATION->ShowViewContent('news-detail-image') ?>"

@@ -14,9 +14,5 @@ $APPLICATION->AddViewContent('header_news_display_date', $html);
 
 /** добавляем для отправки в соц сети */
 
-use Bitrix\Main\Application;
-use FourPaws\App\MainTemplate;
-
-$template = MainTemplate::getInstance(Application::getInstance()->getContext());
 $APPLICATION->AddViewContent('news-detail-description', $arResult['PREVIEW_TEXT'] ?? '');
-$APPLICATION->AddViewContent('news-detail-image', $template->getAbsolutePublicPath($arResult['DETAIL_PICTURE']['SRC']) ?? '');
+$APPLICATION->AddViewContent('news-detail-image', new \FourPaws\Decorators\FullHrefDecorator($arResult['DETAIL_PICTURE']['SRC']) ?? '');
