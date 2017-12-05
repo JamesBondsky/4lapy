@@ -57,27 +57,43 @@ class LocationService
             $iblockId = IblockUtils::getIblockId(IblockType::REFERENCE_BOOKS, IblockCode::CITIES);
 
             $result = [];
-            $sort = ['SORT' => 'ASC', 'ID' => 'ASC'];
             $filter = ['IBLOCK_ID' => $iblockId, 'SECTION_CODE' => CitiesSectionCode::POPULAR];
             $select = ['ID', 'NAME', 'PROPERTY_LOCATION'];
 
             // При выборе популярных городов учитываем сортировку
+            $sort = ['SORT' => 'ASC', 'ID' => 'ASC'];
             $elements = CIBlockElement::GetList($sort, $filter, false, false, $select);
             while ($element = $elements->Fetch()) {
+                if (empty($element['PROPERTY_LOCATION_VALUE'])) {
+                    continue;
+                }
+
                 $result[CitiesSectionCode::POPULAR][] = [
-                    'NAME'     => $element['NAME'],
-                    'LOCATION' => $element['PROPERTY_LOCATION_VALUE'],
+                    'NAME'  => $element['NAME'],
+                    'CODE'  => $element['PROPERTY_LOCATION_VALUE'],
+                    'SHOPS' => array_column(
+                        $this->getShopsByCity($element['PROPERTY_LOCATION_VALUE']),
+                        'CODE'
+                    ),
                 ];
             }
 
-            // При выборе городов Московской обл. не учитываем сортировку
+            // При выборе городов Московской обл. сортируем по алфавиту
+            $sort = ['NAME' => 'ASC', 'ID' => 'ASC'];
             $filter['SECTION_CODE'] = CitiesSectionCode::MOSCOW_REGION;
-            unset($sort['SORT']);
             $elements = CIBlockElement::GetList($sort, $filter, false, false, $select);
             while ($element = $elements->Fetch()) {
+                if (empty($element['PROPERTY_LOCATION_VALUE'])) {
+                    continue;
+                }
+
                 $result[CitiesSectionCode::MOSCOW_REGION][] = [
-                    'NAME' => $element['NAME'],
-                    'CODE' => $element['PROPERTY_LOCATION_VALUE'],
+                    'NAME'  => $element['NAME'],
+                    'CODE'  => $element['PROPERTY_LOCATION_VALUE'],
+                    'SHOPS' => array_column(
+                        $this->getShopsByCity($element['PROPERTY_LOCATION_VALUE']),
+                        'CODE'
+                    ),
                 ];
             }
 
@@ -290,5 +306,16 @@ class LocationService
         return (new BitrixCache())
             ->withId(__METHOD__ . json_encode($typeCodes))
             ->resultOf($getTypeIds);
+    }
+
+    /**
+     * @param $locationCode
+     *
+     * @return array
+     */
+    public function getShopsByCity($locationCode): array
+    {
+        /* @todo implement this */
+        return [];
     }
 }

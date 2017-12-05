@@ -14,7 +14,7 @@ class Event implements ServiceHandlerInterface
             'OnIBlockPropertyBuildList',
             [
                 Location::class,
-                'GetPropertyFieldHtml',
+                'GetUserTypeDescription',
             ]
         );
     }

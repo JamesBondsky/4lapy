@@ -31,9 +31,8 @@ class Location
         }
 
         global $APPLICATION;
-
         ob_start();
-        ?><div><?php
+
         $APPLICATION->IncludeComponent(
             'bitrix:sale.location.selector.search',
             '',
@@ -42,7 +41,7 @@ class Location
                 'ID'                     => '',
                 'CODE'                   => htmlspecialcharsbx($value['VALUE']),
                 'INPUT_NAME'             => htmlspecialcharsbx($strHTMLControlName['VALUE']),
-                'PROVIDE_LINK_BY'        => 'id',
+                'PROVIDE_LINK_BY'        => 'code',
                 'JSCONTROL_GLOBAL_ID'    => '',
                 'JS_CALLBACK'            => '',
                 'SEARCH_BY_PRIMARY'      => 'Y',
@@ -54,7 +53,6 @@ class Location
             ],
             false
         );
-        ?></div><?php
 
         $output = ob_get_clean();
         

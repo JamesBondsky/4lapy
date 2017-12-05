@@ -40,7 +40,7 @@ location.city.autocomplete:
   defaults: { _controller: '\FourPaws\Location\Controller\CityController::autocompleteAction' }
   methods: [GET]
 
-location.city.getList:
+location.city.list:
   path: /location/city/list/
   defaults: { _controller: '\FourPaws\Location\Controller\CityController::listAction' }
   methods: [GET]

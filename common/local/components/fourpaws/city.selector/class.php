@@ -42,12 +42,8 @@ class FourPawsCitySelectorComponent extends \CBitrixComponent
         $userService = Application::getInstance()->getContainer()->get('user.service');
         $availableCities = $locationService->getAvailableCities();
 
-        $this->arResult['POPULAR_CITIES'] = isset($availableCities['popular'])
-            ? $availableCities['popular']
-            : [];
-        $this->arResult['MOSCOW_CITIES'] = isset($availableCities['moscow_region'])
-            ? $availableCities['moscow_region']
-            : [];
+        $this->arResult['POPULAR_CITIES'] = $availableCities['popular'] ?? [];
+        $this->arResult['MOSCOW_CITIES'] = $availableCities['moscow_region'] ?? [];
         $this->arResult['DEFAULT_CITY'] = $locationService->getDefaultCity();
         $this->arResult['SELECTED_CITY'] = $userService->getSelectedCity();
 
