@@ -19,23 +19,6 @@
 /** @var CBitrixComponent $component */
 $this->setFrameMode(true);
 ?>
-<div class="b-container b-container--news-detail">
-    <div class="b-detail-page">
-        <?php $APPLICATION->IncludeComponent('bitrix:breadcrumb',
-                                             'breadcrumb',
-                                             [
-                                                 'PATH'       => '',
-                                                 'SITE_ID'    => SITE_ID,
-                                                 'START_FROM' => '0',
-                                             ]); ?>
-        <h1 class="b-title b-title--h1">
-            <?= !empty($arResult['IPROPERTY_VALUES']['ELEMENT_PAGE_TITLE']) ? $arResult['IPROPERTY_VALUES']['ELEMENT_PAGE_TITLE'] : $arResult['NAME'] ?>
-        </h1>
-        <?php if (!empty($arResult['DISPLAY_ACTIVE_FROM'])) { ?>
-            <div class="b-detail-page__date"><?= $arResult['DISPLAY_ACTIVE_FROM'] ?></div>
-        <?php } ?>
-    </div>
-</div>
 <div class="b-container">
     <div class="b-detail-page b-detail-page--bordered">
         <?php if (is_array($arResult['DETAIL_PICTURE'])) { ?>

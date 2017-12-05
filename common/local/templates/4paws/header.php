@@ -8,7 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var \CMain $APPLICATION
  */
 
-use Bitrix\Main\Application;use FourPaws\App\MainTemplate;use FourPaws\Decorators\SvgDecorator;use FourPaws\App\Application as PawsApplication;
+use Bitrix\Main\Application;use FourPaws\App\Application as PawsApplication;use FourPaws\App\MainTemplate;use FourPaws\Decorators\SvgDecorator;
 
 $template = MainTemplate::getInstance(Application::getInstance()->getContext());
 $markup = PawsApplication::markup();
@@ -114,3 +114,6 @@ $markup = PawsApplication::markup();
     $APPLICATION->ShowViewContent('header_dropdown_menu');
     ?>
     <main class="b-wrapper" role="main">
+        <?if($template->hasDetailNews()){
+            $template->getHeaderDetailArea();
+        } ?>

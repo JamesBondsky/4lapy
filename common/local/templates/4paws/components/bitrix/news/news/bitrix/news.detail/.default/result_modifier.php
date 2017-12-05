@@ -1,4 +1,5 @@
-<?php if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
+<?php
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 /** @var array $arParams */
@@ -11,7 +12,7 @@
 $arResult['NO_SHOW_VIDEO'] = false;
 if (stripos($arResult['DETAIL_TEXT'], '#video#') !== false) {
     $arResult['DETAIL_TEXT']   = str_replace('#video#',
-                                             (!empty($arResult['DISPLAY_PROPERTIES']['VIDEO']['DISPLAY_VALUE'])) ? $arResult['DISPLAY_PROPERTIES']['VIDEO']['DISPLAY_VALUE'] : '',
+                                             !empty($arResult['DISPLAY_PROPERTIES']['VIDEO']['DISPLAY_VALUE']) ? $arResult['DISPLAY_PROPERTIES']['VIDEO']['DISPLAY_VALUE'] : '',
                                              $arResult['DETAIL_TEXT']);
     $arResult['NO_SHOW_VIDEO'] = true;
 }
@@ -21,9 +22,10 @@ if (is_array($arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'])
     && !empty($arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'])
     && stripos($arResult['DETAIL_TEXT'], '#slider#') !== false) {
     $html = '';
-    foreach ($arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'] as $photo) {
+    foreach ((array)$arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'] as $photo) {
         if (is_numeric($photo)) {
-            $photo = ['SRC' => \CFile::GetPath($photo)];
+            /** @noinspection PhpUndefinedClassInspection */
+            $photo = ['SRC' => CFile::GetPath($photo)];
         }
         if (!empty($photo['SRC'])) {
             $html .= '
@@ -36,3 +38,5 @@ if (is_array($arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'])
     $arResult['DETAIL_TEXT']    = str_replace('#slider#', $html, $arResult['DETAIL_TEXT']);
     $arResult['NO_SHOW_SLIDER'] = true;
 }
+
+$this->__component->SetResultCacheKeys(['DISPLAY_ACTIVE_FROM']);
