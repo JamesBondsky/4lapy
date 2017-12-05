@@ -23,8 +23,6 @@ class UserPropLocation extends TypeBase
             'CLASS_NAME'   => __CLASS__,
             'DESCRIPTION'  => Loc::getMessage('UserPropLocationMess'),
             'BASE_TYPE'    => \CUserTypeManager::BASE_TYPE_INT,
-            //"EDIT_CALLBACK" => array(__CLASS__, 'GetPublicEdit'),
-            //"VIEW_CALLBACK" => array(__CLASS__, 'GetPublicView'),
         ];
     }
     
@@ -91,58 +89,24 @@ class UserPropLocation extends TypeBase
         } elseif ((int)$value > 0) {
             $value = (int)$value;
         }
-        $replacedName = str_replace([
-                                        '[',
-                                        ']',
-                                    ],
-                                    '_',
-                                    $htmlControl['NAME']);
         ob_start();
-        $type = 'search';
         global $APPLICATION;
-        if ($type === 'search') {
-            $APPLICATION->IncludeComponent('bitrix:sale.location.selector.search',
-                                           '',
-                                           [
-                                               'CACHE_TIME'                 => '36000000',
-                                               'CACHE_TYPE'                 => 'N',
-                                               'CODE'                       => '',
-                                               //"FILTER_BY_SITE" => "Y",
-                                               //"FILTER_SITE_ID" => "current",
-                                               'ID'                         => $value,
-                                               'INITIALIZE_BY_GLOBAL_EVENT' => '',
-                                               'INPUT_NAME'                 => $htmlControl['NAME'],
-                                               'JS_CALLBACK'                => '',
-                                               //'JS_CONTROL_GLOBAL_ID'       => 'locationSelectors_' . $replacedName,
-                                               //'JS_CONTROL_DEFERRED_INIT'       => 'defered_'.$replacedName,
-                                               'PROVIDE_LINK_BY'            => 'id',
-                                               //"SHOW_DEFAULT_LOCATIONS" => "Y",
-                                               'SUPPRESS_ERRORS'            => 'N',
-                                           ]);
-        } else {
-            $APPLICATION->IncludeComponent('bitrix:sale.location.selector.steps',
-                                           '',
-                                           [
-                                               'CACHE_TIME'                 => '36000000',
-                                               'CACHE_TYPE'                 => 'N',
-                                               'CODE'                       => '',
-                                               'DISABLE_KEYBOARD_INPUT'     => 'N',
-                                               //"FILTER_BY_SITE" => "Y",
-                                               //"FILTER_SITE_ID" => "current",
-                                               'ID'                         => $htmlControl['VALUE'],
-                                               'INITIALIZE_BY_GLOBAL_EVENT' => '',
-                                               'INPUT_NAME'                 => $htmlControl['NAME'],
-                                               'JS_CALLBACK'                => '',
-                                               'JS_CONTROL_GLOBAL_ID'       => 'locationSelectors_' . $replacedName,
-                                               //'JS_CONTROL_DEFERRED_INIT'       => 'defered_'.$replacedName,
-                                               'PRECACHE_LAST_LEVEL'        => 'N',
-                                               'PRESELECT_TREE_TRUNK'       => 'N',
-                                               'PROVIDE_LINK_BY'            => 'id',
-                                               //"SHOW_DEFAULT_LOCATIONS" => "Y",
-                                               'SUPPRESS_ERRORS'            => 'N',
-                                           ]);
-        }
-    
+        $APPLICATION->IncludeComponent('bitrix:sale.location.selector.search',
+                                       '',
+                                       [
+                                           'CACHE_TIME'                 => '36000000',
+                                           'CACHE_TYPE'                 => 'N',
+                                           'CODE'                       => '',
+                                           'ID'                         => $value,
+                                           'INITIALIZE_BY_GLOBAL_EVENT' => '',
+                                           'INPUT_NAME'                 => $htmlControl['NAME'],
+                                           'JS_CALLBACK'                => '',
+                                           'PROVIDE_LINK_BY'            => 'id',
+                                           'SUPPRESS_ERRORS'            => 'N',
+                                       ],
+                                       false,
+                                       ['HIDE_ICONS' => 'Y']);
+        
         $return = ob_get_clean();
         $result .= '
 		<tr>
@@ -161,15 +125,65 @@ class UserPropLocation extends TypeBase
      * @param $htmlControl
      *
      * @return string
+     */
+    public static function getFilterHTML(
+        /** @noinspection PhpUnusedParameterInspection */
+        $userField,
+        $htmlControl
+    ) : string
+    {
+        $replacedName = str_replace([
+                                        '[',
+                                        ']',
+                                    ],
+                                    '_',
+                                    $htmlControl['NAME']);
+        
+        /** @var \CMain $APPLICATION */
+        global $APPLICATION;
+        ob_start();
+        $APPLICATION->IncludeComponent('bitrix:sale.location.selector.search',
+                                       '',
+                                       [
+                                           'CACHE_TIME'                 => '36000000',
+                                           'CACHE_TYPE'                 => 'N',
+                                           'CODE'                       => '',
+                                           'ID'                         => $htmlControl['VALUE'],
+                                           'INITIALIZE_BY_GLOBAL_EVENT' => '',
+                                           'INPUT_NAME'                 => $htmlControl['NAME'],
+                                           'JS_CALLBACK'                => '',
+                                           'JS_CONTROL_GLOBAL_ID'       => 'locationSelectors_' . $replacedName,
+                                           'PROVIDE_LINK_BY'            => 'id',
+                                           'SUPPRESS_ERRORS'            => 'N',
+                                       ],
+                                       false,
+                                       ['HIDE_ICONS' => 'Y']);
+        
+        return ob_get_clean();
+    }
+    
+    /**
+     * @param $userField
+     * @param $htmlControl
+     *
+     * @return string
+     * @throws \Bitrix\Main\LoaderException
+     */
+    public static function getAdminListEditHTML($userField, $htmlControl) : string
+    {
+        return static::getEditFormHTML($userField, $htmlControl);
+    }
+    
+    /**
+     * @param $userField
+     * @param $htmlControl
+     *
+     * @return string
      * @throws LoaderException
      */
     public static function getEditFormHTML($userField, $htmlControl) : string
     {
-        //$fieldName = static::getFieldName($userField, []);
-        //    $value = static::getFieldValue($userField, []);
-        //return '<pre>' . print_r($htmlControl, true) . '</pre>';
-        $return = '&nbsp;';
-        //$htmlControl['NAME'] = $userField['FIELD_CODE'];
+        $return       = '&nbsp;';
         $replacedName = str_replace([
                                         '[',
                                         ']',
@@ -183,51 +197,25 @@ class UserPropLocation extends TypeBase
             /** @var \CMain $APPLICATION */
             global $APPLICATION;
             ob_start();
-            $type               = 'search';
             $deferedControlName = 'defered_' . $replacedName;
             $globalControlName  = 'locationSelectors_' . $replacedName;
-            if ($type === 'search') {
-                $APPLICATION->IncludeComponent('bitrix:sale.location.selector.search',
-                                               '',
-                                               [
-                                                   'CACHE_TIME'                 => '36000000',
-                                                   'CACHE_TYPE'                 => 'N',
-                                                   'CODE'                       => '',
-                                                   //"FILTER_BY_SITE" => "Y",
-                                                   //"FILTER_SITE_ID" => "current",
-                                                   'ID'                         => $htmlControl['VALUE'],
-                                                   'INITIALIZE_BY_GLOBAL_EVENT' => '',
-                                                   'INPUT_NAME'                 => $htmlControl['NAME'],
-                                                   'JS_CALLBACK'                => '',
-                                                   'JS_CONTROL_GLOBAL_ID'       => $globalControlName,
-                                                   'JS_CONTROL_DEFERRED_INIT'   => $deferedControlName,
-                                                   'PROVIDE_LINK_BY'            => 'id',
-                                                   //"SHOW_DEFAULT_LOCATIONS" => "Y",
-                                                   'SUPPRESS_ERRORS'            => 'N',
-                                               ]);
-            } else {
-                $APPLICATION->IncludeComponent('bitrix:sale.location.selector.steps',
-                                               '',
-                                               [
-                                                   'CACHE_TIME'                 => '36000000',
-                                                   'CACHE_TYPE'                 => 'N',
-                                                   'CODE'                       => '',
-                                                   'DISABLE_KEYBOARD_INPUT'     => 'N',
-                                                   //"FILTER_BY_SITE" => "Y",
-                                                   //"FILTER_SITE_ID" => "current",
-                                                   'ID'                         => $htmlControl['VALUE'],
-                                                   'INITIALIZE_BY_GLOBAL_EVENT' => '',
-                                                   'INPUT_NAME'                 => $htmlControl['NAME'],
-                                                   'JS_CALLBACK'                => '',
-                                                   'JS_CONTROL_GLOBAL_ID'       => $globalControlName,
-                                                   'JS_CONTROL_DEFERRED_INIT'   => $deferedControlName,
-                                                   'PRECACHE_LAST_LEVEL'        => 'N',
-                                                   'PRESELECT_TREE_TRUNK'       => 'N',
-                                                   'PROVIDE_LINK_BY'            => 'id',
-                                                   //"SHOW_DEFAULT_LOCATIONS" => "Y",
-                                                   'SUPPRESS_ERRORS'            => 'N',
-                                               ]);
-            } ?>
+            $APPLICATION->IncludeComponent('bitrix:sale.location.selector.search',
+                                           '',
+                                           [
+                                               'CACHE_TIME'                 => '36000000',
+                                               'CACHE_TYPE'                 => 'N',
+                                               'CODE'                       => '',
+                                               'ID'                         => $htmlControl['VALUE'],
+                                               'INITIALIZE_BY_GLOBAL_EVENT' => '',
+                                               'INPUT_NAME'                 => $htmlControl['NAME'],
+                                               'JS_CALLBACK'                => '',
+                                               'JS_CONTROL_GLOBAL_ID'       => $globalControlName,
+                                               'JS_CONTROL_DEFERRED_INIT'   => $deferedControlName,
+                                               'PROVIDE_LINK_BY'            => 'id',
+                                               'SUPPRESS_ERRORS'            => 'N',
+                                           ],
+                                           false,
+                                           ['HIDE_ICONS' => 'Y']); ?>
             <script>
                 if (!window.BX && top.BX) {
                     window.BX = top.BX;
@@ -238,7 +226,7 @@ class UserPropLocation extends TypeBase
                     });
                 });
             </script>
-            <? $return = '<div class="location_type_prop_html">' . ob_get_clean() . '</div>';
+            <?php $return = '<div class="location_type_prop_html">' . ob_get_clean() . '</div>';
         } elseif (!empty($htmlControl['VALUE'])) {
             //$class  = new static();
             $return = static::getAdminListViewHTML($userField, $htmlControl);
@@ -246,6 +234,43 @@ class UserPropLocation extends TypeBase
         
         return $return;
         
+    }
+    
+    //Этот метод вызывается для показа значений в списке
+    /** @noinspection PhpUnusedParameterInspection */
+    
+    /**
+     * @param $userField
+     * @param $htmlControl
+     *
+     * @return string
+     * @throws \Bitrix\Main\LoaderException
+     */
+    public static function getAdminListViewHTML(
+        /** @noinspection PhpUnusedParameterInspection */
+        $userField,
+        $htmlControl
+    ) : string
+    {
+        if (!empty($htmlControl['VALUE']) && (int)$htmlControl['VALUE'] > 0) {
+            Loader::includeModule('sale');
+            
+            return '[' . $htmlControl['VALUE'] . ']' . LocationHelper::getLocationStringById($htmlControl['VALUE']);
+        }
+        
+        return '&nbsp;';
+    }
+    
+    /**
+     * @param $userField
+     * @param $htmlControl
+     *
+     * @return mixed
+     * @throws \Bitrix\Main\LoaderException
+     */
+    public static function getAdminListEditHTMLMulty($userField, $htmlControl) : string
+    {
+        return static::getEditFormHTMLMulty($userField, $htmlControl);
     }
     
     /**
@@ -261,7 +286,6 @@ class UserPropLocation extends TypeBase
         $htmlControl
     ) : string
     {
-        //return '<pre>' . print_r($htmlControl, true) . '</pre>';
         $return = '&nbsp;';
         if ($userField['EDIT_IN_LIST'] === 'Y') {
             $replacedName = str_replace([
@@ -270,10 +294,7 @@ class UserPropLocation extends TypeBase
                                         ],
                                         '_',
                                         $htmlControl['NAME']);
-            //$settings = static::PrepareSettings($arProperty);
             
-            ob_start();
-            //echo '<pre>', print_r($htmlControl,true), '</pre>';
             Loader::includeModule('sale');
             global $APPLICATION;
             
@@ -294,7 +315,7 @@ class UserPropLocation extends TypeBase
                                            ],
                                            false);
             
-            $result = ob_get_contents();
+            $resultComponent = ob_get_clean();
             $result = '<div class="location_type_prop_multi_html" data-realInputName="' . $htmlControl['NAME'] . '">
 			<script type="text/javascript" data-skip-moving="true">
                 if (!window.BX && top.BX) {
@@ -354,7 +375,6 @@ class UserPropLocation extends TypeBase
                         }
                         if(!!el) {
                             setPropLocationRealVals(el, realName);
-                            //setPropLocationRealVals($("input[name=\'"+name+"[L]\']"), realName);
                         }
                     }
                 }
@@ -404,111 +424,15 @@ class UserPropLocation extends TypeBase
 			<link rel="stylesheet" type="text/css" href="/bitrix/panel/main/admin-public.css">
 			<!--suppress HtmlUnknownTarget -->
 			<link rel="stylesheet" type="text/css" href="/local/templates/.default/components/bitrix/system.field.edit/sale_location/_style.css">
-		' . $result . '</div>';
-            ob_end_clean();
-            echo $result;
+		' . $resultComponent . '</div>';
             
-            $return = ob_get_clean();
+            $return = $result;
         } elseif (!empty($htmlControl['VALUE'])) {
             //$class  = new static();
             $return = static::getAdminListViewHTMLMulty($userField, $htmlControl);
         }
         
         return $return;
-    }
-    
-    /**
-     * @param $userField
-     * @param $htmlControl
-     *
-     * @return string
-     */
-    public static function getFilterHTML(
-        /** @noinspection PhpUnusedParameterInspection */
-        $userField,
-        $htmlControl
-    ) : string
-    {
-        $replacedName = str_replace([
-                                        '[',
-                                        ']',
-                                    ],
-                                    '_',
-                                    $htmlControl['NAME']);
-        
-        /** @var \CMain $APPLICATION */
-        global $APPLICATION;
-        ob_start();
-        $type = 'search';
-        if ($type === 'search') {
-            $APPLICATION->IncludeComponent('bitrix:sale.location.selector.search',
-                                           '',
-                                           [
-                                               'CACHE_TIME'                 => '36000000',
-                                               'CACHE_TYPE'                 => 'N',
-                                               'CODE'                       => '',
-                                               //"FILTER_BY_SITE" => "Y",
-                                               //"FILTER_SITE_ID" => "current",
-                                               'ID'                         => $htmlControl['VALUE'],
-                                               'INITIALIZE_BY_GLOBAL_EVENT' => '',
-                                               'INPUT_NAME'                 => $htmlControl['NAME'],
-                                               'JS_CALLBACK'                => '',
-                                               'JS_CONTROL_GLOBAL_ID'       => 'locationSelectors_' . $replacedName,
-                                               //'JS_CONTROL_DEFERRED_INIT'       => 'defered_'.$replacedName,
-                                               'PROVIDE_LINK_BY'            => 'id',
-                                               //"SHOW_DEFAULT_LOCATIONS" => "Y",
-                                               'SUPPRESS_ERRORS'            => 'N',
-                                           ]);
-        } else {
-            $APPLICATION->IncludeComponent('bitrix:sale.location.selector.steps',
-                                           '',
-                                           [
-                                               'CACHE_TIME'                 => '36000000',
-                                               'CACHE_TYPE'                 => 'N',
-                                               'CODE'                       => '',
-                                               'DISABLE_KEYBOARD_INPUT'     => 'N',
-                                               //"FILTER_BY_SITE" => "Y",
-                                               //"FILTER_SITE_ID" => "current",
-                                               'ID'                         => $htmlControl['VALUE'],
-                                               'INITIALIZE_BY_GLOBAL_EVENT' => '',
-                                               'INPUT_NAME'                 => $htmlControl['NAME'],
-                                               'JS_CALLBACK'                => '',
-                                               'JS_CONTROL_GLOBAL_ID'       => 'locationSelectors_' . $replacedName,
-                                               //'JS_CONTROL_DEFERRED_INIT'       => 'defered_'.$replacedName,
-                                               'PRECACHE_LAST_LEVEL'        => 'N',
-                                               'PRESELECT_TREE_TRUNK'       => 'N',
-                                               'PROVIDE_LINK_BY'            => 'id',
-                                               //"SHOW_DEFAULT_LOCATIONS" => "Y",
-                                               'SUPPRESS_ERRORS'            => 'N',
-                                           ]);
-        }
-        
-        return ob_get_clean();
-    }
-    
-    //Этот метод вызывается для показа значений в списке
-    /** @noinspection PhpUnusedParameterInspection */
-    
-    /**
-     * @param $userField
-     * @param $htmlControl
-     *
-     * @return string
-     * @throws \Bitrix\Main\LoaderException
-     */
-    public static function getAdminListViewHTML(
-        /** @noinspection PhpUnusedParameterInspection */
-        $userField,
-        $htmlControl
-    ) : string
-    {
-        if (!empty($htmlControl['VALUE']) && (int)$htmlControl['VALUE'] > 0) {
-            Loader::includeModule('sale');
-            
-            return '[' . $htmlControl['VALUE'] . ']' . LocationHelper::getLocationStringById($htmlControl['VALUE']);
-        }
-        
-        return '&nbsp;';
     }
     
     /**
@@ -543,35 +467,6 @@ class UserPropLocation extends TypeBase
     
     /**
      * @param $userField
-     * @param $htmlControl
-     *
-     * @return string
-     * @throws \Bitrix\Main\LoaderException
-     */
-    public static function getAdminListEditHTML($userField, $htmlControl) : string
-    {
-        //$class = new static();
-        
-        return static::getEditFormHTML($userField, $htmlControl);
-    }
-    
-    /**
-     * @param $userField
-     * @param $htmlControl
-     *
-     * @return mixed
-     * @throws \Bitrix\Main\LoaderException
-     */
-    public static function getAdminListEditHTMLMulty($userField, $htmlControl) : string
-    {
-        //return '<pre>'. print_r($userField,true). '</pre>';
-        //$class = new static();
-        
-        return static::getEditFormHTMLMulty($userField, $htmlControl);
-    }
-    
-    /**
-     * @param $userField
      *
      * @return string
      * @throws \Bitrix\Main\LoaderException
@@ -585,178 +480,4 @@ class UserPropLocation extends TypeBase
         
         return static::getAdminListViewHTML($userField, ['VALUE' => $userField['VALUE']]);
     }
-    
-    /**
-     * @param array $userField Array containing parameters of the user field.
-     * @param array $params
-     * @param array $setting
-     *
-     * @return string
-     */
-    //public static function getPublicViewHTML($userField, $id, $params = "", $settings = array())
-    //{
-    //    return UrlPreview::showView($userField, $params, $cacheTag);
-    //}
-    /** @noinspection ArrayTypeOfParameterByDefaultValueInspection */
-    
-    /**
-     * @param       $arUserField
-     * @param array $arAdditionalParameters
-     *
-     * @return string
-     */
-    //public static function getPublicEdit($arUserField, $arAdditionalParameters = array()) : string
-    //{
-    //    $fieldName = static::getFieldName($arUserField, $arAdditionalParameters);
-    //    $value = static::getFieldValue($arUserField, $arAdditionalParameters);
-    //
-    //    $html = '';
-    //
-    //    foreach($value as $res)
-    //    {
-    //        $attrList = array();
-    //
-    //        if($arUserField["EDIT_IN_LIST"] != "Y")
-    //        {
-    //            $attrList['disabled'] = 'disabled';
-    //        }
-    //
-    //        if($arUserField["SETTINGS"]["SIZE"] > 0)
-    //        {
-    //            $attrList['size'] = intval($arUserField["SETTINGS"]["SIZE"]);
-    //        }
-    //
-    //        if(array_key_exists('attribute', $arAdditionalParameters))
-    //        {
-    //            $attrList = array_merge($attrList, $arAdditionalParameters['attribute']);
-    //        }
-    //
-    //        if(isset($attrList['class']) && is_array($attrList['class']))
-    //        {
-    //            $attrList['class'] = implode(' ', $attrList['class']);
-    //        }
-    //
-    //        $attrList['class'] = static::getHelper()->getCssClassName().(isset($attrList['class']) ? ' '.$attrList['class'] : '');
-    //
-    //        $attrList['name'] = $fieldName;
-    //
-    //        $attrList['type'] = 'text';
-    //        $attrList['value'] = $res;
-    //        $attrList['tabindex'] = '0';
-    //
-    //        $html .= static::getHelper()->wrapSingleField('<input '.static::buildTagAttributes($attrList).'/>');
-    //    }
-    //
-    //    if($arUserField["MULTIPLE"] == "Y" && $arAdditionalParameters["SHOW_BUTTON"] != "N")
-    //    {
-    //        $html .= static::getHelper()->getCloneButton($fieldName);
-    //    }
-    //
-    //    static::initDisplay();
-    //
-    //    return static::getHelper()->wrapDisplayResult($html);
-    //}
-    
-    /**
-     * Checks for current user's access to $value.
-     *
-     * @param array $userField Array containing parameters of the user field.
-     * @param int   $value
-     *
-     * @return array
-     */
-    //public static function checkfields($userField, $value)
-    //{
-    //    $value = (int)$value;
-    //    $result = array();
-    //    if($value === 0)
-    //        return $result;
-    //
-    //    $metadata = UrlMetadataTable::getById($value)->fetch();
-    //    if(!is_array($metadata))
-    //    {
-    //        $result[] = array(
-    //            "id" => $userField["FIELD_NAME"],
-    //            "text" => GetMessage("MAIN_URL_PREVIEW_VALUE_NOT_FOUND")
-    //        );
-    //    }
-    //    else if($metadata['TYPE'] === UrlMetadataTable::TYPE_DYNAMIC
-    //            && !UrlPreview::checkDynamicPreviewAccess($metadata['URL']))
-    //    {
-    //        $result[] = array(
-    //            "id" => $userField["FIELD_NAME"],
-    //            "text" => GetMessage("MAIN_URL_PREVIEW_VALUE_NO_ACCESS",
-    //                                 array('#URL#' => $metadata['URL'])
-    //            )
-    //        );
-    //    }
-    //
-    //    return $result;
-    //}
-    
-    /**
-     * Hook executed before saving url_preview user type value. Checks and removes signature of the $value.
-     * If signature is correct, checks current user's access to $value.
-     *
-     * @param array  $userField Array containing parameters of the user field.
-     * @param string $value     Signed value of the user field.
-     *
-     * @return int Unsigned value of the user field, or null in case of errors.
-     */
-    //public static function onBeforeSave($userField, $value)
-    //{
-    //    $imageUrl = null;
-    //    if(strpos($value, ';') !== false)
-    //    {
-    //        list($value, $imageUrl) = explode(';', $value);
-    //    }
-    //
-    //    $signer = new Signer();
-    //    try
-    //    {
-    //        $value = $signer->unsign($value, UrlPreview::SIGN_SALT);
-    //    }
-    //    catch (SystemException $e)
-    //    {
-    //        return null;
-    //    }
-    //    $metadata = UrlMetadataTable::getById($value)->fetch();
-    //    if(!is_array($metadata))
-    //        return null;
-    //
-    //    if($metadata['TYPE'] === UrlMetadataTable::TYPE_STATIC)
-    //    {
-    //        if($imageUrl && is_array($metadata['EXTRA']['IMAGES']) && in_array($imageUrl, $metadata['EXTRA']['IMAGES']))
-    //        {
-    //            UrlPreview::setMetadataImage((int)$value, $imageUrl);
-    //        }
-    //        return $value;
-    //    }
-    //    else if($metadata['TYPE'] === UrlMetadataTable::TYPE_DYNAMIC
-    //            && UrlPreview::checkDynamicPreviewAccess($metadata['URL']))
-    //    {
-    //        return $value;
-    //    }
-    //
-    //    return null;
-    //}
-    
-    /**
-     * Hook executed after fetching value of the user type. Signs returned value.
-     *
-     * @param array $userField Array containing parameters of the user field.
-     * @param array $value     Unsigned value of the user field.
-     *
-     * @return string Signed value of the user field.
-     */
-    //public static function onAfterFetch($userField, $value)
-    //{
-    //    $result = null;
-    //    if(isset($value['VALUE']))
-    //    {
-    //        $result = UrlPreview::sign($value['VALUE']);
-    //    }
-    //
-    //    return $result;
-    //}
 }
