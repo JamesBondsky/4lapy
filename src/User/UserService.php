@@ -372,14 +372,23 @@ class UserService
         return true;
     }
 
+    /**
+     * @return array
+     */
     public function getSelectedCity() : array
     {
+        $cityCode = null;
         if ($_SESSION['USER_CITY']) {
-            return $_SESSION['USER_CITY'];
+            $cityCode = $_SESSION['USER_CITY'];
+        } elseif (($user = $this->getCurrentUser()) && $user->getLocation()) {
+            $cityCode = $user->getLocation();
         }
 
-        if (($user = $this->getCurrentUser()) && $user->getLocation()) {
-            return $this->locationService->findCityByCode($user->getLocation());
+        if ($cityCode) {
+            try {
+                return $this->locationService->findCityByCode($cityCode);
+            } catch (CityNotFoundException $e) {
+            }
         }
 
         return $this->locationService->getDefaultCity();
