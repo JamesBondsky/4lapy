@@ -40,7 +40,7 @@ class LocationService
         }
 
         if (!empty($cities)) {
-            $_SESSION['USER_CITY'] = reset($cities)['CODE'];
+            $_COOKIE['user_city_id'] = reset($cities)['CODE'];
 
             return true;
         }
@@ -56,36 +56,28 @@ class LocationService
         $getAvailableCities = function () {
             $iblockId = IblockUtils::getIblockId(IblockType::REFERENCE_BOOKS, IblockCode::CITIES);
 
-            CIBlockSection::GetList(
-                [],
-                [
-                    'CODE'      => [CitiesSectionCode::POPULAR, CitiesSectionCode::MOSCOW_REGION],
-                    'IBLOCK_ID' => $iblockId,
-                ]
-            );
-
             $result = [];
-            $arSort = ['SORT' => 'ASC', 'ID' => 'ASC'];
-            $arFilter = ['IBLOCK_ID' => $iblockId, 'SECTION_CODE' => CitiesSectionCode::POPULAR];
-            $arSelect = ['ID', 'NAME', 'PROPERTY_LOCATION'];
+            $sort = ['SORT' => 'ASC', 'ID' => 'ASC'];
+            $filter = ['IBLOCK_ID' => $iblockId, 'SECTION_CODE' => CitiesSectionCode::POPULAR];
+            $select = ['ID', 'NAME', 'PROPERTY_LOCATION'];
 
             // При выборе популярных городов учитываем сортировку
-            $dbElements = CIBlockElement::GetList($arSort, $arFilter, false, false, $arSelect);
-            while ($arElement = $dbElements->Fetch()) {
+            $elements = CIBlockElement::GetList($sort, $filter, false, false, $select);
+            while ($element = $elements->Fetch()) {
                 $result[CitiesSectionCode::POPULAR][] = [
-                    'NAME'     => $arElement['NAME'],
-                    'LOCATION' => $arElement['PROPERTY_LOCATION_VALUE'],
+                    'NAME'     => $element['NAME'],
+                    'LOCATION' => $element['PROPERTY_LOCATION_VALUE'],
                 ];
             }
 
             // При выборе городов Московской обл. не учитываем сортировку
-            $arFilter['SECTION_CODE'] = CitiesSectionCode::MOSCOW_REGION;
-            unset($arSort['SORT']);
-            $dbElements = CIBlockElement::GetList($arSort, $arFilter, false, false, $arSelect);
-            while ($arElement = $dbElements->Fetch()) {
+            $filter['SECTION_CODE'] = CitiesSectionCode::MOSCOW_REGION;
+            unset($sort['SORT']);
+            $elements = CIBlockElement::GetList($sort, $filter, false, false, $select);
+            while ($element = $elements->Fetch()) {
                 $result[CitiesSectionCode::MOSCOW_REGION][] = [
-                    'NAME' => $arElement['NAME'],
-                    'CODE' => $arElement['PROPERTY_LOCATION_VALUE'],
+                    'NAME' => $element['NAME'],
+                    'CODE' => $element['PROPERTY_LOCATION_VALUE'],
                 ];
             }
 
@@ -281,14 +273,14 @@ class LocationService
     {
         $getTypeIds = function () use ($typeCodes) {
             $result = [];
-            $dbTypes = TypeTable::getList(
+            $types = TypeTable::getList(
                 [
                     'filter' => ['CODE' => $typeCodes],
                     'select' => ['ID', 'CODE'],
                 ]
             );
 
-            while ($type = $dbTypes->fetch()) {
+            while ($type = $types->fetch()) {
                 $result[$type['CODE']] = $type['ID'];
             }
 

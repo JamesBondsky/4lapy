@@ -353,20 +353,18 @@ class UserService
         if ($code) {
             $city = $this->locationService->findCityByCode($code);
         } else {
-            $city = $this->locationService->findCity($name, 1,true);
+            $city = reset($this->locationService->findCity($name, 1,true));
         }
 
         if (!$city) {
             return false;
         }
-        $_SESSION['USER_CITY'] = [
-            'CODE' => $city['CODE'],
-            'NAME' => $city['NAME']
-        ];
+
+        setcookie('user_city_id', $city['CODE'], 86400 * 30);
 
         if ($this->isAuthorized()) {
             $user = $this->getCurrentUser();
-            static::update($user->getId(), ['UF_LOCATION' =>$city['CODE']]);
+            static::update($user->getId(), ['UF_LOCATION' => $city['CODE']]);
         }
 
         return true;
@@ -378,8 +376,8 @@ class UserService
     public function getSelectedCity() : array
     {
         $cityCode = null;
-        if ($_SESSION['USER_CITY']) {
-            $cityCode = $_SESSION['USER_CITY'];
+        if ($_COOKIE['user_city_id']) {
+            $cityCode = $_COOKIE['user_city_id'];
         } elseif (($user = $this->getCurrentUser()) && $user->getLocation()) {
             $cityCode = $user->getLocation();
         }
