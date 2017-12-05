@@ -1,8 +1,19 @@
 <?php
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
-$APPLICATION->SetTitle('Политика конфиденциальности');
-?>
-<?php include_once __DIR__ . '/include/header.php'; ?>
+$APPLICATION->SetTitle("Политика конфиденциальности2");
+$APPLICATION->SetPageProperty("keywords_inner", "123");
+
+echo '
+<div class="b-container b-container--confidentiality">
+    <div class="b-confidentiality-page">
+        <h1 class="b-title b-title--h1">';
+$APPLICATION->ShowTitle(false);
+echo '</h1>
+            <div class="b-confidentiality-page__date">', tplvar('confidentiality_date'), '</div>
+        </div>
+    </div>
+<div class="b-container">
+    <div class="b-confidentiality-page">'; ?>
     <div class="b-confidentiality-page__info">
         <p>Настоящая Политика конфиденциальности персональных данных (далее – Политика конфиденциальности)
            действует в отношении всей информации, которую Интернет-магазин «Четыре Лапы», расположенный на
@@ -122,5 +133,10 @@ $APPLICATION->SetTitle('Политика конфиденциальности');
        сайта интернет-магазина</p>
     <p>7.4. Действующая Политика конфиденциальности размещена на странице по адресу
        https://www.4lapy.ru/company/confidenciality/</p>
-<?php include_once __DIR__ . '/include/footer.php' ?>
-<?php require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/footer.php'; ?>
+
+<?php
+
+echo '</div>
+</div>';
+
+require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/footer.php';
