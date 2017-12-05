@@ -50,8 +50,9 @@ $frame = $this->createFrame(); ?>
                            title="<?= $item['NAME'] ?>">
                             <?php } ?>
                             <?php if (!empty($item['PREVIEW_PICTURE']['SRC'])
-                                      && file_exists(Application::getDocumentRoot()
-                                                     . $item['PREVIEW_PICTURE']['SRC'])) { ?>
+                                      && file_exists(
+                                          Application::getDocumentRoot() . $item['PREVIEW_PICTURE']['SRC']
+                                      )) { ?>
                                 <span class="b-news-item__image-wrapper js-image-cover">
                                         <img class="b-news-item__image"
                                              src="<?= $item['PREVIEW_PICTURE']['SRC'] ?>"
@@ -60,9 +61,9 @@ $frame = $this->createFrame(); ?>
                                     <?php if (!empty($item['DISPLAY_PROPERTIES']['VIDEO']['DISPLAY_VALUE'])) { ?>
                                         <span class="b-news-item__video">
                                                 <span class="b-icon">
-                                                    <?= new \FourPaws\Decorators\SvgDecorator('icon-play-video',
-                                                                                              60,
-                                                                                              60); ?>
+                                                    <?= new \FourPaws\Decorators\SvgDecorator(
+                                                        'icon-play-video', 60, 60
+                                                    ); ?>
                                                 </span>
                                             </span>
                                     <?php } ?>
