@@ -22,7 +22,7 @@ class UserPropLocation extends TypeBase
             'USER_TYPE_ID' => self::USER_TYPE,
             'CLASS_NAME'   => __CLASS__,
             'DESCRIPTION'  => Loc::getMessage('UserPropLocationMess'),
-            'BASE_TYPE'    => \CUserTypeManager::BASE_TYPE_INT,
+            'BASE_TYPE'    => \CUserTypeManager::BASE_TYPE_STRING,
         ];
     }
     
@@ -41,12 +41,12 @@ class UserPropLocation extends TypeBase
         global $DB;
         switch (strtolower($DB->type)) {
             case 'oracle':
-                return 'number(18)';
+                return 'varchar(20 char)';
             case 'mssql':
-                return 'int';
+                return 'varchar(20)';
             case 'mysql':
             default:
-                return 'int(11)';
+                return 'varchar(20)';
         }
     }
     
@@ -86,9 +86,8 @@ class UserPropLocation extends TypeBase
             $value = $GLOBALS[$htmlControl['NAME']]['DEFAULT_VALUE'];
         } elseif (\is_array($userField)) {
             $value = $userField['SETTINGS']['DEFAULT_VALUE'];
-        } elseif ((int)$value > 0) {
-            $value = (int)$value;
         }
+
         ob_start();
         global $APPLICATION;
         $APPLICATION->IncludeComponent('bitrix:sale.location.selector.search',
@@ -96,12 +95,12 @@ class UserPropLocation extends TypeBase
                                        [
                                            'CACHE_TIME'                 => '36000000',
                                            'CACHE_TYPE'                 => 'N',
-                                           'CODE'                       => '',
-                                           'ID'                         => $value,
+                                           'CODE'                       => $value,
+                                           'ID'                         => '',
                                            'INITIALIZE_BY_GLOBAL_EVENT' => '',
                                            'INPUT_NAME'                 => $htmlControl['NAME'],
                                            'JS_CALLBACK'                => '',
-                                           'PROVIDE_LINK_BY'            => 'id',
+                                           'PROVIDE_LINK_BY'            => 'code',
                                            'SUPPRESS_ERRORS'            => 'N',
                                        ],
                                        false,
@@ -110,7 +109,7 @@ class UserPropLocation extends TypeBase
         $return = ob_get_clean();
         $result .= '
 		<tr>
-			<td>' . GetMessage('USER_TYPE_INTEGER_DEFAULT_VALUE') . ':</td>
+			<td>' . GetMessage('USER_TYPE_STRING_DEFAULT_VALUE') . ':</td>
 			<td>
 				' . $return . '
 			</td>
@@ -147,13 +146,13 @@ class UserPropLocation extends TypeBase
                                        [
                                            'CACHE_TIME'                 => '36000000',
                                            'CACHE_TYPE'                 => 'N',
-                                           'CODE'                       => '',
-                                           'ID'                         => $htmlControl['VALUE'],
+                                           'CODE'                       => $htmlControl['VALUE'],
+                                           'ID'                         => 'code',
                                            'INITIALIZE_BY_GLOBAL_EVENT' => '',
                                            'INPUT_NAME'                 => $htmlControl['NAME'],
                                            'JS_CALLBACK'                => '',
                                            'JS_CONTROL_GLOBAL_ID'       => 'locationSelectors_' . $replacedName,
-                                           'PROVIDE_LINK_BY'            => 'id',
+                                           'PROVIDE_LINK_BY'            => 'code',
                                            'SUPPRESS_ERRORS'            => 'N',
                                        ],
                                        false,
@@ -204,14 +203,14 @@ class UserPropLocation extends TypeBase
                                            [
                                                'CACHE_TIME'                 => '36000000',
                                                'CACHE_TYPE'                 => 'N',
-                                               'CODE'                       => '',
-                                               'ID'                         => $htmlControl['VALUE'],
+                                               'CODE'                       => $htmlControl['VALUE'],
+                                               'ID'                         => '',
                                                'INITIALIZE_BY_GLOBAL_EVENT' => '',
                                                'INPUT_NAME'                 => $htmlControl['NAME'],
                                                'JS_CALLBACK'                => '',
                                                'JS_CONTROL_GLOBAL_ID'       => $globalControlName,
                                                'JS_CONTROL_DEFERRED_INIT'   => $deferedControlName,
-                                               'PROVIDE_LINK_BY'            => 'id',
+                                               'PROVIDE_LINK_BY'            => 'code',
                                                'SUPPRESS_ERRORS'            => 'N',
                                            ],
                                            false,
@@ -252,10 +251,10 @@ class UserPropLocation extends TypeBase
         $htmlControl
     ) : string
     {
-        if (!empty($htmlControl['VALUE']) && (int)$htmlControl['VALUE'] > 0) {
+        if (!empty($htmlControl['VALUE'])) {
             Loader::includeModule('sale');
             
-            return '[' . $htmlControl['VALUE'] . ']' . LocationHelper::getLocationStringById($htmlControl['VALUE']);
+            return '[' . $htmlControl['VALUE'] . ']' . LocationHelper::getLocationStringByCode($htmlControl['VALUE']);
         }
         
         return '&nbsp;';
