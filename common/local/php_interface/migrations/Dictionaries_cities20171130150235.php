@@ -85,8 +85,20 @@ class Dictionaries_cities20171130150235 extends SprintMigrationBase
 
             foreach ($cities as $city) {
                 if (!isset($nameToLocation[$city['NAME']])) {
-                    $this->log()->warning('Не найдено местоположение для города ' . $city['NAME']);
-                    continue;
+                    switch (mb_strtoupper($city['NAME'])) {
+                        case 'БЫКОВО':
+                            $nameToLocation[$city['NAME']] = '0000059219';
+                            break;
+                        case 'КРАСКОВО':
+                            $nameToLocation[$city['NAME']] = '0000046135';
+                            break;
+                        case 'ТОМИЛИНО':
+                            $nameToLocation[$city['NAME']] = '0000046724';
+                            break;
+                        default:
+                            $this->log()->warning('Не найдено местоположение для города ' . $city['NAME']);
+                            continue 2;
+                    }
                 }
 
                 $code = CUtil::translit(mb_strtolower($city['NAME']), 'ru');
