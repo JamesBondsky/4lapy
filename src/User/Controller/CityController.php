@@ -30,9 +30,10 @@ class CityController extends Controller
     {
         $code = $request->request->get('code') ?? '';
         $name = $request->request->get('name') ?? '';
+        $regionName = $request->request->get('region_name') ?? '';
 
         try {
-            $this->userService->setSelectedCity($code, $name);
+            $this->userService->setSelectedCity($code, $name, $regionName);
         } catch (CityNotFoundException $e) {
             return JsonErrorResponse::create($e->getMessage());
         }
@@ -43,7 +44,7 @@ class CityController extends Controller
     /**
      * @return JsonResponse
      */
-    public function getAction() : JsonResponse
+    public function getAction(): JsonResponse
     {
         try {
             $city = $this->userService->getSelectedCity();

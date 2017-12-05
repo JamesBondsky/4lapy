@@ -347,13 +347,13 @@ class UserService
      * @return bool
      * @throws \Exception
      */
-    public function setSelectedCity(string $code = '', string $name = '') : bool
+    public function setSelectedCity(string $code = '', string $name = '', string $parentName = '') : bool
     {
         $city = null;
         if ($code) {
             $city = $this->locationService->findCityByCode($code);
         } else {
-            $city = reset($this->locationService->findCity($name, 1,true));
+            $city = reset($this->locationService->findCity($name, $parentName, 1, true));
         }
 
         if (!$city) {

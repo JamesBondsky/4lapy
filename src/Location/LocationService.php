@@ -126,13 +126,11 @@ class LocationService
 
         $filter = [
             'NAME.LANGUAGE_ID' => LANGUAGE_ID,
+            'PHRASE'           => $query,
         ];
 
-        if (!$exact) {
-            $filter['NAME.NAME'] = $query; // закомментить, чтобы поиск был не только по имени города
-            $filter['=PHRASE'] = $query;
-        } else {
-            $filter['=NAME.NAME'] = $query;
+        if ($exact) {
+            $filter['NAME.NAME'] = $query;
         }
 
         if (!empty($additionalFilter)) {
@@ -225,22 +223,31 @@ class LocationService
      *
      * @return array
      */
-    public function findCity(string $query, int $limit = null, bool $exact = false): array
+    public function findCity(string $query, string $parentName = '', int $limit = null, bool $exact = false): array
     {
+        $filter = [
+            'TYPE_ID' => array_values(
+                $this->getTypeIdsByCodes(
+                    [
+                        static::TYPE_CITY,
+                        static::TYPE_VILLAGE,
+                    ]
+                )
+            ),
+        ];
+
+        // можно было бы сначала найти PARENT_ID по $parentName,
+        // но так мы получим результат одним запросом
+        if ($parentName) {
+            $exact = false;
+            $query = $parentName . ' ' . $query;
+        }
+
         return $this->find(
             $query,
             $limit,
             $exact,
-            [
-                'TYPE_ID' => array_values(
-                    $this->getTypeIdsByCodes(
-                        [
-                            static::TYPE_CITY,
-                            static::TYPE_VILLAGE,
-                        ]
-                    )
-                ),
-            ]
+            $filter
         );
     }
 
