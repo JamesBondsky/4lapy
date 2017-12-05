@@ -1,3 +1,3 @@
 <?php
-$sSectionName    = 'Конифденциальность';
+$sSectionName    = 'Конифиденциальность';
 $arDirProperties = Array();
