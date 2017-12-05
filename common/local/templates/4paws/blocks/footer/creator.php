@@ -2,12 +2,14 @@
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
-} ?>
+}
+
+use FourPaws\Decorators\SvgDecorator;
+
+?>
 <a class="b-adv" href="https://adv.ru/" title="Сделано в ADV" target="_blank">
     <span class="b-icon b-icon--adv">
-        <svg class="b-icon__svg" viewBox="0 0 24 24 " width="24px" height="24px">
-            <use class="b-icon__use" xlink:href="/static/build/icons.svg#icon-logo-adv"></use>
-        </svg>
+        <?= new SvgDecorator('icon-logo-adv', 24, 24) ?>
     </span>
     Сделано в ADV
 </a>
