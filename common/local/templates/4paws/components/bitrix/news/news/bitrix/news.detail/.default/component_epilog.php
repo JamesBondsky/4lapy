@@ -11,3 +11,12 @@ if (!empty($arResult['DISPLAY_ACTIVE_FROM'])) {
     <?php $html = ob_get_clean();
 }
 $APPLICATION->AddViewContent('header_news_display_date', $html);
+
+/** добавляем для отправки в соц сети */
+
+use Bitrix\Main\Application;
+use FourPaws\App\MainTemplate;
+
+$template = MainTemplate::getInstance(Application::getInstance()->getContext());
+$APPLICATION->AddViewContent('news-detail-description', $arResult['PREVIEW_TEXT'] ?? '');
+$APPLICATION->AddViewContent('news-detail-image', $template->getAbsolutePublicPath($arResult['DETAIL_PICTURE']['SRC']) ?? '');

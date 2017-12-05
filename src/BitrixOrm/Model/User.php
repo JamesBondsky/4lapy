@@ -33,7 +33,7 @@ class User extends BitrixArrayItemBase
      */
     public function getLogin() : string
     {
-        return $this->LOGIN;
+        return $this->LOGIN ?? '';
     }
     
     /**
@@ -41,7 +41,7 @@ class User extends BitrixArrayItemBase
      */
     public function getName() : string
     {
-        return $this->NAME;
+        return $this->NAME ?? '';
     }
     
     /**
@@ -49,7 +49,7 @@ class User extends BitrixArrayItemBase
      */
     public function getSecondName() : string
     {
-        return $this->SECOND_NAME;
+        return $this->SECOND_NAME ?? '';
     }
     
     /**
@@ -57,7 +57,7 @@ class User extends BitrixArrayItemBase
      */
     public function getLastName() : string
     {
-        return $this->LAST_NAME;
+        return $this->LAST_NAME ?? '';
     }
     
     /**
@@ -65,7 +65,7 @@ class User extends BitrixArrayItemBase
      */
     public function getEmail() : string
     {
-        return $this->EMAIL;
+        return $this->EMAIL ?? '';
     }
     
     /**
@@ -73,7 +73,7 @@ class User extends BitrixArrayItemBase
      */
     public function getPersonalPhone() : string
     {
-        return $this->PERSONAL_PHONE;
+        return $this->PERSONAL_PHONE ?? '';
     }
     
     /**
@@ -81,7 +81,7 @@ class User extends BitrixArrayItemBase
      */
     public function getCheckword() : string
     {
-        return $this->CHECKWORD;
+        return $this->CHECKWORD ?? '';
     }
     
     /**
@@ -96,7 +96,7 @@ class User extends BitrixArrayItemBase
                                             $this->getName(),
                                             $this->getSecondName(),
                                             $this->getLastName(),
-                                        ])));
+                                        ]))) ?? '';
     }
     
     /**

@@ -118,4 +118,21 @@ abstract class TemplateAbstract
     public function getResponse() : Response {
         return $this->context->getResponse();
     }
+    
+    /**
+     * @param string $path
+     *
+     * @return string
+     */
+    public function getAbsolutePublicPath(string $path) : string
+    {
+        /** todo может есть другой спопсоб */
+        $host   = $this->getServer()->getHttpHost();
+        $prefix = 'http';
+        if ($this->getRequest()->isHttps()) {
+            $prefix .= 's';
+        }
+        
+        return $prefix . '://' . $host . $path;
+    }
 }

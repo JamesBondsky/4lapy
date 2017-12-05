@@ -39,4 +39,5 @@ if (is_array($arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'])
     $arResult['NO_SHOW_SLIDER'] = true;
 }
 
-$this->__component->SetResultCacheKeys(['DISPLAY_ACTIVE_FROM']);
+/**  DETAIL_PICTURE и PREVIEW_TEXT для отправки в соц сети */
+$this->__component->SetResultCacheKeys(['DISPLAY_ACTIVE_FROM', 'DETAIL_PICTURE', 'PREVIEW_TEXT']);

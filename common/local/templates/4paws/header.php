@@ -22,12 +22,15 @@ $markup = PawsApplication::markup();
     <meta name="google" value="notranslate">
     <meta name="format-detection" content="telephone=no">
     
-    <link href="<?= $markup->getCssFile() ?>" rel="stylesheet">
     <script src="/static/build/js/jquery/jquery.min.js"></script>
     <?php $APPLICATION->ShowHead(); ?>
     <title><?php $APPLICATION->ShowTitle() ?></title>
     <!--[if lte IE 9]>
     <script data-skip-moving="true" src="js/html5shiv/html5shiv.min.js"></script><![endif]-->
+    <?php
+    \Bitrix\Main\Page\Asset::getInstance()->addCss($markup->getCssFile());
+    \Bitrix\Main\Page\Asset::getInstance()->addJs('https://api-maps.yandex.ru/2.1/?lang=ru_RU');
+    ?>
 </head>
 <body>
 <?php $APPLICATION->ShowPanel() ?>
@@ -114,6 +117,9 @@ $markup = PawsApplication::markup();
     $APPLICATION->ShowViewContent('header_dropdown_menu');
     ?>
     <main class="b-wrapper" role="main">
-        <?if($template->hasDetailNews()){
-            $template->getHeaderDetailArea();
+        <?php /** @noinspection PhpUndefinedMethodInspection */
+        if($template->hasDetailNews()){
+            /** @noinspection PhpUndefinedMethodInspection */
+            /** через get не получается из-за того что вставлен компонент а ob_start использовать нельзя */
+            $template->showHeaderDetailArea();
         } ?>
