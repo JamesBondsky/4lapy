@@ -1,3 +1,5 @@
 <?php
-$sSectionName    = 'Конифиденциальность';
-$arDirProperties = Array();
+$sSectionName = 'Политика конфиденциальности';
+$arDirProperties = Array(
+    'title' => 'Политика конфиденциальности'
+);
