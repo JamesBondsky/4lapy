@@ -8,7 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var \CMain $APPLICATION
  */
 
-use Bitrix\Main\Application;use FourPaws\App\Application as PawsApplication;use FourPaws\App\MainTemplate;use FourPaws\Decorators\SvgDecorator;
+use Bitrix\Main\Application;use Bitrix\Main\Page\Asset;use FourPaws\App\Application as PawsApplication;use FourPaws\App\MainTemplate;use FourPaws\Decorators\SvgDecorator;
 
 $template = MainTemplate::getInstance(Application::getInstance()->getContext());
 $markup = PawsApplication::markup();
@@ -28,8 +28,8 @@ $markup = PawsApplication::markup();
     <!--[if lte IE 9]>
     <script data-skip-moving="true" src="js/html5shiv/html5shiv.min.js"></script><![endif]-->
     <?php
-    \Bitrix\Main\Page\Asset::getInstance()->addCss($markup->getCssFile());
-    \Bitrix\Main\Page\Asset::getInstance()->addJs('https://api-maps.yandex.ru/2.1/?lang=ru_RU');
+    Asset::getInstance()->addCss($markup->getCssFile());
+    Asset::getInstance()->addJs('https://api-maps.yandex.ru/2.1/?lang=ru_RU');
     ?>
 </head>
 <body>
