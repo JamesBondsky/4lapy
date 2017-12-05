@@ -11,4 +11,6 @@ class IblockType
     const PUBLICATION = 'publication';
 
     const REFERENCE_BOOKS = 'reference_books';
+    
+    const PUBLICATIONS = 'publications';
 }
