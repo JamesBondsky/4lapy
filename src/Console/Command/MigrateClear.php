@@ -26,12 +26,20 @@ class MigrateClear extends Command implements LoggerAwareInterface
     
     const ARG_ENTITY = 'entity';
     
+    /**
+     * MigrateClear constructor.
+     *
+     * @param null $name
+     */
     public function __construct($name = null)
     {
         parent::__construct($name);
         $this->setLogger(new Logger('Migrator', [new StreamHandler(STDOUT, Logger::DEBUG)]));
     }
     
+    /**
+     * Configure command
+     */
     protected function configure()
     {
         /**
@@ -39,12 +47,12 @@ class MigrateClear extends Command implements LoggerAwareInterface
          */
         $this->setName('migrate:clear')->setDescription('Migrate data via rest')->addArgument(self::ARG_ENTITY,
                                                                                               InputArgument::REQUIRED,
-                                                                                              'Entity type, one or more of this: user, news, articles, shops, sale');
+                                                                                              'Entity type, one or more of this: articles, catalog, city_phone, news, shops, sale, user');
     }
     
     /**
-     * @param \Symfony\Component\Console\Input\InputInterface   $input
-     * @param \Symfony\Component\Console\Output\OutputInterface $output
+     * @param InputInterface  $input
+     * @param OutputInterface $output
      *
      * @return null
      *
@@ -53,8 +61,8 @@ class MigrateClear extends Command implements LoggerAwareInterface
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $entity = $input->getArgument(self::ARG_ENTITY);
-        
-        $available = 'user, news, articles, catalog, store, sale';
+    
+        $available = 'articles, catalog, city_phone, news, shops, sale, user';
         
         if (!strpos($available, $entity)) {
             $this->logger->error(sprintf('Entity name must be one of it: %s.', $available));
