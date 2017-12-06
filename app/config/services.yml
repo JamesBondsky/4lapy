@@ -36,6 +36,8 @@ services:
 
   location.service:
     class: FourPaws\Location\LocationService
+    arguments:
+      - '@bx.hlblock.cities'
 
   user.service:
     class: FourPaws\User\UserService

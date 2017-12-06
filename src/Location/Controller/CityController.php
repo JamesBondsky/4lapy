@@ -42,7 +42,7 @@ class CityController extends Controller
         }
 
         try {
-            $result = $this->locationService->findCity($query, $limit, false);
+            $result = $this->locationService->findLocationCity($query, $limit, false);
         } catch (CityNotFoundException $e) {
         }
 

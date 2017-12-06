@@ -1,8 +1,9 @@
 <?php
 
-namespace FourPaws\BitrixOrm\Query;
+namespace FourPaws\Location\Query;
 
-use FourPaws\BitrixOrm\Collection\CityCollection;
+use FourPaws\Location\Collection\CityCollection;
+use FourPaws\BitrixOrm\Query\D7QueryBase;
 use FourPaws\BitrixOrm\Collection\CollectionBase;
 
 class CityQuery extends D7QueryBase

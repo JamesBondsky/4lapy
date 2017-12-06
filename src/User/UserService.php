@@ -352,9 +352,9 @@ class UserService
     {
         $city = null;
         if ($code) {
-            $city = $this->locationService->findCityByCode($code);
+            $city = $this->locationService->findLocationCityByCode($code);
         } else {
-            $city = reset($this->locationService->findCity($name, $parentName, 1, true));
+            $city = reset($this->locationService->findLocationCity($name, $parentName, 1, true));
         }
 
         if (!$city) {
@@ -385,11 +385,11 @@ class UserService
 
         if ($cityCode) {
             try {
-                return $this->locationService->findCityByCode($cityCode);
+                return $this->locationService->findLocationCityByCode($cityCode);
             } catch (CityNotFoundException $e) {
             }
         }
 
-        return $this->locationService->getDefaultCity();
+        return $this->locationService->findLocationCityByCode(LocationService::LOCATION_CODE_MOSCOW);
     }
 }

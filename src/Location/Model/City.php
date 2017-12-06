@@ -1,9 +1,11 @@
 <?php
 
-namespace FourPaws\BitrixOrm\Model;
+namespace FourPaws\Location\Model;
 
 use FourPaws\App\Application;
-use FourPaws\BitrixOrm\Query\CityQuery;
+use FourPaws\BitrixOrm\Model\HlbItemBase;
+use FourPaws\BitrixOrm\Model\ModelInterface;
+use FourPaws\Location\Query\CityQuery;
 use FourPaws\Location\Exception\CityNotFoundException;
 use Bitrix\Main\Entity\DataManager;
 
@@ -16,8 +18,6 @@ use Bitrix\Main\Entity\DataManager;
  */
 class City extends HlbItemBase
 {
-    const HL_BLOCK_NAME = 'Cities';
-
     protected $UF_NAME;
 
     protected $UF_LOCATION;
@@ -27,7 +27,7 @@ class City extends HlbItemBase
     protected $UF_DELIVERY_TEXT;
 
     protected $UF_PHONE;
-    
+
     /**
      * @return string
      */
@@ -71,7 +71,7 @@ class City extends HlbItemBase
     /**
      * @param string $name
      *
-     * @return \FourPaws\BitrixOrm\Model\City
+     * @return City
      */
     public function withName(string $name): City
     {
@@ -83,7 +83,7 @@ class City extends HlbItemBase
     /**
      * @param string $location
      *
-     * @return \FourPaws\BitrixOrm\Model\City
+     * @return City
      */
     public function withLocation(string $location): City
     {
@@ -95,7 +95,7 @@ class City extends HlbItemBase
     /**
      * @param string $phone
      *
-     * @return \FourPaws\BitrixOrm\Model\City
+     * @return City
      */
     public function withPhone(string $phone): City
     {
@@ -103,11 +103,11 @@ class City extends HlbItemBase
 
         return $this;
     }
-    
+
     /**
      * @param string $active
-     *CityNotFoundException
-     * @return \FourPaws\BitrixOrm\Model\City
+     *
+     * @return City
      */
     public function withActive(bool $active): City
     {
@@ -143,13 +143,15 @@ class City extends HlbItemBase
 
         return $city;
     }
-    
+
     public static function createFromLocation(string $locationCode): ModelInterface
     {
         /** @var DataManager $dataManager */
         $dataManager = Application::getInstance()->getContainer()->get('bx.hlblock.cities');
 
-        $city = (new CityQuery($dataManager::query()))->withFilterParameter('UF_LOCATION', $locationCode)->exec()->first();
+        $city = (new CityQuery($dataManager::query()))->withFilterParameter('UF_LOCATION', $locationCode)
+                                                      ->exec()
+                                                      ->first();
 
         if (!$city) {
             throw new CityNotFoundException(sprintf('City with location code %s is not found.', $locationCode));

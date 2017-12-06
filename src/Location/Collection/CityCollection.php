@@ -1,8 +1,9 @@
 <?php
 
-namespace FourPaws\BitrixOrm\Collection;
+namespace FourPaws\Location\Collection;
 
-use FourPaws\BitrixOrm\Model\City;
+use FourPaws\BitrixOrm\Collection\D7CollectionBase;
+use FourPaws\Location\Model\City;
 use Generator;
 
 class CityCollection extends D7CollectionBase

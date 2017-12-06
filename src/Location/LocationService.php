@@ -3,18 +3,22 @@
 namespace FourPaws\Location;
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Bitrix\Highloadblock\DataManager;
 use Bitrix\Sale\Location\LocationTable;
-use Bitrix\Sale\Location\Search\Finder;
 use Bitrix\Sale\Location\TypeTable;
-use FourPaws\Location\Exception\CityNotFoundException;
-use FourPaws\Enum\IblockCode;
-use FourPaws\Enum\IblockType;
-use FourPaws\Enum\CitiesSectionCode;
-use WebArch\BitrixCache\BitrixCache;
-use CIBlockSection;
-use CIBlockElement;
 use CBitrixComponent;
 use CBitrixLocationSelectorSearchComponent;
+use CIBlockElement;
+use FourPaws\App\Application;
+use FourPaws\Location\Model\City;
+use FourPaws\Location\Query\CityQuery;
+use FourPaws\BitrixOrm\Model\ModelInterface;
+use FourPaws\Enum\CitiesSectionCode;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
+use FourPaws\Location\Exception\CityNotFoundException;
+use FourPaws\User\UserService;
+use WebArch\BitrixCache\BitrixCache;
 
 class LocationService
 {
@@ -24,28 +28,11 @@ class LocationService
 
     const LOCATION_CODE_MOSCOW = '0000073738';
 
-    /**
-     * @param string $code
-     * @param string $name
-     *
-     * @return bool
-     * @throws \Exception
-     */
-    public function selectCity(string $code = '', string $name = ''): bool
+    protected $dataManager;
+
+    public function __construct(DataManager $dataManager)
     {
-        if (!empty($code)) {
-            $cities = [];
-        } elseif (!empty($name)) {
-            $cities = $this->findCity($name, 1, true);
-        }
-
-        if (!empty($cities)) {
-            $_COOKIE['user_city_id'] = reset($cities)['CODE'];
-
-            return true;
-        }
-
-        throw new CityNotFoundException('Город указан неверно.');
+        $this->dataManager = $dataManager;
     }
 
     /**
@@ -109,6 +96,8 @@ class LocationService
     }
 
     /**
+     * Поиск местоположения по названию
+     * 
      * @param $query
      * @param null $limit
      * @param bool $exact
@@ -117,7 +106,7 @@ class LocationService
      * @return array
      * @throws CityNotFoundException
      */
-    public function find(string $query, int $limit = null, bool $exact = false, array $additionalFilter = []): array
+    public function findLocation(string $query, int $limit = null, bool $exact = false, array $additionalFilter = []): array
     {
         if (empty($query)) {
             throw new CityNotFoundException('Город не найден');
@@ -195,12 +184,14 @@ class LocationService
     }
 
     /**
+     * Поиск местоположения по коду
+     * 
      * @param string $code
      * @param array $additionalFilter
      *
      * @return array|false
      */
-    public function findByCode(string $code, array $additionalFilter = [])
+    public function findLocationByCode(string $code, array $additionalFilter = [])
     {
         $filter = ['CODE' => $code];
         if (!empty($additionalFilter) && is_array($additionalFilter)) {
@@ -217,13 +208,15 @@ class LocationService
     }
 
     /**
+     * Поиск местоположений с типом "город" и "деревня" по названию
+     * 
      * @param string $query
      * @param int|null $limit
      * @param bool $exact
      *
      * @return array
      */
-    public function findCity(string $query, string $parentName = '', int $limit = null, bool $exact = false): array
+    public function findLocationCity(string $query, string $parentName = '', int $limit = null, bool $exact = false): array
     {
         $filter = [
             'TYPE_ID' => array_values(
@@ -243,7 +236,7 @@ class LocationService
             $query = $parentName . ' ' . $query;
         }
 
-        return $this->find(
+        return $this->findLocation(
             $query,
             $limit,
             $exact,
@@ -252,16 +245,18 @@ class LocationService
     }
 
     /**
+     * Поиск местоположений с типом "город" или "деревня" по коду
+     * 
      * @param string $code
      *
      * @return array
      * @throws CityNotFoundException
      */
-    public function findCityByCode(string $code = ''): array
+    public function findLocationCityByCode(string $code = ''): array
     {
         $city = false;
         if ($code) {
-            $city = $this->findByCode(
+            $city = $this->findLocationByCode(
                 $code,
                 [
                     '=TYPE.CODE' => [static::TYPE_CITY, static::TYPE_VILLAGE],
@@ -280,11 +275,51 @@ class LocationService
     }
 
     /**
-     * @return array
+     * Получение эл-та из HL-блока Cities по коду местоположения
+     * 
+     * @return City|null
      */
-    public function getDefaultCity(): array
+    public function getDefaultCity()
     {
-        return $this->findCityByCode(static::LOCATION_CODE_MOSCOW);
+        return (new CityQuery($this->dataManager::query()))->withFilterParameter('UF_DEFAULT', true)
+                                                           ->exec()
+                                                           ->first();
+    }
+
+    /**
+     * Получение эл-та из HL-блока Cities по коду местоположения
+     * 
+     * @param $locationCode
+     *
+     * @return ModelInterface|null
+     */
+    public function getCity($locationCode)
+    {
+        try {
+            return City::createFromLocation($locationCode);
+        } catch (CityNotFoundException $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Получение эл-та из HL-блока,
+     * привязанного к выбранному городу пользователя
+     * 
+     * @return ModelInterface|null
+     */
+    public function getCurrentCity()
+    {
+        /** @var UserService $userService */
+        $userService = Application::getInstance()->getContainer()->get('user.service');
+
+        if ($locationCode = $userService->getSelectedCity()['CODE']) {
+            if ($city = $this->getCity($locationCode)){
+                return $city;
+            }
+        }
+
+        return $this->getDefaultCity();
     }
 
     /**
