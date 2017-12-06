@@ -54,38 +54,42 @@ $markup = PawsApplication::markup();
                 ?>
                 <div class="b-header-info">
                     <?php require_once 'blocks/header/phone_block.php' ?>
-                    <?php $APPLICATION->IncludeComponent('fourpaws:auth.form',
-                                                         '',
-                                                         [],
-                                                         false,
-                                                         ['HIDE_ICONS' => 'Y']);
+                    <?php $APPLICATION->IncludeComponent(
+                        'fourpaws:auth.form',
+                        '',
+                        [],
+                        false,
+                        ['HIDE_ICONS' => 'Y']
+                    );
                     
-                    $APPLICATION->IncludeComponent('bitrix:sale.basket.basket.line',
-                                                   'header.basket',
-                                                   [
-                                                       'COMPONENT_TEMPLATE'   => 'header.basket',
-                                                       'PATH_TO_BASKET'       => '/personal/cart/',
-                                                       'PATH_TO_ORDER'        => '/personal/order/make/',
-                                                       'SHOW_NUM_PRODUCTS'    => 'Y',
-                                                       'SHOW_TOTAL_PRICE'     => 'Y',
-                                                       'SHOW_EMPTY_VALUES'    => 'Y',
-                                                       'SHOW_PERSONAL_LINK'   => 'Y',
-                                                       'PATH_TO_PERSONAL'     => '/personal/',
-                                                       'SHOW_AUTHOR'          => 'N',
-                                                       'PATH_TO_REGISTER'     => '',
-                                                       'PATH_TO_AUTHORIZE'    => '',
-                                                       'PATH_TO_PROFILE'      => '/personal/',
-                                                       'SHOW_PRODUCTS'        => 'Y',
-                                                       'SHOW_DELAY'           => 'N',
-                                                       'SHOW_NOTAVAIL'        => 'Y',
-                                                       'SHOW_IMAGE'           => 'Y',
-                                                       'SHOW_PRICE'           => 'Y',
-                                                       'SHOW_SUMMARY'         => 'N',
-                                                       'POSITION_FIXED'       => 'N',
-                                                       'HIDE_ON_BASKET_PAGES' => 'N',
-                                                   ],
-                                                   false,
-                                                   ['HIDE_ICONS' => 'Y']); ?>
+                    $APPLICATION->IncludeComponent(
+                        'bitrix:sale.basket.basket.line',
+                        'header.basket',
+                        [
+                            'COMPONENT_TEMPLATE'   => 'header.basket',
+                            'PATH_TO_BASKET'       => '/personal/cart/',
+                            'PATH_TO_ORDER'        => '/personal/order/make/',
+                            'SHOW_NUM_PRODUCTS'    => 'Y',
+                            'SHOW_TOTAL_PRICE'     => 'Y',
+                            'SHOW_EMPTY_VALUES'    => 'Y',
+                            'SHOW_PERSONAL_LINK'   => 'Y',
+                            'PATH_TO_PERSONAL'     => '/personal/',
+                            'SHOW_AUTHOR'          => 'N',
+                            'PATH_TO_REGISTER'     => '',
+                            'PATH_TO_AUTHORIZE'    => '',
+                            'PATH_TO_PROFILE'      => '/personal/',
+                            'SHOW_PRODUCTS'        => 'Y',
+                            'SHOW_DELAY'           => 'N',
+                            'SHOW_NOTAVAIL'        => 'Y',
+                            'SHOW_IMAGE'           => 'Y',
+                            'SHOW_PRICE'           => 'Y',
+                            'SHOW_SUMMARY'         => 'N',
+                            'POSITION_FIXED'       => 'N',
+                            'HIDE_ON_BASKET_PAGES' => 'N',
+                        ],
+                        false,
+                        ['HIDE_ICONS' => 'Y']
+                    ); ?>
                 </div>
             </div>
             <div class="b-header__menu js-minimal-menu">
@@ -118,8 +122,27 @@ $markup = PawsApplication::markup();
     ?>
     <main class="b-wrapper" role="main">
         <?php /** @noinspection PhpUndefinedMethodInspection */
-        if($template->hasDetailNews()){
-            /** @noinspection PhpUndefinedMethodInspection */
-            /** через get не получается из-за того что вставлен компонент а ob_start использовать нельзя */
-            $template->showHeaderDetailArea();
+        if ($template->hasHeaderDetailPageContainer()) {
+            ?>
+            <div class="b-container b-container--news-detail">
+                <div class="b-detail-page">
+                    <?php
+                    global $APPLICATION;
+            $APPLICATION->IncludeComponent(
+                        'bitrix:breadcrumb',
+                        'breadcrumb',
+                        [
+                            'PATH'       => '',
+                            'SITE_ID'    => SITE_ID,
+                            'START_FROM' => '0',
+                        ]
+                    ); ?>
+                    <h1 class="b-title b-title--h1">
+                        <?php $APPLICATION->ShowTitle(false) ?>
+                    </h1>
+                    <?php
+                    $APPLICATION->ShowViewContent('header_news_display_date'); ?>
+                </div>
+            </div>
+        <?php
         } ?>
