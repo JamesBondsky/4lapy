@@ -469,7 +469,7 @@ class UserPropLocation extends TypeBase
             if (\is_array($htmlControl['VALUE']) && !empty($htmlControl['VALUE'])) {
                 foreach ($htmlControl['VALUE'] as $val) {
                     if (!empty($val) && (int)$val > 0) {
-                        $arPrint[] = '[' . $val . ']' . LocationHelper::getLocationStringById($val);
+                        $arPrint[] = '[' . $val . ']' . LocationHelper::getLocationStringByCode($val);
                     }
                 }
             }

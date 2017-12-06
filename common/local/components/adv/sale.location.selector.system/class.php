@@ -481,7 +481,7 @@ protected function obtainDataLocationTypes(&$cachedData)
         
         if ($this->arParams['PROP_LOCATION'] === 'Y') {
             $this->useGroups = true;
-            $this->useCodes  = false;
+            $this->useCodes  = true;
         } else {
             if (!$this->arParams['LINK_ENTITY_NAME']) {
                 $this->errors['FATAL'][] = Loc::getMessage('SALE_SLSS_ENTITY_PRIMARY_NOT_SET');
