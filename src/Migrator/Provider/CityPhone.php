@@ -2,7 +2,6 @@
 
 namespace FourPaws\Migrator\Provider;
 
-use FourPaws\Migrator\Converter\LocationCodeToLocation;
 use FourPaws\Migrator\Converter\StringToBool;
 
 class CityPhone extends ProviderAbstract
@@ -29,7 +28,6 @@ class CityPhone extends ProviderAbstract
     {
         return [
             new StringToBool('UF_ACTIVE'),
-            new LocationCodeToLocation('UF_LOCATION'),
         ];
     }
 }
