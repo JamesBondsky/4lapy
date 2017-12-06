@@ -33,33 +33,11 @@ class MainTemplate extends TemplateAbstract
     
     public function isDetailNews() : bool
     {
-        $src = '/company/news';
-        
-        return $this->isPartitionDir($src);
-    }
-    
-    public function isPartitionDir(string $src) : bool
-    {
-        $dir = $this->getDir();
-        if (preg_match(sprintf('~^%s/\w+~', $src), $dir)) {
-            $newStr = str_replace($src, '', $dir);
-            if ($newStr) {
-                return true;
-            }
-        }
-        
-        return false;
-    }
-    
-    public function getDir() : string
-    {
-        return $this->getRequest()->getRequestedPageDirectory();
+        return $this->isPartitionDir('/company/news');
     }
     
     public function isDetailArticles()
     {
-        $src = '/services/articles';
-        
-        return $this->isPartitionDir($src);
+        return $this->isPartitionDir('/services/articles');
     }
 }
