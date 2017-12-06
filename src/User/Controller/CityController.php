@@ -38,7 +38,7 @@ class CityController extends Controller
             return JsonErrorResponse::create($e->getMessage());
         }
 
-        return JsonSuccessResponse::create('Город успешно выбран.');
+        return JsonSuccessResponse::create('Город успешно выбран.', 200, [], ['reload' => true]);
     }
 
     /**
