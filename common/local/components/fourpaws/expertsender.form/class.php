@@ -1,25 +1,45 @@
-<?php if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
+<?php
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Application;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 
 class FourPawsExpertsenderFormComponent extends \CBitrixComponent
 {
-    /** {@inheritdoc} */
-    public function onPrepareComponentParams($params) : array
+    /**
+     * @var CurrentUserProviderInterface
+     */
+    private $currentUserProvider;
+
+    /**
+     * @var UserAuthorizationInterface
+     */
+    private $authorizationProvider;
+
+    public function __construct(CBitrixComponent $component = null)
     {
-        return $params;
+        parent::__construct($component);
+        try {
+            $container = Application::getInstance()->getContainer();
+            $this->authorizationProvider = $container->get(UserAuthorizationInterface::class);
+            $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
+        } catch (\FourPaws\App\Exceptions\ApplicationCreateException $e) {
+            $logger = LoggerFactory::create('component');
+            $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
+            /** @noinspection PhpUnhandledExceptionInspection */
+            throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
+        }
     }
-    
+
     /** {@inheritdoc} */
     public function executeComponent()
     {
         try {
-            $this->prepareResult();
-            
             $this->includeComponentTemplate();
         } catch (\Exception $e) {
             try {
@@ -29,21 +49,20 @@ class FourPawsExpertsenderFormComponent extends \CBitrixComponent
             }
         }
     }
-    
+
     /**
-     * @return $this
-     *
-     * @throws SystemException
+     * @return CurrentUserProviderInterface
      */
-    protected function prepareResult()
+    public function getCurrentUserProvider(): CurrentUserProviderInterface
     {
-        try {
-            $userService            = Application::getInstance()->getContainer()->get('user.service');
-            $this->arResult['user'] = $userService->getCurrentUser();
-        } catch (\Exception $e) {
-            throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
-        }
-        
-        return $this;
+        return $this->currentUserProvider;
+    }
+
+    /**
+     * @return UserAuthorizationInterface
+     */
+    public function getAuthorizationProvider(): UserAuthorizationInterface
+    {
+        return $this->authorizationProvider;
     }
 }
