@@ -1,7 +1,6 @@
 <?php
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
-$APPLICATION->SetTitle("Политика конфиденциальности2");
-$APPLICATION->SetPageProperty("keywords_inner", "123");
+$APPLICATION->SetTitle("Политика конфиденциальности");
 
 echo '
 <div class="b-container b-container--confidentiality">
