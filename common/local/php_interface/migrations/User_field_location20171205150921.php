@@ -28,7 +28,7 @@ class User_field_location20171205150921 extends SprintMigrationBase
                 'MANDATORY'         => 'N',
                 'SHOW_FILTER'       => 'N',
                 'SHOW_IN_LIST'      => 'Y',
-                'EDIT_IN_LIST'      => 'N',
+                'EDIT_IN_LIST'      => 'Y',
                 'IS_SEARCHABLE'     => 'N',
             ]
         )) {

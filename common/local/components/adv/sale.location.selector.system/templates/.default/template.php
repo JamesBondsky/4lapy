@@ -65,14 +65,18 @@ else:
                                             -- <?= Loc::getMessage('SALE_SLSS_TYPE_NOT_SELECTED') ?></option>
                                         <?php if (is_array($arResult['TYPES']) && !empty($arResult['TYPES'])) {
                                             foreach ($arResult['TYPES'] as $id => $type): ?>
-                                                <option value="<?= $id ?>"><?= htmlspecialcharsbx($type['NAME']) ?></option>
+                                                <option value="<?= $id ?>"><?= htmlspecialcharsbx(
+                                                        $type['NAME']
+                                                    ) ?></option>
                                             <?php endforeach;
                                         } ?>
                                     </select>
                                 </td>
                                 
                                 <td class="adm-loc-filter-select-cell" style="padding-left: 5px; width: 1%">
-                                    <span class="adm-loc-clear-search bx-ui-slss-clear"><nobr><?= Loc::getMessage('SALE_SLSS_RESET_FILTER') ?></nobr></span>
+                                    <span class="adm-loc-clear-search bx-ui-slss-clear"><nobr><?= Loc::getMessage(
+                                                'SALE_SLSS_RESET_FILTER'
+                                            ) ?></nobr></span>
                                 </td>
                             
                             </tr>
@@ -108,7 +112,9 @@ else:
                                                             <a href="javascript:void(0)"
                                                                class="adm-submenu-item-name-link"
                                                                data-item-id="<?= (int)$group['ID'] ?>">
-                                                                <span class="adm-submenu-item-name-link-text"><?= htmlspecialcharsbx($group['NAME']) ?></span>
+                                                                <span class="adm-submenu-item-name-link-text"><?= htmlspecialcharsbx(
+                                                                        $group['NAME']
+                                                                    ) ?></span>
                                                             </a>
                                                         </div>
                                                     
@@ -161,15 +167,23 @@ else:
                                                                     <div class="adm-loc-i-tree-panel bx-ui-item-tree-slss-children">
                                                                         <div class="bx-ui-item-tree-slss-item-pool">
                                                                         </div>
-                                                                        <div class="adm-loc-i-tree-loading"><?= Loc::getMessage('SALE_SLSS_AJAX_LOADING') ?></div>
+                                                                        <div class="adm-loc-i-tree-loading"><?= Loc::getMessage(
+                                                                                'SALE_SLSS_AJAX_LOADING'
+                                                                            ) ?></div>
                                                                         <a class="adm-loc-i-tree-load-more bx-ui-item-tree-slss-load-more"
-                                                                           href="javascript:void(0)"><?= Loc::getMessage('SALE_SLSS_AJAX_LOAD_MORE') ?></a>
+                                                                           href="javascript:void(0)"><?= Loc::getMessage(
+                                                                                'SALE_SLSS_AJAX_LOAD_MORE'
+                                                                            ) ?></a>
                                                                         <div class="adm-loc-i-tree-error">
-                                                                            <?= Loc::getMessage('SALE_SLSS_LOCATION_SELECTOR_ERROR_OCCURED') ?>
+                                                                            <?= Loc::getMessage(
+                                                                                'SALE_SLSS_LOCATION_SELECTOR_ERROR_OCCURED'
+                                                                            ) ?>
                                                                             :
                                                                             <span class="bx-ui-item-tree-slss-error-desc"></span><br />
                                                                             <a class="bx-ui-item-tree-slss-load-more"
-                                                                               href="javascript:void(0)"><?= Loc::getMessage('SALE_SLSS_AJAX_RETRY') ?></a>
+                                                                               href="javascript:void(0)"><?= Loc::getMessage(
+                                                                                    'SALE_SLSS_AJAX_RETRY'
+                                                                                ) ?></a>
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -182,18 +196,22 @@ else:
                                             
                                             <?php else: ?>
                                                 <div class="adm-loc-error">
-                                                    <?= Loc::getMessage('SALE_SLSS_NO_LOCATIONS',
-                                                                        [
-                                                                            '#ANCHOR_IMPORT#' => '<a href="'
-                                                                                                 . ((string)$arParams['PATH_TO_LOCATION_IMPORT']
-                                                                                                    !== '' ? $arParams['PATH_TO_LOCATION_IMPORT'] : Location\Admin\Helper::getImportUrl())
-                                                                                                 . '" target="_blank">',
-                                                                            '#ANCHOR_END#'    => '</a>',
-                                                                        ]) ?>
+                                                    <?= Loc::getMessage(
+                                                        'SALE_SLSS_NO_LOCATIONS',
+                                                        [
+                                                            '#ANCHOR_IMPORT#' => '<a href="'
+                                                                                 . ((string)$arParams['PATH_TO_LOCATION_IMPORT']
+                                                                                    !== '' ? $arParams['PATH_TO_LOCATION_IMPORT'] : Location\Admin\Helper::getImportUrl(
+                                                                )) . '" target="_blank">',
+                                                            '#ANCHOR_END#'    => '</a>',
+                                                        ]
+                                                    ) ?>
                                                 </div>
                                             <?php endif ?>
                                             
-                                            <script type="text/html" data-template-id="bx-ui-item-tree-slss-node" data-skip-moving="true">
+                                            <script type="text/html"
+                                                    data-template-id="bx-ui-item-tree-slss-node"
+                                                    data-skip-moving="true">
                                                 
                                                 <div class="adm-loc-i-tree-node bx-ui-item-tree-slss-node"
                                                      data-node-id="{{id}}"
@@ -206,15 +224,23 @@ else:
                                                     <div class="adm-loc-i-tree-panel bx-ui-item-tree-slss-children">
                                                         <div class="bx-ui-item-tree-slss-item-pool">
                                                         </div>
-                                                        <div class="adm-loc-i-tree-loading"><?= Loc::getMessage('SALE_SLSS_AJAX_LOADING') ?></div>
+                                                        <div class="adm-loc-i-tree-loading"><?= Loc::getMessage(
+                                                                'SALE_SLSS_AJAX_LOADING'
+                                                            ) ?></div>
                                                         <a class="adm-loc-i-tree-load-more bx-ui-item-tree-slss-load-more"
-                                                           href="javascript:void(0)"><?= Loc::getMessage('SALE_SLSS_AJAX_LOAD_MORE') ?></a>
+                                                           href="javascript:void(0)"><?= Loc::getMessage(
+                                                                'SALE_SLSS_AJAX_LOAD_MORE'
+                                                            ) ?></a>
                                                         <div class="adm-loc-i-tree-error">
-                                                            <?= Loc::getMessage('SALE_SLSS_LOCATION_SELECTOR_ERROR_OCCURED') ?>
+                                                            <?= Loc::getMessage(
+                                                                'SALE_SLSS_LOCATION_SELECTOR_ERROR_OCCURED'
+                                                            ) ?>
                                                             :
                                                             <span class="bx-ui-item-tree-slss-error-desc"></span><br />
                                                             <a class="bx-ui-item-tree-slss-load-more"
-                                                               href="javascript:void(0)"><?= Loc::getMessage('SALE_SLSS_AJAX_RETRY') ?></a>
+                                                               href="javascript:void(0)"><?= Loc::getMessage(
+                                                                    'SALE_SLSS_AJAX_RETRY'
+                                                                ) ?></a>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -238,12 +264,16 @@ else:
                                                for="designed_checkbox_<?= $r ?>"></label>
                                     </td>
                                     <td class="adm-list-table-cell">
-                                        <div class="adm-list-table-cell-inner adm-list-table-name"><?= Loc::getMessage('SALE_SLSS_NAME_COLUMN') ?></div>
+                                        <div class="adm-list-table-cell-inner adm-list-table-name"><?= Loc::getMessage(
+                                                'SALE_SLSS_NAME_COLUMN'
+                                            ) ?></div>
                                     </td>
                                 </tr>
                                 </thead>
                                 <tbody class="slss-current-locations bx-ui-slss-variants bx-ui-slss-selector-locations">
-                                <script type="text/html" data-template-id="bx-ui-slss-dropdown-item" data-skip-moving="true">
+                                <script type="text/html"
+                                        data-template-id="bx-ui-slss-dropdown-item"
+                                        data-skip-moving="true">
                                     <tr class="adm-list-table-row">
                                         <td class="adm-list-table-cell adm-list-table-checkbox">
                                             <input type="checkbox"
@@ -305,7 +335,9 @@ else:
                         <?php endif ?>
                         <div class="adm-loc-selected-actions">
                             <a href="javascript:void(0)"
-                               class="bx-ui-slss-selected-act-clean"><?= Loc::getMessage('SALE_SLSS_LOCATION_SELECTOR_CLEAN_SELECTION') ?></a>
+                               class="bx-ui-slss-selected-act-clean"><?= Loc::getMessage(
+                                    'SALE_SLSS_LOCATION_SELECTOR_CLEAN_SELECTION'
+                                ) ?></a>
                         </div>
                     </div>
                     <div class="adm-loc-cont-wrap">
@@ -322,12 +354,16 @@ else:
                                                for="designed_checkbox_<?= $r ?>"></label>
                                     </td>
                                     <td class="adm-list-table-cell">
-                                        <div class="adm-list-table-cell-inner adm-list-table-name"><?= Loc::getMessage('SALE_SLSS_NAME_COLUMN') ?></div>
+                                        <div class="adm-list-table-cell-inner adm-list-table-name"><?= Loc::getMessage(
+                                                'SALE_SLSS_NAME_COLUMN'
+                                            ) ?></div>
                                     </td>
                                 </tr>
                                 </thead>
                                 <tbody class="bx-ui-slss-selected-groups">
-                                <script type="text/html" data-template-id="bx-ui-slss-selected-group" data-skip-moving="true">
+                                <script type="text/html"
+                                        data-template-id="bx-ui-slss-selected-group"
+                                        data-skip-moving="true">
                                     <tr class="adm-list-table-row">
                                         <td class="adm-list-table-cell adm-list-table-checkbox">
                                             <input type="checkbox"
@@ -351,7 +387,9 @@ else:
                             
                             <table class="adm-list-table">
                                 <tbody class="bx-ui-slss-selected-locations">
-                                <script type="text/html" data-template-id="bx-ui-slss-selected-node" data-skip-moving="true">
+                                <script type="text/html"
+                                        data-template-id="bx-ui-slss-selected-node"
+                                        data-skip-moving="true">
                                     <tr class="adm-list-table-row">
                                         <td class="adm-list-table-cell adm-list-table-checkbox">
                                             <input type="checkbox"
@@ -432,8 +470,10 @@ else:
                         ],
                     ],
                     
-                    'editUrl'        => '?' . implode('&',
-                                                      $urlComponents),
+                    'editUrl'        => '?' . implode(
+                            '&',
+                            $urlComponents
+                        ),
                     'parentTagId'    => (int)$arResult['RANDOM_TAG'],
                     'useCodes'       => $arResult['USE_CODES'],
                     'types'          => $arResult['TYPES'],
@@ -476,10 +516,12 @@ else:
                 
                 ];
                 ?>
-                new BX.Sale.component.location.selector.system(<?=CUtil::PhpToJSObject($jsParams,
-                                                                                       false,
-                                                                                       false,
-                                                                                       true)?>);
+                new BX.Sale.component.location.selector.system(<?=CUtil::PhpToJSObject(
+                    $jsParams,
+                    false,
+                    false,
+                    true
+                )?>);
             <?if(!empty($arParams['JS_CONTROL_DEFERRED_INIT'])):?>
         };
         <?endif?>

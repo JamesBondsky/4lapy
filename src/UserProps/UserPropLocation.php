@@ -2,9 +2,10 @@
 
 namespace FourPaws\UserProps;
 
-use Bitrix\Main\{
-    Loader, LoaderException, Localization\Loc, UserField\TypeBase
-};
+use Bitrix\Main\Loader;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UserField\TypeBase;
 use Bitrix\Sale\Location\Admin\LocationHelper;
 
 Loc::loadMessages(__FILE__);
@@ -90,21 +91,23 @@ class UserPropLocation extends TypeBase
 
         ob_start();
         global $APPLICATION;
-        $APPLICATION->IncludeComponent('bitrix:sale.location.selector.search',
-                                       '',
-                                       [
-                                           'CACHE_TIME'                 => '36000000',
-                                           'CACHE_TYPE'                 => 'N',
-                                           'CODE'                       => $value,
-                                           'ID'                         => '',
-                                           'INITIALIZE_BY_GLOBAL_EVENT' => '',
-                                           'INPUT_NAME'                 => $htmlControl['NAME'],
-                                           'JS_CALLBACK'                => '',
-                                           'PROVIDE_LINK_BY'            => 'code',
-                                           'SUPPRESS_ERRORS'            => 'N',
-                                       ],
-                                       false,
-                                       ['HIDE_ICONS' => 'Y']);
+        $APPLICATION->IncludeComponent(
+            'bitrix:sale.location.selector.search',
+            '',
+            [
+                'CACHE_TIME'                 => '36000000',
+                'CACHE_TYPE'                 => 'N',
+                'CODE'                       => $value,
+                'ID'                         => '',
+                'INITIALIZE_BY_GLOBAL_EVENT' => '',
+                'INPUT_NAME'                 => $htmlControl['NAME'],
+                'JS_CALLBACK'                => '',
+                'PROVIDE_LINK_BY'            => 'code',
+                'SUPPRESS_ERRORS'            => 'N',
+            ],
+            false,
+            ['HIDE_ICONS' => 'Y']
+        );
         
         $return = ob_get_clean();
         $result .= '
@@ -131,32 +134,36 @@ class UserPropLocation extends TypeBase
         $htmlControl
     ) : string
     {
-        $replacedName = str_replace([
-                                        '[',
-                                        ']',
-                                    ],
-                                    '_',
-                                    $htmlControl['NAME']);
+        $replacedName = str_replace(
+            [
+                '[',
+                ']',
+            ],
+            '_',
+            $htmlControl['NAME']
+        );
         
         /** @var \CMain $APPLICATION */
         global $APPLICATION;
         ob_start();
-        $APPLICATION->IncludeComponent('bitrix:sale.location.selector.search',
-                                       '',
-                                       [
-                                           'CACHE_TIME'                 => '36000000',
-                                           'CACHE_TYPE'                 => 'N',
-                                           'CODE'                       => $htmlControl['VALUE'],
-                                           'ID'                         => 'code',
-                                           'INITIALIZE_BY_GLOBAL_EVENT' => '',
-                                           'INPUT_NAME'                 => $htmlControl['NAME'],
-                                           'JS_CALLBACK'                => '',
-                                           'JS_CONTROL_GLOBAL_ID'       => 'locationSelectors_' . $replacedName,
-                                           'PROVIDE_LINK_BY'            => 'code',
-                                           'SUPPRESS_ERRORS'            => 'N',
-                                       ],
-                                       false,
-                                       ['HIDE_ICONS' => 'Y']);
+        $APPLICATION->IncludeComponent(
+            'bitrix:sale.location.selector.search',
+            '',
+            [
+                'CACHE_TIME'                 => '36000000',
+                'CACHE_TYPE'                 => 'N',
+                'CODE'                       => $htmlControl['VALUE'],
+                'ID'                         => '',
+                'INITIALIZE_BY_GLOBAL_EVENT' => '',
+                'INPUT_NAME'                 => $htmlControl['NAME'],
+                'JS_CALLBACK'                => '',
+                'JS_CONTROL_GLOBAL_ID'       => 'locationSelectors_' . $replacedName,
+                'PROVIDE_LINK_BY'            => 'code',
+                'SUPPRESS_ERRORS'            => 'N',
+            ],
+            false,
+            ['HIDE_ICONS' => 'Y']
+        );
         
         return ob_get_clean();
     }
@@ -183,12 +190,15 @@ class UserPropLocation extends TypeBase
     public static function getEditFormHTML($userField, $htmlControl) : string
     {
         $return       = '&nbsp;';
-        $replacedName = str_replace([
-                                        '[',
-                                        ']',
-                                    ],
-                                    '_',
-                                    $htmlControl['NAME']);
+        $replacedName = str_replace(
+            [
+                '[',
+                ']',
+            ],
+            '_',
+            $htmlControl['NAME']
+        );
+
         if ($userField['EDIT_IN_LIST'] === 'Y') {
             if ($userField['ENTITY_VALUE_ID'] < 1 && !empty($userField['SETTINGS']['DEFAULT_VALUE'])) {
                 $htmlControl['VALUE'] = $userField['SETTINGS']['DEFAULT_VALUE'];
@@ -198,23 +208,25 @@ class UserPropLocation extends TypeBase
             ob_start();
             $deferedControlName = 'defered_' . $replacedName;
             $globalControlName  = 'locationSelectors_' . $replacedName;
-            $APPLICATION->IncludeComponent('bitrix:sale.location.selector.search',
-                                           '',
-                                           [
-                                               'CACHE_TIME'                 => '36000000',
-                                               'CACHE_TYPE'                 => 'N',
-                                               'CODE'                       => $htmlControl['VALUE'],
-                                               'ID'                         => '',
-                                               'INITIALIZE_BY_GLOBAL_EVENT' => '',
-                                               'INPUT_NAME'                 => $htmlControl['NAME'],
-                                               'JS_CALLBACK'                => '',
-                                               'JS_CONTROL_GLOBAL_ID'       => $globalControlName,
-                                               'JS_CONTROL_DEFERRED_INIT'   => $deferedControlName,
-                                               'PROVIDE_LINK_BY'            => 'code',
-                                               'SUPPRESS_ERRORS'            => 'N',
-                                           ],
-                                           false,
-                                           ['HIDE_ICONS' => 'Y']); ?>
+            $APPLICATION->IncludeComponent(
+                'bitrix:sale.location.selector.search',
+                '',
+                [
+                    'CACHE_TIME'                 => '36000000',
+                    'CACHE_TYPE'                 => 'N',
+                    'CODE'                       => $htmlControl['VALUE'],
+                    'ID'                         => '',
+                    'INITIALIZE_BY_GLOBAL_EVENT' => '',
+                    'INPUT_NAME'                 => $htmlControl['NAME'],
+                    'JS_CALLBACK'                => '',
+                    'JS_CONTROL_GLOBAL_ID'       => $globalControlName,
+                    'JS_CONTROL_DEFERRED_INIT'   => $deferedControlName,
+                    'PROVIDE_LINK_BY'            => 'code',
+                    'SUPPRESS_ERRORS'            => 'N',
+                ],
+                false,
+                ['HIDE_ICONS' => 'Y']
+            ); ?>
             <script>
                 if (!window.BX && top.BX) {
                     window.BX = top.BX;
@@ -232,7 +244,6 @@ class UserPropLocation extends TypeBase
         }
         
         return $return;
-        
     }
     
     //Этот метод вызывается для показа значений в списке
@@ -287,12 +298,14 @@ class UserPropLocation extends TypeBase
     {
         $return = '&nbsp;';
         if ($userField['EDIT_IN_LIST'] === 'Y') {
-            $replacedName = str_replace([
-                                            '[',
-                                            ']',
-                                        ],
-                                        '_',
-                                        $htmlControl['NAME']);
+            $replacedName = str_replace(
+                [
+                    '[',
+                    ']',
+                ],
+                '_',
+                $htmlControl['NAME']
+            );
             
             Loader::includeModule('sale');
             global $APPLICATION;
@@ -301,21 +314,24 @@ class UserPropLocation extends TypeBase
             
             $deferedControlName = 'defered_' . $replacedName;
             $tmpInputName       = $replacedName . '_TMP';
-            $APPLICATION->IncludeComponent('adv:sale.location.selector.system',
-                                           '',
-                                           [
-                                               'CACHE_TYPE'               => 'N',
-                                               'CACHE_TIME'               => '0',
-                                               'INPUT_NAME'               => $tmpInputName,
-                                               'SELECTED_IN_REQUEST'      => ['L' => $htmlControl['VALUE']],
-                                               'PROP_LOCATION'            => 'Y',
-                                               'JS_CONTROL_DEFERRED_INIT' => $deferedControlName,
-                                               'JS_CONTROL_GLOBAL_ID'     => 'locationSelectors_' . $replacedName,
-                                           ],
-                                           false);
+            $APPLICATION->IncludeComponent(
+                'adv:sale.location.selector.system',
+                '',
+                [
+                    'CACHE_TYPE'               => 'N',
+                    'CACHE_TIME'               => '0',
+                    'INPUT_NAME'               => $tmpInputName,
+                    'SELECTED_IN_REQUEST'      => ['L' => $htmlControl['VALUE']],
+                    'PROP_LOCATION'            => 'Y',
+                    'JS_CONTROL_DEFERRED_INIT' => $deferedControlName,
+                    'JS_CONTROL_GLOBAL_ID'     => 'locationSelectors_' . $replacedName,
+                ],
+                false
+            );
             
             $resultComponent = ob_get_clean();
-            $result = '<div class="location_type_prop_multi_html" data-realInputName="' . $htmlControl['NAME'] . '">
+            $result          =
+                '<div class="location_type_prop_multi_html" data-realInputName="' . $htmlControl['NAME'] . '">
 			<script type="text/javascript" data-skip-moving="true">
                 if (!window.BX && top.BX) {
                     window.BX = top.BX;
