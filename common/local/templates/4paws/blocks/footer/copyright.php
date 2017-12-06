@@ -11,8 +11,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
        href="/company/user-agreement/" title="Пользовательское соглашение">
         Пользовательское соглашение
     </a>
-    <a class="b-copyright__link b-copyright__link--personal" href="/company/privacy-policy/"
-       title="Условия использования персональных данных">
-        Условия использования персональных данных
+    <a class="b-copyright__link b-copyright__link--personal" href="/company/confidenciality/"
+       title="Политика конфиденциальности">
+        Политика конфиденциальности
     </a>
 </div>
