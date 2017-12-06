@@ -39,7 +39,7 @@ class City extends HlbItemBase
     /**
      * @return string
      */
-    public function getLocation(): string
+    public function getLocation(): array
     {
         return $this->UF_LOCATION;
     }
