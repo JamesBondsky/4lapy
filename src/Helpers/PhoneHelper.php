@@ -1,0 +1,48 @@
+<?php
+
+namespace FourPaws\Helpers;
+
+use FourPaws\Helpers\Exception\WrongPhoneNumberException;
+
+class PhoneHelper
+{
+    /**
+     * Нормализует телефонный номер.
+     * Возвращает телефонный номер в формате xxxxxxxxxx (10 цифр без разделителя)
+     * Кидает исключение, если $phone - не номер
+     *
+     * @param string $rawPhone
+     *
+     * @return string
+     *
+     * @throws WrongPhoneNumberException
+     */
+    public static function normalizePhone(string $rawPhone): string
+    {
+        $phone = preg_replace('~(^(\D)*7|8)|\D~', '', $rawPhone);
+
+        if (strlen($phone) === 10) {
+            return $phone;
+        }
+
+        throw new WrongPhoneNumberException('Неверный номер телефона');
+    }
+
+    /**
+     * Проверяет телефон по правилам нормализации. Допускаются 10только десятизначные номера с ведущими 7 или 8
+     *
+     * @param string $phone
+     *
+     * @return bool
+     */
+    public static function isPhone(string $phone)
+    {
+        try {
+            self::normalizePhone($phone);
+
+            return true;
+        } catch (WrongPhoneNumberException $e) {
+            return false;
+        }
+    }
+}

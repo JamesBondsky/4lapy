@@ -9,12 +9,13 @@ use Bitrix\Main\Entity\UpdateResult;
 use Bitrix\Main\UserTable;
 use FourPaws\BitrixOrm\Model\User;
 use FourPaws\BitrixOrm\Type\ResultContent;
+use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Location\Exception\CityNotFoundException;
 use FourPaws\Location\LocationService;
 use FourPaws\User\Exceptions\NotFoundException;
 use FourPaws\User\Exceptions\TooManyUserFoundException;
 use FourPaws\User\Exceptions\WrongPasswordException;
-use FourPaws\User\Exceptions\WrongPhoneNumberException;
+use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 
 class UserService
 {
@@ -302,7 +303,7 @@ class UserService
     public function verifyPhone(int $userId, string $rawPhone) : UpdateResult
     {
         try {
-            $phone = Utils::normalizePhone($rawPhone);
+            $phone = PhoneHelper::normalizePhone($rawPhone);
             /**
              * @todo implement this
              */
