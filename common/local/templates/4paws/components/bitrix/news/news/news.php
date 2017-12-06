@@ -71,5 +71,6 @@ $this->setFrameMode(true);
         'HIDE_LINK_WHEN_NO_DETAIL'        => $arParams['HIDE_LINK_WHEN_NO_DETAIL'],
         'CHECK_DATES'                     => $arParams['CHECK_DATES'],
     ],
-    $component
+    $component,
+    ['HIDE_ICONS' => 'Y']
 ); ?>

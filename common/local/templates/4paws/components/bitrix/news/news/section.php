@@ -75,5 +75,6 @@ $this->setFrameMode(true);
         'SECTION_URL'         => $arResult['FOLDER'] . $arResult['URL_TEMPLATES']['section'],
         'IBLOCK_URL'          => $arResult['FOLDER'] . $arResult['URL_TEMPLATES']['news'],
     ],
-    $component
+    $component,
+    ['HIDE_ICONS' => 'Y']
 ); ?>

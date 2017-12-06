@@ -1,6 +1,10 @@
 <?php if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
+
+use Bitrix\Main\Application;
+use FourPaws\Decorators\FullHrefDecorator;
+
 /** @var array $arParams */
 /** @var array $arResult */
 /** @noinspection PhpUndefinedClassInspection */
@@ -73,13 +77,11 @@ $APPLICATION->IncludeComponent(
         'ADD_ELEMENT_CHAIN'         => $arParams['ADD_ELEMENT_CHAIN'] ?? '',
         'STRICT_SECTION_CHECK'      => $arParams['STRICT_SECTION_CHECK'] ?? '',
     ],
-    $component
+    $component,
+    ['HIDE_ICONS' => 'Y']
 );
 
 /** TODO сделать распродажу с каталогом после готовности каталога со списком товаров */
-
-use Bitrix\Main\Application;
-use FourPaws\Decorators\FullHrefDecorator;
 
 ?>
     <div class="b-container">
