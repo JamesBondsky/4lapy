@@ -27,9 +27,9 @@ abstract class TemplateAbstract
 {
     protected static $instance;
     
-    private          $context;
+    private $context;
     
-    private          $path;
+    private $path;
     
     /**
      * @param Context $context
@@ -115,7 +115,18 @@ abstract class TemplateAbstract
     /**
      * @return Response
      */
-    public function getResponse() : Response {
+    public function getResponse() : Response
+    {
         return $this->context->getResponse();
+    }
+    
+    public function getDir() : string
+    {
+        return $this->getRequest()->getRequestedPageDirectory();
+    }
+    
+    public function isPartitionDir(string $src) : bool
+    {
+        return preg_match(sprintf('~^%s/\w+~', $src), $this->getDir()) > 0;
     }
 }
