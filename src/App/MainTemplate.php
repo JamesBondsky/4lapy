@@ -23,6 +23,21 @@ class MainTemplate extends TemplateAbstract
      */
     public function is404() : bool
     {
-        return defined('ERROR_404') && ERROR_404 === 'Y';
+        return \defined('ERROR_404') && ERROR_404 === 'Y';
+    }
+    
+    public function hasHeaderDetailPageContainer() : bool
+    {
+        return $this->isDetailNews() || $this->isDetailArticles();
+    }
+    
+    public function isDetailNews() : bool
+    {
+        return $this->isPartitionDir('/company/news');
+    }
+    
+    public function isDetailArticles()
+    {
+        return $this->isPartitionDir('/services/articles');
     }
 }

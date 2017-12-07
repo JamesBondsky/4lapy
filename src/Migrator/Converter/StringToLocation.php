@@ -8,7 +8,7 @@ use Bitrix\Sale\Location\Name\LocationTable;
 /**
  * Class StringToLocation
  *
- * Преобразует строку к локации
+ * Преобразует строку к коду местоположения
  *
  * @package FourPaws\Migrator\Converter
  */
@@ -61,19 +61,14 @@ final class StringToLocation extends AbstractConverter
         }
     
         if ($locationCode) {
-            $location = \Bitrix\Sale\Location\LocationTable::getList([
-                                                                         'filter' => ['=CODE' => $locationCode],
-                                                                         'select' => ['ID'],
-                                                                     ])->fetch();
-        
-            return $location['ID'];
+            return $locationCode;
         }
         
         $location = LocationTable::getList([
                                                'filter' => ['=NAME_UPPER' => strtoupper($string)],
-                                               'select' => ['LOCATION_ID'],
+                                               'select' => ['LOCATION.CODE'],
                                            ])->fetch();
-        
-        return $location['LOCATION_ID'];
+    
+        return $location['SALE_LOCATION_NAME_LOCATION_LOCATION_CODE'];
     }
 }
