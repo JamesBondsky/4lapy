@@ -151,8 +151,9 @@ class UserService implements
         setcookie('user_city_id', $city['CODE'], 86400 * 30);
 
         if ($this->isAuthorized()) {
-            global $USER;
-            static::update($USER->GetID(), ['UF_LOCATION' => $city['CODE']]);
+            $user = $this->getCurrentUser();
+            $user->setLocation($city['CODE']);
+            $this->userRepository->update($user);
         }
 
         return true;
