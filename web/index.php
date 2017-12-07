@@ -14,7 +14,7 @@ $APPLICATION->IncludeComponent('bitrix:news.list',
                                'index.slider',
                                [
                                    'COMPONENT_TEMPLATE' => 'index.slider',
-                                   'IBLOCK_TYPE'        => 'publications',
+                                   'IBLOCK_TYPE'        => IblockType::PUBLICATION,
                                    'IBLOCK_ID'          => IblockUtils::getIblockId(IblockType::PUBLICATION,
                                                                                     IblockCode::BANNERS),
                                    //не проставлен символьный код
@@ -140,12 +140,11 @@ $APPLICATION->IncludeComponent('fourpaws:items.list',
                                    ],
                                    'FILTER_NAME'            => '',
                                    'IBLOCK_ID'              => [
-                                       IblockUtils::getIblockId('publications', 'news'),
-                                       IblockUtils::getIblockId('publications',
-                                                                'articles'),
-                                       //\Adv\Bitrixtools\Tools\Iblock\IblockUtils::getIblockId('publications', 'cloubs_and_nurderis'),//Раскоментить когда добавится инфоблок
+                                       IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::NEWS),
+                                       IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::ARTICLES),
+                                       //\Adv\Bitrixtools\Tools\Iblock\IblockUtils::getIblockId(IblockType::PUBLICATION, 'cloubs_and_nurderis'),//Раскоментить когда добавится инфоблок
                                    ],
-                                   'IBLOCK_TYPE'            => 'publications',
+                                   'IBLOCK_TYPE'            => IblockType::PUBLICATION,
                                    'NEWS_COUNT'             => '7',
                                    'PREVIEW_TRUNCATE_LEN'   => '',
                                    'PROPERTY_CODE'          => [

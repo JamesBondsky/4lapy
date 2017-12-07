@@ -20,6 +20,7 @@
 /** @var CBitrixComponent $component */
 
 use Bitrix\Main\Application;
+use FourPaws\BitrixOrm\Model\CropImageDecorator;
 
 $this->setFrameMode(true);
 ?>
@@ -52,7 +53,8 @@ $this->setFrameMode(true);
                         <?php if (!empty($item['PREVIEW_PICTURE']['SRC'])
                                   && file_exists(Application::getDocumentRoot() . $item['PREVIEW_PICTURE']['SRC'])) {
                             ?>
-                            <img src="<?= $item['PREVIEW_PICTURE']['SRC'] ?>"
+                            <?/** todo set crop sizes */?>
+                            <img src="<?= new CropImageDecorator($item['PREVIEW_PICTURE']) ?>"
                                  alt="<?= $item['PREVIEW_PICTURE']['ALT'] ?>"
                                  title="<?= $item['PREVIEW_PICTURE']['TITLE'] ?>">
                         <?php } ?>

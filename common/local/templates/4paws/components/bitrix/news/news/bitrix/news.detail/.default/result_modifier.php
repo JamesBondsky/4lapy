@@ -1,4 +1,7 @@
 <?php
+
+use FourPaws\BitrixOrm\Model\CropImageDecorator;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
@@ -26,13 +29,10 @@ if (is_array($arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'])
     $html = '';
     foreach ((array)$arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'] as $photo) {
         if (is_numeric($photo)) {
-            /** @noinspection PhpUndefinedClassInspection */
-            $photo = ['SRC' => CFile::GetPath($photo)];
-        }
-        if (!empty($photo['SRC'])) {
+            /** todo set crop sizes */
             $html .= '
             <div class="b-detail-page-slider__item">
-                <img src="' . $photo['SRC'] . '" />
+                <img src="' . CropImageDecorator::createFromPrimary($photo) . '" />
             </div>
         ';
         }

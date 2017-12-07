@@ -13,4 +13,8 @@ class IblockCode
     const BRANDS    = 'brands';
     
     const BANNERS   = 'banners';
+    
+    const NEWS      = 'news';
+    
+    const ARTICLES  = 'articles';
 }

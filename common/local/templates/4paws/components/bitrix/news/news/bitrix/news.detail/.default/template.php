@@ -1,4 +1,6 @@
-<?php if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
+<?php use FourPaws\BitrixOrm\Model\CropImageDecorator;
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 /** @var array $arParams */
@@ -21,8 +23,9 @@ $this->setFrameMode(true);
 ?>
 <div class="b-container">
     <div class="b-detail-page b-detail-page--bordered">
-        <?php if (is_array($arResult['DETAIL_PICTURE'])) { ?>
-            <img src="<?= $arResult['DETAIL_PICTURE']['SRC'] ?>" />
+        <?php if (is_array($arResult['DETAIL_PICTURE'])) {?>
+            <?/** todo set crop sizes */?>
+            <img src="<?= new CropImageDecorator($arResult['DETAIL_PICTURE']); ?>" />
         <?php } ?>
         <?= $arResult['DETAIL_TEXT'] ?>
         <?php if (!$arResult['NO_SHOW_VIDEO'] && !empty($arResult['DISPLAY_PROPERTIES']['VIDEO']['DISPLAY_VALUE'])) {
@@ -34,13 +37,10 @@ $this->setFrameMode(true);
             <div class="b-detail-page-slider js-detail-slider">
                 <?php /** @noinspection ForeachSourceInspection - условие есть выше */
                 foreach ($arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'] as $photo) {
-                    if (is_numeric($photo)) {
-                        $photo = ['SRC' => \CFile::GetPath($photo)];
-                    }
-                    if (!empty($photo['SRC'])) {
-                        ?>
+                    if (is_numeric($photo)) {?>
                         <div class="b-detail-page-slider__item">
-                            <img src="<?= $photo['SRC'] ?>" />
+                            <?/** todo set crop sizes */?>
+                            <img src="<?=CropImageDecorator::createFromPrimary($photo);?>"
                         </div>
                     <?php }
                 } ?>
