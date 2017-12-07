@@ -275,6 +275,21 @@ class LocationService
     }
 
     /**
+     * Возвращает дефолтное местоположение
+     *
+     * @return array
+     */
+    public function getDefaultLocation(): array
+    {
+        try {
+            return $this->findLocationCityByCode(static::LOCATION_CODE_MOSCOW);
+        } catch (CityNotFoundException $e) {
+        }
+        
+        return [];
+    }
+
+    /**
      * Получение эл-та из HL-блока Cities по коду местоположения
      * 
      * @return City|null

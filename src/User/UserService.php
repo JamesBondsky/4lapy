@@ -364,8 +364,8 @@ class UserService
         setcookie('user_city_id', $city['CODE'], 86400 * 30);
 
         if ($this->isAuthorized()) {
-            $user = $this->getCurrentUser();
-            static::update($user->getId(), ['UF_LOCATION' => $city['CODE']]);
+            global $USER;
+            static::update($USER->GetID(), ['UF_LOCATION' => $city['CODE']]);
         }
 
         return true;
@@ -390,6 +390,6 @@ class UserService
             }
         }
 
-        return $this->locationService->findLocationCityByCode(LocationService::LOCATION_CODE_MOSCOW);
+        return $this->locationService->getDefaultLocation();
     }
 }
