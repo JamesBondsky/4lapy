@@ -5,6 +5,11 @@ namespace FourPaws\User;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 
+/**
+ * Class Utils
+ * @package FourPaws\User
+ * @deprecated
+ */
 class Utils
 {
 

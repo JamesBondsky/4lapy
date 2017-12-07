@@ -1,39 +1,9 @@
 ---
 
-user.auth.login:
-  path: /user/auth/login/
-  defaults: { _controller: '\FourPaws\User\Controller\AuthController::loginAction' }
-  methods: [POST]
-
-user.auth.forgotPassword:
-  path: /user/auth/forgotPassword/
-  defaults: { _controller: '\FourPaws\User\Controller\AuthController::forgotPasswordAction' }
-  methods: [POST]
-
-user.auth.register:
-  path: /user/auth/register/
-  defaults: { _controller: '\FourPaws\User\Controller\AuthController::registerAction' }
-  methods: [POST]
-
-user.auth.changePassword:
-  path: /user/auth/changePassword/
-  defaults: { _controller: '\FourPaws\User\Controller\AuthController::changePasswordAction' }
-  methods: [POST]
-
-user.subscribe.subscribe:
-  path: /user/subscribe/subscribe/
-  defaults: { _controller: '\FourPaws\User\Controller\SubscribeController::subscribeAction' }
-  methods: [POST]
-
-user.city.set:
-  path: /user/city/set/
-  defaults: { _controller: '\FourPaws\User\Controller\CityController::setAction' }
-  methods: [POST]
-
-user.city.get:
-  path: /user/city/get/
-  defaults: { _controller: '\FourPaws\User\Controller\CityController::getAction' }
-  methods: [GET]
+user:
+    resource: '@FourPawsUserBundle/AjaxController'
+    type: annotation
+    prefix: '/user'
 
 location.city.autocomplete:
   path: /location/city/autocomplete

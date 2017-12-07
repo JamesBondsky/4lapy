@@ -17,7 +17,7 @@ use FourPaws\Enum\CitiesSectionCode;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Location\Exception\CityNotFoundException;
-use FourPaws\User\UserService;
+use FourPaws\UserBundle\Service\UserService;
 use WebArch\BitrixCache\BitrixCache;
 
 class LocationService
@@ -326,7 +326,9 @@ class LocationService
     public function getCurrentCity()
     {
         /** @var UserService $userService */
-        $userService = Application::getInstance()->getContainer()->get('user.service');
+        $userService = Application::getInstance()
+                                  ->getContainer()
+                                  ->get('FourPaws\UserBundle\Service\UserCitySelectInterface');
 
         if ($locationCode = $userService->getSelectedCity()['CODE']) {
             if ($city = $this->getCity($locationCode)){

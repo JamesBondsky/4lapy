@@ -14,8 +14,10 @@ class FourPawsCityPhoneComponent extends \CBitrixComponent
     public function onPrepareComponentParams($params): array
     {
         if (empty($params['LOCATION_CODE'])) {
-            /** @var \FourPaws\User\UserService $userService */
-            $userService = Application::getInstance()->getContainer()->get('user.service');
+            /** @var \FourPaws\UserBundle\Service\UserService $userService */
+            $userService = Application::getInstance()
+                                      ->getContainer()
+                                      ->get('FourPaws\UserBundle\Service\UserCitySelectInterface');
             $params['LOCATION_CODE'] = $userService->getSelectedCity()['CODE'];
         }
 
@@ -47,6 +49,7 @@ class FourPawsCityPhoneComponent extends \CBitrixComponent
      */
     protected function prepareResult()
     {
+        /** @var \FourPaws\Location\LocationService $locationService */
         $locationService = Application::getInstance()->getContainer()->get('location.service');
         $defaultCity = $locationService->getDefaultCity();
 
@@ -59,6 +62,7 @@ class FourPawsCityPhoneComponent extends \CBitrixComponent
 
         if (!$city) {
             $this->AbortResultCache();
+
             return $this;
         }
 
@@ -67,7 +71,7 @@ class FourPawsCityPhoneComponent extends \CBitrixComponent
         $this->arResult['CITY_NAME'] = $city->getName();
         $this->arResult['PHONE'] = PhoneHelper::formatPhone($phone);
         $this->arResult['PHONE_FOR_URL'] = PhoneHelper::formatPhone($phone, PhoneHelper::FORMAT_URL);
-        
+
         /** @var \FourPaws\Location\Model\City $defaultCity */
         $defaultPhone = $defaultCity->getPhone();
         $this->arResult['DEFAULT_CITY_NAME'] = $defaultCity->getName();
