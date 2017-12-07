@@ -28,6 +28,8 @@ class City extends HlbItemBase
 
     protected $UF_PHONE;
 
+    protected $UF_WORKING_HOURS;
+
     /**
      * @return string
      */
@@ -66,6 +68,14 @@ class City extends HlbItemBase
     public function getDeliveryText(): string
     {
         return $this->UF_DELIVERY_TEXT;
+    }
+
+    /**
+     * @return string
+     */
+    public function getWorkingHours(): string
+    {
+        return $this->UF_WORKING_HOURS;
     }
 
     /**
@@ -119,6 +129,18 @@ class City extends HlbItemBase
     public function withDeliveryText(string $deliveryText): City
     {
         $this->UF_DELIVERY_TEXT = $deliveryText;
+
+        return $this;
+    }
+
+    /**
+     * @param string $active
+     *
+     * @return City
+     */
+    public function withWorkingHours(string $workingHours): City
+    {
+        $this->UF_WORKING_HOURS = $workingHours;
 
         return $this;
     }

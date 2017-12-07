@@ -21,7 +21,7 @@ use FourPaws\Decorators\SvgDecorator; ?>
             <dl class="b-phone-pair">
                 <dt class="b-phone-pair__phone">
                     <a class="b-phone-pair__link"
-                       href="tel:<?= preg_replace('/[^+\d]/', '', tplvar('phone_main')) ?>"
+                       href="tel:<?= preg_replace('~[^+\d]~', '', tplvar('phone_main')) ?>"
                        title="<?= tplvar('phone_main') ?>">
                         <?= tplvar('phone_main') ?>
                     </a>

@@ -20,8 +20,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @global CDatabase              $DB
  */
 
-use FourPaws\Decorators\SvgDecorator;
-
 $this->setFrameMode(true);
 ?>
 

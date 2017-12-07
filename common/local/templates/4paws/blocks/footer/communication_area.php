@@ -17,7 +17,7 @@ $currentCity = $locationService->getCurrentCity();
 ) ?>
 <span class="b-footer-communication__item">
     <a class="b-footer-communication__link"
-       href="tel:<?= preg_replace('/[^+\d]/', '', tplvar('phone_main')) ?>"
+       href="tel:<?= preg_replace('~[^+\d]~', '', tplvar('phone_main')) ?>"
        title="<?= tplvar('phone_main') ?>">
         <?= tplvar('phone_main') ?>
     </a>
