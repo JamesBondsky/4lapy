@@ -13,7 +13,7 @@ $currentCity = $locationService->getCurrentCity();
 ?>
 <?php $APPLICATION->IncludeComponent(
         'fourpaws:city.phone',
-        'footer'
+        'template.footer'
 ) ?>
 <span class="b-footer-communication__item">
     <a class="b-footer-communication__link"

@@ -30,13 +30,17 @@ $this->setFrameMode(true);
         <a class="b-footer-communication__link" href="tel:<?= $arResult['PHONE_FOR_URL'] ?>" title="<?= $arResult['PHONE'] ?>">
             <?= $arResult['PHONE'] ?>
         </a>
-        <span class="b-footer-communication__description">(доступен до 21:00)</span>
+        <?php if (!empty($arResult['WORKING_HOURS'])) { ?>
+            <span class="b-footer-communication__description">(<?= $arResult['WORKING_HOURS'] ?>)</span>
+        <?php } ?>
     </span>
 <?php $frame->beginStub() ?>
     <span class="b-footer-communication__item">
         <a class="b-footer-communication__link" href="tel:<?= $arResult['DEFAULT_PHONE_FOR_URL'] ?>" title="<?= $arResult['DEFAULT_PHONE'] ?>">
             <?= $arResult['DEFAULT_PHONE'] ?>
         </a>
-        <span class="b-footer-communication__description">(доступен до 21:00)</span>
+        <?php if (!empty($arResult['DEFAULT_WORKING_HOURS'])) { ?>
+            <span class="b-footer-communication__description">(<?= $arResult['DEFAULT_WORKING_HOURS'] ?>)</span>
+        <?php } ?>
     </span>
 <? $frame->end() ?>
