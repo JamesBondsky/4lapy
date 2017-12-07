@@ -30,7 +30,8 @@ $this->setFrameMode(true);
                 <?= $arResult['PHONE'] ?>
             </a>
         </dt>
-        <dd class="b-phone-pair__description">Для Нижнего Новгорода. Доступен до 21:00</dd>
+        <?php /* @todo склонять название города? */ ?>
+        <dd class="b-phone-pair__description">Для г.<?= $arResult['CITY_NAME'] ?>. Доступен до 21:00</dd>
     </dl>
 <?php $frame->beginStub() ?>
     <dl class="b-phone-pair">
@@ -39,6 +40,7 @@ $this->setFrameMode(true);
                 <?= $arResult['DEFAULT_PHONE'] ?>
             </a>
         </dt>
-        <dd class="b-phone-pair__description">Для Нижнего Новгорода. Доступен до 21:00</dd>
+        <?php /* @todo склонять название города? */ ?>
+        <dd class="b-phone-pair__description">Для г.<?= $arResult['DEFAULT_CITY_NAME'] ?>. Доступен до 21:00</dd>
     </dl>
 <? $frame->end() ?>

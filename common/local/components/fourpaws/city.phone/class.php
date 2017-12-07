@@ -64,11 +64,13 @@ class FourPawsCityPhoneComponent extends \CBitrixComponent
 
         /** @var \FourPaws\Location\Model\City $city */
         $phone = $city->getPhone();
+        $this->arResult['CITY_NAME'] = $city->getName();
         $this->arResult['PHONE'] = PhoneHelper::formatPhone($phone);
         $this->arResult['PHONE_FOR_URL'] = PhoneHelper::formatPhone($phone, PhoneHelper::FORMAT_URL);
         
         /** @var \FourPaws\Location\Model\City $defaultCity */
         $defaultPhone = $defaultCity->getPhone();
+        $this->arResult['DEFAULT_CITY_NAME'] = $defaultCity->getName();
         $this->arResult['DEFAULT_PHONE'] = PhoneHelper::formatPhone($defaultPhone);
         $this->arResult['DEFAULT_PHONE_FOR_URL'] = PhoneHelper::formatPhone($defaultPhone, PhoneHelper::FORMAT_URL);
 
