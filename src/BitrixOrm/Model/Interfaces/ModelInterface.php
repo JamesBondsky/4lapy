@@ -1,6 +1,6 @@
 <?php
 
-namespace FourPaws\BitrixOrm\Model;
+namespace FourPaws\BitrixOrm\Model\Interfaces;
 
 interface ModelInterface
 {
@@ -13,8 +13,6 @@ interface ModelInterface
     
     /**
      * @param string $primary
-     *
-     * @return \FourPaws\BitrixOrm\Model\ModelInterface
      */
-    public static function createFromPrimary(string $primary) : self;
+    public static function createFromPrimary(string $primary);
 }

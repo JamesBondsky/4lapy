@@ -3,6 +3,7 @@
 namespace FourPaws\BitrixOrm\Model;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
+use FourPaws\BitrixOrm\Model\Interfaces\ModelInterface;
 
 /**
  * Class BitrixArrayItemBase
