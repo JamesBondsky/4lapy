@@ -4,7 +4,7 @@ namespace FourPaws\Location\Model;
 
 use FourPaws\App\Application;
 use FourPaws\BitrixOrm\Model\HlbItemBase;
-use FourPaws\BitrixOrm\Model\ModelInterface;
+use FourPaws\BitrixOrm\Model\Interfaces\ModelInterface;
 use FourPaws\Location\Query\CityQuery;
 use FourPaws\Location\Exception\CityNotFoundException;
 use Bitrix\Main\Entity\DataManager;
@@ -126,7 +126,7 @@ class City extends HlbItemBase
     /**
      * @param string $id
      *
-     * @return \FourPaws\BitrixOrm\Model\ModelInterface
+     * @return \FourPaws\BitrixOrm\Model\Interfaces\ModelInterface
      *
      * @throws \FourPaws\User\Exceptions\NotFoundException
      */
