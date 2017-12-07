@@ -8,5 +8,5 @@ class IblockType
     
     const MENU        = 'menu';
     
-    const PUBLICATION = 'publication';
+    const PUBLICATION = 'publications';
 }
