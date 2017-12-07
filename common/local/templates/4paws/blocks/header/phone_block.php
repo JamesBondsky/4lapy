@@ -4,32 +4,24 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+/** @var \CMain $APPLICATION */
+
 use FourPaws\Decorators\SvgDecorator; ?>
 <div class="b-header-info__item b-header-info__item--phone">
-    <a class="b-header-info__link js-open-popover" href="javascript:void(0);" title="+7 473 202-76-26">
-        <span class="b-icon">
-            <?= new SvgDecorator('icon-phone-dark', 16, 16) ?>
-        </span>
-        <span class="b-header-info__inner">+7 473 202-76-26</span>
-        <span class="b-icon b-icon--header b-icon--left-3">
-            <?= new SvgDecorator('icon-arrow-down', 10, 12) ?>
-        </span>
-    </a>
+    <?php $APPLICATION->IncludeComponent(
+            'fourpaws:city.phone',
+            'header.popover'
+    ) ?>
     <div class="b-popover b-popover--phone js-popover">
         <div class="b-contact">
-            <? /** @todo вынести в телефон */ ?>
-            <dl class="b-phone-pair">
-                <dt class="b-phone-pair__phone">
-                    <a class="b-phone-pair__link" href="tel:84732027626" title="+7 473 202-76-26">
-                        +7 473 202-76-26
-                    </a>
-                </dt>
-                <dd class="b-phone-pair__description">Для Нижнего Новгорода. Доступен до 21:00</dd>
-            </dl>
+            <?php $APPLICATION->IncludeComponent(
+                    'fourpaws:city.phone',
+                    'header'
+            ) ?>
             <dl class="b-phone-pair">
                 <dt class="b-phone-pair__phone">
                     <a class="b-phone-pair__link"
-                       href="tel:<?= preg_replace('[^+\d]', '', tplvar('phone_main')) ?>"
+                       href="tel:<?= preg_replace('/[^+\d]/', '', tplvar('phone_main')) ?>"
                        title="<?= tplvar('phone_main') ?>">
                         <?= tplvar('phone_main') ?>
                     </a>

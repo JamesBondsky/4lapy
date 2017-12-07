@@ -6,6 +6,10 @@ use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 
 class PhoneHelper
 {
+    const FORMAT_DEFAULT = '+7 %s%s%s %s%s%s-%s%s-%s%s';
+
+    const FORMAT_URL = '8%s%s%s%s%s%s%s%s%s%s';
+
     /**
      * Нормализует телефонный номер.
      * Возвращает телефонный номер в формате xxxxxxxxxx (10 цифр без разделителя)
@@ -43,6 +47,16 @@ class PhoneHelper
             return true;
         } catch (WrongPhoneNumberException $e) {
             return false;
+        }
+    }
+    
+    public static function formatPhone(string $phone, string $format = self::FORMAT_DEFAULT): string
+    {
+        try {
+            $normalized = self::normalizePhone($phone);
+            return vsprintf($format, str_split($normalized));
+        } catch (WrongPhoneNumberException $e) {
+            return $phone;
         }
     }
 }
