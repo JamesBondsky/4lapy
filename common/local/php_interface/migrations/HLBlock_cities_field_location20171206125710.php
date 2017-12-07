@@ -45,6 +45,18 @@ class HLBlock_cities_field_location20171206125710 extends SprintMigrationBase
                 'SHOW_IN_LIST'  => 'Y',
                 'EDIT_IN_LIST'  => 'Y',
                 'IS_SEARCHABLE' => 'N',
+                'EDIT_FORM_LABEL'   => [
+                    'ru' => 'Местоположения',
+                    'en' => 'Locations',
+                ],
+                'LIST_COLUMN_LABEL' => [
+                    'ru' => 'Местоположения',
+                    'en' => 'Locations',
+                ],
+                'LIST_FILTER_LABEL' => [
+                    'ru' => 'Местоположения',
+                    'en' => 'Locations',
+                ],
             ]
         )) {
             $this->log()->info('Пользовательское свойство ' . static::FIELD_NAME . ' создано');
@@ -89,6 +101,18 @@ class HLBlock_cities_field_location20171206125710 extends SprintMigrationBase
                 'SHOW_IN_LIST'  => 'Y',
                 'EDIT_IN_LIST'  => 'Y',
                 'IS_SEARCHABLE' => 'N',
+                'EDIT_FORM_LABEL'   => [
+                    'ru' => 'Местоположения',
+                    'en' => 'Locations',
+                ],
+                'LIST_COLUMN_LABEL' => [
+                    'ru' => 'Местоположения',
+                    'en' => 'Locations',
+                ],
+                'LIST_FILTER_LABEL' => [
+                    'ru' => 'Местоположения',
+                    'en' => 'Locations',
+                ],
             ]
         )) {
             $this->log()->info('Пользовательское свойство ' . static::FIELD_NAME . ' создано');
