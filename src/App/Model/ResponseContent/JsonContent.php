@@ -21,6 +21,16 @@ class JsonContent implements JsonSerializable
      */
     private $message;
 
+    /**
+     * @var bool
+     */
+    private $reload = false;
+
+    /**
+     * @var string
+     */
+    private $redirect = '';
+
     public function __construct(string $message = '', bool $success = true, $data = null)
     {
         $this->message = $message;
@@ -88,6 +98,29 @@ class JsonContent implements JsonSerializable
         return $this;
     }
 
+    public function getReload(): bool
+    {
+        return (bool)$this->reload;
+    }
+
+    public function withReload(bool $reload): JsonContent
+    {
+        $this->reload = $reload;
+        return $this;
+    }
+
+    public function getRedirect(): string
+    {
+        return $this->redirect;
+    }
+
+    public function withRedirect(string $redirect): JsonContent
+    {
+        $this->redirect = $redirect;
+
+        return $this;
+    }
+    
     /**
      * @return array
      */

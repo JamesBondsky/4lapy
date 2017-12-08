@@ -5,6 +5,16 @@ user:
     type: annotation
     prefix: '/user'
 
+location.city.autocomplete:
+  path: /location/city/autocomplete
+  defaults: { _controller: '\FourPaws\Location\Controller\CityController::autocompleteAction' }
+  methods: [GET]
+
+location.city.list:
+  path: /location/city/list/
+  defaults: { _controller: '\FourPaws\Location\Controller\CityController::listAction' }
+  methods: [GET]
+
 autosort.property.hint:
   path: /autosort/property-hint/{propertyId}
   defaults: { _controller: '\FourPaws\ProductAutoSort\Controller\AutosortController::propertyHint' }

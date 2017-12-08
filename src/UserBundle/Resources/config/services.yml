@@ -27,6 +27,10 @@ services:
         class: FourPaws\UserBundle\Service\UserService
         public: true
 
+    FourPaws\UserBundle\Service\UserCitySelectInterface:
+        class: FourPaws\UserBundle\Service\UserService
+        public: true
+
     FourPaws\UserBundle\AjaxController\:
         resource: '../../AjaxController'
         public: true
