@@ -31,7 +31,8 @@ class Event implements ServiceHandlerInterface
         $result = new EventResult(
             EventResult::SUCCESS,
             [
-                '\FourPaws\DeliveryBundle\Service\InnerDelivery' => __DIR__ . '/Service/InnerDelivery.php',
+                '\FourPaws\DeliveryBundle\Service\InnerDeliveryService' => __DIR__ . '/Service/InnerDeliveryService.php',
+                '\FourPaws\DeliveryBundle\Service\InnerPickupService'   => __DIR__ . '/Service/InnerPickupService.php',
             ]
         );
 

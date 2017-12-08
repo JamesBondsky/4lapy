@@ -3,13 +3,13 @@
 namespace FourPaws\DeliveryBundle\Service;
 
 use Bitrix\Sale\Shipment;
-use Bitrix\Sale\Delivery\Services\Base;
 
-class InnerDelivery extends Base
+class InnerDeliveryService extends DeliveryServiceBase
 {
-    protected static $isCalculatePriceImmediately = true;
-
-    protected static $whetherAdminExtraServicesShow = false;
+    protected $availableZones = [
+        self::ZONE_1,
+        self::ZONE_2,
+    ];
 
     public function __construct(array $initParams)
     {
@@ -18,25 +18,26 @@ class InnerDelivery extends Base
 
     public static function getClassTitle()
     {
-        return 'Доставка';
+        return 'Доставка "Четыре лапы"';
     }
 
     public static function getClassDescription()
     {
-        return 'Обработчик доставки';
+        return 'Обработчик собственной доставки "Четыре лапы"';
     }
 
-    public function isCalculatePriceImmediately()
+    public function isCompatible(Shipment $shipment)
     {
-        return self::$isCalculatePriceImmediately;
+        if (!parent::isCompatible($shipment)) {
+            return false;
+        }
+
+        /** todo проверка остатков товаров */
+
+        return true;
     }
 
-    public static function whetherAdminExtraServicesShow()
-    {
-        return self::$whetherAdminExtraServicesShow;
-    }
-
-    protected function calculateConcrete(Shipment $shipment = null)
+    protected function calculateConcrete(Shipment $shipment)
     {
         /* @todo calculate delivery time and price */
 
