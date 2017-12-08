@@ -7,13 +7,14 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 foreach ($arResult['ITEMS'] as $key => &$item) {
-    $image = new CropImageDecorator($item['PREVIEW_PICTURE']);
-    if($key === 0) {
-        $image->setCropWidth(630)->setCropHeight(210);
+    if (is_array($item['PREVIEW_PICTURE']) && !empty($item['PREVIEW_PICTURE']))) {
+        $image = new CropImageDecorator($item['PREVIEW_PICTURE']);
+    } elseif (is_numeric($item['~PREVIEW_PICTURE']) && (int)$item['~PREVIEW_PICTURE'] > 0) {
+        $image = CropImageDecorator::createFromPrimary($item['~PREVIEW_PICTURE']);
     }
-    else{
+    if ($image instanceof CropImageDecorator) {
         $image->setCropWidth(305)->setCropHeight(120);
+        $item['PREVIEW_PICTURE']['SRC'] = $image;
     }
-    $item['PREVIEW_PICTURE']['SRC'] = $image;
 }
 unset($item);

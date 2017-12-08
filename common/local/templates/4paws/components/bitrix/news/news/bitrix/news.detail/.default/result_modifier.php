@@ -23,7 +23,7 @@ if (stripos($arResult['DETAIL_TEXT'], '#video#') !== false) {
 }
 
 foreach ((array)$arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'] as &$photo) {
-    if (is_numeric($photo)) {
+    if (is_numeric($photo) && (int)$photo > 0) {
         /** @noinspection PhpUnhandledExceptionInspection */
         $image = CropImageDecorator::createFromPrimary($photo);
         $image->setCropWidth(890)->setCropHeight(500);
@@ -36,9 +36,15 @@ foreach ((array)$arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'] a
 }
 
 if (is_array($arResult['DETAIL_PICTURE']) && !empty($arResult['DETAIL_PICTURE'])) {
-    $image = new CropImageDecorator($arResult['DETAIL_PICTURE']);
-    $image->setCropWidth(890)->setCropHeight(500);
-    $arResult['DETAIL_PICTURE']['SRC'] = $image;
+    if (is_array($arResult['DETAIL_PICTURE']) && !empty($arResult['DETAIL_PICTURE'])) {
+        $image = new CropImageDecorator($arResult['DETAIL_PICTURE']);
+    } elseif (is_numeric($arResult['~DETAIL_PICTURE']) && (int)$arResult['~DETAIL_PICTURE'] > 0) {
+        $image = CropImageDecorator::createFromPrimary($arResult['~DETAIL_PICTURE']);
+    }
+    if ($image instanceof CropImageDecorator) {
+        $image->setCropWidth(890)->setCropHeight(500);
+        $arResult['DETAIL_PICTURE']['SRC'] = $image;
+    }
 }
 
 $arResult['NO_SHOW_SLIDER'] = false;
