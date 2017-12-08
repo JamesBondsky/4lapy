@@ -22,6 +22,7 @@ class HLBlock_cities_field_working_hours20171207182204 extends SprintMigrationBa
 
         if (!$hlBlockId = $hlBlockHelper->getHlblockId(static::HL_BLOCK_NAME)) {
             $this->log()->error('HL-блок ' . static::HL_BLOCK_NAME . ' не найден');
+            return false;
         }
 
         $entityId = 'HLBLOCK_' . $hlBlockId;
@@ -72,6 +73,7 @@ class HLBlock_cities_field_working_hours20171207182204 extends SprintMigrationBa
 
         if (!$hlBlockId = $hlBlockHelper->getHlblockId(static::HL_BLOCK_NAME)) {
             $this->log()->error('HL-блок ' . static::HL_BLOCK_NAME . ' не найден');
+            return false;
         }
 
         $entityId = 'HLBLOCK_' . $hlBlockId;
