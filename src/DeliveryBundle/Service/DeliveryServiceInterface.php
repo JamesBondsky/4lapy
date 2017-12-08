@@ -13,11 +13,11 @@ interface DeliveryServiceInterface
     const ZONE_4 = '4';
 
     /**
-     * Получение зоны доставки по местположению
+     * Получение зоны доставки по местоположению
      *
      * @param $locationCode
      *
      * @return mixed
      */
-    public function getDeliveryZone(string $locationCode = null);
+    public function getDeliveryZone(string $locationCode = null): string;
 }
