@@ -134,7 +134,7 @@ class User
      * @Serializer\SerializedName("UF_LOCATION")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
-    protected $location = false;
+    protected $location = '';
 
     /**
      * @return int
@@ -392,7 +392,7 @@ class User
      */
     public function getLocation(): string
     {
-        return $this->location;
+        return (string)$this->location;
     }
 
     /**
