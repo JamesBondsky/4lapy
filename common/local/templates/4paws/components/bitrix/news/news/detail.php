@@ -7,23 +7,21 @@ use FourPaws\Decorators\FullHrefDecorator;
 
 /** @var array $arParams */
 /** @var array $arResult */
-/** @noinspection PhpUndefinedClassInspection */
 /** @global CMain $APPLICATION */
-/** @noinspection PhpUndefinedClassInspection */
 /** @global CUser $USER */
 /** @noinspection PhpUndefinedClassInspection */
 /** @global CDatabase $DB */
-/** @noinspection PhpUndefinedClassInspection */
+
 /** @var CBitrixComponentTemplate $this */
 /** @var string $templateName */
 /** @var string $templateFile */
 /** @var string $templateFolder */
 /** @var string $componentPath */
-/** @noinspection PhpUndefinedClassInspection */
+
 /** @var CBitrixComponent $component */
 $this->setFrameMode(true);
 
-$APPLICATION->IncludeComponent(
+$elementID = $APPLICATION->IncludeComponent(
     'bitrix:news.detail',
     '',
     [
@@ -81,7 +79,7 @@ $APPLICATION->IncludeComponent(
     ['HIDE_ICONS' => 'Y']
 );
 
-/** TODO сделать распродажу с каталогом после готовности каталога со списком товаров */
+/** @todo сделать распродажу с каталогом после готовности каталога со списком товаров */
 
 ?>
     <div class="b-container">
@@ -91,7 +89,8 @@ $APPLICATION->IncludeComponent(
                 <div class="ya-share2"
                      data-lang="en"
                      data-services="facebook,odnoklassniki,vkontakte"
-                     data-url="<?= new FullHrefDecorator(
+                     data-url="<?= /** @noinspection PhpUnhandledExceptionInspection */
+                     new FullHrefDecorator(
                          Application::getInstance()->getContext()->getRequest()->getRequestUri()
                      ) ?>"
                      data-title="<?php $APPLICATION->ShowTitle(false) ?>"
@@ -102,8 +101,8 @@ $APPLICATION->IncludeComponent(
             </div>
         </div>
     </div>
-<?php /** TODO сделать добавление комментариев после готовности верстки по комментариям
+<?php /** @todo сделать добавление комментариев после готовности верстки по комментариям
  * использовать компонент forum.topic.reviews
  * комментарии на базе форума */
 
-/** TODO подумать о необходимости сниппета, лучше использовать свойства - удобнее и проще управлять */
+/** @todo подумать о необходимости сниппета, лучше использовать свойства - удобнее и проще управлять */

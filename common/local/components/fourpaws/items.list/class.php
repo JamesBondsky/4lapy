@@ -2,7 +2,6 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
-/** @noinspection PhpUndefinedClassInspection */
 /** @global \CDatabase $DB */
 /** @global \CUser $USER */
 
@@ -16,8 +15,6 @@ use Bitrix\Main\Data\Cache;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
-
-/** @noinspection PhpUndefinedClassInspection */
 
 /** @noinspection AutoloadingIssuesInspection */
 class CItemsListComponent extends CBitrixComponent
@@ -49,7 +46,7 @@ class CItemsListComponent extends CBitrixComponent
         if (empty($params['IBLOCK_ID'])) {
             /**Получение инфоблоков если не установлены*/
             
-            /** @noinspection PhpUndefinedClassInspection */
+            
             $cache = Cache::createInstance();
             if ($cache->initCache(
                 $params['CACHE_TIME'],
@@ -64,17 +61,19 @@ class CItemsListComponent extends CBitrixComponent
                 $vars                = $cache->getVars();
                 $params['IBLOCK_ID'] = $vars['IBLOCK_ID'];
             } elseif ($cache->startDataCache()) {
-                $params = [
-                    'select' => ['ID'],
-                    'filter' => ['ACTIVE' => 'Y'],
-                ];
-                if (!empty($params['IBLOCK_TYPE'])) {
-                    $params['filter']['IBLOCK_TYPE_ID'] = $params['IBLOCK_TYPE'];
-                }
-                /** @noinspection PhpUndefinedClassInspection */
-                $res = IblockTable::getList($params);
-                while ($item = $res->fetch()) {
-                    $params['IBLOCK_ID'][] = (int)$item['ID'];
+                try {
+                    $paramsIblock = [
+                        'select' => ['ID'],
+                        'filter' => ['ACTIVE' => 'Y'],
+                    ];
+                    if (!empty($params['IBLOCK_TYPE'])) {
+                        $paramsIblock['filter']['IBLOCK_TYPE_ID'] = $params['IBLOCK_TYPE'];
+                    }
+                    $res = IblockTable::getList($paramsIblock);
+                    while ($item = $res->fetch()) {
+                        $params['IBLOCK_ID'][] = (int)$item['ID'];
+                    }
+                } catch (\Bitrix\Main\ArgumentException $e) {
                 }
                 
                 $cache->endDataCache(['IBLOCK_ID' => $params['IBLOCK_ID']]);
@@ -126,7 +125,7 @@ class CItemsListComponent extends CBitrixComponent
         
         $params['ACTIVE_DATE_FORMAT'] = trim($params['ACTIVE_DATE_FORMAT']);
         if (strlen($params['ACTIVE_DATE_FORMAT']) <= 0) {
-            /** @noinspection PhpUndefinedClassInspection */
+            
             $params['ACTIVE_DATE_FORMAT'] = Date::getFormat();
         }
         $params['PREVIEW_TRUNCATE_LEN'] = (int)$params['PREVIEW_TRUNCATE_LEN'];
@@ -146,6 +145,7 @@ class CItemsListComponent extends CBitrixComponent
     
     /**
      * {@inheritdoc}
+     * @throws \Bitrix\Main\LoaderException
      */
     public function executeComponent()
     {
@@ -190,9 +190,9 @@ class CItemsListComponent extends CBitrixComponent
         }
         
         if (isset($this->arResult['ID'])) {
-            /** @noinspection PhpUndefinedClassInspection */
+            
             if ($USER->IsAuthorized() && $APPLICATION->GetShowIncludeAreas() && Loader::includeModule('iblock')) {
-                /** @noinspection PhpUndefinedClassInspection */
+                
                 $buttons = CIBlock::GetPanelButtons(
                     $this->arResult['ID'],
                     0,
@@ -202,7 +202,7 @@ class CItemsListComponent extends CBitrixComponent
                 
                 /** @noinspection NotOptimalIfConditionsInspection */
                 if ($APPLICATION->GetShowIncludeAreas()) {
-                    /** @noinspection PhpUndefinedClassInspection */
+                    
                     $this->addIncludeAreaIcons(
                         CIBlock::GetComponentMenu(
                             $APPLICATION->GetPublicShowMode(),
@@ -215,7 +215,7 @@ class CItemsListComponent extends CBitrixComponent
             $this->setTemplateCachedData($this->arResult['NAV_CACHED_DATA']);
             
             if ($this->arParams['SET_LAST_MODIFIED'] && $this->arResult['ITEMS_TIMESTAMP_X']) {
-                /** @noinspection PhpUndefinedClassInspection */
+                
                 Context::getCurrent()->getResponse()->setLastModified($this->arResult['ITEMS_TIMESTAMP_X']);
             }
             
@@ -256,8 +256,8 @@ class CItemsListComponent extends CBitrixComponent
                 'bDescPageNumbering' => $this->arParams['PAGER_DESC_NUMBERING'],
                 'bShowAll'           => $this->arParams['PAGER_SHOW_ALL'],
             ];
-            /** @noinspection PhpUndefinedClassInspection */
-            $navigation = \CDBResult::GetNavParams($navParams);
+            
+            $navigation = CDBResult::GetNavParams($navParams);
             if ($navigation['PAGEN'] === 0 && $this->arParams['PAGER_DESC_NUMBERING_CACHE_TIME'] > 0) {
                 $this->arParams['CACHE_TIME'] = $this->arParams['PAGER_DESC_NUMBERING_CACHE_TIME'];
             }
@@ -319,10 +319,11 @@ class CItemsListComponent extends CBitrixComponent
     
     /**
      * @return bool
+     * @throws \Bitrix\Main\LoaderException
      */
     protected function checkModule() : bool
     {
-        /** @noinspection PhpUndefinedClassInspection */
+        
         if (!Loader::includeModule('iblock')) {
             $this->abortResultCache();
             ShowError(GetMessage('IBLOCK_MODULE_NOT_INSTALLED'));
@@ -335,50 +336,53 @@ class CItemsListComponent extends CBitrixComponent
     
     protected function setIblocks()
     {
-        $params = [
-            'select' => [
-                'ID',
-                'CODE',
-                'XML_ID',
-                'IBLOCK_TYPE_ID',
-                'NAME',
-                'DESCRIPTION',
-                'ACTIVE',
-                'LIST_PAGE_URL',
-            ],
-            'filter' => ['ID' => $this->arParams['IBLOCK_ID']],
-        ];
-        /** @noinspection PhpUndefinedClassInspection */
-        $res = IblockTable::getList($params);
-        while ($item = $res->fetch()) {
-            $template = '';
-            if (array_key_exists('LIST_PAGE_URL', $item)) {
-                $template = $item['LIST_PAGE_URL'];
-            }
+        try {
+            $params = [
+                'select' => [
+                    'ID',
+                    'CODE',
+                    'XML_ID',
+                    'IBLOCK_TYPE_ID',
+                    'NAME',
+                    'DESCRIPTION',
+                    'ACTIVE',
+                    'LIST_PAGE_URL',
+                ],
+                'filter' => ['ID' => $this->arParams['IBLOCK_ID']],
+            ];
+            $res = IblockTable::getList($params);
+            while ($item = $res->fetch()) {
+                $template = '';
+                if (array_key_exists('LIST_PAGE_URL', $item)) {
+                    $template = $item['LIST_PAGE_URL'];
+                }
+        
+                if (!empty($template)) {
+                    $resTmp = [
+                        'IBLOCK_ID'          => $item['ID'],
+                        'IBLOCK_CODE'        => $item['CODE'],
+                        'IBLOCK_EXTERNAL_ID' => $item['XML_ID'],
+                    ];
             
-            if (!empty($template)) {
-                $resTmp = [
-                    'IBLOCK_ID'          => $item['ID'],
-                    'IBLOCK_CODE'        => $item['CODE'],
-                    'IBLOCK_EXTERNAL_ID' => $item['XML_ID'],
-                ];
-                
-                /** @noinspection PhpUndefinedClassInspection */
-                $item['LIST_PAGE_URL_FORMATED'] = CIBlock::ReplaceDetailUrl($template, $resTmp, true);
+                    
+                    $item['LIST_PAGE_URL_FORMATED'] = CIBlock::ReplaceDetailUrl($template, $resTmp, true);
+                }
+                $this->arResult['IBLOCKS'][$item['ID']] = $item;
             }
-            $this->arResult['IBLOCKS'][$item['ID']] = $item;
+        } catch (\Bitrix\Main\ArgumentException $e) {
         }
+        
     }
     
     protected function setItems()
     {
         list($select, $filter, $sort, $getProperty) = $this->prepareGetListParams();
         
-        /** @noinspection PhpUndefinedClassInspection */
+        
         $obParser                   = new CTextParser;
         $this->arResult['ITEMS']    = [];
         $this->arResult['ELEMENTS'] = [];
-        /** @noinspection PhpUndefinedClassInspection */
+        
         $rsElement     = CIBlockElement::GetList(
             $sort,
             array_merge($filter, $this->externalFilter),
@@ -393,7 +397,7 @@ class CItemsListComponent extends CBitrixComponent
                 $listPageUrlEl = $item['~LIST_PAGE_URL'];
             }
             
-            /** @noinspection PhpUndefinedClassInspection */
+            
             $buttons             = CIBlock::GetPanelButtons(
                 $item['IBLOCK_ID'],
                 $item['ID'],
@@ -412,7 +416,7 @@ class CItemsListComponent extends CBitrixComponent
             }
             
             if (strlen($item['ACTIVE_FROM']) > 0) {
-                /** @noinspection PhpUndefinedClassInspection */
+                
                 $item['DISPLAY_ACTIVE_FROM'] = CIBlockFormatProperties::DateFormat(
                     $this->arParams['ACTIVE_DATE_FORMAT'],
                     MakeTimeStamp(
@@ -424,11 +428,11 @@ class CItemsListComponent extends CBitrixComponent
                 $item['DISPLAY_ACTIVE_FROM'] = '';
             }
             
-            /** @noinspection PhpUndefinedClassInspection */
+            
             $ipropValues              = new Iblock\InheritedProperty\ElementValues($item['IBLOCK_ID'], $item['ID']);
             $item['IPROPERTY_VALUES'] = $ipropValues->getValues();
             
-            /** @noinspection PhpUndefinedClassInspection */
+            
             Tools::getFieldImageData(
                 $item,
                 [
@@ -457,7 +461,7 @@ class CItemsListComponent extends CBitrixComponent
                     if ((!is_array($prop['VALUE']) && !empty($prop['VALUE']))
                         || (is_array($prop['VALUE'])
                             && count($prop['VALUE']) > 0)) {
-                        /** @noinspection PhpUndefinedClassInspection */
+                        
                         $item['DISPLAY_PROPERTIES'][$pid] = CIBlockFormatProperties::GetDisplayValue(
                             $item,
                             $prop,
@@ -468,7 +472,7 @@ class CItemsListComponent extends CBitrixComponent
             }
             
             if ($this->arParams['SET_LAST_MODIFIED']) {
-                /** @noinspection PhpUndefinedClassInspection */
+                
                 $time = DateTime::createFromUserTime($item['TIMESTAMP_X']);
                 /** @noinspection PhpUndefinedMethodInspection */
                 if (!isset($this->arResult['ITEMS_TIMESTAMP_X'])
@@ -493,7 +497,7 @@ class CItemsListComponent extends CBitrixComponent
                 unset($this->pagerParameters['BASE_LINK']);
             }
             
-            /** @noinspection PhpUndefinedClassInspection */
+            
             $navComponentParameters['BASE_LINK'] =
                 CHTTP::urlAddParams($pagerBaseLink, $this->pagerParameters, ['encode' => true]);
         }

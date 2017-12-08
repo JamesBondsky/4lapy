@@ -13,6 +13,8 @@ class AddConfidencialityParam20171205164240 extends \Adv\Bitrixtools\Migration\S
     
     protected static $startConfidentialityDateValue = '28 июля 2017';
     
+    protected $description = "Добавление опции для конфиденциальности с установка занчения";
+    
     public function up()
     {
         Loader::includeModule('asd.tplvars');
