@@ -25,7 +25,6 @@ if (!is_array($arResult['IBLOCKS']) || empty($arResult['IBLOCKS'])) {
 }
 
 use Bitrix\Main\Application;
-use FourPaws\BitrixOrm\Model\CropImageDecorator;
 use FourPaws\Decorators\SvgDecorator;
 
 $frame = $this->createFrame(); ?>
@@ -57,15 +56,8 @@ $frame = $this->createFrame(); ?>
                                           Application::getDocumentRoot() . $item['PREVIEW_PICTURE']['SRC']
                                       )) { ?>
                                 <span class="b-news-item__image-wrapper js-image-cover">
-                                    <?php $image = new CropImageDecorator($item['PREVIEW_PICTURE']);
-                                    if($key === 0) {
-                                        $image->setCropWidth(630)->setCropHeight(210);
-                                    }
-                                    else{
-                                        $image->setCropWidth(305)->setCropHeight(120);
-                                    }?>
                                     <img class="b-news-item__image"
-                                         src="<?= $image ?>"
+                                         src="<?= $item['PREVIEW_PICTURE']['SRC'] ?>"
                                          alt="<?= $item['PREVIEW_PICTURE']['ALT'] ?>"
                                          title="<?= $item['PREVIEW_PICTURE']['TITLE'] ?>" />
                                     <?php if (!empty($item['DISPLAY_PROPERTIES']['VIDEO']['DISPLAY_VALUE'])) { ?>
