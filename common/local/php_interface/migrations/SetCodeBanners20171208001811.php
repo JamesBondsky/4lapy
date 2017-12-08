@@ -12,13 +12,13 @@ class SetCodeBanners20171208001811 extends SprintMigrationBase
     
     public function up()
     {
-        $helper = new HelperManager();
-        $helper->Iblock()->updateIblockFields(self::$bannersIblockID, ['CODE' => self::$bannersIblockCODE]);
+        $iblock = new \CIBlock();
+        $iblock->Update(static::$bannersIblockID, ['CODE' => static::$bannersIblockCODE]);
     }
     
     public function down()
     {
-        $helper = new HelperManager();
-        $helper->Iblock()->updateIblockFields(self::$bannersIblockID, ['CODE' => '']);
+        $iblock = new \CIBlock();
+        $iblock->Update(static::$bannersIblockID, ['CODE' => '']);
     }
 }

@@ -431,10 +431,6 @@ class News20171128132638 extends \Adv\Bitrixtools\Migration\SprintMigrationBase 
     }
 
     public function down(){
-        $helper = new HelperManager();
-
-        //your code ...
-
     }
 
 }
