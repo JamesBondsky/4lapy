@@ -25,6 +25,8 @@ if (!is_array($arResult['IBLOCKS']) || empty($arResult['IBLOCKS'])) {
 }
 
 use Bitrix\Main\Application;
+use FourPaws\BitrixOrm\Model\CropImageDecorator;
+use FourPaws\Decorators\SvgDecorator;
 
 $frame = $this->createFrame(); ?>
 <section class="b-common-section">
@@ -38,7 +40,8 @@ $frame = $this->createFrame(); ?>
             <?php } ?>
         </div>
     </div>
-    <?php $frame->begin(''); ?>
+    <?php /** @noinspection PhpUnhandledExceptionInspection */
+    $frame->begin(''); ?>
     <?php if (is_array($arResult['ITEMS']) && !empty($arResult['ITEMS'])) { ?>
         <div class="b-common-section__content b-common-section__content--latest-event b-common-section__content--wrap">
             <div class="b-news-wrapper">
@@ -54,19 +57,27 @@ $frame = $this->createFrame(); ?>
                                           Application::getDocumentRoot() . $item['PREVIEW_PICTURE']['SRC']
                                       )) { ?>
                                 <span class="b-news-item__image-wrapper js-image-cover">
-                                        <img class="b-news-item__image"
-                                             src="<?= $item['PREVIEW_PICTURE']['SRC'] ?>"
-                                             alt="<?= $item['PREVIEW_PICTURE']['ALT'] ?>"
-                                             title="<?= $item['PREVIEW_PICTURE']['TITLE'] ?>" />
+                                    <?php $image = new CropImageDecorator($item['PREVIEW_PICTURE']);
+                                    if($key === 0) {
+                                        $image->setCropWidth(630)->setCropHeight(210);
+                                    }
+                                    else{
+                                        $image->setCropWidth(305)->setCropHeight(120);
+                                    }?>
+                                    <img class="b-news-item__image"
+                                         src="<?= $image ?>"
+                                         alt="<?= $item['PREVIEW_PICTURE']['ALT'] ?>"
+                                         title="<?= $item['PREVIEW_PICTURE']['TITLE'] ?>" />
                                     <?php if (!empty($item['DISPLAY_PROPERTIES']['VIDEO']['DISPLAY_VALUE'])) { ?>
                                         <span class="b-news-item__video">
                                                 <span class="b-icon">
-                                                    <?= new \FourPaws\Decorators\SvgDecorator(
+                                                    <?= new SvgDecorator(
                                                         'icon-play-video', 60, 60
                                                     ); ?>
                                                 </span>
                                             </span>
-                                    <?php } ?>
+                                    <?php }
+                                    ?>
                                 </span>
                             <?php } ?>
                             <?php if (!empty($item['DISPLAY_PROPERTIES']['PUBLICATION_TYPE']['DISPLAY_VALUE'])) { ?>
@@ -98,6 +109,7 @@ $frame = $this->createFrame(); ?>
             </div>
         </div>
     <?php } ?>
-    <?php $frame->end(); ?>
+    <?php /** @noinspection PhpUnhandledExceptionInspection */
+    $frame->end(); ?>
 </section>
 <div class="b-line b-line--news-main"></div>

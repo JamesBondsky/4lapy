@@ -7,9 +7,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 /** @var array $arParams */
 /** @var array $arResult */
-/** @noinspection PhpUndefinedClassInspection */
-/** @global \CUser $USER */
-/** @global \CMain $APPLICATION */
+
+/** @global CUser $USER */
+/** @global CMain $APPLICATION */
 /** @global CDatabase $DB */
 
 $arResult['NO_SHOW_VIDEO'] = false;
@@ -29,10 +29,13 @@ if (is_array($arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'])
     $html = '';
     foreach ((array)$arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'] as $photo) {
         if (is_numeric($photo)) {
-            /** todo set crop sizes */
+            /** @noinspection PhpUnhandledExceptionInspection */
+            $image = CropImageDecorator::createFromPrimary($photo);
+            $image->setCropWidth(890)->setCropHeight(500);
+            /** @todo set crop sizes */
             $html .= '
             <div class="b-detail-page-slider__item">
-                <img src="' . CropImageDecorator::createFromPrimary($photo) . '" />
+                <img src="' . $image . '" />
             </div>
         ';
         }
