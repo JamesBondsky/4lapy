@@ -3,7 +3,6 @@
 namespace FourPaws\BitrixOrm\Model;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
-use FourPaws\BitrixOrm\Model\Interfaces\ModelInterface;
 
 /**
  * Class BitrixArrayItemBase
@@ -42,6 +41,16 @@ abstract class BitrixArrayItemBase implements ModelInterface
      * @JMS\Serializer\Annotation\Type("string")
      */
     protected $XML_ID = '';
+
+    /**
+     * @var int
+     */
+    protected $SORT = 500;
+
+    /**
+     * @var string
+     */
+    protected $NAME = '';
 
     /**
      * BitrixArrayItemBase constructor.
@@ -168,6 +177,46 @@ abstract class BitrixArrayItemBase implements ModelInterface
     public function withActive(bool $active)
     {
         $this->active = $active;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getName(): string
+    {
+        return $this->NAME;
+    }
+
+    /**
+     * @param string $NAME
+     *
+     * @return $this
+     */
+    public function withName(string $NAME)
+    {
+        $this->NAME = $NAME;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getSort(): int
+    {
+        return (int)$this->SORT;
+    }
+
+    /**
+     * @param int $sort
+     *
+     * @return $this
+     */
+    public function withSort(int $sort)
+    {
+        $this->SORT = $sort;
 
         return $this;
     }
