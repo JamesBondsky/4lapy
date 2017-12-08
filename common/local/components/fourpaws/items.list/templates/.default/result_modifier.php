@@ -11,17 +11,24 @@ if (!\is_array($arResult['ITEMS']) || empty($arResult['ITEMS'])) {
 }
 
 foreach ($arResult['ITEMS'] as $key => &$item) {
+    if (isset($image)) {
+        unset($image);
+    }
     if (is_array($item['PREVIEW_PICTURE'])) {
         $image = new CropImageDecorator($item['PREVIEW_PICTURE']);
     } elseif (is_numeric($item['~PREVIEW_PICTURE']) && (int)$item['~PREVIEW_PICTURE'] > 0) {
+        /** @noinspection PhpUnhandledExceptionInspection */
         $image = CropImageDecorator::createFromPrimary($item['~PREVIEW_PICTURE']);
     }
     if ($image instanceof CropImageDecorator) {
         if ($key === 0) {
-            $image->setCropWidth(630)->setCropHeight(210);
+            $cropWidth  = 630;
+            $cropHeight = 210;
         } else {
-            $image->setCropWidth(305)->setCropHeight(120);
+            $cropWidth  = 305;
+            $cropHeight = 120;
         }
+        $image->setCropWidth($cropWidth)->setCropHeight($cropHeight);
         $item['PREVIEW_PICTURE']['SRC'] = $image;
     }
 }
