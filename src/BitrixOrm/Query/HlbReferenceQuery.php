@@ -13,18 +13,6 @@ class HlbReferenceQuery extends D7QueryBase
     public function getBaseSelect(): array
     {
         return ['*'];
-
-        return [
-            'UF_ID',
-            'UF_XML_ID',
-            'UF_NAME',
-            'UF_SORT',
-            'UF_DESCRIPTION',
-            'UF_FULL_DESCRIPTION',
-            'UF_LINK',
-            'UF_DEF',
-            'UF_FILE',
-        ];
     }
 
     /**
