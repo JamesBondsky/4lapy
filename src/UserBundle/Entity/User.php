@@ -129,6 +129,14 @@ class User
     protected $personalDataConfirmed = false;
 
     /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("UF_LOCATION")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $location = false;
+
+    /**
      * @return int
      */
     public function getId(): int
@@ -376,6 +384,26 @@ class User
     public function setPersonalDataConfirmed(bool $personalDataConfirmed): User
     {
         $this->personalDataConfirmed = $personalDataConfirmed;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getLocation(): string
+    {
+        return $this->location;
+    }
+
+    /**
+     * @param string $location
+     *
+     * @return User
+     */
+    public function setLocation(string $location): User
+    {
+        $this->location = $location;
+
         return $this;
     }
 }

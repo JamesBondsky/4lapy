@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Main\DB\MysqliConnection;
 use Adv\Bitrixtools\Tools\Log\ExceptionLogger;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 
@@ -24,7 +25,7 @@ return [
                 'host' => getenv('BX_MEMCACHE_HOST'),
                 'port' => getenv('BX_MEMCACHE_PORT'),
             ],
-            'sid'      => $_SERVER["DOCUMENT_ROOT"] . "#01",
+            'sid'      => $_SERVER['DOCUMENT_ROOT'] . '#01',
         ],
     ],
     'cache_flags'        =>
@@ -80,7 +81,7 @@ return [
                 [
                     'default' =>
                         [
-                            'className' => '\\Bitrix\\Main\\DB\\MysqliConnection',
+                            'className' => MysqliConnection::class,
                             'host'      => getenv('DB_HOST'),
                             'database'  => getenv('DB_NAME'),
                             'login'     => getenv('DB_LOGIN'),
