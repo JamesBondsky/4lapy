@@ -5,19 +5,18 @@ namespace FourPaws\Location;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Highloadblock\DataManager;
 use Bitrix\Sale\Location\ExternalTable;
-use Bitrix\Sale\Location\LocationTable;
 use Bitrix\Sale\Location\TypeTable;
 use CBitrixComponent;
 use CBitrixLocationSelectorSearchComponent;
 use CIBlockElement;
 use FourPaws\App\Application;
-use FourPaws\Location\Model\City;
-use FourPaws\Location\Query\CityQuery;
 use FourPaws\BitrixOrm\Model\ModelInterface;
 use FourPaws\Enum\CitiesSectionCode;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Location\Exception\CityNotFoundException;
+use FourPaws\Location\Model\City;
+use FourPaws\Location\Query\CityQuery;
 use FourPaws\UserBundle\Service\UserService;
 use WebArch\BitrixCache\BitrixCache;
 
@@ -29,11 +28,28 @@ class LocationService
 
     const LOCATION_CODE_MOSCOW = '0000073738';
 
+    /**
+     * TODO Переименовать, чтобы о цене нигде не было ни слова
+     * LocationService знает только о таких терминах, как местоположения, регионы, код региона. Некорректно писать о
+     * каком-то типе цен. У нас от региона будет зависеть не только цена, но и многое другое. Да и всвязи с новой
+     * архитектурой сущности "Тип цен" больше нет места в нашем проекте.
+     */
     const DEFAULT_PRICE_CODE = 'IR77';
 
     const PRICE_TYPE_SERVICE_CODE = 'REGION';
 
     protected $dataManager;
+
+    /**
+     * Возвращает код выбранного региона.
+     *
+     * @return string
+     */
+    public function getCurrentRegionCode(): string
+    {
+        //TODO По текущему выбранному городу возвращать код региона. В случае любых ошибок и проблем: писать в лог и возвращать default-city (Мск).
+        return self::DEFAULT_PRICE_CODE;
+    }
 
     public function __construct(DataManager $dataManager)
     {
