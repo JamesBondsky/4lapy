@@ -24,7 +24,7 @@ class File extends AbstractConverter
         $result    = [];
         $isArray   = true;
         $fieldName = $this->getFieldName();
-        
+
         if (!$data[$fieldName]) {
             return $data;
         }
@@ -37,7 +37,11 @@ class File extends AbstractConverter
         foreach ($data[$fieldName] as $value) {
             $result[] = $this->getPicture($value);
         }
-        
+    
+        if ($isArray) {
+            $result['file'] = true;
+        }
+    
         $data[$fieldName] = $isArray ? $result : array_shift($result);
         
         return $data;
