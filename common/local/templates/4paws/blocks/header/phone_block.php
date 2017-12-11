@@ -10,18 +10,18 @@ use FourPaws\Decorators\SvgDecorator; ?>
 <div class="b-header-info__item b-header-info__item--phone">
     <?php $APPLICATION->IncludeComponent(
             'fourpaws:city.phone',
-            'header.popover'
+            'template.header.popover'
     ) ?>
     <div class="b-popover b-popover--phone js-popover">
         <div class="b-contact">
             <?php $APPLICATION->IncludeComponent(
                     'fourpaws:city.phone',
-                    'header'
+                    'template.header'
             ) ?>
             <dl class="b-phone-pair">
                 <dt class="b-phone-pair__phone">
                     <a class="b-phone-pair__link"
-                       href="tel:<?= preg_replace('/[^+\d]/', '', tplvar('phone_main')) ?>"
+                       href="tel:<?= preg_replace('~[^+\d]~', '', tplvar('phone_main')) ?>"
                        title="<?= tplvar('phone_main') ?>">
                         <?= tplvar('phone_main') ?>
                     </a>

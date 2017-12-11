@@ -5,6 +5,7 @@ namespace FourPaws\Location;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Highloadblock\DataManager;
 use Bitrix\Sale\Location\GroupLocationTable;
+use Bitrix\Sale\Location\ExternalTable;
 use Bitrix\Sale\Location\LocationTable;
 use Bitrix\Sale\Location\TypeTable;
 use CBitrixComponent;
@@ -28,6 +29,10 @@ class LocationService
     const TYPE_VILLAGE = 'VILLAGE';
 
     const LOCATION_CODE_MOSCOW = '0000073738';
+
+    const DEFAULT_PRICE_CODE = 'IR77';
+
+    const PRICE_TYPE_SERVICE_CODE = 'REGION';
 
     protected $dataManager;
 
@@ -140,37 +145,7 @@ class LocationService
 
         $result = [];
         do {
-            $data = CBitrixLocationSelectorSearchComponent::processSearchRequestV2(
-                [
-                    'select'      => [
-                        'CODE',
-                        'VALUE'   => 'ID',
-                        'DISPLAY' => 'NAME.NAME',
-                    ],
-                    'filter'      => $filter,
-                    'additionals' => ['PATH'],
-                    'PAGE_SIZE'   => $limit,
-                    'PAGE'        => 0,
-                ]
-            );
-            foreach ($data['ITEMS'] as $item) {
-                $path = [];
-                foreach ($item['PATH'] as $pathId) {
-                    if (!isset($data['ETC']['PATH_ITEMS'][$pathId])) {
-                        continue;
-                    }
-                    $pathItem = $data['ETC']['PATH_ITEMS'][$pathId];
-                    $path[] = [
-                        'NAME' => $pathItem['DISPLAY'],
-                        'CODE' => $pathItem['CODE'],
-                    ];
-                }
-                $result[] = [
-                    'CODE' => $item['CODE'],
-                    'NAME' => $item['DISPLAY'],
-                    'PATH' => $path,
-                ];
-            }
+            $result = array_merge($result, $this->findWithLocationSearchComponent($filter, $limit));
 
             if ($limit && count($result) >= $limit) {
                 break;
@@ -196,20 +171,29 @@ class LocationService
      *
      * @return array|false
      */
-    public function findLocationByCode(string $code, array $additionalFilter = [])
+    public function findLocationByCode(string $code, array $additionalFilter = []): array
     {
-        $filter = ['CODE' => $code];
-        if (!empty($additionalFilter) && is_array($additionalFilter)) {
-            $filter = array_merge($filter, $additionalFilter);
-        }
+        $findLocation = function () use ($code, $additionalFilter) {
+            $filter = ['CODE' => $code];
+            if (!empty($additionalFilter) && is_array($additionalFilter)) {
+                $filter = array_merge($filter, $additionalFilter);
+            }
 
-        return LocationTable::getList(
-            [
-                'filter' => $filter,
-                'select' => ['ID', 'NAME.NAME', 'CODE', 'TYPE_ID'],
-                'limit'  => 1,
-            ]
-        )->fetch();
+            $location = reset($this->findWithLocationSearchComponent($filter, 1));
+
+            return $location;
+        };
+
+        return (new BitrixCache())
+            ->withId(
+                __METHOD__ . json_encode(
+                    [
+                        'code'   => $code,
+                        'filter' => $additionalFilter,
+                    ]
+                )
+            )
+            ->resultOf($findLocation);
     }
 
     /**
@@ -268,7 +252,14 @@ class LocationService
             $city = $this->findLocationByCode(
                 $code,
                 [
-                    '=TYPE.CODE' => [static::TYPE_CITY, static::TYPE_VILLAGE],
+                    'TYPE_ID' => array_values(
+                        $this->getTypeIdsByCodes(
+                            [
+                                static::TYPE_CITY,
+                                static::TYPE_VILLAGE,
+                            ]
+                        )
+                    ),
                 ]
             );
         }
@@ -278,9 +269,56 @@ class LocationService
         }
 
         return [
-            'NAME' => $city['SALE_LOCATION_LOCATION_NAME_NAME'],
+            'NAME' => $city['NAME'],
             'CODE' => $city['CODE'],
+            'PATH' => $city['PATH'],
         ];
+    }
+
+    /**
+     * Возвращает код типа цены по коду местоположения
+     *
+     * @param $locationCode
+     *
+     * @return string
+     */
+    public function getPriceTypeCodeByLocation(string $locationCode): string
+    {
+        if (!$locationCode || !$location = $this->findLocationByCode($locationCode)) {
+            return static::DEFAULT_PRICE_CODE;
+        }
+
+        $getPriceCode = function () use ($location) {
+            $filter = [
+                'LOCATION.CODE' => $location['CODE'],
+                'SERVICE.CODE'  => static::PRICE_TYPE_SERVICE_CODE,
+            ];
+
+            if (!empty ($location['PATH'])) {
+                $filter['LOCATION.CODE'] = array_merge(
+                    [$filter['LOCATION.CODE']],
+                    array_column($location['PATH'], 'CODE')
+                );
+            }
+
+            if ($priceType = ExternalTable::getList(
+                [
+                    'filter' => $filter,
+                    'limit'  => 1,
+                    // типы цен привязаны к регионам, так что в принципе может вернуться только одно значение
+                ]
+            )->fetch()) {
+                return $priceType['XML_ID'];
+            }
+
+            return static::DEFAULT_PRICE_CODE;
+        };
+
+        $data = (new BitrixCache())
+            ->withId($locationCode)
+            ->resultOf($getPriceCode);
+
+        return $data['result'];
     }
 
     /**
@@ -420,6 +458,56 @@ class LocationService
         return (new BitrixCache())
             ->withId(__METHOD__ . json_encode($typeCodes))
             ->resultOf($getTypeIds);
+    }
+
+    /**
+     * Ищет местоположения по заданному фильтру
+     * с помощью CBitrixLocationSelectorSearchComponent
+     *
+     * @param $filter
+     * @param $limit
+     *
+     * @return array
+     */
+    private function findWithLocationSearchComponent($filter, $limit)
+    {
+        $result = [];
+
+        CBitrixComponent::includeComponentClass('bitrix:sale.location.selector.search');
+
+        $data = CBitrixLocationSelectorSearchComponent::processSearchRequestV2(
+            [
+                'select'      => [
+                    'CODE',
+                    'VALUE'   => 'ID',
+                    'DISPLAY' => 'NAME.NAME',
+                ],
+                'filter'      => $filter,
+                'additionals' => ['PATH'],
+                'PAGE_SIZE'   => $limit,
+                'PAGE'        => 0,
+            ]
+        );
+        foreach ($data['ITEMS'] as $item) {
+            $path = [];
+            foreach ($item['PATH'] as $pathId) {
+                if (!isset($data['ETC']['PATH_ITEMS'][$pathId])) {
+                    continue;
+                }
+                $pathItem = $data['ETC']['PATH_ITEMS'][$pathId];
+                $path[] = [
+                    'NAME' => $pathItem['DISPLAY'],
+                    'CODE' => $pathItem['CODE'],
+                ];
+            }
+            $result[] = [
+                'CODE' => $item['CODE'],
+                'NAME' => $item['DISPLAY'],
+                'PATH' => $path,
+            ];
+        }
+
+        return $result;
     }
 
     /**

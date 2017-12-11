@@ -31,7 +31,7 @@ $this->setFrameMode(true);
             </a>
         </dt>
         <?php /* @todo склонять название города? */ ?>
-        <dd class="b-phone-pair__description">Для г.<?= $arResult['CITY_NAME'] ?>. Доступен до 21:00</dd>
+        <dd class="b-phone-pair__description">Для г.<?= $arResult['CITY_NAME'] ?>. <?= $arResult['WORKING_HOURS'] ?></dd>
     </dl>
 <?php $frame->beginStub() ?>
     <dl class="b-phone-pair">
@@ -41,6 +41,6 @@ $this->setFrameMode(true);
             </a>
         </dt>
         <?php /* @todo склонять название города? */ ?>
-        <dd class="b-phone-pair__description">Для г.<?= $arResult['DEFAULT_CITY_NAME'] ?>. Доступен до 21:00</dd>
+        <dd class="b-phone-pair__description">Для г.<?= $arResult['DEFAULT_CITY_NAME'] ?>. <?= $arResult['DEFAULT_WORKING_HOURS'] ?></dd>
     </dl>
 <? $frame->end() ?>

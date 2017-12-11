@@ -4,7 +4,7 @@ namespace FourPaws\Location\Model;
 
 use FourPaws\App\Application;
 use FourPaws\BitrixOrm\Model\HlbItemBase;
-use FourPaws\BitrixOrm\Model\Interfaces\ModelInterface;
+use FourPaws\BitrixOrm\Model\ModelInterface;
 use FourPaws\Location\Query\CityQuery;
 use FourPaws\Location\Exception\CityNotFoundException;
 use Bitrix\Main\Entity\DataManager;
@@ -27,6 +27,8 @@ class City extends HlbItemBase
     protected $UF_DELIVERY_TEXT;
 
     protected $UF_PHONE;
+
+    protected $UF_WORKING_HOURS;
 
     /**
      * @return string
@@ -66,6 +68,14 @@ class City extends HlbItemBase
     public function getDeliveryText(): string
     {
         return $this->UF_DELIVERY_TEXT;
+    }
+
+    /**
+     * @return string
+     */
+    public function getWorkingHours(): string
+    {
+        return $this->UF_WORKING_HOURS;
     }
 
     /**
@@ -124,9 +134,21 @@ class City extends HlbItemBase
     }
 
     /**
+     * @param string $active
+     *
+     * @return City
+     */
+    public function withWorkingHours(string $workingHours): City
+    {
+        $this->UF_WORKING_HOURS = $workingHours;
+
+        return $this;
+    }
+
+    /**
      * @param string $id
      *
-     * @return \FourPaws\BitrixOrm\Model\Interfaces\ModelInterface
+     * @return \FourPaws\BitrixOrm\Model\ModelInterface
      *
      * @throws \FourPaws\User\Exceptions\NotFoundException
      */

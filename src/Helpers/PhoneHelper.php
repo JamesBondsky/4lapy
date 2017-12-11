@@ -49,7 +49,13 @@ class PhoneHelper
             return false;
         }
     }
-    
+
+    /**
+     * @param string $phone
+     * @param string $format
+     *
+     * @return string
+     */
     public static function formatPhone(string $phone, string $format = self::FORMAT_DEFAULT): string
     {
         try {
