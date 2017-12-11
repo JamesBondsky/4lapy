@@ -4,9 +4,9 @@ namespace Sprint\Migration;
 
 
 class News20171128132638 extends \Adv\Bitrixtools\Migration\SprintMigrationBase {
-
-    protected $description = "";
-
+    
+    protected $description = "Добавление свойств";
+    
     public function up(){
         $helper = new HelperManager();
 
@@ -433,10 +433,6 @@ class News20171128132638 extends \Adv\Bitrixtools\Migration\SprintMigrationBase 
     }
 
     public function down(){
-        $helper = new HelperManager();
-
-        //your code ...
-
     }
 
 }

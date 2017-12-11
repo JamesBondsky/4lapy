@@ -3,19 +3,15 @@
 }
 /** @var array $arParams */
 /** @var array $arResult */
-/** @noinspection PhpUndefinedClassInspection */
 /** @global CMain $APPLICATION */
-/** @noinspection PhpUndefinedClassInspection */
 /** @global CUser $USER */
 /** @noinspection PhpUndefinedClassInspection */
 /** @global CDatabase $DB */
-/** @noinspection PhpUndefinedClassInspection */
 /** @var CBitrixComponentTemplate $this */
 /** @var string $templateName */
 /** @var string $templateFile */
 /** @var string $templateFolder */
 /** @var string $componentPath */
-/** @noinspection PhpUndefinedClassInspection */
 
 /** @var CBitrixComponent $component */
 
@@ -32,13 +28,11 @@ $this->setFrameMode(true);
         <h1 class="b-title b-title--h1"><?php $APPLICATION->ShowTitle() ?></h1>
         <div class="b-info-blocks">
             <?php foreach ($arResult['ITEMS'] as $item) {
-                /** @noinspection PhpUndefinedClassInspection */
                 $this->AddEditAction(
                     $item['ID'],
                     $item['EDIT_LINK'],
                     CIBlock::GetArrayByID($item['IBLOCK_ID'], 'ELEMENT_EDIT')
                 );
-                /** @noinspection PhpUndefinedClassInspection */
                 $this->AddDeleteAction(
                     $item['ID'],
                     $item['DELETE_LINK'],
