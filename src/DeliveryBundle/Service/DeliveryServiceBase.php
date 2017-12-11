@@ -5,8 +5,8 @@ namespace FourPaws\DeliveryBundle\Service;
 use Bitrix\Sale\Delivery\Services\Base;
 use Bitrix\Sale\Shipment;
 use FourPaws\App\Application;
-use FourPaws\Location\Exception\CityNotFoundException;
 use FourPaws\Location\LocationService;
+use FourPaws\UserBundle\Service\UserCitySelectInterface;
 
 abstract class DeliveryServiceBase extends Base implements DeliveryServiceInterface
 {
@@ -30,10 +30,17 @@ abstract class DeliveryServiceBase extends Base implements DeliveryServiceInterf
      */
     protected $locationService;
 
+    /**
+     * @var UserCitySelectInterface
+     */
+    protected $userService;
+
     public function __construct($initParams)
     {
         $this->locationService = Application::getInstance()->getContainer()->get('location.service');
-
+        $this->userService = Application::getInstance()
+                                        ->getContainer()
+                                        ->get('FourPaws\UserBundle\Service\UserCitySelectInterface');
         parent::__construct($initParams);
     }
 
@@ -42,18 +49,23 @@ abstract class DeliveryServiceBase extends Base implements DeliveryServiceInterf
      */
     public function getDeliveryZone(string $locationCode = null): string
     {
-        /* @todo определение зоны по местоположению */
+        if (!$locationCode) {
+            $locationCode = $this->userService->getSelectedCity()['CODE'];
+        }
+
+        $allZones = $this->getAllAvailableZones();
+        foreach ($allZones as $code => $data) {
+            if (in_array($locationCode, $data['LOCATIONS'])) {
+                return $code;
+            }
+        }
 
         return self::ZONE_4;
     }
 
     public function getAllAvailableZones(): array
     {
-        if ($groups = $this->locationService->getLocationGoups(true)) {
-            return array_column($groups, ['CODE']);
-        }
-
-        return [];
+        $this->locationService->getLocationGroups(true);
     }
 
     public function isCompatible(Shipment $shipment)

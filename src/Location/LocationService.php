@@ -6,7 +6,6 @@ use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Highloadblock\DataManager;
 use Bitrix\Sale\Location\GroupLocationTable;
 use Bitrix\Sale\Location\ExternalTable;
-use Bitrix\Sale\Location\LocationTable;
 use Bitrix\Sale\Location\TypeTable;
 use CBitrixComponent;
 use CBitrixLocationSelectorSearchComponent;
@@ -346,14 +345,16 @@ class LocationService
     {
         $getGroups = function () use ($withLocations) {
             $result = [];
-            $select = ['GROUP.ID', 'GROUP.CODE', 'GROUP.NAME.NAME'];
+            $select = ['GROUP.ID', 'GROUP.CODE', 'GROUP.NAME', 'GROUP.SORT'];
 
             if ($withLocations) {
                 $select[] = 'LOCATION.CODE';
             }
+
             $groups = GroupLocationTable::getList(
                 [
                     'select' => $select,
+                    'order'  => ['GROUP.SORT' => 'ASC'],
                 ]
             );
 
