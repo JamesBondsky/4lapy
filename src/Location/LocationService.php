@@ -28,27 +28,56 @@ class LocationService
 
     const LOCATION_CODE_MOSCOW = '0000073738';
 
-    /**
-     * TODO Переименовать, чтобы о цене нигде не было ни слова
-     * LocationService знает только о таких терминах, как местоположения, регионы, код региона. Некорректно писать о
-     * каком-то типе цен. У нас от региона будет зависеть не только цена, но и многое другое. Да и всвязи с новой
-     * архитектурой сущности "Тип цен" больше нет места в нашем проекте.
-     */
-    const DEFAULT_PRICE_CODE = 'IR77';
+    const DEFAULT_REGION_CODE = 'IR77';
 
-    const PRICE_TYPE_SERVICE_CODE = 'REGION';
+    const REGION_SERVICE_CODE = 'REGION';
 
     protected $dataManager;
 
     /**
      * Возвращает код выбранного региона.
      *
+     * @param $locationCode
+     *
      * @return string
      */
-    public function getCurrentRegionCode(): string
+    public function getCurrentRegionCode(string $locationCode): string
     {
-        //TODO По текущему выбранному городу возвращать код региона. В случае любых ошибок и проблем: писать в лог и возвращать default-city (Мск).
-        return self::DEFAULT_PRICE_CODE;
+        if (!$locationCode || !$location = $this->findLocationByCode($locationCode)) {
+            return self::DEFAULT_REGION_CODE;
+        }
+
+        $getRegionCode = function () use ($location) {
+            $filter = [
+                'LOCATION.CODE' => $location['CODE'],
+                'SERVICE.CODE'  => self::REGION_SERVICE_CODE,
+            ];
+
+            if (!empty ($location['PATH'])) {
+                $filter['LOCATION.CODE'] = array_merge(
+                    [$filter['LOCATION.CODE']],
+                    array_column($location['PATH'], 'CODE')
+                );
+            }
+
+            if ($region = ExternalTable::getList(
+                [
+                    'filter' => $filter,
+                     // коды привязаны к регионам, так что в принципе может вернуться только одно значение
+                    'limit'  => 1,
+                ]
+            )->fetch()) {
+                return $region['XML_ID'];
+            }
+
+            return self::DEFAULT_REGION_CODE;
+        };
+
+        $data = (new BitrixCache())
+            ->withId($locationCode)
+            ->resultOf($getRegionCode);
+
+        return $data['result'];
     }
 
     public function __construct(DataManager $dataManager)
@@ -288,52 +317,6 @@ class LocationService
             'CODE' => $city['CODE'],
             'PATH' => $city['PATH'],
         ];
-    }
-
-    /**
-     * Возвращает код типа цены по коду местоположения
-     *
-     * @param $locationCode
-     *
-     * @return string
-     */
-    public function getPriceTypeCodeByLocation(string $locationCode): string
-    {
-        if (!$locationCode || !$location = $this->findLocationByCode($locationCode)) {
-            return static::DEFAULT_PRICE_CODE;
-        }
-
-        $getPriceCode = function () use ($location) {
-            $filter = [
-                'LOCATION.CODE' => $location['CODE'],
-                'SERVICE.CODE'  => static::PRICE_TYPE_SERVICE_CODE,
-            ];
-
-            if (!empty ($location['PATH'])) {
-                $filter['LOCATION.CODE'] = array_merge(
-                    [$filter['LOCATION.CODE']],
-                    array_column($location['PATH'], 'CODE')
-                );
-            }
-
-            if ($priceType = ExternalTable::getList(
-                [
-                    'filter' => $filter,
-                    'limit'  => 1,
-                    // типы цен привязаны к регионам, так что в принципе может вернуться только одно значение
-                ]
-            )->fetch()) {
-                return $priceType['XML_ID'];
-            }
-
-            return static::DEFAULT_PRICE_CODE;
-        };
-
-        $data = (new BitrixCache())
-            ->withId($locationCode)
-            ->resultOf($getPriceCode);
-
-        return $data['result'];
     }
 
     /**
