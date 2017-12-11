@@ -442,6 +442,11 @@ class Locations_external_service_region20171208164455 extends SprintMigrationBas
             'CODE'   => '0001092542',
             'XML_ID' => 'IR92',
         ],
+        [
+            'NAME' => 'Байконур',
+            'CODE' => '0000000328',
+            'XML_ID' => 'IR99'
+        ]
     ];
 
     public function up()
