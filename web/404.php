@@ -9,12 +9,15 @@ require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php');
 
 $APPLICATION->SetTitle('404 Not Found'); ?>
 
-<h1>Страница не найдена</h1>
-<div class="b-goto">
-    <h3 class="b-goto__header">
-        Вам стоит перейти на
-        <a class="b-goto__link b-goto__link--another b-goto__link--other" href="/">страницу страниц</a>
-    </h3>
-</div>
+<main class="b-wrapper" role="main">
+    <div class="b-container b-container--error">
+        <div class="b-error-page">
+            <? /* @todo image resize helper */ ?>
+            <img src="/static/build/images/content/404.png">
+            <p class="b-title b-title--h1">Такой страницы нет</p>
+            <p>Проверьте правильность адреса, воспользуйтесь поиском или начните с главной страницы</p><a href="/">Перейти на главную страницу</a>
+        </div>
+    </div>
+</main>
 
 <?php require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/footer.php'); ?>

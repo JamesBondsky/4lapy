@@ -3,7 +3,6 @@
 namespace FourPaws\App\Response;
 
 use FourPaws\App\Model\ResponseContent\JsonContent;
-use Symfony\Component\HttpFoundation\JsonResponse;
 
 /**
  * Class JsonSuccessResponse
@@ -17,9 +16,11 @@ class JsonSuccessResponse extends JsonResponse
      *
      * @inheritdoc
      */
-    public static function create($message = null, $status = 200, $headers = [])
+    public static function create($message = null, $status = 200, $headers = [], array $options = [])
     {
-        return parent::create(new JsonContent($message), $status, $headers);
+        $content = static::buildContent($message, true, null, $options);
+
+        return parent::create($content, $status, $headers);
     }
     
     /**
@@ -31,8 +32,14 @@ class JsonSuccessResponse extends JsonResponse
      *
      * @return JsonResponse
      */
-    public static function createWithData(string $message = '', array $data = [], int $status = 200) : JsonResponse
-    {
-        return parent::create(new JsonContent($message, true, $data), $status);
+    public static function createWithData(
+        string $message = '',
+        array $data = [],
+        int $status = 200,
+        array $options = []
+    ) : JsonResponse {
+        $content = static::buildContent($message, true, $data, $options);
+
+        return parent::create($content, $status);
     }
 }

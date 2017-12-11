@@ -64,7 +64,6 @@ $markup = PawsApplication::markup();
     </div>
 </footer>
 </div>
-<?php /** @todo Markup */ ?>
 <script src="<?= $markup->getJsFile() ?>"></script>
 </body>
 </html>

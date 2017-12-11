@@ -37,7 +37,10 @@ abstract class IBlockElement extends IBlock
         $id = $cIBlockElement->Add($data, false, false);
         
         if (!$id) {
-            throw new AddException("IBlock {$this->getIblockId()} element #{$primary} add error: $cIBlockElement->LAST_ERROR");
+            throw new AddException(sprintf('IBlock %s element product #%s add error: %s',
+                                           $this->getIblockId(),
+                                           $primary,
+                                           $cIBlockElement->LAST_ERROR));
         }
         
         /**
@@ -61,14 +64,23 @@ abstract class IBlockElement extends IBlock
                 $result = ProductTable::add($data['CATALOG']);
                 
                 if (!$result->isSuccess()) {
-                    throw new AddProductException("IBlock {$this->getIblockId()} element product #{$primary} add error: $cIBlockElement->LAST_ERROR");
+                    throw new AddProductException(sprintf('IBlock %s element product #%s add error: %s',
+                                                          $this->getIblockId(),
+                                                          $primary,
+                                                          $cIBlockElement->LAST_ERROR));
                 }
             } catch (AddProductException $e) {
                 $cIBlockElement::Delete($id);
-                
-                throw new AddException("IBlock {$this->getIblockId()} element product #{$primary} add error: {$e->getMessage()}");
+    
+                throw new AddException(sprintf('IBlock %s element product #%s add error: %s',
+                                               $this->getIblockId(),
+                                               $primary,
+                                               $e->getMessage()));
             } catch (\Exception $e) {
-                throw new AddException("IBlock {$this->getIblockId()} element product #{$primary} add error: {$e->getMessage()}");
+                throw new AddException(sprintf('IBlock %s element product #%s add error: %s',
+                                               $this->getIblockId(),
+                                               $primary,
+                                               $e->getMessage()));
             }
             
             \CPrice::SetBasePrice($id, $price, 'RUB');
@@ -98,9 +110,14 @@ abstract class IBlockElement extends IBlock
     public function updateItem(string $primary, array $data) : UpdateResult
     {
         $cIBlockElement = new \CIBlockElement();
+    
+        $this->deleteFilesBeforeUpdate($primary, $data);
         
         if (!$cIBlockElement->Update($primary, $data, false, false, false, false)) {
-            throw new UpdateException("IBlock {$this->getIblockId()} element #{$primary} update error: $cIBlockElement->LAST_ERROR");
+            throw new UpdateException(sprintf('IBlock %s element #%s update error: %s',
+                                              $this->getIblockId(),
+                                              $primary,
+                                              $cIBlockElement->LAST_ERROR));
         }
         
         $this->setInternalKeys(['sections' => $data['SECTIONS']], $primary, $this->entity . '_section');
@@ -126,10 +143,15 @@ abstract class IBlockElement extends IBlock
                 $result = ProductTable::update($primary, $data['CATALOG']);
                 
                 if (!$result->isSuccess()) {
-                    throw new UpdateProductException("IBlock {$this->getIblockId()} element product #{$primary} update error: {$result->getErrorMessages()}");
+                    throw new UpdateProductException(sprintf('IBlock %s element product #%s update error: %s'),
+                                                     $this->getIblockId(),
+                                                     $primary,
+                                                     $result->getErrorMessages());
                 }
             } catch (\Exception $e) {
-                throw new UpdateException("IBlock {$this->getIblockId()} element product #{$primary} update error: {$e->getMessage()}");
+                throw new UpdateException(sprintf('IBlock %s element product #{$primary} update error: %s',
+                                                  $this->getIblockId(),
+                                                  $e->getMessage()));
             }
             
             \CPrice::SetBasePrice($primary, $price, 'RUB');
@@ -189,8 +211,10 @@ abstract class IBlockElement extends IBlock
         if ($cIblockElement->Update($primary, [$field => $value])) {
             return new UpdateResult(true, $primary);
         }
-        
-        throw new UpdateException("Update field with primary {$primary} error: {$cIblockElement->LAST_ERROR}");
+    
+        throw new UpdateException(sprintf('Update field with primary %s error: %s',
+                                          $primary,
+                                          $cIblockElement->LAST_ERROR));
     }
     
     /**
@@ -208,5 +232,24 @@ abstract class IBlockElement extends IBlock
          * А вот здесь хер что мы отследим, Битрикс ничего не возвращаем. Считаем, что у нас никаких проблем нет.
          */
         return new UpdateResult(true, $primary);
+    }
+    
+    /**
+     * @todo КОСТЫЛЬ
+     *
+     * @param array  $data
+     * @param string $primary
+     */
+    protected function deleteFilesBeforeUpdate(string $primary, array &$data)
+    {
+        foreach ($data['PROPERTY_VALUES'] as $code => &$value) {
+            if (is_array($value) && $value['file']) {
+                \CIBlockElement::SetPropertyValuesEx($primary,
+                                                     $this->getIblockId(),
+                                                     [$code => ['VALUE' => ['del' => 'Y']]]);
+                
+                unset($value['file']);
+            }
+        }
     }
 }
