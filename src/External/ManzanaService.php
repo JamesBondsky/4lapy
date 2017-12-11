@@ -12,7 +12,6 @@ use FourPaws\External\Manzana\Exception\ContactNotFoundException;
 use FourPaws\External\Manzana\Exception\ManzanaException;
 use FourPaws\External\Manzana\Model\Card;
 use FourPaws\External\Manzana\Model\Cards;
-use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\Manzana\Model\Clients;
 use FourPaws\External\Manzana\Model\Contact;
 use FourPaws\External\Manzana\Model\Contacts;
@@ -153,14 +152,14 @@ class ManzanaService implements LoggerAwareInterface
      *
      * @param string $phone
      *
-     * @return Client
+     * @return Clients
      *
      * @throws ManzanaServiceException
      */
-    public function getUserDataByPhone(string $phone) : Client
+    public function getUserDataByPhone(string $phone) : Clients
     {
         $bag = new ParameterBag([
-                                    'maxresultsnumber' => '2',
+                                    'maxresultsnumber' => '5',
                                     'mobilephone'      => $phone,
                                 ]);
     
@@ -168,12 +167,11 @@ class ManzanaService implements LoggerAwareInterface
     
         try {
             $clients = $this->serializer->deserialize($result, Clients::class, 'xml');
-            $client  = count($clients->clients) === 1 ? $clients->clients[0] : new Client();
         } catch (\Exception $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
         }
     
-        return $client;
+        return $clients;
     }
     
     /**
