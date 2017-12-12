@@ -2,6 +2,7 @@
 
 namespace FourPaws\DeliveryBundle\Service;
 
+use Bitrix\Main\Error;
 use Bitrix\Sale\Shipment;
 
 class InnerDeliveryService extends DeliveryServiceBase
@@ -34,10 +35,26 @@ class InnerDeliveryService extends DeliveryServiceBase
 
     protected function calculateConcrete(Shipment $shipment)
     {
-        /* @todo calculate delivery time and price */
+        $result = parent::calculateConcrete($shipment);
+        if (!$result->isSuccess()) {
+            return $result;
+        }
 
-        $result = new \Bitrix\Sale\Delivery\CalculationResult();
-        $result->setDeliveryPrice(100);
+        $deliveryZone = $this->getDeliveryZoneCode($shipment);
+        if ($this->config[$deliveryZone . '_PRICE']) {
+            $result->setDeliveryPrice($this->config[$deliveryZone . '_PRICE']);
+
+            if (!empty($this->config[$deliveryZone . '_FREE_FROM'])) {
+                $order = $shipment->getParentOrder();
+                if ($order->getPrice() >= $this->config[$deliveryZone . '_FREE_FROM']) {
+                    $result->setDeliveryPrice(0);
+                }
+            }
+        } else {
+            $result->addError(new Error('Не задана стоимость доставки'));
+        }
+
+        /* @todo calculate delivery time */
 
         return $result;
     }

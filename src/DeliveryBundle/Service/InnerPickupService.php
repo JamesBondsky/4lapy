@@ -27,15 +27,8 @@ class InnerPickupService extends DeliveryServiceBase
             return false;
         }
 
-        $order = $shipment->getParentOrder();
-        $propertyCollection = $order->getPropertyCollection();
-        $locationProp = $propertyCollection->getDeliveryLocation();
-
-        if (!$locationProp || !$locationProp->getValue()) {
-            return false;
-        }
-
-        if (!$shopCodes = $this->locationService->getShopsByCity($locationProp->getValue())) {
+        $deliveryLocation = $this->getDeliveryLocation($shipment);
+        if (!$shopCodes = $this->locationService->getShopsByCity($deliveryLocation)) {
             return false;
         }
 
@@ -46,6 +39,11 @@ class InnerPickupService extends DeliveryServiceBase
 
     protected function calculateConcrete(Shipment $shipment)
     {
+        $result = parent::calculateConcrete($shipment);
+        if (!$result->isSuccess()) {
+            return $result;
+        }
+
         /* @todo calculate delivery time and price */
 
         $result = new \Bitrix\Sale\Delivery\CalculationResult();
