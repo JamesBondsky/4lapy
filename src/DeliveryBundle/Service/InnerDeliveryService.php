@@ -3,6 +3,7 @@
 namespace FourPaws\DeliveryBundle\Service;
 
 use Bitrix\Main\Error;
+use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Shipment;
 
 class InnerDeliveryService extends DeliveryServiceBase
@@ -28,7 +29,7 @@ class InnerDeliveryService extends DeliveryServiceBase
             return false;
         }
 
-        /** todo проверка остатков товаров */
+        /** @todo проверка остатков товаров */
 
         return true;
     }
@@ -54,7 +55,13 @@ class InnerDeliveryService extends DeliveryServiceBase
             $result->addError(new Error('Не задана стоимость доставки'));
         }
 
-        /* @todo calculate delivery time */
+        /* @todo учитывать наличие товара */
+        $result->setPeriodType(CalculationResult::PERIOD_TYPE_DAY);
+        if (date('H') < 14) {
+            $result->setPeriodFrom(1);
+        } else {
+            $result->setPeriodFrom(2);
+        }
 
         return $result;
     }

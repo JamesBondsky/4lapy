@@ -2,6 +2,9 @@
 
 namespace FourPaws\DeliveryBundle\Service;
 
+use Bitrix\Main\Error;
+use Bitrix\Sale\Delivery\CalculationResult;
+use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\Shipment;
 
 class InnerPickupService extends DeliveryServiceBase
@@ -29,10 +32,10 @@ class InnerPickupService extends DeliveryServiceBase
 
         $deliveryLocation = $this->getDeliveryLocation($shipment);
         if (!$shopCodes = $this->locationService->getShopsByCity($deliveryLocation)) {
-            return false;
+//            return false; // @todo раскомментировать, когда можно будет получить список магазинов
         }
 
-        /** todo проверка остатков товаров */
+        /** @todo проверка остатков товаров */
 
         return true;
     }
@@ -43,11 +46,33 @@ class InnerPickupService extends DeliveryServiceBase
         if (!$result->isSuccess()) {
             return $result;
         }
+        
+        $order = $shipment->getParentOrder();
+        $propertyCollection = $order->getPropertyCollection();
 
-        /* @todo calculate delivery time */
+        $shopCode = null;
+        /* @var PropertyValue $prop */
+        foreach ($propertyCollection as $prop) {
+            if ($prop->getField('CODE') == 'DELIVERY_PLACE_CODE') {
+                $shopCode = $prop->getValue();
+                break;
+            }
+        }
+
+        $deliveryLocation = $this->getDeliveryLocation($shipment);
+        $shopCodes = $this->locationService->getShopsByCity($deliveryLocation);
+
+        if (!$shopCode) {
+            $result->addError(new Error('Не выбран пункт самовывоза'));
+        } elseif (!in_array($shopCode, $shopCodes)) {
+            $result->addError(new Error('Выбран неверный пункт самовывоза'));
+        }
 
         $result = new \Bitrix\Sale\Delivery\CalculationResult();
         $result->setDeliveryPrice(0);
+        /* @todo учитывать наличие товара */
+        $result->setPeriodFrom(1);
+        $result->setPeriodType(CalculationResult::PERIOD_TYPE_HOUR);
 
         return $result;
     }
