@@ -34,6 +34,44 @@ class InnerDeliveryService extends DeliveryServiceBase
         return true;
     }
 
+    public function getIntervals(Shipment $shipment): array
+    {
+        switch ($this->getDeliveryZoneCode($shipment)) {
+            case self::ZONE_1:
+                return [
+                    [
+                        'FROM' => 9,
+                        'TO'   => 18,
+                    ],
+                    [
+                        'FROM' => 18,
+                        'TO'   => 23,
+                    ],
+                ];
+            case self::ZONE_2:
+                return [
+                    [
+                        'FROM' => 8,
+                        'TO'   => 12,
+                    ],
+                    [
+                        'FROM' => 12,
+                        'TO'   => 16,
+                    ],
+                    [
+                        'FROM' => 16,
+                        'TO'   => 20,
+                    ],
+                    [
+                        'FROM' => 20,
+                        'TO'   => 0,
+                    ],
+                ];
+        }
+
+        return [];
+    }
+
     protected function calculateConcrete(Shipment $shipment)
     {
         $result = parent::calculateConcrete($shipment);
@@ -41,7 +79,7 @@ class InnerDeliveryService extends DeliveryServiceBase
             return $result;
         }
 
-        $deliveryZone = $this->getDeliveryZoneCode($shipment);
+        $deliveryZone = $this->getDeliveryZoneCode($shipment, false);
         if ($this->config['PRICES'][$deliveryZone]) {
             $result->setDeliveryPrice($this->config['PRICES'][$deliveryZone]);
 

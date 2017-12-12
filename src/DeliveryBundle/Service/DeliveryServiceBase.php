@@ -32,11 +32,6 @@ abstract class DeliveryServiceBase extends Base implements DeliveryServiceInterf
     protected static $canHasProfiles = true;
 
     /**
-     * @var array
-     */
-    protected $availableZones = [];
-
-    /**
      * @var LocationService $locationService
      */
     protected $locationService;
@@ -103,7 +98,7 @@ abstract class DeliveryServiceBase extends Base implements DeliveryServiceInterf
     /**
      * {@inheritdoc}
      */
-    public function getDeliveryZoneCode(Shipment $shipment)
+    public function getDeliveryZoneCode(Shipment $shipment, $skipLocations = true)
     {
         if (!$deliveryLocation = $this->getDeliveryLocation($shipment)) {
             return false;
@@ -121,6 +116,9 @@ abstract class DeliveryServiceBase extends Base implements DeliveryServiceInterf
 
         $availableZones = $this->getAvailableZones();
         foreach ($availableZones as $code => $zone) {
+            if ($skipLocations && $zone['TYPE'] == static::LOCATION_RESTRICTION_TYPE_LOCATION) {
+                continue;
+            }
             if (!empty(array_intersect($deliveryLocationPath, $zone['LOCATIONS']))) {
                 return $code;
             }
@@ -152,7 +150,9 @@ abstract class DeliveryServiceBase extends Base implements DeliveryServiceInterf
                     break;
                 case static::LOCATION_RESTRICTION_TYPE_GROUP:
                     if (isset($allZones[$restriction['LOCATION_CODE']])) {
-                        $result[$restriction['LOCATION_CODE']] = $allZones[$restriction['LOCATION_CODE']];
+                        $item = $allZones[$restriction['LOCATION_CODE']];
+                        $item['TYPE'] = static::LOCATION_RESTRICTION_TYPE_GROUP;
+                        $result[$restriction['LOCATION_CODE']] = $item;
                     }
                     break;
             }
@@ -175,6 +175,7 @@ abstract class DeliveryServiceBase extends Base implements DeliveryServiceInterf
                             'NAME'      => $location['SALE_LOCATION_LOCATION_NAME_NAME'],
                             'ID'        => $location['ID'],
                             'LOCATIONS' => [$location['CODE']],
+                            'TYPE'      => static::LOCATION_RESTRICTION_TYPE_LOCATION,
                         ],
                     ] + $result;
             }

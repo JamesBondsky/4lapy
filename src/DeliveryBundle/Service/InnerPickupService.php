@@ -32,12 +32,17 @@ class InnerPickupService extends DeliveryServiceBase
 
         $deliveryLocation = $this->getDeliveryLocation($shipment);
         if (!$shopCodes = $this->locationService->getShopsByCity($deliveryLocation)) {
-//            return false; // @todo раскомментировать, когда можно будет получить список магазинов
+            //            return false; // @todo раскомментировать, когда можно будет получить список магазинов
         }
 
         /** @todo проверка остатков товаров */
 
         return true;
+    }
+
+    public function getIntervals(Shipment $shipment): array
+    {
+        return [];
     }
 
     protected function calculateConcrete(Shipment $shipment)
@@ -46,7 +51,7 @@ class InnerPickupService extends DeliveryServiceBase
         if (!$result->isSuccess()) {
             return $result;
         }
-        
+
         $order = $shipment->getParentOrder();
         $propertyCollection = $order->getPropertyCollection();
 
