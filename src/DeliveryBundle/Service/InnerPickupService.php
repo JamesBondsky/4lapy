@@ -27,6 +27,18 @@ class InnerPickupService extends DeliveryServiceBase
             return false;
         }
 
+        $order = $shipment->getParentOrder();
+        $propertyCollection = $order->getPropertyCollection();
+        $locationProp = $propertyCollection->getDeliveryLocation();
+
+        if (!$locationProp || !$locationProp->getValue()) {
+            return false;
+        }
+
+        if (!$shopCodes = $this->locationService->getShopsByCity($locationProp->getValue())) {
+            return false;
+        }
+
         /** todo проверка остатков товаров */
 
         return true;
