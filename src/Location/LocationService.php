@@ -34,14 +34,31 @@ class LocationService
 
     protected $dataManager;
 
+    public function __construct(DataManager $dataManager)
+    {
+        $this->dataManager = $dataManager;
+    }
+
     /**
-     * Возвращает код выбранного региона.
-     *
-     * @param $locationCode
+     * Возвращает код текущего региона.
      *
      * @return string
      */
-    public function getCurrentRegionCode(string $locationCode): string
+    public function getCurrentRegionCode(): string
+    {
+        $locationCode = $this->getCurrentLocation();
+
+        return $this->getRegionCode($locationCode);
+    }
+
+    /**
+     * Возвращает код региона по коду местоположения
+     *
+     * @param string $locationCode
+     *
+     * @return string
+     */
+    public function getRegionCode(string $locationCode): string
     {
         if (!$locationCode || !$location = $this->findLocationByCode($locationCode)) {
             return self::DEFAULT_REGION_CODE;
@@ -63,7 +80,7 @@ class LocationService
             if ($region = ExternalTable::getList(
                 [
                     'filter' => $filter,
-                     // коды привязаны к регионам, так что в принципе может вернуться только одно значение
+                    // коды привязаны к регионам, так что в принципе может вернуться только одно значение
                     'limit'  => 1,
                 ]
             )->fetch()) {
@@ -78,11 +95,6 @@ class LocationService
             ->resultOf($getRegionCode);
 
         return $data['result'];
-    }
-
-    public function __construct(DataManager $dataManager)
-    {
-        $this->dataManager = $dataManager;
     }
 
     /**
@@ -335,6 +347,25 @@ class LocationService
     }
 
     /**
+     * Получение кода текущего местоположения
+     *
+     * @return string
+     */
+    public function getCurrentLocation(): string
+    {
+        /** @var UserService $userService */
+        $userService = Application::getInstance()
+                                  ->getContainer()
+                                  ->get('FourPaws\UserBundle\Service\UserCitySelectInterface');
+
+        if ($location = $userService->getSelectedCity()) {
+            return $location['CODE'];
+        }
+
+        return (string)$this->getDefaultLocation()['CODE'];
+    }
+
+    /**
      * Получение эл-та из HL-блока Cities по коду местоположения
      *
      * @return City|null
@@ -370,12 +401,8 @@ class LocationService
      */
     public function getCurrentCity()
     {
-        /** @var UserService $userService */
-        $userService = Application::getInstance()
-                                  ->getContainer()
-                                  ->get('FourPaws\UserBundle\Service\UserCitySelectInterface');
 
-        if ($locationCode = $userService->getSelectedCity()['CODE']) {
+        if ($locationCode = $this->getCurrentLocation()) {
             if ($city = $this->getCity($locationCode)) {
                 return $city;
             }
