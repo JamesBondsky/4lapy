@@ -44,7 +44,7 @@ class InnerPickupService extends DeliveryServiceBase
             return $result;
         }
 
-        /* @todo calculate delivery time and price */
+        /* @todo calculate delivery time */
 
         $result = new \Bitrix\Sale\Delivery\CalculationResult();
         $result->setDeliveryPrice(0);

@@ -8,6 +8,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\Delivery\DeliveryLocationTable;
 use Bitrix\Sale\Delivery\Services\Base;
+use Bitrix\Sale\Location\LocationTable;
 use Bitrix\Sale\Shipment;
 use FourPaws\App\Application;
 use FourPaws\Location\LocationService;
@@ -119,8 +120,8 @@ abstract class DeliveryServiceBase extends Base implements DeliveryServiceInterf
         }
 
         $availableZones = $this->getAvailableZones();
-        foreach ($availableZones as $code => $locations) {
-            if (!empty(array_intersect($deliveryLocationPath, $locations))) {
+        foreach ($availableZones as $code => $zone) {
+            if (!empty(array_intersect($deliveryLocationPath, $zone['LOCATIONS']))) {
                 return $code;
             }
         }
@@ -143,16 +144,39 @@ abstract class DeliveryServiceBase extends Base implements DeliveryServiceInterf
 
         $allZones = $this->getAllZones();
 
+        $locationCodes = [];
         while ($restriction = $restrictions->fetch()) {
             switch ($restriction['LOCATION_TYPE']) {
                 case static::LOCATION_RESTRICTION_TYPE_LOCATION:
-                    $result[$restriction['LOCATION_CODE']] = [$restriction['LOCATION_CODE']];
+                    $locationCodes[] = $restriction['LOCATION_CODE'];
                     break;
                 case static::LOCATION_RESTRICTION_TYPE_GROUP:
                     if (isset($allZones[$restriction['LOCATION_CODE']])) {
-                        $result[$restriction['LOCATION_CODE']] = $allZones[$restriction['LOCATION_CODE']]['LOCATIONS'];
+                        $result[$restriction['LOCATION_CODE']] = $allZones[$restriction['LOCATION_CODE']];
                     }
                     break;
+            }
+        }
+
+        if (!empty($locationCodes)) {
+            $locations = LocationTable::getList(
+                [
+                    'filter' => ['CODE' => $locationCodes],
+                    'select' => ['ID', 'CODE', 'NAME.NAME'],
+                ]
+            );
+
+            while ($location = $locations->Fetch()) {
+                // сделано, чтобы отдельные местпололожения были впереди групп,
+                // т.к. группы могут их включать
+                $result = [
+                        $location['CODE'] => [
+                            'CODE'      => $location['CODE'],
+                            'NAME'      => $location['SALE_LOCATION_LOCATION_NAME_NAME'],
+                            'ID'        => $location['ID'],
+                            'LOCATIONS' => [$location['CODE']],
+                        ],
+                    ] + $result;
             }
         }
 

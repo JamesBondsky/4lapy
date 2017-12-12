@@ -41,12 +41,12 @@ class InnerDeliveryService extends DeliveryServiceBase
         }
 
         $deliveryZone = $this->getDeliveryZoneCode($shipment);
-        if ($this->config[$deliveryZone . '_PRICE']) {
-            $result->setDeliveryPrice($this->config[$deliveryZone . '_PRICE']);
+        if ($this->config['PRICES'][$deliveryZone]) {
+            $result->setDeliveryPrice($this->config['PRICES'][$deliveryZone]);
 
-            if (!empty($this->config[$deliveryZone . '_FREE_FROM'])) {
+            if (!empty($this->config['FREE_FROM'][$deliveryZone])) {
                 $order = $shipment->getParentOrder();
-                if ($order->getPrice() >= $this->config[$deliveryZone . '_FREE_FROM']) {
+                if ($order->getBasket()->getPrice() >= $this->config['FREE_FROM'][$deliveryZone]) {
                     $result->setDeliveryPrice(0);
                 }
             }
@@ -55,6 +55,41 @@ class InnerDeliveryService extends DeliveryServiceBase
         }
 
         /* @todo calculate delivery time */
+
+        return $result;
+    }
+
+    protected function getConfigStructure()
+    {
+        $result = parent::getConfigStructure();
+
+        $zones = $this->getAvailableZones();
+
+        $result['PRICES'] = [
+            'TITLE'       => 'Стоимости доставок по зонам',
+            'DESCRIPTION' => 'Стоимости доставок по зонам',
+            'ITEMS'       => [],
+        ];
+
+        $result['FREE_FROM'] = [
+            'TITLE'       => 'Пороги бесплатной доставки по зонам',
+            'DESCRIPTION' => 'Пороги бесплатной доставки по зонам',
+            'ITEMS'       => [],
+        ];
+
+        foreach ($zones as $code => $zone) {
+            $result['PRICES']['ITEMS'][$code] = [
+                'TYPE'    => 'NUMBER',
+                'NAME'    => 'Зона ' . $zone['NAME'],
+                'DEFAULT' => 0,
+            ];
+
+            $result['FREE_FROM']['ITEMS'][$code] = [
+                'TYPE'    => 'NUMBER',
+                'NAME'    => 'Зона ' . $zone['NAME'],
+                'DEFAULT' => 0,
+            ];
+        }
 
         return $result;
     }
