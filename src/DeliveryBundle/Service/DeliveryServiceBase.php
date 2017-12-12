@@ -2,6 +2,9 @@
 
 namespace FourPaws\DeliveryBundle\Service;
 
+use Bitrix\Currency\CurrencyManager;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\Delivery\Services\Base;
 use Bitrix\Sale\Shipment;
 use FourPaws\App\Application;
@@ -19,6 +22,11 @@ abstract class DeliveryServiceBase extends Base implements DeliveryServiceInterf
      * @var bool
      */
     protected static $whetherAdminExtraServicesShow = false;
+
+    /**
+     * @var bool
+     */
+    protected static $canHasProfiles = true;
 
     /**
      * @var array
@@ -44,36 +52,8 @@ abstract class DeliveryServiceBase extends Base implements DeliveryServiceInterf
         parent::__construct($initParams);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getDeliveryZone(string $locationCode = null): string
-    {
-        if (!$locationCode) {
-            $locationCode = $this->userService->getSelectedCity()['CODE'];
-        }
-
-        $allZones = $this->getAllAvailableZones();
-        foreach ($allZones as $code => $data) {
-            if (in_array($locationCode, $data['LOCATIONS'])) {
-                return $code;
-            }
-        }
-
-        return self::ZONE_4;
-    }
-
-    public function getAllAvailableZones(): array
-    {
-        $this->locationService->getLocationGroups(true);
-    }
-
     public function isCompatible(Shipment $shipment)
     {
-        if (!in_array($this->getDeliveryZone(), $this->availableZones)) {
-            return false;
-        }
-
         return parent::isCompatible($shipment);
     }
 
@@ -85,5 +65,35 @@ abstract class DeliveryServiceBase extends Base implements DeliveryServiceInterf
     public static function whetherAdminExtraServicesShow()
     {
         return static::$whetherAdminExtraServicesShow;
+    }
+
+    protected function getConfigStructure()
+    {
+        $currency = $this->currency;
+
+        if (Loader::includeModule('currency')) {
+            $currencyList = CurrencyManager::getCurrencyList();
+            if (isset($currencyList[$this->currency])) {
+                $currency = $currencyList[$this->currency];
+            }
+            unset($currencyList);
+        }
+
+        $result = [
+            "MAIN" => [
+                "TITLE"       => Loc::getMessage("SALE_DLVR_HANDL_SMPL_TAB_MAIN"),
+                "DESCRIPTION" => Loc::getMessage("SALE_DLVR_HANDL_SMPL_TAB_MAIN_DESCR"),
+                "ITEMS"       => [
+                    "CURRENCY" => [
+                        "TYPE"       => "DELIVERY_READ_ONLY",
+                        "NAME"       => Loc::getMessage("SALE_DLVR_HANDL_SMPL_CURRENCY"),
+                        "VALUE"      => $this->currency,
+                        "VALUE_VIEW" => $currency,
+                    ]
+                ],
+            ],
+        ];
+
+        return $result;
     }
 }

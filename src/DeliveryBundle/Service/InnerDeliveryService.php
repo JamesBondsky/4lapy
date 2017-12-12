@@ -6,11 +6,6 @@ use Bitrix\Sale\Shipment;
 
 class InnerDeliveryService extends DeliveryServiceBase
 {
-    protected $availableZones = [
-        self::ZONE_1,
-        self::ZONE_2,
-    ];
-
     public function __construct(array $initParams)
     {
         parent::__construct($initParams);
@@ -43,19 +38,6 @@ class InnerDeliveryService extends DeliveryServiceBase
 
         $result = new \Bitrix\Sale\Delivery\CalculationResult();
         $result->setDeliveryPrice(100);
-
-        return $result;
-    }
-
-    protected function getConfigStructure()
-    {
-        $result = [
-            'MAIN' => [
-                'TITLE'       => 'Основные',
-                'DESCRIPTION' => 'Основные настройки',
-                'ITEMS'       => [],
-            ],
-        ];
 
         return $result;
     }
