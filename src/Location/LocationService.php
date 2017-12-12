@@ -11,7 +11,7 @@ use CBitrixComponent;
 use CBitrixLocationSelectorSearchComponent;
 use CIBlockElement;
 use FourPaws\App\Application;
-use FourPaws\BitrixOrm\Model\Interfaces\ModelInterface;
+use FourPaws\BitrixOrm\Model\ModelInterface;
 use FourPaws\Enum\CitiesSectionCode;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
@@ -29,15 +29,73 @@ class LocationService
 
     const LOCATION_CODE_MOSCOW = '0000073738';
 
-    const DEFAULT_PRICE_CODE = 'IR77';
+    const DEFAULT_REGION_CODE = 'IR77';
 
-    const PRICE_TYPE_SERVICE_CODE = 'REGION';
+    const REGION_SERVICE_CODE = 'REGION';
 
     protected $dataManager;
 
     public function __construct(DataManager $dataManager)
     {
         $this->dataManager = $dataManager;
+    }
+
+    /**
+     * Возвращает код текущего региона.
+     *
+     * @return string
+     */
+    public function getCurrentRegionCode(): string
+    {
+        $locationCode = $this->getCurrentLocation();
+
+        return $this->getRegionCode($locationCode);
+    }
+
+    /**
+     * Возвращает код региона по коду местоположения
+     *
+     * @param string $locationCode
+     *
+     * @return string
+     */
+    public function getRegionCode(string $locationCode): string
+    {
+        if (!$locationCode || !$location = $this->findLocationByCode($locationCode)) {
+            return self::DEFAULT_REGION_CODE;
+        }
+
+        $getRegionCode = function () use ($location) {
+            $filter = [
+                'LOCATION.CODE' => $location['CODE'],
+                'SERVICE.CODE'  => self::REGION_SERVICE_CODE,
+            ];
+
+            if (!empty ($location['PATH'])) {
+                $filter['LOCATION.CODE'] = array_merge(
+                    [$filter['LOCATION.CODE']],
+                    array_column($location['PATH'], 'CODE')
+                );
+            }
+
+            if ($region = ExternalTable::getList(
+                [
+                    'filter' => $filter,
+                    // коды привязаны к регионам, так что в принципе может вернуться только одно значение
+                    'limit'  => 1,
+                ]
+            )->fetch()) {
+                return $region['XML_ID'];
+            }
+
+            return self::DEFAULT_REGION_CODE;
+        };
+
+        $data = (new BitrixCache())
+            ->withId($locationCode)
+            ->resultOf($getRegionCode);
+
+        return $data['result'];
     }
 
     /**
@@ -275,52 +333,6 @@ class LocationService
     }
 
     /**
-     * Возвращает код типа цены по коду местоположения
-     *
-     * @param $locationCode
-     *
-     * @return string
-     */
-    public function getPriceTypeCodeByLocation(string $locationCode): string
-    {
-        if (!$locationCode || !$location = $this->findLocationByCode($locationCode)) {
-            return static::DEFAULT_PRICE_CODE;
-        }
-
-        $getPriceCode = function () use ($location) {
-            $filter = [
-                'LOCATION.CODE' => $location['CODE'],
-                'SERVICE.CODE'  => static::PRICE_TYPE_SERVICE_CODE,
-            ];
-
-            if (!empty ($location['PATH'])) {
-                $filter['LOCATION.CODE'] = array_merge(
-                    [$filter['LOCATION.CODE']],
-                    array_column($location['PATH'], 'CODE')
-                );
-            }
-
-            if ($priceType = ExternalTable::getList(
-                [
-                    'filter' => $filter,
-                    'limit'  => 1,
-                    // типы цен привязаны к регионам, так что в принципе может вернуться только одно значение
-                ]
-            )->fetch()) {
-                return $priceType['XML_ID'];
-            }
-
-            return static::DEFAULT_PRICE_CODE;
-        };
-
-        $data = (new BitrixCache())
-            ->withId($locationCode)
-            ->resultOf($getPriceCode);
-
-        return $data['result'];
-    }
-
-    /**
      * Возвращает дефолтное местоположение
      *
      * @return array
@@ -333,6 +345,25 @@ class LocationService
         }
 
         return [];
+    }
+
+    /**
+     * Получение кода текущего местоположения
+     *
+     * @return string
+     */
+    public function getCurrentLocation(): string
+    {
+        /** @var UserService $userService */
+        $userService = Application::getInstance()
+                                  ->getContainer()
+                                  ->get('FourPaws\UserBundle\Service\UserCitySelectInterface');
+
+        if ($location = $userService->getSelectedCity()) {
+            return $location['CODE'];
+        }
+
+        return (string)$this->getDefaultLocation()['CODE'];
     }
 
     /**
@@ -419,12 +450,8 @@ class LocationService
      */
     public function getCurrentCity()
     {
-        /** @var UserService $userService */
-        $userService = Application::getInstance()
-                                  ->getContainer()
-                                  ->get('FourPaws\UserBundle\Service\UserCitySelectInterface');
 
-        if ($locationCode = $userService->getSelectedCity()['CODE']) {
+        if ($locationCode = $this->getCurrentLocation()) {
             if ($city = $this->getCity($locationCode)) {
                 return $city;
             }
