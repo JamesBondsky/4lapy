@@ -5,6 +5,7 @@ namespace FourPaws\App;
 use Circle\RestClientBundle\CircleRestClientBundle;
 use FOS\RestBundle\FOSRestBundle;
 use FourPaws\AppBundle\FourPawsAppBundle;
+use FourPaws\DeliveryBundle\FourPawsDeliveryBundle;
 use FourPaws\UserBundle\FourPawsUserBundle;
 use JMS\SerializerBundle\JMSSerializerBundle;
 use Misd\PhoneNumberBundle\MisdPhoneNumberBundle;
@@ -60,6 +61,7 @@ class AppKernel extends Kernel
             /** Internal bundles */
             new FourPawsAppBundle(),
             new FourPawsUserBundle(),
+            new FourPawsDeliveryBundle(),
         ];
 
         if (\in_array($this->getEnvironment(), ['dev', 'test'], true)) {
