@@ -4,6 +4,7 @@ namespace FourPaws\Location;
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Highloadblock\DataManager;
+use Bitrix\Sale\Location\GroupLocationTable;
 use Bitrix\Sale\Location\ExternalTable;
 use Bitrix\Sale\Location\TypeTable;
 use CBitrixComponent;
@@ -363,6 +364,54 @@ class LocationService
         }
 
         return (string)$this->getDefaultLocation()['CODE'];
+    }
+
+    /**
+     * Получение групп местоположений
+     *
+     * @param bool $withLocations если true, то в каждой группе содержать ключ LOCATIONS,
+     *                            содержащий массив кодов местоположений этой группы
+     */
+    public function getLocationGroups($withLocations = true): array
+    {
+        $getGroups = function () use ($withLocations) {
+            $result = [];
+            $select = ['GROUP.ID', 'GROUP.CODE', 'GROUP.NAME', 'GROUP.SORT'];
+
+            if ($withLocations) {
+                $select[] = 'LOCATION.CODE';
+            }
+
+            $groups = GroupLocationTable::getList(
+                [
+                    'select' => $select,
+                    'order'  => ['GROUP.SORT' => 'ASC'],
+                ]
+            );
+
+            while ($group = $groups->fetch()) {
+                $item = [
+                    'ID'   => $group['SALE_LOCATION_GROUP_LOCATION_GROUP_ID'],
+                    'CODE' => $group['SALE_LOCATION_GROUP_LOCATION_GROUP_CODE'],
+                    'NAME' => $group['SALE_LOCATION_GROUP_LOCATION_GROUP_NAME_NAME'],
+                ];
+
+                if ($withLocations) {
+                    if (isset($result[$group['SALE_LOCATION_GROUP_LOCATION_GROUP_CODE']])) {
+                        $item = $result[$group['SALE_LOCATION_GROUP_LOCATION_GROUP_CODE']];
+                    }
+                    $item['LOCATIONS'][] = $group['SALE_LOCATION_GROUP_LOCATION_LOCATION_CODE'];
+                }
+
+                $result[$group['SALE_LOCATION_GROUP_LOCATION_GROUP_CODE']] = $item;
+            }
+
+            return $result;
+        };
+
+        return (new BitrixCache())
+            ->withId(__METHOD__ . intVal($withLocations))
+            ->resultOf($getGroups);
     }
 
     /**
