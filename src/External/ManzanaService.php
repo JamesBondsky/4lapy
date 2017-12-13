@@ -3,23 +3,23 @@
 namespace FourPaws\External;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\External\Exception\ManzanaServiceException;
-use FourPaws\External\Manzana\Client\SoapClient;
+use FourPaws\External\Manzana\Exception\AuthenticationException;
 use FourPaws\External\Manzana\Exception\CardNotFoundException;
 use FourPaws\External\Manzana\Exception\ContactNotFoundException;
-use FourPaws\External\Manzana\Exception\ManzanaException;
+use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\Manzana\Model\Card;
 use FourPaws\External\Manzana\Model\Cards;
+use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\Manzana\Model\Clients;
 use FourPaws\External\Manzana\Model\Contact;
 use FourPaws\External\Manzana\Model\Contacts;
 use FourPaws\External\Manzana\Model\ParameterBag;
-use FourPaws\Health\HealthService;
 use GuzzleHttp\Client as GuzzleClient;
 use JMS\Serializer\Serializer;
 use Meng\AsyncSoap\Guzzle\Factory;
+use Meng\AsyncSoap\SoapClientInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use RuntimeException;
@@ -35,6 +35,10 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 class ManzanaService implements LoggerAwareInterface
 {
     use LoggerAwareTrait;
+    
+    const METHOD_AUTHENTICATE             = 'Authenticate';
+    
+    const METHOD_EXECUTE                  = 'Execute';
     
     const CONTRACT_ADVANCED_BALANCE       = 'advanced_balance';
     
@@ -60,23 +64,20 @@ class ManzanaService implements LoggerAwareInterface
     
     const CONTRACT_SEARCH_CARD_BY_NUMBER  = 'search_cards_by_number';
     
-    /**
-     * @var SoapClient
-     */
     protected $client;
     
-    /**
-     * @var HealthService
-     */
-    protected $healthService;
-    
     protected $serializer;
+    
+    protected $parameters;
+    
+    protected $sessionId;
     
     /**
      * ManzanaService constructor.
      *
-     * @param Serializer    $serializer
-     * @param HealthService $healthService
+     * @param Serializer          $serializer
+     * @param SoapClientInterface $client
+     * @param array               $parameters
      *
      * @throws ApplicationCreateException
      * @throws ServiceNotFoundException
@@ -84,18 +85,14 @@ class ManzanaService implements LoggerAwareInterface
      * @throws InvalidArgumentException
      * @throws RuntimeException
      */
-    public function __construct(Serializer $serializer, HealthService $healthService)
+    public function __construct(Serializer $serializer, SoapClientInterface $client, array $parameters)
     {
-        $container = Application::getInstance()->getContainer();
-        
-        $this->serializer    = $serializer;
-        $this->healthService = $healthService;
-        
-        $wdsl          = $container->getParameter('manzana')['pos_wdsl'];
-        $clientOptions = ['curl' => [CURLOPT_CONNECTTIMEOUT => 3]];
-        $client        = (new Factory())->create(new GuzzleClient($clientOptions), $wdsl);
-        $this->client  = new SoapClient($client, $this->healthService);
-        $this->setLogger(LoggerFactory::create('manzana'));
+        $this->serializer = $serializer;
+        $this->client     = $client;
+        $this->parameters = $parameters;
+    
+        $client =
+            (new Factory())->create(new GuzzleClient(['curl' => [CURLOPT_CONNECTTIMEOUT => 3]]), $parameters['wsdl']);
     }
     
     /**
@@ -136,11 +133,18 @@ class ManzanaService implements LoggerAwareInterface
      * - удаление типа питомца (изменение типа питомца/удаление питомца в случае, если больше нет питомцев такого типа)
      * - замена виртуальной карты на физическую в ЛК
      *
-     * @param array $data
+     * @param Client $contact
      */
-    public function updateContact(array $data)
+    public function updateContact(Client $contact)
     {
+        $bag = new ParameterBag($this->serializer->toArray($contact));
     
+        $result = $this->execute(self::CONTRACT_CONTACT_UPDATE, $bag->getParameters());
+        var_dump($result);
+        var_dump(simplexml_load_string($result));
+        $contact->contactId = simplexml_load_string($result)->contactId;
+    
+        return $contact;
     }
     
     /**
@@ -343,30 +347,82 @@ class ManzanaService implements LoggerAwareInterface
         return $contact;
     }
     
+    protected function clientSearch(array $data)
+    {
+    
+    }
+    
+    public function setServiceLogger()
+    {
+        if (!$this->logger) {
+            $this->setLogger(LoggerFactory::create('manzana'));
+        }
+    }
+    
+    /**
+     * @return string
+     *
+     * @throws AuthenticationException
+     */
+    protected function authenticate() : string
+    {
+        if ($this->sessionId) {
+            return $this->sessionId;
+        }
+        
+        $arguments = [
+            'login'    => $this->parameters['login'],
+            'password' => $this->parameters['password'],
+            'ip'       => $_SERVER['HTTP_X_FORWARDED_FOR'] ?: $_SERVER['REMOTE_ADDR'],
+        ];
+        
+        try {
+            $this->sessionId = $this->client->call(self::METHOD_AUTHENTICATE,
+                                                   ['request_options' => $arguments])->AuthenticateResult->SessionId;
+        } catch (\Exception $e) {
+            throw new AuthenticationException(sprintf('Auth error: %s', $e->getMessage()), $e->getCode(), $e);
+        }
+        
+        return $this->sessionId;
+    }
+    
     /**
      * @param string $contract
      * @param array  $parameters
      *
      * @return string
-     * @throws ManzanaServiceException
+     *
+     * @throws AuthenticationException
+     * @throws ExecuteException
      */
-    protected function execute(string $contract, array $parameters) : string
+    protected function execute(string $contract, array $parameters = []) : string
     {
+        $sessionId = $this->authenticate();
+        
         try {
-            $result = $this->client->execute($contract, $parameters);
-        } catch (ManzanaException $e) {
-            $this->logger->error(sprintf('Manzana execution error: error %s, code %s',
-                                         $e->getMessage(),
-                                         $e->getCode()));
-            
-            throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
+            $arguments = [
+                'sessionId'    => $sessionId,
+                'contractName' => $contract,
+                'parameters'   => $parameters,
+            ];
+    
+            $result = $this->client->call(self::METHOD_EXECUTE, ['request_options' => $arguments]);
+    
+            $result = $result->ExecuteResult->Value;
+        } catch (\Exception $e) {
+            unset($this->sessionId);
+    
+            try {
+                $detail = $e->detail->details->description;
+            } catch (\Throwable $e) {
+                $detail = 'none';
+            }
+    
+            throw new ExecuteException(sprintf('Execute error: %s, detail: %s', $e->getMessage(), $detail),
+                                       $e->getCode(),
+                                       $e);
         }
         
         return $result;
-    }
-    
-    protected function clientSearch(array $data)
-    {
-    
     }
 }

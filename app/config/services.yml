@@ -9,6 +9,9 @@ services:
     autoconfigure: true
     public: true
 
+  logger.factory:
+    class: Adv\Bitrixtools\Tools\Log\LoggerFactory
+
   catalog.service:
     class: FourPaws\Catalog\CatalogService
     arguments: ['@bx.hlblock.filter', '@jms_serializer']
@@ -39,9 +42,6 @@ services:
     arguments:
       - '@bx.hlblock.cities'
 
-  user.service:
-    class: FourPaws\User\UserService
-
   health.service:
     class: FourPaws\Health\HealthService
 
@@ -50,7 +50,13 @@ services:
 
   manzana.service:
     class: FourPaws\External\ManzanaService
-    arguments: ['@jms_serializer', '@health.service']
+    arguments: ['@jms_serializer', '@health.service', '%manzana%']
+    calls:
+      - [setServiceLogger]
+
+  manzana.sync_consumer:
+    class: FourPaws\External\Manzana\Consumer\ManzanaContactConsumer
+    arguments: ['@jms_serializer', '@manzana.service']
 
   expertsender.service:
     class: FourPaws\External\ExpertsenderService
