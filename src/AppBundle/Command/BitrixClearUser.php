@@ -14,6 +14,7 @@ use Symfony\Component\Console\Exception\InvalidArgumentException;
 use Symfony\Component\Console\Exception\LogicException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
@@ -26,6 +27,10 @@ class BitrixClearUser extends Command implements LoggerAwareInterface
     use LoggerAwareTrait;
     
     const ARGUMENT_MINIMAL_ID = 'mid';
+    
+    const OPTION_DEBUG        = 'debug';
+    
+    protected $debug = false;
     
     /**
      * BitrixClearHighloadBlock constructor.
@@ -47,9 +52,15 @@ class BitrixClearUser extends Command implements LoggerAwareInterface
      */
     public function configure()
     {
-        $this->setName('bitrix:clear:user')->setDescription('Clear users')->addArgument(self::ARGUMENT_MINIMAL_ID,
-                                                                                        InputArgument::REQUIRED,
-                                                                                        'Minimal user id. Must be an integer, greater than 4');
+        $this->setName('bitrix:clear:user')
+             ->setDescription('Clear users')
+             ->addOption(self::OPTION_DEBUG,
+                         self::OPTION_DEBUG[0],
+                         InputOption::VALUE_NONE,
+                         'Show debug messages')
+             ->addArgument(self::ARGUMENT_MINIMAL_ID,
+                           InputArgument::REQUIRED,
+                           'Minimal user id. Must be an integer, greater than 4');
     }
     
     /**
@@ -62,7 +73,8 @@ class BitrixClearUser extends Command implements LoggerAwareInterface
      */
     public function execute(InputInterface $input, OutputInterface $output)
     {
-        $minimalId = $input->getArgument(self::ARGUMENT_MINIMAL_ID);
+        $minimalId   = $input->getArgument(self::ARGUMENT_MINIMAL_ID);
+        $this->debug = $input->getOption(self::OPTION_DEBUG);
         
         if ($minimalId < 5) {
             throw new InvalidArgumentException('mid must be an integer, greater than 4');
@@ -93,8 +105,7 @@ class BitrixClearUser extends Command implements LoggerAwareInterface
         
         while ($user = $userIdCollection->fetch()) {
             $this->removeUser($user['ID']);
-            
-            $this->logger->debug(sprintf('Users count - %s', $count--));
+            $this->debugMessage(sprintf('Users count - %s', $count--));
         }
     }
     
@@ -111,9 +122,19 @@ class BitrixClearUser extends Command implements LoggerAwareInterface
         if ($user->LAST_ERROR) {
             $this->logger->error(sprintf('User with id %s remove error: %s', $id, $user->LAST_ERROR));
         } else {
-            $this->logger->debug(sprintf('User with id %s was removed', $id));
+            $this->debugMessage(sprintf('User with id %s was removed', $id));
         }
         
         return !$user->LAST_ERROR;
+    }
+    
+    /**
+     * @param string $message
+     */
+    private function debugMessage(string $message)
+    {
+        if ($this->debug) {
+            $this->logger->debug($message);
+        }
     }
 }
