@@ -198,18 +198,14 @@ class Store
 
     /**
      * @var bool
-     * @Serializer\AccessType(type="public_method")
-     * @Serializer\Accessor(getter="getRawShippingCenter", setter="setRawShippingCenter")
      * @Serializer\SerializedName("UF_IS_SHOP")
-     * @Serializer\Type("string")
+     * @Serializer\Type("bool")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
     protected $isShop = false;
 
     /**
-     * @var bool
-     * @Serializer\AccessType(type="public_method")
-     * @Serializer\Accessor(getter="getRawShippingCenter", setter="setRawShippingCenter")
+     * @var string
      * @Serializer\SerializedName("UF_LOCATION")
      * @Serializer\SkipWhenEmpty()
      * @Serializer\Type("string")
@@ -739,19 +735,19 @@ class Store
     }
 
     /**
-     * @return bool
+     * @return string
      */
-    public function isLocation(): bool
+    public function getLocation(): string
     {
         return $this->location;
     }
 
     /**
-     * @param bool $location
+     * @param string $location
      *
      * @return Store
      */
-    public function setLocation(bool $location): Store
+    public function setLocation(string $location): Store
     {
         $this->location = $location;
 

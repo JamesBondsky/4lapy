@@ -88,25 +88,30 @@ class StoreRepository
     public function findBy(array $criteria = [], array $orderBy = [], int $limit = null, int $offset = null): array
     {
         if (empty($orderBy)) {
-            $orderBy = ['SORT' => 'ASC', 'ID' => 'DESC'];
+            $orderBy = ['SORT' => 'ASC', 'ID' => 'ASC'];
         }
 
-        $result = StoreTable::query()
+        $stores = StoreTable::query()
                             ->setSelect(['*', 'UF_*'])
                             ->setFilter($criteria)
                             ->setOrder($orderBy)
                             ->setLimit($limit)
                             ->setOffset($offset)
                             ->exec();
-        if (0 === $result->getSelectedRowsCount()) {
+        if (0 === $stores->getSelectedRowsCount()) {
             return [];
+        }
+
+        $result = [];
+        while ($store = $stores->fetch()) {
+            $result[$store['ID']] = $store;
         }
 
         /**
          * todo change group name to constant
          */
         return $this->arrayTransformer->fromArray(
-            $result->fetchAll(),
+            $result,
             sprintf('array<%s>', Store::class),
             DeserializationContext::create()->setGroups(['read'])
         );
