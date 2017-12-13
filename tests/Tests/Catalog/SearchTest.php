@@ -5,7 +5,10 @@ namespace FourPaws\Test\Tests\Catalog;
 use FourPaws\App\Application;
 use FourPaws\Catalog\CatalogService;
 use FourPaws\Catalog\Model\Category;
+use FourPaws\Catalog\Model\Offer;
+use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\CategoryQuery;
+use FourPaws\Location\LocationService;
 use FourPaws\Search\SearchService;
 use FourPaws\Test\Tests\TestBase;
 use Symfony\Component\HttpFoundation\Request;
@@ -23,6 +26,11 @@ class SearchTest extends TestBase
     protected $catalogService;
 
     /**
+     * @var LocationService
+     */
+    private $locationService;
+
+    /**
      * CatalogTest constructor.
      *
      * @param null $name
@@ -37,6 +45,7 @@ class SearchTest extends TestBase
         parent::__construct($name, $data, $dataName);
         $this->catalogService = Application::getInstance()->getContainer()->get('catalog.service');
         $this->searchService = Application::getInstance()->getContainer()->get('search.service');
+        $this->locationService = Application::getInstance()->getContainer()->get('location.service');
     }
 
     /**
@@ -47,15 +56,16 @@ class SearchTest extends TestBase
      */
     public function testProductSearch()
     {
+        $currentRegionCode = $this->locationService->getCurrentRegionCode();
+
         $expectedCategory = (new CategoryQuery)->withFilter(['=CODE' => 'unsorted'])->exec()->current();
 
         $this->assertInstanceOf(Category::class, $expectedCategory);
 
         $parameters = [
-            //TODO Попробовать позже сортировку по цене
-            'sort'     => 'popular',
-            'page'     => 2,
-            'pageSize' => 40,
+            'sort'     => 'up-price',
+            'page'     => 1,
+            'pageSize' => 20,
 
             'Brand'   => 'proplan,royal-kanin',
 
@@ -64,6 +74,12 @@ class SearchTest extends TestBase
 
             //Мелкий
             'PetSize' => 'd45c1a3e47c180b16be0e29dc87e8281',
+
+            // //Унисекс
+            // 'PetGender' => '6cdd5db762dd7664f9fc769ee39538b2',
+
+            'PriceFrom' => 100,
+            'PriceTo'   => 9000,
 
         ];
 
@@ -107,6 +123,7 @@ class SearchTest extends TestBase
          * 6 Вывести на странице фильтры, т.к. они теперь не только выбраны,
          * но и схлопнуты на основе аггрегаций из Elasticsearch
          */
+        /** @noinspection PhpUnusedLocalVariableInspection */
         $actualFilterCollection = $actualCategory->getFilters();
 
         /**
@@ -114,5 +131,19 @@ class SearchTest extends TestBase
          */
         $productCollection = $productSearchResult->getProductCollection();
 
+        $lastPrice = -1;
+        /** @var Product $product */
+        foreach ($productCollection as $product) {
+            /** @var Offer $offer */
+            foreach ($product->getOffers() as $offer) {
+
+                $this->assertGreaterThanOrEqual(
+                    $lastPrice,
+                    $offer->getPrice($currentRegionCode)->getPrice(),
+                    'Price sort is asc.'
+                );
+
+            }
+        }
     }
 }

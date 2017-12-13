@@ -237,6 +237,7 @@ class IndexHelper implements LoggerAwareInterface
                             ],
                         ],
                         'offers'                           => [
+                            'type'       => 'nested',
                             'properties' => [
                                 'active'                   => ['type' => 'boolean'],
                                 'dateActiveFrom'           => ['type' => 'date', 'format' => 'date_optional_time'],
@@ -251,6 +252,7 @@ class IndexHelper implements LoggerAwareInterface
                                 'PROPERTY_KIND_OF_PACKING' => ['type' => 'keyword'],
                                 'PROPERTY_REWARD_TYPE'     => ['type' => 'keyword'],
                                 'prices'                   => [
+                                    'type'       => 'nested',
                                     'properties' => [
                                         'REGION_ID' => ['type' => 'keyword'],
                                         'PRICE'     => ['type' => 'scaled_float', 'scaling_factor' => 100,],
@@ -347,6 +349,7 @@ class IndexHelper implements LoggerAwareInterface
     public function indexAll()
     {
         $dbAllProducts = (new ProductQuery())->withFilter([])
+                                             ->withOrder(['ID' => 'DESC'])
                                              ->doExec();
         $indexOk = 0;
         $indexError = 0;

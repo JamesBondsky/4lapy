@@ -10,7 +10,7 @@ use Elastica\ResultSet;
 use FourPaws\Catalog\Collection\AggCollection;
 use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Model\Filter\FilterInterface;
-use FourPaws\Catalog\Model\Variant;
+use FourPaws\Catalog\Model\Filter\InternalFilter;
 use FourPaws\Search\Collection\BucketCollection;
 use FourPaws\Search\Model\Bucket;
 use LogicException;
@@ -48,39 +48,46 @@ class AggsHelper
     public function collapseFilters(FilterCollection $filterCollection, ResultSet $resultSet)
     {
         if (!$resultSet->hasAggregations()) {
-            throw new LogicException('Результат поиска не содержит аггрегаций.');
+            throw new LogicException('Результат поиска не содержит результатов аггрегаций.');
         }
 
-        $filterByCodeIndex = [];
+        $filterByAggNameIndex = [];
         /** @var FilterInterface $filter */
         foreach ($filterCollection as $filter) {
-            $filterByCodeIndex[$filter->getFilterCode()] = $filter;
+
+            /** @var AbstractAggregation $agg */
+            foreach ($filter->getAggs() as $agg) {
+
+                $filterByAggNameIndex[$agg->getName()] = $filter;
+
+            }
+
         }
 
-        $this->findAndApplyFilterAgg($filterByCodeIndex, $resultSet->getAggregations());
+        $aggregations = $resultSet->getAggregations();
+        $this->findAndApplyFilterAggResult($filterByAggNameIndex, $aggregations);
 
     }
 
     /**
-     * @param array $filterByCodeIndex
-     * @param array $aggs
+     * @param array $filterByAggNameIndex
+     * @param array $aggregations
      *
      * @throws UnexpectedValueException
      */
-    private function findAndApplyFilterAgg(array $filterByCodeIndex, array $aggs)
+    private function findAndApplyFilterAggResult(array $filterByAggNameIndex, array $aggregations)
     {
-        foreach ($aggs as $agName => $aggBody) {
-            if (
-                array_key_exists($agName, $filterByCodeIndex)
-                && array_key_exists('buckets', $aggBody)
-                && is_array($aggBody['buckets'])
-            ) {
+        foreach ($aggregations as $aggName => $aggResult) {
 
-                $this->collapseFilter($filterByCodeIndex[$agName], self::makeBucketCollection($aggBody['buckets']));
+            if (array_key_exists($aggName, $filterByAggNameIndex)) {
 
-            } elseif (is_array($aggBody)) {
+                /** @var FilterInterface $filter */
+                $filter = $filterByAggNameIndex[$aggName];
+                $filter->collapse($aggName, $aggResult);
 
-                $this->findAndApplyFilterAgg($filterByCodeIndex, $aggBody);
+            } elseif (is_array($aggResult)) {
+
+                $this->findAndApplyFilterAggResult($filterByAggNameIndex, $aggResult);
 
             }
         }
@@ -92,7 +99,7 @@ class AggsHelper
      * @return BucketCollection
      * @throws UnexpectedValueException
      */
-    private static function makeBucketCollection(array $buckets): BucketCollection
+    public static function makeBucketCollection(array $buckets): BucketCollection
     {
         $bucketCollection = new BucketCollection();
 
@@ -134,18 +141,15 @@ class AggsHelper
 
         $result = new AggCollection();
 
-        /**
-         * Подготовить глобальную аггрегацию, если выбран хотя бы один фильтр.
-         */
-        if ($filterCollection->hasCheckedFilter()) {
-            $globAgg = $aggBuilder->global_agg('glob');
-            $result->add($globAgg);
-        }
-
         $subCnt = 0;
 
         /** @var FilterInterface $currentFilter */
         foreach ($filterCollection as $currentFilter) {
+
+            //У внутреннего фильтра не может быть аггрегаций
+            if ($currentFilter instanceof InternalFilter) {
+                continue;
+            }
 
             //Если фильтр не выбран
             if (!$currentFilter->hasCheckedVariants()) {
@@ -158,7 +162,12 @@ class AggsHelper
             } else {
 
                 if (!isset($globAgg) || !($globAgg instanceof GlobalAggregation)) {
-                    throw new LogicException('Не подготовлена глобальная аггрегация.');
+                    /**
+                     * Подготовить глобальную аггрегацию
+                     */
+                    $globAgg = $aggBuilder->global_agg('glob');
+                    $result->add($globAgg);
+
                 }
 
                 //Если выбран, то будет вложенная агрегация с фильтрацией по остальным выбранным фильтрам
@@ -194,32 +203,4 @@ class AggsHelper
 
         return $result;
     }
-
-    /**
-     * @param FilterInterface $filter
-     * @param BucketCollection $bucketCollection
-     */
-    private function collapseFilter(FilterInterface $filter, BucketCollection $bucketCollection)
-    {
-        $filter->getAllVariants()->map(
-            function (Variant $variant) use ($bucketCollection) {
-
-                if ($bucketCollection->containsKey($variant->getValue())) {
-
-                    /** @var Bucket $bucket */
-                    $bucket = $bucketCollection->get($variant->getValue());
-
-                    $variant->withAvailable(true)
-                            ->withCount($bucket->getDocCount());
-
-                } else {
-                    $variant->withAvailable(false)
-                            ->withCount(0);
-                }
-
-                return $variant;
-            }
-        );
-    }
-
 }

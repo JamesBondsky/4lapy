@@ -8,10 +8,12 @@ use Elastica\Query\AbstractQuery;
 use Elastica\Query\Range;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Catalog\CatalogService;
 use FourPaws\Catalog\Collection\AggCollection;
 use FourPaws\Catalog\Collection\VariantCollection;
 use FourPaws\Catalog\Model\Filter\RangeFilterInterface;
 use FourPaws\Search\SearchService;
+use InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -43,6 +45,11 @@ abstract class RangeFilterBase extends FilterBase implements RangeFilterInterfac
     protected $searchService;
 
     /**
+     * @var CatalogService
+     */
+    protected $catalogService;
+
+    /**
      * RangeFilterBase constructor.
      *
      * @param array $fields
@@ -54,6 +61,7 @@ abstract class RangeFilterBase extends FilterBase implements RangeFilterInterfac
     {
         parent::__construct($fields);
         $this->searchService = Application::getInstance()->getContainer()->get('search.service');
+        $this->catalogService = Application::getInstance()->getContainer()->get('catalog.service');
     }
 
     /**
@@ -61,9 +69,7 @@ abstract class RangeFilterBase extends FilterBase implements RangeFilterInterfac
      */
     public function getMinValue(): float
     {
-        if (is_null($this->minValue)) {
-            $this->minValue = $this->doGetMinValue();
-        }
+        $this->initRange();
 
         return $this->minValue;
     }
@@ -85,9 +91,7 @@ abstract class RangeFilterBase extends FilterBase implements RangeFilterInterfac
      */
     public function getMaxValue(): float
     {
-        if (is_null($this->maxValue)) {
-            $this->maxValue = $this->doGetMaxValue();
-        }
+        $this->initRange();
 
         return $this->maxValue;
     }
@@ -155,22 +159,13 @@ abstract class RangeFilterBase extends FilterBase implements RangeFilterInterfac
     }
 
     /**
-     * @return mixed
+     * Заполняет границы доступного диапазона при первом обращении.
      */
-    private function doGetMinValue(): float
+    private function initRange()
     {
-        /** @noinspection PhpUnusedLocalVariableInspection */
-        list($min, $max) = $this->getRange();
-
-        return $min;
-    }
-
-    private function doGetMaxValue(): float
-    {
-        /** @noinspection PhpUnusedLocalVariableInspection */
-        list($min, $max) = $this->getRange();
-
-        return $max;
+        if (is_null($this->minValue) || is_null($this->maxValue)) {
+            list($this->minValue, $this->maxValue) = $this->getRange();
+        }
     }
 
     /**
@@ -178,31 +173,29 @@ abstract class RangeFilterBase extends FilterBase implements RangeFilterInterfac
      */
     protected function doGetRange(): array
     {
-        //TODO Зависимость от региона!!!
-
-        $minPriceAgg = $this->getMinAggRule();
-        $maxPriceAgg = $this->getMaxAggRule();
+        $internalFilters = $this->catalogService->getInternalFilters();
 
         $search = $this->searchService->getIndexHelper()->createProductSearch();
-
         $search->getQuery()
                ->setSize(0)
-               ->addAggregation($minPriceAgg)
-               ->addAggregation($maxPriceAgg);
+               ->setParam('query', $this->searchService->getFullQueryRule($internalFilters));
+
+        foreach ($this->getAggs() as $agg) {
+            $search->getQuery()->addAggregation($agg);
+        }
 
         $result = $search->search();
 
-        $minValue = $maxValue = -1;
+        foreach ($result->getAggregations() as $aggName => $aggResult) {
 
-        foreach ($result->getAggregations() as $name => $aggregation) {
-            if ($minPriceAgg->getName() === $name && key_exists('value', $aggregation)) {
-                $minValue = $aggregation['value'];
-            } elseif ($maxPriceAgg->getName() === $name && key_exists('value', $aggregation)) {
-                $maxValue = $aggregation['value'];
-            }
+            $this->collapse($aggName, $aggResult);
         }
 
-        return [$minValue, $maxValue];
+        /**
+         * Лучше прямое обращение к полям, чтобы не рисковать получить зацикливание,
+         * если аггрегация будет возвращаться неверно.
+         */
+        return [$this->minValue, $this->maxValue];
     }
 
     /**
@@ -213,6 +206,8 @@ abstract class RangeFilterBase extends FilterBase implements RangeFilterInterfac
     abstract protected function getRange(): array;
 
     /**
+     * Возвращает true, если фильтр выбран.
+     *
      * @inheritdoc
      */
     public function hasCheckedVariants(): bool
@@ -229,11 +224,24 @@ abstract class RangeFilterBase extends FilterBase implements RangeFilterInterfac
     }
 
     /**
+     * Возвращает true, если фильтр доступен.
+     *
+     * @inheritdoc
+     */
+    public function hasAvailableVariants(): bool
+    {
+        if ($this->getMinValue() === $this->getMaxValue() && $this->getMinValue() === 0) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * @inheritdoc
      */
     public function getFilterRule(): AbstractQuery
     {
-        //TODO Зависимость от региона!!!
         $args = [];
 
         if ($this->getFromValue() > 0) {
@@ -282,6 +290,39 @@ abstract class RangeFilterBase extends FilterBase implements RangeFilterInterfac
     }
 
     /**
+     * @inheritdoc
+     */
+    public function collapse(string $aggName, array $aggResult)
+    {
+        if (!array_key_exists('value', $aggResult)) {
+            throw new InvalidArgumentException(
+                sprintf(
+                    'Отсутствует value в результате аггрегации `%s`',
+                    $aggName
+                )
+            );
+        }
+
+        if ($this->getMinFilterCode() === $aggName) {
+
+            $this->withMinValue((float)$aggResult['value']);
+
+        } elseif ($this->getMaxFilterCode() === $aggName) {
+
+            $this->withMaxValue((float)$aggResult['value']);
+
+        } else {
+            throw new InvalidArgumentException(
+                sprintf(
+                    'Неподдерживаемое имя аггрегации %s',
+                    $aggName
+                )
+            );
+        }
+
+    }
+
+    /**
      * @return Min
      */
     protected function getMinAggRule(): Min
@@ -300,7 +341,7 @@ abstract class RangeFilterBase extends FilterBase implements RangeFilterInterfac
     /**
      * @return string
      */
-    private function getMinFilterCode(): string
+    protected function getMinFilterCode(): string
     {
         return $this->getFilterCode() . 'Min';
     }
@@ -308,7 +349,7 @@ abstract class RangeFilterBase extends FilterBase implements RangeFilterInterfac
     /**
      * @return string
      */
-    private function getMaxFilterCode(): string
+    protected function getMaxFilterCode(): string
     {
         return $this->getFilterCode() . 'Max';
     }

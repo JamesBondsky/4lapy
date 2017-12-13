@@ -11,7 +11,6 @@ use FourPaws\Catalog\CatalogService;
 use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Model\Brand;
 use FourPaws\Catalog\Model\Category;
-use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
 use FourPaws\Catalog\Model\Filter\BrandFilter;
 use FourPaws\Catalog\Model\Filter\PetAgeFilter;
 use FourPaws\Catalog\Model\Filter\PetGenderFilter;
@@ -19,6 +18,7 @@ use FourPaws\Catalog\Model\Filter\PetSizeFilter;
 use FourPaws\Catalog\Model\Sorting;
 use FourPaws\Catalog\Model\Variant;
 use FourPaws\Catalog\Query\CategoryQuery;
+use FourPaws\Location\LocationService;
 use FourPaws\Search\SearchService;
 use FourPaws\Test\Tests\TestBase;
 use PHPUnit\Framework\Assert;
@@ -38,6 +38,11 @@ class CatalogTest extends TestBase
     protected $catalogService;
 
     /**
+     * @var LocationService
+     */
+    private $locationService;
+
+    /**
      * CatalogTest constructor.
      *
      * @param null $name
@@ -52,6 +57,7 @@ class CatalogTest extends TestBase
         parent::__construct($name, $data, $dataName);
         $this->catalogService = Application::getInstance()->getContainer()->get('catalog.service');
         $this->searchService = Application::getInstance()->getContainer()->get('search.service');
+        $this->locationService = Application::getInstance()->getContainer()->get('location.service');
     }
 
     /**
@@ -229,9 +235,20 @@ class CatalogTest extends TestBase
 
         $expectedFilterRule = $queryBuilder->query()->bool();
 
+        $currentRegionCode = $this->locationService->getCurrentRegionCode();
+
         $expectedFilterRule->addFilter($queryBuilder->query()->term(['active' => true,]));
         $expectedFilterRule->addFilter($queryBuilder->query()->term(['brand.active' => true,]));
-        $expectedFilterRule->addFilter($queryBuilder->query()->term(['offers.active' => true,]));
+        $expectedFilterRule->addFilter(
+            $queryBuilder->query()->nested()
+                         ->setPath('offers')
+                         ->setQuery($queryBuilder->query()->term(['offers.active' => true]))
+        );
+        $expectedFilterRule->addFilter(
+            $queryBuilder->query()->nested()
+                         ->setPath('offers.prices')
+                         ->setQuery($queryBuilder->query()->term(['offers.prices.REGION_ID' => $currentRegionCode]))
+        );
         $expectedFilterRule->addFilter($queryBuilder->query()->terms('sectionIdList', $expectedCategoryIdList));
         $expectedFilterRule->addFilter($queryBuilder->query()->terms('brand.CODE', $expectedBrandCodeList));
 
@@ -342,7 +359,7 @@ class CatalogTest extends TestBase
                 'aggs'   => [
 
                     //Для категории: субфильтр по бренду, возрасту, размеру
-                    'subFilter_1' => [
+                    'subFilter_1'  => [
                         'filter' => ['terms' => [$brandFilter->getRuleCode() => $checkedBrandValues]],
                         'aggs'   => [
                             'subFilter_2' => [
@@ -366,7 +383,7 @@ class CatalogTest extends TestBase
                     ],
 
                     //Для бренда: субфильтр по категории, возрасту и размеру
-                    'subFilter_4' => [
+                    'subFilter_4'  => [
                         'filter' => ['terms' => [$categoryFilter->getRuleCode() => $checkedCategoriesValues]],
                         'aggs'   => [
                             'subFilter_5' => [
@@ -390,7 +407,7 @@ class CatalogTest extends TestBase
                     ],
 
                     //Для возраста: субфильтр по категории, бренду, размеру
-                    'subFilter_7' => [
+                    'subFilter_7'  => [
                         'filter' => ['terms' => [$categoryFilter->getRuleCode() => $checkedCategoriesValues]],
                         'aggs'   => [
                             'subFilter_8' => [
@@ -462,9 +479,19 @@ class CatalogTest extends TestBase
      */
     public function testSortSelecting()
     {
+        $currentRegionCode = $this->locationService->getCurrentRegionCode();
+
+        $rule = [
+            'offers.prices.PRICE' => [
+                'order'         => 'asc',
+                'mode'          => 'min',
+                'nested_path'   => 'offers.prices',
+                'nested_filter' => ['term' => ['offers.prices.REGION_ID' => $currentRegionCode]],
+            ],
+        ];
         $expectedSorting = (new Sorting())->withValue('up-price')
                                           ->withName('возрастанию цены')
-                                          ->withRule(['offers.price' => ['order' => 'asc', 'mode' => 'min']])
+                                          ->withRule($rule)
                                           ->withSelected(true);
 
         $request = Request::create(

@@ -3,11 +3,9 @@
 namespace FourPaws\Search;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
-use Elastica\Client;
 use Elastica\Query\AbstractQuery;
 use Elastica\Query\BoolQuery;
 use Elastica\QueryBuilder;
-use Exception;
 use FourPaws\Catalog\CatalogService;
 use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Model\Filter\FilterInterface;
@@ -22,11 +20,6 @@ use RuntimeException;
 class SearchService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
-
-    /**
-     * @var Client
-     */
-    private $client;
 
     /**
      * @var CatalogService
@@ -46,13 +39,11 @@ class SearchService implements LoggerAwareInterface
     /**
      * SearchService constructor.
      *
-     * @param Client $client
      * @param CatalogService $catalogService
      * @param IndexHelper $indexHelper
      */
-    public function __construct(Client $client, CatalogService $catalogService, IndexHelper $indexHelper)
+    public function __construct(CatalogService $catalogService, IndexHelper $indexHelper)
     {
-        $this->client = $client;
         $this->catalogService = $catalogService;
         $this->indexHelper = $indexHelper;
     }
@@ -76,43 +67,25 @@ class SearchService implements LoggerAwareInterface
         string $searchString = ''
     ): ProductSearchResult {
 
-        try {
+        $search = $this->getIndexHelper()->createProductSearch();
 
-            $search = $this->getIndexHelper()->createProductSearch();
-
-            if ($searchString != '') {
-                $search->getQuery()->setMinScore(0.9);
-            }
-
-            $search->getQuery()
-                   ->setFrom($navigation->getFrom())
-                   ->setSize($navigation->getSize())
-                   ->setSort($sorting->getRule())
-                   ->setParam('query', $this->getFullQueryRule($filters, $searchString));
-
-            $this->getAggsHelper()->setAggs($search->getQuery(), $filters);
-
-            $resultSet = $search->search();
-
-            $this->getAggsHelper()->collapseFilters($filters, $resultSet);
-
-            return new ProductSearchResult($resultSet);
-
-        } catch (Exception $exception) {
-
-            $this->log()->error(
-                sprintf(
-                    '[%s] %s (%s)',
-                    get_class($exception),
-                    $exception->getMessage(),
-                    $exception->getCode()
-                )
-            );
-
-            throw new RuntimeException('Произошла ошибка поиска товаров. Попробуйте позже.');
-
+        if ($searchString != '') {
+            $search->getQuery()->setMinScore(0.9);
         }
 
+        $search->getQuery()
+               ->setFrom($navigation->getFrom())
+               ->setSize($navigation->getSize())
+               ->setSort($sorting->getRule())
+               ->setParam('query', $this->getFullQueryRule($filters, $searchString));
+
+        $this->getAggsHelper()->setAggs($search->getQuery(), $filters);
+
+        $resultSet = $search->search();
+
+        $this->getAggsHelper()->collapseFilters($filters, $resultSet);
+
+        return new ProductSearchResult($resultSet);
     }
 
     /**

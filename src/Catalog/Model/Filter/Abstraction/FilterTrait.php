@@ -6,6 +6,10 @@ use Elastica\Aggregation\Terms;
 use FourPaws\Catalog\Collection\AggCollection;
 use FourPaws\Catalog\Collection\VariantCollection;
 use FourPaws\Catalog\Model\Variant;
+use FourPaws\Search\Helper\AggsHelper;
+use FourPaws\Search\Model\Bucket;
+use InvalidArgumentException;
+use UnexpectedValueException;
 
 /**
  * Trait FilterTrait
@@ -188,4 +192,48 @@ trait FilterTrait
         $this->visible = $visible;
     }
 
+    /**
+     * "Схлопывает" фильтр по его аггрегации.
+     *
+     * @param string $aggName
+     * @param array $aggResult
+     *
+     * @return void
+     * @throws UnexpectedValueException
+     *
+     */
+    public function collapse(string $aggName, array $aggResult)
+    {
+        if (!array_key_exists('buckets', $aggResult) || !is_array($aggResult['buckets'])) {
+            throw new InvalidArgumentException(
+                sprintf(
+                    'Отсутствуют корректные buckets в результате аггрегации `%s`',
+                    $aggName
+                )
+            );
+        }
+
+        $bucketCollection = AggsHelper::makeBucketCollection($aggResult['buckets']);
+
+        $this->getAllVariants()->map(
+            function (Variant $variant) use ($bucketCollection) {
+
+                if ($bucketCollection->containsKey($variant->getValue())) {
+
+                    /** @var Bucket $bucket */
+                    $bucket = $bucketCollection->get($variant->getValue());
+
+                    $variant->withAvailable(true)
+                            ->withCount($bucket->getDocCount());
+
+                } else {
+                    $variant->withAvailable(false)
+                            ->withCount(0);
+                }
+
+                return $variant;
+            }
+        );
+
+    }
 }

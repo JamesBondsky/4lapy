@@ -6,7 +6,7 @@ use Elastica\Query\AbstractQuery;
 use FourPaws\Catalog\Collection\AggCollection;
 use FourPaws\Catalog\Collection\VariantCollection;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
-use LogicException;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Class InternalFilter
@@ -32,12 +32,6 @@ class InternalFilter extends FilterBase
      * @var AbstractQuery
      */
     protected $filterRule;
-
-    public function __construct(array $fields = [])
-    {
-        parent::__construct($fields);
-        throw new LogicException('Внутренний фильтр следует инстанцировать, используя метод create.');
-    }
 
     /**
      * @param string $filterCode
@@ -149,6 +143,16 @@ class InternalFilter extends FilterBase
     public function getAggs(): AggCollection
     {
         return new AggCollection();
+    }
+
+    /**
+     * Внутренний фильтр нельзя инициализировать по запросу.
+     *
+     * @inheritdoc
+     */
+    public function initState(Request $request)
+    {
+        return;
     }
 
 }

@@ -9,6 +9,8 @@ use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Highloadblock\DataManager;
 use CIBlockFindTools;
 use Doctrine\Common\Collections\ArrayCollection;
+use Elastica\Query\Nested;
+use Elastica\Query\Term;
 use Elastica\QueryBuilder;
 use Exception;
 use FourPaws\Catalog\Collection\FilterCollection;
@@ -26,6 +28,7 @@ use FourPaws\Catalog\Query\BrandQuery;
 use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\Location\LocationService;
 use FourPaws\Search\Model\Navigation;
 use JMS\Serializer\Serializer;
 use Psr\Log\LoggerAwareInterface;
@@ -53,16 +56,22 @@ class CatalogService implements LoggerAwareInterface
     private $serializer;
 
     /**
+     * @var LocationService
+     */
+    private $locationService;
+
+    /**
      * CatalogService constructor.
      *
-     * @param $filterTable
+     * @param DataManager $filterTable
      * @param Serializer $serializer
-     *
+     * @param LocationService $locationService
      */
-    public function __construct($filterTable, Serializer $serializer)
+    public function __construct(DataManager $filterTable, Serializer $serializer, LocationService $locationService)
     {
         $this->filterTable = $filterTable;
         $this->serializer = $serializer;
+        $this->locationService = $locationService;
     }
 
     /**
@@ -185,6 +194,8 @@ class CatalogService implements LoggerAwareInterface
      */
     public function getSortings(Request $request): ArrayCollection
     {
+        $currentRegionCode = $this->locationService->getCurrentRegionCode();
+
         $sortings = [
 
             (new Sorting())->withValue('popular')
@@ -193,11 +204,35 @@ class CatalogService implements LoggerAwareInterface
 
             (new Sorting())->withValue('up-price')
                            ->withName('возрастанию цены')
-                           ->withRule(['offers.price' => ['order' => 'asc', 'mode' => 'min']]),
+                           ->withRule(
+                               [
+                                   'offers.prices.PRICE' => [
+                                       'order'         => 'asc',
+                                       'mode'          => 'min',
+                                       'nested_path'   => 'offers.prices',
+                                       'nested_filter' => [
+                                           'term' => ['offers.prices.REGION_ID' => $currentRegionCode],
+                                       ],
+
+                                   ],
+                               ]
+                           ),
 
             (new Sorting())->withValue('down-price')
                            ->withName('убыванию цены')
-                           ->withRule(['offers.price' => ['order' => 'desc', 'mode' => 'max']]),
+                           ->withRule(
+                               [
+                                   'offers.prices.PRICE' => [
+                                       'order'         => 'desc',
+                                       'mode'          => 'max',
+                                       'nested_path'   => 'offers.prices',
+                                       'nested_filter' => [
+                                           'term' => ['offers.prices.REGION_ID' => $currentRegionCode],
+                                       ],
+
+                                   ],
+                               ]
+                           ),
 
         ];
 
@@ -482,14 +517,15 @@ class CatalogService implements LoggerAwareInterface
     }
 
     /**
+     * Возвращает внутренние неотключаемые фильтры, которые должны добавляться к любому запросу товаров из
+     * Elasticsearch, чтобы обеспечить корректность выборки: активные бренды, товары, офферы, цена правильного региона.
+     *
      * @return FilterCollection
      */
-    private function getInternalFilters(): FilterCollection
+    public function getInternalFilters(): FilterCollection
     {
-        //TODO В будущем добавить учёт дат активности
+        // В будущем можно добавить учёт дат активности элементов инфоблоков.
         // See: https://www.elastic.co/guide/en/elasticsearch/reference/5.5/query-dsl-range-query.html
-
-        //TODO Добавить зависимость от региона
 
         $queryBuilder = new QueryBuilder();
 
@@ -512,12 +548,30 @@ class CatalogService implements LoggerAwareInterface
         $internalFilterCollection->add(
             InternalFilter::create(
                 'OffersActive',
-                $queryBuilder->query()->term(['offers.active' => true])
+                $queryBuilder->query()->nested()
+                             ->setPath('offers')
+                             ->setQuery($queryBuilder->query()->term(['offers.active' => true]))
             )
         );
 
+        $internalFilterCollection->add($this->getRegionInternalFilter());
+
         return $internalFilterCollection;
 
+    }
+
+    /**
+     * @return InternalFilter
+     */
+    public function getRegionInternalFilter(): InternalFilter
+    {
+        $currentRegionCode = $this->locationService->getCurrentRegionCode();
+
+        return InternalFilter::create(
+            'CurrentRegion',
+            (new Nested())->setPath('offers.prices')
+                          ->setQuery(new Term(['offers.prices.REGION_ID' => $currentRegionCode]))
+        );
     }
 
 }

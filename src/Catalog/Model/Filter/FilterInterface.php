@@ -134,4 +134,14 @@ interface FilterInterface
      */
     public function initState(Request $request);
 
+    /**
+     * "Схлопывает" фильтр по результату его аггрегации.
+     *
+     * @param string $aggName
+     * @param array $aggBody
+     *
+     * @return void
+     */
+    public function collapse(string $aggName, array $aggBody);
+
 }

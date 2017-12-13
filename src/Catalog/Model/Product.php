@@ -21,13 +21,6 @@ use JMS\Serializer\Annotation\Type;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 
-/**
- * Class Product
- * @package FourPaws\Catalog\Model
- *
- *
- * TODO Не хватает цен
- */
 class Product extends IblockElement implements HitMetaInfoAwareInterface
 {
     use HitMetaInfoAwareTrait;

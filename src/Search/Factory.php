@@ -13,7 +13,6 @@ use InvalidArgumentException;
 use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\Serializer;
-use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\EnvNotFoundException;
@@ -52,25 +51,17 @@ class Factory
             throw new EnvNotFoundException(self::ENV_HOST);
         }
 
-        /** @var Logger $logger */
-        $logger = LoggerFactory::create('ElasticaClient');
-
-        /*
-         * Повышаем всем уровень логирования,
-         * чтобы отладочные сообщения не забивали
-         * лог на dev зонах
-         */
-        foreach ($logger->getHandlers() as $handler) {
-            if ($handler instanceof StreamHandler) {
-                $handler->setLevel(Logger::INFO);
+        $logger = null;
+        foreach ($configParams as $paramPair) {
+            foreach ($paramPair as $key => $value) {
+                if ('log' === $key && true === $value) {
+                    /** @var Logger $logger */
+                    $logger = LoggerFactory::create('ElasticaClient', 'elasticsearch', false);
+                }
             }
         }
 
-        $client = new Client(
-            ['host' => $host, 'port' => $port],
-            null,
-            $logger
-        );
+        $client = new Client(['host' => $host, 'port' => $port], null, $logger);
 
         foreach ($configParams as $paramPair) {
             foreach ($paramPair as $key => $value) {
