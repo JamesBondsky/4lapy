@@ -26,6 +26,11 @@ final class CountryToReference extends StringToReference
         }
         
         $result = $this->searchValue($data[$fieldName]);
+    
+        if (!$data[self::CODE_FIELD_NAME]) {
+            throw new ReferenceException(sprintf('Country value add error: empty country code for %s',
+                                                 $data[$fieldName]));
+        }
         
         if (!$result) {
             $result = $this->addValue($data[self::CODE_FIELD_NAME], $data[$fieldName]);
@@ -54,7 +59,8 @@ final class CountryToReference extends StringToReference
         $result = $this->getDataClass()::add($fields);
         
         if (!$result->isSuccess()) {
-            throw new ReferenceException('Reference value add error: ' . implode(', ', $result->getErrorMessages()));
+            throw new ReferenceException(sprintf('Reference value add error: %s',
+                                                 implode(', ', $result->getErrorMessages())));
         }
         
         self::$referenceValues[$this->getReferenceCode()][] = $fields;
