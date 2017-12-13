@@ -167,7 +167,7 @@ abstract class DeliveryServiceBase extends Base implements DeliveryServiceInterf
             );
 
             while ($location = $locations->Fetch()) {
-                // сделано, чтобы отдельные местпололожения были впереди групп,
+                // сделано, чтобы отдельные местоположения были впереди групп,
                 // т.к. группы могут их включать
                 $result = [
                         $location['CODE'] => [
@@ -187,7 +187,7 @@ abstract class DeliveryServiceBase extends Base implements DeliveryServiceInterf
     /**
      * @return array
      */
-    public function getAllZones(): array
+    protected function getAllZones(): array
     {
         return $this->locationService->getLocationGroups(true);
     }

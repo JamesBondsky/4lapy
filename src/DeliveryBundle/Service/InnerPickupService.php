@@ -9,6 +9,8 @@ use Bitrix\Sale\Shipment;
 
 class InnerPickupService extends DeliveryServiceBase
 {
+    protected $code = '4lapy_pickup';
+
     public function __construct(array $initParams)
     {
         parent::__construct($initParams);

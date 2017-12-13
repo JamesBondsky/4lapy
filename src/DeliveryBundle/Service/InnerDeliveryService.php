@@ -8,6 +8,8 @@ use Bitrix\Sale\Shipment;
 
 class InnerDeliveryService extends DeliveryServiceBase
 {
+    protected $code = '4lapy_delivery';
+
     public function __construct(array $initParams)
     {
         parent::__construct($initParams);
