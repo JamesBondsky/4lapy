@@ -28,7 +28,7 @@ interface DeliveryServiceInterface
      *
      * @return mixed
      */
-    public function getDeliveryZoneCode(Shipment $shipment, $skipLocations = false);
+    public function getDeliveryZoneCode(Shipment $shipment, $skipLocations = true);
 
     /**
      * Получение доступных зон доставки в соответствии с ограничениями по местоположению

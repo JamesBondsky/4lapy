@@ -75,7 +75,6 @@ class InnerPickupService extends DeliveryServiceBase
             $result->addError(new Error('Выбран неверный пункт самовывоза'));
         }
 
-        $result = new \Bitrix\Sale\Delivery\CalculationResult();
         $result->setDeliveryPrice(0);
         /* @todo учитывать наличие товара */
         $result->setPeriodFrom(1);
