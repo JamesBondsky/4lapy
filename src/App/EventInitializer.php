@@ -4,12 +4,11 @@ namespace FourPaws\App;
 
 use Bitrix\Main\EventManager;
 use FourPaws\DeliveryBundle\Event as DeliveryEvent;
-use FourPaws\ProductAutoSort\Event as ProductAutoSortEvent;
-use \FourPaws\Search\EventHandlers as SearchEventHandlers;
 use FourPaws\IblockProps\Event as IblockPropsEvent;
-use FourPaws\Search\Event as CatalogEvent;
-use FourPaws\UserProps\Event as UserPropLocationEvent;
+use FourPaws\ProductAutoSort\Event as ProductAutoSortEvent;
+use FourPaws\Search\EventHandlers as SearchEventHandlers;
 use FourPaws\User\UserServiceHandlers;
+use FourPaws\UserProps\Event as UserPropLocationEvent;
 
 /**
  * Class EventInitializer
@@ -25,7 +24,6 @@ final class EventInitializer
         ProductAutoSortEvent::class,
         SearchEventHandlers::class,
         DeliveryEvent::class,
-        CatalogEvent::class,
         IblockPropsEvent::class,
         UserPropLocationEvent::class,
     ];
