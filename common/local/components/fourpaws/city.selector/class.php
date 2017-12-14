@@ -38,14 +38,12 @@ class FourPawsCitySelectorComponent extends \CBitrixComponent
      */
     protected function prepareResult()
     {
+        /** @var \FourPaws\Location\LocationService $locationService */
         $locationService = Application::getInstance()->getContainer()->get('location.service');
+        /** @var \FourPaws\UserBundle\Service\UserService $userService */
         $userService = Application::getInstance()
                                   ->getContainer()
                                   ->get('FourPaws\UserBundle\Service\UserCitySelectInterface');
-        $availableCities = $locationService->getAvailableCities();
-
-        $this->arResult['POPULAR_CITIES'] = $availableCities['popular'] ?? [];
-        $this->arResult['MOSCOW_CITIES'] = $availableCities['moscow_region'] ?? [];
 
         $this->arResult['DEFAULT_CITY'] = $locationService->getDefaultLocation();
 
