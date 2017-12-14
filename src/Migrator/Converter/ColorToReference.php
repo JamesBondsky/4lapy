@@ -26,10 +26,7 @@ final class ColorToReference extends StringToReference
             return $data;
         }
     
-        if (!$data[self::CODE_FIELD_NAME]) {
-            throw new ReferenceException(sprintf('Color value add error: empty color code for %s',
-                                                 $data[$fieldName]));
-        }
+        $data[self::CODE_FIELD_NAME] = !$data[self::CODE_FIELD_NAME] ?? '';
         
         $data[$fieldName] = trim($data[$fieldName]);
         
