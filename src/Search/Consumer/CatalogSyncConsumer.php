@@ -17,10 +17,10 @@ use PhpAmqpLib\Message\AMQPMessage;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 
 class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
 {
-
     use LoggerAwareTrait;
 
     /**
@@ -33,6 +33,14 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
      */
     private $searchService;
 
+    /**
+     * CatalogSyncConsumer constructor.
+     *
+     * @param Serializer $serializer
+     * @param SearchService $searchService
+     *
+     * @throws RuntimeException
+     */
     public function __construct(Serializer $serializer, SearchService $searchService)
     {
         $this->includeBitrix();
@@ -42,13 +50,26 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
     }
 
     /**
-     * @inheritdoc
+     * @param AMQPMessage $msg
+     *
+     * @return mixed|void
+     * @throws RuntimeException
      */
     public function execute(AMQPMessage $msg)
     {
-
         /** @var CatalogSyncMsg $cagalogSyncMessage */
         $cagalogSyncMessage = $this->extractMessageBody($msg);
+
+        //Если сообщение свежее
+        if (time() === $cagalogSyncMessage->getTimestamp()) {
+            /**
+             * Добавить задержку, чтобы MySQL успел закомитить все изменения по товару
+             * и избежать ситуации, когда из базы будет прочитано неактуальное состояние.
+             */
+            $sleepSeconds = 1;
+            $this->log()->debug(sprintf('Sleep for %ss', $sleepSeconds));
+            sleep($sleepSeconds);
+        }
 
         if (
             $cagalogSyncMessage->isForProductEntity()
@@ -94,25 +115,12 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
             );
 
         }
-
-    }
-
-    /**
-     * @param AMQPMessage $msg
-     *
-     * @return CatalogSyncMsg
-     */
-    protected function extractMessageBody(AMQPMessage $msg)
-    {
-        return $this->serializer->deserialize(
-            $msg->getBody(),
-            CatalogSyncMsg::class,
-            'json'
-        );
     }
 
     /**
      * @param int $productId
+     *
+     * @throws RuntimeException
      */
     private function updateProduct(int $productId)
     {
@@ -131,7 +139,7 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
             return;
         }
 
-        $indexProductResult = $this->searchService->indexProduct($product);
+        $indexProductResult = $this->searchService->getIndexHelper()->indexProduct($product);
 
         $this->log()->debug(
             sprintf(
@@ -146,11 +154,11 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
     /**
      * @param int $productId
      *
-     * @return bool
+     * @throws RuntimeException
      */
     private function deleteProduct(int $productId)
     {
-        $deleteProductResult = $this->searchService->deleteProduct($productId);
+        $deleteProductResult = $this->searchService->getIndexHelper()->deleteProduct($productId);
 
         $this->log()->debug(
             sprintf(
@@ -159,12 +167,12 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
                 ($deleteProductResult ? 'успех' : 'ошибка')
             )
         );
-
-        return true;
     }
 
     /**
      * @param int $offerId
+     *
+     * @throws RuntimeException
      */
     private function updateOffer(int $offerId)
     {
@@ -194,7 +202,7 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
             return;
         }
 
-        $indexProductResult = $this->searchService->indexProduct($product);
+        $indexProductResult = $this->searchService->getIndexHelper()->indexProduct($product);
 
         $this->log()->debug(
             sprintf(
@@ -209,6 +217,8 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
 
     /**
      * @param int $offerId
+     *
+     * @throws RuntimeException
      */
     public function deleteOffer(int $offerId)
     {
@@ -236,7 +246,8 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
         }
 
         $catSyncMsg = new CatalogSyncMsg(
-            CatalogSyncMsg::ACTION_UPDATE, CatalogSyncMsg::ENTITY_TYPE_PRODUCT,
+            CatalogSyncMsg::ACTION_UPDATE,
+            CatalogSyncMsg::ENTITY_TYPE_PRODUCT,
             0
         );
 
@@ -249,7 +260,7 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
 
             $catSyncMsg->withEntityId($productId);
 
-            $this->searchService->publishSyncMessage($catSyncMsg);
+            $this->searchService->getIndexHelper()->publishSyncMessage($catSyncMsg);
 
             $this->log()->debug(
                 sprintf(
@@ -265,18 +276,39 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
 
     /**
      * @param int $brandId
+     *
+     * @throws RuntimeException
      */
     public function deleteBrand(int $brandId)
     {
-        //TODO Сделать запрос к эластику товаров этого бренда и удалить их
+        $deleteBrandResult = $this->searchService->getIndexHelper()->deleteBrand($brandId);
+
+        $this->log()->debug(
+            sprintf(
+                'Удаление бренда #%d: %s',
+                $brandId,
+                ($deleteBrandResult ? 'успех' : 'ошибка')
+            )
+        );
+
+    }
+
+    /**
+     * @param AMQPMessage $msg
+     *
+     * @return CatalogSyncMsg
+     */
+    protected function extractMessageBody(AMQPMessage $msg)
+    {
+        return $this->serializer->deserialize(
+            $msg->getBody(),
+            CatalogSyncMsg::class,
+            'json'
+        );
     }
 
     private function includeBitrix()
     {
-
-        /**
-         * TODO Вынести подключение Битрикса в пакет adv/bitrix-tools ?
-         */
         defined('NO_KEEP_STATISTIC') || define('NO_KEEP_STATISTIC', 'Y');
         defined('NOT_CHECK_PERMISSIONS') || define('NOT_CHECK_PERMISSIONS', true);
         defined('NO_AGENT_CHECK') || define('NO_AGENT_CHECK', true);
@@ -300,5 +332,4 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
     {
         return $this->logger;
     }
-
 }
