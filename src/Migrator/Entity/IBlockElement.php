@@ -3,7 +3,10 @@
 namespace FourPaws\Migrator\Entity;
 
 use Bitrix\Catalog\ProductTable;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Loader;
+use Bitrix\Main\LoaderException;
+use Exception;
 use FourPaws\Migrator\Entity\Exceptions\AddException;
 use FourPaws\Migrator\Entity\Exceptions\AddProductException;
 use FourPaws\Migrator\Entity\Exceptions\UpdateException;
@@ -22,13 +25,13 @@ abstract class IBlockElement extends IBlock
      * @param string $primary
      * @param array  $data
      *
-     * @return \FourPaws\Migrator\Entity\AddResult
+     * @return AddResult
      *
-     * @throws \FourPaws\Migrator\Entity\Exceptions\AddException
-     * @throws \FourPaws\Migrator\Entity\Exceptions\AddProductException
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Exception
+     * @throws AddException
+     * @throws AddProductException
+     * @throws LoaderException
+     * @throws ArgumentException
+     * @throws Exception
      */
     public function addItem(string $primary, array $data) : AddResult
     {
@@ -76,7 +79,7 @@ abstract class IBlockElement extends IBlock
                                                $this->getIblockId(),
                                                $primary,
                                                $e->getMessage()));
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 throw new AddException(sprintf('IBlock %s element product #%s add error: %s',
                                                $this->getIblockId(),
                                                $primary,
@@ -99,19 +102,25 @@ abstract class IBlockElement extends IBlock
      * @param string $primary
      * @param array  $data
      *
-     * @return \FourPaws\Migrator\Entity\UpdateResult
+     * @return UpdateResult
      *
-     * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateException
-     * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateProductException
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Exception
+     * @throws UpdateException
+     * @throws UpdateProductException
+     * @throws LoaderException
+     * @throws ArgumentException
+     * @throws Exception
      */
     public function updateItem(string $primary, array $data) : UpdateResult
     {
         $cIBlockElement = new \CIBlockElement();
     
         $this->deleteFilesBeforeUpdate($primary, $data);
+    
+        foreach ($data['PROPERTY_VALUE'] as &$value) {
+            if (is_array($value) && $value['file'] === true) {
+                unset($value['file']);
+            }
+        }
         
         if (!$cIBlockElement->Update($primary, $data, false, false, false, false)) {
             throw new UpdateException(sprintf('IBlock %s element #%s update error: %s',
@@ -143,12 +152,12 @@ abstract class IBlockElement extends IBlock
                 $result = ProductTable::update($primary, $data['CATALOG']);
                 
                 if (!$result->isSuccess()) {
-                    throw new UpdateProductException(sprintf('IBlock %s element product #%s update error: %s'),
-                                                     $this->getIblockId(),
-                                                     $primary,
-                                                     $result->getErrorMessages());
+                    throw new UpdateProductException(sprintf('IBlock %s element product #%s update error: %s',
+                                                             $this->getIblockId(),
+                                                             $primary,
+                                                             $result->getErrorMessages()));
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 throw new UpdateException(sprintf('IBlock %s element product #{$primary} update error: %s',
                                                   $this->getIblockId(),
                                                   $e->getMessage()));
@@ -167,7 +176,7 @@ abstract class IBlockElement extends IBlock
      * @param string $internal
      * @param string $entity
      *
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      */
     public function setInternalKeys(array $data, string $internal, string $entity)
     {
@@ -183,9 +192,9 @@ abstract class IBlockElement extends IBlock
      * @param string $primary
      * @param        $value
      *
-     * @return \FourPaws\Migrator\Entity\UpdateResult
+     * @return UpdateResult
      *
-     * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateException
+     * @throws UpdateException
      */
     public function setFieldValue(string $field, string $primary, $value) : UpdateResult
     {
@@ -201,8 +210,8 @@ abstract class IBlockElement extends IBlock
      * @param string $primary
      * @param        $value
      *
-     * @return \FourPaws\Migrator\Entity\UpdateResult
-     * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateException
+     * @return UpdateResult
+     * @throws UpdateException
      */
     public function updateField(string $field, string $primary, $value) : UpdateResult
     {
@@ -222,7 +231,7 @@ abstract class IBlockElement extends IBlock
      * @param string $primary
      * @param        $value
      *
-     * @return \FourPaws\Migrator\Entity\UpdateResult
+     * @return UpdateResult
      */
     public function updateProperty(string $property, string $primary, $value) : UpdateResult
     {
