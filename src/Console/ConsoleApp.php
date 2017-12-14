@@ -2,7 +2,10 @@
 
 namespace FourPaws\Console;
 
+use Exception;
 use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Finder\Finder;
 use Throwable;
 
@@ -23,12 +26,12 @@ class ConsoleApp
         $this->documentRoot = $documentRoot;
     }
 
-    public function run()
+    public function run(InputInterface $input = null, OutputInterface $output = null)
     {
         try {
 
             $this->init();
-            $this->launchSymfonyConsoleApp();
+            $this->launchSymfonyConsoleApp($input, $output);
             $this->finish();
 
         } catch (Throwable $exception) {
@@ -75,13 +78,16 @@ class ConsoleApp
         error_reporting(E_ERROR);
     }
 
-    private function launchSymfonyConsoleApp()
+    /**
+     * @throws Exception
+     */
+    private function launchSymfonyConsoleApp(InputInterface $input = null, OutputInterface $output = null)
     {
         $this->application = new Application();
         $this->application->setName('4lapy console interface');
         $this->application->setVersion('1.0.0');
         $this->registerCommands();
-        $this->application->run();
+        $this->application->run($input, $output);
     }
 
     private function finish()

@@ -3,24 +3,23 @@
 namespace FourPaws\Catalog\Model;
 
 use DateTimeImmutable;
+use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\BitrixOrm\Model\IblockElement;
+use FourPaws\BitrixOrm\Utils\ReferenceUtils;
+use FourPaws\Catalog\Collection\PriceCollection;
+use FourPaws\Catalog\Query\PriceQuery;
 use FourPaws\Catalog\Query\ProductQuery;
-use FourPaws\Catalog\ReferenceUtils;
-use JMS\Serializer\Annotation as Serializer;
 use JMS\Serializer\Annotation\Accessor;
 use JMS\Serializer\Annotation\Groups;
 use JMS\Serializer\Annotation\Type;
+use RuntimeException;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 
 class Offer extends IblockElement
 {
-    /**
-     * @var string
-     * @Type("string")
-     * @Groups({"elastic"})
-     */
-    protected $XML_ID = '';
-
     /**
      * @var bool
      * @Type("bool")
@@ -50,6 +49,20 @@ class Offer extends IblockElement
      * @Groups({"elastic"})
      */
     protected $ID = 0;
+
+    /**
+     * @var string
+     * @Type("string")
+     * @Groups({"elastic"})
+     */
+    protected $CODE = '';
+
+    /**
+     * @var string
+     * @Type("string")
+     * @Groups({"elastic"})
+     */
+    protected $XML_ID = '';
 
     /**
      * @var string
@@ -195,6 +208,19 @@ class Offer extends IblockElement
     protected $PROPERTY_OLD_URL = '';
 
     /**
+     * @var ArrayCollection
+     * @Type("ArrayCollection<FourPaws\Catalog\Model\Price>")
+     * @Accessor(getter="getAllPrices",setter="withAllPrices")
+     * @Groups({"elastic"})
+     */
+    protected $prices;
+
+    public function __construct(array $fields = [])
+    {
+        parent::__construct($fields);
+    }
+
+    /**
      * @return Product
      */
     public function getProduct()
@@ -214,11 +240,17 @@ class Offer extends IblockElement
 
     /**
      * @return HlbReferenceItem
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      */
     public function getColor()
     {
         if (is_null($this->colour)) {
-            $this->colour = ReferenceUtils::getReference('bx.hlblock.colour', $this->PROPERTY_COLOUR);
+            $this->colour = ReferenceUtils::getReference(
+                Application::getHlBlockDataManager('bx.hlblock.colour'),
+                $this->PROPERTY_COLOUR
+            );
         }
 
         return $this->colour;
@@ -226,12 +258,15 @@ class Offer extends IblockElement
 
     /**
      * @return HlbReferenceItem
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      */
     public function getVolumeReference()
     {
         if (is_null($this->volumeReference)) {
             $this->volumeReference = ReferenceUtils::getReference(
-                'bx.hlblock.volume',
+                Application::getHlBlockDataManager('bx.hlblock.volume'),
                 $this->PROPERTY_VOLUME_REFERENCE
             );
         }
@@ -249,12 +284,15 @@ class Offer extends IblockElement
 
     /**
      * @return HlbReferenceItem
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      */
     public function getClothingSize()
     {
         if (is_null($this->clothingSize)) {
             $this->clothingSize = ReferenceUtils::getReference(
-                'bx.hlblock.clothingsize',
+                Application::getHlBlockDataManager('bx.hlblock.clothingsize'),
                 $this->PROPERTY_CLOTHING_SIZE
             );
         }
@@ -272,12 +310,15 @@ class Offer extends IblockElement
 
     /**
      * @return HlbReferenceItem
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      */
     public function getKindOfPacking()
     {
         if (is_null($this->kindOfPacking)) {
             $this->kindOfPacking = ReferenceUtils::getReference(
-                'bx.hlblock.packagetype',
+                Application::getHlBlockDataManager('bx.hlblock.packagetype'),
                 $this->PROPERTY_KIND_OF_PACKING
             );
         }
@@ -287,11 +328,17 @@ class Offer extends IblockElement
 
     /**
      * @return HlbReferenceItem
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      */
     public function getSeasonYear()
     {
         if (is_null($this->seasonYear)) {
-            $this->seasonYear = ReferenceUtils::getReference('bx.hlblock.year', $this->PROPERTY_SEASON_YEAR);
+            $this->seasonYear = ReferenceUtils::getReference(
+                Application::getHlBlockDataManager('bx.hlblock.year'),
+                $this->PROPERTY_SEASON_YEAR
+            );
         }
 
         return $this->seasonYear;
@@ -309,11 +356,17 @@ class Offer extends IblockElement
      * Возвращает тип вознаграждения для заводчика.
      *
      * @return HlbReferenceItem
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      */
     public function getRewardType()
     {
         if (is_null($this->rewardType)) {
-            $this->rewardType = ReferenceUtils::getReference('bx.hlblock.rewardtype', $this->PROPERTY_REWARD_TYPE);
+            $this->rewardType = ReferenceUtils::getReference(
+                Application::getHlBlockDataManager('bx.hlblock.rewardtype'),
+                $this->PROPERTY_REWARD_TYPE
+            );
         }
 
         return $this->rewardType;
@@ -357,5 +410,45 @@ class Offer extends IblockElement
     public function getSkuId()
     {
         return $this->getXmlId();
+    }
+
+    /**
+     * @param string $regionId
+     *
+     * @return Price
+     * @throws RuntimeException
+     */
+    public function getPrice(string $regionId): Price
+    {
+        if (!$this->getAllPrices()->offsetExists($regionId)) {
+            throw new RuntimeException(
+                sprintf(
+                    'Цена торгового предложения %d в регионе %s не найдена.',
+                    $this->getId(),
+                    $regionId
+                )
+            );
+        }
+
+        return $this->getAllPrices()->offsetGet($regionId);
+    }
+
+    /**
+     * @return ArrayCollection
+     */
+    public function getAllPrices(): ArrayCollection
+    {
+        if (is_null($this->prices)) {
+            $this->withAllPrices((new PriceQuery())->getAllPrices($this->getId()));
+        }
+
+        return $this->prices;
+    }
+
+    public function withAllPrices(ArrayCollection $priceCollection)
+    {
+        $this->prices = PriceCollection::createIndexedByRegion($priceCollection);
+
+        return $this;
     }
 }

@@ -86,8 +86,8 @@
     "webarchitect609/bitrix-neverinclude": "^0.4.2"
   },
   "require-dev": {
-    "phpunit/phpunit": "^5.7",
-    "friendsofphp/php-cs-fixer": "@stable"
+    "friendsofphp/php-cs-fixer": "@stable",
+    "phpunit/phpunit": "^5.7"
   },
   "repositories": [
     {

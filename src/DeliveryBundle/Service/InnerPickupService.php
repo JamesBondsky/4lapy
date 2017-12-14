@@ -91,7 +91,6 @@ class InnerPickupService extends DeliveryServiceBase
             return $result;
         }
 
-        $result = new \Bitrix\Sale\Delivery\CalculationResult();
         $result->setDeliveryPrice(0);
         /* @todo учитывать наличие товара */
         $result->setPeriodFrom(1);

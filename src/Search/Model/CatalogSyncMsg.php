@@ -19,6 +19,12 @@ class CatalogSyncMsg
     const ENTITY_TYPE_OFFER = 'offer';
 
     /**
+     * @var int
+     * @Type("int")
+     */
+    protected $timestamp;
+
+    /**
      * @var string
      * @Type("string")
      */
@@ -41,6 +47,7 @@ class CatalogSyncMsg
         $this->action = $action;
         $this->entityType = $entityType;
         $this->entityId = $entityId;
+        $this->timestamp = time();
     }
 
     /**
@@ -149,5 +156,39 @@ class CatalogSyncMsg
     public function isForDeleteAction(): bool
     {
         return self::ACTION_DELETE === $this->getAction();
+    }
+
+    /**
+     * @return int
+     */
+    public function getTimestamp(): int
+    {
+        return $this->timestamp;
+    }
+
+    /**
+     * @param int $timestamp
+     *
+     * @return $this
+     */
+    public function withTimestamp(int $timestamp)
+    {
+        $this->timestamp = $timestamp;
+
+        return $this;
+    }
+
+    /**
+     * Сравнивает с другим объектом по значимому содержимому.
+     *
+     * @param CatalogSyncMsg $catalogSyncMsg
+     *
+     * @return bool
+     */
+    public function equals(CatalogSyncMsg $catalogSyncMsg)
+    {
+        return $catalogSyncMsg->getAction() === $this->getAction()
+            && $catalogSyncMsg->getEntityType() === $this->getEntityType()
+            && $catalogSyncMsg->getEntityId() === $this->getEntityId();
     }
 }

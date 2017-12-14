@@ -25,6 +25,8 @@ final class ColorToReference extends StringToReference
         if (!$data[$fieldName]) {
             return $data;
         }
+    
+        $data[self::CODE_FIELD_NAME] = !$data[self::CODE_FIELD_NAME] ?? '';
         
         $data[$fieldName] = trim($data[$fieldName]);
         
