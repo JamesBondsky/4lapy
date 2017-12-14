@@ -36,6 +36,12 @@ abstract class IBlockElement extends IBlock
     public function addItem(string $primary, array $data) : AddResult
     {
         $cIBlockElement = new \CIBlockElement();
+    
+        foreach ($data['PROPERTY_VALUE'] as &$value) {
+            if (is_array($value) && $value['file'] === true) {
+                unset($value['file']);
+            }
+        }
         
         $id = $cIBlockElement->Add($data, false, false);
         
