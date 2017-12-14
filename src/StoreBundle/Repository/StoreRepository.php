@@ -102,9 +102,6 @@ class StoreRepository
                             ->setLimit($limit)
                             ->setOffset($offset)
                             ->exec();
-        if (0 === $stores->getSelectedRowsCount()) {
-            return [];
-        }
 
         $result = [];
         while ($store = $stores->fetch()) {
