@@ -56,14 +56,15 @@ class FourPawsCityPhoneComponent extends \CBitrixComponent
         $city = null;
         if ($this->arParams['LOCATION_CODE']) {
             $city = $locationService->getCity($this->arParams['LOCATION_CODE']);
-        } else {
-            $city = $defaultCity;
         }
-
+        
         if (!$city) {
-            $this->AbortResultCache();
+            if (!$defaultCity) {
+                $this->AbortResultCache();
 
-            return $this;
+                return $this;
+            }
+            $city = $defaultCity;
         }
 
         /** @var \FourPaws\Location\Model\City $city */
