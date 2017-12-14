@@ -7,10 +7,6 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 class Store
 {
-    const BITRIX_TRUE = 'Y';
-
-    const BITRIX_FALSE = 'N';
-
     /**
      * @var int
      * @Serializer\Type("integer")
@@ -24,10 +20,8 @@ class Store
 
     /**
      * @var bool
-     * @Serializer\AccessType(type="public_method")
-     * @Serializer\Accessor(getter="getRawActive", setter="setRawActive")
      * @Serializer\SerializedName("ACTIVE")
-     * @Serializer\Type("string")
+     * @Serializer\Type("bitrix_bool")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
     protected $active = true;
@@ -160,20 +154,16 @@ class Store
 
     /**
      * @var bool
-     * @Serializer\AccessType(type="public_method")
-     * @Serializer\Accessor(getter="getRawIssuingCenter", setter="setRawIssuingCenter")
      * @Serializer\SerializedName("ISSUING_CENTER")
-     * @Serializer\Type("string")
+     * @Serializer\Type("bitrix_bool")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
     protected $issuingCenter = true;
 
     /**
      * @var bool
-     * @Serializer\AccessType(type="public_method")
-     * @Serializer\Accessor(getter="getRawShippingCenter", setter="setRawShippingCenter")
      * @Serializer\SerializedName("SHIPPING_CENTER")
-     * @Serializer\Type("string")
+     * @Serializer\Type("bitrix_bool")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
     protected $shippingCenter = true;
@@ -278,24 +268,6 @@ class Store
         $this->active = $active;
 
         return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getRawActive(): string
-    {
-        return $this->isActive() ? static::BITRIX_TRUE : static::BITRIX_FALSE;
-    }
-
-    /**
-     * @param string $active
-     *
-     * @return Store
-     */
-    public function setRawActive(string $active)
-    {
-        return $this->setActive($active === static::BITRIX_TRUE);
     }
 
     /**
@@ -619,24 +591,6 @@ class Store
     }
 
     /**
-     * @return string
-     */
-    public function getRawIssuingCenter(): string
-    {
-        return $this->isIssuingCenter() ? static::BITRIX_TRUE : static::BITRIX_FALSE;
-    }
-
-    /**
-     * @param string $isIssuingCenter
-     *
-     * @return Store
-     */
-    public function setRawIssuingCenter(string $isIssuingCenter)
-    {
-        return $this->setIssuingCenter($isIssuingCenter === static::BITRIX_TRUE);
-    }
-
-    /**
      * @return bool
      */
     public function isShippingCenter(): bool
@@ -654,24 +608,6 @@ class Store
         $this->shippingCenter = $shippingCenter;
 
         return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getRawShippingCenter(): string
-    {
-        return $this->isShippingCenter() ? static::BITRIX_TRUE : static::BITRIX_FALSE;
-    }
-
-    /**
-     * @param string $isShippingCenter
-     *
-     * @return Store
-     */
-    public function setRawShippingCenter(string $isShippingCenter)
-    {
-        return $this->setShippingCenter($isShippingCenter === static::BITRIX_TRUE);
     }
 
     /**

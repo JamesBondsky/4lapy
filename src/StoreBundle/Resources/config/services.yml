@@ -22,3 +22,8 @@ services:
         class: FourPaws\StoreBundle\Serialization\ArrayOrFalseHandler
         tags:
             - { name: jms_serializer.subscribing_handler }
+
+    jms_serializer.bitrix_boolean_handler:
+        class: FourPaws\StoreBundle\Serialization\BitrixBooleanHandler
+        tags:
+            - { name: jms_serializer.subscribing_handler }
