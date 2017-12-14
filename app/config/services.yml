@@ -11,7 +11,7 @@ services:
 
   catalog.service:
     class: FourPaws\Catalog\CatalogService
-    arguments: ['@bx.hlblock.filter', '@jms_serializer']
+    arguments: ['@bx.hlblock.filter', '@jms_serializer', '@location.service']
 
   search.factory:
     class: FourPaws\Search\Factory
@@ -29,9 +29,15 @@ services:
   search.service:
     class: FourPaws\Search\SearchService
     arguments:
+      - '@catalog.service'
+      - '@search.index_helper'
+
+  search.index_helper:
+    class: FourPaws\Search\Helper\IndexHelper
+    arguments:
       - '@elastica.client'
-      - '@jms_serializer'
       - '@search.factory'
+      - '@jms_serializer'
       - '@old_sound_rabbit_mq.catalog_sync_producer'
 
   location.service:

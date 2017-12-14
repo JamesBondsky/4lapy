@@ -23,7 +23,7 @@ class ElementPropertyConditionTable extends DataManager
     }
 
     /**
-     * @return array
+     * @inheritdoc
      */
     public static function getMap()
     {

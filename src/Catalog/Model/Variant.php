@@ -1,6 +1,6 @@
 <?php
 
-namespace FourPaws\Catalog\Filter;
+namespace FourPaws\Catalog\Model;
 
 class Variant
 {
@@ -15,17 +15,17 @@ class Variant
     private $value = '';
 
     /**
-     * @var int
+     * @var int Количество продуктов, которые соответствуют этому варианту.
      */
     private $count = 0;
 
     /**
-     * @var bool
+     * @var bool Вариант выбран.
      */
     private $checked = false;
 
     /**
-     * @var bool
+     * @var bool Вариант доступен - его выбор даст непустой результат фильтрации.
      */
     private $available = true;
 
