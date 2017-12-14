@@ -1,12 +1,3 @@
-parameters:
-  manzana:
-    login: "%env(MANZANA_LOGIN)%"
-    password: "%env(MANZANA_PASSWORD)%"
-    pos_wdsl: "%env(MANZANA_HOST_POS)%"
-    wdsl: "%env(MANZANA_HOST)%"
-    pos: kuvi_pos
-    business_unit: kuvi_shop
-
 imports:
   - { resource: config.yml }
   - { resource: services_dev.yml }

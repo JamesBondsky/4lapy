@@ -2,9 +2,8 @@
 
 namespace FourPaws\External;
 
-use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\External\Exception\ManzanaServiceException;
+use FourPaws\External\Interfaces\ManzanaServiceInterface;
 use FourPaws\External\Manzana\Exception\AuthenticationException;
 use FourPaws\External\Manzana\Exception\CardNotFoundException;
 use FourPaws\External\Manzana\Exception\ContactNotFoundException;
@@ -16,25 +15,17 @@ use FourPaws\External\Manzana\Model\Clients;
 use FourPaws\External\Manzana\Model\Contact;
 use FourPaws\External\Manzana\Model\Contacts;
 use FourPaws\External\Manzana\Model\ParameterBag;
-use GuzzleHttp\Client as GuzzleClient;
-use JMS\Serializer\Serializer;
-use Meng\AsyncSoap\Guzzle\Factory;
-use Meng\AsyncSoap\SoapClientInterface;
+use FourPaws\External\Traits\ManzanaServiceTrait;
 use Psr\Log\LoggerAwareInterface;
-use Psr\Log\LoggerAwareTrait;
-use RuntimeException;
-use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
-use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
-use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /**
  * Class ManzanaService
  *
  * @package FourPaws\External
  */
-class ManzanaService implements LoggerAwareInterface
+class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
 {
-    use LoggerAwareTrait;
+    use ManzanaServiceTrait;
     
     const METHOD_AUTHENTICATE             = 'Authenticate';
     
@@ -64,36 +55,7 @@ class ManzanaService implements LoggerAwareInterface
     
     const CONTRACT_SEARCH_CARD_BY_NUMBER  = 'search_cards_by_number';
     
-    protected $client;
-    
-    protected $serializer;
-    
-    protected $parameters;
-    
     protected $sessionId;
-    
-    /**
-     * ManzanaService constructor.
-     *
-     * @param Serializer          $serializer
-     * @param SoapClientInterface $client
-     * @param array               $parameters
-     *
-     * @throws ApplicationCreateException
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws InvalidArgumentException
-     * @throws RuntimeException
-     */
-    public function __construct(Serializer $serializer, SoapClientInterface $client, array $parameters)
-    {
-        $this->serializer = $serializer;
-        $this->client     = $client;
-        $this->parameters = $parameters;
-    
-        $client =
-            (new Factory())->create(new GuzzleClient(['curl' => [CURLOPT_CONNECTTIMEOUT => 3]]), $parameters['wsdl']);
-    }
     
     /**
      * Отправка телефона
@@ -350,13 +312,6 @@ class ManzanaService implements LoggerAwareInterface
     protected function clientSearch(array $data)
     {
     
-    }
-    
-    public function setServiceLogger()
-    {
-        if (!$this->logger) {
-            $this->setLogger(LoggerFactory::create('manzana'));
-        }
     }
     
     /**
