@@ -3,11 +3,14 @@
 namespace FourPaws\App;
 
 use Adv\Bitrixtools\Tools\EnvType;
+use Bitrix\Main\Entity\DataManager;
 use FourPaws\App\MarkupBuild\JsonFileLoader;
 use FourPaws\App\MarkupBuild\MarkupBuild;
 use Psr\Cache\InvalidArgumentException;
+use RuntimeException;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Config\FileLocator;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\HttpFoundation\Request;
 
 class Application extends AppKernel
@@ -61,8 +64,8 @@ class Application extends AppKernel
                 if (EnvType::isDev() && is_file(self::getDocumentRoot() . MarkupBuild::STATIC_DEV_JS)) {
                     //подключить результаты сборки к реальному сайту
                     $markupBuild->withJsFile(MarkupBuild::STATIC_DEV_JS)
-                        ->withCssFile(MarkupBuild::STATIC_DEV_CSS)
-                        ->withSvgFile(MarkupBuild::STATIC_DEV_SVG);
+                                ->withCssFile(MarkupBuild::STATIC_DEV_CSS)
+                                ->withSvgFile(MarkupBuild::STATIC_DEV_SVG);
                 } else {
                     $jsonFileLoader =
                         new JsonFileLoader($markupBuild, new FileLocator(self::getDocumentRoot() . '/static'));
@@ -86,7 +89,7 @@ class Application extends AppKernel
      *
      * @param \Symfony\Component\HttpFoundation\Request $request
      *
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws Exceptions\ApplicationCreateException
      * @throws \Exception
      */
     public static function handleRequest(Request $request)
@@ -98,7 +101,7 @@ class Application extends AppKernel
     }
 
     /**
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws Exceptions\ApplicationCreateException
      * @return \FourPaws\App\Application
      *
      */
@@ -143,5 +146,32 @@ class Application extends AppKernel
         
         /** @noinspection PhpIncludeInspection */
         require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_before.php';
+    }
+
+    /**
+     * Возвращает объект DataManager для управления соответствующим hl-блоком.
+     *
+     * @param string $hlblockServiceName
+     *
+     * @return DataManager
+     * @throws RuntimeException
+     * @throws Exceptions\ApplicationCreateException
+     * @throws ServiceCircularReferenceException
+     */
+    public static function getHlBlockDataManager(string $hlblockServiceName): DataManager
+    {
+        $dataManager = Application::getInstance()->getContainer()->get($hlblockServiceName);
+
+        if (!($dataManager instanceof DataManager)) {
+            throw new RuntimeException(
+                sprintf(
+                    'Сервис %s не является %s',
+                    $hlblockServiceName,
+                    DataManager::class
+                )
+            );
+        }
+
+        return $dataManager;
     }
 }

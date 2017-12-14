@@ -8,6 +8,7 @@ use Bitrix\Main\EventManager;
 use Exception;
 use FourPaws\App\Application;
 use FourPaws\App\ServiceHandlerInterface;
+use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Search\Model\CatalogSyncMsg;
@@ -15,9 +16,14 @@ use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Throwable;
 
-class Event implements ServiceHandlerInterface, LoggerAwareInterface
+class EventHandlers implements ServiceHandlerInterface, LoggerAwareInterface
 {
     use LoggerAwareTrait;
+
+    /**
+     * @var CatalogSyncMsg
+     */
+    private static $lastSyncMessage;
 
     /**
      * @var SearchService
@@ -42,9 +48,27 @@ class Event implements ServiceHandlerInterface, LoggerAwareInterface
 
             $eventManager->addEventHandler('iblock', $eventType, [$myself, 'updateInElastic']);
         }
-        $eventManager->addEventHandler('iblock', 'OnAfterIBlockElementDelete', [$myself, 'deleteInElastic']);
+        $eventManager->addEventHandler(
+            'iblock',
+            'OnAfterIBlockElementDelete',
+            [$myself, 'deleteInElastic']
+        );
 
-        //TODO При обновлении цены, остатков, сущности товара в торговом каталоге тоже нужно обновлять продукт
+        foreach (['OnPriceUpdate', 'OnPriceAdd'] as $eventType) {
+            $eventManager->addEventHandler(
+                'catalog',
+                $eventType,
+                [$myself, 'updateOfferInElasticOnPriceChange']
+            );
+        }
+
+        foreach (['OnProductUpdate', 'OnProductAdd'] as $eventType) {
+            $eventManager->addEventHandler(
+                'catalog',
+                $eventType,
+                [$myself, 'updateOfferInElasticOnCatalogProductChange']
+            );
+        }
     }
 
     /**
@@ -62,6 +86,46 @@ class Event implements ServiceHandlerInterface, LoggerAwareInterface
 
         }
 
+    }
+
+    /**
+     * Обновление торгового предложения, когда у него меняется цена.
+     *
+     * @param array $arFields
+     */
+    public function updateOfferInElasticOnPriceChange($arFields)
+    {
+        try {
+            if (!isset($arFields['PRODUCT_ID']) || $arFields['PRODUCT_ID'] <= 0) {
+                return;
+            }
+
+            $offerFields = (new OfferQuery())->withFilter(['=ID' => (int)$arFields['PRODUCT_ID']])
+                                             ->withSelect(['IBLOCK_ID', 'ID'])
+                                             ->doExec()
+                                             ->Fetch();
+
+            if (false == $offerFields) {
+                return;
+            }
+
+            $this->updateInElastic($offerFields);
+
+        } catch (Exception $exception) {
+
+            $this->logException($exception);
+
+        }
+    }
+
+    /**
+     * Обновление торгового предложения, когда у него меняются поля сущности "товар" из "торгового каталога".
+     *
+     * @param $productId
+     */
+    public function updateOfferInElasticOnCatalogProductChange($productId)
+    {
+        $this->updateOfferInElasticOnPriceChange(['PRODUCT_ID' => (int)$productId]);
     }
 
     /**
@@ -106,7 +170,20 @@ class Event implements ServiceHandlerInterface, LoggerAwareInterface
      */
     private function publishCatSyncMsg(string $action, string $entityType, int $entityId)
     {
-        $this->searchService->publishSyncMessage(new CatalogSyncMsg($action, $entityType, $entityId));
+        $newCatSyncMsg = new CatalogSyncMsg($action, $entityType, $entityId);
+
+        /** @noinspection PhpNonStrictObjectEqualityInspection */
+        if (!is_null(self::$lastSyncMessage) && $newCatSyncMsg->equals(self::$lastSyncMessage)) {
+            /**
+             * Предотвращение дублирования, если только что
+             * было отправлено точно такое же (по содержимому!)
+             * синхронизационное сообщение.
+             */
+            return;
+        }
+
+        $this->searchService->getIndexHelper()->publishSyncMessage($newCatSyncMsg);
+        self::$lastSyncMessage = $newCatSyncMsg;
     }
 
     /**

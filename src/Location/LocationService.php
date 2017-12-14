@@ -4,19 +4,20 @@ namespace FourPaws\Location;
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Highloadblock\DataManager;
-use Bitrix\Sale\Location\LocationTable;
+use Bitrix\Sale\Location\GroupLocationTable;
+use Bitrix\Sale\Location\ExternalTable;
 use Bitrix\Sale\Location\TypeTable;
 use CBitrixComponent;
 use CBitrixLocationSelectorSearchComponent;
 use CIBlockElement;
 use FourPaws\App\Application;
-use FourPaws\Location\Model\City;
-use FourPaws\Location\Query\CityQuery;
 use FourPaws\BitrixOrm\Model\ModelInterface;
 use FourPaws\Enum\CitiesSectionCode;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Location\Exception\CityNotFoundException;
+use FourPaws\Location\Model\City;
+use FourPaws\Location\Query\CityQuery;
 use FourPaws\UserBundle\Service\UserService;
 use WebArch\BitrixCache\BitrixCache;
 
@@ -28,11 +29,73 @@ class LocationService
 
     const LOCATION_CODE_MOSCOW = '0000073738';
 
+    const DEFAULT_REGION_CODE = 'IR77';
+
+    const REGION_SERVICE_CODE = 'REGION';
+
     protected $dataManager;
 
     public function __construct(DataManager $dataManager)
     {
         $this->dataManager = $dataManager;
+    }
+
+    /**
+     * Возвращает код текущего региона.
+     *
+     * @return string
+     */
+    public function getCurrentRegionCode(): string
+    {
+        $locationCode = $this->getCurrentLocation();
+
+        return $this->getRegionCode($locationCode);
+    }
+
+    /**
+     * Возвращает код региона по коду местоположения
+     *
+     * @param string $locationCode
+     *
+     * @return string
+     */
+    public function getRegionCode(string $locationCode): string
+    {
+        if (!$locationCode || !$location = $this->findLocationByCode($locationCode)) {
+            return self::DEFAULT_REGION_CODE;
+        }
+
+        $getRegionCode = function () use ($location) {
+            $filter = [
+                'LOCATION.CODE' => $location['CODE'],
+                'SERVICE.CODE'  => self::REGION_SERVICE_CODE,
+            ];
+
+            if (!empty ($location['PATH'])) {
+                $filter['LOCATION.CODE'] = array_merge(
+                    [$filter['LOCATION.CODE']],
+                    array_column($location['PATH'], 'CODE')
+                );
+            }
+
+            if ($region = ExternalTable::getList(
+                [
+                    'filter' => $filter,
+                    // коды привязаны к регионам, так что в принципе может вернуться только одно значение
+                    'limit'  => 1,
+                ]
+            )->fetch()) {
+                return $region['XML_ID'];
+            }
+
+            return self::DEFAULT_REGION_CODE;
+        };
+
+        $data = (new BitrixCache())
+            ->withId($locationCode)
+            ->resultOf($getRegionCode);
+
+        return $data['result'];
     }
 
     /**
@@ -97,7 +160,7 @@ class LocationService
 
     /**
      * Поиск местоположения по названию
-     * 
+     *
      * @param $query
      * @param null $limit
      * @param bool $exact
@@ -106,8 +169,12 @@ class LocationService
      * @return array
      * @throws CityNotFoundException
      */
-    public function findLocation(string $query, int $limit = null, bool $exact = false, array $additionalFilter = []): array
-    {
+    public function findLocation(
+        string $query,
+        int $limit = null,
+        bool $exact = false,
+        array $additionalFilter = []
+    ): array {
         if (empty($query)) {
             throw new CityNotFoundException('Город не найден');
         }
@@ -135,37 +202,7 @@ class LocationService
 
         $result = [];
         do {
-            $data = CBitrixLocationSelectorSearchComponent::processSearchRequestV2(
-                [
-                    'select'      => [
-                        'CODE',
-                        'VALUE'   => 'ID',
-                        'DISPLAY' => 'NAME.NAME',
-                    ],
-                    'filter'      => $filter,
-                    'additionals' => ['PATH'],
-                    'PAGE_SIZE'   => $limit,
-                    'PAGE'        => 0,
-                ]
-            );
-            foreach ($data['ITEMS'] as $item) {
-                $path = [];
-                foreach ($item['PATH'] as $pathId) {
-                    if (!isset($data['ETC']['PATH_ITEMS'][$pathId])) {
-                        continue;
-                    }
-                    $pathItem = $data['ETC']['PATH_ITEMS'][$pathId];
-                    $path[] = [
-                        'NAME' => $pathItem['DISPLAY'],
-                        'CODE' => $pathItem['CODE'],
-                    ];
-                }
-                $result[] = [
-                    'CODE' => $item['CODE'],
-                    'NAME' => $item['DISPLAY'],
-                    'PATH' => $path,
-                ];
-            }
+            $result = array_merge($result, $this->findWithLocationSearchComponent($filter, $limit));
 
             if ($limit && count($result) >= $limit) {
                 break;
@@ -185,39 +222,52 @@ class LocationService
 
     /**
      * Поиск местоположения по коду
-     * 
+     *
      * @param string $code
      * @param array $additionalFilter
      *
      * @return array|false
      */
-    public function findLocationByCode(string $code, array $additionalFilter = [])
+    public function findLocationByCode(string $code, array $additionalFilter = []): array
     {
-        $filter = ['CODE' => $code];
-        if (!empty($additionalFilter) && is_array($additionalFilter)) {
-            $filter = array_merge($filter, $additionalFilter);
-        }
+        $findLocation = function () use ($code, $additionalFilter) {
+            $filter = ['CODE' => $code];
+            if (!empty($additionalFilter) && is_array($additionalFilter)) {
+                $filter = array_merge($filter, $additionalFilter);
+            }
 
-        return LocationTable::getList(
-            [
-                'filter' => $filter,
-                'select' => ['ID', 'NAME.NAME', 'CODE', 'TYPE_ID'],
-                'limit'  => 1,
-            ]
-        )->fetch();
+            $location = reset($this->findWithLocationSearchComponent($filter, 1));
+
+            return $location;
+        };
+
+        return (new BitrixCache())
+            ->withId(
+                __METHOD__ . json_encode(
+                    [
+                        'code'   => $code,
+                        'filter' => $additionalFilter,
+                    ]
+                )
+            )
+            ->resultOf($findLocation);
     }
 
     /**
      * Поиск местоположений с типом "город" и "деревня" по названию
-     * 
+     *
      * @param string $query
      * @param int|null $limit
      * @param bool $exact
      *
      * @return array
      */
-    public function findLocationCity(string $query, string $parentName = '', int $limit = null, bool $exact = false): array
-    {
+    public function findLocationCity(
+        string $query,
+        string $parentName = '',
+        int $limit = null,
+        bool $exact = false
+    ): array {
         $filter = [
             'TYPE_ID' => array_values(
                 $this->getTypeIdsByCodes(
@@ -246,7 +296,7 @@ class LocationService
 
     /**
      * Поиск местоположений с типом "город" или "деревня" по коду
-     * 
+     *
      * @param string $code
      *
      * @return array
@@ -259,7 +309,14 @@ class LocationService
             $city = $this->findLocationByCode(
                 $code,
                 [
-                    '=TYPE.CODE' => [static::TYPE_CITY, static::TYPE_VILLAGE],
+                    'TYPE_ID' => array_values(
+                        $this->getTypeIdsByCodes(
+                            [
+                                static::TYPE_CITY,
+                                static::TYPE_VILLAGE,
+                            ]
+                        )
+                    ),
                 ]
             );
         }
@@ -269,8 +326,9 @@ class LocationService
         }
 
         return [
-            'NAME' => $city['SALE_LOCATION_LOCATION_NAME_NAME'],
+            'NAME' => $city['NAME'],
             'CODE' => $city['CODE'],
+            'PATH' => $city['PATH'],
         ];
     }
 
@@ -285,13 +343,80 @@ class LocationService
             return $this->findLocationCityByCode(static::LOCATION_CODE_MOSCOW);
         } catch (CityNotFoundException $e) {
         }
-        
+
         return [];
     }
 
     /**
+     * Получение кода текущего местоположения
+     *
+     * @return string
+     */
+    public function getCurrentLocation(): string
+    {
+        /** @var UserService $userService */
+        $userService = Application::getInstance()
+                                  ->getContainer()
+                                  ->get('FourPaws\UserBundle\Service\UserCitySelectInterface');
+
+        if ($location = $userService->getSelectedCity()) {
+            return $location['CODE'];
+        }
+
+        return (string)$this->getDefaultLocation()['CODE'];
+    }
+
+    /**
+     * Получение групп местоположений
+     *
+     * @param bool $withLocations если true, то в каждой группе содержать ключ LOCATIONS,
+     *                            содержащий массив кодов местоположений этой группы
+     */
+    public function getLocationGroups($withLocations = true): array
+    {
+        $getGroups = function () use ($withLocations) {
+            $result = [];
+            $select = ['GROUP.ID', 'GROUP.CODE', 'GROUP.NAME', 'GROUP.SORT'];
+
+            if ($withLocations) {
+                $select[] = 'LOCATION.CODE';
+            }
+
+            $groups = GroupLocationTable::getList(
+                [
+                    'select' => $select,
+                    'order'  => ['GROUP.SORT' => 'ASC'],
+                ]
+            );
+
+            while ($group = $groups->fetch()) {
+                $item = [
+                    'ID'   => $group['SALE_LOCATION_GROUP_LOCATION_GROUP_ID'],
+                    'CODE' => $group['SALE_LOCATION_GROUP_LOCATION_GROUP_CODE'],
+                    'NAME' => $group['SALE_LOCATION_GROUP_LOCATION_GROUP_NAME_NAME'],
+                ];
+
+                if ($withLocations) {
+                    if (isset($result[$group['SALE_LOCATION_GROUP_LOCATION_GROUP_CODE']])) {
+                        $item = $result[$group['SALE_LOCATION_GROUP_LOCATION_GROUP_CODE']];
+                    }
+                    $item['LOCATIONS'][] = $group['SALE_LOCATION_GROUP_LOCATION_LOCATION_CODE'];
+                }
+
+                $result[$group['SALE_LOCATION_GROUP_LOCATION_GROUP_CODE']] = $item;
+            }
+
+            return $result;
+        };
+
+        return (new BitrixCache())
+            ->withId(__METHOD__ . intVal($withLocations))
+            ->resultOf($getGroups);
+    }
+
+    /**
      * Получение эл-та из HL-блока Cities по коду местоположения
-     * 
+     *
      * @return City|null
      */
     public function getDefaultCity()
@@ -303,7 +428,7 @@ class LocationService
 
     /**
      * Получение эл-та из HL-блока Cities по коду местоположения
-     * 
+     *
      * @param $locationCode
      *
      * @return ModelInterface|null
@@ -320,18 +445,14 @@ class LocationService
     /**
      * Получение эл-та из HL-блока,
      * привязанного к выбранному городу пользователя
-     * 
+     *
      * @return ModelInterface|null
      */
     public function getCurrentCity()
     {
-        /** @var UserService $userService */
-        $userService = Application::getInstance()
-                                  ->getContainer()
-                                  ->get('FourPaws\UserBundle\Service\UserCitySelectInterface');
 
-        if ($locationCode = $userService->getSelectedCity()['CODE']) {
-            if ($city = $this->getCity($locationCode)){
+        if ($locationCode = $this->getCurrentLocation()) {
+            if ($city = $this->getCity($locationCode)) {
                 return $city;
             }
         }
@@ -365,6 +486,56 @@ class LocationService
         return (new BitrixCache())
             ->withId(__METHOD__ . json_encode($typeCodes))
             ->resultOf($getTypeIds);
+    }
+
+    /**
+     * Ищет местоположения по заданному фильтру
+     * с помощью CBitrixLocationSelectorSearchComponent
+     *
+     * @param $filter
+     * @param $limit
+     *
+     * @return array
+     */
+    private function findWithLocationSearchComponent($filter, $limit)
+    {
+        $result = [];
+
+        CBitrixComponent::includeComponentClass('bitrix:sale.location.selector.search');
+
+        $data = CBitrixLocationSelectorSearchComponent::processSearchRequestV2(
+            [
+                'select'      => [
+                    'CODE',
+                    'VALUE'   => 'ID',
+                    'DISPLAY' => 'NAME.NAME',
+                ],
+                'filter'      => $filter,
+                'additionals' => ['PATH'],
+                'PAGE_SIZE'   => $limit,
+                'PAGE'        => 0,
+            ]
+        );
+        foreach ($data['ITEMS'] as $item) {
+            $path = [];
+            foreach ($item['PATH'] as $pathId) {
+                if (!isset($data['ETC']['PATH_ITEMS'][$pathId])) {
+                    continue;
+                }
+                $pathItem = $data['ETC']['PATH_ITEMS'][$pathId];
+                $path[] = [
+                    'NAME' => $pathItem['DISPLAY'],
+                    'CODE' => $pathItem['CODE'],
+                ];
+            }
+            $result[] = [
+                'CODE' => $item['CODE'],
+                'NAME' => $item['DISPLAY'],
+                'PATH' => $path,
+            ];
+        }
+
+        return $result;
     }
 
     /**
