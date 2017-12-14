@@ -231,6 +231,14 @@ class Store
     protected $yandexShopId = '';
 
     /**
+     * @var bool
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("UF_IS_BASE_SHOP")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $isBase = false;
+
+    /**
      * @return int
      */
     public function getId(): int
@@ -746,6 +754,26 @@ class Store
     public function setYandexShopId(string $yandexShopId): Store
     {
         $this->yandexShopId = $yandexShopId;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isBase(): bool
+    {
+        return (bool)$this->isBase;
+    }
+
+    /**
+     * @param bool $isBase
+     *
+     * @return Store
+     */
+    public function setIsBase(bool $isBase): Store
+    {
+        $this->isBase = $isBase;
 
         return $this;
     }
