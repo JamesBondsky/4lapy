@@ -3,6 +3,7 @@
 namespace FourPaws\StoreBundle\Service;
 
 use FourPaws\Location\LocationService;
+use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Exception\StoreException;
@@ -76,7 +77,7 @@ class StoreService
     {
         $store = false;
         try {
-            $store = reset($this->repository->findBy(['XML_ID' => $xmlId, [], 1]));
+            $store = $this->repository->findBy(['XML_ID' => $xmlId, [], 1])->first();
         } catch (StoreException $e) {
         }
 
@@ -94,7 +95,7 @@ class StoreService
      *
      * @return array
      */
-    public function getByCurrentLocation($type = self::TYPE_ALL): array
+    public function getByCurrentLocation($type = self::TYPE_ALL): StoreCollection
     {
         $location = $this->locationService->getCurrentLocation();
 
@@ -109,7 +110,7 @@ class StoreService
      *
      * @return array
      */
-    public function getByLocation(string $locationCode, string $type = self::TYPE_ALL): array
+    public function getByLocation(string $locationCode, string $type = self::TYPE_ALL): StoreCollection
     {
         $filter = array_merge(
             ['UF_LOCATION' => $locationCode],
@@ -126,7 +127,7 @@ class StoreService
      *
      * @return array
      */
-    public function getMultipleByXmlId(array $codes): array
+    public function getMultipleByXmlId(array $codes): StoreCollection
     {
         return $this->repository->findBy(['XML_ID' => $codes]);
     }

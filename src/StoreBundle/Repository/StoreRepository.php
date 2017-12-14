@@ -3,6 +3,7 @@
 namespace FourPaws\StoreBundle\Repository;
 
 use Bitrix\Catalog\StoreTable;
+use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\BitrixRuntimeException;
 use FourPaws\StoreBundle\Exception\ConstraintDefinitionException;
@@ -72,9 +73,8 @@ class StoreRepository
     public function find(int $id)
     {
         $this->checkIdentifier($id);
-        $result = $this->findBy(['ID' => $id], [], 1);
 
-        return reset($result);
+        return $this->findBy(['ID' => $id], [], 1)->first();
     }
 
     /**
@@ -83,10 +83,14 @@ class StoreRepository
      * @param null|int $limit
      * @param null|int $offset
      *
-     * @return Store[]
+     * @return StoreCollection
      */
-    public function findBy(array $criteria = [], array $orderBy = [], int $limit = null, int $offset = null): array
-    {
+    public function findBy(
+        array $criteria = [],
+        array $orderBy = [],
+        int $limit = null,
+        int $offset = null
+    ): StoreCollection {
         if (empty($orderBy)) {
             $orderBy = ['SORT' => 'ASC', 'ID' => 'ASC'];
         }
@@ -110,10 +114,12 @@ class StoreRepository
         /**
          * todo change group name to constant
          */
-        return $this->arrayTransformer->fromArray(
-            $result,
-            sprintf('array<%s>', Store::class),
-            DeserializationContext::create()->setGroups(['read'])
+        return new StoreCollection(
+            $this->arrayTransformer->fromArray(
+                $result,
+                sprintf('array<%s>', Store::class),
+                DeserializationContext::create()->setGroups(['read'])
+            )
         );
     }
 
