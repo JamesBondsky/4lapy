@@ -29,6 +29,7 @@ $this->setFrameMode(true);
         <a class="b-back-link__link js-close-popup"
            href="javascript:void(0);"
            title="<?= $arResult['SELECTED_CITY']['NAME'] ?>"
+           data-url="<?= $arResult['CITY_SET_URL'] ?>"
            data-code="<?= $arResult['SELECTED_CITY']['CODE'] ?>">
             <span class="b-icon b-icon--back-mobile b-icon--orange">
                 <?= new SvgDecorator('icon-arrow-down', 10, 10) ?>
@@ -41,6 +42,7 @@ $this->setFrameMode(true);
         <a class="b-back-link__link js-close-popup"
            href="javascript:void(0);"
            title="<?= $arResult['DEFAULT_CITY']['NAME'] ?>"
+           data-url="<?= $arResult['CITY_SET_URL'] ?>"
            data-code="<?= $arResult['DEFAULT_CITY']['CODE'] ?>">
             <span class="b-icon b-icon--back-mobile b-icon--orange">
                 <?= new SvgDecorator('icon-arrow-down', 10, 10) ?>
@@ -54,6 +56,7 @@ $this->setFrameMode(true);
             <input class="b-input b-input--pick-city"
                    type="search"
                    id="id-pick-city-search"
+                   data-url="<?= $arResult['CITY_AUTOCOMPLETE_URL'] ?>"
                    placeholder="Найти свой город"/>
             <button class="b-button b-button--pick-city">
                 <span class="b-icon">
@@ -85,6 +88,7 @@ $this->setFrameMode(true);
                                 <a class="b-popup-pick-city__city-link"
                                    href="javascript:void(0)"
                                    title="<?= $city['NAME'] ?>"
+                                   data-url="<?= $arResult['CITY_SET_URL'] ?>"
                                    data-code="<?= $city['CODE'] ?>">
                                     <?= $city['NAME'] ?>
                                     <?php if (!empty($city['SHOPS'])) { ?>
@@ -111,6 +115,7 @@ $this->setFrameMode(true);
                                 <a class="b-popup-pick-city__city-link"
                                    href="javascript:void(0)"
                                    title="<?= $city['NAME'] ?>"
+                                   data-url="<?= $arResult['CITY_SET_URL'] ?>"
                                    data-code="<?= $city['CODE'] ?>">
                                     <?= $city['NAME'] ?>
                                     <?php if (!empty($city['SHOPS'])) { ?>
