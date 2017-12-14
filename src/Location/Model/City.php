@@ -41,7 +41,7 @@ class City extends HlbItemBase
     /**
      * @return string
      */
-    public function getLocation(): array
+    public function getLocations(): array
     {
         return $this->UF_LOCATION;
     }
@@ -91,13 +91,13 @@ class City extends HlbItemBase
     }
 
     /**
-     * @param string $location
+     * @param string $locations
      *
      * @return City
      */
-    public function withLocation(string $location): City
+    public function withLocations(array $locations): City
     {
-        $this->UF_LOCATION = $location;
+        $this->UF_LOCATION = $locations;
 
         return $this;
     }
