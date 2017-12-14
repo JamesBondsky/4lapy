@@ -226,7 +226,7 @@ class Store
      * @var array
      * @Serializer\SerializedName("UF_SERVICES")
      * @Serializer\SkipWhenEmpty()
-     * @Serializer\Type("array<int>")
+     * @Serializer\Type("array_or_false<int>")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
     protected $services = [];

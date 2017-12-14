@@ -18,3 +18,7 @@ services:
         class: FourPaws\StoreBundle\Service\StoreService
         public: true
 
+    jms_serializer.array_or_false_handler:
+        class: FourPaws\StoreBundle\Serialization\ArrayOrFalseHandler
+        tags:
+            - { name: jms_serializer.subscribing_handler }
