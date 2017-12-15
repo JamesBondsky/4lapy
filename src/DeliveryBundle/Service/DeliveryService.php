@@ -37,13 +37,14 @@ class DeliveryService
 
     /**
      * Получение доставок по id товара
-     * 
-     * @param $offerId
-     * @param null $locationCode
+     *
+     * @param int $offerId
+     * @param string $locationCode
+     * @param array $codes коды доставок для расчета
      *
      * @return array
      */
-    public function getByProduct(int $offerId, string $locationCode = null, $codes = []): array
+    public function getByProduct(int $offerId, string $locationCode = null, array $codes = []): array
     {
         if (!$locationCode) {
             $locationCode = $this->getCurrentLocation();
@@ -58,10 +59,11 @@ class DeliveryService
      * Получение доставок для местоположения
      *
      * @param string $locationCode
+     * @param array $codes коды доставок для расчета
      *
      * @return array
      */
-    public function getByLocation(string $locationCode = null, $codes = []): array
+    public function getByLocation(string $locationCode = null, array $codes = []): array
     {
         if (!$locationCode) {
             $locationCode = $this->getCurrentLocation();
