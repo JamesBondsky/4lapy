@@ -2,19 +2,9 @@
 
 namespace FourPaws\External;
 
-use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Interfaces\ManzanaServiceInterface;
 use FourPaws\External\Manzana\Exception\AuthenticationException;
-use FourPaws\External\Manzana\Exception\CardNotFoundException;
-use FourPaws\External\Manzana\Exception\ContactNotFoundException;
 use FourPaws\External\Manzana\Exception\ExecuteException;
-use FourPaws\External\Manzana\Model\Card;
-use FourPaws\External\Manzana\Model\Cards;
-use FourPaws\External\Manzana\Model\Client;
-use FourPaws\External\Manzana\Model\Clients;
-use FourPaws\External\Manzana\Model\Contact;
-use FourPaws\External\Manzana\Model\Contacts;
-use FourPaws\External\Manzana\Model\ParameterBag;
 use FourPaws\External\Traits\ManzanaServiceTrait;
 use Psr\Log\LoggerAwareInterface;
 
