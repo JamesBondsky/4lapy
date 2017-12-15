@@ -86,6 +86,7 @@ class InnerDeliveryService extends DeliveryServiceHandlerBase
             $result->setDeliveryPrice($this->config['PRICES'][$deliveryZone]);
 
             if (!empty($this->config['FREE_FROM'][$deliveryZone])) {
+                $result->setTmpData(['FREE_FROM' => $this->config['FREE_FROM'][$deliveryZone]]);
                 $order = $shipment->getParentOrder();
                 if ($order->getBasket()->getPrice() >= $this->config['FREE_FROM'][$deliveryZone]) {
                     $result->setDeliveryPrice(0);
