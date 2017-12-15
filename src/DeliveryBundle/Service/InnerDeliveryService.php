@@ -38,8 +38,8 @@ class InnerDeliveryService extends DeliveryServiceHandlerBase
 
     public function getIntervals(Shipment $shipment): array
     {
-        switch ($this->getDeliveryZoneCode($shipment)) {
-            case self::ZONE_1:
+        switch ($this->deliveryService->getDeliveryZoneCode($shipment)) {
+            case DeliveryService::ZONE_1:
                 return [
                     [
                         'FROM' => 9,
@@ -50,7 +50,7 @@ class InnerDeliveryService extends DeliveryServiceHandlerBase
                         'TO'   => 23,
                     ],
                 ];
-            case self::ZONE_2:
+            case DeliveryService::ZONE_2:
                 return [
                     [
                         'FROM' => 8,
@@ -81,7 +81,7 @@ class InnerDeliveryService extends DeliveryServiceHandlerBase
             return $result;
         }
 
-        $deliveryZone = $this->getDeliveryZoneCode($shipment, false);
+        $deliveryZone = $this->deliveryService->getDeliveryZoneCode($shipment, false);
         if ($this->config['PRICES'][$deliveryZone]) {
             $result->setDeliveryPrice($this->config['PRICES'][$deliveryZone]);
 
@@ -111,7 +111,7 @@ class InnerDeliveryService extends DeliveryServiceHandlerBase
     {
         $result = parent::getConfigStructure();
 
-        $zones = $this->getAvailableZones();
+        $zones = $this->deliveryService->getAvailableZones($this->getId());
 
         $result['PRICES'] = [
             'TITLE'       => 'Стоимости доставок по зонам',

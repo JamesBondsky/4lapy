@@ -36,7 +36,7 @@ class InnerPickupService extends DeliveryServiceHandlerBase
             return false;
         }
 
-        $deliveryLocation = $this->getDeliveryLocation($shipment);
+        $deliveryLocation = $this->deliveryService->getDeliveryLocation($shipment);
         if (!$deliveryLocation) {
             return false;
         }
@@ -82,7 +82,7 @@ class InnerPickupService extends DeliveryServiceHandlerBase
             return $result;
         }
 
-        $deliveryLocation = $this->getDeliveryLocation($shipment);
+        $deliveryLocation = $this->deliveryService->getDeliveryLocation($shipment);
         $shops = $this->storeService->getByLocation($deliveryLocation, StoreService::TYPE_SHOP);
 
         $shop = $shops->filter(

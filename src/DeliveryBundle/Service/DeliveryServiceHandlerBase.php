@@ -48,31 +48,51 @@ abstract class DeliveryServiceHandlerBase extends Base implements DeliveryServic
      */
     protected $userService;
 
+    /**
+     * @var DeliveryService
+     */
+    protected $deliveryService;
+
     public function __construct($initParams)
     {
         $this->locationService = Application::getInstance()->getContainer()->get('location.service');
         $this->storeService = Application::getInstance()->getContainer()->get('store.service');
+        $this->deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
         $this->userService = Application::getInstance()
                                         ->getContainer()
                                         ->get('FourPaws\UserBundle\Service\UserCitySelectInterface');
         parent::__construct($initParams);
     }
 
+    /**
+     * @param Shipment $shipment
+     *
+     * @return bool
+     */
     public function isCompatible(Shipment $shipment)
     {
         return parent::isCompatible($shipment);
     }
 
+    /**
+     * @return bool
+     */
     public function isCalculatePriceImmediately()
     {
         return static::$isCalculatePriceImmediately;
     }
 
+    /**
+     * @return bool
+     */
     public static function whetherAdminExtraServicesShow()
     {
         return static::$whetherAdminExtraServicesShow;
     }
 
+    /**
+     * @return array
+     */
     protected function getConfigStructure()
     {
         $currency = $this->currency;
@@ -103,137 +123,11 @@ abstract class DeliveryServiceHandlerBase extends Base implements DeliveryServic
         return $result;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getDeliveryZoneCode(Shipment $shipment, $skipLocations = true)
-    {
-        if (!$deliveryLocation = $this->getDeliveryLocation($shipment)) {
-            return false;
-        }
-
-        $deliveryLocationPath = [$deliveryLocation];
-        if ($location = $this->locationService->findLocationByCode($deliveryLocation)) {
-            if ($location['PATH']) {
-                $deliveryLocationPath = array_merge(
-                    $deliveryLocationPath,
-                    array_column($location['PATH'], 'CODE')
-                );
-            }
-        }
-
-        $availableZones = $this->getAvailableZones();
-        foreach ($availableZones as $code => $zone) {
-            if ($skipLocations && $zone['TYPE'] == static::LOCATION_RESTRICTION_TYPE_LOCATION) {
-                continue;
-            }
-            if (!empty(array_intersect($deliveryLocationPath, $zone['LOCATIONS']))) {
-                return $code;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getAvailableZones(): array
-    {
-        $allZones = $this->getAllZones();
-        $deliveryId = $this->getId();
-
-        $getZones = function () use ($allZones, $deliveryId) {
-            $result = [];
-
-            $restrictions = DeliveryLocationTable::getList(
-                [
-                    'filter' => ['DELIVERY_ID' => $deliveryId],
-                ]
-            );
-
-            $locationCodes = [];
-            while ($restriction = $restrictions->fetch()) {
-                switch ($restriction['LOCATION_TYPE']) {
-                    case static::LOCATION_RESTRICTION_TYPE_LOCATION:
-                        $locationCodes[] = $restriction['LOCATION_CODE'];
-                        break;
-                    case static::LOCATION_RESTRICTION_TYPE_GROUP:
-                        if (isset($allZones[$restriction['LOCATION_CODE']])) {
-                            $item = $allZones[$restriction['LOCATION_CODE']];
-                            $item['TYPE'] = static::LOCATION_RESTRICTION_TYPE_GROUP;
-                            $result[$restriction['LOCATION_CODE']] = $item;
-                        }
-                        break;
-                }
-            }
-
-            if (!empty($locationCodes)) {
-                $locations = LocationTable::getList(
-                    [
-                        'filter' => ['CODE' => $locationCodes],
-                        'select' => ['ID', 'CODE', 'NAME.NAME'],
-                    ]
-                );
-
-                while ($location = $locations->Fetch()) {
-                    // сделано, чтобы отдельные местоположения были впереди групп,
-                    // т.к. группы могут их включать
-                    $result = [
-                            $location['CODE'] => [
-                                'CODE'      => $location['CODE'],
-                                'NAME'      => $location['SALE_LOCATION_LOCATION_NAME_NAME'],
-                                'ID'        => $location['ID'],
-                                'LOCATIONS' => [$location['CODE']],
-                                'TYPE'      => static::LOCATION_RESTRICTION_TYPE_LOCATION,
-                            ],
-                        ] + $result;
-                }
-            }
-
-            return $result;
-        };
-
-        $result = (new BitrixCache())
-            ->withId(__METHOD__ . $deliveryId)
-            ->resultOf($getZones);
-
-        return $result;
-    }
-
-    /**
-     * @return array
-     */
-    protected function getAllZones(): array
-    {
-        return $this->locationService->getLocationGroups(true);
-    }
-
-    /**
-     * Получение кода местоположения для доставки
-     *
-     * @param Shipment $shipment
-     *
-     * @return null|string
-     */
-    protected function getDeliveryLocation(Shipment $shipment)
-    {
-        $order = $shipment->getParentOrder();
-        $propertyCollection = $order->getPropertyCollection();
-        $locationProp = $propertyCollection->getDeliveryLocation();
-
-        if ($locationProp && $locationProp->getValue()) {
-            return $locationProp->getValue();
-        }
-
-        return null;
-    }
-
     protected function calculateConcrete(Shipment $shipment)
     {
         $result = new \Bitrix\Sale\Delivery\CalculationResult();
 
-        if (!$this->getDeliveryZoneCode($shipment)) {
+        if (!$this->deliveryService->getDeliveryZoneCode($shipment)) {
             $result->addError(new Error('Не указано местоположение доставки'));
         }
 

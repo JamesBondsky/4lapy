@@ -5,11 +5,14 @@ namespace FourPaws\DeliveryBundle\Service;
 use Bitrix\Currency\CurrencyManager;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
+use Bitrix\Sale\Delivery\DeliveryLocationTable;
 use Bitrix\Sale\Delivery\Services\Manager;
+use Bitrix\Sale\Location\LocationTable;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Shipment;
 use FourPaws\Location\LocationService;
 use FourPaws\UserBundle\Service\UserService;
+use WebArch\BitrixCache\BitrixCache;
 
 class DeliveryService
 {
@@ -18,6 +21,18 @@ class DeliveryService
     const INNER_PICKUP_CODE = '4lapy_pickup';
 
     const ORDER_LOCATION_PROP_CODE = 'CITY_CODE';
+
+    const LOCATION_RESTRICTION_TYPE_LOCATION = 'L';
+
+    const LOCATION_RESTRICTION_TYPE_GROUP = 'G';
+
+    const ZONE_1 = 'ZONE_1';
+
+    const ZONE_2 = 'ZONE_2';
+
+    const ZONE_3 = 'ZONE_3';
+
+    const ZONE_4 = 'ZONE_4';
 
     /**
      * @var LocationService $locationService
@@ -110,6 +125,153 @@ class DeliveryService
                 $result[] = $calculationResult;
             }
         }
+
+        return $result;
+    }
+
+    public function getAllZones($withLocations = true)
+    {
+        return $this->locationService->getLocationGroups($withLocations);
+    }
+
+    /**
+     * Получение кода местоположения для доставки
+     *
+     * @param Shipment $shipment
+     *
+     * @return null|string
+     */
+    public function getDeliveryLocation(Shipment $shipment)
+    {
+        $order = $shipment->getParentOrder();
+        $propertyCollection = $order->getPropertyCollection();
+        $locationProp = $propertyCollection->getDeliveryLocation();
+
+        if ($locationProp && $locationProp->getValue()) {
+            return $locationProp->getValue();
+        }
+
+        return null;
+    }
+
+    /**
+     * Получение кода зоны доставки. Содержит либо код группы доставки,
+     * либо код местоположения (в случае, если в ограничениях указано
+     * отдельное местоположение)
+     *
+     * @param Shipment $shipment
+     * @param bool $skipLocations возвращать только коды групп
+     *
+     * @return bool|string
+     */
+    public function getDeliveryZoneCode(Shipment $shipment, $skipLocations = true)
+    {
+        if (!$deliveryLocation = $this->getDeliveryLocation($shipment)) {
+            return false;
+        }
+        $deliveryId = $shipment->getDeliveryId();
+
+        return $this->getDeliveryZoneCodeByLocation($deliveryLocation, $deliveryId, $skipLocations);
+    }
+
+    /**
+     * @param $deliveryLocation
+     * @param $deliveryId
+     * @param bool $skipLocations
+     *
+     * @return bool|int|string
+     */
+    public function getDeliveryZoneCodeByLocation($deliveryLocation, $deliveryId, $skipLocations = true)
+    {
+        $deliveryLocationPath = [$deliveryLocation];
+        if ($location = $this->locationService->findLocationByCode($deliveryLocation)) {
+            if ($location['PATH']) {
+                $deliveryLocationPath = array_merge(
+                    $deliveryLocationPath,
+                    array_column($location['PATH'], 'CODE')
+                );
+            }
+        }
+
+        $availableZones = $this->getAvailableZones($deliveryId);
+
+        foreach ($availableZones as $code => $zone) {
+            if ($skipLocations && $zone['TYPE'] == static::LOCATION_RESTRICTION_TYPE_LOCATION) {
+                continue;
+            }
+            if (!empty(array_intersect($deliveryLocationPath, $zone['LOCATIONS']))) {
+                return $code;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Получение доступных зон доставки в соответствии с ограничениями по местоположению
+     *
+     * @param int $deliveryId
+     *
+     * @return array
+     */
+    public function getAvailableZones(int $deliveryId): array
+    {
+        $allZones = $this->getAllZones(true);
+
+        $getZones = function () use ($allZones, $deliveryId) {
+            $result = [];
+
+            $restrictions = DeliveryLocationTable::getList(
+                [
+                    'filter' => ['DELIVERY_ID' => $deliveryId],
+                ]
+            );
+
+            $locationCodes = [];
+            while ($restriction = $restrictions->fetch()) {
+                switch ($restriction['LOCATION_TYPE']) {
+                    case static::LOCATION_RESTRICTION_TYPE_LOCATION:
+                        $locationCodes[] = $restriction['LOCATION_CODE'];
+                        break;
+                    case static::LOCATION_RESTRICTION_TYPE_GROUP:
+                        if (isset($allZones[$restriction['LOCATION_CODE']])) {
+                            $item = $allZones[$restriction['LOCATION_CODE']];
+                            $item['TYPE'] = static::LOCATION_RESTRICTION_TYPE_GROUP;
+                            $result[$restriction['LOCATION_CODE']] = $item;
+                        }
+                        break;
+                }
+            }
+
+            if (!empty($locationCodes)) {
+                $locations = LocationTable::getList(
+                    [
+                        'filter' => ['CODE' => $locationCodes],
+                        'select' => ['ID', 'CODE', 'NAME.NAME'],
+                    ]
+                );
+
+                while ($location = $locations->Fetch()) {
+                    // сделано, чтобы отдельные местоположения были впереди групп,
+                    // т.к. группы могут их включать
+                    $result = [
+                            $location['CODE'] => [
+                                'CODE'      => $location['CODE'],
+                                'NAME'      => $location['SALE_LOCATION_LOCATION_NAME_NAME'],
+                                'ID'        => $location['ID'],
+                                'LOCATIONS' => [$location['CODE']],
+                                'TYPE'      => static::LOCATION_RESTRICTION_TYPE_LOCATION,
+                            ],
+                        ] + $result;
+                }
+            }
+
+            return $result;
+        };
+
+        $result = (new BitrixCache())
+            ->withId(__METHOD__ . $deliveryId)
+            ->resultOf($getZones);
 
         return $result;
     }
