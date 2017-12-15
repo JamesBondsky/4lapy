@@ -7,7 +7,7 @@ use Bitrix\Sale\Delivery\DeliveryLocationTable;
 use Bitrix\Sale\Delivery\Services\Manager;
 use Bitrix\Sale\Delivery\Services\Table as ServicesTable;
 use Bitrix\Sale\Internals\ServiceRestrictionTable;
-use FourPaws\DeliveryBundle\Service\DeliveryServiceBase;
+use FourPaws\DeliveryBundle\Service\DeliveryServiceHandlerBase;
 use FourPaws\DeliveryBundle\Service\InnerDeliveryService;
 use FourPaws\DeliveryBundle\Service\InnerPickupService;
 
@@ -64,16 +64,16 @@ class Delivery_services_create20171213103451 extends SprintMigrationBase
                 'CLASS_NAME' => '\Bitrix\Sale\Delivery\Restrictions\ByLocation',
                 'ITEMS'      => [
                     [
-                        'LOCATION_CODE' => DeliveryServiceBase::ZONE_1,
-                        'LOCATION_TYPE' => DeliveryServiceBase::LOCATION_RESTRICTION_TYPE_GROUP,
+                        'LOCATION_CODE' => DeliveryServiceHandlerBase::ZONE_1,
+                        'LOCATION_TYPE' => DeliveryServiceHandlerBase::LOCATION_RESTRICTION_TYPE_GROUP,
                     ],
                     [
-                        'LOCATION_CODE' => DeliveryServiceBase::ZONE_2,
-                        'LOCATION_TYPE' => DeliveryServiceBase::LOCATION_RESTRICTION_TYPE_GROUP,
+                        'LOCATION_CODE' => DeliveryServiceHandlerBase::ZONE_2,
+                        'LOCATION_TYPE' => DeliveryServiceHandlerBase::LOCATION_RESTRICTION_TYPE_GROUP,
                     ],
                     [
                         'LOCATION_CODE' => '0000293598',
-                        'LOCATION_TYPE' => DeliveryServiceBase::LOCATION_RESTRICTION_TYPE_LOCATION,
+                        'LOCATION_TYPE' => DeliveryServiceHandlerBase::LOCATION_RESTRICTION_TYPE_LOCATION,
                     ],
                 ],
             ],
@@ -83,16 +83,16 @@ class Delivery_services_create20171213103451 extends SprintMigrationBase
                 'CLASS_NAME' => '\Bitrix\Sale\Delivery\Restrictions\ByLocation',
                 'ITEMS'      => [
                     [
-                        'LOCATION_CODE' => DeliveryServiceBase::ZONE_1,
-                        'LOCATION_TYPE' => DeliveryServiceBase::LOCATION_RESTRICTION_TYPE_GROUP,
+                        'LOCATION_CODE' => DeliveryServiceHandlerBase::ZONE_1,
+                        'LOCATION_TYPE' => DeliveryServiceHandlerBase::LOCATION_RESTRICTION_TYPE_GROUP,
                     ],
                     [
-                        'LOCATION_CODE' => DeliveryServiceBase::ZONE_2,
-                        'LOCATION_TYPE' => DeliveryServiceBase::LOCATION_RESTRICTION_TYPE_GROUP,
+                        'LOCATION_CODE' => DeliveryServiceHandlerBase::ZONE_2,
+                        'LOCATION_TYPE' => DeliveryServiceHandlerBase::LOCATION_RESTRICTION_TYPE_GROUP,
                     ],
                     [
-                        'LOCATION_CODE' => DeliveryServiceBase::ZONE_3,
-                        'LOCATION_TYPE' => DeliveryServiceBase::LOCATION_RESTRICTION_TYPE_GROUP,
+                        'LOCATION_CODE' => DeliveryServiceHandlerBase::ZONE_3,
+                        'LOCATION_TYPE' => DeliveryServiceHandlerBase::LOCATION_RESTRICTION_TYPE_GROUP,
                     ],
                 ],
             ],

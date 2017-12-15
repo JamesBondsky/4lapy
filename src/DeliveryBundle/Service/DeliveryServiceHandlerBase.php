@@ -14,8 +14,9 @@ use FourPaws\App\Application;
 use FourPaws\Location\LocationService;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
+use WebArch\BitrixCache\BitrixCache;
 
-abstract class DeliveryServiceBase extends Base implements DeliveryServiceInterface
+abstract class DeliveryServiceHandlerBase extends Base implements DeliveryServiceInterface
 {
     /**
      * @var bool
@@ -139,54 +140,63 @@ abstract class DeliveryServiceBase extends Base implements DeliveryServiceInterf
      */
     public function getAvailableZones(): array
     {
-        $result = [];
-
-        $restrictions = DeliveryLocationTable::getList(
-            [
-                'filter' => ['DELIVERY_ID' => $this->getId()],
-            ]
-        );
-
         $allZones = $this->getAllZones();
+        $deliveryId = $this->getId();
 
-        $locationCodes = [];
-        while ($restriction = $restrictions->fetch()) {
-            switch ($restriction['LOCATION_TYPE']) {
-                case static::LOCATION_RESTRICTION_TYPE_LOCATION:
-                    $locationCodes[] = $restriction['LOCATION_CODE'];
-                    break;
-                case static::LOCATION_RESTRICTION_TYPE_GROUP:
-                    if (isset($allZones[$restriction['LOCATION_CODE']])) {
-                        $item = $allZones[$restriction['LOCATION_CODE']];
-                        $item['TYPE'] = static::LOCATION_RESTRICTION_TYPE_GROUP;
-                        $result[$restriction['LOCATION_CODE']] = $item;
-                    }
-                    break;
-            }
-        }
+        $getZones = function () use ($allZones, $deliveryId) {
+            $result = [];
 
-        if (!empty($locationCodes)) {
-            $locations = LocationTable::getList(
+            $restrictions = DeliveryLocationTable::getList(
                 [
-                    'filter' => ['CODE' => $locationCodes],
-                    'select' => ['ID', 'CODE', 'NAME.NAME'],
+                    'filter' => ['DELIVERY_ID' => $deliveryId],
                 ]
             );
 
-            while ($location = $locations->Fetch()) {
-                // сделано, чтобы отдельные местоположения были впереди групп,
-                // т.к. группы могут их включать
-                $result = [
-                        $location['CODE'] => [
-                            'CODE'      => $location['CODE'],
-                            'NAME'      => $location['SALE_LOCATION_LOCATION_NAME_NAME'],
-                            'ID'        => $location['ID'],
-                            'LOCATIONS' => [$location['CODE']],
-                            'TYPE'      => static::LOCATION_RESTRICTION_TYPE_LOCATION,
-                        ],
-                    ] + $result;
+            $locationCodes = [];
+            while ($restriction = $restrictions->fetch()) {
+                switch ($restriction['LOCATION_TYPE']) {
+                    case static::LOCATION_RESTRICTION_TYPE_LOCATION:
+                        $locationCodes[] = $restriction['LOCATION_CODE'];
+                        break;
+                    case static::LOCATION_RESTRICTION_TYPE_GROUP:
+                        if (isset($allZones[$restriction['LOCATION_CODE']])) {
+                            $item = $allZones[$restriction['LOCATION_CODE']];
+                            $item['TYPE'] = static::LOCATION_RESTRICTION_TYPE_GROUP;
+                            $result[$restriction['LOCATION_CODE']] = $item;
+                        }
+                        break;
+                }
             }
-        }
+
+            if (!empty($locationCodes)) {
+                $locations = LocationTable::getList(
+                    [
+                        'filter' => ['CODE' => $locationCodes],
+                        'select' => ['ID', 'CODE', 'NAME.NAME'],
+                    ]
+                );
+
+                while ($location = $locations->Fetch()) {
+                    // сделано, чтобы отдельные местоположения были впереди групп,
+                    // т.к. группы могут их включать
+                    $result = [
+                            $location['CODE'] => [
+                                'CODE'      => $location['CODE'],
+                                'NAME'      => $location['SALE_LOCATION_LOCATION_NAME_NAME'],
+                                'ID'        => $location['ID'],
+                                'LOCATIONS' => [$location['CODE']],
+                                'TYPE'      => static::LOCATION_RESTRICTION_TYPE_LOCATION,
+                            ],
+                        ] + $result;
+                }
+            }
+
+            return $result;
+        };
+
+        $result = (new BitrixCache())
+            ->withId(__METHOD__ . $deliveryId)
+            ->resultOf($getZones);
 
         return $result;
     }

@@ -6,7 +6,7 @@ use Bitrix\Main\Error;
 use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Shipment;
 
-class InnerDeliveryService extends DeliveryServiceBase
+class InnerDeliveryService extends DeliveryServiceHandlerBase
 {
     protected $code = '4lapy_delivery';
 

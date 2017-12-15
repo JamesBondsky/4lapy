@@ -12,6 +12,7 @@ use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Repository\UserRepository;
+use CSaleUser;
 
 class UserService implements
     CurrentUserProviderInterface,
@@ -103,6 +104,14 @@ class UserService implements
     public function getCurrentUser(): User
     {
         return $this->userRepository->find($this->getCurrentUserId());
+    }
+
+    /**
+     * @return int
+     */
+    public function getAnonymousUserId(): int
+    {
+        return CSaleUser::GetAnonymousUserID();
     }
 
     /**

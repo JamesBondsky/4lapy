@@ -9,8 +9,10 @@ use Bitrix\Sale\Shipment;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Service\StoreService;
 
-class InnerPickupService extends DeliveryServiceBase
+class InnerPickupService extends DeliveryServiceHandlerBase
 {
+    const ORDER_DELIVERY_PLACE_CODE_PROP = 'DELIVERY_PLACE_CODE';
+
     protected $code = '4lapy_pickup';
 
     public function __construct(array $initParams)
@@ -35,6 +37,10 @@ class InnerPickupService extends DeliveryServiceBase
         }
 
         $deliveryLocation = $this->getDeliveryLocation($shipment);
+        if (!$deliveryLocation) {
+            return false;
+        }
+
         $shops = $this->storeService->getByLocation($deliveryLocation, StoreService::TYPE_SHOP);
         if ($shops->isEmpty()) {
             return false;
@@ -63,12 +69,13 @@ class InnerPickupService extends DeliveryServiceBase
         $shopCode = null;
         /* @var PropertyValue $prop */
         foreach ($propertyCollection as $prop) {
-            if ($prop->getField('CODE') == 'DELIVERY_PLACE_CODE') {
+            if ($prop->getField('CODE') == self::ORDER_DELIVERY_PLACE_CODE_PROP) {
                 $shopCode = $prop->getValue();
                 break;
             }
         }
 
+        /** todo сделать возможность выбора необязательной, чтобы */
         if (!$shopCode) {
             $result->addError(new Error('Не выбран пункт самовывоза'));
 
