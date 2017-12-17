@@ -16,7 +16,6 @@
 /** @var CBitrixComponent $component */
 
 use Bitrix\Main\Application;
-use FourPaws\BitrixOrm\Model\CropImageDecorator;
 
 $this->setFrameMode(true);
 ?>
@@ -47,9 +46,7 @@ $this->setFrameMode(true);
                         <?php if (!empty($item['PREVIEW_PICTURE']['SRC'])
                                   && file_exists(Application::getDocumentRoot() . $item['PREVIEW_PICTURE']['SRC'])) {
                             ?>
-                            <?php $image = new CropImageDecorator($item['PREVIEW_PICTURE']);
-                            $image->setCropWidth(305)->setCropHeight(120); ?>
-                            <img src="<?= $image ?>"
+                            <img src="<?= $item['PREVIEW_PICTURE']['SRC'] ?>"
                                  alt="<?= $item['PREVIEW_PICTURE']['ALT'] ?>"
                                  title="<?= $item['PREVIEW_PICTURE']['TITLE'] ?>">
                         <?php } ?>

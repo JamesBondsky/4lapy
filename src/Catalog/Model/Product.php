@@ -4,27 +4,27 @@ namespace FourPaws\Catalog\Model;
 
 use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Collection\HlbReferenceItemCollection;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\BitrixOrm\Model\TextContent;
+use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Query\BrandQuery;
 use FourPaws\Catalog\Query\OfferQuery;
-use FourPaws\Catalog\ReferenceUtils;
+use FourPaws\Search\Model\HitMetaInfoAwareInterface;
+use FourPaws\Search\Model\HitMetaInfoAwareTrait;
 use JMS\Serializer\Annotation\Accessor;
 use JMS\Serializer\Annotation\Groups;
 use JMS\Serializer\Annotation\Type;
+use RuntimeException;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 
-/**
- * Class Product
- * @package FourPaws\Catalog\Model
- *
- *
- * TODO Не хватает цен
- * TODO Не хватает привязок ко всем разделам инфоблока
- */
-class Product extends IblockElement
+class Product extends IblockElement implements HitMetaInfoAwareInterface
 {
+    use HitMetaInfoAwareTrait;
+
     /**
      * @var bool
      * @Type("bool")
@@ -54,6 +54,20 @@ class Product extends IblockElement
      * @Groups({"elastic"})
      */
     protected $ID = 0;
+
+    /**
+     * @var string
+     * @Type("string")
+     * @Groups({"elastic"})
+     */
+    protected $CODE = '';
+
+    /**
+     * @var string
+     * @Type("string")
+     * @Groups({"elastic"})
+     */
+    protected $XML_ID = '';
 
     /**
      * @var string
@@ -134,7 +148,7 @@ class Product extends IblockElement
 
     /**
      * @var string[]
-     * @Type("string")
+     * @Type("array")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_FOR_WHO = [];
@@ -500,6 +514,14 @@ class Product extends IblockElement
     protected $offers;
 
     /**
+     * @var int[] ID всех разделов инфоблока, к которым прикреплён элемент.
+     * @Type("array")
+     * @Accessor(getter="getSectionsIdList")
+     * @Groups({"elastic"})
+     */
+    protected $sectionIdList;
+
+    /**
      * @var string[]
      * @Type("array<string>")
      * @Accessor(getter="getSuggest")
@@ -612,11 +634,19 @@ class Product extends IblockElement
 
     /**
      * @return HlbReferenceItemCollection
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      */
     public function getForWho()
     {
+
+
         if (is_null($this->forWho)) {
-            $this->forWho = ReferenceUtils::getReferenceMulti('bx.hlblock.forwho', $this->PROPERTY_FOR_WHO);
+            $this->forWho = ReferenceUtils::getReferenceMulti(
+                Application::getHlBlockDataManager('bx.hlblock.forwho'),
+                $this->PROPERTY_FOR_WHO
+            );
         }
 
         return $this->forWho;
@@ -624,11 +654,17 @@ class Product extends IblockElement
 
     /**
      * @return HlbReferenceItemCollection
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      */
     public function getPetSize()
     {
         if (is_null($this->petSize)) {
-            $this->petSize = ReferenceUtils::getReferenceMulti('bx.hlblock.petsize', $this->PROPERTY_PET_SIZE);
+            $this->petSize = ReferenceUtils::getReferenceMulti(
+                Application::getHlBlockDataManager('bx.hlblock.petsize'),
+                $this->PROPERTY_PET_SIZE
+            );
         }
 
         return $this->petSize;
@@ -640,11 +676,17 @@ class Product extends IblockElement
      * \attention Это всего лишь одноимённое свойство из SAP и никак не связано с категориями каталога на сайте.
      *
      * @return HlbReferenceItem
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      */
     public function getCategory()
     {
         if (is_null($this->category)) {
-            $this->category = ReferenceUtils::getReference('bx.hlblock.productcategory', $this->PROPERTY_CATEGORY);
+            $this->category = ReferenceUtils::getReference(
+                Application::getHlBlockDataManager('bx.hlblock.productcategory'),
+                $this->PROPERTY_CATEGORY
+            );
         }
 
         return $this->category;
@@ -652,11 +694,17 @@ class Product extends IblockElement
 
     /**
      * @return HlbReferenceItem
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      */
     public function getPurpose()
     {
         if (is_null($this->purpose)) {
-            $this->purpose = ReferenceUtils::getReference('bx.hlblock.purpose', $this->PROPERTY_PURPOSE);
+            $this->purpose = ReferenceUtils::getReference(
+                Application::getHlBlockDataManager('bx.hlblock.purpose'),
+                $this->PROPERTY_PURPOSE
+            );
         }
 
         return $this->purpose;
@@ -664,11 +712,17 @@ class Product extends IblockElement
 
     /**
      * @return HlbReferenceItemCollection
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      */
     public function getPetAge()
     {
         if (is_null($this->petAge)) {
-            $this->petAge = ReferenceUtils::getReferenceMulti('bx.hlblock.petage', $this->PROPERTY_PET_AGE);
+            $this->petAge = ReferenceUtils::getReferenceMulti(
+                Application::getHlBlockDataManager('bx.hlblock.petage'),
+                $this->PROPERTY_PET_AGE
+            );
         }
 
         return $this->petAge;
@@ -676,12 +730,15 @@ class Product extends IblockElement
 
     /**
      * @return HlbReferenceItemCollection
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      */
     public function getPetAgeAdditional()
     {
         if (is_null($this->petAgeAdditional)) {
             $this->petAgeAdditional = ReferenceUtils::getReferenceMulti(
-                'bx.hlblock.petageadditional',
+                Application::getHlBlockDataManager('bx.hlblock.petageadditional'),
                 $this->PROPERTY_PET_AGE_ADDITIONAL
             );
         }
@@ -691,11 +748,17 @@ class Product extends IblockElement
 
     /**
      * @return HlbReferenceItem
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      */
     public function getPetBreed()
     {
         if (is_null($this->petBreed)) {
-            $this->petBreed = ReferenceUtils::getReference('bx.hlblock.petbreed', $this->PROPERTY_PET_BREED);
+            $this->petBreed = ReferenceUtils::getReference(
+                Application::getHlBlockDataManager('bx.hlblock.petbreed'),
+                $this->PROPERTY_PET_BREED
+            );
         }
 
         return $this->petBreed;
@@ -703,11 +766,17 @@ class Product extends IblockElement
 
     /**
      * @return HlbReferenceItem
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      */
     public function getPetGender()
     {
         if (is_null($this->petGender)) {
-            $this->petGender = ReferenceUtils::getReference('bx.hlblock.petgender', $this->PROPERTY_PET_GENDER);
+            $this->petGender = ReferenceUtils::getReference(
+                Application::getHlBlockDataManager('bx.hlblock.petgender'),
+                $this->PROPERTY_PET_GENDER
+            );
         }
 
         return $this->petGender;
@@ -715,12 +784,21 @@ class Product extends IblockElement
 
     /**
      * @return HlbReferenceItemCollection
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      */
     public function getLabels()
     {
         if (is_null($this->label)) {
-            $this->label = ReferenceUtils::getReferenceMulti('bx.hlblock.label', $this->PROPERTY_LABEL);
-            //TODO Добавить динамический запрос шильдиков по акциям, в которых в данном регионе участвует этот продукт
+            $this->label = ReferenceUtils::getReferenceMulti(
+                Application::getHlBlockDataManager('bx.hlblock.label'),
+                $this->PROPERTY_LABEL
+            );
+            /*
+             * TODO Добавить динамический запрос шильдиков по акциям, в которых в данном регионе участвует этот продукт
+             */
+
             //TODO Сделать, чтобы это была отдельная коллекция объектов "Шильдик", а не просто элемент справочника.
         }
 
@@ -739,11 +817,17 @@ class Product extends IblockElement
 
     /**
      * @return HlbReferenceItem
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      */
     public function getCountry()
     {
         if (is_null($this->country)) {
-            $this->country = ReferenceUtils::getReference('bx.hlblock.country', $this->PROPERTY_COUNTRY);
+            $this->country = ReferenceUtils::getReference(
+                Application::getHlBlockDataManager('bx.hlblock.country'),
+                $this->PROPERTY_COUNTRY
+            );
         }
 
         return $this->country;
@@ -751,11 +835,17 @@ class Product extends IblockElement
 
     /**
      * @return HlbReferenceItemCollection
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      */
     public function getTradeNames()
     {
         if (is_null($this->tradeName)) {
-            $this->tradeName = ReferenceUtils::getReferenceMulti('bx.hlblock.tradename', $this->PROPERTY_TRADE_NAME);
+            $this->tradeName = ReferenceUtils::getReferenceMulti(
+                Application::getHlBlockDataManager('bx.hlblock.tradename'),
+                $this->PROPERTY_TRADE_NAME
+            );
         }
 
         return $this->tradeName;
@@ -763,11 +853,17 @@ class Product extends IblockElement
 
     /**
      * @return HlbReferenceItemCollection
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      */
     public function getMakers()
     {
         if (is_null($this->maker)) {
-            $this->maker = ReferenceUtils::getReferenceMulti('bx.hlblock.maker', $this->PROPERTY_MAKER);
+            $this->maker = ReferenceUtils::getReferenceMulti(
+                Application::getHlBlockDataManager('bx.hlblock.maker'),
+                $this->PROPERTY_MAKER
+            );
         }
 
         return $this->maker;
@@ -775,12 +871,15 @@ class Product extends IblockElement
 
     /**
      * @return HlbReferenceItemCollection
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      */
     public function getManagersOfCategory()
     {
         if (is_null($this->managerOfCategory)) {
             $this->managerOfCategory = ReferenceUtils::getReferenceMulti(
-                'bx.hlblock.categorymanager',
+                Application::getHlBlockDataManager('bx.hlblock.categorymanager'),
                 $this->PROPERTY_MANAGER_OF_CATEGORY
             );
         }
@@ -790,12 +889,15 @@ class Product extends IblockElement
 
     /**
      * @return HlbReferenceItemCollection
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      */
     public function getManufactureMaterials()
     {
         if (is_null($this->manufactureMaterial)) {
             $this->manufactureMaterial = ReferenceUtils::getReferenceMulti(
-                'bx.hlblock.material',
+                Application::getHlBlockDataManager('bx.hlblock.material'),
                 $this->PROPERTY_MANUFACTURE_MATERIAL
             );
         }
@@ -805,12 +907,15 @@ class Product extends IblockElement
 
     /**
      * @return HlbReferenceItemCollection
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      */
     public function getClothesSeasons()
     {
         if (is_null($this->seasonClothes)) {
             $this->seasonClothes = ReferenceUtils::getReferenceMulti(
-                'bx.hlblock.season',
+                Application::getHlBlockDataManager('bx.hlblock.season'),
                 $this->PROPERTY_SEASON_CLOTHES
             );
         }
@@ -848,11 +953,17 @@ class Product extends IblockElement
 
     /**
      * @return HlbReferenceItem
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      */
     public function getPetType()
     {
         if (is_null($this->petType)) {
-            $this->petType = ReferenceUtils::getReference('bx.hlblock.pettype', $this->PROPERTY_PET_TYPE);
+            $this->petType = ReferenceUtils::getReference(
+                Application::getHlBlockDataManager('bx.hlblock.pettype'),
+                $this->PROPERTY_PET_TYPE
+            );
         }
 
         return $this->petType;
@@ -860,11 +971,17 @@ class Product extends IblockElement
 
     /**
      * @return HlbReferenceItem
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      */
     public function getPharmaGroup()
     {
         if (is_null($this->pharmaGroup)) {
-            $this->pharmaGroup = ReferenceUtils::getReference('bx.hlblock.pharmagroup', $this->PROPERTY_PHARMA_GROUP);
+            $this->pharmaGroup = ReferenceUtils::getReference(
+                Application::getHlBlockDataManager('bx.hlblock.pharmagroup'),
+                $this->PROPERTY_PHARMA_GROUP
+            );
         }
 
         return $this->pharmaGroup;
@@ -874,12 +991,15 @@ class Product extends IblockElement
      * Возвращает специализацию корма
      *
      * @return HlbReferenceItem
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      */
     public function getFeedSpecification()
     {
         if (is_null($this->feedSpecification)) {
             $this->feedSpecification = ReferenceUtils::getReference(
-                'bx.hlblock.feedspec',
+                Application::getHlBlockDataManager('bx.hlblock.feedspec'),
                 $this->PROPERTY_FEED_SPECIFICATION
             );
         }
@@ -899,11 +1019,17 @@ class Product extends IblockElement
 
     /**
      * @return HlbReferenceItem
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      */
     public function getConsistence()
     {
         if (is_null($this->consistence)) {
-            $this->consistence = ReferenceUtils::getReference('bx.hlblock.consistence', $this->PROPERTY_CONSISTENCE);
+            $this->consistence = ReferenceUtils::getReference(
+                Application::getHlBlockDataManager('bx.hlblock.consistence'),
+                $this->PROPERTY_CONSISTENCE
+            );
         }
 
         return $this->consistence;
@@ -911,11 +1037,17 @@ class Product extends IblockElement
 
     /**
      * @return HlbReferenceItemCollection
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      */
     public function getFlavour()
     {
         if (is_null($this->flavour)) {
-            $this->flavour = ReferenceUtils::getReferenceMulti('bx.hlblock.flavour', $this->PROPERTY_FLAVOUR);
+            $this->flavour = ReferenceUtils::getReferenceMulti(
+                Application::getHlBlockDataManager('bx.hlblock.flavour'),
+                $this->PROPERTY_FLAVOUR
+            );
         }
 
         return $this->flavour;
@@ -925,12 +1057,15 @@ class Product extends IblockElement
      * Возвращает особенности ингридиентов
      *
      * @return HlbReferenceItemCollection
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      */
     public function getFeaturesOfIngredients()
     {
         if (is_null($this->featuresOfIngredients)) {
             $this->featuresOfIngredients = ReferenceUtils::getReferenceMulti(
-                'bx.hlblock.ingridientfeatures',
+                Application::getHlBlockDataManager('bx.hlblock.ingridientfeatures'),
                 $this->PROPERTY_FEATURES_OF_INGREDIENTS
             );
         }
@@ -942,12 +1077,15 @@ class Product extends IblockElement
      * Возвращает формы выпуска продукта
      *
      * @return HlbReferenceItemCollection
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      */
     public function getProductForms()
     {
         if (is_null($this->productForm)) {
             $this->productForm = ReferenceUtils::getReferenceMulti(
-                'bx.hlblock.productform',
+                Application::getHlBlockDataManager('bx.hlblock.productform'),
                 $this->PROPERTY_PRODUCT_FORM
             );
         }
@@ -959,12 +1097,15 @@ class Product extends IblockElement
      * Возвращает типы паразитов.
      *
      * @return HlbReferenceItemCollection
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      */
     public function getTypesOfParasites()
     {
         if (is_null($this->typeOfParasite)) {
             $this->typeOfParasite = ReferenceUtils::getReferenceMulti(
-                'bx.hlblock.parasitetype',
+                Application::getHlBlockDataManager('bx.hlblock.parasitetype'),
                 $this->PROPERTY_TYPE_OF_PARASITE
             );
         }

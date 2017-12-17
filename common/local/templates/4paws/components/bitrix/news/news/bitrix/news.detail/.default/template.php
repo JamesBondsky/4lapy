@@ -1,4 +1,4 @@
-<?php use FourPaws\BitrixOrm\Model\CropImageDecorator;
+<?php
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -20,9 +20,7 @@ $this->setFrameMode(true);
 <div class="b-container">
     <div class="b-detail-page b-detail-page--bordered">
         <?php if (is_array($arResult['DETAIL_PICTURE'])) { ?>
-            <?php $image = new CropImageDecorator($arResult['DETAIL_PICTURE']);
-            $image->setCropWidth(890)->setCropHeight(500); ?>
-            <img src="<?= $image; ?>" />
+            <img src="<?= $arResult['DETAIL_PICTURE']['SRC']; ?>" />
         <?php } ?>
         <?= $arResult['DETAIL_TEXT'] ?>
         <?php if (!$arResult['NO_SHOW_VIDEO'] && !empty($arResult['DISPLAY_PROPERTIES']['VIDEO']['DISPLAY_VALUE'])) {
@@ -34,13 +32,9 @@ $this->setFrameMode(true);
             <div class="b-detail-page-slider js-detail-slider">
                 <?php /** @noinspection ForeachSourceInspection - условие есть выше */
                 foreach ($arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'] as $photo) {
-                    if (is_numeric($photo)) { ?>
+                    if (is_array($photo)) { ?>
                         <div class="b-detail-page-slider__item">
-                            <?php
-                            /** @noinspection PhpUnhandledExceptionInspection */
-                            $image = CropImageDecorator::createFromPrimary($photo);
-                            $image->setCropWidth(890)->setCropHeight(500); ?>
-                            <img src="<?= $photo ?>"
+                            <img src="<?= $photo['SRC'] ?>"
                         </div>
                     <?php }
                 } ?>

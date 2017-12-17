@@ -3,7 +3,10 @@
 namespace FourPaws\Migrator\Entity;
 
 use Bitrix\Catalog\ProductTable;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Loader;
+use Bitrix\Main\LoaderException;
+use Exception;
 use FourPaws\Migrator\Entity\Exceptions\AddException;
 use FourPaws\Migrator\Entity\Exceptions\AddProductException;
 use FourPaws\Migrator\Entity\Exceptions\UpdateException;
@@ -22,22 +25,31 @@ abstract class IBlockElement extends IBlock
      * @param string $primary
      * @param array  $data
      *
-     * @return \FourPaws\Migrator\Entity\AddResult
+     * @return AddResult
      *
-     * @throws \FourPaws\Migrator\Entity\Exceptions\AddException
-     * @throws \FourPaws\Migrator\Entity\Exceptions\AddProductException
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Exception
+     * @throws AddException
+     * @throws AddProductException
+     * @throws LoaderException
+     * @throws ArgumentException
+     * @throws Exception
      */
     public function addItem(string $primary, array $data) : AddResult
     {
         $cIBlockElement = new \CIBlockElement();
+    
+        foreach ($data['PROPERTY_VALUE'] as &$value) {
+            if (is_array($value) && $value['file'] === true) {
+                unset($value['file']);
+            }
+        }
         
         $id = $cIBlockElement->Add($data, false, false);
         
         if (!$id) {
-            throw new AddException("IBlock {$this->getIblockId()} element #{$primary} add error: $cIBlockElement->LAST_ERROR");
+            throw new AddException(sprintf('IBlock %s element product #%s add error: %s',
+                                           $this->getIblockId(),
+                                           $primary,
+                                           $cIBlockElement->LAST_ERROR));
         }
         
         /**
@@ -61,14 +73,23 @@ abstract class IBlockElement extends IBlock
                 $result = ProductTable::add($data['CATALOG']);
                 
                 if (!$result->isSuccess()) {
-                    throw new AddProductException("IBlock {$this->getIblockId()} element product #{$primary} add error: $cIBlockElement->LAST_ERROR");
+                    throw new AddProductException(sprintf('IBlock %s element product #%s add error: %s',
+                                                          $this->getIblockId(),
+                                                          $primary,
+                                                          $cIBlockElement->LAST_ERROR));
                 }
             } catch (AddProductException $e) {
                 $cIBlockElement::Delete($id);
-                
-                throw new AddException("IBlock {$this->getIblockId()} element product #{$primary} add error: {$e->getMessage()}");
-            } catch (\Exception $e) {
-                throw new AddException("IBlock {$this->getIblockId()} element product #{$primary} add error: {$e->getMessage()}");
+    
+                throw new AddException(sprintf('IBlock %s element product #%s add error: %s',
+                                               $this->getIblockId(),
+                                               $primary,
+                                               $e->getMessage()));
+            } catch (Exception $e) {
+                throw new AddException(sprintf('IBlock %s element product #%s add error: %s',
+                                               $this->getIblockId(),
+                                               $primary,
+                                               $e->getMessage()));
             }
             
             \CPrice::SetBasePrice($id, $price, 'RUB');
@@ -87,20 +108,31 @@ abstract class IBlockElement extends IBlock
      * @param string $primary
      * @param array  $data
      *
-     * @return \FourPaws\Migrator\Entity\UpdateResult
+     * @return UpdateResult
      *
-     * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateException
-     * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateProductException
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Exception
+     * @throws UpdateException
+     * @throws UpdateProductException
+     * @throws LoaderException
+     * @throws ArgumentException
+     * @throws Exception
      */
     public function updateItem(string $primary, array $data) : UpdateResult
     {
         $cIBlockElement = new \CIBlockElement();
+    
+        $this->deleteFilesBeforeUpdate($primary, $data);
+    
+        foreach ($data['PROPERTY_VALUE'] as &$value) {
+            if (is_array($value) && $value['file'] === true) {
+                unset($value['file']);
+            }
+        }
         
         if (!$cIBlockElement->Update($primary, $data, false, false, false, false)) {
-            throw new UpdateException("IBlock {$this->getIblockId()} element #{$primary} update error: $cIBlockElement->LAST_ERROR");
+            throw new UpdateException(sprintf('IBlock %s element #%s update error: %s',
+                                              $this->getIblockId(),
+                                              $primary,
+                                              $cIBlockElement->LAST_ERROR));
         }
         
         $this->setInternalKeys(['sections' => $data['SECTIONS']], $primary, $this->entity . '_section');
@@ -126,10 +158,15 @@ abstract class IBlockElement extends IBlock
                 $result = ProductTable::update($primary, $data['CATALOG']);
                 
                 if (!$result->isSuccess()) {
-                    throw new UpdateProductException("IBlock {$this->getIblockId()} element product #{$primary} update error: {$result->getErrorMessages()}");
+                    throw new UpdateProductException(sprintf('IBlock %s element product #%s update error: %s',
+                                                             $this->getIblockId(),
+                                                             $primary,
+                                                             $result->getErrorMessages()));
                 }
-            } catch (\Exception $e) {
-                throw new UpdateException("IBlock {$this->getIblockId()} element product #{$primary} update error: {$e->getMessage()}");
+            } catch (Exception $e) {
+                throw new UpdateException(sprintf('IBlock %s element product #{$primary} update error: %s',
+                                                  $this->getIblockId(),
+                                                  $e->getMessage()));
             }
             
             \CPrice::SetBasePrice($primary, $price, 'RUB');
@@ -145,7 +182,7 @@ abstract class IBlockElement extends IBlock
      * @param string $internal
      * @param string $entity
      *
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      */
     public function setInternalKeys(array $data, string $internal, string $entity)
     {
@@ -161,9 +198,9 @@ abstract class IBlockElement extends IBlock
      * @param string $primary
      * @param        $value
      *
-     * @return \FourPaws\Migrator\Entity\UpdateResult
+     * @return UpdateResult
      *
-     * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateException
+     * @throws UpdateException
      */
     public function setFieldValue(string $field, string $primary, $value) : UpdateResult
     {
@@ -179,8 +216,8 @@ abstract class IBlockElement extends IBlock
      * @param string $primary
      * @param        $value
      *
-     * @return \FourPaws\Migrator\Entity\UpdateResult
-     * @throws \FourPaws\Migrator\Entity\Exceptions\UpdateException
+     * @return UpdateResult
+     * @throws UpdateException
      */
     public function updateField(string $field, string $primary, $value) : UpdateResult
     {
@@ -189,8 +226,10 @@ abstract class IBlockElement extends IBlock
         if ($cIblockElement->Update($primary, [$field => $value])) {
             return new UpdateResult(true, $primary);
         }
-        
-        throw new UpdateException("Update field with primary {$primary} error: {$cIblockElement->LAST_ERROR}");
+    
+        throw new UpdateException(sprintf('Update field with primary %s error: %s',
+                                          $primary,
+                                          $cIblockElement->LAST_ERROR));
     }
     
     /**
@@ -198,7 +237,7 @@ abstract class IBlockElement extends IBlock
      * @param string $primary
      * @param        $value
      *
-     * @return \FourPaws\Migrator\Entity\UpdateResult
+     * @return UpdateResult
      */
     public function updateProperty(string $property, string $primary, $value) : UpdateResult
     {
@@ -208,5 +247,24 @@ abstract class IBlockElement extends IBlock
          * А вот здесь хер что мы отследим, Битрикс ничего не возвращаем. Считаем, что у нас никаких проблем нет.
          */
         return new UpdateResult(true, $primary);
+    }
+    
+    /**
+     * @todo КОСТЫЛЬ
+     *
+     * @param array  $data
+     * @param string $primary
+     */
+    protected function deleteFilesBeforeUpdate(string $primary, array &$data)
+    {
+        foreach ($data['PROPERTY_VALUES'] as $code => &$value) {
+            if (is_array($value) && $value['file']) {
+                \CIBlockElement::SetPropertyValuesEx($primary,
+                                                     $this->getIblockId(),
+                                                     [$code => ['VALUE' => ['del' => 'Y']]]);
+                
+                unset($value['file']);
+            }
+        }
     }
 }

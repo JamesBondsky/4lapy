@@ -21,7 +21,7 @@ use FourPaws\Decorators\FullHrefDecorator;
 /** @var CBitrixComponent $component */
 $this->setFrameMode(true);
 
-$APPLICATION->IncludeComponent(
+$elementID = $APPLICATION->IncludeComponent(
     'bitrix:news.detail',
     '',
     [
