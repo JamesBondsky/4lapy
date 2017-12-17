@@ -52,6 +52,24 @@ class StringToReference extends AbstractConverter
     }
     
     /**
+     * @param string $from
+     *
+     * @return string
+     */
+    public function transliterate(string $from)
+    {
+        return \CUtil::translit($from,
+                                'ru',
+                                [
+                                    'max_len'               => '255',
+                                    'change_case'           => 'L',
+                                    'replace_space'         => '-',
+                                    'replace_other'         => '-',
+                                    'delete_repeat_replace' => 'true',
+                                ]);
+    }
+    
+    /**
      * @param string $fieldToSearch
      */
     public function setFieldToSearch(string $fieldToSearch = 'UF_NAME')
@@ -172,7 +190,7 @@ class StringToReference extends AbstractConverter
      */
     protected function addValue(string $value, string $fieldName) : string
     {
-        $externalKey = md5($value);
+        $externalKey = $this->transliterate($value);
         
         $fields = [
             $fieldName               => $value,

@@ -11,6 +11,7 @@ use FourPaws\App\ServiceHandlerInterface;
  * Обработчики событий
  *
  * @package FourPaws\User
+ * @todo Почему этот класс абстрактный? оО что за магия
  */
 abstract class UserServiceHandlers implements ServiceHandlerInterface
 {
@@ -33,12 +34,14 @@ abstract class UserServiceHandlers implements ServiceHandlerInterface
      */
     public static function initHandler(string $eventName, string $method, string $module = 'main')
     {
-        self::$eventManager->addEventHandler($module,
+        self::$eventManager->addEventHandler(
+            $module,
                                              $eventName,
                                              [
                                                  self::class,
                                                  $method,
-                                             ]);
+                                             ]
+        );
     }
     
     /**

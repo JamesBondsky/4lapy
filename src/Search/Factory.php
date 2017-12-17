@@ -8,11 +8,11 @@ use Elastica\Document;
 use Elastica\Result;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Search\Enum\DocumentType;
+use FourPaws\Search\Model\HitMetaInfo;
 use InvalidArgumentException;
 use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\Serializer;
-use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\EnvNotFoundException;
@@ -37,6 +37,7 @@ class Factory
      * @param array $configParams
      *
      * @return Client
+     * @throws RuntimeException
      */
     public function createElasticaClient(array $configParams = []): Client
     {
@@ -50,25 +51,17 @@ class Factory
             throw new EnvNotFoundException(self::ENV_HOST);
         }
 
-        /** @var Logger $logger */
-        $logger = LoggerFactory::create('ElasticaClient');
-
-        /*
-         * Повышаем всем уровень логирования,
-         * чтобы отладочные сообщения не забивали
-         * лог на dev зонах
-         */
-        foreach ($logger->getHandlers() as $handler) {
-            if ($handler instanceof StreamHandler) {
-                $handler->setLevel(Logger::INFO);
+        $logger = null;
+        foreach ($configParams as $paramPair) {
+            foreach ($paramPair as $key => $value) {
+                if ('log' === $key && true === $value) {
+                    /** @var Logger $logger */
+                    $logger = LoggerFactory::create('ElasticaClient', 'elasticsearch', false);
+                }
             }
         }
 
-        $client = new Client(
-            ['host' => $host, 'port' => $port],
-            null,
-            $logger
-        );
+        $client = new Client(['host' => $host, 'port' => $port], null, $logger);
 
         foreach ($configParams as $paramPair) {
             foreach ($paramPair as $key => $value) {
@@ -97,7 +90,13 @@ class Factory
         );
     }
 
-    public function makeProductObject(Result $result)
+    /**
+     * @param Result $result
+     *
+     * @return Product
+     * @throws RuntimeException
+     */
+    public function makeProductObject(Result $result): Product
     {
         if (DocumentType::PRODUCT !== $result->getType()) {
             throw new InvalidArgumentException(
@@ -121,6 +120,8 @@ class Factory
         if (!($product instanceof Product)) {
             throw new RuntimeException('Ошибка десериализации продукта');
         }
+
+        $product->withHitMetaInfo(HitMetaInfo::create($result));
 
         return $product;
     }

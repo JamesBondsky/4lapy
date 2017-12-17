@@ -179,3 +179,8 @@ services:
     arguments: ['MetroWays']
     parent: bx.hlblock.base
 
+  bx.hlblock.cities:
+    class: 'CitiesTable'
+    arguments: ['Cities']
+    parent: bx.hlblock.base
+

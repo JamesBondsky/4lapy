@@ -12,11 +12,12 @@ use FourPaws\External\Manzana\Exception\ContactNotFoundException;
 use FourPaws\External\Manzana\Exception\ManzanaException;
 use FourPaws\External\Manzana\Model\Card;
 use FourPaws\External\Manzana\Model\Cards;
+use FourPaws\External\Manzana\Model\Clients;
 use FourPaws\External\Manzana\Model\Contact;
 use FourPaws\External\Manzana\Model\Contacts;
 use FourPaws\External\Manzana\Model\ParameterBag;
 use FourPaws\Health\HealthService;
-use GuzzleHttp\Client;
+use GuzzleHttp\Client as GuzzleClient;
 use JMS\Serializer\Serializer;
 use Meng\AsyncSoap\Guzzle\Factory;
 use Psr\Log\LoggerAwareInterface;
@@ -92,7 +93,7 @@ class ManzanaService implements LoggerAwareInterface
         
         $wdsl          = $container->getParameter('manzana')['pos_wdsl'];
         $clientOptions = ['curl' => [CURLOPT_CONNECTTIMEOUT => 3]];
-        $client        = (new Factory())->create(new Client($clientOptions), $wdsl);
+        $client        = (new Factory())->create(new GuzzleClient($clientOptions), $wdsl);
         $this->client  = new SoapClient($client, $this->healthService);
         $this->setLogger(LoggerFactory::create('manzana'));
     }
@@ -151,11 +152,26 @@ class ManzanaService implements LoggerAwareInterface
      *
      * @param string $phone
      *
-     * @return array
+     * @return Clients
+     *
+     * @throws ManzanaServiceException
      */
-    public function getUserDataByPhone(string $phone) : array
+    public function getUserDataByPhone(string $phone) : Clients
     {
+        $bag = new ParameterBag([
+                                    'maxresultsnumber' => '5',
+                                    'mobilephone'      => $phone,
+                                ]);
     
+        $result = $this->execute(self::CONTRACT_CLIENT_SEARCH, $bag->getParameters());
+    
+        try {
+            $clients = $this->serializer->deserialize($result, Clients::class, 'xml');
+        } catch (\Exception $e) {
+            throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
+        }
+    
+        return $clients;
     }
     
     /**

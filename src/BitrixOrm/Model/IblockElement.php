@@ -3,6 +3,7 @@
 namespace FourPaws\BitrixOrm\Model;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
+use CIBlockElement;
 use DateTimeImmutable;
 use FourPaws\BitrixOrm\Model\Traits\IblockModelTrait;
 
@@ -95,6 +96,14 @@ abstract class IblockElement extends BitrixArrayItemBase
      * @var DateTimeImmutable
      */
     protected $dateActiveTo;
+
+    /**
+     * @var int[] ID всех разделов инфоблока, к которым прикреплён элемент.
+     * @JMS\Serializer\Annotation\Type("int")
+     * @JMS\Serializer\Annotation\Accessor(getter="getSectionsIdList")
+     * @see BitrixArrayItemBase
+     */
+    protected $sectionIdList;
 
     public function __construct(array $fields = [])
     {
@@ -240,6 +249,27 @@ abstract class IblockElement extends BitrixArrayItemBase
         $this->DATE_ACTIVE_TO = BitrixUtils::dateTimeImmutable2BitrixStringDate($dateActiveTo, 'FULL');
 
         return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getSectionsIdList(): array
+    {
+        if (
+            is_null($this->sectionIdList)
+            || (is_array($this->sectionIdList) && count($this->sectionIdList) == 0)
+        ) {
+
+            $this->sectionIdList = [];
+            $dbSectionList = CIBlockElement::GetElementGroups($this->getId(), true, ['ID']);
+
+            while ($section = $dbSectionList->Fetch()) {
+                $this->sectionIdList[] = (int)$section['ID'];
+            }
+        }
+
+        return $this->sectionIdList;
     }
 
 }

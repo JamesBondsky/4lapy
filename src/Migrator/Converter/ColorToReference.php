@@ -25,6 +25,8 @@ final class ColorToReference extends StringToReference
         if (!$data[$fieldName]) {
             return $data;
         }
+    
+        $data[self::CODE_FIELD_NAME] = !$data[self::CODE_FIELD_NAME] ?? '';
         
         $data[$fieldName] = trim($data[$fieldName]);
         
@@ -50,8 +52,8 @@ final class ColorToReference extends StringToReference
      */
     protected function addValue(string $value, string $fieldName, string $colorCode) : string
     {
-        $externalKey = md5($value);
-        $exists =
+        $externalKey = $this->transliterate($value);
+        $exists      =
             $this->getDataClass()::getList([
                                                'filter' => [self::FIELD_EXTERNAL_KEY => $externalKey],
                                                'select' => [self::FIELD_EXTERNAL_KEY],
