@@ -1,16 +1,14 @@
 <?php
-
-use Bitrix\Main\Localization\Loc;
-
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+use Bitrix\Main\Localization\Loc;
+
 $arComponentDescription = [
-    'NAME'        => Loc::getMessage('COMPONENT_REGISTER_FORM_NAME'),
-    'DESCRIPTION' => Loc::getMessage('COMPONENT_REGISTER_FORM_DESCRIPTION'),
-    'SORT'        => 10010,
-    'CACHE_PATH'  => 'Y',
+    'NAME'        => Loc::getMessage('COMPONENT_FORGOT_PASSWORD_FORM_NAME'),
+    'DESCRIPTION' => Loc::getMessage('COMPONENT_FORGOT_PASSWORD_FORM_DESCRIPTION'),
+    'ICON'        => '/images/icon.gif',
     'PATH'        => [
         'ID'    => 'utility',
         'CHILD' => [

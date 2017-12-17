@@ -1,11 +1,13 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\UserBundle\AjaxController;
 
 use FourPaws\App\Response\JsonErrorResponse;
-use FourPaws\App\Response\JsonSuccessResponse;
-use FourPaws\UserBundle\Exception\InvalidCredentialException;
-use FourPaws\UserBundle\Exception\UsernameNotFoundException;
+use FourPaws\App\Response\JsonResponse;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
@@ -14,6 +16,7 @@ use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Class AuthController
+ *
  * @package FourPaws\UserBundle\Controller
  * @Route("/auth")
  */
@@ -23,61 +26,130 @@ class AuthController extends Controller
      * @var UserAuthorizationInterface
      */
     private $userAuthorization;
+    
     /**
      * @var CurrentUserProviderInterface
      */
     private $currentUserProvider;
-
+    
     public function __construct(
         UserAuthorizationInterface $userAuthorization,
         CurrentUserProviderInterface $currentUserProvider
     ) {
-        $this->userAuthorization = $userAuthorization;
+        $this->userAuthorization   = $userAuthorization;
         $this->currentUserProvider = $currentUserProvider;
     }
-
+    
     /**
      * @Route("/login/", methods={"POST"})
+     * @param \Symfony\Component\HttpFoundation\Request $request
+     *
+     * @throws \FourPaws\UserBundle\Exception\ValidationException
+     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
+     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
+     * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
+     * @throws \RuntimeException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws \Exception
+     * @return \FourPaws\App\Response\JsonResponse
      */
-    public function loginAction(Request $request)
+    public function loginAction(Request $request) : JsonResponse
     {
-        $rawLogin = $request->request->get('login', '');
-        $password = $request->request->get('password', '');
-
-        try {
-            $this->userAuthorization->login($rawLogin, $password);
-        } catch (UsernameNotFoundException $exception) {
-            return JsonErrorResponse::create('Неверный логин или пароль.');
-        } catch (InvalidCredentialException $credentialException) {
-            return JsonErrorResponse::create('Неверный логин или пароль.');
-        } catch (\Exception $exception) {
-            return JsonErrorResponse::create('Системная ошибка при попытке авторизации. Пожалуйста, обратитесь к администратору сайта.');
+        $action = $request->request->get('action', '');
+        $phone  = $request->get('phone', '');
+        \CBitrixComponent::includeComponentClass('fourpaws:auth.form');
+        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+        $loginClass = new \FourPawsAuthFormComponent();
+        switch ($action) {
+            case 'login':
+                $rawLogin = $request->get('login', '');
+                $password = $request->get('password', '');
+                
+                return $loginClass->ajaxLogin($rawLogin, $password);
+                break;
+            case 'resendSms':
+                return $loginClass->ajaxResendSms($phone);
+                break;
+            case 'savePhone':
+                return $loginClass->ajaxSavePhone($phone);
+                break;
+            case 'get':
+                return $loginClass->ajaxGet($request, $phone);
+                break;
         }
-        return JsonSuccessResponse::create('Вы успешно авторизованы.');
+        
+        return JsonErrorResponse::create('Неизвестная ошибка');
     }
-
+    
     /**
      * @Route("/register/", methods={"POST"})
      * @param Request $request
+     *
+     * @throws \Exception
+     * @return null|\Symfony\Component\HttpFoundation\JsonResponse
      */
     public function registerAction(Request $request)
     {
-        /**
-         * todo обработка формы или DTO сериализации с валидаторами
-         */
+        $action = $request->get('action');
+        /** @noinspection PhpUnusedLocalVariableInspection */
+        $phone = $request->get('phone');
+        
+        \CBitrixComponent::includeComponentClass('fourpaws:register');
+        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+        $registerClass = new \FourPawsRegisterComponent();
+        
+        switch ($action) {
+            case 'resendSms':
+                return $registerClass->ajaxResendSms($phone);
+                break;
+            case 'register':
+                return $registerClass->ajaxRegister($request->request->getIterator()->getArrayCopy());
+                break;
+            case 'savePhone':
+                return $registerClass->ajaxSavePhone($request->request->getIterator()->getArrayCopy());
+                break;
+            case 'get':
+                return $registerClass->ajaxGet($request, $phone);
+                break;
+        }
+        
+        return JsonErrorResponse::create('Неизвестная ошибка');
     }
-
+    
     /**
      * @Route("/forgotPassword/", methods={"POST"})
      * @param Request $request
+     *
+     * @return \FourPaws\App\Response\JsonResponse
      */
-    public function forgotPasswordAction(Request $request)
+    public function forgotPasswordAction(Request $request) : JsonResponse
     {
-        /**
-         * todo restore
-         */
+        $action = $request->get('action', '');
+        
+        \CBitrixComponent::includeComponentClass('fourpaws:forgotpassword');
+        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+        $forgotPasswordClass = new \FourPawsForgotPasswordFormComponent();
+        switch ($action) {
+            case 'savePassword':
+                return $forgotPasswordClass->ajaxSavePassword($request->get('phone', ''));
+                
+                break;
+            case 'resendSms':
+                return $forgotPasswordClass->ajaxResendSms($request->get('phone', ''));
+                
+                break;
+            case 'get':
+                return $forgotPasswordClass->ajaxGet($request);
+                break;
+        }
+        
+        return JsonErrorResponse::create('Неизвестная ошибка');
     }
-
+    
     /**
      * @Route("/changePassword/", methods={"POST"})
      * @param Request $request
@@ -85,15 +157,19 @@ class AuthController extends Controller
     public function changePasswordAction(Request $request)
     {
         if ($this->userAuthorization->isAuthorized()) {
-            $password = $request->request->get('password', '');
-            $confirm = $request->request->get('confirm', '');
-
+            /** @noinspection PhpUnusedLocalVariableInspection */
+            $password = $request->get('password', '');
+            /** @noinspection PhpUnusedLocalVariableInspection */
+            $confirm = $request->get('confirm', '');
+            /** @noinspection PhpUnusedLocalVariableInspection */
             $user = $this->currentUserProvider->getCurrentUser();
         } else {
-            $login = $request->request->get('login', '');
-            $checkword = $request->request->get('checkword', '');
+            /** @noinspection PhpUnusedLocalVariableInspection */
+            $login = $request->get('login', '');
+            /** @noinspection PhpUnusedLocalVariableInspection */
+            $checkword = $request->get('checkword', '');
         }
-
+        
         /**
          * todo change password
          */

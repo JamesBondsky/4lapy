@@ -3,7 +3,9 @@
 namespace FourPaws\User;
 
 use Bitrix\Main\EventManager;
+use FourPaws\App\Application;
 use FourPaws\App\ServiceHandlerInterface;
+use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
 
 /**
  * Class UserServiceHandlers
@@ -11,7 +13,11 @@ use FourPaws\App\ServiceHandlerInterface;
  * Обработчики событий
  *
  * @package FourPaws\User
+<<<<<<< Updated upstream
  * @todo Почему этот класс абстрактный? оО что за магия
+=======
+ * @todo    Почему этот класс абстрактный? оО что за магия
+>>>>>>> Stashed changes
  */
 abstract class UserServiceHandlers implements ServiceHandlerInterface
 {
@@ -20,11 +26,18 @@ abstract class UserServiceHandlers implements ServiceHandlerInterface
      */
     protected static $eventManager;
     
+    /**
+     * @param \Bitrix\Main\EventManager $eventManager
+     *
+     * @return mixed|void
+     */
     public static function initHandlers(EventManager $eventManager)
     {
         self::$eventManager = $eventManager;
         
         self::initHandler('OnBeforeUserAdd', 'checkSocserviseRegisterHandler');
+        
+        self::initHandler('OnBeforeUserLogon', 'replaceLogin');
     }
     
     /**
@@ -36,32 +49,44 @@ abstract class UserServiceHandlers implements ServiceHandlerInterface
     {
         self::$eventManager->addEventHandler(
             $module,
-                                             $eventName,
-                                             [
-                                                 self::class,
-                                                 $method,
-                                             ]
+            $eventName,
+            [
+                self::class,
+                $method,
+            ]
         );
     }
     
     /**
      * @param array $fields
      *
-     * @return bool
+     * @return bool|void
      */
-    public static function checkSocserviseRegisterHandler(array $fields) : bool
+    public static function checkSocserviseRegisterHandler(array &$fields)
     {
-        /**
-         * @todo может, можно как-то иначе?
-         */
-        global $APPLICATION;
-        
-        if ($fields['EXTERNAL_AUTH_ID'] === 'socservices' && !$fields['PERSONAL_PHONE']) {
-            $APPLICATION->ThrowException('Phone number must be defined');
-            
-            return false;
+        if ($fields['EXTERNAL_AUTH_ID'] === 'socservices') {
+            /** Установка обязательных пользовательских полей */
+            $fields['UF_CONFIRMATION'] = 1;
         }
-        
-        return true;
+    }
+    
+    /**
+     * @param array $fields
+     *
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     */
+    public static function replaceLogin(array $fields)
+    {
+        global $APPLICATION;
+        $userService = Application::getInstance()
+                                  ->getContainer()
+                                  ->get(UserRegistrationProviderInterface::class);
+        if (!empty($fields['LOGIN'])) {
+            $fields['LOGIN'] = $userService->getLoginByRawLogin((string)$fields['LOGIN']);
+        } else {
+            $APPLICATION->ThrowException('Поле не может быть пустым');
+        }
     }
 }

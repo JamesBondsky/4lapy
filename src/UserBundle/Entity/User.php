@@ -21,6 +21,15 @@ class User
      * @Assert\Blank(groups={"create"})
      */
     protected $id;
+    
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("EXTERNAL_AUTH_ID")
+     * @Serializer\SkipWhenEmpty()
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $externalAuthId = 0;
 
     /**
      * @var bool
@@ -405,5 +414,21 @@ class User
         $this->location = $location;
 
         return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getExternalAuthId() : string
+    {
+        return $this->externalAuthId ?? '';
+    }
+    
+    /**
+     * @param string $externalAuthId
+     */
+    public function setExternalAuthId(string $externalAuthId)
+    {
+        $this->externalAuthId = $externalAuthId;
     }
 }

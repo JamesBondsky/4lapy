@@ -46,7 +46,10 @@ services:
       - '@bx.hlblock.cities'
 
   user.service:
-    class: FourPaws\User\UserService
+    class: FourPaws\UserBundle\Service\UserService
+
+  confirm_code.service:
+      class: FourPaws\ConfirmCode\ConfirmCodeService
 
   health.service:
     class: FourPaws\Health\HealthService
