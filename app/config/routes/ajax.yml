@@ -21,3 +21,13 @@ autosort.property.hint:
   methods: [GET]
   requirements:
     propertyId: '\d+'
+
+comments.add:
+  path: /comments/add/
+  defaults: { _controller: '\FourPaws\Comments\AjaxController\CommentsController::addAction' }
+  methods: [POST]
+
+comments.next:
+  path: /comments/next/
+  defaults: { _controller: '\FourPaws\Comments\AjaxController\CommentsController::nextAction' }
+  methods: [POST]

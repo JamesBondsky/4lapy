@@ -75,7 +75,9 @@ if ($template->hasHeaderPersonalContainer()) {
         </div>
     </div>
 </footer>
+<div class="b-shadow b-shadow--popover js-open-shadow"></div>
 </div>
+<?php require_once 'blocks/footer/popups.php' ?>
 <script src="<?= $markup->getJsFile() ?>"></script>
 </body>
 </html>

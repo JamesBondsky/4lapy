@@ -38,10 +38,22 @@ class FourPawsCitySelectorComponent extends \CBitrixComponent
      */
     protected function prepareResult()
     {
+        /** @var \Symfony\Bundle\FrameworkBundle\Routing\Router */
+        $router = Application::getInstance()->getContainer()->get('router');
+        /** @var Symfony\Component\Routing\RouteCollection $routes */
+        $routes = $router->getRouteCollection();
+
+        /** @var \FourPaws\Location\LocationService $locationService */
         $locationService = Application::getInstance()->getContainer()->get('location.service');
+        /** @var \FourPaws\UserBundle\Service\UserService $userService */
         $userService = Application::getInstance()
                                   ->getContainer()
                                   ->get('FourPaws\UserBundle\Service\UserCitySelectInterface');
+
+        $this->arResult['CITY_SET_URL'] = $routes->get('fourpaws_user_ajax_city_set')->getPath();
+        $this->arResult['CITY_GET_URL'] = $routes->get('fourpaws_user_ajax_city_get')->getPath();
+        $this->arResult['CITY_AUTOCOMPLETE_URL'] = $routes->get('location.city.autocomplete')->getPath();
+
         $availableCities = $locationService->getAvailableCities();
 
         $this->arResult['POPULAR_CITIES'] = $availableCities['popular'] ?? [];

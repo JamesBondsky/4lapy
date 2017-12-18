@@ -18,6 +18,8 @@ use FourPaws\Enum\IblockType;
 use FourPaws\Location\Exception\CityNotFoundException;
 use FourPaws\Location\Model\City;
 use FourPaws\Location\Query\CityQuery;
+use FourPaws\StoreBundle\Entity\Store;
+use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Service\UserService;
 use WebArch\BitrixCache\BitrixCache;
 
@@ -106,6 +108,9 @@ class LocationService
         $getAvailableCities = function () {
             $iblockId = IblockUtils::getIblockId(IblockType::REFERENCE_BOOKS, IblockCode::CITIES);
 
+            /** @var StoreService $storeService */
+            $storeService = Application::getInstance()->getContainer()->get('store.service');
+
             $result = [];
             $filter = ['IBLOCK_ID' => $iblockId, 'SECTION_CODE' => CitiesSectionCode::POPULAR];
             $select = ['ID', 'NAME', 'PROPERTY_LOCATION'];
@@ -118,13 +123,20 @@ class LocationService
                     continue;
                 }
 
+                $storeCodes = [];
+                $stores = $storeService->getByLocation(
+                    $element['PROPERTY_LOCATION_VALUE'],
+                    StoreService::TYPE_SHOP
+                );
+                /** @var Store $store */
+                foreach ($stores as $store) {
+                    $storeCodes[] = $store->getXmlId();
+                }
+
                 $result[CitiesSectionCode::POPULAR][] = [
                     'NAME'  => $element['NAME'],
                     'CODE'  => $element['PROPERTY_LOCATION_VALUE'],
-                    'SHOPS' => array_column(
-                        $this->getShopsByCity($element['PROPERTY_LOCATION_VALUE']),
-                        'CODE'
-                    ),
+                    'SHOPS' => $storeCodes,
                 ];
             }
 
@@ -137,13 +149,20 @@ class LocationService
                     continue;
                 }
 
+                $storeCodes = [];
+                $stores = $storeService->getByLocation(
+                    $element['PROPERTY_LOCATION_VALUE'],
+                    StoreService::TYPE_SHOP
+                );
+                /** @var Store $store */
+                foreach ($stores as $store) {
+                    $storeCodes[] = $store->getXmlId();
+                }
+
                 $result[CitiesSectionCode::MOSCOW_REGION][] = [
                     'NAME'  => $element['NAME'],
                     'CODE'  => $element['PROPERTY_LOCATION_VALUE'],
-                    'SHOPS' => array_column(
-                        $this->getShopsByCity($element['PROPERTY_LOCATION_VALUE']),
-                        'CODE'
-                    ),
+                    'SHOPS' => $storeCodes,
                 ];
             }
 
@@ -536,16 +555,5 @@ class LocationService
         }
 
         return $result;
-    }
-
-    /**
-     * @param $locationCode
-     *
-     * @return array
-     */
-    public function getShopsByCity($locationCode): array
-    {
-        /* @todo implement this */
-        return [];
     }
 }

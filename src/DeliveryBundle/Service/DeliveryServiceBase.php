@@ -12,6 +12,7 @@ use Bitrix\Sale\Location\LocationTable;
 use Bitrix\Sale\Shipment;
 use FourPaws\App\Application;
 use FourPaws\Location\LocationService;
+use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 
 abstract class DeliveryServiceBase extends Base implements DeliveryServiceInterface
@@ -37,6 +38,11 @@ abstract class DeliveryServiceBase extends Base implements DeliveryServiceInterf
     protected $locationService;
 
     /**
+     * @var StoreService $storeService
+     */
+    protected $storeService;
+
+    /**
      * @var UserCitySelectInterface
      */
     protected $userService;
@@ -44,6 +50,7 @@ abstract class DeliveryServiceBase extends Base implements DeliveryServiceInterf
     public function __construct($initParams)
     {
         $this->locationService = Application::getInstance()->getContainer()->get('location.service');
+        $this->storeService = Application::getInstance()->getContainer()->get('store.service');
         $this->userService = Application::getInstance()
                                         ->getContainer()
                                         ->get('FourPaws\UserBundle\Service\UserCitySelectInterface');

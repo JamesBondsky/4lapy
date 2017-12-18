@@ -2,8 +2,8 @@
 
 namespace FourPaws\UserBundle\Service;
 
-use FourPaws\Location\LocationService;
 use FourPaws\Location\Exception\CityNotFoundException;
+use FourPaws\Location\LocationService;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidCredentialException;
@@ -181,5 +181,9 @@ class UserService implements
         }
 
         return $this->locationService->getDefaultLocation();
+    }
+    
+    public function getUserRepository(){
+        return $this->userRepository;
     }
 }
