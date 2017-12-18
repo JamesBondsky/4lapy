@@ -6,7 +6,6 @@ $APPLICATION->SetTitle('Профиль');
     'fourpaws:personal',
     '',
     [
-        'MESSAGE_404'       => '',
         'SEF_FOLDER'        => '/personal/',
         'SEF_MODE'          => 'Y',
         'SEF_URL_TEMPLATES' => [
@@ -19,8 +18,6 @@ $APPLICATION->SetTitle('Профиль');
             'subscribe' => 'subscribe/',
             'top'       => 'top/',
         ],
-        'SET_STATUS_404'    => 'N',
-        'SHOW_404'          => 'N',
     ]
 ); ?>
 <?php require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/footer.php'; ?>
