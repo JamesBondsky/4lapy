@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\UserBundle\Entity;
 
 use JMS\Serializer\Annotation as Serializer;
@@ -405,5 +409,46 @@ class User
         $this->location = $location;
 
         return $this;
+    }
+    
+    /**
+     * @param string $password
+     *
+     * @return bool
+     */
+    public function equalPassword(string $password) : bool
+    {
+        $curPassword = $this->getPassword();
+        $salt        = substr($curPassword, 0, -32);
+        $db_password = substr($curPassword, -32);
+        
+        return $db_password === md5($salt . $password);
+    }
+    
+    /**
+     * @return string
+     */
+    public function getFullName() : string
+    {
+        $name       = $this->getName();
+        $lastName   = $this->getLastName();
+        $secondName = $this->getSecondName();
+        if (!empty($name)
+            && !empty($secondName)
+            && !empty($lastName)) {
+            $fullName = $name . ' ' . $secondName . $lastName;
+        } /** @noinspection NotOptimalIfConditionsInspection */ elseif (!empty($lastName)
+                                                                        && !empty($name)) {
+            $fullName = $lastName . ' ' . $name;
+        } /** @noinspection NotOptimalIfConditionsInspection */ elseif (!empty($name)
+                                                                        && !empty($secondName)) {
+            $fullName = $name . ' ' . $secondName;
+        } elseif (!empty($name)) {
+            $fullName = $name;
+        } else {
+            $fullName = $this->getLogin();
+        }
+        
+        return $fullName;
     }
 }
