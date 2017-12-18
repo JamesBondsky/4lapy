@@ -20,6 +20,7 @@ use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\External\Exception\SmsSendErrorException;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\Location\Model\City;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\InvalidCredentialException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
@@ -35,7 +36,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
     
     const MODE_FORM      = 1;
     
-    const PHONE_HOT_LINE = '8 (800) 770-00-22';
+    const PHONE_HOT_LINE = '8 (800) 770-00-22';
     
     /**
      * @var CurrentUserProviderInterface
@@ -71,7 +72,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         $this->currentUserProvider      = $container->get(CurrentUserProviderInterface::class);
         $this->userAuthorizationService = $container->get(UserAuthorizationInterface::class);
     }
-
+    
     /** {@inheritdoc} */
     public function executeComponent()
     {
@@ -96,7 +97,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             }
         }
     }
-
+    
     /**
      * @throws \Bitrix\Main\LoaderException
      * @throws \Bitrix\Main\SystemException
@@ -183,8 +184,22 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         } catch (InvalidCredentialException $e) {
             return JsonErrorResponse::create('Неверный логин или пароль.');
         } catch (TooManyUserFoundException $e) {
+            /** @noinspection PhpUnhandledExceptionInspection */
+            /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+            $defCity = App::getInstance()->getContainer()->get('location.service')->getDefaultCity();
+            if ($defCity instanceof City) {
+                $phone = $defCity->getPhone();
+            } else {
+                $phone = static::PHONE_HOT_LINE;
+            }
+            
+            /** @noinspection PhpUnhandledExceptionInspection */
+            /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+            $logger = LoggerFactory::create('auth');
+            $logger->critical('Найдено больше одного совпадения по логину/email/телефону ' . $rawLogin);
+            
             return JsonErrorResponse::create(
-                'Обратитесь на горячую линию по телефону ' . static::PHONE_HOT_LINE
+                'Обратитесь на горячую линию по телефону ' . $phone
             );
         } catch (\Exception $e) {
             return JsonErrorResponse::create(
@@ -203,7 +218,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         
         return JsonSuccessResponse::createWithData('Необходимо заполнить номер телефона', ['html' => $html]);
     }
-
+    
     /**
      * @param string $phone
      *
@@ -268,7 +283,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         
         return JsonSuccessResponse::create('Телефон сохранен', 200, [], ['reload' => true]);
     }
-
+    
     /**
      * @param \Symfony\Component\HttpFoundation\Request $request
      * @param  string                                   $phone

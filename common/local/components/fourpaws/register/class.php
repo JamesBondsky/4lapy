@@ -144,8 +144,8 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     /**
      * @param string $phone
      *
-     * @return \FourPaws\App\Response\JsonResponse
      * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
+     * @return \FourPaws\App\Response\JsonResponse
      */
     public function ajaxResendSms($phone) : JsonResponse
     {
@@ -161,7 +161,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             $res = App::getInstance()->getContainer()->get('confirm_code.service')::sendConfirmSms($phone);
             if (!$res) {
                 return JsonErrorResponse::create(
-                    'Ошибка при отправке смс'
+                    'Ошибка отправки смс, попробуйте позднее'
                 );
             }
         } catch (SmsSendErrorException $e) {
@@ -382,8 +382,8 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     /**
      * @param string $phone
      *
-     * @return array|\FourPaws\App\Response\JsonResponse
      * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
+     * @return array|\FourPaws\App\Response\JsonResponse
      */
     private function ajaxGetSendSmsCode($phone)
     {
