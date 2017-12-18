@@ -20,6 +20,8 @@ class DeliveryService
 
     const INNER_PICKUP_CODE = '4lapy_pickup';
 
+    const DPD_DELIVERY_GROUP_CODE = 'ipolh_dpd';
+
     const DPD_DELIVERY_CODE = 'ipolh_dpd:COURIER';
 
     const DPD_PICKUP_CODE = 'ipolh_dpd:PICKUP';
