@@ -1,6 +1,6 @@
 <?php
 
-namespace FourPaws\StoreBundle\Serialization;
+namespace FourPaws\AppBundle\Serialization;
 
 use JMS\Serializer\Handler\SubscribingHandlerInterface;
 use JMS\Serializer\GraphNavigator;
