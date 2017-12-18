@@ -27,9 +27,11 @@ abstract class TemplateAbstract
 {
     protected static $instance;
     
-    private $context;
+    private          $context;
     
-    private $path;
+    private          $path;
+    
+    private          $dir;
     
     /**
      * @param Context $context
@@ -56,6 +58,7 @@ abstract class TemplateAbstract
         
         $uri        = $this->getUri();
         $this->path = $uri->getPath();
+        $this->dir = $context->getRequest()->getRequestedPageDirectory();
     }
     
     /**
@@ -122,11 +125,16 @@ abstract class TemplateAbstract
     
     public function getDir() : string
     {
-        return $this->getRequest()->getRequestedPageDirectory();
+        return $this->dir;
     }
     
     public function isPartitionDir(string $src) : bool
     {
         return preg_match(sprintf('~^%s/\w+~', $src), $this->getDir()) > 0;
+    }
+    
+    public function isDir($dir) : bool
+    {
+        return $this->dir === $dir;
     }
 }
