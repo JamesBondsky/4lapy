@@ -3,6 +3,7 @@
 namespace Sprint\Migration;
 
 use Adv\Bitrixtools\Migration\SprintMigrationBase;
+use Bitrix\Sale\Delivery\DeliveryLocationTable;
 use Bitrix\Sale\Delivery\Services\Table as DeliveryServiceTable;
 use Bitrix\Sale\Internals\ServiceRestrictionTable;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
@@ -13,6 +14,27 @@ class Delivery_dpd_add_codes_restrictions20171218112210 extends SprintMigrationB
 
     protected $restrictions = [
         DeliveryService::DPD_DELIVERY_CODE => [
+            [
+                'CLASS_NAME' => '\Bitrix\Sale\Delivery\Restrictions\ByLocation',
+                'ITEMS'      => [
+                    [
+                        'LOCATION_CODE' => DeliveryService::ZONE_1,
+                        'LOCATION_TYPE' => DeliveryService::LOCATION_RESTRICTION_TYPE_GROUP,
+                    ],
+                    [
+                        'LOCATION_CODE' => DeliveryService::ZONE_2,
+                        'LOCATION_TYPE' => DeliveryService::LOCATION_RESTRICTION_TYPE_GROUP,
+                    ],
+                    [
+                        'LOCATION_CODE' => DeliveryService::ZONE_3,
+                        'LOCATION_TYPE' => DeliveryService::LOCATION_RESTRICTION_TYPE_GROUP,
+                    ],
+                    [
+                        'LOCATION_CODE' => DeliveryService::ZONE_4,
+                        'LOCATION_TYPE' => DeliveryService::LOCATION_RESTRICTION_TYPE_GROUP,
+                    ],
+                ],
+            ],
             [
                 'CLASS_NAME' => '\FourPaws\DeliveryBundle\Restrictions\LocationExceptRestriction',
                 'PARAMS'     => [
@@ -31,6 +53,27 @@ class Delivery_dpd_add_codes_restrictions20171218112210 extends SprintMigrationB
                     'ZONE_2' => 'Y',
                     'ZONE_3' => 'Y',
                     'ZONE_4' => 'N',
+                ],
+            ],
+            [
+                'CLASS_NAME' => '\Bitrix\Sale\Delivery\Restrictions\ByLocation',
+                'ITEMS'      => [
+                    [
+                        'LOCATION_CODE' => DeliveryService::ZONE_1,
+                        'LOCATION_TYPE' => DeliveryService::LOCATION_RESTRICTION_TYPE_GROUP,
+                    ],
+                    [
+                        'LOCATION_CODE' => DeliveryService::ZONE_2,
+                        'LOCATION_TYPE' => DeliveryService::LOCATION_RESTRICTION_TYPE_GROUP,
+                    ],
+                    [
+                        'LOCATION_CODE' => DeliveryService::ZONE_3,
+                        'LOCATION_TYPE' => DeliveryService::LOCATION_RESTRICTION_TYPE_GROUP,
+                    ],
+                    [
+                        'LOCATION_CODE' => DeliveryService::ZONE_4,
+                        'LOCATION_TYPE' => DeliveryService::LOCATION_RESTRICTION_TYPE_GROUP,
+                    ],
                 ],
             ],
         ],
@@ -73,6 +116,23 @@ class Delivery_dpd_add_codes_restrictions20171218112210 extends SprintMigrationB
                         'Добавлена группа ограничений для доставки ' . $delivery['CODE']
                     );
                 }
+
+                foreach ($restriction['ITEMS'] as $restrictionItem) {
+                    $restrictionItem['DELIVERY_ID'] = $delivery['ID'];
+                    $addResult = DeliveryLocationTable::add($restrictionItem);
+                    if (!$addResult->isSuccess()) {
+                        $this->log()->warning(
+                            'Не удалось добавить ограничение для доставки ' . $delivery['CODE'] . ': ' . implode(
+                                ', ',
+                                $addResult->getErrorMessages()
+                            )
+                        );
+                    } else {
+                        $this->log()->info(
+                            'Добавлено ограничение для доставки ' . $delivery['CODE']
+                        );
+                    }
+                }
             }
         }
     }
@@ -111,6 +171,27 @@ class Delivery_dpd_add_codes_restrictions20171218112210 extends SprintMigrationB
                 } else {
                     $this->log()->info(
                         'Удалена группа ограничений для доставки ' . $delivery['CODE']
+                    );
+                }
+            }
+
+            $locationRestrictions = DeliveryLocationTable::getList(
+                [
+                    'filter' => [
+                        'DELIVERY_ID' => $delivery['ID'],
+                    ],
+                ]
+            );
+
+            while ($locationRestriction = $locationRestrictions->fetch()) {
+                $deleteResult = DeliveryLocationTable::delete($locationRestriction);
+                if ($deleteResult->isSuccess()) {
+                    $this->log()->info(
+                        'Удалены ограничения по местоположению для доставки ' . $delivery['CODE']
+                    );
+                } else {
+                    $this->log()->warning(
+                        'Не удалось удалить ограничения по местоположению для доставки ' . $delivery['CODE']
                     );
                 }
             }
