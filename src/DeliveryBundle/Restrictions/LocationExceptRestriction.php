@@ -37,7 +37,7 @@ class LocationExceptRestriction extends Restrictions\Base
             if ($deliveryZone != $zone) {
                 continue;
             }
-            
+
             if ($value == 'Y') {
                 return false;
             }
@@ -46,10 +46,8 @@ class LocationExceptRestriction extends Restrictions\Base
         return true;
     }
 
-    protected
-    static function extractParams(
-        Entity $shipment
-    ) {
+    protected static function extractParams(Entity $shipment)
+    {
         /** @var DeliveryService $deliveryService */
         $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
         if ($shipment instanceof Shipment) {
@@ -59,10 +57,8 @@ class LocationExceptRestriction extends Restrictions\Base
         return '';
     }
 
-    public
-    static function getParamsStructure(
-        $entityId = 0
-    ) {
+    public static function getParamsStructure($entityId = 0)
+    {
         /** @var DeliveryService $deliveryService */
         $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
         $allZones = $deliveryService->getAllZones(false);

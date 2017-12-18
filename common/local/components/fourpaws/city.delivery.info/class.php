@@ -62,10 +62,15 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
         $defaultCity = $locationService->getDefaultLocation();
         $currentCity = $userService->getSelectedCity();
 
-        /** todo добавить код доставки DPD */
         /** @var CalculationResult $defaultResult */
         $defaultResult = reset(
-            $deliveryService->getByLocation($defaultCity['CODE'], [DeliveryService::INNER_DELIVERY_CODE])
+            $deliveryService->getByLocation(
+                $defaultCity['CODE'],
+                [
+                    DeliveryService::INNER_DELIVERY_CODE,
+                    DeliveryService::DPD_DELIVERY_CODE,
+                ]
+            )
         );
 
         if ($defaultCity['CODE'] == $currentCity['CODE']) {
@@ -73,7 +78,13 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
         } else {
             /** @var CalculationResult $currentResult */
             $currentResult = reset(
-                $deliveryService->getByLocation($currentCity['CODE'], [DeliveryService::INNER_DELIVERY_CODE])
+                $deliveryService->getByLocation(
+                    $currentCity['CODE'],
+                    [
+                        DeliveryService::INNER_DELIVERY_CODE,
+                        DeliveryService::DPD_DELIVERY_CODE,
+                    ]
+                )
             );
         }
 

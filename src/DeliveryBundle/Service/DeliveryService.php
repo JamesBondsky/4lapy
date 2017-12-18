@@ -20,6 +20,10 @@ class DeliveryService
 
     const INNER_PICKUP_CODE = '4lapy_pickup';
 
+    const DPD_DELIVERY_CODE = 'ipolh_dpd:COURIER';
+
+    const DPD_PICKUP_CODE = 'ipolh_dpd:PICKUP';
+
     const ORDER_LOCATION_PROP_CODE = 'CITY_CODE';
 
     const LOCATION_RESTRICTION_TYPE_LOCATION = 'L';
@@ -102,6 +106,7 @@ class DeliveryService
         $availableServices = Manager::getRestrictedObjectsList($shipment);
 
         $result = [];
+
         foreach ($availableServices as $service) {
             if ($codes && !in_array($service->getCode(), $codes)) {
                 continue;
