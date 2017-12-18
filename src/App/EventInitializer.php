@@ -22,10 +22,10 @@ final class EventInitializer
     const SERVICE_HANDLER_CLASSES = [
         UserServiceHandlers::class,
         ProductAutoSortEvent::class,
+        UserPropLocationEvent::class,
         SearchEventHandlers::class,
         DeliveryEvent::class,
         IblockPropsEvent::class,
-        UserPropLocationEvent::class,
     ];
 
     /**
