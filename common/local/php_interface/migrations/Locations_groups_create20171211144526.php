@@ -7,7 +7,7 @@ use Bitrix\Sale\Location\GroupLocationTable;
 use Bitrix\Sale\Location\GroupTable;
 use Bitrix\Sale\Location\LocationTable;
 use FourPaws\App\Application;
-use FourPaws\DeliveryBundle\Service\DeliveryServiceBase;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use RuntimeException;
 
 class Locations_groups_create20171211144526 extends SprintMigrationBase
@@ -23,25 +23,25 @@ class Locations_groups_create20171211144526 extends SprintMigrationBase
     const ZONE_4 = 'ZONE_4';
 
     protected $groups = [
-        DeliveryServiceBase::ZONE_1 => [
+        DeliveryService::ZONE_1 => [
             'NAME' => ['ru' => ['NAME' => 'Зона 1']],
             'SORT' => 100,
-            'CODE' => DeliveryServiceBase::ZONE_1,
+            'CODE' => DeliveryService::ZONE_1,
         ],
-        DeliveryServiceBase::ZONE_2 => [
+        DeliveryService::ZONE_2 => [
             'NAME' => ['ru' => ['NAME' => 'Зона 2']],
             'SORT' => 200,
-            'CODE' => DeliveryServiceBase::ZONE_2,
+            'CODE' => DeliveryService::ZONE_2,
         ],
-        DeliveryServiceBase::ZONE_3 => [
+        DeliveryService::ZONE_3 => [
             'NAME' => ['ru' => ['NAME' => 'Зона 3']],
             'SORT' => 300,
-            'CODE' => DeliveryServiceBase::ZONE_3,
+            'CODE' => DeliveryService::ZONE_3,
         ],
-        DeliveryServiceBase::ZONE_4 => [
+        DeliveryService::ZONE_4 => [
             'NAME' => ['ru' => ['NAME' => 'Зона 4']],
             'SORT' => 400,
-            'CODE' => DeliveryServiceBase::ZONE_4,
+            'CODE' => DeliveryService::ZONE_4,
         ],
     ];
 

@@ -101,13 +101,11 @@ $markup = PawsApplication::markup();
                 require_once 'temp_header_menu.php';
                 ?>
                 <?php $APPLICATION->IncludeComponent('fourpaws:city.selector') ?>
-                <?php
-                /**
-                 * @todo Стоимость доставки (регионозависимая). Заменить компонентом и удалить файл.
-                 */
-                require_once 'temp_header_delivery.php';
-                ?>
             </div>
+            <?php $APPLICATION->IncludeComponent(
+                'fourpaws:city.delivery.info',
+                'template.header'
+            ); ?>
         </div>
     </header>
     <?php

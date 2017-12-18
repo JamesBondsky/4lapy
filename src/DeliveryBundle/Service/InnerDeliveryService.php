@@ -6,7 +6,7 @@ use Bitrix\Main\Error;
 use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Shipment;
 
-class InnerDeliveryService extends DeliveryServiceBase
+class InnerDeliveryService extends DeliveryServiceHandlerBase
 {
     protected $code = '4lapy_delivery';
 
@@ -38,8 +38,8 @@ class InnerDeliveryService extends DeliveryServiceBase
 
     public function getIntervals(Shipment $shipment): array
     {
-        switch ($this->getDeliveryZoneCode($shipment)) {
-            case self::ZONE_1:
+        switch ($this->deliveryService->getDeliveryZoneCode($shipment)) {
+            case DeliveryService::ZONE_1:
                 return [
                     [
                         'FROM' => 9,
@@ -50,7 +50,7 @@ class InnerDeliveryService extends DeliveryServiceBase
                         'TO'   => 23,
                     ],
                 ];
-            case self::ZONE_2:
+            case DeliveryService::ZONE_2:
                 return [
                     [
                         'FROM' => 8,
@@ -81,11 +81,12 @@ class InnerDeliveryService extends DeliveryServiceBase
             return $result;
         }
 
-        $deliveryZone = $this->getDeliveryZoneCode($shipment, false);
+        $deliveryZone = $this->deliveryService->getDeliveryZoneCode($shipment, false);
         if ($this->config['PRICES'][$deliveryZone]) {
             $result->setDeliveryPrice($this->config['PRICES'][$deliveryZone]);
 
             if (!empty($this->config['FREE_FROM'][$deliveryZone])) {
+                $result->setTmpData(['FREE_FROM' => $this->config['FREE_FROM'][$deliveryZone]]);
                 $order = $shipment->getParentOrder();
                 if ($order->getBasket()->getPrice() >= $this->config['FREE_FROM'][$deliveryZone]) {
                     $result->setDeliveryPrice(0);
@@ -110,7 +111,7 @@ class InnerDeliveryService extends DeliveryServiceBase
     {
         $result = parent::getConfigStructure();
 
-        $zones = $this->getAvailableZones();
+        $zones = $this->deliveryService->getAvailableZones($this->getId());
 
         $result['PRICES'] = [
             'TITLE'       => 'Стоимости доставок по зонам',
