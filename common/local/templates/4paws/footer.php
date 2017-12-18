@@ -8,10 +8,16 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var \CMain $APPLICATION
  */
 
+use Bitrix\Main\Application;
 use FourPaws\App\Application as PawsApplication;
+use FourPaws\App\MainTemplate;
 
 $markup = PawsApplication::markup();
-/** @noinspection PhpUndefinedMethodInspection */
+/** @var MainTemplate $template */
+if(!isset($template) || !($template instanceof MainTemplate)) {
+    $template = MainTemplate::getInstance(Application::getInstance()->getContext());
+}
+
 if ($template->hasHeaderPersonalContainer()) {
 ?>
             </main>
@@ -25,7 +31,7 @@ if ($template->hasHeaderPersonalContainer()) {
             <div class="b-footer__inner">
                 <div class="b-footer-communication">
                     <?php require_once 'blocks/footer/communication_area.php' ?>
-                </div>git
+                </div>
                 <?php require_once 'blocks/footer/social_links.php' ?>
             </div>
         </div>

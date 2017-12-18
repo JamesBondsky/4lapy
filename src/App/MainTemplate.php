@@ -43,12 +43,17 @@ class MainTemplate extends TemplateAbstract
     
     public function hasHeaderPersonalContainer() : bool
     {
-        return ($this->isPartitionDir('/personal') || $this->isPersonal()) && !$this->isRegister() && !$this->isForgotPassword();
+        return ($this->isPersonalDirectory() || $this->isPersonal()) && !$this->isRegister() && !$this->isForgotPassword();
     }
     
     public function isPersonal() : bool
     {
         return $this->isDir('/personal');
+    }
+    
+    public function isPersonalDirectory() : bool
+    {
+        return $this->isPartitionDir('/personal');
     }
     
     public function isRegister() : bool
