@@ -128,7 +128,6 @@ class UserRepository
     /**
      * @param string $rawLogin
      *
-<<<<<<< Updated upstream
      * @param bool $onlyActive
      *
      * @throws \FourPaws\UserBundle\Exception\UsernameNotFoundException

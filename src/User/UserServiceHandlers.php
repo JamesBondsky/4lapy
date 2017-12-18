@@ -13,11 +13,7 @@ use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
  * Обработчики событий
  *
  * @package FourPaws\User
-<<<<<<< Updated upstream
- * @todo Почему этот класс абстрактный? оО что за магия
-=======
  * @todo    Почему этот класс абстрактный? оО что за магия
->>>>>>> Stashed changes
  */
 abstract class UserServiceHandlers implements ServiceHandlerInterface
 {
