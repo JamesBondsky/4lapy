@@ -19,7 +19,7 @@ $aMenuLinks = [
     ],
     [
         'Последние заказы',
-        '/orders/',
+        '/personal/orders/',
     ],
     [
         'Мои питомцы',

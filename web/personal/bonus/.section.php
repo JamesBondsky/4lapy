@@ -1,3 +1,0 @@
-<?php
-$sSectionName    = 'Бонусы';
-$arDirProperties = [];

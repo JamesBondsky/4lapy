@@ -7,6 +7,12 @@ $arUrlRewrite = array(
         'PATH'      => '/company/news/index.php',
 	),
 	array(
+        'CONDITION' => '#^/personal/#',
+        'RULE'      => '',
+        'ID'        => 'fourpaws:personal',
+        'PATH'      => '/personal/index.php',
+	),
+	array(
         'CONDITION' => '##',
         'RULE'      => '',
         'ID'        => '',
