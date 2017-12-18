@@ -75,7 +75,7 @@ class InnerPickupService extends DeliveryServiceHandlerBase
             }
         }
 
-        /** todo сделать возможность выбора необязательной, чтобы */
+        /** todo сделать возможность выбора необязательной?  */
         if (!$shopCode) {
             $result->addError(new Error('Не выбран пункт самовывоза'));
 
