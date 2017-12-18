@@ -67,7 +67,6 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
         $defaultResult = reset(
             $deliveryService->getByLocation($defaultCity['CODE'], [DeliveryService::INNER_DELIVERY_CODE])
         );
-        $defaultFreeFrom = $defaultResult->getTmpData()['FREE_FROM'] ?? null;
 
         if ($defaultCity['CODE'] == $currentCity['CODE']) {
             $currentResult = $defaultResult;
@@ -77,13 +76,15 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
                 $deliveryService->getByLocation($currentCity['CODE'], [DeliveryService::INNER_DELIVERY_CODE])
             );
         }
-        $currentFreeFrom = $currentResult->getTmpData()['FREE_FROM'] ?? null;
 
         if (empty($currentResult)) {
             $this->abortResultCache();
 
             return $this;
         }
+
+        $defaultFreeFrom = $defaultResult->getTmpData()['FREE_FROM'] ?? null;
+        $currentFreeFrom = $currentResult->getTmpData()['FREE_FROM'] ?? null;
 
         $this->arResult = [
             'CURRENT' => [

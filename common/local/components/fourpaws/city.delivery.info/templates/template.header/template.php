@@ -23,6 +23,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use FourPaws\Decorators\SvgDecorator;
 
 $this->setFrameMode(true);
+
+if (empty($arResult)) {
+    return;
+}
+
 ?>
 <?php $frame = $this->createFrame()->begin() ?>
 <div class="b-header__wrapper-for-popover">
