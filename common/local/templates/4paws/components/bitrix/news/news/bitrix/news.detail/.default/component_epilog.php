@@ -1,4 +1,7 @@
 <?php
+
+use FourPaws\Decorators\FullHrefDecorator;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
@@ -15,5 +18,5 @@ if (!empty($arResult['DISPLAY_ACTIVE_FROM'])) {
 $APPLICATION->AddViewContent('news-detail-description', $arResult['PREVIEW_TEXT'] ?? '');
 $APPLICATION->AddViewContent(
     'news-detail-image',
-    new \FourPaws\Decorators\FullHrefDecorator($arResult['DETAIL_PICTURE']['SRC']) ?? ''
+    !empty($arResult['DETAIL_PICTURE']['SRC']) ? new FullHrefDecorator($arResult['DETAIL_PICTURE']['SRC']) : ''
 );

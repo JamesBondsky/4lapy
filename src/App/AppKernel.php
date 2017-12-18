@@ -6,6 +6,7 @@ use Circle\RestClientBundle\CircleRestClientBundle;
 use FOS\RestBundle\FOSRestBundle;
 use FourPaws\AppBundle\FourPawsAppBundle;
 use FourPaws\DeliveryBundle\FourPawsDeliveryBundle;
+use FourPaws\StoreBundle\FourPawsStoreBundle;
 use FourPaws\UserBundle\FourPawsUserBundle;
 use JMS\SerializerBundle\JMSSerializerBundle;
 use Misd\PhoneNumberBundle\MisdPhoneNumberBundle;
@@ -62,6 +63,7 @@ class AppKernel extends Kernel
             new FourPawsAppBundle(),
             new FourPawsUserBundle(),
             new FourPawsDeliveryBundle(),
+            new FourPawsStoreBundle(),
         ];
 
         if (\in_array($this->getEnvironment(), ['dev', 'test'], true)) {
