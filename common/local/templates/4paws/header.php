@@ -10,6 +10,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use Bitrix\Main\Application;use Bitrix\Main\Page\Asset;use FourPaws\App\Application as PawsApplication;use FourPaws\App\MainTemplate;use FourPaws\Decorators\SvgDecorator;
 
+/** @var MainTemplate $template */
 $template = MainTemplate::getInstance(Application::getInstance()->getContext());
 $markup = PawsApplication::markup();
 
@@ -116,8 +117,7 @@ $markup = PawsApplication::markup();
     $APPLICATION->ShowViewContent('header_dropdown_menu');
     ?>
     <main class="b-wrapper" role="main">
-        <?php /** @noinspection PhpUndefinedMethodInspection */
-        if ($template->hasHeaderDetailPageContainer()) {
+        <?php if ($template->hasHeaderDetailPageContainer()) {
             ?>
             <div class="b-container b-container--news-detail">
                 <div class="b-detail-page">
@@ -139,5 +139,32 @@ $markup = PawsApplication::markup();
                     $APPLICATION->ShowViewContent('header_news_display_date'); ?>
                 </div>
             </div>
+        <?php
+        } ?>
+        
+        <?php if ($template->hasHeaderPersonalContainer()) {
+            ?>
+        <div class="b-account">
+            <div class="b-container b-container--account">
+                <div class="b-account__wrapper-title">
+                    <h1 class="b-title b-title--h1"><?php $APPLICATION->ShowTitle(false) ?></h1>
+                </div>
+                <?php $APPLICATION->IncludeComponent('bitrix:menu',
+                                                     'personal.menu',
+                                                     [
+                                                         'COMPONENT_TEMPLATE'    => 'personal.menu',
+                                                         'ROOT_MENU_TYPE'        => 'personal_cab',
+                                                         'MENU_CACHE_TYPE'       => 'A',
+                                                         'MENU_CACHE_TIME'       => '360000',
+                                                         'MENU_CACHE_USE_GROUPS' => 'N',
+                                                         'MENU_CACHE_GET_VARS'   => [],
+                                                         'MAX_LEVEL'             => '1',
+                                                         'CHILD_MENU_TYPE'       => 'personal_cab',
+                                                         'USE_EXT'               => 'N',
+                                                         'DELAY'                 => 'N',
+                                                         'ALLOW_MULTI_SELECT'    => 'N',
+                                                     ],
+                                                     false); ?>
+                <main class="b-account__content" role="main">
         <?php
         } ?>
