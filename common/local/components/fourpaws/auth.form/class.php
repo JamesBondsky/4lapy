@@ -270,14 +270,6 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
     }
 
     /**
-     * @return CurrentUserProviderInterface
-     */
-    public function getCurrentUserProvider(): CurrentUserProviderInterface
-    {
-        return $this->currentUserProvider;
-    }
-
-    /**
      * @param \Symfony\Component\HttpFoundation\Request $request
      * @param  string                                   $phone
      *
