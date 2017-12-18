@@ -18,6 +18,11 @@ if(!isset($template) || !($template instanceof MainTemplate)) {
     $template = MainTemplate::getInstance(Application::getInstance()->getContext());
 }
 
+if ($template->hasHeaderPublicationListContainer()) {
+    ?>
+        </div>
+    </div>
+<?}
 if ($template->hasHeaderPersonalContainer()) {
 ?>
             </main>

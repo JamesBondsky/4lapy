@@ -1,4 +1,9 @@
 <?php
+
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
@@ -45,7 +50,6 @@ class CItemsListComponent extends CBitrixComponent
         }
         if (empty($params['IBLOCK_ID'])) {
             /**Получение инфоблоков если не установлены*/
-            
             
             $cache = Cache::createInstance();
             if ($cache->initCache(
@@ -125,7 +129,6 @@ class CItemsListComponent extends CBitrixComponent
         
         $params['ACTIVE_DATE_FORMAT'] = trim($params['ACTIVE_DATE_FORMAT']);
         if (strlen($params['ACTIVE_DATE_FORMAT']) <= 0) {
-            
             $params['ACTIVE_DATE_FORMAT'] = Date::getFormat();
         }
         $params['PREVIEW_TRUNCATE_LEN'] = (int)$params['PREVIEW_TRUNCATE_LEN'];
@@ -190,9 +193,7 @@ class CItemsListComponent extends CBitrixComponent
         }
         
         if (isset($this->arResult['ID'])) {
-            
             if ($USER->IsAuthorized() && $APPLICATION->GetShowIncludeAreas() && Loader::includeModule('iblock')) {
-                
                 $buttons = CIBlock::GetPanelButtons(
                     $this->arResult['ID'],
                     0,
@@ -202,7 +203,6 @@ class CItemsListComponent extends CBitrixComponent
                 
                 /** @noinspection NotOptimalIfConditionsInspection */
                 if ($APPLICATION->GetShowIncludeAreas()) {
-                    
                     $this->addIncludeAreaIcons(
                         CIBlock::GetComponentMenu(
                             $APPLICATION->GetPublicShowMode(),
@@ -215,7 +215,6 @@ class CItemsListComponent extends CBitrixComponent
             $this->setTemplateCachedData($this->arResult['NAV_CACHED_DATA']);
             
             if ($this->arParams['SET_LAST_MODIFIED'] && $this->arResult['ITEMS_TIMESTAMP_X']) {
-                
                 Context::getCurrent()->getResponse()->setLastModified($this->arResult['ITEMS_TIMESTAMP_X']);
             }
             
@@ -318,12 +317,11 @@ class CItemsListComponent extends CBitrixComponent
     }
     
     /**
-     * @return bool
      * @throws \Bitrix\Main\LoaderException
+     * @return bool
      */
     protected function checkModule() : bool
     {
-        
         if (!Loader::includeModule('iblock')) {
             $this->abortResultCache();
             ShowError(GetMessage('IBLOCK_MODULE_NOT_INSTALLED'));
@@ -350,20 +348,19 @@ class CItemsListComponent extends CBitrixComponent
                 ],
                 'filter' => ['ID' => $this->arParams['IBLOCK_ID']],
             ];
-            $res = IblockTable::getList($params);
+            $res    = IblockTable::getList($params);
             while ($item = $res->fetch()) {
                 $template = '';
                 if (array_key_exists('LIST_PAGE_URL', $item)) {
                     $template = $item['LIST_PAGE_URL'];
                 }
-        
+                
                 if (!empty($template)) {
                     $resTmp = [
                         'IBLOCK_ID'          => $item['ID'],
                         'IBLOCK_CODE'        => $item['CODE'],
                         'IBLOCK_EXTERNAL_ID' => $item['XML_ID'],
                     ];
-            
                     
                     $item['LIST_PAGE_URL_FORMATED'] = CIBlock::ReplaceDetailUrl($template, $resTmp, true);
                 }
@@ -371,13 +368,11 @@ class CItemsListComponent extends CBitrixComponent
             }
         } catch (\Bitrix\Main\ArgumentException $e) {
         }
-        
     }
     
     protected function setItems()
     {
         list($select, $filter, $sort, $getProperty) = $this->prepareGetListParams();
-        
         
         $obParser                   = new CTextParser;
         $this->arResult['ITEMS']    = [];
@@ -397,7 +392,6 @@ class CItemsListComponent extends CBitrixComponent
                 $listPageUrlEl = $item['~LIST_PAGE_URL'];
             }
             
-            
             $buttons             = CIBlock::GetPanelButtons(
                 $item['IBLOCK_ID'],
                 $item['ID'],
@@ -416,7 +410,6 @@ class CItemsListComponent extends CBitrixComponent
             }
             
             if (strlen($item['ACTIVE_FROM']) > 0) {
-                
                 $item['DISPLAY_ACTIVE_FROM'] = CIBlockFormatProperties::DateFormat(
                     $this->arParams['ACTIVE_DATE_FORMAT'],
                     MakeTimeStamp(
@@ -428,10 +421,8 @@ class CItemsListComponent extends CBitrixComponent
                 $item['DISPLAY_ACTIVE_FROM'] = '';
             }
             
-            
             $ipropValues              = new Iblock\InheritedProperty\ElementValues($item['IBLOCK_ID'], $item['ID']);
             $item['IPROPERTY_VALUES'] = $ipropValues->getValues();
-            
             
             Tools::getFieldImageData(
                 $item,
@@ -461,7 +452,6 @@ class CItemsListComponent extends CBitrixComponent
                     if ((!is_array($prop['VALUE']) && !empty($prop['VALUE']))
                         || (is_array($prop['VALUE'])
                             && count($prop['VALUE']) > 0)) {
-                        
                         $item['DISPLAY_PROPERTIES'][$pid] = CIBlockFormatProperties::GetDisplayValue(
                             $item,
                             $prop,
@@ -472,7 +462,6 @@ class CItemsListComponent extends CBitrixComponent
             }
             
             if ($this->arParams['SET_LAST_MODIFIED']) {
-                
                 $time = DateTime::createFromUserTime($item['TIMESTAMP_X']);
                 /** @noinspection PhpUndefinedMethodInspection */
                 if (!isset($this->arResult['ITEMS_TIMESTAMP_X'])
@@ -496,7 +485,6 @@ class CItemsListComponent extends CBitrixComponent
                 $pagerBaseLink = $this->pagerParameters['BASE_LINK'];
                 unset($this->pagerParameters['BASE_LINK']);
             }
-            
             
             $navComponentParameters['BASE_LINK'] =
                 CHTTP::urlAddParams($pagerBaseLink, $this->pagerParameters, ['encode' => true]);
