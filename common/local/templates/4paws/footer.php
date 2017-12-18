@@ -11,7 +11,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use FourPaws\App\Application as PawsApplication;
 
 $markup = PawsApplication::markup();
+/** @noinspection PhpUndefinedMethodInspection */
+if ($template->hasHeaderPersonalContainer()) {
 ?>
+            </main>
+        </div>
+    </div>
+<?}?>
 </main>
 <footer class="b-footer">
     <div class="b-footer__communication">
@@ -19,7 +25,7 @@ $markup = PawsApplication::markup();
             <div class="b-footer__inner">
                 <div class="b-footer-communication">
                     <?php require_once 'blocks/footer/communication_area.php' ?>
-                </div>
+                </div>git
                 <?php require_once 'blocks/footer/social_links.php' ?>
             </div>
         </div>
