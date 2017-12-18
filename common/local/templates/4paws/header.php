@@ -117,6 +117,14 @@ $markup = PawsApplication::markup();
     $APPLICATION->ShowViewContent('header_dropdown_menu');
     ?>
     <main class="b-wrapper" role="main">
+        <?php if ($template->hasHeaderPublicationListContainer()) {
+            ?>
+            <div class="b-container b-container--news">
+                <div class="b-news">
+                    <h1 class="b-title b-title--h1"><?php $APPLICATION->ShowTitle(false) ?></h1>
+        <?php
+        } ?>
+        
         <?php if ($template->hasHeaderDetailPageContainer()) {
             ?>
             <div class="b-container b-container--news-detail">
