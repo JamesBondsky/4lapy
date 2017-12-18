@@ -150,7 +150,7 @@ class City extends HlbItemBase
      *
      * @return \FourPaws\BitrixOrm\Model\ModelInterface
      *
-     * @throws \FourPaws\User\Exceptions\NotFoundException
+     * @throws \FourPaws\UserBundle\Exceptions\NotFoundException
      */
     public static function createFromPrimary(string $id): ModelInterface
     {

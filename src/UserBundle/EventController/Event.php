@@ -1,6 +1,6 @@
 <?php
 
-namespace FourPaws\User;
+namespace FourPaws\UserBundle\EventController;
 
 use Bitrix\Main\EventManager;
 use FourPaws\App\Application;
@@ -8,14 +8,14 @@ use FourPaws\App\ServiceHandlerInterface;
 use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
 
 /**
- * Class UserServiceHandlers
+ * Class Event
  *
  * Обработчики событий
  *
- * @package FourPaws\User
+ * @package FourPaws\UserBundle\EventController
  * @todo    Почему этот класс абстрактный? оО что за магия
  */
-abstract class UserServiceHandlers implements ServiceHandlerInterface
+abstract class Event implements ServiceHandlerInterface
 {
     /**
      * @var EventManager
