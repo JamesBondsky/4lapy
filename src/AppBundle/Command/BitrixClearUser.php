@@ -111,16 +111,14 @@ class BitrixClearUser extends Command implements LoggerAwareInterface
         }
         
         if (!$this->hasError) {
-            Application::getConnection()->query(sprintf('ALTER TABLE tablename AUTO_INCREMENT=%u', $minimalId + 1));
+            Application::getConnection()->query(sprintf('ALTER TABLE b_user AUTO_INCREMENT=%u', $minimalId + 1));
         }
     }
     
     /**
      * @param int $id
-     *
-     * @return bool
      */
-    private function removeUser(int $id) : bool
+    private function removeUser(int $id)
     {
         $user = new \CUser();
         
@@ -132,8 +130,6 @@ class BitrixClearUser extends Command implements LoggerAwareInterface
             $this->hasError = true;
             $this->logger->error(sprintf('User with id %s remove error: %s', $id, $APPLICATION->GetException()));
         }
-        
-        return !$user->LAST_ERROR;
     }
     
     /**
