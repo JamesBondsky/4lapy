@@ -93,7 +93,9 @@ $frame = $this->createFrame(); ?>
                             <?php } ?>
                             <h4 class="b-news-item__header"><?= $item['NAME'] ?></h4>
                             <?php if (!empty($item['PREVIEW_TEXT'])) { ?>
-                                <p class="b-news-item__description"><?= $item['PREVIEW_TEXT'] ?></p>
+                                <p class="b-news-item__description"><?= htmlspecialcharsback(
+                                        $item['PREVIEW_TEXT']
+                                    ) ?></p>
                             <?php } ?>
                             <?php if (!empty($item['DISPLAY_ACTIVE_FROM'])) { ?>
                                 <span class="b-news-item__date"><?= $item['DISPLAY_ACTIVE_FROM'] ?></span>

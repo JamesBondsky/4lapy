@@ -19,6 +19,12 @@ class Event implements ServiceHandlerInterface
             'onSaleDeliveryHandlersClassNamesBuildList',
             [__CLASS__, 'addCustomDeliveryServices']
         );
+
+        $eventManager->addEventHandler(
+            'sale',
+            'onSaleDeliveryRestrictionsClassNamesBuildList',
+            [__CLASS__, 'addCustomRestrictions']
+        );
     }
 
     /**
@@ -37,5 +43,15 @@ class Event implements ServiceHandlerInterface
         );
 
         return $result;
+    }
+
+    public static function addCustomRestrictions(BitrixEvent $event)
+    {
+        return new EventResult(
+            EventResult::SUCCESS,
+            [
+                '\FourPaws\DeliveryBundle\Restrictions\LocationExceptRestriction' => __DIR__ . '/Restrictions/LocationExceptRestriction.php',
+            ]
+        );
     }
 }
