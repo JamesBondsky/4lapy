@@ -45,7 +45,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     private $userAuthorizationService;
     
     /**
-     * @var UserAuthorizationInterface
+     * @var UserRegistrationProviderInterface
      */
     private $userRegistrationService;
     

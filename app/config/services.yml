@@ -45,9 +45,6 @@ services:
     arguments:
       - '@bx.hlblock.cities'
 
-  user.service:
-    class: FourPaws\UserBundle\Service\UserService
-
   confirm_code.service:
       class: FourPaws\ConfirmCode\ConfirmCodeService
 

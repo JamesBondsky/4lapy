@@ -195,7 +195,7 @@ class UserService implements
     }
     
     /**
-     * @return \FourPaws\UserBundle\Repository\UserRepository
+     * @return UserRepository
      */
     public function getUserRepository() : UserRepository
     {
