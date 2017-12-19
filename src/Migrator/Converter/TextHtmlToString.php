@@ -2,7 +2,8 @@
 
 namespace FourPaws\Migrator\Converter;
 
-use FourPaws\App\Model\TextContent;
+use FourPaws\BitrixOrm\Type\TextContent;
+
 
 /**
  * Class TextHtmlToString

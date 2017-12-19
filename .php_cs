@@ -20,7 +20,6 @@ return \PhpCsFixer\Config::create()
     ->setRiskyAllowed(true)
     ->setRules([
         '@PSR2'                                     => true,
-        'psr0'                                      => true,
         'header_comment'                            => [
             'commentType' => 'comment',
             'header'      => $header,
