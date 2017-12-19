@@ -81,12 +81,13 @@ class InnerDeliveryService extends DeliveryServiceHandlerBase
             return $result;
         }
 
+        $tmpData = [];
         $deliveryZone = $this->deliveryService->getDeliveryZoneCode($shipment, false);
         if ($this->config['PRICES'][$deliveryZone]) {
             $result->setDeliveryPrice($this->config['PRICES'][$deliveryZone]);
 
             if (!empty($this->config['FREE_FROM'][$deliveryZone])) {
-                $result->setTmpData(['FREE_FROM' => $this->config['FREE_FROM'][$deliveryZone]]);
+                $tmpData['FREE_FROM'] = $this->config['FREE_FROM'][$deliveryZone];
                 $order = $shipment->getParentOrder();
                 if ($order->getBasket()->getPrice() >= $this->config['FREE_FROM'][$deliveryZone]) {
                     $result->setDeliveryPrice(0);
@@ -95,6 +96,8 @@ class InnerDeliveryService extends DeliveryServiceHandlerBase
         } else {
             $result->addError(new Error('Не задана стоимость доставки'));
         }
+        $tmpData['INTERVALS'] = $this->getIntervals($shipment);
+        $result->setTmpData($tmpData);
 
         /* @todo учитывать наличие товара */
         $result->setPeriodType(CalculationResult::PERIOD_TYPE_DAY);

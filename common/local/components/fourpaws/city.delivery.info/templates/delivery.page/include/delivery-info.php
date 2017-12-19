@@ -2,6 +2,9 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
+
+use FourPaws\DeliveryBundle\Service\DeliveryService;
+
 ?>
 <div class="b-delivery__delivery-type-row">
     <div class="b-delivery__delivery-type-row__title">
@@ -16,9 +19,24 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     </div>
     <div class="b-delivery__delivery-type-row__day">
         <p>Получение</p>
-        <span>В день оформления заказа (при оформлении до 14:00) или на следующий день</span>
+        <? if ($delivery['CODE'] == DeliveryService::INNER_DELIVERY_CODE) { ?>
+            <span>В день оформления заказа (при оформлении до 14:00) или на следующий день</span>
+        <? } else { ?>
+            <? /* @todo вывод даты доставки DPD */ ?>
+        <? } ?>
     </div>
     <div class="b-delivery__delivery-type-row__time">
-        <p>Время</p><span>09:00 - 18:00,</span> <span>18:00 - 23:00</span>
+        <?php if (!empty($delivery['INTERVALS'])) { ?>
+            <p>Время</p>
+            <?php $lastKey = end(array_keys($delivery['INTERVALS'])) ?>
+            <?php foreach ($delivery['INTERVALS'] as $i => $interval) { ?>
+                <span>
+                    <?= date('H:00', mktime($interval['FROM'])) . ' - ' . date(
+                        'H:00',
+                        mktime($interval['TO'])
+                    ) . ($i !== $lastKey ? ',' : '') ?>
+                </span>
+            <?php } ?>
+        <?php } ?>
     </div>
 </div>

@@ -107,9 +107,10 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
                 'DELIVERY' => [
                     'PRICE'     => $currentDeliveryResult->getPrice(),
                     'FREE_FROM' => $currentDeliveryResult->getTmpData()['FREE_FROM'],
+                    'INTERVALS' => $currentDeliveryResult->getTmpData()['INTERVALS'],
                 ],
                 'PICKUP'   => [
-
+                    'PRICE'     => $currentPickupResult->getPrice(),
                 ],
                 'PAYMENTS' => [
 
@@ -124,9 +125,10 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
                 'DELIVERY' => [
                     'PRICE'     => $defaultDeliveryResult->getPrice(),
                     'FREE_FROM' => $defaultDeliveryResult->getTmpData()['FREE_FROM'],
+                    'INTERVALS' => $defaultDeliveryResult->getTmpData()['INTERVALS'],
                 ],
                 'PICKUP'   => [
-
+                    'PRICE'     => $currentPickupResult->getPrice(),
                 ],
                 'PAYMENTS' => [
 
