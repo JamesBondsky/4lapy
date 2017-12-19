@@ -40,8 +40,7 @@ class AuthController extends Controller
     public function __construct(
         UserAuthorizationInterface $userAuthorization,
         CurrentUserProviderInterface $currentUserProvider
-    )
-    {
+    ) {
         $this->userAuthorization   = $userAuthorization;
         $this->currentUserProvider = $currentUserProvider;
     }
