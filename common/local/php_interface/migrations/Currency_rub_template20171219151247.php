@@ -41,6 +41,7 @@ class Currency_rub_template20171219151247 extends SprintMigrationBase
     public function down()
     {
         foreach ($this->languageIds as $lid) {
+            $format = '';
             switch ($lid) {
                 case 'ru':
                     $format = '# руб.';
@@ -55,7 +56,7 @@ class Currency_rub_template20171219151247 extends SprintMigrationBase
                     'LID'      => $lid,
                 ],
                 [
-                    'FORMAT_STRING' => '# ₽',
+                    'FORMAT_STRING' => $format,
                 ]
             );
 
