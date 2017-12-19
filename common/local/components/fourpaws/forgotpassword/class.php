@@ -16,6 +16,7 @@ use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\External\Exception\SmsSendErrorException;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\UserBundle\Service\ConfirmCodeInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 
 /** @noinspection AutoloadingIssuesInspection */
@@ -66,7 +67,7 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
         }
         
         try {
-            $res = App::getInstance()->getContainer()->get('confirm_code.service')::sendConfirmSms($phone);
+            $res = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::sendConfirmSms($phone);
             if (!$res) {
                 return JsonErrorResponse::create(
                     'Ошибка при отправке смс'
@@ -105,7 +106,7 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
         }
         
         try {
-            $res = App::getInstance()->getContainer()->get('confirm_code.service')::sendConfirmSms($phone);
+            $res = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::sendConfirmSms($phone);
             if (!$res) {
                 return JsonErrorResponse::create(
                     'Ошибка при отправке смс'
@@ -191,7 +192,7 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
         }
         
         try {
-            App::getInstance()->getContainer()->get('confirm_code.service')::sendConfirmSms($phone);
+            App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::sendConfirmSms($phone);
         } catch (SmsSendErrorException $e) {
             JsonErrorResponse::create('Ошибка отправки смс, попробуйте позднее');
         } catch (WrongPhoneNumberException $e) {

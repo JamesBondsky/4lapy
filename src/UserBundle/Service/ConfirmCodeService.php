@@ -4,23 +4,23 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
-namespace FourPaws\ConfirmCode;
+namespace FourPaws\UserBundle\Service;
 
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Type\DateTime;
-use FourPaws\ConfirmCode\Exception\ExpiredConfirmCodeException;
-use FourPaws\ConfirmCode\Model\ConfirmCode;
-use FourPaws\ConfirmCode\Query\ConfirmCodeQuery;
-use FourPaws\ConfirmCode\Table\ConfirmCodeTable;
 use FourPaws\External\SmsService;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
+use FourPaws\UserBundle\Model\ConfirmCode;
+use FourPaws\UserBundle\Query\ConfirmCodeQuery;
+use FourPaws\UserBundle\Table\ConfirmCodeTable;
 
 /**
  * Class ConfirmCodeService
  *
  * @package FourPaws\ConfirmCode
  */
-class ConfirmCodeService
+class ConfirmCodeService implements ConfirmCodeInterface
 {
     const LIFE_TIME = 30 * 60;
     
@@ -33,7 +33,7 @@ class ConfirmCodeService
         $ConfirmCode      = $ConfirmCodeQuery->withFilter(
             ['<DATE' => DateTime::createFromTimestamp(time() - static::LIFE_TIME)]
         )->withSelect(['ID'])->exec();
-        /** @var \FourPaws\ConfirmCode\Model\ConfirmCode $confirmCode */
+        /** @var \FourPaws\UserBundle\Model\ConfirmCode $confirmCode */
         foreach ($ConfirmCode as $confirmCode) {
             ConfirmCodeTable::delete($confirmCode->getId());
         }
@@ -125,7 +125,7 @@ class ConfirmCodeService
      * @param string $confirmCode
      *
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \FourPaws\ConfirmCode\Exception\ExpiredConfirmCodeException
+     * @throws \FourPaws\UserBundle\Exception\ExpiredConfirmCodeException
      * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
      * @throws \Exception
      * @return bool
@@ -158,7 +158,7 @@ class ConfirmCodeService
     public static function getGeneratedCode() : string
     {
         $ConfirmCodeQuery = new ConfirmCodeQuery(ConfirmCodeTable::query());
-        /** @var \FourPaws\ConfirmCode\Model\ConfirmCode $confirmCode */
+        /** @var \FourPaws\UserBundle\Model\ConfirmCode $confirmCode */
         $confirmCode = $ConfirmCodeQuery->withFilter(['ID' => $_COOKIE['SMS_ID']])->exec()->first();
         if (static::isExpire($confirmCode)) {
             static::delCurrentCode();

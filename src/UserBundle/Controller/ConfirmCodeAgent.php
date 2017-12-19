@@ -4,9 +4,10 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
-namespace FourPaws\ConfirmCode\Controller;
+namespace FourPaws\UserBundle\Controller;
 
 use FourPaws\App\Application;
+use FourPaws\UserBundle\Service\ConfirmCodeInterface;
 
 /**
  * Class ConfirmCodeAgents
@@ -24,8 +25,9 @@ class ConfirmCodeAgent
      */
     public static function delExpiredCodes() : string
     {
-        $ConfirmCodeService = Application::getInstance()->getContainer()->get('confirm_code.service');
+        $ConfirmCodeService = Application::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
         $ConfirmCodeService::delExpiredCodes();
-        return '\\' . __METHOD__.'();';
+        
+        return '\\' . __METHOD__ . '();';
     }
 }

@@ -4,7 +4,7 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
-namespace FourPaws\ConfirmCode\Model;
+namespace FourPaws\UserBundle\Model;
 
 use Bitrix\Main\Type\DateTime;
 use FourPaws\BitrixOrm\Model\CustomTable;

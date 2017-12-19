@@ -4,7 +4,7 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
-namespace FourPaws\ConfirmCode\Table;
+namespace FourPaws\UserBundle\Table;
 
 use Bitrix\Main;
 use Bitrix\Main\Entity\DatetimeField;
@@ -49,10 +49,10 @@ class ConfirmCodeTable extends Main\Entity\DataManager
             'ID'   => new StringField(
                 'ID',
                 [
-                'primary'       => true,
-                'required'      => true,
-                'unique'        => true,
-            ]
+                        'primary'  => true,
+                        'required' => true,
+                        'unique'   => true,
+                    ]
             ),
             'CODE' => new StringField(
                 'CODE',
@@ -64,7 +64,7 @@ class ConfirmCodeTable extends Main\Entity\DataManager
             'DATE' => new DatetimeField(
                 'DATE',
                 [
-                          'required' => true,
+                          'required'      => true,
                           'default_value' => new Main\Type\DateTime(),
                       ]
             ),

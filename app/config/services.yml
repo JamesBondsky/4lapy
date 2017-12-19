@@ -45,9 +45,6 @@ services:
     arguments:
       - '@bx.hlblock.cities'
 
-  confirm_code.service:
-      class: FourPaws\ConfirmCode\ConfirmCodeService
-
   health.service:
     class: FourPaws\Health\HealthService
 

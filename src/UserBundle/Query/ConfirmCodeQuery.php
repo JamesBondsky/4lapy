@@ -4,18 +4,18 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
-namespace FourPaws\ConfirmCode\Query;
+namespace FourPaws\UserBundle\Query;
 
 use FourPaws\BitrixOrm\Collection\CollectionBase;
 use FourPaws\BitrixOrm\Query\D7QueryBase;
-use FourPaws\ConfirmCode\Collection\ConfirmCodeCollection;
+use FourPaws\UserBundle\Collection\ConfirmCodeCollection;
 
 class ConfirmCodeQuery extends D7QueryBase
 {
     /**
      * @inheritdoc
      */
-    public function getBaseSelect(): array
+    public function getBaseSelect() : array
     {
         return ['*'];
     }
@@ -23,7 +23,7 @@ class ConfirmCodeQuery extends D7QueryBase
     /**
      * @inheritdoc
      */
-    public function getBaseFilter(): array
+    public function getBaseFilter() : array
     {
         return [];
     }
@@ -31,7 +31,7 @@ class ConfirmCodeQuery extends D7QueryBase
     /**
      * @inheritdoc
      */
-    public function exec(): CollectionBase
+    public function exec() : CollectionBase
     {
         return new ConfirmCodeCollection($this->doExec());
     }

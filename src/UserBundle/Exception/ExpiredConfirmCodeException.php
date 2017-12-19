@@ -4,7 +4,7 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
-namespace FourPaws\ConfirmCode\Exception;
+namespace FourPaws\UserBundle\Exception;
 
 class ExpiredConfirmCodeException extends \Exception
 {

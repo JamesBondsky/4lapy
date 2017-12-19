@@ -25,6 +25,7 @@ use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\InvalidCredentialException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
+use FourPaws\UserBundle\Service\ConfirmCodeInterface;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use JMS\Serializer\SerializerBuilder;
@@ -237,7 +238,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         }
         
         try {
-            $res = App::getInstance()->getContainer()->get('confirm_code.service')::sendConfirmSms($phone);
+            $res = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::sendConfirmSms($phone);
             if (!$res) {
                 return JsonErrorResponse::create(
                     'Ошибка при отправке смс'
@@ -348,7 +349,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         
         $mess = '';
         try {
-            $res = App::getInstance()->getContainer()->get('confirm_code.service')::sendConfirmSms($phone);
+            $res = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::sendConfirmSms($phone);
             if ($res) {
                 $mess = 'Смс успешно отправлено';
             } else {

@@ -45,7 +45,7 @@ class ConfirmCode20171213115940 extends SprintMigrationBase
             );
         }
         
-        \CAgent::AddAgent('\FourPaws\ConfirmCode\Controller\ConfirmCodeAgent::delExpiredCodes();', '', 'Y', 60);
+        \CAgent::AddAgent('\FourPaws\UserBundle\Controller\ConfirmCodeAgent::delExpiredCodes();', '', 'Y', 60);
     }
     
     public function down()
@@ -56,7 +56,7 @@ class ConfirmCode20171213115940 extends SprintMigrationBase
         $res =
             \CAgent::GetList(
                 [],
-                ['NAME' => '\FourPaws\ConfirmCode\Controller\ConfirmCodeAgent::delExpiredCodes();']
+                ['NAME' => '\FourPaws\UserBundle\Controller\ConfirmCodeAgent::delExpiredCodes();']
             );
         if ($agent = $res->Fetch()) {
             \CAgent::Delete($agent['ID']);

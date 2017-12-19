@@ -26,6 +26,7 @@ use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
+use FourPaws\UserBundle\Service\ConfirmCodeInterface;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
@@ -158,7 +159,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         }
         
         try {
-            $res = App::getInstance()->getContainer()->get('confirm_code.service')::sendConfirmSms($phone);
+            $res = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::sendConfirmSms($phone);
             if (!$res) {
                 return JsonErrorResponse::create(
                     'Ошибка отправки смс, попробуйте позднее'
@@ -320,7 +321,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     private function ajaxGetStep2($confirmCode, $phone)
     {
         try {
-            $res = App::getInstance()->getContainer()->get('confirm_code.service')::checkConfirmSms(
+            $res = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::checkConfirmSms(
                 $phone,
                 (string)$confirmCode
             );
@@ -413,7 +414,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             /** @noinspection PhpUnusedLocalVariableInspection */
             
             try {
-                $res = App::getInstance()->getContainer()->get('confirm_code.service')::sendConfirmSms($phone);
+                $res = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::sendConfirmSms($phone);
                 if ($res) {
                     $mess = 'Смс успешно отправлено';
                 } else {
