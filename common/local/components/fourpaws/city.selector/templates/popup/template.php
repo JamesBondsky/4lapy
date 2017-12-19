@@ -52,11 +52,12 @@ $this->setFrameMode(true);
     </div>
     <?php $frame->end() ?>
     <header class="b-popup-pick-city__header">
-        <form class="b-popup-pick-city__form">
+        <form class="b-popup-pick-city__form" action="<?=$arResult['CITY_SET_URL'] ?>">
             <input class="b-input b-input--pick-city"
                    type="search"
                    id="id-pick-city-search"
                    data-url="<?= $arResult['CITY_AUTOCOMPLETE_URL'] ?>"
+                   name="code"
                    placeholder="Найти свой город"/>
             <button class="b-button b-button--pick-city">
                 <span class="b-icon">
