@@ -104,17 +104,6 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
                     'NAME'  => $currentCity->getName(),
                     'PHONE' => PhoneHelper::formatPhone($currentCity->getPhone()),
                 ],
-                'DELIVERY' => [
-                    'PRICE'     => $currentDeliveryResult->getPrice(),
-                    'FREE_FROM' => $currentDeliveryResult->getTmpData()['FREE_FROM'],
-                    'INTERVALS' => $currentDeliveryResult->getTmpData()['INTERVALS'],
-                ],
-                'PICKUP'   => [
-                    'PRICE'     => $currentPickupResult->getPrice(),
-                ],
-                'PAYMENTS' => [
-
-                ],
             ],
             'DEFAULT' => [
                 'LOCATION' => $defaultLocation,
@@ -122,19 +111,43 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
                     'NAME'  => $defaultCity->getName(),
                     'PHONE' => PhoneHelper::formatPhone($defaultCity->getPhone()),
                 ],
-                'DELIVERY' => [
-                    'PRICE'     => $defaultDeliveryResult->getPrice(),
-                    'FREE_FROM' => $defaultDeliveryResult->getTmpData()['FREE_FROM'],
-                    'INTERVALS' => $defaultDeliveryResult->getTmpData()['INTERVALS'],
-                ],
-                'PICKUP'   => [
-                    'PRICE'     => $currentPickupResult->getPrice(),
-                ],
-                'PAYMENTS' => [
-
-                ],
             ],
         ];
+
+        if ($currentDeliveryResult) {
+            $this->arResult['CURRENT']['DELIVERY'] = [
+                'PRICE'       => $currentDeliveryResult->getPrice(),
+                'FREE_FROM'   => $currentDeliveryResult->getData()['FREE_FROM'],
+                'INTERVALS'   => $currentDeliveryResult->getData()['INTERVALS'],
+                'PERIOD_FROM' => $currentDeliveryResult->getPeriodFrom(),
+                'CODE'        => $currentDeliveryResult->getData()['DELIVERY_CODE'],
+            ];
+        }
+
+        if ($defaultDeliveryResult) {
+            $this->arResult['DEFAULT']['DELIVERY'] = [
+                'PRICE'       => $defaultDeliveryResult->getPrice(),
+                'FREE_FROM'   => $defaultDeliveryResult->getData()['FREE_FROM'],
+                'INTERVALS'   => $defaultDeliveryResult->getData()['INTERVALS'],
+                'PERIOD_FROM' => $currentDeliveryResult->getPeriodFrom(),
+                'CODE'        => $currentDeliveryResult->getData()['DELIVERY_CODE'],
+            ];
+        }
+
+        if ($currentPickupResult) {
+            $this->arResult['CURRENT']['PICKUP'] = [
+                'PRICE'       => $currentPickupResult->getPrice(),
+                'CODE'        => $currentPickupResult->getData()['DELIVERY_CODE'],
+                'PERIOD_FROM' => $currentPickupResult->getPeriodFrom(),
+            ];
+        }
+
+        if ($defaultPickupResult) {
+            $this->arResult['DEFAULT']['PICKUP'] = [
+                'PRICE' => $defaultPickupResult->getPrice(),
+                'CODE'  => $defaultPickupResult->getData()['DELIVERY_CODE'],
+            ];
+        }
 
         return $this;
     }
@@ -155,12 +168,6 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
             $deliveryService->getByLocation(
                 $locationCode,
                 $possibleDeliveryCodes
-            /*
-            [
-                DeliveryService::INNER_DELIVERY_CODE,
-                DeliveryService::DPD_DELIVERY_CODE,
-            ]
-            */
             )
         );
     }

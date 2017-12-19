@@ -129,6 +129,35 @@ class DeliveryService
 
             $calculationResult = $shipment->calculateDelivery($shipment);
             if ($calculationResult->isSuccess()) {
+                if (in_array(
+                    $service->getCode(),
+                    [
+                        DeliveryService::DPD_DELIVERY_CODE,
+                        DeliveryService::DPD_PICKUP_CODE,
+                    ]
+                )) {
+                    $calculationResult->setPeriodFrom($_SESSION['DPD_DATA'][$service->getCode()]['DPD_TARIFF']['DAYS']);
+                    $calculationResult->setData(
+                        array_merge(
+                            $calculationResult->getData(),
+                            [
+                                'INTERVALS' => $_SESSION['DPD_DATA'][$service->getCode()]['INTERVALS']
+                            ]
+                        )
+                    );
+                }
+
+                $calculationResult->setData(
+                    array_merge(
+                        [
+                            'DELIVERY_ID'   => $service->getId(),
+                            'DELIVERY_NAME' => $name,
+                            'DELIVERY_CODE' => $service->getCode(),
+                        ],
+                        $calculationResult->getData()
+                    )
+                );
+
                 $result[] = $calculationResult;
             }
         }

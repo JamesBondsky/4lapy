@@ -4,6 +4,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\Helpers\CurrencyHelper;
+use FourPaws\Helpers\WordHelper;
 
 ?>
 <div class="b-delivery__delivery-type-row">
@@ -16,7 +18,7 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
     </div>
     <div class="b-delivery__delivery-type-row__price">
         <p>Стоимость</p>
-        <p><?= $pickup['PRICE'] == 0 ? 'Бесплатно' : $pickup['PRICE'] . '₽' ?></p>
+        <span><?= CurrencyHelper::formatPrice($pickup['PRICE']) ?></span>
         <?php if ($pickup['CODE'] == DeliveryService::INNER_PICKUP_CODE) { ?>
             <a href="#">Найти ближайший</a>
         <? } ?>
@@ -27,7 +29,10 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
             <span>Через 1 час после оформления заказа при наличии товара в магазине</span>
         <?php } else { ?>
             <span>
-                <? /** @todo вывод даты самовывоза DPD */ ?>
+                Через <?= $pickup['PERIOD_FROM'] ?> <?= WordHelper::declension(
+                    $pickup['PERIOD_FROM'],
+                    ['день', 'дня', 'дней']
+                ) ?>
             </span>
         <?php } ?>
     </div>
@@ -36,9 +41,17 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
         <?php if ($pickup['CODE'] == DeliveryService::INNER_PICKUP_CODE) { ?>
             <span>В рабочие часы магазина</span>
         <?php } else { ?>
-            <span>
-                <? /** @todo вывод времени работы пункта самовывоза DPD */ ?>
-            </span>
+            <?php if (!empty($delivery['INTERVALS'])) { ?>
+                <?php $lastKey = end(array_keys($delivery['INTERVALS'])) ?>
+                <?php foreach ($delivery['INTERVALS'] as $i => $interval) { ?>
+                    <span>
+                        <?= date('H:00', mktime($interval['FROM'])) . ' - ' . date(
+                            'H:00',
+                            mktime($interval['TO'])
+                        ) . ($i !== $lastKey ? ',' : '') ?>
+                    </span>
+                <?php } ?>
+            <?php } ?>
         <?php } ?>
     </div>
 </div>

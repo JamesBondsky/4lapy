@@ -4,6 +4,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\Helpers\CurrencyHelper;
+use FourPaws\Helpers\WordHelper;
 
 ?>
 <div class="b-delivery__delivery-type-row">
@@ -12,7 +14,7 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
     </div>
     <div class="b-delivery__delivery-type-row__price">
         <p>Стоимость</p>
-        <span><?= $delivery['PRICE'] ?> ₽</span>
+        <span><?= CurrencyHelper::formatPrice($delivery['PRICE']) ?></span>
         <?php if (!empty($delivery['FREE_FROM'])) { ?>
             <span>Бесплатно при заказе от <?= $delivery['FREE_FROM'] ?> ₽</span>
         <? } ?>
@@ -22,7 +24,12 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
         <? if ($delivery['CODE'] == DeliveryService::INNER_DELIVERY_CODE) { ?>
             <span>В день оформления заказа (при оформлении до 14:00) или на следующий день</span>
         <? } else { ?>
-            <? /* @todo вывод даты доставки DPD */ ?>
+            <span>
+                Через <?= $delivery['PERIOD_FROM'] ?> <?= WordHelper::declension(
+                    $delivery['PERIOD_FROM'],
+                    ['день', 'дня', 'дней']
+                ) ?>
+            </span>
         <? } ?>
     </div>
     <div class="b-delivery__delivery-type-row__time">
