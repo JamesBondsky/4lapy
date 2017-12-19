@@ -2,6 +2,7 @@
 
 namespace FourPaws\AppBundle\Command;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\UserTable;
 use Exception;
@@ -30,7 +31,9 @@ class BitrixClearUser extends Command implements LoggerAwareInterface
     
     const OPTION_DEBUG        = 'debug';
     
-    protected $debug = false;
+    protected $debug    = false;
+    
+    protected $hasError = false;
     
     /**
      * BitrixClearHighloadBlock constructor.
@@ -53,14 +56,14 @@ class BitrixClearUser extends Command implements LoggerAwareInterface
     public function configure()
     {
         $this->setName('bitrix:clear:user')
-             ->setDescription('Clear users')
-             ->addOption(self::OPTION_DEBUG,
-                         self::OPTION_DEBUG[0],
-                         InputOption::VALUE_NONE,
-                         'Show debug messages')
-             ->addArgument(self::ARGUMENT_MINIMAL_ID,
-                           InputArgument::REQUIRED,
-                           'Minimal user id. Must be an integer, greater than 4');
+            ->setDescription('Clear users')
+            ->addOption(self::OPTION_DEBUG,
+                        self::OPTION_DEBUG[0],
+                        InputOption::VALUE_NONE,
+                        'Show debug messages')
+            ->addArgument(self::ARGUMENT_MINIMAL_ID,
+                          InputArgument::REQUIRED,
+                          'Minimal user id. Must be an integer, greater than 4');
     }
     
     /**
@@ -96,8 +99,7 @@ class BitrixClearUser extends Command implements LoggerAwareInterface
      */
     private function removeUsers(int $minimalId)
     {
-        $userIdCollection =
-            (new Query(UserTable::getEntity()))->setSelect(['ID'])->setFilter(['>=ID' => $minimalId])->exec();
+        $userIdCollection = (new Query(UserTable::getEntity()))->setSelect(['ID'])->setFilter(['>=ID' => $minimalId])->exec();
         
         $count = $userIdCollection->getSelectedRowsCount();
         
@@ -106,6 +108,10 @@ class BitrixClearUser extends Command implements LoggerAwareInterface
         while ($user = $userIdCollection->fetch()) {
             $this->removeUser($user['ID']);
             $this->debugMessage(sprintf('Users count - %s', $count--));
+        }
+        
+        if (!$this->hasError) {
+            Application::getConnection()->query(sprintf('ALTER TABLE tablename AUTO_INCREMENT=%u', $minimalId + 1));
         }
     }
     
@@ -117,12 +123,14 @@ class BitrixClearUser extends Command implements LoggerAwareInterface
     private function removeUser(int $id) : bool
     {
         $user = new \CUser();
-        $user->Delete($id);
         
-        if ($user->LAST_ERROR) {
-            $this->logger->error(sprintf('User with id %s remove error: %s', $id, $user->LAST_ERROR));
-        } else {
+        if ($user->Delete($id)) {
             $this->debugMessage(sprintf('User with id %s was removed', $id));
+        } else {
+            global $APPLICATION;
+            
+            $this->hasError = true;
+            $this->logger->error(sprintf('User with id %s remove error: %s', $id, $APPLICATION->GetException()));
         }
         
         return !$user->LAST_ERROR;
