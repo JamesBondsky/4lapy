@@ -63,7 +63,7 @@ class BitrixClearUser extends Command implements LoggerAwareInterface
                         'Show debug messages')
             ->addArgument(self::ARGUMENT_MINIMAL_ID,
                           InputArgument::REQUIRED,
-                          'Minimal user id. Must be an integer, greater than 4');
+                          'Minimal user id. Must be an integer, greater than 6');
     }
     
     /**
@@ -78,9 +78,9 @@ class BitrixClearUser extends Command implements LoggerAwareInterface
     {
         $minimalId   = $input->getArgument(self::ARGUMENT_MINIMAL_ID);
         $this->debug = $input->getOption(self::OPTION_DEBUG);
-        
-        if ($minimalId < 5) {
-            throw new InvalidArgumentException('mid must be an integer, greater than 4');
+    
+        if ($minimalId < 6) {
+            throw new InvalidArgumentException('mid must be an integer, greater than 6');
         }
         
         try {
