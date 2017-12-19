@@ -2,12 +2,12 @@
 
 namespace FourPaws\Location\Model;
 
+use Bitrix\Main\Entity\DataManager;
 use FourPaws\App\Application;
 use FourPaws\BitrixOrm\Model\HlbItemBase;
 use FourPaws\BitrixOrm\Model\ModelInterface;
-use FourPaws\Location\Query\CityQuery;
 use FourPaws\Location\Exception\CityNotFoundException;
-use Bitrix\Main\Entity\DataManager;
+use FourPaws\Location\Query\CityQuery;
 
 /**
  * Class User
@@ -150,7 +150,7 @@ class City extends HlbItemBase
      *
      * @return \FourPaws\BitrixOrm\Model\ModelInterface
      *
-     * @throws \FourPaws\User\Exceptions\NotFoundException
+     * @throws \FourPaws\UserBundle\Exceptions\NotFoundException
      */
     public static function createFromPrimary(string $id): ModelInterface
     {

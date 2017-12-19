@@ -2,7 +2,7 @@
 
 namespace FourPaws\StoreBundle\Exception;
 
-use \Throwable;
+use Throwable;
 
 class StoreException extends \Exception
 {

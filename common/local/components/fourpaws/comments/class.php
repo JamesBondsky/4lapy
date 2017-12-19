@@ -17,6 +17,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Comments\Exception\EmptyUserDataComments;
 use FourPaws\Comments\Exception\ErrorAddComment;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 
@@ -33,9 +34,14 @@ class CCommentsComponent extends \CBitrixComponent
     private $hlEntity;
     
     /**
-     * @var \FourPaws\UserBundle\Service\UserService $userService
+     * @var \FourPaws\UserBundle\Service\UserAuthorizationInterface $userService
      */
-    private $userService;
+    private $userAuthService;
+    
+    /**
+     * @var \FourPaws\UserBundle\Service\CurrentUserProviderInterface $userService
+     */
+    private $userCurrentUserService;
     
     /**
      *
@@ -57,7 +63,7 @@ class CCommentsComponent extends \CBitrixComponent
     {
         $class = new static();
         $class->setUserBundle();
-        $class->arResult['AUTH']      = $class->userService->isAuthorized();
+        $class->arResult['AUTH']      = $class->userAuthService->isAuthorized();
         $data                         = $class->getData();
         $class->arParams['HL_ID']     = $data['HL_ID'];
         $class->arParams['OBJECT_ID'] = $data['UF_OBJECT_ID'];
@@ -81,7 +87,8 @@ class CCommentsComponent extends \CBitrixComponent
      */
     protected function setUserBundle()
     {
-        $this->userService = Application::getInstance()->getContainer()->get(UserAuthorizationInterface::class);
+        $this->userAuthService = Application::getInstance()->getContainer()->get(UserAuthorizationInterface::class);
+        $this->userCurrentUserService = Application::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
     }
     
     /**
@@ -96,9 +103,9 @@ class CCommentsComponent extends \CBitrixComponent
     {
         $data = \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getPostList()->toArray();
         if ($this->arResult['AUTH']) {
-            $data['UF_USER_ID'] = $this->userService->getCurrentUserId();
+            $data['UF_USER_ID'] = $this->userCurrentUserService->getCurrentUserId();
         } else {
-            $userRepository = $this->userService->getUserRepository();
+            $userRepository = $this->userCurrentUserService->getUserRepository();
             $filter         = [
                 'LOGIC' => 'OR',
             ];
@@ -260,7 +267,7 @@ class CCommentsComponent extends \CBitrixComponent
             $items[$item['ID']] = $item;
         }
         if (!empty($userIds)) {
-            $users = $this->userService->getUserRepository()->findBy(['ID' => array_unique($userIds)]);
+            $users = $this->userCurrentUserService->getUserRepository()->findBy(['ID' => array_unique($userIds)]);
             foreach ($users as $user) {
                 foreach ($userIds as $itemID => $userID) {
                     if ($userID === $user->getId()) {
@@ -337,7 +344,7 @@ class CCommentsComponent extends \CBitrixComponent
             
             return false;
         }
-        $this->arResult['AUTH'] = $this->userService->isAuthorized();
+        $this->arResult['AUTH'] = $this->userAuthService->isAuthorized();
         
         try {
             $comments                         = $this->getComments();

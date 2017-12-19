@@ -2,11 +2,11 @@
 
 namespace FourPaws\AppBundle\Serialization;
 
-use JMS\Serializer\Handler\SubscribingHandlerInterface;
+use JMS\Serializer\Context;
 use JMS\Serializer\GraphNavigator;
+use JMS\Serializer\Handler\SubscribingHandlerInterface;
 use JMS\Serializer\JsonDeserializationVisitor;
 use JMS\Serializer\JsonSerializationVisitor;
-use JMS\Serializer\Context;
 
 class BitrixBooleanHandler implements SubscribingHandlerInterface
 {

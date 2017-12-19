@@ -1,6 +1,6 @@
 <?php
 
-namespace FourPaws\User\Exceptions;
+namespace FourPaws\UserBundle\Exception;
 
 class WrongPasswordException extends UserException
 {
