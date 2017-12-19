@@ -31,7 +31,11 @@ $this->setFrameMode(true);
                 получить заказ</p>
             <div class="b-form-inline b-form-inline--search b-form-inline--delivery">
                 <form class="b-form-inline__form b-form-inline__form--search b-form-inline__form--delivery js-popover-search">
-                    <input class="b-input" type="text" id="header-search" placeholder="Введите город..."/>
+                    <input class="b-input"
+                           type="text"
+                           id="header-search"
+                           placeholder="Введите город..."
+                           data-url="<?= $arResult['CITY_AUTOCOMPLETE_URL'] ?>"/>
                     <button class="b-button b-button--form-inline b-button--search b-button--delivery">
                         <span class="b-icon">
                         <?= new SvgDecorator('icon-search', 16, 16) ?>
@@ -42,7 +46,7 @@ $this->setFrameMode(true);
                    href="javascript:void(0)"
                    title="">
                     <span class="b-icon b-icon--header-search-mobile">
-                        <?= new SvgDecorator('icon-search-heade', 20, 20) ?>
+                        <?= new SvgDecorator('icon-search-header', 20, 20) ?>
                     </span>
                 </a>
             </div>
