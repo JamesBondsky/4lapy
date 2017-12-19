@@ -77,25 +77,49 @@ class AuthController extends Controller
          * todo restore
          */
     }
-
+    
     /**
      * @Route("/changePassword/", methods={"POST"})
      * @param Request $request
+     *
+     * @return \FourPaws\App\Response\JsonResponse
      */
     public function changePasswordAction(Request $request)
     {
         if ($this->userAuthorization->isAuthorized()) {
-            $password = $request->request->get('password', '');
-            $confirm = $request->request->get('confirm', '');
-
-            $user = $this->currentUserProvider->getCurrentUser();
+            $password = $request->get('password', '');
+            $confirm = $request->get('confirm_password', '');
+            $old = $request->get('old_password', '');
+            
+            if(empty($password) || empty($confirm) || empty($old)){
+                return JsonErrorResponse::create('Необходимо заполнить все поля');
+            }
+            if($this->currentUserProvider->equalPassword($old)){
+                return JsonErrorResponse::create('Введенный вами пароль не совпадает с текущим');
+            }
+            if($confirm !== $password){
+                return JsonErrorResponse::create('Пароли не совпадают');
+            }
         } else {
-            $login = $request->request->get('login', '');
-            $checkword = $request->request->get('checkword', '');
+            return JsonErrorResponse::create('Вы не авторизованы');
         }
-
-        /**
-         * todo change password
-         */
+    }
+    
+    /**
+     * @Route("/changePersonalData/", methods={"POST"})
+     * @param Request $request
+     */
+    public function changePersonalDataAction(Request $request)
+    {
+    
+    }
+    
+    /**
+     * @Route("/changePhone/", methods={"POST"})
+     * @param Request $request
+     */
+    public function changePhoneAction(Request $request)
+    {
+    
     }
 }
