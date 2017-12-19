@@ -101,13 +101,11 @@ $markup = PawsApplication::markup();
                 require_once 'temp_header_menu.php';
                 ?>
                 <?php $APPLICATION->IncludeComponent('fourpaws:city.selector') ?>
-                <?php
-                /**
-                 * @todo Стоимость доставки (регионозависимая). Заменить компонентом и удалить файл.
-                 */
-                require_once 'temp_header_delivery.php';
-                ?>
             </div>
+            <?php $APPLICATION->IncludeComponent(
+                'fourpaws:city.delivery.info',
+                'template.header'
+            ); ?>
         </div>
     </header>
     <?php
@@ -117,6 +115,14 @@ $markup = PawsApplication::markup();
     $APPLICATION->ShowViewContent('header_dropdown_menu');
     ?>
     <main class="b-wrapper" role="main">
+        <?php if ($template->hasHeaderPublicationListContainer()) {
+            ?>
+            <div class="b-container b-container--news">
+                <div class="b-news">
+                    <h1 class="b-title b-title--h1"><?php $APPLICATION->ShowTitle(false) ?></h1>
+        <?php
+        } ?>
+        
         <?php if ($template->hasHeaderDetailPageContainer()) {
             ?>
             <div class="b-container b-container--news-detail">
