@@ -131,10 +131,12 @@ class UserService implements
      * @param User $user
      *
      * @return bool
+     * @throws \FourPaws\UserBundle\Exception\ValidationException
+     * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
      */
     public function register(User $user): bool
     {
-        return true;
+        return $this->userRepository->create($user);
     }
 
     /**
@@ -192,7 +194,11 @@ class UserService implements
         return $this->locationService->getDefaultLocation();
     }
     
-    public function getUserRepository(){
+    /**
+     * @return UserRepository
+     */
+    public function getUserRepository() : UserRepository
+    {
         return $this->userRepository;
     }
 }

@@ -2,7 +2,7 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 } ?>
-<input type="hidden" name="action" value="save">
+<input type="hidden" name="action" value="confirmPhone">
 <div class="b-registration__step b-registration__step--two">
     <div class="b-registration__text b-registration__text--phone">Ваш номер <?= $phone ?></div>
     <a class="b-registration__text b-registration__text--phone-edit js-open-popup"

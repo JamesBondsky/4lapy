@@ -7,7 +7,7 @@ use FourPaws\DeliveryBundle\Event as DeliveryEvent;
 use FourPaws\IblockProps\Event as IblockPropsEvent;
 use FourPaws\ProductAutoSort\Event as ProductAutoSortEvent;
 use FourPaws\Search\EventHandlers as SearchEventHandlers;
-use FourPaws\User\UserServiceHandlers;
+use FourPaws\UserBundle\EventController\Event as UserEvent;
 use FourPaws\UserProps\Event as UserPropLocationEvent;
 
 /**
@@ -20,7 +20,7 @@ use FourPaws\UserProps\Event as UserPropLocationEvent;
 final class EventInitializer
 {
     const SERVICE_HANDLER_CLASSES = [
-        UserServiceHandlers::class,
+        UserEvent::class,
         ProductAutoSortEvent::class,
         UserPropLocationEvent::class,
         SearchEventHandlers::class,

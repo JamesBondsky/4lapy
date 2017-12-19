@@ -4,6 +4,7 @@ namespace FourPaws\UserBundle\Repository;
 
 use Bitrix\Main\UserTable;
 use CUser;
+use FourPaws\Helpers\PhoneHelper;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -176,13 +177,13 @@ class UserRepository
                         '=EMAIL' => $rawLogin,
                     ],
                     [
-                        /**
-                         * @todo Нормализация
-                         */
-                        '=PERSONAL_PHONE' => $rawLogin,
+                        '=PERSONAL_PHONE' => PhoneHelper::isPhone($rawLogin) ? PhoneHelper::normalizePhone(
+                            $rawLogin
+                        ) : $rawLogin,
                     ],
                 ],
-            ]);
+            ]
+        );
         if ($onlyActive) {
             $query->addFilter('ACTIVE', 'Y');
         }

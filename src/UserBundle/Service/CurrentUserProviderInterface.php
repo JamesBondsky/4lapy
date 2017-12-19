@@ -3,6 +3,7 @@
 namespace FourPaws\UserBundle\Service;
 
 use FourPaws\UserBundle\Entity\User;
+use FourPaws\UserBundle\Repository\UserRepository;
 
 interface CurrentUserProviderInterface
 {
@@ -15,4 +16,9 @@ interface CurrentUserProviderInterface
      * @return int
      */
     public function getCurrentUserId(): int;
+    
+    /**
+     * @return UserRepository
+     */
+    public function getUserRepository() : UserRepository;
 }

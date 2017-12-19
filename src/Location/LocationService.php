@@ -4,8 +4,8 @@ namespace FourPaws\Location;
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Highloadblock\DataManager;
-use Bitrix\Sale\Location\GroupLocationTable;
 use Bitrix\Sale\Location\ExternalTable;
+use Bitrix\Sale\Location\GroupLocationTable;
 use Bitrix\Sale\Location\TypeTable;
 use CBitrixComponent;
 use CBitrixLocationSelectorSearchComponent;

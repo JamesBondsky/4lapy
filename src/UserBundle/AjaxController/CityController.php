@@ -45,7 +45,9 @@ class CityController extends Controller
             return JsonErrorResponse::create($e->getMessage());
         }
 
-        return JsonSuccessResponse::create('Город успешно выбран.', 200, [], ['reload' => true]);
+        $city = $this->userService->getSelectedCity();
+
+        return JsonSuccessResponse::createWithData('Город успешно выбран.', $city, 200, ['reload' => true]);
     }
 
     /**

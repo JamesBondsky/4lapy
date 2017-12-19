@@ -9,13 +9,9 @@ namespace FourPaws\UserBundle\AjaxController;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
-use FourPaws\Helpers\Exception\WrongPhoneNumberException;
-use FourPaws\Helpers\PhoneHelper;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
-use FourPaws\UserBundle\Exception\InvalidCredentialException;
-use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use JMS\Serializer\SerializerBuilder;
@@ -44,54 +40,152 @@ class AuthController extends Controller
     public function __construct(
         UserAuthorizationInterface $userAuthorization,
         CurrentUserProviderInterface $currentUserProvider
-    ) {
-        $this->userAuthorization = $userAuthorization;
+    )
+    {
+        $this->userAuthorization   = $userAuthorization;
         $this->currentUserProvider = $currentUserProvider;
     }
     
     /**
      * @Route("/login/", methods={"POST"})
+     * @param \Symfony\Component\HttpFoundation\Request $request
+     *
+     * @throws \FourPaws\UserBundle\Exception\ValidationException
+     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
+     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
+     * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
+     * @throws \RuntimeException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws \Exception
+     * @return \FourPaws\App\Response\JsonResponse
      */
-    public function loginAction(Request $request)
+    public function loginAction(Request $request) : JsonResponse
     {
-        $rawLogin = $request->request->get('login', '');
-        $password = $request->request->get('password', '');
-        
-        try {
-            $this->userAuthorization->login($rawLogin, $password);
-        } catch (UsernameNotFoundException $exception) {
-            return JsonErrorResponse::create('Неверный логин или пароль.');
-        } catch (InvalidCredentialException $credentialException) {
-            return JsonErrorResponse::create('Неверный логин или пароль.');
-        } catch (\Exception $exception) {
-            return JsonErrorResponse::create(
-                'Системная ошибка при попытке авторизации. Пожалуйста, обратитесь к администратору сайта.'
-            );
+        $action = $request->request->get('action', '');
+        $phone  = $request->get('phone', '');
+        \CBitrixComponent::includeComponentClass('fourpaws:auth.form');
+        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+        $loginClass = new \FourPawsAuthFormComponent();
+        switch ($action) {
+            case 'login':
+                $rawLogin = $request->get('login', '');
+                $password = $request->get('password', '');
+                
+                return $loginClass->ajaxLogin($rawLogin, $password);
+                break;
+            case 'resendSms':
+                return $loginClass->ajaxResendSms($phone);
+                break;
+            case 'savePhone':
+                return $loginClass->ajaxSavePhone($phone);
+                break;
+            case 'get':
+                return $loginClass->ajaxGet($request, $phone);
+                break;
         }
         
-        return JsonSuccessResponse::create('Вы успешно авторизованы.');
+        return JsonErrorResponse::create('Неизвестная ошибка');
     }
     
     /**
      * @Route("/register/", methods={"POST"})
      * @param Request $request
+     *
+     * @throws \Exception
+     * @return null|\Symfony\Component\HttpFoundation\JsonResponse
      */
     public function registerAction(Request $request)
     {
-        /**
-         * todo обработка формы или DTO сериализации с валидаторами
-         */
+        $action = $request->get('action');
+        /** @noinspection PhpUnusedLocalVariableInspection */
+        $phone = $request->get('phone');
+        
+        \CBitrixComponent::includeComponentClass('fourpaws:register');
+        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+        $registerClass = new \FourPawsRegisterComponent();
+        
+        switch ($action) {
+            case 'resendSms':
+                return $registerClass->ajaxResendSms($phone);
+                break;
+            case 'register':
+                return $registerClass->ajaxRegister($request->request->getIterator()->getArrayCopy());
+                break;
+            case 'savePhone':
+                return $registerClass->ajaxSavePhone($request->request->getIterator()->getArrayCopy());
+                break;
+            case 'get':
+                return $registerClass->ajaxGet($request, $phone);
+                break;
+        }
+        
+        return JsonErrorResponse::create('Неизвестная ошибка');
     }
     
     /**
      * @Route("/forgotPassword/", methods={"POST"})
      * @param Request $request
+     *
+     * @return \FourPaws\App\Response\JsonResponse
      */
-    public function forgotPasswordAction(Request $request)
+    public function forgotPasswordAction(Request $request) : JsonResponse
     {
-        /**
-         * todo restore
-         */
+        $action = $request->get('action', '');
+        
+        \CBitrixComponent::includeComponentClass('fourpaws:forgotpassword');
+        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+        $forgotPasswordClass = new \FourPawsForgotPasswordFormComponent();
+        switch ($action) {
+            case 'savePassword':
+                return $forgotPasswordClass->ajaxSavePassword($request->get('phone', ''));
+                
+                break;
+            case 'resendSms':
+                return $forgotPasswordClass->ajaxResendSms($request->get('phone', ''));
+                
+                break;
+            case 'get':
+                return $forgotPasswordClass->ajaxGet($request);
+                break;
+        }
+        
+        return JsonErrorResponse::create('Неизвестная ошибка');
+    }
+    
+    /**
+     * @Route("/changePhone/", methods={"POST"})
+     * @param Request $request
+     *
+     * @return \FourPaws\App\Response\JsonResponse
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \FourPaws\UserBundle\Exception\ValidationException
+     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
+     */
+    public function changePhoneAction(Request $request) : JsonResponse
+    {
+        $action = $request->get('action', '');
+        
+        \CBitrixComponent::includeComponentClass('fourpaws:personal.profile');
+        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+        $profileClass = new \FourPawsPersonalCabinetProfileComponent();
+        
+        switch ($action) {
+            case 'confirmPhone':
+                return $profileClass->ajaxConfirmPhone();
+                break;
+            case 'resendSms':
+                return $profileClass->ajaxResendSms($request->get('phone', ''));
+                break;
+            case 'get':
+                return $profileClass->ajaxGet($request);
+                break;
+        }
+    
+        return JsonErrorResponse::create('Непредвиденная ошибка');
     }
     
     /**
@@ -99,49 +193,51 @@ class AuthController extends Controller
      * @param Request $request
      *
      * @return \FourPaws\App\Response\JsonResponse
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \FourPaws\UserBundle\Exception\ValidationException
+     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
      */
     public function changePasswordAction(Request $request) : JsonResponse
     {
-        if ($this->userAuthorization->isAuthorized()) {
-            $password = $request->get('password', '');
-            $confirm  = $request->get('confirm_password', '');
-            $old      = $request->get('old_password', '');
-            
-            if (empty($password) || empty($confirm) || empty($old)) {
-                return JsonErrorResponse::create('Необходимо заполнить все поля');
-            }
-            if(\strlen($password) < 6){
-                $password = 'Пароль должен содержать минимум 6 символов';
-            }
-            if ($old === $password) {
-                return JsonErrorResponse::create('Пароль не может быть такой же как текущий');
-            }
-            if ($this->currentUserProvider->getCurrentUser()->equalPassword($old)) {
-                return JsonErrorResponse::create('Введенный вами пароль не совпадает с текущим');
-            }
-            if ($confirm !== $password) {
-                return JsonErrorResponse::create('Пароли не совпадают');
-            }
-        } else {
-            return JsonErrorResponse::create('Вы не авторизованы');
+        $old_password = $request->get('old_password', '');
+        $password = $request->get('password', '');
+        $confirm_password = $request->get('confirm_password', '');
+        
+        if(empty($old_password) || empty($password) || empty($confirm_password)){
+            return JsonErrorResponse::create('Должны быть заполнены все поля');
         }
         
-        /** @var \FourPaws\UserBundle\Repository\UserRepository $userRepository */
-        $userRepository = $this->currentUserProvider->getUserRepository();
+        if(\strlen($password) < 6){
+            return JsonErrorResponse::create('Пароль должен содержать минимум 6 символов');
+        }
+        
+        if(!$this->currentUserProvider->getCurrentUser()->equalPassword($old_password)){
+            return JsonErrorResponse::create('Текущий пароль не соответствует введенному');
+        }
+        
+        if($password !== $confirm_password){
+            return JsonErrorResponse::create('Пароли не соответсвуют');
+        }
+        
+        if($old_password ===  $password){
+            return JsonErrorResponse::create('Пароль не может быть такой же как текущий');
+        }
+        
         try {
-            $res = $userRepository->update(
+            /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+            $res = $this->currentUserProvider->getUserRepository()->update(
                 SerializerBuilder::create()->build()->fromArray(['PASSWORD' => $password], User::class)
             );
             if (!$res) {
                 return JsonErrorResponse::create('Произошла ошибка при обновлении');
             }
-            
-            return JsonSuccessResponse::create('Ваш пароль успешно изменен');
+        
+            return JsonSuccessResponse::create('Пароль обновлен');
         } catch (BitrixRuntimeException $e) {
             return JsonErrorResponse::create('Произошла ошибка при обновлении ' . $e->getMessage());
         } catch (ConstraintDefinitionException $e) {
         }
-        
+    
         return JsonErrorResponse::create('Непредвиденная ошибка');
     }
     
@@ -150,77 +246,51 @@ class AuthController extends Controller
      * @param Request $request
      *
      * @return \FourPaws\App\Response\JsonResponse
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \FourPaws\UserBundle\Exception\ValidationException
+     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
      */
-    public function changePersonalDataAction(Request $request) : JsonResponse
+    public function changeDataAction(Request $request) : JsonResponse
     {
         /** @var \FourPaws\UserBundle\Repository\UserRepository $userRepository */
         $userRepository = $this->currentUserProvider->getUserRepository();
-        $data = $request->request->getIterator()->getArrayCopy();
+        $data           = $request->request->getIterator()->getArrayCopy();
+        
         if (filter_var($data['EMAIL'], FILTER_VALIDATE_EMAIL) === false)
         {
             return JsonErrorResponse::create('Неверный email');
         }
+    
+        $curUser = $userRepository->findBy(['EMAIL' => $data['EMAIL']], [], 1);
+        if($curUser instanceof User || (\is_array($curUser) && !empty($curUser))){
+            return JsonErrorResponse::create('Такой email уже существует');
+        }
+        
+        /** @var User $user */
+        $user = SerializerBuilder::create()->build()->fromArray($data, User::class);
+    
+        \CBitrixComponent::includeComponentClass('fourpaws:personal.profile');
+        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+        $profileClass = new \FourPawsPersonalCabinetProfileComponent();
+        
         try {
-            $res  = $userRepository->update(
-                SerializerBuilder::create()->build()->fromArray($data, User::class)
+            /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+            $res = $userRepository->update(
+                $user
             );
             if (!$res) {
                 return JsonErrorResponse::create('Произошла ошибка при обновлении');
             }
-        
-            return JsonSuccessResponse::create('Ваш профиль успешно изменен');
+            
+            return JsonSuccessResponse::createWithData('Данные обновлены', [
+                'email' => $user->getEmail(),
+                'fio'   => $user->getFullName(),
+                'gender'   => $user->getGenderText(),
+                'birthday'   => $profileClass->replaceRuMonth($user->getBirthday()->format('d #n# Y')),
+            ]);
         } catch (BitrixRuntimeException $e) {
             return JsonErrorResponse::create('Произошла ошибка при обновлении ' . $e->getMessage());
         } catch (ConstraintDefinitionException $e) {
-        }
-    
-        return JsonErrorResponse::create('Непредвиденная ошибка');
-    }
-    
-    /**
-     * @Route("/changePhone/", methods={"POST"})
-     * @param Request $request
-     *
-     * @return \FourPaws\App\Response\JsonResponse
-     */
-    public function changePhoneAction(Request $request) : JsonResponse
-    {
-        $phone = $request->get('phone', '');
-        $action = $request->get('action', '');
-        switch($action){
-            case 'save':
-                break;
-            case 'resendSms':
-                break;
-            case 'get':
-                $step = $request->get('step', '');
-                switch($step){
-                    case 'confirm':
-                        try {
-                            $phone = PhoneHelper::normalizePhone($phone);
-                        } catch (WrongPhoneNumberException $e) {
-                            return JsonSuccessResponse::create('Неверный формат номера телефона');
-                        }
-                        /** @var \FourPaws\UserBundle\Repository\UserRepository $userRepository */
-                        $userRepository = $this->currentUserProvider->getUserRepository();
-                        try {
-                            $res = $userRepository->update(
-                                SerializerBuilder::create()->build()->fromArray(['PERSONAL_PHONE' => $phone], User::class)
-                            );
-                            if (!$res) {
-                                return JsonErrorResponse::create('Произошла ошибка при обновлении');
-                            }
-                        
-                            return JsonSuccessResponse::createWithData('Ваш телефон успешно изменен', ['phone' => $phone, 'step' => $step, 'html' => $html]);
-                        } catch (BitrixRuntimeException $e) {
-                            return JsonErrorResponse::create('Произошла ошибка при обновлении ' . $e->getMessage());
-                        } catch (ConstraintDefinitionException $e) {
-                        }
-                        break;
-                    case 'phone':
-                        break;
-                }
-                break;
         }
     
         return JsonErrorResponse::create('Непредвиденная ошибка');
