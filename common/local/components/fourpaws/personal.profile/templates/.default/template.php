@@ -1,7 +1,5 @@
 <?php
 
-use FourPaws\App\Application as App;
-
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
@@ -27,8 +25,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             Личные данные
         </div>
         <div class="b-account-profile__data">
-            <?php require_once App::getDocumentRoot() . $templateFolder . '/include/mainUserData.php' ?>
-            <?php require_once App::getDocumentRoot() . $templateFolder . '/include/userActions.php' ?>
+            <?php require_once 'include/mainUserData.php' ?>
+            <?php require_once 'include/userActions.php' ?>
         </div>
         <div class="b-account-profile__other">
             <?php $APPLICATION->IncludeComponent(
@@ -42,9 +40,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                 ],
                 false
             ); ?>
-            <?php require_once App::getDocumentRoot() . $templateFolder . '/include/subscribe.php' ?>
+            <?php require_once 'include/subscribe.php' ?>
         </div>
     </div>
-<?php require_once App::getDocumentRoot() . $templateFolder . '/include/popupChangePassword.php' ?>
-<?php require_once App::getDocumentRoot() . $templateFolder . '/include/popupChangeData.php' ?>
-<?php require_once App::getDocumentRoot() . $templateFolder . '/include/popupChangePhone.php' ?>
+<?php require_once 'include/popupChangePassword.php' ?>
+<?php require_once 'include/popupChangeData.php' ?>
+<?php require_once 'include/popupChangePhone.php' ?>

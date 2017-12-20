@@ -5,20 +5,20 @@
 use FourPaws\Decorators\SvgDecorator;
 
 /**
- * @var \CBitrixComponentTemplate $this
+ * @var \CBitrixComponentTemplate         $this
  *
- * @var array $arParams
- * @var array $arResult
- * @var array $templateData
+ * @var array                             $arParams
+ * @var array                             $arResult
+ * @var array                             $templateData
  * @var FourPawsExpertsenderFormComponent $component
  *
- * @var string $componentPath
- * @var string $templateName
- * @var string $templateFile
- * @var string $templateFolder
+ * @var string                            $componentPath
+ * @var string                            $templateName
+ * @var string                            $templateFile
+ * @var string                            $templateFolder
  *
- * @global CMain $APPLICATION
- * @global CDatabase $DB
+ * @global CMain                          $APPLICATION
+ * @global CDatabase                      $DB
  */
 
 ?>
@@ -31,7 +31,7 @@ use FourPaws\Decorators\SvgDecorator;
                        name="email"
                        id="feedback"
                        placeholder="Адрес эл. почты"
-                       value="<?= $arResult['EMAIL'] ?>"/>
+                       value="<?= $arResult['EMAIL'] ?>" />
                 <button class="b-button b-button--form-inline b-button--feedback">
                 <span class="b-icon">
                     <?= new SvgDecorator('icon-check', 16, 16) ?>
