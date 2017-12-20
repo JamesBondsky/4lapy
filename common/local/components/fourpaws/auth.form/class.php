@@ -87,6 +87,9 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 if (!empty($curUser->getExternalAuthId() && empty($curUser->getPersonalPhone()))) {
                     $this->arResult['STEP'] = 'addPhone';
                 }
+                else{
+                    $this->arResult['NAME'] = $curUser->getName() ?? $curUser->getLogin();
+                }
             }
             $this->setSocial();
             $this->includeComponentTemplate();
