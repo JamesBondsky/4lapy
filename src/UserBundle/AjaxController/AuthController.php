@@ -80,7 +80,7 @@ class AuthController extends Controller
                 return $loginClass->ajaxResendSms($phone);
                 break;
             case 'savePhone':
-                return $loginClass->ajaxSavePhone($phone);
+                return $loginClass->ajaxSavePhone($phone, $request->get('confirmCode', ''));
                 break;
             case 'get':
                 return $loginClass->ajaxGet($request, $phone);
@@ -101,7 +101,6 @@ class AuthController extends Controller
     {
         $action = $request->get('action');
         /** @noinspection PhpUnusedLocalVariableInspection */
-        $phone = $request->get('phone');
         
         \CBitrixComponent::includeComponentClass('fourpaws:register');
         /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
@@ -109,16 +108,16 @@ class AuthController extends Controller
         
         switch ($action) {
             case 'resendSms':
-                return $registerClass->ajaxResendSms($phone);
+                return $registerClass->ajaxResendSms($request->get('phone', ''));
                 break;
             case 'register':
                 return $registerClass->ajaxRegister($request->request->getIterator()->getArrayCopy());
                 break;
             case 'savePhone':
-                return $registerClass->ajaxSavePhone($request->request->getIterator()->getArrayCopy());
+                return $registerClass->ajaxSavePhone($request);
                 break;
             case 'get':
-                return $registerClass->ajaxGet($request, $phone);
+                return $registerClass->ajaxGet($request);
                 break;
         }
         
@@ -130,6 +129,10 @@ class AuthController extends Controller
      * @param Request $request
      *
      * @return \FourPaws\App\Response\JsonResponse
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \Exception
      */
     public function forgotPasswordAction(Request $request) : JsonResponse
     {

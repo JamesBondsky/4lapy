@@ -16,6 +16,7 @@ use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\External\Exception\SmsSendErrorException;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
 use FourPaws\UserBundle\Service\ConfirmCodeInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 
@@ -34,6 +35,7 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
             
             /** @todo перешли по ссылке из письма для восстановления пароля */
             if (1 === 2) {
+                $this->arResult['EMAIL'] = 'email';
                 $this->arResult['STEP'] = 'createNewPassword';
             }
             
@@ -129,6 +131,10 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
      * @param \Symfony\Component\HttpFoundation\Request $request
      *
      * @return \FourPaws\App\Response\JsonResponse
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws \Exception
      */
     public function ajaxGet($request) : JsonResponse
     {
@@ -157,6 +163,28 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
         
         switch ($step) {
             case 'createNewPassword':
+                if(!empty($phone)) {
+                    try {
+                        $res = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::checkConfirmSms(
+                            $phone,
+                            $request->get('confirmCode')
+                        );
+                        if (!$res) {
+                            return JsonErrorResponse::create(
+                                'Код подтверждения не соответствует'
+                            );
+                        }
+                    } catch (ExpiredConfirmCodeException $e) {
+                        return JsonErrorResponse::create(
+                            $e->getMessage()
+                        );
+                    } catch (WrongPhoneNumberException $e) {
+                        return JsonErrorResponse::create(
+                            $e->getMessage()
+                        );
+                    }
+                }
+                
                 /** @noinspection PhpUnusedLocalVariableInspection */
                 $login = !empty($phone) ? $phone : $email;
                 break;
