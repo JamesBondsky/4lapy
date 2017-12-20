@@ -17,12 +17,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
-//global $APPLICATION;
+global $APPLICATION;
 $product = $APPLICATION->IncludeComponent(
     'fourpaws:catalog.element.detail',
     'catalog',
     [
-        'CODE' => $arResult['VARIABLES']['ELEMENT_ID'],
+        'CODE' => $arResult['VARIABLES']['ELEMENT_CODE'],
     ],
     $component
 );
