@@ -50,6 +50,29 @@ abstract class IblockSection extends BitrixArrayItemBase
     protected $SECTION_PAGE_URL = '';
 
     /**
+     * @var int
+     */
+    protected $ELEMENT_CNT = 0;
+
+    /**
+     * @return int
+     */
+    public function getElementCount(): int
+    {
+        return $this->ELEMENT_CNT;
+    }
+
+    /**
+     * @param int $ELEMENT_CNT
+     * @return IblockSection
+     */
+    public function setElementCount(int $ELEMENT_CNT): IblockSection
+    {
+        $this->ELEMENT_CNT = $ELEMENT_CNT;
+        return $this;
+    }
+
+    /**
      * @return int
      */
     public function getDepthLevel(): int
