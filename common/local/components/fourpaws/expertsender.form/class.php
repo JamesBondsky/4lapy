@@ -6,9 +6,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 
+/** @noinspection AutoloadingIssuesInspection */
 class FourPawsExpertsenderFormComponent extends \CBitrixComponent
 {
     /**
@@ -28,7 +30,7 @@ class FourPawsExpertsenderFormComponent extends \CBitrixComponent
             $container = Application::getInstance()->getContainer();
             $this->authorizationProvider = $container->get(UserAuthorizationInterface::class);
             $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
-        } catch (\FourPaws\App\Exceptions\ApplicationCreateException $e) {
+        } catch (ApplicationCreateException $e) {
             $logger = LoggerFactory::create('component');
             $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
             /** @noinspection PhpUnhandledExceptionInspection */
@@ -40,6 +42,10 @@ class FourPawsExpertsenderFormComponent extends \CBitrixComponent
     public function executeComponent()
     {
         try {
+            $this->arResult['EMAIL'] = '';
+            if ($this->getAuthorizationProvider()->isAuthorized()) {
+                $this->arResult['EMAIL'] = $this->getCurrentUserProvider()->getCurrentUser()->getEmail();
+            }
             $this->includeComponentTemplate();
         } catch (\Exception $e) {
             try {
