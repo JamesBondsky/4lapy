@@ -42,8 +42,6 @@ services:
 
   location.service:
     class: FourPaws\Location\LocationService
-    arguments:
-      - '@bx.hlblock.cities'
 
   health.service:
     class: FourPaws\Health\HealthService
