@@ -25,6 +25,15 @@ class User
      * @Assert\Blank(groups={"create"})
      */
     protected $id;
+    
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("EXTERNAL_AUTH_ID")
+     * @Serializer\SkipWhenEmpty()
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $externalAuthId = 0;
 
     /**
      * @var bool
@@ -412,9 +421,26 @@ class User
     }
     
     /**
+     * @return string
+     */
+    public function getExternalAuthId() : string
+    {
+        return $this->externalAuthId ?? '';
+    }
+    
+    /**
+     * @param string $externalAuthId
+     */
+    public function setExternalAuthId(string $externalAuthId)
+    {
+        $this->externalAuthId = $externalAuthId;
+    }
+    
+    /**
      * @param string $password
      *
      * @return bool
+     *
      */
     public function equalPassword(string $password) : bool
     {
