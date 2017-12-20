@@ -102,7 +102,6 @@ class InnerPickupService extends DeliveryServiceHandlerBase
 
         $result->setDeliveryPrice(0);
 
-
         return $result;
     }
 }

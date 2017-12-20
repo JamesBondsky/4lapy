@@ -30,7 +30,7 @@ $this->setFrameMode(true);
             <p>Доставка и оплата зависит от вашего местоположения, выберите город или населенный пункт, где вы хотите
                 получить заказ</p>
             <div class="b-form-inline b-form-inline--search b-form-inline--delivery">
-                <form class="b-form-inline__form b-form-inline__form--search b-form-inline__form--delivery js-popover-search">
+                <form class="b-form-inline__form b-form-inline__form--search b-form-inline__form--delivery js-popover-search" action="<?= $arResult['DELIVERY_INFO_URL'] ?>">
                     <input class="b-input"
                            type="text"
                            id="header-search"
