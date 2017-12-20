@@ -4,6 +4,8 @@ namespace FourPaws\Catalog\Model;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Elastica\Query\AbstractQuery;
 use Elastica\Query\Simple;
 use Elastica\Query\Terms;
@@ -39,11 +41,18 @@ class Category extends IblockSection implements FilterInterface
      * @var CatalogService
      */
     protected $catalogService;
-
+    /**
+     * @var static
+     */
+    protected $parent;
+    /**
+     * @var Collection|static[]
+     */
+    protected $child;
     /**
      * @var FilterCollection
      */
-    private $filterList = null;
+    private $filterList;
 
     /**
      * Category constructor.
@@ -59,13 +68,14 @@ class Category extends IblockSection implements FilterInterface
         $this->catalogService = Application::getInstance()->getContainer()->get('catalog.service');
         //По умолчанию фильтр по категории невидим.
         $this->setVisible(false);
+        $this->child = new ArrayCollection();
     }
 
     /**
      * @param array $fields
      *
-     * @return Category
      * @throws IblockNotFoundException
+     * @return Category
      */
     public static function createRoot(array $fields = [])
     {
@@ -87,21 +97,81 @@ class Category extends IblockSection implements FilterInterface
     }
 
     /**
+     * @return null|static
+     */
+    public function getParent()
+    {
+        if (null === $this->parent) {
+            if (1 === $this->getDepthLevel()) {
+                $parent = (new static())
+                    ->withId(0)
+                    ->withName(static::ROOT_SECTION_NAME)
+                    ->withCode(static::ROOT_SECTION_CODE)
+                    ->withSectionPageUrl('/catalog/')
+                    ->withListPageUrl('/catalog/');
+                $this->withParent($parent);
+            }
+            if ($this->getIblockSectionId()) {
+                $parent = (new CategoryQuery())
+                    ->withFilterParameter('ID', $this->getIblockSectionId())
+                    ->exec()
+                    ->first();
+                $this->withParent($parent);
+            }
+        }
+        return $this->parent;
+    }
+
+    /**
+     * @param Category $parent
+     *
      * @return Category
      */
-    public function getSymlink()
+    public function withParent(Category $parent): Category
     {
-        if (is_null($this->symlink)) {
-            /**
-             * Обязательно запрашивается активный раздел, т.к. на него будет ссылка
-             * и при деактивации целевого раздела показывать битую ссылку плохо.
-             */
-            $this->symlink = (new CategoryQuery())->withFilterParameter('=ID', (int)$this->UF_SYMLINK)
-                                                  ->exec()
-                                                  ->current();
+        $this->parent = $parent;
+        return $this;
+    }
+
+    /**
+     * @param bool $hasElements
+     *
+     * @return Category[]|Collection
+     */
+    public function getChild(bool $hasElements = true): Collection
+    {
+        if (null === $this->child) {
+            $this->child = new ArrayCollection();
         }
 
-        return $this->symlink;
+        if (0 === $this->child->count() && $this->getRightMargin() - $this->getLeftMargin() > 1) {
+            $this->child = (new CategoryQuery())
+                ->withFilterParameter('SECTION_ID', $this->getId())
+                ->withFilterParameter('CNT_ACTIVE', 'Y')
+                ->withOrder(['SORT' => 'ASC'])
+                ->withCountElements(true)
+                ->exec();
+            $this->child->map(function (Category $category) {
+                $category->withParent($this);
+            });
+        }
+
+        $result = $this->child;
+        if ($hasElements) {
+            $result = $result->filter(function (Category $category) {
+                return $category->getElementCount() > 0;
+            });
+        }
+
+        return $result;
+    }
+
+    public function withChild(Collection $collection)
+    {
+        $collection = $collection->filter(function ($value) {
+            return $value instanceof static;
+        });
+        $this->child = $collection;
     }
 
     /**
@@ -121,8 +191,26 @@ class Category extends IblockSection implements FilterInterface
     }
 
     /**
-     * @return FilterCollection
+     * @return Category
+     */
+    public function getSymlink()
+    {
+        if (is_null($this->symlink)) {
+            /**
+             * Обязательно запрашивается активный раздел, т.к. на него будет ссылка
+             * и при деактивации целевого раздела показывать битую ссылку плохо.
+             */
+            $this->symlink = (new CategoryQuery())->withFilterParameter('=ID', (int)$this->UF_SYMLINK)
+                ->exec()
+                ->current();
+        }
+
+        return $this->symlink;
+    }
+
+    /**
      * @throws Exception
+     * @return FilterCollection
      */
     public function getFilters(): FilterCollection
     {
@@ -148,11 +236,11 @@ class Category extends IblockSection implements FilterInterface
             //Если это не корневой раздел
             if ($this->getId() > 0) {
                 $categoryQuery->withFilterParameter('LEFT_MARGIN', $this->getLeftMargin())
-                              ->withFilterParameter('RIGHT_MARGIN', $this->getRightMargin());
+                    ->withFilterParameter('RIGHT_MARGIN', $this->getRightMargin());
             }
 
             $categoryCollection = $categoryQuery->withOrder(['LEFT_MARGIN' => 'ASC'])
-                                                ->exec();
+                ->exec();
 
             $variants = [];
 
@@ -165,8 +253,8 @@ class Category extends IblockSection implements FilterInterface
                  * т.к. мы по умолчанию ищем по разделу и всем подразделам
                  */
                 $variants[] = (new Variant())->withName($category->getName())
-                                             ->withValue($category->getId())
-                                             ->withChecked(true);
+                    ->withValue($category->getId())
+                    ->withChecked(true);
             }
 
             return $variants;
@@ -174,8 +262,8 @@ class Category extends IblockSection implements FilterInterface
 
         /** @var Variant[] $variants */
         $variants = (new BitrixCache())->withId(__METHOD__ . $this->getId())
-                                       ->withIblockTag($this->getIblockId())
-                                       ->resultOf($doGetAllVariants);
+            ->withIblockTag($this->getIblockId())
+            ->resultOf($doGetAllVariants);
 
         return new VariantCollection($variants);
     }
@@ -211,6 +299,14 @@ class Category extends IblockSection implements FilterInterface
     /**
      * @inheritdoc
      */
+    public function getRuleCode(): string
+    {
+        return 'sectionIdList';
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function getFilterCode(): string
     {
         return 'Category';
@@ -228,19 +324,10 @@ class Category extends IblockSection implements FilterInterface
     }
 
     /**
-     * @inheritdoc
-     */
-    public function getRuleCode(): string
-    {
-        return 'sectionIdList';
-    }
-
-    /**
      * @param Request $request
      */
     public function initState(Request $request)
     {
         // TODO: Implement initState() method для древовидного фильтра.
     }
-
 }

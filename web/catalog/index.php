@@ -23,7 +23,8 @@ try {
             ),
             'SEF_FOLDER'        => '/catalog/',
             'SEF_URL_TEMPLATES' => [
-                'sections' => '',
+                'root'     => '',
+                'sections' => '#SECTION_CODE#/',
                 'section'  => '#SECTION_CODE_PATH#/',
                 'element'  => '#SECTION_CODE_PATH#/#ELEMENT_CODE#/',
             ],

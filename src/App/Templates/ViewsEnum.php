@@ -30,4 +30,6 @@ final class ViewsEnum
     const PRODUCT_DETAIL_DESCRIPTION_TAB_HEADER = 'product.detail.description.tab.header';
 
     const PRODUCT_DETAIL_DESCRIPTION_TAB = 'product.detail.description.tab';
+
+    const CATALOG_CATEGORIES_LIST = 'catalog.categories.list';
 }
