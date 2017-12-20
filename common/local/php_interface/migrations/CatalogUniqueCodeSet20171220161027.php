@@ -42,11 +42,13 @@ class CatalogUniqueCodeSet20171220161027 extends SprintMigrationBase
 
         $this->log()->debug(sprintf('Найдено: %s неуникальных кодов', \count($codes)));
         if ($codes) {
+            /** @noinspection PhpUnhandledExceptionInspection */
             $sections = $this->getBaseQuery()
                 ->addSelect('ID')
                 ->addSelect('CODE')
                 ->addSelect('NAME')
                 ->addFilter('CODE', $codes)
+                ->addOrder('DEPTH_LEVEL', 'DESC')
                 ->exec()
                 ->fetchAll();
 
@@ -96,23 +98,6 @@ class CatalogUniqueCodeSet20171220161027 extends SprintMigrationBase
             ->addFilter('IBLOCK.IBLOCK_TYPE_ID', IblockType::CATALOG);
     }
 
-    protected function generate(string $name)
-    {
-        $config = [
-            'max_len'               => 100,
-            'change_case'           => 'L',
-            'replace_space'         => '-',
-            'replace_other'         => '-',
-            'delete_repeat_replace' => true,
-        ];
-
-        return \CUtil::translit($name, 'ru', $config);
-    }
-
-    public function down()
-    {
-    }
-
     protected function getUniqueCode(string $name)
     {
         $i = 0;
@@ -131,11 +116,28 @@ class CatalogUniqueCodeSet20171220161027 extends SprintMigrationBase
         return $code;
     }
 
+    protected function generate(string $name)
+    {
+        $config = [
+            'max_len'               => 100,
+            'change_case'           => 'L',
+            'replace_space'         => '-',
+            'replace_other'         => '-',
+            'delete_repeat_replace' => true,
+        ];
+
+        return \CUtil::translit($name, 'ru', $config);
+    }
+
     protected function isUnique(string $code): bool
     {
-        return 0 === $this->getBaseQuery()
+        return 1 >= $this->getBaseQuery()
                 ->addFilter('CODE', $code)
                 ->exec()
                 ->getSelectedRowsCount();
+    }
+
+    public function down()
+    {
     }
 }
