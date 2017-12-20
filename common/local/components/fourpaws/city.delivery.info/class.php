@@ -1,28 +1,46 @@
-<?php if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
+<?php
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use Bitrix\Main\SystemException;
+use Bitrix\Sale\Delivery\CalculationResult;
 use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use Bitrix\Sale\Delivery\CalculationResult;
+use FourPaws\UserBundle\Service\UserCitySelectInterface;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
+use Psr\Log\LogLevel;
 
-class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
+class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent implements LoggerAwareInterface
 {
+    use LoggerAwareTrait;
 
-    /** {@inheritdoc} */
+    public function __construct(CBitrixComponent $component = null)
+    {
+        parent::__construct($component);
+
+        $this->setLogger(LoggerFactory::create('component'));
+    }
+
+    /**
+     * @param $params
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @return array
+     */
     public function onPrepareComponentParams($params): array
     {
         if (empty($params['LOCATION_CODE'])) {
             /** @var \FourPaws\UserBundle\Service\UserService $userService */
             $userService = Application::getInstance()
-                                      ->getContainer()
-                                      ->get('FourPaws\UserBundle\Service\UserCitySelectInterface');
+                ->getContainer()
+                ->get(UserCitySelectInterface::class);
             $params['LOCATION_CODE'] = $userService->getSelectedCity()['CODE'];
         }
 
-        return $params;
+        return parent::onPrepareComponentParams($params);
     }
 
     /** {@inheritdoc} */
@@ -30,23 +48,22 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
     {
         try {
             if ($this->startResultCache()) {
+                parent::executeComponent();
                 $this->prepareResult();
 
                 $this->includeComponentTemplate();
             }
         } catch (\Exception $e) {
-            try {
-                $logger = LoggerFactory::create('component');
-                $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
-            } catch (\RuntimeException $e) {
-            }
+            $this->log(LogLevel::ERROR, sprintf('Component execute error: %s', $e->getMessage()), $e->getTrace());
         }
     }
 
     /**
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @return $this
      *
-     * @throws SystemException
      */
     protected function prepareResult()
     {
@@ -56,8 +73,8 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
         $locationService = Application::getInstance()->getContainer()->get('location.service');
         /** @var \FourPaws\UserBundle\Service\UserService $userService */
         $userService = Application::getInstance()
-                                  ->getContainer()
-                                  ->get('FourPaws\UserBundle\Service\UserCitySelectInterface');
+            ->getContainer()
+            ->get(UserCitySelectInterface::class);
 
         $defaultCity = $locationService->getDefaultLocation();
         $currentCity = $userService->getSelectedCity();
@@ -73,7 +90,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
             )
         );
 
-        if ($defaultCity['CODE'] == $currentCity['CODE']) {
+        if ($defaultCity['CODE'] === $currentCity['CODE']) {
             $currentResult = $defaultResult;
         } else {
             /** @var CalculationResult $currentResult */
@@ -88,7 +105,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
             );
         }
 
-        if (empty($currentResult)) {
+        if (!$currentResult) {
             $this->abortResultCache();
 
             return $this;
@@ -113,5 +130,17 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
         ];
 
         return $this;
+    }
+
+    /**
+     * @param       $level
+     * @param       $message
+     * @param array $context
+     */
+    protected function log($level, $message, array $context = [])
+    {
+        if ($this->logger) {
+            $this->logger->log($level, $message, $context);
+        }
     }
 }

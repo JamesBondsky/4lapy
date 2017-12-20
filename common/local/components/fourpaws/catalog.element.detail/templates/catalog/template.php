@@ -58,31 +58,31 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_SLIDER_VIEW);
                 <div class="b-product-slider__item b-product-slider__item--big">
                     <div class="b-product-slider__wrapper b-product-slider__wrapper--big">
                         <img class="b-product-slider__photo-img b-product-slider__photo-img--big js-image-wrapper"
-                             src="images/content/pro-plan.jpg" alt="" title="" role="presentation"/>
+                             src="/static/build/images/content/pro-plan.jpg" alt="" title="" role="presentation"/>
                     </div>
                 </div>
                 <div class="b-product-slider__item b-product-slider__item--big">
                     <div class="b-product-slider__wrapper b-product-slider__wrapper--big">
                         <img class="b-product-slider__photo-img b-product-slider__photo-img--big js-image-wrapper"
-                             src="images/content/clean-cat.jpg" alt="" title="" role="presentation"/>
+                             src="/static/build/images/content/clean-cat.jpg" alt="" title="" role="presentation"/>
                     </div>
                 </div>
                 <div class="b-product-slider__item b-product-slider__item--big">
                     <div class="b-product-slider__wrapper b-product-slider__wrapper--big">
                         <img class="b-product-slider__photo-img b-product-slider__photo-img--big js-image-wrapper"
-                             src="images/content/brit.png" alt="" title="" role="presentation"/>
+                             src="/static/build/images/content/brit.png" alt="" title="" role="presentation"/>
                     </div>
                 </div>
                 <div class="b-product-slider__item b-product-slider__item--big">
                     <div class="b-product-slider__wrapper b-product-slider__wrapper--big">
                         <img class="b-product-slider__photo-img b-product-slider__photo-img--big js-image-wrapper"
-                             src="images/content/royal-canin-2.jpg" alt="" title="" role="presentation"/>
+                             src="/static/build/images/content/royal-canin-2.jpg" alt="" title="" role="presentation"/>
                     </div>
                 </div>
                 <div class="b-product-slider__item b-product-slider__item--big">
                     <div class="b-product-slider__wrapper b-product-slider__wrapper--big">
                         <img class="b-product-slider__photo-img b-product-slider__photo-img--big js-image-wrapper"
-                             src="images/content/abba.png" alt="" title="" role="presentation"/>
+                             src="/static/build/images/content/abba.png" alt="" title="" role="presentation"/>
                     </div>
                 </div>
             </div>
@@ -90,31 +90,31 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_SLIDER_VIEW);
                 <div class="b-product-slider__item b-product-slider__item--small">
                     <div class="b-product-slider__wrapper b-product-slider__wrapper--small">
                         <img class="b-product-slider__photo-img b-product-slider__photo-img--small js-image-wrapper"
-                             src="images/content/pro-plan.jpg" alt="" title="" role="presentation"/>
+                             src="/static/build/images/content/pro-plan.jpg" alt="" title="" role="presentation"/>
                     </div>
                 </div>
                 <div class="b-product-slider__item b-product-slider__item--small">
                     <div class="b-product-slider__wrapper b-product-slider__wrapper--small">
                         <img class="b-product-slider__photo-img b-product-slider__photo-img--small js-image-wrapper"
-                             src="images/content/clean-cat.jpg" alt="" title="" role="presentation"/>
+                             src="/static/build/images/content/clean-cat.jpg" alt="" title="" role="presentation"/>
                     </div>
                 </div>
                 <div class="b-product-slider__item b-product-slider__item--small">
                     <div class="b-product-slider__wrapper b-product-slider__wrapper--small">
                         <img class="b-product-slider__photo-img b-product-slider__photo-img--small js-image-wrapper"
-                             src="images/content/brit.png" alt="" title="" role="presentation"/>
+                             src="/static/build/images/content/brit.png" alt="" title="" role="presentation"/>
                     </div>
                 </div>
                 <div class="b-product-slider__item b-product-slider__item--small">
                     <div class="b-product-slider__wrapper b-product-slider__wrapper--small">
                         <img class="b-product-slider__photo-img b-product-slider__photo-img--small js-image-wrapper"
-                             src="images/content/royal-canin-2.jpg" alt="" title="" role="presentation"/>
+                             src="/static/build/images/content/royal-canin-2.jpg" alt="" title="" role="presentation"/>
                     </div>
                 </div>
                 <div class="b-product-slider__item b-product-slider__item--small">
                     <div class="b-product-slider__wrapper b-product-slider__wrapper--small">
                         <img class="b-product-slider__photo-img b-product-slider__photo-img--small js-image-wrapper"
-                             src="images/content/abba.png" alt="" title="" role="presentation"/>
+                             src="/static/build/images/content/abba.png" alt="" title="" role="presentation"/>
                     </div>
                 </div>
             </div>
@@ -267,7 +267,7 @@ $this->EndViewTarget();
 
 $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB_HEADER);
 ?>
-    <li class="b-tab-title__item active">
+    <li class="b-tab-title__item js-tab-item active">
         <a class="b-tab-title__link js-tab-link"
            href="javascript:void(0);" title="Описание"
            data-tab="description"><span class="b-tab-title__text">Описание</span></a>

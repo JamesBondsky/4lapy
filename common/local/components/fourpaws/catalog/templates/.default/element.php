@@ -1,10 +1,11 @@
 <?php
 /**
- * @var CMain   $APPLICATION
- * @var array   $arParams
- * @var array   $arResult
- * @var Product $product
- * @var Offer   $offer
+ * @var CMain            $APPLICATION
+ * @var array            $arParams
+ * @var array            $arResult
+ * @var Product          $product
+ * @var Offer            $offer
+ * @var CBitrixComponent $component
  */
 
 use FourPaws\App\Templates\ViewsEnum;
@@ -22,16 +23,17 @@ $product = $APPLICATION->IncludeComponent(
     'catalog',
     [
         'CODE' => $arResult['VARIABLES']['ELEMENT_ID'],
-    ]
+    ],
+    $component
 );
 
-$APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab', []);
+$APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab', [], $component);
 
 ?>
     <div class="b-product-card">
         <div class="b-container">
             <?php
-            $APPLICATION->IncludeComponent('fourpaws:catalog.breadcrumbs', 'product', []);
+            $APPLICATION->IncludeComponent('fourpaws:catalog.breadcrumbs', 'product', [], $component);
             ?>
             <div class="b-product-card__top">
                 <div class="b-product-card__title-product">
@@ -70,21 +72,23 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                 <div class="b-advice">
                     <h2 class="b-title b-title--advice">Часто берут вместе</h2>
                     <div class="b-advice__list">
-                        <div class="b-advice__list-items"><a class="b-advice__item" href="javascript:void(0)"
-                                                             title=""><span
-                                        class="b-advice__image-wrapper"><img class="b-advice__image"
-                                                                             src="../images/content/akana.png" alt=""
-                                                                             title="" role="presentation"/></span><span
-                                        class="b-advice__block"><span
-                                            class="b-clipped-text b-clipped-text--advice"><span><strong>Акана</strong> корм для собак всех пород ягненок/яблоки</span></span><span
-                                            class="b-advice__info"><span class="b-advice__weight">6 кг</span><span
+                        <div class="b-advice__list-items">
+                            <a class="b-advice__item" href="javascript:void(0)" title="">
+                                <span class="b-advice__image-wrapper"><img class="b-advice__image"
+                                                                           src="/static/build/images/content/akana.png"
+                                                                           alt=""
+                                                                           title="" role="presentation"/></span>
+                                <span class="b-advice__block"><span
+                                            class="b-clipped-text b-clipped-text--advice"><span><strong>Акана</strong> корм для собак всех пород ягненок/яблоки</span></span>
+                                    <span class="b-advice__info"><span class="b-advice__weight">6 кг</span><span
                                                 class="b-advice__cost">3 719 <span
-                                                    class="b-ruble b-ruble--advice">₽</span></span></span></span></a>
-                            <div
-                                    class="b-advice__sign b-advice__sign--plus"></div>
+                                                    class="b-ruble b-ruble--advice">₽</span></span></span></span>
+                            </a>
+                            <div class="b-advice__sign b-advice__sign--plus"></div>
                             <a class="b-advice__item" href="javascript:void(0)" title=""><span
                                         class="b-advice__image-wrapper"><img class="b-advice__image"
-                                                                             src="../images/content/food-1.jpg" alt=""
+                                                                             src="/static/build/images/content/food-1.jpg"
+                                                                             alt=""
                                                                              title="" role="presentation"/></span><span
                                         class="b-advice__block"><span
                                             class="b-clipped-text b-clipped-text--advice"><span><strong>Хиллс</strong> корм для собак с курицей консервы</span></span><span
@@ -95,7 +99,7 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                                     class="b-advice__sign b-advice__sign--plus"></div>
                             <a class="b-advice__item" href="javascript:void(0)" title=""><span
                                         class="b-advice__image-wrapper"><img class="b-advice__image"
-                                                                             src="../images/content/fresh-step.png"
+                                                                             src="/static/build/images/content/fresh-step.png"
                                                                              alt=""
                                                                              title="" role="presentation"/></span><span
                                         class="b-advice__block"><span
@@ -111,10 +115,10 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                                 <a class="b-advice__basket-link" href="javascript:void(0)" title="">
                                     <span class="b-advice__basket-text">В корзину</span>
                                     <span class="b-icon b-icon--advice"><?= new SvgDecorator(
-                            'icon-cart',
-                            20,
+                                            'icon-cart',
+                                            20,
                                             20
-                        ) ?></span>
+                                        ) ?></span>
                                 </a>
                             </div>
                         </div>
@@ -131,7 +135,7 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                             /**
                              * @todo Состава пока нет
                              */
-                            //<li class="b-tab-title__item">
+                            //<li class="b-tab-title__item js-tab-item">
                             //    <a class="b-tab-title__link js-tab-link"
                             //    href="javascript:void(0);" title="Состав"
                             //    data-tab="composition"><span
@@ -140,7 +144,7 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                             /**
                              * @todo Рекоммендация по питанию пока нет
                              */
-                            /*<li class="b-tab-title__item">
+                            /*<li class="b-tab-title__item js-tab-item">
                                 <a class="b-tab-title__link js-tab-link"
                                    href="javascript:void(0);" title="Рекомендации по питанию"
                                    data-tab="recommendations"><span class="b-tab-title__text">Рекомендации по питанию</span></a>
@@ -148,18 +152,18 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
 
                             $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_RATING_TAB_HEADER_VIEW);
                             ?>
-                            <li class="b-tab-title__item">
+                            <li class="b-tab-title__item js-tab-item">
                                 <a class="b-tab-title__link js-tab-link"
                                    href="javascript:void(0);" title="Доставка и оплата"
                                    data-tab="data"><span class="b-tab-title__text">Доставка и оплата</span></a>
                             </li>
-                            <li class="b-tab-title__item">
+                            <li class="b-tab-title__item js-tab-item">
                                 <a class="b-tab-title__link js-tab-link"
                                    href="javascript:void(0);" title="Наличие в магазинах"
                                    data-tab="availability"><span class="b-tab-title__text">Наличие в магазинах<span
                                                 class="b-tab-title__number">(21)</span></span></a>
                             </li>
-                            <li class="b-tab-title__item">
+                            <li class="b-tab-title__item js-tab-item">
                                 <a class="b-tab-title__link js-tab-link"
                                    href="javascript:void(0);" title="Акция"
                                    data-tab="shares"><span class="b-tab-title__text">Акция</span></a>
@@ -343,7 +347,8 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                                                 class="b-advice__item b-advice__item--stock"
                                                 href="javascript:void(0)" title=""><span
                                                     class="b-advice__image-wrapper b-advice__image-wrapper--stock"><img
-                                                        class="b-advice__image" src="../images/content/fresh-step.png"
+                                                        class="b-advice__image"
+                                                        src="/static/build/images/content/fresh-step.png"
                                                         alt="" title="" role="presentation"/></span><span
                                                     class="b-advice__block b-advice__block--stock"><span
                                                         class="b-advice__text b-advice__text--red">Подарок по акции</span><span
@@ -362,7 +367,7 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                                 <div class="b-common-item b-common-item--catalog-item js-product-item"><span
                                             class="b-common-item__image-wrap"><img
                                                 class="b-common-item__image js-weight-img"
-                                                src="images/content/royal-canin-2.jpg" alt="Роял Канин"
+                                                src="/static/build/images/content/royal-canin-2.jpg" alt="Роял Канин"
                                                 title=""/></span>
                                     <div class="b-common-item__info-center-block"><a
                                                 class="b-common-item__description-wrap"
@@ -787,8 +792,4 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
             </div>
         </div>
     </div>
-
 <?php
-
-
-dump($product);
