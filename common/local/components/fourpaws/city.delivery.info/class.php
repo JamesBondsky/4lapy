@@ -3,13 +3,13 @@
 }
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use Bitrix\Main\SystemException;
 use FourPaws\App\Application;
 use FourPaws\Location\Model\City;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use Bitrix\Sale\Delivery\CalculationResult;
 
+/** @noinspection AutoloadingIssuesInspection */
 class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
 {
     const PICKUP_CODES = [
@@ -56,8 +56,6 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
 
     /**
      * @return $this
-     *
-     * @throws SystemException
      */
     protected function prepareResult()
     {
@@ -78,7 +76,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
         /** @var City $defaultCity */
         $defaultCity = $locationService->getDefaultCity();
 
-        if ($defaultLocation['CODE'] == $currentLocation['CODE']) {
+        if ($defaultLocation['CODE'] === $currentLocation['CODE']) {
             $currentDeliveryResult = $defaultDeliveryResult;
             $currentPickupResult = $defaultPickupResult;
             $currentCity = $defaultCity;
@@ -91,7 +89,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
             $currentCity = $locationService->getCurrentCity();
         }
 
-        if (empty($currentDeliveryResult) || empty($currentCity)) {
+        if (null === $defaultCity || null === $currentCity || null === $currentDeliveryResult) {
             $this->abortResultCache();
 
             return $this;
@@ -162,13 +160,9 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
     {
         /** @var DeliveryService $deliveryService */
         $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+        $deliveries = $deliveryService->getByLocation($locationCode, $possibleDeliveryCodes);
 
         /** @var CalculationResult $defaultResult */
-        return reset(
-            $deliveryService->getByLocation(
-                $locationCode,
-                $possibleDeliveryCodes
-            )
-        );
+        return reset($deliveries);
     }
 }

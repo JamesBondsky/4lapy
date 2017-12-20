@@ -3,9 +3,9 @@
 }
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use Bitrix\Main\SystemException;
 use FourPaws\App\Application;
 
+/** @noinspection AutoloadingIssuesInspection */
 class FourPawsCitySelectorComponent extends \CBitrixComponent
 {
 
@@ -33,8 +33,6 @@ class FourPawsCitySelectorComponent extends \CBitrixComponent
 
     /**
      * @return $this
-     *
-     * @throws SystemException
      */
     protected function prepareResult()
     {
@@ -50,9 +48,15 @@ class FourPawsCitySelectorComponent extends \CBitrixComponent
                                   ->getContainer()
                                   ->get('FourPaws\UserBundle\Service\UserCitySelectInterface');
 
-        $this->arResult['CITY_SET_URL'] = $routes->get('fourpaws_user_ajax_city_set')->getPath();
-        $this->arResult['CITY_GET_URL'] = $routes->get('fourpaws_user_ajax_city_get')->getPath();
-        $this->arResult['CITY_AUTOCOMPLETE_URL'] = $routes->get('location.city.autocomplete')->getPath();
+        if ($citySetRoute = $routes->get('fourpaws_user_ajax_city_set')) {
+            $this->arResult['CITY_SET_URL'] = $citySetRoute->getPath();
+        }
+        if ($cityGetRoute = $routes->get('fourpaws_user_ajax_city_get')) {
+            $this->arResult['CITY_GET_URL'] = $cityGetRoute->getPath();
+        }
+        if ($cityAutocompleteRoute = $routes->get('location.city.autocomplete')) {
+            $this->arResult['CITY_AUTOCOMPLETE_URL'] = $cityAutocompleteRoute->getPath();
+        }
 
         $availableCities = $locationService->getAvailableCities();
 

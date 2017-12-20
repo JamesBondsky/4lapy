@@ -134,14 +134,15 @@ class DeliveryService
                     [
                         DeliveryService::DPD_DELIVERY_CODE,
                         DeliveryService::DPD_PICKUP_CODE,
-                    ]
+                    ],
+                    true
                 )) {
                     $calculationResult->setPeriodFrom($_SESSION['DPD_DATA'][$service->getCode()]['DPD_TARIFF']['DAYS']);
                     $calculationResult->setData(
                         array_merge(
                             $calculationResult->getData(),
                             [
-                                'INTERVALS' => $_SESSION['DPD_DATA'][$service->getCode()]['INTERVALS']
+                                'INTERVALS' => $_SESSION['DPD_DATA'][$service->getCode()]['INTERVALS'],
                             ]
                         )
                     );
@@ -165,7 +166,7 @@ class DeliveryService
         return $result;
     }
 
-    public function getAllZones($withLocations = true)
+    public function getAllZones($withLocations = true): array
     {
         return $this->locationService->getLocationGroups($withLocations);
     }
@@ -220,19 +221,17 @@ class DeliveryService
     public function getDeliveryZoneCodeByLocation($deliveryLocation, $deliveryId, $skipLocations = true)
     {
         $deliveryLocationPath = [$deliveryLocation];
-        if ($location = $this->locationService->findLocationByCode($deliveryLocation)) {
-            if ($location['PATH']) {
-                $deliveryLocationPath = array_merge(
-                    $deliveryLocationPath,
-                    array_column($location['PATH'], 'CODE')
-                );
-            }
+        if (($location = $this->locationService->findLocationByCode($deliveryLocation)) && $location['PATH']) {
+            $deliveryLocationPath = array_merge(
+                $deliveryLocationPath,
+                array_column($location['PATH'], 'CODE')
+            );
         }
 
         $availableZones = $this->getAvailableZones($deliveryId);
 
         foreach ($availableZones as $code => $zone) {
-            if ($skipLocations && $zone['TYPE'] == static::LOCATION_RESTRICTION_TYPE_LOCATION) {
+            if ($skipLocations && $zone['TYPE'] === static::LOCATION_RESTRICTION_TYPE_LOCATION) {
                 continue;
             }
             if (!empty(array_intersect($deliveryLocationPath, $zone['LOCATIONS']))) {
