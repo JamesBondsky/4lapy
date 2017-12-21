@@ -17,10 +17,12 @@ use FourPaws\Helpers\PhoneHelper;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
+use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
 use FourPaws\UserBundle\Service\ConfirmCodeInterface;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use JMS\Serializer\SerializerBuilder;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\HttpFoundation\Request;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -135,13 +137,37 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
     }
     
     /**
+     * @param \Symfony\Component\HttpFoundation\Request $request
+     *
      * @return \FourPaws\App\Response\JsonResponse
      * @throws \FourPaws\UserBundle\Exception\ValidationException
      * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Exception
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
      */
-    public function ajaxConfirmPhone() : JsonResponse
+    public function ajaxConfirmPhone(Request $request) : JsonResponse
     {
+        try {
+            $res = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::checkConfirmSms(
+                $request->get('phone'),
+                $request->get('confirmCode')
+            );
+            if (!$res) {
+                return JsonErrorResponse::create(
+                    'Код подтверждения не соответствует'
+                );
+            }
+        } catch (ExpiredConfirmCodeException $e) {
+            return JsonErrorResponse::create(
+                $e->getMessage()
+            );
+        } catch (WrongPhoneNumberException $e) {
+            return JsonErrorResponse::create(
+                $e->getMessage()
+            );
+        }
         $data = ['UF_PHONE_CONFIRMED' => 'Y'];
         try {
             if ($this->currentUserProvider->getUserRepository()->update(

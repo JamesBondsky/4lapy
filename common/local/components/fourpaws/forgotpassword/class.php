@@ -9,20 +9,58 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\SystemException;
 use FourPaws\App\Application as App;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\External\Exception\SmsSendErrorException;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\UserBundle\Entity\User;
+use FourPaws\UserBundle\Exception\BitrixRuntimeException;
+use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
 use FourPaws\UserBundle\Service\ConfirmCodeInterface;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
+use JMS\Serializer\SerializerBuilder;
+use Symfony\Component\HttpFoundation\Request;
 
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
 {
+    /**
+     * @var CurrentUserProviderInterface
+     */
+    private $currentUserProvider;
+    
+    /**
+     * FourPawsAuthFormComponent constructor.
+     *
+     * @param null|\CBitrixComponent $component
+     *
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \RuntimeException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     */
+    public function __construct(CBitrixComponent $component = null)
+    {
+        parent::__construct($component);
+        try {
+            $container = App::getInstance()->getContainer();
+        } catch (ApplicationCreateException $e) {
+            $logger = LoggerFactory::create('component');
+            $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
+            /** @noinspection PhpUnhandledExceptionInspection */
+            throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
+        }
+        $this->currentUserProvider      = $container->get(CurrentUserProviderInterface::class);
+    }
+    
+    
     /** {@inheritdoc} */
     public function executeComponent()
     {
@@ -50,42 +88,44 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
     }
     
     /**
-     * @param $phone
+     * @param \Symfony\Component\HttpFoundation\Request $request
      *
      * @return \FourPaws\App\Response\JsonResponse
+     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
      */
-    public function ajaxSavePassword($phone) : JsonResponse
+    public function ajaxSavePassword(Request $request) : JsonResponse
     {
-        if (PhoneHelper::isPhone($phone)) {
-            try {
-                $phone = PhoneHelper::normalizePhone($phone);
-            } catch (WrongPhoneNumberException $e) {
-                return JsonErrorResponse::create($e->getMessage());
-            }
-        } else {
-            return JsonErrorResponse::create(
-                'Введен некорректный номер телефона'
-            );
+        $password = $request->get('password', '');
+        $confirm_password = $request->get('confirmPassword', '');
+    
+        if(empty($password) || empty($confirm_password)){
+            return JsonErrorResponse::create('Должны быть заполнены все поля');
         }
-        
+    
+        if(\strlen($password) < 6){
+            return JsonErrorResponse::create('Пароль должен содержать минимум 6 символов');
+        }
+    
+        if($password !== $confirm_password){
+            return JsonErrorResponse::create('Пароли не соответсвуют');
+        }
+    
         try {
-            $res = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::sendConfirmSms($phone);
+            /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+            $res = $this->currentUserProvider->getUserRepository()->update(
+                SerializerBuilder::create()->build()->fromArray(['PASSWORD' => $password], User::class)
+            );
             if (!$res) {
-                return JsonErrorResponse::create(
-                    'Ошибка при отправке смс'
-                );
+                return JsonErrorResponse::create('Произошла ошибка при обновлении');
             }
-        } catch (SmsSendErrorException $e) {
-            JsonErrorResponse::create('Ошибка отправки смс, попробуйте позднее');
-        } catch (WrongPhoneNumberException $e) {
-            return JsonErrorResponse::create($e->getMessage());
-        } catch (\RuntimeException $e) {
-            return JsonErrorResponse::create('Непредвиденная ошибка - обратитесь к администратору');
-        } catch (\Exception $e) {
-            return JsonErrorResponse::create('Непредвиденная ошибка - обратитесь к администратору');
-        }
         
-        return JsonSuccessResponse::create('Смс отправлено');
+            return JsonSuccessResponse::create('Пароль обновлен');
+        } catch (BitrixRuntimeException $e) {
+            return JsonErrorResponse::create('Произошла ошибка при обновлении ' . $e->getMessage());
+        } catch (ConstraintDefinitionException $e) {
+        }
+    
+        return JsonErrorResponse::create('Непредвиденная ошибка');
     }
     
     /**

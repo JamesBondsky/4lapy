@@ -64,7 +64,7 @@ class AuthController extends Controller
      */
     public function loginAction(Request $request) : JsonResponse
     {
-        $action = $request->request->get('action', '');
+        $action = $request->get('action', '');
         $phone  = $request->get('phone', '');
         \CBitrixComponent::includeComponentClass('fourpaws:auth.form');
         /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
@@ -129,6 +129,7 @@ class AuthController extends Controller
      * @param Request $request
      *
      * @return \FourPaws\App\Response\JsonResponse
+     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
@@ -143,7 +144,7 @@ class AuthController extends Controller
         $forgotPasswordClass = new \FourPawsForgotPasswordFormComponent();
         switch ($action) {
             case 'savePassword':
-                return $forgotPasswordClass->ajaxSavePassword($request->get('phone', ''));
+                return $forgotPasswordClass->ajaxSavePassword($request);
                 
                 break;
             case 'resendSms':
