@@ -137,7 +137,7 @@ class DeliveryService
                     ],
                     true
                 )) {
-                    $calculationResult->setPeriodFrom($_SESSION['DPD_DATA'][$service->getCode()]['DPD_TARIFF']['DAYS']);
+                    $calculationResult->setPeriodFrom($_SESSION['DPD_DATA'][$service->getCode()]['DAYS']);
                     $calculationResult->setData(
                         array_merge(
                             $calculationResult->getData(),

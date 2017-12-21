@@ -2,9 +2,11 @@
 
 namespace FourPaws\DeliveryBundle\Dpd;
 
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\Loader;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 
 if (!Loader::includeModule('ipol.dpd')) {
     class Calculator
@@ -19,6 +21,34 @@ class Calculator extends \Ipolh\DPD\Delivery\DPD
     public static function callback($method)
     {
         return [__CLASS__, $method];
+    }
+
+    public function Calculate($profile, $arConfig, $arOrder, $STEP, $TEMP = false)
+    {
+        $result = parent::Calculate($profile, $arConfig, $arOrder, $STEP, $TEMP);
+
+        switch ($profile) {
+            case 'PICKUP':
+                $profile = DeliveryService::DPD_PICKUP_CODE;
+                break;
+            default:
+                $profile = DeliveryService::DPD_DELIVERY_CODE;
+                break;
+        }
+
+        $interval = explode('-', Option::get(IPOLH_DPD_MODULE, 'DELIVERY_TIME_PERIOD'));
+
+        $_SESSION['DPD_DATA'][$profile] = [
+            'INTERVALS' => [
+                [
+                    'FROM' => $interval[0],
+                    'TO'   => $interval[1],
+                ],
+            ],
+            'DAYS'      => $result['DPD_TARIFF']['DAYS'],
+        ];
+
+        return $result;
     }
 
     protected static function makeShipment($arOrder = false)
