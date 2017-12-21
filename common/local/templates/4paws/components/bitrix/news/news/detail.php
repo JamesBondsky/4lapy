@@ -2,8 +2,10 @@
     die();
 }
 
+use Bitrix\Iblock\IblockTable;
 use Bitrix\Main\Application;
 use FourPaws\Decorators\FullHrefDecorator;
+use FourPaws\Helpers\HighloadHelper;
 
 /** @var array $arParams */
 /** @var array $arResult */
@@ -101,8 +103,30 @@ $elementID = $APPLICATION->IncludeComponent(
             </div>
         </div>
     </div>
-<?php /** @todo сделать добавление комментариев после готовности верстки по комментариям
- * использовать компонент forum.topic.reviews
- * комментарии на базе форума */
+
+<?php
+/** @noinspection PhpUnhandledExceptionInspection */
+$arResult['IBLOCK_CODE'] = IblockTable::getList(
+    [
+        'filter' => ['ID' => $arParams['ID']],
+        'select' => ['CODE'],
+        'cache'  => ['ttl' => 360000],
+    ]
+)->fetch()['CODE'];
+/** @noinspection PhpUnhandledExceptionInspection */
+$APPLICATION->IncludeComponent(
+    'fourpaws:comments',
+    '',
+    [
+        'HL_ID'              => HighloadHelper::getIdByName('Comments'),
+        'OBJECT_ID'          => $elementID,
+        'SORT_DESC'          => 'Y',
+        'ITEMS_COUNT'        => 5,
+        'ACTIVE_DATE_FORMAT' => 'd j Y',
+        'TYPE'               => !empty($arResult['IBLOCK_CODE']) ? $arResult['IBLOCK_CODE'] : 'iblock',
+    ],
+    $component,
+    ['HIDE_ICONS' => 'Y']
+);
 
 /** @todo подумать о необходимости сниппета, лучше использовать свойства - удобнее и проще управлять */

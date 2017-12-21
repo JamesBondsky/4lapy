@@ -9,9 +9,6 @@ services:
     autoconfigure: true
     public: true
 
-  logger.factory:
-    class: Adv\Bitrixtools\Tools\Log\LoggerFactory
-
   catalog.service:
     class: FourPaws\Catalog\CatalogService
     arguments: ['@bx.hlblock.filter', '@jms_serializer', '@location.service']
@@ -45,8 +42,6 @@ services:
 
   location.service:
     class: FourPaws\Location\LocationService
-    arguments:
-      - '@bx.hlblock.cities'
 
   health.service:
     class: FourPaws\Health\HealthService
@@ -94,3 +89,13 @@ services:
   jms_serialized_name_annotation_strategy:
     class: JMS\Serializer\Naming\SerializedNameAnnotationStrategy
     arguments: ['@jms_identical_property_naming_strategy']
+
+  jms_serializer.array_or_false_handler:
+      class: FourPaws\AppBundle\Serialization\ArrayOrFalseHandler
+      tags:
+          - { name: jms_serializer.subscribing_handler }
+
+  jms_serializer.bitrix_boolean_handler:
+      class: FourPaws\AppBundle\Serialization\BitrixBooleanHandler
+      tags:
+          - { name: jms_serializer.subscribing_handler }

@@ -2,8 +2,8 @@
 
 namespace FourPaws\UserBundle\Service;
 
-use FourPaws\Location\LocationService;
 use FourPaws\Location\Exception\CityNotFoundException;
+use FourPaws\Location\LocationService;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidCredentialException;
@@ -12,6 +12,7 @@ use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Repository\UserRepository;
+use CSaleUser;
 
 class UserService implements
     CurrentUserProviderInterface,
@@ -106,6 +107,14 @@ class UserService implements
     }
 
     /**
+     * @return int
+     */
+    public function getAnonymousUserId(): int
+    {
+        return CSaleUser::GetAnonymousUserID();
+    }
+
+    /**
      * @throws NotAuthorizedException
      * @return int
      */
@@ -122,10 +131,12 @@ class UserService implements
      * @param User $user
      *
      * @return bool
+     * @throws \FourPaws\UserBundle\Exception\ValidationException
+     * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
      */
     public function register(User $user): bool
     {
-        return true;
+        return $this->userRepository->create($user);
     }
 
     /**
@@ -181,5 +192,13 @@ class UserService implements
         }
 
         return $this->locationService->getDefaultLocation();
+    }
+    
+    /**
+     * @return UserRepository
+     */
+    public function getUserRepository() : UserRepository
+    {
+        return $this->userRepository;
     }
 }

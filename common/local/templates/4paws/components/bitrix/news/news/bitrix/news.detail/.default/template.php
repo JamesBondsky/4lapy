@@ -17,12 +17,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 /** @var CBitrixComponent $component */
 $this->setFrameMode(true);
 ?>
-<div class="b-container">
+<div class="b-container" id="<?= $id ?>">
     <div class="b-detail-page b-detail-page--bordered">
         <?php if (is_array($arResult['DETAIL_PICTURE'])) { ?>
             <img src="<?= $arResult['DETAIL_PICTURE']['SRC']; ?>" />
         <?php } ?>
-        <?= $arResult['DETAIL_TEXT'] ?>
+        <?= htmlspecialcharsback($arResult['DETAIL_TEXT']) ?>
         <?php if (!$arResult['NO_SHOW_VIDEO'] && !empty($arResult['DISPLAY_PROPERTIES']['VIDEO']['DISPLAY_VALUE'])) {
             echo $arResult['DISPLAY_PROPERTIES']['VIDEO']['DISPLAY_VALUE'];
         } ?>

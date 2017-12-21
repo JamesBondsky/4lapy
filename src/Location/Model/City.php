@@ -2,12 +2,12 @@
 
 namespace FourPaws\Location\Model;
 
+use Bitrix\Main\Entity\DataManager;
 use FourPaws\App\Application;
 use FourPaws\BitrixOrm\Model\HlbItemBase;
 use FourPaws\BitrixOrm\Model\ModelInterface;
-use FourPaws\Location\Query\CityQuery;
 use FourPaws\Location\Exception\CityNotFoundException;
-use Bitrix\Main\Entity\DataManager;
+use FourPaws\Location\Query\CityQuery;
 
 /**
  * Class User
@@ -35,15 +35,15 @@ class City extends HlbItemBase
      */
     public function getName(): string
     {
-        return $this->UF_NAME;
+        return (string)$this->UF_NAME;
     }
 
     /**
-     * @return string
+     * @return array
      */
-    public function getLocation(): array
+    public function getLocations(): array
     {
-        return $this->UF_LOCATION;
+        return $this->UF_LOCATION ? $this->UF_LOCATION : [];
     }
 
     /**
@@ -51,7 +51,7 @@ class City extends HlbItemBase
      */
     public function getPhone(): string
     {
-        return $this->UF_PHONE;
+        return (string)$this->UF_PHONE;
     }
 
     /**
@@ -59,7 +59,7 @@ class City extends HlbItemBase
      */
     public function getActive(): bool
     {
-        return $this->UF_ACTIVE;
+        return (bool)$this->UF_ACTIVE;
     }
 
     /**
@@ -67,7 +67,7 @@ class City extends HlbItemBase
      */
     public function getDeliveryText(): string
     {
-        return $this->UF_DELIVERY_TEXT;
+        return (string)$this->UF_DELIVERY_TEXT;
     }
 
     /**
@@ -75,7 +75,7 @@ class City extends HlbItemBase
      */
     public function getWorkingHours(): string
     {
-        return $this->UF_WORKING_HOURS;
+        return (string)$this->UF_WORKING_HOURS;
     }
 
     /**
@@ -91,13 +91,13 @@ class City extends HlbItemBase
     }
 
     /**
-     * @param string $location
+     * @param array $locations
      *
      * @return City
      */
-    public function withLocation(string $location): City
+    public function withLocations(array $locations): City
     {
-        $this->UF_LOCATION = $location;
+        $this->UF_LOCATION = $locations;
 
         return $this;
     }
@@ -149,8 +149,7 @@ class City extends HlbItemBase
      * @param string $id
      *
      * @return \FourPaws\BitrixOrm\Model\ModelInterface
-     *
-     * @throws \FourPaws\User\Exceptions\NotFoundException
+     * @throws CityNotFoundException
      */
     public static function createFromPrimary(string $id): ModelInterface
     {
@@ -166,6 +165,12 @@ class City extends HlbItemBase
         return $city;
     }
 
+    /**
+     * @param string $locationCode
+     *
+     * @return ModelInterface
+     * @throws CityNotFoundException
+     */
     public static function createFromLocation(string $locationCode): ModelInterface
     {
         /** @var DataManager $dataManager */

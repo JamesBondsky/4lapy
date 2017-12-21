@@ -4,8 +4,8 @@ namespace FourPaws\Location;
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Highloadblock\DataManager;
-use Bitrix\Sale\Location\GroupLocationTable;
 use Bitrix\Sale\Location\ExternalTable;
+use Bitrix\Sale\Location\GroupLocationTable;
 use Bitrix\Sale\Location\TypeTable;
 use CBitrixComponent;
 use CBitrixLocationSelectorSearchComponent;
@@ -18,6 +18,8 @@ use FourPaws\Enum\IblockType;
 use FourPaws\Location\Exception\CityNotFoundException;
 use FourPaws\Location\Model\City;
 use FourPaws\Location\Query\CityQuery;
+use FourPaws\StoreBundle\Entity\Store;
+use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Service\UserService;
 use WebArch\BitrixCache\BitrixCache;
 
@@ -33,11 +35,8 @@ class LocationService
 
     const REGION_SERVICE_CODE = 'REGION';
 
-    protected $dataManager;
-
-    public function __construct(DataManager $dataManager)
+    public function __construct()
     {
-        $this->dataManager = $dataManager;
     }
 
     /**
@@ -106,6 +105,9 @@ class LocationService
         $getAvailableCities = function () {
             $iblockId = IblockUtils::getIblockId(IblockType::REFERENCE_BOOKS, IblockCode::CITIES);
 
+            /** @var StoreService $storeService */
+            $storeService = Application::getInstance()->getContainer()->get('store.service');
+
             $result = [];
             $filter = ['IBLOCK_ID' => $iblockId, 'SECTION_CODE' => CitiesSectionCode::POPULAR];
             $select = ['ID', 'NAME', 'PROPERTY_LOCATION'];
@@ -118,13 +120,20 @@ class LocationService
                     continue;
                 }
 
+                $storeCodes = [];
+                $stores = $storeService->getByLocation(
+                    $element['PROPERTY_LOCATION_VALUE'],
+                    StoreService::TYPE_SHOP
+                );
+                /** @var Store $store */
+                foreach ($stores as $store) {
+                    $storeCodes[] = $store->getXmlId();
+                }
+
                 $result[CitiesSectionCode::POPULAR][] = [
                     'NAME'  => $element['NAME'],
                     'CODE'  => $element['PROPERTY_LOCATION_VALUE'],
-                    'SHOPS' => array_column(
-                        $this->getShopsByCity($element['PROPERTY_LOCATION_VALUE']),
-                        'CODE'
-                    ),
+                    'SHOPS' => $storeCodes,
                 ];
             }
 
@@ -137,13 +146,20 @@ class LocationService
                     continue;
                 }
 
+                $storeCodes = [];
+                $stores = $storeService->getByLocation(
+                    $element['PROPERTY_LOCATION_VALUE'],
+                    StoreService::TYPE_SHOP
+                );
+                /** @var Store $store */
+                foreach ($stores as $store) {
+                    $storeCodes[] = $store->getXmlId();
+                }
+
                 $result[CitiesSectionCode::MOSCOW_REGION][] = [
                     'NAME'  => $element['NAME'],
                     'CODE'  => $element['PROPERTY_LOCATION_VALUE'],
-                    'SHOPS' => array_column(
-                        $this->getShopsByCity($element['PROPERTY_LOCATION_VALUE']),
-                        'CODE'
-                    ),
+                    'SHOPS' => $storeCodes,
                 ];
             }
 
@@ -421,7 +437,8 @@ class LocationService
      */
     public function getDefaultCity()
     {
-        return (new CityQuery($this->dataManager::query()))->withFilterParameter('UF_DEFAULT', true)
+        $citiesTable = Application::getInstance()->getContainer()->get('bx.hlblock.cities');
+        return (new CityQuery($citiesTable::query()))->withFilterParameter('UF_DEFAULT', true)
                                                            ->exec()
                                                            ->first();
     }
@@ -536,16 +553,5 @@ class LocationService
         }
 
         return $result;
-    }
-
-    /**
-     * @param $locationCode
-     *
-     * @return array
-     */
-    public function getShopsByCity($locationCode): array
-    {
-        /* @todo implement this */
-        return [];
     }
 }
