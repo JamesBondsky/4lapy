@@ -35,11 +35,8 @@ class LocationService
 
     const REGION_SERVICE_CODE = 'REGION';
 
-    protected $dataManager;
-
-    public function __construct(DataManager $dataManager)
+    public function __construct()
     {
-        $this->dataManager = $dataManager;
     }
 
     /**
@@ -440,7 +437,8 @@ class LocationService
      */
     public function getDefaultCity()
     {
-        return (new CityQuery($this->dataManager::query()))->withFilterParameter('UF_DEFAULT', true)
+        $citiesTable = Application::getInstance()->getContainer()->get('bx.hlblock.cities');
+        return (new CityQuery($citiesTable::query()))->withFilterParameter('UF_DEFAULT', true)
                                                            ->exec()
                                                            ->first();
     }

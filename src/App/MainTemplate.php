@@ -19,6 +19,11 @@ class MainTemplate extends TemplateAbstract
         return $this->isPage('/');
     }
     
+    public function getIndexMainClass()
+    {
+        return $this->isIndex() ? ' b-wrapper--main':'';
+    }
+    
     /**
      * Страница 404
      *

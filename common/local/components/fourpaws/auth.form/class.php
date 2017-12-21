@@ -22,6 +22,7 @@ use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Location\Model\City;
 use FourPaws\UserBundle\Entity\User;
+use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
 use FourPaws\UserBundle\Exception\InvalidCredentialException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
@@ -86,6 +87,9 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 $curUser = $currentUserService->getCurrentUser();
                 if (!empty($curUser->getExternalAuthId() && empty($curUser->getPersonalPhone()))) {
                     $this->arResult['STEP'] = 'addPhone';
+                }
+                else{
+                    $this->arResult['NAME'] = $curUser->getName() ?? $curUser->getLogin();
                 }
             }
             $this->setSocial();
@@ -260,18 +264,41 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
     /**
      * @param string $phone
      *
+     * @param string $confirmCode
+     *
+     * @return \FourPaws\App\Response\JsonResponse
      * @throws \FourPaws\UserBundle\Exception\ValidationException
      * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Exception
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
      * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @return \FourPaws\App\Response\JsonResponse
      */
-    public function ajaxSavePhone($phone) : JsonResponse
+    public function ajaxSavePhone(string $phone, string $confirmCode) : JsonResponse
     {
-        $data = ['PERSONAL_PHONE' => $phone];
+        try {
+            $res = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::checkConfirmSms(
+                $phone,
+                $confirmCode
+            );
+            if (!$res) {
+                return JsonErrorResponse::create(
+                    'Код подтверждения не соответствует'
+                );
+            }
+        } catch (ExpiredConfirmCodeException $e) {
+            return JsonErrorResponse::create(
+                $e->getMessage()
+            );
+        } catch (WrongPhoneNumberException $e) {
+            return JsonErrorResponse::create(
+                $e->getMessage()
+            );
+        }
+        
+        $data = ['PERSONAL_PHONE' => $phone, 'UF_PHONE_CONFIRMED' => 'Y'];
         
         if ($this->currentUserProvider->getUserRepository()->update(
             SerializerBuilder::create()->build()->fromArray($data, User::class)

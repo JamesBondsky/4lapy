@@ -1,6 +1,7 @@
 <?php
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 
@@ -168,9 +169,11 @@ require_once '_temp_viewed_products.php';
 /**
  * Контейнер текста на странице.
  */
-echo '<section class="b-adventure">'; ?><h2 class="b-title">Почему покупатели выбирают зоомагазин «Четыре лапы»</h2>
+echo '<section class="b-adventure">'; ?>
+<h2 class="b-title">Почему покупатели выбирают зоомагазин «Четыре лапы»</h2>
 <dl class="b-adventure__item">
-    <dt class="b-adventure__header-block"><span class="b-icon b-icon--adventure"> </span>
+    <dt class="b-adventure__header-block">
+        <span class="b-icon b-icon--adventure"><?= new SvgDecorator('icon-range', 24, 32); ?></span>
         <h4 class="b-adventure__header">Широкий ассортимент</h4>
     </dt>
     <dd class="b-adventure__description-block">
@@ -199,7 +202,8 @@ echo '<section class="b-adventure">'; ?><h2 class="b-title">Почему пок�
     </dd>
 </dl>
 <dl class="b-adventure__item">
-    <dt class="b-adventure__header-block"><span class="b-icon b-icon--adventure"> </span>
+    <dt class="b-adventure__header-block">
+        <span class="b-icon b-icon--adventure"><?= new SvgDecorator('icon-terms', 26, 32); ?></span>
         <h4 class="b-adventure__header">Условия доставки</h4>
     </dt>
     <dd class="b-adventure__description-block">
@@ -225,7 +229,8 @@ echo '<section class="b-adventure">'; ?><h2 class="b-title">Почему пок�
     </dd>
 </dl>
 <dl class="b-adventure__item">
-    <dt class="b-adventure__header-block"><span class="b-icon b-icon--adventure"> </span>
+    <dt class="b-adventure__header-block">
+        <span class="b-icon b-icon--adventure"><?= new SvgDecorator('icon-reason', 32, 27); ?></span>
         <h4 class="b-adventure__header">Пять причин купить</h4>
     </dt>
     <dd class="b-adventure__description-block">
@@ -253,7 +258,8 @@ echo '<section class="b-adventure">'; ?><h2 class="b-title">Почему пок�
     </dd>
 </dl>
 <dl class="b-adventure__item">
-    <dt class="b-adventure__header-block"><span class="b-icon b-icon--adventure"> </span>
+    <dt class="b-adventure__header-block">
+        <span class="b-icon b-icon--adventure"><?= new SvgDecorator('icon-offer', 32, 31); ?></span>
         <h4 class="b-adventure__header">Специальные предложения</h4>
     </dt>
     <dd class="b-adventure__description-block">
