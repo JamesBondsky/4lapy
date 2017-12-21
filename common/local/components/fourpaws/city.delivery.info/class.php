@@ -73,10 +73,12 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
         $defaultLocation = $locationService->getDefaultLocation();
         $currentLocation = $userService->getSelectedCity();
 
-        /** @var CalculationResult $defaultDeliveryResult */
-        $defaultDeliveryResult = $this->getDelivery($defaultLocation['CODE'], self::DELIVERY_CODES);
-        /** @var CalculationResult $defaultPickupResult */
-        $defaultPickupResult = $this->getDelivery($defaultLocation['CODE'], self::PICKUP_CODES);
+        $allDeliveryCodes = array_merge(self::PICKUP_CODES, self::PICKUP_CODES);
+
+        /** @var CalculationResult[] $defaultDeliveryResult */
+        $defaultResult = $this->getDeliveries($defaultLocation['CODE'], $allDeliveryCodes);
+        $defaultDeliveryResult = $this->getDelivery($defaultResult);
+        $defaultPickupResult = $this->getPickup($defaultResult);
         /** @var City $defaultCity */
         $defaultCity = $locationService->getDefaultCity();
 
@@ -85,10 +87,10 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
             $currentPickupResult = $defaultPickupResult;
             $currentCity = $defaultCity;
         } else {
-            /** @var CalculationResult $currentDeliveryResult */
-            $currentDeliveryResult = $this->getDelivery($currentLocation['CODE'], self::DELIVERY_CODES);
-            /** @var CalculationResult $currentPickupResult */
-            $currentPickupResult = $this->getDelivery($currentLocation['CODE'], self::PICKUP_CODES);
+            /** @var CalculationResult[] $currentDeliveryResult */
+            $currentResult = $this->getDeliveries($currentLocation['CODE'], $allDeliveryCodes);
+            $currentDeliveryResult = $this->getDelivery($currentResult);
+            $currentPickupResult = $this->getPickup($currentResult);
             /** @var City $currentCity */
             $currentCity = $locationService->getCurrentCity();
         }
@@ -131,8 +133,8 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
                 'PRICE'       => $defaultDeliveryResult->getPrice(),
                 'FREE_FROM'   => $defaultDeliveryResult->getData()['FREE_FROM'],
                 'INTERVALS'   => $defaultDeliveryResult->getData()['INTERVALS'],
-                'PERIOD_FROM' => $currentDeliveryResult->getPeriodFrom(),
-                'CODE'        => $currentDeliveryResult->getData()['DELIVERY_CODE'],
+                'PERIOD_FROM' => $defaultDeliveryResult->getPeriodFrom(),
+                'CODE'        => $defaultDeliveryResult->getData()['DELIVERY_CODE'],
             ];
         }
 
@@ -146,8 +148,9 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
 
         if ($defaultPickupResult) {
             $this->arResult['DEFAULT']['PICKUP'] = [
-                'PRICE' => $defaultPickupResult->getPrice(),
-                'CODE'  => $defaultPickupResult->getData()['DELIVERY_CODE'],
+                'PRICE'       => $defaultPickupResult->getPrice(),
+                'CODE'        => $defaultPickupResult->getData()['DELIVERY_CODE'],
+                'PERIOD_FROM' => $defaultPickupResult->getPeriodFrom(),
             ];
         }
 
@@ -158,15 +161,56 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
      * @param string $locationCode
      * @param array $possibleDeliveryCodes
      *
-     * @return CalculationResult|null
+     * @return CalculationResult[]|null
      */
-    protected function getDelivery(string $locationCode, array $possibleDeliveryCodes = [])
+    protected function getDeliveries(string $locationCode, array $possibleDeliveryCodes = [])
     {
         /** @var DeliveryService $deliveryService */
         $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
-        $deliveries = $deliveryService->getByLocation($locationCode, $possibleDeliveryCodes);
 
-        /** @var CalculationResult $defaultResult */
-        return reset($deliveries);
+        /** @var CalculationResult[] $defaultResult */
+        return $deliveryService->getByLocation($locationCode, $possibleDeliveryCodes);
+    }
+
+    /**
+     * @param CalculationResult[] $deliveries
+     *
+     * @return CalculationResult|null
+     */
+    protected function getDelivery($deliveries)
+    {
+        if (empty($deliveries)) {
+            return null;
+        }
+        $deliveryCodes = self::DELIVERY_CODES;
+        $filtered = array_filter(
+            $deliveries,
+            function (CalculationResult $delivery) use ($deliveryCodes) {
+                return in_array($delivery->getData()['CODE'], $deliveryCodes);
+            }
+        );
+
+        return reset($filtered);
+    }
+
+    /**
+     * @param CalculationResult[] $deliveries
+     *
+     * @return CalculationResult|null
+     */
+    protected function getPickup($deliveries)
+    {
+        if (empty($deliveries)) {
+            return null;
+        }
+        $pickupCodes = self::PICKUP_CODES;
+        $filtered = array_filter(
+            $deliveries,
+            function (CalculationResult $delivery) use ($pickupCodes) {
+                return in_array($delivery->getData()['CODE'], $pickupCodes);
+            }
+        );
+
+        return reset($filtered);
     }
 }
