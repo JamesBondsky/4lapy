@@ -16,7 +16,7 @@ use FourPaws\Helpers\WordHelper;
         <p>Стоимость</p>
         <span><?= CurrencyHelper::formatPrice($delivery['PRICE']) ?></span>
         <?php if (!empty($delivery['FREE_FROM'])) { ?>
-            <span>Бесплатно при заказе от <?= CurrencyHelper::formatPrice($delivery['PRICE']) ?></span>
+            <span>Бесплатно при заказе от <?= CurrencyHelper::formatPrice($delivery['FREE_FROM']) ?></span>
         <? } ?>
     </div>
     <div class="b-delivery__delivery-type-row__day">

@@ -73,7 +73,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
         $defaultLocation = $locationService->getDefaultLocation();
         $currentLocation = $userService->getSelectedCity();
 
-        $allDeliveryCodes = array_merge(self::PICKUP_CODES, self::PICKUP_CODES);
+        $allDeliveryCodes = array_merge(self::DELIVERY_CODES, self::PICKUP_CODES);
 
         /** @var CalculationResult[] $defaultDeliveryResult */
         $defaultResult = $this->getDeliveries($defaultLocation['CODE'], $allDeliveryCodes);
@@ -186,7 +186,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
         $filtered = array_filter(
             $deliveries,
             function (CalculationResult $delivery) use ($deliveryCodes) {
-                return in_array($delivery->getData()['CODE'], $deliveryCodes);
+                return in_array($delivery->getData()['DELIVERY_CODE'], $deliveryCodes);
             }
         );
 
@@ -207,7 +207,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
         $filtered = array_filter(
             $deliveries,
             function (CalculationResult $delivery) use ($pickupCodes) {
-                return in_array($delivery->getData()['CODE'], $pickupCodes);
+                return in_array($delivery->getData()['DELIVERY_CODE'], $pickupCodes);
             }
         );
 
