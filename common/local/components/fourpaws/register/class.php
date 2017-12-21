@@ -17,13 +17,13 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
-use FourPaws\ConfirmCode\Exception\ExpiredConfirmCodeException;
 use FourPaws\External\Exception\SmsSendErrorException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
+use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Service\ConfirmCodeInterface;
@@ -31,6 +31,7 @@ use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
 use JMS\Serializer\SerializerBuilder;
+use Symfony\Component\HttpFoundation\Request;
 
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsRegisterComponent extends \CBitrixComponent
@@ -195,6 +196,8 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             $data['LOGIN'] = $data['EMAIL'];
         }
         
+        $data['UF_PHONE_CONFIRMED'] = 'Y';
+        
         try {
             $res = $this->userRegistrationService->register(
                 SerializerBuilder::create()->build()->fromArray($data, User::class)
@@ -215,19 +218,43 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     }
     
     /**
-     * @param array $data
+     * @param \Symfony\Component\HttpFoundation\Request $request
      *
+     * @return \FourPaws\App\Response\JsonResponse
      * @throws \FourPaws\UserBundle\Exception\ValidationException
      * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Exception
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
      * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @return \FourPaws\App\Response\JsonResponse
      */
-    public function ajaxSavePhone($data) : JsonResponse
+    public function ajaxSavePhone(Request $request) : JsonResponse
     {
+        $phone = $request->get('phone', '');
+        $confirmCode = $request->get('confirmCode', '');
+        try {
+            $res = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::checkConfirmSms(
+                $phone,
+                $confirmCode
+            );
+            if (!$res) {
+                return JsonErrorResponse::create(
+                    'Код подтверждения не соответствует'
+                );
+            }
+        } catch (ExpiredConfirmCodeException $e) {
+            return JsonErrorResponse::create(
+                $e->getMessage()
+            );
+        } catch (WrongPhoneNumberException $e) {
+            return JsonErrorResponse::create(
+                $e->getMessage()
+            );
+        }
+        
+        $data = ['UF_PHONE_CONFIRMED' => 'Y', 'PERSONAL_PHONE' => $phone];
         if ($this->currentUserProvider->getUserRepository()->update(
             SerializerBuilder::create()->build()->fromArray($data, User::class)
         )) {
@@ -242,26 +269,26 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     
     /**
      * @param \Symfony\Component\HttpFoundation\Request $request
-     * @param string                                    $phone
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \FourPaws\External\Exception\ManzanaServiceException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
-     * @throws \Exception
      * @return \FourPaws\App\Response\JsonResponse
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Exception
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\External\Exception\ManzanaServiceException
+     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
      */
-    public function ajaxGet($request, $phone) : JsonResponse
+    public function ajaxGet($request) : JsonResponse
     {
         $step = $request->get('step', '');
+        $phone = $request->get('phone', '');
         $mess = '';
         switch ($step) {
             case 'step1':
             case 'addPhone':
                 break;
             case 'step2':
-                $mess = $this->ajaxGetStep2($request->get('confirmCode'), $phone);
+                $mess = $this->ajaxGetStep2($request->get('confirmCode', ''), $phone);
                 if ($mess instanceof JsonResponse) {
                     return $mess;
                 }
