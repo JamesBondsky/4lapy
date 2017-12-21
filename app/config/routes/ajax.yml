@@ -10,6 +10,10 @@ delivery:
     type: annotation
     prefix: '/delivery'
 
+store:
+    resource: '@FourPawsStoreBundle/AjaxController'
+    type: annotation
+    prefix: '/store'
 
 location.city.autocomplete:
   path: /location/city/autocomplete

@@ -25,17 +25,17 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         <ul>
             <li>
                 <a href="">
-                    <img src="images/inhtml/visa.png">
+                    <img src="/static/build/images/inhtml/visa.png">
                 </a>
             </li>
             <li>
                 <a href="">
-                    <img src="images/inhtml/master-card.png">
+                    <img src="/static/build/images/inhtml/master-card.png">
                 </a>
             </li>
             <li>
                 <a href="">
-                    <img src="images/inhtml/mir.png">
+                    <img src="/static/build/images/inhtml/mir.png">
                 </a>
             </li>
         </ul>
