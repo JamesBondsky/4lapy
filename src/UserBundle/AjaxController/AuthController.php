@@ -167,6 +167,9 @@ class AuthController extends Controller
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
      * @throws \FourPaws\UserBundle\Exception\ValidationException
      * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
+     * @throws \Exception
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
      */
     public function changePhoneAction(Request $request) : JsonResponse
     {
@@ -178,7 +181,7 @@ class AuthController extends Controller
         
         switch ($action) {
             case 'confirmPhone':
-                return $profileClass->ajaxConfirmPhone();
+                return $profileClass->ajaxConfirmPhone($request);
                 break;
             case 'resendSms':
                 return $profileClass->ajaxResendSms($request->get('phone', ''));
@@ -223,7 +226,7 @@ class AuthController extends Controller
         }
         
         if($old_password ===  $password){
-            return JsonErrorResponse::create('Пароль не может быть такой же как текущий');
+            return JsonErrorResponse::create('Пароль не может быть таким же, как и текущий');
         }
         
         try {
