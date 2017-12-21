@@ -21,6 +21,10 @@ use JMS\Serializer\Annotation\XmlRoot;
  */
 class Contact
 {
+    const GENDER_CODE_MAN   = 1;
+    
+    const GENDER_CODE_WOMAN = 2;
+    
     /**
      * @XmlElement(cdata=false)
      * @Type("string")
