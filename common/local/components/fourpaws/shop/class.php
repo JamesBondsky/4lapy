@@ -53,7 +53,7 @@ class FourPawsShopComponent extends CBitrixComponent
         );
         
         if (!$componentPage) {
-            $componentPage = 'personal';
+            $componentPage = 'list';
         }
         
         CComponentEngine::initComponentVariables(
@@ -70,7 +70,6 @@ class FourPawsShopComponent extends CBitrixComponent
             'VARIABLES'     => $arVariables,
             'ALIASES'       => $arVariableAliases,
         ];
-        echo $componentPage;
         $this->includeComponentTemplate($componentPage);
         
         return true;

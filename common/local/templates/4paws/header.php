@@ -150,27 +150,37 @@ $markup = PawsApplication::markup();
         
         <?php if ($template->hasHeaderPersonalContainer()) {
             ?>
-        <div class="b-account">
-            <div class="b-container b-container--account">
-                <div class="b-account__wrapper-title">
-                    <h1 class="b-title b-title--h1"><?php $APPLICATION->ShowTitle(false) ?></h1>
-                </div>
-                <?php $APPLICATION->IncludeComponent('bitrix:menu',
-                                                     'personal.menu',
-                                                     [
-                                                         'COMPONENT_TEMPLATE'    => 'personal.menu',
-                                                         'ROOT_MENU_TYPE'        => 'personal_cab',
-                                                         'MENU_CACHE_TYPE'       => 'A',
-                                                         'MENU_CACHE_TIME'       => '360000',
-                                                         'MENU_CACHE_USE_GROUPS' => 'N',
-                                                         'MENU_CACHE_GET_VARS'   => [],
-                                                         'MAX_LEVEL'             => '1',
-                                                         'CHILD_MENU_TYPE'       => 'personal_cab',
-                                                         'USE_EXT'               => 'N',
-                                                         'DELAY'                 => 'N',
-                                                         'ALLOW_MULTI_SELECT'    => 'N',
-                                                     ],
-                                                     false); ?>
-                <main class="b-account__content" role="main">
+            <div class="b-account">
+                <div class="b-container b-container--account">
+                    <div class="b-account__wrapper-title">
+                        <h1 class="b-title b-title--h1"><?php $APPLICATION->ShowTitle(false) ?></h1>
+                    </div>
+                    <?php $APPLICATION->IncludeComponent('bitrix:menu',
+                         'personal.menu',
+                         [
+                             'COMPONENT_TEMPLATE'    => 'personal.menu',
+                             'ROOT_MENU_TYPE'        => 'personal_cab',
+                             'MENU_CACHE_TYPE'       => 'A',
+                             'MENU_CACHE_TIME'       => '360000',
+                             'MENU_CACHE_USE_GROUPS' => 'N',
+                             'MENU_CACHE_GET_VARS'   => [],
+                             'MAX_LEVEL'             => '1',
+                             'CHILD_MENU_TYPE'       => 'personal_cab',
+                             'USE_EXT'               => 'N',
+                             'DELAY'                 => 'N',
+                             'ALLOW_MULTI_SELECT'    => 'N',
+                         ],
+                         false); ?>
+                     <main class="b-account__content" role="main">
         <?php
         } ?>
+        <?php if ($template->hasShopList()) {?>
+                    <div class="b-stores">
+                        <div class="b-container">
+                            <div class="b-stores__top">
+                                <h1 class="b-title b-title--h1 b-title--stores-header"><?php $APPLICATION->ShowTitle(false) ?></h1>
+                                <div class="b-stores__info">
+                                    <p>Все магазины нашей сети работают без выходных и принимают банковские карты к оплате</p>
+                                </div>
+                            </div>
+        <?php }?>

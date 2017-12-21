@@ -2,6 +2,8 @@
 
 namespace FourPaws\StoreBundle\Service;
 
+use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
+use FourPaws\Helpers\HighloadHelper;
 use FourPaws\Location\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
@@ -137,7 +139,7 @@ class StoreService
      *
      * @return array
      */
-    protected function getTypeFilter($type)
+    protected function getTypeFilter($type) : array
     {
         switch ($type) {
             case self::TYPE_SHOP:
@@ -147,5 +149,12 @@ class StoreService
         }
 
         return [];
+    }
+    
+    public function getMetroInfo($metroID){
+        $highloadStation = HLBlockFactory::createTableObject('MetroStations');
+        $highloadBranch = HLBlockFactory::createTableObject('MetroWays');
+    
+        $arStation = $highloadStation->getById($metroID);
     }
 }

@@ -106,7 +106,7 @@ class Store
      * @var int
      * @Serializer\Type("int")
      * @Serializer\SkipWhenEmpty()
-     * @Serializer\SerializedName("LOCATION_ID")
+     * @Serializer\SerializedName("USER_ID")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
     protected $userId = 0;
@@ -115,7 +115,7 @@ class Store
      * @var int
      * @Serializer\Type("int")
      * @Serializer\SkipWhenEmpty()
-     * @Serializer\SerializedName("LOCATION_ID")
+     * @Serializer\SerializedName("MODIFIED_BY")
      * @Serializer\Groups(groups={"read"})
      */
     protected $modifiedBy = 0;
@@ -127,6 +127,14 @@ class Store
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
     protected $schedule = '';
+    
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("PHONE")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $phone = '';
 
     /**
      * @var string
@@ -776,5 +784,21 @@ class Store
         $this->isBase = $isBase;
 
         return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getPhone() : string
+    {
+        return $this->phone;
+    }
+    
+    /**
+     * @param string $phone
+     */
+    public function setPhone(string $phone)
+    {
+        $this->phone = $phone;
     }
 }
