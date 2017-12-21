@@ -3,7 +3,14 @@
 namespace Sprint\Migration;
 
 use Adv\Bitrixtools\Migration\SprintMigrationBase;
+use FourPaws\App\Application;
+use FourPaws\Console\Command\MigrateClear;
+use FourPaws\Console\ConsoleApp;
 use Sprint\Migration\Helpers\HlblockHelper;
+use Symfony\Component\Console\Input\ArrayInput;
+use Symfony\Component\Console\Output\BufferedOutput;
+use Symfony\Component\Console\Output\NullOutput;
+use Symfony\Component\HttpKernel\KernelInterface;
 
 class HLBlock_cities_20171206125709 extends SprintMigrationBase
 {
@@ -170,6 +177,30 @@ class HLBlock_cities_20171206125709 extends SprintMigrationBase
             'LIST_FILTER_LABEL' => [
                 'ru' => 'По умолчанию',
                 'en' => 'Is default',
+            ],
+        ],
+        [
+            'FIELD_NAME'        => 'UF_LOCATION',
+            'USER_TYPE_ID'      => 'string',
+            'XML_ID'            => 'UF_LOCATION',
+            'SORT'              => 500,
+            'MULTIPLE'          => 'Y',
+            'MANDATORY'         => 'N',
+            'SHOW_FILTER'       => 'N',
+            'SHOW_IN_LIST'      => 'Y',
+            'EDIT_IN_LIST'      => 'Y',
+            'IS_SEARCHABLE'     => 'N',
+            'EDIT_FORM_LABEL'   => [
+                'ru' => 'Местоположения',
+                'en' => 'Locations',
+            ],
+            'LIST_COLUMN_LABEL' => [
+                'ru' => 'Местоположения',
+                'en' => 'Locations',
+            ],
+            'LIST_FILTER_LABEL' => [
+                'ru' => 'Местоположения',
+                'en' => 'Locations',
             ],
         ],
     ];

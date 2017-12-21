@@ -33,12 +33,13 @@ class CommentsController extends Controller
 {
     /**
      * @return \FourPaws\App\Response\JsonResponse
+     * @throws \LogicException
      */
     public function addAction() : JsonResponse
     {
         CBitrixComponent::includeComponentClass('fourpaws:comments');
         
-        $json = JsonErrorResponse::create('Unknown Error');
+        $json = JsonErrorResponse::create('Неизвестная ошибка');
         try {
             $res = \CCommentsComponent::addComment();
             if ($res) {
@@ -64,12 +65,13 @@ class CommentsController extends Controller
     
     /**
      * @return \FourPaws\App\Response\JsonResponse
+     * @throws \LogicException
      */
     public function nextAction() : JsonResponse
     {
         CBitrixComponent::includeComponentClass('fourpaws:comments');
         
-        $json = JsonErrorResponse::create('Unknown Error');
+        $json = JsonErrorResponse::create('Неизвестная ошибка');
         try {
             $items = CCommentsComponent::getNextItems();
             
