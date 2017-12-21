@@ -27,7 +27,7 @@ $child = $category->getChild()->filter(function (Category $category) {
     return 0 === $category->getChild()->count();
 });
 
-$this->SetViewTarget(ViewsEnum::CATALOG_CATEGORIES_LIST);
+$this->SetViewTarget(ViewsEnum::CATALOG_CATEGORY_ROOT);
 
 ?>
     <main class="b-catalog__main b-catalog__main--first-step" role="main">

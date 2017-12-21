@@ -2,53 +2,106 @@
 
 namespace FourPaws\Components;
 
+use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Bitrix\Iblock\Component\Tools;
+use FourPaws\App\Application;
+use FourPaws\Catalog\Exception\BrandNotFoundException;
+use FourPaws\Catalog\Exception\CategoryNotFoundException;
 use FourPaws\Catalog\Model\Category;
-use FourPaws\Catalog\Query\CategoryQuery;
+use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\Search\Model\Navigation;
+use FourPaws\Search\SearchService;
+use Symfony\Component\HttpFoundation\Request;
 
 class CatalogCategory extends \CBitrixComponent
 {
-    public function onPrepareComponentParams($params): array
-    {
-        $params['CODE'] = $params['CODE'] ?: '';
-        $params['CODE'] = (string)$params['CODE'];
+    /**
+     * @var \FourPaws\Catalog\CatalogService
+     */
+    private $catalogService;
 
-        return parent::onPrepareComponentParams($params);
+    /**
+     * @var Request
+     */
+    private $symfonyRequest;
+
+    /**
+     * @var SearchService
+     */
+    private $searchService;
+
+    public function __construct(\CBitrixComponent $component = null)
+    {
+        parent::__construct($component);
+
+        $this->catalogService = Application::getInstance()->getContainer()->get('catalog.service');
+        $this->searchService = Application::getInstance()->getContainer()->get('search.service');
+        $this->symfonyRequest = Request::createFromGlobals();
     }
 
     public function executeComponent()
     {
-        if (!$this->arParams['CODE']) {
+        $result = $this->searchService->searchProducts(
+            $this->catalogService->getFilters($this->getCategory()),
+            $this->catalogService->getSelectedSorting($this->symfonyRequest),
+            $this->catalogService->getNavigation($this->symfonyRequest),
+            $this->catalogService->getSearchString($this->symfonyRequest)
+        );
+
+        dump($result);
+
+        return;
+
+
+        if (!$category) {
             Tools::process404('', true, true, true);
         }
 
-        if ($this->startResultCache()) {
+        if ($this->startResultCache(false, [$category->getId(), $navigation->getPage(), $navigation->getPageSize()])) {
             parent::executeComponent();
 
-            $category = $this->getCategory($this->arParams['CODE']);
+            $this->catalogService->getSelectedSorting($this->symfonyRequest);
 
-            if (!$category) {
-                $this->abortResultCache();
-                Tools::process404('', true, true, true);
-            }
+            $this->arResult['PRODUCTS'] = $this->processFilter();
+
             $this->includeComponentTemplate();
         }
-        return $this->arResult['CATEGORY'];
     }
 
     /**
-     * @param string $code
-     * @return null|Category
+     * @throws \RuntimeException
+     * @throws IblockNotFoundException
+     * @throws \Exception
+     * @throws BrandNotFoundException
+     * @throws CategoryNotFoundException
+     * @return Category
      */
-    protected function getCategory(string $code)
+    public function getCategory(): Category
     {
-        return (new CategoryQuery())
-            ->withFilterParameter('CODE', $code)
-            ->withFilterParameter('CNT_ACTIVE', 'Y')
-            ->withFilterParameter('>ELEMENT_CNT', 0)
-            ->withNav(['nTopCount' => 1])
-            ->withCountElements(true)
-            ->exec()
-            ->first();
+        return $this->catalogService->getCategory($this->symfonyRequest);
+    }
+
+    /**
+     * @return Navigation
+     */
+    protected function getNavRule(): Navigation
+    {
+        return $this->catalogService->getNavigation($this->symfonyRequest);
+    }
+
+    protected function processFilter()
+    {
+        /**
+         * @todo implement logic
+         */
+
+        return (new ProductQuery())
+            ->withFilterParameter('SECTION_ID', $this->arParams['SECTION_ID'])
+            ->withFilterParameter('INCLUDE_SUBSECTIONS', 'Y')
+            ->withNav([
+                'iNumPage'  => 1,
+                'nPageSize' => 30,
+            ])
+            ->exec();
     }
 }

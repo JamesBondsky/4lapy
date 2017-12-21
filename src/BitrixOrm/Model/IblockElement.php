@@ -207,7 +207,7 @@ abstract class IblockElement extends BitrixArrayItemBase
      */
     public function getDateActiveFrom()
     {
-        if (null === $this->dateActiveFrom && $this->DATE_ACTIVE_FROM !== '') {
+        if (null === $this->dateActiveFrom && $this->DATE_ACTIVE_FROM) {
             $this->dateActiveFrom = BitrixUtils::bitrixStringDateTime2DateTimeImmutable($this->DATE_ACTIVE_FROM);
         }
 
@@ -232,7 +232,7 @@ abstract class IblockElement extends BitrixArrayItemBase
      */
     public function getDateActiveTo()
     {
-        if (null === $this->dateActiveTo && $this->DATE_ACTIVE_TO !== '') {
+        if (null === $this->dateActiveTo && $this->DATE_ACTIVE_TO) {
             $this->dateActiveTo = BitrixUtils::bitrixStringDateTime2DateTimeImmutable($this->DATE_ACTIVE_TO);
         }
 

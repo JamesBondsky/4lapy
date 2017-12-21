@@ -1,0 +1,26 @@
+services:
+    # default configuration for services in *this* file
+    _defaults:
+        # automatically injects dependencies in your services
+        autowire: true
+        # automatically registers your services as commands, event subscribers, etc.
+        autoconfigure: true
+        # this means you cannot fetch services directly from the container via $container->get()
+        # if you need to do this, you can override this setting on individual services
+        public: false
+
+    FourPaws\CatalogBundle\:
+        resource: '../../*'
+        # you can exclude directories or files
+        # but if a service is unused, it's removed anyway
+        exclude: '../../{Entity,Tests}'
+
+    FourPaws\CatalogBundle\Controller\:
+        resource: '../../Controller'
+        public: true
+        tags: ['controller.service_arguments']
+
+    catalog.service:
+        class: FourPaws\Catalog\CatalogService
+        arguments: ['@bx.hlblock.filter', '@jms_serializer', '@location.service']
+        public: true

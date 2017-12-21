@@ -80,8 +80,8 @@ class CatalogService implements LoggerAwareInterface
      *
      * @param Category $category
      *
-     * @return FilterCollection
      * @throws Exception
+     * @return FilterCollection
      */
     public function getFilters(Category $category): FilterCollection
     {
@@ -99,7 +99,6 @@ class CatalogService implements LoggerAwareInterface
 
         /** @var array $filterFields */
         foreach ($this->getFilterFieldsList() as $filterFields) {
-
             if (!isset($filterFields['UF_CLASS_NAME']) || !class_exists($filterFields['UF_CLASS_NAME'])) {
                 $this->log()->warning(
                     sprintf('Filter class `%s` not found', $filterFields['UF_CLASS_NAME']),
@@ -128,17 +127,18 @@ class CatalogService implements LoggerAwareInterface
      *
      * @param Request $request
      *
-     * @return Category
-     *
+     * @param string  $codePath
      * @throws BrandNotFoundException
      * @throws CategoryNotFoundException
      * @throws Exception
      * @throws IblockNotFoundException
-     * @throws RuntimeException
+     * @return Category
+     *
      */
-    public function getCategory(Request $request): Category
+    public function getCategory(Request $request, string $codePath = ''): Category
     {
-        $codePath = trim($request->getPathInfo(), '/');
+        $codePath = $codePath ?: $request->getPathInfo();
+        $codePath = trim($codePath, '/');
 
         /**
          * Корневая категория должна определяться,
@@ -146,12 +146,9 @@ class CatalogService implements LoggerAwareInterface
          * т.к. поиск товаров ведётся по всему каталогу.
          */
         if ($codePath === 'search') {
-
             $category = Category::createRoot();
             $this->getFilterHelper()->initCategoryFilters($category, $request);
-
         } elseif (strpos($codePath, 'brand/') === 0) {
-
             $category = Category::createRoot();
             $this->getFilterHelper()->initCategoryFilters($category, $request);
 
@@ -175,12 +172,9 @@ class CatalogService implements LoggerAwareInterface
 
             $brandFilter->setCheckedVariants([$brand->getCode()]);
             $brandFilter->setVisible(false);
-
         } else {
-
             $category = $this->getCategoryByCodePath($codePath);
             $this->getFilterHelper()->initCategoryFilters($category, $request);
-
         }
 
         return $category;
@@ -255,9 +249,7 @@ class CatalogService implements LoggerAwareInterface
         //Определить выбранную сортировку
         $activeSorting = $sortingCollection->filter(
             function (Sorting $sorting) use ($selectedSortValue) {
-
                 return $sorting->getValue() === $selectedSortValue;
-
             }
         )->current();
 
@@ -276,8 +268,8 @@ class CatalogService implements LoggerAwareInterface
      *
      * @param Request $request
      *
-     * @return Sorting
      * @throws RuntimeException
+     * @return Sorting
      */
     public function getSelectedSorting(Request $request): Sorting
     {
@@ -322,16 +314,15 @@ class CatalogService implements LoggerAwareInterface
         }
 
         return $navRule;
-
     }
 
     /**
      * @param string $codePath
      *
-     * @return Category
      * @throws CategoryNotFoundException
      * @throws IblockNotFoundException
      * @throws Exception
+     * @return Category
      */
     protected function getCategoryByCodePath(string $codePath): Category
     {
@@ -384,9 +375,9 @@ class CatalogService implements LoggerAwareInterface
     /**
      * @param string $codePath
      *
-     * @return int
      * @throws IblockNotFoundException
      * @throws Exception
+     * @return int
      */
     private function getCategoryIdByCodePath(string $codePath): int
     {
@@ -423,8 +414,8 @@ class CatalogService implements LoggerAwareInterface
     /**
      * @param $codePath
      *
-     * @return Brand
      * @throws BrandNotFoundException
+     * @return Brand
      */
     private function getBrandByCodePath($codePath): Brand
     {
@@ -451,8 +442,8 @@ class CatalogService implements LoggerAwareInterface
     /**
      * Возвращает список фильтров (данные из HL-блока, достаточные для создания объектов фильтров).
      *
-     * @return array
      * @throws Exception
+     * @return array
      */
     private function getFilterFieldsList(): array
     {
@@ -482,8 +473,8 @@ class CatalogService implements LoggerAwareInterface
      * @param int $categoryIblockId
      * @param int $categoryId
      *
-     * @return array
      * @throws Exception
+     * @return array
      */
     private function getAvailablePropIndexByCode(int $categoryIblockId, int $categoryId)
     {
@@ -537,7 +528,8 @@ class CatalogService implements LoggerAwareInterface
                 'ProductActive',
                 $queryBuilder->query()->term(['active' => true])
             )
-        );;
+        );
+        ;
 
         $internalFilterCollection->add(
             InternalFilter::create(
@@ -558,7 +550,6 @@ class CatalogService implements LoggerAwareInterface
         $internalFilterCollection->add($this->getRegionInternalFilter());
 
         return $internalFilterCollection;
-
     }
 
     /**
@@ -574,5 +565,4 @@ class CatalogService implements LoggerAwareInterface
                           ->setQuery(new Term(['offers.prices.REGION_ID' => $currentRegionCode]))
         );
     }
-
 }

@@ -6,7 +6,7 @@ use Bitrix\Iblock\Component\Tools;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Query\CategoryQuery;
 
-class CatalogCategoriesList extends \CBitrixComponent
+class CatalogCategoryRoot extends \CBitrixComponent
 {
     public function onPrepareComponentParams($params): array
     {

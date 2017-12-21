@@ -31,5 +31,5 @@ final class ViewsEnum
 
     const PRODUCT_DETAIL_DESCRIPTION_TAB = 'product.detail.description.tab';
 
-    const CATALOG_CATEGORIES_LIST = 'catalog.categories.list';
+    const CATALOG_CATEGORY_ROOT = 'catalog.category.root';
 }

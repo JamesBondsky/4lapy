@@ -14,7 +14,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 
 $APPLICATION->IncludeComponent(
-    'fourpaws:catalog.categories.list',
+    'fourpaws:catalog.category.root',
     'catalog',
     [
         'ID' => $arResult['VARIABLES']['SECTION_ID'],
@@ -493,7 +493,7 @@ $APPLICATION->IncludeComponent(
             </div>
         </aside>
         <?php
-        $APPLICATION->ShowViewContent(ViewsEnum::CATALOG_CATEGORIES_LIST);
+        $APPLICATION->ShowViewContent(ViewsEnum::CATALOG_CATEGORY_ROOT);
         /**
          * @todo brands in section
          */
