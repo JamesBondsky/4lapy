@@ -41,14 +41,22 @@ class Category extends IblockSection implements FilterInterface
      * @var CatalogService
      */
     protected $catalogService;
+
     /**
      * @var static
      */
     protected $parent;
+
     /**
      * @var Collection|static[]
      */
     protected $child;
+
+    /**
+     * @var int
+     */
+    protected $PICTURE = 0;
+
     /**
      * @var FilterCollection
      */
@@ -94,6 +102,24 @@ class Category extends IblockSection implements FilterInterface
         $category->setVisible(true);
 
         return $category;
+    }
+
+    /**
+     * @return int
+     */
+    public function getPictureId(): int
+    {
+        return (int)$this->PICTURE;
+    }
+
+    /**
+     * @param int $pictureId
+     * @return static
+     */
+    public function setPictureId(int $pictureId)
+    {
+        $this->PICTURE = $pictureId;
+        return $this;
     }
 
     /**
