@@ -251,7 +251,7 @@ class Store
      */
     public function getId(): int
     {
-        return $this->id;
+        return $this->id ?? 0;
     }
 
     /**
@@ -291,7 +291,7 @@ class Store
      */
     public function getTitle(): string
     {
-        return $this->title;
+        return $this->title ?? '';
     }
 
     /**
@@ -311,7 +311,7 @@ class Store
      */
     public function getAddress(): string
     {
-        return $this->address;
+        return $this->address ?? '';
     }
 
     /**
@@ -331,7 +331,7 @@ class Store
      */
     public function getDescription(): string
     {
-        return $this->description;
+        return $this->description ?? '';
     }
 
     /**
@@ -351,7 +351,7 @@ class Store
      */
     public function getLatitude(): float
     {
-        return $this->latitude;
+        return $this->latitude ?? 0;
     }
 
     /**
@@ -371,7 +371,7 @@ class Store
      */
     public function getLongitude(): float
     {
-        return $this->longitude;
+        return $this->longitude ?? 0;
     }
 
     /**
@@ -391,7 +391,7 @@ class Store
      */
     public function getImageId(): int
     {
-        return $this->imageId;
+        return $this->imageId ?? 0;
     }
 
     /**
@@ -411,7 +411,7 @@ class Store
      */
     public function getLocationId(): int
     {
-        return $this->locationId;
+        return $this->locationId ?? 0;
     }
 
     /**
@@ -431,7 +431,7 @@ class Store
      */
     public function getDateModify(): int
     {
-        return $this->dateModify;
+        return $this->dateModify ?? 0;
     }
 
     /**
@@ -451,7 +451,7 @@ class Store
      */
     public function getDateCreate(): string
     {
-        return $this->dateCreate;
+        return $this->dateCreate ?? '';
     }
 
     /**
@@ -471,7 +471,7 @@ class Store
      */
     public function getUserId(): int
     {
-        return $this->userId;
+        return $this->userId ?? 0;
     }
 
     /**
@@ -491,7 +491,7 @@ class Store
      */
     public function getModifiedBy(): int
     {
-        return $this->modifiedBy;
+        return $this->modifiedBy ?? 0;
     }
 
     /**
@@ -511,7 +511,7 @@ class Store
      */
     public function getSchedule(): string
     {
-        return $this->schedule;
+        return $this->schedule ?? '';
     }
 
     /**
@@ -531,7 +531,7 @@ class Store
      */
     public function getXmlId(): string
     {
-        return $this->xmlId;
+        return $this->xmlId ?? '';
     }
 
     /**
@@ -551,7 +551,7 @@ class Store
      */
     public function getSort(): int
     {
-        return $this->sort;
+        return $this->sort ?? 0;
     }
 
     /**
@@ -571,7 +571,7 @@ class Store
      */
     public function getEmail(): string
     {
-        return $this->email;
+        return $this->email ?? '';
     }
 
     /**
@@ -631,7 +631,7 @@ class Store
      */
     public function getSiteId(): string
     {
-        return $this->siteId;
+        return $this->siteId ?? '';
     }
 
     /**
@@ -651,7 +651,7 @@ class Store
      */
     public function getCode(): string
     {
-        return $this->code;
+        return $this->code ?? '';
     }
 
     /**
@@ -691,7 +691,7 @@ class Store
      */
     public function getLocation(): string
     {
-        return $this->location;
+        return $this->location ?? '';
     }
 
     /**
@@ -711,7 +711,7 @@ class Store
      */
     public function getMetro(): int
     {
-        return $this->metro;
+        return $this->metro ?? 0;
     }
 
     /**
@@ -751,7 +751,7 @@ class Store
      */
     public function getYandexShopId(): string
     {
-        return $this->yandexShopId;
+        return $this->yandexShopId ?? '';
     }
 
     /**
@@ -791,7 +791,7 @@ class Store
      */
     public function getPhone() : string
     {
-        return $this->phone;
+        return $this->phone ?? '';
     }
     
     /**

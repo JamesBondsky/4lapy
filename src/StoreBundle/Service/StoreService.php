@@ -3,7 +3,6 @@
 namespace FourPaws\StoreBundle\Service;
 
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
-use FourPaws\Helpers\HighloadHelper;
 use FourPaws\Location\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
@@ -151,10 +150,115 @@ class StoreService
         return [];
     }
     
-    public function getMetroInfo($metroID){
+    /**
+     * @param array $filter
+     *
+     * @param array $select
+     *
+     * @return array
+     * @throws \Exception
+     */
+    public function getMetroInfo(array $filter = [], array $select = ['*']) : array
+    {
         $highloadStation = HLBlockFactory::createTableObject('MetroStations');
-        $highloadBranch = HLBlockFactory::createTableObject('MetroWays');
     
-        $arStation = $highloadStation->getById($metroID);
+        $branchIDS = [];
+        $result = [];
+        $res = $highloadStation::query()->setFilter($filter)->setSelect($select)->exec();
+        while($item = $res->fetch()){
+            $result[$item['ID']] = $item;
+            if(!\in_array($item['UF_BRANCH'], $branchIDS, true)) {
+                $branchIDS[$item['ID']] = $item['UF_BRANCH'];
+            }
+        }
+    
+        if(\is_array($branchIDS) && !empty($branchIDS)) {
+            $highloadBranch = HLBlockFactory::createTableObject('MetroWays');
+            $res = $highloadBranch::query()->setFilter(['ID' => $branchIDS])->exec();
+            $reverseBranchIDS = [];
+            foreach($branchIDS as $id => $branch){
+                $reverseBranchIDS[$branch][] = $id;
+            }
+            while($item = $res->fetch()){
+                if(\is_array($reverseBranchIDS[$item['ID']]) && !empty($reverseBranchIDS[$item['ID']])) {
+                    foreach ($reverseBranchIDS[$item['ID']] as $id) {
+                        $item['CLASS'] = $this->getBranchClass($item['UF_COLOUR_CODE'] ?? '');
+                        $result[$id]['BRANCH'] = $item;
+                    }
+                }
+            }
+        }
+        return $result;
+    }
+    
+    /**
+     * @param string $branchColor
+     *
+     * @return string
+     */
+    public function getBranchClass(string $branchColor) : string
+    {
+        $class = '';
+        if (!empty($branchColor)) {
+            switch ($branchColor) {
+                case 'a31c78':
+                    $class = '';
+                    break;
+                case '9c9999':
+                    $class = '';
+                    break;
+                case '91c71f':
+                    $class = '';
+                    break;
+                case '00874a':
+                    $class = '';
+                    break;
+                case 'facf00':
+                    $class = '';
+                    break;
+                case '084085':
+                    $class = '';
+                    break;
+                case '75c4f0':
+                    $class = '';
+                    break;
+                case 'f09e36':
+                    $class = '';
+                    break;
+                case 'd9261c':
+                    $class = '';
+                    break;
+            }
+        }
+        
+        return $class;
+    }
+    
+    /**
+     * @return \FourPaws\Location\LocationService
+     */
+    public function getLocationService() : LocationService
+    {
+        return $this->locationService;
+    }
+    
+    /**
+     * @param array $filter
+     * @param array $select
+     *
+     * @return array
+     * @throws \Exception
+     */
+    public function getServicesInfo(array $filter, array $select=['*']) : array
+    {
+        $highloadServices = HLBlockFactory::createTableObject('StoreServices');
+        
+        $result = [];
+        $res = $highloadServices::query()->setFilter($filter)->setSelect($select)->exec();
+        while($item = $res->fetch()){
+            $result[$item['ID']] = $item;
+        }
+        
+        return $result;
     }
 }
