@@ -3,10 +3,10 @@
 }
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use Bitrix\Main\SystemException;
 use FourPaws\App\Application;
 use FourPaws\Helpers\PhoneHelper;
 
+/** @noinspection AutoloadingIssuesInspection */
 class FourPawsCityPhoneComponent extends \CBitrixComponent
 {
 
@@ -44,8 +44,6 @@ class FourPawsCityPhoneComponent extends \CBitrixComponent
 
     /**
      * @return $this
-     *
-     * @throws SystemException
      */
     protected function prepareResult()
     {
@@ -59,7 +57,7 @@ class FourPawsCityPhoneComponent extends \CBitrixComponent
         }
 
         if (!$city && !$defaultCity) {
-            $this->AbortResultCache();
+            $this->abortResultCache();
 
             return $this;
         }
