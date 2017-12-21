@@ -25,9 +25,12 @@ class InfoController extends Controller
         $APPLICATION->IncludeComponent(
             'fourpaws:city.delivery.info',
             'delivery.page',
-            ['LOCATION_CODE' => $code]
+            ['LOCATION_CODE' => $code],
+            false,
+            ['HIDE_ICONS' => 'Y']
         );
         $html = ob_get_clean();
+
         return JsonSuccessResponse::createWithData('', ['html' => $html]);
     }
 }
