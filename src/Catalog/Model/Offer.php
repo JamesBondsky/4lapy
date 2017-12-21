@@ -3,7 +3,7 @@
 namespace FourPaws\Catalog\Model;
 
 use DateTimeImmutable;
-use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Model\CatalogProduct;
@@ -212,7 +212,7 @@ class Offer extends IblockElement
     protected $PROPERTY_OLD_URL = '';
 
     /**
-     * @var ArrayCollection
+     * @var Collection
      * @Type("ArrayCollection<FourPaws\Catalog\Model\Price>")
      * @Accessor(getter="getAllPrices",setter="withAllPrices")
      * @Groups({"elastic"})
@@ -443,9 +443,9 @@ class Offer extends IblockElement
     }
 
     /**
-     * @return ArrayCollection
+     * @return Collection|Price[]
      */
-    public function getAllPrices(): ArrayCollection
+    public function getAllPrices(): Collection
     {
         if (null === $this->prices) {
             $this->withAllPrices((new PriceQuery())->getAllPrices($this->getId()));
@@ -454,7 +454,11 @@ class Offer extends IblockElement
         return $this->prices;
     }
 
-    public function withAllPrices(ArrayCollection $priceCollection)
+    /**
+     * @param Collection|Price[] $priceCollection
+     * @return $this
+     */
+    public function withAllPrices(Collection $priceCollection)
     {
         $this->prices = PriceCollection::createIndexedByRegion($priceCollection);
 

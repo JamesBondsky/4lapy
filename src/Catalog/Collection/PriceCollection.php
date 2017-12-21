@@ -4,6 +4,7 @@ namespace FourPaws\Catalog\Collection;
 
 use Bitrix\Main\DB\ArrayResult;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use FourPaws\BitrixOrm\Collection\D7CollectionBase;
 use FourPaws\Catalog\Model\Price;
 use Generator;
@@ -21,11 +22,11 @@ class PriceCollection extends D7CollectionBase
     }
 
     /**
-     * @param ArrayCollection $catalogPriceCollection
+     * @param Collection $catalogPriceCollection
      *
      * @return PriceCollection
      */
-    public static function createIndexedByRegion(ArrayCollection $catalogPriceCollection)
+    public static function createIndexedByRegion(Collection $catalogPriceCollection)
     {
         $self = new self(new ArrayResult([]));
 

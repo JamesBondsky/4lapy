@@ -9,6 +9,7 @@ use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Highloadblock\DataManager;
 use CIBlockFindTools;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Elastica\Query\Nested;
 use Elastica\Query\Term;
 use Elastica\QueryBuilder;
@@ -190,9 +191,9 @@ class CatalogService implements LoggerAwareInterface
      *
      * @param Request $request
      *
-     * @return ArrayCollection<Sorting>
+     * @return Collection|Sorting[]
      */
-    public function getSortings(Request $request): ArrayCollection
+    public function getSortings(Request $request): Collection
     {
         $currentRegionCode = $this->locationService->getCurrentRegionCode();
 
