@@ -127,7 +127,7 @@ class DeliveryService
                 ]
             );
 
-            $calculationResult = $shipment->calculateDelivery($shipment);
+            $calculationResult = $shipment->calculateDelivery();
             if ($calculationResult->isSuccess()) {
                 if (in_array(
                     $service->getCode(),
