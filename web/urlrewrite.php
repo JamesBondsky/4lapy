@@ -13,6 +13,12 @@ $arUrlRewrite = array(
         'PATH'      => '/personal/index.php',
 	),
 	array(
+		"CONDITION" => "#^/brands/#",
+		"RULE" => "",
+		"ID" => "fourpaws:brands",
+		"PATH" => "/brands/index.php",
+	),
+	array(
         'CONDITION' => '##',
         'RULE'      => '',
         'ID'        => '',
