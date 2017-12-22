@@ -130,7 +130,7 @@ class MainTemplate extends TemplateAbstract
     /**
      * @return bool
      */
-    public function hasShopList() : bool
+    public function hasHeaderBlockShopList() : bool
     {
         return $this->isShopList();
     }

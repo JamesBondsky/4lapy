@@ -23,7 +23,7 @@ if ($template->hasHeaderPublicationListContainer()) {
         </div>
     </div>
 <?}
-if ($template->hasShopList()) {
+if ($template->hasHeaderBlockShopList()) {
     ?>
         </div>
     </div>

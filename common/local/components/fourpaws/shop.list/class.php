@@ -79,7 +79,7 @@ class FourPawsShopListComponent extends CBitrixComponent
         $city = $this->userService->getSelectedCity();
         if ($this->startResultCache(false, ['location' => $city['CODE']])) {
             $this->arResult['CITY']   = $city['NAME'];
-            $stores                   = $storeService->getByCurrentLocation();
+            $stores                   = $storeService->getByCurrentLocation($this->storeService::TYPE_SHOP);
             $this->arResult['STORES'] = $stores->toArray();
             
             if (!empty($this->arResult['STORES'])) {
@@ -103,25 +103,25 @@ class FourPawsShopListComponent extends CBitrixComponent
      */
     public function getFullStoreInfo(array $stores) : array
     {
-        $servicesIDS = [];
-        $metroIDS    = [];
+        $servicesIds = [];
+        $metroIds    = [];
         /** @var Store $store */
         foreach ($stores as $store) {
             /** @noinspection SlowArrayOperationsInLoopInspection */
-            $servicesIDS = array_merge($servicesIDS, $store->getServices());
+            $servicesIds = array_merge($servicesIds, $store->getServices());
             $metro       = $store->getMetro();
             if ($metro > 0) {
-                $metroIDS[] = $metro;
+                $metroIds[] = $metro;
             }
         }
         $services = [];
-        if (!empty($servicesIDS)) {
-            $services = $this->storeService->getServicesInfo(['ID' => array_unique($servicesIDS)]);
+        if (!empty($servicesIds)) {
+            $services = $this->storeService->getServicesInfo(['ID' => array_unique($servicesIds)]);
         }
         
         $metro = [];
-        if (!empty($metroIDS)) {
-            $metro = $this->storeService->getMetroInfo(['ID' => array_unique($metroIDS)]);
+        if (!empty($metroIds)) {
+            $metro = $this->storeService->getMetroInfo(['ID' => array_unique($metroIds)]);
         }
         
         return [
@@ -143,6 +143,7 @@ class FourPawsShopListComponent extends CBitrixComponent
     {
         $result          = [];
         $storeRepository = $this->storeService->getRepository();
+        $filter = array_merge($filter, $this->storeService->getTypeFilter($this->storeService::TYPE_SHOP));
         $storeCollection = $storeRepository->findBy($filter, $order);
         $stores          = $storeCollection->toArray();
         if (!empty($stores)) {
@@ -176,16 +177,20 @@ class FourPawsShopListComponent extends CBitrixComponent
                     }
                 }
                 
-                $gpsS              = $store->getLongitude();
-                $gpsN              = $store->getLatitude();
-                $avgGpsN           += $gpsN;
-                $avgGpsS           += $gpsS;
+                $gpsS = $store->getLongitude();
+                $gpsN = $store->getLatitude();
+                if ($gpsN > 0) {
+                    $avgGpsN += $gpsN;
+                }
+                if ($gpsS > 0) {
+                    $avgGpsS += $gpsS;
+                }
                 $result['items'][] = [
                     'adress'     => $address,
                     'phone'      => $store->getPhone(),
                     'schedule'   => $store->getSchedule(),
                     'photo'      => $imageSrc,
-                    'metroClass' => $this->storeService->getBranchClass($metroList[$metro]['UF_COLOUR_CODE']),
+                    'metroClass' => 'b-delivery-list__col--'.$metroList[$metro]['UF_CLASS'],
                     'services'   => $services,
                     'gps_s'      => $gpsS,
                     'gps_n'      => $gpsN,
@@ -217,12 +222,11 @@ class FourPawsShopListComponent extends CBitrixComponent
         }
         $search = $request->get('search');
         if (!empty($search)) {
-            $result[] =
-                [
-                    'LOGIC'          => 'OR',
-                    '%ADDRESS'       => $search,
-                    '%METRO.UF_NAME' => $search,
-                ];
+            $result[] = [
+                'LOGIC'          => 'OR',
+                '%ADDRESS'       => $search,
+                '%METRO.UF_NAME' => $search,
+            ];
         }
         
         return $result;

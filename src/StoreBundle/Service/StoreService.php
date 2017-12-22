@@ -143,7 +143,7 @@ class StoreService
      *
      * @return array
      */
-    protected function getTypeFilter($type) : array
+    public function getTypeFilter($type) : array
     {
         switch ($type) {
             case self::TYPE_SHOP:
@@ -166,77 +166,33 @@ class StoreService
     public function getMetroInfo(array $filter = [], array $select = ['*']) : array
     {
         $highloadStation = HLBlockFactory::createTableObject('MetroStations');
-        $branchIDS = [];
+        $branchIds = [];
         $result = [];
         $res = $highloadStation::query()->setFilter($filter)->setSelect($select)->exec();
         while($item = $res->fetch()){
             $result[$item['ID']] = $item;
-            if(!\in_array($item['UF_BRANCH'], $branchIDS, true)) {
-                $branchIDS[$item['ID']] = $item['UF_BRANCH'];
+            if(!\in_array($item['UF_BRANCH'], $branchIds, true)) {
+                $branchIds[$item['ID']] = $item['UF_BRANCH'];
             }
         }
     
-        if(\is_array($branchIDS) && !empty($branchIDS)) {
+        if(\is_array($branchIds) && !empty($branchIds)) {
             $highloadBranch = HLBlockFactory::createTableObject('MetroWays');
-            $res = $highloadBranch::query()->setFilter(['ID' => $branchIDS])->exec();
-            $reverseBranchIDS = [];
-            foreach($branchIDS as $id => $branch){
-                $reverseBranchIDS[$branch][] = $id;
+            $res = $highloadBranch::query()->setFilter(['ID' => $branchIds])->exec();
+            $reverseBranchIds = [];
+            foreach($branchIds as $id => $branch){
+                $reverseBranchIds[$branch][] = $id;
             }
             while($item = $res->fetch()){
-                if(\is_array($reverseBranchIDS[$item['ID']]) && !empty($reverseBranchIDS[$item['ID']])) {
-                    foreach ($reverseBranchIDS[$item['ID']] as $id) {
-                        $item['CLASS'] = $this->getBranchClass($item['UF_COLOUR_CODE'] ?? '');
+                if(\is_array($reverseBranchIds[$item['ID']]) && !empty($reverseBranchIds[$item['ID']])) {
+                    foreach ($reverseBranchIds[$item['ID']] as $id) {
+                        $item['CLASS'] = $item['UF_CLASS'] ?? '';
                         $result[$id]['BRANCH'] = $item;
                     }
                 }
             }
         }
         return $result;
-    }
-    
-    /**
-     * @param string $branchColor
-     *
-     * @return string
-     */
-    public function getBranchClass(string $branchColor) : string
-    {
-        $class = '';
-        /** @todo Сопоставление цветов и классов */
-        if (!empty($branchColor)) {
-            switch ($branchColor) {
-                case 'a31c78':
-                    $class = '';
-                    break;
-                case '9c9999':
-                    $class = '';
-                    break;
-                case '91c71f':
-                    $class = '';
-                    break;
-                case '00874a':
-                    $class = '';
-                    break;
-                case 'facf00':
-                    $class = '';
-                    break;
-                case '084085':
-                    $class = '';
-                    break;
-                case '75c4f0':
-                    $class = '';
-                    break;
-                case 'f09e36':
-                    $class = '';
-                    break;
-                case 'd9261c':
-                    $class = '';
-                    break;
-            }
-        }
-        
-        return $class;
     }
     
     /**

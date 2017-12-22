@@ -174,7 +174,7 @@ $markup = PawsApplication::markup();
                      <main class="b-account__content" role="main">
         <?php
         } ?>
-        <?php if ($template->hasShopList()) {?>
+        <?php if ($template->hasHeaderBlockShopList()) {?>
                     <div class="b-stores">
                         <div class="b-container">
                             <div class="b-stores__top">
