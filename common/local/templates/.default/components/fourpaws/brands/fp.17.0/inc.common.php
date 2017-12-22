@@ -5,6 +5,9 @@
  * @updated: 21.12.2017
  */
 
+$arParams['CACHE_TIME'] = isset($arParams['CACHE_TIME']) ? $arParams['CACHE_TIME'] : '43200';
+$arParams['CACHE_TYPE'] = isset($arParams['CACHE_TYPE']) ? $arParams['CACHE_TYPE'] : 'A';
+
 echo '<div class="b-container">';
 echo '<h1 class="b-title b-title--h1 b-title--block b-title--catalog-h2">Бренды</h1>';
 //
@@ -32,9 +35,8 @@ $APPLICATION->IncludeComponent(
 		'CACHE_FILTER' => 'Y',
 		'CACHE_GROUPS' => 'N',
 		'NEWS_COUNT' => '8',
-		'CACHE_TIME' => isset($arParams['CACHE_TIME']) ? $arParams['CACHE_TIME'] : '43200',
-		'CACHE_TYPE' => isset($arParams['CACHE_TYPE']) ? $arParams['CACHE_TYPE'] : 'A',
-		'CHECK_DATES' => 'Y',
+		'CACHE_TIME' => $arParams['CACHE_TIME'],
+		'CACHE_TYPE' => $arParams['CACHE_TYPE'],
 		'DETAIL_URL' => '',
 
 		'RESIZE_WIDTH' => '115',
@@ -89,8 +91,8 @@ $APPLICATION->IncludeComponent(
 	array(
 		'IBLOCK_TYPE' => 'catalog',
 		'IBLOCK_CODE' => 'brands',
-		'CACHE_TYPE' => 'N',
-		'CACHE_TIME' => '43200',
+		'CACHE_TIME' => $arParams['CACHE_TIME'],
+		'CACHE_TYPE' => $arParams['CACHE_TYPE'],
 		'CHARS_COUNT' => 1,
 		'TEMPLATE_NO_CACHE' => 'Y',
 		'LETTER_PAGE_URL' => '/brands/#LETTER_REDUCED#/',
@@ -123,8 +125,8 @@ $APPLICATION->IncludeComponent(
 		'CACHE_FILTER' => 'Y',
 		'CACHE_GROUPS' => 'N',
 		'NEWS_COUNT' => '9999',
-		'CACHE_TIME' => isset($arParams['CACHE_TIME']) ? $arParams['CACHE_TIME'] : '43200',
-		'CACHE_TYPE' => isset($arParams['CACHE_TYPE']) ? $arParams['CACHE_TYPE'] : 'A',
+		'CACHE_TIME' => $arParams['CACHE_TIME'],
+		'CACHE_TYPE' => $arParams['CACHE_TYPE'],
 		'CHECK_DATES' => 'Y',
 		'DETAIL_URL' => '',
 
