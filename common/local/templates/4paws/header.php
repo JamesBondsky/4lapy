@@ -100,11 +100,20 @@ $markup = PawsApplication::markup();
                  */
                 require_once 'temp_header_menu.php';
                 ?>
-                <?php $APPLICATION->IncludeComponent('fourpaws:city.selector') ?>
+                <?php $APPLICATION->IncludeComponent(
+                        'fourpaws:city.selector',
+                        '',
+                        [],
+                        false,
+                        ['HIDE_ICONS' => 'Y']
+                ) ?>
             </div>
             <?php $APPLICATION->IncludeComponent(
                 'fourpaws:city.delivery.info',
-                'template.header'
+                'template.header',
+                [],
+                false,
+                ['HIDE_ICONS' => 'Y']
             ); ?>
         </div>
     </header>

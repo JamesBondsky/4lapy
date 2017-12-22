@@ -7,6 +7,7 @@ use FourPaws\App\Application;
 use FourPaws\Location\Model\City;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\Location\Exception\CityNotFoundException;
 use Bitrix\Sale\Delivery\CalculationResult;
 
 /** @noinspection AutoloadingIssuesInspection */
@@ -95,7 +96,12 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
             $currentCity = $locationService->getCurrentCity();
         }
 
-        if (null === $defaultCity || null === $currentCity || null === $currentDeliveryResult) {
+        if (!$defaultCity || !$currentCity) {
+            $this->abortResultCache();
+            throw new CityNotFoundException('Default city not found');
+        }
+
+        if (!$currentDeliveryResult) {
             $this->abortResultCache();
 
             return $this;
