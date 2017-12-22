@@ -5,6 +5,11 @@ user:
     type: annotation
     prefix: '/user'
 
+store:
+    resource: '@FourPawsStoreBundle/AjaxController'
+    type: annotation
+    prefix: '/store'
+
 location.city.autocomplete:
   path: /location/city/autocomplete
   defaults: { _controller: '\FourPaws\Location\Controller\CityController::autocompleteAction' }

@@ -161,7 +161,6 @@ class StoreService
     public function getMetroInfo(array $filter = [], array $select = ['*']) : array
     {
         $highloadStation = HLBlockFactory::createTableObject('MetroStations');
-    
         $branchIDS = [];
         $result = [];
         $res = $highloadStation::query()->setFilter($filter)->setSelect($select)->exec();
@@ -260,5 +259,13 @@ class StoreService
         }
         
         return $result;
+    }
+    
+    /**
+     * @return \FourPaws\StoreBundle\Repository\StoreRepository
+     */
+    public function getRepository() : StoreRepository
+    {
+        return $this->repository;
     }
 }

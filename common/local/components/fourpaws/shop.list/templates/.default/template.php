@@ -34,60 +34,33 @@ $frame = $this->createFrame(); ?>
     <h2 class="b-title b-title--stores">Ваш город</h2>
     <a class="b-link b-link--select"
        href="javascript:void(0);"
-       title="<?=$arResult['CITY']?>"><?=$arResult['CITY']?></a>
-    <?/** @todo выпадающий список городов */?>
+       title="<?= $arResult['CITY'] ?>"><?= $arResult['CITY'] ?></a>
+    <?php /** @todo выпадающий список городов */ ?>
     <div class="b-stores-sort">
-        <?/** @todo фильтрация ajax */?>
-        <div class="b-stores-sort__checkbox-block">
-            <div class="b-checkbox b-checkbox--stores">
-                <input class="b-checkbox__input" type="checkbox" name="stores-sort" id="stores-sort-1" />
-                <label class="b-checkbox__name b-checkbox__name--stores"
-                       for="stores-sort-1">
-                    <span class="b-checkbox__text">аквариумистика</span>
-                </label>
+        <?php if (\is_array($arResult['SERVICES']) && !empty($arResult['SERVICES'])) { ?>
+            <div class="b-stores-sort__checkbox-block">
+                <?php foreach ($arResult['SERVICES'] as $key => $service) { ?>
+                    <div class="b-checkbox b-checkbox--stores">
+                        <input class="b-checkbox__input"
+                               type="checkbox"
+                               name="stores-sort"
+                               id="stores-sort-<?= $key ?>"
+                               data-url="/ajax/store/list/checkboxFilter/"
+                               value="<?= $service['ID'] ?>" />
+                        <label class="b-checkbox__name b-checkbox__name--stores"
+                               for="stores-sort-<?= $key ?>">
+                            <span class="b-checkbox__text"><?= $service['UF_NAME'] ?></span>
+                        </label>
+                    </div>
+                <?php } ?>
             </div>
-            <div class="b-checkbox b-checkbox--stores">
-                <input class="b-checkbox__input" type="checkbox" name="stores-sort" id="stores-sort-2" />
-                <label class="b-checkbox__name b-checkbox__name--stores"
-                       for="stores-sort-2">
-                    <span class="b-checkbox__text">ветаптека</span>
-                </label>
-            </div>
-            <div class="b-checkbox b-checkbox--stores">
-                <input class="b-checkbox__input" type="checkbox" name="stores-sort" id="stores-sort-3" />
-                <label class="b-checkbox__name b-checkbox__name--stores"
-                       for="stores-sort-3">
-                    <span class="b-checkbox__text">гравировка</span>
-                </label>
-            </div>
-            <div class="b-checkbox b-checkbox--stores">
-                <input class="b-checkbox__input" type="checkbox" name="stores-sort" id="stores-sort-4" />
-                <label class="b-checkbox__name b-checkbox__name--stores"
-                       for="stores-sort-4">
-                    <span class="b-checkbox__text">груминг</span>
-                </label>
-            </div>
-            <div class="b-checkbox b-checkbox--stores">
-                <input class="b-checkbox__input" type="checkbox" name="stores-sort" id="stores-sort-5" />
-                <label class="b-checkbox__name b-checkbox__name--stores"
-                       for="stores-sort-5">
-                    <span class="b-checkbox__text">котята и щенки</span>
-                </label>
-            </div>
-            <div class="b-checkbox b-checkbox--stores">
-                <input class="b-checkbox__input" type="checkbox" name="stores-sort" id="stores-sort-6" />
-                <label class="b-checkbox__name b-checkbox__name--stores"
-                       for="stores-sort-6">
-                    <span class="b-checkbox__text">птицы и грызуны</span>
-                </label>
-            </div>
-        </div>
-        <?/** @todo поиск ajax */?>
+        <?php } ?>
         <div class="b-form-inline b-form-inline--stores-search">
-            <form class="b-form-inline__form">
+            <form class="b-form-inline__form" data-url="/ajax/store/list/search/">
                 <input class="b-input b-input--stores-search"
                        type="text"
                        id="stores-search"
+                       name=""
                        placeholder="Поиск по адресу, метро и названию ТЦ" />
             </form>
         </div>
@@ -97,14 +70,19 @@ $frame = $this->createFrame(); ?>
     <div class="b-availability">
         <div class="b-catalog-filter b-catalog-filter--stores js-availability-parent">
             <div class="b-catalog-filter__sort-part b-catalog-filter__sort-part--stores">
-                <span class="b-catalog-filter__label b-catalog-filter__label--amount b-catalog-filter__label--stores"><?=count($arResult['STORES'])?> магазина</span>
+                <span class="b-catalog-filter__label b-catalog-filter__label--amount b-catalog-filter__label--stores"><?= count(
+                        $arResult['STORES']
+                    ) ?> магазина</span>
                 <span class="b-catalog-filter__sort">
                     <span class="b-catalog-filter__label b-catalog-filter__label--sort b-catalog-filter__label--stores">Сортировать</span>
                     <span class="b-select b-select--stores">
-                        <?/** @todo сортировка ajax */?>
-                        <select class="b-select__block b-select__block--stores" name="sort">
-                            <option value="sort-0">по популярности</option>
-                            <option value="sort-1">по цене</option>
+                        <select class="b-select__block b-select__block--stores"
+                                name="sort"
+                                data-url="/ajax/store/list/order/">
+                            <option value="city">по городу</option>
+                            <option value="address">по адресу</option>
+                            <option value="metro"<?= (!isset($arResult['METRO'])
+                                                       || empty($arResult['METRO'])) ? ' style="display:none"' : '' ?>>по метро</option>
                         </select>
                         <span class="b-select__arrow"></span>
                     </span>
@@ -129,9 +107,7 @@ $frame = $this->createFrame(); ?>
             <div class="b-tab-delivery b-tab-delivery--stores js-content-list js-map-list-scroll">
                 <ul class="b-delivery-list js-delivery-list">
                     <?php /** @var Store $store */
-                    //echo '<pre>',print_r($arResult['STORES'], true),'</pre>';
                     foreach ($arResult['STORES'] as $store) {
-                        //echo '<pre>',print_r($store->getId(), true),'</pre>';
                         ?>
                         <li class="b-delivery-list__item">
                             <a class="b-delivery-list__link b-delivery-list__link--stores js-accordion-stores-list"
@@ -170,7 +146,10 @@ $frame = $this->createFrame(); ?>
                                 if (!empty($image) && is_numeric($image) && $image > 0) {
                                     ?>
                                     <div class="b-delivery-list__image-wrapper">
-                                        <img src="<?= CropImageDecorator::createFromPrimary($image) ?>"
+                                        <img src="<?= /** @noinspection PhpUnhandledExceptionInspection */
+                                        CropImageDecorator::createFromPrimary($image)->setCropWidth(630)->setCropHeight(
+                                                360
+                                            ); ?>"
                                              class="b-delivery-list__image"
                                              alt=""
                                              title="">
@@ -198,7 +177,7 @@ $frame = $this->createFrame(); ?>
             <div class="b-tab-delivery-map b-tab-delivery-map--stores js-content-map">
                 <a class="b-link b-link b-link--popup-back b-link b-link--popup-choose-shop js-product-list js-map-shoose-shop"
                    href="javascript:void(0);">Выберите магазин</a>
-                <?/** @todo инициализация карты */?>
+                <?php /** @todo инициализация карты */ ?>
                 <div class="b-tab-delivery-map__map" id="map"></div>
                 <a class="b-link b-link--close-baloon js-product-list"
                    href="javascript:void(0);"
