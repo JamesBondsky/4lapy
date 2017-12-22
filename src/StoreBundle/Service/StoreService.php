@@ -42,7 +42,7 @@ class StoreService
         $this->locationService = $locationService;
         $this->repository = $repository;
     }
-
+    
     /**
      * Получить склад по ID
      *
@@ -50,6 +50,7 @@ class StoreService
      *
      * @return Store
      * @throws NotFoundException
+     * @throws \Exception
      */
     public function getById(int $id): Store
     {
@@ -65,7 +66,7 @@ class StoreService
 
         return $store;
     }
-
+    
     /**
      * Получить склад по XML_ID
      *
@@ -73,6 +74,7 @@ class StoreService
      *
      * @return Store
      * @throws NotFoundException
+     * @throws \Exception
      */
     public function getByXmlId($xmlId): Store
     {
@@ -88,13 +90,14 @@ class StoreService
 
         return $store;
     }
-
+    
     /**
      * Получить склады в текущем местоположении
      *
      * @param string $type
      *
-     * @return array
+     * @return \FourPaws\StoreBundle\Collection\StoreCollection
+     * @throws \Exception
      */
     public function getByCurrentLocation($type = self::TYPE_ALL): StoreCollection
     {
@@ -102,14 +105,15 @@ class StoreService
 
         return $this->getByLocation($location, $type);
     }
-
+    
     /**
      * Получить склады, привязанные к указанному местоположению
      *
      * @param string $locationCode
      * @param string $type
      *
-     * @return array
+     * @return \FourPaws\StoreBundle\Collection\StoreCollection
+     * @throws \Exception
      */
     public function getByLocation(string $locationCode, string $type = self::TYPE_ALL): StoreCollection
     {
@@ -120,13 +124,14 @@ class StoreService
 
         return $this->repository->findBy($filter);
     }
-
+    
     /**
      * Получить склады по массиву XML_ID
      *
      * @param array $codes
      *
-     * @return array
+     * @return \FourPaws\StoreBundle\Collection\StoreCollection
+     * @throws \Exception
      */
     public function getMultipleByXmlId(array $codes): StoreCollection
     {
@@ -198,6 +203,7 @@ class StoreService
     public function getBranchClass(string $branchColor) : string
     {
         $class = '';
+        /** @todo Сопоставление цветов и классов */
         if (!empty($branchColor)) {
             switch ($branchColor) {
                 case 'a31c78':

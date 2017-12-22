@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Application as App;
@@ -34,7 +38,7 @@ class FourPawsShopListComponent extends CBitrixComponent
     /**
      * FourPawsShopListComponent constructor.
      *
-     * @param \CBitrixComponent|null $component
+     * @param null|\CBitrixComponent $component
      *
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
      * @throws \Bitrix\Main\SystemException
@@ -94,8 +98,8 @@ class FourPawsShopListComponent extends CBitrixComponent
      *
      * @param array $stores
      *
-     * @return array
      * @throws \Exception
+     * @return array
      */
     public function getFullStoreInfo(array $stores) : array
     {
@@ -130,10 +134,10 @@ class FourPawsShopListComponent extends CBitrixComponent
      * @param array $filter
      * @param array $order
      *
-     * @return array
      * @throws \FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
      * @throws \Exception
+     * @return array
      */
     public function getStores(array $filter = [], array $order = []) : array
     {
@@ -181,7 +185,7 @@ class FourPawsShopListComponent extends CBitrixComponent
                     'phone'      => $store->getPhone(),
                     'schedule'   => $store->getSchedule(),
                     'photo'      => $imageSrc,
-                    'metroClass' => 'col--blue',
+                    'metroClass' => $this->storeService->getBranchClass($metroList[$metro]['UF_COLOUR_CODE']),
                     'services'   => $services,
                     'gps_s'      => $gpsS,
                     'gps_n'      => $gpsN,
