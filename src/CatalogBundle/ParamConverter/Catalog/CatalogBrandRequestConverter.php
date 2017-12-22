@@ -15,7 +15,7 @@ use Sensio\Bundle\FrameworkExtraBundle\Request\ParamConverter\ParamConverterInte
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-class BrandCategoryConverter implements ParamConverterInterface
+class CatalogBrandRequestConverter implements ParamConverterInterface
 {
     const BRAND_PARAM = 'brand';
 
