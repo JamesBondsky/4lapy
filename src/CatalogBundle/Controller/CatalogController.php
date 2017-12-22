@@ -2,6 +2,7 @@
 
 namespace FourPaws\CatalogBundle\Controller;
 
+use FourPaws\Catalog\Model\Category;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Response;
@@ -14,11 +15,30 @@ use Symfony\Component\HttpFoundation\Response;
 class CatalogController extends Controller
 {
     /**
-     * @Route("/{slug}/")
+     * @var \CAllMain|\CMain
      */
-    public function rootCategoryAction(string $slug)
+    private $bitrixApp;
+
+    public function __construct()
     {
-        return new Response($slug);
+        global $APPLICATION;
+        $this->bitrixApp = $APPLICATION;
+    }
+
+    /**
+     * @Route("/")
+     */
+    public function rootAction()
+    {
+        return $this->redirect('/');
+    }
+
+    /**
+     * @Route("/{category}/")
+     */
+    public function rootCategoryAction(Category $category)
+    {
+        return new Response('');
     }
 
     /**

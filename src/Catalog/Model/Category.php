@@ -18,6 +18,7 @@ use FourPaws\Catalog\Collection\VariantCollection;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterTrait;
 use FourPaws\Catalog\Model\Filter\FilterInterface;
 use FourPaws\Catalog\Query\CategoryQuery;
+use FourPaws\CatalogBundle\Service\FilterService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use Symfony\Component\HttpFoundation\Request;
@@ -63,6 +64,11 @@ class Category extends IblockSection implements FilterInterface
     private $filterList;
 
     /**
+     * @var FilterService
+     */
+    private $filterService;
+
+    /**
      * Category constructor.
      *
      * @param array $fields
@@ -73,7 +79,7 @@ class Category extends IblockSection implements FilterInterface
     public function __construct(array $fields = [])
     {
         parent::__construct($fields);
-        $this->catalogService = Application::getInstance()->getContainer()->get('catalog.service');
+        $this->filterService = Application::getInstance()->getContainer()->get(FilterService::class);
         //По умолчанию фильтр по категории невидим.
         $this->setVisible(false);
         $this->child = new ArrayCollection();
@@ -244,8 +250,8 @@ class Category extends IblockSection implements FilterInterface
          * Обязательно надо хранить актуальную коллекцию фильтров,
          * т.к. её состояние в процессе поиска товаров будет меняться.
          */
-        if (is_null($this->filterList)) {
-            $this->filterList = $this->catalogService->getFilters($this);
+        if (null === $this->filterList) {
+            $this->filterList = $this->filterService->getCategoryFilters($this);
         }
 
         return $this->filterList;
