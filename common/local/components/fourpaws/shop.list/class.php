@@ -70,10 +70,8 @@ class FourPawsShopListComponent extends CBitrixComponent
      */
     public function executeComponent()
     {
-        /** @var StoreService $storeService */
         $this->storeService = App::getInstance()->getContainer()->get('store.service');
         
-        /** @var \FourPaws\UserBundle\Service\UserService $userService */
         $this->userService = App::getInstance()->getContainer()->get(UserCitySelectInterface::class);
         
         $city = $this->userService->getSelectedCity();
