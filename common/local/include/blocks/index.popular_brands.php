@@ -5,20 +5,7 @@
  * @updated: 22.12.2017
  */
 
-?><section class="b-common-section">
-	<div class="b-common-section__title-box b-common-section__title-box--popular-brand">
-		<h2 class="b-title b-title--popular-brand">Популярные бренды</h2>
-		<a class="b-link b-link--title b-link--title" href="/brands/" title="Показать все">
-			<span class="b-link__text b-link__text--title">Показать все</span>
-			<span class="b-link__mobile b-link__mobile--title">Все</span>
-			<span class="b-icon">
-				<svg class="b-icon__svg" viewBox="0 0 6 10 " width="6px" height="10px">
-					<use class="b-icon__use" xlink:href="/static/build/icons.svg#icon-arrow-right"></use>
-				</svg>
-			</span>
-		</a>
-	</div><?
-
+?><section class="b-common-section"><?
 	//
 	// Популярные бренды
 	//
