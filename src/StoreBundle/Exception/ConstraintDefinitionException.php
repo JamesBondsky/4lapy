@@ -2,7 +2,7 @@
 
 namespace FourPaws\StoreBundle\Exception;
 
-class ConstraintDefinitionException extends StoreException
+class ConstraintDefinitionException extends BaseException
 {
 
 }

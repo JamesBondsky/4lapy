@@ -4,7 +4,7 @@ namespace FourPaws\StoreBundle\Exception;
 
 use Throwable;
 
-class StoreException extends \Exception
+class BaseException extends \Exception
 {
     public function __construct($message = "", int $code = 0, Throwable $previous = null)
     {

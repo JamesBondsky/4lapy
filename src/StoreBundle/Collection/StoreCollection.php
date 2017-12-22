@@ -2,10 +2,9 @@
 
 namespace FourPaws\StoreBundle\Collection;
 
-use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\StoreBundle\Entity\Store;
 
-class StoreCollection extends ArrayCollection
+class StoreCollection extends BaseCollection
 {
     public function getStores()
     {

@@ -2,7 +2,7 @@
 
 namespace FourPaws\StoreBundle\Exception;
 
-class InvalidIdentifierException extends StoreException
+class InvalidIdentifierException extends BaseException
 {
 
 }
