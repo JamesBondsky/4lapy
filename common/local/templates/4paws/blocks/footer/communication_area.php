@@ -7,13 +7,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\App\Application;
 
-/** @var FourPaws\Location\LocationService $locationService */
-$locationService = Application::getInstance()->getContainer()->get('location.service');
-$currentCity = $locationService->getCurrentCity();
 ?>
 <?php $APPLICATION->IncludeComponent(
-        'fourpaws:city.phone',
-        'template.footer'
+    'fourpaws:city.phone',
+    'template.footer',
+    [],
+    false,
+    ['HIDE_ICONS' => 'Y']
 ) ?>
 <span class="b-footer-communication__item">
     <a class="b-footer-communication__link"

@@ -5,6 +5,7 @@
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use FourPaws\App\Application;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\Location\Exception\CityNotFoundException;
 
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsCityPhoneComponent extends \CBitrixComponent
@@ -56,13 +57,14 @@ class FourPawsCityPhoneComponent extends \CBitrixComponent
             $city = $locationService->getCity($this->arParams['LOCATION_CODE']);
         }
 
-        if (!$city && !$defaultCity) {
+        if (!$defaultCity) {
             $this->abortResultCache();
-
-            return $this;
+            throw new CityNotFoundException('Default city not found');
         }
 
-        $city = $city ?? $defaultCity;
+        if (!$city) {
+            $city = $defaultCity;
+        }
 
         /** @var \FourPaws\Location\Model\City $city */
         $phone = $city->getPhone();
