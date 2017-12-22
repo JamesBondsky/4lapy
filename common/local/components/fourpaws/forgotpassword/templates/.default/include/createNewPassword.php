@@ -9,7 +9,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     <form class="b-registration__form" data-url="/ajax/user/auth/forgotPassword/">
         <input type="hidden" name="action" value="savePassword">
         <input type="hidden" name="step" value="sendSmsCode">
-        <input type="hidden" name="login" value="<?= $login ?>">
+        <input type="hidden" name="login" value="<?= $login ?? $arResult['EMAIL'] ?>">
         <div class="b-input-line b-input-line--create-password">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-password-first">Пароль</label>
