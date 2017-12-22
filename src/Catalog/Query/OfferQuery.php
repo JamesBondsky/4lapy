@@ -44,6 +44,7 @@ class OfferQuery extends IblockElementQuery
             'PROPERTY_COLOUR_COMBINATION',
             'PROPERTY_FLAVOUR_COMBINATION',
             'PROPERTY_OLD_URL',
+            'PROPERTY_BY_REQUEST'
         ];
     }
 

@@ -208,6 +208,11 @@ class Offer extends IblockElement
     protected $PROPERTY_OLD_URL = '';
 
     /**
+     * @var int
+     */
+    protected $PROPERTY_BY_REQUEST = 0;
+
+    /**
      * @var ArrayCollection
      * @Type("ArrayCollection<FourPaws\Catalog\Model\Price>")
      * @Accessor(getter="getAllPrices",setter="withAllPrices")
@@ -402,6 +407,11 @@ class Offer extends IblockElement
     public function getOldUrl()
     {
         return $this->PROPERTY_OLD_URL;
+    }
+
+    public function isByRequest(): bool
+    {
+        return (bool)$this->PROPERTY_BY_REQUEST;
     }
 
     /**
