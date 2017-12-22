@@ -51,18 +51,15 @@ $this->setFrameMode(true);
     </div>
 </div>
 <div class="b-container b-container--delivery">
-    <div class="b-delivery">
-        <div class="b-delivery__payment-type">
-            <p class="b-title b-title--h2">Способы оплаты</p>
-            <?php
-                $frame = $this->createFrame()->begin();
-                $payments = $arResult['CURRENT']['PAYMENTS'];
-                include __DIR__ . '/include/payment-info.php';
-                $frame->beginStub();
-                $payments = $arResult['DEFAULT']['PAYMENTS'];
-                include __DIR__ . '/include/payment-info.php';
-                $frame->end()
-            ?>
-        </div>
-    </div>
+    <?php $APPLICATION->IncludeComponent(
+        'bitrix:main.include',
+        '',
+        [
+            'COMPONENT_TEMPLATE' => '.default',
+            'AREA_FILE_SHOW'     => 'file',
+            'PATH'               => '/local/include/blocks/delivery_page.payments.php',
+            'EDIT_TEMPLATE'      => '',
+        ],
+        false
+    ) ?>
 </div>

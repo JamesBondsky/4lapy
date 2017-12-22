@@ -8,9 +8,9 @@ use Bitrix\Sale\Location\LocationTable;
 use Bitrix\Sale\Location\TypeTable;
 use FourPaws\Location\LocationService;
 
-class Delivery_ipol_dpd_module_configuration20171218162911 extends SprintMigrationBase
+class Delivery_ipol_dpd_module_configuration20171221202644 extends SprintMigrationBase
 {
-    protected $description = 'Конфигурация модуля ipol.dpd';
+    protected $description = 'Конфигурация модуля ipol.dpd (исправления)';
 
     const MODULE_ID = 'ipol.dpd';
 
@@ -27,6 +27,7 @@ class Delivery_ipol_dpd_module_configuration20171218162911 extends SprintMigrati
         'SENDER_FIO'           => '4lapy',
         'SENDER_NAME'          => '4lapy',
         'SENDER_PHONE'         => '+7 800 770-00-22',
+        'DELIVERY_TIME_PERIOD' => '9-18',
     ];
 
     public function up()

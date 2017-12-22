@@ -109,7 +109,7 @@ class File implements FileInterface
     /**
      * @param string $primary
      *
-     * @return mixed
+     * @return static
      *
      * @throws FileNotFoundException
      */
