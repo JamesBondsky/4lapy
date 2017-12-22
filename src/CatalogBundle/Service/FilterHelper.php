@@ -145,7 +145,7 @@ class FilterHelper implements LoggerAwareInterface
             return
                 isset($filterFields['UF_CLASS_NAME']) &&
                 class_exists($filterFields['UF_CLASS_NAME']) &&
-                is_a($filterFields['UF_CLASS_NAME'], FilterInterface::class);
+                is_a($filterFields['UF_CLASS_NAME'], FilterInterface::class, true);
         });
 
         return array_map(function (array $filterFields) {
