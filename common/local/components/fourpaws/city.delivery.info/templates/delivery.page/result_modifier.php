@@ -9,4 +9,4 @@ $router = Application::getInstance()->getContainer()->get('router');
 /** @var Symfony\Component\Routing\RouteCollection $routes */
 $routes = $router->getRouteCollection();
 
-$arResult['SHOP_LIST_URL'] = $routes->get('fourpaws_store_ajax_store_shoplist')->getPath();
+$arResult['SHOP_LIST_URL'] = $routes->get('fourpaws_store_ajax_storelist_choosecity')->getPath();
