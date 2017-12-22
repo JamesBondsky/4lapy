@@ -2,7 +2,7 @@
 /**
  * Популярные бренды
  *
- * @updated: 21.12.2017
+ * @updated: 22.12.2017
  */
 
 if(!$arResult['ITEMS']) {
@@ -12,7 +12,7 @@ if(!$arResult['ITEMS']) {
 $arResult['GROUPING'] = array();
 $arResult['GROUPING']['#'] = array(
 	'TITLE' => '#',
-	'ANCHOR' => md5('#'),
+	'ANCHOR' => 'idx_'.md5('#'),
 	'ITEMS_ARRAY_KEYS' => array()
 );
 
@@ -47,7 +47,7 @@ foreach($arResult['ITEMS'] as $mKey => &$arItem) {
 	if(!isset($arResult['GROUPING'][$sFirstLetterReduced])) {
 		$arResult['GROUPING'][$sFirstLetterReduced] = array(
 			'TITLE' => $sFirstLetter,
-			'ANCHOR' => md5($sFirstLetterReduced),
+			'ANCHOR' => 'idx_'.md5($sFirstLetterReduced),
 			'ITEMS_ARRAY_KEYS' => array()
 		);
 	}

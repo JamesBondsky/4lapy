@@ -3,7 +3,7 @@
  * Алфавитный указатель
  * !шаблон не должен кэшироваться!
  *
- * @updated: 21.12.2017
+ * @updated: 22.12.2017
  */
 
 $arCharsCollect = array();
@@ -27,7 +27,7 @@ $arResult['PRINT'][] = array(
 	'CAPTION' => '#',
 	'EXISTS' => $arResult['IS_NUM_EXISTS'] === 'Y' || $arResult['IS_SPEC_EXISTS'] === 'Y' ? 'Y' : 'N',
 	'SELECTED' => 'N',
-	'ANCHOR' => md5('#'),
+	'ANCHOR' => 'idx_'.md5('#'),
 	'URL' => str_replace(
 		array('#LETTER#', '#LETTER_REDUCED#', '#SITE_DIR#', '#SERVER_NAME#', '#IBLOCK_ID#', '#IBLOCK_CODE#'),
 		array(urlencode('extra'), urlencode('extra'), SITE_DIR, SITE_SERVER_NAME, $arParams['IBLOCK_ID'], $arParams['IBLOCK_CODE']),
@@ -41,7 +41,7 @@ foreach($arCharsCollect as $arCollect) {
 			'CAPTION' => $sChar,
 			'EXISTS' => isset($arResult['LIST'][$sChar]) ? 'Y' : 'N',
 			'SELECTED' => 'N',
-			'ANCHOR' => md5($sChar),
+			'ANCHOR' => 'idx_'.md5($sChar),
 			'URL' => $arResult['LIST'][$sChar]['LETTER_PAGE_URL'],
 		);
 	}
