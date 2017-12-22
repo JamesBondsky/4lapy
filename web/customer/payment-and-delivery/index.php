@@ -1,4 +1,28 @@
-<?
-require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
+<?php
+require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/header.php");
 $APPLICATION->SetTitle("Доставка и оплата");
-?>Text here....<?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>
+
+$APPLICATION->IncludeComponent(
+    'fourpaws:city.selector',
+    'delivery.page',
+    [],
+    false,
+    ['HIDE_ICONS' => 'Y']
+);
+$APPLICATION->IncludeComponent(
+    'fourpaws:city.delivery.info',
+    'delivery.page',
+    [],
+    false,
+    ['HIDE_ICONS' => 'Y']
+);
+$APPLICATION->IncludeComponent(
+    'fourpaws:city.phone',
+    'delivery.page',
+    [],
+    false,
+    ['HIDE_ICONS' => 'Y']
+);
+
+require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/footer.php");
+?>

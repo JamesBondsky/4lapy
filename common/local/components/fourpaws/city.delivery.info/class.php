@@ -3,17 +3,32 @@
 }
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use Bitrix\Main\SystemException;
 use FourPaws\App\Application;
+use FourPaws\Location\Model\City;
+use FourPaws\Helpers\PhoneHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use Bitrix\Sale\Delivery\CalculationResult;
 
+/** @noinspection AutoloadingIssuesInspection */
 class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
 {
+    const PICKUP_CODES = [
+        DeliveryService::INNER_PICKUP_CODE,
+        DeliveryService::DPD_PICKUP_CODE,
+    ];
+
+    const DELIVERY_CODES = [
+        DeliveryService::INNER_DELIVERY_CODE,
+        DeliveryService::DPD_DELIVERY_CODE,
+    ];
 
     /** {@inheritdoc} */
     public function onPrepareComponentParams($params): array
     {
+        if (!isset($params['CACHE_TIME'])) {
+            $params['CACHE_TIME'] = 36000000;
+        }
+
         if (empty($params['LOCATION_CODE'])) {
             /** @var \FourPaws\UserBundle\Service\UserService $userService */
             $userService = Application::getInstance()
@@ -45,13 +60,9 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
 
     /**
      * @return $this
-     *
-     * @throws SystemException
      */
     protected function prepareResult()
     {
-        /** @var DeliveryService $deliveryService */
-        $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
         /** @var \FourPaws\Location\LocationService $locationService */
         $locationService = Application::getInstance()->getContainer()->get('location.service');
         /** @var \FourPaws\UserBundle\Service\UserService $userService */
@@ -59,59 +70,147 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
                                   ->getContainer()
                                   ->get('FourPaws\UserBundle\Service\UserCitySelectInterface');
 
-        $defaultCity = $locationService->getDefaultLocation();
-        $currentCity = $userService->getSelectedCity();
+        $defaultLocation = $locationService->getDefaultLocation();
+        $currentLocation = $userService->getSelectedCity();
 
-        /** @var CalculationResult $defaultResult */
-        $defaultResult = reset(
-            $deliveryService->getByLocation(
-                $defaultCity['CODE'],
-                [
-                    DeliveryService::INNER_DELIVERY_CODE,
-                    DeliveryService::DPD_DELIVERY_CODE,
-                ]
-            )
-        );
+        $allDeliveryCodes = array_merge(self::DELIVERY_CODES, self::PICKUP_CODES);
 
-        if ($defaultCity['CODE'] == $currentCity['CODE']) {
-            $currentResult = $defaultResult;
+        /** @var CalculationResult[] $defaultDeliveryResult */
+        $defaultResult = $this->getDeliveries($defaultLocation['CODE'], $allDeliveryCodes);
+        $defaultDeliveryResult = $this->getDelivery($defaultResult);
+        $defaultPickupResult = $this->getPickup($defaultResult);
+        /** @var City $defaultCity */
+        $defaultCity = $locationService->getDefaultCity();
+
+        if ($defaultLocation['CODE'] === $currentLocation['CODE']) {
+            $currentDeliveryResult = $defaultDeliveryResult;
+            $currentPickupResult = $defaultPickupResult;
+            $currentCity = $defaultCity;
         } else {
-            /** @var CalculationResult $currentResult */
-            $currentResult = reset(
-                $deliveryService->getByLocation(
-                    $currentCity['CODE'],
-                    [
-                        DeliveryService::INNER_DELIVERY_CODE,
-                        DeliveryService::DPD_DELIVERY_CODE,
-                    ]
-                )
-            );
+            /** @var CalculationResult[] $currentDeliveryResult */
+            $currentResult = $this->getDeliveries($currentLocation['CODE'], $allDeliveryCodes);
+            $currentDeliveryResult = $this->getDelivery($currentResult);
+            $currentPickupResult = $this->getPickup($currentResult);
+            /** @var City $currentCity */
+            $currentCity = $locationService->getCurrentCity();
         }
 
-        if (empty($currentResult)) {
+        if (null === $defaultCity || null === $currentCity || null === $currentDeliveryResult) {
             $this->abortResultCache();
 
             return $this;
         }
 
-        $defaultFreeFrom = $defaultResult->getTmpData()['FREE_FROM'] ?? null;
-        $currentFreeFrom = $currentResult->getTmpData()['FREE_FROM'] ?? null;
-
         $this->arResult = [
             'CURRENT' => [
-                'CITY_CODE' => $currentCity['CODE'],
-                'CITY_NAME' => $currentCity['NAME'],
-                'PRICE'     => $currentResult->getPrice(),
-                'FREE_FROM' => $currentFreeFrom,
+                'LOCATION' => $currentLocation,
+                'CITY'     => [
+                    'NAME'  => $currentCity->getName(),
+                    'PHONE' => PhoneHelper::formatPhone($currentCity->getPhone()),
+                ],
             ],
             'DEFAULT' => [
-                'CITY_CODE' => $defaultCity['CODE'],
-                'CITY_NAME' => $defaultCity['NAME'],
-                'PRICE'     => $defaultResult->getPrice(),
-                'FREE_FROM' => $defaultFreeFrom,
+                'LOCATION' => $defaultLocation,
+                'CITY'     => [
+                    'NAME'  => $defaultCity->getName(),
+                    'PHONE' => PhoneHelper::formatPhone($defaultCity->getPhone()),
+                ],
             ],
         ];
 
+        if ($currentDeliveryResult) {
+            $this->arResult['CURRENT']['DELIVERY'] = [
+                'PRICE'       => $currentDeliveryResult->getPrice(),
+                'FREE_FROM'   => $currentDeliveryResult->getData()['FREE_FROM'],
+                'INTERVALS'   => $currentDeliveryResult->getData()['INTERVALS'],
+                'PERIOD_FROM' => $currentDeliveryResult->getPeriodFrom(),
+                'CODE'        => $currentDeliveryResult->getData()['DELIVERY_CODE'],
+            ];
+        }
+
+        if ($defaultDeliveryResult) {
+            $this->arResult['DEFAULT']['DELIVERY'] = [
+                'PRICE'       => $defaultDeliveryResult->getPrice(),
+                'FREE_FROM'   => $defaultDeliveryResult->getData()['FREE_FROM'],
+                'INTERVALS'   => $defaultDeliveryResult->getData()['INTERVALS'],
+                'PERIOD_FROM' => $defaultDeliveryResult->getPeriodFrom(),
+                'CODE'        => $defaultDeliveryResult->getData()['DELIVERY_CODE'],
+            ];
+        }
+
+        if ($currentPickupResult) {
+            $this->arResult['CURRENT']['PICKUP'] = [
+                'PRICE'       => $currentPickupResult->getPrice(),
+                'CODE'        => $currentPickupResult->getData()['DELIVERY_CODE'],
+                'PERIOD_FROM' => $currentPickupResult->getPeriodFrom(),
+            ];
+        }
+
+        if ($defaultPickupResult) {
+            $this->arResult['DEFAULT']['PICKUP'] = [
+                'PRICE'       => $defaultPickupResult->getPrice(),
+                'CODE'        => $defaultPickupResult->getData()['DELIVERY_CODE'],
+                'PERIOD_FROM' => $defaultPickupResult->getPeriodFrom(),
+            ];
+        }
+
         return $this;
+    }
+
+    /**
+     * @param string $locationCode
+     * @param array $possibleDeliveryCodes
+     *
+     * @return CalculationResult[]|null
+     */
+    protected function getDeliveries(string $locationCode, array $possibleDeliveryCodes = [])
+    {
+        /** @var DeliveryService $deliveryService */
+        $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+
+        /** @var CalculationResult[] $defaultResult */
+        return $deliveryService->getByLocation($locationCode, $possibleDeliveryCodes);
+    }
+
+    /**
+     * @param CalculationResult[] $deliveries
+     *
+     * @return CalculationResult|null
+     */
+    protected function getDelivery($deliveries)
+    {
+        if (empty($deliveries)) {
+            return null;
+        }
+        $deliveryCodes = self::DELIVERY_CODES;
+        $filtered = array_filter(
+            $deliveries,
+            function (CalculationResult $delivery) use ($deliveryCodes) {
+                return in_array($delivery->getData()['DELIVERY_CODE'], $deliveryCodes);
+            }
+        );
+
+        return reset($filtered);
+    }
+
+    /**
+     * @param CalculationResult[] $deliveries
+     *
+     * @return CalculationResult|null
+     */
+    protected function getPickup($deliveries)
+    {
+        if (empty($deliveries)) {
+            return null;
+        }
+        $pickupCodes = self::PICKUP_CODES;
+        $filtered = array_filter(
+            $deliveries,
+            function (CalculationResult $delivery) use ($pickupCodes) {
+                return in_array($delivery->getData()['DELIVERY_CODE'], $pickupCodes);
+            }
+        );
+
+        return reset($filtered);
     }
 }
