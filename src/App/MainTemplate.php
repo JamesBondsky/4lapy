@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\App;
 
 /**
@@ -45,6 +49,22 @@ class MainTemplate extends TemplateAbstract
     /**
      * @return bool
      */
+    public function isListNews() : bool
+    {
+        return $this->isDir('/company/news');
+    }
+    
+    /**
+     * @return bool
+     */
+    public function isListArticles() : bool
+    {
+        return $this->isDir('/services/articles');
+    }
+    
+    /**
+     * @return bool
+     */
     public function hasHeaderDetailPageContainer() : bool
     {
         return $this->isDetailNews() || $this->isDetailArticles();
@@ -61,7 +81,7 @@ class MainTemplate extends TemplateAbstract
     /**
      * @return bool
      */
-    public function isDetailArticles()
+    public function isDetailArticles() : bool
     {
         return $this->isPartitionDir('/services/articles');
     }
@@ -71,15 +91,8 @@ class MainTemplate extends TemplateAbstract
      */
     public function hasHeaderPersonalContainer() : bool
     {
-        return ($this->isPersonalDirectory() || $this->isPersonal()) && !$this->isRegister() && !$this->isForgotPassword();
-    }
-    
-    /**
-     * @return bool
-     */
-    public function isPersonal() : bool
-    {
-        return $this->isDir('/personal');
+        return ($this->isPersonalDirectory() || $this->isPersonal()) && !$this->isRegister()
+               && !$this->isForgotPassword();
     }
     
     /**
@@ -88,6 +101,14 @@ class MainTemplate extends TemplateAbstract
     public function isPersonalDirectory() : bool
     {
         return $this->isPartitionDir('/personal');
+    }
+    
+    /**
+     * @return bool
+     */
+    public function isPersonal() : bool
+    {
+        return $this->isDir('/personal');
     }
     
     /**
@@ -106,13 +127,19 @@ class MainTemplate extends TemplateAbstract
         return $this->isDir('/personal/forgot-password');
     }
     
-    public function isListNews()
+    /**
+     * @return bool
+     */
+    public function hasHeaderBlockShopList() : bool
     {
-        return $this->isDir('/company/news');
+        return $this->isShopList();
     }
     
-    public function isListArticles()
+    /**
+     * @return bool
+     */
+    public function isShopList() : bool
     {
-        return $this->isDir('/services/articles');
+        return $this->isDir('/company/shops');
     }
 }
