@@ -79,7 +79,7 @@ class FourPawsShopListComponent extends CBitrixComponent
         $city = $this->userService->getSelectedCity();
         if ($this->startResultCache(false, ['location' => $city['CODE']])) {
             $this->arResult['CITY']   = $city['NAME'];
-            $stores                   = $storeService->getByCurrentLocation($this->storeService::TYPE_SHOP);
+            $stores                   = $this->storeService->getByCurrentLocation($this->storeService::TYPE_SHOP);
             $this->arResult['STORES'] = $stores->toArray();
             
             if (!empty($this->arResult['STORES'])) {
