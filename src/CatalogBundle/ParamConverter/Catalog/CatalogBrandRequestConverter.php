@@ -11,11 +11,10 @@ use FourPaws\CatalogBundle\Exception\NoBrandFilterInRootDirectory;
 use FourPaws\CatalogBundle\Service\BrandService;
 use FourPaws\CatalogBundle\Service\FilterHelper;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
-use Sensio\Bundle\FrameworkExtraBundle\Request\ParamConverter\ParamConverterInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-class CatalogBrandRequestConverter implements ParamConverterInterface
+class CatalogBrandRequestConverter extends AbstractCatalogRequestConverter
 {
     const BRAND_PARAM = 'brand';
 
@@ -28,29 +27,66 @@ class CatalogBrandRequestConverter implements ParamConverterInterface
      */
     private $filterHelper;
 
-    public function __construct(BrandService $brandService, FilterHelper $filterHelper)
+    /**
+     * @param BrandService $brandService
+     *
+     * @required
+     * @return static
+     */
+    public function setBrandService(BrandService $brandService)
     {
         $this->brandService = $brandService;
-        $this->filterHelper = $filterHelper;
+        return $this;
     }
 
     /**
-     * Stores the object in the request.
+     * @param FilterHelper $filterHelper
      *
-     * @param Request        $request
-     * @param ParamConverter $configuration Contains the name, class and options of the object
+     * @required
+     * @return static
+     */
+    public function setFilterHelper(FilterHelper $filterHelper)
+    {
+        $this->filterHelper = $filterHelper;
+        return $this;
+    }
+
+    /**
+     * Checks if the object is supported.
+     *
+     * @param ParamConverter $configuration
+     *
+     * @return bool True if the object is supported, else false
+     */
+    public function supports(ParamConverter $configuration): bool
+    {
+        return CatalogBrandRequest::class === $configuration->getClass();
+    }
+
+    /**
+     * @return CatalogBrandRequest
+     */
+    protected function getCatalogRequestObject()
+    {
+        return new CatalogBrandRequest();
+    }
+
+    /**
+     * @param Request             $request
+     * @param ParamConverter      $configuration
+     * @param CatalogBrandRequest $object
      *
      * @throws \Exception
-     * @return bool True if the object has been successfully set, else false
+     * @return bool
      */
-    public function apply(Request $request, ParamConverter $configuration): bool
+    protected function configureCustom(Request $request, ParamConverter $configuration, $object)
     {
         if (!$request->attributes->has(static::BRAND_PARAM)) {
             return false;
         }
 
         $value = $request->attributes->get(static::BRAND_PARAM);
-        if (!$value && $configuration->isOptional()) {
+        if (!$value) {
             return false;
         }
 
@@ -70,7 +106,6 @@ class CatalogBrandRequestConverter implements ParamConverterInterface
         } catch (\Exception $e) {
         }
 
-
         $brandFilters = $category->getFilters()->filter(function (FilterInterface $filter) {
             return $filter instanceof BrandFilter;
         });
@@ -86,19 +121,9 @@ class CatalogBrandRequestConverter implements ParamConverterInterface
         $brandFilter->setCheckedVariants([$brand->getCode()]);
         $brandFilter->setVisible(false);
 
-        $catalogBrandRequest = new CatalogBrandRequest($brand, $category);
-        $request->attributes->set($configuration->getName(), $catalogBrandRequest);
+        $object
+            ->setBrand($brand)
+            ->setCategory($category);
         return true;
-    }
-
-    /**
-     * Checks if the object is supported.
-     *
-     * @param ParamConverter $configuration
-     * @return bool True if the object is supported, else false
-     */
-    public function supports(ParamConverter $configuration): bool
-    {
-        return CatalogBrandRequest::class === $configuration->getClass();
     }
 }

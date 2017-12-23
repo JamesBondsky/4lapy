@@ -2,7 +2,8 @@
 
 namespace FourPaws\CatalogBundle\Controller;
 
-use FourPaws\Catalog\Model\Category;
+use FourPaws\CatalogBundle\Dto\CategoryRequest;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Response;
@@ -35,18 +36,31 @@ class CatalogController extends Controller
 
     /**
      * @Route("/{category}/")
+     * @ParamConverter(name="categoryRequest", options={"path"="category"})
+     * @param CategoryRequest $categoryRequest
+     *
+     * @return Response
      */
-    public function rootCategoryAction(Category $category)
+    public function rootCategoryAction(CategoryRequest $categoryRequest)
     {
+        dump($categoryRequest);
+        die();
         return new Response('');
     }
 
     /**
      * @Route("/{path}/", requirements={"path"="[^\.]+(?!\.html)$" })
+     * @ParamConverter(name="categoryRequest", options={"path"="path"})
+     * @param CategoryRequest $categoryRequest
+     *
+     * @return Response
      */
-    public function childCategoryAction(string $path)
+    public function childCategoryAction(CategoryRequest $categoryRequest)
     {
-        return new Response($path);
+        dump($categoryRequest);
+        die();
+
+        return new Response('');
     }
 
     /**

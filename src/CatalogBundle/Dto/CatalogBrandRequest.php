@@ -5,22 +5,17 @@ namespace FourPaws\CatalogBundle\Dto;
 use FourPaws\Catalog\Model\Brand;
 use FourPaws\Catalog\Model\Category;
 
-class CatalogBrandRequest
+class CatalogBrandRequest extends AbstractCatalogRequest
 {
     /**
      * @var Brand
      */
     protected $brand;
+
     /**
      * @var Category
      */
     protected $category;
-
-    public function __construct(Brand $brand, Category $category)
-    {
-        $this->brand = $brand;
-        $this->category = $category;
-    }
 
     /**
      * @return Brand
@@ -32,6 +27,7 @@ class CatalogBrandRequest
 
     /**
      * @param Brand $brand
+     *
      * @return CatalogBrandRequest
      */
     public function setBrand(Brand $brand): CatalogBrandRequest
@@ -50,6 +46,7 @@ class CatalogBrandRequest
 
     /**
      * @param Category $category
+     *
      * @return CatalogBrandRequest
      */
     public function setCategory(Category $category): CatalogBrandRequest
