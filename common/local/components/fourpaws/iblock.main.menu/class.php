@@ -3,15 +3,15 @@
  * Class CFourPawsIBlockMainMenu
  * Компонент главного меню сайта, генерируемого по специальному инфоблоку
  *
- * @updated: 22.12.2017
+ * @updated: 23.12.2017
  */
 
 class CFourPawsIBlockMainMenu extends \CBitrixComponent {
-    /** @var int $iMenuIBlockId */
+	/** @var int $iMenuIBlockId */
 	private $iMenuIBlockId = -1;
-    /** @var array $arMenuIBlockSectionsTree */
+	/** @var array $arMenuIBlockSectionsTree */
 	private $arMenuIBlockSectionsTree = null;
-    /** @var array $arMenuIBlockElements */
+	/** @var array $arMenuIBlockElements */
 	private $arMenuIBlockElements = null;
 
 	/**
@@ -35,13 +35,15 @@ class CFourPawsIBlockMainMenu extends \CBitrixComponent {
 	 * @return array
 	 */
 	public function onPrepareComponentParams($arParams) {
-		$arParams['IBLOCK_TYPE'] = isset($arParams['IBLOCK_TYPE']) ? trim($arParams['IBLOCK_TYPE']) : '';
-		$arParams['IBLOCK_CODE'] = isset($arParams['IBLOCK_CODE']) ? trim($arParams['IBLOCK_CODE']) : '';
+		$arParams['IBLOCK_TYPE'] = isset($arParams['IBLOCK_TYPE']) ? trim($arParams['IBLOCK_TYPE']) : 'menu';
+		$arParams['IBLOCK_CODE'] = isset($arParams['IBLOCK_CODE']) ? trim($arParams['IBLOCK_CODE']) : 'main_menu';
 
-		$arParams['CACHE_TIME'] = isset($arParams['CACHE_TIME']) ? intval($arParams['CACHE_TIME']) : 43200 ;
+		$arParams['CACHE_TIME'] = isset($arParams['CACHE_TIME']) ? intval($arParams['CACHE_TIME']) : 43200;
 		if($arParams['CACHE_TYPE'] === 'N' || ($arParams['CACHE_TYPE'] === 'A' && \COption::GetOptionString('main', 'component_cache_on', 'Y') === 'N')) {
 			$arParams['CACHE_TIME'] = 0;
 		}
+
+		$arParams['MAX_DEPTH_LEVEL'] = isset($arParams['MAX_DEPTH_LEVEL']) ? intval($arParams['MAX_DEPTH_LEVEL']) : 4;
 
 		return $arParams;
 	}
@@ -78,16 +80,8 @@ class CFourPawsIBlockMainMenu extends \CBitrixComponent {
 				return $arResult;
 			}
 
-			$arSectionsTree = $this->getMenuIBlockSectionsTree();
-			$arMenuElements = $this->getMenuIBlockElements();
+			$arResult['MENU_TREE'] = $this->getNestedMenu();
 
-			$arMenuIBlockElements2Sections = array();
-			foreach($arMenuElements as $arItem) {
-				$arMenuIBlockElements2Sections[intval($arItem['IBLOCK_SECTION_ID'])][] = $arItem['ID'];
-			}
-
-//_log_array($arSectionsTree, '$arSectionsTree');
-//_log_array($arMenuElements, '$arMenuElements');
 			$this->endResultCache();
 		}
 
@@ -95,6 +89,105 @@ class CFourPawsIBlockMainMenu extends \CBitrixComponent {
 		//$this->templateCachedData = $this->getTemplateCachedData();
 
 		return $arResult;
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getNestedMenu() {
+		$arData = array();
+		$arSectionsTree = $this->getMenuIBlockSectionsTree();
+		$arMenuElements = $this->getMenuIBlockElements();
+
+		$arMenuIBlockElements2Sections = array();
+		foreach($arMenuElements as $arItem) {
+			$arMenuIBlockElements2Sections[intval($arItem['IBLOCK_SECTION_ID'])][] = $arItem['ID'];
+		}
+
+		$iMaxDepthLevel = 0;
+		foreach($arSectionsTree as $iSectionId => $arSect) {
+			$arSect['IS_DIR'] = true;
+			$arSect['NESTED'] = array();
+			if(!empty($arMenuIBlockElements2Sections[$iSectionId])) {
+				foreach($arMenuIBlockElements2Sections[$iSectionId] as $iElementId) {
+					$arElem = $arMenuElements[$iElementId];
+					$arElem['DEPTH_LEVEL'] = $arSect['DEPTH_LEVEL'] + 1;
+					$arElem['IS_DIR'] = false;
+					$arElem['NESTED'] = array();
+					$arSect['NESTED']['E'.$arElem['ID']] = $arElem;
+				}
+			}
+			// пока все секции привязываем к корню, перенос по веткам будет выполнен ниже
+			$arData['S'.$arSect['ID']] = $arSect;
+			$iMaxDepthLevel = $arSect['DEPTH_LEVEL'] > $iMaxDepthLevel ? $arSect['DEPTH_LEVEL'] : $iMaxDepthLevel;
+		}
+
+		// заполнение вложенности секций, двигаемся сверху вниз (от максимального уровня вложенности)
+		$iCurLevel = $iMaxDepthLevel;
+		while($iCurLevel > 1) {
+			foreach($arData as $mKey => $arItem) {
+				if(!$arItem['IS_DIR']) {
+					continue;
+				}
+				if($arItem['DEPTH_LEVEL'] != $iCurLevel) {
+					continue;
+				}
+				if($arItem['IBLOCK_SECTION_ID'] && isset($arData['S'.$arItem['IBLOCK_SECTION_ID']])) {
+					$arData['S'.$arItem['IBLOCK_SECTION_ID']]['NESTED']['S'.$arItem['ID']] = $arItem;
+					unset($arData[$mKey]);
+				}
+			}
+			--$iCurLevel;
+		}
+
+		if(!empty($arMenuIBlockElements2Sections[0])) {
+			foreach($arMenuIBlockElements2Sections[0] as $iElementId) {
+				$arElem = $arMenuElements[$iElementId];
+				$arElem['DEPTH_LEVEL'] = 1;
+				$arElem['IS_DIR'] = false;
+				$arElem['NESTED'] = array();
+				$arData['E'.$arElem['ID']] = $arElem;
+			}
+		}
+
+		$arData = $this->sortRecursive($arData);
+
+//_log_array($arSectionsTree, '$arSectionsTree');
+//_log_array($arMenuElements, '$arMenuElements');
+_log_array($arData, '$arData');
+		return $arData;
+	}
+
+	/**
+	 * @param array $arData
+	 * @return array
+	 */
+	protected function sortRecursive($arData) {
+		$iIdx = 0;
+		foreach($arData as &$arItem) {
+			if($arItem['NESTED']) {
+				$arItem['NESTED'] = $this->sortRecursive($arItem['NESTED']);
+			}
+			// формируем поле для сортировки: DEPTH_LEVEL-SORT-IS_DIR-IDX
+			$arTmp = array();
+			$arTmp[] = $arItem['DEPTH_LEVEL'];
+			$arTmp[] = $arItem['SORT'];
+			// секциям отдаем больший вес
+			$arTmp[] = $arItem['IS_DIR'] ? '0' : '1';
+			// чтобы сохранялась исходная последовательность среди равных
+			$arTmp[] = ++$iIdx;
+			$arItem['SORT_IDX'] = implode('-', $arTmp);
+		}
+		unset($arItem);
+
+		uasort(
+			$arData,
+			function($arA, $arB) {
+				return strnatcmp($arA['SORT_IDX'], $arB['SORT_IDX']);
+			}
+		);
+
+		return $arData;
 	}
 
 	/**
@@ -162,12 +255,13 @@ class CFourPawsIBlockMainMenu extends \CBitrixComponent {
 		$arRelSections = array();
 		$dbItems = \CIBlockSection::GetList(
 			array(
-				'LEFT_MARGIN' => 'ASC'
+				'LEFT_MARGIN' => 'ASC' // !!!
 			),
 			array(
 				'IBLOCK_ID' => $iIBlockId,
 				'ACTIVE' => 'Y',
 				'GLOBAL_ACTIVE' => 'Y',
+				'<=DEPTH_LEVEL' => $this->arParams['MAX_DEPTH_LEVEL'],
 			),
 			false,
 			array(
@@ -180,6 +274,7 @@ class CFourPawsIBlockMainMenu extends \CBitrixComponent {
 		);
 		while($arItem = $dbItems->getNext(true, false)) {
 			$arData[$arItem['ID']] = array(
+				'ID' => $arItem['ID'],
 				'NAME' => $arItem['NAME'],
 				'IBLOCK_SECTION_ID' => intval($arItem['IBLOCK_SECTION_ID']),
 				'SORT' => $arItem['SORT'],
@@ -259,6 +354,7 @@ class CFourPawsIBlockMainMenu extends \CBitrixComponent {
 		);
 		while($arItem = $dbItems->getNext(true, false)) {
 			$arData[$arItem['ID']] = array(
+				'ID' => $arItem['ID'],
 				'NAME' => $arItem['NAME'],
 				'IBLOCK_SECTION_ID' => intval($arItem['IBLOCK_SECTION_ID']),
 				'SORT' => $arItem['SORT'],
@@ -311,6 +407,7 @@ class CFourPawsIBlockMainMenu extends \CBitrixComponent {
 					foreach($arRelElements[$arItem['ID']] as $iTmpId) {
 						if($arData[$iTmpId]) {
 							$arData[$iTmpId]['ELEMENT_HREF'] = array(
+								'ID' => $arItem['ID'],
 								'URL' => $arItem['DETAIL_PAGE_URL'],
 								'IBLOCK_ID' => $arItem['IBLOCK_ID'],
 								'IBLOCK_CODE' => $arItem['IBLOCK_CODE'],
@@ -350,6 +447,7 @@ class CFourPawsIBlockMainMenu extends \CBitrixComponent {
 					foreach($arRelSections[$arItem['ID']] as $iTmpId) {
 						if($arData[$iTmpId]) {
 							$arData[$iTmpId]['SECTION_HREF'] = array(
+								'ID' => $arItem['ID'],
 								'URL' => $arItem['SECTION_PAGE_URL'],
 								'IBLOCK_ID' => $arItem['IBLOCK_ID'],
 								'IBLOCK_CODE' => $arItem['IBLOCK_CODE'],
@@ -365,5 +463,4 @@ class CFourPawsIBlockMainMenu extends \CBitrixComponent {
 
 		return $arData;
 	}
-
 }
