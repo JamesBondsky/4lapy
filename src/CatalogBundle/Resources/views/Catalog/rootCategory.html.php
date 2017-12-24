@@ -16,7 +16,7 @@ $APPLICATION->IncludeComponent(
     'fourpaws:catalog.category.root',
     '',
     [
-        'CATEGORY' => $rootCategoryRequest->getCategory(),
+        'SECTION_CODE' => $rootCategoryRequest->getCategorySlug(),
     ],
     $component
 );

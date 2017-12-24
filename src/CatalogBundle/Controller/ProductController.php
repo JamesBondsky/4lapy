@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Class ProductController
  * @package FourPaws\CatalogBundle\Controller
- * @Route("/catalog2")
+ * @Route("/catalog")
  */
 class ProductController extends Controller
 {
@@ -22,7 +22,7 @@ class ProductController extends Controller
      */
     public function productDetailRequest(ProductDetailRequest $productDetailRequest)
     {
-        return $this->render('@FourPawsCatalog/Catalog/productDetail.html.php', [
+        return $this->render('FourPawsCatalogBundle:Catalog:productDetail.html.php', [
             'productDetailRequest' => $productDetailRequest,
         ]);
     }

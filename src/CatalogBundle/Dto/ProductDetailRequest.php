@@ -2,56 +2,53 @@
 
 namespace FourPaws\CatalogBundle\Dto;
 
-use FourPaws\Catalog\Model\Category;
-use FourPaws\Catalog\Model\Product;
-
 class ProductDetailRequest
 {
     /**
-     * @var Product
+     * @var string
      */
-    protected $product;
+    protected $productSlug = '';
 
     /**
-     * @var Category
+     * @var string
      */
-    protected $category;
+    protected $sectionSlug = '';
 
     /**
-     * @return Product
+     * @return string
      */
-    public function getProduct(): Product
+    public function getProductSlug(): string
     {
-        return $this->product;
+        return $this->productSlug;
     }
 
     /**
-     * @param Product $product
+     * @param string $productSlug
      *
      * @return ProductDetailRequest
      */
-    public function setProduct(Product $product): ProductDetailRequest
+    public function setProductSlug(string $productSlug): ProductDetailRequest
     {
-        $this->product = $product;
+        $this->productSlug = $productSlug;
         return $this;
     }
 
     /**
-     * @return Category
+     * @return string
      */
-    public function getCategory(): Category
+    public function getSectionSlug(): string
     {
-        return $this->category;
+        return $this->sectionSlug;
     }
 
     /**
-     * @param Category $category
+     * @param string $sectionSlug
      *
      * @return ProductDetailRequest
      */
-    public function setCategory(Category $category): ProductDetailRequest
+    public function setSectionSlug(string $sectionSlug): ProductDetailRequest
     {
-        $this->category = $category;
+        $this->sectionSlug = $sectionSlug;
         return $this;
     }
 }

@@ -13,12 +13,6 @@ $arUrlRewrite = [
         'PATH'      => '/personal/index.php',
     ],
     [
-        'CONDITION' => '#^/catalog/#',
-        'RULE'      => '',
-        'ID'        => 'fourpaws:catalog',
-        'PATH'      => '/catalog/index.php',
-    ],
-    [
         'CONDITION' => '##',
         'RULE'      => '',
         'ID'        => '',

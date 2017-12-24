@@ -12,21 +12,10 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Class CatalogController
  * @package FourPaws\CatalogBundle\Controller
- * @Route("/catalog2")
+ * @Route("/catalog")
  */
 class CatalogController extends Controller
 {
-    /**
-     * @var \CAllMain|\CMain
-     */
-    private $bitrixApp;
-
-    public function __construct()
-    {
-        global $APPLICATION;
-        $this->bitrixApp = $APPLICATION;
-    }
-
     /**
      * @Route("/")
      */
@@ -36,7 +25,7 @@ class CatalogController extends Controller
     }
 
     /**
-     * @Route("/{rootCategoryRequest}/")
+     * @Route("/{path}/")
      *
      * @param RootCategoryRequest $rootCategoryRequest
      *

@@ -5,7 +5,6 @@ namespace FourPaws\CatalogBundle\ParamConverter\Catalog;
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use FourPaws\CatalogBundle\Dto\ProductDetailRequest;
-use FourPaws\CatalogBundle\Service\CategoriesService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
@@ -15,19 +14,9 @@ use Symfony\Component\HttpFoundation\Request;
 class ProductDetailRequestConverter implements ParamConverterInterface
 {
     /**
-     * @var CategoriesService
-     */
-    private $categoriesService;
-
-    public function __construct(CategoriesService $categoriesService)
-    {
-        $this->categoriesService = $categoriesService;
-    }
-
-
-    /**
      * Stores the object in the request.
      *
+     * @param Request        $request
      * @param ParamConverter $configuration Contains the name, class and options of the object
      *
      * @throws IblockNotFoundException
@@ -35,14 +24,24 @@ class ProductDetailRequestConverter implements ParamConverterInterface
      */
     public function apply(Request $request, ParamConverter $configuration)
     {
-        $elementCode = $request->get('slug', '');
-        $sectionPath = $request->get('path', '');
+        $variables = [
+            'SECTION_CODE_PATH' => $request->get('path', ''),
+            'ELEMENT_CODE'      => $request->get('slug', ''),
+        ];
 
-        if ($this->checkProductSectionPath($elementCode, $sectionPath)) {
+        $result = \CIBlockFindTools::checkElement(
+            IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS),
+            $variables
+        );
+
+        if ($result) {
+            $productDetailRequest = (new ProductDetailRequest())
+                ->setProductSlug($variables['ELEMENT_CODE'])
+                ->setSectionSlug($variables['SECTION_CODE']);
+            $request->attributes->set('productDetailRequest', $productDetailRequest);
+            return true;
         }
-
-        dump($variables);
-        die();
+        return false;
     }
 
     /**
@@ -55,25 +54,5 @@ class ProductDetailRequestConverter implements ParamConverterInterface
     public function supports(ParamConverter $configuration)
     {
         return $configuration->getClass() === ProductDetailRequest::class;
-    }
-
-    /**
-     * @param string $slug
-     * @param string $path
-     *
-     * @throws IblockNotFoundException
-     * @return bool
-     */
-    protected function checkProductSectionPath(string $slug, string $path)
-    {
-        $variables = [
-            'SECTION_CODE_PATH' => $path,
-            'ELEMENT_CODE'      => $slug,
-        ];
-
-        return \CIBlockFindTools::checkElement(
-            IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS),
-            $variables
-        );
     }
 }

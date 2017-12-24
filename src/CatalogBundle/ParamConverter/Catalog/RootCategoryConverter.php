@@ -9,55 +9,47 @@
 namespace FourPaws\CatalogBundle\ParamConverter\Catalog;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
-use FourPaws\Catalog\Exception\CategoryNotFoundException;
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use FourPaws\CatalogBundle\Dto\RootCategoryRequest;
-use FourPaws\CatalogBundle\Service\CategoriesService;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Sensio\Bundle\FrameworkExtraBundle\Request\ParamConverter\ParamConverterInterface;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class RootCategoryConverter implements ParamConverterInterface
 {
     /**
-     * @var CategoriesService
-     */
-    private $categoriesService;
-
-    public function __construct(CategoriesService $categoriesService)
-    {
-        $this->categoriesService = $categoriesService;
-    }
-
-
-    /**
      * Stores the object in the request.
      *
+     * @param Request        $request
      * @param ParamConverter $configuration Contains the name, class and options of the object
      *
-     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+     * @throws IblockNotFoundException
      * @return bool True if the object has been successfully set, else false
      */
     public function apply(Request $request, ParamConverter $configuration)
     {
-        $name = $configuration->getName();
+        $name = 'path';
 
         if (!$request->attributes->has($name)) {
             return false;
         }
 
-        $value = $request->attributes->get($name, '');
-        try {
-            $category = $this->categoriesService->getByPath($value);
-        } catch (IblockNotFoundException $e) {
-            throw new NotFoundHttpException('Инфоблок каталога не найден');
-        } catch (CategoryNotFoundException $e) {
-            throw new NotFoundHttpException(sprintf('Категория %s не найдена', $value));
+        $variables = [
+            'SECTION_CODE_PATH' => $request->attributes->get($name, ''),
+        ];
+
+        $result = \CIBlockFindTools::checkSection(
+            IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS),
+            $variables
+        );
+        if ($result) {
+            $rootCategoryRequest = (new RootCategoryRequest())
+                ->setCategorySlug($variables['SECTION_CODE']);
+            $request->attributes->set('rootCategoryRequest', $rootCategoryRequest);
         }
-        $rootCategoryRequest = (new RootCategoryRequest())
-            ->setCategory($category);
-        $request->attributes->set($name, $rootCategoryRequest);
-        return true;
+        return $result;
     }
 
     /**

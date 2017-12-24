@@ -4,24 +4,27 @@ namespace FourPaws\CatalogBundle\Dto;
 
 class RootCategoryRequest
 {
-    protected $category;
+    /**
+     * @var string
+     */
+    protected $categorySlug = '';
 
     /**
-     * @return mixed
+     * @return string
      */
-    public function getCategory()
+    public function getCategorySlug(): string
     {
-        return $this->category;
+        return $this->categorySlug;
     }
 
     /**
-     * @param mixed $category
+     * @param string $categorySlug
      *
      * @return RootCategoryRequest
      */
-    public function setCategory($category)
+    public function setCategorySlug(string $categorySlug): RootCategoryRequest
     {
-        $this->category = $category;
+        $this->categorySlug = $categorySlug;
         return $this;
     }
 }
