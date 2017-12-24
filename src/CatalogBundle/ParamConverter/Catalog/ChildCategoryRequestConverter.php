@@ -4,14 +4,14 @@ namespace FourPaws\CatalogBundle\ParamConverter\Catalog;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use FourPaws\Catalog\Exception\CategoryNotFoundException;
-use FourPaws\CatalogBundle\Dto\CategoryRequest;
+use FourPaws\CatalogBundle\Dto\ChildCategoryRequest;
 use FourPaws\CatalogBundle\Service\CategoriesService;
 use FourPaws\CatalogBundle\Service\FilterService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-class CategoryRequestConverter extends AbstractCatalogRequestConverter
+class ChildCategoryRequestConverter extends AbstractCatalogRequestConverter
 {
     /**
      * @var CategoriesService
@@ -55,21 +55,21 @@ class CategoryRequestConverter extends AbstractCatalogRequestConverter
      */
     public function supports(ParamConverter $configuration): bool
     {
-        return CategoryRequest::class === $configuration->getClass();
+        return ChildCategoryRequest::class === $configuration->getClass();
     }
 
     /**
-     * @return CategoryRequest
+     * @return ChildCategoryRequest
      */
     protected function getCatalogRequestObject()
     {
-        return new CategoryRequest();
+        return new ChildCategoryRequest();
     }
 
     /**
-     * @param Request         $request
-     * @param ParamConverter  $configuration
-     * @param CategoryRequest $object
+     * @param Request              $request
+     * @param ParamConverter       $configuration
+     * @param ChildCategoryRequest $object
      *
      * @throws NotFoundHttpException
      * @return bool

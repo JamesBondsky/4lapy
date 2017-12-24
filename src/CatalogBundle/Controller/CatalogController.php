@@ -2,7 +2,8 @@
 
 namespace FourPaws\CatalogBundle\Controller;
 
-use FourPaws\CatalogBundle\Dto\CategoryRequest;
+use FourPaws\CatalogBundle\Dto\ChildCategoryRequest;
+use FourPaws\CatalogBundle\Dto\RootCategoryRequest;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -35,39 +36,31 @@ class CatalogController extends Controller
     }
 
     /**
-     * @Route("/{category}/")
-     * @ParamConverter(name="categoryRequest", options={"path"="category"})
-     * @param CategoryRequest $categoryRequest
+     * @Route("/{rootCategoryRequest}/")
+     *
+     * @param RootCategoryRequest $rootCategoryRequest
      *
      * @return Response
      */
-    public function rootCategoryAction(CategoryRequest $categoryRequest)
+    public function rootCategoryAction(RootCategoryRequest $rootCategoryRequest)
     {
-        dump($categoryRequest);
-        die();
-        return new Response('');
+        return $this->render('FourPawsCatalogBundle:Catalog:rootCategory.html.php', [
+            'rootCategoryRequest' => $rootCategoryRequest,
+        ]);
     }
 
     /**
      * @Route("/{path}/", requirements={"path"="[^\.]+(?!\.html)$" })
      * @ParamConverter(name="categoryRequest", options={"path"="path"})
-     * @param CategoryRequest $categoryRequest
+     * @param ChildCategoryRequest $categoryRequest
      *
      * @return Response
      */
-    public function childCategoryAction(CategoryRequest $categoryRequest)
+    public function childCategoryAction(ChildCategoryRequest $categoryRequest)
     {
         dump($categoryRequest);
         die();
 
         return new Response('');
-    }
-
-    /**
-     * @Route("/{path}/{slug}.html", requirements={"path"="[^\.]+(?!\.html)"})
-     */
-    public function productAction(string $path, string $slug)
-    {
-        return new Response($path . ' + ' . $slug);
     }
 }
