@@ -92,4 +92,5 @@ jms_serializer:
 sensio_framework_extra:
   request:
     converters: true
+    auto_convert: true
     disable: ['doctrine.orm']

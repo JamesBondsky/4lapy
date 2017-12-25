@@ -17,6 +17,7 @@ class ChildCategoryRequestConverter extends AbstractCatalogRequestConverter
      * @var CategoriesService
      */
     private $categoriesService;
+
     /**
      * @var FilterService
      */
@@ -36,9 +37,8 @@ class ChildCategoryRequestConverter extends AbstractCatalogRequestConverter
 
     /**
      * @param FilterService $filterService
-     *
-     * @required
      * @return static
+     * @required
      */
     public function setFilterService(FilterService $filterService)
     {
@@ -61,7 +61,7 @@ class ChildCategoryRequestConverter extends AbstractCatalogRequestConverter
     /**
      * @return ChildCategoryRequest
      */
-    protected function getCatalogRequestObject()
+    protected function getCatalogRequestObject(): ChildCategoryRequest
     {
         return new ChildCategoryRequest();
     }
@@ -74,10 +74,11 @@ class ChildCategoryRequestConverter extends AbstractCatalogRequestConverter
      * @throws NotFoundHttpException
      * @return bool
      */
-    protected function configureCustom(Request $request, ParamConverter $configuration, $object)
+    protected function configureCustom(Request $request, ParamConverter $configuration, $object): bool
     {
         $options = $configuration->getOptions();
         $pathAttribute = $options['path'] ?? 'path';
+
         if (!$request->attributes->has($pathAttribute)) {
             return false;
         }

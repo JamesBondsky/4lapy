@@ -24,11 +24,6 @@ services:
         resource: '../../ParamConverter/*'
         tags: ['request.param_converter']
 
-    catalog.service:
-        class: FourPaws\Catalog\CatalogService
-        arguments: ['@location.service']
-        public: true
-
     # Постараться спрятать за интерфейс
     # @see
     FourPaws\CatalogBundle\Service\FilterService:

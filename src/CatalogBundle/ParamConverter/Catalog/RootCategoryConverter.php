@@ -30,6 +30,8 @@ class RootCategoryConverter implements ParamConverterInterface
      */
     public function apply(Request $request, ParamConverter $configuration)
     {
+        dump($request);
+
         $name = 'path';
 
         if (!$request->attributes->has($name)) {
@@ -59,7 +61,7 @@ class RootCategoryConverter implements ParamConverterInterface
      *
      * @return bool True if the object is supported, else false
      */
-    public function supports(ParamConverter $configuration)
+    public function supports(ParamConverter $configuration): bool
     {
         return $configuration->getClass() === RootCategoryRequest::class;
     }
