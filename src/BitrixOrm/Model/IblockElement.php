@@ -6,6 +6,7 @@ use Adv\Bitrixtools\Tools\BitrixUtils;
 use CIBlockElement;
 use DateTimeImmutable;
 use FourPaws\BitrixOrm\Model\Traits\IblockModelTrait;
+use FourPaws\BitrixOrm\Type\TextContent;
 
 /**
  * Class IblockElement
@@ -155,9 +156,10 @@ abstract class IblockElement extends BitrixArrayItemBase
      */
     public function getPreviewText(): TextContent
     {
-        if (is_null($this->previewText)) {
-            $this->previewText = (new TextContent())->withText($this->PREVIEW_TEXT)
-                                                    ->withType($this->PREVIEW_TEXT_TYPE);
+        if (null === $this->previewText) {
+            $this->previewText = (new TextContent())
+                ->withText($this->PREVIEW_TEXT)
+                ->withType($this->PREVIEW_TEXT_TYPE);
         }
 
         return $this->previewText;
@@ -180,9 +182,9 @@ abstract class IblockElement extends BitrixArrayItemBase
      */
     public function getDetailText(): TextContent
     {
-        if (is_null($this->detailText)) {
+        if (null === $this->detailText) {
             $this->detailText = (new TextContent())->withText($this->DETAIL_TEXT)
-                                                   ->withType($this->DETAIL_TEXT_TYPE);
+                ->withType($this->DETAIL_TEXT_TYPE);
         }
 
         return $this->detailText;
@@ -201,11 +203,11 @@ abstract class IblockElement extends BitrixArrayItemBase
     }
 
     /**
-     * @return DateTimeImmutable|null
+     * @return null|DateTimeImmutable
      */
     public function getDateActiveFrom()
     {
-        if (is_null($this->dateActiveFrom) && $this->DATE_ACTIVE_FROM != '') {
+        if (null === $this->dateActiveFrom && $this->DATE_ACTIVE_FROM) {
             $this->dateActiveFrom = BitrixUtils::bitrixStringDateTime2DateTimeImmutable($this->DATE_ACTIVE_FROM);
         }
 
@@ -219,7 +221,6 @@ abstract class IblockElement extends BitrixArrayItemBase
      */
     public function withDateActiveFrom(DateTimeImmutable $dateActiveFrom)
     {
-
         $this->dateActiveFrom = $dateActiveFrom;
         $this->DATE_ACTIVE_FROM = BitrixUtils::dateTimeImmutable2BitrixStringDate($dateActiveFrom, 'FULL');
 
@@ -227,11 +228,11 @@ abstract class IblockElement extends BitrixArrayItemBase
     }
 
     /**
-     * @return DateTimeImmutable|null
+     * @return null|DateTimeImmutable
      */
     public function getDateActiveTo()
     {
-        if (is_null($this->dateActiveTo) && $this->DATE_ACTIVE_TO != '') {
+        if (null === $this->dateActiveTo && $this->DATE_ACTIVE_TO) {
             $this->dateActiveTo = BitrixUtils::bitrixStringDateTime2DateTimeImmutable($this->DATE_ACTIVE_TO);
         }
 
@@ -257,10 +258,9 @@ abstract class IblockElement extends BitrixArrayItemBase
     public function getSectionsIdList(): array
     {
         if (
-            is_null($this->sectionIdList)
-            || (is_array($this->sectionIdList) && count($this->sectionIdList) == 0)
+            null === $this->sectionIdList
+            || (\is_array($this->sectionIdList) && \count($this->sectionIdList) === 0)
         ) {
-
             $this->sectionIdList = [];
             $dbSectionList = CIBlockElement::GetElementGroups($this->getId(), true, ['ID']);
 
@@ -271,5 +271,4 @@ abstract class IblockElement extends BitrixArrayItemBase
 
         return $this->sectionIdList;
     }
-
 }
