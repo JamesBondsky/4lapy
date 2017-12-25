@@ -2,8 +2,9 @@
 
 namespace FourPaws\Catalog\Model;
 
+use CCatalogDiscountSave;
+use CCatalogProduct;
 use DateTimeImmutable;
-use Doctrine\Common\Collections\Collection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Model\CatalogProduct;
@@ -11,8 +12,6 @@ use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\BitrixOrm\Query\CatalogProductQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
-use FourPaws\Catalog\Collection\PriceCollection;
-use FourPaws\Catalog\Query\PriceQuery;
 use FourPaws\Catalog\Query\ProductQuery;
 use JMS\Serializer\Annotation\Accessor;
 use JMS\Serializer\Annotation\Groups;
@@ -212,21 +211,46 @@ class Offer extends IblockElement
     protected $PROPERTY_OLD_URL = '';
 
     /**
-     * @var Collection
-     * @Type("ArrayCollection<FourPaws\Catalog\Model\Price>")
-     * @Accessor(getter="getAllPrices",setter="withAllPrices")
+     * @Type("float")
      * @Groups({"elastic"})
+     * @Accessor(getter="getPrice", setter="withPrice")
+     * @var float
      */
-    protected $prices;
+    protected $price = 0;
+
+    /**
+     * @var float
+     */
+    protected $oldPrice = 0;
+
+    /**
+     * @Type("string")
+     * @Groups({"elastic"})
+     * @var string
+     */
+    protected $currency = '';
 
     /**
      * @var CatalogProduct
      */
     protected $catalogProduct;
 
+    /**
+     * @var int
+     */
+    protected $discount = 0;
+
     public function __construct(array $fields = [])
     {
         parent::__construct($fields);
+
+        if (isset($fields['CATALOG_PRICE_1'])) {
+            $this->price = (float)$fields['CATALOG_PRICE_1'];
+        }
+
+        if (isset($fields['CATALOG_CURRENCY_1'])) {
+            $this->currency = (string)$fields['CATALOG_CURRENCY_1'];
+        }
     }
 
     /**
@@ -422,46 +446,32 @@ class Offer extends IblockElement
     }
 
     /**
-     * @param string $regionId
-     *
-     * @throws RuntimeException
-     * @return Price
+     * @return float
      */
-    public function getPrice(string $regionId): Price
+    public function getPrice(): float
     {
-        if (!$this->getAllPrices()->offsetExists($regionId)) {
-            throw new RuntimeException(
-                sprintf(
-                    'Цена торгового предложения %d в регионе %s не найдена.',
-                    $this->getId(),
-                    $regionId
-                )
-            );
-        }
+        $this->checkOptimalPrice();
 
-        return $this->getAllPrices()->offsetGet($regionId);
+        return $this->price;
     }
 
     /**
-     * @return Collection|Price[]
+     * @param float $price
+     * @return static
      */
-    public function getAllPrices(): Collection
+    public function withPrice(float $price)
     {
-        if (null === $this->prices) {
-            $this->withAllPrices((new PriceQuery())->getAllPrices($this->getId()));
-        }
-
-        return $this->prices;
+        $this->price = $price;
+        return $this;
     }
 
     /**
-     * @param Collection|Price[] $priceCollection
+     * @param float $oldPrice
      * @return $this
      */
-    public function withAllPrices(Collection $priceCollection)
+    public function withOldPrice(float $oldPrice)
     {
-        $this->prices = PriceCollection::createIndexedByRegion($priceCollection);
-
+        $this->oldPrice = $oldPrice;
         return $this;
     }
 
@@ -496,5 +506,66 @@ class Offer extends IblockElement
     {
         $this->catalogProduct = $catalogProduct;
         return $this;
+    }
+
+    /**
+     * @return float
+     */
+    public function getOldPrice(): float
+    {
+        $this->checkOptimalPrice();
+
+        return $this->oldPrice;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCurrency(): string
+    {
+        return $this->currency;
+    }
+
+    /**
+     * @return int
+     */
+    public function getDiscount(): int
+    {
+        $this->checkOptimalPrice();
+
+        return $this->discount;
+    }
+
+    /**
+     * @param int $discount
+     * @return static
+     */
+    public function withDiscount(int $discount)
+    {
+        $this->discount = $discount;
+        return $this;
+    }
+
+    protected function checkOptimalPrice()
+    {
+        CCatalogDiscountSave::Disable();
+        $optimalPrice = CCatalogProduct::GetOptimalPrice($this->getId());
+        CCatalogDiscountSave::Enable();
+
+        if (\is_array($optimalPrice)) {
+            /**
+             * @var array $optimalPrice
+             */
+            $resultPrice = $optimalPrice['RESULT_PRICE'] ?? [
+                    'PERCENT'        => 0,
+                    'BASE_PRICE'     => $this->price,
+                    'DISCOUNT_PRICE' => $this->price,
+                ];
+            $this->withDiscount(floor($resultPrice['PERCENT']));
+            if ($this->discount > 0) {
+                $this->withOldPrice($resultPrice['BASE_PRICE']);
+                $this->withPrice($resultPrice['DISCOUNT_PRICE']);
+            }
+        }
     }
 }

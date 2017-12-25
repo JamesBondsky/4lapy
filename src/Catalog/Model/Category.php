@@ -12,7 +12,6 @@ use Elastica\Query\Terms;
 use Exception;
 use FourPaws\App\Application;
 use FourPaws\BitrixOrm\Model\IblockSection;
-use FourPaws\Catalog\CatalogService;
 use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Collection\VariantCollection;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterTrait;
@@ -37,11 +36,6 @@ class Category extends IblockSection implements FilterInterface
      * @var Category
      */
     protected $symlink;
-
-    /**
-     * @var CatalogService
-     */
-    protected $catalogService;
 
     /**
      * @var static
