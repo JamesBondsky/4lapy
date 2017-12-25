@@ -2,6 +2,7 @@
 
 namespace FourPaws\BitrixOrm\Collection;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\BitrixOrm\Model\BitrixArrayItemBase;
 
 abstract class CdbResultCollectionBase extends CollectionBase
@@ -19,6 +20,7 @@ abstract class CdbResultCollectionBase extends CollectionBase
     public function __construct(\CDBResult $result)
     {
         $this->cdbResult = $result;
+        $this->collection = new ArrayCollection();
     }
 
     /**
@@ -26,7 +28,16 @@ abstract class CdbResultCollectionBase extends CollectionBase
      */
     public function getTotalCount(): int
     {
+        $this->initialize();
         return $this->totalCount;
+    }
+
+    /**
+     * @return \CDBResult
+     */
+    public function getCdbResult(): \CDBResult
+    {
+        return $this->cdbResult;
     }
 
     protected function doInitialize()
@@ -40,25 +51,17 @@ abstract class CdbResultCollectionBase extends CollectionBase
 
             foreach ($result as $key => $value) {
                 if ($value instanceof BitrixArrayItemBase) {
-                    $this->set($value->getId(), $value);
+                    $this->collection->set($value->getId(), $value);
                 } elseif (\is_array($value) && array_key_exists('ID', $value)) {
-                    $this->set($value['ID'], $value);
+                    $this->collection->set($value['ID'], $value);
                 } else {
-                    $this->set($key, $value);
+                    $this->collection->set($key, $value);
                 }
             }
-            $this->totalCount = $this->count();
+            $this->totalCount = $this->collection->count();
         } else {
             parent::doInitialize();
             $this->totalCount = (int)$this->cdbResult->AffectedRowsCount();
         }
-    }
-
-    /**
-     * @return \CDBResult
-     */
-    public function getCdbResult(): \CDBResult
-    {
-        return $this->cdbResult;
     }
 }

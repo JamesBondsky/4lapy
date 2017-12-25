@@ -7,6 +7,7 @@ use Elastica\Result;
 use Elastica\ResultSet;
 use FourPaws\App\Application;
 use FourPaws\Catalog\Collection\ProductCollection;
+use FourPaws\Search\Factory;
 
 class ProductSearchResult
 {
@@ -19,6 +20,11 @@ class ProductSearchResult
      * @var ResultSet
      */
     private $resultSet;
+
+    /**
+     * @var Factory
+     */
+    private $factory;
 
     /**
      * ProductSearchResult constructor.
@@ -35,13 +41,12 @@ class ProductSearchResult
     }
 
     /**
-     * @return ProductCollection
      * @throws \RuntimeException
+     * @return ProductCollection
      */
-    public function getProductCollection()
+    public function getProductCollection(): ProductCollection
     {
-        if (is_null($this->productCollection)) {
-
+        if (null === $this->productCollection) {
             $productList = [];
 
             /** @var Result $item */
@@ -52,7 +57,6 @@ class ProductSearchResult
             $cdbres = new CDBResult(null);
             $cdbres->InitFromArray($productList);
             $this->productCollection = new ProductCollection($cdbres);
-
         }
 
         return $this->productCollection;
