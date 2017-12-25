@@ -183,4 +183,9 @@ services:
     class: 'CitiesTable'
     arguments: ['Cities']
     parent: bx.hlblock.base
+    
+  bx.hlblock.deliveryschedule:
+    class: 'DeliveryScheduleTable'
+    arguments: ['DeliverySchedule']
+    parent: bx.hlblock.base
 
