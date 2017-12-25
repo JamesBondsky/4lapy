@@ -99,3 +99,6 @@ services:
       class: FourPaws\AppBundle\Serialization\BitrixBooleanHandler
       tags:
           - { name: jms_serializer.subscribing_handler }
+
+  recaptcha.service:
+      class: FourPaws\ReCaptcha\ReCaptchaService
