@@ -25,6 +25,7 @@ class CategoryQuery extends IblockSectionQuery
             'LEFT_MARGIN',
             'RIGHT_MARGIN',
             'UF_SYMLINK',
+            'PICTURE',
         ];
     }
 
@@ -40,5 +41,4 @@ class CategoryQuery extends IblockSectionQuery
     {
         return new CategoryCollection($this->doExec());
     }
-
 }

@@ -4,12 +4,13 @@ namespace FourPaws\Catalog\Model;
 
 use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Collection\HlbReferenceItemCollection;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\BitrixOrm\Model\IblockElement;
-use FourPaws\BitrixOrm\Model\TextContent;
+use FourPaws\BitrixOrm\Type\TextContent;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Query\BrandQuery;
 use FourPaws\Catalog\Query\OfferQuery;
@@ -506,7 +507,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     protected $specifications;
 
     /**
-     * @var ArrayCollection
+     * @var Collection
      * @Type("ArrayCollection<FourPaws\Catalog\Model\Offer>")
      * @Accessor(getter="getOffers")
      * @Groups({"elastic"})
@@ -546,35 +547,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
-     * @internal Специально для Elasitcsearch храним коллецию без ключей, т.к. ассоциативный массив с торговыми
-     * предложениями туда передавать нельзя: это будет объект, а не массив объектов.
-     *
-     * @return ArrayCollection
-     */
-    public function getOffers(): ArrayCollection
-    {
-        if (is_null($this->offers)) {
-            $this->offers = new ArrayCollection(
-                array_values(
-                    (new OfferQuery())->withFilterParameter('=PROPERTY_CML2_LINK', $this->getId())
-                                      ->exec()
-                                      ->toArray()
-                )
-            );
-        }
-
-        return $this->offers;
-    }
-
-    /**
-     * @return int
-     */
-    public function getBrandId(): int
-    {
-        return (int)$this->PROPERTY_BRAND;
-    }
-
-    /**
      * @param int $id
      *
      * @return $this
@@ -592,19 +564,11 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
-     * @return string
-     */
-    public function getBrandName(): string
-    {
-        return $this->PROPERTY_BRAND_NAME;
-    }
-
-    /**
      * @return Brand
      */
     public function getBrand(): Brand
     {
-        if (is_null($this->brand)) {
+        if (null === $this->brand) {
             $this->brand = (new BrandQuery())->withFilter(['=ID' => $this->getBrandId()])->exec()->current();
             /**
              * Если бренд не найден, "заткнуть" пустышкой.
@@ -616,6 +580,22 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         }
 
         return $this->brand;
+    }
+
+    /**
+     * @return int
+     */
+    public function getBrandId(): int
+    {
+        return (int)$this->PROPERTY_BRAND;
+    }
+
+    /**
+     * @return string
+     */
+    public function getBrandName(): string
+    {
+        return $this->PROPERTY_BRAND_NAME;
     }
 
     /**
@@ -633,16 +613,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
-     * @return HlbReferenceItemCollection
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     * @return HlbReferenceItemCollection
      */
     public function getForWho()
     {
-
-
-        if (is_null($this->forWho)) {
+        if (null === $this->forWho) {
             $this->forWho = ReferenceUtils::getReferenceMulti(
                 Application::getHlBlockDataManager('bx.hlblock.forwho'),
                 $this->PROPERTY_FOR_WHO
@@ -653,14 +631,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
-     * @return HlbReferenceItemCollection
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     * @return HlbReferenceItemCollection
      */
     public function getPetSize()
     {
-        if (is_null($this->petSize)) {
+        if (null === $this->petSize) {
             $this->petSize = ReferenceUtils::getReferenceMulti(
                 Application::getHlBlockDataManager('bx.hlblock.petsize'),
                 $this->PROPERTY_PET_SIZE
@@ -675,14 +653,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * \attention Это всего лишь одноимённое свойство из SAP и никак не связано с категориями каталога на сайте.
      *
-     * @return HlbReferenceItem
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     * @return HlbReferenceItem
      */
     public function getCategory()
     {
-        if (is_null($this->category)) {
+        if (null === $this->category) {
             $this->category = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.productcategory'),
                 $this->PROPERTY_CATEGORY
@@ -693,14 +671,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
-     * @return HlbReferenceItem
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     * @return HlbReferenceItem
      */
     public function getPurpose()
     {
-        if (is_null($this->purpose)) {
+        if (null === $this->purpose) {
             $this->purpose = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.purpose'),
                 $this->PROPERTY_PURPOSE
@@ -711,14 +689,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
-     * @return HlbReferenceItemCollection
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     * @return HlbReferenceItemCollection
      */
     public function getPetAge()
     {
-        if (is_null($this->petAge)) {
+        if (null === $this->petAge) {
             $this->petAge = ReferenceUtils::getReferenceMulti(
                 Application::getHlBlockDataManager('bx.hlblock.petage'),
                 $this->PROPERTY_PET_AGE
@@ -729,14 +707,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
-     * @return HlbReferenceItemCollection
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     * @return HlbReferenceItemCollection
      */
     public function getPetAgeAdditional()
     {
-        if (is_null($this->petAgeAdditional)) {
+        if (null === $this->petAgeAdditional) {
             $this->petAgeAdditional = ReferenceUtils::getReferenceMulti(
                 Application::getHlBlockDataManager('bx.hlblock.petageadditional'),
                 $this->PROPERTY_PET_AGE_ADDITIONAL
@@ -747,14 +725,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
-     * @return HlbReferenceItem
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     * @return HlbReferenceItem
      */
     public function getPetBreed()
     {
-        if (is_null($this->petBreed)) {
+        if (null === $this->petBreed) {
             $this->petBreed = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.petbreed'),
                 $this->PROPERTY_PET_BREED
@@ -765,14 +743,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
-     * @return HlbReferenceItem
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     * @return HlbReferenceItem
      */
     public function getPetGender()
     {
-        if (is_null($this->petGender)) {
+        if (null === $this->petGender) {
             $this->petGender = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.petgender'),
                 $this->PROPERTY_PET_GENDER
@@ -783,14 +761,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
-     * @return HlbReferenceItemCollection
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     * @return HlbReferenceItemCollection
      */
     public function getLabels()
     {
-        if (is_null($this->label)) {
+        if (null === $this->label) {
             $this->label = ReferenceUtils::getReferenceMulti(
                 Application::getHlBlockDataManager('bx.hlblock.label'),
                 $this->PROPERTY_LABEL
@@ -816,14 +794,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
-     * @return HlbReferenceItem
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     * @return HlbReferenceItem
      */
     public function getCountry()
     {
-        if (is_null($this->country)) {
+        if (null === $this->country) {
             $this->country = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.country'),
                 $this->PROPERTY_COUNTRY
@@ -834,14 +812,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
-     * @return HlbReferenceItemCollection
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     * @return HlbReferenceItemCollection
      */
     public function getTradeNames()
     {
-        if (is_null($this->tradeName)) {
+        if (null === $this->tradeName) {
             $this->tradeName = ReferenceUtils::getReferenceMulti(
                 Application::getHlBlockDataManager('bx.hlblock.tradename'),
                 $this->PROPERTY_TRADE_NAME
@@ -852,14 +830,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
-     * @return HlbReferenceItemCollection
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     * @return HlbReferenceItemCollection
      */
     public function getMakers()
     {
-        if (is_null($this->maker)) {
+        if (null === $this->maker) {
             $this->maker = ReferenceUtils::getReferenceMulti(
                 Application::getHlBlockDataManager('bx.hlblock.maker'),
                 $this->PROPERTY_MAKER
@@ -870,14 +848,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
-     * @return HlbReferenceItemCollection
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     * @return HlbReferenceItemCollection
      */
     public function getManagersOfCategory()
     {
-        if (is_null($this->managerOfCategory)) {
+        if (null === $this->managerOfCategory) {
             $this->managerOfCategory = ReferenceUtils::getReferenceMulti(
                 Application::getHlBlockDataManager('bx.hlblock.categorymanager'),
                 $this->PROPERTY_MANAGER_OF_CATEGORY
@@ -888,14 +866,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
-     * @return HlbReferenceItemCollection
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     * @return HlbReferenceItemCollection
      */
     public function getManufactureMaterials()
     {
-        if (is_null($this->manufactureMaterial)) {
+        if (null === $this->manufactureMaterial) {
             $this->manufactureMaterial = ReferenceUtils::getReferenceMulti(
                 Application::getHlBlockDataManager('bx.hlblock.material'),
                 $this->PROPERTY_MANUFACTURE_MATERIAL
@@ -906,14 +884,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
-     * @return HlbReferenceItemCollection
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     * @return HlbReferenceItemCollection
      */
     public function getClothesSeasons()
     {
-        if (is_null($this->seasonClothes)) {
+        if (null === $this->seasonClothes) {
             $this->seasonClothes = ReferenceUtils::getReferenceMulti(
                 Application::getHlBlockDataManager('bx.hlblock.season'),
                 $this->PROPERTY_SEASON_CLOTHES
@@ -952,14 +930,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
-     * @return HlbReferenceItem
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     * @return HlbReferenceItem
      */
     public function getPetType()
     {
-        if (is_null($this->petType)) {
+        if (null === $this->petType) {
             $this->petType = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.pettype'),
                 $this->PROPERTY_PET_TYPE
@@ -970,14 +948,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
-     * @return HlbReferenceItem
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     * @return HlbReferenceItem
      */
     public function getPharmaGroup()
     {
-        if (is_null($this->pharmaGroup)) {
+        if (null === $this->pharmaGroup) {
             $this->pharmaGroup = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.pharmagroup'),
                 $this->PROPERTY_PHARMA_GROUP
@@ -990,14 +968,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     /**
      * Возвращает специализацию корма
      *
-     * @return HlbReferenceItem
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     * @return HlbReferenceItem
      */
     public function getFeedSpecification()
     {
-        if (is_null($this->feedSpecification)) {
+        if (null === $this->feedSpecification) {
             $this->feedSpecification = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.feedspec'),
                 $this->PROPERTY_FEED_SPECIFICATION
@@ -1018,14 +996,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
-     * @return HlbReferenceItem
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     * @return HlbReferenceItem
      */
     public function getConsistence()
     {
-        if (is_null($this->consistence)) {
+        if (null === $this->consistence) {
             $this->consistence = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.consistence'),
                 $this->PROPERTY_CONSISTENCE
@@ -1036,14 +1014,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
-     * @return HlbReferenceItemCollection
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     * @return HlbReferenceItemCollection
      */
     public function getFlavour()
     {
-        if (is_null($this->flavour)) {
+        if (null === $this->flavour) {
             $this->flavour = ReferenceUtils::getReferenceMulti(
                 Application::getHlBlockDataManager('bx.hlblock.flavour'),
                 $this->PROPERTY_FLAVOUR
@@ -1056,14 +1034,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     /**
      * Возвращает особенности ингридиентов
      *
-     * @return HlbReferenceItemCollection
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     * @return HlbReferenceItemCollection
      */
     public function getFeaturesOfIngredients()
     {
-        if (is_null($this->featuresOfIngredients)) {
+        if (null === $this->featuresOfIngredients) {
             $this->featuresOfIngredients = ReferenceUtils::getReferenceMulti(
                 Application::getHlBlockDataManager('bx.hlblock.ingridientfeatures'),
                 $this->PROPERTY_FEATURES_OF_INGREDIENTS
@@ -1076,14 +1054,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     /**
      * Возвращает формы выпуска продукта
      *
-     * @return HlbReferenceItemCollection
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     * @return HlbReferenceItemCollection
      */
     public function getProductForms()
     {
-        if (is_null($this->productForm)) {
+        if (null === $this->productForm) {
             $this->productForm = ReferenceUtils::getReferenceMulti(
                 Application::getHlBlockDataManager('bx.hlblock.productform'),
                 $this->PROPERTY_PRODUCT_FORM
@@ -1096,14 +1074,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     /**
      * Возвращает типы паразитов.
      *
-     * @return HlbReferenceItemCollection
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     * @return HlbReferenceItemCollection
      */
     public function getTypesOfParasites()
     {
-        if (is_null($this->typeOfParasite)) {
+        if (null === $this->typeOfParasite) {
             $this->typeOfParasite = ReferenceUtils::getReferenceMulti(
                 Application::getHlBlockDataManager('bx.hlblock.parasitetype'),
                 $this->PROPERTY_TYPE_OF_PARASITE
@@ -1188,7 +1166,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      */
     public function getSuggest()
     {
-        if (is_null($this->suggest)) {
+        if (null === $this->suggest) {
             $fullName = $this->getName();
             $suggest = explode(' ', $fullName);
             array_unshift($suggest, $fullName);
@@ -1196,7 +1174,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
             /** @var Offer $offer */
             foreach ($this->getOffers() as $offer) {
                 $suggest[] = $offer->getSkuId();
-                if (is_array($offer->getBarcodes())) {
+                if (\is_array($offer->getBarcodes())) {
                     foreach ($offer->getBarcodes() as $barcode) {
                         $suggest[] = $barcode;
                     }
@@ -1206,7 +1184,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
             $suggest = array_filter(
                 $suggest,
                 function ($token) {
-                    return trim($token) != '' && strlen($token) >= 3;
+                    return trim($token) != '' && \strlen($token) >= 3;
                 }
             );
 
@@ -1216,9 +1194,29 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
              * `java.lang.IllegalArgumentException: unknown field name [0], must be one of [input, weight, contexts]`
              */
             $this->suggest = array_values(array_unique($suggest));
-
         }
 
         return $this->suggest;
+    }
+
+    /**
+     * @internal Специально для Elasitcsearch храним коллецию без ключей, т.к. ассоциативный массив с торговыми
+     * предложениями туда передавать нельзя: это будет объект, а не массив объектов.
+     *
+     * @return Collection|Offer[]
+     */
+    public function getOffers(): Collection
+    {
+        if (null === $this->offers) {
+            $this->offers = new ArrayCollection(
+                array_values(
+                    (new OfferQuery())->withFilterParameter('=PROPERTY_CML2_LINK', $this->getId())
+                        ->exec()
+                        ->toArray()
+                )
+            );
+        }
+
+        return $this->offers;
     }
 }

@@ -12,3 +12,7 @@ app.swagger:
 ajax.routes:
     resource: "ajax.yml"
     prefix:   /ajax
+
+app.catalog:
+    resource: "@FourPawsCatalogBundle/Controller/"
+    type: annotation
