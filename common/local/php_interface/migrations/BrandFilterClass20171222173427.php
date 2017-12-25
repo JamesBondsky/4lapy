@@ -88,11 +88,11 @@ class BrandFilterClass20171222173427 extends SprintMigrationBase
                 /**
                  * @var array $data
                  */
-                $result = $dataManager::update($data['ID'], [
+                $updateResult = $dataManager::update($data['ID'], [
                     'UF_CODE' => $this->getCodeForClass($data['UF_CLASS_NAME']),
                 ]);
 
-                if (!$result->isSuccess()) {
+                if (!$updateResult->isSuccess()) {
                     return false;
                 }
             }
