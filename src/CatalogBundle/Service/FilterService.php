@@ -78,7 +78,7 @@ class FilterService implements LoggerAwareInterface
             /**
              * @todo Фильтр по региональной цене
              */
-            $internalFilterCollection->add($this->getRegionInternalFilter());
+//            $internalFilterCollection->add($this->getRegionInternalFilter());
         } catch (\InvalidArgumentException $exception) {
             /**
              * @todo log exception
@@ -138,12 +138,12 @@ class FilterService implements LoggerAwareInterface
     protected function getRegionInternalFilter(): InternalFilter
     {
         //$currentRegionCode = $this->locationService->getCurrentRegionCode();
-        $currentRegionCode = LocationService::DEFAULT_REGION_CODE;
-
-        return InternalFilter::create(
-            'CurrentRegion',
-            (new Nested())->setPath('offers.prices')
-                ->setQuery(new Term(['offers.prices.REGION_ID' => $currentRegionCode]))
-        );
+//        $currentRegionCode = LocationService::DEFAULT_REGION_CODE;
+//
+//        return InternalFilter::create(
+//            'CurrentRegion',
+//            (new Nested())->setPath('offers.prices')
+//                ->setQuery(new Term(['offers.prices.REGION_ID' => $currentRegionCode]))
+//        );
     }
 }

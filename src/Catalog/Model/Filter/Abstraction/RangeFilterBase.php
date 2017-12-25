@@ -174,7 +174,7 @@ abstract class RangeFilterBase extends FilterBase implements RangeFilterInterfac
      */
     protected function doGetRange(): array
     {
-        $internalFilters = $this->catalogService->getInternalFilters();
+        $internalFilters = $this->filterService->getInternalFilters();
 
         $search = $this->searchService->getIndexHelper()->createProductSearch();
         $search->getQuery()

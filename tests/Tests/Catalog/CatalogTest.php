@@ -2,28 +2,7 @@
 
 namespace FourPaws\Test\Tests\Catalog;
 
-use Adv\Bitrixtools\Exception\IblockNotFoundException;
-use Elastica\Aggregation\AbstractAggregation;
-use Elastica\Query;
-use Elastica\QueryBuilder;
-use FourPaws\App\Application;
-use FourPaws\Catalog\CatalogService;
-use FourPaws\Catalog\Collection\FilterCollection;
-use FourPaws\Catalog\Model\Brand;
-use FourPaws\Catalog\Model\Category;
-use FourPaws\Catalog\Model\Filter\BrandFilter;
-use FourPaws\Catalog\Model\Filter\PetAgeFilter;
-use FourPaws\Catalog\Model\Filter\PetGenderFilter;
-use FourPaws\Catalog\Model\Filter\PetSizeFilter;
-use FourPaws\Catalog\Model\Sorting;
-use FourPaws\Catalog\Model\Variant;
-use FourPaws\Catalog\Query\CategoryQuery;
-use FourPaws\Location\LocationService;
-use FourPaws\Search\SearchService;
 use FourPaws\Test\Tests\TestBase;
-use PHPUnit\Framework\Assert;
-use RuntimeException;
-use Symfony\Component\HttpFoundation\Request;
 
 class CatalogTest extends TestBase
 {

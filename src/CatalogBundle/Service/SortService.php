@@ -4,11 +4,10 @@ namespace FourPaws\CatalogBundle\Service;
 
 use FourPaws\Catalog\Model\Sorting;
 use FourPaws\CatalogBundle\Collection\SortsCollection;
-use FourPaws\Location\LocationService;
 
 class SortService
 {
-    public function getSorts(string $activeSortCode, bool $isQuery = false)
+    public function getSorts(string $activeSortCode, bool $isQuery = false): SortsCollection
     {
         $sorts = $this->getBaseSorts();
 
@@ -33,7 +32,7 @@ class SortService
     protected function getBaseSorts(): array
     {
         //$currentRegionCode = $this->locationService->getCurrentRegionCode();
-        $currentRegionCode = LocationService::DEFAULT_REGION_CODE;
+//        $currentRegionCode = LocationService::DEFAULT_REGION_CODE;
 
         return [
             (new Sorting())->withValue('popular')
@@ -44,15 +43,16 @@ class SortService
                 ->withName('возрастанию цены')
                 ->withRule(
                     [
-                        'offers.prices.PRICE' => [
-                            'order'         => 'asc',
-                            'mode'          => 'min',
-                            'nested_path'   => 'offers.prices',
-                            'nested_filter' => [
-                                'term' => ['offers.prices.REGION_ID' => $currentRegionCode],
-                            ],
-
-                        ],
+                        'offers.price' => ['order' => 'asc', 'mode' => 'min'],
+//                        'offers.prices.PRICE' => [
+//                            'order'         => 'asc',
+//                            'mode'          => 'min',
+//                            'nested_path'   => 'offers.prices',
+//                            'nested_filter' => [
+//                                'term' => ['offers.prices.REGION_ID' => $currentRegionCode],
+//                            ],
+//
+//                        ],
                     ]
                 ),
 
@@ -60,15 +60,16 @@ class SortService
                 ->withName('убыванию цены')
                 ->withRule(
                     [
-                        'offers.prices.PRICE' => [
-                            'order'         => 'desc',
-                            'mode'          => 'max',
-                            'nested_path'   => 'offers.prices',
-                            'nested_filter' => [
-                                'term' => ['offers.prices.REGION_ID' => $currentRegionCode],
-                            ],
-
-                        ],
+                        'offers.price' => ['order' => 'desc', 'mode' => 'max'],
+//                        'offers.prices.PRICE' => [
+//                            'order'         => 'desc',
+//                            'mode'          => 'max',
+//                            'nested_path'   => 'offers.prices',
+//                            'nested_filter' => [
+//                                'term' => ['offers.prices.REGION_ID' => $currentRegionCode],
+//                            ],
+//
+//                        ],
                     ]
                 ),
         ];
