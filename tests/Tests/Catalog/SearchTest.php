@@ -2,16 +2,7 @@
 
 namespace FourPaws\Test\Tests\Catalog;
 
-use FourPaws\App\Application;
-use FourPaws\Catalog\CatalogService;
-use FourPaws\Catalog\Model\Category;
-use FourPaws\Catalog\Model\Offer;
-use FourPaws\Catalog\Model\Product;
-use FourPaws\Catalog\Query\CategoryQuery;
-use FourPaws\Location\LocationService;
-use FourPaws\Search\SearchService;
 use FourPaws\Test\Tests\TestBase;
-use Symfony\Component\HttpFoundation\Request;
 
 class SearchTest extends TestBase
 {

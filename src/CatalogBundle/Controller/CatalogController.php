@@ -2,9 +2,9 @@
 
 namespace FourPaws\CatalogBundle\Controller;
 
+use FourPaws\App\Application;
 use FourPaws\CatalogBundle\Dto\ChildCategoryRequest;
 use FourPaws\CatalogBundle\Dto\RootCategoryRequest;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Response;
@@ -40,14 +40,22 @@ class CatalogController extends Controller
 
     /**
      * @Route("/{path}/", requirements={"path"="[^\.]+(?!\.html)$" })
-     * @ParamConverter(name="categoryRequest", options={"path"="path"})
      * @param ChildCategoryRequest $categoryRequest
      *
+     * @throws \Exception
      * @return Response
      */
-    public function childCategoryAction(ChildCategoryRequest $categoryRequest)
+    public function childCategoryAction(ChildCategoryRequest $categoryRequest): Response
     {
+        $result = Application::getInstance()->getContainer()->get('search.service')->searchProducts(
+            $categoryRequest->getCategory()->getFilters(),
+            $categoryRequest->getSorts()->getSelected(),
+            $categoryRequest->getNavigation(),
+            $categoryRequest->getSearchString()
+        );
+
         dump($categoryRequest);
+        dump($result->getProductCollection());
         die();
 
         return new Response('');
