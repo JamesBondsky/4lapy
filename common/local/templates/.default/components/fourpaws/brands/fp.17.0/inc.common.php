@@ -2,11 +2,18 @@
 /**
  * Бренды: главная страница
  *
- * @updated: 21.12.2017
+ * @updated: 25.12.2017
  */
 
 $arParams['CACHE_TIME'] = isset($arParams['CACHE_TIME']) ? $arParams['CACHE_TIME'] : '43200';
 $arParams['CACHE_TYPE'] = isset($arParams['CACHE_TYPE']) ? $arParams['CACHE_TYPE'] : 'A';
+
+$arParams['RESIZE_WIDTH'] = isset($arParams['RESIZE_WIDTH']) ? $arParams['RESIZE_WIDTH'] : '115';
+$arParams['RESIZE_HEIGHT'] = isset($arParams['RESIZE_HEIGHT']) ? $arParams['RESIZE_HEIGHT'] : '43';
+$arParams['RESIZE_TYPE'] = isset($arParams['RESIZE_TYPE']) ? $arParams['RESIZE_TYPE'] : 'BX_RESIZE_IMAGE_PROPORTIONAL';
+
+$arParams['IBLOCK_TYPE'] = isset($arParams['IBLOCK_TYPE']) ? $arParams['IBLOCK_TYPE'] : \FourPaws\Enum\IblockType::CATALOG;
+$arParams['IBLOCK_CODE'] = isset($arParams['IBLOCK_CODE']) ? $arParams['IBLOCK_CODE'] : \FourPaws\Enum\IblockCode::BRANDS;
 
 echo '<div class="b-container">';
 echo '<h1 class="b-title b-title--h1 b-title--block b-title--catalog-h2">Бренды</h1>';
@@ -20,8 +27,8 @@ $APPLICATION->IncludeComponent(
 	'bitrix:news.list',
 	'fp.17.0.popular',
 	array(
-		'IBLOCK_TYPE' => 'catalog',
-		'IBLOCK_ID' => 'brands',
+		'IBLOCK_TYPE' => $arParams['IBLOCK_TYPE'],
+		'IBLOCK_ID' => $arParams['IBLOCK_CODE'],
 		'SORT_BY1' => 'SORT',
 		'SORT_ORDER1' => 'ASC',
 		'SORT_BY2' => 'NAME',
@@ -39,9 +46,9 @@ $APPLICATION->IncludeComponent(
 		'CACHE_TYPE' => $arParams['CACHE_TYPE'],
 		'DETAIL_URL' => '',
 
-		'RESIZE_WIDTH' => '115',
-		'RESIZE_HEIGHT' => '43',
-		'RESIZE_TYPE' => 'BX_RESIZE_IMAGE_PROPORTIONAL',
+		'RESIZE_WIDTH' => $arParams['RESIZE_WIDTH'],
+		'RESIZE_HEIGHT' => $arParams['RESIZE_HEIGHT'],
+		'RESIZE_TYPE' => $arParams['RESIZE_TYPE'],
 
 		'ACTIVE_DATE_FORMAT' => 'd.m.Y',
 		'ADD_SECTIONS_CHAIN' => 'N',
@@ -89,13 +96,13 @@ $APPLICATION->IncludeComponent(
 	'fourpaws:iblock.alphabetical.index',
 	'fp.17.0.default',
 	array(
-		'IBLOCK_TYPE' => 'catalog',
-		'IBLOCK_CODE' => 'brands',
+		'IBLOCK_TYPE' => $arParams['IBLOCK_TYPE'],
+		'IBLOCK_CODE' => $arParams['IBLOCK_CODE'],
 		'CACHE_TIME' => $arParams['CACHE_TIME'],
 		'CACHE_TYPE' => $arParams['CACHE_TYPE'],
 		'CHARS_COUNT' => 1,
 		'TEMPLATE_NO_CACHE' => 'Y',
-		'LETTER_PAGE_URL' => '/brands/#LETTER_REDUCED#/',
+		'LETTER_PAGE_URL' => $arResult['FOLDER'].'#LETTER_REDUCED#/',
 	),
 	$component,
 	array(
@@ -110,8 +117,8 @@ $APPLICATION->IncludeComponent(
 	'bitrix:news.list',
 	'fp.17.0.list',
 	array(
-		'IBLOCK_TYPE' => 'catalog',
-		'IBLOCK_ID' => 'brands',
+		'IBLOCK_TYPE' => $arParams['IBLOCK_TYPE'],
+		'IBLOCK_ID' => $arParams['IBLOCK_CODE'],
 		'SORT_BY1' => 'SORT',
 		'SORT_ORDER1' => 'ASC',
 		'SORT_BY2' => 'NAME',
@@ -130,9 +137,9 @@ $APPLICATION->IncludeComponent(
 		'CHECK_DATES' => 'Y',
 		'DETAIL_URL' => '',
 
-		'RESIZE_WIDTH' => '115',
-		'RESIZE_HEIGHT' => '43',
-		'RESIZE_TYPE' => 'BX_RESIZE_IMAGE_PROPORTIONAL',
+		'RESIZE_WIDTH' => $arParams['RESIZE_WIDTH'],
+		'RESIZE_HEIGHT' => $arParams['RESIZE_HEIGHT'],
+		'RESIZE_TYPE' => $arParams['RESIZE_TYPE'],
 
 		'ACTIVE_DATE_FORMAT' => 'd.m.Y',
 		'ADD_SECTIONS_CHAIN' => 'N',

@@ -1,6 +1,5 @@
 <?
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
-$APPLICATION->SetTitle("Бренды");
 ?>
 <div class="b-container">
 	<?$APPLICATION->IncludeComponent(
@@ -9,8 +8,8 @@ $APPLICATION->SetTitle("Бренды");
 		array(
 			'ELEMENT_ID' => '',
 			'ELEMENT_CODE' => $_REQUEST['ELEMENT_CODE'],
-			'IBLOCK_TYPE' => 'catalog',
-			'IBLOCK_ID' => 'brands',
+			'IBLOCK_TYPE' => \FourPaws\Enum\IblockType::CATALOG,
+			'IBLOCK_ID' => \FourPaws\Enum\IblockCode::BRANDS,
 			'FIELD_CODE' => array(
 				'NAME',
 				'PREVIEW_PICTURE',
