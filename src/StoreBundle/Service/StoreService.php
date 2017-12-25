@@ -2,8 +2,8 @@
 
 namespace FourPaws\StoreBundle\Service;
 
+use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use FourPaws\Location\LocationService;
-use FourPaws\StoreBundle\Collection\BaseCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Entity\Base as BaseEntity;
@@ -51,6 +51,7 @@ class StoreService
      *
      * @return bool|BaseEntity|Store
      * @throws NotFoundException
+     * @throws \Exception
      */
     public function getById(int $id)
     {
@@ -66,7 +67,7 @@ class StoreService
 
         return $store;
     }
-
+    
     /**
      * Получить склад по XML_ID
      *
@@ -74,6 +75,7 @@ class StoreService
      *
      * @return Store
      * @throws NotFoundException
+     * @throws \Exception
      */
     public function getByXmlId($xmlId): Store
     {
@@ -96,6 +98,7 @@ class StoreService
      * @param string $type
      *
      * @return StoreCollection
+     * @throws \Exception
      */
     public function getByCurrentLocation($type = self::TYPE_ALL): StoreCollection
     {
@@ -110,7 +113,8 @@ class StoreService
      * @param string $locationCode
      * @param string $type
      *
-     * @return BaseCollection|StoreCollection
+     * @return StoreCollection
+     * @throws \Exception
      */
     public function getByLocation(string $locationCode, string $type = self::TYPE_ALL)
     {
@@ -127,7 +131,8 @@ class StoreService
      *
      * @param array $codes
      *
-     * @return BaseCollection|StoreCollection
+     * @return StoreCollection
+     * @throws \Exception
      */
     public function getMultipleByXmlId(array $codes)
     {
@@ -139,7 +144,7 @@ class StoreService
      *
      * @return array
      */
-    protected function getTypeFilter($type): array
+    public function getTypeFilter($type): array
     {
         switch ($type) {
             case self::TYPE_SHOP:
@@ -149,5 +154,82 @@ class StoreService
         }
 
         return [];
+    }
+
+    /**
+     * @param array $filter
+     *
+     * @param array $select
+     *
+     * @return array
+     * @throws \Exception
+     */
+    public function getMetroInfo(array $filter = [], array $select = ['*']): array
+    {
+        $highloadStation = HLBlockFactory::createTableObject('MetroStations');
+        $branchIds = [];
+        $result = [];
+        $res = $highloadStation::query()->setFilter($filter)->setSelect($select)->exec();
+        while ($item = $res->fetch()) {
+            $result[$item['ID']] = $item;
+            if (!\in_array($item['UF_BRANCH'], $branchIds, true)) {
+                $branchIds[$item['ID']] = $item['UF_BRANCH'];
+            }
+        }
+
+        if (\is_array($branchIds) && !empty($branchIds)) {
+            $highloadBranch = HLBlockFactory::createTableObject('MetroWays');
+            $res = $highloadBranch::query()->setFilter(['ID' => $branchIds])->exec();
+            $reverseBranchIds = [];
+            foreach ($branchIds as $id => $branch) {
+                $reverseBranchIds[$branch][] = $id;
+            }
+            while ($item = $res->fetch()) {
+                if (\is_array($reverseBranchIds[$item['ID']]) && !empty($reverseBranchIds[$item['ID']])) {
+                    foreach ($reverseBranchIds[$item['ID']] as $id) {
+                        $item['CLASS'] = $item['UF_CLASS'] ?? '';
+                        $result[$id]['BRANCH'] = $item;
+                    }
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return \FourPaws\Location\LocationService
+     */
+    public function getLocationService(): LocationService
+    {
+        return $this->locationService;
+    }
+
+    /**
+     * @param array $filter
+     * @param array $select
+     *
+     * @return array
+     * @throws \Exception
+     */
+    public function getServicesInfo(array $filter, array $select = ['*']): array
+    {
+        $highloadServices = HLBlockFactory::createTableObject('StoreServices');
+
+        $result = [];
+        $res = $highloadServices::query()->setFilter($filter)->setSelect($select)->exec();
+        while ($item = $res->fetch()) {
+            $result[$item['ID']] = $item;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return \FourPaws\StoreBundle\Repository\StoreRepository
+     */
+    public function getRepository(): StoreRepository
+    {
+        return $this->repository;
     }
 }

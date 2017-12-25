@@ -63,5 +63,4 @@ class OfferQuery extends IblockElementQuery
     {
         return new OfferCollection($this->doExec());
     }
-
 }

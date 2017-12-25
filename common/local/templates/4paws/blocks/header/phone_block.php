@@ -9,14 +9,20 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use FourPaws\Decorators\SvgDecorator; ?>
 <div class="b-header-info__item b-header-info__item--phone">
     <?php $APPLICATION->IncludeComponent(
-            'fourpaws:city.phone',
-            'template.header.popover'
+        'fourpaws:city.phone',
+        'template.header.popover',
+        [],
+        false,
+        ['HIDE_ICONS' => 'Y']
     ) ?>
     <div class="b-popover b-popover--phone js-popover">
         <div class="b-contact">
             <?php $APPLICATION->IncludeComponent(
-                    'fourpaws:city.phone',
-                    'template.header'
+                'fourpaws:city.phone',
+                'template.header',
+                [],
+                false,
+                ['HIDE_ICONS' => 'Y']
             ) ?>
             <dl class="b-phone-pair">
                 <dt class="b-phone-pair__phone">

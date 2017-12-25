@@ -106,7 +106,7 @@ class Store extends Base
      * @var int
      * @Serializer\Type("int")
      * @Serializer\SkipWhenEmpty()
-     * @Serializer\SerializedName("LOCATION_ID")
+     * @Serializer\SerializedName("USER_ID")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
     protected $userId = 0;
@@ -115,7 +115,7 @@ class Store extends Base
      * @var int
      * @Serializer\Type("int")
      * @Serializer\SkipWhenEmpty()
-     * @Serializer\SerializedName("LOCATION_ID")
+     * @Serializer\SerializedName("MODIFIED_BY")
      * @Serializer\Groups(groups={"read"})
      */
     protected $modifiedBy = 0;
@@ -127,6 +127,14 @@ class Store extends Base
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
     protected $schedule = '';
+    
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("PHONE")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $phone = '';
 
     /**
      * @var string
@@ -243,7 +251,7 @@ class Store extends Base
      */
     public function getId(): int
     {
-        return $this->id;
+        return $this->id ?? 0;
     }
 
     /**
@@ -283,7 +291,7 @@ class Store extends Base
      */
     public function getTitle(): string
     {
-        return $this->title;
+        return $this->title ?? '';
     }
 
     /**
@@ -303,7 +311,7 @@ class Store extends Base
      */
     public function getAddress(): string
     {
-        return $this->address;
+        return $this->address ?? '';
     }
 
     /**
@@ -323,7 +331,7 @@ class Store extends Base
      */
     public function getDescription(): string
     {
-        return $this->description;
+        return $this->description ?? '';
     }
 
     /**
@@ -343,7 +351,7 @@ class Store extends Base
      */
     public function getLatitude(): float
     {
-        return $this->latitude;
+        return $this->latitude ?? 0;
     }
 
     /**
@@ -363,7 +371,7 @@ class Store extends Base
      */
     public function getLongitude(): float
     {
-        return $this->longitude;
+        return $this->longitude ?? 0;
     }
 
     /**
@@ -383,7 +391,7 @@ class Store extends Base
      */
     public function getImageId(): int
     {
-        return $this->imageId;
+        return $this->imageId ?? 0;
     }
 
     /**
@@ -403,7 +411,7 @@ class Store extends Base
      */
     public function getLocationId(): int
     {
-        return $this->locationId;
+        return $this->locationId ?? 0;
     }
 
     /**
@@ -423,7 +431,7 @@ class Store extends Base
      */
     public function getDateModify(): int
     {
-        return $this->dateModify;
+        return $this->dateModify ?? 0;
     }
 
     /**
@@ -443,7 +451,7 @@ class Store extends Base
      */
     public function getDateCreate(): string
     {
-        return $this->dateCreate;
+        return $this->dateCreate ?? '';
     }
 
     /**
@@ -463,7 +471,7 @@ class Store extends Base
      */
     public function getUserId(): int
     {
-        return $this->userId;
+        return $this->userId ?? 0;
     }
 
     /**
@@ -483,7 +491,7 @@ class Store extends Base
      */
     public function getModifiedBy(): int
     {
-        return $this->modifiedBy;
+        return $this->modifiedBy ?? 0;
     }
 
     /**
@@ -503,7 +511,7 @@ class Store extends Base
      */
     public function getSchedule(): string
     {
-        return $this->schedule;
+        return $this->schedule ?? '';
     }
 
     /**
@@ -523,7 +531,7 @@ class Store extends Base
      */
     public function getXmlId(): string
     {
-        return $this->xmlId;
+        return $this->xmlId ?? '';
     }
 
     /**
@@ -543,7 +551,7 @@ class Store extends Base
      */
     public function getSort(): int
     {
-        return $this->sort;
+        return $this->sort ?? 0;
     }
 
     /**
@@ -563,7 +571,7 @@ class Store extends Base
      */
     public function getEmail(): string
     {
-        return $this->email;
+        return $this->email ?? '';
     }
 
     /**
@@ -623,7 +631,7 @@ class Store extends Base
      */
     public function getSiteId(): string
     {
-        return $this->siteId;
+        return $this->siteId ?? '';
     }
 
     /**
@@ -643,7 +651,7 @@ class Store extends Base
      */
     public function getCode(): string
     {
-        return $this->code;
+        return $this->code ?? '';
     }
 
     /**
@@ -683,7 +691,7 @@ class Store extends Base
      */
     public function getLocation(): string
     {
-        return $this->location;
+        return $this->location ?? '';
     }
 
     /**
@@ -703,7 +711,7 @@ class Store extends Base
      */
     public function getMetro(): int
     {
-        return $this->metro;
+        return $this->metro ?? 0;
     }
 
     /**
@@ -743,7 +751,7 @@ class Store extends Base
      */
     public function getYandexShopId(): string
     {
-        return $this->yandexShopId;
+        return $this->yandexShopId ?? '';
     }
 
     /**
@@ -776,5 +784,21 @@ class Store extends Base
         $this->isBase = $isBase;
 
         return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getPhone() : string
+    {
+        return $this->phone ?? '';
+    }
+    
+    /**
+     * @param string $phone
+     */
+    public function setPhone(string $phone)
+    {
+        $this->phone = $phone;
     }
 }

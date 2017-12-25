@@ -3,11 +3,13 @@
 namespace FourPaws\Catalog\Model;
 
 use DateTimeImmutable;
-use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\BitrixOrm\Model\CatalogProduct;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\BitrixOrm\Model\IblockElement;
+use FourPaws\BitrixOrm\Query\CatalogProductQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Collection\PriceCollection;
 use FourPaws\Catalog\Query\PriceQuery;
@@ -134,8 +136,10 @@ class Offer extends IblockElement
      */
     protected $clothingSize;
 
-    //TODO Изображения
-    protected $PROPERTY_IMG;
+    /**
+     * @var int[]
+     */
+    protected $PROPERTY_IMG = [];
 
     /**
      * @var string[]
@@ -213,12 +217,17 @@ class Offer extends IblockElement
     protected $PROPERTY_BY_REQUEST = 0;
 
     /**
-     * @var ArrayCollection
+     * @var Collection
      * @Type("ArrayCollection<FourPaws\Catalog\Model\Price>")
      * @Accessor(getter="getAllPrices",setter="withAllPrices")
      * @Groups({"elastic"})
      */
     protected $prices;
+
+    /**
+     * @var CatalogProduct
+     */
+    protected $catalogProduct;
 
     public function __construct(array $fields = [])
     {
@@ -230,10 +239,10 @@ class Offer extends IblockElement
      */
     public function getProduct()
     {
-        if (is_null($this->product)) {
+        if (null === $this->product) {
             $this->product = (new ProductQuery())->withFilter(['=ID' => (int)$this->PROPERTY_CML2_LINK])
-                                                 ->exec()
-                                                 ->current();
+                ->exec()
+                ->current();
 
             if (!($this->product instanceof Product)) {
                 $this->product = new Product();
@@ -244,14 +253,14 @@ class Offer extends IblockElement
     }
 
     /**
-     * @return HlbReferenceItem
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     * @return HlbReferenceItem
      */
     public function getColor()
     {
-        if (is_null($this->colour)) {
+        if (null === $this->colour) {
             $this->colour = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.colour'),
                 $this->PROPERTY_COLOUR
@@ -262,14 +271,14 @@ class Offer extends IblockElement
     }
 
     /**
-     * @return HlbReferenceItem
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     * @return HlbReferenceItem
      */
     public function getVolumeReference()
     {
-        if (is_null($this->volumeReference)) {
+        if (null === $this->volumeReference) {
             $this->volumeReference = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.volume'),
                 $this->PROPERTY_VOLUME_REFERENCE
@@ -288,14 +297,14 @@ class Offer extends IblockElement
     }
 
     /**
-     * @return HlbReferenceItem
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     * @return HlbReferenceItem
      */
     public function getClothingSize()
     {
-        if (is_null($this->clothingSize)) {
+        if (null === $this->clothingSize) {
             $this->clothingSize = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.clothingsize'),
                 $this->PROPERTY_CLOTHING_SIZE
@@ -314,14 +323,14 @@ class Offer extends IblockElement
     }
 
     /**
-     * @return HlbReferenceItem
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     * @return HlbReferenceItem
      */
     public function getKindOfPacking()
     {
-        if (is_null($this->kindOfPacking)) {
+        if (null === $this->kindOfPacking) {
             $this->kindOfPacking = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.packagetype'),
                 $this->PROPERTY_KIND_OF_PACKING
@@ -332,14 +341,14 @@ class Offer extends IblockElement
     }
 
     /**
-     * @return HlbReferenceItem
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     * @return HlbReferenceItem
      */
     public function getSeasonYear()
     {
-        if (is_null($this->seasonYear)) {
+        if (null === $this->seasonYear) {
             $this->seasonYear = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.year'),
                 $this->PROPERTY_SEASON_YEAR
@@ -360,14 +369,14 @@ class Offer extends IblockElement
     /**
      * Возвращает тип вознаграждения для заводчика.
      *
-     * @return HlbReferenceItem
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     * @return HlbReferenceItem
      */
     public function getRewardType()
     {
-        if (is_null($this->rewardType)) {
+        if (null === $this->rewardType) {
             $this->rewardType = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.rewardtype'),
                 $this->PROPERTY_REWARD_TYPE
@@ -425,8 +434,8 @@ class Offer extends IblockElement
     /**
      * @param string $regionId
      *
-     * @return Price
      * @throws RuntimeException
+     * @return Price
      */
     public function getPrice(string $regionId): Price
     {
@@ -444,21 +453,58 @@ class Offer extends IblockElement
     }
 
     /**
-     * @return ArrayCollection
+     * @return Collection|Price[]
      */
-    public function getAllPrices(): ArrayCollection
+    public function getAllPrices(): Collection
     {
-        if (is_null($this->prices)) {
+        if (null === $this->prices) {
             $this->withAllPrices((new PriceQuery())->getAllPrices($this->getId()));
         }
 
         return $this->prices;
     }
 
-    public function withAllPrices(ArrayCollection $priceCollection)
+    /**
+     * @param Collection|Price[] $priceCollection
+     * @return $this
+     */
+    public function withAllPrices(Collection $priceCollection)
     {
         $this->prices = PriceCollection::createIndexedByRegion($priceCollection);
 
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getImagesIds(): array
+    {
+        return $this->PROPERTY_IMG;
+    }
+
+    /**
+     * @return CatalogProduct
+     */
+    public function getCatalogProduct(): CatalogProduct
+    {
+        if (null === $this->catalogProduct) {
+            $catalogProduct = (new CatalogProductQuery())
+                ->withFilter(['ID' => $this->getId()])
+                ->exec()
+                ->current();
+            $this->withCatalogProduct($catalogProduct);
+        }
+        return $this->catalogProduct;
+    }
+
+    /**
+     * @param CatalogProduct $catalogProduct
+     * @return Offer
+     */
+    public function withCatalogProduct(CatalogProduct $catalogProduct): Offer
+    {
+        $this->catalogProduct = $catalogProduct;
         return $this;
     }
 }

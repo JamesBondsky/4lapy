@@ -88,3 +88,8 @@ jms_serializer:
   property_naming:
     id: jms_serialized_name_annotation_strategy
     enable_cache: true
+
+sensio_framework_extra:
+  request:
+    converters: true
+    disable: ['doctrine.orm']

@@ -6,14 +6,19 @@ use FourPaws\BitrixOrm\Model\BitrixArrayItemBase;
 
 abstract class CdbResultCollectionBase extends CollectionBase
 {
+    /**
+     * @var \CDBResult
+     */
     protected $cdbResult;
 
     /**
-     * @return \CDBResult
+     * @var int Сколько всего элементов выбрано, если мы получили только одну страницу.
      */
-    public function getCdbResult(): \CDBResult
+    protected $totalCount = 0;
+
+    public function __construct(\CDBResult $result)
     {
-        return $this->cdbResult;
+        $this->cdbResult = $result;
     }
 
     /**
@@ -24,48 +29,36 @@ abstract class CdbResultCollectionBase extends CollectionBase
         return $this->totalCount;
     }
 
-    /**
-     * CdbResultCollectionBase constructor.
-     *
-     * @param \CDBResult $cdbResult
-     */
-    public function __construct(\CDBResult $cdbResult)
+    protected function doInitialize()
     {
-        parent::__construct();
+        if (true === $this->getCdbResult()->bFromArray && \is_array($this->getCdbResult()->arResult)) {
+            /**
+             * @todo Зачем тут инициилизация из BitrixItemBase
+             * @todo Лучше залогировать и удалить
+             */
+            $result = (array)$this->getCdbResult()->arResult;
 
-        $this->cdbResult = $cdbResult;
-
-        $this->populateCollection();
+            foreach ($result as $key => $value) {
+                if ($value instanceof BitrixArrayItemBase) {
+                    $this->set($value->getId(), $value);
+                } elseif (\is_array($value) && array_key_exists('ID', $value)) {
+                    $this->set($value['ID'], $value);
+                } else {
+                    $this->set($key, $value);
+                }
+            }
+            $this->totalCount = $this->count();
+        } else {
+            parent::doInitialize();
+            $this->totalCount = (int)$this->cdbResult->AffectedRowsCount();
+        }
     }
 
     /**
-     * PopulateCollection
+     * @return \CDBResult
      */
-    protected function populateCollection()
+    public function getCdbResult(): \CDBResult
     {
-        if (true === $this->cdbResult->bFromArray) {
-            foreach ($this->cdbResult->arResult as $key => $value) {
-
-                if ($value instanceof BitrixArrayItemBase) {
-
-                    $this->set($value->getId(), $value);
-
-                } elseif (is_array($value) && array_key_exists('ID', $value)) {
-
-                    $this->set($value['ID'], $value);
-
-                } else {
-
-                    $this->set($key, $value);
-
-                }
-            }
-
-            $this->totalCount = $this->count();
-        } else {
-            parent::populateCollection();
-
-            $this->totalCount = (int)$this->cdbResult->AffectedRowsCount();
-        }
+        return $this->cdbResult;
     }
 }
