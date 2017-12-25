@@ -2,6 +2,7 @@
 
 namespace FourPaws\BitrixOrm\Collection;
 
+use Doctrine\Common\Collections\AbstractLazyCollection;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\BitrixOrm\Model\BitrixArrayItemBase;
 
@@ -10,36 +11,26 @@ use FourPaws\BitrixOrm\Model\BitrixArrayItemBase;
  *
  * @package FourPaws\BitrixOrm\Collection
  */
-abstract class CollectionBase extends ArrayCollection
+abstract class CollectionBase extends AbstractLazyCollection
 {
     /**
-     * @var int Сколько всего элементов выбрано, если мы получили только одну страницу.
+     * Do the initialization logic
+     *
+     * @return void
      */
-    protected $totalCount = 0;
-    
-    /**
-     * Извлечение модели
-     */
-    abstract protected function fetchElement() : \Generator;
-    
-    /**
-     * Заполнение коллекции объектами
-     */
-    protected function populateCollection()
+    protected function doInitialize()
     {
+        $this->collection = new ArrayCollection();
         foreach ($this->fetchElement() as $element) {
             /**
              * @var BitrixArrayItemBase
              */
-            $this->set($element->getId(), $element);
+            $this->collection->set($element->getId(), $element);
         }
     }
-    
+
     /**
-     * @return int
+     * Извлечение модели
      */
-    public function getTotalCount() : int
-    {
-        return $this->totalCount;
-    }
+    abstract protected function fetchElement(): \Generator;
 }

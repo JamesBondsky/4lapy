@@ -11,6 +11,11 @@ abstract class D7CollectionBase extends CollectionBase
      */
     protected $result;
 
+    public function __construct(Result $result)
+    {
+        $this->result = $result;
+    }
+
     /**
      * @return Result
      */
@@ -18,13 +23,4 @@ abstract class D7CollectionBase extends CollectionBase
     {
         return $this->result;
     }
-
-    public function __construct(Result $result)
-    {
-        parent::__construct();
-
-        $this->result = $result;
-        $this->populateCollection();
-    }
-
 }
