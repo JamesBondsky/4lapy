@@ -31,8 +31,8 @@ class CatalogURL20171220141437 extends SprintMigrationBase
         return $cIblock->Update($iblockId, array_merge($iblockFields, [
             'LIST_PAGE_URL'      => '#SITE_DIR#/catalog/',
             'SECTION_PAGE_URL'   => '#SITE_DIR#/catalog/#SECTION_CODE_PATH#/',
-            'DETAIL_PAGE_URL'    => '#SITE_DIR#/catalog/#SECTION_CODE_PATH#/#ELEMENT_CODE#/',
-            'CANONICAL_PAGE_URL' => 'https://#SERVER_NAME##SITE_DIR#/catalog/#SECTION_CODE_PATH#/#ELEMENT_CODE#/',
+            'DETAIL_PAGE_URL'    => '#SITE_DIR#/catalog/#SECTION_CODE_PATH#/#ELEMENT_CODE#.html',
+            'CANONICAL_PAGE_URL' => 'https://#SERVER_NAME##SITE_DIR#/catalog/#SECTION_CODE_PATH#/#ELEMENT_CODE#.html',
         ]));
     }
 
