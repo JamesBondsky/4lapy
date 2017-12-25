@@ -17,3 +17,6 @@ services:
     store.service:
         class: FourPaws\StoreBundle\Service\StoreService
         public: true
+    store.deliveryschedule.service:
+        class: FourPaws\StoreBundle\Service\DeliveryScheduleService
+        public: true

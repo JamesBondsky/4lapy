@@ -22,4 +22,14 @@ class StockRepository extends BaseRepository
     {
         return Stock::class;
     }
+
+    protected function getDefaultFilter(): array
+    {
+        return [];
+    }
+
+    protected function getDefaultOrder(): array
+    {
+        return ['ID' => 'ASC'];
+    }
 }

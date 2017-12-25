@@ -3,10 +3,12 @@
 namespace FourPaws\StoreBundle\Service;
 
 use FourPaws\Location\LocationService;
+use FourPaws\StoreBundle\Collection\BaseCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
+use FourPaws\StoreBundle\Entity\Base as BaseEntity;
 use FourPaws\StoreBundle\Exception\NotFoundException;
-use FourPaws\StoreBundle\Exception\StoreException;
+use FourPaws\StoreBundle\Exception\BaseException;
 use FourPaws\StoreBundle\Repository\StoreRepository;
 
 class StoreService
@@ -47,15 +49,15 @@ class StoreService
      *
      * @param int $id
      *
-     * @return Store
+     * @return bool|BaseEntity|Store
      * @throws NotFoundException
      */
-    public function getById(int $id): Store
+    public function getById(int $id)
     {
         $store = false;
         try {
             $store = $this->repository->find($id);
-        } catch (StoreException $e) {
+        } catch (BaseException $e) {
         }
 
         if (!$store) {
@@ -78,7 +80,7 @@ class StoreService
         $store = false;
         try {
             $store = $this->repository->findBy(['XML_ID' => $xmlId, [], 1])->first();
-        } catch (StoreException $e) {
+        } catch (BaseException $e) {
         }
 
         if (!$store) {
@@ -93,7 +95,7 @@ class StoreService
      *
      * @param string $type
      *
-     * @return array
+     * @return StoreCollection
      */
     public function getByCurrentLocation($type = self::TYPE_ALL): StoreCollection
     {
@@ -108,9 +110,9 @@ class StoreService
      * @param string $locationCode
      * @param string $type
      *
-     * @return array
+     * @return BaseCollection|StoreCollection
      */
-    public function getByLocation(string $locationCode, string $type = self::TYPE_ALL): StoreCollection
+    public function getByLocation(string $locationCode, string $type = self::TYPE_ALL)
     {
         $filter = array_merge(
             ['UF_LOCATION' => $locationCode],
@@ -125,9 +127,9 @@ class StoreService
      *
      * @param array $codes
      *
-     * @return array
+     * @return BaseCollection|StoreCollection
      */
-    public function getMultipleByXmlId(array $codes): StoreCollection
+    public function getMultipleByXmlId(array $codes)
     {
         return $this->repository->findBy(['XML_ID' => $codes]);
     }
@@ -137,7 +139,7 @@ class StoreService
      *
      * @return array
      */
-    protected function getTypeFilter($type)
+    protected function getTypeFilter($type): array
     {
         switch ($type) {
             case self::TYPE_SHOP:

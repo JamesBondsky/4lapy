@@ -22,4 +22,14 @@ class StoreRepository extends BaseRepository
     {
         return Store::class;
     }
+
+    protected function getDefaultFilter(): array
+    {
+        return ['ACTIVE' => 'Y'];
+    }
+
+    protected function getDefaultOrder(): array
+    {
+        return ['SORT' => 'ASC', 'ID' => 'ASC'];
+    }
 }

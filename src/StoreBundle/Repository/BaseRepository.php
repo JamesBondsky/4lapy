@@ -42,6 +42,10 @@ abstract class BaseRepository implements RepositoryInterface
 
     abstract protected function getEntityClass(): string;
 
+    abstract protected function getDefaultFilter(): array;
+
+    abstract protected function getDefaultOrder(): array;
+
     /**
      * BaseRepository constructor.
      *
@@ -114,18 +118,22 @@ abstract class BaseRepository implements RepositoryInterface
         array $orderBy = [],
         int $limit = null,
         int $offset = null
-    ): BaseCollection {
+    ) {
         if (empty($orderBy)) {
-            $orderBy = ['SORT' => 'ASC', 'ID' => 'ASC'];
+            $orderBy = $this->getDefaultOrder();
+        }
+
+        if (empty($criteria)) {
+            $criteria = $this->getDefaultFilter();
         }
 
         $entities = ($this->table)::query()
-                                ->setSelect(['*', 'UF_*'])
-                                ->setFilter($criteria)
-                                ->setOrder($orderBy)
-                                ->setLimit($limit)
-                                ->setOffset($offset)
-                                ->exec();
+                                  ->setSelect(['*', 'UF_*'])
+                                  ->setFilter($criteria)
+                                  ->setOrder($orderBy)
+                                  ->setLimit($limit)
+                                  ->setOffset($offset)
+                                  ->exec();
 
         $result = [];
         while ($entity = $entities->fetch()) {
@@ -136,6 +144,7 @@ abstract class BaseRepository implements RepositoryInterface
          * todo change group name to constant
          */
         $collectionClass = $this->getCollectionClass();
+
         return new $collectionClass(
             $this->arrayTransformer->fromArray(
                 $result,
