@@ -10,6 +10,8 @@ use Bitrix\Sale\Delivery\Services\Manager;
 use Bitrix\Sale\Location\LocationTable;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Shipment;
+use FourPaws\Catalog\Model\Offer;
+use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Location\LocationService;
 use FourPaws\UserBundle\Service\UserService;
 use WebArch\BitrixCache\BitrixCache;
@@ -309,6 +311,38 @@ class DeliveryService
             ->resultOf($getZones);
 
         return $result;
+    }
+
+    /**
+     * @param Shipment $shipment
+     *
+     * @return bool
+     */
+    public function checkShipmentOffersAvailability(Shipment $shipment): bool
+    {
+
+        $order = $shipment->getParentOrder();
+        $basketCollection = $order->getBasket();
+        if ($basketCollection->isEmpty()) {
+            return true;
+        }
+
+        $offerIds = [];
+        /** @var BasketItem $basketItem */
+        foreach ($basketCollection as $basketItem) {
+            $offerIds[] = $basketItem->getField('PRODUCT_ID');
+        }
+
+        $deliveryZone = $this->getDeliveryZoneCode($shipment);
+        $offers = (new OfferQuery())->withFilterParameter(['ID' => $offerIds])->exec();
+        /** @var Offer $offer */
+        foreach ($offers as $offer) {
+            if (!$offer->isAvailable()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

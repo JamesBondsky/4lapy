@@ -71,6 +71,10 @@ abstract class DeliveryServiceHandlerBase extends Base implements DeliveryServic
      */
     public function isCompatible(Shipment $shipment)
     {
+        if (!$this->deliveryService->checkShipmentOffersAvailability($shipment)) {
+            return false;
+        }
+
         return parent::isCompatible($shipment);
     }
 

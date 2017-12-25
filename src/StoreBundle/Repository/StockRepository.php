@@ -25,7 +25,7 @@ class StockRepository extends BaseRepository
 
     protected function getDefaultFilter(): array
     {
-        return [];
+        return ['>AMOUNT' => 0];
     }
 
     protected function getDefaultOrder(): array

@@ -3,6 +3,7 @@
 namespace FourPaws\DeliveryBundle\Service;
 
 use Bitrix\Main\Error;
+use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\Shipment;
@@ -45,8 +46,6 @@ class InnerPickupService extends DeliveryServiceHandlerBase
         if ($shops->isEmpty()) {
             return false;
         }
-
-        /** @todo проверка остатков товаров */
 
         return true;
     }

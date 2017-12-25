@@ -13,6 +13,8 @@ use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\BitrixOrm\Query\CatalogProductQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\Location\LocationService;
+use FourPaws\StoreBundle\Service\StoreService;
 use JMS\Serializer\Annotation\Accessor;
 use JMS\Serializer\Annotation\Groups;
 use JMS\Serializer\Annotation\Type;
@@ -577,5 +579,25 @@ class Offer extends IblockElement
                 $this->withPrice($resultPrice['DISCOUNT_PRICE']);
             }
         }
+    }
+
+    public function isAvailable() {
+        /** @var LocationService $locationService */
+        $locationService = Application::getInstance()->getContainer()->get('location.service');
+        /** @var StoreService $storeService */
+        $storeService = Application::getInstance()->getContainer()->get('store.service');
+
+        $locationCode = $locationService->getCurrentLocation();
+        $stores = $storeService->getByLocation($locationCode);
+        if ($stores->isEmpty()) {
+            $stores = $storeService->getByLocation(LocationService::LOCATION_CODE_MOSCOW);
+        }
+
+        if ($stores->isEmpty()) {
+            return false;
+        }
+
+        $stocks = $storeService->getStocks($this, $stores);
+        return !$stocks->isEmpty();
     }
 }

@@ -3,12 +3,15 @@
 namespace FourPaws\StoreBundle\Service;
 
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\Location\LocationService;
+use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Entity\Base as BaseEntity;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Exception\BaseException;
+use FourPaws\StoreBundle\Repository\StockRepository;
 use FourPaws\StoreBundle\Repository\StoreRepository;
 
 class StoreService
@@ -36,12 +39,21 @@ class StoreService
     /**
      * @var StoreRepository
      */
-    protected $repository;
+    protected $storeRespostory;
 
-    public function __construct(LocationService $locationService, StoreRepository $repository)
-    {
+    /**
+     * @var StockRepository
+     */
+    protected $stockRepository;
+
+    public function __construct(
+        LocationService $locationService,
+        StoreRepository $storeRespostory,
+        StockRepository $stockRepository
+    ) {
         $this->locationService = $locationService;
-        $this->repository = $repository;
+        $this->storeRespostory = $storeRespostory;
+        $this->stockRespostory = $stockRepository;
     }
 
     /**
@@ -57,7 +69,7 @@ class StoreService
     {
         $store = false;
         try {
-            $store = $this->repository->find($id);
+            $store = $this->storeRespostory->find($id);
         } catch (BaseException $e) {
         }
 
@@ -67,7 +79,7 @@ class StoreService
 
         return $store;
     }
-    
+
     /**
      * Получить склад по XML_ID
      *
@@ -81,7 +93,7 @@ class StoreService
     {
         $store = false;
         try {
-            $store = $this->repository->findBy(['XML_ID' => $xmlId, [], 1])->first();
+            $store = $this->storeRespostory->findBy(['XML_ID' => $xmlId, [], 1])->first();
         } catch (BaseException $e) {
         }
 
@@ -123,7 +135,7 @@ class StoreService
             $this->getTypeFilter($type)
         );
 
-        return $this->repository->findBy($filter);
+        return $this->storeRespostory->findBy($filter);
     }
 
     /**
@@ -136,7 +148,7 @@ class StoreService
      */
     public function getMultipleByXmlId(array $codes)
     {
-        return $this->repository->findBy(['XML_ID' => $codes]);
+        return $this->storeRespostory->findBy(['XML_ID' => $codes]);
     }
 
     /**
@@ -230,6 +242,21 @@ class StoreService
      */
     public function getRepository(): StoreRepository
     {
-        return $this->repository;
+        return $this->storeRespostory;
+    }
+
+    /**
+     * Получить наличие оффера на указанных складах
+     *
+     * @param Offer $offer
+     * @param StoreCollection $stores
+     */
+    public function getStocks(Offer $offer, StoreCollection $stores): StockCollection
+    {
+        $storeIds = [];
+        foreach ($stores as $store) {
+            $storeIds[] = $store->getId();
+        }
+        return $this->stockRepository->findBy(['PRODUCT_ID' => $offer->getId(), 'STORE_ID' => $storeIds]);
     }
 }
