@@ -1,8 +1,8 @@
 <?if(!defined('B_PROLOG_INCLUDED')||B_PROLOG_INCLUDED!==true)die();
 /**
- * Популярные бренды
+ * Сгруппированный список брендов (в разделе брендов)
  *
- * @updated: 21.12.2017
+ * @updated: 25.12.2017
  */
 $this->setFrameMode(true);
 

@@ -12,7 +12,7 @@ $APPLICATION->SetTitle("Бренды");
 		'SEF_FOLDER' => '/brands/',
 		'SEF_URL_TEMPLATES' => array(
 			'index' => 'index.php',
-			'letter' => '#LETTER_REDUCED#/'
+			//'letter' => '#LETTER_REDUCED#/'
 		),
 	),
 	null,

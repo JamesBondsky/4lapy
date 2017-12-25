@@ -2,7 +2,7 @@
 /**
  * Популярные бренды на главной странице сайта
  *
- * @updated: 22.12.2017
+ * @updated: 25.12.2017
  */
 
 if(!$arResult['ITEMS']) {
@@ -10,21 +10,38 @@ if(!$arResult['ITEMS']) {
 }
 
 foreach($arResult['ITEMS'] as &$arItem) {
-	$arItem['PRINT_PICTURE'] = array();
-	if(!empty($arParams['RESIZE_WIDTH']) && !empty($arParams['RESIZE_HEIGHT']) && ($arItem['PREVIEW_PICTURE'] || $arItem['DETAIL_PICTURE'])) {
-		$arImg = \CFile::ResizeImageGet(
-			$arItem['PREVIEW_PICTURE'] ? $arItem['PREVIEW_PICTURE'] : $arItem['DETAIL_PICTURE'],
-			array(
-				'width' => $arParams['RESIZE_WIDTH'],
-				'height' => $arParams['RESIZE_HEIGHT'],
-			),
-			$arParams['RESIZE_TYPE'],
-			false
-		);
-		if($arImg) {
-			$arItem['PRINT_PICTURE'] = array(
-				'SRC' => $arImg['src'],
-			);
+	$mImgField = false;
+	if($arItem['PREVIEW_PICTURE'] || $arItem['DETAIL_PICTURE']) {
+		$mImgField = $arItem['PREVIEW_PICTURE'] ? $arItem['PREVIEW_PICTURE'] : $arItem['DETAIL_PICTURE'];
+	}
+	$arItem['PRINT_PICTURE'] = $mImgField && is_array($mImgField) ? $mImgField : array();
+	if($mImgField) {
+		if(!empty($arParams['RESIZE_WIDTH']) && !empty($arParams['RESIZE_HEIGHT'])) {
+			try {
+				$bCrop = isset($arParams['RESIZE_TYPE']) && $arParams['RESIZE_TYPE'] == 'BX_RESIZE_IMAGE_EXACT';
+
+				if(is_array($mImgField)) {
+					$obImg = new \FourPaws\BitrixOrm\Model\ResizeImageDecorator($mImgField);
+				} else {
+					$obImg = \FourPaws\BitrixOrm\Model\ResizeImageDecorator::createFromPrimary($mImgField);
+				}
+				$obImg->setResizeWidth(!$bCrop ? $arParams['RESIZE_WIDTH'] : max(array($arParams['RESIZE_HEIGHT'], $arParams['RESIZE_WIDTH'])));
+				$obImg->setResizeHeight(!$bCrop ? $arParams['RESIZE_HEIGHT'] : max(array($arParams['RESIZE_HEIGHT'], $arParams['RESIZE_WIDTH'])));
+
+				if($bCrop) {
+					if(is_array($mImgField)) {
+						$obImg = new \FourPaws\BitrixOrm\Model\CropImageDecorator($mImgField);
+					} else {
+						$obImg = \FourPaws\BitrixOrm\Model\CropImageDecorator::createFromPrimary($mImgField);
+					}
+					$obImg->setCropWidth($arParams['RESIZE_WIDTH']);
+					$obImg->setCropHeight($arParams['RESIZE_HEIGHT']);
+				}
+
+				$arItem['PRINT_PICTURE'] = array(
+					'SRC' => $obImg->getSrc(),
+				);
+			} catch(\Exception $obException) {}
 		}
 	}
 }

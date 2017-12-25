@@ -5,8 +5,8 @@ $arUrlRewrite = [
 		"RULE" => "ELEMENT_CODE=\$1",
 		"ID" => "",
 		"PATH" => "/brand/detail.php",
-	),
-	array(
+	],
+    [
         'CONDITION' => '#^/company/news/#',
         'RULE'      => '',
         'ID'        => 'bitrix:news',
@@ -29,8 +29,8 @@ $arUrlRewrite = [
 		"RULE" => "",
 		"ID" => "fourpaws:brands",
 		"PATH" => "/brands/index.php",
-	),
-	array(
+	],
+	[
         'CONDITION' => '##',
         'RULE'      => '',
         'ID'        => '',

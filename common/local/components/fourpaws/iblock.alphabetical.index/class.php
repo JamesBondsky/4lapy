@@ -3,7 +3,7 @@
  * Class CFourPawsIBlockAlphabeticalIndex
  * Компонент алфавитного указателя
  *
- * @updated: 21.12.2017
+ * @updated: 25.12.2017
  */
 
 class CFourPawsIBlockAlphabeticalIndex extends \CBitrixComponent {
@@ -13,15 +13,6 @@ class CFourPawsIBlockAlphabeticalIndex extends \CBitrixComponent {
 	 */
 	public function __construct($obParentComponent = null) {
 		parent::__construct($obParentComponent);
-		$this->constructInit($obParentComponent);
-	}
-
-	/**
-	 * @param \CBitrixComponent|null $obParentComponent
-	 * @return void
-	 */
-	protected function constructInit($obParentComponent = null) {
-		//
 	}
 
 	/**
