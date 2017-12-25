@@ -43,6 +43,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             <?php require_once 'include/subscribe.php' ?>
         </div>
     </div>
-<?php require_once 'include/popupChangePassword.php' ?>
-<?php require_once 'include/popupChangeData.php' ?>
-<?php require_once 'include/popupChangePhone.php' ?>
+<?php require_once '/common/popupChangePassword.phpws/personal.profile/templates/popupChangePassword/popupChangePassword.php' ?>
+<?php require_once '/common/popupChangeData.phpurpaws/personal.profile/templates/popupChangeData/popupChangeData.php' ?>
+<?php require_once '/common/popupChangePhone.phprpaws/personal.profile/templates/popupChangePhone/popupChangePhone.php' ?>
