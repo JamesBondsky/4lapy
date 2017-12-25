@@ -38,6 +38,10 @@ class Calculator extends \Ipolh\DPD\Delivery\DPD
 
         $interval = explode('-', Option::get(IPOLH_DPD_MODULE, 'DELIVERY_TIME_PERIOD'));
 
+        if ($profile == DeliveryService::DPD_DELIVERY_CODE) {
+            $result['DPD_TARIFF']['DAYS']++;
+        }
+
         $_SESSION['DPD_DATA'][$profile] = [
             'INTERVALS' => [
                 [
