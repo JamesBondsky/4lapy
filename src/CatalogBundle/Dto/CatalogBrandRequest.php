@@ -5,7 +5,7 @@ namespace FourPaws\CatalogBundle\Dto;
 use FourPaws\Catalog\Model\Brand;
 use FourPaws\Catalog\Model\Category;
 
-class CatalogBrandRequest extends AbstractCatalogRequest
+class CatalogBrandRequest extends AbstractCatalogRequest implements CatalogCategorySearchRequestInterface
 {
     /**
      * @var Brand
@@ -47,9 +47,9 @@ class CatalogBrandRequest extends AbstractCatalogRequest
     /**
      * @param Category $category
      *
-     * @return CatalogBrandRequest
+     * @return CatalogCategorySearchRequestInterface
      */
-    public function setCategory(Category $category): CatalogBrandRequest
+    public function setCategory(Category $category): CatalogCategorySearchRequestInterface
     {
         $this->category = $category;
         return $this;
