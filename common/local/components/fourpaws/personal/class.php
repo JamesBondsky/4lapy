@@ -79,7 +79,6 @@ class CPersonalCabinetComponent extends CBitrixComponent
             'VARIABLES'     => $arVariables,
             'ALIASES'       => $arVariableAliases,
         ];
-        echo $componentPage;
         $this->includeComponentTemplate($componentPage);
         
         return true;

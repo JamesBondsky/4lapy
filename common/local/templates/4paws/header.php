@@ -100,11 +100,20 @@ $markup = PawsApplication::markup();
                  */
                 require_once 'temp_header_menu.php';
                 ?>
-                <?php $APPLICATION->IncludeComponent('fourpaws:city.selector') ?>
+                <?php $APPLICATION->IncludeComponent(
+                        'fourpaws:city.selector',
+                        '',
+                        [],
+                        false,
+                        ['HIDE_ICONS' => 'Y']
+                ) ?>
             </div>
             <?php $APPLICATION->IncludeComponent(
                 'fourpaws:city.delivery.info',
-                'template.header'
+                'template.header',
+                [],
+                false,
+                ['HIDE_ICONS' => 'Y']
             ); ?>
         </div>
     </header>
@@ -114,7 +123,7 @@ $markup = PawsApplication::markup();
      */
     $APPLICATION->ShowViewContent('header_dropdown_menu');
     ?>
-    <main class="b-wrapper<?$template->isIndex() ? ' b-wrapper--main' : ''?>" role="main">
+    <main class="b-wrapper<?=$template->getIndexMainClass()?>" role="main">
         <?php if ($template->hasHeaderPublicationListContainer()) {
             ?>
             <div class="b-container b-container--news">
@@ -150,27 +159,37 @@ $markup = PawsApplication::markup();
         
         <?php if ($template->hasHeaderPersonalContainer()) {
             ?>
-        <div class="b-account">
-            <div class="b-container b-container--account">
-                <div class="b-account__wrapper-title">
-                    <h1 class="b-title b-title--h1"><?php $APPLICATION->ShowTitle(false) ?></h1>
-                </div>
-                <?php $APPLICATION->IncludeComponent('bitrix:menu',
-                                                     'personal.menu',
-                                                     [
-                                                         'COMPONENT_TEMPLATE'    => 'personal.menu',
-                                                         'ROOT_MENU_TYPE'        => 'personal_cab',
-                                                         'MENU_CACHE_TYPE'       => 'A',
-                                                         'MENU_CACHE_TIME'       => '360000',
-                                                         'MENU_CACHE_USE_GROUPS' => 'N',
-                                                         'MENU_CACHE_GET_VARS'   => [],
-                                                         'MAX_LEVEL'             => '1',
-                                                         'CHILD_MENU_TYPE'       => 'personal_cab',
-                                                         'USE_EXT'               => 'N',
-                                                         'DELAY'                 => 'N',
-                                                         'ALLOW_MULTI_SELECT'    => 'N',
-                                                     ],
-                                                     false); ?>
-                <main class="b-account__content" role="main">
+            <div class="b-account">
+                <div class="b-container b-container--account">
+                    <div class="b-account__wrapper-title">
+                        <h1 class="b-title b-title--h1"><?php $APPLICATION->ShowTitle(false) ?></h1>
+                    </div>
+                    <?php $APPLICATION->IncludeComponent('bitrix:menu',
+                         'personal.menu',
+                         [
+                             'COMPONENT_TEMPLATE'    => 'personal.menu',
+                             'ROOT_MENU_TYPE'        => 'personal_cab',
+                             'MENU_CACHE_TYPE'       => 'A',
+                             'MENU_CACHE_TIME'       => '360000',
+                             'MENU_CACHE_USE_GROUPS' => 'N',
+                             'MENU_CACHE_GET_VARS'   => [],
+                             'MAX_LEVEL'             => '1',
+                             'CHILD_MENU_TYPE'       => 'personal_cab',
+                             'USE_EXT'               => 'N',
+                             'DELAY'                 => 'N',
+                             'ALLOW_MULTI_SELECT'    => 'N',
+                         ],
+                         false); ?>
+                     <main class="b-account__content" role="main">
         <?php
         } ?>
+        <?php if ($template->hasHeaderBlockShopList()) {?>
+                    <div class="b-stores">
+                        <div class="b-container">
+                            <div class="b-stores__top">
+                                <h1 class="b-title b-title--h1 b-title--stores-header"><?php $APPLICATION->ShowTitle(false) ?></h1>
+                                <div class="b-stores__info">
+                                    <p>Все магазины нашей сети работают без выходных и принимают банковские карты к оплате</p>
+                                </div>
+                            </div>
+        <?php }?>

@@ -15,18 +15,18 @@ class Delivery_ipol_dpd_module_configuration20171218162911 extends SprintMigrati
     const MODULE_ID = 'ipol.dpd';
 
     protected $values = [
-        'IS_TEST'             => 1,
-        'KLIENT_CURRENCY'     => 'RUB',
-        'KLIENT_KEY'          => 'D34538D623B7BF2E03EE6BB59A5DF8DCF305B575',
-        'KLIENT_NUMBER'       => '1001041602',
-        'RECEIVER_EMAIL_1'    => 'EMAIL',
-        'RECEIVER_FIO_1'      => 'NAME',
-        'RECEIVER_LOCATION_1' => 'CITY_CODE',
-        'RECEIVER_NAME_1'     => 'NAME',
-        'RECEIVER_PHONE_1'    => 'PHONE',
-        'SENDER_FIO'          => '4lapy',
-        'SENDER_NAME'         => '4lapy',
-        'SENDER_PHONE'        => '+7 800 770-00-22',
+        'IS_TEST'              => 1,
+        'KLIENT_CURRENCY'      => 'RUB',
+        'KLIENT_KEY'           => 'D34538D623B7BF2E03EE6BB59A5DF8DCF305B575',
+        'KLIENT_NUMBER'        => '1001041602',
+        'RECEIVER_EMAIL_1'     => 'EMAIL',
+        'RECEIVER_FIO_1'       => 'NAME',
+        'RECEIVER_LOCATION_1'  => 'CITY_CODE',
+        'RECEIVER_NAME_1'      => 'NAME',
+        'RECEIVER_PHONE_1'     => 'PHONE',
+        'SENDER_FIO'           => '4lapy',
+        'SENDER_NAME'          => '4lapy',
+        'SENDER_PHONE'         => '+7 800 770-00-22',
     ];
 
     public function up()

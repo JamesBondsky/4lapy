@@ -5,8 +5,14 @@ $arUrlRewrite = [
         'RULE'      => '',
         'ID'        => 'bitrix:news',
         'PATH'      => '/company/news/index.php',
-    ],
+	],
     [
+        'CONDITION' => '#^/services/articles/#',
+        'RULE'      => '',
+        'ID'        => 'bitrix:news',
+        'PATH'      => '/services/articles/index.php',
+    ],
+	[
         'CONDITION' => '#^/personal/#',
         'RULE'      => '',
         'ID'        => 'fourpaws:personal',

@@ -130,6 +130,23 @@ class Application extends AppKernel
     {
         return self::getDocumentRoot() . $path;
     }
+    
+    public static function includeBitrix()
+    {
+        defined('NO_KEEP_STATISTIC') || define('NO_KEEP_STATISTIC', 'Y');
+        defined('NOT_CHECK_PERMISSIONS') || define('NOT_CHECK_PERMISSIONS', true);
+        defined('NO_AGENT_CHECK') || define('NO_AGENT_CHECK', true);
+        defined('PUBLIC_AJAX_MODE') || define('PUBLIC_AJAX_MODE', true);
+        
+        if (empty($_SERVER['DOCUMENT_ROOT'])) {
+            $_SERVER['DOCUMENT_ROOT'] = self::getDocumentRoot();
+        }
+        
+        $GLOBALS['DOCUMENT_ROOT'] = $_SERVER['DOCUMENT_ROOT'];
+        
+        /** @noinspection PhpIncludeInspection */
+        require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_before.php';
+    }
 
     /**
      * Возвращает объект DataManager для управления соответствующим hl-блоком.

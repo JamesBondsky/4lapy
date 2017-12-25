@@ -8,7 +8,6 @@ use FourPaws\BitrixOrm\Model\HlbItemBase;
 use FourPaws\BitrixOrm\Model\ModelInterface;
 use FourPaws\Location\Exception\CityNotFoundException;
 use FourPaws\Location\Query\CityQuery;
-use FourPaws\UserBundle\Exception\NotFoundException;
 
 /**
  * Class User

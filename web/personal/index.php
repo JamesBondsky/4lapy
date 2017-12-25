@@ -18,6 +18,8 @@ $APPLICATION->SetTitle('Профиль');
             'subscribe' => 'subscribe/',
             'top'       => 'top/',
         ],
-    ]
+    ],
+    false,
+    ['HIDE_ICONS' => 'Y']
 ); ?>
 <?php require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/footer.php'; ?>

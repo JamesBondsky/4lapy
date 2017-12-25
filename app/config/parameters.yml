@@ -4,6 +4,17 @@ parameters:
   locale: ru
   secret: 7371018148815e9de0f88dba6a44126524d6a80e
 
+  manzana:
+    login: "%env(MANZANA_LOGIN)%"
+    password: "%env(MANZANA_PASSWORD)%"
+    wdsl: "%env(MANZANA_HOST)%"
+    pos: kuvi_pos
+    business_unit: kuvi_shop
+  manzana.wdsl: "%env(MANZANA_HOST)%"
+  manzana.pos.wdsl: "%env(MANZANA_HOST_POS)%"
+  manzana.guzzle.curl:
+    !php/const:CURLOPT_CONNECTTIMEOUT: 3
+
   migrator:
     token: c81789b482ecbe6976f496a9697d75de
 

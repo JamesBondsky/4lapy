@@ -23,6 +23,11 @@ if ($template->hasHeaderPublicationListContainer()) {
         </div>
     </div>
 <?}
+if ($template->hasHeaderBlockShopList()) {
+    ?>
+        </div>
+    </div>
+<?}
 if ($template->hasHeaderPersonalContainer()) {
 ?>
             </main>

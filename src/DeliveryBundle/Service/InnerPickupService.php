@@ -75,33 +75,32 @@ class InnerPickupService extends DeliveryServiceHandlerBase
             }
         }
 
-        /** todo сделать возможность выбора необязательной?  */
-        if (!$shopCode) {
-            $result->addError(new Error('Не выбран пункт самовывоза'));
+        // если выбран пункт самовывоза, проверяем остатки
+        if ($shopCode) {
+            $deliveryLocation = $this->deliveryService->getDeliveryLocation($shipment);
+            $shops = $this->storeService->getByLocation($deliveryLocation, StoreService::TYPE_SHOP);
 
-            return $result;
-        }
+            $shop = $shops->filter(
+                function ($shop) use ($shopCode) {
+                    /** @var Store $shop */
+                    return $shop->getXmlId() == $shopCode;
+                }
+            )->first();
 
-        $deliveryLocation = $this->deliveryService->getDeliveryLocation($shipment);
-        $shops = $this->storeService->getByLocation($deliveryLocation, StoreService::TYPE_SHOP);
+            if (!$shop) {
+                $result->addError(new Error('Выбран неверный пункт самовывоза'));
 
-        $shop = $shops->filter(
-            function ($shop) use ($shopCode) {
-                /** @var Store $shop */
-                return $shop->getXmlId() == $shopCode;
+                return $result;
             }
-        )->first();
-
-        if (!$shop) {
-            $result->addError(new Error('Выбран неверный пункт самовывоза'));
-
-            return $result;
+            /* @todo учитывать наличие товара */
+            $result->setPeriodFrom(1);
+            $result->setPeriodType(CalculationResult::PERIOD_TYPE_HOUR);
+        } else {
+            $result->setPeriodFrom(1);
+            $result->setPeriodType(CalculationResult::PERIOD_TYPE_HOUR);
         }
 
         $result->setDeliveryPrice(0);
-        /* @todo учитывать наличие товара */
-        $result->setPeriodFrom(1);
-        $result->setPeriodType(CalculationResult::PERIOD_TYPE_HOUR);
 
         return $result;
     }

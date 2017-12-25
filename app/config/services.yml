@@ -38,8 +38,6 @@ services:
 
   location.service:
     class: FourPaws\Location\LocationService
-    arguments:
-      - '@bx.hlblock.cities'
 
   health.service:
     class: FourPaws\Health\HealthService
@@ -47,9 +45,33 @@ services:
   sms.service:
     class: FourPaws\External\SmsService
 
+  manzana.guzzle:
+    class: GuzzleHttp\Client
+    arguments:
+      - curl: '%manzana.guzzle.curl%'
+
+  async.soap.factory:
+    class: Meng\AsyncSoap\Guzzle\Factory
+
+  manzana.soap:
+    class: Meng\AsyncSoap\SoapClientInteface
+    factory: 'async.soap.factory:create'
+    arguments: ['@manzana.guzzle', '%manzana.wdsl%']
+
+  manzana.pos.soap:
+    class: Meng\AsyncSoap\SoapClientInteface
+    factory: 'async.soap.factory:create'
+    arguments: ['@manzana.guzzle', '%manzana.pos.wdsl%']
+
   manzana.service:
     class: FourPaws\External\ManzanaService
-    arguments: ['@jms_serializer', '@health.service']
+    arguments: ['@jms_serializer', '@manzana.soap', '%manzana%']
+    calls:
+      - [setServiceLogger]
+
+  manzana.sync_consumer:
+    class: FourPaws\External\Manzana\Consumer\ManzanaContactConsumer
+    arguments: ['@jms_serializer', '@manzana.service']
 
   expertsender.service:
     class: FourPaws\External\ExpertsenderService
