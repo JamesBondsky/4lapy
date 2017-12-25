@@ -17,3 +17,8 @@ services:
     store.service:
         class: FourPaws\StoreBundle\Service\StoreService
         public: true
+
+    FourPaws\StoreBundle\AjaxController\:
+        resource: '../../AjaxController'
+        public: true
+        tags: ['controller.service_arguments']

@@ -13,7 +13,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 /** @global \CMain $APPLICATION */
 
 /** @noinspection AutoloadingIssuesInspection */
-class CPersonalCabinetComponent extends CBitrixComponent
+class FourPawsShopComponent extends CBitrixComponent
 {
     /**
      * {@inheritdoc}
@@ -24,21 +24,12 @@ class CPersonalCabinetComponent extends CBitrixComponent
         $this->setFrameMode(true);
         
         $arDefaultUrlTemplates404 = [
-            'personal'  => '',
-            'address'   => 'address/',
-            'bonus'     => 'bonus/',
-            'orders'    => 'orders/',
-            'pets'      => 'pets/',
-            'referal'   => 'referal/',
-            'subscribe' => 'subscribe/',
-            'top'       => 'top/',
+            'list'  => '',
+            'detail'   => '#ID#/',
         ];
         
         $arComponentVariables = [
-            'SECTION_ID',
-            'SECTION_CODE',
-            'ELEMENT_ID',
-            'ELEMENT_CODE',
+            'ID',
         ];
         
         $arDefaultVariableAliases404 = [];
@@ -62,7 +53,7 @@ class CPersonalCabinetComponent extends CBitrixComponent
         );
         
         if (!$componentPage) {
-            $componentPage = 'personal';
+            $componentPage = 'list';
         }
         
         CComponentEngine::initComponentVariables(
