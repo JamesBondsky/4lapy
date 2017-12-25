@@ -1,13 +1,17 @@
-<?php if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
+<?php
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use FourPaws\App\Application;
-use FourPaws\Location\Model\City;
-use FourPaws\Helpers\PhoneHelper;
-use FourPaws\DeliveryBundle\Service\DeliveryService;
 use Bitrix\Sale\Delivery\CalculationResult;
+use FourPaws\App\Application;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\Helpers\PhoneHelper;
+use FourPaws\Location\Exception\CityNotFoundException;
+use FourPaws\Location\LocationService;
+use FourPaws\Location\Model\City;
+use FourPaws\UserBundle\Service\UserCitySelectInterface;
 
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
@@ -22,6 +26,30 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
         DeliveryService::DPD_DELIVERY_CODE,
     ];
 
+    /**
+     * @var UserCitySelectInterface
+     */
+    protected $userCitySelect;
+
+    /**
+     * @var LocationService
+     */
+    protected $locationService;
+
+    /**
+     * @var DeliveryService
+     */
+    protected $deliveryService;
+
+    public function __construct(CBitrixComponent $component = null)
+    {
+        parent::__construct($component);
+
+        $this->userCitySelect = Application::getInstance()->getContainer()->get(UserCitySelectInterface::class);
+        $this->locationService = Application::getInstance()->getContainer()->get('location.service');
+        $this->deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+    }
+
     /** {@inheritdoc} */
     public function onPrepareComponentParams($params): array
     {
@@ -30,14 +58,10 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
         }
 
         if (empty($params['LOCATION_CODE'])) {
-            /** @var \FourPaws\UserBundle\Service\UserService $userService */
-            $userService = Application::getInstance()
-                                      ->getContainer()
-                                      ->get('FourPaws\UserBundle\Service\UserCitySelectInterface');
-            $params['LOCATION_CODE'] = $userService->getSelectedCity()['CODE'];
+            $params['LOCATION_CODE'] = $this->userCitySelect->getSelectedCity()['CODE'];
         }
 
-        return $params;
+        return parent::onPrepareComponentParams($params);
     }
 
     /** {@inheritdoc} */
@@ -45,6 +69,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
     {
         try {
             if ($this->startResultCache()) {
+                parent::executeComponent();
                 $this->prepareResult();
 
                 $this->includeComponentTemplate();
@@ -59,19 +84,16 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
     }
 
     /**
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws CityNotFoundException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @return $this
      */
     protected function prepareResult()
     {
-        /** @var \FourPaws\Location\LocationService $locationService */
-        $locationService = Application::getInstance()->getContainer()->get('location.service');
-        /** @var \FourPaws\UserBundle\Service\UserService $userService */
-        $userService = Application::getInstance()
-                                  ->getContainer()
-                                  ->get('FourPaws\UserBundle\Service\UserCitySelectInterface');
-
-        $defaultLocation = $locationService->getDefaultLocation();
-        $currentLocation = $userService->getSelectedCity();
+        $defaultLocation = $this->locationService->getDefaultLocation();
+        $currentLocation = $this->userCitySelect->getSelectedCity();
 
         $allDeliveryCodes = array_merge(self::DELIVERY_CODES, self::PICKUP_CODES);
 
@@ -80,7 +102,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
         $defaultDeliveryResult = $this->getDelivery($defaultResult);
         $defaultPickupResult = $this->getPickup($defaultResult);
         /** @var City $defaultCity */
-        $defaultCity = $locationService->getDefaultCity();
+        $defaultCity = $this->locationService->getDefaultCity();
 
         if ($defaultLocation['CODE'] === $currentLocation['CODE']) {
             $currentDeliveryResult = $defaultDeliveryResult;
@@ -92,10 +114,15 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
             $currentDeliveryResult = $this->getDelivery($currentResult);
             $currentPickupResult = $this->getPickup($currentResult);
             /** @var City $currentCity */
-            $currentCity = $locationService->getCurrentCity();
+            $currentCity = $this->locationService->getCurrentCity();
         }
 
-        if (null === $defaultCity || null === $currentCity || null === $currentDeliveryResult) {
+        if (!$defaultCity || !$currentCity) {
+            $this->abortResultCache();
+            throw new CityNotFoundException('Default city not found');
+        }
+
+        if (!$currentDeliveryResult) {
             $this->abortResultCache();
 
             return $this;
@@ -159,23 +186,18 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
 
     /**
      * @param string $locationCode
-     * @param array $possibleDeliveryCodes
-     *
-     * @return CalculationResult[]|null
+     * @param array  $possibleDeliveryCodes
+     * @return null|CalculationResult[]
      */
     protected function getDeliveries(string $locationCode, array $possibleDeliveryCodes = [])
     {
-        /** @var DeliveryService $deliveryService */
-        $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
-
-        /** @var CalculationResult[] $defaultResult */
-        return $deliveryService->getByLocation($locationCode, $possibleDeliveryCodes);
+        return $this->deliveryService->getByLocation($locationCode, $possibleDeliveryCodes);
     }
 
     /**
      * @param CalculationResult[] $deliveries
      *
-     * @return CalculationResult|null
+     * @return null|CalculationResult
      */
     protected function getDelivery($deliveries)
     {
@@ -196,7 +218,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
     /**
      * @param CalculationResult[] $deliveries
      *
-     * @return CalculationResult|null
+     * @return null|CalculationResult
      */
     protected function getPickup($deliveries)
     {

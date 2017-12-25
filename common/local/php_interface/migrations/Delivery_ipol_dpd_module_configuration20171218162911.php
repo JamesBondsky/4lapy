@@ -27,7 +27,6 @@ class Delivery_ipol_dpd_module_configuration20171218162911 extends SprintMigrati
         'SENDER_FIO'           => '4lapy',
         'SENDER_NAME'          => '4lapy',
         'SENDER_PHONE'         => '+7 800 770-00-22',
-        'DELIVERY_TIME_PERIOD' => '9-18',
     ];
 
     public function up()

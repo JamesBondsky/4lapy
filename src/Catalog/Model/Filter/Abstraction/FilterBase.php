@@ -19,7 +19,7 @@ use Symfony\Component\HttpFoundation\Request;
  * @see FilterTrait
  *
  */
-abstract class FilterBase extends HLBItemBase implements FilterInterface
+abstract class FilterBase extends HlbItemBase implements FilterInterface
 {
     /**
      * Знак разделения множественных значений фильтра
@@ -68,21 +68,17 @@ abstract class FilterBase extends HLBItemBase implements FilterInterface
         $rawValue = $request->get($this->getFilterCode());
 
         if (is_null($rawValue)) {
-
             return [];
-
-        } elseif (is_string($rawValue) && strpos($rawValue, static::VARIANT_DELIMITER)) {
-
-            return explode(static::VARIANT_DELIMITER, $rawValue);
-
-        } elseif (is_array($rawValue)) {
-
-            return $rawValue;
-
-        } else {
-
-            return [$rawValue];
         }
-    }
 
+        if (is_string($rawValue) && strpos($rawValue, static::VARIANT_DELIMITER)) {
+            return explode(static::VARIANT_DELIMITER, $rawValue);
+        }
+
+        if (is_array($rawValue)) {
+            return $rawValue;
+        }
+
+        return [$rawValue];
+    }
 }

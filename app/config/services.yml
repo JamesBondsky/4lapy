@@ -9,10 +9,6 @@ services:
     autoconfigure: true
     public: true
 
-  catalog.service:
-    class: FourPaws\Catalog\CatalogService
-    arguments: ['@bx.hlblock.filter', '@jms_serializer', '@location.service']
-
   search.factory:
     class: FourPaws\Search\Factory
     arguments: ['@jms_serializer']
