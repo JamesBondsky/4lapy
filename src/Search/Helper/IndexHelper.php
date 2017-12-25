@@ -91,13 +91,12 @@ class IndexHelper implements LoggerAwareInterface
     /**
      * @param bool $force
      *
-     * @return bool
      * @throws RuntimeException
+     * @return bool
      */
     public function createCatalogIndex(bool $force = false): bool
     {
         try {
-
             $catalogIndex = $this->getCatalogIndex();
 
             $indexExists = $catalogIndex->exists();
@@ -111,9 +110,7 @@ class IndexHelper implements LoggerAwareInterface
             }
 
             $catalogIndex->create($this->getCatalogIndexSettings());
-
         } catch (ResponseException $exception) {
-
             $this->log()->error(
                 sprintf(
                     'Ошибка создания индекса %s: [%s] %s',
@@ -124,7 +121,6 @@ class IndexHelper implements LoggerAwareInterface
             );
 
             return false;
-
         }
 
         return true;
@@ -236,7 +232,7 @@ class IndexHelper implements LoggerAwareInterface
                                 'PROPERTY_POPULAR'   => ['type' => 'boolean'],
                             ],
                         ],
-                        'offers'                           => [
+                        'offers' => [
                             'type'       => 'nested',
                             'properties' => [
                                 'active'                   => ['type' => 'boolean'],
@@ -251,14 +247,16 @@ class IndexHelper implements LoggerAwareInterface
                                 'PROPERTY_BARCODE'         => ['type' => 'keyword'],
                                 'PROPERTY_KIND_OF_PACKING' => ['type' => 'keyword'],
                                 'PROPERTY_REWARD_TYPE'     => ['type' => 'keyword'],
-                                'prices'                   => [
-                                    'type'       => 'nested',
-                                    'properties' => [
-                                        'REGION_ID' => ['type' => 'keyword'],
-                                        'PRICE'     => ['type' => 'scaled_float', 'scaling_factor' => 100,],
-                                        'CURRENCY'  => ['type' => 'keyword'],
-                                    ],
-                                ],
+                                'price'                    => ['type' => 'scaled_float', 'scaling_factor' => 100,],
+                                'currency'                 => ['type' => 'keyword'],
+//                                'prices'                   => [
+//                                    'type'       => 'nested',
+//                                    'properties' => [
+//                                        'REGION_ID' => ['type' => 'keyword'],
+//                                        'PRICE'     => ['type' => 'scaled_float', 'scaling_factor' => 100,],
+//                                        'CURRENCY'  => ['type' => 'keyword'],
+//                                    ],
+//                                ],
                             ],
                         ],
                         'active'                           => ['type' => 'boolean'],
@@ -317,8 +315,8 @@ class IndexHelper implements LoggerAwareInterface
     /**
      * @param Product $product
      *
-     * @return bool
      * @throws RuntimeException
+     * @return bool
      */
     public function indexProduct(Product $product): bool
     {
@@ -327,7 +325,6 @@ class IndexHelper implements LoggerAwareInterface
         );
 
         if (!$responseSet->isOk()) {
-
             $this->log()->error(
                 $responseSet->getError(),
                 [
@@ -386,12 +383,11 @@ class IndexHelper implements LoggerAwareInterface
     /**
      * @param int $productId
      *
-     * @return bool
      * @throws RuntimeException
+     * @return bool
      */
     public function deleteProduct(int $productId): bool
     {
-
         $document = (new Document($productId))->setType(DocumentType::PRODUCT);
         $responseSet = $this->getCatalogIndex()->deleteDocuments([$document]);
 
@@ -412,8 +408,8 @@ class IndexHelper implements LoggerAwareInterface
     /**
      * @param int $brandId
      *
-     * @return bool
      * @throws RuntimeException
+     * @return bool
      */
     public function deleteBrand(int $brandId): bool
     {
@@ -431,13 +427,10 @@ class IndexHelper implements LoggerAwareInterface
         $scroll = $productSearch->scroll();
 
         foreach ($scroll as $resultSet) {
-
             $documentsToDelete = [];
 
             foreach ($resultSet as $result) {
-
                 $documentsToDelete[] = (new Document($result->getId()))->setType(DocumentType::PRODUCT);
-
             }
 
             $responseSet = $this->getCatalogIndex()->deleteDocuments($documentsToDelete);
@@ -452,7 +445,6 @@ class IndexHelper implements LoggerAwareInterface
 
                 $overallResult = false;
             }
-
         }
 
         return $overallResult;
@@ -494,8 +486,8 @@ class IndexHelper implements LoggerAwareInterface
     /**
      * Удаляет из Elasticsearch отсутствующие в БД товары
      *
-     * @return bool
      * @throws RuntimeException
+     * @return bool
      */
     public function cleanup(): bool
     {
@@ -518,7 +510,6 @@ class IndexHelper implements LoggerAwareInterface
 
             //По всем пачкам из Elastic
             foreach ($scroll as $resultSet) {
-
                 if ($totalDocumentsCount == 0) {
                     $totalDocumentsCount = $resultSet->getTotalHits();
                 }
@@ -564,15 +555,12 @@ class IndexHelper implements LoggerAwareInterface
                 if ($deleteDocumentsResponseSet->isOk()) {
                     $deletedDocumentsCount += $deleteDocumentsResponseSet->count();
                 }
-
             }
 
             $this->log()->info('Cleanup done.');
             $this->log()->info('Check documents: ' . $totalDocumentsCount);
             $this->log()->info('Removed documents: ' . $deletedDocumentsCount);
-
         } catch (Exception $exception) {
-
             $this->log()->error(
                 sprintf(
                     '[%s] %s (%s)',
@@ -587,5 +575,4 @@ class IndexHelper implements LoggerAwareInterface
 
         return true;
     }
-
 }

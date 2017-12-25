@@ -25,7 +25,6 @@ services:
   search.service:
     class: FourPaws\Search\SearchService
     arguments:
-      - '@catalog.service'
       - '@search.index_helper'
 
   search.index_helper:
