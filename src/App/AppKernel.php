@@ -7,6 +7,7 @@ use FOS\RestBundle\FOSRestBundle;
 use FourPaws\AppBundle\FourPawsAppBundle;
 use FourPaws\CatalogBundle\FourPawsCatalogBundle;
 use FourPaws\DeliveryBundle\FourPawsDeliveryBundle;
+use FourPaws\SapBundle\FourPawsSapBundle;
 use FourPaws\StoreBundle\FourPawsStoreBundle;
 use FourPaws\UserBundle\FourPawsUserBundle;
 use JMS\SerializerBundle\JMSSerializerBundle;
@@ -51,7 +52,7 @@ class AppKernel extends Kernel
             new FrameworkBundle(),
             new TwigBundle(),
             new SensioFrameworkExtraBundle(),
-
+    
             /** External bundles */
             new CircleRestClientBundle(),
             new OldSoundRabbitMqBundle(),
@@ -59,13 +60,14 @@ class AppKernel extends Kernel
             new JMSSerializerBundle(),
             new NelmioApiDocBundle(),
             new MisdPhoneNumberBundle(),
-
+    
             /** Internal bundles */
             new FourPawsAppBundle(),
-            new FourPawsUserBundle(),
-            new FourPawsDeliveryBundle(),
-            new FourPawsStoreBundle(),
             new FourPawsCatalogBundle(),
+            new FourPawsDeliveryBundle(),
+            new FourPawsSapBundle(),
+            new FourPawsStoreBundle(),
+            new FourPawsUserBundle(),
         ];
 
         if (\in_array($this->getEnvironment(), ['dev', 'test'], true)) {
