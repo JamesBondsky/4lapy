@@ -6,7 +6,7 @@ use FourPaws\CatalogBundle\Collection\SortsCollection;
 use FourPaws\Search\Model\Navigation;
 use Symfony\Component\Validator\Constraints as Assert;
 
-abstract class AbstractCatalogRequest
+abstract class AbstractCatalogRequest implements CatalogSearchRequestInterface
 {
     /**
      * @Assert\NotBlank()
@@ -42,7 +42,7 @@ abstract class AbstractCatalogRequest
      *
      * @return static
      */
-    public function setSorts(SortsCollection $sorts): AbstractCatalogRequest
+    public function setSorts(SortsCollection $sorts): CatalogSearchRequestInterface
     {
         $this->sorts = $sorts;
         return $this;
@@ -61,7 +61,7 @@ abstract class AbstractCatalogRequest
      *
      * @return static
      */
-    public function setNavigation(Navigation $navigation): AbstractCatalogRequest
+    public function setNavigation(Navigation $navigation): CatalogSearchRequestInterface
     {
         $this->navigation = $navigation;
         return $this;
@@ -81,7 +81,7 @@ abstract class AbstractCatalogRequest
      *
      * @return static
      */
-    public function setSearchString(string $searchString): AbstractCatalogRequest
+    public function setSearchString(string $searchString): CatalogSearchRequestInterface
     {
         $this->searchString = $searchString;
         return $this;

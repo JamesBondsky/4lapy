@@ -789,3 +789,4 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
 <?php
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/footer.php';
+die();

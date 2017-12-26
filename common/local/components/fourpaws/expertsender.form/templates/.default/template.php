@@ -22,16 +22,20 @@ use FourPaws\Decorators\SvgDecorator;
  */
 
 ?>
-    <div class="b-feedback js-feedback-permutation" data-url="">
+    <div class="b-feedback js-feedback-permutation">
         <h4 class="b-feedback__header">Получайте рекомендации и выгодные предложения на почту</h4>
         <div class="b-form-inline b-form-inline--feedback">
-            <form class="b-form-inline__form" data-url="/ajax/user/subscribe/subscribe/" method="post">
-                <input class="b-input"
-                       type="email"
-                       name="email"
-                       id="feedback"
-                       placeholder="Адрес эл. почты"
-                       value="<?= $arResult['EMAIL'] ?>" />
+            <form class="b-form-inline__form b-form-inline__form--feedback js-form-validation"
+                  data-url="/ajax/user/subscribe/subscribe/"
+                  method="post">
+                <div class="b-input">
+                    <input class="b-input__input-field"
+                           type="email"
+                           name="email"
+                           id="feedback"
+                           placeholder="Адрес эл. почты"
+                           value="<?= $arResult['EMAIL'] ?>" />
+                </div>
                 <button class="b-button b-button--form-inline b-button--feedback">
                 <span class="b-icon">
                     <?= new SvgDecorator('icon-check', 16, 16) ?>

@@ -2,11 +2,14 @@
 
 namespace FourPaws\Catalog\Model;
 
+use Bitrix\Main\FileTable;
 use CCatalogDiscountSave;
 use CCatalogProduct;
 use DateTimeImmutable;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\BitrixOrm\Collection\ImageCollection;
+use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
 use FourPaws\BitrixOrm\Model\CatalogProduct;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\BitrixOrm\Model\IblockElement;
@@ -240,6 +243,16 @@ class Offer extends IblockElement
      */
     protected $discount = 0;
 
+    /**
+     * @var ImageCollection
+     */
+    protected $images;
+
+    /**
+     * @var ResizeImageCollection
+     */
+    protected $resizeImages;
+
     public function __construct(array $fields = [])
     {
         parent::__construct($fields);
@@ -251,6 +264,69 @@ class Offer extends IblockElement
         if (isset($fields['CATALOG_CURRENCY_1'])) {
             $this->currency = (string)$fields['CATALOG_CURRENCY_1'];
         }
+    }
+
+    /**
+     * @return ImageCollection
+     */
+    public function getImages(): ImageCollection
+    {
+        if ($this->images instanceof ImageCollection) {
+            return $this->images;
+        }
+        $this->images = new ImageCollection(
+            FileTable::query()
+                ->addFilter('ID', $this->getImagesIds())
+                ->addSelect('*')
+                ->exec()
+        );
+
+        return $this->images;
+    }
+
+    /**
+     * @param ImageCollection $images
+     */
+    public function withImages(ImageCollection $images)
+    {
+        $this->images = $images;
+    }
+
+    /**
+     * @param int $width
+     * @param int $height
+     *
+     * @return ResizeImageCollection
+     */
+    public function getResizeImages(int $width = 0, int $height = 0): ResizeImageCollection
+    {
+        if ($this->resizeImages instanceof ResizeImageCollection) {
+            if ($width && $this->resizeImages->getWidth() !== $width) {
+                $this->resizeImages->setWidth($width);
+            }
+            if ($height && $this->resizeImages->getHeight() !== $height) {
+                $this->resizeImages->setHeight($height);
+            }
+            return $this->resizeImages;
+        }
+        $this->resizeImages = new ResizeImageCollection(
+            FileTable::query()
+                ->addFilter('ID', $this->getImagesIds())
+                ->addSelect('*')
+                ->exec(),
+            $width,
+            $height
+        );
+
+        return $this->resizeImages;
+    }
+
+    /**
+     * @param ResizeImageCollection $resizeImages
+     */
+    public function withResizeImages(ResizeImageCollection $resizeImages)
+    {
+        $this->resizeImages = $resizeImages;
     }
 
     /**
@@ -457,6 +533,7 @@ class Offer extends IblockElement
 
     /**
      * @param float $price
+     *
      * @return static
      */
     public function withPrice(float $price)
@@ -467,6 +544,7 @@ class Offer extends IblockElement
 
     /**
      * @param float $oldPrice
+     *
      * @return $this
      */
     public function withOldPrice(float $oldPrice)
@@ -500,6 +578,7 @@ class Offer extends IblockElement
 
     /**
      * @param CatalogProduct $catalogProduct
+     *
      * @return Offer
      */
     public function withCatalogProduct(CatalogProduct $catalogProduct): Offer
@@ -538,6 +617,7 @@ class Offer extends IblockElement
 
     /**
      * @param int $discount
+     *
      * @return static
      */
     public function withDiscount(int $discount)
