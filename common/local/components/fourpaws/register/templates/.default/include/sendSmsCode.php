@@ -1,7 +1,8 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
-} ?>
+}
+Use FourPaws\App\Application as App;?>
 <div class="b-registration__content b-registration__content--moiety b-registration__content--step">
     <div class="b-step-form b-step-form--add-number">Шаг <span>1</span> из <span>2</span>
     </div>
@@ -29,7 +30,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                    name="confirmCode" />
             <span class="b-link-gray">Отправить новый код можно будет через <span>59</span> сек.</span>
         </div>
-        <div class="b-registration__captcha" data-sitekey=""></div>
+        <div class="b-registration__captcha" data-sitekey="">
+            <?= /** @noinspection PhpUnhandledExceptionInspection */
+            App::getInstance()->getContainer()->get('recaptcha.service')->getCaptcha();?>
+        </div>
         <button class="b-button b-button--social b-button--full-width" type="submit">Подтвердить</button>
     </form>
 </div>

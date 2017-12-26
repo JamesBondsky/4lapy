@@ -12,7 +12,7 @@ echo '<div class="b-feedback-page">
 ?>
 <?php $APPLICATION->IncludeComponent(
     'bitrix:form.result.new',
-    '',
+    'feedback',
     [
         'CACHE_TIME'             => '3600000',
         'CACHE_TYPE'             => 'A',

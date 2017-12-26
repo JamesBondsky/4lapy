@@ -5,7 +5,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use FourPaws\Decorators\SvgDecorator;
-use FourPaws\App\Application;
 
 ?>
 <?php $APPLICATION->IncludeComponent(
@@ -26,15 +25,15 @@ use FourPaws\App\Application;
 </span>
 <span class="b-footer-communication__link-block">
     <span class="b-footer-communication__item">
-        <a class="b-footer-communication__link" href="javascript:void(0);" title="Перезвоните мне">
+        <div class="recall-block"></div>
+        <span class="b-footer-communication__link js-footer-recall" title="Перезвоните мне">
             <span class="b-icon b-icon--footer">
                 <?= new SvgDecorator('icon-phone-white', 10, 16) ?>
-            </span>
-            Перезвоните мне
-        </a>
+            </span>Перезвоните мне
+        </span>
     </span>
     <span class="b-footer-communication__item">
-        <a class="b-footer-communication__link" href="javascript:void(0);" title="Обратная связь">
+        <a class="b-footer-communication__link" href="/company/feedback/" title="Обратная связь">
             <span class="b-icon b-icon--footer">
                 <?= new SvgDecorator('icon-feedback', 16, 11) ?>
             </span>

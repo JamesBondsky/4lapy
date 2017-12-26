@@ -182,6 +182,8 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     /**
      * @param array $data
      *
+     * @throws \FourPaws\External\Manzana\Exception\ContactUpdateException
+     * @throws \FourPaws\External\Exception\ManzanaServiceException
      * @throws \FourPaws\UserBundle\Exception\ValidationException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
@@ -221,6 +223,8 @@ class FourPawsRegisterComponent extends \CBitrixComponent
      * @param \Symfony\Component\HttpFoundation\Request $request
      *
      * @return \FourPaws\App\Response\JsonResponse
+     * @throws \FourPaws\External\Manzana\Exception\ContactUpdateException
+     * @throws \FourPaws\External\Exception\ManzanaServiceException
      * @throws \FourPaws\UserBundle\Exception\ValidationException
      * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
@@ -338,6 +342,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
      * @param string $confirmCode
      * @param string $phone
      *
+     * @throws \Bitrix\Main\SystemException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
      * @throws \Exception
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
@@ -347,6 +352,11 @@ class FourPawsRegisterComponent extends \CBitrixComponent
      */
     private function ajaxGetStep2($confirmCode, $phone)
     {
+        if(!App::getInstance()->getContainer()->get('recaptcha.service')->checkCaptcha()){
+            return JsonErrorResponse::create(
+                'Проверка капчей не пройдена'
+            );
+        }
         try {
             $res = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::checkConfirmSms(
                 $phone,

@@ -5,10 +5,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 if (!\is_array($arResult['QUESTIONS']) || empty($arResult['QUESTIONS'])) {
     return;
 }
+
 use FourPaws\App\Application as App;
+
 ?>
 <h2 class="b-title b-title--feedback-form"><?= $arResult['FORM_DESCRIPTION'] ?></h2>
-<?php if ($arResult['isFormErrors'] === 'Y'): ?><?= $arResult['FORM_ERRORS_TEXT']; ?><? endif; ?>
 <form class="b-feedback-page__form js-form-validation"
       name="<?= $arResult['arForm']['SID'] ?>" data-url="/ajax/form/feedback/add/"
       method="post"
@@ -41,15 +42,7 @@ use FourPaws\App\Application as App;
                                    id="feedback-<?= $fieldSid ?>"
                                    placeholder=""
                                    name="<?= $fieldSid ?>" <?= $question['REQUIRED'] === 'Y' ? ' required' : '' ?>/>
-                            <?php if (is_array($arResult['FORM_ERRORS'])
-                                      && array_key_exists(
-                                          $fieldSid,
-                                          $arResult['FORM_ERRORS']
-                                      )): ?>
-                                <div class="b-error">
-                        <span class="js-message"
-                              title="<?= htmlspecialcharsbx($arResult['FORM_ERRORS'][$fieldSid]) ?>"></span></div>
-                            <? endif; ?>
+                            <div class="b-error"><span class="js-message" title=""></span></div>
                         </div>
                     </div>
                     <?php
@@ -75,15 +68,7 @@ use FourPaws\App\Application as App;
                                     }
                                 } ?>
                             </select>
-                            <?php if (is_array($arResult['FORM_ERRORS'])
-                                      && array_key_exists(
-                                          $fieldSid,
-                                          $arResult['FORM_ERRORS']
-                                      )): ?>
-                                <div class="b-error">
-                        <span class="js-message"
-                              title="<?= htmlspecialcharsbx($arResult['FORM_ERRORS'][$fieldSid]) ?>"></span></div>
-                            <? endif; ?>
+                            <div class="b-error"><span class="js-message" title=""></span></div>
                         </div>
                     </div>
                     <?php
@@ -96,17 +81,9 @@ use FourPaws\App\Application as App;
                                    for="feedback-<?= $fieldSid ?>"><?= $question['CAPTION'] ?></label>
                         </div>
                         <div class="b-input b-input--registration-form">
-                        <textarea class="b-input__input-field b-input__input-field--textarea b-input__input-field--registration-form"
+                            <textarea class="b-input__input-field b-input__input-field--textarea b-input__input-field--registration-form"
                                   id="feedback-<?= $fieldSid ?>" name="<?= $fieldSid ?>"></textarea>
-                            <?php if (is_array($arResult['FORM_ERRORS'])
-                                      && array_key_exists(
-                                          $fieldSid,
-                                          $arResult['FORM_ERRORS']
-                                      )): ?>
-                                <div class="b-error">
-                        <span class="js-message"
-                              title="<?= htmlspecialcharsbx($arResult['FORM_ERRORS'][$fieldSid]) ?>"></span></div>
-                            <? endif; ?>
+                            <div class="b-error"><span class="js-message" title=""></span></div>
                         </div>
                     </div>
                     <?php
@@ -126,15 +103,7 @@ use FourPaws\App\Application as App;
                                    for="feedback-<?= $fieldSid ?>">
                                 <?= $question['CAPTION'] ?>
                             </label>
-                            <?php if (is_array($arResult['FORM_ERRORS'])
-                                      && array_key_exists(
-                                          $fieldSid,
-                                          $arResult['FORM_ERRORS']
-                                      )): ?>
-                                <div class="b-error">
-                        <span class="js-message"
-                              title="<?= htmlspecialcharsbx($arResult['FORM_ERRORS'][$fieldSid]) ?>"></span></div>
-                            <? endif; ?>
+                            <div class="b-error"><span class="js-message" title=""></span></div>
                             <span class="b-input-line__comment b-input-line__comment--feedback-page">
                                 Объем файла не более 2 Мб.<br /> Допустимые форматы файла: jpg, png, doc, docx
                             </span>
@@ -151,7 +120,7 @@ use FourPaws\App\Application as App;
         ?>
         <div class="b-feedback-page__capcha">
             <?= /** @noinspection PhpUnhandledExceptionInspection */
-            App::getInstance()->getContainer()->get('recaptcha.service')->getCaptcha();?>
+            App::getInstance()->getContainer()->get('recaptcha.service')->getCaptcha(); ?>
         </div>
         <?php
     }

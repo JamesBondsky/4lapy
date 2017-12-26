@@ -46,3 +46,8 @@ form.feedback:
   path: /form/feedback/add/
   defaults: { _controller: '\FourPaws\FormService\AjaxController\FeedBackController::addAction' }
   methods: [POST]
+
+form.callback:
+  path: /form/callback/add/
+  defaults: { _controller: '\FourPaws\FormService\AjaxController\CallBackController::addAction' }
+  methods: [POST]

@@ -14,11 +14,11 @@ use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
- * Class FeedBackController
+ * Class CallBackController
  *
  * @package FourPaws\UserBundle\AjaxController
  */
-class FeedBackController extends Controller
+class CallBackController extends Controller
 {
     /**
      * @param Request $request

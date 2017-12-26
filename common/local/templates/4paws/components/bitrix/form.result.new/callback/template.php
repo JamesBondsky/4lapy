@@ -1,0 +1,90 @@
+<?php
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
+    die();
+}
+if (!\is_array($arResult['QUESTIONS']) || empty($arResult['QUESTIONS'])) {
+    return;
+}
+
+use FourPaws\Decorators\SvgDecorator;
+
+?>
+<div class="b-contact b-contact--call-me js-second-phone-content">
+    <div class="b-contact__header">
+        <a class="b-contact__back-link js-back-to-first-cont" href="javascript:void(0)" title="">
+            <span class="b-icon b-icon--arrow-back">
+                <?= new SvgDecorator('icon-arrow-back', 15, 13) ?>
+            </span>Другие варианты связи
+        </a>
+    </div>
+    <hr class="b-contact__hr" />
+    <dl class="b-phone-pair">
+        <dt class="b-phone-pair__phone b-phone-pair__phone--small-blue">Хотите поговорить?</dt>
+        <dd class="b-phone-pair__description">Оставьте телефон, мы вам перезвоним</dd>
+    </dl>
+    <form class="b-contact__form js-form-validation js-phone-query" data-url="/ajax/form/callback/add/" method="post">
+        <?= bitrix_sessid_post() ?>
+        <input name="WEB_FORM_ID" value="<?= $arResult['arForm']['ID'] ?>" type="hidden">
+        
+        <?php
+        foreach ($arResult['QUESTIONS'] as $fieldSid => $question) {
+            if ($question['STRUCTURE'][0]['FIELD_TYPE'] === 'hidden') {
+                echo $question['HTML_CODE'];
+            } else {
+                switch ($question['STRUCTURE'][0]['FIELD_TYPE']) {
+                    case 'text':
+                    case 'email':
+                        $type = 'text';
+                        if ($fieldSid === 'phone') {
+                            $type = 'tel';
+                        } ?>
+                        <div class="b-input b-input--recall js-phone-mask">
+                            <input class="b-input__input-field b-input__input-field--recall<?=$type==='tel' ? ' js-phone-mask' : ''?>"
+                                   type="<?=$type?>"
+                                   id="id-recall-<?= $fieldSid ?>"
+                                   placeholder="Ваш телефон"
+                                   name="<?= $fieldSid ?>" />
+                            <div class="b-error"><span class="js-message"></span></div>
+                        </div>
+                        <?php
+                        break;
+                    case 'dropdown':
+                        ?>
+                        <div class="b-select b-select--recall">
+                            <select class="b-select__block b-select__block--recall" name="<?= $fieldSid ?>">
+                                <option value="" disabled="disabled" selected="selected">выберите</option>
+                                <?php
+                                if (\is_array($arResult['arAnswers'][$fieldSid])
+                                    && !empty($arResult['arAnswers'][$fieldSid])) {
+                                    foreach ($arResult['arAnswers'][$fieldSid] as $selectItem) { ?>
+                                        <option value="<?= $selectItem['ID'] ?>"><?= $selectItem['MESSAGE'] ?></option>
+                                        <?php
+                                    }
+                                } ?>
+                                <option value="recall-0">Звонок сейчас</option>
+                                <option value="recall-1">Звонок через 5 мин</option>
+                                <option value="recall-2">Звонок через 15 мин</option>
+                                <option value="recall-3">Звонок завтра</option>
+                            </select>
+                            <div class="b-error"><span class="js-message"></span></div>
+                        </div>
+                        <?php
+                        break;
+                }
+                ?>
+                <?php
+            }
+        } ?>
+        <button class="b-button b-button--full-width b-button--recall"
+                type="submit"
+                name="web_form_submit"
+                value="Перезвоните мне">Перезвоните мне
+        </button>
+    </form>
+</div>
+<div class="b-contact b-contact--call-done js-third-phone-content">
+    <dl class="b-phone-pair b-phone-pair--bottom">
+        <dt class="b-phone-pair__phone">Спасибо!</dt>
+        <dd class="b-phone-pair__description js-call-me-text">Наш оператор позвонит в течении 5 минут</dd>
+    </dl>
+</div>
