@@ -24,7 +24,7 @@ if (!is_array($arResult['IBLOCKS']) || empty($arResult['IBLOCKS'])) {
     return;
 }
 
-use Bitrix\Main\Application;
+use FourPaws\Decorators\SvgDecorator;
 
 $frame = $this->createFrame(); ?>
 <section class="b-common-section">
@@ -38,39 +38,47 @@ $frame = $this->createFrame(); ?>
             <?php } ?>
         </div>
     </div>
-    <?php $frame->begin(''); ?>
+    <?php /** @noinspection PhpUnhandledExceptionInspection */
+    $frame->begin(''); ?>
     <?php if (is_array($arResult['ITEMS']) && !empty($arResult['ITEMS'])) { ?>
         <div class="b-common-section__content b-common-section__content--latest-event b-common-section__content--wrap">
             <div class="b-news-wrapper">
-                <?php foreach ($arResult['ITEMS'] as $key => $item) { ?>
-                    <article class="b-news-item<?= ($key === 0) ? ' b-news-item--big' : '' ?>">
+                <?php foreach ($arResult['ITEMS'] as $key => $item) {
+                    $this->AddEditAction(
+                        $item['ID'],
+                        $item['EDIT_LINK'],
+                        CIBlock::GetArrayByID($item['IBLOCK_ID'], 'ELEMENT_EDIT')
+                    );
+                    $this->AddDeleteAction(
+                        $item['ID'],
+                        $item['DELETE_LINK'],
+                        CIBlock::GetArrayByID($item['IBLOCK_ID'], 'ELEMENT_DELETE'),
+                        ['CONFIRM' => GetMessage('CT_BNL_ELEMENT_DELETE_CONFIRM')]
+                    ); ?>
+                    <article class="b-news-item<?= ($key === 0) ? ' b-news-item--big' : '' ?>"
+                             id="<?= $this->GetEditAreaId($item['ID']); ?>">
                         <?php if (!empty($item['DETAIL_PAGE_URL'])){ ?>
                         <a class="b-news-item__link"
                            href="<?= $item['DETAIL_PAGE_URL'] ?>"
                            title="<?= $item['NAME'] ?>">
                             <?php } ?>
-                            <?php if (!empty($item['PREVIEW_PICTURE']['SRC'])
-                                      && file_exists(
-                                          Application::getDocumentRoot() . $item['PREVIEW_PICTURE']['SRC']
-                                      )) { ?>
+                            <?php if (!empty($item['PREVIEW_PICTURE']['SRC'])) { ?>
                                 <span class="b-news-item__image-wrapper js-image-cover">
-                                        <img class="b-news-item__image"
-                                             src="<?= $item['PREVIEW_PICTURE']['SRC'] ?>"
-                                             alt="<?= $item['PREVIEW_PICTURE']['ALT'] ?>"
-                                             title="<?= $item['PREVIEW_PICTURE']['TITLE'] ?>" />
+                                    <img class="b-news-item__image"
+                                         src="<?= $item['PREVIEW_PICTURE']['SRC'] ?>"
+                                         alt="<?= $item['PREVIEW_PICTURE']['ALT'] ?>"
+                                         title="<?= $item['PREVIEW_PICTURE']['TITLE'] ?>" />
                                     <?php if (!empty($item['DISPLAY_PROPERTIES']['VIDEO']['DISPLAY_VALUE'])) { ?>
                                         <span class="b-news-item__video">
                                                 <span class="b-icon">
-                                                    <?= new \FourPaws\Decorators\SvgDecorator(
+                                                    <?= new SvgDecorator(
                                                         'icon-play-video', 60, 60
                                                     ); ?>
                                                 </span>
                                             </span>
-                                    <?php } ?>
+                                    <?php }
+                                    ?>
                                 </span>
-                            <?php } ?>
-                            <?php if (!empty($item['DISPLAY_PROPERTIES']['PUBLICATION_TYPE']['DISPLAY_VALUE'])) { ?>
-                                <span class="b-news-item__label"><?= $item['DISPLAY_PROPERTIES']['PUBLICATION_TYPE']['DISPLAY_VALUE'] ?></span>
                             <?php } ?>
                             <?php if (is_array($item['DISPLAY_PROPERTIES']['PUBLICATION_TYPE']['DISPLAY_VALUE'])
                                       && !empty($item['DISPLAY_PROPERTIES']['PUBLICATION_TYPE']['DISPLAY_VALUE'])) {
@@ -85,7 +93,9 @@ $frame = $this->createFrame(); ?>
                             <?php } ?>
                             <h4 class="b-news-item__header"><?= $item['NAME'] ?></h4>
                             <?php if (!empty($item['PREVIEW_TEXT'])) { ?>
-                                <p class="b-news-item__description"><?= $item['PREVIEW_TEXT'] ?></p>
+                                <p class="b-news-item__description"><?= htmlspecialcharsback(
+                                        $item['PREVIEW_TEXT']
+                                    ) ?></p>
                             <?php } ?>
                             <?php if (!empty($item['DISPLAY_ACTIVE_FROM'])) { ?>
                                 <span class="b-news-item__date"><?= $item['DISPLAY_ACTIVE_FROM'] ?></span>
@@ -98,6 +108,7 @@ $frame = $this->createFrame(); ?>
             </div>
         </div>
     <?php } ?>
-    <?php $frame->end(); ?>
+    <?php /** @noinspection PhpUnhandledExceptionInspection */
+    $frame->end(); ?>
 </section>
 <div class="b-line b-line--news-main"></div>

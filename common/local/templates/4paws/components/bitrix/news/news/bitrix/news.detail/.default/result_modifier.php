@@ -1,12 +1,19 @@
 <?php
+
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
+use FourPaws\BitrixOrm\Model\CropImageDecorator;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 /** @var array $arParams */
 /** @var array $arResult */
-/** @noinspection PhpUndefinedClassInspection */
-/** @global \CUser $USER */
-/** @global \CMain $APPLICATION */
+
+/** @global CUser $USER */
+/** @global CMain $APPLICATION */
 /** @global CDatabase $DB */
 
 $arResult['NO_SHOW_VIDEO'] = false;
@@ -19,6 +26,33 @@ if (stripos($arResult['DETAIL_TEXT'], '#video#') !== false) {
     $arResult['NO_SHOW_VIDEO'] = true;
 }
 
+foreach ((array)$arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'] as &$photo) {
+    if (is_numeric($photo) && (int)$photo > 0) {
+        /** @noinspection PhpUnhandledExceptionInspection */
+        $image = CropImageDecorator::createFromPrimary($photo);
+        $image->setCropWidth(890)->setCropHeight(500);
+        
+        $photo = [
+            'ID'  => $photo,
+            'SRC' => $image,
+        ];
+    }
+}
+
+if (isset($image)) {
+    unset($image);
+}
+if (is_array($arResult['DETAIL_PICTURE']) && !empty($arResult['DETAIL_PICTURE'])) {
+    $image = new CropImageDecorator($arResult['DETAIL_PICTURE']);
+} elseif (is_numeric($arResult['~DETAIL_PICTURE']) && (int)$arResult['~DETAIL_PICTURE'] > 0) {
+    /** @noinspection PhpUnhandledExceptionInspection */
+    $image = CropImageDecorator::createFromPrimary($arResult['~DETAIL_PICTURE']);
+}
+if ($image instanceof CropImageDecorator) {
+    $image->setCropWidth(890)->setCropHeight(500);
+    $arResult['DETAIL_PICTURE']['SRC'] = $image;
+}
+
 $arResult['NO_SHOW_SLIDER'] = false;
 if (is_array($arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'])
     && !empty($arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'])
@@ -26,10 +60,6 @@ if (is_array($arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'])
     $html = '';
     foreach ((array)$arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'] as $photo) {
         if (is_numeric($photo)) {
-            /** @noinspection PhpUndefinedClassInspection */
-            $photo = ['SRC' => CFile::GetPath($photo)];
-        }
-        if (!empty($photo['SRC'])) {
             $html .= '
             <div class="b-detail-page-slider__item">
                 <img src="' . $photo['SRC'] . '" />
@@ -42,7 +72,7 @@ if (is_array($arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'])
 }
 
 /**  DETAIL_PICTURE и PREVIEW_TEXT для отправки в соц сети */
-$this->__component->SetResultCacheKeys(
+$this->__component->setResultCacheKeys(
     [
         'DISPLAY_ACTIVE_FROM',
         'DETAIL_PICTURE',

@@ -5,17 +5,19 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use FourPaws\Decorators\SvgDecorator;
+use FourPaws\App\Application;
 
 ?>
-<span class="b-footer-communication__item">
-    <a class="b-footer-communication__link" href="tel:84732027626" title="+7 473 202-76-26">
-        +7 473 202-76-26
-    </a>
-    <span class="b-footer-communication__description">(доступен до 21:00)</span>
-</span>
+<?php $APPLICATION->IncludeComponent(
+    'fourpaws:city.phone',
+    'template.footer',
+    [],
+    false,
+    ['HIDE_ICONS' => 'Y']
+) ?>
 <span class="b-footer-communication__item">
     <a class="b-footer-communication__link"
-       href="tel:<?= preg_replace('[^+\d]', '', tplvar('phone_main')) ?>"
+       href="tel:<?= preg_replace('~[^+\d]~', '', tplvar('phone_main')) ?>"
        title="<?= tplvar('phone_main') ?>">
         <?= tplvar('phone_main') ?>
     </a>

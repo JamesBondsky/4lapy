@@ -2,14 +2,25 @@
 
 namespace FourPaws\Catalog\Model;
 
+use Adv\Bitrixtools\Exception\IblockNotFoundException;
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
+use Elastica\Query\AbstractQuery;
+use Elastica\Query\Simple;
+use Elastica\Query\Terms;
+use Exception;
 use FourPaws\App\Application;
 use FourPaws\BitrixOrm\Model\IblockSection;
-use FourPaws\Catalog\CatalogService;
-use FourPaws\Catalog\Filter\FilterBase;
-use FourPaws\Catalog\Filter\FilterInterface;
-use FourPaws\Catalog\Filter\FilterTrait;
-use FourPaws\Catalog\Filter\Variant;
+use FourPaws\Catalog\Collection\FilterCollection;
+use FourPaws\Catalog\Collection\VariantCollection;
+use FourPaws\Catalog\Model\Filter\Abstraction\FilterTrait;
+use FourPaws\Catalog\Model\Filter\FilterInterface;
 use FourPaws\Catalog\Query\CategoryQuery;
+use FourPaws\CatalogBundle\Service\FilterService;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
+use Symfony\Component\HttpFoundation\Request;
 use WebArch\BitrixCache\BitrixCache;
 
 class Category extends IblockSection implements FilterInterface
@@ -27,19 +38,182 @@ class Category extends IblockSection implements FilterInterface
     protected $symlink;
 
     /**
-     * @var CatalogService
+     * @var static
      */
-    protected $catalogService;
+    protected $parent;
 
     /**
-     * @var FilterBase[]
+     * @var Collection|static[]
      */
-    private $filterList = null;
+    protected $child;
 
+    /**
+     * @var int
+     */
+    protected $PICTURE = 0;
+
+    /**
+     * @var FilterCollection
+     */
+    private $filterList;
+
+    /**
+     * @var FilterService
+     */
+    private $filterService;
+
+    /**
+     * Category constructor.
+     *
+     * @param array $fields
+     *
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     */
     public function __construct(array $fields = [])
     {
         parent::__construct($fields);
-        $this->catalogService = Application::getInstance()->getContainer()->get('catalog.service');
+        $this->filterService = Application::getInstance()->getContainer()->get(FilterService::class);
+        //По умолчанию фильтр по категории невидим.
+        $this->setVisible(false);
+        $this->child = new ArrayCollection();
+    }
+
+    /**
+     * @param array $fields
+     *
+     * @throws IblockNotFoundException
+     * @return Category
+     */
+    public static function createRoot(array $fields = [])
+    {
+        $category = new self(
+            array_merge(
+                $fields,
+                [
+                    'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS),
+                    'ID'        => 0,
+                    'CODE'      => '',
+                    'NAME'      => 'Поиск товаров',
+                ]
+            )
+        );
+
+        $category->setVisible(true);
+
+        return $category;
+    }
+
+    /**
+     * @return int
+     */
+    public function getPictureId(): int
+    {
+        return (int)$this->PICTURE;
+    }
+
+    /**
+     * @param int $pictureId
+     * @return static
+     */
+    public function setPictureId(int $pictureId)
+    {
+        $this->PICTURE = $pictureId;
+        return $this;
+    }
+
+    /**
+     * @return null|static
+     */
+    public function getParent()
+    {
+        if (null === $this->parent) {
+            if (1 === $this->getDepthLevel()) {
+                $parent = (new static())
+                    ->withId(0)
+                    ->withName(static::ROOT_SECTION_NAME)
+                    ->withCode(static::ROOT_SECTION_CODE)
+                    ->withSectionPageUrl('/catalog/')
+                    ->withListPageUrl('/catalog/');
+                $this->withParent($parent);
+            }
+            if ($this->getIblockSectionId()) {
+                $parent = (new CategoryQuery())
+                    ->withFilterParameter('ID', $this->getIblockSectionId())
+                    ->exec()
+                    ->first();
+                $this->withParent($parent);
+            }
+        }
+        return $this->parent;
+    }
+
+    /**
+     * @param Category $parent
+     *
+     * @return Category
+     */
+    public function withParent(Category $parent): Category
+    {
+        $this->parent = $parent;
+        return $this;
+    }
+
+    /**
+     * @param bool $hasElements
+     *
+     * @return Category[]|Collection
+     */
+    public function getChild(bool $hasElements = true): Collection
+    {
+        if (null === $this->child) {
+            $this->child = new ArrayCollection();
+        }
+
+        if (0 === $this->child->count() && $this->getRightMargin() - $this->getLeftMargin() > 1) {
+            $this->child = (new CategoryQuery())
+                ->withFilterParameter('SECTION_ID', $this->getId())
+                ->withFilterParameter('CNT_ACTIVE', 'Y')
+                ->withOrder(['SORT' => 'ASC'])
+                ->withCountElements(true)
+                ->exec();
+            $this->child->map(function (Category $category) {
+                $category->withParent($this);
+            });
+        }
+
+        $result = $this->child;
+        if ($hasElements) {
+            $result = $result->filter(function (Category $category) {
+                return $category->getElementCount() > 0;
+            });
+        }
+
+        return $result;
+    }
+
+    public function withChild(Collection $collection)
+    {
+        $collection = $collection->filter(function ($value) {
+            return $value instanceof static;
+        });
+        $this->child = $collection;
+    }
+
+    /**
+     * Возвращает ссылку на категорию с подменой, если используется связка с другой категорией.
+     *
+     * @return string
+     */
+    public function getSectionPageUrl(): string
+    {
+        $symlink = $this->getSymlink();
+
+        if ($symlink instanceof Category) {
+            return $symlink->getSectionPageUrl();
+        }
+
+        return parent::getSectionPageUrl();
     }
 
     /**
@@ -53,36 +227,25 @@ class Category extends IblockSection implements FilterInterface
              * и при деактивации целевого раздела показывать битую ссылку плохо.
              */
             $this->symlink = (new CategoryQuery())->withFilterParameter('=ID', (int)$this->UF_SYMLINK)
-                                                  ->exec()
-                                                  ->current();
+                ->exec()
+                ->current();
         }
 
         return $this->symlink;
     }
 
     /**
-     * Возвращает ссылку на категорию с подменой, если используется связка с другой категорией.
-     *
-     * @return string
+     * @throws Exception
+     * @return FilterCollection
      */
-    public function getSectionPageUrl(): string
+    public function getFilters(): FilterCollection
     {
-        $symlink = $this->getSymlink();
-        if (is_null($symlink)) {
-            return parent::getSectionPageUrl();
-        }
-
-        return $symlink->getSectionPageUrl();
-    }
-
-    /**
-     * @return FilterBase[]
-     */
-    public function getFilters(): array
-    {
-        //TODO Если \FourPaws\Catalog\CatalogService::getFilters будет кешироваться, можно не хранить эти данные.
-        if (is_null($this->filterList)) {
-            $this->filterList = $this->catalogService->getFilters($this);
+        /**
+         * Обязательно надо хранить актуальную коллекцию фильтров,
+         * т.к. её состояние в процессе поиска товаров будет меняться.
+         */
+        if (null === $this->filterList) {
+            $this->filterList = $this->filterService->getCategoryFilters($this);
         }
 
         return $this->filterList;
@@ -91,29 +254,33 @@ class Category extends IblockSection implements FilterInterface
     /**
      * @inheritdoc
      */
-    protected function doGetAllVariants()
+    public function doGetAllVariants(): VariantCollection
     {
-
         $doGetAllVariants = function () {
             $categoryQuery = new CategoryQuery();
 
             //Если это не корневой раздел
             if ($this->getId() > 0) {
-                $categoryQuery->withFilterParameter('>LEFT_MARGIN', $this->getLeftMargin())
-                              ->withFilterParameter('<RIGHT_MARGIN', $this->getRightMargin())
-                              ->withFilterParameter('!ID', $this->getId());
+                $categoryQuery->withFilterParameter('LEFT_MARGIN', $this->getLeftMargin())
+                    ->withFilterParameter('RIGHT_MARGIN', $this->getRightMargin());
             }
 
-            $categoryCollection = $categoryQuery->withOrder(['LEFT_MARGIN' => 'ASC',])
-                                                ->exec();
+            $categoryCollection = $categoryQuery->withOrder(['LEFT_MARGIN' => 'ASC'])
+                ->exec();
 
             $variants = [];
 
             /** @var Category $category */
             foreach ($categoryCollection as $category) {
-                //TODO Добавить уровень вложенности, чтобы отобразить дерево, когда нужно.
+                //TODO Добавить к варианту уровень вложенности, чтобы отобразить дерево, когда нужно.
+
+                /**
+                 * Все варианты по-умолчанию выбраны,
+                 * т.к. мы по умолчанию ищем по разделу и всем подразделам
+                 */
                 $variants[] = (new Variant())->withName($category->getName())
-                                             ->withValue($category->getId());
+                    ->withValue($category->getId())
+                    ->withChecked(true);
             }
 
             return $variants;
@@ -121,22 +288,72 @@ class Category extends IblockSection implements FilterInterface
 
         /** @var Variant[] $variants */
         $variants = (new BitrixCache())->withId(__METHOD__ . $this->getId())
-                                       ->withIblockTag($this->getIblockId())
-                                       ->resultOf(
-                                           $doGetAllVariants
-                                       );
+            ->withIblockTag($this->getIblockId())
+            ->resultOf($doGetAllVariants);
 
-        return $variants;
+        return new VariantCollection($variants);
     }
 
-    public function getFilterRule(): array
+    /**
+     * @inheritdoc
+     */
+    public function getFilterRule(): AbstractQuery
     {
-        // TODO: Implement getFilterRule() method.
+        /**
+         * Если корневая категория, то фильтра по ней не будет
+         */
+        if ($this->getId() <= 0 || $this->getIblockId() <= 0) {
+            return new Simple([]);
+        }
+
+        //TODO Возможно, придётся переделать тут, когда будет реализовываться древовидный фильтр по категориям
+
+        $sectionIdList = [];
+
+        /** @var Variant $variant */
+        foreach ($this->getAllVariants() as $variant) {
+            $sectionIdList[] = (int)$variant->getValue();
+        }
+
+        if (empty($sectionIdList)) {
+            return new Simple([]);
+        }
+
+        return new Terms($this->getRuleCode(), $sectionIdList);
     }
 
-    public function getAggRule(): array
+    /**
+     * @inheritdoc
+     */
+    public function getRuleCode(): string
     {
-        // TODO: Implement getAggRule() method.
+        return 'sectionIdList';
     }
 
+    /**
+     * @inheritdoc
+     */
+    public function getFilterCode(): string
+    {
+        return 'Category';
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getPropCode(): string
+    {
+        /**
+         * Категория не связана ни с каким свойством
+         */
+        return '';
+    }
+
+    /**
+     * @param Request $request
+     */
+    public function initState(Request $request)
+    {
+        // TODO: Implement initState() method для древовидного фильтра.
+    }
 }

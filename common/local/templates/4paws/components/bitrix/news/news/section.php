@@ -3,19 +3,20 @@
 }
 /** @var array $arParams */
 /** @var array $arResult */
-/** @noinspection PhpUndefinedClassInspection */
+
 /** @global CMain $APPLICATION */
-/** @noinspection PhpUndefinedClassInspection */
+
 /** @global CUser $USER */
 /** @noinspection PhpUndefinedClassInspection */
+
 /** @global CDatabase $DB */
-/** @noinspection PhpUndefinedClassInspection */
+
 /** @var CBitrixComponentTemplate $this */
 /** @var string $templateName */
 /** @var string $templateFile */
 /** @var string $templateFolder */
 /** @var string $componentPath */
-/** @noinspection PhpUndefinedClassInspection */
+
 /** @var CBitrixComponent $component */
 $this->setFrameMode(true);
 ?>

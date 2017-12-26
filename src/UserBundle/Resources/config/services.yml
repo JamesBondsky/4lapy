@@ -1,0 +1,45 @@
+services:
+    # default configuration for services in *this* file
+    _defaults:
+        # automatically injects dependencies in your services
+        autowire: true
+        # automatically registers your services as commands, event subscribers, etc.
+        autoconfigure: true
+        # this means you cannot fetch services directly from the container via $container->get()
+        # if you need to do this, you can override this setting on individual services
+        public: false
+
+    FourPaws\UserBundle\:
+        resource: '../../*'
+        # you can exclude directories or files
+        # but if a service is unused, it's removed anyway
+        exclude: '../../{Entity,Tests}'
+
+    FourPaws\UserBundle\Service\CurrentUserProviderInterface:
+        class: FourPaws\UserBundle\Service\UserService
+        public: true
+
+    FourPaws\UserBundle\Service\UserAuthorizationInterface:
+        class: FourPaws\UserBundle\Service\UserService
+        public: true
+
+    FourPaws\UserBundle\Service\UserRegistrationProviderInterface:
+        class: FourPaws\UserBundle\Service\UserService
+        public: true
+
+    FourPaws\UserBundle\Service\UserCitySelectInterface:
+        class: FourPaws\UserBundle\Service\UserService
+        public: true
+
+    FourPaws\UserBundle\Service\ConfirmCodeInterface:
+        class: FourPaws\UserBundle\Service\ConfirmCodeService
+        public: true
+
+    FourPaws\UserBundle\AjaxController\:
+        resource: '../../AjaxController'
+        public: true
+        tags: ['controller.service_arguments']
+
+    # Временное решение. Ввиду вызова из компонентов
+#    FourPaws\UserBundle\Service\UserService:
+#        public: true

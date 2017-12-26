@@ -8,5 +8,7 @@ class IblockType
     
     const MENU        = 'menu';
     
-    const PUBLICATION = 'publication';
+    const REFERENCE_BOOKS = 'reference_books';
+    
+    const PUBLICATION = 'publications';
 }

@@ -21,6 +21,7 @@ BitrixNeverInclude::registerModuleAutoload();
  *
  * @return bool
  */
+
 function custom_mail(
     string $to,
     string $subject,

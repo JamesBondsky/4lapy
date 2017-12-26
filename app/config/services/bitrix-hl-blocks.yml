@@ -6,176 +6,147 @@ services:
     class: 'Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory'
 
   bx.hlblock.base:
-    class: '\SomeTable'
+    class: Bitrix\Highloadblock\DataManager
+    abstract: true
     factory: 'bx.hlblock.factory:createTableObject'
 
   bx.hlblock.forwho:
-    class: 'ForWhoTable'
     arguments: ['ForWho']
     parent: bx.hlblock.base
 
   bx.hlblock.country:
-    class: 'CountryTable'
     arguments: ['Country']
     parent: bx.hlblock.base
 
   bx.hlblock.tradename:
-    class: 'TradeNameTable'
     arguments: ['TradeName']
     parent: bx.hlblock.base
 
   bx.hlblock.maker:
-    class: 'MakerTable'
     arguments: ['Maker']
     parent: bx.hlblock.base
 
   bx.hlblock.categorymanager:
-    class: 'CategoryManagerTable'
     arguments: ['CategoryManager']
     parent: bx.hlblock.base
 
   bx.hlblock.material:
-    class: 'MaterialTable'
     arguments: ['Material']
     parent: bx.hlblock.base
 
   bx.hlblock.petsize:
-    class: 'PetSizeTable'
     arguments: ['PetSize']
     parent: bx.hlblock.base
 
   bx.hlblock.season:
-    class: 'SeasonTable'
     arguments: ['Season']
     parent: bx.hlblock.base
 
   bx.hlblock.purpose:
-    class: 'PurposeTable'
     arguments: ['Purpose']
     parent: bx.hlblock.base
 
   bx.hlblock.productcategory:
-    class: 'ProductCategoryTable'
     arguments: ['ProductCategory']
     parent: bx.hlblock.base
 
   bx.hlblock.packagetype:
-    class: 'PackageTypeTable'
     arguments: ['PackageType']
     parent: bx.hlblock.base
 
   bx.hlblock.petage:
-    class: 'PetAgeTable'
     arguments: ['PetAge']
     parent: bx.hlblock.base
 
   bx.hlblock.pettype:
-    class: 'PetTypeTable'
     arguments: ['PetType']
     parent: bx.hlblock.base
 
   bx.hlblock.pharmagroup:
-    class: 'PharmaGroupTable'
     arguments: ['PharmaGroup']
     parent: bx.hlblock.base
 
   bx.hlblock.feedspec:
-    class: 'FeedSpecTable'
     arguments: ['FeedSpec']
     parent: bx.hlblock.base
 
   bx.hlblock.colour:
-    class: 'ColourTable'
     arguments: ['Colour']
     parent: bx.hlblock.base
 
   bx.hlblock.volume:
-    class: 'VolumeTable'
     arguments: ['Volume']
     parent: bx.hlblock.base
 
   bx.hlblock.clothingsize:
-    class: 'ClothingSizeTable'
     arguments: ['ClothingSize']
     parent: bx.hlblock.base
 
   bx.hlblock.consistence:
-    class: 'ConsistenceTable'
     arguments: ['Consistence']
     parent: bx.hlblock.base
 
   bx.hlblock.flavour:
-    class: 'FlavourTable'
     arguments: ['Flavour']
     parent: bx.hlblock.base
 
   bx.hlblock.ingridientfeatures:
-    class: 'IngridientFeaturesTable'
     arguments: ['IngridientFeatures']
     parent: bx.hlblock.base
 
   bx.hlblock.petbreed:
-    class: 'PetBreedTable'
     arguments: ['PetBreed']
     parent: bx.hlblock.base
 
   bx.hlblock.petgender:
-    class: 'PetGenderTable'
     arguments: ['PetGender']
     parent: bx.hlblock.base
 
   bx.hlblock.productform:
-    class: 'ProductFormTable'
     arguments: ['ProductForm']
     parent: bx.hlblock.base
 
   bx.hlblock.year:
-    class: 'YearTable'
     arguments: ['Year']
     parent: bx.hlblock.base
 
   bx.hlblock.parasitetype:
-    class: 'ParasiteTypeTable'
     arguments: ['ParasiteType']
     parent: bx.hlblock.base
 
   bx.hlblock.label:
-    class: 'LabelTable'
     arguments: ['Label']
     parent: bx.hlblock.base
 
   bx.hlblock.filter:
-    class: 'FilterTable'
     arguments: ['Filter']
     parent: bx.hlblock.base
 
   bx.hlblock.publicationtype:
-    class: 'PublicationTypeTable'
     arguments: ['PublicationType']
     parent: bx.hlblock.base
 
   bx.hlblock.rewardtype:
-    class: 'RewardTypeTable'
     arguments: ['RewardType']
     parent: bx.hlblock.base
 
   bx.hlblock.petageadditional:
-    class: 'PetAgeAdditionalTable'
     arguments: ['PetAgeAdditional']
     parent: bx.hlblock.base
 
   bx.hlblock.storeservices:
-    class: 'StoreServicesTable'
     arguments: ['StoreServices']
     parent: bx.hlblock.base
 
   bx.hlblock.metrostations:
-    class: 'MetroStationsTable'
     arguments: ['MetroStations']
     parent: bx.hlblock.base
 
   bx.hlblock.metroways:
-    class: 'MetroWaysTable'
     arguments: ['MetroWays']
+    parent: bx.hlblock.base
+
+  bx.hlblock.cities:
+    arguments: ['Cities']
     parent: bx.hlblock.base
 

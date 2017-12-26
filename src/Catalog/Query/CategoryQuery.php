@@ -19,10 +19,13 @@ class CategoryQuery extends IblockSectionQuery
             'NAME',
             'XML_ID',
             'CODE',
+            'LIST_PAGE_URL',
+            'SECTION_PAGE_URL',
             'DEPTH_LEVEL',
             'LEFT_MARGIN',
             'RIGHT_MARGIN',
             'UF_SYMLINK',
+            'PICTURE',
         ];
     }
 
@@ -38,5 +41,4 @@ class CategoryQuery extends IblockSectionQuery
     {
         return new CategoryCollection($this->doExec());
     }
-
 }

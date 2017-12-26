@@ -1,29 +1,29 @@
 ---
 
-user.auth.login:
-  path: /user/auth/login/
-  defaults: { _controller: '\FourPaws\User\Controller\AuthController::loginAction' }
-  methods: [POST]
+user:
+    resource: '@FourPawsUserBundle/AjaxController'
+    type: annotation
+    prefix: '/user'
 
-user.auth.forgotPassword:
-  path: /user/auth/forgotPassword/
-  defaults: { _controller: '\FourPaws\User\Controller\AuthController::forgotPasswordAction' }
-  methods: [POST]
+delivery:
+    resource: '@FourPawsDeliveryBundle/AjaxController'
+    type: annotation
+    prefix: '/delivery'
 
-user.auth.register:
-  path: /user/auth/register/
-  defaults: { _controller: '\FourPaws\User\Controller\AuthController::registerAction' }
-  methods: [POST]
+store:
+    resource: '@FourPawsStoreBundle/AjaxController'
+    type: annotation
+    prefix: '/store'
 
-user.auth.changePassword:
-  path: /user/auth/changePassword/
-  defaults: { _controller: '\FourPaws\User\Controller\AuthController::changePasswordAction' }
-  methods: [POST]
+location.city.autocomplete:
+  path: /location/city/autocomplete
+  defaults: { _controller: '\FourPaws\Location\Controller\CityController::autocompleteAction' }
+  methods: [GET]
 
-user.auth.register:
-  path: /user/subscribe/subscribe/
-  defaults: { _controller: '\FourPaws\User\Controller\SubscribeController::subscribeAction' }
-  methods: [POST]
+location.city.list:
+  path: /location/city/list/
+  defaults: { _controller: '\FourPaws\Location\Controller\CityController::listAction' }
+  methods: [GET]
 
 autosort.property.hint:
   path: /autosort/property-hint/{propertyId}
@@ -31,3 +31,13 @@ autosort.property.hint:
   methods: [GET]
   requirements:
     propertyId: '\d+'
+
+comments.add:
+  path: /comments/add/
+  defaults: { _controller: '\FourPaws\Comments\AjaxController\CommentsController::addAction' }
+  methods: [POST]
+
+comments.next:
+  path: /comments/next/
+  defaults: { _controller: '\FourPaws\Comments\AjaxController\CommentsController::nextAction' }
+  methods: [GET]
