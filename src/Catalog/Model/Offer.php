@@ -2,15 +2,19 @@
 
 namespace FourPaws\Catalog\Model;
 
+use Bitrix\Main\FileTable;
+use CCatalogDiscountSave;
+use CCatalogProduct;
 use DateTimeImmutable;
-use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\BitrixOrm\Collection\ImageCollection;
+use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
+use FourPaws\BitrixOrm\Model\CatalogProduct;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\BitrixOrm\Model\IblockElement;
+use FourPaws\BitrixOrm\Query\CatalogProductQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
-use FourPaws\Catalog\Collection\PriceCollection;
-use FourPaws\Catalog\Query\PriceQuery;
 use FourPaws\Catalog\Query\ProductQuery;
 use JMS\Serializer\Annotation\Accessor;
 use JMS\Serializer\Annotation\Groups;
@@ -134,8 +138,10 @@ class Offer extends IblockElement
      */
     protected $clothingSize;
 
-    //TODO Изображения
-    protected $PROPERTY_IMG;
+    /**
+     * @var int[]
+     */
+    protected $PROPERTY_IMG = [];
 
     /**
      * @var string[]
@@ -208,16 +214,119 @@ class Offer extends IblockElement
     protected $PROPERTY_OLD_URL = '';
 
     /**
-     * @var ArrayCollection
-     * @Type("ArrayCollection<FourPaws\Catalog\Model\Price>")
-     * @Accessor(getter="getAllPrices",setter="withAllPrices")
+     * @Type("float")
      * @Groups({"elastic"})
+     * @Accessor(getter="getPrice", setter="withPrice")
+     * @var float
      */
-    protected $prices;
+    protected $price = 0;
+
+    /**
+     * @var float
+     */
+    protected $oldPrice = 0;
+
+    /**
+     * @Type("string")
+     * @Groups({"elastic"})
+     * @var string
+     */
+    protected $currency = '';
+
+    /**
+     * @var CatalogProduct
+     */
+    protected $catalogProduct;
+
+    /**
+     * @var int
+     */
+    protected $discount = 0;
+
+    /**
+     * @var ImageCollection
+     */
+    protected $images;
+
+    /**
+     * @var ResizeImageCollection
+     */
+    protected $resizeImages;
 
     public function __construct(array $fields = [])
     {
         parent::__construct($fields);
+
+        if (isset($fields['CATALOG_PRICE_1'])) {
+            $this->price = (float)$fields['CATALOG_PRICE_1'];
+        }
+
+        if (isset($fields['CATALOG_CURRENCY_1'])) {
+            $this->currency = (string)$fields['CATALOG_CURRENCY_1'];
+        }
+    }
+
+    /**
+     * @return ImageCollection
+     */
+    public function getImages(): ImageCollection
+    {
+        if ($this->images instanceof ImageCollection) {
+            return $this->images;
+        }
+        $this->images = new ImageCollection(
+            FileTable::query()
+                ->addFilter('ID', $this->getImagesIds())
+                ->addSelect('*')
+                ->exec()
+        );
+
+        return $this->images;
+    }
+
+    /**
+     * @param ImageCollection $images
+     */
+    public function withImages(ImageCollection $images)
+    {
+        $this->images = $images;
+    }
+
+    /**
+     * @param int $width
+     * @param int $height
+     *
+     * @return ResizeImageCollection
+     */
+    public function getResizeImages(int $width = 0, int $height = 0): ResizeImageCollection
+    {
+        if ($this->resizeImages instanceof ResizeImageCollection) {
+            if ($width && $this->resizeImages->getWidth() !== $width) {
+                $this->resizeImages->setWidth($width);
+            }
+            if ($height && $this->resizeImages->getHeight() !== $height) {
+                $this->resizeImages->setHeight($height);
+            }
+            return $this->resizeImages;
+        }
+        $this->resizeImages = new ResizeImageCollection(
+            FileTable::query()
+                ->addFilter('ID', $this->getImagesIds())
+                ->addSelect('*')
+                ->exec(),
+            $width,
+            $height
+        );
+
+        return $this->resizeImages;
+    }
+
+    /**
+     * @param ResizeImageCollection $resizeImages
+     */
+    public function withResizeImages(ResizeImageCollection $resizeImages)
+    {
+        $this->resizeImages = $resizeImages;
     }
 
     /**
@@ -225,10 +334,10 @@ class Offer extends IblockElement
      */
     public function getProduct()
     {
-        if (is_null($this->product)) {
+        if (null === $this->product) {
             $this->product = (new ProductQuery())->withFilter(['=ID' => (int)$this->PROPERTY_CML2_LINK])
-                                                 ->exec()
-                                                 ->current();
+                ->exec()
+                ->current();
 
             if (!($this->product instanceof Product)) {
                 $this->product = new Product();
@@ -239,14 +348,14 @@ class Offer extends IblockElement
     }
 
     /**
-     * @return HlbReferenceItem
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     * @return HlbReferenceItem
      */
     public function getColor()
     {
-        if (is_null($this->colour)) {
+        if (null === $this->colour) {
             $this->colour = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.colour'),
                 $this->PROPERTY_COLOUR
@@ -257,14 +366,14 @@ class Offer extends IblockElement
     }
 
     /**
-     * @return HlbReferenceItem
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     * @return HlbReferenceItem
      */
     public function getVolumeReference()
     {
-        if (is_null($this->volumeReference)) {
+        if (null === $this->volumeReference) {
             $this->volumeReference = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.volume'),
                 $this->PROPERTY_VOLUME_REFERENCE
@@ -283,14 +392,14 @@ class Offer extends IblockElement
     }
 
     /**
-     * @return HlbReferenceItem
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     * @return HlbReferenceItem
      */
     public function getClothingSize()
     {
-        if (is_null($this->clothingSize)) {
+        if (null === $this->clothingSize) {
             $this->clothingSize = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.clothingsize'),
                 $this->PROPERTY_CLOTHING_SIZE
@@ -309,14 +418,14 @@ class Offer extends IblockElement
     }
 
     /**
-     * @return HlbReferenceItem
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     * @return HlbReferenceItem
      */
     public function getKindOfPacking()
     {
-        if (is_null($this->kindOfPacking)) {
+        if (null === $this->kindOfPacking) {
             $this->kindOfPacking = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.packagetype'),
                 $this->PROPERTY_KIND_OF_PACKING
@@ -327,14 +436,14 @@ class Offer extends IblockElement
     }
 
     /**
-     * @return HlbReferenceItem
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     * @return HlbReferenceItem
      */
     public function getSeasonYear()
     {
-        if (is_null($this->seasonYear)) {
+        if (null === $this->seasonYear) {
             $this->seasonYear = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.year'),
                 $this->PROPERTY_SEASON_YEAR
@@ -355,14 +464,14 @@ class Offer extends IblockElement
     /**
      * Возвращает тип вознаграждения для заводчика.
      *
-     * @return HlbReferenceItem
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
+     * @return HlbReferenceItem
      */
     public function getRewardType()
     {
-        if (is_null($this->rewardType)) {
+        if (null === $this->rewardType) {
             $this->rewardType = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.rewardtype'),
                 $this->PROPERTY_REWARD_TYPE
@@ -413,42 +522,130 @@ class Offer extends IblockElement
     }
 
     /**
-     * @param string $regionId
-     *
-     * @return Price
-     * @throws RuntimeException
+     * @return float
      */
-    public function getPrice(string $regionId): Price
+    public function getPrice(): float
     {
-        if (!$this->getAllPrices()->offsetExists($regionId)) {
-            throw new RuntimeException(
-                sprintf(
-                    'Цена торгового предложения %d в регионе %s не найдена.',
-                    $this->getId(),
-                    $regionId
-                )
-            );
-        }
+        $this->checkOptimalPrice();
 
-        return $this->getAllPrices()->offsetGet($regionId);
+        return $this->price;
     }
 
     /**
-     * @return ArrayCollection
+     * @param float $price
+     *
+     * @return static
      */
-    public function getAllPrices(): ArrayCollection
+    public function withPrice(float $price)
     {
-        if (is_null($this->prices)) {
-            $this->withAllPrices((new PriceQuery())->getAllPrices($this->getId()));
-        }
-
-        return $this->prices;
+        $this->price = $price;
+        return $this;
     }
 
-    public function withAllPrices(ArrayCollection $priceCollection)
+    /**
+     * @param float $oldPrice
+     *
+     * @return $this
+     */
+    public function withOldPrice(float $oldPrice)
     {
-        $this->prices = PriceCollection::createIndexedByRegion($priceCollection);
-
+        $this->oldPrice = $oldPrice;
         return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getImagesIds(): array
+    {
+        return $this->PROPERTY_IMG;
+    }
+
+    /**
+     * @return CatalogProduct
+     */
+    public function getCatalogProduct(): CatalogProduct
+    {
+        if (null === $this->catalogProduct) {
+            $catalogProduct = (new CatalogProductQuery())
+                ->withFilter(['ID' => $this->getId()])
+                ->exec()
+                ->current();
+            $this->withCatalogProduct($catalogProduct);
+        }
+        return $this->catalogProduct;
+    }
+
+    /**
+     * @param CatalogProduct $catalogProduct
+     *
+     * @return Offer
+     */
+    public function withCatalogProduct(CatalogProduct $catalogProduct): Offer
+    {
+        $this->catalogProduct = $catalogProduct;
+        return $this;
+    }
+
+    /**
+     * @return float
+     */
+    public function getOldPrice(): float
+    {
+        $this->checkOptimalPrice();
+
+        return $this->oldPrice;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCurrency(): string
+    {
+        return $this->currency;
+    }
+
+    /**
+     * @return int
+     */
+    public function getDiscount(): int
+    {
+        $this->checkOptimalPrice();
+
+        return $this->discount;
+    }
+
+    /**
+     * @param int $discount
+     *
+     * @return static
+     */
+    public function withDiscount(int $discount)
+    {
+        $this->discount = $discount;
+        return $this;
+    }
+
+    protected function checkOptimalPrice()
+    {
+        CCatalogDiscountSave::Disable();
+        $optimalPrice = CCatalogProduct::GetOptimalPrice($this->getId());
+        CCatalogDiscountSave::Enable();
+
+        if (\is_array($optimalPrice)) {
+            /**
+             * @var array $optimalPrice
+             */
+            $resultPrice = $optimalPrice['RESULT_PRICE'] ?? [
+                    'PERCENT'        => 0,
+                    'BASE_PRICE'     => $this->price,
+                    'DISCOUNT_PRICE' => $this->price,
+                ];
+            $this->withDiscount(floor($resultPrice['PERCENT']));
+            if ($this->discount > 0) {
+                $this->withOldPrice($resultPrice['BASE_PRICE']);
+                $this->withPrice($resultPrice['DISCOUNT_PRICE']);
+            }
+        }
     }
 }

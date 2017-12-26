@@ -11,25 +11,36 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
+use Bitrix\Main\LoaderException;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Exception\SmsSendErrorException;
+use FourPaws\External\Manzana\Exception\ContactUpdateException;
+use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Location\Model\City;
 use FourPaws\UserBundle\Entity\User;
+use FourPaws\UserBundle\Exception\BitrixRuntimeException;
+use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
 use FourPaws\UserBundle\Exception\InvalidCredentialException;
+use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
+use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Service\ConfirmCodeInterface;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use JMS\Serializer\SerializerBuilder;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use Symfony\Component\HttpFoundation\Request;
 
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsAuthFormComponent extends \CBitrixComponent
@@ -55,10 +66,10 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      *
      * @param null|\CBitrixComponent $component
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Bitrix\Main\SystemException
+     * @throws ServiceNotFoundException
+     * @throws SystemException
      * @throws \RuntimeException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws ServiceCircularReferenceException
      */
     public function __construct(CBitrixComponent $component = null)
     {
@@ -79,7 +90,10 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
     public function executeComponent()
     {
         try {
-            $this->arResult['STEP'] = 'begin';
+            $this->arResult['STEP'] = '';
+            if ($this->getMode() === static::MODE_FORM) {
+                $this->arResult['STEP'] = 'begin';
+            }
             
             $currentUserService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
             $userAuthService    = App::getInstance()->getContainer()->get(UserAuthorizationInterface::class);
@@ -87,8 +101,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 $curUser = $currentUserService->getCurrentUser();
                 if (!empty($curUser->getExternalAuthId() && empty($curUser->getPersonalPhone()))) {
                     $this->arResult['STEP'] = 'addPhone';
-                }
-                else{
+                } else {
                     $this->arResult['NAME'] = $curUser->getName() ?? $curUser->getLogin();
                 }
             }
@@ -104,8 +117,24 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
     }
     
     /**
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\SystemException
+     * @return int
+     */
+    public function getMode() : int
+    {
+        return $this->getUserAuthorizationService()->isAuthorized() ? static::MODE_PROFILE : static::MODE_FORM;
+    }
+    
+    /**
+     * @return UserAuthorizationInterface
+     */
+    public function getUserAuthorizationService() : UserAuthorizationInterface
+    {
+        return $this->userAuthorizationService;
+    }
+    
+    /**
+     * @throws LoaderException
+     * @throws SystemException
      */
     protected function setSocial()
     {
@@ -143,22 +172,6 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
     }
     
     /**
-     * @return int
-     */
-    public function getMode() : int
-    {
-        return $this->getUserAuthorizationService()->isAuthorized() ? static::MODE_PROFILE : static::MODE_FORM;
-    }
-    
-    /**
-     * @return UserAuthorizationInterface
-     */
-    public function getUserAuthorizationService() : UserAuthorizationInterface
-    {
-        return $this->userAuthorizationService;
-    }
-    
-    /**
      * @return CurrentUserProviderInterface
      */
     public function getCurrentUserProvider() : CurrentUserProviderInterface
@@ -170,12 +183,26 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      * @param string $rawLogin
      * @param string $password
      *
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @return \FourPaws\App\Response\JsonResponse
+     * @throws ApplicationCreateException
+     * @throws \RuntimeException
+     * @throws ServiceCircularReferenceException
+     * @return JsonResponse
      */
-    public function ajaxLogin($rawLogin, $password) : JsonResponse
+    public function ajaxLogin(string $rawLogin, string $password) : JsonResponse
     {
         $needWritePhone = false;
+        if (empty($rawLogin)) {
+            return JsonErrorResponse::createWithData(
+                'Не указан телефон или email',
+                ['errors' => ['emptyData' => 'Не указан телефон или email']]
+            );
+        }
+        if (empty($password)) {
+            return JsonErrorResponse::createWithData(
+                'Не указан пароль',
+                ['errors' => ['emptyPassword' => 'Не указан пароль']]
+            );
+        }
         try {
             $this->userAuthorizationService->login($rawLogin, $password);
             if ($this->userAuthorizationService->isAuthorized()) {
@@ -185,9 +212,12 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 }
             }
         } catch (UsernameNotFoundException $e) {
-            return JsonErrorResponse::create('Неверный логин или пароль.');
+            return JsonErrorResponse::create('Неверный логин или пароль');
         } catch (InvalidCredentialException $e) {
-            return JsonErrorResponse::create('Неверный логин или пароль.');
+            return JsonErrorResponse::createWithData(
+                'Неверный логин или пароль',
+                ['errors' => ['' => 'Неверный логин или пароль']]
+            );
         } catch (TooManyUserFoundException $e) {
             /** @noinspection PhpUnhandledExceptionInspection */
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
@@ -208,7 +238,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             );
         } catch (\Exception $e) {
             return JsonErrorResponse::create(
-                'Системная ошибка при попытке авторизации. Пожалуйста, обратитесь к администратору сайта.'
+                'Системная ошибка при попытке авторизации. Пожалуйста, обратитесь к администратору сайта'
             );
         }
         
@@ -227,9 +257,9 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
     /**
      * @param string $phone
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
-     * @return \FourPaws\App\Response\JsonResponse
+     * @throws ServiceNotFoundException
+     * @throws WrongPhoneNumberException
+     * @return JsonResponse
      */
     public function ajaxResendSms($phone) : JsonResponse
     {
@@ -266,15 +296,17 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      *
      * @param string $confirmCode
      *
-     * @return \FourPaws\App\Response\JsonResponse
-     * @throws \FourPaws\UserBundle\Exception\ValidationException
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws ContactUpdateException
+     * @throws ManzanaServiceException
+     * @throws ValidationException
+     * @throws InvalidIdentifierException
+     * @throws ServiceNotFoundException
      * @throws \Exception
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws ApplicationCreateException
+     * @throws BitrixRuntimeException
+     * @throws ConstraintDefinitionException
+     * @throws ServiceCircularReferenceException
+     * @return JsonResponse
      */
     public function ajaxSavePhone(string $phone, string $confirmCode) : JsonResponse
     {
@@ -298,13 +330,16 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             );
         }
         
-        $data = ['PERSONAL_PHONE' => $phone, 'UF_PHONE_CONFIRMED' => 'Y'];
+        $data = [
+            'PERSONAL_PHONE'     => $phone,
+            'UF_PHONE_CONFIRMED' => 'Y',
+        ];
         
         if ($this->currentUserProvider->getUserRepository()->update(
             SerializerBuilder::create()->build()->fromArray($data, User::class)
         )) {
             /** todo отправить данные в манзану о пользователе */
-            /** @var \FourPaws\External\ManzanaService $manzanaService */
+            /** @var ManzanaService $manzanaService */
             $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
             $manzanaService->updateContact([]);
         }
@@ -313,12 +348,12 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
     }
     
     /**
-     * @param \Symfony\Component\HttpFoundation\Request $request
-     * @param  string                                   $phone
+     * @param Request $request
+     * @param  string $phone
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
-     * @return \FourPaws\App\Response\JsonResponse
+     * @throws ServiceNotFoundException
+     * @throws WrongPhoneNumberException
+     * @return JsonResponse
      */
     public function ajaxGet($request, $phone) : JsonResponse
     {
@@ -334,7 +369,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         }
         ob_start();
         /** @noinspection PhpIncludeInspection */
-        include_once App::getDocumentRoot() . '/local/components/fourpaws/auth.form/templates/.default/include/' . $step
+        include_once App::getDocumentRoot() . '/local/components/fourpaws/auth.form/templates/popup/include/' . $step
                      . '.php';
         $html = ob_get_clean();
         
@@ -351,9 +386,9 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
     /**
      * @param string $phone
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
-     * @return \FourPaws\App\Response\JsonResponse|string
+     * @throws ServiceNotFoundException
+     * @throws WrongPhoneNumberException
+     * @return JsonResponse|string
      */
     private function ajaxGetSendSmsCode($phone)
     {

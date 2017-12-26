@@ -29,8 +29,30 @@ class InfoController extends Controller
             false,
             ['HIDE_ICONS' => 'Y']
         );
-        $html = ob_get_clean();
+        $deliveryHtml = ob_get_clean();
 
-        return JsonSuccessResponse::createWithData('', ['html' => $html]);
+        ob_start();
+        $APPLICATION->IncludeComponent(
+            'bitrix:main.include',
+            '',
+            [
+                'COMPONENT_TEMPLATE' => '.default',
+                'AREA_FILE_SHOW'     => 'file',
+                'PATH'               => '/local/include/blocks/delivery_page.payments.php',
+                'EDIT_TEMPLATE'      => '',
+            ],
+            false
+        );
+        $paymentHtml = ob_get_clean();
+
+        return JsonSuccessResponse::createWithData(
+            '',
+            [
+                'html' => [
+                    'date'    => $deliveryHtml,
+                    'payment' => $paymentHtml,
+                ],
+            ]
+        );
     }
 }

@@ -47,30 +47,27 @@ class BrandFilter extends Abstraction\FilterBase
     protected function doGetAllVariants(): VariantCollection
     {
         $doGetAllVariants = function () {
-
             $variants = [];
 
             $brandCollection = (new BrandQuery())->withOrder([])
-                                                 ->exec();
+                ->exec();
 
             /** @var Brand $brand */
             foreach ($brandCollection as $brand) {
                 $variants[] = (new Variant())->withName($brand->getName())
-                                             ->withValue($brand->getCode());
+                    ->withValue($brand->getCode());
             }
 
             return $variants;
-
         };
 
         /** @var Variant[] $variants */
         $variants = (new BitrixCache())->withId(__METHOD__ . $this->getId())
-                                       ->withIblockTag(
-                                           IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::BRANDS)
-                                       )
-                                       ->resultOf($doGetAllVariants);
+            ->withIblockTag(
+                IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::BRANDS)
+            )
+            ->resultOf($doGetAllVariants);
 
         return new VariantCollection($variants);
     }
-
 }

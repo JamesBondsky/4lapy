@@ -8,10 +8,10 @@ use Elastica\Query\AbstractQuery;
 use Elastica\Query\Range;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\Catalog\CatalogService;
 use FourPaws\Catalog\Collection\AggCollection;
 use FourPaws\Catalog\Collection\VariantCollection;
 use FourPaws\Catalog\Model\Filter\RangeFilterInterface;
+use FourPaws\CatalogBundle\Service\FilterService;
 use FourPaws\Search\SearchService;
 use InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -45,9 +45,9 @@ abstract class RangeFilterBase extends FilterBase implements RangeFilterInterfac
     protected $searchService;
 
     /**
-     * @var CatalogService
+     * @var FilterService
      */
-    protected $catalogService;
+    protected $filterService;
 
     /**
      * RangeFilterBase constructor.
@@ -60,8 +60,9 @@ abstract class RangeFilterBase extends FilterBase implements RangeFilterInterfac
     public function __construct(array $fields = [])
     {
         parent::__construct($fields);
+
         $this->searchService = Application::getInstance()->getContainer()->get('search.service');
-        $this->catalogService = Application::getInstance()->getContainer()->get('catalog.service');
+        $this->filterService = Application::getInstance()->getContainer()->get(FilterService::class);
     }
 
     /**
@@ -173,7 +174,7 @@ abstract class RangeFilterBase extends FilterBase implements RangeFilterInterfac
      */
     protected function doGetRange(): array
     {
-        $internalFilters = $this->catalogService->getInternalFilters();
+        $internalFilters = $this->filterService->getInternalFilters();
 
         $search = $this->searchService->getIndexHelper()->createProductSearch();
         $search->getQuery()
@@ -187,7 +188,6 @@ abstract class RangeFilterBase extends FilterBase implements RangeFilterInterfac
         $result = $search->search();
 
         foreach ($result->getAggregations() as $aggName => $aggResult) {
-
             $this->collapse($aggName, $aggResult);
         }
 
@@ -304,13 +304,9 @@ abstract class RangeFilterBase extends FilterBase implements RangeFilterInterfac
         }
 
         if ($this->getMinFilterCode() === $aggName) {
-
             $this->withMinValue((float)$aggResult['value']);
-
         } elseif ($this->getMaxFilterCode() === $aggName) {
-
             $this->withMaxValue((float)$aggResult['value']);
-
         } else {
             throw new InvalidArgumentException(
                 sprintf(
@@ -319,7 +315,6 @@ abstract class RangeFilterBase extends FilterBase implements RangeFilterInterfac
                 )
             );
         }
-
     }
 
     /**
@@ -369,5 +364,4 @@ abstract class RangeFilterBase extends FilterBase implements RangeFilterInterfac
     {
         return $this->getFilterCode() . 'To';
     }
-
 }
