@@ -1,6 +1,6 @@
 <?php
 
-namespace FourPaws\AppBundle\DependencyInjection;
+namespace FourPaws\SapBundle\DependencyInjection;
 
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
