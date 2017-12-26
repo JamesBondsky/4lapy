@@ -30,7 +30,6 @@ global $APPLICATION;
 $product = $arResult['PRODUCT'];
 $brand = $product->getBrand();
 $offer = $product->getOffers()->first();
-$product = $offer->getProduct();
 
 
 /**
