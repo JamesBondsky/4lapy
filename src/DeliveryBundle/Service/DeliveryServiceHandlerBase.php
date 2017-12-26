@@ -71,11 +71,26 @@ abstract class DeliveryServiceHandlerBase extends Base implements DeliveryServic
      */
     public function isCompatible(Shipment $shipment)
     {
-        if (!$this->deliveryService->checkShipmentOffersAvailability($shipment)) {
+        if (!parent::isCompatible($shipment)) {
             return false;
         }
 
-        return parent::isCompatible($shipment);
+        $order = $shipment->getParentOrder();
+        $basketCollection = $order->getBasket();
+        if ($basketCollection->isEmpty()) {
+            return true;
+        }
+
+        $basketItems = $basketCollection->getBasketItems();
+        /* @todo учитывать график поставок для товаров под заказ */
+        foreach ($basketItems as $basketItem) {
+            $stocks = $this->storeService->getStocksByLocation($basketItem['PRODUCT_ID']);
+            if ($stocks->isEmpty()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

@@ -13,6 +13,7 @@ use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Exception\BaseException;
 use FourPaws\StoreBundle\Repository\StockRepository;
 use FourPaws\StoreBundle\Repository\StoreRepository;
+use WebArch\BitrixCache\BitrixCache;
 
 class StoreService
 {
@@ -39,7 +40,7 @@ class StoreService
     /**
      * @var StoreRepository
      */
-    protected $storeRespostory;
+    protected $storeRepository;
 
     /**
      * @var StockRepository
@@ -48,12 +49,12 @@ class StoreService
 
     public function __construct(
         LocationService $locationService,
-        StoreRepository $storeRespostory,
+        StoreRepository $storeRespository,
         StockRepository $stockRepository
     ) {
         $this->locationService = $locationService;
-        $this->storeRespostory = $storeRespostory;
-        $this->stockRespostory = $stockRepository;
+        $this->storeRepository = $storeRespository;
+        $this->stockRepository = $stockRepository;
     }
 
     /**
@@ -69,7 +70,7 @@ class StoreService
     {
         $store = false;
         try {
-            $store = $this->storeRespostory->find($id);
+            $store = $this->storeRepository->find($id);
         } catch (BaseException $e) {
         }
 
@@ -93,7 +94,7 @@ class StoreService
     {
         $store = false;
         try {
-            $store = $this->storeRespostory->findBy(['XML_ID' => $xmlId, [], 1])->first();
+            $store = $this->storeRepository->findBy(['XML_ID' => $xmlId, [], 1])->first();
         } catch (BaseException $e) {
         }
 
@@ -128,14 +129,25 @@ class StoreService
      * @return StoreCollection
      * @throws \Exception
      */
-    public function getByLocation(string $locationCode, string $type = self::TYPE_ALL)
+    public function getByLocation(string $locationCode, string $type = self::TYPE_ALL): StoreCollection
     {
-        $filter = array_merge(
-            ['UF_LOCATION' => $locationCode],
-            $this->getTypeFilter($type)
-        );
+        $typeFilter = $this->getTypeFilter($type);
+        $getStores = function () use ($locationCode, $typeFilter) {
+            $filter = array_merge(
+                ['UF_LOCATION' => $locationCode],
+                $typeFilter
+            );
 
-        return $this->storeRespostory->findBy($filter);
+            $storeCollection = $this->storeRepository->findBy($filter);
+
+            return ['result' => $storeCollection];
+        };
+
+        $result = (new BitrixCache())
+            ->withId(__METHOD__ . $locationCode . $type)
+            ->resultOf($getStores);
+
+        return $result['result'];
     }
 
     /**
@@ -146,9 +158,9 @@ class StoreService
      * @return StoreCollection
      * @throws \Exception
      */
-    public function getMultipleByXmlId(array $codes)
+    public function getMultipleByXmlId(array $codes): StoreCollection
     {
-        return $this->storeRespostory->findBy(['XML_ID' => $codes]);
+        return $this->storeRepository->findBy(['XML_ID' => $codes]);
     }
 
     /**
@@ -242,21 +254,53 @@ class StoreService
      */
     public function getRepository(): StoreRepository
     {
-        return $this->storeRespostory;
+        return $this->storeRepository;
     }
 
     /**
      * Получить наличие оффера на указанных складах
      *
-     * @param Offer $offer
+     * @param int $offerId
      * @param StoreCollection $stores
+     *
+     * @return StockCollection
      */
-    public function getStocks(Offer $offer, StoreCollection $stores): StockCollection
+    public function getStocks(int $offerId, StoreCollection $stores): StockCollection
     {
         $storeIds = [];
         foreach ($stores as $store) {
             $storeIds[] = $store->getId();
         }
-        return $this->stockRepository->findBy(['PRODUCT_ID' => $offer->getId(), 'STORE_ID' => $storeIds]);
+
+        return $this->storeRepository->findBy(['PRODUCT_ID' => $offerId, 'STORE_ID' => $storeIds]);
+    }
+
+    /**
+     * Проверяет, в наличии ли товар в заданном местоположении
+     *
+     * @param int $offerId ID товар
+     * @param string $locationCode код местоположения
+     * @param bool $checkDefault проверять дефолтные (московские) склады, если нет складов в данном городе
+     *
+     * @return StockCollection
+     */
+    public function getStocksByLocation(
+        int $offerId,
+        string $locationCode = '',
+        bool $checkDefault = true
+    ): StockCollection {
+        if (!$locationCode) {
+            $locationCode = $this->locationService->getCurrentLocation();
+        }
+        $stores = $this->getByLocation($locationCode);
+        if ($stores->isEmpty() && $checkDefault) {
+            $stores = $this->getByLocation(LocationService::LOCATION_CODE_MOSCOW);
+        }
+
+        if ($stores->isEmpty()) {
+            return new StockCollection();
+        }
+
+        return $this->getStocks($offerId, $stores);
     }
 }

@@ -580,24 +580,4 @@ class Offer extends IblockElement
             }
         }
     }
-
-    public function isAvailable() {
-        /** @var LocationService $locationService */
-        $locationService = Application::getInstance()->getContainer()->get('location.service');
-        /** @var StoreService $storeService */
-        $storeService = Application::getInstance()->getContainer()->get('store.service');
-
-        $locationCode = $locationService->getCurrentLocation();
-        $stores = $storeService->getByLocation($locationCode);
-        if ($stores->isEmpty()) {
-            $stores = $storeService->getByLocation(LocationService::LOCATION_CODE_MOSCOW);
-        }
-
-        if ($stores->isEmpty()) {
-            return false;
-        }
-
-        $stocks = $storeService->getStocks($this, $stores);
-        return !$stocks->isEmpty();
-    }
 }
