@@ -7,6 +7,7 @@ use FOS\RestBundle\FOSRestBundle;
 use FourPaws\AppBundle\FourPawsAppBundle;
 use FourPaws\CatalogBundle\FourPawsCatalogBundle;
 use FourPaws\DeliveryBundle\FourPawsDeliveryBundle;
+use FourPaws\SapBundle\FourPawsSapBundle;
 use FourPaws\StoreBundle\FourPawsStoreBundle;
 use FourPaws\UserBundle\FourPawsUserBundle;
 use JMS\SerializerBundle\JMSSerializerBundle;
@@ -40,6 +41,18 @@ class AppKernel extends Kernel
     protected static $documentRoot;
 
     /**
+     * @return string
+     */
+    public static function getDocumentRoot(): string
+    {
+        if (null === static::$documentRoot) {
+            static::$documentRoot = \dirname(__DIR__, 2) . '/web';
+        }
+
+        return static::$documentRoot;
+    }
+
+    /**
      * Returns an array of bundles to register.
      *
      * @return BundleInterface[] An array of bundle instances
@@ -66,6 +79,7 @@ class AppKernel extends Kernel
             new FourPawsDeliveryBundle(),
             new FourPawsStoreBundle(),
             new FourPawsCatalogBundle(),
+            new FourPawsSapBundle(),
         ];
 
         if (\in_array($this->getEnvironment(), ['dev', 'test'], true)) {
@@ -93,18 +107,6 @@ class AppKernel extends Kernel
     public function getRootDir()
     {
         return \dirname(static::getDocumentRoot());
-    }
-
-    /**
-     * @return string
-     */
-    public static function getDocumentRoot(): string
-    {
-        if (null === static::$documentRoot) {
-            static::$documentRoot = \dirname(__DIR__, 2) . '/web';
-        }
-
-        return static::$documentRoot;
     }
 
     /**
