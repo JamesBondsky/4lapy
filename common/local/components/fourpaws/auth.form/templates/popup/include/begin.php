@@ -10,8 +10,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         <header class="b-registration__header">
             <h1 class="b-title b-title--h1 b-title--registration">Авторизация</h1>
         </header>
-        <form class="b-registration__form js-form-validation"
-              data-utl="/ajax/user/auth/login/"
+        <form class="b-registration__form js-form-validation js-auth-2way"
+              data-url="/ajax/user/auth/login/"
               method="post">
             <input type="hidden" name="action" value="login">
             <div class="b-input-line b-input-line--popup-authorization">
@@ -24,7 +24,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                            type="text"
                            id="tel-email-authorization"
                            name="LOGIN"
-                           placeholder="" />
+                           data-type="telEmail" />
                     <div class="b-error"><span class="js-message"></span>
                     </div>
                 </div>
@@ -40,13 +40,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                     <input class="b-input__input-field b-input__input-field--registration-form"
                            type="password"
                            id="password-authorization"
-                           name="PASSWORD"
-                           placeholder="" />
+                           name="PASSWORD" />
                     <div class="b-error"><span class="js-message"></span>
                     </div>
                 </div>
             </div>
-            <button class="b-button b-button--social b-button--full-width b-button--popup-authorization">
+            <button class="b-button b-button--social b-button--full-width b-button--popup-authorization" type="submit">
                 Войти
             </button>
             <span class="b-registration__else b-registration__else--authorization">или</span>
