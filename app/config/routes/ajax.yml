@@ -5,6 +5,11 @@ user:
     type: annotation
     prefix: '/user'
 
+sale:
+    resource: '@FourPawsSaleBundle/AjaxController'
+    type: annotation
+    prefix: '/sale'
+
 delivery:
     resource: '@FourPawsDeliveryBundle/AjaxController'
     type: annotation
