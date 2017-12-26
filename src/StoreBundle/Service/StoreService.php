@@ -258,49 +258,20 @@ class StoreService
     }
 
     /**
-     * Получить наличие оффера на указанных складах
+     * Получить наличие офферов на указанных складах
      *
-     * @param int $offerId
+     * @param int[] $offerIds
      * @param StoreCollection $stores
      *
      * @return StockCollection
      */
-    public function getStocks(int $offerId, StoreCollection $stores): StockCollection
+    public function getStocks(array $offerIds, StoreCollection $stores): StockCollection
     {
         $storeIds = [];
         foreach ($stores as $store) {
             $storeIds[] = $store->getId();
         }
 
-        return $this->storeRepository->findBy(['PRODUCT_ID' => $offerId, 'STORE_ID' => $storeIds]);
-    }
-
-    /**
-     * Проверяет, в наличии ли товар в заданном местоположении
-     *
-     * @param int $offerId ID товар
-     * @param string $locationCode код местоположения
-     * @param bool $checkDefault проверять дефолтные (московские) склады, если нет складов в данном городе
-     *
-     * @return StockCollection
-     */
-    public function getStocksByLocation(
-        int $offerId,
-        string $locationCode = '',
-        bool $checkDefault = true
-    ): StockCollection {
-        if (!$locationCode) {
-            $locationCode = $this->locationService->getCurrentLocation();
-        }
-        $stores = $this->getByLocation($locationCode);
-        if ($stores->isEmpty() && $checkDefault) {
-            $stores = $this->getByLocation(LocationService::LOCATION_CODE_MOSCOW);
-        }
-
-        if ($stores->isEmpty()) {
-            return new StockCollection();
-        }
-
-        return $this->getStocks($offerId, $stores);
+        return $this->stockRepository->findBy(['PRODUCT_ID' => $offerIds, 'STORE_ID' => $storeIds]);
     }
 }

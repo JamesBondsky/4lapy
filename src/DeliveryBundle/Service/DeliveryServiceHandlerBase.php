@@ -6,15 +6,12 @@ use Bitrix\Currency\CurrencyManager;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Sale\Delivery\DeliveryLocationTable;
 use Bitrix\Sale\Delivery\Services\Base;
-use Bitrix\Sale\Location\LocationTable;
 use Bitrix\Sale\Shipment;
 use FourPaws\App\Application;
 use FourPaws\Location\LocationService;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
-use WebArch\BitrixCache\BitrixCache;
 
 abstract class DeliveryServiceHandlerBase extends Base implements DeliveryServiceInterface
 {
@@ -71,26 +68,7 @@ abstract class DeliveryServiceHandlerBase extends Base implements DeliveryServic
      */
     public function isCompatible(Shipment $shipment)
     {
-        if (!parent::isCompatible($shipment)) {
-            return false;
-        }
-
-        $order = $shipment->getParentOrder();
-        $basketCollection = $order->getBasket();
-        if ($basketCollection->isEmpty()) {
-            return true;
-        }
-
-        $basketItems = $basketCollection->getBasketItems();
-        /* @todo учитывать график поставок для товаров под заказ */
-        foreach ($basketItems as $basketItem) {
-            $stocks = $this->storeService->getStocksByLocation($basketItem['PRODUCT_ID']);
-            if ($stocks->isEmpty()) {
-                return false;
-            }
-        }
-
-        return true;
+        return parent::isCompatible($shipment);
     }
 
     /**
