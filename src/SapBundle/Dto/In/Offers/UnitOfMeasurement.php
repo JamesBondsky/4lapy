@@ -1,6 +1,6 @@
 <?php
 
-namespace FourPaws\SapBundle\Dto\In;
+namespace FourPaws\SapBundle\Dto\In\Offers;
 
 use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
@@ -187,7 +187,7 @@ class UnitOfMeasurement
      * Штрих-коды
      *
      * @Serializer\XmlList(inline=true, entry="BC")
-     * @Serializer\Type("ArrayCollection<FourPaws\SapBundle\Dto\In\BarCode>")
+     * @Serializer\Type("ArrayCollection<FourPaws\SapBundle\Dto\In\Offers\BarCode>")
      *
      * @var BarCode[]|Collection
      */

@@ -1,6 +1,6 @@
 <?php
 
-namespace FourPaws\SapBundle\Dto\In;
+namespace FourPaws\SapBundle\Dto\In\Offers;
 
 use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
@@ -33,7 +33,7 @@ class Property
      * Значения признаков
      *
      * @Serializer\XmlList(inline=true, entry="Value")
-     * @Serializer\Type("ArrayCollection<FourPaws\SapBundle\Dto\In\PropertyValue>")
+     * @Serializer\Type("ArrayCollection<FourPaws\SapBundle\Dto\In\Offers\PropertyValue>")
      *
      * @var Collection|PropertyValue[]
      */

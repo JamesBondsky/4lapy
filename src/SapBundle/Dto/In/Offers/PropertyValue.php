@@ -1,6 +1,6 @@
 <?php
 
-namespace FourPaws\SapBundle\Dto\In;
+namespace FourPaws\SapBundle\Dto\In\Offers;
 
 use JMS\Serializer\Annotation as Serializer;
 

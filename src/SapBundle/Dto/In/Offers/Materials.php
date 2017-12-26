@@ -1,6 +1,6 @@
 <?php
 
-namespace FourPaws\SapBundle\Dto\In;
+namespace FourPaws\SapBundle\Dto\In\Offers;
 
 use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
@@ -24,7 +24,7 @@ class Materials
 
     /**
      * @Serializer\XmlList(inline=true, entry="Mat")
-     * @Serializer\Type("ArrayCollection<FourPaws\SapBundle\Dto\In\Material>")
+     * @Serializer\Type("ArrayCollection<FourPaws\SapBundle\Dto\In\Offers\Material>")
      * @var Collection|Material[]
      */
     protected $materials;

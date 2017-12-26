@@ -1,6 +1,6 @@
 <?php
 
-namespace FourPaws\SapBundle\Dto\In;
+namespace FourPaws\SapBundle\Dto\In\Offers;
 
 use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
@@ -230,7 +230,7 @@ class Material
      * Единицы измерения
      *
      * @Serializer\XmlList(inline=true, entry="UOM")
-     * @Serializer\Type("ArrayCollection<FourPaws\SapBundle\Dto\In\UnitOfMeasurement>")
+     * @Serializer\Type("ArrayCollection<FourPaws\SapBundle\Dto\In\Offers\UnitOfMeasurement>")
      *
      * @var Collection|UnitOfMeasurement[]
      */
@@ -241,7 +241,7 @@ class Material
      *
      * @Serializer\SerializedName("Properties")
      * @Serializer\XmlElement()
-     * @Serializer\Type("FourPaws\SapBundle\Dto\In\Properties")
+     * @Serializer\Type("FourPaws\SapBundle\Dto\In\Offers\Properties")
      *
      * @var Properties
      */
