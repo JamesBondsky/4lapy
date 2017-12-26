@@ -7,6 +7,7 @@ use FOS\RestBundle\FOSRestBundle;
 use FourPaws\AppBundle\FourPawsAppBundle;
 use FourPaws\CatalogBundle\FourPawsCatalogBundle;
 use FourPaws\DeliveryBundle\FourPawsDeliveryBundle;
+use FourPaws\SaleBundle\FourPawsSaleBundle;
 use FourPaws\SapBundle\FourPawsSapBundle;
 use FourPaws\StoreBundle\FourPawsStoreBundle;
 use FourPaws\UserBundle\FourPawsUserBundle;
@@ -76,9 +77,10 @@ class AppKernel extends Kernel
             /** Internal bundles */
             new FourPawsAppBundle(),
             new FourPawsUserBundle(),
-            new FourPawsDeliveryBundle(),
-            new FourPawsStoreBundle(),
             new FourPawsCatalogBundle(),
+            new FourPawsDeliveryBundle(),
+            new FourPawsSaleBundle(),
+            new FourPawsStoreBundle(),
             new FourPawsSapBundle(),
         ];
 
