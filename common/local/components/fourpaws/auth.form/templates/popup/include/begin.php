@@ -1,0 +1,72 @@
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
+    die();
+}
+?>
+<?php if ($component->getMode() === FourPawsAuthFormComponent::MODE_FORM) {
+    ?>
+    <div class="b-registration b-registration--popup-authorization">
+        <header class="b-registration__header">
+            <h1 class="b-title b-title--h1 b-title--registration">Авторизация</h1>
+        </header>
+        <form class="b-registration__form js-form-validation"
+              data-utl="/ajax/user/auth/login/"
+              method="post">
+            <input type="hidden" name="action" value="login">
+            <div class="b-input-line b-input-line--popup-authorization">
+                <div class="b-input-line__label-wrapper">
+                    <label class="b-input-line__label" for="tel-email-authorization">Телефон или
+                                                                                     эл.почта</label>
+                </div>
+                <div class="b-input b-input--registration-form">
+                    <input class="b-input__input-field b-input__input-field--registration-form"
+                           type="text"
+                           id="tel-email-authorization"
+                           name="LOGIN"
+                           placeholder="" />
+                    <div class="b-error"><span class="js-message"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="b-input-line b-input-line--popup-authorization">
+                <div class="b-input-line__label-wrapper">
+                    <label class="b-input-line__label" for="password-authorization">Пароль</label>
+                    <a class="b-link-gray b-link-gray--label"
+                       href="/personal/forgot-password/"
+                       title="Забыли пароль?">Забыли пароль?</a>
+                </div>
+                <div class="b-input b-input--registration-form">
+                    <input class="b-input__input-field b-input__input-field--registration-form"
+                           type="password"
+                           id="password-authorization"
+                           name="PASSWORD"
+                           placeholder="" />
+                    <div class="b-error"><span class="js-message"></span>
+                    </div>
+                </div>
+            </div>
+            <button class="b-button b-button--social b-button--full-width b-button--popup-authorization">
+                Войти
+            </button>
+            <span class="b-registration__else b-registration__else--authorization">или</span>
+            <?php $APPLICATION->IncludeComponent(
+                'bitrix:socserv.auth.form',
+                'socserv_auth',
+                [
+                    'AUTH_SERVICES' => $arResult['AUTH_SERVICES'],
+                    'AUTH_URL'      => $arResult['AUTH_URL'],
+                    'POST'          => $arResult['POST'],
+                ],
+                $component,
+                ['HIDE_ICONS' => 'Y']
+            ); ?>
+            <div class="b-registration__new-user">Я новый покупатель.
+                <a class="b-link b-link--authorization b-link--authorization"
+                   href="/personal/register/"
+                   title="Зарегистрироваться"><span class="b-link__text b-link__text--authorization">Зарегистрироваться</span></a>
+            </div>
+        </form>
+    </div>
+    <?php
+} ?>

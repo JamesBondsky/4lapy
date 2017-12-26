@@ -40,4 +40,4 @@ comments.add:
 comments.next:
   path: /comments/next/
   defaults: { _controller: '\FourPaws\Comments\AjaxController\CommentsController::nextAction' }
-  methods: [POST]
+  methods: [GET]

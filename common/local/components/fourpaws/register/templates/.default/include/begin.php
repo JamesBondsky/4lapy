@@ -3,7 +3,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 } ?>
 <div class="b-registration__content b-registration__content--moiety">
-    <a class="b-button b-button--social b-button--full-width"
+    <a class="b-button b-button--social b-button--full-width js-reg-by-phone"
        href="javascript:void(0)"
        title="Регистрация по телефону"
        data-url="/ajax/user/auth/register/"
@@ -13,7 +13,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     <?php
     $APPLICATION->IncludeComponent(
         'bitrix:socserv.auth.form',
-        'socserv_auth',
+        'socserv_reg',
         [
             'AUTH_SERVICES' => $arResult['AUTH_SERVICES'],
             'AUTH_URL'      => $arResult['AUTH_URL'],

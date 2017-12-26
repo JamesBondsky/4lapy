@@ -3,7 +3,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 } ?>
 <input type="hidden" name="action" value="confirmPhone">
-<div class="b-registration__step b-registration__step--two">
+<div class="b-registration__step b-registration__step--two js-phone-change-two js-hidden-valid-fields">
     <div class="b-registration__text b-registration__text--phone">Ваш номер <?= $phone ?></div>
     <a class="b-registration__text b-registration__text--phone-edit js-open-popup"
        href="javascript:void(0);"
@@ -13,11 +13,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         <div class="b-input-line__label-wrapper">
             <label class="b-input-line__label" for="sms-phone">SMS-код</label>
         </div>
-        <input class="b-input b-input--registration-form"
-               type="text"
-               id="sms-phone"
-               placeholder=""
-               name="confirm_code" />
+        <div class="b-input b-input--registration-form">
+            <input class="b-input__input-field b-input__input-field--registration-form"
+                   type="text"
+                   id="sms-phone"
+                   placeholder=""
+                   name="confirmCode" />
+            <div class="b-error"><span class="js-message"></span>
+            </div>
+        </div>
         <a class="b-link-gray"
            href="javascript:void(0);"
            title="Отправить снова"

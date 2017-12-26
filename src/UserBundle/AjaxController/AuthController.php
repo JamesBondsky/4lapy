@@ -40,7 +40,8 @@ class AuthController extends Controller
     public function __construct(
         UserAuthorizationInterface $userAuthorization,
         CurrentUserProviderInterface $currentUserProvider
-    ) {
+    )
+    {
         $this->userAuthorization   = $userAuthorization;
         $this->currentUserProvider = $currentUserProvider;
     }
@@ -71,10 +72,7 @@ class AuthController extends Controller
         $loginClass = new \FourPawsAuthFormComponent();
         switch ($action) {
             case 'login':
-                $rawLogin = $request->get('login', '');
-                $password = $request->get('password', '');
-                
-                return $loginClass->ajaxLogin($rawLogin, $password);
+                return $loginClass->ajaxLogin($request->get('login', ''), $request->get('password', ''));
                 break;
             case 'resendSms':
                 return $loginClass->ajaxResendSms($phone);
@@ -190,7 +188,7 @@ class AuthController extends Controller
                 return $profileClass->ajaxGet($request);
                 break;
         }
-    
+        
         return JsonErrorResponse::create('Непредвиденная ошибка');
     }
     
@@ -205,27 +203,27 @@ class AuthController extends Controller
      */
     public function changePasswordAction(Request $request) : JsonResponse
     {
-        $old_password = $request->get('old_password', '');
-        $password = $request->get('password', '');
+        $old_password     = $request->get('old_password', '');
+        $password         = $request->get('password', '');
         $confirm_password = $request->get('confirm_password', '');
         
-        if(empty($old_password) || empty($password) || empty($confirm_password)){
+        if (empty($old_password) || empty($password) || empty($confirm_password)) {
             return JsonErrorResponse::create('Должны быть заполнены все поля');
         }
         
-        if(\strlen($password) < 6){
+        if (\strlen($password) < 6) {
             return JsonErrorResponse::create('Пароль должен содержать минимум 6 символов');
         }
         
-        if(!$this->currentUserProvider->getCurrentUser()->equalPassword($old_password)){
+        if (!$this->currentUserProvider->getCurrentUser()->equalPassword($old_password)) {
             return JsonErrorResponse::create('Текущий пароль не соответствует введенному');
         }
         
-        if($password !== $confirm_password){
+        if ($password !== $confirm_password) {
             return JsonErrorResponse::create('Пароли не соответсвуют');
         }
         
-        if($old_password ===  $password){
+        if ($old_password === $password) {
             return JsonErrorResponse::create('Пароль не может быть таким же, как и текущий');
         }
         
@@ -237,13 +235,13 @@ class AuthController extends Controller
             if (!$res) {
                 return JsonErrorResponse::create('Произошла ошибка при обновлении');
             }
-        
+            
             return JsonSuccessResponse::create('Пароль обновлен');
         } catch (BitrixRuntimeException $e) {
             return JsonErrorResponse::create('Произошла ошибка при обновлении ' . $e->getMessage());
         } catch (ConstraintDefinitionException $e) {
         }
-    
+        
         return JsonErrorResponse::create('Непредвиденная ошибка');
     }
     
@@ -262,19 +260,18 @@ class AuthController extends Controller
         $userRepository = $this->currentUserProvider->getUserRepository();
         $data           = $request->request->getIterator()->getArrayCopy();
         
-        if (filter_var($data['EMAIL'], FILTER_VALIDATE_EMAIL) === false)
-        {
+        if (filter_var($data['EMAIL'], FILTER_VALIDATE_EMAIL) === false) {
             return JsonErrorResponse::create('Неверный email');
         }
-    
+        
         $curUser = $userRepository->findBy(['EMAIL' => $data['EMAIL']], [], 1);
-        if($curUser instanceof User || (\is_array($curUser) && !empty($curUser))){
+        if ($curUser instanceof User || (\is_array($curUser) && !empty($curUser))) {
             return JsonErrorResponse::create('Такой email уже существует');
         }
         
         /** @var User $user */
         $user = SerializerBuilder::create()->build()->fromArray($data, User::class);
-    
+        
         \CBitrixComponent::includeComponentClass('fourpaws:personal.profile');
         /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
         $profileClass = new \FourPawsPersonalCabinetProfileComponent();
@@ -288,17 +285,20 @@ class AuthController extends Controller
                 return JsonErrorResponse::create('Произошла ошибка при обновлении');
             }
             
-            return JsonSuccessResponse::createWithData('Данные обновлены', [
-                'email' => $user->getEmail(),
-                'fio'   => $user->getFullName(),
-                'gender'   => $user->getGenderText(),
-                'birthday'   => $profileClass->replaceRuMonth($user->getBirthday()->format('d #n# Y')),
-            ]);
+            return JsonSuccessResponse::createWithData(
+                'Данные обновлены',
+                [
+                    'email'    => $user->getEmail(),
+                    'fio'      => $user->getFullName(),
+                    'gender'   => $user->getGenderText(),
+                    'birthday' => $profileClass->replaceRuMonth($user->getBirthday()->format('d #n# Y')),
+                ]
+            );
         } catch (BitrixRuntimeException $e) {
             return JsonErrorResponse::create('Произошла ошибка при обновлении ' . $e->getMessage());
         } catch (ConstraintDefinitionException $e) {
         }
-    
+        
         return JsonErrorResponse::create('Непредвиденная ошибка');
     }
 }
