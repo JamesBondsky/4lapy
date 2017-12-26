@@ -6,7 +6,9 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\Loader;
+use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\StoreBundle\Service\StoreService;
 
 if (!Loader::includeModule('ipol.dpd')) {
     class Calculator
@@ -84,6 +86,17 @@ class Calculator extends \Ipolh\DPD\Delivery\DPD
             $profiles = ['COURIER'];
         } else {
             $profiles = [];
+        }
+
+        /* @todo учитывать график поставок для товаров под заказ */
+        /** @var StoreService $storeService */
+        $storeService = Application::getInstance()->getContainer()->get('store.service');
+        if (!empty($shipment->getItems())) {
+            foreach ($shipment->getItems() as $item) {
+                if ($storeService->getStocksByLocation($item['PRODUCT_ID'])->isEmpty()) {
+                    return [];
+                }
+            }
         }
 
         $event = new Event(IPOLH_DPD_MODULE, "onCompabilityBefore", [$profiles, $arOrder, $arConfig]);
