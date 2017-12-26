@@ -14,19 +14,23 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
        data-action="get"
        data-step="step1"
        data-phone="<?= $phone ?>">Сменить номер</a>
-    <form class="b-registration__form" data-url="/ajax/user/auth/register/" method="post">
+    <form class="b-registration__form js-form-validation" data-url="/ajax/user/auth/register/" method="post">
         <input type="hidden" name="action" value="<?= !empty($newAction) ? $newAction : 'get' ?>">
         <input type="hidden" name="step" value="step2">
         <input type="hidden" name="phone" value="<?= $phone ?>">
-        <div class="b-input-line b-input-line--add-number">
+        <div class="b-input-line b-input-line--add-number js-phone3-resend">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="sms-code-3">SMS-код</label>
             </div>
-            <input class="b-input b-input--registration-form"
-                   type="text"
-                   id="sms-code-3"
-                   placeholder=""
-                   name="confirmCode" />
+            <div class="b-input b-input--registration-form">
+                <input class="b-input__input-field b-input__input-field--registration-form"
+                       type="text"
+                       id="sms-code-3"
+                       placeholder=""
+                       name="confirmCode" />
+                <div class="b-error"><span class="js-message"></span>
+                </div>
+            </div>
             <span class="b-link-gray">Отправить новый код можно будет через <span>59</span> сек.</span>
         </div>
         <div class="b-registration__captcha" data-sitekey=""></div>

@@ -10,16 +10,22 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         <header class="b-registration__header">
             <h1 class="b-title b-title--h1 b-title--registration">Изменение пароля</h1>
         </header>
-        <form class="b-registration__form js-form-validation" data-url="/ajax/user/auth/changePassword/" method="post">
+        <form class="b-registration__form js-form-validation js-new-password"
+              data-url="/ajax/user/auth/changePassword/"
+              method="post">
             <div class="b-input-line b-input-line--create-password">
                 <div class="b-input-line__label-wrapper">
                     <label class="b-input-line__label" for="registration-password-old-popup">Старый пароль</label>
                 </div>
-                <input class="b-input b-input--registration-form"
-                       type="password"
-                       id="registration-password-old-popup"
-                       name="old_password"
-                       placeholder="" />
+                <div class="b-input b-input--registration-form">
+                    <input class="b-input__input-field b-input__input-field--registration-form"
+                           type="password"
+                           id="registration-password-old-popup"
+                           name="old_password"
+                           placeholder="" />
+                    <div class="b-error"><span class="js-message"></span>
+                    </div>
+                </div>
                 <a class="b-input-line__eye js-open-password"
                    href="javascript:void(0);"
                    title=""></a><span class="b-link-gray">Минимум 6 символов</span>
@@ -28,11 +34,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                 <div class="b-input-line__label-wrapper">
                     <label class="b-input-line__label" for="registration-password-first-popup">Новый пароль</label>
                 </div>
-                <input class="b-input b-input--registration-form"
-                       type="password"
-                       id="registration-password-first-popup"
-                       name="password"
-                       placeholder="" />
+                <div class="b-input b-input--registration-form">
+                    <input class="b-input__input-field b-input__input-field--registration-form"
+                           type="password"
+                           id="registration-password-first-popup"
+                           name="password"
+                           placeholder="" />
+                    <div class="b-error"><span class="js-message"></span>
+                    </div>
+                </div>
                 <a class="b-input-line__eye js-open-password"
                    href="javascript:void(0);"
                    title=""></a><span class="b-link-gray">Минимум 6 символов</span>
@@ -42,11 +52,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                     <label class="b-input-line__label" for="registration-password-second-popup">Повторите новый
                                                                                                 пароль</label>
                 </div>
-                <input class="b-input b-input--registration-form"
-                       type="password"
-                       id="registration-password-second-popup"
-                       name="confirm_password"
-                       placeholder="" />
+                <div class="b-input b-input--registration-form">
+                    <input class="b-input__input-field b-input__input-field--registration-form"
+                           type="password"
+                           id="registration-password-second-popup"
+                           name="confirm_password"
+                           placeholder="" />
+                    <div class="b-error"><span class="js-message"></span>
+                    </div>
+                </div>
                 <a class="b-input-line__eye js-open-password" href="javascript:void(0);" title=""></a>
             </div>
             <button class="b-button b-button--subscribe-delivery">Изменить</button>

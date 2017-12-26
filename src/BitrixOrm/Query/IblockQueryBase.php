@@ -12,7 +12,7 @@ abstract class IblockQueryBase extends QueryBase
          */
         $this->withFilter(self::getActiveAccessableElementsFilter());
     }
-    
+
     /**
      * Возвращает фильтр активных и доступных элементов инфоблока.
      *
@@ -21,12 +21,13 @@ abstract class IblockQueryBase extends QueryBase
      *
      * @return array
      */
-    public static function getActiveAccessableElementsFilter() : array
+    public static function getActiveAccessableElementsFilter(): array
     {
         return [
-            'CHECK_PERMISSIONS' => 'Y',
-            'ACTIVE'            => 'Y',
-            'ACTIVE_DATE'       => 'Y',
+            'CHECK_PERMISSIONS'     => 'Y',
+            'ACTIVE'                => 'Y',
+            'ACTIVE_DATE'           => 'Y',
+            'SECTION_GLOBAL_ACTIVE' => 'Y',
         ];
     }
 }

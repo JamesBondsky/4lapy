@@ -1,13 +1,7 @@
 <?php
-
-/*
- * @copyright Copyright (c) ADV/web-engineering co
- */
-
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
-
 /**
  * @var \CBitrixComponentTemplate $this
  *
@@ -19,11 +13,20 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var string                    $templateName
  * @var string                    $templateFile
  * @var string                    $templateFolder
- * @var FourPawsAuthFormComponent $component
  *
  * @global CUser                  $USER
  * @global CMain                  $APPLICATION
  * @global CDatabase              $DB
  */
 
-require_once __DIR__ . '/include/' . $arResult['STEP'] . '.php';
+/** @noinspection PhpIncludeInspection */
+if (empty($arResult['STEP'])) {
+    return;
+} ?>
+<section class="b-popup-pick-city b-popup-pick-city--authorization js-popup-section"
+         data-popup="authorization">
+    <a class="b-popup-pick-city__close b-popup-pick-city__close--authorization js-close-popup"
+       href="javascript:void(0);"
+       title="Закрыть"></a>
+    <?php require_once 'include/' . $arResult['STEP'] . '.php'; ?>
+</section>

@@ -22,44 +22,29 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 $this->setFrameMode(true);
 ?>
-<div class="b-container b-container--delivery">
-    <div class="b-delivery">
-        <div class="b-delivery__delivery-type">
-            <p class="b-title b-title--h2">Способы доставки</p>
-            <?php
-            $frame = $this->createFrame()->begin();
-            if (!empty($arResult['CURRENT']['DELIVERY'])) {
-                $delivery = $arResult['CURRENT']['DELIVERY'];
-                include __DIR__ . '/include/delivery-info.php';
-            }
-            if (!empty($arResult['CURRENT']['PICKUP'])) {
-                $pickup = $arResult['CURRENT']['PICKUP'];
-                include __DIR__ . '/include/pickup-info.php';
-            }
-            $frame->beginStub();
-            if (!empty($arResult['DEFAULT']['DELIVERY'])) {
-                $delivery = $arResult['DEFAULT']['DELIVERY'];
-                include __DIR__ . '/include/delivery-info.php';
-            }
-            if (!empty($arResult['DEFAULT']['PICKUP'])) {
-                $pickup = $arResult['DEFAULT']['PICKUP'];
-                include __DIR__ . '/include/pickup-info.php';
-            }
-            $frame->end()
-            ?>
-        </div>
+<div class="b-delivery">
+    <div class="b-delivery__delivery-type">
+        <p class="b-title b-title--h2">Способы доставки</p>
+        <?php
+        $frame = $this->createFrame()->begin();
+        if (!empty($arResult['CURRENT']['DELIVERY'])) {
+            $delivery = $arResult['CURRENT']['DELIVERY'];
+            include __DIR__ . '/include/delivery-info.php';
+        }
+        if (!empty($arResult['CURRENT']['PICKUP'])) {
+            $pickup = $arResult['CURRENT']['PICKUP'];
+            include __DIR__ . '/include/pickup-info.php';
+        }
+        $frame->beginStub();
+        if (!empty($arResult['DEFAULT']['DELIVERY'])) {
+            $delivery = $arResult['DEFAULT']['DELIVERY'];
+            include __DIR__ . '/include/delivery-info.php';
+        }
+        if (!empty($arResult['DEFAULT']['PICKUP'])) {
+            $pickup = $arResult['DEFAULT']['PICKUP'];
+            include __DIR__ . '/include/pickup-info.php';
+        }
+        $frame->end()
+        ?>
     </div>
-</div>
-<div class="b-container b-container--delivery">
-    <?php $APPLICATION->IncludeComponent(
-        'bitrix:main.include',
-        '',
-        [
-            'COMPONENT_TEMPLATE' => '.default',
-            'AREA_FILE_SHOW'     => 'file',
-            'PATH'               => '/local/include/blocks/delivery_page.payments.php',
-            'EDIT_TEMPLATE'      => '',
-        ],
-        false
-    ) ?>
 </div>
