@@ -7,6 +7,7 @@
 namespace Sprint\Migration;
 
 use Adv\Bitrixtools\Migration\SprintMigrationBase;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 
 class FormAdd20171226132140 extends SprintMigrationBase
@@ -291,7 +292,7 @@ class FormAdd20171226132140 extends SprintMigrationBase
         $this->addForm($form);
         
         /** @noinspection PhpUnhandledExceptionInspection */
-        //Option::set('form', 'SIMPLE', 'N');
+        Option::set('form', 'SIMPLE', 'N');
     }
     
     /**
