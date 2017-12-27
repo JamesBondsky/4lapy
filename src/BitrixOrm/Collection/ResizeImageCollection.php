@@ -3,6 +3,7 @@
 namespace FourPaws\BitrixOrm\Collection;
 
 use Adv\Bitrixtools\Collection\ObjectArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use FourPaws\BitrixOrm\Model\Image;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use InvalidArgumentException;
@@ -26,7 +27,7 @@ class ResizeImageCollection extends ObjectArrayCollection
         $this->height = $height;
     }
 
-    public static function createFromImageCollection(ImageCollection $imageCollection, int $width = 0, int $height = 0)
+    public static function createFromImageCollection(Collection $imageCollection, int $width = 0, int $height = 0)
     {
         $collection = new ResizeImageCollection([], $width, $height);
         foreach ($imageCollection as $image) {

@@ -5,6 +5,7 @@ namespace FourPaws\Catalog\Model;
 use CCatalogDiscountSave;
 use CCatalogProduct;
 use DateTimeImmutable;
+use Doctrine\Common\Collections\Collection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Collection\ImageCollection;
@@ -12,6 +13,8 @@ use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
 use FourPaws\BitrixOrm\Model\CatalogProduct;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\BitrixOrm\Model\IblockElement;
+use FourPaws\BitrixOrm\Model\Image;
+use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\BitrixOrm\Query\CatalogProductQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Query\ProductQuery;
@@ -255,12 +258,12 @@ class Offer extends IblockElement
      * @Groups({"elastic"})
      * @Type("FourPaws\BitrixOrm\Collection\ImageCollection")
      * @Accessor(getter="getImages", setter="withImages")
-     * @var ImageCollection
+     * @var Collection|Image[]
      */
     protected $images;
 
     /**
-     * @var ResizeImageCollection
+     * @var Collection|Image[]
      */
     protected $resizeImages;
 
@@ -279,11 +282,11 @@ class Offer extends IblockElement
 
     /**
      * @throws \InvalidArgumentException
-     * @return ImageCollection
+     * @return Collection|Image[]
      */
-    public function getImages(): ImageCollection
+    public function getImages(): Collection
     {
-        if ($this->images instanceof ImageCollection) {
+        if ($this->images instanceof Collection) {
             return $this->images;
         }
         $this->images = ImageCollection::createFromIds($this->getImagesIds());
@@ -292,11 +295,14 @@ class Offer extends IblockElement
     }
 
     /**
-     * @param ImageCollection $images
+     * @param Collection|Image[] $images
+     *
+     * @return static
      */
-    public function withImages(ImageCollection $images)
+    public function withImages(Collection $images)
     {
         $this->images = $images;
+        return $this;
     }
 
     /**
@@ -305,14 +311,20 @@ class Offer extends IblockElement
      *
      * @return ResizeImageCollection
      */
-    public function getResizeImages(int $width = 0, int $height = 0): ResizeImageCollection
+    public function getResizeImages(int $width = 0, int $height = 0): Collection
     {
-        if ($this->resizeImages instanceof ResizeImageCollection) {
-            if ($width && $this->resizeImages->getWidth() !== $width) {
-                $this->resizeImages->setWidth($width);
+        if ($this->resizeImages instanceof Collection) {
+            if ($width) {
+                $this->resizeImages->forAll(function ($key, ResizeImageDecorator $image) use ($width) {
+                    $image->setResizeWidth($width);
+                    return true;
+                });
             }
-            if ($height && $this->resizeImages->getHeight() !== $height) {
-                $this->resizeImages->setHeight($height);
+            if ($height) {
+                $this->resizeImages->forAll(function ($key, ResizeImageDecorator $image) use ($height) {
+                    $image->setResizeHeight($height);
+                    return true;
+                });
             }
             return $this->resizeImages;
         }
@@ -323,11 +335,14 @@ class Offer extends IblockElement
     }
 
     /**
-     * @param ResizeImageCollection $resizeImages
+     * @param Collection $resizeImages
+     *
+     * @return static
      */
-    public function withResizeImages(ResizeImageCollection $resizeImages)
+    public function withResizeImages(Collection $resizeImages)
     {
         $this->resizeImages = $resizeImages;
+        return $this;
     }
 
     /**
