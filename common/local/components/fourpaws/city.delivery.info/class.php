@@ -122,7 +122,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
             throw new CityNotFoundException('Default city not found');
         }
 
-        if (!$currentDeliveryResult) {
+        if (!$currentDeliveryResult && !$currentPickupResult) {
             $this->abortResultCache();
 
             return $this;
