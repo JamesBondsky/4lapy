@@ -24,7 +24,6 @@ $product = $arResult['PRODUCT'];
 
 $arResult['OFFERS'] = (new OfferQuery())
     ->withFilterParameter('=PROPERTY_CML2_LINK', $product->getId())
-    ->exec()
-    ->toArray();
+    ->exec();
 
 $this->getComponent()->setResultCacheKeys(['OFFERS']);
