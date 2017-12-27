@@ -57,7 +57,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_SLIDER_VIEW);
 ?>
     <div class="b-product-card__slider">
         <div class="b-product-slider">
-            <div class="b-product-slider__list b-product-slider__list--main js-product-slider-for">
+            <div class="b-product-slider__list b-product-slider__list--main js-product-slider-for" id="gallery1">
                 <?php
                 foreach ($product->getOffers() as $offer) {
                     if (!$offer->getImagesIds()) {
@@ -71,7 +71,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_SLIDER_VIEW);
                         ?>
                         <div class="b-product-slider__item b-product-slider__item--big">
                             <div class="b-product-slider__wrapper b-product-slider__wrapper--big">
-                                <img class="b-product-slider__photo-img b-product-slider__photo-img--big js-image-wrapper"
+                                <img class="b-product-slider__photo-img b-product-slider__photo-img--big js-image-wrapper js-zoom"
                                      src="<?= $image ?>"
                                      alt="<?= $offer->getName() . ($id ? ' ' . $id : '') ?>"
                                      title="<?= $offer->getName() . ($id ? ' ' . $id : '') ?>"
