@@ -11,26 +11,36 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
+use Bitrix\Main\LoaderException;
 use Bitrix\Main\SystemException;
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Exception\SmsSendErrorException;
+use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\External\Manzana\Model\Client;
+use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
+use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
+use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
+use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Service\ConfirmCodeInterface;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
 use JMS\Serializer\SerializerBuilder;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 
 /** @noinspection AutoloadingIssuesInspection */
@@ -56,10 +66,10 @@ class FourPawsRegisterComponent extends \CBitrixComponent
      *
      * @param null|\CBitrixComponent $component
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Bitrix\Main\SystemException
+     * @throws ServiceNotFoundException
+     * @throws SystemException
      * @throws \RuntimeException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws ServiceCircularReferenceException
      */
     public function __construct(CBitrixComponent $component = null)
     {
@@ -105,8 +115,8 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     }
     
     /**
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\SystemException
+     * @throws LoaderException
+     * @throws SystemException
      */
     protected function setSocial()
     {
@@ -146,8 +156,8 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     /**
      * @param string $phone
      *
-     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
-     * @return \FourPaws\App\Response\JsonResponse
+     * @throws WrongPhoneNumberException
+     * @return JsonResponse
      */
     public function ajaxResendSms($phone) : JsonResponse
     {
@@ -182,13 +192,12 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     /**
      * @param array $data
      *
-     * @throws \FourPaws\External\Manzana\Exception\ContactUpdateException
-     * @throws \FourPaws\External\Exception\ManzanaServiceException
-     * @throws \FourPaws\UserBundle\Exception\ValidationException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @return \FourPaws\App\Response\JsonResponse
+     * @throws ServiceNotFoundException
+     * @throws ApplicationCreateException
+     * @throws ManzanaServiceException
+     * @throws ContactUpdateException
+     * @throws ServiceCircularReferenceException
+     * @return JsonResponse
      */
     public function ajaxRegister($data) : JsonResponse
     {
@@ -212,31 +221,42 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         }
         
         /** todo отправить данные в манзану о пользователе */
-        /** @var \FourPaws\External\ManzanaService $manzanaService */
+        /** @var ManzanaService $manzanaService */
         $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
         $manzanaService->updateContact([]);
         
-        return JsonSuccessResponse::create('Регистрация прошла успешно');
+        ob_start();
+        /** @noinspection PhpIncludeInspection */
+        include_once App::getDocumentRoot()
+                     . '/local/components/fourpaws/register/templates/.default/include/confirm.php';
+        $html = ob_get_clean();
+        
+        return JsonSuccessResponse::createWithData(
+            'Регистрация прошла успешно',
+            [
+                'html' => $html,
+            ]
+        );
     }
     
     /**
-     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @param Request $request
      *
-     * @return \FourPaws\App\Response\JsonResponse
-     * @throws \FourPaws\External\Manzana\Exception\ContactUpdateException
-     * @throws \FourPaws\External\Exception\ManzanaServiceException
-     * @throws \FourPaws\UserBundle\Exception\ValidationException
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws ContactUpdateException
+     * @throws ManzanaServiceException
+     * @throws ValidationException
+     * @throws InvalidIdentifierException
+     * @throws ServiceNotFoundException
      * @throws \Exception
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws ApplicationCreateException
+     * @throws BitrixRuntimeException
+     * @throws ConstraintDefinitionException
+     * @throws ServiceCircularReferenceException
+     * @return JsonResponse
      */
     public function ajaxSavePhone(Request $request) : JsonResponse
     {
-        $phone = $request->get('phone', '');
+        $phone       = $request->get('phone', '');
         $confirmCode = $request->get('confirmCode', '');
         try {
             $res = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::checkConfirmSms(
@@ -258,12 +278,15 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             );
         }
         
-        $data = ['UF_PHONE_CONFIRMED' => 'Y', 'PERSONAL_PHONE' => $phone];
+        $data = [
+            'UF_PHONE_CONFIRMED' => 'Y',
+            'PERSONAL_PHONE'     => $phone,
+        ];
         if ($this->currentUserProvider->getUserRepository()->update(
             SerializerBuilder::create()->build()->fromArray($data, User::class)
         )) {
             /** todo отправить данные в манзану о пользователе */
-            /** @var \FourPaws\External\ManzanaService $manzanaService */
+            /** @var ManzanaService $manzanaService */
             $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
             $manzanaService->updateContact([]);
         }
@@ -272,21 +295,21 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     }
     
     /**
-     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @param Request $request
      *
-     * @return \FourPaws\App\Response\JsonResponse
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws ServiceNotFoundException
      * @throws \Exception
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\External\Exception\ManzanaServiceException
-     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws ApplicationCreateException
+     * @throws ManzanaServiceException
+     * @throws WrongPhoneNumberException
+     * @throws ServiceCircularReferenceException
+     * @return JsonResponse
      */
     public function ajaxGet($request) : JsonResponse
     {
-        $step = $request->get('step', '');
+        $step  = $request->get('step', '');
         $phone = $request->get('phone', '');
-        $mess = '';
+        $mess  = '';
         switch ($step) {
             case 'step1':
             case 'addPhone':
@@ -342,17 +365,17 @@ class FourPawsRegisterComponent extends \CBitrixComponent
      * @param string $confirmCode
      * @param string $phone
      *
-     * @throws \Bitrix\Main\SystemException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws SystemException
+     * @throws ServiceNotFoundException
      * @throws \Exception
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\External\Exception\ManzanaServiceException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @return \FourPaws\App\Response\JsonResponse|string
+     * @throws ApplicationCreateException
+     * @throws ManzanaServiceException
+     * @throws ServiceCircularReferenceException
+     * @return JsonResponse|string
      */
     private function ajaxGetStep2($confirmCode, $phone)
     {
-        if(!App::getInstance()->getContainer()->get('recaptcha.service')->checkCaptcha()){
+        if (!App::getInstance()->getContainer()->get('recaptcha.service')->checkCaptcha()) {
             return JsonErrorResponse::create(
                 'Проверка капчей не пройдена'
             );
@@ -378,10 +401,10 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         }
         $mess = 'Смс прошло проверку';
         
-        /** @var \FourPaws\External\ManzanaService $manzanaService */
+        /** @var ManzanaService $manzanaService */
         $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
         $manzanaData    = $manzanaService->getUserDataByPhone($phone);
-        /** @var \Doctrine\Common\Collections\ArrayCollection $clients */
+        /** @var ArrayCollection $clients */
         $clients = $manzanaData->clients;
         if ($clients instanceof Client) {
             /** @noinspection PhpUnusedLocalVariableInspection */
@@ -390,7 +413,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             $clientsList = $clients->toArray();
             if (\is_array($clientsList) && \count($clientsList) === 1) {
                 /** @noinspection PhpUnusedLocalVariableInspection */
-                /** @var \FourPaws\External\Manzana\Model\Client $manzanaItem */
+                /** @var Client $manzanaItem */
                 $manzanaItem = current($clientsList);
             }
         }
@@ -401,8 +424,8 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     /**
      * @param string $phone
      *
-     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
-     * @return \FourPaws\App\Response\JsonResponse|string
+     * @throws WrongPhoneNumberException
+     * @return JsonResponse|string
      */
     private function ajaxGetAuthByPhone($phone)
     {
@@ -420,8 +443,8 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     /**
      * @param string $phone
      *
-     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
-     * @return array|\FourPaws\App\Response\JsonResponse
+     * @throws WrongPhoneNumberException
+     * @return array|JsonResponse
      */
     private function ajaxGetSendSmsCode($phone)
     {

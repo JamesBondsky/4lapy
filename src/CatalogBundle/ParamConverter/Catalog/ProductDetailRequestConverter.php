@@ -51,7 +51,7 @@ class ProductDetailRequestConverter implements ParamConverterInterface
      *
      * @return bool True if the object is supported, else false
      */
-    public function supports(ParamConverter $configuration)
+    public function supports(ParamConverter $configuration): bool
     {
         return $configuration->getClass() === ProductDetailRequest::class;
     }

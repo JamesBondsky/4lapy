@@ -54,10 +54,9 @@ class CatalogController extends Controller
             $categoryRequest->getSearchString()
         );
 
-        dump($categoryRequest);
-        dump($result->getProductCollection());
-        die();
-
-        return new Response('');
+        return $this->render('FourPawsCatalogBundle:Catalog:catalog.html.php', [
+            'productSearchResult' => $result,
+            'catalogRequest'      => $categoryRequest,
+        ]);
     }
 }

@@ -733,3 +733,4 @@ $APPLICATION->IncludeComponent(
 <?php
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/footer.php';
+die();

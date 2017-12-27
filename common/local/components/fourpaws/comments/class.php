@@ -6,20 +6,26 @@
 
 use Bitrix\Highloadblock\DataManager;
 use Bitrix\Highloadblock\HighloadBlockTable;
+use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
+use Bitrix\Main\ObjectException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
-use FourPaws\App\Application;
+use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Comments\Exception\EmptyUserDataComments;
 use FourPaws\Comments\Exception\ErrorAddComment;
+use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
+use Psr\Cache\InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 if (!\defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -34,29 +40,29 @@ class CCommentsComponent extends \CBitrixComponent
     private $hlEntity;
     
     /**
-     * @var \FourPaws\UserBundle\Service\UserAuthorizationInterface $userService
+     * @var UserAuthorizationInterface $userService
      */
     private $userAuthService;
     
     /**
-     * @var \FourPaws\UserBundle\Service\CurrentUserProviderInterface $userService
+     * @var CurrentUserProviderInterface $userService
      */
     private $userCurrentUserService;
     
     /**
      *
-     * @throws \Bitrix\Main\ObjectException
+     * @throws ObjectException
      * @throws \LogicException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\Comments\Exception\EmptyUserDataComments
-     * @throws \FourPaws\Comments\Exception\ErrorAddComment
-     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
-     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
+     * @throws ServiceNotFoundException
+     * @throws LoaderException
+     * @throws SystemException
+     * @throws ApplicationCreateException
+     * @throws EmptyUserDataComments
+     * @throws ErrorAddComment
+     * @throws WrongPhoneNumberException
+     * @throws NotAuthorizedException
      * @throws \RuntimeException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws ServiceCircularReferenceException
      * @return bool
      */
     public static function addComment() : bool
@@ -81,27 +87,27 @@ class CCommentsComponent extends \CBitrixComponent
     }
     
     /**
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
+     * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
      */
     protected function setUserBundle()
     {
-        $this->userAuthService = Application::getInstance()->getContainer()->get(UserAuthorizationInterface::class);
-        $this->userCurrentUserService = Application::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
+        $this->userAuthService        = App::getInstance()->getContainer()->get(UserAuthorizationInterface::class);
+        $this->userCurrentUserService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
     }
     
     /**
-     * @throws \Bitrix\Main\ObjectException
-     * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\Comments\Exception\EmptyUserDataComments
-     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
-     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
+     * @throws ObjectException
+     * @throws SystemException
+     * @throws EmptyUserDataComments
+     * @throws WrongPhoneNumberException
+     * @throws NotAuthorizedException
      * @return array
      */
     protected function getData() : array
     {
-        $data = \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getPostList()->toArray();
+        $data = Application::getInstance()->getContext()->getRequest()->getPostList()->toArray();
         if ($this->arResult['AUTH']) {
             $data['UF_USER_ID'] = $this->userCurrentUserService->getCurrentUserId();
         } else {
@@ -145,8 +151,8 @@ class CCommentsComponent extends \CBitrixComponent
     
     /**
      * @throws \LogicException
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\SystemException
+     * @throws LoaderException
+     * @throws SystemException
      * @throws \RuntimeException
      */
     protected function setHLEntity()
@@ -158,8 +164,8 @@ class CCommentsComponent extends \CBitrixComponent
      * @param int $hlID
      *
      * @throws \LogicException
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\SystemException
+     * @throws LoaderException
+     * @throws SystemException
      * @throws \RuntimeException
      * @throws \RuntimeException
      * @return mixed
@@ -196,13 +202,13 @@ class CCommentsComponent extends \CBitrixComponent
     
     /**
      * @throws \LogicException
-     * @throws \Psr\Cache\InvalidArgumentException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws InvalidArgumentException
+     * @throws ServiceNotFoundException
+     * @throws ArgumentException
+     * @throws LoaderException
+     * @throws SystemException
+     * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
      * @throws \RuntimeException
      * @return array
      */
@@ -210,7 +216,7 @@ class CCommentsComponent extends \CBitrixComponent
     {
         $class = new static();
         $class->setUserBundle();
-        $request                        = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
+        $request                        = Application::getInstance()->getContext()->getRequest();
         $class->arParams['HL_ID']       = $request->getPost('hl_id');
         $class->arParams['OBJECT_ID']   = $request->getPost('object_id');
         $class->arParams['TYPE']        = $request->getPost('type');
@@ -224,7 +230,7 @@ class CCommentsComponent extends \CBitrixComponent
     }
     
     /**
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      * @return array
      */
     protected function getComments() : array
@@ -305,7 +311,7 @@ class CCommentsComponent extends \CBitrixComponent
     
     /**
      * {@inheritdoc}
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws ServiceNotFoundException
      * @throws \RuntimeException
      * @throws \LogicException
      */
@@ -392,7 +398,9 @@ class CCommentsComponent extends \CBitrixComponent
         $query->registerRuntimeField(
             'SUM',
             new ExpressionField(
-                'SUM', 'SUM(%s)', ['UF_MARK']
+                'SUM',
+                'SUM(%s)',
+                ['UF_MARK']
             )
         );
         

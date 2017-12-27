@@ -9,75 +9,101 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 <div class="b-registration__content b-registration__content--moiety b-registration__content--step b-registration__content--back">
     <div class="b-step-form">Шаг <span>2</span> из <span>2</span>
     </div>
-    <form class="b-registration__form b-registration__form--margin" data-url="/ajax/user/auth/register/" method="post">
+    <form class="b-registration__form b-registration__form--margin js-form-validation"
+          data-url="/ajax/user/auth/register/"
+          method="post">
         <input type="hidden" name="action" value="register">
         <input type="hidden" name="PERSONAL_PHONE" value="<?= $phone ?>">
         <div class="b-input-line b-input-line--user-data">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-surname">Фамилия</label>
             </div>
-            <input class="b-input b-input--registration-form"
-                   type="text"
-                   id="registration-surname"
-                   name="LAST_NAME"
-                   placeholder=""
-                   value="<?= $manzanaItem instanceof Client ? $manzanaItem->lastName : '' ?>" />
+            <div class="b-input b-input--registration-form">
+                <input class="b-input__input-field b-input__input-field--registration-form"
+                       type="text"
+                       id="registration-surname"
+                       name="LAST_NAME"
+                       placeholder=""
+                       value="<?= $manzanaItem instanceof Client ? $manzanaItem->lastName : '' ?>" />
+                <div class="b-error"><span class="js-message"></span>
+                </div>
+            </div>
         </div>
         <div class="b-input-line b-input-line--user-data">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-name">Имя</label>
                 <span class="b-input-line__require">(обязательно)</span>
             </div>
-            <input class="b-input b-input--registration-form"
-                   type="text"
-                   id="registration-name"
-                   name="NAME"
-                   placeholder=""
-                   value="<?= $manzanaItem instanceof Client ? $manzanaItem->firstName : '' ?>" />
+            <div class="b-input b-input--registration-form">
+                <input class="b-input__input-field b-input__input-field--registration-form"
+                       type="text"
+                       id="registration-name"
+                       name="NAME"
+                       placeholder=""
+                       value="<?= $manzanaItem instanceof Client ? $manzanaItem->firstName : '' ?>" />
+                <div class="b-error"><span class="js-message"></span>
+                </div>
+            </div>
         </div>
         <div class="b-input-line b-input-line--user-data">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-patronymic">Отчество</label>
             </div>
-            <input class="b-input b-input--registration-form"
-                   type="text"
-                   id="registration-patronymic"
-                   name="SECOND_NAME"
-                   placeholder=""
-                   value="<?= $manzanaItem instanceof Client ? $manzanaItem->secondName : '' ?>" />
+            <div class="b-input b-input--registration-form">
+                <input class="b-input__input-field b-input__input-field--registration-form"
+                       type="text"
+                       id="registration-patronymic"
+                       name="SECOND_NAME"
+                       placeholder=""
+                       value="<?= $manzanaItem instanceof Client ? $manzanaItem->secondName : '' ?>" />
+                <div class="b-error"><span class="js-message"></span>
+                </div>
+            </div>
         </div>
         <div class="b-input-line b-input-line--user-data">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-date-birth">Дата рождения</label>
             </div>
-            <input class="b-input b-input--registration-form"
-                   type="text"
-                   id="registration-date-birth"
-                   name="PERSONAL_BIRTHDAY"
-                   placeholder=""
-                   value="<?= $manzanaItem instanceof Client ? $manzanaItem->birthDate : '' ?>" />
+            <div class="b-input b-input--registration-form">
+                <input class="b-input__input-field b-input__input-field--registration-form"
+                       type="text"
+                       id="registration-date-birth"
+                       name="PERSONAL_BIRTHDAY"
+                       placeholder=""
+                       value="<?= $manzanaItem instanceof Client ? $manzanaItem->birthDate : '' ?>" />
+                <div class="b-error"><span class="js-message"></span>
+                </div>
+            </div>
         </div>
         <div class="b-input-line b-input-line--user-data">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-email">Эл. почта</label>
             </div>
-            <input class="b-input b-input--registration-form"
-                   type="email"
-                   id="registration-email"
-                   name="EMAIL"
-                   placeholder=""
-                   value="<?= $manzanaItem instanceof Client ? $manzanaItem->email : '' ?>" />
+            <div class="b-input b-input--registration-form">
+                <input class="b-input__input-field b-input__input-field--registration-form"
+                       type="email"
+                       id="registration-email"
+                       name="EMAIL"
+                       placeholder=""
+                       value="<?= $manzanaItem instanceof Client ? $manzanaItem->email : '' ?>" />
+                <div class="b-error"><span class="js-message"></span>
+                </div>
+            </div>
         </div>
         <div class="b-input-line b-input-line--user-data">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-password-5">Пароль</label>
                 <span class="b-input-line__require">(обязательно)</span>
             </div>
-            <input class="b-input b-input--registration-form"
-                   type="password"
-                   id="registration-password-5"
-                   name="PASSWORD"
-                   placeholder="" />
+            <div class="b-input b-input--registration-form">
+                <input class="b-input__input-field b-input__input-field--registration-form"
+                       type="password"
+                       id="registration-password-5"
+                       name="PASSWORD"
+                       placeholder="" />
+                <div class="b-error"><span class="js-message"></span>
+                </div>
+            </div>
             <span class="b-link-gray">Минимум 6 символов</span>
         </div>
         <div class="b-input-line b-input-line--user-data">

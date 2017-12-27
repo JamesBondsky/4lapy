@@ -26,6 +26,8 @@ use FourPaws\UserBundle\Service\ConfirmCodeInterface;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use JMS\Serializer\SerializerBuilder;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 
 /** @noinspection AutoloadingIssuesInspection */
@@ -41,10 +43,10 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
      *
      * @param null|\CBitrixComponent $component
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Bitrix\Main\SystemException
+     * @throws ServiceNotFoundException
+     * @throws SystemException
      * @throws \RuntimeException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws ServiceCircularReferenceException
      */
     public function __construct(CBitrixComponent $component = null)
     {
@@ -57,9 +59,8 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
             /** @noinspection PhpUnhandledExceptionInspection */
             throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
         }
-        $this->currentUserProvider      = $container->get(CurrentUserProviderInterface::class);
+        $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
     }
-    
     
     /** {@inheritdoc} */
     public function executeComponent()
@@ -74,7 +75,7 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
             /** @todo перешли по ссылке из письма для восстановления пароля */
             if (1 === 2) {
                 $this->arResult['EMAIL'] = 'email';
-                $this->arResult['STEP'] = 'createNewPassword';
+                $this->arResult['STEP']  = 'createNewPassword';
             }
             
             $this->includeComponentTemplate();
@@ -88,28 +89,27 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
     }
     
     /**
-     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @param Request $request
      *
-     * @return \FourPaws\App\Response\JsonResponse
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
+     * @return JsonResponse
      */
     public function ajaxSavePassword(Request $request) : JsonResponse
     {
-        $password = $request->get('password', '');
+        $password         = $request->get('password', '');
         $confirm_password = $request->get('confirmPassword', '');
-    
-        if(empty($password) || empty($confirm_password)){
+        
+        if (empty($password) || empty($confirm_password)) {
             return JsonErrorResponse::create('Должны быть заполнены все поля');
         }
-    
-        if(\strlen($password) < 6){
+        
+        if (\strlen($password) < 6) {
             return JsonErrorResponse::create('Пароль должен содержать минимум 6 символов');
         }
-    
-        if($password !== $confirm_password){
+        
+        if ($password !== $confirm_password) {
             return JsonErrorResponse::create('Пароли не соответсвуют');
         }
-    
+        
         try {
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             $res = $this->currentUserProvider->getUserRepository()->update(
@@ -118,20 +118,20 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
             if (!$res) {
                 return JsonErrorResponse::create('Произошла ошибка при обновлении');
             }
-        
+            
             return JsonSuccessResponse::create('Пароль обновлен');
         } catch (BitrixRuntimeException $e) {
             return JsonErrorResponse::create('Произошла ошибка при обновлении ' . $e->getMessage());
         } catch (ConstraintDefinitionException $e) {
         }
-    
+        
         return JsonErrorResponse::create('Непредвиденная ошибка');
     }
     
     /**
      * @param $phone
      *
-     * @return \FourPaws\App\Response\JsonResponse
+     * @return JsonResponse
      */
     public function ajaxResendSms($phone) : JsonResponse
     {
@@ -168,13 +168,13 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
     }
     
     /**
-     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @param Request $request
      *
-     * @return \FourPaws\App\Response\JsonResponse
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
+     * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
      * @throws \Exception
+     * @return JsonResponse
      */
     public function ajaxGet($request) : JsonResponse
     {
@@ -195,7 +195,14 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                 $phone = $res;
             } elseif ($recovery === 'email') {
                 /** @todo отправка письма для верификации */
-                return $this->ajaxGetSendEmailCode($email);
+                $res = $this->ajaxGetSendEmailCode($email);
+                if ($res instanceof JsonResponse) {
+                    return $res;
+                }
+                if (is_bool($res) && !$res) {
+                    return JsonErrorResponse::create('Отправка письма не удалась, пожалуйста попробуйте позднее');
+                }
+                $step = 'compileSendEmail';
             } else {
                 return JsonErrorResponse::create('Не найдено действие для выполнения');
             }
@@ -203,7 +210,7 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
         
         switch ($step) {
             case 'createNewPassword':
-                if(!empty($phone)) {
+                if (!empty($phone)) {
                     try {
                         $res = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::checkConfirmSms(
                             $phone,
@@ -275,15 +282,18 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
     }
     
     /**
-     * @param $email
+     * @param string $email
      *
-     * @return JsonResponse
+     * @return bool|JsonResponse
      */
-    private function ajaxGetSendEmailCode($email) : JsonResponse
+    private function ajaxGetSendEmailCode(string $email)
     {
+        //входящая строка, в которой может быть все, что угодно, а должна быть почта
+        if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+            return JsonErrorResponse::create('Введен неверный email');
+        }
+        
         /** @todo отправка сообщения для верификации по email через expertSender */
-        return JsonSuccessResponse::create(
-            'На почту ' . $email . ' было отправлено письмо для восстановления пароля'
-        );
+        return true;
     }
 }

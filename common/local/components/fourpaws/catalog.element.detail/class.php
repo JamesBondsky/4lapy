@@ -38,12 +38,12 @@ class CatalogElementDetailComponent extends \CBitrixComponent
 
     /**
      * @param string $code
-     * @return Offer|null
+     * @return null|Offer
      */
     protected function getProduct(string $code)
     {
         return (new ProductQuery())
-            ->withFilter(['CODE' => $code])
+            ->withFilterParameter('CODE', $code)
             ->exec()
             ->first();
     }

@@ -5,6 +5,11 @@ user:
     type: annotation
     prefix: '/user'
 
+sale:
+    resource: '@FourPawsSaleBundle/AjaxController'
+    type: annotation
+    prefix: '/sale'
+
 delivery:
     resource: '@FourPawsDeliveryBundle/AjaxController'
     type: annotation
@@ -40,7 +45,7 @@ comments.add:
 comments.next:
   path: /comments/next/
   defaults: { _controller: '\FourPaws\Comments\AjaxController\CommentsController::nextAction' }
-  methods: [POST]
+  methods: [GET]
 
 form.feedback:
   path: /form/feedback/add/
