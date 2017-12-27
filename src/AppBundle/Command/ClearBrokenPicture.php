@@ -37,7 +37,7 @@ class ClearBrokenPicture extends Command implements LoggerAwareInterface
     public function __construct($name = null)
     {
         parent::__construct($name);
-        $this->setLogger(new Logger('Migrator', [new StreamHandler(STDOUT, Logger::DEBUG)]));
+        $this->setLogger(new Logger('command', [new StreamHandler(STDOUT, Logger::DEBUG)]));
     }
     
     /**
@@ -45,7 +45,7 @@ class ClearBrokenPicture extends Command implements LoggerAwareInterface
      */
     public function configure()
     {
-        $this->setName('bitrix:fourpaws:clearbrokenpicture')->setDescription('Clear users');
+        $this->setName('fourpaws:specific:clearbrokenpicture')->setDescription('Clear users');
     }
     
     /**

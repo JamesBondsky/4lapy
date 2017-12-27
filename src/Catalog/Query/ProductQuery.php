@@ -77,7 +77,10 @@ class ProductQuery extends IblockElementQuery
      */
     public function getBaseFilter(): array
     {
-        return ['IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS)];
+        return [
+            'IBLOCK_ID'             => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS),
+            'SECTION_GLOBAL_ACTIVE' => 'Y',
+        ];
     }
 
     /**
@@ -87,5 +90,4 @@ class ProductQuery extends IblockElementQuery
     {
         return new ProductCollection($this->doExec());
     }
-
 }
