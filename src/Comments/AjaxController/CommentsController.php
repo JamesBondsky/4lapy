@@ -39,7 +39,7 @@ class CommentsController extends Controller
     {
         CBitrixComponent::includeComponentClass('fourpaws:comments');
         
-        $json = JsonErrorResponse::create('Неизвестная ошибка');
+        $json = JsonErrorResponse::create('Произошла ошибка, повторите попытку позже');
         try {
             $res = \CCommentsComponent::addComment();
             if ($res) {
@@ -75,7 +75,7 @@ class CommentsController extends Controller
     {
         CBitrixComponent::includeComponentClass('fourpaws:comments');
         
-        $json = JsonErrorResponse::create('Неизвестная ошибка');
+        $json = JsonErrorResponse::create('Произошла ошибка, повторите попытку позже');
         try {
             $items = CCommentsComponent::getNextItems();
             
@@ -83,17 +83,11 @@ class CommentsController extends Controller
         } catch (ArgumentException $e) {
             $json = JsonErrorResponse::create('Ошибка - неверные параметры ' . $e->getMessage());
         } catch (LoaderException $e) {
-            $json = JsonErrorResponse::create('Ошибка1 ' . $e->getMessage());
         } catch (SystemException $e) {
-            $json = JsonErrorResponse::create('Ошибка2 ' . $e->getMessage());
         } catch (ApplicationCreateException $e) {
-            $json = JsonErrorResponse::create('Ошибка3 ' . $e->getMessage());
         } catch (ServiceCircularReferenceException $e) {
-            $json = JsonErrorResponse::create('Ошибка4 ' . $e->getMessage());
         } catch (InvalidArgumentException $e) {
-            $json = JsonErrorResponse::create('Ошибка5 ' . $e->getMessage());
         } catch (\RuntimeException $e) {
-            $json = JsonErrorResponse::create('Ошибка6 ' . $e->getMessage());
         }
         
         return $json;

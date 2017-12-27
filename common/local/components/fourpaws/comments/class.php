@@ -50,7 +50,7 @@ class CCommentsComponent extends \CBitrixComponent
     
     /**
      *
-     * @throws \FourPaws\UserBundle\Exception\WrongEmailException
+     * @throws WrongEmailException
      * @throws \LogicException
      * @throws ServiceNotFoundException
      * @throws LoaderException
@@ -96,11 +96,11 @@ class CCommentsComponent extends \CBitrixComponent
     }
     
     /**
-     * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\Comments\Exception\EmptyUserDataComments
-     * @throws \FourPaws\Comments\Exception\ErrorAddComment
-     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
-     * @throws \FourPaws\UserBundle\Exception\WrongEmailException
+     * @throws SystemException
+     * @throws EmptyUserDataComments
+     * @throws ErrorAddComment
+     * @throws WrongPhoneNumberException
+     * @throws WrongEmailException
      * @return array
      */
     protected function getData() : array
@@ -133,9 +133,6 @@ class CCommentsComponent extends \CBitrixComponent
                 $users = $userRepository->findBy($filter);
                 if (\is_array($users) && !empty($users)) {
                     foreach ($users as $user) {
-                        //echo '<pre>',print_r($data['PASSWORD'], true),'</pre>';
-                        //echo '<pre>',print_r($user->getEncryptedPassword(), true),'</pre>';
-                        //die();
                         if ($user->equalPassword($data['PASSWORD'])) {
                             $data['UF_USER_ID'] = $user->getId();
                             break;
@@ -411,9 +408,7 @@ class CCommentsComponent extends \CBitrixComponent
         $query->registerRuntimeField(
             'SUM',
             new ExpressionField(
-                'SUM',
-                'SUM(%s)',
-                ['UF_MARK']
+                'SUM', 'SUM(%s)', ['UF_MARK']
             )
         );
         
