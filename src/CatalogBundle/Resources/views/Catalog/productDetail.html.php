@@ -27,7 +27,14 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
     <div class="b-product-card">
         <div class="b-container">
             <?php
-            $APPLICATION->IncludeComponent('fourpaws:catalog.breadcrumbs', 'product', [], $component);
+            $APPLICATION->IncludeComponent(
+                'fourpaws:breadcrumbs',
+                'product',
+                [
+                    'IBLOCK_ELEMENT' => $product
+                ],
+                $component
+            );
             ?>
             <div class="b-product-card__top">
                 <div class="b-product-card__title-product">
