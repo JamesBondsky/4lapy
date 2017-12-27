@@ -5,7 +5,7 @@ namespace FourPaws\StoreBundle\Entity;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
-class Store
+class Store extends Base
 {
     /**
      * @var int
