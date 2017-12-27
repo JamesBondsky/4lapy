@@ -26,6 +26,7 @@ use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\Location\Model\City;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -46,6 +47,8 @@ use Symfony\Component\HttpFoundation\Request;
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsRegisterComponent extends \CBitrixComponent
 {
+    const PHONE_HOT_LINE = '8 (800) 770-00-22';
+    
     /**
      * @var CurrentUserProviderInterface
      */
@@ -468,6 +471,9 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     /**
      * @param string $phone
      *
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws WrongPhoneNumberException
      * @return array|JsonResponse
      */
@@ -542,5 +548,23 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             'mess' => $mess,
             'step' => $step,
         ];
+    }
+    
+    /**
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @return string
+     */
+    protected function getSitePhone() : string
+    {
+        $defCity = App::getInstance()->getContainer()->get('location.service')->getDefaultCity();
+        if ($defCity instanceof City) {
+            $phone = $defCity->getPhone();
+        } else {
+            $phone = static::PHONE_HOT_LINE;
+        }
+        
+        return $phone;
     }
 }
