@@ -5,7 +5,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 /** @var \CMain $APPLICATION */
-use FourPaws\Decorators\SvgDecorator; ?>
+
+use FourPaws\Decorators\SvgDecorator;
+use FourPaws\Enum\Form;
+use FourPaws\Helpers\FormHelper;
+
+?>
 <div class="b-header-info__item b-header-info__item--phone">
     <?php $APPLICATION->IncludeComponent(
         'fourpaws:city.phone',
@@ -52,7 +57,9 @@ use FourPaws\Decorators\SvgDecorator; ?>
                     </a>
                 </li>
                 <li class="b-link-block__item">
-                    <a class="b-link-block__link js-link-phone-call" href="javascript:void(0);" title="Чат с консультантом">
+                    <a class="b-link-block__link js-link-phone-call"
+                       href="javascript:void(0);"
+                       title="Чат с консультантом">
                         <span class="b-icon">
                             <?= new SvgDecorator('icon-chat-header', 16, 16) ?>
                         </span>
@@ -61,6 +68,26 @@ use FourPaws\Decorators\SvgDecorator; ?>
                 </li>
             </ul>
         </div>
-        //11
+        <?php $APPLICATION->IncludeComponent(
+            'bitrix:form.result.new',
+            'feedback',
+            [
+                'CACHE_TIME'             => '3600000',
+                'CACHE_TYPE'             => 'A',
+                'CHAIN_ITEM_LINK'        => '',
+                'CHAIN_ITEM_TEXT'        => '',
+                'EDIT_URL'               => '',
+                'IGNORE_CUSTOM_TEMPLATE' => 'Y',
+                'LIST_URL'               => '',
+                'SEF_MODE'               => 'N',
+                'SUCCESS_URL'            => '',
+                'USE_EXTENDED_ERRORS'    => 'Y',
+                'VARIABLE_ALIASES'       => [
+                    'RESULT_ID'   => 'RESULT_ID',
+                    'WEB_FORM_ID' => 'WEB_FORM_ID',
+                ],
+                'WEB_FORM_ID'            => FormHelper::getIdByCode(Form::CALLBACK),
+            ]
+        ); ?>
     </div>
 </div>
