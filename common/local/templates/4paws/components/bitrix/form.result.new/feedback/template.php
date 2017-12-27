@@ -62,7 +62,8 @@ use FourPaws\App\Application as App;
                                 <?php
                                 if (\is_array($arResult['arAnswers'][$fieldSid])
                                     && !empty($arResult['arAnswers'][$fieldSid])) {
-                                    foreach ($arResult['arAnswers'][$fieldSid] as $selectItem) { ?>
+                                    foreach ($arResult['arAnswers'][$fieldSid] as $selectItem) {
+                                        ?>
                                         <option value="<?= $selectItem['ID'] ?>"><?= $selectItem['MESSAGE'] ?></option>
                                         <?php
                                     }
@@ -82,7 +83,7 @@ use FourPaws\App\Application as App;
                         </div>
                         <div class="b-input b-input--registration-form">
                             <textarea class="b-input__input-field b-input__input-field--textarea b-input__input-field--registration-form"
-                                  id="feedback-<?= $fieldSid ?>" name="<?= $fieldSid ?>"></textarea>
+                                      id="feedback-<?= $fieldSid ?>" name="<?= $fieldSid ?>"></textarea>
                             <div class="b-error"><span class="js-message" title=""></span></div>
                         </div>
                     </div>
@@ -93,6 +94,7 @@ use FourPaws\App\Application as App;
                     <div class="b-input-line b-input-line--file">
                         <div class="b-input-line__comment-block">
                             <div class="b-input b-input--feedback-page">
+                                <input type="hidden" name="MAX_FILE_SIZE" value="<?= 2 * 1024 * 1024 ?>" />
                                 <input class="b-input__input-field b-input__input-field--feedback-page"
                                        type="file"
                                        id="feedback-<?= $fieldSid ?>"
@@ -111,8 +113,7 @@ use FourPaws\App\Application as App;
                     </div>
                     <?php
                     break;
-            }
-            ?>
+            } ?>
             <?php
         }
     }

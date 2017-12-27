@@ -10,6 +10,8 @@ use FourPaws\App\Application as App;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\Helpers\Exception\WrongPhoneNumberException;
+use FourPaws\Helpers\PhoneHelper;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -31,7 +33,26 @@ class CallBackController extends Controller
      */
     public function addAction(Request $request) : JsonResponse
     {
-        $data      = $request->request->getIterator()->getArrayCopy();
+        $data = $request->request->getIterator()->getArrayCopy();
+        
+        $requiredFields = [
+            'name',
+            'email',
+            'time_call',
+        ];
+        foreach ($requiredFields as $requiredField) {
+            if (empty($data[$requiredField])) {
+                return JsonErrorResponse::create('Не заполнены все обязательные поля');
+                break;
+            }
+        }
+        
+        try {
+            $data['phone'] = PhoneHelper::normalizePhone($data['phone']);
+        } catch (WrongPhoneNumberException $e) {
+            return JsonErrorResponse::create('Некорретно заполнен телефон');
+        }
+        
         $webFormId = $data['WEB_FORM_ID'];
         if (!App::getInstance()->getContainer()->get('recaptcha.service')->checkCaptcha()) {
             return JsonErrorResponse::create('Проверка капчи не пройдена');

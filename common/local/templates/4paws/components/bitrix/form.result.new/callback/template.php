@@ -18,10 +18,7 @@ use FourPaws\Decorators\SvgDecorator;
         </a>
     </div>
     <hr class="b-contact__hr" />
-    <dl class="b-phone-pair">
-        <dt class="b-phone-pair__phone b-phone-pair__phone--small-blue">Хотите поговорить?</dt>
-        <dd class="b-phone-pair__description">Оставьте телефон, мы вам перезвоним</dd>
-    </dl>
+    <?= $arResult['FORM_DESCRIPTION'] ?>
     <form class="b-contact__form js-form-validation js-phone-query" data-url="/ajax/form/callback/add/" method="post">
         <?= bitrix_sessid_post() ?>
         <input name="WEB_FORM_ID" value="<?= $arResult['arForm']['ID'] ?>" type="hidden">
@@ -39,8 +36,9 @@ use FourPaws\Decorators\SvgDecorator;
                             $type = 'tel';
                         } ?>
                         <div class="b-input b-input--recall js-phone-mask">
-                            <input class="b-input__input-field b-input__input-field--recall<?=$type==='tel' ? ' js-phone-mask' : ''?>"
-                                   type="<?=$type?>"
+                            <input class="b-input__input-field b-input__input-field--recall<?= $type
+                                                                                               === 'tel' ? ' js-phone-mask' : '' ?>"
+                                   type="<?= $type ?>"
                                    id="id-recall-<?= $fieldSid ?>"
                                    placeholder="Ваш телефон"
                                    name="<?= $fieldSid ?>" />
@@ -56,7 +54,8 @@ use FourPaws\Decorators\SvgDecorator;
                                 <?php
                                 if (\is_array($arResult['arAnswers'][$fieldSid])
                                     && !empty($arResult['arAnswers'][$fieldSid])) {
-                                    foreach ($arResult['arAnswers'][$fieldSid] as $selectItem) { ?>
+                                    foreach ($arResult['arAnswers'][$fieldSid] as $selectItem) {
+                                        ?>
                                         <option value="<?= $selectItem['ID'] ?>"><?= $selectItem['MESSAGE'] ?></option>
                                         <?php
                                     }
@@ -70,8 +69,7 @@ use FourPaws\Decorators\SvgDecorator;
                         </div>
                         <?php
                         break;
-                }
-                ?>
+                } ?>
                 <?php
             }
         } ?>

@@ -187,6 +187,105 @@ class FormAdd20171226132140 extends \Adv\Bitrixtools\Migration\SprintMigrationBa
         
         $this->addForm($form);
         
+        $form = [
+            'SID'              => 'callback',
+            'NAME'             => 'Обратный звонок',
+            'BUTTON'           => 'Отправить',
+            'C_SORT'           => '100',
+            'DESCRIPTION'      => '<dl class="b-phone-pair">
+        <dt class="b-phone-pair__phone b-phone-pair__phone--small-blue">Хотите поговорить?</dt>
+        <dd class="b-phone-pair__description">Оставьте телефон, мы вам перезвоним</dd>
+    </dl>',
+            'DESCRIPTION_TYPE' => 'html',
+            'CREATE_EMAIL'     => 'Y',
+            'STATUSES'         => [
+                [
+                    'TITLE'         => 'default',
+                    'ACTIVE'        => 'Y',
+                    'DEFAULT_VALUE' => 'Y',
+                ],
+            ],
+            'QUESTIONS'        => [
+                [
+                    'SID'                 => 'name',
+                    'ACTIVE'              => 'Y',
+                    'TITLE'               => 'Имя',
+                    'TITLE_TYPE'          => 'text',
+                    'REQUIRED'            => 'Y',
+                    'FILTER_TITLE'        => 'Имя',
+                    'IN_RESULTS_TABLE'    => 'Y',
+                    'IN_EXCEL_TABLE'      => 'Y',
+                    'RESULTS_TABLE_TITLE' => 'Имя',
+                    'ANSWERS'             => [
+                        [
+                            'MESSAGE'    => 'Имя',
+                            'FIELD_TYPE' => 'text',
+                            'ACTIVE'     => 'Y',
+                            'C_SORT'     => '100',
+                        ],
+                    ],
+                ],
+                [
+                    'SID'                 => 'phone',
+                    'ACTIVE'              => 'Y',
+                    'TITLE'               => 'Телефон',
+                    'TITLE_TYPE'          => 'text',
+                    'REQUIRED'            => 'Y',
+                    'FILTER_TITLE'        => 'Телефон',
+                    'IN_RESULTS_TABLE'    => 'Y',
+                    'IN_EXCEL_TABLE'      => 'Y',
+                    'RESULTS_TABLE_TITLE' => 'Телефон',
+                    'ANSWERS'             => [
+                        [
+                            'MESSAGE'    => 'Телефон',
+                            'FIELD_TYPE' => 'text',
+                            'ACTIVE'     => 'Y',
+                            'C_SORT'     => '300',
+                        ],
+                    ],
+                ],
+                [
+                    'SID'                 => 'time_call',
+                    'ACTIVE'              => 'Y',
+                    'TITLE'               => 'Время звонка',
+                    'TITLE_TYPE'          => 'text',
+                    'REQUIRED'            => 'Y',
+                    'FILTER_TITLE'        => 'Время звонка',
+                    'IN_RESULTS_TABLE'    => 'Y',
+                    'IN_EXCEL_TABLE'      => 'Y',
+                    'RESULTS_TABLE_TITLE' => 'Время звонка',
+                    'ANSWERS'             => [
+                        [
+                            'MESSAGE'    => 'Звонок сейчас',
+                            'FIELD_TYPE' => 'dropdown',
+                            'ACTIVE'     => 'Y',
+                            'C_SORT'     => '100',
+                        ],
+                        [
+                            'MESSAGE'    => 'Звонок через 5 мин',
+                            'FIELD_TYPE' => 'dropdown',
+                            'ACTIVE'     => 'Y',
+                            'C_SORT'     => '200',
+                        ],
+                        [
+                            'MESSAGE'    => 'Звонок через 15 мин',
+                            'FIELD_TYPE' => 'dropdown',
+                            'ACTIVE'     => 'Y',
+                            'C_SORT'     => '300',
+                        ],
+                        [
+                            'MESSAGE'    => 'Звонок завтра',
+                            'FIELD_TYPE' => 'dropdown',
+                            'ACTIVE'     => 'Y',
+                            'C_SORT'     => '400',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+        
+        $this->addForm($form);
+        
         /** @noinspection PhpUnhandledExceptionInspection */
         //Option::set('form', 'SIMPLE', 'N');
     }
@@ -226,7 +325,6 @@ class FormAdd20171226132140 extends \Adv\Bitrixtools\Migration\SprintMigrationBa
      */
     private function addStatuses(int $formId, array $statuses = [])
     {
-        
         if ($formId > 0 && \is_array($statuses) && !empty($statuses)) {
             $obFormStatus = new \CFormStatus();
             foreach ($statuses as $status) {
