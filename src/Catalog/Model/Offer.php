@@ -286,7 +286,7 @@ class Offer extends IblockElement
         if ($this->images instanceof ImageCollection) {
             return $this->images;
         }
-        $this->images = new ImageCollection($this->getImagesIds());
+        $this->images = ImageCollection::createFromIds($this->getImagesIds());
 
         return $this->images;
     }
