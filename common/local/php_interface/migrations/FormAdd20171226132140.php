@@ -6,9 +6,10 @@
 
 namespace Sprint\Migration;
 
+use Adv\Bitrixtools\Migration\SprintMigrationBase;
 use Bitrix\Main\Loader;
 
-class FormAdd20171226132140 extends \Adv\Bitrixtools\Migration\SprintMigrationBase
+class FormAdd20171226132140 extends SprintMigrationBase
 {
     protected $description = 'Настройка форм';
     
@@ -23,6 +24,8 @@ class FormAdd20171226132140 extends \Adv\Bitrixtools\Migration\SprintMigrationBa
             'C_SORT'           => '100',
             'DESCRIPTION'      => 'Мы открыты для обратной связи с покупателями, партнерами и соискателями! Оставьте свой отзыв о работе компании «Четыре лапы» в форме, приведенной ниже',
             'DESCRIPTION_TYPE' => 'text',
+            'arSITE'=>['s1'],
+            'USE_CAPTCHA' => 'Y',
             'CREATE_EMAIL'     => 'Y',
             'STATUSES'         => [
                 [
@@ -175,7 +178,7 @@ class FormAdd20171226132140 extends \Adv\Bitrixtools\Migration\SprintMigrationBa
                     'RESULTS_TABLE_TITLE' => 'Файл',
                     'ANSWERS'             => [
                         [
-                            'MESSAGE'    => 'Имя',
+                            'MESSAGE'    => 'Файл',
                             'FIELD_TYPE' => 'file',
                             'ACTIVE'     => 'Y',
                             'C_SORT'     => '600',
@@ -197,6 +200,7 @@ class FormAdd20171226132140 extends \Adv\Bitrixtools\Migration\SprintMigrationBa
         <dd class="b-phone-pair__description">Оставьте телефон, мы вам перезвоним</dd>
     </dl>',
             'DESCRIPTION_TYPE' => 'html',
+            'arSITE'=>['s1'],
             'CREATE_EMAIL'     => 'Y',
             'STATUSES'         => [
                 [
@@ -350,7 +354,9 @@ class FormAdd20171226132140 extends \Adv\Bitrixtools\Migration\SprintMigrationBa
                 }
                 $question['FORM_ID'] = $formId;
                 $questionId          = (int)$obFormField->Set($question);
-                $this->addAnswers($questionId, $answers);
+                if($questionId > 0) {
+                    $this->addAnswers($questionId, $answers);
+                }
             }
         }
     }
@@ -364,6 +370,7 @@ class FormAdd20171226132140 extends \Adv\Bitrixtools\Migration\SprintMigrationBa
         if ($questionId > 0 && \is_array($answers) && !empty($answers)) {
             $obFormAnswer = new \CFormAnswer();
             foreach ($answers as $answer) {
+                $answer['FIELD_ID'] = $questionId;
                 $obFormAnswer->Set($answer);
             }
         }
@@ -373,10 +380,11 @@ class FormAdd20171226132140 extends \Adv\Bitrixtools\Migration\SprintMigrationBa
      * @param int    $formId
      * @param string $createEmail
      */
-    private function addMailTemplate(int $formId, string $createEmail = 'N') : void
+    private function addMailTemplate(int $formId, string $createEmail = 'N')
     {
         if ($createEmail === 'Y') {
-            \CForm::SetMailTemplate($formId, 'Y');
+            $arTemplates = \CForm::SetMailTemplate($formId, 'Y');
+            \CForm::Set(array('arMAIL_TEMPLATE' => $arTemplates), $formId);
         }
     }
     
