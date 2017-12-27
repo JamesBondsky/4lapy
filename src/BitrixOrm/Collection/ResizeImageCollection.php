@@ -5,7 +5,7 @@ namespace FourPaws\BitrixOrm\Collection;
 use Bitrix\Main\DB\Result;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 
-class ResizeImageCollection extends ImageCollection
+class ResizeImageCollection extends D7CollectionBase
 {
     /**
      * @var int
@@ -40,7 +40,7 @@ class ResizeImageCollection extends ImageCollection
     public function setWidth(int $width): ResizeImageCollection
     {
         $this->width = $width;
-        $this->collection = $this->map(function (ResizeImageDecorator $image) use ($width) {
+        $this->forAll(function (ResizeImageDecorator $image) use ($width) {
             $image->setWidth($width);
         });
         return $this;
@@ -62,7 +62,7 @@ class ResizeImageCollection extends ImageCollection
     public function setHeight(int $height): ResizeImageCollection
     {
         $this->height = $height;
-        $this->collection = $this->map(function (ResizeImageDecorator $image) use ($height) {
+        $this->forAll(function (ResizeImageDecorator $image) use ($height) {
             $image->setHeight($height);
         });
         return $this;
