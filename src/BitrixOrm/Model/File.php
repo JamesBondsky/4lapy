@@ -71,7 +71,6 @@ class File implements FileInterface
             } catch (ArgumentNullException $e) {
             } catch (ArgumentOutOfRangeException $e) {
             }
-            $this->src = '';
         }
 
         return $this->src;

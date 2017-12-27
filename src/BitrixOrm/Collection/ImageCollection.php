@@ -11,13 +11,15 @@ class ImageCollection extends ObjectArrayCollection
 {
     public static function createFromIds(array $ids = [])
     {
-        $result = FileTable::query()
-            ->addFilter('ID', $ids)
-            ->addSelect('*')
-            ->exec();
         $collection = new static();
-        while ($item = $result->fetch()) {
-            $collection->add(new Image($item));
+        if ($ids) {
+            $result = FileTable::query()
+                ->addFilter('ID', $ids)
+                ->addSelect('*')
+                ->exec();
+            while ($item = $result->fetch()) {
+                $collection->add(new Image($item));
+            }
         }
         return $collection;
     }
