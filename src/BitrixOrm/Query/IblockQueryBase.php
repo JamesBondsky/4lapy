@@ -24,10 +24,9 @@ abstract class IblockQueryBase extends QueryBase
     public static function getActiveAccessableElementsFilter(): array
     {
         return [
-            'CHECK_PERMISSIONS'     => 'Y',
-            'ACTIVE'                => 'Y',
-            'ACTIVE_DATE'           => 'Y',
-            'SECTION_GLOBAL_ACTIVE' => 'Y',
+            'CHECK_PERMISSIONS' => 'Y',
+            'ACTIVE'            => 'Y',
+            'ACTIVE_DATE'       => 'Y',
         ];
     }
 }
