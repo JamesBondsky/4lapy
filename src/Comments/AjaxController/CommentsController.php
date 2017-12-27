@@ -50,11 +50,11 @@ class CommentsController extends Controller
             }
         } catch (WrongPhoneNumberException $e) {
             $json = JsonErrorResponse::create('Введен некорректный номер телефона');
+        } catch (WrongEmailException $e) {
+            $json = JsonErrorResponse::create($e->getMessage());
         } catch (EmptyUserDataComments $e) {
             $json = JsonErrorResponse::create($e->getMessage());
         } catch (ErrorAddComment $e) {
-            $json = JsonErrorResponse::create($e->getMessage());
-        } catch (WrongEmailException $e) {
             $json = JsonErrorResponse::create($e->getMessage());
         } catch (LoaderException $e) {
         } catch (SystemException $e) {
@@ -83,17 +83,11 @@ class CommentsController extends Controller
         } catch (ArgumentException $e) {
             $json = JsonErrorResponse::create('Ошибка - неверные параметры ' . $e->getMessage());
         } catch (LoaderException $e) {
-            $json = JsonErrorResponse::create('Ошибка1 ' . $e->getMessage());
         } catch (SystemException $e) {
-            $json = JsonErrorResponse::create('Ошибка2 ' . $e->getMessage());
         } catch (ApplicationCreateException $e) {
-            $json = JsonErrorResponse::create('Ошибка3 ' . $e->getMessage());
         } catch (ServiceCircularReferenceException $e) {
-            $json = JsonErrorResponse::create('Ошибка4 ' . $e->getMessage());
         } catch (InvalidArgumentException $e) {
-            $json = JsonErrorResponse::create('Ошибка5 ' . $e->getMessage());
         } catch (\RuntimeException $e) {
-            $json = JsonErrorResponse::create('Ошибка6 ' . $e->getMessage());
         }
         
         return $json;

@@ -97,3 +97,6 @@ services:
 
   recaptcha.service:
       class: FourPaws\ReCaptcha\ReCaptchaService
+
+  form.service:
+      class: FourPaws\Form\FormService

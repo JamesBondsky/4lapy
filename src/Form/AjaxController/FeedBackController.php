@@ -4,7 +4,7 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
-namespace FourPaws\FormService\AjaxController;
+namespace FourPaws\Form\AjaxController;
 
 use FourPaws\App\Application as App;
 use FourPaws\App\Response\JsonErrorResponse;
@@ -35,6 +35,8 @@ class FeedBackController extends Controller
     {
         $data = $request->request->getIterator()->getArrayCopy();
         
+        $formService = App::getInstance()->getContainer()->get('form.service');
+        
         $requiredFields = [
             'name',
             'email',
@@ -42,14 +44,11 @@ class FeedBackController extends Controller
             'theme',
             'message',
         ];
-        foreach ($requiredFields as $requiredField) {
-            if (empty($data[$requiredField])) {
-                return JsonErrorResponse::create('Не заполнены все обязательные поля');
-                break;
-            }
+        if(!$formService->checkRequiredFields($data, $requiredFields)){
+            return JsonErrorResponse::create('Не заполнены все обязательные поля');
         }
         
-        if (filter_var($data['email'], FILTER_VALIDATE_EMAIL) === false) {
+        if (!$formService->validEmail($data['email'])) {
             return JsonErrorResponse::create('Некорректно заполнен эл. адрес');
         }
         
@@ -59,20 +58,16 @@ class FeedBackController extends Controller
             return JsonErrorResponse::create('Некорретно заполнен телефон');
         }
         
-        if (isset($data['MAX_FILE_SIZE'])) {
-            unset($data['MAX_FILE_SIZE']);
-        }
-        
         $fileCode = 'file';
+        $fileSizeMb    = 2 * 1024 * 1024;
+        $valid_types   = [
+            'jpg',
+            'png',
+            'doc',
+            'docx',
+        ];
         if (!empty($_FILES[$fileCode])) {
-            $fileSizeMb    = 2;
             $max_file_size = $fileSizeMb * 1024 * 1024;
-            $valid_types   = [
-                'jpg',
-                'png',
-                'doc',
-                'docx',
-            ];
             
             $file = $_FILES[$fileCode];
             if (is_uploaded_file($file['tmp_name'])) {
@@ -98,23 +93,11 @@ class FeedBackController extends Controller
             }
         }
         
-        $webFormId = $data['WEB_FORM_ID'];
         if (!App::getInstance()->getContainer()->get('recaptcha.service')->checkCaptcha()) {
             return JsonErrorResponse::create('Проверка капчи не пройдена');
         }
-        if (isset($data['g-recaptcha-response'])) {
-            unset($data['g-recaptcha-response']);
-        }
-        global $USER;
-        $userID = 0;
-        if ($USER->IsAuthorized()) {
-            $userID = (int)$USER->GetID();
-        }
-        unset($data['web_form_submit'], $data['WEB_FORM_ID']);
         
-        $formResult = new \CFormResult();
-        $res        = $formResult->Add($webFormId, $data, 'N', $userID > 0 ? $userID : false);
-        if ($res) {
+        if ($formService->addResult($data)) {
             JsonSuccessResponse::create('Ваша завка принята');
         } else {
             return JsonErrorResponse::create('Произошла ошибка при сохранении');

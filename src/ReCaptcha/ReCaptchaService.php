@@ -4,6 +4,7 @@ namespace FourPaws\ReCaptcha;
 
 use Bitrix\Main\Application;
 use Bitrix\Main\Page\Asset;
+use Bitrix\Main\SystemException;
 
 class ReCaptchaService
 {
@@ -19,14 +20,14 @@ class ReCaptchaService
      */
     const SECRET_KEY = '6Le2QT4UAAAAALHxRtMAzINWrPKT82LLCo02Cf9K';
     
-    
     /**
      * @return string
      */
     public function getCaptcha() : string
     {
         $this->addJs();
-        return '<div class="g-recaptcha" data-sitekey="' . static::KEY . '>"></div>';
+        
+        return '<div class="g-recaptcha" data-sitekey="' . static::KEY . '"></div>';
     }
     
     public function addJs()
@@ -38,14 +39,14 @@ class ReCaptchaService
      * @param string $recaptcha
      *
      * @return bool
-     * @throws \Bitrix\Main\SystemException
+     * @throws SystemException
      */
     public function checkCaptcha(string $recaptcha = '') : bool
     {
         /** @noinspection PhpUnhandledExceptionInspection */
         $context = Application::getInstance()->getContext();
         /** отменяем првоерку если запрос был без капчи */
-        if(empty($recaptcha) && !$context->getRequest()->offsetExists('g-recaptcha-response')){
+        if (empty($recaptcha) && !$context->getRequest()->offsetExists('g-recaptcha-response')) {
             return true;
         }
         if (empty($recaptcha)) {

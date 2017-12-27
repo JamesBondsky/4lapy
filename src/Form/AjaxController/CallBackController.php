@@ -4,7 +4,7 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
-namespace FourPaws\FormService\AjaxController;
+namespace FourPaws\Form\AjaxController;
 
 use FourPaws\App\Application as App;
 use FourPaws\App\Response\JsonErrorResponse;
@@ -34,17 +34,16 @@ class CallBackController extends Controller
     public function addAction(Request $request) : JsonResponse
     {
         $data = $request->request->getIterator()->getArrayCopy();
+    
+        $formService = App::getInstance()->getContainer()->get('form.service');
         
         $requiredFields = [
             'name',
             'email',
             'time_call',
         ];
-        foreach ($requiredFields as $requiredField) {
-            if (empty($data[$requiredField])) {
-                return JsonErrorResponse::create('Не заполнены все обязательные поля');
-                break;
-            }
+        if(!$formService->checkRequiredFields($data, $requiredFields)){
+            return JsonErrorResponse::create('Не заполнены все обязательные поля');
         }
         
         try {
@@ -53,23 +52,11 @@ class CallBackController extends Controller
             return JsonErrorResponse::create('Некорретно заполнен телефон');
         }
         
-        $webFormId = $data['WEB_FORM_ID'];
         if (!App::getInstance()->getContainer()->get('recaptcha.service')->checkCaptcha()) {
             return JsonErrorResponse::create('Проверка капчи не пройдена');
         }
-        if (isset($data['g-recaptcha-response'])) {
-            unset($data['g-recaptcha-response']);
-        }
-        global $USER;
-        $userID = 0;
-        if ($USER->IsAuthorized()) {
-            $userID = (int)$USER->GetID();
-        }
-        unset($data['web_form_submit'], $data['WEB_FORM_ID']);
         
-        $formResult = new \CFormResult();
-        $res        = $formResult->Add($webFormId, $data, 'N', $userID > 0 ? $userID : false);
-        if ($res) {
+        if ($formService->addResult($data)) {
             JsonSuccessResponse::create('Ваша завка принята');
         } else {
             return JsonErrorResponse::create('Произошла ошибка при сохранении');
