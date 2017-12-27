@@ -404,7 +404,7 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                                 <div class="b-common-item b-common-item--catalog-item js-product-item"><span
                                             class="b-common-item__image-wrap"><img
                                                 class="b-common-item__image js-weight-img"
-                                                src="images/content/hills-cat.jpg" alt="Хиллс" title=""/></span>
+                                                src="/static/build/images/content/hills-cat.jpg" alt="Хиллс" title=""/></span>
                                     <div class="b-common-item__info-center-block"><a
                                                 class="b-common-item__description-wrap"
                                                 href="javascript:void(0);"
@@ -446,7 +446,7 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                                 <div class="b-common-item b-common-item--catalog-item js-product-item"><span
                                             class="b-common-item__image-wrap"><img
                                                 class="b-common-item__image js-weight-img"
-                                                src="images/content/clean-cat.jpg" alt="CleanCat" title=""/></span>
+                                                src="/static/build/images/content/clean-cat.jpg" alt="CleanCat" title=""/></span>
                                     <div class="b-common-item__info-center-block"><a
                                                 class="b-common-item__description-wrap"
                                                 href="javascript:void(0);"
@@ -488,7 +488,7 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                                 <div class="b-common-item b-common-item--catalog-item js-product-item"><span
                                             class="b-common-item__image-wrap"><img
                                                 class="b-common-item__image js-weight-img"
-                                                src="images/content/clean-cat.jpg" alt="CleanCat" title=""/></span>
+                                                src="/static/build/images/content/clean-cat.jpg" alt="CleanCat" title=""/></span>
                                     <div class="b-common-item__info-center-block"><a
                                                 class="b-common-item__description-wrap"
                                                 href="javascript:void(0);"
@@ -530,7 +530,7 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                                 <div class="b-common-item b-common-item--catalog-item js-product-item"><span
                                             class="b-common-item__image-wrap"><img
                                                 class="b-common-item__image js-weight-img"
-                                                src="images/content/hills-cat.jpg" alt="Хиллс" title=""/></span>
+                                                src="/static/build/images/content/hills-cat.jpg" alt="Хиллс" title=""/></span>
                                     <div class="b-common-item__info-center-block"><a
                                                 class="b-common-item__description-wrap"
                                                 href="javascript:void(0);"
@@ -572,7 +572,7 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                                 <div class="b-common-item b-common-item--catalog-item js-product-item"><span
                                             class="b-common-item__image-wrap"><img
                                                 class="b-common-item__image js-weight-img"
-                                                src="images/content/clean-cat.jpg" alt="CleanCat" title=""/></span>
+                                                src="/static/build/images/content/clean-cat.jpg" alt="CleanCat" title=""/></span>
                                     <div class="b-common-item__info-center-block"><a
                                                 class="b-common-item__description-wrap"
                                                 href="javascript:void(0);"
@@ -614,7 +614,7 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                                 <div class="b-common-item b-common-item--catalog-item js-product-item"><span
                                             class="b-common-item__image-wrap"><img
                                                 class="b-common-item__image js-weight-img"
-                                                src="images/content/clean-cat.jpg" alt="CleanCat" title=""/></span>
+                                                src="/static/build/images/content/clean-cat.jpg" alt="CleanCat" title=""/></span>
                                     <div class="b-common-item__info-center-block"><a
                                                 class="b-common-item__description-wrap"
                                                 href="javascript:void(0);"
@@ -656,7 +656,7 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                                 <div class="b-common-item b-common-item--catalog-item js-product-item"><span
                                             class="b-common-item__image-wrap"><img
                                                 class="b-common-item__image js-weight-img"
-                                                src="images/content/hills-cat.jpg" alt="Хиллс" title=""/></span>
+                                                src="/static/build/images/content/hills-cat.jpg" alt="Хиллс" title=""/></span>
                                     <div class="b-common-item__info-center-block"><a
                                                 class="b-common-item__description-wrap"
                                                 href="javascript:void(0);"
@@ -698,7 +698,7 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                                 <div class="b-common-item b-common-item--catalog-item js-product-item"><span
                                             class="b-common-item__image-wrap"><img
                                                 class="b-common-item__image js-weight-img"
-                                                src="images/content/clean-cat.jpg" alt="CleanCat" title=""/></span>
+                                                src="/static/build/images/content/clean-cat.jpg" alt="CleanCat" title=""/></span>
                                     <div class="b-common-item__info-center-block"><a
                                                 class="b-common-item__description-wrap"
                                                 href="javascript:void(0);"
@@ -740,7 +740,7 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                                 <div class="b-common-item b-common-item--catalog-item js-product-item"><span
                                             class="b-common-item__image-wrap"><img
                                                 class="b-common-item__image js-weight-img"
-                                                src="images/content/clean-cat.jpg" alt="CleanCat" title=""/></span>
+                                                src="/static/build/images/content/clean-cat.jpg" alt="CleanCat" title=""/></span>
                                     <div class="b-common-item__info-center-block"><a
                                                 class="b-common-item__description-wrap"
                                                 href="javascript:void(0);"
