@@ -23,7 +23,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 $product = $arResult['PRODUCT'];
 
 $arResult['OFFERS'] = (new OfferQuery())
-    ->withFilterParameter('=PROPERTY_CML2_LINK', $offer->getId())
+    ->withFilterParameter('=PROPERTY_CML2_LINK', $product->getId())
     ->exec()
     ->toArray();
 
