@@ -18,7 +18,7 @@ use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\Comments\Exception\EmptyUserDataComments;
 use FourPaws\Comments\Exception\ErrorAddComment;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
-use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Exception\WrongEmailException;
 use Psr\Cache\InvalidArgumentException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -26,14 +26,14 @@ use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceExce
 
 /**
  * Class CommentsController
+ *
  * @package FourPaws\Comments\AjaxController
  * @Route("/comments")
  */
 class CommentsController extends Controller
 {
     /**
-     * @return \FourPaws\App\Response\JsonResponse
-     * @throws \LogicException
+     * @return JsonResponse
      */
     public function addAction() : JsonResponse
     {
@@ -45,27 +45,31 @@ class CommentsController extends Controller
             if ($res) {
                 $json =
                     JsonSuccessResponse::create('Ваш комментарий успешно отправлен, он появится здесь после проверки');
+            } else {
+                $json = JsonErrorResponse::create('Ошибка добавления комментария');
             }
-        } catch (LoaderException $e) {
-            $json = JsonErrorResponse::create('Ошибка загрузки модуля');
-        } catch (SystemException $e) {
-        } catch (NotAuthorizedException $e) {
-        } catch (ApplicationCreateException $e) {
-        } catch (ServiceCircularReferenceException $e) {
         } catch (WrongPhoneNumberException $e) {
-        } catch (\RuntimeException $e) {
+            $json = JsonErrorResponse::create('Введен некорректный номер телефона');
         } catch (EmptyUserDataComments $e) {
             $json = JsonErrorResponse::create($e->getMessage());
         } catch (ErrorAddComment $e) {
             $json = JsonErrorResponse::create($e->getMessage());
+        } catch (WrongEmailException $e) {
+            $json = JsonErrorResponse::create($e->getMessage());
+        } catch (LoaderException $e) {
+        } catch (SystemException $e) {
+        } catch (ApplicationCreateException $e) {
+        } catch (ServiceCircularReferenceException $e) {
+        } catch (\RuntimeException $e) {
+        } catch (\LogicException $e) {
         }
         
         return $json;
     }
     
     /**
-     * @return \FourPaws\App\Response\JsonResponse
      * @throws \LogicException
+     * @return JsonResponse
      */
     public function nextAction() : JsonResponse
     {
@@ -79,11 +83,17 @@ class CommentsController extends Controller
         } catch (ArgumentException $e) {
             $json = JsonErrorResponse::create('Ошибка - неверные параметры ' . $e->getMessage());
         } catch (LoaderException $e) {
+            $json = JsonErrorResponse::create('Ошибка1 ' . $e->getMessage());
         } catch (SystemException $e) {
+            $json = JsonErrorResponse::create('Ошибка2 ' . $e->getMessage());
         } catch (ApplicationCreateException $e) {
+            $json = JsonErrorResponse::create('Ошибка3 ' . $e->getMessage());
         } catch (ServiceCircularReferenceException $e) {
+            $json = JsonErrorResponse::create('Ошибка4 ' . $e->getMessage());
         } catch (InvalidArgumentException $e) {
+            $json = JsonErrorResponse::create('Ошибка5 ' . $e->getMessage());
         } catch (\RuntimeException $e) {
+            $json = JsonErrorResponse::create('Ошибка6 ' . $e->getMessage());
         }
         
         return $json;
