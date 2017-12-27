@@ -1200,6 +1200,22 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
+     * Проверяет, под заказ данный товар или нет
+     *
+     * @return bool
+     */
+    public function isByRequest(): bool
+    {
+        $result = true;
+        /** @var Offer $offer */
+        foreach ($this->getOffers() as $offer) {
+            $result &= $offer->isByRequest();
+        }
+
+        return $result;
+    }
+    
+    /*
      * @internal Специально для Elasitcsearch храним коллецию без ключей, т.к. ассоциативный массив с торговыми
      * предложениями туда передавать нельзя: это будет объект, а не массив объектов.
      *

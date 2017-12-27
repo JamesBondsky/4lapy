@@ -387,7 +387,7 @@ class User
      */
     public function equalPassword(string $password) : bool
     {
-        $curPassword = $this->getPassword();
+        $curPassword = $this->getEncryptedPassword();
         $salt        = substr($curPassword, 0, -32);
         $db_password = substr($curPassword, -32);
         

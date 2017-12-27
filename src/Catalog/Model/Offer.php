@@ -16,6 +16,8 @@ use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\BitrixOrm\Query\CatalogProductQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\Location\LocationService;
+use FourPaws\StoreBundle\Service\StoreService;
 use JMS\Serializer\Annotation\Accessor;
 use JMS\Serializer\Annotation\Groups;
 use JMS\Serializer\Annotation\Type;
@@ -212,6 +214,11 @@ class Offer extends IblockElement
      * @var string
      */
     protected $PROPERTY_OLD_URL = '';
+
+    /**
+     * @var int
+     */
+    protected $PROPERTY_BY_REQUEST = 0;
 
     /**
      * @Type("float")
@@ -511,6 +518,11 @@ class Offer extends IblockElement
     public function getOldUrl()
     {
         return $this->PROPERTY_OLD_URL;
+    }
+
+    public function isByRequest(): bool
+    {
+        return (bool)$this->PROPERTY_BY_REQUEST;
     }
 
     /**
