@@ -6,15 +6,15 @@ use Bitrix\Currency\CurrencyManager;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Sale\Delivery\DeliveryLocationTable;
 use Bitrix\Sale\Delivery\Services\Base;
-use Bitrix\Sale\Location\LocationTable;
 use Bitrix\Sale\Shipment;
 use FourPaws\App\Application;
+use FourPaws\Catalog\Model\Offer;
+use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Location\LocationService;
+use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
-use WebArch\BitrixCache\BitrixCache;
 
 abstract class DeliveryServiceHandlerBase extends Base implements DeliveryServiceInterface
 {
@@ -132,5 +132,54 @@ abstract class DeliveryServiceHandlerBase extends Base implements DeliveryServic
         }
 
         return $result;
+    }
+
+    public static function getStocks($locationCode, $offerData)
+    {
+        /* @todo нужно как-то оптимизировать метод, т.к. он выполняется для каждого профиля доставки, который подходит по зоне */
+        if (empty($offerData)) {
+            return [];
+        }
+        /** @var StoreService $storeService */
+        $storeService = Application::getInstance()->getContainer()->get('store.service');
+        $stores = $storeService->getByLocation($locationCode);
+        if ($stores->isEmpty()) {
+            return [];
+        }
+
+        $offers = (new OfferQuery())->withFilterParameter('ID', array_keys($offerData))->exec();
+        if ($offers->isEmpty()) {
+            return [];
+        }
+
+        $offersByRequest = $offers->filter(function (Offer $offer) {
+            return $offer->isByRequest();
+        });
+        $availableOffers = $offers->filter(function (Offer $offer) {
+            return !$offer->isByRequest();
+        });
+
+        if (!$availableOffers->isEmpty()) {
+            $offerIds = [];
+            while ($offer = $availableOffers->next()) {
+                $offerIds[] = $offer->getId();
+            }
+            $stocks = $storeService->getStocks($offerIds, $stores);
+        } else {
+            $stocks = new StockCollection();
+        }
+
+        /* @todo получение графиков поставок */
+        $deliverySchedules = [];
+        if (!$offersByRequest->isEmpty()) {
+            $deliverySchedules = [];
+        }
+
+        return [
+            'AVAILABLE_OFFERS'   => $availableOffers,
+            'OFFERS_BY_REQUEST'   => $offersByRequest,
+            'STOCKS'             => $stocks,
+            'DELIVERY_SCHEDULES' => $deliverySchedules,
+        ];
     }
 }

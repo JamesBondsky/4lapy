@@ -10,7 +10,10 @@ use Bitrix\Sale\Delivery\Services\Manager;
 use Bitrix\Sale\Location\LocationTable;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Shipment;
+use FourPaws\Catalog\Model\Offer;
+use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Location\LocationService;
+use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Service\UserService;
 use WebArch\BitrixCache\BitrixCache;
 
@@ -50,10 +53,16 @@ class DeliveryService
      */
     protected $userService;
 
-    public function __construct(LocationService $locationService, UserService $userService)
+    /**
+     * @var StoreService
+     */
+    protected $storeService;
+
+    public function __construct(LocationService $locationService, UserService $userService, StoreService $storeService)
     {
         $this->locationService = $locationService;
         $this->userService = $userService;
+        $this->storeService = $storeService;
     }
 
     /**
