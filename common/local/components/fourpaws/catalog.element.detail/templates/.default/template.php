@@ -63,7 +63,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_SLIDER_VIEW);
                     if (!$offer->getImagesIds()) {
                         continue;
                     }
-                    $images = $offer->getResizeImages(240, 240);
+                    $images = $offer->getResizeImages(480, 480);
                     foreach ($images as $id => $image) {
                         /**
                          * @var ResizeImageDecorator $image
@@ -91,7 +91,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_SLIDER_VIEW);
                     if (!$offer->getImagesIds()) {
                         continue;
                     }
-                    $images = $offer->getResizeImages(40, 40);
+                    $images = $offer->getResizeImages(80, 80);
                     foreach ($images as $id => $image) {
                         /**
                          * @var ResizeImageDecorator $image
