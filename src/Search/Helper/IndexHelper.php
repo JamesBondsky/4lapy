@@ -26,20 +26,17 @@ class IndexHelper implements LoggerAwareInterface
     use LazyLoggerAwareTrait;
 
     /**
+     * @var Index
+     */
+    protected $catalogIndex;
+    /**
      * @var Client
      */
     private $client;
-
     /**
      * @var Factory
      */
     private $factory;
-
-    /**
-     * @var Index
-     */
-    protected $catalogIndex;
-
     /**
      * @var Serializer
      */
@@ -53,7 +50,7 @@ class IndexHelper implements LoggerAwareInterface
     /**
      * IndexHelper constructor.
      *
-     * @param Client $client
+     * @param Client  $client
      * @param Factory $factory
      *
      * @throws RuntimeException
@@ -232,7 +229,7 @@ class IndexHelper implements LoggerAwareInterface
                                 'PROPERTY_POPULAR'   => ['type' => 'boolean'],
                             ],
                         ],
-                        'offers' => [
+                        'offers'                           => [
                             'type'       => 'nested',
                             'properties' => [
                                 'active'                   => ['type' => 'boolean'],
@@ -339,15 +336,23 @@ class IndexHelper implements LoggerAwareInterface
     }
 
     /**
-     * **Синхронно** индексирует все товары в Elasticsearch
+     * **Синхронно** индексирует товары в Elasticsearch
      *
-     * @throws RuntimeException
+     * @param bool $filter
+     *
+     * @throws \RuntimeException
      */
-    public function indexAll()
+    public function indexAll(bool $filter = false)
     {
-        $dbAllProducts = (new ProductQuery())->withFilter([])
-                                             ->withOrder(['ID' => 'DESC'])
-                                             ->doExec();
+        $query = (new ProductQuery())
+            ->withOrder(['ID' => 'DESC']);
+
+        if ($filter) {
+            $query->withFilter([]);
+        }
+        $dbAllProducts = $query->doExec();
+
+
         $indexOk = 0;
         $indexError = 0;
         $indexTotal = $dbAllProducts->SelectedRowsCount();
@@ -418,11 +423,11 @@ class IndexHelper implements LoggerAwareInterface
         $productSearch = $this->createProductSearch();
 
         $productSearch->getQuery()
-                      ->setFrom(0)
-                      ->setSize(500)
-                      ->setSource(false)
-                      ->setSort(['_doc'])
-                      ->setParam('query', ['term' => ['brand.ID' => $brandId]]);
+            ->setFrom(0)
+            ->setSize(500)
+            ->setSource(false)
+            ->setSort(['_doc'])
+            ->setParam('query', ['term' => ['brand.ID' => $brandId]]);
 
         $scroll = $productSearch->scroll();
 
@@ -448,21 +453,6 @@ class IndexHelper implements LoggerAwareInterface
         }
 
         return $overallResult;
-    }
-
-    /**
-     * @param string $indexName
-     *
-     * @return string
-     */
-    private function getIndexName(string $indexName): string
-    {
-        $prefix = '';
-        if (EnvType::isDev()) {
-            $prefix = EnvType::DEV . '-';
-        }
-
-        return $prefix . $indexName;
     }
 
     /**
@@ -496,15 +486,15 @@ class IndexHelper implements LoggerAwareInterface
             $deletedDocumentsCount = 0;
 
             $productQuery = (new ProductQuery())->withFilter([])
-                                                ->withSelect(['ID']);
+                ->withSelect(['ID']);
 
             $productSearch = $this->createProductSearch();
 
             $productSearch->getQuery()
-                          ->setFrom(0)
-                          ->setSize(500)
-                          ->setSource(false)
-                          ->setSort(['_doc']);
+                ->setFrom(0)
+                ->setSize(500)
+                ->setSource(false)
+                ->setSort(['_doc']);
 
             $scroll = $productSearch->scroll();
 
@@ -526,7 +516,7 @@ class IndexHelper implements LoggerAwareInterface
 
                 $productFromDbIdList = [];
                 $dbProductList = $productQuery->withFilterParameter('=ID', $productFromElasticIdList)
-                                              ->doExec();
+                    ->doExec();
 
                 while ($fields = $dbProductList->Fetch()) {
                     $productFromDbIdList[] = (int)$fields['ID'];
@@ -574,5 +564,20 @@ class IndexHelper implements LoggerAwareInterface
         }
 
         return true;
+    }
+
+    /**
+     * @param string $indexName
+     *
+     * @return string
+     */
+    private function getIndexName(string $indexName): string
+    {
+        $prefix = '';
+        if (EnvType::isDev()) {
+            $prefix = EnvType::DEV . '-';
+        }
+
+        return $prefix . $indexName;
     }
 }

@@ -11,14 +11,14 @@ use Symfony\Component\Console\Question\ConfirmationQuestion;
 
 class IndexerReindex extends Command
 {
-    private $searchService;
-
     const OPT_FORCE = 'force';
+    const OPT_NO_FILTER = 'no-filter';
+    private $searchService;
 
     /**
      * ElasticReindexAll constructor.
      *
-     * @param string|null $name
+     * @param null|string $name
      *
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
@@ -34,14 +34,21 @@ class IndexerReindex extends Command
      */
     protected function configure()
     {
-        $this->setName('indexer:reindex')
-             ->setDescription('Reindex all catalog in Elasticsearch. Also could create index if it doesn\'t exist.')
-             ->addOption(
-                 self::OPT_FORCE,
-                 'f',
-                 InputOption::VALUE_NONE,
-                 'Recreate catalog index. Useful if you want to apply new mapping'
-             );
+        $this
+            ->setName('indexer:reindex')
+            ->setDescription('Reindex all catalog in Elasticsearch. Also could create index if it doesn\'t exist.')
+            ->addOption(
+                self::OPT_FORCE,
+                'f',
+                InputOption::VALUE_NONE,
+                'Recreate catalog index. Useful if you want to apply new mapping'
+            )
+            ->addOption(
+                static::OPT_NO_FILTER,
+                'nf',
+                InputOption::VALUE_NONE,
+                'Index without any filter'
+            );
     }
 
     /**
@@ -72,6 +79,7 @@ class IndexerReindex extends Command
         if ($force) {
             $output->writeln('FORCE MODE: Catalog index will be destroyed and created again!');
         }
+        $noFilter = $input->getOption(self::OPT_FORCE) ?: false;
 
         if ($this->searchService->getIndexHelper()->createCatalogIndex($force)) {
             $output->writeln(
@@ -82,7 +90,7 @@ class IndexerReindex extends Command
                 )
             );
         }
-        $this->searchService->getIndexHelper()->indexAll();
+        $this->searchService->getIndexHelper()->indexAll($noFilter);
         $this->searchService->getIndexHelper()->cleanup();
     }
 }
