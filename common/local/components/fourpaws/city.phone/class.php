@@ -14,6 +14,10 @@ class FourPawsCityPhoneComponent extends \CBitrixComponent
     /** {@inheritdoc} */
     public function onPrepareComponentParams($params): array
     {
+        if (!isset($params['CACHE_TIME'])) {
+            $params['CACHE_TIME'] = 36000000;
+        }
+
         if (empty($params['LOCATION_CODE'])) {
             /** @var \FourPaws\UserBundle\Service\UserService $userService */
             $userService = Application::getInstance()

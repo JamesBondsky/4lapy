@@ -2,7 +2,6 @@
 
 namespace FourPaws\Catalog\Model;
 
-use Bitrix\Main\FileTable;
 use CCatalogDiscountSave;
 use CCatalogProduct;
 use DateTimeImmutable;
@@ -16,9 +15,8 @@ use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\BitrixOrm\Query\CatalogProductQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Query\ProductQuery;
-use FourPaws\Location\LocationService;
-use FourPaws\StoreBundle\Service\StoreService;
 use JMS\Serializer\Annotation\Accessor;
+use JMS\Serializer\Annotation as Serializer;
 use JMS\Serializer\Annotation\Groups;
 use JMS\Serializer\Annotation\Type;
 use RuntimeException;
@@ -141,6 +139,8 @@ class Offer extends IblockElement
     protected $clothingSize;
 
     /**
+     * @Type("array")
+     * @Groups({"elastic"})
      * @var int[]
      */
     protected $PROPERTY_IMG = [];
@@ -251,6 +251,10 @@ class Offer extends IblockElement
     protected $discount = 0;
 
     /**
+     * @Serializer\Expose()
+     * @Groups({"elastic"})
+     * @Type("FourPaws\BitrixOrm\Collection\ImageCollection")
+     * @Accessor(getter="getImages", setter="withImages")
      * @var ImageCollection
      */
     protected $images;
@@ -274,6 +278,7 @@ class Offer extends IblockElement
     }
 
     /**
+     * @throws \InvalidArgumentException
      * @return ImageCollection
      */
     public function getImages(): ImageCollection
@@ -281,12 +286,7 @@ class Offer extends IblockElement
         if ($this->images instanceof ImageCollection) {
             return $this->images;
         }
-        $this->images = new ImageCollection(
-            FileTable::query()
-                ->addFilter('ID', $this->getImagesIds())
-                ->addSelect('*')
-                ->exec()
-        );
+        $this->images = ImageCollection::createFromIds($this->getImagesIds());
 
         return $this->images;
     }
@@ -316,14 +316,8 @@ class Offer extends IblockElement
             }
             return $this->resizeImages;
         }
-        $this->resizeImages = new ResizeImageCollection(
-            FileTable::query()
-                ->addFilter('ID', $this->getImagesIds())
-                ->addSelect('*')
-                ->exec(),
-            $width,
-            $height
-        );
+
+        $this->resizeImages = ResizeImageCollection::createFromImageCollection($this->getImages(), $width, $height);
 
         return $this->resizeImages;
     }

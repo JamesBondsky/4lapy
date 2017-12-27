@@ -2,10 +2,12 @@
 
 namespace FourPaws\BitrixOrm\Collection;
 
-use Bitrix\Main\DB\Result;
+use Adv\Bitrixtools\Collection\ObjectArrayCollection;
+use FourPaws\BitrixOrm\Model\Image;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
+use InvalidArgumentException;
 
-class ResizeImageCollection extends D7CollectionBase
+class ResizeImageCollection extends ObjectArrayCollection
 {
     /**
      * @var int
@@ -17,11 +19,20 @@ class ResizeImageCollection extends D7CollectionBase
      */
     private $height;
 
-    public function __construct(Result $result, int $width = 0, int $height = 0)
+    public function __construct(array $objects = [], int $width = 0, int $height = 0)
     {
-        parent::__construct($result);
+        parent::__construct($objects);
         $this->width = $width;
         $this->height = $height;
+    }
+
+    public static function createFromImageCollection(ImageCollection $imageCollection, int $width = 0, int $height = 0)
+    {
+        $collection = new ResizeImageCollection([], $width, $height);
+        foreach ($imageCollection as $image) {
+            $collection->addFromImage($image);
+        }
+        return $collection;
     }
 
     /**
@@ -69,14 +80,40 @@ class ResizeImageCollection extends D7CollectionBase
     }
 
     /**
-     * Извлечение модели
+     * @param Image $image
+     *
+     * @throws \InvalidArgumentException
+     * @return static
      */
-    protected function fetchElement(): \Generator
+    public function addFromImage(Image $image)
     {
-        while ($fields = $this->getResult()->fetch()) {
-            yield (new ResizeImageDecorator($fields))
-                ->setResizeHeight($this->height)
-                ->setResizeWidth($this->width);
+        $isExist = $this->exists(function ($key, ResizeImageDecorator $element) use ($image) {
+            return $element->getId() === $image->getId();
+        });
+        if (!$isExist) {
+            $resizedImage = new ResizeImageDecorator($image->getFields());
+            if ($this->getWidth()) {
+                $resizedImage->setResizeWidth($this->getWidth());
+            }
+            if ($this->getHeight()) {
+                $resizedImage->setResizeHeight($this->getHeight());
+            }
+
+            $this->add($resizedImage);
+        }
+        return $this;
+    }
+
+    /**
+     * @param mixed $object
+     *
+     * @throws InvalidArgumentException
+     * @return void
+     */
+    protected function checkType($object)
+    {
+        if (!($object instanceof ResizeImageDecorator)) {
+            throw new InvalidArgumentException('Попытка добавить объект не корректного типа в коллекцию');
         }
     }
 }
