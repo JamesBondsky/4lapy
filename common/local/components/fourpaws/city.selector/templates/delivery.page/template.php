@@ -29,10 +29,19 @@ $this->setFrameMode(true);
         <div class="b-delivery__town-form">
             <form class="js-delivery-form" action="<?= $arResult['DELIVERY_INFO_URL'] ?>">
                 <div class="b-delivery__town-form--input">
+                    <?php $frame = $this->createFrame()->begin() ?>
                     <input class="b-input__input-field"
                            placeholder="Введите город..."
                            type="text"
+                           value="<?= $arResult['SELECTED_CITY']['NAME'] ?>"
                            data-url="<?= $arResult['CITY_AUTOCOMPLETE_URL'] ?>">
+                    <?php $frame->beginStub() ?>
+                    <input class="b-input__input-field"
+                           placeholder="Введите город..."
+                           type="text"
+                           value="<?= $arResult['DEFAULT_CITY']['NAME'] ?>"
+                           data-url="<?= $arResult['CITY_AUTOCOMPLETE_URL'] ?>">
+                    <?php $frame->end() ?>
                 </div>
                 <button class="b-button b-button--form-inline b-button--search b-button--delivery"></button>
             </form>

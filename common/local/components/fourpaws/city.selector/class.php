@@ -12,6 +12,10 @@ class FourPawsCitySelectorComponent extends \CBitrixComponent
     /** {@inheritdoc} */
     public function onPrepareComponentParams($params): array
     {
+        if (!isset($params['CACHE_TIME'])) {
+            $params['CACHE_TIME'] = 36000000;
+        }
+
         return $params;
     }
 
