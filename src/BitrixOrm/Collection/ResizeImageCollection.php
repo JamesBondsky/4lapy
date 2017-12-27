@@ -40,7 +40,7 @@ class ResizeImageCollection extends D7CollectionBase
     public function setWidth(int $width): ResizeImageCollection
     {
         $this->width = $width;
-        $this->forAll(function (ResizeImageDecorator $image) use ($width) {
+        $this->forAll(function ($key, ResizeImageDecorator $image) use ($width) {
             $image->setWidth($width);
         });
         return $this;
@@ -62,7 +62,7 @@ class ResizeImageCollection extends D7CollectionBase
     public function setHeight(int $height): ResizeImageCollection
     {
         $this->height = $height;
-        $this->forAll(function (ResizeImageDecorator $image) use ($height) {
+        $this->forAll(function ($key, ResizeImageDecorator $image) use ($height) {
             $image->setHeight($height);
         });
         return $this;
