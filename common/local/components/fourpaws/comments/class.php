@@ -11,7 +11,6 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
-use Bitrix\Main\ObjectException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
 use FourPaws\App\Application as App;
@@ -20,7 +19,7 @@ use FourPaws\Comments\Exception\EmptyUserDataComments;
 use FourPaws\Comments\Exception\ErrorAddComment;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
-use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Exception\WrongEmailException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use Psr\Cache\InvalidArgumentException;
@@ -51,7 +50,7 @@ class CCommentsComponent extends \CBitrixComponent
     
     /**
      *
-     * @throws ObjectException
+     * @throws \FourPaws\UserBundle\Exception\WrongEmailException
      * @throws \LogicException
      * @throws ServiceNotFoundException
      * @throws LoaderException
@@ -60,7 +59,6 @@ class CCommentsComponent extends \CBitrixComponent
      * @throws EmptyUserDataComments
      * @throws ErrorAddComment
      * @throws WrongPhoneNumberException
-     * @throws NotAuthorizedException
      * @throws \RuntimeException
      * @throws ServiceCircularReferenceException
      * @return bool
@@ -82,7 +80,7 @@ class CCommentsComponent extends \CBitrixComponent
         }
         
         throw new ErrorAddComment(
-            'Произошла ошибка при добавлении комментария' . implode('<br/>', $res->getErrorMessages())
+            'Произошла ошибка при добавлении комментария ' . implode('<br/>', $res->getErrorMessages())
         );
     }
     
@@ -98,16 +96,17 @@ class CCommentsComponent extends \CBitrixComponent
     }
     
     /**
-     * @throws ObjectException
-     * @throws SystemException
-     * @throws EmptyUserDataComments
-     * @throws WrongPhoneNumberException
-     * @throws NotAuthorizedException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\Comments\Exception\EmptyUserDataComments
+     * @throws \FourPaws\Comments\Exception\ErrorAddComment
+     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
+     * @throws \FourPaws\UserBundle\Exception\WrongEmailException
      * @return array
      */
     protected function getData() : array
     {
         $data = Application::getInstance()->getContext()->getRequest()->getPostList()->toArray();
+        unset($data['action']);
         if ($this->arResult['AUTH']) {
             $data['UF_USER_ID'] = $this->userCurrentUserService->getCurrentUserId();
         } else {
@@ -116,6 +115,11 @@ class CCommentsComponent extends \CBitrixComponent
                 'LOGIC' => 'OR',
             ];
             if (!empty($data['EMAIL'])) {
+                if (filter_var($data['EMAIL'], FILTER_VALIDATE_EMAIL) === false) {
+                    throw new WrongEmailException(
+                        'Введен некорректный email'
+                    );
+                }
                 $filter[] = [
                     '=EMAIL' => $data['EMAIL'],
                 ];
@@ -126,25 +130,31 @@ class CCommentsComponent extends \CBitrixComponent
                 ];
             }
             if (count($filter) > 1) {
-                $users = $userRepository->findBy(
-                    $filter
-                );
+                $users = $userRepository->findBy($filter);
                 if (\is_array($users) && !empty($users)) {
                     foreach ($users as $user) {
+                        //echo '<pre>',print_r($data['PASSWORD'], true),'</pre>';
+                        //echo '<pre>',print_r($user->getEncryptedPassword(), true),'</pre>';
+                        //die();
                         if ($user->equalPassword($data['PASSWORD'])) {
                             $data['UF_USER_ID'] = $user->getId();
                             break;
                         }
                     }
                 }
+                if (empty($data['UF_USER_ID'])) {
+                    throw new ErrorAddComment(
+                        'Пользователь не найден, либо данные введены неверно'
+                    );
+                }
             } else {
-                /** todo сделать нормальный exception */
                 throw new EmptyUserDataComments('Не указаны параметры');
             }
         }
         unset($data['PHONE'], $data['EMAIL'], $data['PASSWORD']);
         $data['UF_ACTIVE'] = 0;
-        $data['UF_DATE']   = new Date();
+        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+        $data['UF_DATE'] = new Date();
         
         return $data;
     }
@@ -216,13 +226,14 @@ class CCommentsComponent extends \CBitrixComponent
     {
         $class = new static();
         $class->setUserBundle();
-        $request                        = Application::getInstance()->getContext()->getRequest();
-        $class->arParams['HL_ID']       = $request->getPost('hl_id');
-        $class->arParams['OBJECT_ID']   = $request->getPost('object_id');
-        $class->arParams['TYPE']        = $request->getPost('type');
-        $class->arParams['ITEMS_COUNT'] = $request->getPost('items_count');
-        $class->arParams['PAGE']        = $request->getPost('page');
-        $class->arParams['SORT_DESC']   = $request->getPost('sort_desc');
+        $request                               = Application::getInstance()->getContext()->getRequest();
+        $class->arParams['HL_ID']              = $request->get('hl_id');
+        $class->arParams['OBJECT_ID']          = $request->get('object_id');
+        $class->arParams['TYPE']               = $request->get('type');
+        $class->arParams['ITEMS_COUNT']        = $request->get('items_count');
+        $class->arParams['PAGE']               = $request->get('page');
+        $class->arParams['SORT_DESC']          = $request->get('sort_desc');
+        $class->arParams['ACTIVE_DATE_FORMAT'] = $request->get('active_date_format') ?? 'd.m.Y';
         $class->setHLEntity();
         $items = $class->getComments();
         
@@ -266,7 +277,7 @@ class CCommentsComponent extends \CBitrixComponent
                 $item['DATE_FORMATED'] = $item['UF_DATE']->format($this->arParams['ACTIVE_DATE_FORMAT']);
             }
             if ((int)$item['UF_USER_ID'] > 0) {
-                $userIds[$item['ID']] = $item['UF_USER_ID'];
+                $userIds[$item['ID']] = (int)$item['UF_USER_ID'];
             } else {
                 $item['USER_NAME'] = 'Анонимно';
             }
@@ -274,11 +285,13 @@ class CCommentsComponent extends \CBitrixComponent
         }
         if (!empty($userIds)) {
             $users = $this->userCurrentUserService->getUserRepository()->findBy(['ID' => array_unique($userIds)]);
-            foreach ($users as $user) {
-                foreach ($userIds as $itemID => $userID) {
-                    if ($userID === $user->getId()) {
-                        $items[$itemID]['USER_NAME'] = $user->getFullName();
-                        unset($userIds[$itemID]);
+            if (\is_array($users) && !empty($users)) {
+                foreach ($users as $user) {
+                    foreach ($userIds as $itemID => $userID) {
+                        if ($userID === $user->getId()) {
+                            $items[$itemID]['USER_NAME'] = $user->getFullName();
+                            unset($userIds[$itemID]);
+                        }
                     }
                 }
             }
