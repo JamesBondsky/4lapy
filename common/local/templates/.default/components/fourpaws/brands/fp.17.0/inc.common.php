@@ -4,7 +4,7 @@
 /**
  * Бренды: главная страница
  *
- * @updated: 25.12.2017
+ * @updated: 26.12.2017
  */
 
 $arParams['CACHE_TIME'] = isset($arParams['CACHE_TIME']) ? $arParams['CACHE_TIME'] : '43200';
@@ -103,7 +103,7 @@ $APPLICATION->IncludeComponent(
         'CACHE_TIME' => $arParams['CACHE_TIME'],
         'CACHE_TYPE' => $arParams['CACHE_TYPE'],
         'CHARS_COUNT' => 1,
-        'TEMPLATE_NO_CACHE' => 'Y',
+        'TEMPLATE_NO_CACHE' => 'N',
         'LETTER_PAGE_URL' => $arResult['FOLDER'].'#LETTER_REDUCED#/',
     ),
     $component,

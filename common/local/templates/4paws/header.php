@@ -93,12 +93,28 @@ $markup = PawsApplication::markup();
                     ); ?>
                 </div>
             </div>
-            <div class="b-header__menu js-minimal-menu">
+            <div class="b-header__menu js-minimal-menu js-nav-first-desktop">
                 <?php
                 /**
-                 * @todo Основное меню. Чать без dropdown Заменить компонентом и удалить файл.
+                 * Основное меню.
+                 * dropdown передается через header_dropdown_menu
                  */
-                require_once 'temp_header_menu.php';
+                $APPLICATION->IncludeComponent(
+                    'fourpaws:iblock.main.menu',
+                    'fp.17.0.top',
+                    [
+                        'MENU_IBLOCK_TYPE' => \FourPaws\Enum\IblockType::MENU,
+                        'MENU_IBLOCK_CODE' => \FourPaws\Enum\IblockCode::MAIN_MENU,
+                        'PRODUCTS_IBLOCK_TYPE' => \FourPaws\Enum\IblockType::CATALOG,
+                        'PRODUCTS_IBLOCK_CODE' => \FourPaws\Enum\IblockCode::PRODUCTS,
+                        'CACHE_TIME' => 3600,
+                        'CACHE_TYPE' => 'A',
+                    ],
+                    null,
+                    [
+                        'HIDE_ICONS' => 'Y'
+                    ]
+                );
                 ?>
                 <?php $APPLICATION->IncludeComponent(
                         'fourpaws:city.selector',
@@ -119,7 +135,7 @@ $markup = PawsApplication::markup();
     </header>
     <?php
     /**
-     * @todo добавить @see на место установки header_dropdown_menu
+     * Основное меню. dropdown
      */
     $APPLICATION->ShowViewContent('header_dropdown_menu');
     ?>
