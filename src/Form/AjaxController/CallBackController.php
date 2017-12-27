@@ -34,7 +34,7 @@ class CallBackController extends Controller
     public function addAction(Request $request) : JsonResponse
     {
         $data = $request->request->getIterator()->getArrayCopy();
-    
+        
         $formService = App::getInstance()->getContainer()->get('form.service');
         
         $requiredFields = [
@@ -42,26 +42,41 @@ class CallBackController extends Controller
             'email',
             'time_call',
         ];
-        if(!$formService->checkRequiredFields($data, $requiredFields)){
-            return JsonErrorResponse::create('Не заполнены все обязательные поля');
+        if (!$formService->checkRequiredFields($data, $requiredFields)) {
+            return JsonErrorResponse::createWithData(
+                'Не заполнены все обязательные поля',
+                ['errors' => ['emptyData' => 'Не заполнены все обязательные поля']]
+            );
         }
         
         try {
             $data['phone'] = PhoneHelper::normalizePhone($data['phone']);
         } catch (WrongPhoneNumberException $e) {
-            return JsonErrorResponse::create('Некорретно заполнен телефон');
+            return JsonErrorResponse::createWithData(
+                'Некорретно заполнен телефон',
+                ['errors' => ['wrongPhone' => 'Некорретно заполнен телефон']]
+            );
         }
         
         if (!App::getInstance()->getContainer()->get('recaptcha.service')->checkCaptcha()) {
-            return JsonErrorResponse::create('Проверка капчи не пройдена');
+            return JsonErrorResponse::createWithData(
+                'Проверка капчи не пройдена',
+                ['errors' => ['captchaError' => 'Проверка капчи не пройдена']]
+            );
         }
         
         if ($formService->addResult($data)) {
             JsonSuccessResponse::create('Ваша завка принята');
         } else {
-            return JsonErrorResponse::create('Произошла ошибка при сохранении');
+            return JsonErrorResponse::createWithData(
+                'Произошла ошибка при сохранении',
+                ['errors' => ['errorSave' => 'Произошла ошибка при сохранении']]
+            );
         }
         
-        return JsonErrorResponse::create('Неизвестаня ошибка');
+        return JsonErrorResponse::createWithData(
+            'Неизвестаня ошибка. Пожалуйста обратитесь к администратору сайта',
+            ['errors' => ['systemError' => 'Неизвестаня ошибка. Пожалуйста обратитесь к администратору сайта']]
+        );
     }
 }

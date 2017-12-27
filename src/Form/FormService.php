@@ -2,6 +2,10 @@
 
 namespace FourPaws\Form;
 
+use FourPaws\Form\Exception\FileSaveException;
+use FourPaws\Form\Exception\FileSizeException;
+use FourPaws\Form\Exception\FileTypeException;
+
 /**
  * Class FormService
  *
@@ -26,6 +30,11 @@ class FormService
         return true;
     }
     
+    /**
+     * @param $email
+     *
+     * @return bool
+     */
     public function validEmail($email)
     {
         if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
@@ -34,6 +43,11 @@ class FormService
         return true;
     }
     
+    /**
+     * @param $data
+     *
+     * @return bool
+     */
     public function addResult($data)
     {
         if (isset($data['MAX_FILE_SIZE'])) {
@@ -57,6 +71,16 @@ class FormService
         return (int)$res > 0;
     }
     
+    /**
+     * @param $fileCode
+     * @param $fileSizeMb
+     * @param $valid_types
+     *
+     * @return int
+     * @throws \FourPaws\Form\Exception\FileSaveException
+     * @throws \FourPaws\Form\Exception\FileSizeException
+     * @throws \FourPaws\Form\Exception\FileTypeException
+     */
     public function saveFile($fileCode, $fileSizeMb, $valid_types) : int{
         if (!empty($_FILES[$fileCode])) {
             $max_file_size = $fileSizeMb * 1024 * 1024;
@@ -64,23 +88,22 @@ class FormService
             $file = $_FILES[$fileCode];
             if (is_uploaded_file($file['tmp_name'])) {
                 $filename = $file['tmp_name'];
-                $ext      = end(explode('.', $file['name']));
+                /** @noinspection PassingByReferenceCorrectnessInspection */
+                $ext = end(explode('.', $file['name']));
                 if (filesize($filename) > $max_file_size) {
                     throw new FileSizeException('Файл не должен быть больше ' . $fileSizeMb . 'Мб');
                 }
                 if (!\in_array($ext, $valid_types, true)) {
-                    throw new WrongPhoneNumberException('Разрешено загружать файлы только с расширениями ' . implode(' ,', $valid_types));
+                    throw new FileTypeException('Разрешено загружать файлы только с расширениями ' . implode(' ,', $valid_types));
                 }
             
                 $fileId = (int)\CFile::SaveFile($file, 'form');
                 if ($fileId > 0) {
                     return $fileId;
                 }
-    
-                throw new WrongPhoneNumberException('Произошла ошибка при сохранении файла, попробуйте позже');
             }
     
-            throw new WrongPhoneNumberException('Произошла ошибка при сохранении файла, попробуйте позже');
+            throw new FileSaveException('Произошла ошибка при сохранении файла, попробуйте позже');
         }
         return 0;
     }
