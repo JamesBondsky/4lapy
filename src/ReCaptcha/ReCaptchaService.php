@@ -19,20 +19,19 @@ class ReCaptchaService
      */
     const SECRET_KEY = '6Le2QT4UAAAAALHxRtMAzINWrPKT82LLCo02Cf9K';
     
-    /**
-     * ReCaptchaService constructor.
-     */
-    public function __construct()
-    {
-        Asset::getInstance()->addJs('https://www.google.com/recaptcha/api.js');
-    }
     
     /**
      * @return string
      */
     public function getCaptcha() : string
     {
+        $this->addJs();
         return '<div class="g-recaptcha" data-sitekey="' . static::KEY . '>"></div>';
+    }
+    
+    public function addJs()
+    {
+        Asset::getInstance()->addJs('https://www.google.com/recaptcha/api.js');
     }
     
     /**

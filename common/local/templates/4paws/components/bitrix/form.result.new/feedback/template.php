@@ -41,7 +41,8 @@ use FourPaws\App\Application as App;
                                    type="<?= $type ?>"
                                    id="feedback-<?= $fieldSid ?>"
                                    placeholder=""
-                                   name="<?= $fieldSid ?>" <?= $question['REQUIRED'] === 'Y' ? ' required' : '' ?>/>
+                                   name="<?= $fieldSid ?>" <?= $question['REQUIRED'] === 'Y' ? ' required' : '' ?>
+                                   value="<?= $arResult['CUR_USER'][$fieldSid] ?>" />
                             <div class="b-error"><span class="js-message" title=""></span></div>
                         </div>
                     </div>
@@ -117,7 +118,7 @@ use FourPaws\App\Application as App;
             <?php
         }
     }
-    if ($arResult['isUseCaptcha'] === 'Y') {
+    if ($arResult['isUseCaptcha']) {
         ?>
         <div class="b-feedback-page__capcha">
             <?= /** @noinspection PhpUnhandledExceptionInspection */

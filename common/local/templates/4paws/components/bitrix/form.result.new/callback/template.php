@@ -41,7 +41,8 @@ use FourPaws\Decorators\SvgDecorator;
                                    type="<?= $type ?>"
                                    id="id-recall-<?= $fieldSid ?>"
                                    placeholder="Ваш телефон"
-                                   name="<?= $fieldSid ?>" />
+                                   name="<?= $fieldSid ?>"
+                                   value="<?= $arResult['CUR_USER'][$fieldSid] ?>" />
                             <div class="b-error"><span class="js-message"></span></div>
                         </div>
                         <?php
