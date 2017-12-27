@@ -36,7 +36,7 @@ $firstOffer = $offers->first();
                 title="<?= $firstOffer->getName() ?>"
         /></span>
     <div class="b-common-item__info-center-block">
-        <a class="b-common-item__description-wrap" href="javascript:void(0);" title="">
+        <a class="b-common-item__description-wrap" href="<?= $product->getDetailPageUrl() ?>" title="">
             <span class="b-clipped-text b-clipped-text--three"
             ><span><strong><?= $product->getBrand()->getName() ?>  </strong><?= $product->getName() ?></span></span>
         </a>
