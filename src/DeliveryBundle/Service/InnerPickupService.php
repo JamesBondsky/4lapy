@@ -7,6 +7,7 @@ use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\Shipment;
+use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Stock;
 use FourPaws\StoreBundle\Entity\Store;
@@ -119,7 +120,9 @@ class InnerPickupService extends DeliveryServiceHandlerBase
             }
         }
 
-        $stocks = $this->storeService->getStocks(array_keys($offerData), $stores);
+        $stockData = self::getStocks($deliveryLocation, $offerData);
+        /** @var StockCollection $stocks */
+        $stocks = $stockData['STOCKS'];
         foreach ($offerData as $offerId => $quantity) {
             if ($stocks->filterByOfferId($offerId)->isEmpty()) {
                 $result->addError(
@@ -185,10 +188,5 @@ class InnerPickupService extends DeliveryServiceHandlerBase
         }
 
         return $result;
-    }
-
-    protected function checkAvailability()
-    {
-
     }
 }

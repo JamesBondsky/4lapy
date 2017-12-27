@@ -8,6 +8,8 @@ use Bitrix\Main\EventResult;
 use Bitrix\Main\Loader;
 use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\DeliveryBundle\Service\DeliveryServiceHandlerBase;
+use FourPaws\Location\LocationService;
 use FourPaws\StoreBundle\Service\StoreService;
 
 if (!Loader::includeModule('ipol.dpd')) {
@@ -38,8 +40,19 @@ class Calculator extends \Ipolh\DPD\Delivery\DPD
                 break;
         }
 
-        $interval = explode('-', Option::get(IPOLH_DPD_MODULE, 'DELIVERY_TIME_PERIOD'));
+        if (!empty($arOrder['ITEMS'])) {
+            $offerData = [];
+            foreach ($arOrder['ITEMS'] as $item) {
+                if (!$item['PRODUCT_ID'] || !$item['QUANTITY']) {
+                    continue;
+                }
+                $offerData[$item['PRODUCT_ID']] = $item['QUANTITY'];
+            }
+            $stockData = DeliveryServiceHandlerBase::getStocks(LocationService::LOCATION_CODE_MOSCOW, $offerData);
+            /* @todo проверка остатков для DPD */
+        }
 
+        $interval = explode('-', Option::get(IPOLH_DPD_MODULE, 'DELIVERY_TIME_PERIOD'));
         if ($profile == DeliveryService::DPD_DELIVERY_CODE) {
             $result['DPD_TARIFF']['DAYS']++;
         }
@@ -86,17 +99,6 @@ class Calculator extends \Ipolh\DPD\Delivery\DPD
             $profiles = ['COURIER'];
         } else {
             $profiles = [];
-        }
-
-        /* @todo учитывать график поставок для товаров под заказ */
-        /** @var StoreService $storeService */
-        $storeService = Application::getInstance()->getContainer()->get('store.service');
-        if (!empty($shipment->getItems())) {
-            foreach ($shipment->getItems() as $item) {
-                if ($storeService->getStocksByLocation($item['PRODUCT_ID'])->isEmpty()) {
-                    return [];
-                }
-            }
         }
 
         $event = new Event(IPOLH_DPD_MODULE, "onCompabilityBefore", [$profiles, $arOrder, $arConfig]);
