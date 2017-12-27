@@ -164,26 +164,40 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         if (PhoneHelper::isPhone($phone)) {
             $phone = PhoneHelper::normalizePhone($phone);
         } else {
-            return JsonErrorResponse::create(
-                'Введен некорректный номер телефона'
+            return JsonErrorResponse::createWithData(
+                'Введен некорректный номер телефона',
+                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
             );
         }
         
         try {
             $res = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::sendConfirmSms($phone);
             if (!$res) {
-                return JsonErrorResponse::create(
-                    'Ошибка отправки смс, попробуйте позднее'
+                return JsonErrorResponse::createWithData(
+                    'Ошибка отправки смс, попробуйте позднее',
+                    ['errors' => ['errorSmsSend' => 'Ошибка отправки смс, попробуйте позднее']]
                 );
             }
         } catch (SmsSendErrorException $e) {
-            JsonErrorResponse::create('Ошибка отправки смс, попробуйте позднее');
+            return JsonErrorResponse::createWithData(
+                'Ошибка отправки смс, попробуйте позднее',
+                ['errors' => ['errorSmsSend' => 'Ошибка отправки смс, попробуйте позднее']]
+            );
         } catch (WrongPhoneNumberException $e) {
-            return JsonErrorResponse::create($e->getMessage());
+            return JsonErrorResponse::createWithData(
+                'Некорректный номер телефона',
+                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
+            );
         } catch (\RuntimeException $e) {
-            return JsonErrorResponse::create('Непредвиденная ошибка - обратитесь к администратору');
+            return JsonErrorResponse::createWithData(
+                'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
+                ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
+            );
         } catch (\Exception $e) {
-            return JsonErrorResponse::create('Непредвиденная ошибка - обратитесь к администратору');
+            return JsonErrorResponse::createWithData(
+                'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
+                ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
+            );
         }
         
         return JsonSuccessResponse::create('Смс успешно отправлено');
@@ -214,10 +228,20 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 SerializerBuilder::create()->build()->fromArray($data, User::class)
             );
             if (!$res) {
-                return JsonErrorResponse::create('При регистрации произошла ошибка');
+                return JsonErrorResponse::createWithData(
+                    'При регистрации произошла ошибка',
+                    ['errors' => ['registerError' => 'При регистрации произошла ошибка']]
+                );
             }
         } catch (BitrixRuntimeException $e) {
-            return JsonErrorResponse::create('При регистрации произошла ошибка - ' . $e->getMessage());
+            return JsonErrorResponse::createWithData(
+                'При регистрации произошла ошибка - ' . $e->getMessage(),
+                [
+                    'errors' => [
+                        'registerError' => 'При регистрации произошла ошибка - ' . $e->getMessage(),
+                    ],
+                ]
+            );
         }
         
         /** todo отправить данные в манзану о пользователе */
@@ -264,17 +288,20 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 $confirmCode
             );
             if (!$res) {
-                return JsonErrorResponse::create(
-                    'Код подтверждения не соответствует'
+                return JsonErrorResponse::createWithData(
+                    'Код подтверждения не соответствует',
+                    ['errors' => ['wrongConfirmCode' => 'Код подтверждения не соответствует']]
                 );
             }
         } catch (ExpiredConfirmCodeException $e) {
-            return JsonErrorResponse::create(
-                $e->getMessage()
+            return JsonErrorResponse::createWithData(
+                $e->getMessage(),
+                ['errors' => ['expiredConfirmCode' => $e->getMessage()]]
             );
         } catch (WrongPhoneNumberException $e) {
-            return JsonErrorResponse::create(
-                $e->getMessage()
+            return JsonErrorResponse::createWithData(
+                'Некорректный номер телефона',
+                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
             );
         }
         
@@ -380,17 +407,20 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 (string)$confirmCode
             );
             if (!$res) {
-                return JsonErrorResponse::create(
-                    'Код подтверждения не соответствует'
+                return JsonErrorResponse::createWithData(
+                    'Код подтверждения не соответствует',
+                    ['errors' => ['wrongConfirmCode' => 'Код подтверждения не соответствует']]
                 );
             }
         } catch (ExpiredConfirmCodeException $e) {
-            return JsonErrorResponse::create(
-                $e->getMessage()
+            return JsonErrorResponse::createWithData(
+                $e->getMessage(),
+                ['errors' => ['expiredConfirmCode' => $e->getMessage()]]
             );
         } catch (WrongPhoneNumberException $e) {
-            return JsonErrorResponse::create(
-                $e->getMessage()
+            return JsonErrorResponse::createWithData(
+                'Некорректный номер телефона',
+                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
             );
         }
         $mess = 'Смс прошло проверку';
@@ -426,8 +456,9 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         if (PhoneHelper::isPhone($phone)) {
             $phone = PhoneHelper::normalizePhone($phone);
         } else {
-            return JsonErrorResponse::create(
-                'Введен некорректный номер телефона'
+            return JsonErrorResponse::createWithData(
+                'Введен некорректный номер телефона',
+                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
             );
         }
         
@@ -445,8 +476,9 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         if (PhoneHelper::isPhone($phone)) {
             $phone = PhoneHelper::normalizePhone($phone);
         } else {
-            return JsonErrorResponse::create(
-                'Введен некорректный номер телефона'
+            return JsonErrorResponse::createWithData(
+                'Введен некорректный номер телефона',
+                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
             );
         }
         $mess = '';
@@ -456,8 +488,14 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         try {
             $id = $this->currentUserProvider->getUserRepository()->findIdentifierByRawLogin($phone);
         } catch (TooManyUserFoundException $e) {
-            return JsonErrorResponse::create(
-                'Найдено больше 1 пользователя с данным телефоном, пожалуйста обратитесь к администрации'
+            return JsonErrorResponse::createWithData(
+                'Найдено больше одного совпадения, обратитесь на горячую линию по телефону ' . $this->getSitePhone(),
+                [
+                    'errors' => [
+                        'moreOneUser' => 'Найдено больше одного совпадения, обратитесь на горячую линию по телефону '
+                                         . $this->getSitePhone(),
+                    ],
+                ]
             );
         } catch (UsernameNotFoundException $e) {
         }
@@ -472,18 +510,31 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 if ($res) {
                     $mess = 'Смс успешно отправлено';
                 } else {
-                    return JsonErrorResponse::create(
-                        'Ошибка при отправке смс'
+                    return JsonErrorResponse::createWithData(
+                        'Ошибка отправки смс, попробуйте позднее',
+                        ['errors' => ['errorSmsSend' => 'Ошибка отправки смс, попробуйте позднее']]
                     );
                 }
             } catch (SmsSendErrorException $e) {
-                JsonErrorResponse::create('Ошибка отправки смс, попробуйте позднее');
+                JsonErrorResponse::createWithData(
+                    'Ошибка отправки смс, попробуйте позднее',
+                    ['errors' => ['errorSmsSend' => 'Ошибка отправки смс, попробуйте позднее']]
+                );
             } catch (WrongPhoneNumberException $e) {
-                return JsonErrorResponse::create($e->getMessage());
+                return JsonErrorResponse::createWithData(
+                    'Некорректный номер телефона',
+                    ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
+                );
             } catch (\RuntimeException $e) {
-                return JsonErrorResponse::create('Непредвиденная ошибка - обратитесь к администратору');
+                return JsonErrorResponse::createWithData(
+                    'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
+                    ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
+                );
             } catch (\Exception $e) {
-                return JsonErrorResponse::create('Непредвиденная ошибка - обратитесь к администратору');
+                return JsonErrorResponse::createWithData(
+                    'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
+                    ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
+                );
             }
         }
         

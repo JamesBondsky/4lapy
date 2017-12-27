@@ -35,11 +35,6 @@ use Symfony\Component\HttpFoundation\Request;
 class AuthController extends Controller
 {
     /**
-     * @var UserAuthorizationInterface
-     */
-    private $userAuthorization;
-    
-    /**
      * @var CurrentUserProviderInterface
      */
     private $currentUserProvider;
@@ -47,9 +42,7 @@ class AuthController extends Controller
     public function __construct(
         UserAuthorizationInterface $userAuthorization,
         CurrentUserProviderInterface $currentUserProvider
-    )
-    {
-        $this->userAuthorization   = $userAuthorization;
+    ) {
         $this->currentUserProvider = $currentUserProvider;
     }
     
@@ -57,6 +50,8 @@ class AuthController extends Controller
      * @Route("/login/", methods={"POST"})
      * @param Request $request
      *
+     * @throws \FourPaws\External\Manzana\Exception\ContactUpdateException
+     * @throws \FourPaws\External\Exception\ManzanaServiceException
      * @throws ValidationException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
@@ -133,12 +128,11 @@ class AuthController extends Controller
      * @Route("/forgotPassword/", methods={"POST"})
      * @param Request $request
      *
-     * @return JsonResponse
-     * @throws ConstraintDefinitionException
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws ApplicationCreateException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
      * @throws \Exception
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @return JsonResponse
      */
     public function forgotPasswordAction(Request $request) : JsonResponse
     {
@@ -168,13 +162,13 @@ class AuthController extends Controller
      * @Route("/changePhone/", methods={"POST"})
      * @param Request $request
      *
-     * @return JsonResponse
      * @throws ServiceNotFoundException
      * @throws ValidationException
      * @throws InvalidIdentifierException
      * @throws \Exception
      * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
+     * @return JsonResponse
      */
     public function changePhoneAction(Request $request) : JsonResponse
     {
@@ -203,10 +197,10 @@ class AuthController extends Controller
      * @Route("/changePassword/", methods={"POST"})
      * @param Request $request
      *
-     * @return JsonResponse
      * @throws ServiceNotFoundException
      * @throws ValidationException
      * @throws InvalidIdentifierException
+     * @return JsonResponse
      */
     public function changePasswordAction(Request $request) : JsonResponse
     {
@@ -256,10 +250,10 @@ class AuthController extends Controller
      * @Route("/changeData/", methods={"POST"})
      * @param Request $request
      *
-     * @return JsonResponse
      * @throws ServiceNotFoundException
      * @throws ValidationException
      * @throws InvalidIdentifierException
+     * @return JsonResponse
      */
     public function changeDataAction(Request $request) : JsonResponse
     {
