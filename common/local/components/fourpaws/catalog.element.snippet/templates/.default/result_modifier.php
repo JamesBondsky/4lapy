@@ -5,7 +5,7 @@
  * @var Product          $product
  * @var Offer            $offer
  * @var Offer            $firstOffer
- * @var CBitrixComponent $this
+ * @var CBitrixComponentTemplate $this
  */
 
 use FourPaws\Catalog\Model\Offer;
@@ -27,4 +27,4 @@ $arResult['OFFERS'] = (new OfferQuery())
     ->exec()
     ->toArray();
 
-$this->setResultCacheKeys(['OFFERS']);
+$this->getComponent()->setResultCacheKeys(['OFFERS']);
