@@ -7,9 +7,11 @@
  * @var CMain                                 $APPLICATION
  */
 
+use Bitrix\Main\Grid\Declension;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
 use FourPaws\Catalog\Model\Filter\PriceFilter;
 use FourPaws\Catalog\Model\Filter\RangeFilterInterface;
+use FourPaws\Catalog\Model\Sorting;
 use FourPaws\Catalog\Model\Variant;
 use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
 use FourPaws\Decorators\SvgDecorator;
@@ -185,16 +187,26 @@ global $APPLICATION;
                 <div class="b-line b-line--sort-desktop">
                 </div>
                 <div class="b-catalog-filter__row b-catalog-filter__row--sort">
-                    <div class="b-catalog-filter__sort-part js-permutation-mobile-here"><span
-                                class="b-catalog-filter__label b-catalog-filter__label--amount">98 товаров</span><span
-                                class="b-catalog-filter__sort"><span
-                                    class="b-catalog-filter__label b-catalog-filter__label--sort">Сортировать</span><span
+                    <div class="b-catalog-filter__sort-part js-permutation-mobile-here">
+                        <?php
+                        $totalString = $productSearchResult->getProductCollection()->getTotalCount();
+                        $totalString .= (new Declension(' товар', ' товара', ' товаров'))->get($productSearchResult->getProductCollection()->getTotalCount());
+                        ?>
+                        <span class="b-catalog-filter__label b-catalog-filter__label--amount"><?=$totalString?></span>
+                        <span class="b-catalog-filter__sort"><span
+                                    class="b-catalog-filter__label b-catalog-filter__label--sort">Сортировать по</span><span
                                     class="b-select b-select--sort js-filter-select">
                       <select class="b-select__block b-select__block--sort js-filter-select" name="sort">
-                        <option value="" disabled="disabled" selected="selected">выберите
-                        </option>
-                        <option value="sort-0">по популярности</option>
-                        <option value="sort-1">по цене</option>
+                          <?php
+                          /**
+                           * @var Sorting $sort
+                           */
+                          foreach ($catalogRequest->getSorts() as $sort) {
+                              ?>
+                              <option value="<?= $sort->getValue() ?>" <?= $sort->isSelected() ? 'selected="selected"' : '' ?>><?= $sort->getName() ?></option>
+                              <?php
+                          }
+                          ?>
                       </select><span class="b-select__arrow"></span></span></span><span
                                 class="b-catalog-filter__discount js-discount-desktop-here">
                       <ul class="b-filter-link-list b-filter-link-list--filter js-discount-checkbox js-filter-checkbox">
