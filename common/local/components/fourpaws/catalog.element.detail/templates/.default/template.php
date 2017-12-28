@@ -207,7 +207,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                         <div class="b-product-information__value">Только под заказ</div>
                     </li>
                 <?php } ?>
-                <?php $frame = $this->createFrame()->begin() ?>
+                <? /* @todo сделать подгрузку инфо о доставках через ajax */ ?>
                 <?php $APPLICATION->IncludeComponent(
                     'fourpaws:catalog.product.delivery.info',
                     'detail',
@@ -218,18 +218,6 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                     false,
                     ['HIDE_ICONS' => 'Y']
                 ); ?>
-                <?php $frame->beginStub() ?>
-                <?php $APPLICATION->IncludeComponent(
-                    'fourpaws:catalog.product.delivery.info',
-                    'detail',
-                    [
-                        'OFFER'         => $offer,
-                        'LOCATION_CODE' => $locationService->getDefaultLocation()['CODE'],
-                    ],
-                    false,
-                    ['HIDE_ICONS' => 'Y']
-                ); ?>
-                <?php $frame->end() ?>
                 <?php if ($offer->getFlavourCombination()) { ?>
                     <li class="b-product-information__item">
                         <div class="b-product-information__title-info">Вкус</div>
