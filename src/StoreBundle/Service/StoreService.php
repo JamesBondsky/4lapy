@@ -3,7 +3,6 @@
 namespace FourPaws\StoreBundle\Service;
 
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
-use FourPaws\Catalog\Model\Offer;
 use FourPaws\Location\LocationService;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;

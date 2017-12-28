@@ -367,11 +367,11 @@ class Offer extends IblockElement
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
-     * @return HlbReferenceItem
+     * @return null|HlbReferenceItem
      */
     public function getColor()
     {
-        if (null === $this->colour) {
+        if ((null === $this->colour) && $this->PROPERTY_COLOUR) {
             $this->colour = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.colour'),
                 $this->PROPERTY_COLOUR
@@ -385,11 +385,11 @@ class Offer extends IblockElement
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
-     * @return HlbReferenceItem
+     * @return null|HlbReferenceItem
      */
     public function getVolumeReference()
     {
-        if (null === $this->volumeReference) {
+        if ((null === $this->volumeReference) && $this->PROPERTY_VOLUME_REFERENCE) {
             $this->volumeReference = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.volume'),
                 $this->PROPERTY_VOLUME_REFERENCE
@@ -411,11 +411,11 @@ class Offer extends IblockElement
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
-     * @return HlbReferenceItem
+     * @return null||HlbReferenceItem
      */
     public function getClothingSize()
     {
-        if (null === $this->clothingSize) {
+        if ((null === $this->clothingSize) && $this->PROPERTY_CLOTHING_SIZE) {
             $this->clothingSize = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.clothingsize'),
                 $this->PROPERTY_CLOTHING_SIZE
@@ -437,11 +437,11 @@ class Offer extends IblockElement
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
-     * @return HlbReferenceItem
+     * @return null|HlbReferenceItem
      */
     public function getKindOfPacking()
     {
-        if (null === $this->kindOfPacking) {
+        if ((null === $this->kindOfPacking) && $this->PROPERTY_KIND_OF_PACKING) {
             $this->kindOfPacking = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.packagetype'),
                 $this->PROPERTY_KIND_OF_PACKING
@@ -455,11 +455,11 @@ class Offer extends IblockElement
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
-     * @return HlbReferenceItem
+     * @return null|HlbReferenceItem
      */
     public function getSeasonYear()
     {
-        if (null === $this->seasonYear) {
+        if ((null === $this->seasonYear) && $this->PROPERTY_SEASON_YEAR) {
             $this->seasonYear = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.year'),
                 $this->PROPERTY_SEASON_YEAR
@@ -483,11 +483,11 @@ class Offer extends IblockElement
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
-     * @return HlbReferenceItem
+     * @return null|HlbReferenceItem
      */
     public function getRewardType()
     {
-        if (null === $this->rewardType) {
+        if ((null === $this->rewardType) && $this->PROPERTY_REWARD_TYPE) {
             $this->rewardType = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.rewardtype'),
                 $this->PROPERTY_REWARD_TYPE

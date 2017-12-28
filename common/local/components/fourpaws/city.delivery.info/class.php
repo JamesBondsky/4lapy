@@ -16,16 +16,6 @@ use FourPaws\UserBundle\Service\UserCitySelectInterface;
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
 {
-    const PICKUP_CODES = [
-        DeliveryService::INNER_PICKUP_CODE,
-        DeliveryService::DPD_PICKUP_CODE,
-    ];
-
-    const DELIVERY_CODES = [
-        DeliveryService::INNER_DELIVERY_CODE,
-        DeliveryService::DPD_DELIVERY_CODE,
-    ];
-
     /**
      * @var UserCitySelectInterface
      */
@@ -95,7 +85,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
         $defaultLocation = $this->locationService->getDefaultLocation();
         $currentLocation = $this->locationService->findLocationByCode($this->arParams['LOCATION_CODE']);
 
-        $allDeliveryCodes = array_merge(self::DELIVERY_CODES, self::PICKUP_CODES);
+        $allDeliveryCodes = array_merge(DeliveryService::DELIVERY_CODES, DeliveryService::PICKUP_CODES);
 
         /** @var CalculationResult[] $defaultDeliveryResult */
         $defaultResult = $this->getDeliveries($defaultLocation['CODE'], $allDeliveryCodes);
@@ -151,6 +141,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
                 'FREE_FROM'   => $currentDeliveryResult->getData()['FREE_FROM'],
                 'INTERVALS'   => $currentDeliveryResult->getData()['INTERVALS'],
                 'PERIOD_FROM' => $currentDeliveryResult->getPeriodFrom(),
+                'PERIOD_TYPE' => $currentDeliveryResult->getPeriodType() ?? CalculationResult::PERIOD_TYPE_DAY,
                 'CODE'        => $currentDeliveryResult->getData()['DELIVERY_CODE'],
             ];
         }
@@ -161,6 +152,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
                 'FREE_FROM'   => $defaultDeliveryResult->getData()['FREE_FROM'],
                 'INTERVALS'   => $defaultDeliveryResult->getData()['INTERVALS'],
                 'PERIOD_FROM' => $defaultDeliveryResult->getPeriodFrom(),
+                'PERIOD_TYPE' => $defaultDeliveryResult->getPeriodType() ?? CalculationResult::PERIOD_TYPE_DAY,
                 'CODE'        => $defaultDeliveryResult->getData()['DELIVERY_CODE'],
             ];
         }
@@ -170,6 +162,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
                 'PRICE'       => $currentPickupResult->getPrice(),
                 'CODE'        => $currentPickupResult->getData()['DELIVERY_CODE'],
                 'PERIOD_FROM' => $currentPickupResult->getPeriodFrom(),
+                'PERIOD_TYPE' => $currentPickupResult->getPeriodType() ?? CalculationResult::PERIOD_TYPE_DAY,
             ];
         }
 
@@ -178,6 +171,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
                 'PRICE'       => $defaultPickupResult->getPrice(),
                 'CODE'        => $defaultPickupResult->getData()['DELIVERY_CODE'],
                 'PERIOD_FROM' => $defaultPickupResult->getPeriodFrom(),
+                'PERIOD_TYPE' => $defaultPickupResult->getPeriodType() ?? CalculationResult::PERIOD_TYPE_DAY,
             ];
         }
 
@@ -186,7 +180,8 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
 
     /**
      * @param string $locationCode
-     * @param array  $possibleDeliveryCodes
+     * @param array $possibleDeliveryCodes
+     *
      * @return null|CalculationResult[]
      */
     protected function getDeliveries(string $locationCode, array $possibleDeliveryCodes = [])
@@ -204,7 +199,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
         if (empty($deliveries)) {
             return null;
         }
-        $deliveryCodes = self::DELIVERY_CODES;
+        $deliveryCodes = DeliveryService::DELIVERY_CODES;
         $filtered = array_filter(
             $deliveries,
             function (CalculationResult $delivery) use ($deliveryCodes) {
@@ -225,7 +220,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
         if (empty($deliveries)) {
             return null;
         }
-        $pickupCodes = self::PICKUP_CODES;
+        $pickupCodes = DeliveryService::PICKUP_CODES;
         $filtered = array_filter(
             $deliveries,
             function (CalculationResult $delivery) use ($pickupCodes) {

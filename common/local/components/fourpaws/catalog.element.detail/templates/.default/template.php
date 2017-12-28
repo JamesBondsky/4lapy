@@ -1,14 +1,16 @@
 <?php
 /**
- * @var CBitrixComponentTemplate      $this
- * @var CMain                         $APPLICATION
- * @var array                         $arParams
- * @var array                         $arResult
+ * @var CBitrixComponentTemplate $this
+ * @var CMain $APPLICATION
+ * @var array $arParams
+ * @var array $arResult
  * @var CatalogElementDetailComponent $component
- * @var Product                       $product
- * @var Offer                         $offer
+ * @var Product $product
+ * @var Offer $currentOffer
  */
 
+use FourPaws\App\Application;
+use FourPaws\Location\LocationService;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Templates\ViewsEnum;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
@@ -23,20 +25,31 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 global $APPLICATION;
 
+/** @var LocationService $locationService */
+$locationService = Application::getInstance()->getContainer()->get('location.service');
 
 /**
  * @todo Разворачивать всю цепочку нужных элементов в result_modifier
  */
 
 $product = $arResult['PRODUCT'];
+$offers = $product->getOffers();
 $brand = $product->getBrand();
-$offer = $product->getOffers()->first();
+$currentOffer = $product->getOffers()->first();
 
+$mainCombinationType = '';
+if (!empty($arResult['PACKING_COMBINATIONS'])) {
+    if ($currentOffer->getClothingSize()) {
+        $mainCombinationType = 'SIZE';
+    } else {
+        $mainCombinationType = 'VOLUME';
+    }
+}
 
 /**
  * Характеристики
  */
-$article = $offer->getXmlId();
+$article = $currentOffer->getXmlId();
 
 $product->getWeightCapacityPacking();
 
@@ -45,6 +58,8 @@ try {
 } catch (ApplicationCreateException $e) {
     $createCountry = null;
 }
+
+$this->setFrameMode(true);
 
 $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_TITLE_VIEW);
 ?>
@@ -119,115 +134,117 @@ $this->EndViewTarget();
 $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
 ?>
     <div class="b-product-card__option-product js-weight-default">
-        <div class="b-product-card__weight">Варианты фасовки</div>
-        <div class="b-weight-container b-weight-container--product">
-            <ul class="b-weight-container__list b-weight-container__list--product">
-                <li class="b-weight-container__item b-weight-container__item--product"><a
-                            class="b-weight-container__link b-weight-container__link--product js-price-product active-link"
-                            href="javascript:void(0);" data-weight="5 л" data-price="353"
-                            data-image="1"><span class="b-weight-container__line"><span
-                                    class="b-weight-container__weight">5 л</span><span
-                                    class="b-weight-container__price b-undefined">353 <span
-                                        class="b-ruble b-ruble--weight">₽</span></span></span><span
-                                class="b-weight-container__line"><span
-                                    class="b-weight-container__action">Акция</span></span></a>
-                </li>
-                <li class="b-weight-container__item b-weight-container__item--product"><a
-                            class="b-weight-container__link b-weight-container__link--product js-price-product"
-                            href="javascript:void(0);" data-weight="10 л" data-price="915"
-                            data-image="2"><span class="b-weight-container__line"><span
-                                    class="b-weight-container__weight">10 л</span><span
-                                    class="b-weight-container__price b-undefined">915 <span
-                                        class="b-ruble b-ruble--weight">₽</span></span></span><span
-                                class="b-weight-container__line"><span
-                                    class="b-weight-container__action">Акция</span></span></a>
-                </li>
-                <li class="b-weight-container__item b-weight-container__item--product"><a
-                            class="b-weight-container__link b-weight-container__link--product js-price-product"
-                            href="javascript:void(0);" data-weight="3 кг" data-price="115 000"
-                            data-image="3"><span class="b-weight-container__line"><span
-                                    class="b-weight-container__weight">3 кг</span><span
-                                    class="b-weight-container__price b-weight-container__price--big">115 000 <span
-                                        class="b-ruble b-ruble--weight">₽</span><span
-                                        class="b-ruble b-ruble--weight-big"></span></span></span> <span
-                                class="b-weight-container__line"><span
-                                    class="b-weight-container__action">Акция</span><span
-                                    class="b-weight-container__old-price b-weight-container__old-price--big">130 000 <span
-                                        class="b-ruble b-ruble--old-weight-price">₽</span></span></span></a>
-                </li>
-                <li class="b-weight-container__item b-weight-container__item--product"><a
-                            class="b-weight-container__link b-weight-container__link--product js-price-product unavailable-link"
-                            href="javascript:void(0);" data-weight="8 кг" data-price="585"
-                            data-image="4"><span class="b-weight-container__line"><span
-                                    class="b-weight-container__weight">8 кг</span><span
-                                    class="b-weight-container__price b-undefined">585 <span
-                                        class="b-ruble b-ruble--weight">₽</span></span></span><span
-                                class="b-weight-container__line"><span
-                                    class="b-weight-container__not">Нет в наличии</span></span></a>
-                </li>
-                <li class="b-weight-container__item b-weight-container__item--product"><a
-                            class="b-weight-container__link b-weight-container__link--product js-price-product"
-                            href="javascript:void(0);" data-weight="1 л" data-price="915"
-                            data-image="5"><span class="b-weight-container__line"><span
-                                    class="b-weight-container__weight">1 л</span><span
-                                    class="b-weight-container__price b-undefined">915 <span
-                                        class="b-ruble b-ruble--weight">₽</span></span></span><span
-                                class="b-weight-container__line"><span
-                                    class="b-weight-container__action">Акция</span><span
-                                    class="b-weight-container__cart"><span
-                                        class="b-cart b-cart--cart-product"><span
-                                            class="b-icon b-icon--cart-product"><svg class="b-icon__svg"
-                                                                                     viewBox="0 0 16 16 "
-                                                                                     width="16px"
-                                                                                     height="16px"><use
-                                                    class="b-icon__use"
-                                                    xlink:href="icons.svg#icon-cart"></use></svg></span></span><span
-                                        class="b-weight-container__number">2</span></span></span></a>
-                </li>
-            </ul>
-        </div>
+        <?php if (count($arResult['PACKING_COMBINATIONS']) > 1) { ?>
+            <?php if ($mainCombinationType === 'SIZE') { ?>
+                <div class="b-product-card__weight">Размеры</div>
+
+            <?php } else { ?>
+                <div class="b-product-card__weight">Варианты фасовки</div>
+            <?php } ?>
+            <div class="b-weight-container b-weight-container--product">
+                <ul class="b-weight-container__list b-weight-container__list--product">
+                    <?php foreach ($arResult['PACKING_COMBINATIONS'] as $combination) { ?>
+                        <?php
+                        /** @var Offer $firstOffer */
+                        $firstOffer = reset($combination);
+                        if ($mainCombinationType === 'SIZE') {
+                            $value = $firstOffer->getClothingSize()->getName();
+                        } else {
+                            $value = $firstOffer->getVolumeReference()->getName();
+                        }
+                        ?>
+                        <li class="b-weight-container__item b-weight-container__item--product">
+                            <a class="b-weight-container__link b-weight-container__link--product js-price-product active-link"
+                               href="javascript:void(0);"
+                               data-weight="<?= $value ?>"
+                               data-price="<?= $offer->getPrice() ?>"
+                               data-image="1">
+                                <span class="b-weight-container__line">
+                                    <span class="b-weight-container__weight"><?= $value ?></span>
+                                    <span class="b-weight-container__price b-undefined">
+                                        <?= $offer->getPrice() ?> <span class="b-ruble b-ruble--weight">₽</span>
+                                    </span>
+                                </span>
+                                <span class="b-weight-container__line">
+                                    <span class="b-weight-container__action">Акция</span>
+                                </span>
+                            </a>
+                        </li>
+                    <?php } ?>
+                </ul>
+            </div>
+        <?php } ?>
     </div>
 <?php
 $this->EndViewTarget();
 
 $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
 ?>
-    <div class="b-product-card__info">
+<?php /** @var Offer $offer */ ?>
+<?php foreach ($offers as $offer) { ?>
+    <div class="b-product-card__info" <?= ($offer->getId() != $currentOffer->getId()) ? 'style="display:none"' : '' ?>>
         <div class="b-product-information">
             <ul class="b-product-information__list">
-                <li class="b-product-information__item">
-                    <div class="b-product-information__title-info js-info-product">Вес</div>
-                    <div class="b-product-information__value">6кг</div>
-                </li>
+                <?php if ($offer->getVolumeReference()) { ?>
+                    <li class="b-product-information__item">
+                        <div class="b-product-information__title-info js-info-product">Вес</div>
+                        <div class="b-product-information__value"><?= $offer->getVolumeReference()->getName() ?></div>
+                    </li>
+                <?php } ?>
                 <li class="b-product-information__item">
                     <div class="b-product-information__title-info">Цена</div>
-                    <div class="b-product-information__value b-product-information__value--price"><span
-                                class="b-product-information__price js-price-product">3 719</span><span
-                                class="b-ruble b-ruble--product-information">&nbsp₽</span><span
-                                class="b-product-information__bonus">+112 бонусов</span>
+                    <div class="b-product-information__value b-product-information__value--price">
+                        <span class="b-product-information__price js-price-product">
+                            <?= $offer->getPrice() ?>
+                        </span>
+                        <span class="b-ruble b-ruble--product-information">&nbsp₽</span>
+                        <span class="b-product-information__bonus">+112 бонусов</span>
                     </div>
                 </li>
-                <li class="b-product-information__item">
-                    <div class="b-product-information__title-info">Наличие</div>
-                    <div class="b-product-information__value">Только под заказ</div>
-                </li>
-                <li class="b-product-information__item">
-                    <div class="b-product-information__title-info">Доставка</div>
-                    <div class="b-product-information__value">10 сентября ближайшая</div>
-                </li>
-                <li class="b-product-information__item">
-                    <div class="b-product-information__title-info">Вкус</div>
-                    <div class="b-product-information__value b-product-information__value--select">
-                        <div class="b-select b-select--product">
-                            <select class="b-select__block b-select__block--product js-select-link">
-                                <option value="../product-card.html">Ягненок/яблоки, 6 кг</option>
-                                <option value="../product-card-2-socks.html">Корова/арбуз, 6 кг</option>
-                                <option value="../product-card-3-milprazon.html">Варан/авокадо, 6 кг
-                                </option>
-                            </select>
+                <?php if ($offer->isByRequest()) { ?>
+                    <li class="b-product-information__item">
+                        <div class="b-product-information__title-info">Наличие</div>
+                        <div class="b-product-information__value">Только под заказ</div>
+                    </li>
+                <?php } ?>
+                <?php $frame = $this->createFrame()->begin() ?>
+                <?php $APPLICATION->IncludeComponent(
+                    'fourpaws:catalog.product.delivery.info',
+                    'detail',
+                    [
+                        'OFFER'         => $offer,
+                        'LOCATION_CODE' => $locationService->getCurrentLocation(),
+                    ],
+                    false,
+                    ['HIDE_ICONS' => 'Y']
+                ); ?>
+                <?php $frame->beginStub() ?>
+                <?php $APPLICATION->IncludeComponent(
+                    'fourpaws:catalog.product.delivery.info',
+                    'detail',
+                    [
+                        'OFFER'         => $offer,
+                        'LOCATION_CODE' => $locationService->getDefaultLocation()['CODE'],
+                    ],
+                    false,
+                    ['HIDE_ICONS' => 'Y']
+                ); ?>
+                <?php $frame->end() ?>
+                <?php if ($offer->getFlavourCombination()) { ?>
+                    <li class="b-product-information__item">
+                        <div class="b-product-information__title-info">Вкус</div>
+                        <div class="b-product-information__value b-product-information__value--select">
+                            <div class="b-select b-select--product">
+                                <select class="b-select__block b-select__block--product js-select-link">
+                                    <option value="../product-card.html">Ягненок/яблоки, 6 кг</option>
+                                    <option value="../product-card-2-socks.html">Корова/арбуз, 6 кг</option>
+                                    <option value="../product-card-3-milprazon.html">Варан/авокадо, 6 кг
+                                    </option>
+                                </select>
+                            </div>
                         </div>
-                    </div>
-                </li>
+                    </li>
+                <?php } ?>
             </ul>
         </div>
         <div class="b-counter-basket">
@@ -237,15 +254,19 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                 <a class="b-plus-minus__plus js-plus" href="javascript:void(0);"></a><span
                         class="b-plus-minus__by-line">Количество</span>
             </div>
-            <a class="b-counter-basket__add-set js-add-set" href="javascript:void(0)" title=""
-               data-count="6">Округлить до упаковки (6 шт.)<span>— скидка 3%</span></a>
+            <?php if ($offer->getMultiplicity()) { ?>
+                <a class="b-counter-basket__add-set js-add-set" href="javascript:void(0)" title=""
+                   data-count="<?= $offer->getMultiplicity() ?>">
+                    Округлить до упаковки (<?= $offer->getMultiplicity() ?> шт.)<span>— скидка 3%</span>
+                </a>
+            <?php } ?>
             <a class="b-counter-basket__basket-link" href="javascript:void(0)" title="">
                 <span class="b-counter-basket__basket-text">Добавить в корзину</span>
                 <span class="b-icon b-icon--advice"><?= new SvgDecorator('icon-cart', 20, 20) ?></span>
             </a>
-            <a
-                    class="b-link b-link--one-click" href="javascript:void(0)"
-                    title="Купить в 1 клик"><span class="b-link__text b-link__text--one-click">Купить в 1 клик</span>
+            <a class="b-link b-link--one-click" href="javascript:void(0)"
+               title="Купить в 1 клик">
+                <span class="b-link__text b-link__text--one-click">Купить в 1 клик</span>
             </a>
             <hr class="b-counter-basket__hr"/>
             <p class="b-counter-basket__text b-counter-basket__text--red">Акция. 4+1 подарок при
@@ -255,6 +276,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
             <p class="b-counter-basket__text">5 июня — 25 августа 2017</p>
         </div>
     </div>
+<? } ?>
 <?php
 $this->EndViewTarget();
 
@@ -316,7 +338,8 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB);
                                     <span>Страна производства</span>
                                     <div class="b-characteristics-tab__dots"></div>
                                 </div>
-                                <div class="b-characteristics-tab__characteristics-value"><?= $createCountry->getName() ?></div>
+                                <div class="b-characteristics-tab__characteristics-value"><?= $createCountry->getName(
+                                    ) ?></div>
                             </li>
                             <?php
                         }

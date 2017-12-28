@@ -72,12 +72,6 @@ class InnerPickupService extends DeliveryServiceHandlerBase
 
         $offerData = [];
         $basketCollection = $order->getBasket();
-        if ($basketCollection->isEmpty()) {
-            $result->setPeriodFrom(1);
-            $result->setPeriodType(CalculationResult::PERIOD_TYPE_HOUR);
-
-            return $result;
-        }
 
         /** @var BasketItem $basketItem */
         foreach ($basketCollection as $basketItem) {
@@ -92,6 +86,12 @@ class InnerPickupService extends DeliveryServiceHandlerBase
             $offerData[$offerId] = $quantity;
         }
 
+        if ($basketCollection->isEmpty() || empty($offerData)) {
+            $result->setPeriodFrom(1);
+            $result->setPeriodType(CalculationResult::PERIOD_TYPE_HOUR);
+
+            return $result;
+        }
         $stores = $this->storeService->getByLocation($deliveryLocation, StoreService::TYPE_ALL);
         $shops = $stores->getShops();
 
@@ -123,11 +123,12 @@ class InnerPickupService extends DeliveryServiceHandlerBase
         $stockData = self::getStocks($deliveryLocation, $offerData);
         /** @var StockCollection $stocks */
         $stocks = $stockData['STOCKS'];
+
         foreach ($offerData as $offerId => $quantity) {
             if ($stocks->filterByOfferId($offerId)->isEmpty()) {
                 $result->addError(
                     new Error(
-                        'Товар ' . $basketItem->getField(['PRODUCT_ID'] . ' недоступен')
+                        'Товар ' . $offerId . ' недоступен'
                     )
                 );
             }

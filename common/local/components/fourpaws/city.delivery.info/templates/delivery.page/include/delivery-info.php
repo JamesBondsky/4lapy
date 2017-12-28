@@ -25,7 +25,7 @@ use FourPaws\Helpers\WordHelper;
             <span>В день оформления заказа (при оформлении до 14:00) или на следующий день</span>
         <? } else { ?>
             <span>
-                Через <?= $delivery['PERIOD_FROM'] ?> <?= WordHelper::declension(
+                В течение <?= $delivery['PERIOD_FROM'] ?> <?= WordHelper::declension(
                     $delivery['PERIOD_FROM'],
                     ['день', 'дня', 'дней']
                 ) ?>

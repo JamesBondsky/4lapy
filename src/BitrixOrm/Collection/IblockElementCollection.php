@@ -16,4 +16,15 @@ class IblockElementCollection extends CdbResultCollectionBase
             yield new IblockElement($fields);
         }
     }
+
+    /**
+     * @param $id
+     *
+     * @return null|IblockElement
+     */
+    public function getById($id) {
+        return $this->filter(function (IblockElement $element) use ($id) {
+            return $element->getId() == $id;
+        })->first();
+    }
 }
