@@ -1,17 +1,24 @@
 <?php
 /**
+ * @var Request                               $request
  * @var CatalogCategorySearchRequestInterface $catalogRequest
  * @var ProductSearchResult                   $productSearchResult
  * @var PhpEngine                             $view
  * @var CMain                                 $APPLICATION
  */
 
+use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
+use FourPaws\Catalog\Model\Filter\PriceFilter;
+use FourPaws\Catalog\Model\Filter\RangeFilterInterface;
+use FourPaws\Catalog\Model\Variant;
 use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Search\Model\ProductSearchResult;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Templating\PhpEngine;
 
 global $APPLICATION;
+
 
 ?>
 <div class="b-container b-container--catalog-filter">
@@ -95,254 +102,62 @@ global $APPLICATION;
                       </svg></span></a>
                     </div>
                 </div>
-                <div class="b-filter__block">
-                    <h3 class="b-title b-title--filter-header">Бренд
-                    </h3>
-                    <ul class="b-filter-link-list b-filter-link-list--filter js-accordion-filter js-filter-checkbox">
-                        <li class="b-filter-link-list__item">
-                            <label class="b-filter-link-list__label"><input
-                                        class="b-filter-link-list__checkbox js-checkbox-change js-filter-control"
-                                        type="checkbox" name="filter-brand" value="filter-brand-0"
-                                        id="filter-brand-0"/><a
-                                        class="b-filter-link-list__link b-filter-link-list__link--checkbox"
-                                        href="javascript:void(0);" title="Chappy">Chappy</a>
-                            </label>
-                        </li>
-                        <li class="b-filter-link-list__item">
-                            <label class="b-filter-link-list__label"><input
-                                        class="b-filter-link-list__checkbox js-checkbox-change js-filter-control"
-                                        type="checkbox" name="filter-brand" value="filter-brand-1"
-                                        id="filter-brand-1"/><a
-                                        class="b-filter-link-list__link b-filter-link-list__link--checkbox"
-                                        href="javascript:void(0);"
-                                        title="Royal CaninRoyal CaninRoyal CaninRoyal Canin">Royal
-                                    CaninRoyal CaninRoyal CaninRoyal Canin</a>
-                            </label>
-                        </li>
-                        <li class="b-filter-link-list__item">
-                            <label class="b-filter-link-list__label"><input
-                                        class="b-filter-link-list__checkbox js-checkbox-change js-filter-control"
-                                        type="checkbox" name="filter-brand" value="filter-brand-2"
-                                        id="filter-brand-2"/><a
-                                        class="b-filter-link-list__link b-filter-link-list__link--checkbox"
-                                        href="javascript:void(0);" title="Hills">Hills</a>
-                            </label>
-                        </li>
-                        <li class="b-filter-link-list__item">
-                            <label class="b-filter-link-list__label"><input
-                                        class="b-filter-link-list__checkbox js-checkbox-change js-filter-control"
-                                        type="checkbox" name="filter-brand" value="filter-brand-3"
-                                        id="filter-brand-3"/><a
-                                        class="b-filter-link-list__link b-filter-link-list__link--checkbox"
-                                        href="javascript:void(0);" title="Royal Canin">Royal Canin</a>
-                            </label>
-                        </li>
-                        <li class="b-filter-link-list__item">
-                            <label class="b-filter-link-list__label"><input
-                                        class="b-filter-link-list__checkbox js-checkbox-change js-filter-control"
-                                        type="checkbox" name="filter-brand" value="filter-brand-4"
-                                        id="filter-brand-4"/><a
-                                        class="b-filter-link-list__link b-filter-link-list__link--checkbox"
-                                        href="javascript:void(0);" title="Hills">Hills</a>
-                            </label>
-                        </li>
-                        <li class="b-filter-link-list__item">
-                            <label class="b-filter-link-list__label"><input
-                                        class="b-filter-link-list__checkbox js-checkbox-change js-filter-control"
-                                        type="checkbox" name="filter-brand" value="filter-brand-5"
-                                        id="filter-brand-5"/><a
-                                        class="b-filter-link-list__link b-filter-link-list__link--checkbox"
-                                        href="javascript:void(0);" title="Royal Canin">Royal Canin</a>
-                            </label>
-                        </li>
-                        <li class="b-filter-link-list__item">
-                            <label class="b-filter-link-list__label"><input
-                                        class="b-filter-link-list__checkbox js-checkbox-change js-filter-control"
-                                        type="checkbox" name="filter-brand" value="filter-brand-6"
-                                        id="filter-brand-6"/><a
-                                        class="b-filter-link-list__link b-filter-link-list__link--checkbox"
-                                        href="javascript:void(0);" title="Hills">Hills</a>
-                            </label>
-                        </li>
-                        <li class="b-filter-link-list__item">
-                            <label class="b-filter-link-list__label"><input
-                                        class="b-filter-link-list__checkbox js-checkbox-change js-filter-control"
-                                        type="checkbox" name="filter-brand" value="filter-brand-7"
-                                        id="filter-brand-7"/><a
-                                        class="b-filter-link-list__link b-filter-link-list__link--checkbox"
-                                        href="javascript:void(0);" title="Royal Canin">Royal Canin</a>
-                            </label>
-                        </li>
-                        <li class="b-filter-link-list__item">
-                            <label class="b-filter-link-list__label"><input
-                                        class="b-filter-link-list__checkbox js-checkbox-change js-filter-control"
-                                        type="checkbox" name="filter-brand" value="filter-brand-8"
-                                        id="filter-brand-8"/><a
-                                        class="b-filter-link-list__link b-filter-link-list__link--checkbox"
-                                        href="javascript:void(0);" title="Hills">Hills</a>
-                            </label>
-                        </li>
-                    </ul>
-                    <a class="b-link b-link--filter-more js-open-filter-all" href="javascript:void(0);"
-                       title="Показать все">Показать все <span class="b-icon b-icon--more">
-                    <svg class="b-icon__svg" viewBox="0 0 10 10 " width="10px" height="10px">
-                      <use class="b-icon__use" xlink:href="icons.svg#icon-arrow-down">
-                      </use>
-                    </svg></span></a>
-                </div>
-                <div class="b-filter__block">
-                    <h3 class="b-title b-title--filter-header">Возраст
-                    </h3>
-                    <ul class="b-filter-link-list b-filter-link-list--filter js-filter-checkbox">
-                        <li class="b-filter-link-list__item">
-                            <label class="b-filter-link-list__label"><input
-                                        class="b-filter-link-list__checkbox js-checkbox-change js-filter-control"
-                                        type="checkbox" name="filter-age" value="filter-age-0" id="filter-age-0"/><a
-                                        class="b-filter-link-list__link b-filter-link-list__link--checkbox"
-                                        href="javascript:void(0);" title="Юниор (до года)">Юниор (до года)</a>
-                            </label>
-                        </li>
-                        <li class="b-filter-link-list__item">
-                            <label class="b-filter-link-list__label"><input
-                                        class="b-filter-link-list__checkbox js-checkbox-change js-filter-control"
-                                        type="checkbox" name="filter-age" value="filter-age-1" id="filter-age-1"/><a
-                                        class="b-filter-link-list__link b-filter-link-list__link--checkbox"
-                                        href="javascript:void(0);" title="Эдалт (1–7 лет)">Эдалт (1–7 лет)</a>
-                            </label>
-                        </li>
-                        <li class="b-filter-link-list__item">
-                            <label class="b-filter-link-list__label"><input
-                                        class="b-filter-link-list__checkbox js-checkbox-change js-filter-control"
-                                        disabled="disabled" type="checkbox" name="filter-age" value="filter-age-2"
-                                        id="filter-age-2"/><a
-                                        class="b-filter-link-list__link b-filter-link-list__link--checkbox"
-                                        href="javascript:void(0);" title="Сеньор (старше 7 лет)">Сеньор (старше 7
-                                    лет)</a>
-                            </label>
-                        </li>
-                    </ul>
-                </div>
-                <div class="b-filter__block">
-                    <h3 class="b-title b-title--filter-header">Размер
-                    </h3>
-                    <ul class="b-filter-link-list b-filter-link-list--filter js-filter-checkbox">
-                        <li class="b-filter-link-list__item">
-                            <label class="b-filter-link-list__label"><input
-                                        class="b-filter-link-list__checkbox js-checkbox-change js-filter-control"
-                                        disabled="disabled" type="checkbox" name="filter-size" value="filter-size-0"
-                                        id="filter-size-0"/><a
-                                        class="b-filter-link-list__link b-filter-link-list__link--checkbox"
-                                        href="javascript:void(0);" title="Мелкий">Мелкий</a>
-                            </label>
-                        </li>
-                        <li class="b-filter-link-list__item">
-                            <label class="b-filter-link-list__label"><input
-                                        class="b-filter-link-list__checkbox js-checkbox-change js-filter-control"
-                                        type="checkbox" name="filter-size" value="filter-size-1"
-                                        id="filter-size-1"/><a
-                                        class="b-filter-link-list__link b-filter-link-list__link--checkbox"
-                                        href="javascript:void(0);" title="Средний">Средний</a>
-                            </label>
-                        </li>
-                        <li class="b-filter-link-list__item">
-                            <label class="b-filter-link-list__label"><input
-                                        class="b-filter-link-list__checkbox js-checkbox-change js-filter-control"
-                                        type="checkbox" name="filter-size" value="filter-size-2"
-                                        id="filter-size-2"/><a
-                                        class="b-filter-link-list__link b-filter-link-list__link--checkbox"
-                                        href="javascript:void(0);" title="Крупный">Крупный</a>
-                            </label>
-                        </li>
-                    </ul>
-                </div>
-                <div class="b-filter__block">
-                    <h3 class="b-title b-title--filter-header">Вид упаковки
-                    </h3>
-                    <ul class="b-filter-link-list b-filter-link-list--filter js-filter-checkbox">
-                        <li class="b-filter-link-list__item">
-                            <label class="b-filter-link-list__label"><input
-                                        class="b-filter-link-list__checkbox js-checkbox-change js-filter-control"
-                                        type="checkbox" name="filter-packing-type" value="filter-packing-type-0"
-                                        id="filter-packing-type-0"/><a
-                                        class="b-filter-link-list__link b-filter-link-list__link--checkbox"
-                                        href="javascript:void(0);" title="Банка">Банка</a>
-                            </label>
-                        </li>
-                        <li class="b-filter-link-list__item">
-                            <label class="b-filter-link-list__label"><input
-                                        class="b-filter-link-list__checkbox js-checkbox-change js-filter-control"
-                                        type="checkbox" name="filter-packing-type" value="filter-packing-type-1"
-                                        id="filter-packing-type-1"/><a
-                                        class="b-filter-link-list__link b-filter-link-list__link--checkbox"
-                                        href="javascript:void(0);" title="Мешок">Мешок</a>
-                            </label>
-                        </li>
-                        <li class="b-filter-link-list__item">
-                            <label class="b-filter-link-list__label"><input
-                                        class="b-filter-link-list__checkbox js-checkbox-change js-filter-control"
-                                        disabled="disabled" type="checkbox" name="filter-packing-type"
-                                        value="filter-packing-type-2" id="filter-packing-type-2"/><a
-                                        class="b-filter-link-list__link b-filter-link-list__link--checkbox"
-                                        href="javascript:void(0);" title="Пауч">Пауч</a>
-                            </label>
-                        </li>
-                    </ul>
-                </div>
-                <div class="b-filter__block">
-                    <h3 class="b-title b-title--filter-header">Цена, <span
-                                class="b-ruble b-ruble--catalpg-filter">₽</span>
-                    </h3>
-                    <div class="b-range js-filter-input">
-                        <div class="b-range__price-block"><input
-                                    class="b-input__input-field b-input__input-field--price b-input__input-field--min js-price-min"
-                                    type="text" data-min="0" value="0" name="price-min"/><span
-                                    class="b-range__line-input">-</span><input
-                                    class="b-input__input-field b-input__input-field--price b-input__input-field--max js-price-max"
-                                    type="text" data-max="10000" value="10569" name="price-max"/>
+                <?php
+
+                $filterCollection = $catalogRequest->getCategory()->getFilters();
+
+                foreach ($filterCollection->getVisibleFilters() as $filter) {
+                    if ($filter instanceof PriceFilter) {
+                        continue;
+                    }
+                    if ($filter instanceof RangeFilterInterface) {
+                        continue;
+                    }
+                    if (!$filter->hasAvailableVariants()) {
+                        continue;
+                    }
+                    if ($filter instanceof FilterBase) {
+                        ?>
+                        <div class="b-filter__block">
+                            <h3 class="b-title b-title--filter-header">
+                                <?= $filter->getName() ?>
+                            </h3>
+                            <ul class="b-filter-link-list b-filter-link-list--filter js-filter-checkbox">
+                                <?php
+                                /**
+                                 * @var Variant $variant
+                                 */
+                                foreach ($filter->getAllVariants() as $id => $variant) {
+                                    ?>
+                                    <li class="b-filter-link-list__item">
+                                        <label class="b-filter-link-list__label">
+                                            <input
+                                                    class="b-filter-link-list__checkbox js-checkbox-change js-filter-control"
+                                                    type="checkbox"
+                                                    name="<?= $filter->getFilterCode() ?>"
+                                                    value="<?= $variant->getValue() ?>"
+                                                    id="<?= $filter->getFilterCode() ?>-<?= $id ?>"/>
+                                            <a
+                                                    class="b-filter-link-list__link b-filter-link-list__link--checkbox"
+                                                    href="javascript:void(0);"
+                                                    title="<?= $variant->getName() ?>"
+                                            ><?= $variant->getName() ?></a>
+                                        </label>
+                                    </li>
+                                    <?php
+                                } ?>
                         </div>
-                        <div class="b-range__line js-slider-range">
-                        </div>
-                    </div>
-                </div>
-                <div class="b-filter__block">
-                    <h3 class="b-title b-title--filter-header">Доступность
-                    </h3>
-                    <ul class="b-filter-link-list b-filter-link-list--filter js-filter-checkbox">
-                        <li class="b-filter-link-list__item">
-                            <label class="b-filter-link-list__label"><input
-                                        class="b-filter-link-list__checkbox js-checkbox-change js-filter-control"
-                                        type="checkbox" name="filter-availability" value="filter-availability-0"
-                                        id="filter-availability-0"/><a
-                                        class="b-filter-link-list__link b-filter-link-list__link--checkbox"
-                                        href="javascript:void(0);" title="Доставка">Доставка</a>
-                            </label>
-                        </li>
-                        <li class="b-filter-link-list__item">
-                            <label class="b-filter-link-list__label"><input
-                                        class="b-filter-link-list__checkbox js-checkbox-change js-filter-control"
-                                        type="checkbox" name="filter-availability" value="filter-availability-1"
-                                        id="filter-availability-1"/><a
-                                        class="b-filter-link-list__link b-filter-link-list__link--checkbox"
-                                        href="javascript:void(0);" title="Самовывоз">Самовывоз</a>
-                            </label>
-                        </li>
-                        <li class="b-filter-link-list__item">
-                            <label class="b-filter-link-list__label"><input
-                                        class="b-filter-link-list__checkbox js-checkbox-change js-filter-control"
-                                        type="checkbox" name="filter-availability" value="filter-availability-2"
-                                        id="filter-availability-2"/><a
-                                        class="b-filter-link-list__link b-filter-link-list__link--checkbox"
-                                        href="javascript:void(0);" title="Под заказ">Под заказ</a>
-                            </label>
-                        </li>
-                    </ul>
-                </div>
+                        <?php
+                    }
+                }
+                ?>
                 <div class="b-filter__block b-filter__block--discount js-discount-mobile-here">
                 </div>
             </form>
         </div>
-        <div class="b-filter__bottom"><a class="b-filter__button" href="javascript:void(0);" title="">Показать 300
-                товаров</a>
+        <div class="b-filter__bottom"><a class="b-filter__button" href="javascript:void(0);" title="">
+                Показать 300 товаров
+            </a>
         </div>
     </aside>
     <main class="b-catalog__main" role="main">
