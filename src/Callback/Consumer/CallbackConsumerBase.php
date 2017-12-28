@@ -3,9 +3,7 @@
 namespace FourPaws\Callback\Consumer;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use FourPaws\App\Application;
-use FourPaws\External\ManzanaService;
-use JMS\Serializer\Serializer;
+use GuzzleHttp\ClientInterface;
 use OldSound\RabbitMqBundle\RabbitMq\ConsumerInterface;
 use PhpAmqpLib\Message\AMQPMessage;
 use Psr\Log\LoggerAwareInterface;
@@ -17,23 +15,17 @@ abstract class CallbackConsumerBase implements ConsumerInterface, LoggerAwareInt
     use LoggerAwareTrait;
     
     /**
-     * @var Serializer
+     * @var ClientInterface
      */
-    protected $serializer;
+    protected $guzzle;
     
-    /**
-     * @var ManzanaService
-     */
-    protected $manzanaService;
+    protected $logger;
     
-    public function __construct(Serializer $serializer, ManzanaService $manzanaService)
+    public function __construct(ClientInterface $guzzle)
     {
-        Application::includeBitrix();
-        
-        $this->serializer     = $serializer;
-        $this->manzanaService = $manzanaService;
+        $this->guzzle = $guzzle;
         /** @noinspection PhpUnhandledExceptionInspection */
-        $this->setLogger(LoggerFactory::create('ManzanaConsumer'));
+        $this->logger = LoggerFactory::create('callbackService');
     }
     
     /**

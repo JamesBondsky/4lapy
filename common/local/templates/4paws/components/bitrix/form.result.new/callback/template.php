@@ -40,7 +40,7 @@ use FourPaws\Decorators\SvgDecorator;
                                                                                                === 'tel' ? ' js-phone-mask' : '' ?>"
                                    type="<?= $type ?>"
                                    id="id-recall-<?= $fieldSid ?>"
-                                   placeholder="Ваш телефон"
+                                   placeholder="<?= $question['CAPTION'] ?>"
                                    name="<?= $fieldSid ?>"
                                    value="<?= $arResult['CUR_USER'][$fieldSid] ?>" />
                             <div class="b-error"><span class="js-message"></span></div>
@@ -51,7 +51,7 @@ use FourPaws\Decorators\SvgDecorator;
                         ?>
                         <div class="b-select b-select--recall">
                             <select class="b-select__block b-select__block--recall" name="<?= $fieldSid ?>">
-                                <option value="" disabled="disabled" selected="selected">выберите</option>
+                                <option value="" disabled="disabled">выберите</option>
                                 <?php
                                 if (\is_array($arResult['arAnswers'][$fieldSid])
                                     && !empty($arResult['arAnswers'][$fieldSid])) {

@@ -70,7 +70,7 @@ use FourPaws\Helpers\FormHelper;
         </div>
         <?php $APPLICATION->IncludeComponent(
             'bitrix:form.result.new',
-            'feedback',
+            'callback',
             [
                 'CACHE_TIME'             => '3600000',
                 'CACHE_TYPE'             => 'A',

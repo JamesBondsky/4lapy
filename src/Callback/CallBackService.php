@@ -36,6 +36,7 @@ class CallBackService
                 ],
                 static::HREF
             );
-        App::getInstance()->getContainer()->get('old_sound_rabbit_mq.callback_producer')->publish($href);
+        /** @noinspection PhpUnhandledExceptionInspection */
+        App::getInstance()->getContainer()->get('old_sound_rabbit_mq.callbackServ_producer')->publish($href);
     }
 }
