@@ -6,7 +6,9 @@
 
 namespace FourPaws\Form\AjaxController;
 
+use Bitrix\Main\SystemException;
 use FourPaws\App\Application as App;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
@@ -16,6 +18,8 @@ use FourPaws\Form\Exception\FileTypeException;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -28,10 +32,10 @@ class FeedBackController extends Controller
     /**
      * @param Request $request
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Bitrix\Main\SystemException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
+     * @throws SystemException
+     * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
      * @return JsonResponse
      */
     public function addAction(Request $request) : JsonResponse
