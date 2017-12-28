@@ -100,3 +100,8 @@ services:
 
   form.service:
       class: FourPaws\Form\FormService
+
+  callback.soap:
+    class: FourPaws\Callback\CallbackService
+    factory: 'async.soap.factory:create'
+    arguments: ['@manzana.guzzle', '%manzana.wdsl%']
