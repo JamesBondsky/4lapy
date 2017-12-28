@@ -15,9 +15,11 @@ class Materials
 {
     /**
      * Код файла выгрузки IDoc
+     *
      * @Serializer\SerializedName("DN")
      * @Serializer\XmlAttribute()
      * @Serializer\Type("integer")
+     *
      * @var int
      */
     protected $documentNumber;
@@ -25,6 +27,7 @@ class Materials
     /**
      * @Serializer\XmlList(inline=true, entry="Mat")
      * @Serializer\Type("ArrayCollection<FourPaws\SapBundle\Dto\In\Offers\Material>")
+     *
      * @var Collection|Material[]
      */
     protected $materials;
