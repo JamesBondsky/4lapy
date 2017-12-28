@@ -6,7 +6,9 @@
 
 namespace FourPaws\Form\AjaxController;
 
+use Bitrix\Main\Loader;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Type\DateTime;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
@@ -29,6 +31,8 @@ class CallBackController extends Controller
     /**
      * @param Request $request
      *
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\ObjectException
      * @throws ServiceNotFoundException
      * @throws SystemException
      * @throws ApplicationCreateException
@@ -70,6 +74,18 @@ class CallBackController extends Controller
         }
         
         if ($formService->addResult($data)) {
+            /** @noinspection PhpUnhandledExceptionInspection */
+            Loader::includeModule('form');
+            $answer = new \CFormAnswer();
+            $arAnswer = $answer->GetByID($data['time_call'])->Fetch();
+            $timeout = $arAnswer['FIELD_PARAM'] ?? 0;
+            $date = new DateTime();
+            /** @noinspection PhpUnhandledExceptionInspection */
+            App::getInstance()->getContainer()->get('callback.service')->send(
+                $data['phone'],
+                $date->format('Y-m-d H:i:s'),
+                $timeout
+            );
             JsonSuccessResponse::create('Ваша завка принята');
         } else {
             return JsonErrorResponse::createWithData(

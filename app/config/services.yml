@@ -26,6 +26,10 @@ services:
       class: FourPaws\Callback\Consumer\CallbackConsumer
       arguments: ['@manzana.guzzle']
 
+  callback.service:
+      class: FourPaws\Callback\CallbackService
+      arguments: ['@manzana.guzzle']
+
   search.service:
     class: FourPaws\Search\SearchService
     arguments:
