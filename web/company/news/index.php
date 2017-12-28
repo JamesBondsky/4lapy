@@ -50,8 +50,7 @@ $APPLICATION->SetTitle('Новости');
         'DETAIL_PROPERTY_CODE'            => [
             0 => 'VIDEO',
             1 => 'PRODUCTS',
-            2 => '',
-            'MORE_PHOTO',
+            2 => 'MORE_PHOTO',
         ],
         'DETAIL_SET_CANONICAL_URL'        => 'Y',
         'DISPLAY_BOTTOM_PAGER'            => 'Y',

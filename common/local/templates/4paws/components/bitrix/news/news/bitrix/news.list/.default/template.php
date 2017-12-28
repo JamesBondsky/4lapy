@@ -39,8 +39,7 @@ $this->setFrameMode(true);
                href="<?= $item['DETAIL_PAGE_URL'] ?>"
                id="<?= $this->GetEditAreaId($item['ID']); ?>">
                 <div class="b-info-blocks__item-img">
-                    <?php if (!empty($item['PREVIEW_PICTURE']['SRC'])
-                              && file_exists(Application::getDocumentRoot() . $item['PREVIEW_PICTURE']['SRC'])) {
+                    <?php if (!empty($item['PREVIEW_PICTURE']['SRC'])) {
                         ?>
                         <img src="<?= $item['PREVIEW_PICTURE']['SRC'] ?>"
                              alt="<?= $item['PREVIEW_PICTURE']['ALT'] ?>"
