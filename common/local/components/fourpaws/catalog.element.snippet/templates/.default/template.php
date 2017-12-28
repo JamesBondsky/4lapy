@@ -1,12 +1,14 @@
 <?php
 /**
- * @var array   $arParams
- * @var array   $arResult
- * @var Product $product
- * @var Offer   $offer
- * @var Offer   $firstOffer
+ * @var array           $arParams
+ * @var array           $arResult
+ * @var Product         $product
+ * @var OfferCollection $offers
+ * @var Offer           $offer
+ * @var Offer           $firstOffer
  */
 
+use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Decorators\SvgDecorator;
@@ -16,8 +18,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 $product = $arResult['PRODUCT'];
+$offers = $arResult['OFFERS'];
 
-$firstOffer = $product->getOffers()->first();
+$firstOffer = $offers->first();
 
 
 ?>
@@ -33,7 +36,7 @@ $firstOffer = $product->getOffers()->first();
                 title="<?= $firstOffer->getName() ?>"
         /></span>
     <div class="b-common-item__info-center-block">
-        <a class="b-common-item__description-wrap" href="javascript:void(0);" title="">
+        <a class="b-common-item__description-wrap" href="<?= $product->getDetailPageUrl() ?>" title="">
             <span class="b-clipped-text b-clipped-text--three"
             ><span><strong><?= $product->getBrand()->getName() ?>  </strong><?= $product->getName() ?></span></span>
         </a>
@@ -62,7 +65,7 @@ $firstOffer = $product->getOffers()->first();
             </div>
         </div>
         <?php
-        if ($product->getOffers()->count() > 1) {
+        if ($offers->count() > 1) {
             ?>
             <div class="b-common-item__variant">
                 Варианты фасовки
@@ -76,7 +79,7 @@ $firstOffer = $product->getOffers()->first();
 
                 <ul class="b-weight-container__list">
                     <?php
-                    foreach ($product->getOffers() as $offer) {
+                    foreach ($offers as $offer) {
                         ?>
                         <li class="b-weight-container__item">
                             <a

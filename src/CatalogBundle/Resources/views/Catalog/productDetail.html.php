@@ -392,8 +392,7 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                                                     class="b-common-item__wrapper-link"><span class="b-cart"><span
                                                             class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 16, 16)?></span></span><span
                                                         class="b-common-item__price js-price-block">100</span> <span
-                                                        class="b-common-item__currency"><span
-                                                            class="b-ruble">Р</span></span></span></a>
+                                                        class="b-common-item__currency"><span class="b-ruble">₽</span></span></span></a>
                                     </div>
                                 </div>
                                 <div class="b-common-item b-common-item--catalog-item js-product-item"><span
@@ -430,8 +429,7 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                                                     class="b-common-item__wrapper-link"><span class="b-cart"><span
                                                             class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 16, 16)?></span></span><span
                                                         class="b-common-item__price js-price-block">2 585</span> <span
-                                                        class="b-common-item__currency"><span
-                                                            class="b-ruble">Р</span></span></span></a>
+                                                        class="b-common-item__currency"><span class="b-ruble">₽</span></span></span></a>
                                     </div>
                                 </div>
                                 <div class="b-common-item b-common-item--catalog-item js-product-item"><span
@@ -468,8 +466,7 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                                                     class="b-common-item__wrapper-link"><span class="b-cart"><span
                                                             class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 16, 16)?></span></span><span
                                                         class="b-common-item__price js-price-block">353</span> <span
-                                                        class="b-common-item__currency"><span
-                                                            class="b-ruble">Р</span></span></span></a>
+                                                        class="b-common-item__currency"><span class="b-ruble">₽</span></span></span></a>
                                     </div>
                                 </div>
                                 <div class="b-common-item b-common-item--catalog-item js-product-item"><span
@@ -506,8 +503,7 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                                                     class="b-common-item__wrapper-link"><span class="b-cart"><span
                                                             class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 16, 16)?></span></span><span
                                                         class="b-common-item__price js-price-block">353</span> <span
-                                                        class="b-common-item__currency"><span
-                                                            class="b-ruble">Р</span></span></span></a>
+                                                        class="b-common-item__currency"><span class="b-ruble">₽</span></span></span></a>
                                     </div>
                                 </div>
                                 <div class="b-common-item b-common-item--catalog-item js-product-item"><span
@@ -544,8 +540,7 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                                                     class="b-common-item__wrapper-link"><span class="b-cart"><span
                                                             class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 16, 16)?></span></span><span
                                                         class="b-common-item__price js-price-block">2 585</span> <span
-                                                        class="b-common-item__currency"><span
-                                                            class="b-ruble">Р</span></span></span></a>
+                                                        class="b-common-item__currency"><span class="b-ruble">₽</span></span></span></a>
                                     </div>
                                 </div>
                                 <div class="b-common-item b-common-item--catalog-item js-product-item"><span
@@ -582,8 +577,7 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                                                     class="b-common-item__wrapper-link"><span class="b-cart"><span
                                                             class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 16, 16)?></span></span><span
                                                         class="b-common-item__price js-price-block">353</span> <span
-                                                        class="b-common-item__currency"><span
-                                                            class="b-ruble">Р</span></span></span></a>
+                                                        class="b-common-item__currency"><span class="b-ruble">₽</span></span></span></a>
                                     </div>
                                 </div>
                                 <div class="b-common-item b-common-item--catalog-item js-product-item"><span
@@ -620,8 +614,7 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                                                     class="b-common-item__wrapper-link"><span class="b-cart"><span
                                                             class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 16, 16)?></span></span><span
                                                         class="b-common-item__price js-price-block">353</span> <span
-                                                        class="b-common-item__currency"><span
-                                                            class="b-ruble">Р</span></span></span></a>
+                                                        class="b-common-item__currency"><span class="b-ruble">₽</span></span></span></a>
                                     </div>
                                 </div>
                                 <div class="b-common-item b-common-item--catalog-item js-product-item"><span
@@ -658,8 +651,7 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                                                     class="b-common-item__wrapper-link"><span class="b-cart"><span
                                                             class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 16, 16)?></span></span><span
                                                         class="b-common-item__price js-price-block">2 585</span> <span
-                                                        class="b-common-item__currency"><span
-                                                            class="b-ruble">Р</span></span></span></a>
+                                                        class="b-common-item__currency"><span class="b-ruble">₽</span></span></span></a>
                                     </div>
                                 </div>
                                 <div class="b-common-item b-common-item--catalog-item js-product-item"><span
@@ -696,8 +688,7 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                                                     class="b-common-item__wrapper-link"><span class="b-cart"><span
                                                             class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 16, 16)?></span></span><span
                                                         class="b-common-item__price js-price-block">353</span> <span
-                                                        class="b-common-item__currency"><span
-                                                            class="b-ruble">Р</span></span></span></a>
+                                                        class="b-common-item__currency"><span class="b-ruble">₽</span></span></span></a>
                                     </div>
                                 </div>
                                 <div class="b-common-item b-common-item--catalog-item js-product-item"><span
@@ -734,8 +725,7 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                                                     class="b-common-item__wrapper-link"><span class="b-cart"><span
                                                             class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 16, 16)?></span></span><span
                                                         class="b-common-item__price js-price-block">353</span> <span
-                                                        class="b-common-item__currency"><span
-                                                            class="b-ruble">Р</span></span></span></a>
+                                                        class="b-common-item__currency"><span class="b-ruble">₽</span></span></span></a>
                                     </div>
                                 </div>
                             </div>
