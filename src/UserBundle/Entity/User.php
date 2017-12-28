@@ -7,6 +7,7 @@
 namespace FourPaws\UserBundle\Entity;
 
 use Bitrix\Main\Type\Date;
+use FourPaws\UserBundle\Exception\EmptyDateException;
 use JMS\Serializer\Annotation as Serializer;
 use Misd\PhoneNumberBundle\Validator\Constraints\PhoneNumber;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -552,11 +553,17 @@ class User
     
     /**
      * @return Date
+     *
+     * @throws EmptyDateException
      */
     public function getBirthday() : Date
     {
         /** @noinspection PhpIncompatibleReturnTypeInspection */
-        return Date::createFromText($this->birthday);
+        if ($this->birthday) {
+            return Date::createFromText($this->birthday);
+        }
+    
+        throw new EmptyDateException('Birthday date is not set');
     }
     
     /**

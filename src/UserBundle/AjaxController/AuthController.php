@@ -14,6 +14,7 @@ use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
+use FourPaws\UserBundle\Exception\EmptyDateException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -285,6 +286,12 @@ class AuthController extends Controller
             if (!$res) {
                 return JsonErrorResponse::create('Произошла ошибка при обновлении');
             }
+    
+            try {
+                $birthday = $profileClass->replaceRuMonth($user->getBirthday()->format('d #n# Y'));
+            } catch (EmptyDateException $e) {
+                $birthday = '';
+            }
             
             return JsonSuccessResponse::createWithData(
                 'Данные обновлены',
@@ -292,7 +299,7 @@ class AuthController extends Controller
                     'email'    => $user->getEmail(),
                     'fio'      => $user->getFullName(),
                     'gender'   => $user->getGenderText(),
-                    'birthday' => $profileClass->replaceRuMonth($user->getBirthday()->format('d #n# Y')),
+                    'birthday' => $birthday,
                 ]
             );
         } catch (BitrixRuntimeException $e) {
