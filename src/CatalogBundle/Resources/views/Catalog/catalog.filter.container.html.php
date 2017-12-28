@@ -189,8 +189,9 @@ global $APPLICATION;
                 <div class="b-catalog-filter__row b-catalog-filter__row--sort">
                     <div class="b-catalog-filter__sort-part js-permutation-mobile-here">
                         <?php
-                        $totalString = $productSearchResult->getProductCollection()->getTotalCount();
-                        $totalString .= (new Declension(' товар', ' товара', ' товаров'))->get($productSearchResult->getProductCollection()->getTotalCount());
+
+                        $totalString = $productSearchResult->getResultSet()->getTotalHits();
+                        $totalString .= (new Declension(' товар', ' товара', ' товаров'))->get($productSearchResult->getResultSet()->getTotalHits());
                         ?>
                         <span class="b-catalog-filter__label b-catalog-filter__label--amount"><?=$totalString?></span>
                         <span class="b-catalog-filter__sort"><span
