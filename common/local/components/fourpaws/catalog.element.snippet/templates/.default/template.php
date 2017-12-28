@@ -116,8 +116,8 @@ $firstOffer = $offers->first();
                 ><span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 12, 12) ?></span></span><span
                         class="b-common-item__price js-price-block">100</span><span
                         class="b-common-item__currency"> <span class="b-ruble">₽</span></span></span></a>
-        <div class="b-common-item__additional-information">
-            <div class="b-common-item__benefin">
+<!--        <div class="b-common-item__additional-information">-->
+<!--            <div class="b-common-item__benefin">-->
                 <!--                <span class="b-common-item__prev-price">-->
                 <?php //= $firstOffer->getPrice()?><!-- <span-->
                 <!--                            class="b-ruble b-ruble--prev-price">₽</span></span>-->
@@ -125,7 +125,7 @@ $firstOffer = $offers->first();
                 <!--                            class="b-common-item__discount-price">200</span><span-->
                 <!--                            class="b-common-item__currency"> <span-->
                 <!--                                class="b-ruble b-ruble--discount">₽</span></span></span>-->
-            </div>
-        </div>
+<!--            </div>-->
+<!--        </div>-->
     </div>
 </div>
