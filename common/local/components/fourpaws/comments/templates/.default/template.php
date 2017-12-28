@@ -169,7 +169,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                     <textarea class="b-form-review__textarea"
                               name="UF_TEXT"
                               required="required"
-                              placeholder="Оставьте ваш отзыв:"></textarea>
+                              placeholder="Оставьте ваш отзыв"></textarea>
                     <button class="b-button b-button--form-review" type="submit">Отправить</button>
                 </div>
                 <div class="b-form-review__wrapper-blocks js-success-review">
