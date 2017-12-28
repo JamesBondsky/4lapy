@@ -1,13 +1,14 @@
 <?php
 
-namespace FourPaws\Callback;
+namespace FourPaws\Callback\Consumer;
 
+use FourPaws\External\Manzana\Consumer\CallbackConsumerBase;
 use OldSound\RabbitMqBundle\RabbitMq\ConsumerInterface;
 use PhpAmqpLib\Message\AMQPMessage;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use GuzzleHttp\ClientInterface;
 
-class CallbackConsumer implements ConsumerInterface
+class CallbackConsumer extends CallbackConsumerBase
 {
     const HREF = 'https://srv_03:F6RIikaO9QvhlZ7C@4584.vats-on.ru/execsvcscriptplain?name=[VATS-ON] SiteCallBack&startparam1=#phone#&startparam2=#dateTime#&async=0&timeout=#timeout#';
     
