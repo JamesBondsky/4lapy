@@ -133,9 +133,6 @@ class CCommentsComponent extends \CBitrixComponent
                 $users = $userRepository->findBy($filter);
                 if (\is_array($users) && !empty($users)) {
                     foreach ($users as $user) {
-                        //echo '<pre>',print_r($data['PASSWORD'], true),'</pre>';
-                        //echo '<pre>',print_r($user->getEncryptedPassword(), true),'</pre>';
-                        //die();
                         if ($user->equalPassword($data['PASSWORD'])) {
                             $data['UF_USER_ID'] = $user->getId();
                             break;

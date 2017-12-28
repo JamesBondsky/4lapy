@@ -1,12 +1,14 @@
 <?php
 /**
- * @var array   $arParams
- * @var array   $arResult
- * @var Product $product
- * @var Offer   $offer
- * @var Offer   $firstOffer
+ * @var array           $arParams
+ * @var array           $arResult
+ * @var Product         $product
+ * @var OfferCollection $offers
+ * @var Offer           $offer
+ * @var Offer           $firstOffer
  */
 
+use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Decorators\SvgDecorator;
@@ -16,8 +18,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 $product = $arResult['PRODUCT'];
+$offers = $arResult['OFFERS'];
 
-$firstOffer = $product->getOffers()->first();
+$firstOffer = $offers->first();
 
 
 ?>
@@ -25,15 +28,16 @@ $firstOffer = $product->getOffers()->first();
 <div class="b-common-item b-common-item--catalog-item js-product-item">
     <!--    <span class="b-common-item__sticker-wrap" style="background-color:;data-background:;"-->
     <!--    ><img class="b-common-item__sticker" src="images/inhtml/s-15proc.svg" alt="" role="presentation"/></span>-->
-    <span class="b-common-item__image-wrap"
-    ><img
+    <a class="b-common-item__image-wrap" href="<?= $product->getDetailPageUrl() ?>">
+        <img
                 class="b-common-item__image js-weight-img"
                 src="<?= $firstOffer->getResizeImages(240, 240)->first() ?>"
                 alt="<?= $firstOffer->getName() ?>"
                 title="<?= $firstOffer->getName() ?>"
-        /></span>
+        />
+    </a>
     <div class="b-common-item__info-center-block">
-        <a class="b-common-item__description-wrap" href="javascript:void(0);" title="">
+        <a class="b-common-item__description-wrap" href="<?= $product->getDetailPageUrl() ?>" title="">
             <span class="b-clipped-text b-clipped-text--three"
             ><span><strong><?= $product->getBrand()->getName() ?>  </strong><?= $product->getName() ?></span></span>
         </a>
@@ -62,7 +66,7 @@ $firstOffer = $product->getOffers()->first();
             </div>
         </div>
         <?php
-        if ($product->getOffers()->count() > 1) {
+        if ($offers->count() > 1) {
             ?>
             <div class="b-common-item__variant">
                 Варианты фасовки
@@ -76,15 +80,14 @@ $firstOffer = $product->getOffers()->first();
 
                 <ul class="b-weight-container__list">
                     <?php
-                    foreach ($product->getOffers() as $offer) {
+                    foreach ($offers as $offer) {
                         ?>
                         <li class="b-weight-container__item">
-                            <a
+                            <span
                                     class="b-weight-container__link js-price <?= $firstOffer->getId() === $offer->getId() ? 'active-link' : '' ?>"
-                                    href="<?= $offer->getDetailPageUrl() ?>"
                                     data-price="<?= $offer->getPrice() ?>"
                                     data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
-                            >4 кг</a>
+                            >4 кг</span>
                         </li>
                         <?php
                     } ?>
@@ -111,17 +114,18 @@ $firstOffer = $product->getOffers()->first();
             <span class="b-common-item__wrapper-link"
             ><span class="b-cart"
                 ><span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 12, 12) ?></span></span><span
-                        class="b-common-item__price js-price-block">100</span><span
+                        class="b-common-item__price js-price-block"><?= $firstOffer->getPrice() ?></span><span
                         class="b-common-item__currency"> <span class="b-ruble">₽</span></span></span></a>
-        <div class="b-common-item__additional-information">
-            <div class="b-common-item__benefin">
-                <span class="b-common-item__prev-price">100 <span
-                            class="b-ruble b-ruble--prev-price">₽</span></span>
-                <span class="b-common-item__discount"><span class="b-common-item__disc">Скидка</span><span
-                            class="b-common-item__discount-price">200</span><span
-                            class="b-common-item__currency"> <span
-                                class="b-ruble b-ruble--discount">₽</span></span></span>
-            </div>
-        </div>
+        <!--        <div class="b-common-item__additional-information">-->
+        <!--            <div class="b-common-item__benefin">-->
+        <!--                <span class="b-common-item__prev-price">-->
+        <?php //= $firstOffer->getPrice()?><!-- <span-->
+        <!--                            class="b-ruble b-ruble--prev-price">₽</span></span>-->
+        <!--                <span class="b-common-item__discount"><span class="b-common-item__disc">Скидка</span><span-->
+        <!--                            class="b-common-item__discount-price">200</span><span-->
+        <!--                            class="b-common-item__currency"> <span-->
+        <!--                                class="b-ruble b-ruble--discount">₽</span></span></span>-->
+        <!--            </div>-->
+        <!--        </div>-->
     </div>
 </div>

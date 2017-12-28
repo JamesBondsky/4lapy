@@ -39,7 +39,7 @@ class CommentsController extends Controller
     {
         CBitrixComponent::includeComponentClass('fourpaws:comments');
         
-        $json = JsonErrorResponse::create('Неизвестная ошибка');
+        $json = JsonErrorResponse::create('Произошла ошибка, повторите попытку позже');
         try {
             $res = \CCommentsComponent::addComment();
             if ($res) {
@@ -75,7 +75,7 @@ class CommentsController extends Controller
     {
         CBitrixComponent::includeComponentClass('fourpaws:comments');
         
-        $json = JsonErrorResponse::create('Неизвестная ошибка');
+        $json = JsonErrorResponse::create('Произошла ошибка, повторите попытку позже');
         try {
             $items = CCommentsComponent::getNextItems();
             

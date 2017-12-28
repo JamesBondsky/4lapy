@@ -8,6 +8,7 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\FileTable;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
 use FourPaws\BitrixOrm\Model\Interfaces\FileInterface;
+use JMS\Serializer\Annotation as Serializer;
 
 /**
  * Class File
@@ -17,11 +18,15 @@ use FourPaws\BitrixOrm\Model\Interfaces\FileInterface;
 class File implements FileInterface
 {
     /**
+     * @Serializer\Type("array")
+     * @Serializer\Groups({"elastic"})
      * @var array
      */
     protected $fields;
 
     /**
+     * @Serializer\Type("string")
+     * @Serializer\Groups({"elastic"})
      * @var string
      */
     protected $src;
