@@ -20,23 +20,23 @@ class Material
      * УИД торгового предложения
      *
      * @Serializer\XmlAttribute()
-     * @Serializer\Type("int")
+     * @Serializer\Type("string")
      * @Serializer\SerializedName("Matnr")
      *
-     * @var int
+     * @var string
      */
-    protected $offerXmlId = 0;
+    protected $offerXmlId = '';
 
     /**
      * Старый номер материала
      *
      * @Serializer\XmlAttribute()
-     * @Serializer\Type("int")
+     * @Serializer\Type("string")
      * @Serializer\SerializedName("Old_Number")
      *
-     * @var int
+     * @var string
      */
-    protected $oldOfferXmlId = 0;
+    protected $oldOfferXmlId = '';
 
     /**
      * Наименование торгового предложения

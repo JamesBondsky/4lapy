@@ -2,6 +2,7 @@
 
 namespace FourPaws\SapBundle\Dto\Out\Orders;
 
+use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 
 /**
@@ -214,4 +215,130 @@ class Order
      * @var string
      */
     protected $deliveryTimeInterval = '';
+
+    /**
+     * Способ оплаты
+     * 05 – Онлайн-оплата;
+     * Пусто – для других способов оплаты.
+     *
+     * @Serializer\XmlAttribute()
+     * @Serializer\SerializedName("OrderPayType")
+     * @Serializer\Type("string")
+     *
+     * @var string
+     */
+    protected $payType = '';
+
+    /**
+     * Статус оплаты
+     *
+     * 01 – ZIMN Оплачено;
+     * 02 – ZIMN Не оплачено;
+     * 03 – ZIMN Предоплачено.
+     *
+     * @Serializer\XmlAttribute()
+     * @Serializer\SerializedName("OrderPayStat")
+     * @Serializer\Type("string")
+     *
+     * @var string
+     */
+    protected $payStatus = '';
+
+    /**
+     * Транзакция холдирования денежных средств
+     * Поле должно быть заполнено, если выбран способ оплаты 05
+     *
+     *
+     * @Serializer\XmlAttribute()
+     * @Serializer\SerializedName("Tranzaction")
+     * @Serializer\Type("string")
+     *
+     * @var string
+     */
+    protected $payHoldTransaction = '';
+
+    /**
+     * Транзакция холдирования денежных средств
+     * Поле должно быть заполнено, если выбран способ оплаты 05
+     *
+     *
+     * @Serializer\XmlAttribute()
+     * @Serializer\SerializedName("HoldDate")
+     * @Serializer\Type("DateTime<'Ymd'>")
+     * @Serializer\SkipWhenEmpty()
+     *
+     * @var null|\DateTime
+     */
+    protected $payHoldDate;
+
+    /**
+     * Номер мерчанта платежной системы
+     * Поле должно быть заполнено, если выбран способ оплаты 05.
+     *
+     * @Serializer\XmlAttribute()
+     * @Serializer\SerializedName("Merchant")
+     * @Serializer\Type("string")
+     *
+     * @var string
+     */
+    protected $payMerchantCode = '';
+
+    /**
+     * Предоплата
+     * Поле должно быть заполнено, если выбран способ оплаты 05.
+     *
+     * @Serializer\XmlAttribute()
+     * @Serializer\SerializedName("OrderPaySum")
+     * @Serializer\Type("float")
+     *
+     * @var float
+     */
+    protected $prePayedSum = 0;
+
+    /**
+     * Номер бонусной карты покупателя, 13-значный цифровой код.
+     *
+     * @Serializer\XmlAttribute()
+     * @Serializer\SerializedName("BonusCard")
+     * @Serializer\Type("string")
+     *
+     * @var string
+     */
+    protected $bonusCard = '';
+
+    /**
+     * Сумма оплаты баллами
+     *
+     * @Serializer\XmlAttribute()
+     * @Serializer\SerializedName("SUM_POINTS")
+     * @Serializer\Type("float")
+     *
+     * @var float
+     */
+    protected $bonusPayedCount = 0;
+
+    /**
+     * Товары в заказе
+     *
+     * @Serializer\XmlList(inline=true, entry="Item")
+     * @Serializer\Type("ArrayCollection<FourPaws\SapBundle\Dto\Out\Orders\OrderOffer>")
+     *
+     * @var Collection|OrderOffer[]
+     */
+    protected $products;
+
+    /**
+     * Адрес доставки для:
+     * 01 – Курьерская доставка из РЦ;
+     * 06 – Курьерская доставка из магазина;
+     * 07 – Курьерская доставка внешним подрядчиком;
+     * 08 – РЦ – магазин - домой
+     *
+     * @Serializer\SkipWhenEmpty()
+     * @Serializer\Type("FourPaws\SapBundle\Dto\Out\Orders\DeliveryAddress")
+     * @Serializer\SerializedName("DeliveryAddress")
+     *
+     * @var null|DeliveryAddress
+     */
+    protected $deliveryAddress;
 }
