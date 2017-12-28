@@ -34,7 +34,7 @@ $this->setFrameMode(true);
                 foreach ($arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'] as $photo) {
                     if (is_array($photo)) { ?>
                         <div class="b-detail-page-slider__item">
-                            <img src="<?= $photo['SRC'] ?>"
+                            <img src="<?= $photo['SRC'] ?>">
                         </div>
                     <?php }
                 } ?>

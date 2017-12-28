@@ -26,15 +26,16 @@ if (stripos($arResult['DETAIL_TEXT'], '#video#') !== false) {
     $arResult['NO_SHOW_VIDEO'] = true;
 }
 
-foreach ((array)$arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'] as &$photo) {
-    if (is_numeric($photo) && (int)$photo > 0) {
+$arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'] = [];
+foreach ((array)$arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['VALUE'] as $key => $photo) {
+    if ((int)$photo > 0) {
         /** @noinspection PhpUnhandledExceptionInspection */
         $image = CropImageDecorator::createFromPrimary($photo);
         $image->setCropWidth(890)->setCropHeight(500);
-        
-        $photo = [
-            'ID'  => $photo,
-            'SRC' => $image,
+    
+        $arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'][$key] = [
+            'ID'  => $image->getId(),
+            'SRC' => $image->getSrc(),
         ];
     }
 }
@@ -67,8 +68,10 @@ if (is_array($arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'])
         ';
         }
     }
-    $arResult['DETAIL_TEXT']    = str_replace('#slider#', $html, $arResult['DETAIL_TEXT']);
-    $arResult['NO_SHOW_SLIDER'] = true;
+    if(!empty($html)) {
+        $arResult['DETAIL_TEXT']    = str_replace('#slider#', $html, $arResult['DETAIL_TEXT']);
+        $arResult['NO_SHOW_SLIDER'] = true;
+    }
 }
 
 /**  DETAIL_PICTURE и PREVIEW_TEXT для отправки в соц сети */
