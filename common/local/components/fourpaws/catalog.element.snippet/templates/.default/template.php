@@ -114,7 +114,7 @@ $firstOffer = $offers->first();
             <span class="b-common-item__wrapper-link"
             ><span class="b-cart"
                 ><span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 12, 12) ?></span></span><span
-                        class="b-common-item__price js-price-block"><?= $offer->getPrice() ?></span><span
+                        class="b-common-item__price js-price-block"><?= $firstOffer->getPrice() ?></span><span
                         class="b-common-item__currency"> <span class="b-ruble">₽</span></span></span></a>
         <!--        <div class="b-common-item__additional-information">-->
         <!--            <div class="b-common-item__benefin">-->
