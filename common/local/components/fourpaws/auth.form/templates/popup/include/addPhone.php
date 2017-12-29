@@ -1,7 +1,8 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
-} ?>
+}
+/** @var string $phone */ ?>
 <div class="b-registration__content b-registration__content--moiety b-registration__content--step">
     <div class="b-registration__text-instruction">Пожалуйста, введите номер телефона</div>
     <form class="b-registration__form js-form-validation" data-url="/ajax/user/auth/login/" method="post">

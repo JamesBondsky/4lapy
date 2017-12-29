@@ -7,8 +7,10 @@
 namespace FourPaws\Helpers;
 
 use Bitrix\Highloadblock\HighloadBlockTable;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DB\Result;
 use Bitrix\Main\Loader;
+use Bitrix\Main\LoaderException;
 
 /**
  * Class HighloadHelper
@@ -20,8 +22,8 @@ class HighloadHelper
     /**
      * @param string $name
      *
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\LoaderException
+     * @throws ArgumentException
+     * @throws LoaderException
      * @return int
      */
     public static function getIdByName(string $name) : int
@@ -38,9 +40,9 @@ class HighloadHelper
     /**
      * @param array $params
      *
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\LoaderException
-     * @return \Bitrix\Main\DB\Result
+     * @throws ArgumentException
+     * @throws LoaderException
+     * @return Result
      */
     public static function getHighloadTableRes(array $params) : Result
     {
@@ -52,8 +54,8 @@ class HighloadHelper
     /**
      * @param string $name
      *
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\LoaderException
+     * @throws ArgumentException
+     * @throws LoaderException
      * @return int
      */
     public static function getIdByTableName(string $name) : int

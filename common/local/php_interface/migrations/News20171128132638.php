@@ -6,10 +6,20 @@
 
 namespace Sprint\Migration;
 
-class News20171128132638 extends \Adv\Bitrixtools\Migration\SprintMigrationBase
+use Adv\Bitrixtools\Migration\SprintMigrationBase;
+
+/**
+ * Class News20171128132638
+ *
+ * @package Sprint\Migration
+ */
+class News20171128132638 extends SprintMigrationBase
 {
-    protected $description = "Добавление свойств";
+    protected $description = 'Добавление свойств';
     
+    /**
+     * @return bool|void
+     */
     public function up()
     {
         $helper = new HelperManager();
@@ -453,6 +463,9 @@ class News20171128132638 extends \Adv\Bitrixtools\Migration\SprintMigrationBase
         );
     }
     
+    /**
+     * @return bool|void
+     */
     public function down()
     {
     }

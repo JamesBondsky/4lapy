@@ -21,6 +21,7 @@ use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Exception\SmsSendErrorException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
+use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
@@ -183,7 +184,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      * @param string $rawLogin
      * @param string $password
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
      * @throws \RuntimeException
      * @throws ServiceCircularReferenceException
@@ -257,9 +258,9 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
     }
     
     /**
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
+     * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
      * @return string
      */
     protected function getSitePhone() : string
@@ -377,8 +378,10 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         )) {
             /** todo отправить данные в манзану о пользователе */
             /** @var ManzanaService $manzanaService */
-            $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
-            $manzanaService->updateContact([]);
+            $manzanaService       = App::getInstance()->getContainer()->get('manzana.service');
+            $manzanaClient        = new Client();
+            $manzanaClient->phone = $phone;
+            $manzanaService->updateContact($manzanaClient);
         }
         
         return JsonSuccessResponse::create('Телефон сохранен', 200, [], ['reload' => true]);
@@ -388,8 +391,8 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      * @param Request $request
      * @param  string $phone
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
      * @throws ServiceNotFoundException
      * @throws WrongPhoneNumberException
      * @return JsonResponse
@@ -425,8 +428,8 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
     /**
      * @param string $phone
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
      * @throws ServiceNotFoundException
      * @throws WrongPhoneNumberException
      * @return JsonResponse|string
