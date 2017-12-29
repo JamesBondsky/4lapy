@@ -15,12 +15,15 @@ class CatalogElementDetailComponent extends \CBitrixComponent
     public function onPrepareComponentParams($params): array
     {
         $params['CODE'] = $params['CODE'] ?? '';
+        $params['SET_TITLE'] = ($params['SET_TITLE'] === 'Y') ? $params['SET_TITLE'] : 'N';
 
         return parent::onPrepareComponentParams($params);
     }
 
     public function executeComponent()
     {
+        global $APPLICATION;
+
         if (!$this->arParams['CODE']) {
             Tools::process404([], true, true, true);
         }
@@ -36,27 +39,12 @@ class CatalogElementDetailComponent extends \CBitrixComponent
                 Tools::process404([], true, true, true);
             }
 
-            $offers = $product->getOffers();
-            $packingCombinations = [];
-            /** @var Offer $offer */
-            foreach ($offers as $offer) {
-                if ($offer->getClothingSize() || $offer->getVolumeReference()) {
-                    $packingCombinations[$offer->getPackingCombination()] = $offer;
-                }
-                /*
-                if ($offer->getColor() && $offer->getColourCombination()) {
-                    $colors[] = $offer->getColor();
-                    $combinations['COLOR'][$offer->getColourCombination()] = $offer;
-                }
-                */
-                if ($offer->getFlavourCombination()) {
-                    /* @todo выбрать связанные товары? */
-                }
+            if ($this->arParams['SET_TITLE'] === 'Y') {
+                $APPLICATION->SetTitle($product->getName());
             }
 
             $this->arResult = [
-                'PRODUCT'      => $product,
-                'PACKING_COMBINATIONS' => $packingCombinations,
+                'PRODUCT' => $product,
             ];
 
             $this->includeComponentTemplate();

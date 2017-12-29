@@ -17,6 +17,7 @@ $product = $APPLICATION->IncludeComponent(
     '',
     [
         'CODE' => $productDetailRequest->getProductSlug(),
+        'SET_TITLE' => 'Y'
     ],
     $component
 );
