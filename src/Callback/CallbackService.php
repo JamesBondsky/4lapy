@@ -8,6 +8,7 @@ namespace FourPaws\Callback;
 
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use OldSound\RabbitMqBundle\RabbitMq\Producer;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -45,6 +46,8 @@ class CallbackService
             static::HREF
         );
         /** @noinspection PhpUnhandledExceptionInspection */
-        App::getInstance()->getContainer()->get('old_sound_rabbit_mq.callback_set_producer')->publish($href);
+        $callBackProducer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.callback_set_producer');
+        /** @var Producer $callBackProducer */
+        $callBackProducer->publish($href);
     }
 }
