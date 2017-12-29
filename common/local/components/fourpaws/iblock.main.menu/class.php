@@ -5,7 +5,7 @@
  * Class CFourPawsIBlockMainMenu
  * Компонент главного меню сайта, генерируемого по специальному инфоблоку
  *
- * @updated: 26.12.2017
+ * @updated: 28.12.2017
  */
 
 class CFourPawsIBlockMainMenu extends \CBitrixComponent {
@@ -45,6 +45,8 @@ class CFourPawsIBlockMainMenu extends \CBitrixComponent {
         if($arParams['CACHE_TYPE'] === 'N' || ($arParams['CACHE_TYPE'] === 'A' && \COption::GetOptionString('main', 'component_cache_on', 'Y') === 'N')) {
             $arParams['CACHE_TIME'] = 0;
         }
+
+        $arParams['TEMPLATE_NO_CACHE'] = isset($arParams['TEMPLATE_NO_CACHE']) && $arParams['TEMPLATE_NO_CACHE'] === 'Y' ? 'Y' : 'N';
 
         $arParams['MAX_DEPTH_LEVEL'] = isset($arParams['MAX_DEPTH_LEVEL']) ? intval($arParams['MAX_DEPTH_LEVEL']) : 4;
 
@@ -100,6 +102,9 @@ class CFourPawsIBlockMainMenu extends \CBitrixComponent {
                             if(!$arSubItem['SECTION_HREF']) {
                                 continue;
                             }
+                            if(!$arSubItem['NESTED']) {
+                                continue;
+                            }
                             if($arSubItem['SECTION_HREF']['IBLOCK_ID'] == $iProductsIBlockId) {
                                 $arResult['SECTIONS_POPULAR_BRANDS'][$arSubItem['SECTION_HREF']['ID']] = $this->getSectionPopularBrands(
                                     $arSubItem['SECTION_HREF']['ID'],
@@ -111,11 +116,17 @@ class CFourPawsIBlockMainMenu extends \CBitrixComponent {
                 }
             }
 
+            if ($arParams['TEMPLATE_NO_CACHE'] !== 'Y') {
+                $this->includeComponentTemplate();
+            }
+
             $this->endResultCache();
         }
 
-        $this->includeComponentTemplate();
-        //$this->templateCachedData = $this->getTemplateCachedData();
+        if ($arParams['TEMPLATE_NO_CACHE'] === 'Y') {
+            $this->includeComponentTemplate();
+            //$this->templateCachedData = $this->GetTemplateCachedData();
+        }
 
         return $arResult;
     }

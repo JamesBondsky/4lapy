@@ -3,15 +3,18 @@
 }
 /**
  * Главное меню сайта
+ * result_modifier.php
  *
- * @updated: 26.12.2017
+ * @updated: 28.12.2017
  */
 
 if (!$arResult['MENU_TREE']) {
     return;
 }
 
-//_log_array($arResult);
+$arParams['RESIZE_WIDTH'] = isset($arParams['RESIZE_WIDTH']) ? $arParams['RESIZE_WIDTH'] : 115;
+$arParams['RESIZE_HEIGHT'] = isset($arParams['RESIZE_HEIGHT']) ? $arParams['RESIZE_HEIGHT'] : 43;
+$arParams['RESIZE_TYPE'] = isset($arParams['RESIZE_TYPE']) ? $arParams['RESIZE_TYPE'] : 'BX_RESIZE_IMAGE_PROPORTIONAL';
 
 $funcWalkRecursive = function($arData, $funcSelf) {
     foreach ($arData as &$arItem) {
@@ -32,3 +35,47 @@ $funcWalkRecursive = function($arData, $funcSelf) {
     return $arData;    
 };
 $arResult['MENU_TREE'] = $funcWalkRecursive($arResult['MENU_TREE'], $funcWalkRecursive);
+
+// масштабирование изображений
+if ($arResult['SECTIONS_POPULAR_BRANDS']) {
+    foreach ($arResult['SECTIONS_POPULAR_BRANDS'] as &$arBrandsList) {
+        foreach($arBrandsList as &$arItem) {
+            $mImgField = false;
+            if (!empty($arItem['PREVIEW_PICTURE']) || !empty($arItem['DETAIL_PICTURE'])) {
+                $mImgField = !empty($arItem['PREVIEW_PICTURE']) ? $arItem['PREVIEW_PICTURE'] : $arItem['DETAIL_PICTURE'];
+            }
+            $arItem['PRINT_PICTURE'] = $mImgField && is_array($mImgField) ? $mImgField : array();
+            if ($mImgField) {
+                if (!empty($arParams['RESIZE_WIDTH']) && !empty($arParams['RESIZE_HEIGHT'])) {
+                    try {
+                        $bCrop = isset($arParams['RESIZE_TYPE']) && $arParams['RESIZE_TYPE'] == 'BX_RESIZE_IMAGE_EXACT';
+
+                        if (is_array($mImgField)) {
+                            $obImg = new \FourPaws\BitrixOrm\Model\ResizeImageDecorator($mImgField);
+                        } else {
+                            $obImg = \FourPaws\BitrixOrm\Model\ResizeImageDecorator::createFromPrimary($mImgField);
+                        }
+                        $obImg->setResizeWidth(!$bCrop ? $arParams['RESIZE_WIDTH'] : max(array($arParams['RESIZE_HEIGHT'], $arParams['RESIZE_WIDTH'])));
+                        $obImg->setResizeHeight(!$bCrop ? $arParams['RESIZE_HEIGHT'] : max(array($arParams['RESIZE_HEIGHT'], $arParams['RESIZE_WIDTH'])));
+
+                        if ($bCrop) {
+                            if (is_array($mImgField)) {
+                                $obImg = new \FourPaws\BitrixOrm\Model\CropImageDecorator($mImgField);
+                            } else {
+                                $obImg = \FourPaws\BitrixOrm\Model\CropImageDecorator::createFromPrimary($mImgField);
+                            }
+                            $obImg->setCropWidth($arParams['RESIZE_WIDTH']);
+                            $obImg->setCropHeight($arParams['RESIZE_HEIGHT']);
+                        }
+
+                        $arItem['PRINT_PICTURE'] = array(
+                            'SRC' => $obImg->getSrc(),
+                        );
+                    } catch (\Exception $obException) {}
+                }
+            }
+        }
+        unset($arItem);
+    }
+    unset($arBrandsList);
+}

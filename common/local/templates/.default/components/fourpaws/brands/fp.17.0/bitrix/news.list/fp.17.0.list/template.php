@@ -23,7 +23,8 @@ foreach ($arResult['GROUPING'] as $arGroup) {
             $arItem = isset($arResult['ITEMS'][$mKey]) ? $arResult['ITEMS'][$mKey] : array();
             if (!$arItem) {
                 continue;
-            } ?><a class="b-popular-brand-item b-popular-brand-item--brands" href="<?=$arItem['DETAIL_PAGE_URL']?>" title="<?=$arItem['NAME']?>">
+            }
+            ?><a class="b-popular-brand-item b-popular-brand-item--brands" href="<?=$arItem['DETAIL_PAGE_URL']?>" title="<?=$arItem['NAME']?>">
                 <span class="b-popular-brand-item__link b-popular-brand-item__link--brands"><?php
                     if ($arItem['PRINT_PICTURE']) {
                         ?><img class="b-popular-brand-item__image js-image-wrapper" src="<?=$arItem['PRINT_PICTURE']['SRC']?>" alt="<?=$arItem['NAME']?>" title="<?=$arItem['NAME']?>"><?php

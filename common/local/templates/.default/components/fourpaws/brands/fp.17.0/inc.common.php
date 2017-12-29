@@ -4,7 +4,7 @@
 /**
  * Бренды: главная страница
  *
- * @updated: 26.12.2017
+ * @updated: 28.12.2017
  */
 
 $arParams['CACHE_TIME'] = isset($arParams['CACHE_TIME']) ? $arParams['CACHE_TIME'] : '43200';
@@ -37,7 +37,6 @@ $APPLICATION->IncludeComponent(
         'SORT_ORDER2' => 'ASC',
         'FIELD_CODE' => array(
             'NAME',
-            'PREVIEW_PICTURE',
             'DETAIL_PICTURE',
         ),
         'FILTER_NAME' => 'arPopularBrandsFilterExt',

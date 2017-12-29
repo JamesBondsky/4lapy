@@ -2,19 +2,21 @@
     die();
 }
 /**
- * Сгруппированный список брендов (в разделе брендов)
+ * Бренды в меню (алфавитный указатель, сгруппированный список, популярные бренды)
+ * result_modifier.php
  *
  * @updated: 28.12.2017
  */
-
 if (!$arResult['ITEMS']) {
     return;
 }
 
+$arResult['POPULAR_ITEMS_ARRAY_KEYS'] = array();
+
 $arResult['GROUPING'] = array();
 $arResult['GROUPING']['#'] = array(
     'TITLE' => '#',
-    'ANCHOR' => 'idx_'.md5('#'),
+    //'ANCHOR' => 'idx_'.md5('#'),
     'ITEMS_ARRAY_KEYS' => array()
 );
 
@@ -67,13 +69,16 @@ foreach ($arResult['ITEMS'] as $mKey => &$arItem) {
     if (!isset($arResult['GROUPING'][$sFirstLetterReduced])) {
         $arResult['GROUPING'][$sFirstLetterReduced] = array(
             'TITLE' => $sFirstLetter,
-            'ANCHOR' => 'idx_'.md5($sFirstLetterReduced),
+            //'ANCHOR' => 'idx_'.md5($sFirstLetterReduced),
             'ITEMS_ARRAY_KEYS' => array()
         );
     }
     $arResult['GROUPING'][$sFirstLetterReduced]['ITEMS_ARRAY_KEYS'][] = $mKey;
+
+    if ($arItem['PROPERTY_POPULAR_VALUE']) {
+        $arResult['POPULAR_ITEMS_ARRAY_KEYS'][] = $mKey;
+    }
 }
 unset($arItem);
 
-ksort($arResult['GROUPING'], SORT_NATURAL);
-
+ksort($arResult['GROUPING']);

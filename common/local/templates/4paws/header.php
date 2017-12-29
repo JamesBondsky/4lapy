@@ -39,8 +39,11 @@ $markup = PawsApplication::markup();
     <header class="b-header js-header">
         <div class="b-container">
             <div class="b-header__info">
+                <a class="b-hamburger b-hamburger--mobile-menu js-hamburger-menu-mobile" href="javascript:void(0);" title="">
+                    <span class="b-hamburger__hamburger-icon"></span>
+                </a>
                 <a class="b-hamburger js-hamburger-menu-main" href="javascript:void(0);" title="">
-                    <span class="b-icon">
+                    <span class="b-icon b-icon--hamburger">
                         <?= new SvgDecorator('icon-hamburger', 24, 18) ?>
                     </span>
                 </a>
@@ -109,6 +112,9 @@ $markup = PawsApplication::markup();
                         'PRODUCTS_IBLOCK_CODE' => \FourPaws\Enum\IblockCode::PRODUCTS,
                         'CACHE_TIME' => 3600,
                         'CACHE_TYPE' => 'A',
+                        'MAX_DEPTH_LEVEL' => '4',
+                        'TEMPLATE_NO_CACHE' => 'N', // N - шаблон кэшируется
+                        'BRANDS_POPULAR_LIMIT' => '6',
                     ],
                     null,
                     [
