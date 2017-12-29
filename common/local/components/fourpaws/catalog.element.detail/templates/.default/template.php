@@ -72,6 +72,8 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_SLIDER_VIEW);
         <div class="b-product-slider">
             <div class="b-product-slider__list b-product-slider__list--main js-product-slider-for" id="gallery1">
                 <?php
+                $mainImageIndex = [];
+                $allCount = 0;
                 foreach ($product->getOffers() as $offer) {
                     if (!$offer->getImagesIds()) {
                         continue;
@@ -81,6 +83,10 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_SLIDER_VIEW);
                         /**
                          * @var ResizeImageDecorator $image
                          */
+                        if ($id == 0) {
+                            $mainImageIndex[$offer->getId()] = $allCount;
+                        }
+                        $allCount++;
                         ?>
                         <div class="b-product-slider__item b-product-slider__item--big">
                             <div class="b-product-slider__wrapper b-product-slider__wrapper--big">
@@ -132,7 +138,7 @@ $this->EndViewTarget();
 $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
 ?>
     <div class="b-product-card__option-product js-weight-default">
-        <?php if ($offers->count() > 1) { ?>
+        <?php if ($offers->count() > 1 && $mainCombinationType) { ?>
             <?php if ($mainCombinationType === 'SIZE') { ?>
                 <div class="b-product-card__weight">Размеры</div>
             <?php } else { ?>
@@ -140,33 +146,32 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
             <?php } ?>
             <div class="b-weight-container b-weight-container--product">
                 <ul class="b-weight-container__list b-weight-container__list--product">
-                    <?php if ($mainCombinationType) { ?>
-                        <?php foreach ($offers as $offer) { ?>
-                            <?php
-                            if ($mainCombinationType === 'SIZE') {
-                                $value = $offer->getClothingSize()->getName();
-                            } else {
-                                $value = $offer->getVolumeReference()->getName();
-                            }
-                            ?>
-                            <li class="b-weight-container__item b-weight-container__item--product">
-                                <a class="b-weight-container__link b-weight-container__link--product js-price-product active-link"
-                                   href="javascript:void(0);"
-                                   data-weight="<?= $value ?>"
-                                   data-price="<?= $offer->getPrice() ?>"
-                                   data-image="1">
-                                    <span class="b-weight-container__line">
-                                        <span class="b-weight-container__weight"><?= $value ?></span>
-                                        <span class="b-weight-container__price b-undefined">
-                                            <?= $offer->getPrice() ?> <span class="b-ruble b-ruble--weight">₽</span>
-                                        </span>
+                    <?php foreach ($offers as $offer) { ?>
+                        <?php
+                        if ($mainCombinationType === 'SIZE') {
+                            $value = $offer->getClothingSize()->getName();
+                        } else {
+                            $value = $offer->getVolumeReference()->getName();
+                        }
+                        ?>
+                        <li class="b-weight-container__item b-weight-container__item--product <?= ($currentOffer->getId(
+                            ) === $offer->getId()) ? 'active' : '' ?>">
+                            <a class="b-weight-container__link b-weight-container__link--product js-price-product"
+                               href="javascript:void(0);"
+                               data-weight=" <?= $value ?>"
+                               data-price="<?= $offer->getPrice() ?>"
+                               data-image="<?= $mainImageIndex[$offer->getId()] ?>">
+                                <span class="b-weight-container__line">
+                                    <span class="b-weight-container__weight"><?= $value ?></span>
+                                    <span class="b-weight-container__price b-undefined">
+                                        <?= $offer->getPrice() ?> <span class="b-ruble b-ruble--weight">₽</span>
                                     </span>
-                                    <span class="b-weight-container__line">
-                                        <span class="b-weight-container__action">Акция</span>
-                                    </span>
-                                </a>
-                            </li>
-                        <?php } ?>
+                                </span>
+                                <span class="b-weight-container__line">
+                                    <span class="b-weight-container__action">Акция</span>
+                                </span>
+                            </a>
+                        </li>
                     <?php } ?>
                 </ul>
             </div>
