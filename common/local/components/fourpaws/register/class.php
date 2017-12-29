@@ -249,8 +249,17 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         
         /** todo отправить данные в манзану о пользователе */
         /** @var ManzanaService $manzanaService */
-        $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
-        $manzanaService->updateContact([]);
+        $manzanaService       = App::getInstance()->getContainer()->get('manzana.service');
+        $manzanaClient        = new Client();
+        $manzanaClient->phone = $data['PERSONAL_PHONE'];
+        /** @todo В каком формате передавать пол */
+        $manzanaClient->genderCode = $data['PERSONAL_GENDER'];
+        /** @todo В каком формате передавать дату рождения */
+        $manzanaClient->birthDate  = $data['PERSONAL_BIRTHDAY'];
+        $manzanaClient->lastName   = $data['LAST_NAME'];
+        $manzanaClient->secondName = $data['SECOND_NAME'];
+        $manzanaClient->firstName  = $data['NAME'];
+        $manzanaService->updateContact($manzanaClient);
         
         ob_start();
         /** @noinspection PhpIncludeInspection */
@@ -317,8 +326,10 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         )) {
             /** todo отправить данные в манзану о пользователе */
             /** @var ManzanaService $manzanaService */
-            $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
-            $manzanaService->updateContact([]);
+            $manzanaService       = App::getInstance()->getContainer()->get('manzana.service');
+            $manzanaClient        = new Client();
+            $manzanaClient->phone = $phone;
+            $manzanaService->updateContact($manzanaClient);
         }
         
         return JsonSuccessResponse::create('Телефон сохранен', 200, [], ['reload' => true]);
