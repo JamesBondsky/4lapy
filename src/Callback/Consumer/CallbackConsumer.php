@@ -32,12 +32,13 @@ class CallbackConsumer extends CallbackConsumerBase
      */
     public function execute(AMQPMessage $msg) : bool
     {
-        $res  = $this->guzzle->send(new Request('get', $msg->getBody()));
+        $href = $msg->getBody();
+        $res  = $this->guzzle->send(new Request('get', $href));
         $data = json_decode($res->getBody()->getContents());
         if ((int)$data->result !== 4 || $res->getStatusCode() !== 200) {
-            $this->log()->critical('Отправка не удалась');
+            $this->log()->critical('Сервис обартного звонка ответил ошибкой');
             App::getInstance()->getContainer()->get('old_sound_rabbit_mq.callback_serv_producer')->publish(
-                $msg->getBody()
+                $href
             );
         }
         
