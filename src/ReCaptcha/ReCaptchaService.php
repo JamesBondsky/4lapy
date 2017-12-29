@@ -110,9 +110,11 @@ class ReCaptchaService implements LoggerAwareInterface
             );
         if (!empty($recaptcha)) {
             $res = $this->guzzle->request('get', $url);
-            $data = json_decode($res->getBody()->getContents());
-            if ($data->success) {
-                return true;
+            if($res->getStatusCode() === 200) {
+                $data = json_decode($res->getBody()->getContents());
+                if ($data->success) {
+                    return true;
+                }
             }
         }
         
