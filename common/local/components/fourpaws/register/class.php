@@ -327,6 +327,9 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     /**
      * @param Request $request
      *
+     * @throws \RuntimeException
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \Bitrix\Main\SystemException
      * @throws ServiceNotFoundException
      * @throws \Exception
      * @throws ApplicationCreateException
@@ -395,6 +398,8 @@ class FourPawsRegisterComponent extends \CBitrixComponent
      * @param string $confirmCode
      * @param string $phone
      *
+     * @throws \RuntimeException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      * @throws SystemException
      * @throws ServiceNotFoundException
      * @throws \Exception

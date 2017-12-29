@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\Callback\Consumer;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
@@ -19,8 +23,18 @@ abstract class CallbackConsumerBase implements ConsumerInterface, LoggerAwareInt
      */
     protected $guzzle;
     
+    /**
+     * @var \Psr\Log\LoggerInterface
+     */
     protected $logger;
     
+    /**
+     * CallbackConsumerBase constructor.
+     *
+     * @param \GuzzleHttp\ClientInterface $guzzle
+     *
+     * @throws \RuntimeException
+     */
     public function __construct(ClientInterface $guzzle)
     {
         $this->guzzle = $guzzle;
@@ -40,5 +54,4 @@ abstract class CallbackConsumerBase implements ConsumerInterface, LoggerAwareInt
     {
         return $this->logger;
     }
-    
 }

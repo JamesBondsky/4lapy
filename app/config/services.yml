@@ -22,7 +22,7 @@ services:
     class: FourPaws\Search\Consumer\CatalogSyncConsumer
     arguments: ['@jms_serializer', '@search.service']
 
-  callbackServ.sync_consumer:
+  callback_serv.sync_consumer:
       class: FourPaws\Callback\Consumer\CallbackConsumer
       arguments: ['@manzana.guzzle']
 
@@ -105,11 +105,7 @@ services:
 
   recaptcha.service:
       class: FourPaws\ReCaptcha\ReCaptchaService
+      arguments: ['@manzana.guzzle']
 
   form.service:
       class: FourPaws\Form\FormService
-
-  callback.soap:
-    class: FourPaws\Callback\CallbackService
-    factory: 'async.soap.factory:create'
-    arguments: ['@manzana.guzzle', '%manzana.wdsl%']

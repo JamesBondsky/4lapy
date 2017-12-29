@@ -31,6 +31,8 @@ class CallBackController extends Controller
     /**
      * @param Request $request
      *
+     * @throws \RuntimeException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      * @throws \Bitrix\Main\LoaderException
      * @throws \Bitrix\Main\ObjectException
      * @throws ServiceNotFoundException
@@ -76,10 +78,10 @@ class CallBackController extends Controller
         if ($formService->addResult($data)) {
             /** @noinspection PhpUnhandledExceptionInspection */
             Loader::includeModule('form');
-            $answer = new \CFormAnswer();
+            $answer   = new \CFormAnswer();
             $arAnswer = $answer->GetByID($data['time_call'])->Fetch();
-            $timeout = $arAnswer['FIELD_PARAM'] ?? 0;
-            $date = new DateTime();
+            $timeout  = $arAnswer['FIELD_PARAM'] ?? 0;
+            $date     = new DateTime();
             /** @noinspection PhpUnhandledExceptionInspection */
             App::getInstance()->getContainer()->get('callback.service')->send(
                 $data['phone'],

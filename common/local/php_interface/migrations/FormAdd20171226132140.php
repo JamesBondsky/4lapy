@@ -9,15 +9,31 @@ namespace Sprint\Migration;
 use Adv\Bitrixtools\Migration\SprintMigrationBase;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
+use FourPaws\App\Application as App;
 
+/**
+ * Class FormAdd20171226132140
+ *
+ * @package Sprint\Migration
+ */
 class FormAdd20171226132140 extends SprintMigrationBase
 {
     protected $description = 'Настройка форм';
     
+    /**
+     * @return bool|void
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     */
     public function up()
     {
-        /** @noinspection PhpUnhandledExceptionInspection */
-        Loader::includeModule('form');
+        //Loader::includeModule('form');
+    
+        $formService = App::getInstance()->getContainer()->get('form.service');
+        
         $form = [
             'SID'              => 'feedback',
             'NAME'             => 'Обратная связь',
@@ -50,8 +66,7 @@ class FormAdd20171226132140 extends SprintMigrationBase
                         [
                             'MESSAGE'    => 'Имя',
                             'FIELD_TYPE' => 'text',
-                            'ACTIVE'     => 'Y',
-                            'C_SORT'     => '100',
+                            'ACTIVE'     => 'Y'
                         ],
                     ],
                 ],
@@ -69,8 +84,7 @@ class FormAdd20171226132140 extends SprintMigrationBase
                         [
                             'MESSAGE'    => 'Эл. почта',
                             'FIELD_TYPE' => 'text',
-                            'ACTIVE'     => 'Y',
-                            'C_SORT'     => '200',
+                            'ACTIVE'     => 'Y'
                         ],
                     ],
                 ],
@@ -88,8 +102,7 @@ class FormAdd20171226132140 extends SprintMigrationBase
                         [
                             'MESSAGE'    => 'Телефон',
                             'FIELD_TYPE' => 'text',
-                            'ACTIVE'     => 'Y',
-                            'C_SORT'     => '300',
+                            'ACTIVE'     => 'Y'
                         ],
                     ],
                 ],
@@ -162,8 +175,7 @@ class FormAdd20171226132140 extends SprintMigrationBase
                         [
                             'MESSAGE'    => 'Сообщение',
                             'FIELD_TYPE' => 'textarea',
-                            'ACTIVE'     => 'Y',
-                            'C_SORT'     => '500',
+                            'ACTIVE'     => 'Y'
                         ],
                     ],
                 ],
@@ -181,15 +193,14 @@ class FormAdd20171226132140 extends SprintMigrationBase
                         [
                             'MESSAGE'    => 'Файл',
                             'FIELD_TYPE' => 'file',
-                            'ACTIVE'     => 'Y',
-                            'C_SORT'     => '600',
+                            'ACTIVE'     => 'Y'
                         ],
                     ],
                 ],
             ],
         ];
-        
-        $this->addForm($form);
+    
+        $formService->addForm($form);
         
         $form = [
             'SID'              => 'callback',
@@ -225,8 +236,7 @@ class FormAdd20171226132140 extends SprintMigrationBase
                         [
                             'MESSAGE'    => 'Имя',
                             'FIELD_TYPE' => 'text',
-                            'ACTIVE'     => 'Y',
-                            'C_SORT'     => '100',
+                            'ACTIVE'     => 'Y'
                         ],
                     ],
                 ],
@@ -244,8 +254,7 @@ class FormAdd20171226132140 extends SprintMigrationBase
                         [
                             'MESSAGE'    => 'Телефон',
                             'FIELD_TYPE' => 'text',
-                            'ACTIVE'     => 'Y',
-                            'C_SORT'     => '300',
+                            'ACTIVE'     => 'Y'
                         ],
                     ],
                 ],
@@ -264,132 +273,54 @@ class FormAdd20171226132140 extends SprintMigrationBase
                             'MESSAGE'    => 'Звонок сейчас',
                             'FIELD_TYPE' => 'dropdown',
                             'ACTIVE'     => 'Y',
+                            'FIELD_PARAM'     => 0,
                             'C_SORT'     => '100',
                         ],
                         [
                             'MESSAGE'    => 'Звонок через 5 мин',
                             'FIELD_TYPE' => 'dropdown',
                             'ACTIVE'     => 'Y',
+                            'FIELD_PARAM'     => 5,
                             'C_SORT'     => '200',
                         ],
                         [
                             'MESSAGE'    => 'Звонок через 15 мин',
                             'FIELD_TYPE' => 'dropdown',
                             'ACTIVE'     => 'Y',
+                            'FIELD_PARAM'     => 15,
                             'C_SORT'     => '300',
                         ],
                         [
                             'MESSAGE'    => 'Звонок завтра',
                             'FIELD_TYPE' => 'dropdown',
                             'ACTIVE'     => 'Y',
+                            'FIELD_PARAM'     => 1440,
                             'C_SORT'     => '400',
                         ],
                     ],
                 ],
             ],
         ];
-        
-        $this->addForm($form);
+    
+        $formService->addForm($form);
         
         /** @noinspection PhpUnhandledExceptionInspection */
         Option::set('form', 'SIMPLE', 'N');
     }
     
     /**
-     * @param $form
+     * @return bool|void
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
-    private function addForm($form)
-    {
-        $questions = [];
-        if (isset($form['QUESTIONS'])) {
-            $questions = $form['QUESTIONS'];
-            unset($form['QUESTIONS']);
-        }
-        $createEmail = 'N';
-        if (isset($form['CREATE_EMAIL'])) {
-            $createEmail = $form['CREATE_EMAIL'];
-            unset($form['CREATE_EMAIL']);
-        }
-        $statuses = [];
-        if (isset($form['STATUSES'])) {
-            $statuses = $form['STATUSES'];
-            unset($form['STATUSES']);
-        }
-        $formId = (int)\CForm::Set($form);
-        
-        if ($formId > 0) {
-            $this->addStatuses($formId, $statuses);
-            $this->addQuestions($formId, $questions);
-            $this->addMailTemplate($formId, $createEmail);
-        }
-    }
-    
-    /**
-     * @param int   $formId
-     * @param array $statuses
-     */
-    private function addStatuses(int $formId, array $statuses = [])
-    {
-        if ($formId > 0 && \is_array($statuses) && !empty($statuses)) {
-            $obFormStatus = new \CFormStatus();
-            foreach ($statuses as $status) {
-                $status['FORM_ID'] = $formId;
-                $obFormStatus->Set($status);
-            }
-        }
-    }
-    
-    /**
-     * @param int   $formId
-     * @param array $questions
-     */
-    private function addQuestions(int $formId, array $questions = [])
-    {
-        if ($formId > 0 && \is_array($questions) && !empty($questions)) {
-            $obFormField = new \CFormField();
-            foreach ($questions as $question) {
-                $answers = [];
-                if (isset($question['ANSWERS'])) {
-                    $answers = $question['ANSWERS'];
-                    unset($question['ANSWERS']);
-                }
-                $question['FORM_ID'] = $formId;
-                $questionId          = (int)$obFormField->Set($question);
-                if($questionId > 0) {
-                    $this->addAnswers($questionId, $answers);
-                }
-            }
-        }
-    }
-    
-    /**
-     * @param array $answers
-     * @param int   $questionId
-     */
-    private function addAnswers(int $questionId, array $answers)
-    {
-        if ($questionId > 0 && \is_array($answers) && !empty($answers)) {
-            $obFormAnswer = new \CFormAnswer();
-            foreach ($answers as $answer) {
-                $answer['FIELD_ID'] = $questionId;
-                $obFormAnswer->Set($answer);
-            }
-        }
-    }
-    
-    /**
-     * @param int    $formId
-     * @param string $createEmail
-     */
-    private function addMailTemplate(int $formId, string $createEmail = 'N')
-    {
-        if ($createEmail === 'Y') {
-            $arTemplates = \CForm::SetMailTemplate($formId, 'Y');
-            \CForm::Set(array('arMAIL_TEMPLATE' => $arTemplates), $formId);
-        }
-    }
-    
     public function down()
     {
+        //Loader::includeModule('form');
+    
+        $formService = App::getInstance()->getContainer()->get('form.service');
+    
+        $formService ->deleteForm('feedback');
+        $formService ->deleteForm('callback');
     }
 }

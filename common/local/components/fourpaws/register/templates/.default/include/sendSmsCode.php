@@ -34,10 +34,8 @@ Use FourPaws\App\Application as App;?>
             </div>
             <span class="b-link-gray">Отправить новый код можно будет через <span>59</span> сек.</span>
         </div>
-        <div class="b-registration__captcha" data-sitekey="">
-            <?= /** @noinspection PhpUnhandledExceptionInspection */
-            App::getInstance()->getContainer()->get('recaptcha.service')->getCaptcha();?>
-        </div>
+        <?= /** @noinspection PhpUnhandledExceptionInspection */
+        App::getInstance()->getContainer()->get('recaptcha.service')->getCaptcha(' b-registration__captcha');?>
         <button class="b-button b-button--social b-button--full-width" type="submit">Подтвердить</button>
     </form>
 </div>

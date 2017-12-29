@@ -61,10 +61,6 @@ use FourPaws\Decorators\SvgDecorator;
                                         <?php
                                     }
                                 } ?>
-                                <option value="recall-0">Звонок сейчас</option>
-                                <option value="recall-1">Звонок через 5 мин</option>
-                                <option value="recall-2">Звонок через 15 мин</option>
-                                <option value="recall-3">Звонок завтра</option>
                             </select>
                             <div class="b-error"><span class="js-message"></span></div>
                         </div>

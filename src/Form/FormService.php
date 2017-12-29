@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\Form;
 
 use FourPaws\Form\Exception\FileSaveException;
@@ -27,6 +31,7 @@ class FormService
                 break;
             }
         }
+        
         return true;
     }
     
@@ -35,12 +40,9 @@ class FormService
      *
      * @return bool
      */
-    public function validEmail($email)
+    public function validEmail($email) : bool
     {
-        if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
-            return false;
-        }
-        return true;
+        return !(filter_var($email, FILTER_VALIDATE_EMAIL) === false);
     }
     
     /**
@@ -48,7 +50,7 @@ class FormService
      *
      * @return bool
      */
-    public function addResult($data)
+    public function addResult($data) : bool
     {
         if (isset($data['MAX_FILE_SIZE'])) {
             unset($data['MAX_FILE_SIZE']);
@@ -65,9 +67,10 @@ class FormService
             $userID = (int)$USER->GetID();
         }
         unset($data['web_form_submit'], $data['WEB_FORM_ID']);
-    
+        
         $formResult = new \CFormResult();
         $res        = $formResult->Add($webFormId, $data, 'N', $userID > 0 ? $userID : false);
+        
         return (int)$res > 0;
     }
     
@@ -76,15 +79,16 @@ class FormService
      * @param $fileSizeMb
      * @param $valid_types
      *
-     * @return int
      * @throws \FourPaws\Form\Exception\FileSaveException
      * @throws \FourPaws\Form\Exception\FileSizeException
      * @throws \FourPaws\Form\Exception\FileTypeException
+     * @return int
      */
-    public function saveFile($fileCode, $fileSizeMb, $valid_types) : int{
+    public function saveFile($fileCode, $fileSizeMb, $valid_types) : int
+    {
         if (!empty($_FILES[$fileCode])) {
             $max_file_size = $fileSizeMb * 1024 * 1024;
-        
+            
             $file = $_FILES[$fileCode];
             if (is_uploaded_file($file['tmp_name'])) {
                 $filename = $file['tmp_name'];
@@ -94,17 +98,130 @@ class FormService
                     throw new FileSizeException('Файл не должен быть больше ' . $fileSizeMb . 'Мб');
                 }
                 if (!\in_array($ext, $valid_types, true)) {
-                    throw new FileTypeException('Разрешено загружать файлы только с расширениями ' . implode(' ,', $valid_types));
+                    throw new FileTypeException(
+                        'Разрешено загружать файлы только с расширениями ' . implode(' ,', $valid_types)
+                    );
                 }
-            
+                
                 $fileId = (int)\CFile::SaveFile($file, 'form');
                 if ($fileId > 0) {
                     return $fileId;
                 }
             }
-    
+            
             throw new FileSaveException('Произошла ошибка при сохранении файла, попробуйте позже');
         }
+        
         return 0;
+    }
+    
+    /**
+     * @param $form
+     */
+    public function addForm($form)
+    {
+        $questions = [];
+        if (isset($form['QUESTIONS'])) {
+            $questions = $form['QUESTIONS'];
+            unset($form['QUESTIONS']);
+        }
+        $createEmail = 'N';
+        if (isset($form['CREATE_EMAIL'])) {
+            $createEmail = $form['CREATE_EMAIL'];
+            unset($form['CREATE_EMAIL']);
+        }
+        $statuses = [];
+        if (isset($form['STATUSES'])) {
+            $statuses = $form['STATUSES'];
+            unset($form['STATUSES']);
+        }
+        $formId = (int)\CForm::Set($form);
+        
+        if ($formId > 0) {
+            if (!empty($statuses)) {
+                $this->addStatuses($formId, $statuses);
+            }
+            if (!empty($questions)) {
+                $this->addQuestions($formId, $questions);
+            }
+            if ($createEmail === 'Y') {
+                $this->addMailTemplate($formId, $createEmail);
+            }
+        }
+    }
+    
+    /**
+     * @param int   $formId
+     * @param array $statuses
+     */
+    public function addStatuses(int $formId, array $statuses)
+    {
+        if ($formId > 0 && !empty($statuses)) {
+            $obFormStatus = new \CFormStatus();
+            foreach ($statuses as $status) {
+                $status['FORM_ID'] = $formId;
+                $obFormStatus->Set($status);
+            }
+        }
+    }
+    
+    /**
+     * @param int   $formId
+     * @param array $questions
+     */
+    public function addQuestions(int $formId, array $questions)
+    {
+        if ($formId > 0 && !empty($questions)) {
+            $obFormField = new \CFormField();
+            foreach ($questions as $question) {
+                $answers = [];
+                if (isset($question['ANSWERS'])) {
+                    $answers = $question['ANSWERS'];
+                    unset($question['ANSWERS']);
+                }
+                $question['FORM_ID'] = $formId;
+                $questionId          = (int)$obFormField->Set($question);
+                if ($questionId > 0 && !empty($answers)) {
+                    $this->addAnswers($questionId, $answers);
+                }
+            }
+        }
+    }
+    
+    /**
+     * @param array $answers
+     * @param int   $questionId
+     */
+    public function addAnswers(int $questionId, array $answers)
+    {
+        if ($questionId > 0 && !empty($answers)) {
+            $obFormAnswer = new \CFormAnswer();
+            foreach ($answers as $answer) {
+                $answer['FIELD_ID'] = $questionId;
+                $obFormAnswer->Set($answer);
+            }
+        }
+    }
+    
+    /**
+     * @param int    $formId
+     * @param string $createEmail
+     */
+    public function addMailTemplate(int $formId, string $createEmail = 'N')
+    {
+        if ($createEmail === 'Y') {
+            $arTemplates = \CForm::SetMailTemplate($formId, 'Y');
+            \CForm::Set(['arMAIL_TEMPLATE' => $arTemplates], $formId);
+        }
+    }
+    
+    public function deleteForm($sid)
+    {
+        $by    = 'ID';
+        $order = 'ASC';
+        $res   = \CForm::GetList($by, $order, ['SID' => $sid]);
+        while ($item = $res->Fetch()) {
+            \CForm::Delete($item['ID']);
+        }
     }
 }

@@ -32,6 +32,8 @@ class FeedBackController extends Controller
     /**
      * @param Request $request
      *
+     * @throws \RuntimeException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      * @throws ServiceNotFoundException
      * @throws SystemException
      * @throws ApplicationCreateException

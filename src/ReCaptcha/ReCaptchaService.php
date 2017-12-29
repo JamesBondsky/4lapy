@@ -1,33 +1,73 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\ReCaptcha;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Application;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\SystemException;
+use GuzzleHttp\ClientInterface;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
 
-class ReCaptchaService
+class ReCaptchaService implements LoggerAwareInterface
 {
-    /** @noinspection SpellCheckingInspection */
+    use LoggerAwareTrait;
+    
     /**
      * ключ
      */
     const KEY = '6Le2QT4UAAAAAKq4NGsbLo7XYMJB1f84S_9PzVZR';
     
-    /** @noinspection SpellCheckingInspection */
     /**
      * секретный ключ
      */
     const SECRET_KEY = '6Le2QT4UAAAAALHxRtMAzINWrPKT82LLCo02Cf9K';
     
+    const HREF       = 'https://www.google.com/recaptcha/api/siteverify?secret=#secret_key#&response=#captcha_code#&remoteip=#remoteip#';
+    
     /**
+     * @var ClientInterface
+     */
+    protected $guzzle;
+    
+    /** @noinspection SpellCheckingInspection */
+    
+    /**
+     * @var \Psr\Log\LoggerInterface
+     */
+    protected $logger;
+    
+    /** @noinspection SpellCheckingInspection */
+    
+    /**
+     * CallbackConsumerBase constructor.
+     *
+     * @param \GuzzleHttp\ClientInterface $guzzle
+     *
+     * @throws \RuntimeException
+     */
+    public function __construct(ClientInterface $guzzle)
+    {
+        $this->guzzle = $guzzle;
+        /** @noinspection PhpUnhandledExceptionInspection */
+        $this->logger = LoggerFactory::create('callbackService');
+    }
+    
+    /**
+     * @param string $additionalClass
+     *
      * @return string
      */
-    public function getCaptcha() : string
+    public function getCaptcha(string $additionalClass = '') : string
     {
         $this->addJs();
         
-        return '<div class="g-recaptcha" data-sitekey="' . static::KEY . '"></div>';
+        return '<div class="g-recaptcha' . $additionalClass . '" data-sitekey="' . static::KEY . '"></div>';
     }
     
     public function addJs()
@@ -38,8 +78,10 @@ class ReCaptchaService
     /**
      * @param string $recaptcha
      *
-     * @return bool
+     * @throws \RuntimeException
      * @throws SystemException
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @return bool
      */
     public function checkCaptcha(string $recaptcha = '') : bool
     {
@@ -53,26 +95,23 @@ class ReCaptchaService
             $recaptcha = (string)$context->getRequest()->get('g-recaptcha-response');
         }
         $url =
-            'https://www.google.com/recaptcha/api/siteverify?secret=' . static::SECRET_KEY . '&response=' . $recaptcha
-            . '&remoteip=' . $context->getServer()->get('REMOTE_ADDR');
-        if (!empty($recaptcha)) {
-            $curl = curl_init();
-            if (!$curl) {
-                return false;
-            }
-            
-            curl_setopt($curl, CURLOPT_URL, $url);
-            curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
-            curl_setopt($curl, CURLOPT_TIMEOUT, 10);
-            curl_setopt(
-                $curl,
-                CURLOPT_USERAGENT,
-                'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.2.16) Gecko/20110319 Firefox/3.6.16'
+            str_replace(
+                [
+                    '#secret_key#',
+                    '#captcha_code#',
+                    '#remoteip#',
+                ],
+                [
+                    static::SECRET_KEY,
+                    $recaptcha,
+                    $context->getServer()->get('REMOTE_ADDR'),
+                ],
+                static::HREF
             );
-            $curlData = curl_exec($curl);
-            curl_close($curl);
-            $curlData = json_decode($curlData, true);
-            if ($curlData['success']) {
+        if (!empty($recaptcha)) {
+            $res = $this->guzzle->request('get', $url);
+            $data = json_decode($res->getBody()->getContents());
+            if ($data->success) {
                 return true;
             }
         }

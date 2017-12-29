@@ -73,20 +73,20 @@ old_sound_rabbit_mq:
             use_socket: false
 
     producers:
-      callbackServ:
+      callback_serv:
         connection:       default
-        exchange_options: { name: "callbackServ", type: direct }
+        exchange_options: { name: "callback_serv", type: direct }
 
       catalog_sync:
         connection: default
         exchange_options: {name: "catalog_sync", type: "direct"}
 
     consumers:
-      callbackServ:
+      callback_serv:
         connection:       default
-        exchange_options: { name: "callbackServ", type: direct}
-        queue_options:    { name: "callbackServ" }
-        callback:         callbackServ.sync_consumer
+        exchange_options: { name: "callback_serv", type: direct}
+        queue_options:    { name: "callback_serv" }
+        callback:         callback_serv.sync_consumer
 
       catalog_sync:
         connection: default

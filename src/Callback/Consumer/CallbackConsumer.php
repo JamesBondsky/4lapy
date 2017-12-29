@@ -1,7 +1,12 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\Callback\Consumer;
 
+use FourPaws\App\Application as App;
 use GuzzleHttp\Psr7\Request;
 use PhpAmqpLib\Message\AMQPMessage;
 
@@ -17,22 +22,24 @@ class CallbackConsumer extends CallbackConsumerBase
     /**
      * @param AMQPMessage $msg The message
      *
-     * @return mixed false to reject and requeue, any other value to acknowledge
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \RuntimeException
      * @throws \LogicException
+     * @return mixed false to reject and requeue, any other value to acknowledge
      */
     public function execute(AMQPMessage $msg) : bool
     {
-        $href    = $msg->getBody();
-        $request = new Request('get', $href);
-        $promise = $this->guzzle->sendAsync($request)->then(
-            function () {
-                $this->log()->info('Запрос отправлен');
-            },
-            function () {
-                $this->log()->critical('произошла ошибка при выполнении');
-            }
-        );
-        $promise->wait();
+        $res  = $this->guzzle->send(new Request('get', $msg->getBody()));
+        $data = json_decode($res->getBody()->getContents());
+        if ((int)$data->result !== 4 || $res->getStatusCode() !== 200) {
+            $this->log()->critical('Отправка не удалась');
+            App::getInstance()->getContainer()->get('old_sound_rabbit_mq.callback_serv_producer')->publish(
+                $msg->getBody()
+            );
+        }
         
         return true;
     }
