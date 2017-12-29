@@ -11,7 +11,6 @@
 
 use FourPaws\App\Application;
 use FourPaws\Location\LocationService;
-use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Templates\ViewsEnum;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\Catalog\Model\Offer;
@@ -40,21 +39,8 @@ $currentOffer = $product->getOffers()->first();
 $mainCombinationType = '';
 if ($currentOffer->getClothingSize()) {
     $mainCombinationType = 'SIZE';
-} else {
+} elseif ($currentOffer->getVolumeReference()) {
     $mainCombinationType = 'VOLUME';
-}
-
-/**
- * Характеристики
- */
-$article = $currentOffer->getXmlId();
-
-$product->getWeightCapacityPacking();
-
-try {
-    $createCountry = $product->getCountry();
-} catch (ApplicationCreateException $e) {
-    $createCountry = null;
 }
 
 $this->setFrameMode(true);
@@ -74,6 +60,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_SLIDER_VIEW);
                 <?php
                 $mainImageIndex = [];
                 $allCount = 0;
+                /** @var Offer $offer */
                 foreach ($product->getOffers() as $offer) {
                     if (!$offer->getImagesIds()) {
                         continue;
@@ -83,7 +70,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_SLIDER_VIEW);
                         /**
                          * @var ResizeImageDecorator $image
                          */
-                        if ($id == 0) {
+                        if ($id === 0) {
                             $mainImageIndex[$offer->getId()] = $allCount;
                         }
                         $allCount++;
@@ -106,6 +93,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_SLIDER_VIEW);
 
             <div class="b-product-slider__list b-product-slider__list--nav js-product-slider-nav">
                 <?php
+                /** @var Offer $offer */
                 foreach ($product->getOffers() as $offer) {
                     if (!$offer->getImagesIds()) {
                         continue;
@@ -138,7 +126,7 @@ $this->EndViewTarget();
 $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
 ?>
     <div class="b-product-card__option-product js-weight-default">
-        <?php if ($offers->count() > 1 && $mainCombinationType) { ?>
+        <?php if ($mainCombinationType && ($offers->count() > 1)) { ?>
             <?php if ($mainCombinationType === 'SIZE') { ?>
                 <div class="b-product-card__weight">Размеры</div>
             <?php } else { ?>
@@ -184,7 +172,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
 ?>
 <?php /** @var Offer $offer */ ?>
 <?php foreach ($offers as $offer) { ?>
-    <div class="b-product-card__info" <?= ($offer->getId() != $currentOffer->getId()) ? 'style="display:none"' : '' ?>>
+    <div class="b-product-card__info" <?= ($offer->getId() !== $currentOffer->getId()) ? 'style="display:none"' : '' ?>>
         <div class="b-product-information">
             <ul class="b-product-information__list">
                 <?php if ($offer->getVolumeReference()) { ?>
@@ -336,65 +324,57 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB);
                 <div class="b-description-tab__title">Подробные характеристики</div>
                 <div class="b-characteristics-tab">
                     <ul class="b-characteristics-tab__list">
-                        <?php
-                        if ($article) {
-                            ?>
-                            <li class="b-characteristics-tab__item">
-                                <div class="b-characteristics-tab__characteristics-text">
-                                    <span>Артикул</span>
-                                    <div class="b-characteristics-tab__dots"></div>
-                                </div>
-                                <div class="b-characteristics-tab__characteristics-value"><?= $article ?></div>
-                            </li>
-                            <?php
-                        }
-                        /**
-                         * @todo Направленность
-                         */
-                        ?>
-                        <!--                                        <li class="b-characteristics-tab__item">
-                                                                    <div class="b-characteristics-tab__characteristics-text"><span>Направленность</span>
-                                                                        <div class="b-characteristics-tab__dots"></div>
-                                                                    </div>
-                                                                    <div class="b-characteristics-tab__characteristics-value">Повседневный корм
-                                                                        для собак от 7 лет
-                                                                    </div>
-                                                                </li>-->
-                        <?php
-                        if ($createCountry) {
-                            ?>
-                            <li class="b-characteristics-tab__item">
-                                <div class="b-characteristics-tab__characteristics-text">
-                                    <span>Страна производства</span>
-                                    <div class="b-characteristics-tab__dots"></div>
-                                </div>
-                                <div class="b-characteristics-tab__characteristics-value"><?= $createCountry->getName(
-                                    ) ?></div>
-                            </li>
-                            <?php
-                        }
-
-                        /*
-                        ?>
-                        <li class="b-characteristics-tab__item">
+                        <li class="b-characteristics-tab__item" <?= (!$currentOffer->getXmlId(
+                        )) ? 'style="display:none"' : '' ?>>
+                            <div class="b-characteristics-tab__characteristics-text">
+                                <span>Артикул</span>
+                                <div class="b-characteristics-tab__dots"></div>
+                            </div>
+                            <div class="b-characteristics-tab__characteristics-value">
+                                <?= $currentOffer->getXmlId() ?>
+                            </div>
+                        </li>
+                        <li class="b-characteristics-tab__item" <?= (!$product->getPurpose(
+                        )) ? 'style="display:none"' : '' ?>>
+                            <div class="b-characteristics-tab__characteristics-text"><span>Направленность</span>
+                                <div class="b-characteristics-tab__dots"></div>
+                            </div>
+                            <div class="b-characteristics-tab__characteristics-value">
+                                <?= $product->getPurpose() ? $product->getPurpose()->getName() : '' ?>
+                            </div>
+                        </li>
+                        <li class="b-characteristics-tab__item" <?= (!$product->getCountry(
+                        )) ? 'style="display:none"' : '' ?>>
+                            <div class="b-characteristics-tab__characteristics-text">
+                                <span>Страна производства</span>
+                                <div class="b-characteristics-tab__dots"></div>
+                            </div>
+                            <div class="b-characteristics-tab__characteristics-value">
+                                <?= $product->getCountry() ? $product->getCountry()->getName() : '' ?>
+                            </div>
+                        </li>
+                        <li class="b-characteristics-tab__item" <?= (!$currentOffer->getKindOfPacking(
+                        )) ? 'style="display:none"' : '' ?>>
                             <div class="b-characteristics-tab__characteristics-text">
                                 <span>Упаковано</span>
                                 <div class="b-characteristics-tab__dots"></div>
                             </div>
                             <div class="b-characteristics-tab__characteristics-value">
-                                Пакет / коробка
+                                <?= $currentOffer->getKindOfPacking() ? $currentOffer->getKindOfPacking()->getName(
+                                ) : '' ?>
                             </div>
                         </li>
-                        <li class="b-characteristics-tab__item">
+                        <li class="b-characteristics-tab__item" <?= (!$currentOffer->getMultiplicity(
+                        )) ? 'style="display:none"' : '' ?>>
                             <div class="b-characteristics-tab__characteristics-text">
                                 <span>В упаковке</span>
                                 <div class="b-characteristics-tab__dots"></div>
                             </div>
-                            <div class="b-characteristics-tab__characteristics-value">6 шт.</div>
+                            <div class="b-characteristics-tab__characteristics-value">
+                                <?= $currentOffer->getMultiplicity() ?> шт.
+                            </div>
                         </li>
                         <?php
-                        */
-
                         /*
                         ?>
                         <li class="b-characteristics-tab__item">
