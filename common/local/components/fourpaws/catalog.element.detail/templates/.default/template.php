@@ -11,6 +11,7 @@
 
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Templates\ViewsEnum;
+use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Components\CatalogElementDetailComponent;
@@ -36,6 +37,9 @@ $offer = $product->getOffers()->first();
  * Характеристики
  */
 $article = $offer->getXmlId();
+
+$product->getWeightCapacityPacking();
+
 try {
     $createCountry = $product->getCountry();
 } catch (ApplicationCreateException $e) {
@@ -53,69 +57,59 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_SLIDER_VIEW);
 ?>
     <div class="b-product-card__slider">
         <div class="b-product-slider">
-            <div class="b-product-slider__list b-product-slider__list--main js-product-slider-for">
-                <div class="b-product-slider__item b-product-slider__item--big">
-                    <div class="b-product-slider__wrapper b-product-slider__wrapper--big">
-                        <img class="b-product-slider__photo-img b-product-slider__photo-img--big js-image-wrapper"
-                             src="/static/build/images/content/pro-plan.jpg" alt="" title="" role="presentation"/>
-                    </div>
-                </div>
-                <div class="b-product-slider__item b-product-slider__item--big">
-                    <div class="b-product-slider__wrapper b-product-slider__wrapper--big">
-                        <img class="b-product-slider__photo-img b-product-slider__photo-img--big js-image-wrapper"
-                             src="/static/build/images/content/clean-cat.jpg" alt="" title="" role="presentation"/>
-                    </div>
-                </div>
-                <div class="b-product-slider__item b-product-slider__item--big">
-                    <div class="b-product-slider__wrapper b-product-slider__wrapper--big">
-                        <img class="b-product-slider__photo-img b-product-slider__photo-img--big js-image-wrapper"
-                             src="/static/build/images/content/brit.png" alt="" title="" role="presentation"/>
-                    </div>
-                </div>
-                <div class="b-product-slider__item b-product-slider__item--big">
-                    <div class="b-product-slider__wrapper b-product-slider__wrapper--big">
-                        <img class="b-product-slider__photo-img b-product-slider__photo-img--big js-image-wrapper"
-                             src="/static/build/images/content/royal-canin-2.jpg" alt="" title="" role="presentation"/>
-                    </div>
-                </div>
-                <div class="b-product-slider__item b-product-slider__item--big">
-                    <div class="b-product-slider__wrapper b-product-slider__wrapper--big">
-                        <img class="b-product-slider__photo-img b-product-slider__photo-img--big js-image-wrapper"
-                             src="/static/build/images/content/abba.png" alt="" title="" role="presentation"/>
-                    </div>
-                </div>
+            <div class="b-product-slider__list b-product-slider__list--main js-product-slider-for" id="gallery1">
+                <?php
+                foreach ($product->getOffers() as $offer) {
+                    if (!$offer->getImagesIds()) {
+                        continue;
+                    }
+                    $images = $offer->getResizeImages(480, 480);
+                    foreach ($images as $id => $image) {
+                        /**
+                         * @var ResizeImageDecorator $image
+                         */
+                        ?>
+                        <div class="b-product-slider__item b-product-slider__item--big">
+                            <div class="b-product-slider__wrapper b-product-slider__wrapper--big">
+                                <img class="b-product-slider__photo-img b-product-slider__photo-img--big js-image-wrapper js-zoom"
+                                     src="<?= $image ?>"
+                                     alt="<?= $offer->getName() . ($id ? ' ' . $id : '') ?>"
+                                     title="<?= $offer->getName() . ($id ? ' ' . $id : '') ?>"
+                                     role="presentation"/>
+                            </div>
+                        </div>
+                        <?php
+                    }
+                }
+                ?>
             </div>
+
+
             <div class="b-product-slider__list b-product-slider__list--nav js-product-slider-nav">
-                <div class="b-product-slider__item b-product-slider__item--small">
-                    <div class="b-product-slider__wrapper b-product-slider__wrapper--small">
-                        <img class="b-product-slider__photo-img b-product-slider__photo-img--small js-image-wrapper"
-                             src="/static/build/images/content/pro-plan.jpg" alt="" title="" role="presentation"/>
-                    </div>
-                </div>
-                <div class="b-product-slider__item b-product-slider__item--small">
-                    <div class="b-product-slider__wrapper b-product-slider__wrapper--small">
-                        <img class="b-product-slider__photo-img b-product-slider__photo-img--small js-image-wrapper"
-                             src="/static/build/images/content/clean-cat.jpg" alt="" title="" role="presentation"/>
-                    </div>
-                </div>
-                <div class="b-product-slider__item b-product-slider__item--small">
-                    <div class="b-product-slider__wrapper b-product-slider__wrapper--small">
-                        <img class="b-product-slider__photo-img b-product-slider__photo-img--small js-image-wrapper"
-                             src="/static/build/images/content/brit.png" alt="" title="" role="presentation"/>
-                    </div>
-                </div>
-                <div class="b-product-slider__item b-product-slider__item--small">
-                    <div class="b-product-slider__wrapper b-product-slider__wrapper--small">
-                        <img class="b-product-slider__photo-img b-product-slider__photo-img--small js-image-wrapper"
-                             src="/static/build/images/content/royal-canin-2.jpg" alt="" title="" role="presentation"/>
-                    </div>
-                </div>
-                <div class="b-product-slider__item b-product-slider__item--small">
-                    <div class="b-product-slider__wrapper b-product-slider__wrapper--small">
-                        <img class="b-product-slider__photo-img b-product-slider__photo-img--small js-image-wrapper"
-                             src="/static/build/images/content/abba.png" alt="" title="" role="presentation"/>
-                    </div>
-                </div>
+                <?php
+                foreach ($product->getOffers() as $offer) {
+                    if (!$offer->getImagesIds()) {
+                        continue;
+                    }
+                    $images = $offer->getResizeImages(80, 80);
+                    foreach ($images as $id => $image) {
+                        /**
+                         * @var ResizeImageDecorator $image
+                         */
+                        ?>
+                        <div class="b-product-slider__item b-product-slider__item--small">
+                            <div class="b-product-slider__wrapper b-product-slider__wrapper--small">
+                                <img class="b-product-slider__photo-img b-product-slider__photo-img--small js-image-wrapper"
+                                     src="<?= $image ?>"
+                                     alt="Превью <?= $offer->getName() . ($id ? ' ' . $id : '') ?>"
+                                     title="Превью <?= $offer->getName() . ($id ? ' ' . $id : '') ?>"
+                                     role="presentation"/>
+                            </div>
+                        </div>
+                        <?php
+                    }
+                }
+                ?>
             </div>
         </div>
     </div>
@@ -326,13 +320,16 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB);
                             </li>
                             <?php
                         }
+
+                        /*
                         ?>
                         <li class="b-characteristics-tab__item">
                             <div class="b-characteristics-tab__characteristics-text">
                                 <span>Упаковано</span>
                                 <div class="b-characteristics-tab__dots"></div>
                             </div>
-                            <div class="b-characteristics-tab__characteristics-value">Пакет / коробка
+                            <div class="b-characteristics-tab__characteristics-value">
+                                Пакет / коробка
                             </div>
                         </li>
                         <li class="b-characteristics-tab__item">
@@ -343,8 +340,9 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB);
                             <div class="b-characteristics-tab__characteristics-value">6 шт.</div>
                         </li>
                         <?php
+                        */
 
-
+                        /*
                         ?>
                         <li class="b-characteristics-tab__item">
                             <div class="b-characteristics-tab__characteristics-text"><span>Вес</span>
@@ -370,6 +368,9 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB);
                             </div>
                             <div class="b-characteristics-tab__characteristics-value">35 см</div>
                         </li>
+                        <?php
+                        */
+                        ?>
                     </ul>
                 </div>
             </div>

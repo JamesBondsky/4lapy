@@ -249,10 +249,7 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                             <h2 class="b-title b-title--advice b-title--stock">Наличие в магазинах</h2>
                             <div class="b-availability"><a class="b-link b-link--show-map js-product-map"
                                                            href="javascript:void(0);" title=""><span
-                                            class="b-icon b-icon--map"><svg class="b-icon__svg" viewBox="0 0 22 20 "
-                                                                            width="22px" height="20px"><use
-                                                    class="b-icon__use"
-                                                    xlink:href="icons.svg#icon-map"></use></svg></span></a>
+                                            class="b-icon b-icon--map"><?= new SvgDecorator('icon-map', 22, 20)?></span></a>
                                 <ul
                                         class="b-availability-tab-list">
                                     <li class="b-availability-tab-list__item active"><a
@@ -292,12 +289,7 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                                         <div class="b-tab-delivery-map__map" id="map"></div>
                                         <a class="b-link b-link--close-baloon js-product-list"
                                            href="javascript:void(0);"
-                                           title=""><span class="b-icon b-icon--close-baloon"><svg class="b-icon__svg"
-                                                                                                   viewBox="0 0 18 18 "
-                                                                                                   width="18px"
-                                                                                                   height="18px"><use
-                                                            class="b-icon__use"
-                                                            xlink:href="icons.svg#icon-close-baloon"></use></svg></span></a>
+                                           title=""><span class="b-icon b-icon--close-baloon"><?= new SvgDecorator('icon-close-baloon', 18, 18)?></span></a>
                                     </div>
                                 </div>
                             </div>
@@ -375,36 +367,31 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                                                 <li class="b-weight-container__item"><a
                                                             class="b-weight-container__link js-price active-link"
                                                             href="javascript:void(0);" data-price="100"
-                                                            data-image="images/content/royal-canin-2.jpg">4 кг</a>
+                                                            data-image="/static/build/images/content/royal-canin-2.jpg">4 кг</a>
                                                 </li>
                                                 <li class="b-weight-container__item"><a
                                                             class="b-weight-container__link js-price"
                                                             href="javascript:void(0);" data-price="4 199"
-                                                            data-image="images/content/abba.png">6 кг</a>
+                                                            data-image="/static/build/images/content/abba.png">6 кг</a>
                                                 </li>
                                                 <li class="b-weight-container__item"><a
                                                             class="b-weight-container__link js-price unavailable-link"
                                                             href="javascript:void(0);" data-price="4 199"
-                                                            data-image="images/content/abba.png">15 кг</a>
+                                                            data-image="/static/build/images/content/abba.png">15 кг</a>
                                                 </li>
                                             </ul>
                                         </div>
                                         <a class="b-common-item__add-to-cart" href="javascript:void(0);" title=""><span
                                                     class="b-common-item__wrapper-link"><span class="b-cart"><span
-                                                            class="b-icon b-icon--cart"><svg class="b-icon__svg"
-                                                                                             viewBox="0 0 16 16 "
-                                                                                             width="16px" height="16px"><use
-                                                                    class="b-icon__use"
-                                                                    xlink:href="icons.svg#icon-cart"></use></svg></span></span><span
+                                                            class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 16, 16)?></span></span><span
                                                         class="b-common-item__price js-price-block">100</span> <span
-                                                        class="b-common-item__currency"><span
-                                                            class="b-ruble">Р</span></span></span></a>
+                                                        class="b-common-item__currency"><span class="b-ruble">₽</span></span></span></a>
                                     </div>
                                 </div>
                                 <div class="b-common-item b-common-item--catalog-item js-product-item"><span
                                             class="b-common-item__image-wrap"><img
                                                 class="b-common-item__image js-weight-img"
-                                                src="images/content/hills-cat.jpg" alt="Хиллс" title=""/></span>
+                                                src="/static/build/images/content/hills-cat.jpg" alt="Хиллс" title=""/></span>
                                     <div class="b-common-item__info-center-block"><a
                                                 class="b-common-item__description-wrap"
                                                 href="javascript:void(0);"
@@ -417,36 +404,31 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                                                 <li class="b-weight-container__item"><a
                                                             class="b-weight-container__link js-price active-link"
                                                             href="javascript:void(0);" data-price="2 585"
-                                                            data-image="images/content/hills-cat.jpg">3,5 кг</a>
+                                                            data-image="/static/build/images/content/hills-cat.jpg">3,5 кг</a>
                                                 </li>
                                                 <li class="b-weight-container__item"><a
                                                             class="b-weight-container__link js-price"
                                                             href="javascript:void(0);" data-price="2 585"
-                                                            data-image="images/content/brit.png">8 кг</a>
+                                                            data-image="/static/build/images/content/brit.png">8 кг</a>
                                                 </li>
                                                 <li class="b-weight-container__item"><a
                                                             class="b-weight-container__link js-price unavailable-link"
                                                             href="javascript:void(0);" data-price="2 585"
-                                                            data-image="images/content/brit.png">12 кг</a>
+                                                            data-image="/static/build/images/content/brit.png">12 кг</a>
                                                 </li>
                                             </ul>
                                         </div>
                                         <a class="b-common-item__add-to-cart" href="javascript:void(0);" title=""><span
                                                     class="b-common-item__wrapper-link"><span class="b-cart"><span
-                                                            class="b-icon b-icon--cart"><svg class="b-icon__svg"
-                                                                                             viewBox="0 0 16 16 "
-                                                                                             width="16px" height="16px"><use
-                                                                    class="b-icon__use"
-                                                                    xlink:href="icons.svg#icon-cart"></use></svg></span></span><span
+                                                            class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 16, 16)?></span></span><span
                                                         class="b-common-item__price js-price-block">2 585</span> <span
-                                                        class="b-common-item__currency"><span
-                                                            class="b-ruble">Р</span></span></span></a>
+                                                        class="b-common-item__currency"><span class="b-ruble">₽</span></span></span></a>
                                     </div>
                                 </div>
                                 <div class="b-common-item b-common-item--catalog-item js-product-item"><span
                                             class="b-common-item__image-wrap"><img
                                                 class="b-common-item__image js-weight-img"
-                                                src="images/content/clean-cat.jpg" alt="CleanCat" title=""/></span>
+                                                src="/static/build/images/content/clean-cat.jpg" alt="CleanCat" title=""/></span>
                                     <div class="b-common-item__info-center-block"><a
                                                 class="b-common-item__description-wrap"
                                                 href="javascript:void(0);"
@@ -459,36 +441,31 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                                                 <li class="b-weight-container__item"><a
                                                             class="b-weight-container__link js-price active-link"
                                                             href="javascript:void(0);" data-price="353"
-                                                            data-image="images/content/clean-cat.jpg">5 л</a>
+                                                            data-image="/static/build/images/content/clean-cat.jpg">5 л</a>
                                                 </li>
                                                 <li class="b-weight-container__item"><a
                                                             class="b-weight-container__link js-price"
                                                             href="javascript:void(0);" data-price="915"
-                                                            data-image="images/content/pro-plan.jpg">10 л</a>
+                                                            data-image="/static/build/images/content/pro-plan.jpg">10 л</a>
                                                 </li>
                                                 <li class="b-weight-container__item"><a
                                                             class="b-weight-container__link js-price unavailable-link"
                                                             href="javascript:void(0);" data-price="2 585"
-                                                            data-image="images/content/brit.png">18 кг</a>
+                                                            data-image="/static/build/images/content/brit.png">18 кг</a>
                                                 </li>
                                             </ul>
                                         </div>
                                         <a class="b-common-item__add-to-cart" href="javascript:void(0);" title=""><span
                                                     class="b-common-item__wrapper-link"><span class="b-cart"><span
-                                                            class="b-icon b-icon--cart"><svg class="b-icon__svg"
-                                                                                             viewBox="0 0 16 16 "
-                                                                                             width="16px" height="16px"><use
-                                                                    class="b-icon__use"
-                                                                    xlink:href="icons.svg#icon-cart"></use></svg></span></span><span
+                                                            class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 16, 16)?></span></span><span
                                                         class="b-common-item__price js-price-block">353</span> <span
-                                                        class="b-common-item__currency"><span
-                                                            class="b-ruble">Р</span></span></span></a>
+                                                        class="b-common-item__currency"><span class="b-ruble">₽</span></span></span></a>
                                     </div>
                                 </div>
                                 <div class="b-common-item b-common-item--catalog-item js-product-item"><span
                                             class="b-common-item__image-wrap"><img
                                                 class="b-common-item__image js-weight-img"
-                                                src="images/content/clean-cat.jpg" alt="CleanCat" title=""/></span>
+                                                src="/static/build/images/content/clean-cat.jpg" alt="CleanCat" title=""/></span>
                                     <div class="b-common-item__info-center-block"><a
                                                 class="b-common-item__description-wrap"
                                                 href="javascript:void(0);"
@@ -501,36 +478,31 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                                                 <li class="b-weight-container__item"><a
                                                             class="b-weight-container__link js-price active-link"
                                                             href="javascript:void(0);" data-price="353"
-                                                            data-image="images/content/clean-cat.jpg">5 л</a>
+                                                            data-image="/static/build/images/content/clean-cat.jpg">5 л</a>
                                                 </li>
                                                 <li class="b-weight-container__item"><a
                                                             class="b-weight-container__link js-price"
                                                             href="javascript:void(0);" data-price="915"
-                                                            data-image="images/content/pro-plan.jpg">10 л</a>
+                                                            data-image="/static/build/images/content/pro-plan.jpg">10 л</a>
                                                 </li>
                                                 <li class="b-weight-container__item"><a
                                                             class="b-weight-container__link js-price unavailable-link"
                                                             href="javascript:void(0);" data-price="2 585"
-                                                            data-image="images/content/brit.png">18 кг</a>
+                                                            data-image="/static/build/images/content/brit.png">18 кг</a>
                                                 </li>
                                             </ul>
                                         </div>
                                         <a class="b-common-item__add-to-cart" href="javascript:void(0);" title=""><span
                                                     class="b-common-item__wrapper-link"><span class="b-cart"><span
-                                                            class="b-icon b-icon--cart"><svg class="b-icon__svg"
-                                                                                             viewBox="0 0 16 16 "
-                                                                                             width="16px" height="16px"><use
-                                                                    class="b-icon__use"
-                                                                    xlink:href="icons.svg#icon-cart"></use></svg></span></span><span
+                                                            class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 16, 16)?></span></span><span
                                                         class="b-common-item__price js-price-block">353</span> <span
-                                                        class="b-common-item__currency"><span
-                                                            class="b-ruble">Р</span></span></span></a>
+                                                        class="b-common-item__currency"><span class="b-ruble">₽</span></span></span></a>
                                     </div>
                                 </div>
                                 <div class="b-common-item b-common-item--catalog-item js-product-item"><span
                                             class="b-common-item__image-wrap"><img
                                                 class="b-common-item__image js-weight-img"
-                                                src="images/content/hills-cat.jpg" alt="Хиллс" title=""/></span>
+                                                src="/static/build/images/content/hills-cat.jpg" alt="Хиллс" title=""/></span>
                                     <div class="b-common-item__info-center-block"><a
                                                 class="b-common-item__description-wrap"
                                                 href="javascript:void(0);"
@@ -543,36 +515,31 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                                                 <li class="b-weight-container__item"><a
                                                             class="b-weight-container__link js-price active-link"
                                                             href="javascript:void(0);" data-price="2 585"
-                                                            data-image="images/content/hills-cat.jpg">3,5 кг</a>
+                                                            data-image="/static/build/images/content/hills-cat.jpg">3,5 кг</a>
                                                 </li>
                                                 <li class="b-weight-container__item"><a
                                                             class="b-weight-container__link js-price"
                                                             href="javascript:void(0);" data-price="2 585"
-                                                            data-image="images/content/brit.png">8 кг</a>
+                                                            data-image="/static/build/images/content/brit.png">8 кг</a>
                                                 </li>
                                                 <li class="b-weight-container__item"><a
                                                             class="b-weight-container__link js-price unavailable-link"
                                                             href="javascript:void(0);" data-price="2 585"
-                                                            data-image="images/content/brit.png">12 кг</a>
+                                                            data-image="/static/build/images/content/brit.png">12 кг</a>
                                                 </li>
                                             </ul>
                                         </div>
                                         <a class="b-common-item__add-to-cart" href="javascript:void(0);" title=""><span
                                                     class="b-common-item__wrapper-link"><span class="b-cart"><span
-                                                            class="b-icon b-icon--cart"><svg class="b-icon__svg"
-                                                                                             viewBox="0 0 16 16 "
-                                                                                             width="16px" height="16px"><use
-                                                                    class="b-icon__use"
-                                                                    xlink:href="icons.svg#icon-cart"></use></svg></span></span><span
+                                                            class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 16, 16)?></span></span><span
                                                         class="b-common-item__price js-price-block">2 585</span> <span
-                                                        class="b-common-item__currency"><span
-                                                            class="b-ruble">Р</span></span></span></a>
+                                                        class="b-common-item__currency"><span class="b-ruble">₽</span></span></span></a>
                                     </div>
                                 </div>
                                 <div class="b-common-item b-common-item--catalog-item js-product-item"><span
                                             class="b-common-item__image-wrap"><img
                                                 class="b-common-item__image js-weight-img"
-                                                src="images/content/clean-cat.jpg" alt="CleanCat" title=""/></span>
+                                                src="/static/build/images/content/clean-cat.jpg" alt="CleanCat" title=""/></span>
                                     <div class="b-common-item__info-center-block"><a
                                                 class="b-common-item__description-wrap"
                                                 href="javascript:void(0);"
@@ -585,36 +552,31 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                                                 <li class="b-weight-container__item"><a
                                                             class="b-weight-container__link js-price active-link"
                                                             href="javascript:void(0);" data-price="353"
-                                                            data-image="images/content/clean-cat.jpg">5 л</a>
+                                                            data-image="/static/build/images/content/clean-cat.jpg">5 л</a>
                                                 </li>
                                                 <li class="b-weight-container__item"><a
                                                             class="b-weight-container__link js-price"
                                                             href="javascript:void(0);" data-price="915"
-                                                            data-image="images/content/pro-plan.jpg">10 л</a>
+                                                            data-image="/static/build/images/content/pro-plan.jpg">10 л</a>
                                                 </li>
                                                 <li class="b-weight-container__item"><a
                                                             class="b-weight-container__link js-price unavailable-link"
                                                             href="javascript:void(0);" data-price="2 585"
-                                                            data-image="images/content/brit.png">18 кг</a>
+                                                            data-image="/static/build/images/content/brit.png">18 кг</a>
                                                 </li>
                                             </ul>
                                         </div>
                                         <a class="b-common-item__add-to-cart" href="javascript:void(0);" title=""><span
                                                     class="b-common-item__wrapper-link"><span class="b-cart"><span
-                                                            class="b-icon b-icon--cart"><svg class="b-icon__svg"
-                                                                                             viewBox="0 0 16 16 "
-                                                                                             width="16px" height="16px"><use
-                                                                    class="b-icon__use"
-                                                                    xlink:href="icons.svg#icon-cart"></use></svg></span></span><span
+                                                            class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 16, 16)?></span></span><span
                                                         class="b-common-item__price js-price-block">353</span> <span
-                                                        class="b-common-item__currency"><span
-                                                            class="b-ruble">Р</span></span></span></a>
+                                                        class="b-common-item__currency"><span class="b-ruble">₽</span></span></span></a>
                                     </div>
                                 </div>
                                 <div class="b-common-item b-common-item--catalog-item js-product-item"><span
                                             class="b-common-item__image-wrap"><img
                                                 class="b-common-item__image js-weight-img"
-                                                src="images/content/clean-cat.jpg" alt="CleanCat" title=""/></span>
+                                                src="/static/build/images/content/clean-cat.jpg" alt="CleanCat" title=""/></span>
                                     <div class="b-common-item__info-center-block"><a
                                                 class="b-common-item__description-wrap"
                                                 href="javascript:void(0);"
@@ -627,36 +589,31 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                                                 <li class="b-weight-container__item"><a
                                                             class="b-weight-container__link js-price active-link"
                                                             href="javascript:void(0);" data-price="353"
-                                                            data-image="images/content/clean-cat.jpg">5 л</a>
+                                                            data-image="/static/build/images/content/clean-cat.jpg">5 л</a>
                                                 </li>
                                                 <li class="b-weight-container__item"><a
                                                             class="b-weight-container__link js-price"
                                                             href="javascript:void(0);" data-price="915"
-                                                            data-image="images/content/pro-plan.jpg">10 л</a>
+                                                            data-image="/static/build/images/content/pro-plan.jpg">10 л</a>
                                                 </li>
                                                 <li class="b-weight-container__item"><a
                                                             class="b-weight-container__link js-price unavailable-link"
                                                             href="javascript:void(0);" data-price="2 585"
-                                                            data-image="images/content/brit.png">18 кг</a>
+                                                            data-image="/static/build/images/content/brit.png">18 кг</a>
                                                 </li>
                                             </ul>
                                         </div>
                                         <a class="b-common-item__add-to-cart" href="javascript:void(0);" title=""><span
                                                     class="b-common-item__wrapper-link"><span class="b-cart"><span
-                                                            class="b-icon b-icon--cart"><svg class="b-icon__svg"
-                                                                                             viewBox="0 0 16 16 "
-                                                                                             width="16px" height="16px"><use
-                                                                    class="b-icon__use"
-                                                                    xlink:href="icons.svg#icon-cart"></use></svg></span></span><span
+                                                            class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 16, 16)?></span></span><span
                                                         class="b-common-item__price js-price-block">353</span> <span
-                                                        class="b-common-item__currency"><span
-                                                            class="b-ruble">Р</span></span></span></a>
+                                                        class="b-common-item__currency"><span class="b-ruble">₽</span></span></span></a>
                                     </div>
                                 </div>
                                 <div class="b-common-item b-common-item--catalog-item js-product-item"><span
                                             class="b-common-item__image-wrap"><img
                                                 class="b-common-item__image js-weight-img"
-                                                src="images/content/hills-cat.jpg" alt="Хиллс" title=""/></span>
+                                                src="/static/build/images/content/hills-cat.jpg" alt="Хиллс" title=""/></span>
                                     <div class="b-common-item__info-center-block"><a
                                                 class="b-common-item__description-wrap"
                                                 href="javascript:void(0);"
@@ -669,36 +626,31 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                                                 <li class="b-weight-container__item"><a
                                                             class="b-weight-container__link js-price active-link"
                                                             href="javascript:void(0);" data-price="2 585"
-                                                            data-image="images/content/hills-cat.jpg">3,5 кг</a>
+                                                            data-image="/static/build/images/content/hills-cat.jpg">3,5 кг</a>
                                                 </li>
                                                 <li class="b-weight-container__item"><a
                                                             class="b-weight-container__link js-price"
                                                             href="javascript:void(0);" data-price="2 585"
-                                                            data-image="images/content/brit.png">8 кг</a>
+                                                            data-image="/static/build/images/content/brit.png">8 кг</a>
                                                 </li>
                                                 <li class="b-weight-container__item"><a
                                                             class="b-weight-container__link js-price unavailable-link"
                                                             href="javascript:void(0);" data-price="2 585"
-                                                            data-image="images/content/brit.png">12 кг</a>
+                                                            data-image="/static/build/images/content/brit.png">12 кг</a>
                                                 </li>
                                             </ul>
                                         </div>
                                         <a class="b-common-item__add-to-cart" href="javascript:void(0);" title=""><span
                                                     class="b-common-item__wrapper-link"><span class="b-cart"><span
-                                                            class="b-icon b-icon--cart"><svg class="b-icon__svg"
-                                                                                             viewBox="0 0 16 16 "
-                                                                                             width="16px" height="16px"><use
-                                                                    class="b-icon__use"
-                                                                    xlink:href="icons.svg#icon-cart"></use></svg></span></span><span
+                                                            class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 16, 16)?></span></span><span
                                                         class="b-common-item__price js-price-block">2 585</span> <span
-                                                        class="b-common-item__currency"><span
-                                                            class="b-ruble">Р</span></span></span></a>
+                                                        class="b-common-item__currency"><span class="b-ruble">₽</span></span></span></a>
                                     </div>
                                 </div>
                                 <div class="b-common-item b-common-item--catalog-item js-product-item"><span
                                             class="b-common-item__image-wrap"><img
                                                 class="b-common-item__image js-weight-img"
-                                                src="images/content/clean-cat.jpg" alt="CleanCat" title=""/></span>
+                                                src="/static/build/images/content/clean-cat.jpg" alt="CleanCat" title=""/></span>
                                     <div class="b-common-item__info-center-block"><a
                                                 class="b-common-item__description-wrap"
                                                 href="javascript:void(0);"
@@ -711,36 +663,31 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                                                 <li class="b-weight-container__item"><a
                                                             class="b-weight-container__link js-price active-link"
                                                             href="javascript:void(0);" data-price="353"
-                                                            data-image="images/content/clean-cat.jpg">5 л</a>
+                                                            data-image="/static/build/images/content/clean-cat.jpg">5 л</a>
                                                 </li>
                                                 <li class="b-weight-container__item"><a
                                                             class="b-weight-container__link js-price"
                                                             href="javascript:void(0);" data-price="915"
-                                                            data-image="images/content/pro-plan.jpg">10 л</a>
+                                                            data-image="/static/build/images/content/pro-plan.jpg">10 л</a>
                                                 </li>
                                                 <li class="b-weight-container__item"><a
                                                             class="b-weight-container__link js-price unavailable-link"
                                                             href="javascript:void(0);" data-price="2 585"
-                                                            data-image="images/content/brit.png">18 кг</a>
+                                                            data-image="/static/build/images/content/brit.png">18 кг</a>
                                                 </li>
                                             </ul>
                                         </div>
                                         <a class="b-common-item__add-to-cart" href="javascript:void(0);" title=""><span
                                                     class="b-common-item__wrapper-link"><span class="b-cart"><span
-                                                            class="b-icon b-icon--cart"><svg class="b-icon__svg"
-                                                                                             viewBox="0 0 16 16 "
-                                                                                             width="16px" height="16px"><use
-                                                                    class="b-icon__use"
-                                                                    xlink:href="icons.svg#icon-cart"></use></svg></span></span><span
+                                                            class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 16, 16)?></span></span><span
                                                         class="b-common-item__price js-price-block">353</span> <span
-                                                        class="b-common-item__currency"><span
-                                                            class="b-ruble">Р</span></span></span></a>
+                                                        class="b-common-item__currency"><span class="b-ruble">₽</span></span></span></a>
                                     </div>
                                 </div>
                                 <div class="b-common-item b-common-item--catalog-item js-product-item"><span
                                             class="b-common-item__image-wrap"><img
                                                 class="b-common-item__image js-weight-img"
-                                                src="images/content/clean-cat.jpg" alt="CleanCat" title=""/></span>
+                                                src="/static/build/images/content/clean-cat.jpg" alt="CleanCat" title=""/></span>
                                     <div class="b-common-item__info-center-block"><a
                                                 class="b-common-item__description-wrap"
                                                 href="javascript:void(0);"
@@ -753,30 +700,25 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                                                 <li class="b-weight-container__item"><a
                                                             class="b-weight-container__link js-price active-link"
                                                             href="javascript:void(0);" data-price="353"
-                                                            data-image="images/content/clean-cat.jpg">5 л</a>
+                                                            data-image="/static/build/images/content/clean-cat.jpg">5 л</a>
                                                 </li>
                                                 <li class="b-weight-container__item"><a
                                                             class="b-weight-container__link js-price"
                                                             href="javascript:void(0);" data-price="915"
-                                                            data-image="images/content/pro-plan.jpg">10 л</a>
+                                                            data-image="/static/build/images/content/pro-plan.jpg">10 л</a>
                                                 </li>
                                                 <li class="b-weight-container__item"><a
                                                             class="b-weight-container__link js-price unavailable-link"
                                                             href="javascript:void(0);" data-price="2 585"
-                                                            data-image="images/content/brit.png">18 кг</a>
+                                                            data-image="/static/build/images/content/brit.png">18 кг</a>
                                                 </li>
                                             </ul>
                                         </div>
                                         <a class="b-common-item__add-to-cart" href="javascript:void(0);" title=""><span
                                                     class="b-common-item__wrapper-link"><span class="b-cart"><span
-                                                            class="b-icon b-icon--cart"><svg class="b-icon__svg"
-                                                                                             viewBox="0 0 16 16 "
-                                                                                             width="16px" height="16px"><use
-                                                                    class="b-icon__use"
-                                                                    xlink:href="icons.svg#icon-cart"></use></svg></span></span><span
+                                                            class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 16, 16)?></span></span><span
                                                         class="b-common-item__price js-price-block">353</span> <span
-                                                        class="b-common-item__currency"><span
-                                                            class="b-ruble">Р</span></span></span></a>
+                                                        class="b-common-item__currency"><span class="b-ruble">₽</span></span></span></a>
                                     </div>
                                 </div>
                             </div>

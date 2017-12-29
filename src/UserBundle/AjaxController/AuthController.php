@@ -6,17 +6,25 @@
 
 namespace FourPaws\UserBundle\AjaxController;
 
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
+use FourPaws\UserBundle\Exception\EmptyDateException;
+use FourPaws\UserBundle\Exception\InvalidIdentifierException;
+use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use JMS\Serializer\SerializerBuilder;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -28,11 +36,6 @@ use Symfony\Component\HttpFoundation\Request;
 class AuthController extends Controller
 {
     /**
-     * @var UserAuthorizationInterface
-     */
-    private $userAuthorization;
-    
-    /**
      * @var CurrentUserProviderInterface
      */
     private $currentUserProvider;
@@ -40,28 +43,28 @@ class AuthController extends Controller
     public function __construct(
         UserAuthorizationInterface $userAuthorization,
         CurrentUserProviderInterface $currentUserProvider
-    )
-    {
-        $this->userAuthorization   = $userAuthorization;
+    ) {
         $this->currentUserProvider = $currentUserProvider;
     }
     
     /**
      * @Route("/login/", methods={"POST"})
-     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @param Request $request
      *
-     * @throws \FourPaws\UserBundle\Exception\ValidationException
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
-     * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
+     * @throws \FourPaws\External\Manzana\Exception\ContactUpdateException
+     * @throws \FourPaws\External\Exception\ManzanaServiceException
+     * @throws ValidationException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws BitrixRuntimeException
+     * @throws ServiceNotFoundException
+     * @throws InvalidArgumentException
      * @throws \RuntimeException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws ApplicationCreateException
+     * @throws WrongPhoneNumberException
+     * @throws ServiceCircularReferenceException
      * @throws \Exception
-     * @return \FourPaws\App\Response\JsonResponse
+     * @return JsonResponse
      */
     public function loginAction(Request $request) : JsonResponse
     {
@@ -93,7 +96,7 @@ class AuthController extends Controller
      * @param Request $request
      *
      * @throws \Exception
-     * @return null|\Symfony\Component\HttpFoundation\JsonResponse
+     * @return null|JsonResponse
      */
     public function registerAction(Request $request)
     {
@@ -126,12 +129,11 @@ class AuthController extends Controller
      * @Route("/forgotPassword/", methods={"POST"})
      * @param Request $request
      *
-     * @return \FourPaws\App\Response\JsonResponse
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \Exception
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @return JsonResponse
      */
     public function forgotPasswordAction(Request $request) : JsonResponse
     {
@@ -161,13 +163,13 @@ class AuthController extends Controller
      * @Route("/changePhone/", methods={"POST"})
      * @param Request $request
      *
-     * @return \FourPaws\App\Response\JsonResponse
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \FourPaws\UserBundle\Exception\ValidationException
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
+     * @throws ServiceNotFoundException
+     * @throws ValidationException
+     * @throws InvalidIdentifierException
      * @throws \Exception
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
+     * @return JsonResponse
      */
     public function changePhoneAction(Request $request) : JsonResponse
     {
@@ -196,10 +198,10 @@ class AuthController extends Controller
      * @Route("/changePassword/", methods={"POST"})
      * @param Request $request
      *
-     * @return \FourPaws\App\Response\JsonResponse
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \FourPaws\UserBundle\Exception\ValidationException
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
+     * @throws ServiceNotFoundException
+     * @throws ValidationException
+     * @throws InvalidIdentifierException
+     * @return JsonResponse
      */
     public function changePasswordAction(Request $request) : JsonResponse
     {
@@ -249,10 +251,10 @@ class AuthController extends Controller
      * @Route("/changeData/", methods={"POST"})
      * @param Request $request
      *
-     * @return \FourPaws\App\Response\JsonResponse
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \FourPaws\UserBundle\Exception\ValidationException
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
+     * @throws ServiceNotFoundException
+     * @throws ValidationException
+     * @throws InvalidIdentifierException
+     * @return JsonResponse
      */
     public function changeDataAction(Request $request) : JsonResponse
     {
@@ -284,6 +286,12 @@ class AuthController extends Controller
             if (!$res) {
                 return JsonErrorResponse::create('Произошла ошибка при обновлении');
             }
+    
+            try {
+                $birthday = $profileClass->replaceRuMonth($user->getBirthday()->format('d #n# Y'));
+            } catch (EmptyDateException $e) {
+                $birthday = '';
+            }
             
             return JsonSuccessResponse::createWithData(
                 'Данные обновлены',
@@ -291,7 +299,7 @@ class AuthController extends Controller
                     'email'    => $user->getEmail(),
                     'fio'      => $user->getFullName(),
                     'gender'   => $user->getGenderText(),
-                    'birthday' => $profileClass->replaceRuMonth($user->getBirthday()->format('d #n# Y')),
+                    'birthday' => $birthday,
                 ]
             );
         } catch (BitrixRuntimeException $e) {

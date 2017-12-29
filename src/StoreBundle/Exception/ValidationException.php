@@ -2,7 +2,7 @@
 
 namespace FourPaws\StoreBundle\Exception;
 
-class ValidationException extends StoreException
+class ValidationException extends BaseException
 {
 
 }

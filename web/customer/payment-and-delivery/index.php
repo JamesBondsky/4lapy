@@ -22,7 +22,7 @@ $APPLICATION->SetTitle("Доставка и оплата");
     );
     ?>
 </div>
-<div class="b-container b-container--delivery b-container--delivery__date">
+<div class="b-container b-container--delivery b-container--delivery__payment">
     <?php $APPLICATION->IncludeComponent(
         'bitrix:main.include',
         '',

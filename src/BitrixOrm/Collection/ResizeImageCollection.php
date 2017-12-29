@@ -2,10 +2,13 @@
 
 namespace FourPaws\BitrixOrm\Collection;
 
-use Bitrix\Main\DB\Result;
+use Adv\Bitrixtools\Collection\ObjectArrayCollection;
+use Doctrine\Common\Collections\Collection;
+use FourPaws\BitrixOrm\Model\Image;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
+use InvalidArgumentException;
 
-class ResizeImageCollection extends ImageCollection
+class ResizeImageCollection extends ObjectArrayCollection
 {
     /**
      * @var int
@@ -17,11 +20,20 @@ class ResizeImageCollection extends ImageCollection
      */
     private $height;
 
-    public function __construct(Result $result, int $width = 0, int $height = 0)
+    public function __construct(array $objects = [], int $width = 0, int $height = 0)
     {
-        parent::__construct($result);
+        parent::__construct($objects);
         $this->width = $width;
         $this->height = $height;
+    }
+
+    public static function createFromImageCollection(Collection $imageCollection, int $width = 0, int $height = 0)
+    {
+        $collection = new ResizeImageCollection([], $width, $height);
+        foreach ($imageCollection as $image) {
+            $collection->addFromImage($image);
+        }
+        return $collection;
     }
 
     /**
@@ -40,8 +52,8 @@ class ResizeImageCollection extends ImageCollection
     public function setWidth(int $width): ResizeImageCollection
     {
         $this->width = $width;
-        $this->collection = $this->map(function (ResizeImageDecorator $image) use ($width) {
-            $image->setWidth($width);
+        $this->forAll(function ($key, ResizeImageDecorator $image) use ($width) {
+            $image->setResizeWidth($width);
         });
         return $this;
     }
@@ -62,21 +74,47 @@ class ResizeImageCollection extends ImageCollection
     public function setHeight(int $height): ResizeImageCollection
     {
         $this->height = $height;
-        $this->collection = $this->map(function (ResizeImageDecorator $image) use ($height) {
-            $image->setHeight($height);
+        $this->forAll(function ($key, ResizeImageDecorator $image) use ($height) {
+            $image->setResizeHeight($height);
         });
         return $this;
     }
 
     /**
-     * Извлечение модели
+     * @param Image $image
+     *
+     * @throws \InvalidArgumentException
+     * @return static
      */
-    protected function fetchElement(): \Generator
+    public function addFromImage(Image $image)
     {
-        while ($fields = $this->getResult()->fetch()) {
-            yield (new ResizeImageDecorator($fields))
-                ->setHeight($this->height)
-                ->setWidth($this->width);
+        $isExist = $this->exists(function ($key, ResizeImageDecorator $element) use ($image) {
+            return $element->getId() === $image->getId();
+        });
+        if (!$isExist) {
+            $resizedImage = new ResizeImageDecorator($image->getFields());
+            if ($this->getWidth()) {
+                $resizedImage->setResizeWidth($this->getWidth());
+            }
+            if ($this->getHeight()) {
+                $resizedImage->setResizeHeight($this->getHeight());
+            }
+
+            $this->add($resizedImage);
+        }
+        return $this;
+    }
+
+    /**
+     * @param mixed $object
+     *
+     * @throws InvalidArgumentException
+     * @return void
+     */
+    protected function checkType($object)
+    {
+        if (!($object instanceof ResizeImageDecorator)) {
+            throw new InvalidArgumentException('Попытка добавить объект не корректного типа в коллекцию');
         }
     }
 }

@@ -2,10 +2,10 @@
 
 namespace FourPaws\Catalog\Model;
 
-use Bitrix\Main\FileTable;
 use CCatalogDiscountSave;
 use CCatalogProduct;
 use DateTimeImmutable;
+use Doctrine\Common\Collections\Collection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Collection\ImageCollection;
@@ -13,10 +13,13 @@ use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
 use FourPaws\BitrixOrm\Model\CatalogProduct;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\BitrixOrm\Model\IblockElement;
+use FourPaws\BitrixOrm\Model\Image;
+use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\BitrixOrm\Query\CatalogProductQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Query\ProductQuery;
 use JMS\Serializer\Annotation\Accessor;
+use JMS\Serializer\Annotation as Serializer;
 use JMS\Serializer\Annotation\Groups;
 use JMS\Serializer\Annotation\Type;
 use RuntimeException;
@@ -139,6 +142,8 @@ class Offer extends IblockElement
     protected $clothingSize;
 
     /**
+     * @Type("array")
+     * @Groups({"elastic"})
      * @var int[]
      */
     protected $PROPERTY_IMG = [];
@@ -214,6 +219,11 @@ class Offer extends IblockElement
     protected $PROPERTY_OLD_URL = '';
 
     /**
+     * @var int
+     */
+    protected $PROPERTY_BY_REQUEST = 0;
+
+    /**
      * @Type("float")
      * @Groups({"elastic"})
      * @Accessor(getter="getPrice", setter="withPrice")
@@ -244,12 +254,16 @@ class Offer extends IblockElement
     protected $discount = 0;
 
     /**
-     * @var ImageCollection
+     * @Serializer\Expose()
+     * @Groups({"elastic"})
+     * @Type("ArrayCollection<FourPaws\BitrixOrm\Model\Image>")
+     * @Accessor(getter="getImages", setter="withImages")
+     * @var Collection|Image[]
      */
     protected $images;
 
     /**
-     * @var ResizeImageCollection
+     * @var Collection|Image[]
      */
     protected $resizeImages;
 
@@ -257,39 +271,38 @@ class Offer extends IblockElement
     {
         parent::__construct($fields);
 
-        if (isset($fields['CATALOG_PRICE_1'])) {
-            $this->price = (float)$fields['CATALOG_PRICE_1'];
+        if (isset($fields['CATALOG_PRICE_2'])) {
+            $this->price = (float)$fields['CATALOG_PRICE_2'];
         }
 
-        if (isset($fields['CATALOG_CURRENCY_1'])) {
-            $this->currency = (string)$fields['CATALOG_CURRENCY_1'];
+        if (isset($fields['CATALOG_CURRENCY_2'])) {
+            $this->currency = (string)$fields['CATALOG_CURRENCY_2'];
         }
     }
 
     /**
-     * @return ImageCollection
+     * @throws \InvalidArgumentException
+     * @return Collection|Image[]
      */
-    public function getImages(): ImageCollection
+    public function getImages(): Collection
     {
-        if ($this->images instanceof ImageCollection) {
+        if ($this->images instanceof Collection) {
             return $this->images;
         }
-        $this->images = new ImageCollection(
-            FileTable::query()
-                ->addFilter('ID', $this->getImagesIds())
-                ->addSelect('*')
-                ->exec()
-        );
+        $this->images = ImageCollection::createFromIds($this->getImagesIds());
 
         return $this->images;
     }
 
     /**
-     * @param ImageCollection $images
+     * @param Collection|Image[] $images
+     *
+     * @return static
      */
-    public function withImages(ImageCollection $images)
+    public function withImages(Collection $images)
     {
         $this->images = $images;
+        return $this;
     }
 
     /**
@@ -298,35 +311,38 @@ class Offer extends IblockElement
      *
      * @return ResizeImageCollection
      */
-    public function getResizeImages(int $width = 0, int $height = 0): ResizeImageCollection
+    public function getResizeImages(int $width = 0, int $height = 0): Collection
     {
-        if ($this->resizeImages instanceof ResizeImageCollection) {
-            if ($width && $this->resizeImages->getWidth() !== $width) {
-                $this->resizeImages->setWidth($width);
+        if ($this->resizeImages instanceof Collection) {
+            if ($width) {
+                $this->resizeImages->forAll(function ($key, ResizeImageDecorator $image) use ($width) {
+                    $image->setResizeWidth($width);
+                    return true;
+                });
             }
-            if ($height && $this->resizeImages->getHeight() !== $height) {
-                $this->resizeImages->setHeight($height);
+            if ($height) {
+                $this->resizeImages->forAll(function ($key, ResizeImageDecorator $image) use ($height) {
+                    $image->setResizeHeight($height);
+                    return true;
+                });
             }
             return $this->resizeImages;
         }
-        $this->resizeImages = new ResizeImageCollection(
-            FileTable::query()
-                ->addFilter('ID', $this->getImagesIds())
-                ->addSelect('*')
-                ->exec(),
-            $width,
-            $height
-        );
+
+        $this->resizeImages = ResizeImageCollection::createFromImageCollection($this->getImages(), $width, $height);
 
         return $this->resizeImages;
     }
 
     /**
-     * @param ResizeImageCollection $resizeImages
+     * @param Collection $resizeImages
+     *
+     * @return static
      */
-    public function withResizeImages(ResizeImageCollection $resizeImages)
+    public function withResizeImages(Collection $resizeImages)
     {
         $this->resizeImages = $resizeImages;
+        return $this;
     }
 
     /**
@@ -511,6 +527,11 @@ class Offer extends IblockElement
     public function getOldUrl()
     {
         return $this->PROPERTY_OLD_URL;
+    }
+
+    public function isByRequest(): bool
+    {
+        return (bool)$this->PROPERTY_BY_REQUEST;
     }
 
     /**
