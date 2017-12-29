@@ -33,6 +33,25 @@ class Materials
     protected $materials;
 
     /**
+     * @return Collection|Material[]
+     */
+    public function getMaterials(): Collection
+    {
+        return $this->materials;
+    }
+
+    /**
+     * @param Collection|Material[] $materials
+     *
+     * @return Materials
+     */
+    public function setMaterials(Collection $materials): Materials
+    {
+        $this->materials = $materials;
+        return $this;
+    }
+
+    /**
      * @return int
      */
     public function getDocumentNumber(): int
@@ -42,6 +61,7 @@ class Materials
 
     /**
      * @param int $documentNumber
+     *
      * @return Materials
      */
     public function setDocumentNumber(int $documentNumber): Materials

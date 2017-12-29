@@ -104,3 +104,11 @@ sensio_framework_extra:
     converters: true
     auto_convert: true
     disable: ['doctrine.orm']
+
+four_paws_sap:
+  directory_sources:
+    product_info:
+      entity: FourPaws\SapBundle\Dto\In\Offers\Materials
+      in: '%sap.product.directory.in%'
+      out: '%sap.product.directory.out%'
+      error: '%sap.product.directory.error%'
