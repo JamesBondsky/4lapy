@@ -4,17 +4,17 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
-use FourPaws\BitrixOrm\Model\CropImageDecorator;
-
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
-/** @var array $arParams */
-/** @var array $arResult */
 
-/** @global CUser $USER */
-/** @global CMain $APPLICATION */
-/** @global CDatabase $DB */
+use FourPaws\BitrixOrm\Model\CropImageDecorator;
+
+/**
+ * @var \CBitrixComponentTemplate $this
+ *
+ * @var array                     $arResult
+ */
 
 $arResult['NO_SHOW_VIDEO'] = false;
 if (stripos($arResult['DETAIL_TEXT'], '#video#') !== false) {
@@ -32,7 +32,7 @@ foreach ((array)$arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['VALUE'] as $key =
         /** @noinspection PhpUnhandledExceptionInspection */
         $image = CropImageDecorator::createFromPrimary($photo);
         $image->setCropWidth(890)->setCropHeight(500);
-    
+        
         $arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'][$key] = [
             'ID'  => $image->getId(),
             'SRC' => $image->getSrc(),
@@ -68,7 +68,7 @@ if (is_array($arResult['DISPLAY_PROPERTIES']['MORE_PHOTO']['DISPLAY_VALUE'])
         ';
         }
     }
-    if(!empty($html)) {
+    if (!empty($html)) {
         $arResult['DETAIL_TEXT']    = str_replace('#slider#', $html, $arResult['DETAIL_TEXT']);
         $arResult['NO_SHOW_SLIDER'] = true;
     }

@@ -1,15 +1,15 @@
 <?php
 
-use Bitrix\Main\Text\HtmlFilter;
-use FourPaws\Decorators\SvgDecorator;
-
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+use Bitrix\Main\Text\HtmlFilter;
+use FourPaws\Decorators\SvgDecorator;
+
 /**
  * @var array $arParams
- */?>
+ */ ?>
 
 <ul class="b-registration__social-wrapper b-registration__social-wrapper--authorization">
     <?php

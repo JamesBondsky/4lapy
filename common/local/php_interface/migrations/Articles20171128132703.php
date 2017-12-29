@@ -6,10 +6,20 @@
 
 namespace Sprint\Migration;
 
-class Articles20171128132703 extends \Adv\Bitrixtools\Migration\SprintMigrationBase
+use Adv\Bitrixtools\Migration\SprintMigrationBase;
+
+/**
+ * Class Articles20171128132703
+ *
+ * @package Sprint\Migration
+ */
+class Articles20171128132703 extends SprintMigrationBase
 {
-    protected $description = "Добавление свойств";
+    protected $description = 'Добавление свойств';
     
+    /**
+     * @return bool|void
+     */
     public function up()
     {
         $helper = new HelperManager();
@@ -31,16 +41,16 @@ class Articles20171128132703 extends \Adv\Bitrixtools\Migration\SprintMigrationB
                 ],
             ]
         );
-    
+        
         $aIblock = $helper->Iblock()->getIblock('articles', 'publications');
         if (!empty($aIblock)) {
             $ib = new \CIBlock();
             $ib->Update(
                 $aIblock['ID'],
                 [
-                    'LIST_PAGE_URL'      => '#SITE_DIR#/services/articles/',
-                    'DETAIL_PAGE_URL'    => '#SITE_DIR#/services/articles/#ELEMENT_CODE#/',
-                    'SECTION_PAGE_URL'   => '#SITE_DIR#/services/articles/',
+                    'LIST_PAGE_URL'    => '#SITE_DIR#/services/articles/',
+                    'DETAIL_PAGE_URL'  => '#SITE_DIR#/services/articles/#ELEMENT_CODE#/',
+                    'SECTION_PAGE_URL' => '#SITE_DIR#/services/articles/',
                 ]
             );
         } else {
@@ -486,6 +496,9 @@ class Articles20171128132703 extends \Adv\Bitrixtools\Migration\SprintMigrationB
         );
     }
     
+    /**
+     * @return void|bool
+     */
     public function down()
     {
     }

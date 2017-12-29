@@ -7,10 +7,6 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
-/** @global \CDatabase $DB */
-/** @global \CUser $USER */
-
-/** @global \CMain $APPLICATION */
 
 /** @noinspection AutoloadingIssuesInspection */
 class CPersonalCabinetComponent extends CBitrixComponent

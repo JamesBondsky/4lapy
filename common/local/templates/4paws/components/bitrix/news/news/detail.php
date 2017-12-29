@@ -7,18 +7,13 @@ use Bitrix\Main\Application;
 use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\Helpers\HighloadHelper;
 
-/** @var array $arParams */
-/** @var array $arResult */
-/** @global CMain $APPLICATION */
-/** @global CUser $USER */
-/** @noinspection PhpUndefinedClassInspection */
-/** @global CDatabase $DB */
-
-/** @var CBitrixComponentTemplate $this */
-/** @var string $templateName */
-/** @var string $templateFile */
-/** @var string $templateFolder */
-/** @var string $componentPath */
+/**
+ * @var \CBitrixComponentTemplate $this
+ *
+ * @var array                     $arParams
+ * @var array                     $arResult
+ * @global CMain                  $APPLICATION
+ */
 
 /** @var CBitrixComponent $component */
 $this->setFrameMode(true);

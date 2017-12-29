@@ -1,11 +1,18 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\UserBundle\EventController;
 
 use Bitrix\Main\EventManager;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\ServiceHandlerInterface;
 use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /**
  * Class Event
@@ -23,7 +30,7 @@ abstract class Event implements ServiceHandlerInterface
     protected static $eventManager;
     
     /**
-     * @param \Bitrix\Main\EventManager $eventManager
+     * @param EventManager $eventManager
      *
      * @return mixed|void
      */
@@ -69,16 +76,14 @@ abstract class Event implements ServiceHandlerInterface
     /**
      * @param array $fields
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
+     * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
      */
     public static function replaceLogin(array $fields)
     {
         global $APPLICATION;
-        $userService = Application::getInstance()
-                                  ->getContainer()
-                                  ->get(UserRegistrationProviderInterface::class);
+        $userService = Application::getInstance()->getContainer()->get(UserRegistrationProviderInterface::class);
         if (!empty($fields['LOGIN'])) {
             $fields['LOGIN'] = $userService->getLoginByRawLogin((string)$fields['LOGIN']);
         } else {

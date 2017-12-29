@@ -6,6 +6,15 @@
 
 namespace FourPaws\UserBundle\Service;
 
+use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\External\Exception\SmsSendErrorException;
+use FourPaws\Helpers\Exception\WrongPhoneNumberException;
+use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
+use FourPaws\UserBundle\Model\ConfirmCode;
+use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+
 interface ConfirmCodeInterface
 {
     /**
@@ -16,13 +25,13 @@ interface ConfirmCodeInterface
     /**
      * @param string $phone
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws ServiceCircularReferenceException
      * @throws \RuntimeException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
-     * @throws \FourPaws\External\Exception\SmsSendErrorException
-     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
+     * @throws ApplicationCreateException
+     * @throws ServiceNotFoundException
+     * @throws InvalidArgumentException
+     * @throws SmsSendErrorException
+     * @throws WrongPhoneNumberException
      * @throws \Exception
      * @return bool
      */
@@ -51,9 +60,9 @@ interface ConfirmCodeInterface
      * @param string $phone
      * @param string $confirmCode
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \FourPaws\UserBundle\Exception\ExpiredConfirmCodeException
-     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
+     * @throws ServiceNotFoundException
+     * @throws ExpiredConfirmCodeException
+     * @throws WrongPhoneNumberException
      * @throws \Exception
      * @return bool
      */
@@ -61,7 +70,7 @@ interface ConfirmCodeInterface
     
     /**
      *
-     * @throws \FourPaws\UserBundle\Exception\ExpiredConfirmCodeException
+     * @throws ExpiredConfirmCodeException
      * @throws \Exception
      *
      * @return string
@@ -69,9 +78,9 @@ interface ConfirmCodeInterface
     public static function getGeneratedCode() : string;
     
     /**
-     * @param \FourPaws\UserBundle\Model\ConfirmCode $confirmCode
+     * @param ConfirmCode $confirmCode
      *
      * @return bool
      */
-    public static function isExpire(\FourPaws\UserBundle\Model\ConfirmCode $confirmCode) : bool;
+    public static function isExpire(ConfirmCode $confirmCode) : bool;
 }

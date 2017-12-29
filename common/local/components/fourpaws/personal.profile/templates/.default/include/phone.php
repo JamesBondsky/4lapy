@@ -1,7 +1,8 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
-} ?>
+}
+/** @var string $phone */ ?>
 <input type="hidden" name="action" value="get">
 <input type="hidden" name="step" value="confirm">
 <div class="b-registration__step b-registration__step--one">

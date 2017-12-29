@@ -1,7 +1,16 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\BitrixOrm\Model;
 
+/**
+ * Class CustomTable
+ *
+ * @package FourPaws\BitrixOrm\Model
+ */
 abstract class CustomTable implements ModelInterface
 {
     
@@ -19,25 +28,12 @@ abstract class CustomTable implements ModelInterface
         }
     }
     
-    public function toArray()
-    {
-        $result = [];
-        //TODO Дописать лучше часть про поля
-        foreach (get_object_vars($this) as $field => $value) {
-            if (!is_object($value) && !is_null($value)) {
-                $result[$field] = $value;
-            }
-        }
-        
-        return $result;
-    }
-    
     /**
      * @param string $fieldName
      *
      * @return bool
      */
-    protected function isExists(string $fieldName): bool
+    protected function isExists(string $fieldName) : bool
     {
         return property_exists($this, $fieldName);
     }
@@ -45,10 +41,26 @@ abstract class CustomTable implements ModelInterface
     /**
      * @inheritDoc
      */
-    public static function createFromPrimary(string $primary): ModelInterface
+    public static function createFromPrimary(string $primary) : ModelInterface
     {
         /**
          * @todo Заглушка. Удалить после реализации создания в более конкретных классах.
          */
+    }
+    
+    /**
+     * @return array
+     */
+    public function toArray() : array
+    {
+        $result = [];
+        //TODO Дописать лучше часть про поля
+        foreach (get_object_vars($this) as $field => $value) {
+            if (!\is_object($value) && $value !== null) {
+                $result[$field] = $value;
+            }
+        }
+        
+        return $result;
     }
 }

@@ -1,11 +1,11 @@
 <?php
 
-use Bitrix\Main\Localization\Loc;
-use FourPaws\Decorators\SvgDecorator;
-
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
+
+use Bitrix\Main\Localization\Loc;
+use FourPaws\Decorators\SvgDecorator;
 
 if (!empty($arResult['AUTH_SERVICES']) && \is_array($arResult['AUTH_SERVICES'])) {
     ?>
@@ -47,19 +47,19 @@ if (!empty($arResult['AUTH_SERVICES']) && \is_array($arResult['AUTH_SERVICES']))
                                         ?>
                             href="<?= htmlspecialcharsbx($service['DELETE_LINK']) ?>"
                             onclick="return confirm('<?= Loc::getMessage('SS_PROFILE_DELETE_CONFIRM') ?>')"
-                        <?php
+                            <?php
                                     } ?>
                        title="close">
                         <span class="b-icon b-icon--account-social-del">
                             <?= new SvgDecorator(
                                 'icon-delete',
-                                        13,
-                                        13
+                                13,
+                                13
                             ) ?>
                         </span>
                     </a>
                 </div>
-            <?php
+                <?php
             } ?>
         </div>
     </div>

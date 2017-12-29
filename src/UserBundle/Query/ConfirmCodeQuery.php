@@ -10,6 +10,11 @@ use FourPaws\BitrixOrm\Collection\CollectionBase;
 use FourPaws\BitrixOrm\Query\D7QueryBase;
 use FourPaws\UserBundle\Collection\ConfirmCodeCollection;
 
+/**
+ * Class ConfirmCodeQuery
+ *
+ * @package FourPaws\UserBundle\Query
+ */
 class ConfirmCodeQuery extends D7QueryBase
 {
     /**

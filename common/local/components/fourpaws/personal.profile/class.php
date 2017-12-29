@@ -87,8 +87,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         $this->setFrameMode(true);
         
         /** @var UserService $userService */
-        $userService =
-            App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
+        $userService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
         if (!$userService->isAuthorized()) {
             return null;
         }
@@ -168,9 +167,9 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         $phone = '';
         try {
             $res = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::checkConfirmSms(
-                    $request->get('phone'),
-                    $request->get('confirmCode')
-                );
+                $request->get('phone'),
+                $request->get('confirmCode')
+            );
             if (!$res) {
                 return JsonErrorResponse::createWithData(
                     'Код подтверждения не соответствует',
@@ -192,9 +191,9 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         try {
             if ($this->currentUserProvider->getUserRepository()->update(
                 SerializerBuilder::create()->build()->fromArray(
-                        $data,
-                        User::class
-                    )
+                    $data,
+                    User::class
+                )
             )) {
                 /** todo отправить данные в манзану о пользователе */
                 /** @var ManzanaService $manzanaService */

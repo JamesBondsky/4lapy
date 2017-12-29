@@ -4,16 +4,6 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
-use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use Bitrix\Main\SystemException;
-use FourPaws\App\Application as App;
-use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\BitrixOrm\Model\CropImageDecorator;
-use FourPaws\StoreBundle\Entity\Store;
-use FourPaws\StoreBundle\Service\StoreService;
-use FourPaws\UserBundle\Service\UserCitySelectInterface;
-use Symfony\Component\HttpFoundation\Request;
-
 /*
  * @copyright Copyright (c) ADV/web-engineering co
  */
@@ -21,10 +11,20 @@ use Symfony\Component\HttpFoundation\Request;
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
-/** @global \CDatabase $DB */
-/** @global \CUser $USER */
 
-/** @global \CMain $APPLICATION */
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\SystemException;
+use FourPaws\App\Application as App;
+use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\BitrixOrm\Model\CropImageDecorator;
+use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
+use FourPaws\StoreBundle\Entity\Store;
+use FourPaws\StoreBundle\Service\StoreService;
+use FourPaws\UserBundle\Service\UserCitySelectInterface;
+use FourPaws\UserBundle\Service\UserService;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use Symfony\Component\HttpFoundation\Request;
 
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsShopListComponent extends CBitrixComponent
@@ -32,7 +32,7 @@ class FourPawsShopListComponent extends CBitrixComponent
     /** @var StoreService $storeService */
     private $storeService;
     
-    /** @var \FourPaws\UserBundle\Service\UserService $userService */
+    /** @var UserService $userService */
     private $userService;
     
     /**
@@ -40,10 +40,10 @@ class FourPawsShopListComponent extends CBitrixComponent
      *
      * @param null|\CBitrixComponent $component
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Bitrix\Main\SystemException
+     * @throws ServiceNotFoundException
+     * @throws SystemException
      * @throws \RuntimeException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws ServiceCircularReferenceException
      */
     public function __construct(\CBitrixComponent $component = null)
     {
@@ -63,9 +63,9 @@ class FourPawsShopListComponent extends CBitrixComponent
     
     /**
      * {@inheritdoc}
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
      * @throws \Exception
      */
     public function executeComponent()
@@ -132,8 +132,8 @@ class FourPawsShopListComponent extends CBitrixComponent
      * @param array $filter
      * @param array $order
      *
-     * @throws \FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws FileNotFoundException
+     * @throws ServiceNotFoundException
      * @throws \Exception
      * @return array
      */
@@ -141,7 +141,7 @@ class FourPawsShopListComponent extends CBitrixComponent
     {
         $result          = [];
         $storeRepository = $this->storeService->getRepository();
-        $filter = array_merge($filter, $this->storeService->getTypeFilter($this->storeService::TYPE_SHOP));
+        $filter          = array_merge($filter, $this->storeService->getTypeFilter($this->storeService::TYPE_SHOP));
         $storeCollection = $storeRepository->findBy($filter, $order);
         $stores          = $storeCollection->toArray();
         if (!empty($stores)) {
@@ -188,7 +188,7 @@ class FourPawsShopListComponent extends CBitrixComponent
                     'phone'      => $store->getPhone(),
                     'schedule'   => $store->getSchedule(),
                     'photo'      => $imageSrc,
-                    'metroClass' => 'b-delivery-list__col--'.$metroList[$metro]['UF_CLASS'],
+                    'metroClass' => 'b-delivery-list__col--' . $metroList[$metro]['UF_CLASS'],
                     'services'   => $services,
                     'gps_s'      => $gpsS,
                     'gps_n'      => $gpsN,
@@ -203,7 +203,7 @@ class FourPawsShopListComponent extends CBitrixComponent
     }
     
     /**
-     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @param Request $request
      *
      * @return array
      */
@@ -231,7 +231,7 @@ class FourPawsShopListComponent extends CBitrixComponent
     }
     
     /**
-     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @param Request $request
      *
      * @return array
      */

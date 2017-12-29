@@ -4,6 +4,10 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
+if (!\defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
+    die();
+}
+
 use Bitrix\Highloadblock\DataManager;
 use Bitrix\Highloadblock\HighloadBlockTable;
 use Bitrix\Main\Application;
@@ -25,10 +29,6 @@ use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use Psr\Cache\InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
-
-if (!\defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
-    die();
-}
 
 /** @noinspection AutoloadingIssuesInspection */
 class CCommentsComponent extends \CBitrixComponent
@@ -408,7 +408,9 @@ class CCommentsComponent extends \CBitrixComponent
         $query->registerRuntimeField(
             'SUM',
             new ExpressionField(
-                'SUM', 'SUM(%s)', ['UF_MARK']
+                'SUM',
+                'SUM(%s)',
+                ['UF_MARK']
             )
         );
         
