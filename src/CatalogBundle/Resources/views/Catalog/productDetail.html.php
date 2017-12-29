@@ -6,17 +6,20 @@
 
 use FourPaws\App\Templates\ViewsEnum;
 use FourPaws\CatalogBundle\Dto\ProductDetailRequest;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Decorators\SvgDecorator;
+use FourPaws\Catalog\Model\Product;
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 
 global $APPLICATION;
 
+/** @var Product $product */
 $product = $APPLICATION->IncludeComponent(
     'fourpaws:catalog.element.detail',
     '',
     [
-        'CODE' => $productDetailRequest->getProductSlug(),
+        'CODE'      => $productDetailRequest->getProductSlug(),
         'SET_TITLE' => 'Y',
     ],
     $component
@@ -153,12 +156,9 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                             </li>*/
 
                             $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_RATING_TAB_HEADER_VIEW);
+                            $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_DETAIL_DELIVERY_PAYMENT_TAB_HEADER);
                             ?>
-                            <li class="b-tab-title__item js-tab-item">
-                                <a class="b-tab-title__link js-tab-link"
-                                   href="javascript:void(0);" title="Доставка и оплата"
-                                   data-tab="data"><span class="b-tab-title__text">Доставка и оплата</span></a>
-                            </li>
+                            <?php /* todo наличие в магазинах */ ?>
                             <li class="b-tab-title__item js-tab-item">
                                 <a class="b-tab-title__link js-tab-link"
                                    href="javascript:void(0);" title="Наличие в магазинах"
@@ -193,66 +193,16 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                         */
                         $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_RATING_TAB_VIEW);
                         ?>
-                        <div class="b-tab-content__container js-tab-content" data-tab-content="data">
-                            <div class="b-tab-shipping">
-                                <div class="b-tab-shipping__inline-table">
-                                    <table class="b-tab-shipping__table">
-                                        <caption class="b-tab-shipping__caption">Стоимость доставки</caption>
-                                        <tbody class="b-tab-shipping__tbody">
-                                        <tr class="b-tab-shipping__tr">
-                                            <th class="b-tab-shipping__th b-tab-shipping__th--first">Заказ на сумму</th>
-                                            <th class="b-tab-shipping__th b-tab-shipping__th--second">Доставка</th>
-                                        </tr>
-                                        <tr class="b-tab-shipping__tr b-tab-shipping__tr--first-line">
-                                            <td class="b-tab-shipping__td b-tab-shipping__td--first">до 500 <span
-                                                        class="b-ruble b-ruble--table-tab-shipping">₽</span>
-                                            </td>
-                                            <td class="b-tab-shipping__td b-tab-shipping__td--second">—</td>
-                                        </tr>
-                                        <tr class="b-tab-shipping__tr">
-                                            <td class="b-tab-shipping__td b-tab-shipping__td--first">500 — 1 999 <span
-                                                        class="b-ruble b-ruble--table-tab-shipping">₽</span>
-                                            </td>
-                                            <td class="b-tab-shipping__td b-tab-shipping__td--second">200 <span
-                                                        class="b-ruble b-ruble--table-tab-shipping">₽</span>
-                                            </td>
-                                        </tr>
-                                        <tr class="b-tab-shipping__tr">
-                                            <td class="b-tab-shipping__td b-tab-shipping__td--first">от 2 000</td>
-                                            <td class="b-tab-shipping__td b-tab-shipping__td--second">бесплатно</td>
-                                        </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div class="b-tab-shipping__inline-table b-tab-shipping__inline-table--right">
-                                    <table class="b-tab-shipping__table">
-                                        <caption class="b-tab-shipping__caption">Время доставки</caption>
-                                        <tbody class="b-tab-shipping__tbody">
-                                        <tr class="b-tab-shipping__tr">
-                                            <th class="b-tab-shipping__th b-tab-shipping__th--first">Время заказа</th>
-                                            <th class="b-tab-shipping__th b-tab-shipping__th--second">Доставка</th>
-                                        </tr>
-                                        <tr class="b-tab-shipping__tr b-tab-shipping__tr--first-line">
-                                            <td class="b-tab-shipping__td b-tab-shipping__td--first">до 14:00</td>
-                                            <td class="b-tab-shipping__td b-tab-shipping__td--second">в тот же день</td>
-                                        </tr>
-                                        <tr class="b-tab-shipping__tr">
-                                            <td class="b-tab-shipping__td b-tab-shipping__td--first">до 20:00</td>
-                                            <td class="b-tab-shipping__td b-tab-shipping__td--second">на следующий
-                                                день
-                                            </td>
-                                        </tr>
-                                        <tr class="b-tab-shipping__tr">
-                                            <td class="b-tab-shipping__td b-tab-shipping__td--first">после 20:00</td>
-                                            <td class="b-tab-shipping__td b-tab-shipping__td--second">по
-                                                договоренности
-                                            </td>
-                                        </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
+                        <?php $APPLICATION->IncludeComponent(
+                            'fourpaws:city.delivery.info',
+                            'catalog.detail.tab',
+                            [
+                                'DELIVERY_CODES' => [DeliveryService::INNER_DELIVERY_CODE]
+                            ],
+                            false,
+                            ['HIDE_ICONS' => 'Y']
+                        ) ?>
+                        <?php /* todo наличие в магазинах */ ?>
                         <div class="b-tab-content__container js-tab-content" data-tab-content="availability">
                             <h2 class="b-title b-title--advice b-title--stock">Наличие в магазинах</h2>
                             <div class="b-availability"><a class="b-link b-link--show-map js-product-map"

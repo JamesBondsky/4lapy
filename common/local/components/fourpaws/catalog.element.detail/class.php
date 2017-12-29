@@ -14,6 +14,9 @@ class CatalogElementDetailComponent extends \CBitrixComponent
 
     public function onPrepareComponentParams($params): array
     {
+        if (!isset($params['CACHE_TIME'])) {
+            $params['CACHE_TIME'] = 36000000;
+        }
         $params['CODE'] = $params['CODE'] ?? '';
         $params['SET_TITLE'] = ($params['SET_TITLE'] === 'Y') ? $params['SET_TITLE'] : 'N';
 

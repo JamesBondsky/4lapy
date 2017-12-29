@@ -51,6 +51,10 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
             $params['LOCATION_CODE'] = $this->userCitySelect->getSelectedCity()['CODE'];
         }
 
+        if (!isset($params['DELIVERY_CODES'])) {
+            $params['DELIVERY_CODES'] = [];
+        }
+
         return parent::onPrepareComponentParams($params);
     }
 
@@ -86,6 +90,9 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
         $currentLocation = $this->locationService->findLocationByCode($this->arParams['LOCATION_CODE']);
 
         $allDeliveryCodes = array_merge(DeliveryService::DELIVERY_CODES, DeliveryService::PICKUP_CODES);
+        if (!empty($this->arParams['DELIVERY_CODES'])) {
+            $allDeliveryCodes = array_intersect($allDeliveryCodes, $this->arParams['DELIVERY_CODES']);
+        }
 
         /** @var CalculationResult[] $defaultDeliveryResult */
         $defaultResult = $this->getDeliveries($defaultLocation['CODE'], $allDeliveryCodes);
