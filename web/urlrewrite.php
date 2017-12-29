@@ -1,6 +1,12 @@
 <?php
 $arUrlRewrite = [
     [
+		"CONDITION" => "#^/brand/([0-9a-zA-Z_-]+)/((index\\.php)?(\\?.*)?)?\$#",
+		"RULE" => "ELEMENT_CODE=\$1",
+		"ID" => "",
+		"PATH" => "/brand/detail.php",
+	],
+    [
         'CONDITION' => '#^/company/news/#',
         'RULE'      => '',
         'ID'        => 'bitrix:news',
@@ -19,6 +25,12 @@ $arUrlRewrite = [
         'PATH'      => '/personal/index.php',
     ],
     [
+		"CONDITION" => "#^/brands/#",
+		"RULE" => "",
+		"ID" => "fourpaws:brands",
+		"PATH" => "/brands/index.php",
+	],
+	[
         'CONDITION' => '##',
         'RULE'      => '',
         'ID'        => '',

@@ -4,6 +4,10 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
+    die();
+}
+
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\SystemException;
@@ -12,7 +16,10 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Exception\SmsSendErrorException;
+use FourPaws\External\Manzana\Exception\ContactUpdateException;
+use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
@@ -32,14 +39,6 @@ use JMS\Serializer\SerializerBuilder;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
-
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
-    die();
-}
-/** @global \CDatabase $DB */
-/** @global \CUser $USER */
-
-/** @global \CMain $APPLICATION */
 
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
@@ -88,14 +87,13 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         $this->setFrameMode(true);
         
         /** @var UserService $userService */
-        $userService =
-            App::getInstance()->getContainer()->get(\FourPaws\UserBundle\Service\CurrentUserProviderInterface::class);
+        $userService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
         if (!$userService->isAuthorized()) {
             return null;
         }
-    
+        
         $curUser = $userService->getCurrentUser();
-    
+        
         try {
             $birthday = $this->replaceRuMonth($curUser->getBirthday()->format('j #n# Y'));
         } catch (EmptyDateException $e) {
@@ -154,6 +152,8 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
     /**
      * @param Request $request
      *
+     * @throws ContactUpdateException
+     * @throws ManzanaServiceException
      * @throws ValidationException
      * @throws InvalidIdentifierException
      * @throws ServiceNotFoundException
@@ -164,51 +164,64 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
      */
     public function ajaxConfirmPhone(Request $request) : JsonResponse
     {
+        $phone = '';
         try {
-            $res =
-                App::getInstance()
-                   ->getContainer()
-                   ->get(ConfirmCodeInterface::class)::checkConfirmSms($request->get('phone'),
-                                                                       $request->get('confirmCode'));
+            $res = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::checkConfirmSms(
+                $request->get('phone'),
+                $request->get('confirmCode')
+            );
             if (!$res) {
-                return JsonErrorResponse::createWithData('Код подтверждения не соответствует',
-                                                         ['errors' => ['wrongConfirmCode' => 'Код подтверждения не соответствует']]);
+                return JsonErrorResponse::createWithData(
+                    'Код подтверждения не соответствует',
+                    ['errors' => ['wrongConfirmCode' => 'Код подтверждения не соответствует']]
+                );
             }
         } catch (ExpiredConfirmCodeException $e) {
-            return JsonErrorResponse::createWithData($e->getMessage(),
-                                                     ['errors' => ['expiredConfirmCode' => $e->getMessage()]]);
+            return JsonErrorResponse::createWithData(
+                $e->getMessage(),
+                ['errors' => ['expiredConfirmCode' => $e->getMessage()]]
+            );
         } catch (WrongPhoneNumberException $e) {
-            return JsonErrorResponse::createWithData('Некорректный номер телефона',
-                                                     ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]);
+            return JsonErrorResponse::createWithData(
+                'Некорректный номер телефона',
+                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
+            );
         }
         $data = ['UF_PHONE_CONFIRMED' => 'Y'];
         try {
-            if ($this->currentUserProvider->getUserRepository()->update(SerializerBuilder::create()
-                                                                                         ->build()
-                                                                                         ->fromArray($data,
-                                                                                                     User::class))) {
+            if ($this->currentUserProvider->getUserRepository()->update(
+                SerializerBuilder::create()->build()->fromArray(
+                    $data,
+                    User::class
+                )
+            )) {
                 /** todo отправить данные в манзану о пользователе */
                 /** @var ManzanaService $manzanaService */
-                $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
-                $manzanaService->updateContact([]);
+                $manzanaService       = App::getInstance()->getContainer()->get('manzana.service');
+                $manzanaClient        = new Client();
+                $manzanaClient->phone = $phone;
+                $manzanaService->updateContact($manzanaClient);
                 
                 return JsonSuccessResponse::create('Телефон верифицирован');
             }
         } catch (BitrixRuntimeException $e) {
-            return JsonErrorResponse::createWithData('Произошла ошибка при обновлении ' . $e->getMessage(),
-                                                     [
-                                                         'errors' => [
-                                                             'updateError' => 'Произошла ошибка при обновлении '
-                                                                              . $e->getMessage(),
-                                                         ],
-                                                     ]);
+            return JsonErrorResponse::createWithData(
+                'Произошла ошибка при обновлении ' . $e->getMessage(),
+                [
+                    'errors' => [
+                        'updateError' => 'Произошла ошибка при обновлении ' . $e->getMessage(),
+                    ],
+                ]
+            );
         } catch (ConstraintDefinitionException $e) {
         } catch (ApplicationCreateException $e) {
         } catch (ServiceCircularReferenceException $e) {
         }
-    
-        return JsonErrorResponse::createWithData('Ошибка верификации',
-                                                 ['errors' => ['verificationError' => 'Ошибка верификации']]);
+        
+        return JsonErrorResponse::createWithData(
+            'Ошибка верификации',
+            ['errors' => ['verificationError' => 'Ошибка верификации']]
+        );
     }
     
     /**
@@ -222,32 +235,46 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             try {
                 $phone = PhoneHelper::normalizePhone($phone);
             } catch (WrongPhoneNumberException $e) {
-                return JsonErrorResponse::createWithData('Некорректный номер телефона',
-                                                         ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]);
+                return JsonErrorResponse::createWithData(
+                    'Некорректный номер телефона',
+                    ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
+                );
             }
         } else {
-            return JsonErrorResponse::createWithData('Некорректный номер телефона',
-                                                     ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]);
+            return JsonErrorResponse::createWithData(
+                'Некорректный номер телефона',
+                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
+            );
         }
         
         try {
             $res = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::sendConfirmSms($phone);
             if (!$res) {
-                return JsonErrorResponse::createWithData('Ошибка отправки смс, попробуйте позднее',
-                                                         ['errors' => ['errorSmsSend' => 'Ошибка отправки смс, попробуйте позднее']]);
+                return JsonErrorResponse::createWithData(
+                    'Ошибка отправки смс, попробуйте позднее',
+                    ['errors' => ['errorSmsSend' => 'Ошибка отправки смс, попробуйте позднее']]
+                );
             }
         } catch (SmsSendErrorException $e) {
-            return JsonErrorResponse::createWithData('Ошибка отправки смс, попробуйте позднее',
-                                                     ['errors' => ['errorSmsSend' => 'Ошибка отправки смс, попробуйте позднее']]);
+            return JsonErrorResponse::createWithData(
+                'Ошибка отправки смс, попробуйте позднее',
+                ['errors' => ['errorSmsSend' => 'Ошибка отправки смс, попробуйте позднее']]
+            );
         } catch (WrongPhoneNumberException $e) {
-            return JsonErrorResponse::createWithData('Некорректный номер телефона',
-                                                     ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]);
+            return JsonErrorResponse::createWithData(
+                'Некорректный номер телефона',
+                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
+            );
         } catch (\RuntimeException $e) {
-            return JsonErrorResponse::createWithData('Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
-                                                     ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]);
+            return JsonErrorResponse::createWithData(
+                'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
+                ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
+            );
         } catch (\Exception $e) {
-            return JsonErrorResponse::createWithData('Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
-                                                     ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]);
+            return JsonErrorResponse::createWithData(
+                'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
+                ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
+            );
         }
         
         return JsonSuccessResponse::create('Смс успешно отправлено');
@@ -279,13 +306,15 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         include_once App::getDocumentRoot() . '/local/components/fourpaws/personal.profile/templates/.default/include/'
                      . $step . '.php';
         $html = ob_get_clean();
-    
-        return JsonSuccessResponse::createWithData($mess,
-                                                   [
-                                                       'html'  => $html,
-                                                       'step'  => $step,
-                                                       'phone' => $phone ?? '',
-                                                   ]);
+        
+        return JsonSuccessResponse::createWithData(
+            $mess,
+            [
+                'html'  => $html,
+                'step'  => $step,
+                'phone' => $phone ?? '',
+            ]
+        );
     }
     
     /**
@@ -306,30 +335,34 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         $userRepository = $this->currentUserProvider->getUserRepository();
         $curUser        = $userRepository->findBy(['PERSONAL_PHONE' => $phone], [], 1);
         if ($curUser instanceof User || (\is_array($curUser) && !empty($curUser))) {
-            return JsonErrorResponse::createWithData('Такой телефон уже существует',
-                                                     ['errors' => ['havePhone' => 'Такой телефон уже существует']]);
+            return JsonErrorResponse::createWithData(
+                'Такой телефон уже существует',
+                ['errors' => ['havePhone' => 'Такой телефон уже существует']]
+            );
         }
         
         try {
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-            $res =
-                $userRepository->update(SerializerBuilder::create()
-                                                         ->build()
-                                                         ->fromArray(['PERSONAL_PHONE' => $phone], User::class));
+            $res = $userRepository->update(
+                SerializerBuilder::create()->build()->fromArray(['PERSONAL_PHONE' => $phone], User::class)
+            );
             if (!$res) {
-                return JsonErrorResponse::createWithData('Произошла ошибка при обновлении',
-                                                         ['errors' => ['updateError' => 'Произошла ошибка при обновлении']]);
+                return JsonErrorResponse::createWithData(
+                    'Произошла ошибка при обновлении',
+                    ['errors' => ['updateError' => 'Произошла ошибка при обновлении']]
+                );
             }
             
             $mess = 'Телефон обновлен';
         } catch (BitrixRuntimeException $e) {
-            return JsonErrorResponse::createWithData('Произошла ошибка при обновлении ' . $e->getMessage(),
-                                                     [
-                                                         'errors' => [
-                                                             'updateError' => 'Произошла ошибка при обновлении '
-                                                                              . $e->getMessage(),
-                                                         ],
-                                                     ]);
+            return JsonErrorResponse::createWithData(
+                'Произошла ошибка при обновлении ' . $e->getMessage(),
+                [
+                    'errors' => [
+                        'updateError' => 'Произошла ошибка при обновлении ' . $e->getMessage(),
+                    ],
+                ]
+            );
         } catch (ConstraintDefinitionException $e) {
         }
         

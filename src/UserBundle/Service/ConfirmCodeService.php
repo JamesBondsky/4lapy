@@ -8,12 +8,15 @@ namespace FourPaws\UserBundle\Service;
 
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Type\DateTime;
+use FourPaws\External\Exception\SmsSendErrorException;
 use FourPaws\External\SmsService;
+use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
 use FourPaws\UserBundle\Model\ConfirmCode;
 use FourPaws\UserBundle\Query\ConfirmCodeQuery;
 use FourPaws\UserBundle\Table\ConfirmCodeTable;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /**
  * Class ConfirmCodeService
@@ -42,14 +45,9 @@ class ConfirmCodeService implements ConfirmCodeInterface
     /**
      * @param string $phone
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws \RuntimeException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
-     * @throws \FourPaws\External\Exception\SmsSendErrorException
-     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
      * @throws \Exception
+     * @throws SmsSendErrorException
+     * @throws WrongPhoneNumberException
      * @return bool
      */
     public static function sendConfirmSms(string $phone) : bool
@@ -124,9 +122,9 @@ class ConfirmCodeService implements ConfirmCodeInterface
      * @param string $phone
      * @param string $confirmCode
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \FourPaws\UserBundle\Exception\ExpiredConfirmCodeException
-     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
+     * @throws ServiceNotFoundException
+     * @throws ExpiredConfirmCodeException
+     * @throws WrongPhoneNumberException
      * @throws \Exception
      * @return bool
      */

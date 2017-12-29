@@ -7,6 +7,7 @@ use FourPaws\CatalogBundle\Dto\ChildCategoryRequest;
 use FourPaws\CatalogBundle\Dto\RootCategoryRequest;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -40,12 +41,18 @@ class CatalogController extends Controller
 
     /**
      * @Route("/{path}/", requirements={"path"="[^\.]+(?!\.html)$" })
+     * @param Request              $request
      * @param ChildCategoryRequest $categoryRequest
      *
+     * @throws \FourPaws\CatalogBundle\Exception\RuntimeException
+     * @throws \RuntimeException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
      * @throws \Exception
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @return Response
      */
-    public function childCategoryAction(ChildCategoryRequest $categoryRequest): Response
+    public function childCategoryAction(Request $request, ChildCategoryRequest $categoryRequest): Response
     {
         $result = Application::getInstance()->getContainer()->get('search.service')->searchProducts(
             $categoryRequest->getCategory()->getFilters(),
@@ -55,6 +62,7 @@ class CatalogController extends Controller
         );
 
         return $this->render('FourPawsCatalogBundle:Catalog:catalog.html.php', [
+            'request'             => $request,
             'productSearchResult' => $result,
             'catalogRequest'      => $categoryRequest,
         ]);

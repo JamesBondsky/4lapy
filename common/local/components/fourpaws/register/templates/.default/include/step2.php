@@ -1,11 +1,15 @@
 <?php
 
-use FourPaws\External\Manzana\Model\Client;
-
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
-/** @var \FourPaws\External\Manzana\Model\Client $manzanaItem */ ?>
+
+use FourPaws\Decorators\SvgDecorator;
+use FourPaws\External\Manzana\Model\Client;
+
+/** @var Client $manzanaItem
+ * @var string $phone
+ */ ?>
 <div class="b-registration__content b-registration__content--moiety b-registration__content--step b-registration__content--back">
     <div class="b-step-form">Шаг <span>2</span> из <span>2</span>
     </div>
@@ -146,7 +150,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
        data-step="step1"
        data-phone="<?= $phone ?>">
         <span class="b-icon b-icon--back-long">
-            <?= new \FourPaws\Decorators\SvgDecorator('icon-back-form', 13, 21) ?>
+            <?= new SvgDecorator('icon-back-form', 13, 21) ?>
         </span>Назад
     </a>
 </div>

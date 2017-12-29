@@ -7,7 +7,10 @@
 namespace FourPaws\UserBundle\Controller;
 
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\UserBundle\Service\ConfirmCodeInterface;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /**
  * Class ConfirmCodeAgents
@@ -17,10 +20,10 @@ use FourPaws\UserBundle\Service\ConfirmCodeInterface;
 class ConfirmCodeAgent
 {
     /**
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws ServiceNotFoundException
      * @throws \Exception
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
      * @return string
      */
     public static function delExpiredCodes() : string

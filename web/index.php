@@ -106,9 +106,21 @@ $APPLICATION->IncludeComponent('bitrix:main.include',
 echo '<div class="b-container">';
 
 /**
- * @todo Популярные бренды. Заменить компонентом и удалить файл.
+ * Популярные бренды
  */
-require_once '_temp_sale.php';
+$APPLICATION->IncludeComponent(
+	'bitrix:main.include',
+	'',
+	array(
+		'AREA_FILE_SHOW' => 'file',
+		'PATH' => '/local/include/blocks/index.popular_brands.php',
+		'EDIT_TEMPLATE' => '',
+	),
+	null,
+	array(
+		'HIDE_ICONS' => 'Y',
+	)
+);
 
 $APPLICATION->IncludeComponent('bitrix:main.include',
                                'index.pet_block',

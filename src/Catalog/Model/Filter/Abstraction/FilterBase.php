@@ -16,7 +16,7 @@ use Symfony\Component\HttpFoundation\Request;
  * В этом классе должны быть описаны методы, которые подходят всем обычным фильтрам, но не подходят к
  *     \FourPaws\Catalog\Model\Category
  *
- * @see FilterTrait
+ * @see     FilterTrait
  *
  */
 abstract class FilterBase extends HlbItemBase implements FilterInterface
@@ -31,6 +31,12 @@ abstract class FilterBase extends HlbItemBase implements FilterInterface
     public function __construct(array $fields = [])
     {
         parent::__construct($fields);
+        if ($fields) {
+            $this
+                ->withName($fields['UF_NAME'] ?: $this->getName())
+                ->withSort($fields['UF_SORT'] ?: $this->getSort())
+                ->withXmlId($fields['UF_CODE'] ?: $this->getXmlId());
+        }
     }
 
     /**

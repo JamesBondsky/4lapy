@@ -1,7 +1,8 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
-} ?>
+}
+/** @var array $arResult */ ?>
 <div class="b-account-profile__personal-data">
     <div class="b-account-profile__column b-account-profile__column--data">
         <div class="b-account-data">

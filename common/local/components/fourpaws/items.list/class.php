@@ -7,17 +7,19 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
-/** @global \CDatabase $DB */
-/** @global \CUser $USER */
 
-/** @global \CMain $APPLICATION */
+/** @global \CUser $USER
+ * @global \CMain $APPLICATION
+ */
 
-use Bitrix\Iblock;
 use Bitrix\Iblock\Component\Tools;
 use Bitrix\Iblock\IblockTable;
+use Bitrix\Iblock\InheritedProperty\ElementValues;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Context;
 use Bitrix\Main\Data\Cache;
 use Bitrix\Main\Loader;
+use Bitrix\Main\LoaderException;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 
@@ -77,7 +79,7 @@ class CItemsListComponent extends CBitrixComponent
                     while ($item = $res->fetch()) {
                         $params['IBLOCK_ID'][] = (int)$item['ID'];
                     }
-                } catch (\Bitrix\Main\ArgumentException $e) {
+                } catch (ArgumentException $e) {
                 }
                 
                 $cache->endDataCache(['IBLOCK_ID' => $params['IBLOCK_ID']]);
@@ -148,7 +150,7 @@ class CItemsListComponent extends CBitrixComponent
     
     /**
      * {@inheritdoc}
-     * @throws \Bitrix\Main\LoaderException
+     * @throws LoaderException
      */
     public function executeComponent()
     {
@@ -317,7 +319,7 @@ class CItemsListComponent extends CBitrixComponent
     }
     
     /**
-     * @throws \Bitrix\Main\LoaderException
+     * @throws LoaderException
      * @return bool
      */
     protected function checkModule() : bool
@@ -366,7 +368,7 @@ class CItemsListComponent extends CBitrixComponent
                 }
                 $this->arResult['IBLOCKS'][$item['ID']] = $item;
             }
-        } catch (\Bitrix\Main\ArgumentException $e) {
+        } catch (ArgumentException $e) {
         }
     }
     
@@ -421,7 +423,7 @@ class CItemsListComponent extends CBitrixComponent
                 $item['DISPLAY_ACTIVE_FROM'] = '';
             }
             
-            $ipropValues              = new Iblock\InheritedProperty\ElementValues($item['IBLOCK_ID'], $item['ID']);
+            $ipropValues              = new ElementValues($item['IBLOCK_ID'], $item['ID']);
             $item['IPROPERTY_VALUES'] = $ipropValues->getValues();
             
             Tools::getFieldImageData(
