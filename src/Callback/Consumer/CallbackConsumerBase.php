@@ -24,14 +24,14 @@ abstract class CallbackConsumerBase implements ConsumerInterface, LoggerAwareInt
     protected $guzzle;
     
     /**
-     * @var \Psr\Log\LoggerInterface
+     * @var LoggerInterface
      */
     protected $logger;
     
     /**
      * CallbackConsumerBase constructor.
      *
-     * @param \GuzzleHttp\ClientInterface $guzzle
+     * @param ClientInterface $guzzle
      *
      * @throws \RuntimeException
      */
