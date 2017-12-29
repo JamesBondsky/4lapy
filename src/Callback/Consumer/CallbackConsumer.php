@@ -35,7 +35,7 @@ class CallbackConsumer extends CallbackConsumerBase
     public function execute(AMQPMessage $msg) : bool
     {
         //App::getInstance()->getContainer()->get('sms.service')->sendSms('очередь отработала', '9201612427');
-        //$this->log()->debug('успех епта');
+        //$this->log()->debug('очередь отработала');
         //return false;
         $href = $msg->getBody();
         $res  = $this->guzzle->send(new Request('get', $href));
