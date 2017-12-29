@@ -10,6 +10,11 @@ use FourPaws\BitrixOrm\Collection\D7CollectionBase;
 use FourPaws\UserBundle\Model\ConfirmCode;
 use Generator;
 
+/**
+ * Class ConfirmCodeCollection
+ *
+ * @package FourPaws\UserBundle\Collection
+ */
 class ConfirmCodeCollection extends D7CollectionBase
 {
     /**

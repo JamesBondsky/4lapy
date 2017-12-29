@@ -1,7 +1,8 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
-} ?>
+}
+/** @var string $phone */ ?>
 <input type="hidden" name="action" value="confirmPhone">
 <div class="b-registration__step b-registration__step--two js-phone-change-two js-hidden-valid-fields">
     <div class="b-registration__text b-registration__text--phone">Ваш номер <?= $phone ?></div>

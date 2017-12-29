@@ -4,8 +4,6 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
-use FourPaws\BitrixOrm\Model\CropImageDecorator;
-
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
@@ -13,6 +11,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 if (!\is_array($arResult['ITEMS']) || empty($arResult['ITEMS'])) {
     return;
 }
+
+use FourPaws\BitrixOrm\Model\CropImageDecorator;
 
 foreach ($arResult['ITEMS'] as $key => &$item) {
     if (isset($image)) {

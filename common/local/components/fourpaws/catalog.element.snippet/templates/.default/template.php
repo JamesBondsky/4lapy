@@ -18,10 +18,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 $product = $arResult['PRODUCT'];
-$offers = $arResult['OFFERS'];
-
+$offers = $product->getOffers();
 $firstOffer = $offers->first();
-
 
 ?>
 

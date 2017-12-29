@@ -256,7 +256,7 @@ class Offer extends IblockElement
     /**
      * @Serializer\Expose()
      * @Groups({"elastic"})
-     * @Type("FourPaws\BitrixOrm\Collection\ImageCollection")
+     * @Type("ArrayCollection<FourPaws\BitrixOrm\Model\Image>")
      * @Accessor(getter="getImages", setter="withImages")
      * @var Collection|Image[]
      */
@@ -271,12 +271,12 @@ class Offer extends IblockElement
     {
         parent::__construct($fields);
 
-        if (isset($fields['CATALOG_PRICE_1'])) {
-            $this->price = (float)$fields['CATALOG_PRICE_1'];
+        if (isset($fields['CATALOG_PRICE_2'])) {
+            $this->price = (float)$fields['CATALOG_PRICE_2'];
         }
 
-        if (isset($fields['CATALOG_CURRENCY_1'])) {
-            $this->currency = (string)$fields['CATALOG_CURRENCY_1'];
+        if (isset($fields['CATALOG_CURRENCY_2'])) {
+            $this->currency = (string)$fields['CATALOG_CURRENCY_2'];
         }
     }
 

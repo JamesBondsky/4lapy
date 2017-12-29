@@ -4,23 +4,15 @@
  *
  * @var array                     $arParams
  * @var array                     $arResult
- * @var array                     $templateData
- *
- * @var string                    $componentPath
- * @var string                    $templateName
- * @var string                    $templateFile
- * @var string                    $templateFolder
- *
- * @global CUser                  $USER
- * @global CMain                  $APPLICATION
- * @global CDatabase              $DB
  */
-
-use FourPaws\Decorators\SvgDecorator;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
-} ?>
+}
+
+use FourPaws\Decorators\SvgDecorator;
+
+?>
 <div class="b-container">
     <div class="b-comment-block">
         <p class="b-comment-block__title">Комментарии</p>
@@ -68,13 +60,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                         <div class="b-rate-block__rate-wrapper">
                             <div class="b-rating b-rating--big">
                                 <?php for ($i = 1; $i <= 5; $i++) {
-                                    ?>
+                            ?>
                                     <div class="b-rating__star-block<?= $arResult['RATING']
                                                                         > $i ? ' b-rating__star-block--active' : '' ?>">
                                         <span class="b-icon"><?= new SvgDecorator('icon-star', 12, 12) ?></span>
                                     </div>
                                     <?php
-                                } ?>
+                        } ?>
                             </div>
                             <span class="b-rate-block__rate-description">на основе <?= $arResult['COUNT_COMMENTS'] ?>
                                                                          отзывов</span>
@@ -149,7 +141,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                         <div class="b-rating__form">
                             <div class="b-rating__group">
                                 <?php for ($i = 5; $i >= 1; $i--) {
-                                    ?>
+                    ?>
                                     <input class="b-rating__input"
                                            type="radio"
                                            id="radio<?= $i ?>"
@@ -161,7 +153,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                                     </span>
                                     </label>
                                     <?php
-                                } ?>
+                } ?>
                             </div>
                         </div>
                     </div>
@@ -187,7 +179,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                     <h2 class="b-review__heading">Отзывы</h2>
                     <ul class="b-review__list">
                         <?php foreach ($arResult['COMMENTS'] as $comment) {
-                            ?>
+                    ?>
                             <li class="b-review__item">
                                 <header class="b-review__left-side">
                                     <p class="b-review__name"><?= $comment['USER_NAME'] ?></p>
@@ -196,15 +188,17 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                                 <div class="b-review__right-side">
                                     <div class="b-rating b-rating--big">
                                         <?php for ($i = 1; $i <= 5; $i++) {
-                                            ?>
+                        ?>
                                             <div class="b-rating__star-block<?= $comment['UF_MARK']
                                                                                 >= $i ? ' b-rating__star-block--active' : '' ?>">
                                                     <span class="b-icon"><?= new SvgDecorator(
-                                                            'icon-star', 12, 12
+                                                            'icon-star',
+                                                                                    12,
+                                                                                    12
                                                         ) ?></span>
                                             </div>
                                             <?php
-                                        } ?>
+                    } ?>
                                     </div>
                                     <div class="b-review__text">
                                         <p><?= $comment['UF_TEXT'] ?></p>
@@ -212,10 +206,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                                 </div>
                             </li>
                             <?php
-                        } ?>
+                } ?>
                     </ul>
                     <?php if ($arResult['COUNT_COMMENTS'] > count($arResult['COMMENTS'])) {
-                        ?>
+                    ?>
                         <button class="b-button b-button--review js-add_review"
                                 id="getNextCommentsBtn"
                                 data-url="/ajax/comments/next/"
@@ -231,7 +225,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                             Ещё отзывы
                         </button>
                         <?php
-                    } ?>
+                } ?>
                 </div>
                 <?php
             } ?>
