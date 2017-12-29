@@ -3,6 +3,7 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
+/** @var Cmain $APPLICATION */
 ?>
 <?php if ($component->getMode() === FourPawsAuthFormComponent::MODE_FORM) {
     ?>

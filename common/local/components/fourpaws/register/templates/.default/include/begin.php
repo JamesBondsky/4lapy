@@ -1,7 +1,11 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
-} ?>
+}
+/** @var Cmain $APPLICATION
+ * @var array                     $arResult
+ * @var \CBitrixComponentTemplate $component
+ */ ?>
 <div class="b-registration__content b-registration__content--moiety">
     <a class="b-button b-button--social b-button--full-width js-reg-by-phone"
        href="javascript:void(0)"

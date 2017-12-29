@@ -6,10 +6,20 @@
 
 namespace Sprint\Migration;
 
-class HlBlock_comments20171211222846 extends \Adv\Bitrixtools\Migration\SprintMigrationBase
+use Adv\Bitrixtools\Migration\SprintMigrationBase;
+
+/**
+ * Class HlBlock_comments20171211222846
+ *
+ * @package Sprint\Migration
+ */
+class HlBlock_comments20171211222846 extends SprintMigrationBase
 {
     protected $description = 'Создание HL блока комментариев';
     
+    /**
+     * @return bool|void
+     */
     public function up()
     {
         $helper = new HelperManager();
@@ -295,6 +305,9 @@ class HlBlock_comments20171211222846 extends \Adv\Bitrixtools\Migration\SprintMi
         );
     }
     
+    /**
+     * @return bool|void
+     */
     public function down()
     {
     }

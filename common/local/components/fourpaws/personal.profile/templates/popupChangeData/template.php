@@ -1,7 +1,8 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
-} ?>
+}
+/** @var array $arResult */ ?>
 <section class="b-popup-pick-city b-popup-pick-city--edit-data js-popup-section" data-popup="edit-data">
     <a class="b-popup-pick-city__close b-popup-pick-city__close--edit-data js-close-popup"
        href="javascript:void(0);"

@@ -1,7 +1,8 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
-} ?>
+}
+/** @var string $phone */ ?>
 <div class="b-registration__content b-registration__content--moiety b-registration__content--step">
     <div class="b-step-form b-step-form--add-number">Шаг <span>1</span> из <span>2</span>
     </div>

@@ -3,17 +3,11 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
-/** @var array $arParams */
-/** @var array $arResult */
-/** @global CMain $APPLICATION */
-/** @global CUser $USER */
-/** @global CDatabase $DB */
-/** @var CBitrixComponentTemplate $this */
-/** @var string $templateName */
-/** @var string $templateFile */
-/** @var string $templateFolder */
-/** @var string $componentPath */
-/** @var CBitrixComponent $component */
+/**
+ * @var \CBitrixComponentTemplate $this
+ *
+ * @var array                     $arResult
+ */
 $this->setFrameMode(true);
 
 if (!(bool)$arResult['NavShowAlways']) {
@@ -34,14 +28,14 @@ if (!(bool)$arResult['NavShowAlways']) {
         <li class="b-pagination__item b-pagination__item--prev<?= ((int)$arResult['NavPageNomer']
                                                                    > 1) ? '' : 'b-pagination__item--disabled' ?>">
             <?php if ((int)$arResult['NavPageNomer'] > 1) {
-                ?>
+                                                                       ?>
                 <a class="b-pagination__link" href="<?= $arResult['PREV_URL'] ?>">Назад</a>
                 <?php
-            } else {
-                ?>
+                                                                   } else {
+                                                                       ?>
                 <span class="b-pagination__link">Назад</span>
                 <?php
-            } ?>
+                                                                   } ?>
         </li>
         
         
@@ -95,16 +89,16 @@ if (!(bool)$arResult['NavShowAlways']) {
         <li class="b-pagination__item b-pagination__item--next<?= ((int)$arResult['NavPageNomer']
                                                                    < $arResult['NavPageCount']) ? '' : 'b-pagination__item--disabled' ?>">
             <?php if ((int)$arResult['NavPageNomer'] < $arResult['NavPageCount']) {
-                ?>
+                                                                       ?>
                 <a class="b-pagination__link" href="<?= $arResult['NEXT_URL'] ?>">
                     Вперед
                 </a>
                 <?php
-            } else {
-                ?>
+                                                                   } else {
+                                                                       ?>
                 <span class="b-pagination__link">Вперед</span>
                 <?php
-            } ?>
+                                                                   } ?>
         </li>
     </ul>
 </div>

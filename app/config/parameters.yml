@@ -37,3 +37,7 @@ parameters:
     - log: false
     - bigintConversion: false
     - retryOnConflict: 0
+
+  sap.product.directory.in: '/home/vagrant'
+  sap.product.directory.out: '/out'
+  sap.product.directory.error: '/error'

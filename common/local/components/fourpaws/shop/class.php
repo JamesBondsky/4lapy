@@ -7,25 +7,23 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
-/** @global \CDatabase $DB */
-/** @global \CUser $USER */
 
-/** @global \CMain $APPLICATION */
+use Bitrix\Main\LoaderException;
 
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsShopComponent extends CBitrixComponent
 {
     /**
      * {@inheritdoc}
-     * @throws \Bitrix\Main\LoaderException
+     * @throws LoaderException
      */
     public function executeComponent()
     {
         $this->setFrameMode(true);
         
         $arDefaultUrlTemplates404 = [
-            'list'  => '',
-            'detail'   => '#ID#/',
+            'list'   => '',
+            'detail' => '#ID#/',
         ];
         
         $arComponentVariables = [

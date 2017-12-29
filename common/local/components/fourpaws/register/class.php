@@ -26,6 +26,7 @@ use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\Location\Model\City;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -46,6 +47,8 @@ use Symfony\Component\HttpFoundation\Request;
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsRegisterComponent extends \CBitrixComponent
 {
+    const PHONE_HOT_LINE = '8 (800) 770-00-22';
+    
     /**
      * @var CurrentUserProviderInterface
      */
@@ -164,26 +167,40 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         if (PhoneHelper::isPhone($phone)) {
             $phone = PhoneHelper::normalizePhone($phone);
         } else {
-            return JsonErrorResponse::create(
-                'Введен некорректный номер телефона'
+            return JsonErrorResponse::createWithData(
+                'Введен некорректный номер телефона',
+                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
             );
         }
         
         try {
             $res = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::sendConfirmSms($phone);
             if (!$res) {
-                return JsonErrorResponse::create(
-                    'Ошибка отправки смс, попробуйте позднее'
+                return JsonErrorResponse::createWithData(
+                    'Ошибка отправки смс, попробуйте позднее',
+                    ['errors' => ['errorSmsSend' => 'Ошибка отправки смс, попробуйте позднее']]
                 );
             }
         } catch (SmsSendErrorException $e) {
-            JsonErrorResponse::create('Ошибка отправки смс, попробуйте позднее');
+            return JsonErrorResponse::createWithData(
+                'Ошибка отправки смс, попробуйте позднее',
+                ['errors' => ['errorSmsSend' => 'Ошибка отправки смс, попробуйте позднее']]
+            );
         } catch (WrongPhoneNumberException $e) {
-            return JsonErrorResponse::create($e->getMessage());
+            return JsonErrorResponse::createWithData(
+                'Некорректный номер телефона',
+                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
+            );
         } catch (\RuntimeException $e) {
-            return JsonErrorResponse::create('Непредвиденная ошибка - обратитесь к администратору');
+            return JsonErrorResponse::createWithData(
+                'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
+                ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
+            );
         } catch (\Exception $e) {
-            return JsonErrorResponse::create('Непредвиденная ошибка - обратитесь к администратору');
+            return JsonErrorResponse::createWithData(
+                'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
+                ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
+            );
         }
         
         return JsonSuccessResponse::create('Смс успешно отправлено');
@@ -214,16 +231,35 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 SerializerBuilder::create()->build()->fromArray($data, User::class)
             );
             if (!$res) {
-                return JsonErrorResponse::create('При регистрации произошла ошибка');
+                return JsonErrorResponse::createWithData(
+                    'При регистрации произошла ошибка',
+                    ['errors' => ['registerError' => 'При регистрации произошла ошибка']]
+                );
             }
         } catch (BitrixRuntimeException $e) {
-            return JsonErrorResponse::create('При регистрации произошла ошибка - ' . $e->getMessage());
+            return JsonErrorResponse::createWithData(
+                'При регистрации произошла ошибка - ' . $e->getMessage(),
+                [
+                    'errors' => [
+                        'registerError' => 'При регистрации произошла ошибка - ' . $e->getMessage(),
+                    ],
+                ]
+            );
         }
         
         /** todo отправить данные в манзану о пользователе */
         /** @var ManzanaService $manzanaService */
-        $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
-        $manzanaService->updateContact([]);
+        $manzanaService       = App::getInstance()->getContainer()->get('manzana.service');
+        $manzanaClient        = new Client();
+        $manzanaClient->phone = $data['PERSONAL_PHONE'];
+        /** @todo В каком формате передавать пол */
+        $manzanaClient->genderCode = $data['PERSONAL_GENDER'];
+        /** @todo В каком формате передавать дату рождения */
+        $manzanaClient->birthDate  = $data['PERSONAL_BIRTHDAY'];
+        $manzanaClient->lastName   = $data['LAST_NAME'];
+        $manzanaClient->secondName = $data['SECOND_NAME'];
+        $manzanaClient->firstName  = $data['NAME'];
+        $manzanaService->updateContact($manzanaClient);
         
         ob_start();
         /** @noinspection PhpIncludeInspection */
@@ -264,17 +300,20 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 $confirmCode
             );
             if (!$res) {
-                return JsonErrorResponse::create(
-                    'Код подтверждения не соответствует'
+                return JsonErrorResponse::createWithData(
+                    'Код подтверждения не соответствует',
+                    ['errors' => ['wrongConfirmCode' => 'Код подтверждения не соответствует']]
                 );
             }
         } catch (ExpiredConfirmCodeException $e) {
-            return JsonErrorResponse::create(
-                $e->getMessage()
+            return JsonErrorResponse::createWithData(
+                $e->getMessage(),
+                ['errors' => ['expiredConfirmCode' => $e->getMessage()]]
             );
         } catch (WrongPhoneNumberException $e) {
-            return JsonErrorResponse::create(
-                $e->getMessage()
+            return JsonErrorResponse::createWithData(
+                'Некорректный номер телефона',
+                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
             );
         }
         
@@ -287,8 +326,10 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         )) {
             /** todo отправить данные в манзану о пользователе */
             /** @var ManzanaService $manzanaService */
-            $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
-            $manzanaService->updateContact([]);
+            $manzanaService       = App::getInstance()->getContainer()->get('manzana.service');
+            $manzanaClient        = new Client();
+            $manzanaClient->phone = $phone;
+            $manzanaService->updateContact($manzanaClient);
         }
         
         return JsonSuccessResponse::create('Телефон сохранен', 200, [], ['reload' => true]);
@@ -380,17 +421,20 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 (string)$confirmCode
             );
             if (!$res) {
-                return JsonErrorResponse::create(
-                    'Код подтверждения не соответствует'
+                return JsonErrorResponse::createWithData(
+                    'Код подтверждения не соответствует',
+                    ['errors' => ['wrongConfirmCode' => 'Код подтверждения не соответствует']]
                 );
             }
         } catch (ExpiredConfirmCodeException $e) {
-            return JsonErrorResponse::create(
-                $e->getMessage()
+            return JsonErrorResponse::createWithData(
+                $e->getMessage(),
+                ['errors' => ['expiredConfirmCode' => $e->getMessage()]]
             );
         } catch (WrongPhoneNumberException $e) {
-            return JsonErrorResponse::create(
-                $e->getMessage()
+            return JsonErrorResponse::createWithData(
+                'Некорректный номер телефона',
+                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
             );
         }
         $mess = 'Смс прошло проверку';
@@ -426,8 +470,9 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         if (PhoneHelper::isPhone($phone)) {
             $phone = PhoneHelper::normalizePhone($phone);
         } else {
-            return JsonErrorResponse::create(
-                'Введен некорректный номер телефона'
+            return JsonErrorResponse::createWithData(
+                'Введен некорректный номер телефона',
+                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
             );
         }
         
@@ -437,6 +482,9 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     /**
      * @param string $phone
      *
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
      * @throws WrongPhoneNumberException
      * @return array|JsonResponse
      */
@@ -445,8 +493,9 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         if (PhoneHelper::isPhone($phone)) {
             $phone = PhoneHelper::normalizePhone($phone);
         } else {
-            return JsonErrorResponse::create(
-                'Введен некорректный номер телефона'
+            return JsonErrorResponse::createWithData(
+                'Введен некорректный номер телефона',
+                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
             );
         }
         $mess = '';
@@ -456,8 +505,14 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         try {
             $id = $this->currentUserProvider->getUserRepository()->findIdentifierByRawLogin($phone);
         } catch (TooManyUserFoundException $e) {
-            return JsonErrorResponse::create(
-                'Найдено больше 1 пользователя с данным телефоном, пожалуйста обратитесь к администрации'
+            return JsonErrorResponse::createWithData(
+                'Найдено больше одного совпадения, обратитесь на горячую линию по телефону ' . $this->getSitePhone(),
+                [
+                    'errors' => [
+                        'moreOneUser' => 'Найдено больше одного совпадения, обратитесь на горячую линию по телефону '
+                                         . $this->getSitePhone(),
+                    ],
+                ]
             );
         } catch (UsernameNotFoundException $e) {
         }
@@ -472,18 +527,31 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 if ($res) {
                     $mess = 'Смс успешно отправлено';
                 } else {
-                    return JsonErrorResponse::create(
-                        'Ошибка при отправке смс'
+                    return JsonErrorResponse::createWithData(
+                        'Ошибка отправки смс, попробуйте позднее',
+                        ['errors' => ['errorSmsSend' => 'Ошибка отправки смс, попробуйте позднее']]
                     );
                 }
             } catch (SmsSendErrorException $e) {
-                JsonErrorResponse::create('Ошибка отправки смс, попробуйте позднее');
+                JsonErrorResponse::createWithData(
+                    'Ошибка отправки смс, попробуйте позднее',
+                    ['errors' => ['errorSmsSend' => 'Ошибка отправки смс, попробуйте позднее']]
+                );
             } catch (WrongPhoneNumberException $e) {
-                return JsonErrorResponse::create($e->getMessage());
+                return JsonErrorResponse::createWithData(
+                    'Некорректный номер телефона',
+                    ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
+                );
             } catch (\RuntimeException $e) {
-                return JsonErrorResponse::create('Непредвиденная ошибка - обратитесь к администратору');
+                return JsonErrorResponse::createWithData(
+                    'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
+                    ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
+                );
             } catch (\Exception $e) {
-                return JsonErrorResponse::create('Непредвиденная ошибка - обратитесь к администратору');
+                return JsonErrorResponse::createWithData(
+                    'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
+                    ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
+                );
             }
         }
         
@@ -491,5 +559,23 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             'mess' => $mess,
             'step' => $step,
         ];
+    }
+    
+    /**
+     * @throws ServiceNotFoundException
+     * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
+     * @return string
+     */
+    protected function getSitePhone() : string
+    {
+        $defCity = App::getInstance()->getContainer()->get('location.service')->getDefaultCity();
+        if ($defCity instanceof City) {
+            $phone = $defCity->getPhone();
+        } else {
+            $phone = static::PHONE_HOT_LINE;
+        }
+        
+        return $phone;
     }
 }

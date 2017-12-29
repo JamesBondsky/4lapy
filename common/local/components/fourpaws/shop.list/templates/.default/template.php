@@ -3,18 +3,7 @@
 /**
  * @var \CBitrixComponentTemplate $this
  *
- * @var array                     $arParams
  * @var array                     $arResult
- * @var array                     $templateData
- *
- * @var string                    $componentPath
- * @var string                    $templateName
- * @var string                    $templateFile
- * @var string                    $templateFolder
- *
- * @global CUser                  $USER
- * @global CMain                  $APPLICATION
- * @global CDatabase              $DB
  */
 
 use FourPaws\BitrixOrm\Model\CropImageDecorator;
@@ -37,9 +26,11 @@ $frame = $this->createFrame(); ?>
        title="<?= $arResult['CITY'] ?>"><?= $arResult['CITY'] ?></a>
     <?php /** @todo выпадающий список городов */ ?>
     <div class="b-stores-sort">
-        <?php if (\is_array($arResult['SERVICES']) && !empty($arResult['SERVICES'])) { ?>
+        <?php if (\is_array($arResult['SERVICES']) && !empty($arResult['SERVICES'])) {
+    ?>
             <div class="b-stores-sort__checkbox-block">
-                <?php foreach ($arResult['SERVICES'] as $key => $service) { ?>
+                <?php foreach ($arResult['SERVICES'] as $key => $service) {
+        ?>
                     <div class="b-checkbox b-checkbox--stores">
                         <input class="b-checkbox__input"
                                type="checkbox"
@@ -52,9 +43,11 @@ $frame = $this->createFrame(); ?>
                             <span class="b-checkbox__text"><?= $service['UF_NAME'] ?></span>
                         </label>
                     </div>
-                <?php } ?>
+                <?php
+    } ?>
             </div>
-        <?php } ?>
+        <?php
+} ?>
         <div class="b-form-inline b-form-inline--stores-search">
             <form class="b-form-inline__form" data-url="/ajax/store/list/search/">
                 <input class="b-input b-input--stores-search"
@@ -82,7 +75,7 @@ $frame = $this->createFrame(); ?>
                             <option value="city">по городу</option>
                             <option value="address">по адресу</option>
                             <option value="metro"<?= (!isset($arResult['METRO'])
-                                                       || empty($arResult['METRO'])) ? ' style="display:none"' : '' ?>>по метро</option>
+                                                      || empty($arResult['METRO'])) ? ' style="display:none"' : '' ?>>по метро</option>
                         </select>
                         <span class="b-select__arrow"></span>
                     </span>
@@ -115,12 +108,12 @@ $frame = $this->createFrame(); ?>
                                title="">
                             <span class="b-delivery-list__col b-delivery-list__col--stores b-delivery-list__col--addr">
                                 <?php $metro = $store->getMetro();
-                                if (!empty($metro)) {
-                                    ?>
+                        if (!empty($metro)) {
+                            ?>
                                     <span class="b-delivery-list__col b-delivery-list__col--color<?= !empty($arResult['METRO'][$metro]['BRANCH']['CLASS']) ? 'b-delivery-list__col--'
                                                                                                                                                              . $arResult['METRO'][$metro]['BRANCH']['CLASS'] : '' ?>"></span>
                                     <?= $arResult['METRO'][$metro]['UF_NAME'] . ', ';
-                                } ?>
+                        } ?>
                                 <?= $store->getAddress() ?>
                             </span>
                                 <span class="b-delivery-list__col b-delivery-list__col--stores b-delivery-list__col--phone"><?= $store->getPhone(
@@ -129,33 +122,33 @@ $frame = $this->createFrame(); ?>
                                     ) ?></span>
                                 <div class="b-tag">
                                     <?php $arServices = $store->getServices();
-                                    if (\is_array($arServices) && !empty($arServices)) {
-                                        $count = count($arServices);
-                                        foreach ($arServices as $key => $service) {
-                                            ?>
+                        if (\is_array($arServices) && !empty($arServices)) {
+                            $count = count($arServices);
+                            foreach ($arServices as $key => $service) {
+                                ?>
                                             <span class="b-tag__item"><?= $arResult['SERVICES'][$service]['UF_NAME'] ?></span><?= $key
                                                                                                                                   !== $count
                                                                                                                                       - 1 ? ',' : '' ?>
                                             <?php
-                                        }
-                                    } ?>
+                            }
+                        } ?>
                                 </div>
                             </a>
                             <div class="b-delivery-list__information">
                                 <?php $image = $store->getImageId();
-                                if (!empty($image) && is_numeric($image) && $image > 0) {
-                                    ?>
+                        if (!empty($image) && is_numeric($image) && $image > 0) {
+                            ?>
                                     <div class="b-delivery-list__image-wrapper">
                                         <img src="<?= /** @noinspection PhpUnhandledExceptionInspection */
                                         CropImageDecorator::createFromPrimary($image)->setCropWidth(630)->setCropHeight(
-                                                360
-                                            ); ?>"
+                                            360
+                                        ); ?>"
                                              class="b-delivery-list__image"
                                              alt=""
                                              title="">
                                     </div>
                                     <?php
-                                } ?>
+                        } ?>
                                 <div class="b-delivery-list__text">
                                     <p class="b-delivery-list__information-header">Как нас найти</p>
                                     <p class="b-delivery-list__information-text"><?= $store->getDescription() ?> </p>

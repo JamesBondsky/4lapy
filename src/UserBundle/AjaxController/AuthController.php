@@ -6,17 +6,29 @@
 
 namespace FourPaws\UserBundle\AjaxController;
 
+use FourPaws\App\Application as App;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\External\Exception\ManzanaServiceException;
+use FourPaws\External\Manzana\Exception\ContactUpdateException;
+use FourPaws\External\Manzana\Model\Client;
+use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
+use FourPaws\UserBundle\Exception\EmptyDateException;
+use FourPaws\UserBundle\Exception\InvalidIdentifierException;
+use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use JMS\Serializer\SerializerBuilder;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -28,11 +40,6 @@ use Symfony\Component\HttpFoundation\Request;
 class AuthController extends Controller
 {
     /**
-     * @var UserAuthorizationInterface
-     */
-    private $userAuthorization;
-    
-    /**
      * @var CurrentUserProviderInterface
      */
     private $currentUserProvider;
@@ -40,28 +47,28 @@ class AuthController extends Controller
     public function __construct(
         UserAuthorizationInterface $userAuthorization,
         CurrentUserProviderInterface $currentUserProvider
-    )
-    {
-        $this->userAuthorization   = $userAuthorization;
+    ) {
         $this->currentUserProvider = $currentUserProvider;
     }
     
     /**
      * @Route("/login/", methods={"POST"})
-     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @param Request $request
      *
-     * @throws \FourPaws\UserBundle\Exception\ValidationException
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
-     * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
+     * @throws ContactUpdateException
+     * @throws ManzanaServiceException
+     * @throws ValidationException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws BitrixRuntimeException
+     * @throws ServiceNotFoundException
+     * @throws InvalidArgumentException
      * @throws \RuntimeException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws ApplicationCreateException
+     * @throws WrongPhoneNumberException
+     * @throws ServiceCircularReferenceException
      * @throws \Exception
-     * @return \FourPaws\App\Response\JsonResponse
+     * @return JsonResponse
      */
     public function loginAction(Request $request) : JsonResponse
     {
@@ -85,7 +92,10 @@ class AuthController extends Controller
                 break;
         }
         
-        return JsonErrorResponse::create('Неизвестная ошибка');
+        return JsonErrorResponse::createWithData(
+            'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
+            ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
+        );
     }
     
     /**
@@ -93,12 +103,11 @@ class AuthController extends Controller
      * @param Request $request
      *
      * @throws \Exception
-     * @return null|\Symfony\Component\HttpFoundation\JsonResponse
+     * @return null|JsonResponse
      */
     public function registerAction(Request $request)
     {
         $action = $request->get('action');
-        /** @noinspection PhpUnusedLocalVariableInspection */
         
         \CBitrixComponent::includeComponentClass('fourpaws:register');
         /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
@@ -119,19 +128,21 @@ class AuthController extends Controller
                 break;
         }
         
-        return JsonErrorResponse::create('Неизвестная ошибка');
+        return JsonErrorResponse::createWithData(
+            'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
+            ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
+        );
     }
     
     /**
      * @Route("/forgotPassword/", methods={"POST"})
      * @param Request $request
      *
-     * @return \FourPaws\App\Response\JsonResponse
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ServiceNotFoundException
      * @throws \Exception
+     * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
+     * @return JsonResponse
      */
     public function forgotPasswordAction(Request $request) : JsonResponse
     {
@@ -154,20 +165,25 @@ class AuthController extends Controller
                 break;
         }
         
-        return JsonErrorResponse::create('Неизвестная ошибка');
+        return JsonErrorResponse::createWithData(
+            'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
+            ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
+        );
     }
     
     /**
      * @Route("/changePhone/", methods={"POST"})
      * @param Request $request
      *
-     * @return \FourPaws\App\Response\JsonResponse
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \FourPaws\UserBundle\Exception\ValidationException
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
+     * @throws ContactUpdateException
+     * @throws ManzanaServiceException
+     * @throws ServiceNotFoundException
+     * @throws ValidationException
+     * @throws InvalidIdentifierException
      * @throws \Exception
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
+     * @return JsonResponse
      */
     public function changePhoneAction(Request $request) : JsonResponse
     {
@@ -189,17 +205,20 @@ class AuthController extends Controller
                 break;
         }
         
-        return JsonErrorResponse::create('Непредвиденная ошибка');
+        return JsonErrorResponse::createWithData(
+            'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
+            ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
+        );
     }
     
     /**
      * @Route("/changePassword/", methods={"POST"})
      * @param Request $request
      *
-     * @return \FourPaws\App\Response\JsonResponse
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \FourPaws\UserBundle\Exception\ValidationException
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
+     * @throws ServiceNotFoundException
+     * @throws ValidationException
+     * @throws InvalidIdentifierException
+     * @return JsonResponse
      */
     public function changePasswordAction(Request $request) : JsonResponse
     {
@@ -208,23 +227,38 @@ class AuthController extends Controller
         $confirm_password = $request->get('confirm_password', '');
         
         if (empty($old_password) || empty($password) || empty($confirm_password)) {
-            return JsonErrorResponse::create('Должны быть заполнены все поля');
+            return JsonErrorResponse::createWithData(
+                'Должны быть заполнены все поля',
+                ['errors' => ['emptyData' => 'Должны быть заполнены все поля']]
+            );
         }
         
         if (\strlen($password) < 6) {
-            return JsonErrorResponse::create('Пароль должен содержать минимум 6 символов');
+            return JsonErrorResponse::createWithData(
+                'Пароль должен содержать минимум 6 символов',
+                ['errors' => ['notValidPasswordLength' => 'Пароль должен содержать минимум 6 символов']]
+            );
         }
         
         if (!$this->currentUserProvider->getCurrentUser()->equalPassword($old_password)) {
-            return JsonErrorResponse::create('Текущий пароль не соответствует введенному');
+            return JsonErrorResponse::createWithData(
+                'Текущий пароль не соответствует введенному',
+                ['errors' => ['notEqualOldPassword' => 'Текущий пароль не соответствует введенному']]
+            );
         }
         
         if ($password !== $confirm_password) {
-            return JsonErrorResponse::create('Пароли не соответсвуют');
+            return JsonErrorResponse::createWithData(
+                'Пароли не соответсвуют',
+                ['errors' => ['notEqualPasswords' => 'Пароли не соответсвуют']]
+            );
         }
         
         if ($old_password === $password) {
-            return JsonErrorResponse::create('Пароль не может быть таким же, как и текущий');
+            return JsonErrorResponse::createWithData(
+                'Пароль не может быть таким же, как и текущий',
+                ['errors' => ['equalWithOldPassword' => 'Пароль не может быть таким же, как и текущий']]
+            );
         }
         
         try {
@@ -233,26 +267,39 @@ class AuthController extends Controller
                 SerializerBuilder::create()->build()->fromArray(['PASSWORD' => $password], User::class)
             );
             if (!$res) {
-                return JsonErrorResponse::create('Произошла ошибка при обновлении');
+                return JsonErrorResponse::createWithData(
+                    'Произошла ошибка при обновлении',
+                    ['errors' => ['updateError' => 'Произошла ошибка при обновлении']]
+                );
             }
             
             return JsonSuccessResponse::create('Пароль обновлен');
         } catch (BitrixRuntimeException $e) {
-            return JsonErrorResponse::create('Произошла ошибка при обновлении ' . $e->getMessage());
+            return JsonErrorResponse::createWithData(
+                'Произошла ошибка при обновлении ' . $e->getMessage(),
+                ['errors' => ['updateError' => 'Произошла ошибка при обновлении ' . $e->getMessage()]]
+            );
         } catch (ConstraintDefinitionException $e) {
         }
         
-        return JsonErrorResponse::create('Непредвиденная ошибка');
+        return JsonErrorResponse::createWithData(
+            'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
+            ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
+        );
     }
     
     /**
      * @Route("/changeData/", methods={"POST"})
      * @param Request $request
      *
-     * @return \FourPaws\App\Response\JsonResponse
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \FourPaws\UserBundle\Exception\ValidationException
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
+     * @throws ContactUpdateException
+     * @throws ManzanaServiceException
+     * @throws ServiceNotFoundException
+     * @throws ValidationException
+     * @throws InvalidIdentifierException
+     * @return JsonResponse
      */
     public function changeDataAction(Request $request) : JsonResponse
     {
@@ -261,12 +308,18 @@ class AuthController extends Controller
         $data           = $request->request->getIterator()->getArrayCopy();
         
         if (filter_var($data['EMAIL'], FILTER_VALIDATE_EMAIL) === false) {
-            return JsonErrorResponse::create('Неверный email');
+            return JsonErrorResponse::createWithData(
+                'Некорректный email',
+                ['errors' => ['wrongEmail' => 'Некорректный email']]
+            );
         }
         
         $curUser = $userRepository->findBy(['EMAIL' => $data['EMAIL']], [], 1);
         if ($curUser instanceof User || (\is_array($curUser) && !empty($curUser))) {
-            return JsonErrorResponse::create('Такой email уже существует');
+            return JsonErrorResponse::createWithData(
+                'Такой email уже существует',
+                ['errors' => ['haveEmail' => 'Такой email уже существует']]
+            );
         }
         
         /** @var User $user */
@@ -282,7 +335,28 @@ class AuthController extends Controller
                 $user
             );
             if (!$res) {
-                return JsonErrorResponse::create('Произошла ошибка при обновлении');
+                return JsonErrorResponse::createWithData(
+                    'Произошла ошибка при обновлении',
+                    ['errors' => ['updateError' => 'Произошла ошибка при обновлении']]
+                );
+            }
+            
+            $manzanaService       = App::getInstance()->getContainer()->get('manzana.service');
+            $manzanaClient        = new Client();
+            $manzanaClient->phone = $data['PERSONAL_PHONE'];
+            /** @todo В каком формате передавать пол */
+            $manzanaClient->genderCode = $data['PERSONAL_GENDER'];
+            /** @todo В каком формате передавать дату рождения */
+            $manzanaClient->birthDate  = $data['PERSONAL_BIRTHDAY'];
+            $manzanaClient->lastName   = $data['LAST_NAME'];
+            $manzanaClient->secondName = $data['SECOND_NAME'];
+            $manzanaClient->firstName  = $data['NAME'];
+            $manzanaService->updateContact($manzanaClient);
+            
+            try {
+                $birthday = $profileClass->replaceRuMonth($user->getBirthday()->format('d #n# Y'));
+            } catch (EmptyDateException $e) {
+                $birthday = '';
             }
             
             return JsonSuccessResponse::createWithData(
@@ -291,14 +365,20 @@ class AuthController extends Controller
                     'email'    => $user->getEmail(),
                     'fio'      => $user->getFullName(),
                     'gender'   => $user->getGenderText(),
-                    'birthday' => $profileClass->replaceRuMonth($user->getBirthday()->format('d #n# Y')),
+                    'birthday' => $birthday,
                 ]
             );
         } catch (BitrixRuntimeException $e) {
-            return JsonErrorResponse::create('Произошла ошибка при обновлении ' . $e->getMessage());
+            return JsonErrorResponse::createWithData(
+                'Произошла ошибка при обновлении ' . $e->getMessage(),
+                ['errors' => ['updateError' => 'Произошла ошибка при обновлении ' . $e->getMessage()]]
+            );
         } catch (ConstraintDefinitionException $e) {
         }
         
-        return JsonErrorResponse::create('Непредвиденная ошибка');
+        return JsonErrorResponse::createWithData(
+            'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
+            ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
+        );
     }
 }

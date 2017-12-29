@@ -6,15 +6,17 @@
 
 namespace FourPaws\UserBundle\Table;
 
-use Bitrix\Main;
+use Bitrix\Main\Entity\DataManager;
 use Bitrix\Main\Entity\DatetimeField;
 use Bitrix\Main\Entity\StringField;
+use Bitrix\Main\Entity\Validator\Length;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Type\DateTime;
 
 Loc::loadMessages(__FILE__);
 
 /**
- * Class SmscodesTable
+ * Class ConfirmCodeTable
  *
  * Fields:
  * <ul>
@@ -23,16 +25,16 @@ Loc::loadMessages(__FILE__);
  * <li> DATE datetime mandatory
  * </ul>
  *
- * @package Bitrix\SmsCodes
+ * @package FourPaws\UserBundle\Table
  **/
-class ConfirmCodeTable extends Main\Entity\DataManager
+class ConfirmCodeTable extends DataManager
 {
     /**
      * Returns DB table name for entity.
      *
      * @return string
      */
-    public static function getTableName()
+    public static function getTableName() : string
     {
         return '4lp_ConfirmCode';
     }
@@ -40,10 +42,9 @@ class ConfirmCodeTable extends Main\Entity\DataManager
     /**
      * Returns entity map definition.
      *
-     * @throws \Bitrix\Main\ObjectException
      * @return array
      */
-    public static function getMap()
+    public static function getMap() : array
     {
         return [
             'ID'   => new StringField(
@@ -65,7 +66,7 @@ class ConfirmCodeTable extends Main\Entity\DataManager
                 'DATE',
                 [
                           'required'      => true,
-                          'default_value' => new Main\Type\DateTime(),
+                          'default_value' => new DateTime(),
                       ]
             ),
         ];
@@ -76,10 +77,10 @@ class ConfirmCodeTable extends Main\Entity\DataManager
      *
      * @return array
      */
-    public static function validateId()
+    public static function validateId() : array
     {
         return [
-            new Main\Entity\Validator\Length(null, 255),
+            new Length(null, 255),
         ];
     }
     
@@ -88,10 +89,10 @@ class ConfirmCodeTable extends Main\Entity\DataManager
      *
      * @return array
      */
-    public static function validateCode()
+    public static function validateCode() : array
     {
         return [
-            new Main\Entity\Validator\Length(null, 255),
+            new Length(null, 255),
         ];
     }
 }

@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 use FourPaws\BitrixOrm\Model\CropImageDecorator;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
@@ -14,7 +18,7 @@ foreach ($arResult['ITEMS'] as $key => &$item) {
     if (isset($image)) {
         unset($image);
     }
-    if (is_array($item['PREVIEW_PICTURE'])) {
+    if (is_array($item['PREVIEW_PICTURE']) && !empty($item['PREVIEW_PICTURE'])) {
         $image = new CropImageDecorator($item['PREVIEW_PICTURE']);
     } elseif (is_numeric($item['~PREVIEW_PICTURE']) && (int)$item['~PREVIEW_PICTURE'] > 0) {
         /** @noinspection PhpUnhandledExceptionInspection */
@@ -28,8 +32,7 @@ foreach ($arResult['ITEMS'] as $key => &$item) {
             $cropWidth  = 305;
             $cropHeight = 120;
         }
-        $image->setCropWidth($cropWidth)->setCropHeight($cropHeight);
-        $item['PREVIEW_PICTURE']['SRC'] = $image;
+        $item['PREVIEW_PICTURE']['SRC'] = $image->setCropWidth($cropWidth)->setCropHeight($cropHeight)->getSrc();
     }
 }
 unset($item);
