@@ -10,9 +10,13 @@ use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Application;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Web\Uri;
 use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\GuzzleException;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
+use Psr\Log\LoggerInterface;
+use FourPaws\App\Application as App;
 
 class ReCaptchaService implements LoggerAwareInterface
 {
@@ -21,14 +25,14 @@ class ReCaptchaService implements LoggerAwareInterface
     /**
      * ключ
      */
-    const KEY = '6Le2QT4UAAAAAKq4NGsbLo7XYMJB1f84S_9PzVZR';
+    private $key;
     
     /**
      * секретный ключ
      */
-    const SECRET_KEY = '6Le2QT4UAAAAALHxRtMAzINWrPKT82LLCo02Cf9K';
+    private $secretKey;
     
-    const HREF       = 'https://www.google.com/recaptcha/api/siteverify?secret=#secret_key#&response=#captcha_code#&remoteip=#remoteip#';
+    const SERVICE_URI = 'https://www.google.com/recaptcha/api/siteverify';
     
     /**
      * @var ClientInterface
@@ -38,7 +42,7 @@ class ReCaptchaService implements LoggerAwareInterface
     /** @noinspection SpellCheckingInspection */
     
     /**
-     * @var \Psr\Log\LoggerInterface
+     * @var LoggerInterface
      */
     protected $logger;
     
@@ -47,15 +51,20 @@ class ReCaptchaService implements LoggerAwareInterface
     /**
      * CallbackConsumerBase constructor.
      *
-     * @param \GuzzleHttp\ClientInterface $guzzle
+     * @param ClientInterface $guzzle
      *
+     * @throws \Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \RuntimeException
      */
     public function __construct(ClientInterface $guzzle)
     {
         $this->guzzle = $guzzle;
         /** @noinspection PhpUnhandledExceptionInspection */
-        $this->logger = LoggerFactory::create('callbackService');
+        $this->logger = LoggerFactory::create('recaptcha');
+    
+        list($this->key, $this->secretKey) =
+            array_values(App::getInstance()->getContainer()->getParameter('recaptcha'));
     }
     
     /**
@@ -67,7 +76,7 @@ class ReCaptchaService implements LoggerAwareInterface
     {
         $this->addJs();
         
-        return '<div class="g-recaptcha' . $additionalClass . '" data-sitekey="' . static::KEY . '"></div>';
+        return '<div class="g-recaptcha' . $additionalClass . '" data-sitekey="' . $this->key . '"></div>';
     }
     
     public function addJs()
@@ -80,7 +89,7 @@ class ReCaptchaService implements LoggerAwareInterface
      *
      * @throws \RuntimeException
      * @throws SystemException
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      * @return bool
      */
     public function checkCaptcha(string $recaptcha = '') : bool
@@ -94,23 +103,17 @@ class ReCaptchaService implements LoggerAwareInterface
         if (empty($recaptcha)) {
             $recaptcha = (string)$context->getRequest()->get('g-recaptcha-response');
         }
-        $url =
-            str_replace(
-                [
-                    '#secret_key#',
-                    '#captcha_code#',
-                    '#remoteip#',
-                ],
-                [
-                    static::SECRET_KEY,
-                    $recaptcha,
-                    $context->getServer()->get('REMOTE_ADDR'),
-                ],
-                static::HREF
-            );
+        $uri = new Uri(static::SERVICE_URI);
+        $uri->addParams(
+            [
+                'secret'   => $this->secretKey,
+                'response' => $recaptcha,
+                'remoteip' => $context->getServer()->get('REMOTE_ADDR'),
+            ]
+        );
         if (!empty($recaptcha)) {
-            $res = $this->guzzle->request('get', $url);
-            if($res->getStatusCode() === 200) {
+            $res = $this->guzzle->request('get', $uri->getUri());
+            if ($res->getStatusCode() === 200) {
                 $data = json_decode($res->getBody()->getContents());
                 if ($data->success) {
                     return true;
