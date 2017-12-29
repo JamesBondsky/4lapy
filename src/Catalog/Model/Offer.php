@@ -18,6 +18,7 @@ use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\BitrixOrm\Query\CatalogProductQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\StoreBundle\Service\StoreService;
 use JMS\Serializer\Annotation\Accessor;
 use JMS\Serializer\Annotation as Serializer;
 use JMS\Serializer\Annotation\Groups;
@@ -645,6 +646,12 @@ class Offer extends IblockElement
     {
         $this->discount = $discount;
         return $this;
+    }
+
+    public function getBonuses()
+    {
+        /* @@todo расчет бонусов */
+        return 112;
     }
 
     protected function checkOptimalPrice()

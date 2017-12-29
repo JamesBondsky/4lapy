@@ -198,7 +198,14 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                             <?= $offer->getPrice() ?>
                         </span>
                         <span class="b-ruble b-ruble--product-information">&nbsp₽</span>
-                        <span class="b-product-information__bonus">+112 бонусов</span>
+                        <? if ($offer->getBonuses()) { ?>
+                            <span class="b-product-information__bonus">+<?= $offer->getBonuses(
+                                ) ?> <?= \FourPaws\Helpers\WordHelper::declension(
+                                    $offer->getBonuses(),
+                                    ['бонус', 'бонуса', 'бонусов']
+                                ) ?>
+                            </span>
+                        <? } ?>
                     </div>
                 </li>
                 <?php if ($offer->isByRequest()) { ?>
