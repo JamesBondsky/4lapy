@@ -39,8 +39,11 @@ $markup = PawsApplication::markup();
     <header class="b-header js-header">
         <div class="b-container">
             <div class="b-header__info">
+                <a class="b-hamburger b-hamburger--mobile-menu js-hamburger-menu-mobile" href="javascript:void(0);" title="">
+                    <span class="b-hamburger__hamburger-icon"></span>
+                </a>
                 <a class="b-hamburger js-hamburger-menu-main" href="javascript:void(0);" title="">
-                    <span class="b-icon">
+                    <span class="b-icon b-icon--hamburger">
                         <?= new SvgDecorator('icon-hamburger', 24, 18) ?>
                     </span>
                 </a>
@@ -89,12 +92,31 @@ $markup = PawsApplication::markup();
                                                    ['HIDE_ICONS' => 'Y']); ?>
                 </div>
             </div>
-            <div class="b-header__menu js-minimal-menu">
+            <div class="b-header__menu js-minimal-menu js-nav-first-desktop">
                 <?php
                 /**
-                 * @todo Основное меню. Чать без dropdown Заменить компонентом и удалить файл.
+                 * Основное меню.
+                 * dropdown передается через header_dropdown_menu
                  */
-                require_once 'temp_header_menu.php';
+                $APPLICATION->IncludeComponent(
+                    'fourpaws:iblock.main.menu',
+                    'fp.17.0.top',
+                    [
+                        'MENU_IBLOCK_TYPE' => \FourPaws\Enum\IblockType::MENU,
+                        'MENU_IBLOCK_CODE' => \FourPaws\Enum\IblockCode::MAIN_MENU,
+                        'PRODUCTS_IBLOCK_TYPE' => \FourPaws\Enum\IblockType::CATALOG,
+                        'PRODUCTS_IBLOCK_CODE' => \FourPaws\Enum\IblockCode::PRODUCTS,
+                        'CACHE_TIME' => 3600,
+                        'CACHE_TYPE' => 'A',
+                        'MAX_DEPTH_LEVEL' => '4',
+                        'TEMPLATE_NO_CACHE' => 'N', // N - шаблон кэшируется
+                        'BRANDS_POPULAR_LIMIT' => '6',
+                    ],
+                    null,
+                    [
+                        'HIDE_ICONS' => 'Y'
+                    ]
+                );
                 ?>
                 <?php $APPLICATION->IncludeComponent('fourpaws:city.selector',
                                                      '',
@@ -111,7 +133,7 @@ $markup = PawsApplication::markup();
     </header>
     <?php
     /**
-     * @todo добавить @see на место установки header_dropdown_menu
+     * Основное меню. dropdown
      */
     $APPLICATION->ShowViewContent('header_dropdown_menu'); ?>
     <main class="b-wrapper<?= $template->getIndexMainClass() ?>" role="main">
