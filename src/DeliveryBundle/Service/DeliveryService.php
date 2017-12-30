@@ -5,13 +5,13 @@ namespace FourPaws\DeliveryBundle\Service;
 use Bitrix\Currency\CurrencyManager;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
+use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Delivery\DeliveryLocationTable;
 use Bitrix\Sale\Delivery\Services\Manager;
 use Bitrix\Sale\Location\LocationTable;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Shipment;
 use FourPaws\Catalog\Model\Offer;
-use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Location\LocationService;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Service\UserService;
@@ -43,6 +43,16 @@ class DeliveryService
 
     const ZONE_4 = 'ZONE_4';
 
+    const PICKUP_CODES = [
+        DeliveryService::INNER_PICKUP_CODE,
+        DeliveryService::DPD_PICKUP_CODE,
+    ];
+
+    const DELIVERY_CODES = [
+        DeliveryService::INNER_DELIVERY_CODE,
+        DeliveryService::DPD_DELIVERY_CODE,
+    ];
+
     /**
      * @var LocationService $locationService
      */
@@ -66,21 +76,21 @@ class DeliveryService
     }
 
     /**
-     * Получение доставок по id товара
+     * Получение доставок для товара
      *
-     * @param int $offerId
+     * @param Offer $offer
      * @param string $locationCode
      * @param array $codes коды доставок для расчета
      *
      * @return array
      */
-    public function getByProduct(int $offerId, string $locationCode = null, array $codes = []): array
+    public function getByProduct(Offer $offer, string $locationCode = null, array $codes = []): array
     {
         if (!$locationCode) {
             $locationCode = $this->getCurrentLocation();
         }
 
-        $shipment = $this->generateShipment($locationCode, $offerId);
+        $shipment = $this->generateShipment($locationCode, $offer);
 
         return $this->calculateDeliveries($shipment, $codes);
     }
@@ -110,7 +120,7 @@ class DeliveryService
      * @param Shipment $shipment
      * @param array $codes коды доставок
      *
-     * @return array
+     * @return CalculationResult[]
      */
     public function calculateDeliveries(Shipment $shipment, array $codes = [])
     {
@@ -328,7 +338,7 @@ class DeliveryService
         return $this->locationService->getCurrentLocation();
     }
 
-    protected function generateShipment(string $locationCode, int $offerId = null): Shipment
+    protected function generateShipment(string $locationCode, Offer $offer = null): Shipment
     {
         $order = Order::create(
             SITE_ID,
@@ -337,11 +347,11 @@ class DeliveryService
         );
 
         $basket = Basket::createFromRequest([]);
-        if ($offerId) {
-            $basketItem = BasketItem::create($basket, 'sale', $offerId);
-            /** todo нужна цена и кол-во товара */
-            //            $basketItem->setFieldNoDemand('PRICE', $price);
-            //            $basketItem->setFieldNoDemand('QUANTITY', $quantity);
+        if ($offer) {
+            $basketItem = BasketItem::create($basket, 'sale', $offer->getId());
+            $basketItem->setFieldNoDemand('CAN_BUY', 'Y');
+            $basketItem->setFieldNoDemand('PRICE', $offer->getPrice());
+            $basketItem->setFieldNoDemand('QUANTITY', 1);
             $basket->addItem($basketItem);
         }
         $order->setBasket($basket);

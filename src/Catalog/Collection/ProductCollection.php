@@ -3,10 +3,11 @@
 namespace FourPaws\Catalog\Collection;
 
 use FourPaws\BitrixOrm\Collection\CdbResultCollectionBase;
+use FourPaws\BitrixOrm\Collection\IblockElementCollection;
 use FourPaws\Catalog\Model\Product;
 use Generator;
 
-class ProductCollection extends CdbResultCollectionBase
+class ProductCollection extends IblockElementCollection
 {
     /**
      * @inheritdoc

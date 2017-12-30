@@ -656,11 +656,11 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
-     * @return HlbReferenceItem
+     * @return null|HlbReferenceItem
      */
     public function getCategory()
     {
-        if (null === $this->category) {
+        if ((null === $this->category) && $this->PROPERTY_CATEGORY) {
             $this->category = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.productcategory'),
                 $this->PROPERTY_CATEGORY
@@ -674,11 +674,11 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
-     * @return HlbReferenceItem
+     * @return null|HlbReferenceItem
      */
     public function getPurpose()
     {
-        if (null === $this->purpose) {
+        if ((null === $this->purpose) && $this->PROPERTY_PURPOSE) {
             $this->purpose = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.purpose'),
                 $this->PROPERTY_PURPOSE
@@ -728,11 +728,11 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
-     * @return HlbReferenceItem
+     * @return null|HlbReferenceItem
      */
     public function getPetBreed()
     {
-        if (null === $this->petBreed) {
+        if ((null === $this->petBreed) && $this->PROPERTY_PET_BREED) {
             $this->petBreed = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.petbreed'),
                 $this->PROPERTY_PET_BREED
@@ -746,11 +746,11 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
-     * @return HlbReferenceItem
+     * @return null|HlbReferenceItem
      */
     public function getPetGender()
     {
-        if (null === $this->petGender) {
+        if ((null === $this->petGender) && $this->PROPERTY_PET_GENDER) {
             $this->petGender = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.petgender'),
                 $this->PROPERTY_PET_GENDER
@@ -797,11 +797,11 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
-     * @return HlbReferenceItem
+     * @return null|HlbReferenceItem
      */
     public function getCountry()
     {
-        if (null === $this->country) {
+        if ((null === $this->country) && $this->PROPERTY_COUNTRY) {
             $this->country = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.country'),
                 $this->PROPERTY_COUNTRY
@@ -933,11 +933,11 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
-     * @return HlbReferenceItem
+     * @return null|HlbReferenceItem
      */
     public function getPetType()
     {
-        if (null === $this->petType) {
+        if ((null === $this->petType) && $this->PROPERTY_PET_TYPE) {
             $this->petType = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.pettype'),
                 $this->PROPERTY_PET_TYPE
@@ -951,11 +951,11 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
-     * @return HlbReferenceItem
+     * @return null|HlbReferenceItem
      */
     public function getPharmaGroup()
     {
-        if (null === $this->pharmaGroup) {
+        if ((null === $this->pharmaGroup) && $this->PROPERTY_PHARMA_GROUP) {
             $this->pharmaGroup = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.pharmagroup'),
                 $this->PROPERTY_PHARMA_GROUP
@@ -971,11 +971,11 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
-     * @return HlbReferenceItem
+     * @return null|HlbReferenceItem
      */
     public function getFeedSpecification()
     {
-        if (null === $this->feedSpecification) {
+        if ((null === $this->feedSpecification) && $this->PROPERTY_FEED_SPECIFICATION) {
             $this->feedSpecification = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.feedspec'),
                 $this->PROPERTY_FEED_SPECIFICATION
@@ -999,11 +999,11 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
-     * @return HlbReferenceItem
+     * @return null|HlbReferenceItem
      */
     public function getConsistence()
     {
-        if (null === $this->consistence) {
+        if ((null === $this->consistence) && $this->PROPERTY_CONSISTENCE) {
             $this->consistence = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.consistence'),
                 $this->PROPERTY_CONSISTENCE
@@ -1017,11 +1017,11 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
-     * @return HlbReferenceItemCollection
+     * @return null|HlbReferenceItemCollection
      */
     public function getFlavour()
     {
-        if (null === $this->flavour) {
+        if ((null === $this->flavour) && $this->PROPERTY_FLAVOUR) {
             $this->flavour = ReferenceUtils::getReferenceMulti(
                 Application::getHlBlockDataManager('bx.hlblock.flavour'),
                 $this->PROPERTY_FLAVOUR

@@ -102,9 +102,9 @@ class InnerDeliveryService extends DeliveryServiceHandlerBase
         /* @todo учитывать наличие товара */
         $result->setPeriodType(CalculationResult::PERIOD_TYPE_DAY);
         if (date('H') < 14) {
-            $result->setPeriodFrom(1);
+            $result->setPeriodFrom(0);
         } else {
-            $result->setPeriodFrom(2);
+            $result->setPeriodFrom(1);
         }
 
         return $result;
