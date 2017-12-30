@@ -338,6 +338,9 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     /**
      * @param Request $request
      *
+     * @throws \RuntimeException
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \Bitrix\Main\SystemException
      * @throws ServiceNotFoundException
      * @throws \Exception
      * @throws ApplicationCreateException
@@ -406,6 +409,9 @@ class FourPawsRegisterComponent extends \CBitrixComponent
      * @param string $confirmCode
      * @param string $phone
      *
+     * @throws \RuntimeException
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws SystemException
      * @throws ServiceNotFoundException
      * @throws \Exception
      * @throws ApplicationCreateException
@@ -415,6 +421,11 @@ class FourPawsRegisterComponent extends \CBitrixComponent
      */
     private function ajaxGetStep2($confirmCode, $phone)
     {
+        if (!App::getInstance()->getContainer()->get('recaptcha.service')->checkCaptcha()) {
+            return JsonErrorResponse::create(
+                'Проверка капчей не пройдена'
+            );
+        }
         try {
             $res = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::checkConfirmSms(
                 $phone,

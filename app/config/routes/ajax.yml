@@ -46,3 +46,13 @@ comments.next:
   path: /comments/next/
   defaults: { _controller: '\FourPaws\Comments\AjaxController\CommentsController::nextAction' }
   methods: [GET]
+
+form.feedback:
+  path: /form/feedback/add/
+  defaults: { _controller: '\FourPaws\Form\AjaxController\FeedBackController::addAction' }
+  methods: [POST]
+
+form.callback:
+  path: /form/callback/add/
+  defaults: { _controller: '\FourPaws\Form\AjaxController\CallBackController::addAction' }
+  methods: [POST]

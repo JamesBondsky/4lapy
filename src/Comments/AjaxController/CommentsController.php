@@ -50,11 +50,11 @@ class CommentsController extends Controller
             }
         } catch (WrongPhoneNumberException $e) {
             $json = JsonErrorResponse::create('Введен некорректный номер телефона');
+        } catch (WrongEmailException $e) {
+            $json = JsonErrorResponse::create($e->getMessage());
         } catch (EmptyUserDataComments $e) {
             $json = JsonErrorResponse::create($e->getMessage());
         } catch (ErrorAddComment $e) {
-            $json = JsonErrorResponse::create($e->getMessage());
-        } catch (WrongEmailException $e) {
             $json = JsonErrorResponse::create($e->getMessage());
         } catch (LoaderException $e) {
         } catch (SystemException $e) {
