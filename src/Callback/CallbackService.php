@@ -11,6 +11,7 @@ use Bitrix\Main\Web\Uri;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use OldSound\RabbitMqBundle\RabbitMq\Producer;
+use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -30,8 +31,8 @@ class CallbackService
     /**
      * CallbackService constructor.
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws InvalidArgumentException
+     * @throws ApplicationCreateException
      */
     public function __construct()
     {
@@ -45,7 +46,6 @@ class CallbackService
      * @param string $curDate
      * @param int    $timeout
      *
-     * @throws \Bitrix\Main\ObjectException
      * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
@@ -53,6 +53,7 @@ class CallbackService
     public function send(string $phone, string $curDate = '', int $timeout = 0)
     {
         if (empty($curDate)) {
+            /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             $date    = new DateTime();
             $curDate = $date->format('Y-m-d H:i:s');
         }

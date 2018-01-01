@@ -11,26 +11,18 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Web\Uri;
+use FourPaws\App\Application as App;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
-use FourPaws\App\Application as App;
+use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 
 class ReCaptchaService implements LoggerAwareInterface
 {
     use LoggerAwareTrait;
-    
-    /**
-     * ключ
-     */
-    private $key;
-    
-    /**
-     * секретный ключ
-     */
-    private $secretKey;
     
     const SERVICE_URI = 'https://www.google.com/recaptcha/api/siteverify';
     
@@ -39,12 +31,22 @@ class ReCaptchaService implements LoggerAwareInterface
      */
     protected $guzzle;
     
-    /** @noinspection SpellCheckingInspection */
-    
     /**
      * @var LoggerInterface
      */
     protected $logger;
+    
+    /**
+     * ключ
+     */
+    private $key;
+    
+    /** @noinspection SpellCheckingInspection */
+    
+    /**
+     * секретный ключ
+     */
+    private $secretKey;
     
     /** @noinspection SpellCheckingInspection */
     
@@ -53,8 +55,8 @@ class ReCaptchaService implements LoggerAwareInterface
      *
      * @param ClientInterface $guzzle
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws InvalidArgumentException
+     * @throws ApplicationCreateException
      * @throws \RuntimeException
      */
     public function __construct(ClientInterface $guzzle)
@@ -62,9 +64,10 @@ class ReCaptchaService implements LoggerAwareInterface
         $this->guzzle = $guzzle;
         /** @noinspection PhpUnhandledExceptionInspection */
         $this->logger = LoggerFactory::create('recaptcha');
-    
-        list($this->key, $this->secretKey) =
-            array_values(App::getInstance()->getContainer()->getParameter('recaptcha'));
+        
+        list(
+            $this->key, $this->secretKey
+            ) = array_values(App::getInstance()->getContainer()->getParameter('recaptcha'));
     }
     
     /**
