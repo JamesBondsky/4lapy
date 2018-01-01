@@ -32,6 +32,7 @@ parameters:
   recaptcha:
     key: '%env(RECAPTCHA_KEY)%'
     secretKey: '%env(RECAPTCHA_SECRET_KEY)%'
+    serviceUri: 'https://www.google.com/recaptcha/api/siteverify'
 
   callback:
     baseUri: 'https://4584.vats-on.ru'

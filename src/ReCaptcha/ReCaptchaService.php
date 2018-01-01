@@ -24,7 +24,7 @@ class ReCaptchaService implements LoggerAwareInterface
 {
     use LoggerAwareTrait;
     
-    const SERVICE_URI = 'https://www.google.com/recaptcha/api/siteverify';
+    protected $serviceUri;
     
     /**
      * @var ClientInterface
@@ -66,7 +66,7 @@ class ReCaptchaService implements LoggerAwareInterface
         $this->logger = LoggerFactory::create('recaptcha');
         
         list(
-            $this->key, $this->secretKey
+            $this->key, $this->secretKey, $this->serviceUri
             ) = array_values(App::getInstance()->getContainer()->getParameter('recaptcha'));
     }
     
@@ -106,7 +106,7 @@ class ReCaptchaService implements LoggerAwareInterface
         if (empty($recaptcha)) {
             $recaptcha = (string)$context->getRequest()->get('g-recaptcha-response');
         }
-        $uri = new Uri(static::SERVICE_URI);
+        $uri = new Uri($this->serviceUri);
         $uri->addParams(
             [
                 'secret'   => $this->secretKey,
