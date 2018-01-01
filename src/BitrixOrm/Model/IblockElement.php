@@ -13,7 +13,7 @@ use FourPaws\BitrixOrm\Type\TextContent;
  * @package FourPaws\BitrixOrm\Model
  *
  */
-abstract class IblockElement extends BitrixArrayItemBase
+class IblockElement extends BitrixArrayItemBase
 {
     use IblockModelTrait;
 

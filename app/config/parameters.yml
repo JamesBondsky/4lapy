@@ -29,6 +29,15 @@ parameters:
     url: https://api.esv2.com
     key: ivaacmVjzakOzRLeYjKy
 
+  recaptcha:
+    key: '6Le2QT4UAAAAAKq4NGsbLo7XYMJB1f84S_9PzVZR'
+    secretKey: '6Le2QT4UAAAAALHxRtMAzINWrPKT82LLCo02Cf9K'
+
+  callback:
+    baseUri: 'https://4584.vats-on.ru'
+    login: 'srv_03'
+    pass: 'F6RIikaO9QvhlZ7C'
+
   # See \Elastica\Client::$_config for more options
   elastica.client_options:
     - timeout: 60

@@ -161,7 +161,7 @@ abstract class DeliveryServiceHandlerBase extends Base implements DeliveryServic
 
         if (!$availableOffers->isEmpty()) {
             $offerIds = [];
-            while ($offer = $availableOffers->next()) {
+            foreach ($availableOffers as $offer) {
                 $offerIds[] = $offer->getId();
             }
             $stocks = $storeService->getStocks($offerIds, $stores);

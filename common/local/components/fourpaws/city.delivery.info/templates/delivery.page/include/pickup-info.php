@@ -31,7 +31,7 @@ use FourPaws\Helpers\WordHelper;
             <span>Через 1 час после оформления заказа при наличии товара в магазине</span>
         <?php } else { ?>
             <span>
-                Через <?= $pickup['PERIOD_FROM'] ?> <?= WordHelper::declension(
+                В течение <?= $pickup['PERIOD_FROM'] ?> <?= WordHelper::declension(
                     $pickup['PERIOD_FROM'],
                     ['день', 'дня', 'дней']
                 ) ?>

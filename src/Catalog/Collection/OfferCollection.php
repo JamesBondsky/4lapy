@@ -2,10 +2,10 @@
 
 namespace FourPaws\Catalog\Collection;
 
-use FourPaws\BitrixOrm\Collection\CdbResultCollectionBase;
+use FourPaws\BitrixOrm\Collection\IblockElementCollection;
 use FourPaws\Catalog\Model\Offer;
 
-class OfferCollection extends CdbResultCollectionBase
+class OfferCollection extends IblockElementCollection
 {
     /**
      * @inheritdoc

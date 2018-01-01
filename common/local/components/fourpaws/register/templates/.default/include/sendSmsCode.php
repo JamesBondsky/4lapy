@@ -36,7 +36,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             </div>
             <span class="b-link-gray">Отправить новый код можно будет через <span>59</span> сек.</span>
         </div>
-        <div class="b-registration__captcha" data-sitekey=""></div>
+        <?= /** @noinspection PhpUnhandledExceptionInspection */
+        App::getInstance()->getContainer()->get('recaptcha.service')->getCaptcha(' b-registration__captcha');?>
         <button class="b-button b-button--social b-button--full-width" type="submit">Подтвердить</button>
     </form>
 </div>

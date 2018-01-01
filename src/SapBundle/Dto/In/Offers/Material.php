@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Dto\In\Offers;
 
 use Doctrine\Common\Collections\Collection;
@@ -7,6 +11,7 @@ use JMS\Serializer\Annotation as Serializer;
 
 /**
  * Class Material
+ *
  * @package FourPaws\SapBundle\Dto\In
  * @Serializer\XmlRoot("Mat")
  * @todo    Проверить отсуствующие поля - ответсвенный Николай Кудряшов
@@ -132,6 +137,7 @@ class Material
      * @Serializer\XmlAttribute()
      * @Serializer\SerializedName("No_Upload_IM")
      * @Serializer\Type("sap_bool")
+     *
      * @var bool
      */
     protected $notUploadToIm = false;
@@ -246,4 +252,384 @@ class Material
      * @var Properties
      */
     protected $properties;
+
+    /**
+     * @return string
+     */
+    public function getOfferXmlId(): string
+    {
+        return $this->offerXmlId;
+    }
+
+    /**
+     * @param string $offerXmlId
+     *
+     * @return Material
+     */
+    public function setOfferXmlId(string $offerXmlId): Material
+    {
+        $this->offerXmlId = $offerXmlId;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getOldOfferXmlId(): string
+    {
+        return $this->oldOfferXmlId;
+    }
+
+    /**
+     * @param string $oldOfferXmlId
+     *
+     * @return Material
+     */
+    public function setOldOfferXmlId(string $oldOfferXmlId): Material
+    {
+        $this->oldOfferXmlId = $oldOfferXmlId;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getOfferName(): string
+    {
+        return $this->offerName;
+    }
+
+    /**
+     * @param string $offerName
+     *
+     * @return Material
+     */
+    public function setOfferName(string $offerName): Material
+    {
+        $this->offerName = $offerName;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getProductName(): string
+    {
+        return $this->productName;
+    }
+
+    /**
+     * @param string $productName
+     *
+     * @return Material
+     */
+    public function setProductName(string $productName): Material
+    {
+        $this->productName = $productName;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getBasicUnitOfMeasurementCode(): string
+    {
+        return $this->basicUnitOfMeasurementCode;
+    }
+
+    /**
+     * @param string $basicUnitOfMeasurementCode
+     *
+     * @return Material
+     */
+    public function setBasicUnitOfMeasurementCode(string $basicUnitOfMeasurementCode): Material
+    {
+        $this->basicUnitOfMeasurementCode = $basicUnitOfMeasurementCode;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getBasicUnitOfMeasurementName(): string
+    {
+        return $this->basicUnitOfMeasurementName;
+    }
+
+    /**
+     * @param string $basicUnitOfMeasurementName
+     *
+     * @return Material
+     */
+    public function setBasicUnitOfMeasurementName(string $basicUnitOfMeasurementName): Material
+    {
+        $this->basicUnitOfMeasurementName = $basicUnitOfMeasurementName;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getSapMaterialGroupId(): int
+    {
+        return $this->sapMaterialGroupId;
+    }
+
+    /**
+     * @param int $sapMaterialGroupId
+     *
+     * @return Material
+     */
+    public function setSapMaterialGroupId(int $sapMaterialGroupId): Material
+    {
+        $this->sapMaterialGroupId = $sapMaterialGroupId;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getCountInPack(): int
+    {
+        return $this->countInPack;
+    }
+
+    /**
+     * @param int $countInPack
+     *
+     * @return Material
+     */
+    public function setCountInPack(int $countInPack): Material
+    {
+        $this->countInPack = $countInPack;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isUploadToIm(): bool
+    {
+        return $this->uploadToIm;
+    }
+
+    /**
+     * @param bool $uploadToIm
+     *
+     * @return Material
+     */
+    public function setUploadToIm(bool $uploadToIm): Material
+    {
+        $this->uploadToIm = $uploadToIm;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isNotUploadToIm(): bool
+    {
+        return $this->notUploadToIm;
+    }
+
+    /**
+     * @param bool $notUploadToIm
+     *
+     * @return Material
+     */
+    public function setNotUploadToIm(bool $notUploadToIm): Material
+    {
+        $this->notUploadToIm = $notUploadToIm;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isNoCourierDelivery(): bool
+    {
+        return $this->noCourierDelivery;
+    }
+
+    /**
+     * @param bool $noCourierDelivery
+     *
+     * @return Material
+     */
+    public function setNoCourierDelivery(bool $noCourierDelivery): Material
+    {
+        $this->noCourierDelivery = $noCourierDelivery;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getMaterialGroupId(): int
+    {
+        return $this->materialGroupId;
+    }
+
+    /**
+     * @param int $materialGroupId
+     *
+     * @return Material
+     */
+    public function setMaterialGroupId(int $materialGroupId): Material
+    {
+        $this->materialGroupId = $materialGroupId;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getMaterialGroupName(): string
+    {
+        return $this->materialGroupName;
+    }
+
+    /**
+     * @param string $materialGroupName
+     *
+     * @return Material
+     */
+    public function setMaterialGroupName(string $materialGroupName): Material
+    {
+        $this->materialGroupName = $materialGroupName;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getBrandCode(): string
+    {
+        return $this->brandCode;
+    }
+
+    /**
+     * @param string $brandCode
+     *
+     * @return Material
+     */
+    public function setBrandCode(string $brandCode): Material
+    {
+        $this->brandCode = $brandCode;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getBrandName(): string
+    {
+        return $this->brandName;
+    }
+
+    /**
+     * @param string $brandName
+     *
+     * @return Material
+     */
+    public function setBrandName(string $brandName): Material
+    {
+        $this->brandName = $brandName;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCountryOfOriginCode(): string
+    {
+        return $this->countryOfOriginCode;
+    }
+
+    /**
+     * @param string $countryOfOriginCode
+     *
+     * @return Material
+     */
+    public function setCountryOfOriginCode(string $countryOfOriginCode): Material
+    {
+        $this->countryOfOriginCode = $countryOfOriginCode;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCountryOfOriginName(): string
+    {
+        return $this->countryOfOriginName;
+    }
+
+    /**
+     * @param string $countryOfOriginName
+     *
+     * @return Material
+     */
+    public function setCountryOfOriginName(string $countryOfOriginName): Material
+    {
+        $this->countryOfOriginName = $countryOfOriginName;
+        return $this;
+    }
+
+    /**
+     * @return float
+     */
+    public function getRetailPrice(): float
+    {
+        return $this->retailPrice;
+    }
+
+    /**
+     * @param float $retailPrice
+     *
+     * @return Material
+     */
+    public function setRetailPrice(float $retailPrice): Material
+    {
+        $this->retailPrice = $retailPrice;
+        return $this;
+    }
+
+    /**
+     * @return Collection|UnitOfMeasurement[]
+     */
+    public function getUnitsOfMeasure()
+    {
+        return $this->unitsOfMeasure;
+    }
+
+    /**
+     * @param Collection|UnitOfMeasurement[] $unitsOfMeasure
+     *
+     * @return Material
+     */
+    public function setUnitsOfMeasure($unitsOfMeasure)
+    {
+        $this->unitsOfMeasure = $unitsOfMeasure;
+        return $this;
+    }
+
+    /**
+     * @return Properties
+     */
+    public function getProperties(): Properties
+    {
+        return $this->properties;
+    }
+
+    /**
+     * @param Properties $properties
+     *
+     * @return Material
+     */
+    public function setProperties(Properties $properties): Material
+    {
+        $this->properties = $properties;
+        return $this;
+    }
 }

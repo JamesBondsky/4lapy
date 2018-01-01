@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Dto\In\Offers;
 
 use Doctrine\Common\Collections\Collection;
@@ -38,4 +42,61 @@ class Property
      * @var Collection|PropertyValue[]
      */
     protected $values;
+
+    /**
+     * @return string
+     */
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    /**
+     * @param string $name
+     *
+     * @return Property
+     */
+    public function setName(string $name): Property
+    {
+        $this->name = $name;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCode(): string
+    {
+        return $this->code;
+    }
+
+    /**
+     * @param string $code
+     *
+     * @return Property
+     */
+    public function setCode(string $code): Property
+    {
+        $this->code = $code;
+        return $this;
+    }
+
+    /**
+     * @return Collection|PropertyValue[]
+     */
+    public function getValues()
+    {
+        return $this->values;
+    }
+
+    /**
+     * @param Collection|PropertyValue[] $values
+     *
+     * @return Property
+     */
+    public function setValues($values)
+    {
+        $this->values = $values;
+        return $this;
+    }
 }

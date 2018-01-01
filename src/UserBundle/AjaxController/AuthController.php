@@ -47,7 +47,8 @@ class AuthController extends Controller
     public function __construct(
         UserAuthorizationInterface $userAuthorization,
         CurrentUserProviderInterface $currentUserProvider
-    ) {
+    )
+    {
         $this->currentUserProvider = $currentUserProvider;
     }
     
@@ -102,6 +103,19 @@ class AuthController extends Controller
      * @Route("/register/", methods={"POST"})
      * @param Request $request
      *
+     * @throws \FourPaws\UserBundle\Exception\ValidationException
+     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
+     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
+     * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
+     * @throws \FourPaws\External\Manzana\Exception\ContactUpdateException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws \RuntimeException
+     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
+     * @throws \FourPaws\External\Exception\ManzanaServiceException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      * @throws \Exception
      * @return null|JsonResponse
      */

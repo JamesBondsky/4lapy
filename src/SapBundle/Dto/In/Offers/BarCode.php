@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Dto\In\Offers;
 
 use JMS\Serializer\Annotation as Serializer;
@@ -18,4 +22,23 @@ class BarCode
      * @var string
      */
     protected $value;
+
+    /**
+     * @return string
+     */
+    public function getValue(): string
+    {
+        return $this->value;
+    }
+
+    /**
+     * @param string $value
+     *
+     * @return BarCode
+     */
+    public function setValue(string $value): BarCode
+    {
+        $this->value = $value;
+        return $this;
+    }
 }
