@@ -4,7 +4,7 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
-namespace FourPaws\Callback;
+namespace FourPaws\AppBundle\Callback;
 
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\Uri;

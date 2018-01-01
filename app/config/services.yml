@@ -22,13 +22,6 @@ services:
     class: FourPaws\Search\Consumer\CatalogSyncConsumer
     arguments: ['@jms_serializer', '@search.service']
 
-  callback_set.consumer:
-      class: FourPaws\Callback\Consumer\CallbackConsumer
-      arguments: ['@manzana.guzzle']
-
-  callback.service:
-      class: FourPaws\Callback\CallbackService
-
   search.service:
     class: FourPaws\Search\SearchService
     arguments:

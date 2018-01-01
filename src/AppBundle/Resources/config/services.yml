@@ -15,6 +15,13 @@ services:
         # but if a service is unused, it's removed anyway
         exclude: '../../{Entity,Tests}'
 
+    callback_set.consumer:
+        class: FourPaws\AppBundle\Callback\Consumer\CallbackConsumer
+        arguments: ['@manzana.guzzle']
+
+    callback.service:
+        class: FourPaws\AppBundle\Callback\CallbackService
+
 #    FourPaws\AppBundle\Controller\:
 #        resource: '../../Controller'
 #        public: true
