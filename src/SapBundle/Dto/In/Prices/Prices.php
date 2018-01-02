@@ -44,4 +44,61 @@ class Prices
      * @var Collection|Item[]
      */
     protected $items;
+
+    /**
+     * @return bool
+     */
+    public function getUploadToIm(): bool
+    {
+        return $this->uploadToIm;
+    }
+
+    /**
+     * @param bool $uploadToIm
+     *
+     * @return Prices
+     */
+    public function setUploadToIm(bool $uploadToIm): Prices
+    {
+        $this->uploadToIm = $uploadToIm;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getRegionCode(): string
+    {
+        return $this->$regionCode;
+    }
+
+    /**
+     * @param string $regionCode
+     *
+     * @return Prices
+     */
+    public function setRegionCode(string $regionCode): Prices
+    {
+        $this->regionCode = $regionCode;
+        return $this;
+    }
+
+    /**
+     * @return Collection|Item[]
+     */
+    public function getItems(): Collection
+    {
+        return $this->items;
+    }
+
+    /**
+     * @param Collection $items
+     *
+     * @return Prices
+     */
+    public function setItems(Collection $items): Prices
+    {
+        $this->items = $items;
+        return $this;
+    }
 }
