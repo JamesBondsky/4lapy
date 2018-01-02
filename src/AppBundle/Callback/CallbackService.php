@@ -11,7 +11,6 @@ use Bitrix\Main\Web\Uri;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use OldSound\RabbitMqBundle\RabbitMq\Producer;
-use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -22,23 +21,17 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  */
 class CallbackService
 {
-    private $baseUri;
-    
-    private $login;
-    
-    private $pass;
+    private $parameters;
     
     /**
      * CallbackService constructor.
      *
-     * @throws InvalidArgumentException
-     * @throws ApplicationCreateException
+     * @param array $parameters
+     *
      */
-    public function __construct()
+    public function __construct(array $parameters)
     {
-        list(
-            $this->baseUri, $this->login, $this->pass
-            ) = array_values(App::getInstance()->getContainer()->getParameter('callback'));
+        $this->parameters = $parameters;
     }
     
     /**
@@ -57,7 +50,7 @@ class CallbackService
             $date    = new DateTime();
             $curDate = $date->format('Y-m-d H:i:s');
         }
-        $uri = new Uri($this->baseUri);
+        $uri = new Uri($this->parameters['baseUri']);
         $uri->addParams(
             [
                 'name'        => '[VATS-ON] SiteCallBack',
@@ -67,8 +60,8 @@ class CallbackService
                 'timeout'     => $timeout,
             ]
         );
-        $uri->setPass($this->pass);
-        $uri->setUser($this->login);
+        $uri->setPass($this->parameters['pass']);
+        $uri->setUser($this->parameters['login']);
         $uri->setHost($uri->getUser() . ':' . $uri->getPass() . '@' . $uri->getHost());
         
         /** @noinspection PhpUnhandledExceptionInspection */
