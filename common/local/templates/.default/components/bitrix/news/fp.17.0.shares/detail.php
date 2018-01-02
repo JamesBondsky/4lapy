@@ -2,19 +2,14 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
-
-use Bitrix\Iblock\IblockTable;
-use Bitrix\Main\Application;
-use FourPaws\Decorators\FullHrefDecorator;
-use FourPaws\Helpers\HighloadHelper;
-
 /**
- * @var \CBitrixComponentTemplate $this
+ * Страница карточки акции в разделе Акции
  *
- * @var array                     $arParams
- * @var array                     $arResult
- * @global CMain                  $APPLICATION
+ * @updated: 01.01.2018
  */
+
+$APPLICATION->SetPageProperty('PUBLICATION_DETAIL_CONTAINER_1', 'b-container b-container--news-detail');
+$APPLICATION->SetPageProperty('PUBLICATION_DETAIL_CONTAINER_2', 'b-detail-page');
 
 /** @var CBitrixComponent $component */
 $this->setFrameMode(true);
@@ -23,14 +18,11 @@ $APPLICATION->IncludeComponent(
     'bitrix:news.detail',
     '',
     [
-        'DISPLAY_DATE' => $arParams['DISPLAY_DATE'],
-        'DISPLAY_NAME' => $arParams['DISPLAY_NAME'],
-        'DISPLAY_PICTURE' => $arParams['DISPLAY_PICTURE'],
-        'DISPLAY_PREVIEW_TEXT' => $arParams['DISPLAY_PREVIEW_TEXT'],
         'IBLOCK_TYPE' => $arParams['IBLOCK_TYPE'],
         'IBLOCK_ID' => $arParams['IBLOCK_ID'],
         'FIELD_CODE' => $arParams['DETAIL_FIELD_CODE'],
         'PROPERTY_CODE' => $arParams['DETAIL_PROPERTY_CODE'],
+        'IBLOCK_URL' => $arResult['FOLDER'] . $arResult['URL_TEMPLATES']['news'],
         'DETAIL_URL' => $arResult['FOLDER'] . $arResult['URL_TEMPLATES']['detail'],
         'SECTION_URL' => $arResult['FOLDER'] . $arResult['URL_TEMPLATES']['section'],
         'META_KEYWORDS' => $arParams['META_KEYWORDS'],
@@ -63,15 +55,9 @@ $APPLICATION->IncludeComponent(
         'ELEMENT_CODE' => $arResult['VARIABLES']['ELEMENT_CODE'],
         'SECTION_ID' => $arResult['VARIABLES']['SECTION_ID'],
         'SECTION_CODE' => $arResult['VARIABLES']['SECTION_CODE'],
-        'IBLOCK_URL' => $arResult['FOLDER'] . $arResult['URL_TEMPLATES']['news'],
         'USE_SHARE' => $arParams['USE_SHARE'],
-        'SHARE_HIDE' => $arParams['SHARE_HIDE'],
-        'SHARE_TEMPLATE' => $arParams['SHARE_TEMPLATE'],
-        'SHARE_HANDLERS' => $arParams['SHARE_HANDLERS'],
-        'SHARE_SHORTEN_URL_LOGIN' => $arParams['SHARE_SHORTEN_URL_LOGIN'],
-        'SHARE_SHORTEN_URL_KEY' => $arParams['SHARE_SHORTEN_URL_KEY'],
-        'ADD_ELEMENT_CHAIN' => $arParams['ADD_ELEMENT_CHAIN'] ?? '',
-        'STRICT_SECTION_CHECK' => $arParams['STRICT_SECTION_CHECK'] ?? '',
+        'ADD_ELEMENT_CHAIN' => $arParams['ADD_ELEMENT_CHAIN'],
+        'STRICT_SECTION_CHECK' => $arParams['STRICT_SECTION_CHECK'],
     ],
     $component,
     [
@@ -79,24 +65,41 @@ $APPLICATION->IncludeComponent(
     ]
 );
 
-/** @todo сделать распродажу с каталогом после готовности каталога со списком товаров */
 
-?><div class="b-container">
-    <div class="b-social-big">
-        <p>Рассказать в соцсетях</p>
-        <div class="ya-share2--wrapper">
-            <div class="ya-share2"
-                 data-lang="en"
-                 data-services="facebook,odnoklassniki,vkontakte"
-                 data-url="<?= /** @noinspection PhpUnhandledExceptionInspection */
-                 new FullHrefDecorator(
-                     Application::getInstance()->getContext()->getRequest()->getRequestUri()
-                 ) ?>"
-                 data-title="<?php $APPLICATION->ShowTitle(false) ?>"
-                 data-description="<?php $APPLICATION->ShowViewContent('news-detail-description') ?>"
-                 data-image="<?php $APPLICATION->ShowViewContent('news-detail-image') ?>"
-            >
-            </div>
-        </div>
-    </div>
-</div><?php
+/**
+ * Распродажа
+ */
+if (isset($arParams['SHOW_PRODUCTS_SALE']) && $arParams['SHOW_PRODUCTS_SALE'] === 'Y') {
+    $APPLICATION->IncludeComponent(
+    	'bitrix:main.include',
+	    '',
+    	array(
+	    	'AREA_FILE_SHOW' => 'file',
+		    'PATH' => '/local/templates/.default/blocks/components/products_sale.php',
+    		'EDIT_TEMPLATE' => '',
+	    ),
+    	null,
+    	array(
+	    	'HIDE_ICONS' => 'Y',
+    	)
+    );
+}
+
+/**
+ * Рассказать в соцсетях
+ */
+if (isset($arParams['USE_SHARE']) && $arParams['USE_SHARE'] === 'Y') {
+    $APPLICATION->IncludeComponent(
+    	'bitrix:main.include',
+	    '',
+    	array(
+	    	'AREA_FILE_SHOW' => 'file',
+		    'PATH' => '/local/templates/.default/blocks/components/social_share.php',
+    		'EDIT_TEMPLATE' => '',
+	    ),
+    	null,
+    	array(
+	    	'HIDE_ICONS' => 'Y',
+    	)
+    );
+}
