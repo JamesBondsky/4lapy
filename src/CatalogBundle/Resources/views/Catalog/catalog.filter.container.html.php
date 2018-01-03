@@ -1,16 +1,17 @@
 <?php
 /**
- * @var Request                               $request
+ * @var Request $request
  * @var CatalogCategorySearchRequestInterface $catalogRequest
- * @var ProductSearchResult                   $productSearchResult
- * @var PhpEngine                             $view
- * @var CMain                                 $APPLICATION
+ * @var ProductSearchResult $productSearchResult
+ * @var PhpEngine $view
+ * @var CMain $APPLICATION
  */
 
 use Bitrix\Main\Grid\Declension;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
 use FourPaws\Catalog\Model\Filter\PriceFilter;
 use FourPaws\Catalog\Model\Filter\RangeFilterInterface;
+use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Sorting;
 use FourPaws\Catalog\Model\Variant;
 use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
@@ -21,21 +22,36 @@ use Symfony\Component\Templating\PhpEngine;
 
 global $APPLICATION;
 
-
+/**
+ * @var Category $category
+ */
+$category = $APPLICATION->IncludeComponent(
+    'fourpaws:catalog.category',
+    '',
+    [
+        'SECTION_CODE' => $catalogRequest->getCategory()->getCode(),
+        'SET_TITLE'    => 'Y',
+    ],
+    $component,
+    ['HIDE_ICONS' => 'Y']
+);
+?>
 ?>
 <div class="b-container b-container--catalog-filter">
     <div class="b-catalog__wrapper-title b-catalog__wrapper-title--filter">
-        <nav class="b-breadcrumbs">
-            <ul class="b-breadcrumbs__list">
-                <li class="b-breadcrumbs__item">
-                    <a class="b-breadcrumbs__link" href="javascript:void(0);" title="Товары для собак">
-                        Товары для собак
-                    </a>
-                </li>
-            </ul>
-        </nav>
+        <?php
+        $APPLICATION->IncludeComponent(
+            'fourpaws:breadcrumbs',
+            '',
+            [
+                'IBLOCK_SECTION' => $category,
+            ],
+            $component,
+            ['HIDE_ICONS' => 'Y']
+        );
+        ?>
         <h1 class="b-title b-title--h1 b-title--catalog-filter">
-            Корм для собак
+            <?= $category->getName() ?>
         </h1>
     </div>
     <aside class="b-filter b-filter--popup js-filter-popup">
@@ -191,9 +207,11 @@ global $APPLICATION;
                         <?php
 
                         $totalString = $productSearchResult->getResultSet()->getTotalHits();
-                        $totalString .= (new Declension(' товар', ' товара', ' товаров'))->get($productSearchResult->getResultSet()->getTotalHits());
+                        $totalString .= (new Declension(' товар', ' товара', ' товаров'))->get(
+                            $productSearchResult->getResultSet()->getTotalHits()
+                        );
                         ?>
-                        <span class="b-catalog-filter__label b-catalog-filter__label--amount"><?=$totalString?></span>
+                        <span class="b-catalog-filter__label b-catalog-filter__label--amount"><?= $totalString ?></span>
                         <span class="b-catalog-filter__sort"><span
                                     class="b-catalog-filter__label b-catalog-filter__label--sort">Сортировать по</span><span
                                     class="b-select b-select--sort js-filter-select">
@@ -204,7 +222,8 @@ global $APPLICATION;
                            */
                           foreach ($catalogRequest->getSorts() as $sort) {
                               ?>
-                              <option value="<?= $sort->getValue() ?>" <?= $sort->isSelected() ? 'selected="selected"' : '' ?>><?= $sort->getName() ?></option>
+                              <option value="<?= $sort->getValue() ?>" <?= $sort->isSelected(
+                              ) ? 'selected="selected"' : '' ?>><?= $sort->getName() ?></option>
                               <?php
                           }
                           ?>
