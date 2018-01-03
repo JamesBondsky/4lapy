@@ -15,6 +15,7 @@ class CategoryQuery extends IblockSectionQuery
     {
         return [
             'IBLOCK_ID',
+            'IBLOCK_SECTION_ID',
             'ID',
             'NAME',
             'XML_ID',

@@ -60,9 +60,9 @@ class CatalogCategory extends CBitrixComponent
     protected function getCategory(string $slug)
     {
         return (new CategoryQuery())
-//            ->withFilterParameter('CNT_ACTIVE', 'Y')
+            ->withFilterParameter('CNT_ACTIVE', 'Y')
             ->withFilterParameter('CODE', $slug)
-//            ->withCountElements(true)
+            ->withCountElements(true)
             ->withNav(['nTopCount' => 1])
             ->exec()
             ->first();

@@ -17,6 +17,7 @@ use FourPaws\Catalog\Model\Variant;
 use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Search\Model\ProductSearchResult;
+use FourPaws\App\Templates\ViewsEnum;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Templating\PhpEngine;
 
@@ -63,63 +64,12 @@ $category = $APPLICATION->IncludeComponent(
         </div>
         <div class="b-filter__wrapper b-filter__wrapper--scroll">
             <form class="b-form js-filter-form">
-                <div class="b-filter__block b-filter__block--back">
-                    <ul class="b-back">
-                        <li class="b-back__item">
-                            <a class="b-link b-link--back" href="javascript:void(0);"
-                               title="Товары для собак">Товары для собак</a>
-                        </li>
-                    </ul>
-                </div>
+                <?php $APPLICATION->ShowViewContent(ViewsEnum::CATALOG_CATEGORY_BACK_LINK) ?>
                 <div class="b-filter__block b-filter__block--reset js-reset-link-block"><a
                             class="b-link b-link--reset js-reset-filter" href="javascript:void(0);"
                             title="Сбросить фильтры">Сбросить фильтры</a>
                 </div>
-                <div class="b-filter__block b-filter__block--select">
-                    <h3 class="b-title b-title--filter-header">Категория
-                    </h3>
-                    <div class="b-select b-select--filter">
-                        <ul class="b-filter-link-list b-filter-link-list--filter b-filter-link-list--select-filter js-accordion-filter-select js-filter-checkbox">
-                            <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                    href="javascript:void(0);"
-                                                                    title="Сухой">Сухой</a>
-                            </li>
-                            <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                    href="javascript:void(0);"
-                                                                    title="Консервы">Консервы</a>
-                            </li>
-                            <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                    href="javascript:void(0);"
-                                                                    title="Кормовая добавка и молоко">Кормовая
-                                    добавка и
-                                    молоко</a>
-                            </li>
-                            <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                    href="javascript:void(0);" title="Диетический">Диетический</a>
-                            </li>
-                            <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                    href="javascript:void(0);"
-                                                                    title="Консервы">Консервы</a>
-                            </li>
-                            <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                    href="javascript:void(0);"
-                                                                    title="Кормовая добавка и молоко">Кормовая
-                                    добавка и
-                                    молоко</a>
-                            </li>
-                            <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                    href="javascript:void(0);" title="Диетический">Диетический</a>
-                            </li>
-                        </ul>
-                        <a class="b-link b-link--filter-more b-link--filter-select js-open-filter-all"
-                           href="javascript:void(0);" title="Показать все">Показать все <span
-                                    class="b-icon b-icon--more">
-                      <svg class="b-icon__svg" viewBox="0 0 10 10 " width="10px" height="10px">
-                        <use class="b-icon__use" xlink:href="icons.svg#icon-arrow-down">
-                        </use>
-                      </svg></span></a>
-                    </div>
-                </div>
+                <?php $APPLICATION->ShowViewContent(ViewsEnum::CATALOG_CATEGORY_CHILDREN_LIST) ?>
                 <?php
 
                 $filterCollection = $catalogRequest->getCategory()->getFilters();
