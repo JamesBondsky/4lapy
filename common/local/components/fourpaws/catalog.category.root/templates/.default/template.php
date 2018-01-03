@@ -1,12 +1,12 @@
 <?php
 /**
  * @var CBitrixComponentTemplate $this
- * @var array                    $arParams
- * @var array                    $arResult
- * @var Category                 $category
- * @var Category                 $childCategory
- * @var Category[]               $childCategories
- * @var Category                 $childChildCategory
+ * @var array $arParams
+ * @var array $arResult
+ * @var Category $category
+ * @var Category $childCategory
+ * @var Category[] $childCategories
+ * @var Category $childChildCategory
  */
 
 use FourPaws\App\Templates\ViewsEnum;
@@ -18,24 +18,52 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 $category = $arResult['CATEGORY'];
 
-
 /**
  * Удаляем категории без детей
  * @todo Что делать с такими категориями?
  */
-$child = $category->getChild()->filter(function (Category $category) {
-    return 0 === $category->getChild()->count();
-});
-
-$this->SetViewTarget(ViewsEnum::CATALOG_CATEGORY_ROOT);
+$categoriesWithChildren = $category->getChild()->filter(
+    function (Category $category) {
+        return $category->getChild()->count() > 0;
+    }
+);
 
 ?>
+<?php $this->setViewTarget(ViewsEnum::CATALOG_CATEGORY_ROOT_LEFT_BLOCK) ?>
+    <aside class="b-filter b-filter--accordion">
+        <div class="b-filter__wrapper">
+            <?php /** @var Category $cat */ ?>
+            <?php foreach ($categoriesWithChildren as $cat) { ?>
+                <div class="b-accordion b-accordion--filter">
+                    <a class="b-accordion__header b-accordion__header--filter js-toggle-accordion"
+                       href="javascript:void(0);"
+                       title="<?= $cat->getName() ?>">
+                        <?= $cat->getName() ?>
+                    </a>
+                    <div class="b-accordion__block js-dropdown-block">
+                        <ul class="b-filter-link-list">
+                            <?php foreach ($cat->getChild() as $child) { ?>
+                                <li class="b-filter-link-list__item">
+                                    <a class="b-filter-link-list__link"
+                                       href="<?= $child->getSectionPageUrl() ?>"
+                                       title="<?= $child->getName() ?>">
+                                        <?= $child->getName() ?>
+                                    </a>
+                                </li>
+                            <?php } ?>
+                        </ul>
+                    </div>
+                </div>
+            <?php } ?>
+        </div>
+    </aside>
+<?php $this->EndViewTarget() ?>
+
+<?php $this->SetViewTarget(ViewsEnum::CATALOG_CATEGORY_ROOT_MAIN_BLOCK) ?>
     <main class="b-catalog__main b-catalog__main--first-step" role="main">
         <?php
-
-        $childCategories = $category->getChild()->slice(0, 2);
-        include __DIR__ . '/category_view.php';
-
+        $childCategories = $categoriesWithChildren->slice(0, 2);
+        include 'category_view.php';
         /**
          * @todo Баннер
          */
@@ -53,11 +81,8 @@ $this->SetViewTarget(ViewsEnum::CATALOG_CATEGORY_ROOT);
             </a>
         </div>
         <?php
-
-        $childCategories = $category->getChild()->slice(2);
-        include __DIR__ . '/category_view.php';
-
+        $childCategories = $categoriesWithChildren->slice(2);
+        include 'category_view.php';
         ?>
     </main>
-<?php
-$this->EndViewTarget();
+<?php $this->EndViewTarget();

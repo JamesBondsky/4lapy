@@ -33,5 +33,7 @@ final class ViewsEnum
 
     const PRODUCT_DETAIL_DELIVERY_PAYMENT_TAB_HEADER = 'product.detail.delivery.payment.tab.header';
 
-    const CATALOG_CATEGORY_ROOT = 'catalog.category.root';
+    const CATALOG_CATEGORY_ROOT_MAIN_BLOCK = 'catalog.category.root.main.block';
+
+    const CATALOG_CATEGORY_ROOT_LEFT_BLOCK = 'catalog.category.root.left.block';
 }
