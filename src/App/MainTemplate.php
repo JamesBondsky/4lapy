@@ -43,7 +43,7 @@ class MainTemplate extends TemplateAbstract
      */
     public function hasHeaderPublicationListContainer() : bool
     {
-        return $this->isListNews() || $this->isListArticles();
+        return $this->isListNews() || $this->isListArticles() || $this->isListShares() || $this->isListSharesFilter();
     }
     
     /**
@@ -65,9 +65,25 @@ class MainTemplate extends TemplateAbstract
     /**
      * @return bool
      */
+    public function isListShares() : bool
+    {
+        return $this->isDir('/customer/shares');
+    }
+
+    /**
+     * @return bool
+     */
+    public function isListSharesFilter() : bool
+    {
+        return $this->isPartitionDir('/customer/shares/by_pet');
+    }
+    
+    /**
+     * @return bool
+     */
     public function hasHeaderDetailPageContainer() : bool
     {
-        return $this->isDetailNews() || $this->isDetailArticles();
+        return $this->isDetailNews() || $this->isDetailArticles() || $this->isDetailShares();
     }
     
     /**
@@ -86,6 +102,14 @@ class MainTemplate extends TemplateAbstract
         return $this->isPartitionDir('/services/articles');
     }
     
+    /**
+     * @return bool
+     */
+    public function isDetailShares() : bool
+    {
+        return !$this->isListShares() && $this->isPartitionDir('/customer/shares');
+    }
+
     /**
      * @return bool
      */
