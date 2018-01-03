@@ -191,46 +191,54 @@ class LocationService
         bool $exact = false,
         array $additionalFilter = []
     ): array {
-        if (empty($query)) {
-            throw new CityNotFoundException('Город не найден');
-        }
-        CBitrixComponent::includeComponentClass("bitrix:sale.location.selector.search");
-
-        $filter = [
-            'NAME.LANGUAGE_ID' => LANGUAGE_ID,
-            'PHRASE'           => $query,
-        ];
-
-        if ($exact) {
-            $filter['NAME.NAME'] = $query;
-        }
-
-        if (!empty($additionalFilter)) {
-            $filter = array_merge($filter, $additionalFilter);
-        }
-
-        // Bitrix не ищет по массиву TYPE_ID
-        $typeIdFilter = [];
-        if (is_array($filter['TYPE_ID'])) {
-            $typeIdFilter = $filter['TYPE_ID'];
-            $filter['TYPE_ID'] = reset($typeIdFilter);
-        }
-
-        $result = [];
-        do {
-            $result = array_merge($result, $this->findWithLocationSearchComponent($filter, $limit));
-
-            if ($limit && count($result) >= $limit) {
-                break;
+        $findLocation = function () use ($query, $limit, $exact, $additionalFilter) {
+            if (empty($query)) {
+                throw new CityNotFoundException('Город не найден');
             }
-        } while ($filter['TYPE_ID'] = next($typeIdFilter));
+            CBitrixComponent::includeComponentClass("bitrix:sale.location.selector.search");
+
+            $filter = [
+                'NAME.LANGUAGE_ID' => LANGUAGE_ID,
+                'PHRASE'           => $query,
+            ];
+
+            if ($exact) {
+                $filter['NAME.NAME'] = $query;
+            }
+
+            if (!empty($additionalFilter)) {
+                $filter = array_merge($filter, $additionalFilter);
+            }
+
+            // Bitrix не ищет по массиву TYPE_ID
+            $typeIdFilter = [];
+            if (\is_array($filter['TYPE_ID'])) {
+                $typeIdFilter = $filter['TYPE_ID'];
+                $filter['TYPE_ID'] = reset($typeIdFilter);
+            }
+
+            $result = [];
+            do {
+                $result = array_merge($result, $this->findWithLocationSearchComponent($filter, $limit));
+
+                if ($limit && \count($result) >= $limit) {
+                    break;
+                }
+            } while ($filter['TYPE_ID'] = next($typeIdFilter));
+
+            if ($limit) {
+                $result = array_slice($result, 0, $limit);
+            }
+
+            return $result;
+        };
+
+        $result = (new BitrixCache())
+            ->withId($query . json_encode($additionalFilter) . (int)$limit . (int)$exact)
+            ->resultOf($findLocation);
 
         if (empty($result)) {
             throw new CityNotFoundException('Город не найден');
-        }
-
-        if ($limit) {
-            $result = array_slice($result, 0, $limit);
         }
 
         return $result;
@@ -438,9 +446,10 @@ class LocationService
     public function getDefaultCity()
     {
         $citiesTable = Application::getInstance()->getContainer()->get('bx.hlblock.cities');
+
         return (new CityQuery($citiesTable::query()))->withFilterParameter('UF_DEFAULT', true)
-                                                           ->exec()
-                                                           ->first();
+                                                     ->exec()
+                                                     ->first();
     }
 
     /**
