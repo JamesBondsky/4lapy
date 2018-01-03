@@ -40,12 +40,10 @@ class CityController extends Controller
         $regionName = $request->request->get('region_name') ?? '';
 
         try {
-            $this->userService->setSelectedCity($code, $name, $regionName);
+            $city = $this->userService->setSelectedCity($code, $name, $regionName);
         } catch (CityNotFoundException $e) {
             return JsonErrorResponse::create($e->getMessage());
         }
-
-        $city = $this->userService->getSelectedCity();
 
         return JsonSuccessResponse::createWithData('Город успешно выбран.', $city, 200, ['reload' => true]);
     }

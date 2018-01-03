@@ -143,10 +143,10 @@ class UserService implements
      * @param string $code
      * @param string $name
      *
-     * @return bool
+     * @return bool|array
      * @throws CityNotFoundException
      */
-    public function setSelectedCity(string $code = '', string $name = '', string $parentName = '') : bool
+    public function setSelectedCity(string $code = '', string $name = '', string $parentName = '')
     {
         $city = null;
         if ($code) {
@@ -167,7 +167,7 @@ class UserService implements
             $this->userRepository->update($user);
         }
 
-        return true;
+        return $city;
     }
 
     /**
