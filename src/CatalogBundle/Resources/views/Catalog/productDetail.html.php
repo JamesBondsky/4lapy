@@ -33,7 +33,7 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
             <?php
             $APPLICATION->IncludeComponent(
                 'fourpaws:breadcrumbs',
-                'product',
+                '',
                 [
                     'IBLOCK_ELEMENT' => $product,
                 ],

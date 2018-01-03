@@ -1,7 +1,7 @@
 <?php
 /**
  * @var RootCategoryRequest $rootCategoryRequest
- * @var CMain               $APPLICATION
+ * @var CMain $APPLICATION
  */
 
 use FourPaws\App\Templates\ViewsEnum;
@@ -11,8 +11,7 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 
 global $APPLICATION;
 
-
-$APPLICATION->IncludeComponent(
+$category = $APPLICATION->IncludeComponent(
     'fourpaws:catalog.category.root',
     '',
     [
@@ -25,9 +24,14 @@ $APPLICATION->IncludeComponent(
         <div class="b-container b-container--catalog-main">
             <div class="b-catalog__wrapper-title">
                 <?php
-                /**
-                 * @todo Хлебные крошки
-                 */
+                $APPLICATION->IncludeComponent(
+                    'fourpaws:breadcrumbs',
+                    '',
+                    [
+                        'IBLOCK_SECTION' => $category,
+                    ],
+                    $component
+                );
                 ?>
                 <nav class="b-breadcrumbs b-breadcrumbs--catalog-main">
                     <ul class="b-breadcrumbs__list">

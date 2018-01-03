@@ -7,9 +7,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 ?>
-<?php if (!empty($arResult['SECTIONS'])) { ?>
-    <nav class="b-breadcrumbs">
-        <ul class="b-breadcrumbs__list">
+<nav class="b-breadcrumbs">
+    <ul class="b-breadcrumbs__list">
+        <?php if ($arParams['SHOW_LINK_TO_MAIN'] === 'Y') { ?>
+            <li class="b-breadcrumbs__item">
+                <a class="b-breadcrumbs__link" href="javascript:void(0);"
+                   title="Главная">Главная</a>
+            </li>
+        <?php } ?>
+        <?php if (!empty($arResult['SECTIONS'])) { ?>
             <?php foreach ($arResult['SECTIONS'] as $section) { ?>
                 <li class="b-breadcrumbs__item">
                     <a class="b-breadcrumbs__link"
@@ -17,6 +23,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                        title="<?= $section['NAME'] ?>"><?= $section['NAME'] ?></a>
                 </li>
             <?php } ?>
-        </ul>
-    </nav>
-<?php } ?>
+        <?php } ?>
+    </ul>
+</nav>
