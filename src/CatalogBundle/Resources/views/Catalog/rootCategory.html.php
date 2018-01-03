@@ -6,16 +6,21 @@
 
 use FourPaws\App\Templates\ViewsEnum;
 use FourPaws\CatalogBundle\Dto\RootCategoryRequest;
+use FourPaws\Catalog\Model\Category;
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 
 global $APPLICATION;
 
+/**
+ * @var Category $category
+ */
 $category = $APPLICATION->IncludeComponent(
     'fourpaws:catalog.category.root',
     '',
     [
         'SECTION_CODE' => $rootCategoryRequest->getCategorySlug(),
+        'SET_TITLE' => 'Y'
     ],
     $component
 );
@@ -41,12 +46,7 @@ $category = $APPLICATION->IncludeComponent(
                         </li>
                     </ul>
                 </nav>
-                <?php
-                /**
-                 * @todo title
-                 */
-                ?>
-                <h1 class="b-title b-title--h1">Товары для собак</h1>
+                <h1 class="b-title b-title--h1"><?= $category->getDisplayName() ?: $category->getName() ?></h1>
             </div>
             <?php
             /**

@@ -11,14 +11,21 @@ class CatalogCategoryRoot extends \CBitrixComponent
 {
     public function onPrepareComponentParams($params): array
     {
+        if (!isset($params['CACHE_TIME'])) {
+            $params['CACHE_TIME'] = 36000000;
+        }
+
         $params['SECTION_CODE'] = $params['SECTION_CODE'] ?? '';
         $params['SECTION_CODE'] = (string)$params['SECTION_CODE'];
+        $params['SET_TITLE'] = ($params['SET_TITLE'] === 'Y') ? $params['SET_TITLE'] : 'N';
 
         return parent::onPrepareComponentParams($params);
     }
 
     public function executeComponent()
     {
+        global $APPLICATION;
+
         if (!$this->arParams['SECTION_CODE']) {
             Tools::process404('', true, true, true);
         }
@@ -29,6 +36,10 @@ class CatalogCategoryRoot extends \CBitrixComponent
             if (!$category || 0 === $category->getChild()->count()) {
                 $this->abortResultCache();
                 Tools::process404('', true, true, true);
+            }
+
+            if ($this->arParams['SET_TITLE'] === 'Y') {
+                $APPLICATION->SetTitle($category->getDisplayName() ?: $category->getName());
             }
 
             $this->arResult['CATEGORY'] = $category;
