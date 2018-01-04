@@ -1,0 +1,358 @@
+<?php
+
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
+namespace FourPaws\PersonalBundle\Entity;
+
+use FourPaws\AppBundle\Entity\BaseEntity;
+use JMS\Serializer\Annotation as Serializer;
+use Symfony\Component\Validator\Constraints as Assert;
+
+class Address extends BaseEntity
+{
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("UF_NAME")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $name = '';
+    
+    /**
+     * @var int
+     * @Serializer\Type("integer")
+     * @Serializer\SerializedName("UF_USER_ID")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Assert\NotBlank(groups={"create","read","update","delete"})
+     */
+    protected $userId;
+    
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("UF_CITY")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Assert\NotBlank(groups={"create","read","update","delete"})
+     */
+    protected $city = '';
+    
+    /**
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("UF_CITY_LOCATION")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $cityLocation = '';
+    
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("UF_STREET")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Assert\NotBlank(groups={"create","read","update","delete"})
+     */
+    protected $street = '';
+    
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("UF_HOUSE")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Assert\NotBlank(groups={""create",read","update","delete"})
+     */
+    protected $house = '';
+    
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("UF_HOUSING")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $housing = '';
+    
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("UF_ENTRANCE")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $entrance = '';
+    
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("UF_FLOOR")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $floor = '';
+    
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("UF_FLAT")
+     * @Serializer\Groups(groups={"read"})
+     */
+    protected $flat = '';
+    
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("UF_INTERCOM_CODE")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $intercomCode = '';
+    
+    /**
+     * @var bool
+     * @Serializer\AccessType(type="public_method")
+     * @Serializer\Accessor(getter="getRawMain", setter="setRawMain")
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("UF_MAIN")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $main = false;
+    
+    /**
+     * @return string
+     */
+    public function getName() : string
+    {
+        return $this->name ?? '';
+    }
+    
+    /**
+     * @param string $name
+     */
+    public function setName(string $name)
+    {
+        $this->name = $name;
+    }
+    
+    /**
+     * @param string $main
+     */
+    public function setRawMain(string $main)
+    {
+        $this->setMain($main === static::BITRIX_TRUE);
+    }
+    
+    /**
+     * @return string
+     */
+    public function getRawMain() : string
+    {
+        return $this->isMain() ? static::BITRIX_TRUE : static::BITRIX_FALSE;
+    }
+    
+    /**
+     * @return bool
+     */
+    public function isMain() : bool
+    {
+        return $this->main;
+    }
+    
+    /**
+     * @param bool $main
+     */
+    public function setMain(bool $main)
+    {
+        $this->main = $main;
+    }
+    
+    /**
+     * @return int
+     */
+    public function getUserId() : int
+    {
+        return $this->userId;
+    }
+    
+    /**
+     * @param int $userId
+     */
+    public function setUserId(int $userId)
+    {
+        $this->userId = $userId;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getFullAddress() : string
+    {
+        $housing = '';
+        if (!empty($this->getHousing())) {
+            $housing .= ', корпус' . $this->getHousing();
+        }
+        $entrance = '';
+        if (!empty($this->getEntrance())) {
+            $entrance .= ', подъезд' . $this->getEntrance();
+        }
+        $floor = '';
+        if (!empty($this->getFloor())) {
+            $floor .= ', этаж' . $this->getFloor();
+        }
+        $flat = '';
+        if (!empty($this->getFlat())) {
+            $flat .= ', кв. ' . $this->getFlat();
+        }
+        $intercomCode = '';
+        if (!empty($this->getIntercomCode())) {
+            $intercomCode .= ', код домофона' . $this->getIntercomCode();
+        }
+        $house = ',д. ' . $this->getHouse();
+        
+        $res =
+            $this->getStreet() . ' ул.' . $house . $housing . $entrance . $floor . $flat . $intercomCode . ' '
+            . $this->getCity();
+        
+        return $res;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getHousing() : string
+    {
+        return $this->housing ?? '';
+    }
+    
+    /**
+     * @param string $housing
+     */
+    public function setHousing(string $housing)
+    {
+        $this->housing = $housing;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getEntrance() : string
+    {
+        return $this->entrance ?? '';
+    }
+    
+    /**
+     * @param string $entrance
+     */
+    public function setEntrance(string $entrance)
+    {
+        $this->entrance = $entrance;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getFloor() : string
+    {
+        return $this->floor ?? '';
+    }
+    
+    /**
+     * @param string $floor
+     */
+    public function setFloor(string $floor)
+    {
+        $this->floor = $floor;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getFlat() : string
+    {
+        return $this->flat ?? '';
+    }
+    
+    /**
+     * @param string $flat
+     */
+    public function setFlat(string $flat)
+    {
+        $this->flat = $flat;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getIntercomCode() : string
+    {
+        return $this->intercomCode ?? '';
+    }
+    
+    /**
+     * @param string $intercomCode
+     */
+    public function setIntercomCode(string $intercomCode)
+    {
+        $this->intercomCode = $intercomCode;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getHouse() : string
+    {
+        return $this->house;
+    }
+    
+    /**
+     * @param string $house
+     */
+    public function setHouse(string $house)
+    {
+        $this->house = $house;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getStreet() : string
+    {
+        return $this->street;
+    }
+    
+    /**
+     * @param string $street
+     */
+    public function setStreet(string $street)
+    {
+        $this->street = $street;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getCity() : string
+    {
+        return $this->city;
+    }
+    
+    /**
+     * @param string $city
+     */
+    public function setCity(string $city)
+    {
+        $this->city = $city;
+    }
+    
+    /**
+     * @return int
+     */
+    public function getCityLocation() : int
+    {
+        return $this->cityLocation ?? 0;
+    }
+    
+    /**
+     * @param int $cityLocation
+     */
+    public function setCityLocation(int $cityLocation)
+    {
+        $this->cityLocation = $cityLocation;
+    }
+}

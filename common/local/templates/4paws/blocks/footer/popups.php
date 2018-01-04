@@ -1,8 +1,14 @@
 <?php
 
+use Bitrix\Main\Application;
+use FourPaws\App\MainTemplate;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
-} ?>
+}
+/** @var MainTemplate $template */
+/** @noinspection PhpUnhandledExceptionInspection */
+$template = MainTemplate::getInstance(Application::getInstance()->getContext()); ?>
 <div class="b-popup-wrapper js-popup-wrapper">
     <?php $APPLICATION->IncludeComponent(
         'fourpaws:city.selector',
@@ -10,8 +16,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         [],
         false,
         ['HIDE_ICONS' => 'Y']
-    ); ?>
-    <?php $APPLICATION->IncludeComponent(
+    );
+    $APPLICATION->IncludeComponent(
         'fourpaws:auth.form',
         'popup',
         [],
@@ -149,202 +155,47 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             </form>
         </div>
     </section>
-    <section class="b-popup-pick-city b-popup-pick-city--add-adress js-popup-section" data-popup="edit-adress-popup">
-        <a class="b-popup-pick-city__close b-popup-pick-city__close--add-adress js-close-popup"
-           href="javascript:void(0);"
-           title="Закрыть"></a>
-        <div class="b-registration b-registration--add-adress">
-            <header class="b-registration__header">
-                <h1 class="b-title b-title--h1 b-title--registration">Новый адрес доставки</h1>
-            </header>
-            <form class="b-registration__form js-form-validation">
-                <div class="b-input-line b-input-line--popup-authorization">
-                    <div class="b-input-line__label-wrapper">
-                        <label class="b-input-line__label" for="name-adress">Название</label>
-                        <span class="b-input-line__require">(например, дом, работа, дача)</span>
-                    </div>
-                    <input class="b-input b-input--registration-form" type="text" id="name-adress" placeholder="" />
-                </div>
-                <div class="b-input-line b-input-line--popup-authorization">
-                    <div class="b-input-line__label-wrapper">
-                        <label class="b-input-line__label" for="city-adress">Город</label>
-                        <span class="b-input-line__require">(обязательно)</span>
-                    </div>
-                    <input class="b-input b-input--registration-form" type="text" id="city-adress" placeholder="" />
-                </div>
-                <div class="b-input-line b-input-line--popup-authorization">
-                    <div class="b-input-line__label-wrapper">
-                        <label class="b-input-line__label" for="street-adress">Улица</label>
-                        <span class="b-input-line__require">(обязательно)</span>
-                    </div>
-                    <input class="b-input b-input--registration-form" type="text" id="street-adress" placeholder="" />
-                </div>
-                <div class="b-registration__wrapper-input">
-                    <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-add-adress">
-                        <div class="b-input-line__label-wrapper">
-                            <label class="b-input-line__label" for="home-adress">Дом</label>
-                            <span class="b-input-line__require">(обязательно)</span>
-                        </div>
-                        <input class="b-input b-input--registration-form" type="text" id="home-adress" placeholder="" />
-                    </div>
-                    <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-add-adress">
-                        <div class="b-input-line__label-wrapper">
-                            <label class="b-input-line__label" for="housing-adress">Корпус</label>
-                        </div>
-                        <input class="b-input b-input--registration-form"
-                               type="text"
-                               id="housing-adress"
-                               placeholder="" />
-                    </div>
-                    <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-add-adress">
-                        <div class="b-input-line__label-wrapper">
-                            <label class="b-input-line__label" for="porch-adress">Подъезд</label>
-                        </div>
-                        <input class="b-input b-input--registration-form"
-                               type="text"
-                               id="porch-adress"
-                               placeholder="" />
-                    </div>
-                    <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-add-adress">
-                        <div class="b-input-line__label-wrapper">
-                            <label class="b-input-line__label" for="floor-adress">Этаж</label>
-                        </div>
-                        <input class="b-input b-input--registration-form"
-                               type="text"
-                               id="floor-adress"
-                               placeholder="" />
-                    </div>
-                    <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-add-adress">
-                        <div class="b-input-line__label-wrapper">
-                            <label class="b-input-line__label" for="flat-adress">Квартира, офис</label>
-                        </div>
-                        <input class="b-input b-input--registration-form" type="text" id="flat-adress" placeholder="" />
-                    </div>
-                    <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-add-adress">
-                        <div class="b-input-line__label-wrapper">
-                            <label class="b-input-line__label" for="doorphone-code-adress">Код домофона</label>
-                        </div>
-                        <input class="b-input b-input--registration-form"
-                               type="text"
-                               id="doorphone-code-adress"
-                               placeholder="" />
-                    </div>
-                </div>
-                <div class="b-checkbox b-checkbox--add-adress">
-                    <input class="b-checkbox__input" type="checkbox" name="main-adress" id="main-adress" />
-                    <label class="b-checkbox__name b-checkbox__name--add-adress"
-                           for="main-adress"><span class="b-checkbox__text">Основной адрес</span>
-                    </label>
-                </div>
-                <button class="b-button b-button--subscribe-delivery">Добавить</button>
-            </form>
-        </div>
-    </section>
-    <section class="b-popup-pick-city b-popup-pick-city--add-pet js-popup-section" data-popup="edit-popup-pet">
-        <a class="b-popup-pick-city__close b-popup-pick-city__close--add-pet js-close-popup"
-           href="javascript:void(0);"
-           title="Закрыть"></a>
-        <div class="b-registration b-registration--add-pet">
-            <header class="b-registration__header">
-                <h1 class="b-title b-title--h1 b-title--registration">Дэймон</h1>
-            </header>
-            <form class="b-registration__form js-form-validation">
-                <div class="b-registration__wrapper-avatar">
-                    <div class="b-registration__add-photos">
-                        <input class="b-registration__load"
-                               type="file"
-                               name="load-avatar"
-                               accept="image/*,image/jpeg" /><span
-                                class="b-icon b-icon--upload"><svg class="b-icon__svg"
-                                                                   viewBox="0 0 69 57 "
-                                                                   width="69px"
-                                                                   height="57px"><use class="b-icon__use"
-                                                                                      xlink:href="icons.svg#icon-upload"></use></svg></span>
-                        <div class="b-registration__text b-registration__text--upload">Перетащите картинку сюда или
-                                                                                       нажмите на область для выбора
-                                                                                       файла
-                        </div>
-                    </div>
-                    <a class="b-registration__link-pet"
-                       href="javascript:void(0);"
-                       title="Дэймон"><span class="b-icon b-icon--pet-edit"><svg class="b-icon__svg"
-                                                                                 viewBox="0 0 25 25 "
-                                                                                 width="25px"
-                                                                                 height="25px"><use class="b-icon__use"
-                                                                                                    xlink:href="icons.svg#icon-edit"></use></svg></span><img
-                                class="b-registration__image js-image-wrapper"
-                                src="images/content/dog.jpg"
-                                alt="Дэймон"
-                                title="" /></a>
-                </div>
-                <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet">
-                    <div class="b-input-line__label-wrapper">
-                        <label class="b-input-line__label" for="name-pet">Имя питомца</label>
-                    </div>
-                    <input class="b-input b-input--registration-form" type="text" id="name-pet" placeholder="" />
-                </div>
-                <label class="b-registration__label b-registration__label--subscribe-delivery">Вид питомца</label>
-                <div class="b-select b-select--subscribe-delivery">
-                    <select class="b-select__block b-select__block--subscribe-delivery" name="pet">
-                        <option value="pet-0">Кот</option>
-                        <option value="pet-1">Пес</option>
-                        <option value="pet-2">Овца</option>
-                    </select>
-                </div>
-                <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet">
-                    <div class="b-input-line__label-wrapper">
-                        <label class="b-input-line__label" for="breed-pet">Порода</label>
-                    </div>
-                    <input class="b-input b-input--registration-form" type="text" id="breed-pet" placeholder="" />
-                </div>
-                <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet">
-                    <div class="b-input-line__label-wrapper">
-                        <label class="b-input-line__label" for="birthday-pet">Дата рождения</label>
-                    </div>
-                    <input class="b-input b-input--registration-form"
-                           type="date"
-                           id="birthday-pet"
-                           placeholder="ДД.ММ.ГГГГ" />
-                </div>
-                <div class="b-registration__wrapper-radio">
-                    <div class="b-radio b-radio--add-pet">
-                        <input class="b-radio__input" type="radio" name="sex" id="male" />
-                        <label class="b-radio__label b-radio__label--add-pet"
-                               for="male"><span class="b-radio__text-label">Мальчик</span>
-                        </label>
-                    </div>
-                    <div class="b-radio b-radio--add-pet">
-                        <input class="b-radio__input" type="radio" name="sex" id="female" />
-                        <label class="b-radio__label b-radio__label--add-pet"
-                               for="female"><span class="b-radio__text-label">Девочка</span>
-                        </label>
-                    </div>
-                </div>
-                <button class="b-button b-button--subscribe-delivery">Сохранить</button>
-            </form>
-        </div>
-    </section>
-    <?php $APPLICATION->IncludeComponent(
-        'fourpaws:personal.profile',
-        'popupChangePassword',
-        [],
-        $component,
-        ['HIDE_ICONS' => 'Y']
-    ); ?>
-    <?php $APPLICATION->IncludeComponent(
-        'fourpaws:personal.profile',
-        'popupChangeData',
-        [],
-        $component,
-        ['HIDE_ICONS' => 'Y']
-    ); ?>
-    <?php $APPLICATION->IncludeComponent(
-        'fourpaws:personal.profile',
-        'popupChangePhone',
-        [],
-        $component,
-        ['HIDE_ICONS' => 'Y']
-    ); ?>
+    <?php if ($template->hasPersonalAddress()) {
+        $APPLICATION->IncludeComponent(
+            'fourpaws:personal.address',
+            'popup',
+            [],
+            $component,
+            ['HIDE_ICONS' => 'Y']
+        );
+    }
+    if ($template->hasPersonalPet()) {
+        $APPLICATION->IncludeComponent(
+            'fourpaws:personal.pets',
+            'popup',
+            [],
+            $component,
+            ['HIDE_ICONS' => 'Y']
+        );
+    }
+    if ($template->hasPersonalProfile()) {
+        $APPLICATION->IncludeComponent(
+            'fourpaws:personal.profile',
+            'popupChangePassword',
+            [],
+            $component,
+            ['HIDE_ICONS' => 'Y']
+        );
+        $APPLICATION->IncludeComponent(
+            'fourpaws:personal.profile',
+            'popupChangeData',
+            [],
+            $component,
+            ['HIDE_ICONS' => 'Y']
+        );
+        $APPLICATION->IncludeComponent(
+            'fourpaws:personal.profile',
+            'popupChangePhone',
+            [],
+            $component,
+            ['HIDE_ICONS' => 'Y']
+        );
+    } ?>
     <div class="b-popup-wrapper__wrapper-modal">
         <section class="b-popup-pick-city b-popup-pick-city--choose-gift js-popup-section"
                  data-popup="popup-choose-gift">
