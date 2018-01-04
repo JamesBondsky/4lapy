@@ -8,7 +8,6 @@ namespace FourPaws\PersonalBundle\Service;
 
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\External\Manzana\Model\Client;
@@ -61,6 +60,10 @@ class AddressService
     /**
      * @param $data
      *
+     * @throws \RuntimeException
+     * @throws NotAuthorizedException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
      * @throws ContactUpdateException
      * @throws ManzanaServiceException
      * @throws ApplicationCreateException
@@ -80,6 +83,7 @@ class AddressService
         $res = $this->addressRepository->setEntityFromData($data, Address::class)->create();
         if ($res) {
             if ($data['UF_MAIN'] === 'Y') {
+                /** @noinspection PhpParamsInspection */
                 $this->updateManzanaAddress($this->addressRepository->dataToEntity($data, Address::class));
             }
         }
@@ -118,35 +122,40 @@ class AddressService
     }
     
     /**
-     * @param BaseEntity $address
+     * @param Address $address
      *
+     * @throws NotAuthorizedException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
      * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
      * @throws ManzanaServiceException
      * @throws ContactUpdateException
      * @throws ServiceCircularReferenceException
+     * @throws \RuntimeException
      */
-    protected function updateManzanaAddress(BaseEntity $address)
+    protected function updateManzanaAddress(Address $address)
     {
         $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
-        $client         = new Client();
-        $client->address = '';
-        $client->addressCity = '';
-        $client->addressLine2 = '';
-        $client->addressLine3 = '';
-        $client->addressPostalCode = '';
-        $client->addressStateOrProvince = '';
-        $client->plAddress1Line1StreetTypeId = '';
-        $client->plAddress1Line1StreetTypeName = '';
-        $client->plAddressFlat = '';
-        $client->plRegionId = '';
-        $client->plRegionName = '';
-        $manzanaService->updateContact($client);
+        
+        $contactId = $manzanaService->getContactIdByCurUser();
+        if ($contactId >= 0) {
+            $client = new Client();
+            if ($contactId > 0) {
+                $client->contactId = $contactId;
+            } else {
+                $manzanaService->setClientPersonalDataByCurUser($client);
+            }
+            $manzanaService->setClientAddress($client, $address);
+            $manzanaService->updateContact($client);
+        }
     }
     
     /**
      * @param array $data
      *
+     * @throws \RuntimeException
+     * @throws NotAuthorizedException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
@@ -168,6 +177,7 @@ class AddressService
         $res = $this->addressRepository->setEntityFromData($data, Address::class)->update();
         if ($res) {
             if ($data['UF_MAIN'] === 'Y') {
+                /** @noinspection PhpParamsInspection */
                 $this->updateManzanaAddress($this->addressRepository->dataToEntity($data, Address::class));
             }
         }

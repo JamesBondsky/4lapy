@@ -7,6 +7,7 @@
 namespace FourPaws\UserBundle\Entity;
 
 use Bitrix\Main\Type\Date;
+use Bitrix\Main\Type\DateTime;
 use FourPaws\UserBundle\Exception\EmptyDateException;
 use JMS\Serializer\Annotation as Serializer;
 use Misd\PhoneNumberBundle\Validator\Constraints\PhoneNumber;
@@ -161,8 +162,8 @@ class User
     protected $gender = '';
     
     /**
-     * @var string
-     * @Serializer\Type("string")
+     * @var Date
+     * @Serializer\Type("\Bitrix\Main\Type\Date")
      * @Serializer\SerializedName("PERSONAL_BIRTHDAY")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
@@ -182,6 +183,14 @@ class User
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
     protected $phoneConfirmed = false;
+    
+    /**
+     * @var DateTime
+     * @Serializer\Type("\Bitrix\Main\Type\DateTime")
+     * @Serializer\SerializedName("DATE_REGISTER")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $dateRegister = false;
     
     /**
      * @return int
@@ -552,26 +561,26 @@ class User
     }
     
     /**
-     * @return Date
+     * @return Date|null
      *
      * @throws EmptyDateException
      */
-    public function getBirthday() : Date
+    public function getBirthday()
     {
         /** @noinspection PhpIncompatibleReturnTypeInspection */
-        if ($this->birthday) {
-            return Date::createFromText($this->birthday);
+        if ($this->birthday instanceof Date) {
+            return $this->birthday;
         }
     
-        throw new EmptyDateException('Birthday date is not set');
+        return null;
     }
     
     /**
-     * @param \Bitrix\Main\Type\Date $birthday
+     * @param Date $birthday
      */
     public function setBirthday(Date $birthday)
     {
-        $this->birthday = $birthday->format('d.m.Y');
+        $this->birthday = $birthday;
     }
     
     /**
@@ -607,10 +616,7 @@ class User
     }
     
     /**
-     * @param string $password
-     *
      * @return bool
-     *
      */
     public function isEmailConfirmed() : bool
     {
@@ -623,5 +629,21 @@ class User
     public function setEmailConfirmed(bool $emailConfirmed)
     {
         $this->emailConfirmed = $emailConfirmed;
+    }
+    
+    /**
+     * @return DateTime
+     */
+    public function getDateRegister() : DateTime
+    {
+        return $this->dateRegister;
+    }
+    
+    /**
+     * @param DateTime $dateRegister
+     */
+    public function setDateRegister(DateTime $dateRegister)
+    {
+        $this->dateRegister = $dateRegister;
     }
 }

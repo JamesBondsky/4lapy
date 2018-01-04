@@ -162,7 +162,7 @@ class BaseRepository
     /**
      * @param array $params
      *
-     * @return array
+     * @return BaseEntity[]|array
      * @throws \Exception
      */
     public function findBy(array $params = []) : array

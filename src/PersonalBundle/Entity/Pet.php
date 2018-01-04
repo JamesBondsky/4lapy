@@ -85,6 +85,8 @@ class Pet extends BaseEntity
     
     protected $stringGender = '';
     
+    protected   $xmlIdType = '';
+    
     /**
      * @return string
      */
@@ -171,16 +173,32 @@ class Pet extends BaseEntity
     }
     
     /**
+     * @return string
+     */
+    public function getXmlIdType() : string
+    {
+        if (empty($this->xmlIdType) && $this->getType() > 0) {
+            try {
+                $this->setStringType($this->getType());
+            } catch (\Exception $e) {
+            }
+        }
+        
+        return $this->xmlIdType;
+    }
+    
+    /**
      * @param int $type
      *
      * @throws \Exception
      */
     protected function setStringType(int $type)
     {
-        $this->stringType =
-            HLBlockFactory::createTableObject(static::PET_TYPE)::query()->setFilter(['ID' => $type])->setSelect(
-                ['UF_NAME']
-            )->exec()->fetch()['UF_NAME'];
+        $item = HLBlockFactory::createTableObject(static::PET_TYPE)::query()->setFilter(['ID' => $type])->setSelect(
+            ['UF_NAME']
+        )->exec()->fetch();
+        $this->stringType = $item['UF_NAME'];
+        $this->xmlIdType = $item['UF_XML_ID'];
     }
     
     /**

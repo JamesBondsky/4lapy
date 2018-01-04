@@ -38,8 +38,9 @@ class AddressRepository extends BaseHlRepository
     public function create() : bool
     {
         if ($this->entity->getUserId() === 0) {
-            $curUserService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
-            $this->entity->setUserId($curUserService->getCurrentUserId());
+            $this->entity->setUserId(
+                App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class)->getCurrentUserId()
+            );
         }
         
         return parent::create();
@@ -63,7 +64,7 @@ class AddressRepository extends BaseHlRepository
         
         return $this->findBy(
             [
-                'filter'      => ['UF_USER_ID' => $userId],
+                'filter' => ['UF_USER_ID' => $userId],
                 'entityClass' => Address::class,
             ]
         );
