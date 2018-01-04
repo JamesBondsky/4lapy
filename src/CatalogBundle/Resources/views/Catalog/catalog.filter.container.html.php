@@ -37,7 +37,6 @@ $category = $APPLICATION->IncludeComponent(
     ['HIDE_ICONS' => 'Y']
 );
 ?>
-?>
 <div class="b-container b-container--catalog-filter">
     <div class="b-catalog__wrapper-title b-catalog__wrapper-title--filter">
         <?php

@@ -83,7 +83,7 @@ abstract class IblockSection extends BitrixArrayItemBase
      */
     public function getIblockSectionId(): int
     {
-        return $this->IBLOCK_SECTION_ID;
+        return (int)$this->IBLOCK_SECTION_ID;
     }
 
     /**
