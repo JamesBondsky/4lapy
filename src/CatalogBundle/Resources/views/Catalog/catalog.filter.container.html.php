@@ -17,7 +17,6 @@ use FourPaws\Catalog\Model\Variant;
 use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Search\Model\ProductSearchResult;
-use FourPaws\App\Templates\ViewsEnum;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Templating\PhpEngine;
 
@@ -63,12 +62,22 @@ $category = $APPLICATION->IncludeComponent(
         </div>
         <div class="b-filter__wrapper b-filter__wrapper--scroll">
             <form class="b-form js-filter-form">
-                <?php $APPLICATION->ShowViewContent(ViewsEnum::CATALOG_CATEGORY_BACK_LINK) ?>
+                <?= $view->render(
+                    'FourPawsCatalogBundle:Catalog:catalog.filter.backLink.html.php',
+                    [
+                        'category' => $category,
+                    ]
+                ) ?>
                 <div class="b-filter__block b-filter__block--reset js-reset-link-block"><a
                             class="b-link b-link--reset js-reset-filter" href="javascript:void(0);"
                             title="Сбросить фильтры">Сбросить фильтры</a>
                 </div>
-                <?php $APPLICATION->ShowViewContent(ViewsEnum::CATALOG_CATEGORY_CHILDREN_LIST) ?>
+                <?= $view->render(
+                    'FourPawsCatalogBundle:Catalog:catalog.filter.category.list.html.php',
+                    [
+                        'category' => $category,
+                    ]
+                ) ?>
                 <?php
 
                 $filterCollection = $catalogRequest->getCategory()->getFilters();
