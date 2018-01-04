@@ -20,7 +20,8 @@ $category = $APPLICATION->IncludeComponent(
     '',
     [
         'SECTION_CODE' => $rootCategoryRequest->getCategorySlug(),
-        'SET_TITLE' => 'Y'
+        'SET_TITLE' => 'Y',
+        'CACHE_TIME' => 10
     ],
     $component,
     ['HIDE_ICONS' => 'Y']

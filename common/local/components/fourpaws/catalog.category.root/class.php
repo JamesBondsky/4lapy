@@ -11,7 +11,6 @@ CBitrixComponent::includeComponentClass('fourpaws:catalog.category');
 /** @noinspection AutoloadingIssuesInspection */
 class CatalogCategoryRoot extends CatalogCategory
 {
-
     protected function prepareResult()
     {
         global $APPLICATION;
