@@ -118,13 +118,13 @@ class Reference_codes_20180101224518 extends SprintMigrationBase
                 'DEFAULT_VALUE' => null,
             ],
             'EDIT_FORM_LABEL'   => [
-                'ru' => 'Название',
+                'ru' => 'Символьный код',
             ],
             'LIST_COLUMN_LABEL' => [
-                'ru' => 'Название',
+                'ru' => 'Символьный код',
             ],
             'LIST_FILTER_LABEL' => [
-                'ru' => 'Название',
+                'ru' => 'Символьный код',
             ],
             'ERROR_MESSAGE'     => [
                 'ru' => null,
