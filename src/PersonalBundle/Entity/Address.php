@@ -106,9 +106,7 @@ class Address extends BaseEntity
     
     /**
      * @var bool
-     * @Serializer\AccessType(type="public_method")
-     * @Serializer\Accessor(getter="getRawMain", setter="setRawMain")
-     * @Serializer\Type("string")
+     * @Serializer\Type("bitrix_bool")
      * @Serializer\SerializedName("UF_MAIN")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
@@ -132,24 +130,6 @@ class Address extends BaseEntity
         $this->name = $name;
         
         return $this;
-    }
-    
-    /**
-     * @param string $main
-     *
-     * @return Address
-     */
-    public function setRawMain(string $main) : Address
-    {
-        return $this->setMain($main === static::BITRIX_TRUE);
-    }
-    
-    /**
-     * @return string
-     */
-    public function getRawMain() : string
-    {
-        return $this->isMain() ? static::BITRIX_TRUE : static::BITRIX_FALSE;
     }
     
     /**

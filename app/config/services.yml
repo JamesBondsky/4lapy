@@ -95,6 +95,16 @@ services:
       tags:
           - { name: jms_serializer.subscribing_handler }
 
+  jms_serializer.bitrix_date_handler:
+      class: FourPaws\AppBundle\Serialization\BitrixDateHandler
+      tags:
+          - { name: jms_serializer.subscribing_handler }
+
+  jms_serializer.bitrix_date_time_handler:
+      class: FourPaws\AppBundle\Serialization\BitrixDateTimeHandler
+      tags:
+          - { name: jms_serializer.subscribing_handler }
+
   recaptcha.guzzle:
       class: GuzzleHttp\Client
       arguments:
