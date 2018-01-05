@@ -13,7 +13,6 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\SystemException;
-use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
@@ -23,6 +22,7 @@ use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Exception\SmsSendErrorException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\External\Manzana\Model\Client;
+use FourPaws\External\Manzana\Model\Clients;
 use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
@@ -32,6 +32,7 @@ use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Exception\ValidationException;
@@ -39,6 +40,7 @@ use FourPaws\UserBundle\Service\ConfirmCodeInterface;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
+use GuzzleHttp\Exception\GuzzleException;
 use JMS\Serializer\SerializerBuilder;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -209,11 +211,15 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     /**
      * @param array $data
      *
+     * @throws NotAuthorizedException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
      * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
      * @throws ManzanaServiceException
      * @throws ContactUpdateException
      * @throws ServiceCircularReferenceException
+     * @throws \RuntimeException
      * @return JsonResponse
      */
     public function ajaxRegister($data) : JsonResponse
@@ -226,10 +232,9 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         
         $data['UF_PHONE_CONFIRMED'] = 'Y';
         
+        $userEntity = SerializerBuilder::create()->build()->fromArray($data, User::class);
         try {
-            $res = $this->userRegistrationService->register(
-                SerializerBuilder::create()->build()->fromArray($data, User::class)
-            );
+            $res = $this->userRegistrationService->register($userEntity);
             if (!$res) {
                 return JsonErrorResponse::createWithData(
                     'При регистрации произошла ошибка',
@@ -247,19 +252,15 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             );
         }
         
-        /** todo отправить данные в манзану о пользователе */
         /** @var ManzanaService $manzanaService */
-        $manzanaService       = App::getInstance()->getContainer()->get('manzana.service');
-        $manzanaClient        = new Client();
-        $manzanaClient->phone = $data['PERSONAL_PHONE'];
-        /** @todo В каком формате передавать пол */
-        $manzanaClient->genderCode = $data['PERSONAL_GENDER'];
-        /** @todo В каком формате передавать дату рождения */
-        $manzanaClient->birthDate  = $data['PERSONAL_BIRTHDAY'];
-        $manzanaClient->lastName   = $data['LAST_NAME'];
-        $manzanaClient->secondName = $data['SECOND_NAME'];
-        $manzanaClient->firstName  = $data['NAME'];
-        $manzanaService->updateContact($manzanaClient);
+        $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
+        $contactId      = $manzanaService->getContactIdByCurUser($userEntity);
+        $client         = new Client();
+        if ($contactId > 0) {
+            $client->contactId = $contactId;
+        }
+        $this->currentUserProvider->setClientPersonalDataByCurUser($client, $userEntity);
+        $manzanaService->updateContact($client);
         
         ob_start();
         /** @noinspection PhpIncludeInspection */
@@ -278,6 +279,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     /**
      * @param Request $request
      *
+     * @throws NotAuthorizedException
      * @throws ContactUpdateException
      * @throws ManzanaServiceException
      * @throws ValidationException
@@ -324,12 +326,15 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         if ($this->currentUserProvider->getUserRepository()->update(
             SerializerBuilder::create()->build()->fromArray($data, User::class)
         )) {
-            /** todo отправить данные в манзану о пользователе */
             /** @var ManzanaService $manzanaService */
-            $manzanaService       = App::getInstance()->getContainer()->get('manzana.service');
-            $manzanaClient        = new Client();
-            $manzanaClient->phone = $phone;
-            $manzanaService->updateContact($manzanaClient);
+            $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
+            $contactId      = $manzanaService->getContactIdByCurUser();
+            $client         = new Client();
+            if ($contactId > 0) {
+                $client->contactId = $contactId;
+            }
+            $this->currentUserProvider->setClientPersonalDataByCurUser($client);
+            $manzanaService->updateContact($client);
         }
         
         return JsonSuccessResponse::create('Телефон сохранен', 200, [], ['reload' => true]);
@@ -339,8 +344,8 @@ class FourPawsRegisterComponent extends \CBitrixComponent
      * @param Request $request
      *
      * @throws \RuntimeException
-     * @throws \GuzzleHttp\Exception\GuzzleException
-     * @throws \Bitrix\Main\SystemException
+     * @throws GuzzleException
+     * @throws SystemException
      * @throws ServiceNotFoundException
      * @throws \Exception
      * @throws ApplicationCreateException
@@ -410,7 +415,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
      * @param string $phone
      *
      * @throws \RuntimeException
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      * @throws SystemException
      * @throws ServiceNotFoundException
      * @throws \Exception
@@ -453,18 +458,12 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         /** @var ManzanaService $manzanaService */
         $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
         $manzanaData    = $manzanaService->getUserDataByPhone($phone);
-        /** @var ArrayCollection $clients */
+        /** @var Clients $clients */
         $clients = $manzanaData->clients;
-        if ($clients instanceof Client) {
+        if (\is_array($clients) && \count($clients) === 1) {
             /** @noinspection PhpUnusedLocalVariableInspection */
-            $manzanaItem = $clients;
-        } else {
-            $clientsList = $clients->toArray();
-            if (\is_array($clientsList) && \count($clientsList) === 1) {
-                /** @noinspection PhpUnusedLocalVariableInspection */
-                /** @var Client $manzanaItem */
-                $manzanaItem = current($clientsList);
-            }
+            /** @var Client $manzanaItem */
+            $manzanaItem = current($clients);
         }
         
         return $mess;

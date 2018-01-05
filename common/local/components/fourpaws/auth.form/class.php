@@ -32,6 +32,7 @@ use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
 use FourPaws\UserBundle\Exception\InvalidCredentialException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Exception\ValidationException;
@@ -331,6 +332,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      *
      * @param string $confirmCode
      *
+     * @throws NotAuthorizedException
      * @throws ContactUpdateException
      * @throws ManzanaServiceException
      * @throws ValidationException
@@ -345,8 +347,9 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      */
     public function ajaxSavePhone(string $phone, string $confirmCode) : JsonResponse
     {
+        $container = App::getInstance()->getContainer();
         try {
-            $res = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::checkConfirmSms(
+            $res = $container->get(ConfirmCodeInterface::class)::checkConfirmSms(
                 $phone,
                 $confirmCode
             );
@@ -376,12 +379,20 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         if ($this->currentUserProvider->getUserRepository()->update(
             SerializerBuilder::create()->build()->fromArray($data, User::class)
         )) {
-            /** todo отправить данные в манзану о пользователе */
             /** @var ManzanaService $manzanaService */
-            $manzanaService       = App::getInstance()->getContainer()->get('manzana.service');
-            $manzanaClient        = new Client();
-            $manzanaClient->phone = $phone;
-            $manzanaService->updateContact($manzanaClient);
+            $manzanaService = $container->get('manzana.service');
+            $contactId      = $manzanaService->getContactIdByPhone($phone);
+            if($contactId >= 0) {
+                $client = new Client();
+                if ($contactId > 0) {
+                    $client->contactId = $contactId;
+                    $client->phone = $phone;
+                }
+                else{
+                    $this->currentUserProvider->setClientPersonalDataByCurUser($client);
+                }
+                $manzanaService->updateContact($client);
+            }
         }
         
         return JsonSuccessResponse::create('Телефон сохранен', 200, [], ['reload' => true]);

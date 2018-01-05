@@ -16,16 +16,19 @@ namespace FourPaws\App;
 class MainTemplate extends TemplateAbstract
 {
     /**
+     * @return string
+     */
+    public function getIndexMainClass() : string
+    {
+        return $this->isIndex() ? ' b-wrapper--main' : '';
+    }
+    
+    /**
      * @return bool
      */
     public function isIndex() : bool
     {
         return $this->isPage('/');
-    }
-    
-    public function getIndexMainClass()
-    {
-        return $this->isIndex() ? ' b-wrapper--main':'';
     }
     
     /**
@@ -69,7 +72,7 @@ class MainTemplate extends TemplateAbstract
     {
         return $this->isDir('/customer/shares');
     }
-
+    
     /**
      * @return bool
      */
@@ -109,7 +112,7 @@ class MainTemplate extends TemplateAbstract
     {
         return !$this->isListShares() && $this->isPartitionDir('/customer/shares');
     }
-
+    
     /**
      * @return bool
      */
@@ -165,5 +168,45 @@ class MainTemplate extends TemplateAbstract
     public function isShopList() : bool
     {
         return $this->isDir('/company/shops');
+    }
+    
+    /**
+     * @return bool
+     */
+    public function hasPersonalProfile() : bool
+    {
+        return $this->isPersonal();
+    }
+    
+    /**
+     * @return bool
+     */
+    public function hasPersonalAddress() : bool
+    {
+        return $this->isPersonalAddress();
+    }
+    
+    /**
+     * @return bool
+     */
+    public function isPersonalAddress() : bool
+    {
+        return $this->isDir('/personal/address');
+    }
+    
+    /**
+     * @return bool
+     */
+    public function hasPersonalPet() : bool
+    {
+        return $this->isPersonalPet();
+    }
+    
+    /**
+     * @return bool
+     */
+    public function isPersonalPet() : bool
+    {
+        return $this->isDir('/personal/pets');
     }
 }
