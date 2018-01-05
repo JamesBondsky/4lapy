@@ -124,18 +124,24 @@ class Address extends BaseEntity
     
     /**
      * @param string $name
+     *
+     * @return Address
      */
-    public function setName(string $name)
+    public function setName(string $name) : Address
     {
         $this->name = $name;
+        
+        return $this;
     }
     
     /**
      * @param string $main
+     *
+     * @return Address
      */
-    public function setRawMain(string $main)
+    public function setRawMain(string $main) : Address
     {
-        $this->setMain($main === static::BITRIX_TRUE);
+        return $this->setMain($main === static::BITRIX_TRUE);
     }
     
     /**
@@ -156,10 +162,14 @@ class Address extends BaseEntity
     
     /**
      * @param bool $main
+     *
+     * @return Address
      */
-    public function setMain(bool $main)
+    public function setMain(bool $main) : Address
     {
         $this->main = $main;
+        
+        return $this;
     }
     
     /**
@@ -172,10 +182,14 @@ class Address extends BaseEntity
     
     /**
      * @param int $userId
+     *
+     * @return Address
      */
-    public function setUserId(int $userId)
+    public function setUserId(int $userId) : Address
     {
         $this->userId = $userId;
+        
+        return $this;
     }
     
     /**
@@ -222,10 +236,14 @@ class Address extends BaseEntity
     
     /**
      * @param string $housing
+     *
+     * @return Address
      */
-    public function setHousing(string $housing)
+    public function setHousing(string $housing) : Address
     {
         $this->housing = $housing;
+        
+        return $this;
     }
     
     /**
@@ -238,10 +256,14 @@ class Address extends BaseEntity
     
     /**
      * @param string $entrance
+     *
+     * @return Address
      */
-    public function setEntrance(string $entrance)
+    public function setEntrance(string $entrance) : Address
     {
         $this->entrance = $entrance;
+        
+        return $this;
     }
     
     /**
@@ -254,10 +276,14 @@ class Address extends BaseEntity
     
     /**
      * @param string $floor
+     *
+     * @return Address
      */
-    public function setFloor(string $floor)
+    public function setFloor(string $floor) : Address
     {
         $this->floor = $floor;
+        
+        return $this;
     }
     
     /**
@@ -270,10 +296,14 @@ class Address extends BaseEntity
     
     /**
      * @param string $flat
+     *
+     * @return Address
      */
-    public function setFlat(string $flat)
+    public function setFlat(string $flat) : Address
     {
         $this->flat = $flat;
+        
+        return $this;
     }
     
     /**
@@ -286,10 +316,14 @@ class Address extends BaseEntity
     
     /**
      * @param string $intercomCode
+     *
+     * @return Address
      */
-    public function setIntercomCode(string $intercomCode)
+    public function setIntercomCode(string $intercomCode) : Address
     {
         $this->intercomCode = $intercomCode;
+        
+        return $this;
     }
     
     /**
@@ -302,10 +336,14 @@ class Address extends BaseEntity
     
     /**
      * @param string $house
+     *
+     * @return Address
      */
-    public function setHouse(string $house)
+    public function setHouse(string $house) : Address
     {
         $this->house = $house;
+        
+        return $this;
     }
     
     /**
@@ -318,10 +356,14 @@ class Address extends BaseEntity
     
     /**
      * @param string $street
+     *
+     * @return Address
      */
-    public function setStreet(string $street)
+    public function setStreet(string $street) : Address
     {
         $this->street = $street;
+        
+        return $this;
     }
     
     /**
@@ -334,10 +376,14 @@ class Address extends BaseEntity
     
     /**
      * @param string $city
+     *
+     * @return Address
      */
-    public function setCity(string $city)
+    public function setCity(string $city) : Address
     {
         $this->city = $city;
+        
+        return $this;
     }
     
     /**
@@ -350,9 +396,13 @@ class Address extends BaseEntity
     
     /**
      * @param int $cityLocation
+     *
+     * @return Address
      */
-    public function setCityLocation(int $cityLocation)
+    public function setCityLocation(int $cityLocation) : Address
     {
         $this->cityLocation = $cityLocation;
+        
+        return $this;
     }
 }

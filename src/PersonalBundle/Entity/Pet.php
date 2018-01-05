@@ -85,7 +85,7 @@ class Pet extends BaseEntity
     
     protected $stringGender = '';
     
-    protected   $xmlIdType = '';
+    protected $xmlIdType    = '';
     
     /**
      * @return string
@@ -97,10 +97,14 @@ class Pet extends BaseEntity
     
     /**
      * @param string $name
+     *
+     * @return Pet
      */
-    public function setName(string $name)
+    public function setName(string $name) : Pet
     {
         $this->name = $name;
+        
+        return $this;
     }
     
     /**
@@ -113,10 +117,14 @@ class Pet extends BaseEntity
     
     /**
      * @param int $userId
+     *
+     * @return Pet
      */
-    public function setUserId(int $userId)
+    public function setUserId(int $userId) : Pet
     {
         $this->userId = $userId;
+        
+        return $this;
     }
     
     /**
@@ -137,10 +145,14 @@ class Pet extends BaseEntity
     
     /**
      * @param int $photo
+     *
+     * @return Pet
      */
-    public function setPhoto(int $photo)
+    public function setPhoto(int $photo) : Pet
     {
         $this->photo = $photo;
+        
+        return $this;
     }
     
     /**
@@ -173,6 +185,45 @@ class Pet extends BaseEntity
     }
     
     /**
+     * @param int $type
+     *
+     * @throws \Exception
+     */
+    protected function setStringType(int $type)
+    {
+        $item             =
+            HLBlockFactory::createTableObject(static::PET_TYPE)::query()->setFilter(['ID' => $type])->setSelect(
+                ['UF_NAME']
+            )->exec()->fetch();
+        $this->stringType = $item['UF_NAME'];
+        $this->xmlIdType  = $item['UF_XML_ID'];
+    }
+    
+    /**
+     * @return int
+     */
+    public function getType() : int
+    {
+        return $this->type;
+    }
+    
+    /**
+     * @param int $type
+     *
+     * @throws \Exception
+     * @return Pet
+     */
+    public function setType(int $type) : Pet
+    {
+        $this->type = $type;
+        if ($type > 0) {
+            $this->setStringType($type);
+        }
+        
+        return $this;
+    }
+    
+    /**
      * @return string
      */
     public function getXmlIdType() : string
@@ -188,41 +239,6 @@ class Pet extends BaseEntity
     }
     
     /**
-     * @param int $type
-     *
-     * @throws \Exception
-     */
-    protected function setStringType(int $type)
-    {
-        $item = HLBlockFactory::createTableObject(static::PET_TYPE)::query()->setFilter(['ID' => $type])->setSelect(
-            ['UF_NAME']
-        )->exec()->fetch();
-        $this->stringType = $item['UF_NAME'];
-        $this->xmlIdType = $item['UF_XML_ID'];
-    }
-    
-    /**
-     * @return int
-     */
-    public function getType() : int
-    {
-        return $this->type;
-    }
-    
-    /**
-     * @param int $type
-     *
-     * @throws \Exception
-     */
-    public function setType(int $type)
-    {
-        $this->type = $type;
-        if ($type > 0) {
-            $this->setStringType($type);
-        }
-    }
-    
-    /**
      * @return string
      */
     public function getBreed() : string
@@ -232,10 +248,14 @@ class Pet extends BaseEntity
     
     /**
      * @param string $breed
+     *
+     * @return Pet
      */
-    public function setBreed(string $breed)
+    public function setBreed(string $breed) : Pet
     {
         $this->breed = $breed;
+        
+        return $this;
     }
     
     public function getYearsString()
@@ -270,11 +290,15 @@ class Pet extends BaseEntity
     
     /**
      * @param string $birthday
+     *
+     * @return Pet
      */
-    public function setBirthday(string $birthday)
+    public function setBirthday(string $birthday) : Pet
     {
         /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
         $this->birthday = new Date($birthday, 'd.m.Y');
+        
+        return $this;
     }
     
     /**
@@ -308,12 +332,16 @@ class Pet extends BaseEntity
     
     /**
      * @param int $gender
+     *
+     * @return Pet
      */
-    public function setGender(int $gender)
+    public function setGender(int $gender) : Pet
     {
         $this->gender = $gender;
         if ($gender > 0) {
             $this->setStringGender($gender);
         }
+        
+        return $this;
     }
 }
