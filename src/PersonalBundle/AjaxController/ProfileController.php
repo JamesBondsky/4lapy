@@ -6,6 +6,7 @@
 
 namespace FourPaws\UserBundle\AjaxController;
 
+use Bitrix\Main\Type\Date;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
@@ -14,19 +15,18 @@ use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\External\Manzana\Model\Client;
-use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\EmptyDateException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use JMS\Serializer\SerializerBuilder;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
@@ -47,8 +47,7 @@ class ProfileController extends Controller
     public function __construct(
         UserAuthorizationInterface $userAuthorization,
         CurrentUserProviderInterface $currentUserProvider
-    )
-    {
+    ) {
         $this->currentUserProvider = $currentUserProvider;
     }
     
@@ -57,7 +56,6 @@ class ProfileController extends Controller
      * @param Request $request
      *
      * @throws ContactUpdateException
-     * @throws ManzanaServiceException
      * @throws ServiceNotFoundException
      * @throws ValidationException
      * @throws InvalidIdentifierException
@@ -180,6 +178,7 @@ class ProfileController extends Controller
      * @throws ServiceNotFoundException
      * @throws ValidationException
      * @throws InvalidIdentifierException
+     * @throws NotAuthorizedException
      * @return JsonResponse
      */
     public function changeDataAction(Request $request) : JsonResponse
@@ -187,12 +186,13 @@ class ProfileController extends Controller
         /** @var \FourPaws\UserBundle\Repository\UserRepository $userRepository */
         $userRepository = $this->currentUserProvider->getUserRepository();
         $data           = $request->request->getIterator()->getArrayCopy();
-        
-        if (filter_var($data['EMAIL'], FILTER_VALIDATE_EMAIL) === false) {
-            return JsonErrorResponse::createWithData(
-                'Некорректный email',
-                ['errors' => ['wrongEmail' => 'Некорректный email']]
-            );
+        if (!empty($data[''])) {
+            if (filter_var($data['EMAIL'], FILTER_VALIDATE_EMAIL) === false) {
+                return JsonErrorResponse::createWithData(
+                    'Некорректный email',
+                    ['errors' => ['wrongEmail' => 'Некорректный email']]
+                );
+            }
         }
         
         $curUser = $userRepository->findBy(['EMAIL' => $data['EMAIL']], [], 1);
@@ -222,20 +222,24 @@ class ProfileController extends Controller
                 );
             }
             
-            $manzanaService       = App::getInstance()->getContainer()->get('manzana.service');
-            $manzanaClient        = new Client();
-            $manzanaClient->phone = $data['PERSONAL_PHONE'];
-            /** @todo В каком формате передавать пол */
-            $manzanaClient->genderCode = $data['PERSONAL_GENDER'];
-            /** @todo В каком формате передавать дату рождения */
-            $manzanaClient->birthDate  = $data['PERSONAL_BIRTHDAY'];
-            $manzanaClient->lastName   = $data['LAST_NAME'];
-            $manzanaClient->secondName = $data['SECOND_NAME'];
-            $manzanaClient->firstName  = $data['NAME'];
-            $manzanaService->updateContact($manzanaClient);
+            $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
+            $contactId      = $manzanaService->getContactIdByCurUser();
+            if ($contactId >= 0) {
+                $client = new Client();
+                if ($contactId > 0) {
+                    $client->contactId = $contactId;
+                }
+                $manzanaService->setClientPersonalDataByCurUser($client, $user);
+                $manzanaService->updateContact($client);
+            }
             
             try {
-                $birthday = $profileClass->replaceRuMonth($user->getBirthday()->format('d #n# Y'));
+                $curBirthday = $user->getBirthday();
+                if ($curBirthday instanceof Date) {
+                    $birthday = $profileClass->replaceRuMonth($curBirthday->format('d #n# Y'));
+                } else {
+                    $birthday = '';
+                }
             } catch (EmptyDateException $e) {
                 $birthday = '';
             }

@@ -6,24 +6,19 @@
 
 namespace FourPaws\UserBundle\AjaxController;
 
-use FourPaws\App\Application as App;
+use Bitrix\Main\SystemException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
-use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
-use FourPaws\External\Manzana\Model\Client;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
-use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
-use FourPaws\UserBundle\Exception\EmptyDateException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\ValidationException;
-use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
-use FourPaws\UserBundle\Service\UserAuthorizationInterface;
-use JMS\Serializer\SerializerBuilder;
+use GuzzleHttp\Exception\GuzzleException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
@@ -40,22 +35,10 @@ use Symfony\Component\HttpFoundation\Request;
 class AuthController extends Controller
 {
     /**
-     * @var CurrentUserProviderInterface
-     */
-    private $currentUserProvider;
-    
-    public function __construct(
-        UserAuthorizationInterface $userAuthorization,
-        CurrentUserProviderInterface $currentUserProvider
-    )
-    {
-        $this->currentUserProvider = $currentUserProvider;
-    }
-    
-    /**
      * @Route("/login/", methods={"POST"})
      * @param Request $request
      *
+     * @throws NotAuthorizedException
      * @throws ContactUpdateException
      * @throws ManzanaServiceException
      * @throws ValidationException
@@ -103,19 +86,20 @@ class AuthController extends Controller
      * @Route("/register/", methods={"POST"})
      * @param Request $request
      *
-     * @throws \FourPaws\UserBundle\Exception\ValidationException
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
-     * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
-     * @throws \FourPaws\External\Manzana\Exception\ContactUpdateException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws NotAuthorizedException
+     * @throws ValidationException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws BitrixRuntimeException
+     * @throws ContactUpdateException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
      * @throws \RuntimeException
-     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
-     * @throws \FourPaws\External\Exception\ManzanaServiceException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \Bitrix\Main\SystemException
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws WrongPhoneNumberException
+     * @throws ManzanaServiceException
+     * @throws ApplicationCreateException
+     * @throws SystemException
+     * @throws GuzzleException
      * @throws \Exception
      * @return null|JsonResponse
      */

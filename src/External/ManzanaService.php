@@ -269,24 +269,27 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     }
     
     /**
+     * @param User|null $user
+     *
      * @return int
      * @throws InvalidIdentifierException
      * @throws ServiceNotFoundException
-     * @throws ManzanaServiceException
      * @throws ApplicationCreateException
+     * @throws ManzanaServiceException
      * @throws ConstraintDefinitionException
      * @throws NotAuthorizedException
      * @throws ServiceCircularReferenceException
-     * @throws \RuntimeException
      */
-    public function getContactIdByCurUser() : int
+    public function getContactIdByCurUser(User $user = null) : int
     {
+        if(!($user instanceof User)){
+            $user = App::getInstance()
+                       ->getContainer()
+                       ->get(CurrentUserProviderInterface::class)
+                       ->getCurrentUser();
+        }
         return $this->getContactIdByPhone(
-            App::getInstance()
-               ->getContainer()
-               ->get(CurrentUserProviderInterface::class)
-               ->getCurrentUser()
-               ->getPersonalPhone()
+            $user->getPersonalPhone()
         );
     }
     

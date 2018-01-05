@@ -137,7 +137,6 @@ class AddressService
     protected function updateManzanaAddress(Address $address)
     {
         $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
-        
         $contactId = $manzanaService->getContactIdByCurUser();
         if ($contactId >= 0) {
             $client = new Client();
