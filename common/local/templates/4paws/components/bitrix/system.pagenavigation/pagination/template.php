@@ -26,7 +26,7 @@ if (!(bool)$arResult['NavShowAlways']) {
 <div class="b-pagination">
     <ul class="b-pagination__list">
         <li class="b-pagination__item b-pagination__item--prev<?= ((int)$arResult['NavPageNomer']
-                                                                   > 1) ? '' : 'b-pagination__item--disabled' ?>">
+                                                                   > 1) ? '' : ' b-pagination__item--disabled' ?>">
             <?php if ((int)$arResult['NavPageNomer'] > 1) {
                                                                        ?>
                 <a class="b-pagination__link" href="<?= $arResult['PREV_URL'] ?>">Назад</a>
@@ -87,7 +87,7 @@ if (!(bool)$arResult['NavShowAlways']) {
         } ?>
         
         <li class="b-pagination__item b-pagination__item--next<?= ((int)$arResult['NavPageNomer']
-                                                                   < $arResult['NavPageCount']) ? '' : 'b-pagination__item--disabled' ?>">
+                                                                   < $arResult['NavPageCount']) ? '' : ' b-pagination__item--disabled' ?>">
             <?php if ((int)$arResult['NavPageNomer'] < $arResult['NavPageCount']) {
                                                                        ?>
                 <a class="b-pagination__link" href="<?= $arResult['NEXT_URL'] ?>">

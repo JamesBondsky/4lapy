@@ -4,7 +4,7 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
-namespace FourPaws\Callback;
+namespace FourPaws\AppBundle\Callback;
 
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\Uri;
@@ -21,23 +21,17 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  */
 class CallbackService
 {
-    private $baseUri;
-    
-    private $login;
-    
-    private $pass;
+    private $parameters;
     
     /**
      * CallbackService constructor.
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @param array $parameters
+     *
      */
-    public function __construct()
+    public function __construct(array $parameters)
     {
-        list(
-            $this->baseUri, $this->login, $this->pass
-            ) = array_values(App::getInstance()->getContainer()->getParameter('callback'));
+        $this->parameters = $parameters;
     }
     
     /**
@@ -45,7 +39,6 @@ class CallbackService
      * @param string $curDate
      * @param int    $timeout
      *
-     * @throws \Bitrix\Main\ObjectException
      * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
@@ -53,10 +46,11 @@ class CallbackService
     public function send(string $phone, string $curDate = '', int $timeout = 0)
     {
         if (empty($curDate)) {
+            /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             $date    = new DateTime();
             $curDate = $date->format('Y-m-d H:i:s');
         }
-        $uri = new Uri($this->baseUri);
+        $uri = new Uri($this->parameters['baseUri']);
         $uri->addParams(
             [
                 'name'        => '[VATS-ON] SiteCallBack',
@@ -66,8 +60,8 @@ class CallbackService
                 'timeout'     => $timeout,
             ]
         );
-        $uri->setPass($this->pass);
-        $uri->setUser($this->login);
+        $uri->setPass($this->parameters['pass']);
+        $uri->setUser($this->parameters['login']);
         $uri->setHost($uri->getUser() . ':' . $uri->getPass() . '@' . $uri->getHost());
         
         /** @noinspection PhpUnhandledExceptionInspection */

@@ -4,7 +4,7 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
-namespace FourPaws\Callback\Consumer;
+namespace FourPaws\AppBundle\Callback\Consumer;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use GuzzleHttp\ClientInterface;
