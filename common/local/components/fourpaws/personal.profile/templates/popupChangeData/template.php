@@ -12,7 +12,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             <h1 class="b-title b-title--h1 b-title--registration">Редактирование данных</h1>
         </header>
         <form class="b-registration__form js-form-validation js-edit-data-query"
-              data-url="/ajax/user/auth/changeData/"
+              data-url="/ajax/personal/profile/changeData/"
               method="post">
             <div class="b-input-line b-input-line--popup-authorization b-input-line--referal js-last-name">
                 <div class="b-input-line__label-wrapper">
