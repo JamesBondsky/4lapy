@@ -106,9 +106,7 @@ class Address extends BaseEntity
     
     /**
      * @var bool
-     * @Serializer\AccessType(type="public_method")
-     * @Serializer\Accessor(getter="getRawMain", setter="setRawMain")
-     * @Serializer\Type("string")
+     * @Serializer\Type("bitrix_bool")
      * @Serializer\SerializedName("UF_MAIN")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */

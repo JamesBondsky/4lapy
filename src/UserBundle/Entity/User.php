@@ -41,10 +41,8 @@ class User
     
     /**
      * @var bool
-     * @Serializer\AccessType(type="public_method")
-     * @Serializer\Accessor(getter="getRawActive", setter="setRawActive")
      * @Serializer\SerializedName("ACTIVE")
-     * @Serializer\Type("string")
+     * @Serializer\Type("bitrix_bool")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
     protected $active = true;
