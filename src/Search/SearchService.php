@@ -76,7 +76,7 @@ class SearchService implements LoggerAwareInterface
 
         $this->getAggsHelper()->collapseFilters($filters, $resultSet);
 
-        return new ProductSearchResult($resultSet);
+        return new ProductSearchResult($resultSet, $navigation);
     }
 
     /**

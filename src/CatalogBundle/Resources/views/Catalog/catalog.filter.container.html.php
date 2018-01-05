@@ -231,36 +231,19 @@ $category = $APPLICATION->IncludeComponent(
         </div>
         <div class="b-line b-line--catalog-filter">
         </div>
-        <div class="b-pagination">
-            <ul class="b-pagination__list">
-                <li class="b-pagination__item b-pagination__item--prev b-pagination__item--disabled"><span
-                            class="b-pagination__link">Назад</span>
-                </li>
-                <li class="b-pagination__item"><a class="b-pagination__link active" href="javascript:void(0);"
-                                                  title="1">1</a>
-                </li>
-                <li class="b-pagination__item"><a class="b-pagination__link" href="javascript:void(0);"
-                                                  title="2">2</a>
-                </li>
-                <li class="b-pagination__item"><a class="b-pagination__link" href="javascript:void(0);"
-                                                  title="3">3</a>
-                </li>
-                <li class="b-pagination__item hidden"><a class="b-pagination__link" href="javascript:void(0);"
-                                                         title="4">4</a>
-                </li>
-                <li class="b-pagination__item"><span class="b-pagination__dot">&hellip;</span>
-                </li>
-                <li class="b-pagination__item hidden"><a class="b-pagination__link" href="javascript:void(0);"
-                                                         title="5">5</a>
-                </li>
-                <li class="b-pagination__item"><a class="b-pagination__link" href="javascript:void(0);"
-                                                  title="13">13</a>
-                </li>
-                <li class="b-pagination__item b-pagination__item--next"><a class="b-pagination__link"
-                                                                           href="javascript:void(0);"
-                                                                           title="Вперед">Вперед</a>
-                </li>
-            </ul>
-        </div>
+        <?php $APPLICATION->IncludeComponent(
+            'bitrix:system.pagenavigation',
+            'pagination',
+            [
+                'NAV_TITLE'   => '',
+                'NAV_RESULT'  => $productSearchResult->getProductCollection()->getCdbResult(),
+                'SHOW_ALWAYS' => false,
+                'PAGE_PARAMETER' => 'page'
+            ],
+            $component,
+            [
+                'HIDE_ICONS' => 'Y',
+            ]
+        ); ?>
     </main>
 </div>
