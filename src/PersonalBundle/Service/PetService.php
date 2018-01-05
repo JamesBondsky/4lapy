@@ -18,6 +18,7 @@ use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\ValidationException;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -148,6 +149,7 @@ class PetService
      */
     protected function updateManzanaPets()
     {
+        $container = App::getInstance()->getContainer();
         $types = [];
         $pets = $this->getCurUserPets();
         if(\is_array($pets) && !empty($pets)) {
@@ -156,7 +158,7 @@ class PetService
                 $types[]=$pet->getXmlIdType();
             }
         }
-        $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
+        $manzanaService = $container->get('manzana.service');
         
         $contactId = $manzanaService->getContactIdByCurUser();
         if ($contactId >= 0) {
@@ -164,10 +166,43 @@ class PetService
             if ($contactId > 0) {
                 $client->contactId = $contactId;
             } else {
-                $manzanaService->setClientPersonalDataByCurUser($client);
+                $container->get(CurrentUserProviderInterface::class)->setClientPersonalDataByCurUser($client);
             }
             $manzanaService->setClientPets($client, $types);
             $manzanaService->updateContact($client);
         }
+    }
+    
+    /**
+     * @param Client $client
+     * @param array  $types
+     */
+    public function setClientPets(&$client, array $types)
+    {
+        /** @todo set actual types*/
+        $baseTypes        =
+            [
+                'bird',
+                'cat',
+                'dog',
+                'fish',
+                'rodent',
+            ];
+        $client->ffBird   = \in_array('bird', $types, true) ? 1 : 0;
+        $client->ffCat    = \in_array('cat', $types, true) ? 1 : 0;
+        $client->ffDog    = \in_array('dog', $types, true) ? 1 : 0;
+        $client->ffFish   = \in_array('fish', $types, true) ? 1 : 0;
+        $client->ffRodent = \in_array('rodent', $types, true) ? 1 : 0;
+        $others           = 0;
+        if (\is_array($types) && !empty($types)) {
+            foreach ($types as $type) {
+                if (!\in_array($type, $baseTypes, true)) {
+                    $others = 1;
+                    break;
+                }
+            }
+            
+        }
+        $client->ffOthers = $others;
     }
 }

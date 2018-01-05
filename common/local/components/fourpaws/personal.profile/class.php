@@ -201,7 +201,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                         $client->contactId = $contactId;
                         $client->phone     = $phone;
                     } else {
-                        $manzanaService->setClientPersonalDataByCurUser($client);
+                        $this->currentUserProvider->setClientPersonalDataByCurUser($client);
                     }
                     $manzanaService->updateContact($client);
                 }

@@ -229,7 +229,7 @@ class ProfileController extends Controller
                 if ($contactId > 0) {
                     $client->contactId = $contactId;
                 }
-                $manzanaService->setClientPersonalDataByCurUser($client, $user);
+                $this->currentUserProvider->setClientPersonalDataByCurUser($client, $user);
                 $manzanaService->updateContact($client);
             }
             

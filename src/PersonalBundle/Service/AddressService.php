@@ -136,14 +136,15 @@ class AddressService
      */
     protected function updateManzanaAddress(Address $address)
     {
-        $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
+        $container = App::getInstance()->getContainer();
+        $manzanaService = $container->get('manzana.service');
         $contactId = $manzanaService->getContactIdByCurUser();
         if ($contactId >= 0) {
             $client = new Client();
             if ($contactId > 0) {
                 $client->contactId = $contactId;
             } else {
-                $manzanaService->setClientPersonalDataByCurUser($client);
+                $container->get(CurrentUserProviderInterface::class)->setClientPersonalDataByCurUser($client);
             }
             $manzanaService->setClientAddress($client, $address);
             $manzanaService->updateContact($client);
@@ -196,5 +197,20 @@ class AddressService
     public function delete(int $id) : bool
     {
         return $this->addressRepository->delete($id);
+    }
+    
+    /**
+     * @param Client  $client
+     * @param Address $address
+     */
+    public function setClientAddress(&$client, Address $address)
+    {
+        /** неоткуда взять область для обновления
+         * $client->addressStateOrProvince = '';*/
+        $client->addressCity   = $address->getCity();//Город
+        $client->address       = $address->getStreet();//Улица
+        $client->addressLine2  = $address->getHouse();//Дом
+        $client->addressLine3  = $address->getHousing();//Корпус
+        $client->plAddressFlat = $address->getFlat();//Квартира
     }
 }

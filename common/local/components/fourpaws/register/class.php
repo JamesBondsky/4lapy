@@ -259,7 +259,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         if ($contactId > 0) {
             $client->contactId = $contactId;
         }
-        $manzanaService->setClientPersonalDataByCurUser($client, $userEntity);
+        $this->currentUserProvider->setClientPersonalDataByCurUser($client, $userEntity);
         $manzanaService->updateContact($client);
         
         ob_start();
@@ -333,7 +333,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             if ($contactId > 0) {
                 $client->contactId = $contactId;
             }
-            $manzanaService->setClientPersonalDataByCurUser($client);
+            $this->currentUserProvider->setClientPersonalDataByCurUser($client);
             $manzanaService->updateContact($client);
         }
         

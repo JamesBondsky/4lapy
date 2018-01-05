@@ -347,8 +347,9 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      */
     public function ajaxSavePhone(string $phone, string $confirmCode) : JsonResponse
     {
+        $container = App::getInstance()->getContainer();
         try {
-            $res = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::checkConfirmSms(
+            $res = $container->get(ConfirmCodeInterface::class)::checkConfirmSms(
                 $phone,
                 $confirmCode
             );
@@ -379,7 +380,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             SerializerBuilder::create()->build()->fromArray($data, User::class)
         )) {
             /** @var ManzanaService $manzanaService */
-            $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
+            $manzanaService = $container->get('manzana.service');
             $contactId      = $manzanaService->getContactIdByPhone($phone);
             if($contactId >= 0) {
                 $client = new Client();
@@ -388,7 +389,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                     $client->phone = $phone;
                 }
                 else{
-                    $manzanaService->setClientPersonalDataByCurUser($client);
+                    $this->currentUserProvider->setClientPersonalDataByCurUser($client);
                 }
                 $manzanaService->updateContact($client);
             }

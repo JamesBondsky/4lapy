@@ -29,7 +29,7 @@ class BaseHlRepository extends BaseRepository
     )
     {
         parent::__construct($arrayTransformer, $validator);
-        $hlAddress = HLBlockFactory::createTableObject(static::HL_NAME);
-        $this->setDataManager($hlAddress);
+        $baseHl = HLBlockFactory::createTableObject(static::HL_NAME);
+        $this->setDataManager($baseHl);
     }
 }

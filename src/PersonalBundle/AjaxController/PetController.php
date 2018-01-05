@@ -6,16 +6,14 @@
 
 namespace FourPaws\PersonalBundle\AjaxController;
 
-use FourPaws\App\Application as App;
-use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\PersonalBundle\Service\PetService;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -28,18 +26,26 @@ use Symfony\Component\HttpFoundation\Request;
 class PetController extends Controller
 {
     /**
+     * @var PetService
+     */
+    private $petService;
+    
+    public function __construct(
+        PetService $petService
+    ) {
+        $this->petService = $petService;
+    }
+    
+    /**
      * @Route("/add/", methods={"POST"})
      * @param Request $request
      *
      * @throws ServiceNotFoundException
-     * @throws ApplicationCreateException
-     * @throws ServiceCircularReferenceException
      * @return JsonResponse
      */
     public function addAction(Request $request) : JsonResponse
     {
-        $petService = App::getInstance()->getContainer()->get('pet.service');
-        $data       = $request->request->getIterator()->getArrayCopy();
+        $data = $request->request->getIterator()->getArrayCopy();
         if (empty($data)) {
             return JsonErrorResponse::createWithData(
                 'Не указаны данные для добавления',
@@ -48,7 +54,7 @@ class PetController extends Controller
         }
         
         try {
-            if ($petService->add($data)) {
+            if ($this->petService->add($data)) {
                 return JsonSuccessResponse::create(
                     '',
                     200,
@@ -71,14 +77,11 @@ class PetController extends Controller
      * @param Request $request
      *
      * @throws ServiceNotFoundException
-     * @throws ApplicationCreateException
-     * @throws ServiceCircularReferenceException
      * @return JsonResponse
      */
     public function updateAction(Request $request) : JsonResponse
     {
-        $petService = App::getInstance()->getContainer()->get('pet.service');
-        $data       = $request->request->getIterator()->getArrayCopy();
+        $data = $request->request->getIterator()->getArrayCopy();
         if (empty($data)) {
             return JsonErrorResponse::createWithData(
                 'Не указаны данные для обновления',
@@ -93,7 +96,7 @@ class PetController extends Controller
         }
         
         try {
-            if ($petService->update($data)) {
+            if ($this->petService->update($data)) {
                 return JsonSuccessResponse::create(
                     '',
                     200,
@@ -117,14 +120,11 @@ class PetController extends Controller
      * @param Request $request
      *
      * @throws ServiceNotFoundException
-     * @throws ApplicationCreateException
-     * @throws ServiceCircularReferenceException
      * @return JsonResponse
      */
     public function deleteAction(Request $request) : JsonResponse
     {
-        $petService = App::getInstance()->getContainer()->get('pet.service');
-        $delId      = (int)$request->get('id');
+        $delId = (int)$request->get('id');
         if ($delId < 1) {
             return JsonErrorResponse::createWithData(
                 'Не указан элемент для удаления',
@@ -133,7 +133,7 @@ class PetController extends Controller
         }
         
         try {
-            if ($petService->delete($delId)) {
+            if ($this->petService->delete($delId)) {
                 return JsonSuccessResponse::create(
                     '',
                     200,

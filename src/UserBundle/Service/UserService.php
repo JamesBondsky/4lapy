@@ -2,10 +2,15 @@
 
 namespace FourPaws\UserBundle\Service;
 
+use Bitrix\Main\Type\Date;
+use FourPaws\App\Application as App;
+use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\External\Manzana\Model\Client;
 use FourPaws\Location\Exception\CityNotFoundException;
 use FourPaws\Location\LocationService;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
+use FourPaws\UserBundle\Exception\EmptyDateException;
 use FourPaws\UserBundle\Exception\InvalidCredentialException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -13,6 +18,8 @@ use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Repository\UserRepository;
 use CSaleUser;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 class UserService implements
     CurrentUserProviderInterface,
@@ -200,5 +207,39 @@ class UserService implements
     public function getUserRepository() : UserRepository
     {
         return $this->userRepository;
+    }
+    
+    /**
+     * @param Client    $client
+     * @param User|null $user
+     *
+     * @throws InvalidIdentifierException
+     * @throws ServiceNotFoundException
+     * @throws ApplicationCreateException
+     * @throws ConstraintDefinitionException
+     * @throws NotAuthorizedException
+     * @throws ServiceCircularReferenceException
+     */
+    public function setClientPersonalDataByCurUser(&$client, User $user = null)
+    {
+        if (!($user instanceof User)) {
+            $user = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class)->getCurrentUser();
+        }
+        
+        try {
+            $birthday = $user->getBirthday();
+            if ($birthday instanceof Date) {
+                $client->birthDate = $birthday->format('d.m.Y');
+            }
+        } catch (EmptyDateException $e) {
+        }
+        $client->phone              = $user->getPersonalPhone();
+        $client->firstName          = $user->getName();
+        $client->secondName         = $user->getSecondName();
+        $client->lastName           = $user->getLastName();
+        $client->genderCode         = $user->getGender();
+        $client->email              = $user->getEmail();
+        $client->plLogin            = $user->getLogin();
+        $client->plRegistrationDate = $user->getDateRegister()->format('d.m.Y');
     }
 }

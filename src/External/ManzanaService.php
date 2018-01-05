@@ -2,7 +2,6 @@
 
 namespace FourPaws\External;
 
-use Bitrix\Main\Type\Date;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\External\Exception\ManzanaServiceException;
@@ -21,10 +20,8 @@ use FourPaws\External\Manzana\Model\Contacts;
 use FourPaws\External\Manzana\Model\ParameterBag;
 use FourPaws\External\Manzana\Model\ResultXmlFactory;
 use FourPaws\External\Traits\ManzanaServiceTrait;
-use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
-use FourPaws\UserBundle\Exception\EmptyDateException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -220,55 +217,6 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     }
     
     /**
-     * @param Client    $client
-     * @param User|null $user
-     *
-     * @throws InvalidIdentifierException
-     * @throws ServiceNotFoundException
-     * @throws ApplicationCreateException
-     * @throws ConstraintDefinitionException
-     * @throws NotAuthorizedException
-     * @throws ServiceCircularReferenceException
-     */
-    public function setClientPersonalDataByCurUser(&$client, User $user = null)
-    {
-        if (!($user instanceof User)) {
-            $user = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class)->getCurrentUser();
-        }
-        
-        try {
-            $birthday = $user->getBirthday();
-            if ($birthday instanceof Date) {
-                $client->birthDate = $birthday->format('d.m.Y');
-            }
-        } catch (EmptyDateException $e) {
-        }
-        $client->phone              = $user->getPersonalPhone();
-        $client->firstName          = $user->getName();
-        $client->secondName         = $user->getSecondName();
-        $client->lastName           = $user->getLastName();
-        $client->genderCode         = $user->getGender();
-        $client->email              = $user->getEmail();
-        $client->plLogin            = $user->getLogin();
-        $client->plRegistrationDate = $user->getDateRegister()->format('d.m.Y');
-    }
-    
-    /**
-     * @param Client  $client
-     * @param Address $address
-     */
-    public function setClientAddress(&$client, Address $address)
-    {
-        /** неоткуда взять область для обновления
-         * $client->addressStateOrProvince = '';*/
-        $client->addressCity   = $address->getCity();//Город
-        $client->address       = $address->getStreet();//Улица
-        $client->addressLine2  = $address->getHouse();//Дом
-        $client->addressLine3  = $address->getHousing();//Корпус
-        $client->plAddressFlat = $address->getFlat();//Квартира
-    }
-    
-    /**
      * @param User|null $user
      *
      * @return int
@@ -291,39 +239,6 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         return $this->getContactIdByPhone(
             $user->getPersonalPhone()
         );
-    }
-    
-    /**
-     * @param Client $client
-     * @param array  $types
-     */
-    public function setClientPets(&$client, array $types)
-    {
-        /** @todo set actual types*/
-        $baseTypes        =
-            [
-                'bird',
-                'cat',
-                'dog',
-                'fish',
-                'rodent',
-            ];
-        $client->ffBird   = \in_array('bird', $types, true) ? 1 : 0;
-        $client->ffCat    = \in_array('cat', $types, true) ? 1 : 0;
-        $client->ffDog    = \in_array('dog', $types, true) ? 1 : 0;
-        $client->ffFish   = \in_array('fish', $types, true) ? 1 : 0;
-        $client->ffRodent = \in_array('rodent', $types, true) ? 1 : 0;
-        $others           = 0;
-        if (\is_array($types) && !empty($types)) {
-            foreach ($types as $type) {
-                if (!\in_array($type, $baseTypes, true)) {
-                    $others = 1;
-                    break;
-                }
-            }
-            
-        }
-        $client->ffOthers = $others;
     }
     
     /**
