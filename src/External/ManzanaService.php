@@ -217,6 +217,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     }
     
     /**
+     * Возвращает id, -1 tесли найдено больше 1 записи и 0 если не найдено записей
      * @param User|null $user
      *
      * @return int
@@ -242,6 +243,8 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     }
     
     /**
+     * @todo сделать выбрасывание исключение если найдено больше 1 записи и если найдено 0 записей
+     * Возвращает id, -1 tесли найдено больше 1 записи и 0 если не найдено записей
      * @param string $phone
      *
      * @return int
