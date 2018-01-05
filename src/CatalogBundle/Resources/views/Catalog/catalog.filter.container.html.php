@@ -199,19 +199,18 @@ $category = $APPLICATION->IncludeComponent(
                         </li>
                       </ul></span>
                     </div>
-                    <div class="b-catalog-filter__type-part"><a
-                                class="b-link b-link--type active js-link-type-normal"
-                                href="javascript:void(0);" title=""><span
-                                    class="b-icon b-icon--type">
-                      <svg class="b-icon__svg" viewBox="0 0 20 20 " width="20px" height="20px">
-                        <use class="b-icon__use" xlink:href="icons.svg#icon-catalog-normal">
-                        </use>
-                      </svg></span></a><a class="b-link b-link--type js-link-type-line" href="javascript:void(0);"
-                                          title=""><span class="b-icon b-icon--type">
-                      <svg class="b-icon__svg" viewBox="0 0 20 20 " width="20px" height="20px">
-                        <use class="b-icon__use" xlink:href="icons.svg#icon-catalog-line">
-                        </use>
-                      </svg></span></a>
+                    <div class="b-catalog-filter__type-part">
+                        <a class="b-link b-link--type active js-link-type-normal"
+                           href="javascript:void(0);" title="">
+                            <span class="b-icon b-icon--type">
+                                <?= new SvgDecorator('icon-catalog-normal', 20, 20) ?>
+                            </span>
+                        </a>
+                        <a class="b-link b-link--type js-link-type-line" href="javascript:void(0);" title="">
+                            <span class="b-icon b-icon--type">
+                                <?= new SvgDecorator('icon-catalog-line', 20, 20) ?>
+                            </span>
+                        </a>
                     </div>
                 </div>
                 <div class="b-line b-line--sort-mobile">
@@ -235,10 +234,10 @@ $category = $APPLICATION->IncludeComponent(
             'bitrix:system.pagenavigation',
             'pagination',
             [
-                'NAV_TITLE'   => '',
-                'NAV_RESULT'  => $productSearchResult->getProductCollection()->getCdbResult(),
-                'SHOW_ALWAYS' => false,
-                'PAGE_PARAMETER' => 'page'
+                'NAV_TITLE'      => '',
+                'NAV_RESULT'     => $productSearchResult->getProductCollection()->getCdbResult(),
+                'SHOW_ALWAYS'    => false,
+                'PAGE_PARAMETER' => 'page',
             ],
             $component,
             [
