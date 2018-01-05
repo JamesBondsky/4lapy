@@ -61,11 +61,11 @@ class Pet extends BaseEntity
      * @Serializer\Groups(groups={"create","read","update","delete"})
      * @Assert\NotBlank(groups={"create","read","update","delete"})
      */
-    protected $breed;
+    protected $breed = '';
     
+    /** @todo как сделать множественный тип на вход и выход */
     /**
-     * @var Date
-     * @Serializer\Type("string")
+     * @var Date|null
      * @Serializer\SerializedName("UF_BIRTHDAY")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      * @Assert\NotBlank(groups={"create","read","update","delete"})
@@ -261,6 +261,9 @@ class Pet extends BaseEntity
     public function getYearsString()
     {
         $years = $this->getYears();
+        if ($years === 0) {
+            return '';
+        }
         
         return $years . ' ' . WordHelper::declension(
                 $years,
@@ -272,12 +275,19 @@ class Pet extends BaseEntity
             );
     }
     
-    public function getYears()
+    /**
+     * @return float
+     */
+    public function getYears() : float
     {
+        $birthday = $this->getBirthday();
+        if (!($birthday instanceof Date)) {
+            return 0;
+        }
         $date     = new \DateTime($this->getBirthday()->format('Y-m-d'));
         $interval = $date->diff(new \DateTime(date('Y-m-d')));
         
-        return (int)$interval->format('%Y') + ((float)$interval->format('%m') / 12);
+        return (float)$interval->format('%Y') + ((float)$interval->format('%m') / 12);
     }
     
     /**
@@ -285,18 +295,28 @@ class Pet extends BaseEntity
      */
     public function getBirthday() : Date
     {
+        if (!($this->birthday instanceof Date)) {
+            return null;
+        }
+        
         return $this->birthday;
     }
     
     /**
-     * @param string $birthday
+     * @param null|string|Date $birthday
      *
      * @return Pet
      */
-    public function setBirthday(string $birthday) : Pet
+    public function setBirthday($birthday) : Pet
     {
-        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-        $this->birthday = new Date($birthday, 'd.m.Y');
+        if ($birthday instanceof Date) {
+            $this->birthday = $birthday;
+        } elseif (\strlen($birthday) > 0) {
+            /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+            $this->birthday = new Date($birthday, 'd.m.Y');
+        } else {
+            $this->birthday = null;
+        }
         
         return $this;
     }

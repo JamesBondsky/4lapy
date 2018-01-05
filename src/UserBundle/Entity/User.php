@@ -164,7 +164,6 @@ class User
     /** @todo как сделать множественный тип на вход и выход */
     /**
      * @var null|Date
-     * @Serializer\Type("\Bitrix\Main\Type\Date|null|string")
      * @Serializer\SerializedName("PERSONAL_BIRTHDAY")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
@@ -187,8 +186,7 @@ class User
     
     /** @todo как сделать множественный тип на вход */
     /**
-     * @var DateTime
-     * @Serializer\Type("\Bitrix\Main\Type\DateTime|string")
+     * @var DateTime|null
      * @Serializer\SerializedName("DATE_REGISTER")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
@@ -669,13 +667,20 @@ class User
     }
     
     /**
-     * @param DateTime|string $dateRegister
+     * @param DateTime|string|null $dateRegister
      *
      * @return User
      */
     public function setDateRegister($dateRegister) : User
     {
-        $this->dateRegister = $dateRegister;
+        if ($dateRegister instanceof DateTime) {
+            $this->dateRegister = $dateRegister;
+        } elseif (\strlen($dateRegister) > 0) {
+            /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+            $this->dateRegister = new DateTime($dateRegister, 'd.m.Y H:i:s');
+        } else {
+            $this->dateRegister = null;
+        }
         
         return $this;
     }
