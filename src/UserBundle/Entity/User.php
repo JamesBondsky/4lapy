@@ -220,24 +220,6 @@ class User
     }
     
     /**
-     * @param string $active
-     *
-     * @return User
-     */
-    public function setRawActive(string $active) : User
-    {
-        return $this->setActive($active === User::BITRIX_TRUE);
-    }
-    
-    /**
-     * @return string
-     */
-    public function getRawActive() : string
-    {
-        return $this->getActive() ? User::BITRIX_TRUE : User::BITRIX_FALSE;
-    }
-    
-    /**
      * @return bool
      */
     public function getActive() : bool

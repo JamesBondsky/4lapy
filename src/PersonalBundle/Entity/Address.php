@@ -133,24 +133,6 @@ class Address extends BaseEntity
     }
     
     /**
-     * @param string $main
-     *
-     * @return Address
-     */
-    public function setRawMain(string $main) : Address
-    {
-        return $this->setMain($main === static::BITRIX_TRUE);
-    }
-    
-    /**
-     * @return string
-     */
-    public function getRawMain() : string
-    {
-        return $this->isMain() ? static::BITRIX_TRUE : static::BITRIX_FALSE;
-    }
-    
-    /**
      * @return bool
      */
     public function isMain() : bool
