@@ -66,6 +66,11 @@ class Pet extends BaseEntity
     /** @todo как сделать множественный тип на вход и выход */
     /**
      * @var Date|null
+     * @Serializer\Type("string")
+     * @Assert\Blank(groups={"create","read","update","delete"})
+     * @Serializer\SkipWhenEmpty()
+     * @Serializer\AccessType(type="public_method")
+     * @Serializer\Accessor(getter="getBirthday", setter="setBirthday")
      * @Serializer\SerializedName("UF_BIRTHDAY")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      * @Assert\NotBlank(groups={"create","read","update","delete"})

@@ -11,6 +11,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Type\Date;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
@@ -94,7 +95,18 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         $curUser = $userService->getCurrentUser();
         
         try {
-            $birthday = $this->replaceRuMonth($curUser->getBirthday()->format('j #n# Y'));
+            $curBirthday = $curUser->getBirthday();
+            if($curBirthday instanceof Date) {
+                try{
+                    $birthday = $this->replaceRuMonth($curBirthday->format('j #n# Y'));
+                }
+                catch (\Exception $e){
+                    $birthday = '';
+                }
+            }
+            else{
+                $birthday = '';
+            }
         } catch (EmptyDateException $e) {
             $birthday = '';
         }

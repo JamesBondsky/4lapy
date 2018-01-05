@@ -163,7 +163,12 @@ class User
     
     /** @todo как сделать множественный тип на вход и выход */
     /**
-     * @var null|Date
+     * @var Date|null
+     * @Serializer\Type("string")
+     * @Assert\Blank(groups={"create","read","update","delete"})
+     * @Serializer\SkipWhenEmpty()
+     * @Serializer\AccessType(type="public_method")
+     * @Serializer\Accessor(getter="getBirthday", setter="setBirthday")
      * @Serializer\SerializedName("PERSONAL_BIRTHDAY")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
@@ -187,6 +192,10 @@ class User
     /** @todo как сделать множественный тип на вход */
     /**
      * @var DateTime|null
+     * @Serializer\Type("string")
+     * @Serializer\SkipWhenEmpty()
+     * @Serializer\AccessType(type="public_method")
+     * @Serializer\Accessor(getter="getDateRegister", setter="setDateRegister")
      * @Serializer\SerializedName("DATE_REGISTER")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */

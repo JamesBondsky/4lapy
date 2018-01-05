@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Main\Type\Date;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\PersonalBundle\Entity\Pet;
 
@@ -47,7 +48,8 @@ if (!\is_array($arResult['ITEMS']) || empty($arResult['ITEMS'])) {
                        data-id="<?= $pet->getId() ?>"
                        data-name="<?= $pet->getName() ?>"
                        data-type="<?= $pet->getType() ?>"
-                       data-bithday="<?= $pet->getBirthday()->format('d.m.Y') ?>"
+                       data-birthday="<?php $birthday = $pet->getBirthday();
+                       echo $birthday instanceof Date ? $birthday->format('d.m.Y') : '' ?>"
                        data-breed="<?= $pet->getBreed() ?>"
                        data-gender="<?= $pet->getGender() ?>"
                     >
