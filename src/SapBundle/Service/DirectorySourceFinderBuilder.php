@@ -6,11 +6,20 @@ use Symfony\Component\Finder\Finder;
 
 class DirectorySourceFinderBuilder
 {
-    public static function build(string $path, string $fileType = 'xml')
+    /**
+     * @param string $prefix
+     * @param string $path
+     * @param string $fileType
+     *
+     * @return Finder
+     *
+     * @throws \InvalidArgumentException
+     */
+    public static function build(string $prefix, string $path, string $fileType = 'xml') : Finder
     {
         return (new Finder())
             ->in($path)
-            ->name('*.' . $fileType)
+            ->name($prefix . '*.' . $fileType)
             ->files()
             ->ignoreDotFiles(true)
             ->sortByAccessedTime()
