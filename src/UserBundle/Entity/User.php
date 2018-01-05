@@ -162,11 +162,9 @@ class User
     /** @todo как сделать множественный тип на вход и выход */
     /**
      * @var Date|null
-     * @Serializer\Type("string")
+     * @Serializer\Type("bitrix_date")
      * @Assert\Blank(groups={"create","read","update","delete"})
      * @Serializer\SkipWhenEmpty()
-     * @Serializer\AccessType(type="public_method")
-     * @Serializer\Accessor(getter="getBirthday", setter="setBirthday")
      * @Serializer\SerializedName("PERSONAL_BIRTHDAY")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
@@ -190,10 +188,8 @@ class User
     /** @todo как сделать множественный тип на вход */
     /**
      * @var DateTime|null
-     * @Serializer\Type("string")
+     * @Serializer\Type("bitrix_date_time")
      * @Serializer\SkipWhenEmpty()
-     * @Serializer\AccessType(type="public_method")
-     * @Serializer\Accessor(getter="getDateRegister", setter="setDateRegister")
      * @Serializer\SerializedName("DATE_REGISTER")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
@@ -569,20 +565,13 @@ class User
     }
     
     /**
-     * @param null|Date|string $birthday
+     * @param null|Date $birthday
      *
      * @return User
      */
-    public function setBirthday($birthday) : User
+    public function setBirthday(Date $birthday) : User
     {
-        if ($birthday instanceof Date) {
-            $this->birthday = $birthday;
-        } elseif (\strlen($birthday) > 0) {
-            /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-            $this->birthday = new Date($birthday, 'd.m.Y');
-        } else {
-            $this->birthday = null;
-        }
+        $this->birthday = $birthday;
         
         return $this;
     }
@@ -656,20 +645,13 @@ class User
     }
     
     /**
-     * @param DateTime|string|null $dateRegister
+     * @param DateTime|null $dateRegister
      *
      * @return User
      */
-    public function setDateRegister($dateRegister) : User
+    public function setDateRegister(DateTime $dateRegister) : User
     {
-        if ($dateRegister instanceof DateTime) {
-            $this->dateRegister = $dateRegister;
-        } elseif (\strlen($dateRegister) > 0) {
-            /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-            $this->dateRegister = new DateTime($dateRegister, 'd.m.Y H:i:s');
-        } else {
-            $this->dateRegister = null;
-        }
+        $this->dateRegister = $dateRegister;
         
         return $this;
     }

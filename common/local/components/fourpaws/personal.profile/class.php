@@ -34,7 +34,7 @@ use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\ConfirmCodeInterface;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
-use FourPaws\UserBundle\Service\UserService;
+use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use JMS\Serializer\SerializerBuilder;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -47,6 +47,9 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
      * @var CurrentUserProviderInterface
      */
     private $currentUserProvider;
+    
+    /** @var UserAuthorizationInterface */
+    private $authUserProvider;
     
     /**
      * AutoloadingIssuesInspection constructor.
@@ -70,6 +73,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
         }
         $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
+        $this->authUserProvider = $container->get(UserAuthorizationInterface::class);
     }
     
     /**
@@ -86,13 +90,11 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
     {
         $this->setFrameMode(true);
         
-        /** @var UserService $userService */
-        $userService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
-        if (!$userService->isAuthorized()) {
+        if (!$this->authUserProvider->isAuthorized()) {
             return null;
         }
         
-        $curUser = $userService->getCurrentUser();
+        $curUser = $this->currentUserProvider->getCurrentUser();
         
         try {
             $curBirthday = $curUser->getBirthday();
