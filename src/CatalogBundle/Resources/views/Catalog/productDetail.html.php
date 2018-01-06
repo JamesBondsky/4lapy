@@ -189,15 +189,13 @@ $product = $APPLICATION->IncludeComponent(
                             <div>3</div>
                         </div>
                         */
-                        echo '<pre>',print_r($arResult, true),'</pre>';
-                        echo '<pre>',print_r($product, true),'</pre>';
                         /** @noinspection PhpUnhandledExceptionInspection */
                         $APPLICATION->IncludeComponent(
                             'fourpaws:comments',
                             'catalog',
                             [
                                 'HL_ID'              => HighloadHelper::getIdByName('Comments'),
-                                'OBJECT_ID'          => $elementID,
+                                'OBJECT_ID'          => $product->getId(),
                                 'SORT_DESC'          => 'Y',
                                 'ITEMS_COUNT'        => 5,
                                 'ACTIVE_DATE_FORMAT' => 'd j Y',
