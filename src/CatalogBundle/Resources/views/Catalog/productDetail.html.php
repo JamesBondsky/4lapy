@@ -9,6 +9,7 @@ use FourPaws\CatalogBundle\Dto\ProductDetailRequest;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Catalog\Model\Product;
+use FourPaws\Helpers\HighloadHelper;
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 
@@ -24,9 +25,6 @@ $product = $APPLICATION->IncludeComponent(
     ],
     $component
 );
-
-$APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab', [], $component);
-
 ?>
     <div class="b-product-card">
         <div class="b-container">
@@ -191,7 +189,21 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                             <div>3</div>
                         </div>
                         */
-                        $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_RATING_TAB_VIEW);
+                        /** @noinspection PhpUnhandledExceptionInspection */
+                        $APPLICATION->IncludeComponent(
+                            'fourpaws:comments',
+                            'catalog',
+                            [
+                                'HL_ID'              => HighloadHelper::getIdByName('Comments'),
+                                'OBJECT_ID'          => $product->getId(),
+                                'SORT_DESC'          => 'Y',
+                                'ITEMS_COUNT'        => 5,
+                                'ACTIVE_DATE_FORMAT' => 'd j Y',
+                                'TYPE'               => 'catalog',
+                            ],
+                            $component,
+                            ['HIDE_ICONS' => 'Y']
+                        );
                         ?>
                         <?php $APPLICATION->IncludeComponent(
                             'fourpaws:city.delivery.info',

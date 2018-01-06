@@ -4,7 +4,7 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
-namespace FourPaws\UserBundle\AjaxController;
+namespace FourPaws\PersonalBundle\AjaxController;
 
 use Bitrix\Main\Type\Date;
 use FourPaws\App\Application as App;
@@ -32,9 +32,9 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
- * Class AuthController
+ * Class ProfileController
  *
- * @package FourPaws\UserBundle\Controller
+ * @package FourPaws\PersonalBundle\AjaxController
  * @Route("/profile")
  */
 class ProfileController extends Controller
