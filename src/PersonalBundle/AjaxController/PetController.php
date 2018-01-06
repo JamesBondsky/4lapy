@@ -20,7 +20,7 @@ use Symfony\Component\HttpFoundation\Request;
 /**
  * Class PetController
  *
- * @package FourPaws\UserBundle\Controller
+ * @package FourPaws\PersonalBundle\AjaxController
  * @Route("/pets")
  */
 class PetController extends Controller

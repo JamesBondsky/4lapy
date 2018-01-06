@@ -20,7 +20,7 @@ use Symfony\Component\HttpFoundation\Request;
 /**
  * Class AddressController
  *
- * @package FourPaws\UserBundle\Controller
+ * @package FourPaws\PersonalBundle\AjaxController
  * @Route("/address")
  */
 class AddressController extends Controller
