@@ -332,7 +332,6 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      *
      * @param string $confirmCode
      *
-     * @throws NotAuthorizedException
      * @throws ContactUpdateException
      * @throws ManzanaServiceException
      * @throws ValidationException
@@ -400,7 +399,6 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
     
     /**
      * @param Request $request
-     * @param  string $phone
      *
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
@@ -408,10 +406,11 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      * @throws WrongPhoneNumberException
      * @return JsonResponse
      */
-    public function ajaxGet($request, $phone) : JsonResponse
+    public function ajaxGet($request) : JsonResponse
     {
         $mess = '';
         $step = $request->get('step', '');
+        $phone = $request->get('phone', '');
         switch ($step) {
             case 'sendSmsCode':
                 $mess = $this->ajaxGetSendSmsCode($phone);
