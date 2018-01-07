@@ -15,7 +15,7 @@ use FourPaws\App\Application as App;
             <h1 class="b-title b-title--h1 b-title--registration">Изменение телефона</h1>
         </header>
         <form class="b-registration__form js-form-validation js-phone-change"
-              data-url="/ajax/user/auth/changePhone/"
+              data-url="/ajax/personal/profile/changePhone/"
               method="post">
             <?php $phone = $arResult['CUR_USER']['PERSONAL_PHONE'];
             require_once App::getDocumentRoot() . $templateFolder . '/include/phone.php'; ?>

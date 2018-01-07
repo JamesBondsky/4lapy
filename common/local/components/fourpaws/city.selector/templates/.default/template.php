@@ -40,7 +40,7 @@ $this->setFrameMode(true);
                 <span><?= $arResult['SELECTED_CITY']['NAME'] ?></span>?
             </p>
             <a
-                class="b-popover__link"
+                class="b-popover__link js-set-my-city js-get-loction"
                 href="javascript:void(0)"
                 title=""
                 data-url="<?= $arResult['CITY_SET_URL'] ?>"
@@ -66,7 +66,7 @@ $this->setFrameMode(true);
                 <span><?= $arResult['DEFAULT_CITY']['NAME'] ?></span>?
             </p>
             <a
-                class="b-popover__link"
+                class="b-popover__link js-set-my-city js-get-loction"
                 href="javascript:void(0)"
                 title=""
                 data-url="<?= $arResult['CITY_SET_URL'] ?>"

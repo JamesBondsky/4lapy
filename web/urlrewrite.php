@@ -7,10 +7,10 @@ $arUrlRewrite = [
 		"PATH" => "/brand/detail.php",
 	],
     [
-        'CONDITION' => '#^/company/news/#',
-        'RULE'      => '',
-        'ID'        => 'bitrix:news',
-        'PATH'      => '/company/news/index.php',
+        'CONDITION' => '#^/customer/shares/#',
+        'RULE' => '',
+        'ID' => 'bitrix:news',
+        'PATH' => '/customer/shares/index.php',
 	],
     [
         'CONDITION' => '#^/services/articles/#',
@@ -18,6 +18,12 @@ $arUrlRewrite = [
         'ID'        => 'bitrix:news',
         'PATH'      => '/services/articles/index.php',
     ],
+    [
+        'CONDITION' => '#^/company/news/#',
+        'RULE'      => '',
+        'ID'        => 'bitrix:news',
+        'PATH'      => '/company/news/index.php',
+	],
 	[
         'CONDITION' => '#^/personal/#',
         'RULE'      => '',

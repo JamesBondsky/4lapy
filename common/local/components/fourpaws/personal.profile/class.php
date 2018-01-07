@@ -11,6 +11,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Type\Date;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
@@ -20,7 +21,6 @@ use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Exception\SmsSendErrorException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\External\Manzana\Model\Client;
-use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\UserBundle\Entity\User;
@@ -34,7 +34,7 @@ use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\ConfirmCodeInterface;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
-use FourPaws\UserBundle\Service\UserService;
+use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use JMS\Serializer\SerializerBuilder;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -47,6 +47,9 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
      * @var CurrentUserProviderInterface
      */
     private $currentUserProvider;
+    
+    /** @var UserAuthorizationInterface */
+    private $authUserProvider;
     
     /**
      * AutoloadingIssuesInspection constructor.
@@ -70,6 +73,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
         }
         $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
+        $this->authUserProvider = $container->get(UserAuthorizationInterface::class);
     }
     
     /**
@@ -86,16 +90,25 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
     {
         $this->setFrameMode(true);
         
-        /** @var UserService $userService */
-        $userService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
-        if (!$userService->isAuthorized()) {
+        if (!$this->authUserProvider->isAuthorized()) {
             return null;
         }
         
-        $curUser = $userService->getCurrentUser();
+        $curUser = $this->currentUserProvider->getCurrentUser();
         
         try {
-            $birthday = $this->replaceRuMonth($curUser->getBirthday()->format('j #n# Y'));
+            $curBirthday = $curUser->getBirthday();
+            if($curBirthday instanceof Date) {
+                try{
+                    $birthday = $this->replaceRuMonth($curBirthday->format('j #n# Y'));
+                }
+                catch (\Exception $e){
+                    $birthday = '';
+                }
+            }
+            else{
+                $birthday = '';
+            }
         } catch (EmptyDateException $e) {
             $birthday = '';
         }
@@ -153,7 +166,6 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
      * @param Request $request
      *
      * @throws ContactUpdateException
-     * @throws ManzanaServiceException
      * @throws ValidationException
      * @throws InvalidIdentifierException
      * @throws ServiceNotFoundException
@@ -164,10 +176,10 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
      */
     public function ajaxConfirmPhone(Request $request) : JsonResponse
     {
-        $phone = '';
+        $phone = $request->get('phone');
         try {
             $res = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::checkConfirmSms(
-                $request->get('phone'),
+                $phone,
                 $request->get('confirmCode')
             );
             if (!$res) {
@@ -195,12 +207,18 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                     User::class
                 )
             )) {
-                /** todo отправить данные в манзану о пользователе */
-                /** @var ManzanaService $manzanaService */
-                $manzanaService       = App::getInstance()->getContainer()->get('manzana.service');
-                $manzanaClient        = new Client();
-                $manzanaClient->phone = $phone;
-                $manzanaService->updateContact($manzanaClient);
+                $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
+                $contactId      = $manzanaService->getContactIdByCurUser();
+                if ($contactId >= 0) {
+                    $client = new Client();
+                    if ($contactId > 0) {
+                        $client->contactId = $contactId;
+                        $client->phone     = $phone;
+                    } else {
+                        $this->currentUserProvider->setClientPersonalDataByCurUser($client);
+                    }
+                    $manzanaService->updateContact($client);
+                }
                 
                 return JsonSuccessResponse::create('Телефон верифицирован');
             }
@@ -216,6 +234,8 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         } catch (ConstraintDefinitionException $e) {
         } catch (ApplicationCreateException $e) {
         } catch (ServiceCircularReferenceException $e) {
+        } catch (ManzanaServiceException $e) {
+        } catch (NotAuthorizedException $e) {
         }
         
         return JsonErrorResponse::createWithData(

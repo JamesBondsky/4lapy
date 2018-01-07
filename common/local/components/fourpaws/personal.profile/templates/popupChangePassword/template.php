@@ -11,7 +11,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             <h1 class="b-title b-title--h1 b-title--registration">Изменение пароля</h1>
         </header>
         <form class="b-registration__form js-form-validation js-new-password"
-              data-url="/ajax/user/auth/changePassword/"
+              data-url="/ajax/personal/profile/changePassword/"
               method="post">
             <div class="b-input-line b-input-line--create-password">
                 <div class="b-input-line__label-wrapper">

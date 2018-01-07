@@ -16,35 +16,22 @@ use GuzzleHttp\Exception\GuzzleException;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
-use FourPaws\App\Application as App;
 
 class ReCaptchaService implements LoggerAwareInterface
 {
     use LoggerAwareTrait;
     
     /**
-     * ключ
-     */
-    private $key;
-    
-    /**
-     * секретный ключ
-     */
-    private $secretKey;
-    
-    const SERVICE_URI = 'https://www.google.com/recaptcha/api/siteverify';
-    
-    /**
      * @var ClientInterface
      */
     protected $guzzle;
-    
-    /** @noinspection SpellCheckingInspection */
     
     /**
      * @var LoggerInterface
      */
     protected $logger;
+    
+    private $parameters;
     
     /** @noinspection SpellCheckingInspection */
     
@@ -53,18 +40,17 @@ class ReCaptchaService implements LoggerAwareInterface
      *
      * @param ClientInterface $guzzle
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @param array           $parameters
+     *
      * @throws \RuntimeException
      */
-    public function __construct(ClientInterface $guzzle)
+    public function __construct(ClientInterface $guzzle, array $parameters)
     {
         $this->guzzle = $guzzle;
         /** @noinspection PhpUnhandledExceptionInspection */
         $this->logger = LoggerFactory::create('recaptcha');
-    
-        list($this->key, $this->secretKey) =
-            array_values(App::getInstance()->getContainer()->getParameter('recaptcha'));
+        
+        $this->parameters = $parameters;
     }
     
     /**
@@ -76,7 +62,8 @@ class ReCaptchaService implements LoggerAwareInterface
     {
         $this->addJs();
         
-        return '<div class="g-recaptcha' . $additionalClass . '" data-sitekey="' . $this->key . '"></div>';
+        return '<div class="g-recaptcha' . $additionalClass . '" data-sitekey="' . $this->parameters['key']
+               . '"></div>';
     }
     
     public function addJs()
@@ -96,17 +83,13 @@ class ReCaptchaService implements LoggerAwareInterface
     {
         /** @noinspection PhpUnhandledExceptionInspection */
         $context = Application::getInstance()->getContext();
-        /** отменяем првоерку если запрос был без капчи */
-        if (empty($recaptcha) && !$context->getRequest()->offsetExists('g-recaptcha-response')) {
-            return true;
-        }
         if (empty($recaptcha)) {
             $recaptcha = (string)$context->getRequest()->get('g-recaptcha-response');
         }
-        $uri = new Uri(static::SERVICE_URI);
+        $uri = new Uri($this->parameters['serviceUri']);
         $uri->addParams(
             [
-                'secret'   => $this->secretKey,
+                'secret'   => $this->parameters['secretKey'],
                 'response' => $recaptcha,
                 'remoteip' => $context->getServer()->get('REMOTE_ADDR'),
             ]
