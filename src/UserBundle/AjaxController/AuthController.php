@@ -38,7 +38,6 @@ class AuthController extends Controller
      * @Route("/login/", methods={"POST"})
      * @param Request $request
      *
-     * @throws NotAuthorizedException
      * @throws ContactUpdateException
      * @throws ManzanaServiceException
      * @throws ValidationException
@@ -57,7 +56,6 @@ class AuthController extends Controller
     public function loginAction(Request $request) : JsonResponse
     {
         $action = $request->get('action', '');
-        $phone  = $request->get('phone', '');
         \CBitrixComponent::includeComponentClass('fourpaws:auth.form');
         /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
         $loginClass = new \FourPawsAuthFormComponent();
@@ -66,13 +64,13 @@ class AuthController extends Controller
                 return $loginClass->ajaxLogin($request->get('login', ''), $request->get('password', ''));
                 break;
             case 'resendSms':
-                return $loginClass->ajaxResendSms($phone);
+                return $loginClass->ajaxResendSms($request->get('phone', ''));
                 break;
             case 'savePhone':
-                return $loginClass->ajaxSavePhone($phone, $request->get('confirmCode', ''));
+                return $loginClass->ajaxSavePhone($request->get('phone', ''), $request->get('confirmCode', ''));
                 break;
             case 'get':
-                return $loginClass->ajaxGet($request, $phone);
+                return $loginClass->ajaxGet($request);
                 break;
         }
         

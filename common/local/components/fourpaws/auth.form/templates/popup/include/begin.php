@@ -14,7 +14,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         <form class="b-registration__form js-form-validation js-auth-2way"
               data-url="/ajax/user/auth/login/"
               method="post">
-            <input type="hidden" name="action" value="login">
+            <input type="hidden" name="action" value="login" class="js-no-valid">
             <div class="b-input-line b-input-line--popup-authorization">
                 <div class="b-input-line__label-wrapper">
                     <label class="b-input-line__label" for="tel-email-authorization">Телефон или
@@ -24,7 +24,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                     <input class="b-input__input-field b-input__input-field--registration-form"
                            type="text"
                            id="tel-email-authorization"
-                           name="LOGIN"
+                           name="login"
                            data-type="telEmail" />
                     <div class="b-error"><span class="js-message"></span>
                     </div>
@@ -41,7 +41,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                     <input class="b-input__input-field b-input__input-field--registration-form"
                            type="password"
                            id="password-authorization"
-                           name="PASSWORD" />
+                           name="password" />
                     <div class="b-error"><span class="js-message"></span>
                     </div>
                 </div>

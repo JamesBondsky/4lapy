@@ -30,7 +30,7 @@ $markup = PawsApplication::markup();
     <script data-skip-moving="true" src="js/html5shiv/html5shiv.min.js"></script><![endif]-->
     <?php
     Asset::getInstance()->addCss($markup->getCssFile());
-    Asset::getInstance()->addJs('https://api-maps.yandex.ru/2.1/?lang=ru_RU');
+    Asset::getInstance()->addJs('https://api-maps.yandex.ru/2.1.56/?lang=ru_RU');
     ?>
 </head>
 <body>
