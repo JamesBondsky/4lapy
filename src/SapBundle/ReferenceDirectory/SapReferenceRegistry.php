@@ -25,6 +25,12 @@ class SapReferenceRegistry
         return $this;
     }
 
+    /**
+     * @param string $sapPropertyCode
+     *
+     * @return DataManager
+     * @throws NotFoundDataManagerException
+     */
     public function get(string $sapPropertyCode)
     {
         $dataManager = $this->collection->get($sapPropertyCode);
@@ -33,11 +39,5 @@ class SapReferenceRegistry
         }
 
         throw new NotFoundDataManagerException(sprintf('DataManager for %s property not found', $sapPropertyCode));
-
-
-
-        //$material->getProperties()->getProperty('')
-        //$this->sapRegistry->get('')
-        //$offer->set(null)
     }
 }
