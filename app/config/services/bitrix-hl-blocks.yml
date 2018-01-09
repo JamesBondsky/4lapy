@@ -142,28 +142,28 @@ services:
     arguments: ['Colour']
     parent: bx.hlblock.base
     tags:
-      - {name: sap.reference, property: 'COLOUR'}
+      - {name: sap.reference, property: !php/const:FourPaws\SapBundle\Enum\OfferProperty::COLOUR}
 
   bx.hlblock.volume:
     arguments: ['Volume']
     parent: bx.hlblock.base
     tags:
-      - {name: sap.reference, property: 'VOLUME'}
+      - {name: sap.reference, property: !php/const:FourPaws\SapBundle\Enum\OfferProperty::VOLUME}
 
   bx.hlblock.clothingsize:
     arguments: ['ClothingSize']
     parent: bx.hlblock.base
     tags:
-      - {name: sap.reference, property: 'CLOTHING_SIZE'}
+      - {name: sap.reference, property: !php/const:FourPaws\SapBundle\Enum\OfferProperty::CLOTHING_SIZE}
 
   bx.hlblock.year:
     arguments: ['Year']
     parent: bx.hlblock.base
     tags:
-      - {name: sap.reference, property: 'SEASON_YEAR'}
+      - {name: sap.reference, property: !php/const:FourPaws\SapBundle\Enum\OfferProperty::SEASON_YEAR}
 
   bx.hlblock.packagetype:
     arguments: ['PackageType']
     parent: bx.hlblock.base
     tags:
-      - {name: sap.reference, property: 'KIND_OF_PACKING'}
+      - {name: sap.reference, property: !php/const:FourPaws\SapBundle\Enum\OfferProperty::KIND_OF_PACKING}
