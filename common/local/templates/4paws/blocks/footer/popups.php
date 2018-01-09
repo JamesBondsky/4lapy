@@ -102,60 +102,16 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
             </form>
         </div>
     </section>
-    <section class="b-popup-pick-city b-popup-pick-city--add-referal js-popup-section" data-popup="add-referal">
-        <a class="b-popup-pick-city__close b-popup-pick-city__close--add-referal js-close-popup"
-           href="javascript:void(0);"
-           title="Закрыть"></a>
-        <div class="b-registration b-registration--add-referal">
-            <header class="b-registration__header">
-                <h1 class="b-title b-title--h1 b-title--registration">Новый реферал</h1>
-            </header>
-            <form class="b-registration__form js-form-validation">
-                <div class="b-input-line b-input-line--popup-authorization b-input-line--referal">
-                    <div class="b-input-line__label-wrapper">
-                        <label class="b-input-line__label" for="number-card">Номер бонусной карты</label>
-                        <span class="b-input-line__require">(обязательно)</span>
-                    </div>
-                    <input class="b-input b-input--registration-form" type="text" id="number-card" placeholder="" />
-                </div>
-                <div class="b-input-line b-input-line--popup-authorization b-input-line--referal">
-                    <div class="b-input-line__label-wrapper">
-                        <label class="b-input-line__label" for="last-name">Фамилия</label>
-                    </div>
-                    <input class="b-input b-input--registration-form" type="text" id="last-name" placeholder="" />
-                </div>
-                <div class="b-input-line b-input-line--popup-authorization b-input-line--referal">
-                    <div class="b-input-line__label-wrapper">
-                        <label class="b-input-line__label" for="first-name">Имя</label>
-                    </div>
-                    <input class="b-input b-input--registration-form" type="text" id="first-name" placeholder="" />
-                </div>
-                <div class="b-input-line b-input-line--popup-authorization b-input-line--referal">
-                    <div class="b-input-line__label-wrapper">
-                        <label class="b-input-line__label" for="patronymic">Отчество</label>
-                    </div>
-                    <input class="b-input b-input--registration-form" type="text" id="patronymic" placeholder="" />
-                </div>
-                <div class="b-input-line b-input-line--popup-authorization b-input-line--referal">
-                    <div class="b-input-line__label-wrapper">
-                        <label class="b-input-line__label" for="phone-referal">Телефон</label>
-                    </div>
-                    <input class="b-input b-input--registration-form" type="tel" id="phone-referal" placeholder="" />
-                </div>
-                <div class="b-input-line b-input-line--popup-authorization b-input-line--referal">
-                    <div class="b-input-line__label-wrapper">
-                        <label class="b-input-line__label" for="email-referal">Эл. почта</label>
-                    </div>
-                    <input class="b-input b-input--registration-form" type="email" id="email-referal" placeholder="" />
-                </div>
-                <button class="b-button b-button--subscribe-delivery">Сохранить</button>
-                <div class="b-registration__text b-registration__text--referal">Начисление баллов начнется после
-                                                                                успешной проверки данных
-                </div>
-            </form>
-        </div>
-    </section>
-    <?php if ($template->hasPersonalAddress()) {
+    <?php if ($template->hasPersonalReferral()) {
+        $APPLICATION->IncludeComponent(
+            'fourpaws:personal.referral',
+            'popup',
+            [],
+            $component,
+            ['HIDE_ICONS' => 'Y']
+        );
+    }
+    if ($template->hasPersonalAddress()) {
         $APPLICATION->IncludeComponent(
             'fourpaws:personal.address',
             'popup',

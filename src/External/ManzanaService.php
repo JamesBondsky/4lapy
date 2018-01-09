@@ -4,6 +4,8 @@ namespace FourPaws\External;
 
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
+use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Interfaces\ManzanaServiceInterface;
 use FourPaws\External\Manzana\Exception\AuthenticationException;
@@ -18,6 +20,7 @@ use FourPaws\External\Manzana\Model\Clients;
 use FourPaws\External\Manzana\Model\Contact;
 use FourPaws\External\Manzana\Model\Contacts;
 use FourPaws\External\Manzana\Model\ParameterBag;
+use FourPaws\External\Manzana\Model\Referrals;
 use FourPaws\External\Manzana\Model\ResultXmlFactory;
 use FourPaws\External\Traits\ManzanaServiceTrait;
 use FourPaws\UserBundle\Entity\User;
@@ -217,7 +220,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     }
     
     /**
-     * Возвращает id, -1 tесли найдено больше 1 записи и 0 если не найдено записей
+     * Возвращает id, -1 если найдено больше 1 записи и 0 если не найдено записей
      * @param User|null $user
      *
      * @return int
@@ -245,6 +248,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     /**
      * @todo сделать выбрасывание исключение если найдено больше 1 записи и если найдено 0 записей
      * Возвращает id, -1 tесли найдено больше 1 записи и 0 если не найдено записей
+     *
      * @param string $phone
      *
      * @return int
@@ -252,21 +256,72 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     public function getContactIdByPhone(string $phone) : int
     {
-        $contactId = -1;
-        /** @var Clients $currentClient */
-        $clients      = $this->getUserDataByPhone($phone);
-        $countClients = \count($clients->clients);
-        if ($countClients === 1) {
-            /** @var Client $currentClient */
-            $currentClient = current($clients->clients);
+        try {
+            $currentClient = $this->getContactByPhone($phone);
             $contactId     = (int)$currentClient->contactId;
-        } elseif ($countClients > 1) {
-            $this->logger->critical('Найдено больше одного пользователя с телефоном ' . $phone);
-        } else {
+        } catch (ManzanaServiceContactSearchMoreOneException $e) {
+            $contactId = -1;
+        } catch (ManzanaServiceContactSearchNullException $e) {
             $contactId = 0;
         }
         
         return $contactId;
+    }
+    
+    /**
+     * Возвращает id, -1 если найдено больше 1 записи и 0 если не найдено записей
+     *
+     * @param User|null $user
+     *
+     * @return Client
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws ServiceNotFoundException
+     * @throws ManzanaServiceContactSearchNullException
+     * @throws ManzanaServiceContactSearchMoreOneException
+     * @throws ManzanaServiceException
+     * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
+     * @throws NotAuthorizedException
+     */
+    public function getContactByCurUser(User $user = null) : Client
+    {
+        if(!($user instanceof User)){
+            $user = App::getInstance()
+                       ->getContainer()
+                       ->get(CurrentUserProviderInterface::class)
+                       ->getCurrentUser();
+        }
+        return $this->getContactByPhone(
+            $user->getPersonalPhone()
+        );
+    }
+    
+    /**
+     * Возвращает FourPaws\External\Manzana\Model\Client
+     *
+     * @param string $phone
+     *
+     * @return Client
+     * @throws ManzanaServiceContactSearchMoreOneException
+     * @throws ManzanaServiceContactSearchNullException
+     * @throws ManzanaServiceException
+     */
+    public function getContactByPhone(string $phone) : Client
+    {
+        /** @var Clients $currentClient */
+        $clients      = $this->getUserDataByPhone($phone);
+        $countClients = \count($clients->clients);
+        if ($countClients === 1) {
+            return current($clients->clients);
+        }
+    
+        if ($countClients > 1) {
+            $this->logger->critical('Найдено больше одного пользователя с телефоном ' . $phone);
+            throw new ManzanaServiceContactSearchMoreOneException('Найдено больше одного пользователя');
+        }
+    
+        throw new ManzanaServiceContactSearchNullException('Пользователей не найдено');
     }
     
     /**
@@ -363,9 +418,51 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      *
      * - первый шаг заполнения формы добавления реферала
      */
-    public function addReferralByBonusCard() : string
+    public function addReferralByBonusCard(array $params = []) : string
     {
+        if(empty($params['сontact_id']) || empty($params['cardnumber'])){
+            try {
+                $manzanaItem = $this->getContactByCurUser();
+                $manzanaParams = ['сontact_id' => $manzanaItem->contactId,
+                                  'cardnumber'      => $manzanaItem->cards];
+            } catch (ApplicationCreateException $e) {
+            } catch (ManzanaServiceContactSearchMoreOneException $e) {
+            } catch (ManzanaServiceContactSearchNullException $e) {
+            } catch (ManzanaServiceException $e) {
+            } catch (ConstraintDefinitionException $e) {
+            } catch (NotAuthorizedException $e) {
+            } catch (ServiceCircularReferenceException $e) {
+            }
+        }
+        if(!empty($manzanaParams)){
+        if(1 === 2){
+            $manzanaParams['firstname'] = '';
+            $manzanaParams['lastname'] = '';
+            $manzanaParams['middlename'] = '';
+            $manzanaParams['mobilephone'] = '';
+            $manzanaParams['emailaddress1'] = '';
+            $manzanaParams['birthdate'] = '';
+            $manzanaParams['gendercode'] = '';
+        }
+        $bag = new ParameterBag(
+            $manzanaParams
+        );
     
+        try {
+            $rawResult = $this->execute(self::CONTRACT_CARD_ATTACH, $bag->getParameters());
+    
+            $result    = ResultXmlFactory::getReferralCardAttachResultFromXml($this->serializer, $rawResult);
+            if($result->isError()){
+            
+            }
+            else{
+                $result = $result->getContactId();
+            }
+        } catch (\Exception $e) {
+            throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
+        }
+    
+        return $result;
     }
     
     /**
@@ -380,10 +477,40 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      * Получение данных о рефералах заводчика
      *
      * - переход в раздел «Реферальная программа» в ЛК покупателя
+     *
+     * @param User $user
+     *
+     * @return array
+     * @throws ServiceNotFoundException
+     * @throws NotAuthorizedException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws ApplicationCreateException
+     * @throws ManzanaServiceException
+     * @throws ServiceCircularReferenceException
      */
-    public function getUserReferralList()
+    public function getUserReferralList(User $user = null) : array
     {
+        $contact_id = $this->getContactIdByCurUser($user);
+        $referrals = [];
+        if($contact_id > 0) {
+            $bag = new ParameterBag(
+                [
+                    'contact_id'       => $contact_id
+                ]
+            );
     
+            try {
+                $result = $this->execute(self::CONTRACT_CONTACT_REFERRAL_CARDS, $bag->getParameters());
+    
+                /** @var Referrals $res */
+                $res = $this->serializer->deserialize($result, Referrals::class, 'xml');
+                $referrals = $res->referrals;
+            } catch (\Exception $e) {
+                throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
+            }
+        }
+        return $referrals;
     }
     
     /**

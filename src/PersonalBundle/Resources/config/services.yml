@@ -23,6 +23,10 @@ services:
         class: FourPaws\PersonalBundle\Service\PetService
         public: true
 
+    referral.service:
+        class: FourPaws\PersonalBundle\Service\ReferalService
+        public: true
+
     FourPaws\PersonalBundle\AjaxController\:
         resource: '../../AjaxController'
         public: true
