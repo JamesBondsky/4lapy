@@ -31,7 +31,7 @@ $product = $APPLICATION->IncludeComponent(
             <?php
             $APPLICATION->IncludeComponent(
                 'fourpaws:breadcrumbs',
-                'product',
+                '',
                 [
                     'IBLOCK_ELEMENT' => $product,
                 ],

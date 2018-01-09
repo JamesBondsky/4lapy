@@ -25,8 +25,8 @@ if (!(bool)$arResult['NavShowAlways']) {
 
 <div class="b-pagination">
     <ul class="b-pagination__list">
-        <li class="b-pagination__item b-pagination__item--prev<?= ((int)$arResult['NavPageNomer']
-                                                                   > 1) ? '' : ' b-pagination__item--disabled' ?>">
+        <li class="b-pagination__item b-pagination__item--prev <?= ((int)$arResult['NavPageNomer']
+                                                                   > 1) ? '' : 'b-pagination__item--disabled' ?>">
             <?php if ((int)$arResult['NavPageNomer'] > 1) {
                                                                        ?>
                 <a class="b-pagination__link" href="<?= $arResult['PREV_URL'] ?>">Назад</a>
@@ -54,14 +54,14 @@ if (!(bool)$arResult['NavShowAlways']) {
                 </li><?php
             } elseif ($navRecordGroup === 1 && (bool)$arResult['bSavePage'] === false) {
                 ?>
-            <li class="b-pagination__item<?= $arResult['HIDDEN'][$navRecordGroup] ?? '' ?>">
+            <li class="b-pagination__item <?= $arResult['HIDDEN'][$navRecordGroup] ?? '' ?>">
                 <a class="b-pagination__link"
                    href="<?= $arResult['BASE_URI'] ?>"
                    title="<?= $title ?>"><?= $navRecordGroup ?></a>
                 </li><?php
             } else {
                 ?>
-            <li class="b-pagination__item<?= $arResult['HIDDEN'][$navRecordGroup] ?? '' ?>">
+            <li class="b-pagination__item <?= $arResult['HIDDEN'][$navRecordGroup] ?? '' ?>">
                 <a class="b-pagination__link"
                    href="<?= $arResult['URLS'][$navRecordGroup] ?>"
                    title="<?= $title ?>"><?= $navRecordGroup ?></a>
@@ -86,8 +86,8 @@ if (!(bool)$arResult['NavShowAlways']) {
             }
         } ?>
         
-        <li class="b-pagination__item b-pagination__item--next<?= ((int)$arResult['NavPageNomer']
-                                                                   < $arResult['NavPageCount']) ? '' : ' b-pagination__item--disabled' ?>">
+        <li class="b-pagination__item b-pagination__item--next <?= ((int)$arResult['NavPageNomer']
+                                                                   < $arResult['NavPageCount']) ? '' : 'b-pagination__item--disabled' ?>">
             <?php if ((int)$arResult['NavPageNomer'] < $arResult['NavPageCount']) {
                                                                        ?>
                 <a class="b-pagination__link" href="<?= $arResult['NEXT_URL'] ?>">

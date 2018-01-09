@@ -1,11 +1,11 @@
 <?php
 /**
- * @var array           $arParams
- * @var array           $arResult
- * @var Product         $product
+ * @var array $arParams
+ * @var array $arResult
+ * @var Product $product
  * @var OfferCollection $offers
- * @var Offer           $offer
- * @var Offer           $firstOffer
+ * @var Offer $offer
+ * @var Offer $firstOffer
  */
 
 use FourPaws\Catalog\Collection\OfferCollection;
@@ -39,6 +39,7 @@ $firstOffer = $offers->first();
             <span class="b-clipped-text b-clipped-text--three"
             ><span><strong><?= $product->getBrand()->getName() ?>  </strong><?= $product->getName() ?></span></span>
         </a>
+        <? /* @todo рейтинг товара */ ?>
         <div class="b-common-item__rank">
             <div class="b-rating">
                 <div class="b-rating__star-block">
@@ -63,12 +64,20 @@ $firstOffer = $offers->first();
                 <span class="b-common-item__rank-text b-common-item__rank-text--red">Выгода 15%</span>
             </div>
         </div>
-        <?php
-        if ($offers->count() > 1) {
+        <?php if ($offers->count() > 1) { ?>
+            <?php
+            $mainCombinationType = '';
+            if ($firstOffer->getClothingSize()) {
+                $mainCombinationType = 'SIZE';
+            } elseif ($firstOffer->getVolumeReference()) {
+                $mainCombinationType = 'VOLUME';
+            }
             ?>
-            <div class="b-common-item__variant">
-                Варианты фасовки
-            </div>
+            <?php if ($mainCombinationType === 'SIZE') { ?>
+                <div class="b-common-item__variant">Размеры</div>
+            <?php } else { ?>
+                <div class="b-common-item__variant">Варианты фасовки</div>
+            <?php } ?>
             <div class="b-weight-container b-weight-container--list">
                 <a
                         class="b-weight-container__link b-weight-container__link--mobile js-mobile-select"
@@ -79,31 +88,42 @@ $firstOffer = $offers->first();
                 <ul class="b-weight-container__list">
                     <?php
                     foreach ($offers as $offer) {
+                        if ($mainCombinationType === 'SIZE') {
+                            $value = $offer->getClothingSize()->getName();
+                        } else {
+                            $value = $offer->getVolumeReference()->getName();
+                        }
                         ?>
                         <li class="b-weight-container__item">
                             <span
-                                    class="b-weight-container__link js-price <?= $firstOffer->getId() === $offer->getId() ? 'active-link' : '' ?>"
+                                    class="b-weight-container__link js-price <?= $firstOffer->getId() === $offer->getId(
+                                    ) ? 'active-link' : '' ?>"
                                     data-price="<?= $offer->getPrice() ?>"
                                     data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
-                            >4 кг</span>
+                            ><?= $value ?></span>
                         </li>
                         <?php
                     } ?>
                 </ul>
             </div>
-            <?php
-        }
-        ?>
+        <?php } ?>
         <div class="b-common-item__moreinfo">
-            <div class="b-common-item__packing">
-                Упаковка <strong>8шт.</strong>
-            </div>
-            <div class="b-common-item__country">
-                Страна производства <strong>Нидерланды</strong>
-            </div>
-            <div class="b-common-item__order">
-                Только под заказ
-            </div>
+            <?php if ($firstOffer->getMultiplicity() > 1) { ?>
+                <div class="b-common-item__packing">
+                    Упаковка <strong><?= $firstOffer->getMultiplicity() ?>шт.</strong>
+                </div>
+            <?php } ?>
+            <?php if ($product->getCountry()) { ?>
+                <div class="b-common-item__country">
+                    Страна производства <strong><?= $product->getCountry()->getName() ?></strong>
+                </div>
+            <?php } ?>
+            <?php if ($firstOffer->isByRequest()) { ?>
+                <div class="b-common-item__order">
+                    Только под заказ
+                </div>
+            <?php } ?>
+            <?php /* @todo инфо о доставке/самовывозе */ ?>
             <div class="b-common-item__pickup">
                 Самовызов
             </div>
