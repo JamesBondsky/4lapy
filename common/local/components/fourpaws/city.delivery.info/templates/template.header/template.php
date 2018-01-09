@@ -41,14 +41,14 @@ if (empty($arResult)) {
         <?php if ($arResult['CURRENT']['DELIVERY']['FREE_FROM']) { ?>
             Бесплатная доставка
         <?php } else { ?>
-            Доставка <?= CurrencyHelper::formatPrice($arResult['CURRENT']['DELIVERY']['PRICE']) ?>
+            Доставка от <?= CurrencyHelper::formatPrice($arResult['CURRENT']['DELIVERY']['PRICE']) ?>
         <?php } ?>
         <span class="b-icon b-icon--delivery-arrow">
             <?= new SvgDecorator('icon-arrow-down', 20, 16) ?>
         </span>
     </a>
     <div class="b-popover b-popover--blue-arrow js-popover">
-        <p class="b-popover__text">Доставка <?= CurrencyHelper::formatPrice(
+        <p class="b-popover__text">Доставка от <?= CurrencyHelper::formatPrice(
                 $arResult['CURRENT']['DELIVERY']['PRICE']
             ) ?></p>
         <?php if ($arResult['CURRENT']['DELIVERY']['FREE_FROM']) { ?>
@@ -68,14 +68,14 @@ if (empty($arResult)) {
         <?php if ($arResult['DEFAULT']['DELIVERY']['FREE_FROM']) { ?>
             Бесплатная доставка
         <?php } else { ?>
-            Доставка <?= CurrencyHelper::formatPrice($arResult['DEFAULT']['DELIVERY']['PRICE']) ?>
+            Доставка от <?= CurrencyHelper::formatPrice($arResult['DEFAULT']['DELIVERY']['PRICE']) ?>
         <?php } ?>
         <span class="b-icon b-icon--delivery-arrow">
             <?= new SvgDecorator('icon-arrow-down', 20, 16) ?>
         </span>
     </a>
     <div class="b-popover b-popover--blue-arrow js-popover">
-        <p class="b-popover__text">Доставка <?= CurrencyHelper::formatPrice(
+        <p class="b-popover__text">Доставка от <?= CurrencyHelper::formatPrice(
                 $arResult['DEFAULT']['DELIVERY']['PRICE']
             ) ?></p>
         <?php if ($arResult['DEFAULT']['DELIVERY']['FREE_FROM']) { ?>

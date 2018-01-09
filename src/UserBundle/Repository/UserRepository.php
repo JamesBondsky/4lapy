@@ -216,7 +216,10 @@ class UserRepository
         if ($validationResult->count() > 0) {
             throw new ValidationException('Wrong entity passed to update');
         }
-        if ($this->cuser->Update($user->getId(), $user)) {
+        if ($this->cuser->Update(
+            $user->getId(),
+            $this->arrayTransformer->toArray($user, SerializationContext::create()->setGroups(['update']))
+        )) {
             return true;
         }
         throw new BitrixRuntimeException($this->cuser->LAST_ERROR);
