@@ -202,11 +202,6 @@ class Offer extends IblockElement
     /**
      * @var string
      */
-    protected $PROPERTY_PACKING_COMBINATION = '';
-
-    /**
-     * @var string
-     */
     protected $PROPERTY_COLOUR_COMBINATION = '';
 
     /**
@@ -498,13 +493,6 @@ class Offer extends IblockElement
         return $this->rewardType;
     }
 
-    /**
-     * @return string
-     */
-    public function getPackingCombination()
-    {
-        return $this->PROPERTY_PACKING_COMBINATION;
-    }
 
     /**
      * @return string

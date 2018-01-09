@@ -30,8 +30,6 @@ class RootCategoryConverter implements ParamConverterInterface
      */
     public function apply(Request $request, ParamConverter $configuration)
     {
-        dump($request);
-
         $name = 'path';
 
         if (!$request->attributes->has($name)) {
