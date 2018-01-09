@@ -123,7 +123,6 @@ class User
      * @Serializer\SerializedName("PERSONAL_PHONE")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      * @PhoneNumber(defaultRegion="RU",type="mobile")
-     * @Assert\Email(groups={"create","read","update","delete"})
      */
     protected $personalPhone = '';
     
@@ -280,7 +279,7 @@ class User
      */
     public function getPersonalPhone() : string
     {
-        return $this->personalPhone;
+        return (string)$this->personalPhone;
     }
     
     /**
