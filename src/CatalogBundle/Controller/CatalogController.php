@@ -61,7 +61,13 @@ class CatalogController extends Controller
             $categoryRequest->getSearchString()
         );
 
-        return $this->render('FourPawsCatalogBundle:Catalog:catalog.html.php', [
+        if ($request->query->get('partial') === 'Y') {
+            $tpl = 'FourPawsCatalogBundle:Catalog:catalog.filter.container.html.php';
+        } else {
+            $tpl = 'FourPawsCatalogBundle:Catalog:catalog.html.php';
+        }
+
+        return $this->render($tpl, [
             'request'             => $request,
             'productSearchResult' => $result,
             'catalogRequest'      => $categoryRequest,

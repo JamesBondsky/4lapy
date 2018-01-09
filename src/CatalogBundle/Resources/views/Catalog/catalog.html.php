@@ -1,9 +1,9 @@
 <?php
 /**
  * @var CatalogCategorySearchRequestInterface $catalogRequest
- * @var ProductSearchResult                   $productSearchResult
- * @var PhpEngine                             $view
- * @var CMain                                 $APPLICATION
+ * @var ProductSearchResult $productSearchResult
+ * @var PhpEngine $view
+ * @var CMain $APPLICATION
  */
 
 use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
@@ -13,10 +13,15 @@ use Symfony\Component\Templating\PhpEngine;
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 ?>
     <div class="b-catalog js-preloader-fix">
-        <?= $view->render('FourPawsCatalogBundle:Catalog:catalog.filter.container.html.php', [
-            'catalogRequest'      => $catalogRequest,
-            'productSearchResult' => $productSearchResult,
-        ]) ?>
+        <div class="b-container b-container--catalog-filter">
+            <?= $view->render(
+                'FourPawsCatalogBundle:Catalog:catalog.filter.container.html.php',
+                [
+                    'catalogRequest'      => $catalogRequest,
+                    'productSearchResult' => $productSearchResult,
+                ]
+            ) ?>
+        </div>
         <div class="b-container">
             <div class="b-line b-line--pet">
             </div>
