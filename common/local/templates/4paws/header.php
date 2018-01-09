@@ -30,7 +30,7 @@ $markup = PawsApplication::markup();
     <script data-skip-moving="true" src="js/html5shiv/html5shiv.min.js"></script><![endif]-->
     <?php
     Asset::getInstance()->addCss($markup->getCssFile());
-    Asset::getInstance()->addJs('https://api-maps.yandex.ru/2.1/?lang=ru_RU');
+    Asset::getInstance()->addJs('https://api-maps.yandex.ru/2.1.56/?lang=ru_RU');
     ?>
 </head>
 <body>
@@ -138,16 +138,16 @@ $markup = PawsApplication::markup();
     $APPLICATION->ShowViewContent('header_dropdown_menu'); ?>
     <main class="b-wrapper<?= $template->getIndexMainClass() ?>" role="main">
         <?php if ($template->hasHeaderPublicationListContainer()) { ?>
-        <div class="b-container b-container--news">
-            <div class="b-news">
+        <div class="<?php $APPLICATION->ShowProperty('PUBLICATION_LIST_CONTAINER_1', 'b-container b-container--news') ?>">
+            <div class="<?php $APPLICATION->ShowProperty('PUBLICATION_LIST_CONTAINER_2', 'b-news') ?>">
                 <h1 class="b-title b-title--h1"><?php $APPLICATION->ShowTitle(false) ?></h1>
                 <?php
                 }
                 
                 if ($template->hasHeaderDetailPageContainer()) {
                     ?>
-                    <div class="b-container b-container--news-detail">
-                        <div class="b-detail-page">
+                    <div class="<?php $APPLICATION->ShowProperty('PUBLICATION_DETAIL_CONTAINER_1', 'b-container b-container--news-detail') ?>">
+                        <div class="<?php $APPLICATION->ShowProperty('PUBLICATION_DETAIL_CONTAINER_2', 'b-detail-page') ?>">
                             <?php
                             $APPLICATION->IncludeComponent('bitrix:breadcrumb',
                                                            'breadcrumb',

@@ -4,6 +4,7 @@ namespace FourPaws\App;
 
 use Circle\RestClientBundle\CircleRestClientBundle;
 use FOS\RestBundle\FOSRestBundle;
+use FourPaws\PersonalBundle\FourPawsPersonalBundle;
 use FourPaws\AppBundle\FourPawsAppBundle;
 use FourPaws\CatalogBundle\FourPawsCatalogBundle;
 use FourPaws\DeliveryBundle\FourPawsDeliveryBundle;
@@ -82,6 +83,7 @@ class AppKernel extends Kernel
             new FourPawsSaleBundle(),
             new FourPawsStoreBundle(),
             new FourPawsSapBundle(),
+            new FourPawsPersonalBundle(),
         ];
 
         if (\in_array($this->getEnvironment(), ['dev', 'test'], true)) {

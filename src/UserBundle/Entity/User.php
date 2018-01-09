@@ -7,6 +7,7 @@
 namespace FourPaws\UserBundle\Entity;
 
 use Bitrix\Main\Type\Date;
+use Bitrix\Main\Type\DateTime;
 use FourPaws\UserBundle\Exception\EmptyDateException;
 use JMS\Serializer\Annotation as Serializer;
 use Misd\PhoneNumberBundle\Validator\Constraints\PhoneNumber;
@@ -40,10 +41,8 @@ class User
     
     /**
      * @var bool
-     * @Serializer\AccessType(type="public_method")
-     * @Serializer\Accessor(getter="getRawActive", setter="setRawActive")
      * @Serializer\SerializedName("ACTIVE")
-     * @Serializer\Type("string")
+     * @Serializer\Type("bitrix_bool")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
     protected $active = true;
@@ -160,13 +159,16 @@ class User
      */
     protected $gender = '';
     
+    /** @todo как сделать множественный тип на вход и выход */
     /**
-     * @var string
-     * @Serializer\Type("string")
+     * @var Date|null
+     * @Serializer\Type("bitrix_date")
+     * @Assert\Blank(groups={"create","read","update","delete"})
+     * @Serializer\SkipWhenEmpty()
      * @Serializer\SerializedName("PERSONAL_BIRTHDAY")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
-    protected $birthday = '';
+    protected $birthday;
     
     /** @var bool
      * @Serializer\Type("boolean")
@@ -182,6 +184,16 @@ class User
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
     protected $phoneConfirmed = false;
+    
+    /** @todo как сделать множественный тип на вход */
+    /**
+     * @var DateTime|null
+     * @Serializer\Type("bitrix_date_time")
+     * @Serializer\SkipWhenEmpty()
+     * @Serializer\SerializedName("DATE_REGISTER")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $dateRegister;
     
     /**
      * @return int
@@ -204,27 +216,9 @@ class User
     }
     
     /**
-     * @param string $active
-     *
-     * @return User
-     */
-    public function setRawActive(string $active)
-    {
-        return $this->setActive($active === static::BITRIX_TRUE);
-    }
-    
-    /**
-     * @return string
-     */
-    public function getRawActive() : string
-    {
-        return $this->getActive() ? static::BITRIX_TRUE : static::BITRIX_FALSE;
-    }
-    
-    /**
      * @return bool
      */
-    public function getActive()
+    public function getActive() : bool
     {
         return $this->active;
     }
@@ -257,26 +251,6 @@ class User
     public function setXmlId(string $xmlId) : User
     {
         $this->xmlId = $xmlId;
-        
-        return $this;
-    }
-    
-    /**
-     * @return string
-     */
-    public function getEncryptedPassword() : string
-    {
-        return $this->encryptedPassword;
-    }
-    
-    /**
-     * @param string $encryptedPassword
-     *
-     * @return User
-     */
-    public function setEncryptedPassword(string $encryptedPassword) : User
-    {
-        $this->encryptedPassword = $encryptedPassword;
         
         return $this;
     }
@@ -393,6 +367,26 @@ class User
         $db_password = substr($curPassword, -32);
         
         return $db_password === md5($salt . $password);
+    }
+    
+    /**
+     * @return string
+     */
+    public function getEncryptedPassword() : string
+    {
+        return $this->encryptedPassword;
+    }
+    
+    /**
+     * @param string $encryptedPassword
+     *
+     * @return User
+     */
+    public function setEncryptedPassword(string $encryptedPassword) : User
+    {
+        $this->encryptedPassword = $encryptedPassword;
+        
+        return $this;
     }
     
     /**
@@ -536,7 +530,7 @@ class User
     }
     
     /**
-     * @return string|null
+     * @return null|string
      */
     public function getGender()
     {
@@ -545,33 +539,41 @@ class User
     
     /**
      * @param string $gender
+     *
+     * @return User
      */
-    public function setGender(string $gender)
+    public function setGender(string $gender) : User
     {
         $this->gender = $gender;
+        
+        return $this;
     }
     
     /**
-     * @return Date
-     *
      * @throws EmptyDateException
+     * @return null|Date
+     *
      */
-    public function getBirthday() : Date
+    public function getBirthday()
     {
         /** @noinspection PhpIncompatibleReturnTypeInspection */
-        if ($this->birthday) {
-            return Date::createFromText($this->birthday);
+        if ($this->birthday instanceof Date) {
+            return $this->birthday;
         }
-    
-        throw new EmptyDateException('Birthday date is not set');
+        
+        return null;
     }
     
     /**
-     * @param \Bitrix\Main\Type\Date $birthday
+     * @param null|Date $birthday
+     *
+     * @return User
      */
-    public function setBirthday(Date $birthday)
+    public function setBirthday(Date $birthday) : User
     {
-        $this->birthday = $birthday->format('d.m.Y');
+        $this->birthday = $birthday;
+        
+        return $this;
     }
     
     /**
@@ -584,10 +586,14 @@ class User
     
     /**
      * @param bool $phoneConfirmed
+     *
+     * @return User
      */
-    public function setPhoneConfirmed(bool $phoneConfirmed)
+    public function setPhoneConfirmed(bool $phoneConfirmed) : User
     {
         $this->phoneConfirmed = $phoneConfirmed;
+        
+        return $this;
     }
     
     /**
@@ -600,17 +606,18 @@ class User
     
     /**
      * @param string $externalAuthId
+     *
+     * @return User
      */
-    public function setExternalAuthId(string $externalAuthId)
+    public function setExternalAuthId(string $externalAuthId) : User
     {
         $this->externalAuthId = $externalAuthId;
+        
+        return $this;
     }
     
     /**
-     * @param string $password
-     *
      * @return bool
-     *
      */
     public function isEmailConfirmed() : bool
     {
@@ -619,9 +626,33 @@ class User
     
     /**
      * @param bool $emailConfirmed
+     *
+     * @return User
      */
-    public function setEmailConfirmed(bool $emailConfirmed)
+    public function setEmailConfirmed(bool $emailConfirmed) : User
     {
         $this->emailConfirmed = $emailConfirmed;
+        
+        return $this;
+    }
+    
+    /**
+     * @return DateTime
+     */
+    public function getDateRegister() : DateTime
+    {
+        return $this->dateRegister;
+    }
+    
+    /**
+     * @param DateTime|null $dateRegister
+     *
+     * @return User
+     */
+    public function setDateRegister(DateTime $dateRegister) : User
+    {
+        $this->dateRegister = $dateRegister;
+        
+        return $this;
     }
 }

@@ -30,13 +30,20 @@ parameters:
     key: ivaacmVjzakOzRLeYjKy
 
   recaptcha:
-    key: '6Le2QT4UAAAAAKq4NGsbLo7XYMJB1f84S_9PzVZR'
-    secretKey: '6Le2QT4UAAAAALHxRtMAzINWrPKT82LLCo02Cf9K'
+    key: '%env(RECAPTCHA_KEY)%'
+    secretKey: '%env(RECAPTCHA_SECRET_KEY)%'
+    serviceUri: 'https://www.google.com/recaptcha/api/siteverify'
+
+  recaptcha.guzzle.curl:
+    !php/const:CURLOPT_CONNECTTIMEOUT: 3
 
   callback:
     baseUri: 'https://4584.vats-on.ru'
-    login: 'srv_03'
-    pass: 'F6RIikaO9QvhlZ7C'
+    login: '%env(CALLBACK_LOGIN)%'
+    pass: '%env(CALLBACK_PASS)%'
+
+  callback.guzzle.curl:
+    !php/const:CURLOPT_CONNECTTIMEOUT: 3
 
   # See \Elastica\Client::$_config for more options
   elastica.client_options:

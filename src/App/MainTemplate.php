@@ -16,16 +16,19 @@ namespace FourPaws\App;
 class MainTemplate extends TemplateAbstract
 {
     /**
+     * @return string
+     */
+    public function getIndexMainClass() : string
+    {
+        return $this->isIndex() ? ' b-wrapper--main' : '';
+    }
+    
+    /**
      * @return bool
      */
     public function isIndex() : bool
     {
         return $this->isPage('/');
-    }
-    
-    public function getIndexMainClass()
-    {
-        return $this->isIndex() ? ' b-wrapper--main':'';
     }
     
     /**
@@ -43,7 +46,7 @@ class MainTemplate extends TemplateAbstract
      */
     public function hasHeaderPublicationListContainer() : bool
     {
-        return $this->isListNews() || $this->isListArticles();
+        return $this->isListNews() || $this->isListArticles() || $this->isListShares() || $this->isListSharesFilter();
     }
     
     /**
@@ -65,9 +68,25 @@ class MainTemplate extends TemplateAbstract
     /**
      * @return bool
      */
+    public function isListShares() : bool
+    {
+        return $this->isDir('/customer/shares');
+    }
+    
+    /**
+     * @return bool
+     */
+    public function isListSharesFilter() : bool
+    {
+        return $this->isPartitionDir('/customer/shares/by_pet');
+    }
+    
+    /**
+     * @return bool
+     */
     public function hasHeaderDetailPageContainer() : bool
     {
-        return $this->isDetailNews() || $this->isDetailArticles();
+        return $this->isDetailNews() || $this->isDetailArticles() || $this->isDetailShares();
     }
     
     /**
@@ -84,6 +103,14 @@ class MainTemplate extends TemplateAbstract
     public function isDetailArticles() : bool
     {
         return $this->isPartitionDir('/services/articles');
+    }
+    
+    /**
+     * @return bool
+     */
+    public function isDetailShares() : bool
+    {
+        return !$this->isListShares() && $this->isPartitionDir('/customer/shares');
     }
     
     /**
@@ -141,5 +168,45 @@ class MainTemplate extends TemplateAbstract
     public function isShopList() : bool
     {
         return $this->isDir('/company/shops');
+    }
+    
+    /**
+     * @return bool
+     */
+    public function hasPersonalProfile() : bool
+    {
+        return $this->isPersonal();
+    }
+    
+    /**
+     * @return bool
+     */
+    public function hasPersonalAddress() : bool
+    {
+        return $this->isPersonalAddress();
+    }
+    
+    /**
+     * @return bool
+     */
+    public function isPersonalAddress() : bool
+    {
+        return $this->isDir('/personal/address');
+    }
+    
+    /**
+     * @return bool
+     */
+    public function hasPersonalPet() : bool
+    {
+        return $this->isPersonalPet();
+    }
+    
+    /**
+     * @return bool
+     */
+    public function isPersonalPet() : bool
+    {
+        return $this->isDir('/personal/pets');
     }
 }

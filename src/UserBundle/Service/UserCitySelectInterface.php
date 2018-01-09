@@ -9,10 +9,10 @@ interface UserCitySelectInterface
      * @param string $name
      * @param string $parentName
      *
-     * @return bool
+     * @return bool|array
      * @throws \FourPaws\Location\Exception\CityNotFoundException
      */
-    public function setSelectedCity(string $code = '', string $name = '', string $parentName = ''): bool;
+    public function setSelectedCity(string $code = '', string $name = '', string $parentName = '');
 
     /**
      * @return array

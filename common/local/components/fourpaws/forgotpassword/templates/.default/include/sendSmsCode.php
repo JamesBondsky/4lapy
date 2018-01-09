@@ -10,15 +10,17 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                                                                                                     выслали вам на
                                                                                                     номер <?= $phone ?>
     </div>
-    <form class="b-registration__form js-form-validation" data-url="/ajax/user/auth/forgotPassword/" method="post">
+    <form class="b-registration__form js-form-validation js-password-recovery-code"
+          data-url="/ajax/user/auth/forgotPassword/"
+          method="post">
         <input type="hidden" name="action" value="createNewPassword">
         <input type="hidden" name="phone" value="<?= $phone ?>">
         <div class="b-input-line b-input-line--create-password b-input-line--recovery">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-tel-recovery-code">SMS-код</label>
             </div>
-            <div class="b-input b-input--registration-form">
-                <input class="b-input__input-field b-input__input-field--registration-form"
+            <div class="b-input b-input--registration-form b-kek">
+                <input class="b-input__input-field b-input__input-field--registration-form b-kek"
                        type="text"
                        id="registration-tel-recovery-code"
                        placeholder=""

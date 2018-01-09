@@ -13,9 +13,11 @@ use Bitrix\Main\Web\Uri;
 $arResult['BASE_URI'] = $arResult['sUrlPath'];
 $arResult['BASE_URI'] .= $arResult['NavQueryString'] !== '' ? '?' . $arResult['NavQueryString'] : '';
 
+$pageParameter = $arParams['PAGE_PARAMETER'] ?? 'PAGEN_' . $arResult['NavNum'];
+
 if ($arResult['NavPageNomer'] > 1) {
     $uri = new Uri($arResult['BASE_URI']);
-    $uri->addParams(['PAGEN_' . $arResult['NavNum'] => (int)$arResult['NavPageNomer'] - 1]);
+    $uri->addParams([$pageParameter => (int)$arResult['NavPageNomer'] - 1]);
     
     if ($arResult['bSavePage']) {
         $arResult['PREV_URL'] = $uri->getUri();
@@ -30,7 +32,7 @@ if ($arResult['NavPageNomer'] > 1) {
 
 if ((int)$arResult['NavPageNomer'] < (int)$arResult['NavPageCount']) {
     $uri = new Uri($arResult['BASE_URI']);
-    $uri->addParams(['PAGEN_' . $arResult['NavNum'] => (int)$arResult['NavPageNomer'] + 1]);
+    $uri->addParams([$pageParameter => (int)$arResult['NavPageNomer'] + 1]);
     $arResult['NEXT_URL'] = $uri->getUri();
 }
 
@@ -41,7 +43,7 @@ $i                  = 0;
 while ($navRecordGroup <= (int)$arResult['NavPageCount']) {
     $i++;
     $uri = new Uri($arResult['BASE_URI']);
-    $uri->addParams(['PAGEN_' . $arResult['NavNum'] => $navRecordGroup]);
+    $uri->addParams([$pageParameter => $navRecordGroup]);
     $arResult['URLS'][$navRecordGroup] = $uri->getUri();
     if ($i > 3 && (int)$arResult['nStartPage'] <= 1) {
         $arResult['HIDDEN'][$navRecordGroup] = ' hidden';

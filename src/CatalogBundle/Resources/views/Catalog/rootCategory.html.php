@@ -1,33 +1,45 @@
 <?php
 /**
  * @var RootCategoryRequest $rootCategoryRequest
- * @var CMain               $APPLICATION
+ * @var CMain $APPLICATION
  */
 
 use FourPaws\App\Templates\ViewsEnum;
 use FourPaws\CatalogBundle\Dto\RootCategoryRequest;
+use FourPaws\Catalog\Model\Category;
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 
 global $APPLICATION;
 
-
-$APPLICATION->IncludeComponent(
+/**
+ * @var Category $category
+ */
+$category = $APPLICATION->IncludeComponent(
     'fourpaws:catalog.category.root',
     '',
     [
         'SECTION_CODE' => $rootCategoryRequest->getCategorySlug(),
+        'SET_TITLE' => 'Y',
+        'CACHE_TIME' => 10
     ],
-    $component
+    $component,
+    ['HIDE_ICONS' => 'Y']
 );
 ?>
     <div class="b-catalog">
         <div class="b-container b-container--catalog-main">
             <div class="b-catalog__wrapper-title">
                 <?php
-                /**
-                 * @todo Хлебные крошки
-                 */
+                $APPLICATION->IncludeComponent(
+                    'fourpaws:breadcrumbs',
+                    '',
+                    [
+                        'IBLOCK_SECTION' => $category,
+                    ],
+                    $component,
+                    ['HIDE_ICONS' => 'Y']
+                );
                 ?>
                 <nav class="b-breadcrumbs b-breadcrumbs--catalog-main">
                     <ul class="b-breadcrumbs__list">
@@ -37,503 +49,11 @@ $APPLICATION->IncludeComponent(
                         </li>
                     </ul>
                 </nav>
-                <?php
-                /**
-                 * @todo title
-                 */
-                ?>
-                <h1 class="b-title b-title--h1">Товары для собак</h1>
+                <h1 class="b-title b-title--h1"><?= $category->getDisplayName() ?: $category->getName() ?></h1>
             </div>
+            <?php $APPLICATION->ShowViewContent(ViewsEnum::CATALOG_CATEGORY_ROOT_LEFT_BLOCK) ?>
+            <?php $APPLICATION->ShowViewContent(ViewsEnum::CATALOG_CATEGORY_ROOT_MAIN_BLOCK) ?>
             <?php
-            /**
-             * @todo Левое меню
-             */
-            ?>
-            <aside class="b-filter b-filter--accordion">
-                <div class="b-filter__wrapper">
-                    <div class="b-accordion b-accordion--filter"><a
-                                class="b-accordion__header b-accordion__header--filter js-toggle-accordion"
-                                href="javascript:void(0);" title="Корм для собак">Корм для собак</a>
-                        <div class="b-accordion__block js-dropdown-block">
-                            <ul class="b-filter-link-list">
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Сухой">Сухой</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Консервы">Консервы</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Кормовая добавка и молоко">Кормовая
-                                        добавка и
-                                        молоко</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);" title="Диетический">Диетический</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="b-accordion b-accordion--filter"><a
-                                class="b-accordion__header b-accordion__header--filter js-toggle-accordion"
-                                href="javascript:void(0);" title="Лакомства и витамины">Лакомства и витамины</a>
-                        <div class="b-accordion__block js-dropdown-block">
-                            <ul class="b-filter-link-list">
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Сухой">Сухой</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Консервы">Консервы</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Кормовая добавка и молоко">Кормовая
-                                        добавка и
-                                        молоко</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);" title="Диетический">Диетический</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="b-accordion b-accordion--filter"><a
-                                class="b-accordion__header b-accordion__header--filter js-toggle-accordion"
-                                href="javascript:void(0);" title="Одежда и обувь">Одежда и обувь</a>
-                        <div class="b-accordion__block js-dropdown-block">
-                            <ul class="b-filter-link-list">
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Сухой">Сухой</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Консервы">Консервы</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Кормовая добавка и молоко">Кормовая
-                                        добавка и
-                                        молоко</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);" title="Диетический">Диетический</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="b-accordion b-accordion--filter"><a
-                                class="b-accordion__header b-accordion__header--filter js-toggle-accordion"
-                                href="javascript:void(0);" title="Намордники, ошейники, поводки">Намордники, ошейники,
-                            поводки</a>
-                        <div class="b-accordion__block js-dropdown-block">
-                            <ul class="b-filter-link-list">
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Сухой">Сухой</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Консервы">Консервы</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Кормовая добавка и молоко">Кормовая
-                                        добавка и
-                                        молоко</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);" title="Диетический">Диетический</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="b-accordion b-accordion--filter"><a
-                                class="b-accordion__header b-accordion__header--filter js-toggle-accordion"
-                                href="javascript:void(0);" title="Туалеты, лотки, совочки">Туалеты, лотки, совочки</a>
-                        <div class="b-accordion__block js-dropdown-block">
-                            <ul class="b-filter-link-list">
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Сухой">Сухой</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Консервы">Консервы</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Кормовая добавка и молоко">Кормовая
-                                        добавка и
-                                        молоко</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);" title="Диетический">Диетический</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="b-accordion b-accordion--filter"><a
-                                class="b-accordion__header b-accordion__header--filter js-toggle-accordion"
-                                href="javascript:void(0);" title="Товары для грумминга">Товары для грумминга</a>
-                        <div class="b-accordion__block js-dropdown-block">
-                            <ul class="b-filter-link-list">
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Сухой">Сухой</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Консервы">Консервы</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Кормовая добавка и молоко">Кормовая
-                                        добавка и
-                                        молоко</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);" title="Диетический">Диетический</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="b-accordion b-accordion--filter"><a
-                                class="b-accordion__header b-accordion__header--filter js-toggle-accordion"
-                                href="javascript:void(0);" title="Клетки, вольеры, двери">Клетки, вольеры, двери</a>
-                        <div class="b-accordion__block js-dropdown-block">
-                            <ul class="b-filter-link-list">
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Сухой">Сухой</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Консервы">Консервы</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Кормовая добавка и молоко">Кормовая
-                                        добавка и
-                                        молоко</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);" title="Диетический">Диетический</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="b-accordion b-accordion--filter"><a
-                                class="b-accordion__header b-accordion__header--filter js-toggle-accordion"
-                                href="javascript:void(0);" title="Товары для грумминга">Товары для грумминга</a>
-                        <div class="b-accordion__block js-dropdown-block">
-                            <ul class="b-filter-link-list">
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Сухой">Сухой</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Консервы">Консервы</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Кормовая добавка и молоко">Кормовая
-                                        добавка и
-                                        молоко</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);" title="Диетический">Диетический</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="b-accordion b-accordion--filter"><a
-                                class="b-accordion__header b-accordion__header--filter js-toggle-accordion"
-                                href="javascript:void(0);" title="Сумки, переноски">Сумки, переноски</a>
-                        <div class="b-accordion__block js-dropdown-block">
-                            <ul class="b-filter-link-list">
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Сухой">Сухой</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Консервы">Консервы</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Кормовая добавка и молоко">Кормовая
-                                        добавка и
-                                        молоко</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);" title="Диетический">Диетический</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="b-accordion b-accordion--filter"><a
-                                class="b-accordion__header b-accordion__header--filter js-toggle-accordion"
-                                href="javascript:void(0);" title="Игрушки">Игрушки</a>
-                        <div class="b-accordion__block js-dropdown-block">
-                            <ul class="b-filter-link-list">
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Сухой">Сухой</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Консервы">Консервы</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Кормовая добавка и молоко">Кормовая
-                                        добавка и
-                                        молоко</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);" title="Диетический">Диетический</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="b-accordion b-accordion--filter"><a
-                                class="b-accordion__header b-accordion__header--filter js-toggle-accordion"
-                                href="javascript:void(0);" title="Шлейки, ошейники, поводки">Шлейки, ошейники,
-                            поводки</a>
-                        <div class="b-accordion__block js-dropdown-block">
-                            <ul class="b-filter-link-list">
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Сухой">Сухой</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Консервы">Консервы</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Кормовая добавка и молоко">Кормовая
-                                        добавка и
-                                        молоко</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);" title="Диетический">Диетический</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="b-accordion b-accordion--filter"><a
-                                class="b-accordion__header b-accordion__header--filter js-toggle-accordion"
-                                href="javascript:void(0);" title="Лежаки и домики">Лежаки и домики</a>
-                        <div class="b-accordion__block js-dropdown-block">
-                            <ul class="b-filter-link-list">
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Сухой">Сухой</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Консервы">Консервы</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Кормовая добавка и молоко">Кормовая
-                                        добавка и
-                                        молоко</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);" title="Диетический">Диетический</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="b-accordion b-accordion--filter"><a
-                                class="b-accordion__header b-accordion__header--filter js-toggle-accordion"
-                                href="javascript:void(0);" title="Гигиена и косметика">Гигиена и косметика</a>
-                        <div class="b-accordion__block js-dropdown-block">
-                            <ul class="b-filter-link-list">
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Сухой">Сухой</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Консервы">Консервы</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Кормовая добавка и молоко">Кормовая
-                                        добавка и
-                                        молоко</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);" title="Диетический">Диетический</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="b-accordion b-accordion--filter"><a
-                                class="b-accordion__header b-accordion__header--filter js-toggle-accordion"
-                                href="javascript:void(0);" title="Пеленки, подгузники, штанишки">Пеленки, подгузники,
-                            штанишки</a>
-                        <div class="b-accordion__block js-dropdown-block">
-                            <ul class="b-filter-link-list">
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Сухой">Сухой</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Консервы">Консервы</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Кормовая добавка и молоко">Кормовая
-                                        добавка и
-                                        молоко</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);" title="Диетический">Диетический</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="b-accordion b-accordion--filter"><a
-                                class="b-accordion__header b-accordion__header--filter js-toggle-accordion"
-                                href="javascript:void(0);" title="Коррекция поведения">Коррекция поведения</a>
-                        <div class="b-accordion__block js-dropdown-block">
-                            <ul class="b-filter-link-list">
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Сухой">Сухой</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Консервы">Консервы</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Кормовая добавка и молоко">Кормовая
-                                        добавка и
-                                        молоко</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);" title="Диетический">Диетический</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="b-accordion b-accordion--filter"><a
-                                class="b-accordion__header b-accordion__header--filter js-toggle-accordion"
-                                href="javascript:void(0);" title="Средства от запаха и пятен">Средства от запаха и
-                            пятен</a>
-                        <div class="b-accordion__block js-dropdown-block">
-                            <ul class="b-filter-link-list">
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Сухой">Сухой</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Консервы">Консервы</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Кормовая добавка и молоко">Кормовая
-                                        добавка и
-                                        молоко</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);" title="Диетический">Диетический</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="b-accordion b-accordion--filter"><a
-                                class="b-accordion__header b-accordion__header--filter js-toggle-accordion"
-                                href="javascript:void(0);" title="Защита от блох и клещей">Защита от блох и клещей</a>
-                        <div class="b-accordion__block js-dropdown-block">
-                            <ul class="b-filter-link-list">
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Сухой">Сухой</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Консервы">Консервы</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Кормовая добавка и молоко">Кормовая
-                                        добавка и
-                                        молоко</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);" title="Диетический">Диетический</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="b-accordion b-accordion--filter"><a
-                                class="b-accordion__header b-accordion__header--filter js-toggle-accordion"
-                                href="javascript:void(0);" title="Завели щенка">Завели щенка</a>
-                        <div class="b-accordion__block js-dropdown-block">
-                            <ul class="b-filter-link-list">
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Сухой">Сухой</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Консервы">Консервы</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Кормовая добавка и молоко">Кормовая
-                                        добавка и
-                                        молоко</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);" title="Диетический">Диетический</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="b-accordion b-accordion--filter"><a
-                                class="b-accordion__header b-accordion__header--filter js-toggle-accordion"
-                                href="javascript:void(0);" title="Товары со скидкой">Товары со скидкой</a>
-                        <div class="b-accordion__block js-dropdown-block">
-                            <ul class="b-filter-link-list">
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Сухой">Сухой</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Консервы">Консервы</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);"
-                                                                        title="Кормовая добавка и молоко">Кормовая
-                                        добавка и
-                                        молоко</a>
-                                </li>
-                                <li class="b-filter-link-list__item"><a class="b-filter-link-list__link"
-                                                                        href="javascript:void(0);" title="Диетический">Диетический</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </aside>
-            <?php
-            $APPLICATION->ShowViewContent(ViewsEnum::CATALOG_CATEGORY_ROOT);
             /**
              * @todo brands in section
              */

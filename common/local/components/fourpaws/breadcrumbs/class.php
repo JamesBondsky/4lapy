@@ -18,6 +18,8 @@ class FourPawsBreadCrumbs extends \CBitrixComponent
             $params['CACHE_TIME'] = 36000000;
         }
 
+        $params['SHOW_LINK_TO_MAIN'] = ($params['SHOW_LINK_TO_MAIN'] === 'N') ? 'N' : 'Y';
+
         if (!$params['IBLOCK_SECTION'] && !empty($params['SECTION_CODE'])) {
             $params['IBLOCK_SECTION'] = $this->getSection($params['SECTION_CODE']);
         }
@@ -54,6 +56,7 @@ class FourPawsBreadCrumbs extends \CBitrixComponent
         $iblockElement = $this->arParams['IBLOCK_ELEMENT'];
         /** @var IblockSection $iblockSection */
         $iblockSection = $this->arParams['IBLOCK_SECTION'];
+        $skipId = null;
         if ($this->arParams['IBLOCK_ELEMENT']) {
             $iblockId = $iblockElement->getIblockId();
             $sectionIds = $iblockElement->getSectionsIdList();
@@ -61,6 +64,8 @@ class FourPawsBreadCrumbs extends \CBitrixComponent
         } elseif ($this->arParams['IBLOCK_SECTION']) {
             $iblockId = $iblockSection->getIblockId();
             $iblockSectionId = $iblockSection->getId();
+            // не показываем сам раздел в крошках
+            $skipId = $iblockSectionId;
         } else {
             throw new \InvalidArgumentException('Invalid component parameters');
         }
@@ -68,6 +73,9 @@ class FourPawsBreadCrumbs extends \CBitrixComponent
         $this->arResult['SECTIONS'] = [];
         $navChain = \CIBlockSection::GetNavChain($iblockId, $iblockSectionId);
         while ($item = $navChain->GetNext()) {
+            if ($item['ID'] == $skipId) {
+                continue;
+            }
             $this->arResult['SECTIONS'][] = $item;
         }
 

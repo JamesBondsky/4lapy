@@ -52,13 +52,19 @@ $this->setFrameMode(true);
     </div>
     <?php $frame->end() ?>
     <header class="b-popup-pick-city__header">
-        <form class="b-popup-pick-city__form" action="<?=$arResult['CITY_SET_URL'] ?>">
-            <input class="b-input__input-field b-input__input-field--pick-city"
-                   type="search"
-                   id="id-pick-city-search"
-                   data-url="<?= $arResult['CITY_AUTOCOMPLETE_URL'] ?>"
-                   name="code"
-                   placeholder="Найти свой город"/>
+        <form class="b-popup-pick-city__form"
+              action="<?= $arResult['CITY_SET_URL'] ?>"
+              data-url="<?= $arResult['CITY_AUTOCOMPLETE_URL'] ?>"
+              method="post">
+            <div class="b-input b-input--pick-city">
+                <input class="b-input__input-field b-input__input-field--pick-city"
+                       type="search"
+                       id="id-pick-city-search"
+                       placeholder="Найти свой город"
+                       name="id-pick-city-search"/>
+                <div class="b-error"><span class="js-message"></span>
+                </div>
+            </div>
             <button class="b-button b-button--pick-city">
                 <span class="b-icon">
                     <?= new SvgDecorator('icon-search', 16, 16) ?>
@@ -88,7 +94,7 @@ $this->setFrameMode(true);
                         <?php foreach ($cities as $city) { ?>
                             <?php $class = ($city['CODE'] == $arResult['SELECTED_CITY']['CODE']) ? 'b-popup-pick-city__city-link--active' : '' ?>
                             <li class="b-popup-pick-city__item-litter">
-                                <a class="b-popup-pick-city__city-link <?= $class ?>"
+                                <a class="b-popup-pick-city__city-link js-my-city <?= $class ?>"
                                    href="javascript:void(0)"
                                    title="<?= $city['NAME'] ?>"
                                    data-url="<?= $arResult['CITY_SET_URL'] ?>"
@@ -114,7 +120,7 @@ $this->setFrameMode(true);
                         <?php foreach ($cities as $city) { ?>
                             <?php $class = ($city['CODE'] == $arResult['SELECTED_CITY']['CODE']) ? 'b-popup-pick-city__city-link--active' : '' ?>
                             <li class="b-popup-pick-city__item-litter">
-                                <a class="b-popup-pick-city__city-link <?= $class ?>"
+                                <a class="b-popup-pick-city__city-link js-my-city <?= $class ?>"
                                    href="javascript:void(0)"
                                    title="<?= $city['NAME'] ?>"
                                    data-url="<?= $arResult['CITY_SET_URL'] ?>"

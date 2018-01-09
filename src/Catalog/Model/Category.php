@@ -53,6 +53,17 @@ class Category extends IblockSection implements FilterInterface
     protected $PICTURE = 0;
 
     /**
+     * @var string
+     */
+    protected $UF_DISPLAY_NAME = '';
+
+    /**
+     * @var string
+     */
+    protected $UF_SUFFIX = '';
+
+
+    /**
      * @var FilterCollection
      */
     private $filterList;
@@ -119,6 +130,44 @@ class Category extends IblockSection implements FilterInterface
     public function setPictureId(int $pictureId)
     {
         $this->PICTURE = $pictureId;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDisplayName(): string
+    {
+        return (string)$this->UF_DISPLAY_NAME;
+    }
+
+    /**
+     * @param $name
+     *
+     * @return $this
+     */
+    public function withDisplayName($name)
+    {
+        $this->UF_DISPLAY_NAME = $name;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSuffix(): string
+    {
+        return (string)$this->UF_SUFFIX;
+    }
+
+    /**
+     * @param $name
+     *
+     * @return $this
+     */
+    public function withSuffix($suffix)
+    {
+        $this->UF_SUFFIX = $suffix;
         return $this;
     }
 
