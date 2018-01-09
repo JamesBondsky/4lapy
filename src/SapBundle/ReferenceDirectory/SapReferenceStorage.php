@@ -24,6 +24,12 @@ class SapReferenceStorage
         $this->referenceRegistry = $referenceRegistry;
     }
 
+    /**
+     * @param string $propertyCode
+     * @param string $xmlId
+     *
+     * @return null|HlbReferenceItem
+     */
     public function findByXmlId(string $propertyCode, string $xmlId)
     {
         return $this->findByCallable($propertyCode, function (HlbReferenceItem $hlbReferenceItem) use ($xmlId) {
@@ -31,6 +37,19 @@ class SapReferenceStorage
         })->current();
     }
 
+    public function findByCode(string $propertyCode, string $code)
+    {
+        return $this->findByCallable($propertyCode, function (HlbReferenceItem $hlbReferenceItem) use ($code) {
+            return $hlbReferenceItem->getCode() === $code;
+        })->current();
+    }
+
+    /**
+     * @param string   $propertyCode
+     * @param callable $callable
+     *
+     * @return Collection|HlbReferenceItem[]|HlbReferenceItemCollection
+     */
     public function findByCallable(string $propertyCode, callable $callable)
     {
         if (!$this->collection->offsetExists($propertyCode)) {
@@ -41,6 +60,25 @@ class SapReferenceStorage
          */
         $collection = $this->collection->get($propertyCode);
         return $collection->filter($callable);
+    }
+
+    /**
+     * @param string $propertyCode
+     *
+     * @return static
+     */
+    public function clear(string $propertyCode)
+    {
+        $this->collection->remove($propertyCode);
+        return $this;
+    }
+
+    /**
+     * @return SapReferenceRegistry
+     */
+    public function getReferenceRegistry(): SapReferenceRegistry
+    {
+        return $this->referenceRegistry;
     }
 
     protected function loadCollection(string $propertyCode)
