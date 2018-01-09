@@ -13,11 +13,19 @@ use Bitrix\Catalog;
 
 class PricesConsumer implements ConsumerInterface
 {
+    const BASE_PRICE_REGION_CODE = 'IM01';
+
     /** @var string $defaultCurrencyCode */
     protected $defaultCurrencyCode = 'RUB';
 
     /** @var string $recalcPrices */
     protected $recalcPrices = true;
+
+    /** @var array $arOffersCache */
+    protected $arOffersCache = [];
+
+    /** @var int $iMaxOffersCacheSize */
+    protected $iMaxOffersCacheSize = 100;
 
     /**
      * @param Prices $prices
@@ -30,7 +38,7 @@ class PricesConsumer implements ConsumerInterface
             return false;
         }
 
-        if ($prices->getUploadToIm()) {
+        if (!$prices->getUploadToIm()) {
             return false;
         }
 
@@ -39,10 +47,13 @@ class PricesConsumer implements ConsumerInterface
             if (!$obOfferElementData->isSuccess()) {
                 continue;
             }
-            $this->setOfferPrices($obOfferElementData, $obPriceItem, $prices->getRegionCode());
+            $obSetOffersResult = $this->setOfferPrices($obOfferElementData, $obPriceItem, $prices->getRegionCode());
         }
 
-        return $bReturn;
+// !!!
+// непонятно при каких условиях какой результат возвращать
+// !!!
+        return true;
     }
 
     /**
@@ -107,25 +118,12 @@ class PricesConsumer implements ConsumerInterface
         }
 
         if ($obResult->isSuccess()) {
-            $this->incModules();
-            $arItem = \CIBlockElement::GetList(
-                [
-                    'ID' => 'ASC'
-                ],
-                [
-                    'IBLOCK_ID' => $this->getOffersIBlockId(),
-                    '=XML_ID' => $sXmlId,
-                ],
-                false,
-                false,
-                [
-                    'ID'
-                ]
-            )->fetch();
+            $arItem = $this->getOfferElementByXmlId($sXmlId);
             if ($arItem) {
                 $obResult->setData(
                     [
                         'ID' => $arItem['ID'],
+                        'IBLOCK_ID' => $arItem['IBLOCK_ID'],
                     ]
                 );
             } else {
@@ -137,13 +135,54 @@ class PricesConsumer implements ConsumerInterface
     }
 
     /**
+     * @param string $sXmlId
+     *
+     * @return array
+     */
+    private function getOfferElementByXmlId($sXmlId): array
+    {
+        $arReturn = [];
+        if (!isset($this->arOffersCache[$sXmlId])) {
+            $this->incModules();
+            $dbItems = \CIBlockElement::GetList(
+                [
+                    'ID' => 'ASC'
+                ],
+                [
+                    'IBLOCK_ID' => $this->getOffersIBlockId(),
+                    '=XML_ID' => $sXmlId,
+                ],
+                false,
+                false,
+                [
+                    'ID', 'IBLOCK_ID',
+                ]
+            );
+            if ($arItem = $dbItems->fetch()) {
+                $arReturn = $arItem;
+            }
+
+            $this->arOffersCache[$sXmlId] = $arReturn;
+            
+            if ($this->iMaxOffersCacheSize > 0 && count($this->arOffersCache) > $this->iMaxOffersCacheSize) {
+                $this->arOffersCache = array_slice($this->arOffersCache, 1, null, true);
+            }
+        } else {
+            $arReturn = $this->arOffersCache[$sXmlId];
+        }
+
+        return $arReturn;
+    }
+
+    /**
      * @param Result $obOfferElementData
      * @param Item $obPriceItem
      * @param string $sRegionCode
+     * @param bool $bGetExtResult
      *
      * @return Result
      */
-    protected function setOfferPrices(Result $obOfferElementData, Item $obPriceItem, $sRegionCode): Result
+    protected function setOfferPrices(Result $obOfferElementData, Item $obPriceItem, $sRegionCode, $bGetExtResult = true): Result
     {
         $obResult = new Result();
 
@@ -159,79 +198,99 @@ class PricesConsumer implements ConsumerInterface
             $iProductId = $arOfferElementData['ID'];
             $sCurrency = $this->defaultCurrencyCode;
 
-            $arSetPricesList = [];
-            $iBasePriceTypeId = $this->getBasePriceTypeId();
-            if ($iBasePriceTypeId) {
-                $arSetPricesList[$iBasePriceTypeId] = [
-                    'PRODUCT_ID' => $iProductId,
-                    'CATALOG_GROUP_ID' => $iBasePriceTypeId,
-                    'PRICE' => doubleval($obPriceItem->getRetailPrice()),
-                    'CURRENCY' => $sCurrency,
-                ];
-            }
-
-            $iRegionPriceTypeId = $this->getPriceTypeIdByXmlId($sRegionCode);
-            if ($iRegionPriceTypeId) {
-                $arSetPricesList[$iRegionPriceTypeId] = [
-                    'PRODUCT_ID' => $iProductId,
-                    'CATALOG_GROUP_ID' => $iRegionPriceTypeId,
-                    'PRICE' => doubleval($obPriceItem->getRetailPrice()),
-                    'CURRENCY' => $sCurrency,
-                ];
-            }
-
             $arDelPrices = [];
-            // обновление существующих цен
-            $dbItems = \CPrice::GetListEx(
-                [
-                    'ID' => 'ASC'
-                ],
-                [
-                    'PRODUCT_ID' => $iProductId,
-                    'CURRENCY' => $sCurrency,
-                    //'QUANTITY_FROM' => false,
-                    //'QUANTITY_TO' => false,
-                ]
-            );
-            while ($arItem = $dbItems->fetch()) {
-// !!!
-// непонятно что делать с наценками, если таковые вернет выборка
-// непонятно что делать с ценами, зависящими от количества, если таковые вернет выборка
-// !!!
-                if (isset($arSetPricesList[$arItem['CATALOG_GROUP_ID']])) {
-                    if ($arSetPricesList[$arItem['CATALOG_GROUP_ID']]['PRICE'] <= 0) {
-                        $arDelPrices[] = $arItem['ID'];
-                    } else {
-                        $bTmpResult = \CPrice::Update($arItem['ID'], $arSetPricesList[$arItem['CATALOG_GROUP_ID']], $this->recalcPrices);
 
-                        $obTmpResult = new Result();
-                        if (!$bTmpResult) {
-                            $obTmpResult->addError(new Error($GLOBALS['APPLICATION']->GetException()));
+            $arSetPricesList = [];
+            $iTmpPriceTypeId = $this->getPriceTypeIdByXmlId($sRegionCode);
+            if ($iTmpPriceTypeId) {
+                $arSetPricesList[$iTmpPriceTypeId] = [
+                    'PRODUCT_ID' => $iProductId,
+                    'CATALOG_GROUP_ID' => $iTmpPriceTypeId,
+                    'PRICE' => doubleval($obPriceItem->getRetailPrice()),
+                    'CURRENCY' => $sCurrency,
+                ];
+            }
+
+            $arSetPropsList = [];
+            $arSetPropsList['PRICE_ACTION'] = doubleval($obPriceItem->getActionPrice());
+            $arSetPropsList['PRICE_ACTION'] = $arSetPropsList['PRICE_ACTION'] > 0 ? $arSetPropsList['PRICE_ACTION'] : '';
+            $arSetPropsList['COND_FOR_ACTION'] = trim($obPriceItem->getPriceType());
+            $arSetPropsList['COND_VALUE'] = doubleval($obPriceItem->getDiscountValue());
+            $arSetPropsList['COND_VALUE'] = $arSetPropsList['COND_VALUE'] == 0 ? '' : $arSetPropsList['COND_VALUE'];
+
+            if ($arSetPricesList) {
+                // обновление существующих цен
+                $dbItems = \CPrice::GetListEx(
+                    [
+                        'ID' => 'ASC'
+                    ],
+                    [
+                        'PRODUCT_ID' => $iProductId,
+                        'CURRENCY' => $sCurrency,
+// !!!
+// непонятно что делать с ценами, зависящими от количества, если таковые будут
+// !!!
+                        'QUANTITY_FROM' => false,
+                        'QUANTITY_TO' => false,
+// !!!
+// непонятно что делать с наценками, если таковые будут
+// !!!
+                        'EXTRA_ID' => false,
+                    ]
+                );
+                $arProcessedPriceTypes = [];
+                while ($arItem = $dbItems->fetch()) {
+                    if (isset($arSetPricesList[$arItem['CATALOG_GROUP_ID']])) {
+                        if ($arSetPricesList[$arItem['CATALOG_GROUP_ID']]['PRICE'] <= 0) {
+                            $arDelPrices[] = $arItem['ID'];
+                        } else {
+                            $bTmpResult = \CPrice::Update($arItem['ID'], $arSetPricesList[$arItem['CATALOG_GROUP_ID']], $this->recalcPrices);
+
+                            if ($bGetExtResult) {
+                                $obTmpResult = new Result();
+                                if (!$bTmpResult) {
+                                    $obTmpResult->addError(new Error($GLOBALS['APPLICATION']->GetException()));
+                                }
+                                $obTmpResult->setData(array_merge($arSetPricesList[$arItem['CATALOG_GROUP_ID']], ['ID' => $arItem['ID']]));
+                                $arResultData['update'][] = $obTmpResult;
+                            }
+
+                            if (!$bTmpResult) {
+                                $obResult->addError(new Error('Ошибка при обновлении цены id '.$arItem['ID'].': '.$GLOBALS['APPLICATION']->GetException(), 210));
+                            }
                         }
-                        $obTmpResult->setData(array_merge($arSetPricesList[$arItem['CATALOG_GROUP_ID']], ['ID' => $arItem['ID']]));
-                        $arResultData['update'][] = $obTmpResult;
 
                         unset($arSetPricesList[$arItem['CATALOG_GROUP_ID']]);
+                        $arProcessedPriceTypes[$arItem['CATALOG_GROUP_ID']] = $arItem['CATALOG_GROUP_ID'];
+
+                    } elseif (isset($arProcessedPriceTypes[$arItem['CATALOG_GROUP_ID']])) {
+                        // удаление цен с уже обработанным типом (возможно, задублировались по какой-то причине)
+                        $arDelPrices[] = $arItem['ID'];
                     }
-                } else {
-// !!!
-// если цена есть в каталоге, но нет в выгрузке, то такая цена удаляется?
-// !!!
-                    //$arDelPrices[] = $arItem['ID'];
                 }
             }
 
             // добавление новых цен
             if ($arSetPricesList) {
                 foreach ($arSetPricesList as $arFields) {
-                    $bTmpResult = \CPrice::Add($arFields);
-
-                    $obTmpResult = new Result();
-                    if (!$bTmpResult) {
-                        $obTmpResult->addError(new Error($GLOBALS['APPLICATION']->GetException()));
+                    if ($arFields['PRICE'] <= 0) {
+                        continue;
                     }
-                    $obTmpResult->setData($arFields);
-                    $arResultData['add'][] = $obTmpResult;
+
+                    $mNewPrice = \CPrice::Add($arFields);
+
+                    if ($bGetExtResult) {
+                        $obTmpResult = new Result();
+                        if (!$mNewPrice) {
+                            $obTmpResult->addError(new Error($GLOBALS['APPLICATION']->GetException()));
+                        }
+                        $obTmpResult->setData(array_merge($arFields, ['ID' => $mNewPrice]));
+                        $arResultData['add'][] = $obTmpResult;
+                    }
+
+                    if (!$mNewPrice) {
+                        $obResult->addError(new Error('Ошибка при добавлении цены: '.$GLOBALS['APPLICATION']->GetException(), 220));
+                    }
                 }
             }
 
@@ -240,12 +299,28 @@ class PricesConsumer implements ConsumerInterface
                 foreach ($arDelPrices as $iPriceId) {
                     $bTmpResult = \CPrice::Delete($iPriceId);
 
-                    $obTmpResult = new Result();
-                    if (!$bTmpResult) {
-                        $obTmpResult->addError(new Error($GLOBALS['APPLICATION']->GetException()));
+                    if ($bGetExtResult) {
+                        $obTmpResult = new Result();
+                        if (!$bTmpResult) {
+                            $obTmpResult->addError(new Error($GLOBALS['APPLICATION']->GetException()));
+                        }
+                        $obTmpResult->setData(['ID' => $iPriceId]);
+                        $arResultData['delete'][] = $obTmpResult;
                     }
-                    $obTmpResult->setData(['ID' => $iPriceId]);
-                    $arResultData['delete'][] = $obTmpResult;
+
+                    if (!$bTmpResult) {
+                        $obResult->addError(new Error('Ошибка при удалении цены id '.$iPriceId.': '.$GLOBALS['APPLICATION']->GetException(), 230));
+                    }
+                }
+            }
+
+            // обновление свойств
+            if ($obResult->isSuccess() && $arSetPropsList) {
+                \CIBlockElement::SetPropertyValuesEx($arOfferElementData['ID'], $arOfferElementData['IBLOCK_ID'], $arSetPropsList);
+                if ($bGetExtResult) {
+                    $obTmpResult = new Result();
+                    $obTmpResult->setData($arSetPropsList);
+                    $arResultData['offer_props'][] = $obTmpResult;
                 }
             }
         }
@@ -253,6 +328,16 @@ class PricesConsumer implements ConsumerInterface
         $obResult->setData($arResultData);
 
         return $obResult;
+    }
+
+    /**
+     * @param string $sRegionCode
+     * @return bool
+     */
+    protected function isBasePriceRegionCode($sRegionCode)
+    {
+        $sRegionCode = ToUpper(trim($sRegionCode));
+        return !strlen($sRegionCode) || $sRegionCode == static::BASE_PRICE_REGION_CODE;
     }
 
     /**
@@ -306,7 +391,12 @@ class PricesConsumer implements ConsumerInterface
      */
     protected function getPriceTypeByXmlId($sXmlId)
     {
-        $arPriceTypesList = $this->getPriceTypesList();
+        if ($this->isBasePriceRegionCode($sXmlId)) {
+            return $this->getBasePriceType();
+        } else {
+            $arPriceTypesList = $this->getPriceTypesList();
+        }
+
         return isset($arPriceTypesList[$sXmlId]) ? $arPriceTypesList[$sXmlId] : array();
     }
 
@@ -318,5 +408,4 @@ class PricesConsumer implements ConsumerInterface
         $arPriceType = $this->getPriceTypeByXmlId($sXmlId);
         return $arPriceType ? $arPriceType['ID'] : 0;
     }
-
 }

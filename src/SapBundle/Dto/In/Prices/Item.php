@@ -162,5 +162,4 @@ class Item
         $this->discountValue = $discountValue;
         return $this;
     }
-
 }

@@ -69,7 +69,7 @@ class Prices
      */
     public function getRegionCode(): string
     {
-        return $this->$regionCode;
+        return $this->regionCode;
     }
 
     /**
