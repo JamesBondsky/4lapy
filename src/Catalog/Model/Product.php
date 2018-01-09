@@ -530,6 +530,11 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      */
     protected $suggest;
 
+    /**
+     * @var string
+     */
+    protected $PROPERTY_PACKING_COMBINATION = '';
+
     public function __construct(array $fields = [])
     {
         parent::__construct($fields);
@@ -1214,7 +1219,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 
         return $result;
     }
-    
+
     /*
      * @internal Специально для Elasitcsearch храним коллецию без ключей, т.к. ассоциативный массив с торговыми
      * предложениями туда передавать нельзя: это будет объект, а не массив объектов.
@@ -1234,5 +1239,25 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         }
 
         return $this->offers;
+    }
+
+
+    /**
+     * @return string
+     */
+    public function getPackingCombination(): string
+    {
+        return $this->PROPERTY_PACKING_COMBINATION;
+    }
+
+    /**
+     * @param string $packingCombination
+     *
+     * @return static
+     */
+    public function setPackingCombination(string $packingCombination)
+    {
+        $this->PROPERTY_PACKING_COMBINATION = $packingCombination;
+        return $this;
     }
 }
