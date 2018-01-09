@@ -112,3 +112,8 @@ four_paws_sap:
       in: '%sap.product.directory.in%'
       out: '%sap.product.directory.out%'
       error: '%sap.product.directory.error%'
+
+cocur_slugify:
+    lowercase: true
+    separator: '_'
+    rulesets: [default, russian]

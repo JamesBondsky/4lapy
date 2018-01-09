@@ -3,6 +3,7 @@
 namespace FourPaws\App;
 
 use Circle\RestClientBundle\CircleRestClientBundle;
+use Cocur\Slugify\Bridge\Symfony\CocurSlugifyBundle;
 use FOS\RestBundle\FOSRestBundle;
 use FourPaws\PersonalBundle\FourPawsPersonalBundle;
 use FourPaws\AppBundle\FourPawsAppBundle;
@@ -74,6 +75,7 @@ class AppKernel extends Kernel
             new JMSSerializerBundle(),
             new NelmioApiDocBundle(),
             new MisdPhoneNumberBundle(),
+            new CocurSlugifyBundle(),
 
             /** Internal bundles */
             new FourPawsAppBundle(),
