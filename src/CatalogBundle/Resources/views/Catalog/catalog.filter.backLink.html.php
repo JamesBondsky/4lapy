@@ -32,10 +32,20 @@ $parents = array_reverse($parents);
         <ul class="b-back">
             <?php /** @var Category $parent */ ?>
             <?php foreach ($parents as $parent) { ?>
+                <?php
+                if ($parent->getDisplayName()) {
+                    $name = $parent->getDisplayName();
+                } else {
+                    $name = $parent->getName();
+                    if ($parent->getParent() && $parent->getParent()->getSuffix()) {
+                        $name .= ' ' . $parent->getParent()->getSuffix();
+                    }
+                }
+                ?>
                 <li class="b-back__item">
                     <a class="b-link b-link--back" href="<?= $parent->getSectionPageUrl() ?>"
-                       title="<?= $parent->getDisplayName() ?: $parent->getName() ?>">
-                        <?= $parent->getDisplayName() ?: $parent->getName() ?>
+                       title="<?= $name ?>">
+                        <?= $name ?>
                     </a>
                 </li>
             <?php } ?>

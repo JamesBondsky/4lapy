@@ -31,6 +31,7 @@ $category = $APPLICATION->IncludeComponent(
     [
         'SECTION_CODE' => $catalogRequest->getCategory()->getCode(),
         'SET_TITLE'    => 'Y',
+        'CACHE_TIME'   => 10
     ],
     $component,
     ['HIDE_ICONS' => 'Y']
@@ -49,7 +50,7 @@ $category = $APPLICATION->IncludeComponent(
     );
     ?>
     <h1 class="b-title b-title--h1 b-title--catalog-filter">
-        <?= $category->getName() ?>
+        <?= implode(' ', [$category->getName(), $category->getParent()->getSuffix()]) ?>
     </h1>
 </div>
 <aside class="b-filter b-filter--popup js-filter-popup">

@@ -42,12 +42,19 @@ class CatalogCategory extends CBitrixComponent
 
     protected function prepareResult()
     {
-        /* @todo set title */
+        global $APPLICATION;
+
         $category = $this->getCategory($this->arParams['SECTION_CODE']);
         if (!$category) {
             $this->abortResultCache();
             Tools::process404('', true, true, true);
         }
+
+        $title = $category->getName();
+        if ($category->getParent() && $category->getParent()->getSuffix()) {
+            $title .= ' ' . $category->getParent()->getSuffix();
+        }
+        $APPLICATION->SetTitle($title);
 
         $this->arResult['CATEGORY'] = $category;
     }

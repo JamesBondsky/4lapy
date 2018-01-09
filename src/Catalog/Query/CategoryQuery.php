@@ -27,6 +27,7 @@ class CategoryQuery extends IblockSectionQuery
             'RIGHT_MARGIN',
             'UF_SYMLINK',
             'UF_DISPLAY_NAME',
+            'UF_SUFFIX',
             'PICTURE',
         ];
     }
