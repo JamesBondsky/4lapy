@@ -50,10 +50,6 @@ services:
     arguments: ['ProductCategory']
     parent: bx.hlblock.base
 
-  bx.hlblock.packagetype:
-    arguments: ['PackageType']
-    parent: bx.hlblock.base
-
   bx.hlblock.petage:
     arguments: ['PetAge']
     parent: bx.hlblock.base
@@ -70,17 +66,6 @@ services:
     arguments: ['FeedSpec']
     parent: bx.hlblock.base
 
-  bx.hlblock.colour:
-    arguments: ['Colour']
-    parent: bx.hlblock.base
-
-  bx.hlblock.volume:
-    arguments: ['Volume']
-    parent: bx.hlblock.base
-
-  bx.hlblock.clothingsize:
-    arguments: ['ClothingSize']
-    parent: bx.hlblock.base
 
   bx.hlblock.consistence:
     arguments: ['Consistence']
@@ -104,10 +89,6 @@ services:
 
   bx.hlblock.productform:
     arguments: ['ProductForm']
-    parent: bx.hlblock.base
-
-  bx.hlblock.year:
-    arguments: ['Year']
     parent: bx.hlblock.base
 
   bx.hlblock.parasitetype:
@@ -149,9 +130,40 @@ services:
   bx.hlblock.cities:
     arguments: ['Cities']
     parent: bx.hlblock.base
-    
+
   bx.hlblock.deliveryschedule:
-    class: 'DeliveryScheduleTable'
     arguments: ['DeliverySchedule']
     parent: bx.hlblock.base
 
+
+
+  # Свойства оффера
+  bx.hlblock.colour:
+    arguments: ['Colour']
+    parent: bx.hlblock.base
+    tags:
+      - {name: sap.reference, property: 'COLOUR'}
+
+  bx.hlblock.volume:
+    arguments: ['Volume']
+    parent: bx.hlblock.base
+    tags:
+      - {name: sap.reference, property: 'VOLUME'}
+
+  bx.hlblock.clothingsize:
+    arguments: ['ClothingSize']
+    parent: bx.hlblock.base
+    tags:
+      - {name: sap.reference, property: 'CLOTHING_SIZE'}
+
+  bx.hlblock.year:
+    arguments: ['Year']
+    parent: bx.hlblock.base
+    tags:
+      - {name: sap.reference, property: 'SEASON_YEAR'}
+
+  bx.hlblock.packagetype:
+    arguments: ['PackageType']
+    parent: bx.hlblock.base
+    tags:
+      - {name: sap.reference, property: 'KIND_OF_PACKING'}
