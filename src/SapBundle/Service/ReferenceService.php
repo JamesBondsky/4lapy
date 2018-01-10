@@ -2,7 +2,6 @@
 
 namespace FourPaws\SapBundle\Service;
 
-use Bitrix\Highloadblock\DataManager;
 use Cocur\Slugify\SlugifyInterface;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\SapBundle\ReferenceDirectory\SapReferenceStorage;
@@ -69,12 +68,12 @@ class ReferenceService
     }
 
     /**
-     * @param DataManager $dataManager
-     * @param string      $name
+     * @param string $propertyCode
+     * @param string $name
      *
      * @return string
      */
-    protected function getUniqueCode(DataManager $dataManager, string $name): string
+    protected function getUniqueCode(string $propertyCode, string $name): string
     {
         $i = 0;
         $code = $this->slugify->slugify($name);
@@ -82,11 +81,13 @@ class ReferenceService
             if ($i > 10) {
                 return md5($code . microtime());
             }
-            $result = $dataManager::query()
-                ->addFilter('=UF_CODE', $code . ($i > 0 ? $i : ''))
-                ->exec();
-            $i++;
-        } while ($result->fetch());
+            $result = $this->referenceStorage->findByCallable(
+                $propertyCode,
+                function (HlbReferenceItem $item) use ($code) {
+                    return $item->getCode() === $code;
+                }
+            );
+        } while ($result->count());
         return $code . ($i > 0 ? $i : '');
     }
 }
