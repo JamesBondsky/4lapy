@@ -6,6 +6,7 @@
 
 namespace FourPaws\PersonalBundle\Entity;
 
+use Bitrix\Main\Type\Date;
 use FourPaws\AppBundle\Entity\BaseEntity;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -70,6 +71,21 @@ class Referral extends BaseEntity
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
     protected $email = '';
+    
+    /**
+     * @var bool
+     */
+    protected $moderate = false;
+    
+    /**
+     * @var Date
+     */
+    protected $dateEndActive;
+    
+    /**
+     * @var float
+     */
+    protected $bonus = 0;
     
     /**
      * @return string
@@ -207,6 +223,75 @@ class Referral extends BaseEntity
     public function setEmail(string $email) : self
     {
         $this->email = $email;
+        
+        return $this;
+    }
+    
+    /**
+     * @return bool
+     */
+    public function isModerate() : bool
+    {
+        return $this->moderate;
+    }
+    
+    /**
+     * @param bool $moderate
+     *
+     * @return self
+     */
+    public function setModerate(bool $moderate) : self
+    {
+        $this->moderate = $moderate;
+        
+        return $this;
+    }
+    
+    /**
+     * @return Date
+     */
+    public function getDateEndActive() : Date
+    {
+        return $this->dateEndActive;
+    }
+    
+    /**
+     * @param Date|string|null $dateEndActive
+     *
+     * @return self
+     */
+    public function setDateEndActive($dateEndActive) : self
+    {
+        if (!($dateEndActive instanceof Date)) {
+            if (\strlen($dateEndActive) > 0) {
+                /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+                $this->dateEndActive = new Date($dateEndActive, 'd.m.Y');
+            } else {
+                $this->dateEndActive = null;
+            }
+        } else {
+            $this->dateEndActive = $dateEndActive;
+        }
+        
+        return $this;
+    }
+    
+    /**
+     * @return float
+     */
+    public function getBonus() : float
+    {
+        return $this->bonus;
+    }
+    
+    /**
+     * @param float $bonus
+     *
+     * @return self
+     */
+    public function setBonus(float $bonus) : self
+    {
+        $this->bonus = $bonus;
         
         return $this;
     }

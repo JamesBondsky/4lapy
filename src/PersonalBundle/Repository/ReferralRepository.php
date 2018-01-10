@@ -6,6 +6,7 @@ use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Repository\BaseHlRepository;
 use FourPaws\PersonalBundle\Entity\Referral;
+use FourPaws\External\Manzana\Model\Referral as ManzaReferal;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -87,8 +88,29 @@ class ReferralRepository extends BaseHlRepository
             ]
         );
         
-        if(!empty($referals)) {
-            $this->manzanaService->getUserReferralList($curUserService->getCurrentUser());
+        $arCards = [];
+        if(\is_array($referals) && !empty($referals)) {
+            /** @var Referral $item */
+            foreach ($referals as $key => $item) {
+                $arCards[$item->getCard()] = $key;
+            }
+        }
+        
+        $manzanaReferrals = $this->manzanaService->getUserReferralList($curUserService->getCurrentUser());
+        if(\is_array($manzanaReferrals) && !empty($manzanaReferrals)) {
+            /** @var ManzaReferal $item */
+            foreach ($manzanaReferrals as $item) {
+                if(!array_key_exists($item->cardNumber, $arCards)){
+                
+                }
+                else{
+                    /** @var Referral $referral */
+                    $referral =& $referals[$arCards[$item->cardNumber]];
+                    $referral->setBonus((float)$item->sumReferralBonus);
+                    $referral->setModerate($item->isQuestionnaireActual === 20000);
+                }
+            }
+    
         }
         
         return $referals;

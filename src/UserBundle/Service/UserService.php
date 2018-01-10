@@ -229,7 +229,7 @@ class UserService implements
         try {
             $birthday = $user->getBirthday();
             if ($birthday instanceof Date) {
-                $client->birthDate = $birthday->format('d.m.Y');
+                $client->birthDate = new \DateTimeImmutable($birthday->format('Y-m-d\TH:i:s'));
             }
         } catch (EmptyDateException $e) {
         }
@@ -240,6 +240,6 @@ class UserService implements
         $client->genderCode         = $user->getGender();
         $client->email              = $user->getEmail();
         $client->plLogin            = $user->getLogin();
-        $client->plRegistrationDate = $user->getDateRegister()->format('d.m.Y');
+        $client->plRegistrationDate = new \DateTimeImmutable($user->getDateRegister()->format('Y-m-d\TH:i:s'));
     }
 }

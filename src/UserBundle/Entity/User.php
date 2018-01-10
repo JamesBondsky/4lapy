@@ -239,7 +239,7 @@ class User
      */
     public function getXmlId() : string
     {
-        return $this->xmlId;
+        return $this->xmlId ?? '';
     }
     
     /**
@@ -279,7 +279,7 @@ class User
      */
     public function getPersonalPhone() : string
     {
-        return (string)$this->personalPhone;
+        return $this->personalPhone ?? '';
     }
     
     /**
@@ -299,7 +299,7 @@ class User
      */
     public function getCheckWord() : string
     {
-        return $this->checkWord;
+        return $this->checkWord ?? '';
     }
     
     /**
@@ -440,7 +440,7 @@ class User
      */
     public function getName() : string
     {
-        return $this->name;
+        return $this->name ?? '';
     }
     
     /**
@@ -460,7 +460,7 @@ class User
      */
     public function getLastName() : string
     {
-        return $this->lastName;
+        return $this->lastName ?? '';
     }
     
     /**
@@ -480,7 +480,7 @@ class User
      */
     public function getSecondName() : string
     {
-        return $this->secondName;
+        return $this->secondName ?? '';
     }
     
     /**
@@ -533,7 +533,7 @@ class User
      */
     public function getGender()
     {
-        return $this->gender;
+        return $this->gender ?? null;
     }
     
     /**
