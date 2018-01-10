@@ -299,6 +299,7 @@ class StockConsumer implements ConsumerInterface
             while ($item = $items->fetch()) {
                 if ($wasUpdated) {
                     // Удаление возможных дублей
+                    // (если структура таблицы не будет испорчена, то такой ситуации никогда не будет)
                     $actionResult = StoreProductTable::delete($item['ID']);
                     if ($getExtResult) {
                         $tmpResult = new Result();
