@@ -112,3 +112,14 @@ four_paws_sap:
       in: '%sap.product.directory.in%'
       out: '%sap.product.directory.out%'
       error: '%sap.product.directory.error%'
+      filemask: 'Mat_*'
+  pipelines:
+    catalog:
+      - FourPaws\SapBundle\Consumer\OffersInfoConsumer
+      - FourPaws\SapBundle\Consumer\PriceConsumer
+      - FourPaws\SapBundle\Consumer\StockRemainConsumer
+      - FourPaws\SapBundle\Consumer\ShopRemainConsumer
+    order_status:
+      - FourPaws\SapBundle\Consumer\OrderStatusConsumer
+    delivery_schedule:
+      - FourPaws\SapBundle\Consumer\DeliveryScheduleConsumer
