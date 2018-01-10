@@ -137,20 +137,23 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
                     <?php foreach ($offers as $offer) { ?>
                         <?php
                         if ($mainCombinationType === 'SIZE') {
-                            $value = $offer->getClothingSize()->getName();
+                            $value = $offer->getClothingSize();
                         } else {
-                            $value = $offer->getVolumeReference()->getName();
+                            $value = $offer->getVolumeReference();
+                        }
+                        if (!$value) {
+                            continue;
                         }
                         ?>
                         <li class="b-weight-container__item b-weight-container__item--product <?= ($currentOffer->getId(
                             ) === $offer->getId()) ? 'active' : '' ?>">
                             <a class="b-weight-container__link b-weight-container__link--product js-price-product"
                                href="javascript:void(0);"
-                               data-weight=" <?= $value ?>"
+                               data-weight=" <?= $value->getName() ?>"
                                data-price="<?= $offer->getPrice() ?>"
                                data-image="<?= $mainImageIndex[$offer->getId()] ?>">
                                 <span class="b-weight-container__line">
-                                    <span class="b-weight-container__weight"><?= $value ?></span>
+                                    <span class="b-weight-container__weight"><?= $value->getName() ?></span>
                                     <span class="b-weight-container__price b-undefined">
                                         <?= $offer->getPrice() ?> <span class="b-ruble b-ruble--weight">₽</span>
                                     </span>
