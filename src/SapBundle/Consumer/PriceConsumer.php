@@ -11,7 +11,7 @@ use Bitrix\Main\Result;
 use Bitrix\Main\Error;
 use Bitrix\Catalog;
 
-class PricesConsumer implements ConsumerInterface
+class PriceConsumer implements ConsumerInterface
 {
     const BASE_PRICE_REGION_CODE = 'IM01';
 
@@ -21,11 +21,11 @@ class PricesConsumer implements ConsumerInterface
     /** @var string $recalcPrices */
     protected $recalcPrices = true;
 
-    /** @var array $arOffersCache */
-    protected $arOffersCache = [];
+    /** @var array $offersCache */
+    protected $offersCache = [];
 
-    /** @var int $iMaxOffersCacheSize */
-    protected $iMaxOffersCacheSize = 100;
+    /** @var int $maxOffersCacheSize */
+    protected $maxOffersCacheSize = 100;
 
     /**
      * @param Prices $prices
@@ -142,7 +142,7 @@ class PricesConsumer implements ConsumerInterface
     private function getOfferElementByXmlId($sXmlId): array
     {
         $arReturn = [];
-        if (!isset($this->arOffersCache[$sXmlId])) {
+        if (!isset($this->offersCache[$sXmlId])) {
             $this->incModules();
             $dbItems = \CIBlockElement::GetList(
                 [
@@ -162,13 +162,13 @@ class PricesConsumer implements ConsumerInterface
                 $arReturn = $arItem;
             }
 
-            $this->arOffersCache[$sXmlId] = $arReturn;
+            $this->offersCache[$sXmlId] = $arReturn;
             
-            if ($this->iMaxOffersCacheSize > 0 && count($this->arOffersCache) > $this->iMaxOffersCacheSize) {
-                $this->arOffersCache = array_slice($this->arOffersCache, 1, null, true);
+            if ($this->maxOffersCacheSize > 0 && count($this->offersCache) > $this->maxOffersCacheSize) {
+                $this->offersCache = array_slice($this->offersCache, 1, null, true);
             }
         } else {
-            $arReturn = $this->arOffersCache[$sXmlId];
+            $arReturn = $this->offersCache[$sXmlId];
         }
 
         return $arReturn;
