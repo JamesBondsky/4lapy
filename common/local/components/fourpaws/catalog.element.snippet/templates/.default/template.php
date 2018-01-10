@@ -89,9 +89,12 @@ $firstOffer = $offers->first();
                     <?php
                     foreach ($offers as $offer) {
                         if ($mainCombinationType === 'SIZE') {
-                            $value = $offer->getClothingSize()->getName();
+                            $value = $offer->getClothingSize();
                         } else {
-                            $value = $offer->getVolumeReference()->getName();
+                            $value = $offer->getVolumeReference();
+                        }
+                        if (!$value) {
+                            continue;
                         }
                         ?>
                         <li class="b-weight-container__item">
@@ -100,7 +103,7 @@ $firstOffer = $offers->first();
                                     ) ? 'active-link' : '' ?>"
                                     data-price="<?= $offer->getPrice() ?>"
                                     data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
-                            ><?= $value ?></span>
+                            ><?= $value->getName() ?></span>
                         </li>
                         <?php
                     } ?>
