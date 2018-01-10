@@ -218,9 +218,11 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
         
         $phone = $request->get('phone', '');
         $email = $request->get('email', '');
+        $title = 'Восстановление пароля';
         if (empty($step)) {
             $recovery = $request->get('recovery', '');
             if ($recovery === 'phone') {
+                $title = 'Восстановление пароля';
                 $step = 'sendSmsCode';
                 $res  = $this->ajaxGetSendSmsCode($phone);
                 if ($res instanceof JsonResponse) {
@@ -229,6 +231,7 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                 
                 $phone = $res;
             } elseif ($recovery === 'email') {
+                $title = 'Создание нового пароля';
                 /** @todo отправка письма для верификации */
                 $res = $this->ajaxGetSendEmailCode($email);
                 if ($res instanceof JsonResponse) {
@@ -251,6 +254,7 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
         
         switch ($step) {
             case 'createNewPassword':
+                $title = 'Создание нового пароля';
                 if (!empty($phone)) {
                     try {
                         $res = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::checkConfirmSms(
@@ -281,8 +285,11 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                 break;
         }
         
-        ob_start();
-        /** @noinspection PhpIncludeInspection */
+        ob_start(); ?>
+        <header class="b-registration__header">
+            <h1 class="b-title b-title--h1 b-title--registration"><?= $title ?></h1>
+        </header>
+        <?php /** @noinspection PhpIncludeInspection */
         include_once App::getDocumentRoot() . '/local/components/fourpaws/forgotpassword/templates/.default/include/'
                      . $step . '.php';
         $html = ob_get_clean();

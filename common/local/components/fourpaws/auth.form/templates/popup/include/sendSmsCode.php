@@ -45,7 +45,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                title="Отправить снова">Отправить снова</a>
         </div>
         <div class="b-registration__captcha" data-sitekey=""></div>
-        <button class="b-button b-button--social b-button--full-width" type="submit">Подтвердить</button>
+        <button class="b-button b-button--social b-button--full-width">Подтвердить</button>
     </form>
 </div>
 <section class="b-registration__additional-info b-registration__additional-info--step">

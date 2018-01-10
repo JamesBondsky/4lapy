@@ -240,6 +240,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 ]
             );
         } catch (\Exception $e) {
+            //App::getInstance()->getRootDir()
             return JsonErrorResponse::createWithData(
                 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
                 ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
@@ -251,8 +252,8 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         }
         
         ob_start();
-        require_once App::getInstance()->getRootDir()
-                     . '/local/components/fourpaws/auth.form/templates/.default/include/addPhone.php';
+        require_once App::getDocumentRoot()
+                     . '/local/components/fourpaws/auth.form/templates/popup/include/addPhone.php';
         $html = ob_get_clean();
         
         return JsonSuccessResponse::createWithData('Необходимо заполнить номер телефона', ['html' => $html]);

@@ -23,7 +23,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                 </div>
             </div>
         </div>
-        <button class="b-button b-button--social b-button--full-width" type="submit">Отправить код</button>
+        <button class="b-button b-button--social b-button--full-width">Отправить код</button>
     </form>
 </div>
 <section class="b-registration__additional-info b-registration__additional-info--step">

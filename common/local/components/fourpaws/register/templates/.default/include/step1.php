@@ -6,7 +6,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 <div class="b-registration__content b-registration__content--moiety b-registration__content--step">
     <div class="b-step-form">Шаг <span>1</span> из <span>2</span>
     </div>
-    <form class="b-registration__form js-form-validation" data-url="/ajax/user/auth/register/" method="post">
+    <form class="b-registration__form js-form-validation js-registration-form"
+          id="reg-step1-form"
+          data-url="/ajax/user/auth/register/"
+          method="post">
         <input type="hidden" name="action" value="get">
         <input type="hidden" name="step" value="sendSmsCode">
         <div class="b-input-line">

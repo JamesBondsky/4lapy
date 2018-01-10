@@ -359,6 +359,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         $step  = $request->get('step', '');
         $phone = $request->get('phone', '');
         $mess  = '';
+        $title = 'Регистрация';
         switch ($step) {
             case 'step1':
             case 'addPhone':
@@ -394,8 +395,11 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 }
                 break;
         }
-        ob_start();
-        /** @noinspection PhpIncludeInspection */
+        ob_start();?>
+        <header class="b-registration__header">
+            <h1 class="b-title b-title--h1 b-title--registration"><?= $title ?></h1>
+        </header>
+        <?php/** @noinspection PhpIncludeInspection */
         include_once App::getDocumentRoot() . '/local/components/fourpaws/register/templates/.default/include/' . $step
                      . '.php';
         $html = ob_get_clean();

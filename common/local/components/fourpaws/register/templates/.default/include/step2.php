@@ -13,7 +13,8 @@ use FourPaws\External\Manzana\Model\Client;
 <div class="b-registration__content b-registration__content--moiety b-registration__content--step b-registration__content--back">
     <div class="b-step-form">Шаг <span>2</span> из <span>2</span>
     </div>
-    <form class="b-registration__form b-registration__form--margin js-form-validation"
+    <form class="b-registration__form b-registration__form--margin js-form-validation js-registration-form"
+          id="reg-step5-form"
           data-url="/ajax/user/auth/register/"
           method="post">
         <input type="hidden" name="action" value="register">
@@ -119,12 +120,18 @@ use FourPaws\External\Manzana\Model\Client;
                        name="PERSONAL_GENDER"
                        id="registration-male"
                        value="M"
+                       data-radio="0"
                        checked="checked" />
                 <label class="b-radio__label" for="registration-male"><span class="b-radio__text-label">мужской</span>
                 </label>
             </div>
             <div class="b-radio">
-                <input class="b-radio__input" type="radio" name="PERSONAL_GENDER" id="registration-female" value="F" />
+                <input class="b-radio__input"
+                       type="radio"
+                       name="PERSONAL_GENDER"
+                       id="registration-female"
+                       value="F"
+                       data-radio="1" />
                 <label class="b-radio__label" for="registration-female"><span class="b-radio__text-label">женский</span>
                 </label>
             </div>

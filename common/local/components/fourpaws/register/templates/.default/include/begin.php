@@ -11,6 +11,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
        href="javascript:void(0)"
        title="Регистрация по телефону"
        data-url="/ajax/user/auth/register/"
+       data-method="post"
        data-action="get"
        data-step="addPhone">Регистрация по телефону</a>
     <span class="b-registration__else">или</span>
