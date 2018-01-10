@@ -6,30 +6,30 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\BitrixOrm\Collection\HlbReferenceItemCollection;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
-use FourPaws\BitrixOrm\Query\HlbReferenceQuery;
 
 class SapReferenceStorage
 {
-    /**
-     * @var SapReferenceRegistry
-     */
-    protected $referenceRegistry;
-
     /**
      * @var Collection|HlbReferenceItemCollection[]
      */
     protected $collection;
 
-    public function __construct(SapReferenceRegistry $referenceRegistry)
+    /**
+     * @var ReferenceRepositoryRegistry
+     */
+    private $referenceRepositoryRegistry;
+
+    public function __construct(ReferenceRepositoryRegistry $referenceRepositoryRegistry)
     {
-        $this->referenceRegistry = $referenceRegistry;
         $this->collection = new ArrayCollection();
+        $this->referenceRepositoryRegistry = $referenceRepositoryRegistry;
     }
 
     /**
      * @param string $propertyCode
      * @param string $xmlId
      *
+     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
      * @return null|HlbReferenceItem
      */
     public function findByXmlId(string $propertyCode, string $xmlId)
@@ -50,13 +50,15 @@ class SapReferenceStorage
      * @param string   $propertyCode
      * @param callable $callable
      *
+     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
      * @return Collection|HlbReferenceItem[]|HlbReferenceItemCollection
      */
     public function findByCallable(string $propertyCode, callable $callable)
     {
         if (!$this->collection->offsetExists($propertyCode)) {
-            $this->collection->set($propertyCode, $this->loadCollection($propertyCode));
+            $this->collection->set($propertyCode, $this->referenceRepositoryRegistry->get($propertyCode)->findBy());
         }
+
         /**
          * @var Collection $collection
          */
@@ -76,15 +78,10 @@ class SapReferenceStorage
     }
 
     /**
-     * @return SapReferenceRegistry
+     * @return ReferenceRepositoryRegistry
      */
-    public function getReferenceRegistry(): SapReferenceRegistry
+    public function getReferenceRepositoryRegistry(): ReferenceRepositoryRegistry
     {
-        return $this->referenceRegistry;
-    }
-
-    protected function loadCollection(string $propertyCode)
-    {
-        return (new HlbReferenceQuery($this->referenceRegistry->get($propertyCode)::query()))->exec();
+        return $this->referenceRepositoryRegistry;
     }
 }

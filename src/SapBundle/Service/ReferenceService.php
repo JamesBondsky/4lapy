@@ -75,24 +75,24 @@ class ReferenceService implements LoggerAwareInterface
      * @param string $name
      *
      * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
-     * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
+     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
      * @return null|HlbReferenceItem
      */
     public function create(string $propertyCode, string $xmlId, string $name)
     {
-        $dataManager = $this->referenceStorage->getReferenceRegistry()->get($propertyCode);
-        $fields = [
-            'UF_CODE'   => $this->getUniqueCode($propertyCode, $name),
-            'UF_XML_ID' => $xmlId,
-            'UF_NAME'   => $name,
-        ];
-        $addResult = $dataManager::add($fields);
+        $item = (new HlbReferenceItem())
+            ->withCode($this->getUniqueCode($propertyCode, $name))
+            ->withXmlId($xmlId)
+            ->withName($name);
+
+        $referenceRepository = $this->referenceStorage->getReferenceRepositoryRegistry()->get($propertyCode);
+        $addResult = $referenceRepository->add($item);
 
         if ($addResult->isSuccess()) {
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             $this->log()->debug(
                 sprintf('Создано значение справочника для свойства %s: %s', $propertyCode, $xmlId),
-                $fields
+                $item->toArray()
             );
             return $this->get($propertyCode, $xmlId);
         }
@@ -130,7 +130,7 @@ class ReferenceService implements LoggerAwareInterface
     public function fillFromMaterial(Material $material)
     {
         foreach ($material->getProperties()->getProperties() as $property) {
-            if ($this->referenceStorage->getReferenceRegistry()->has($property->getCode())) {
+            if ($this->referenceStorage->getReferenceRepositoryRegistry()->has($property->getCode())) {
                 $this->getPropertyValueHlbElement($property);
             }
         }
