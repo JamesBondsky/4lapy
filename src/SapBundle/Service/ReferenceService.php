@@ -4,6 +4,8 @@ namespace FourPaws\SapBundle\Service;
 
 use Cocur\Slugify\SlugifyInterface;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
+use FourPaws\SapBundle\Exception\CantCreateReferenceItem;
+use FourPaws\SapBundle\Exception\LogicException;
 use FourPaws\SapBundle\ReferenceDirectory\SapReferenceStorage;
 
 class ReferenceService
@@ -28,12 +30,22 @@ class ReferenceService
      * @param string $xmlId
      * @param string $name
      *
+     * @throws \FourPaws\SapBundle\Exception\LogicException
+     * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
      * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
-     * @return null|HlbReferenceItem
+     * @return HlbReferenceItem
      */
-    public function getOrCreate(string $propertyCode, string $xmlId, string $name)
+    public function getOrCreate(string $propertyCode, string $xmlId, string $name): HlbReferenceItem
     {
-        return $this->get($propertyCode, $xmlId) ?: $this->create($propertyCode, $xmlId, $name);
+        $result = $this->get($propertyCode, $xmlId);
+        if (!$result) {
+            $result = $this->create($propertyCode, $xmlId, $name);
+        }
+        if (!$result) {
+            throw new LogicException('For some reason created item was not get from dataManager');
+        }
+
+        return $result;
     }
 
     /**
@@ -52,6 +64,7 @@ class ReferenceService
      * @param string $xmlId
      * @param string $name
      *
+     * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
      * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
      * @return null|HlbReferenceItem
      */
@@ -64,7 +77,10 @@ class ReferenceService
             'UF_NAME'   => $name,
         ]);
 
-        return $addResult->isSuccess() ? $this->get($propertyCode, $xmlId) : null;
+        if ($addResult->isSuccess()) {
+            return $this->get($propertyCode, $xmlId);
+        }
+        throw new CantCreateReferenceItem(implode(' ', $addResult->getErrorMessages()));
     }
 
     /**
