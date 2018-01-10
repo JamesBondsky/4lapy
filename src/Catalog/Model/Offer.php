@@ -18,7 +18,6 @@ use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\BitrixOrm\Query\CatalogProductQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Query\ProductQuery;
-use FourPaws\StoreBundle\Service\StoreService;
 use JMS\Serializer\Annotation\Accessor;
 use JMS\Serializer\Annotation as Serializer;
 use JMS\Serializer\Annotation\Groups;
@@ -347,7 +346,7 @@ class Offer extends IblockElement
     public function getProduct()
     {
         if (null === $this->product) {
-            $this->product = (new ProductQuery())->withFilter(['=ID' => (int)$this->PROPERTY_CML2_LINK])
+            $this->product = (new ProductQuery())->withFilter(['=ID' => $this->getCml2Link()])
                 ->exec()
                 ->current();
 
@@ -357,6 +356,14 @@ class Offer extends IblockElement
         }
 
         return $this->product;
+    }
+
+    /**
+     * @return int
+     */
+    public function getCml2Link(): int
+    {
+        return (int)$this->PROPERTY_CML2_LINK;
     }
 
     /**

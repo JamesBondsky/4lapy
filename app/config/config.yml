@@ -123,3 +123,8 @@ four_paws_sap:
       - FourPaws\SapBundle\Consumer\OrderStatusConsumer
     delivery_schedule:
       - FourPaws\SapBundle\Consumer\DeliveryScheduleConsumer
+
+cocur_slugify:
+    lowercase: true
+    separator: '_'
+    rulesets: [default, russian]

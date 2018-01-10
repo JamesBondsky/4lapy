@@ -28,10 +28,10 @@ class SapReferenceRegistry
     /**
      * @param string $sapPropertyCode
      *
-     * @return DataManager
      * @throws NotFoundDataManagerException
+     * @return DataManager
      */
-    public function get(string $sapPropertyCode)
+    public function get(string $sapPropertyCode): DataManager
     {
         $dataManager = $this->collection->get($sapPropertyCode);
         if ($dataManager) {
@@ -39,5 +39,13 @@ class SapReferenceRegistry
         }
 
         throw new NotFoundDataManagerException(sprintf('DataManager for %s property not found', $sapPropertyCode));
+    }
+
+    /**
+     * @return Collection|DataManager[]
+     */
+    public function getCollection(): Collection
+    {
+        return $this->collection;
     }
 }

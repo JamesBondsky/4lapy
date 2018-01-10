@@ -7,6 +7,7 @@ use FourPaws\DeliveryBundle\Event as DeliveryEvent;
 use FourPaws\IblockProps\Event as IblockPropsEvent;
 use FourPaws\ProductAutoSort\Event as ProductAutoSortEvent;
 use FourPaws\SaleBundle\EventController\Event as SaleEvent;
+use FourPaws\SapBundle\Subscriber\BitrixEvents;
 use FourPaws\Search\EventHandlers as SearchEventHandlers;
 use FourPaws\UserBundle\EventController\Event as UserEvent;
 use FourPaws\UserProps\Event as UserPropLocationEvent;
@@ -28,8 +29,9 @@ final class EventInitializer
         SearchEventHandlers::class,
         UserEvent::class,
         UserPropLocationEvent::class,
+        BitrixEvents::class,
     ];
-    
+
     /**
      * Исполняем хендлеры
      *
@@ -44,22 +46,21 @@ final class EventInitializer
             $class::initHandlers($eventManager);
         }
     }
-    
+
     /**
-     * @return \Generator
-     *
      * @throws \ReflectionException
      * @throws \RuntimeException
+     * @return \Generator
      */
     private function getServiceHandlerClassList()
     {
         foreach (self::SERVICE_HANDLER_CLASSES as $serviceHandlerClass) {
             $interfaces = (new \ReflectionClass($serviceHandlerClass))->getInterfaceNames();
-    
-            if (!in_array(ServiceHandlerInterface::class, $interfaces, true)) {
+
+            if (!\in_array(ServiceHandlerInterface::class, $interfaces, true)) {
                 throw new \RuntimeException('Handler class must be an instance of ServiceHandlerInterface');
             }
-    
+
             yield $serviceHandlerClass;
         }
     }

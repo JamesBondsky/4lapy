@@ -496,7 +496,7 @@ class UnitOfMeasurement
      *
      * @return UnitOfMeasurement
      */
-    public function setBarCodes($barCodes)
+    public function setBarCodes($barCodes): UnitOfMeasurement
     {
         $this->barCodes = $barCodes;
         return $this;
