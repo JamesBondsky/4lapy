@@ -13,12 +13,12 @@ class HlbReferenceItem extends HlbItemBase
      * @var string
      */
     protected $UF_LINK = '';
-    
+
     /**
      * @var string
      */
     protected $UF_DESCRIPTION = '';
-    
+
     /**
      * @var string
      */
@@ -34,17 +34,22 @@ class HlbReferenceItem extends HlbItemBase
      */
     protected $UF_XML_ID = '';
 
+    /**
+     * @var string
+     */
+    protected $UF_CODE = '';
+
     //TODO UF_DEF типа "Да/Нет"
     //TODO UF_FILE типа "Файл"
-    
+
     /**
      * @return string
      */
-    public function getLink() : string
+    public function getLink(): string
     {
         return $this->UF_LINK;
     }
-    
+
     /**
      * @param string $link
      *
@@ -53,18 +58,18 @@ class HlbReferenceItem extends HlbItemBase
     public function withLink(string $link)
     {
         $this->UF_LINK = $link;
-        
+
         return $this;
     }
-    
+
     /**
      * @return string
      */
-    public function getDescription() : string
+    public function getDescription(): string
     {
         return $this->UF_DESCRIPTION;
     }
-    
+
     /**
      * @param string $description
      *
@@ -73,18 +78,18 @@ class HlbReferenceItem extends HlbItemBase
     public function withDescription(string $description)
     {
         $this->UF_DESCRIPTION = $description;
-        
+
         return $this;
     }
-    
+
     /**
      * @return string
      */
-    public function getFullDescription() : string
+    public function getFullDescription(): string
     {
         return $this->UF_FULL_DESCRIPTION;
     }
-    
+
     /**
      * @param string $fullDescription
      *
@@ -93,7 +98,7 @@ class HlbReferenceItem extends HlbItemBase
     public function withFullDescription(string $fullDescription)
     {
         $this->UF_FULL_DESCRIPTION = $fullDescription;
-        
+
         return $this;
     }
 
@@ -157,6 +162,19 @@ class HlbReferenceItem extends HlbItemBase
         return $this;
     }
 
+    public function getCode(): string
+    {
+        return $this->UF_CODE;
+    }
 
-
+    /**
+     * @param string $code
+     *
+     * @return $this
+     */
+    public function withCode(string $code)
+    {
+        $this->UF_CODE = $code;
+        return $this;
+    }
 }
