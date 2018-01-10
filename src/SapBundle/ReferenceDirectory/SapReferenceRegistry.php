@@ -31,7 +31,7 @@ class SapReferenceRegistry
      * @throws NotFoundDataManagerException
      * @return DataManager
      */
-    public function get(string $sapPropertyCode)
+    public function get(string $sapPropertyCode): DataManager
     {
         $dataManager = $this->collection->get($sapPropertyCode);
         if ($dataManager) {
