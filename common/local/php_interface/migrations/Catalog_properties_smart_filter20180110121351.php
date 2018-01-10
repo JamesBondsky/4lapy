@@ -104,6 +104,7 @@ class Catalog_properties_smart_filter20180110121351 extends SprintMigrationBase
                 'FILTERS' => [
                     'MANUFACTURE_MATERIAL',
                     'PET_SIZE',
+                    'PET_GENDER'
                     // цвет
                 ],
             ],
@@ -343,16 +344,16 @@ class Catalog_properties_smart_filter20180110121351 extends SprintMigrationBase
             'VOLUME_REFERENCE',
         ],
     ];
-    
+
     protected $oldProductPropertyCodes = [
         '_root_' => [
             'PET_AGE',
             'PET_SIZE',
             'PET_GENDER',
-            'BRAND'
-        ]
+            'BRAND',
+        ],
     ];
-    
+
     protected $oldOfferPropertyCodes = [];
 
     /**
@@ -465,7 +466,20 @@ class Catalog_properties_smart_filter20180110121351 extends SprintMigrationBase
                             return false;
                         }
                     } else {
-                        if (!$this->addPropsToSmartFilter($iblockId, $propertyCodes, $section['ID'])) {
+                        $childSection = \CIBlockSection::GetList(
+                            [],
+                            [
+                                'IBLOCK_ID'         => $iblockId,
+                                'IBLOCK_SECTION_ID' => $section['ID'],
+                                'CODE'              => $key,
+                            ]
+                        )->Fetch();
+                        if (!$childSection) {
+                            $this->log()->error('Не найден раздел с кодом ' . $key);
+
+                            return false;
+                        }
+                        if (!$this->addPropsToSmartFilter($iblockId, $propertyCodes, $childSection['ID'])) {
                             return false;
                         }
                     }
