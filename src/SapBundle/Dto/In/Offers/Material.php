@@ -608,7 +608,7 @@ class Material
      *
      * @return Material
      */
-    public function setUnitsOfMeasure($unitsOfMeasure)
+    public function setUnitsOfMeasure($unitsOfMeasure): Material
     {
         $this->unitsOfMeasure = $unitsOfMeasure;
         return $this;
