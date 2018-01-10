@@ -41,6 +41,11 @@ class SapReferenceRegistry
         throw new NotFoundDataManagerException(sprintf('DataManager for %s property not found', $sapPropertyCode));
     }
 
+    public function has(string $sapPropertyCode): bool
+    {
+        return $this->collection->offsetExists($sapPropertyCode);
+    }
+
     /**
      * @return Collection|DataManager[]
      */

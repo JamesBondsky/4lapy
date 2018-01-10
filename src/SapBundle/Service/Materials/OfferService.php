@@ -1,12 +1,17 @@
 <?php
 
-namespace FourPaws\SapBundle\Service;
+namespace FourPaws\SapBundle\Service\Materials;
 
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\Application;
 use FourPaws\SapBundle\Dto\In\Offers\Material;
+use FourPaws\SapBundle\Service\ReferenceService;
+use Psr\Log\LoggerAwareInterface;
 
-class OfferService
+class OfferService implements LoggerAwareInterface
 {
+    use LazyLoggerAwareTrait;
+
     /**
      * @var ReferenceService
      */
@@ -30,15 +35,16 @@ class OfferService
     }
 
 
+    /**
+     * @param Material $material
+     *
+     * @throws \Bitrix\Main\Db\SqlQueryException
+     */
     public function createFromMaterial(Material $material)
     {
+        $this->connect->startTransaction();
 
-    }
 
-    protected function createReference(Material $material)
-    {
-        return [
-
-        ];
+        $this->connect->commitTransaction();
     }
 }

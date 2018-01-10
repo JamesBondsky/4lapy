@@ -2,6 +2,7 @@
 
 namespace FourPaws\SapBundle\ReferenceDirectory;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\BitrixOrm\Collection\HlbReferenceItemCollection;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
@@ -22,6 +23,7 @@ class SapReferenceStorage
     public function __construct(SapReferenceRegistry $referenceRegistry)
     {
         $this->referenceRegistry = $referenceRegistry;
+        $this->collection = new ArrayCollection();
     }
 
     /**
