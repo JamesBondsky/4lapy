@@ -11,6 +11,13 @@ use FourPaws\Enum\IblockType;
 
 class ProductQuery extends IblockElementQuery
 {
+    public static function getActiveAccessableElementsFilter(): array
+    {
+        $array = parent::getActiveAccessableElementsFilter();
+        $array['SECTION_GLOBAL_ACTIVE'] = 'Y';
+        return $array;
+    }
+
     /**
      * @inheritdoc
      */
@@ -69,6 +76,7 @@ class ProductQuery extends IblockElementQuery
             'PROPERTY_GROUP_NAME',
             'PROPERTY_PRODUCED_BY_HOLDER',
             'PROPERTY_SPECIFICATIONS',
+            'PROPERTY_PACKING_COMBINATION',
         ];
     }
 
@@ -77,10 +85,7 @@ class ProductQuery extends IblockElementQuery
      */
     public function getBaseFilter(): array
     {
-        return [
-            'IBLOCK_ID'             => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS),
-            'SECTION_GLOBAL_ACTIVE' => 'Y',
-        ];
+        return ['IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS)];
     }
 
     /**

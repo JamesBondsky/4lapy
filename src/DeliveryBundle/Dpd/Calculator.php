@@ -67,6 +67,8 @@ class Calculator extends \Ipolh\DPD\Delivery\DPD
             'DAYS'      => $result['DPD_TARIFF']['DAYS'],
         ];
 
+        $result['VALUE'] = floor($result['VALUE']);
+
         return $result;
     }
 
