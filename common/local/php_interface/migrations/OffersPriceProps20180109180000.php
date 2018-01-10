@@ -7,7 +7,7 @@ class OffersPriceProps20180109180000 extends \Adv\Bitrixtools\Migration\SprintMi
 
     public function up()
     {
-        //$obHelper = new \Sprint\Migration\HelperManager();
+        //$helper = new \Sprint\Migration\HelperManager();
         if (!\Bitrix\Main\Loader::includeModule('iblock')) {
             return false;
         }
@@ -24,20 +24,20 @@ class OffersPriceProps20180109180000 extends \Adv\Bitrixtools\Migration\SprintMi
      */
     protected function addOffersProps()
     {
-        $iTmpIBlockId = $this->getIBlockIdByCode('offers', 'catalog');
-        if (!$iTmpIBlockId) {
+        $tmpIBlockId = $this->getIBlockIdByCode('offers', 'catalog');
+        if (!$tmpIBlockId) {
             return false;
         }
 
-        $obHelper = new \Sprint\Migration\HelperManager();
+        $helper = new \Sprint\Migration\HelperManager();
 
-        $iPropsSort = 5000;
+        $propsSort = 5000;
 
         // ---
-        $sTmpPropCode = 'PRICE_ACTION';
-        $iPropsSort += 100;
-        $obHelper->Iblock()->addPropertyIfNotExists(
-            $iTmpIBlockId,
+        $tmpPropCode = 'PRICE_ACTION';
+        $propsSort += 100;
+        $helper->Iblock()->addPropertyIfNotExists(
+            $tmpIBlockId,
             [
                 'NAME' => 'Цена по акции',
                 'PROPERTY_TYPE' => 'N',
@@ -48,8 +48,8 @@ class OffersPriceProps20180109180000 extends \Adv\Bitrixtools\Migration\SprintMi
                 'MULTIPLE' => 'N',
                 'ACTIVE' => 'Y',
                 'FILTRABLE' => 'Y',
-                'SORT' => $iPropsSort,
-                'CODE' => $sTmpPropCode,
+                'SORT' => $propsSort,
+                'CODE' => $tmpPropCode,
                 'ROW_COUNT' => '1',
                 'COL_COUNT' => '10',
                 'HINT' => '',
@@ -57,10 +57,10 @@ class OffersPriceProps20180109180000 extends \Adv\Bitrixtools\Migration\SprintMi
         );
 
         // ---
-        $sTmpPropCode = 'COND_FOR_ACTION';
-        $iPropsSort += 100;
-        $obHelper->Iblock()->addPropertyIfNotExists(
-            $iTmpIBlockId,
+        $tmpPropCode = 'COND_FOR_ACTION';
+        $propsSort += 100;
+        $helper->Iblock()->addPropertyIfNotExists(
+            $tmpIBlockId,
             [
                 'NAME' => 'Тип цены по акции',
                 'PROPERTY_TYPE' => 'S',
@@ -71,8 +71,8 @@ class OffersPriceProps20180109180000 extends \Adv\Bitrixtools\Migration\SprintMi
                 'MULTIPLE' => 'N',
                 'ACTIVE' => 'Y',
                 'FILTRABLE' => 'Y',
-                'SORT' => $iPropsSort,
-                'CODE' => $sTmpPropCode,
+                'SORT' => $propsSort,
+                'CODE' => $tmpPropCode,
                 'ROW_COUNT' => '1',
                 'COL_COUNT' => '10',
                 'HINT' => 'Пусто – розничная цена; VKA0 – цена по акции "Рекламная цена"; ZRBT – цена по акции "Скидка на товар"'
@@ -80,10 +80,10 @@ class OffersPriceProps20180109180000 extends \Adv\Bitrixtools\Migration\SprintMi
         );
 
         // ---
-        $sTmpPropCode = 'COND_VALUE';
-        $iPropsSort += 100;
-        $obHelper->Iblock()->addPropertyIfNotExists(
-            $iTmpIBlockId,
+        $tmpPropCode = 'COND_VALUE';
+        $propsSort += 100;
+        $helper->Iblock()->addPropertyIfNotExists(
+            $tmpIBlockId,
             [
                 'NAME' => 'Размер скидки на товар',
                 'PROPERTY_TYPE' => 'N',
@@ -94,42 +94,42 @@ class OffersPriceProps20180109180000 extends \Adv\Bitrixtools\Migration\SprintMi
                 'MULTIPLE' => 'N',
                 'ACTIVE' => 'Y',
                 'FILTRABLE' => 'Y',
-                'SORT' => $iPropsSort,
-                'CODE' => $sTmpPropCode,
+                'SORT' => $propsSort,
+                'CODE' => $tmpPropCode,
                 'ROW_COUNT' => '1',
                 'COL_COUNT' => '10',
                 'HINT' => 'Содержит процент скидки по акции "Скидка на товар" (ZRBT) со знаком минус.'
             ]
         );
 
-        $arTabs = $obHelper->AdminIblock()->extractElementForm($iTmpIBlockId);
-        $arTabs['Торговое предложение']['PROPERTY_PRICE_ACTION'] = 'Цена по акции';
-        $arTabs['Торговое предложение']['PROPERTY_COND_FOR_ACTION'] = 'Тип цены по акции';
-        $arTabs['Торговое предложение']['PROPERTY_COND_VALUE'] = 'Размер скидки на товар';
-        $obHelper->AdminIblock()->buildElementForm($iTmpIBlockId, $arTabs);
+        $tabs = $helper->AdminIblock()->extractElementForm($tmpIBlockId);
+        $tabs['Торговое предложение']['PROPERTY_PRICE_ACTION'] = 'Цена по акции';
+        $tabs['Торговое предложение']['PROPERTY_COND_FOR_ACTION'] = 'Тип цены по акции';
+        $tabs['Торговое предложение']['PROPERTY_COND_VALUE'] = 'Размер скидки на товар';
+        $helper->AdminIblock()->buildElementForm($tmpIBlockId, $tabs);
 
         return true;
     }
 
     /**
-     * @param string $sIBlockCode
-     * @param string $sIBlockType
+     * @param string $iblockCode
+     * @param string $iblockType
      * @return int
      */
-    protected function getIBlockIdByCode($sIBlockCode, $sIBlockType = '')
+    protected function getIBlockIdByCode($iblockCode, $iblockType = '')
     {
-        $iReturn = 0;
+        $return = 0;
 
-        $arFilter = array(
+        $filter = array(
             'CHECK_PERMISSIONS' => 'N',
-            'CODE' => $sIBlockCode,
+            'CODE' => $iblockCode,
         );
-        if (strlen($sIBlockType)) {
-            $arFilter['TYPE'] = $sIBlockType;
+        if (strlen($iblockType)) {
+            $filter['TYPE'] = $iblockType;
         }
-        $arIBlock = \CIBlock::GetList(array('ID' => 'ASC'), $arFilter)->fetch();
-        $iReturn = $arIBlock ? $arIBlock['ID'] : 0;
+        $iblock = \CIBlock::GetList(array('ID' => 'ASC'), $filter)->fetch();
+        $return = $iblock ? $iblock['ID'] : 0;
 
-        return $iReturn;
+        return $return;
     }
 }
