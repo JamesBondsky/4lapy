@@ -79,15 +79,17 @@ class ReferenceService
         $code = $this->slugify->slugify($name);
         do {
             if ($i > 10) {
-                return md5($code . microtime());
+                $resultCode = md5($code . microtime());
+                break;
             }
+            $resultCode = $code . ($i > 0 ? $i : '');
             $result = $this->referenceStorage->findByCallable(
                 $propertyCode,
-                function (HlbReferenceItem $item) use ($code) {
-                    return $item->getCode() === $code;
+                function (HlbReferenceItem $item) use ($resultCode) {
+                    return $item->getCode() === $resultCode;
                 }
             );
         } while ($result->count());
-        return $code . ($i > 0 ? $i : '');
+        return $resultCode;
     }
 }
