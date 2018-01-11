@@ -195,8 +195,9 @@ class StringToReference extends AbstractConverter
         $externalKey = $this->transliterate($value);
         
         $fields = [
-            $fieldName       => $value,
-            self::FIELD_CODE => $externalKey,
+            $fieldName               => $value,
+            self::FIELD_EXTERNAL_KEY => $externalKey,
+            self::FIELD_CODE         => $externalKey,
         ];
         
         $select = [self::FIELD_EXTERNAL_KEY];
