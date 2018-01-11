@@ -3,6 +3,9 @@
 namespace FourPaws\BitrixOrm\Model;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
+use FourPaws\BitrixOrm\Model\Interfaces\ActiveReadModelInterface;
+use FourPaws\BitrixOrm\Model\Interfaces\ItemInterface;
+use FourPaws\BitrixOrm\Model\Interfaces\ToArrayInterface;
 
 /**
  * Class BitrixArrayItemBase
@@ -20,7 +23,7 @@ use Adv\Bitrixtools\Tools\BitrixUtils;
  * @package FourPaws\BitrixOrm\Model
  *
  */
-abstract class BitrixArrayItemBase implements ModelInterface
+abstract class BitrixArrayItemBase implements ActiveReadModelInterface, ItemInterface, ToArrayInterface
 {
     const PATTERN_PROPERTY_VALUE = '~^(?>(PROPERTY_\w+)_VALUE)$~';
 
@@ -76,19 +79,134 @@ abstract class BitrixArrayItemBase implements ModelInterface
         }
     }
 
-    public function toArray()
+    /**
+     * @inheritDoc
+     */
+    public static function createFromPrimary(string $primary)
+    {
+        /**
+         * @todo Заглушка. Удалить после реализации создания в более конкретных классах.
+         */
+    }
+
+    public function toArray(): array
     {
         $result = [];
         //TODO Дописать лучше часть про поля
         foreach (get_object_vars($this) as $field => $value) {
-            if ('PROPERTY_' === substr($field, 0, 9)) {
+            if ($field === 'active' && \is_bool($value)) {
+                $value = BitrixUtils::bool2BitrixBool($value);
+                $result['ACTIVE'] = $value;
+                continue;
+            }
+            if (0 === strpos($field, 'PROPERTY_')) {
                 $result['PROPERTY_VALUES'][substr($field, 9)] = $value;
-            } elseif (!is_object($value) && !is_null($value)) {
+            } elseif (!\is_object($value) && null !== $value) {
                 $result[$field] = $value;
             }
         }
 
         return $result;
+    }
+
+    /**
+     * @return int
+     */
+    public function getId(): int
+    {
+        return (int)$this->ID;
+    }
+
+    /**
+     * @param int $id
+     *
+     * @return $this
+     */
+    public function withId(int $id): ItemInterface
+    {
+        $this->ID = $id;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getXmlId(): string
+    {
+        return $this->XML_ID;
+    }
+
+    /**
+     * @param string $xmlId
+     *
+     * @return $this
+     */
+    public function withXmlId(string $xmlId): ItemInterface
+    {
+        $this->XML_ID = $xmlId;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isActive(): bool
+    {
+        return $this->active;
+    }
+
+    /**
+     * @param bool $active
+     *
+     * @return $this
+     */
+    public function withActive(bool $active): ItemInterface
+    {
+        $this->active = $active;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getName(): string
+    {
+        return $this->NAME;
+    }
+
+    /**
+     * @param string $name
+     *
+     * @return $this
+     */
+    public function withName(string $name): ItemInterface
+    {
+        $this->NAME = $name;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getSort(): int
+    {
+        return (int)$this->SORT;
+    }
+
+    /**
+     * @param int $sort
+     *
+     * @return $this
+     */
+    public function withSort(int $sort): ItemInterface
+    {
+        $this->SORT = $sort;
+
+        return $this;
     }
 
     /**
@@ -120,115 +238,4 @@ abstract class BitrixArrayItemBase implements ModelInterface
     {
         return property_exists($this, $fieldName);
     }
-
-    /**
-     * @return int
-     */
-    public function getId(): int
-    {
-        return (int)$this->ID;
-    }
-
-    /**
-     * @param int $ID
-     *
-     * @return $this
-     */
-    public function withId(int $ID)
-    {
-        $this->ID = $ID;
-
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getXmlId(): string
-    {
-        return $this->XML_ID;
-    }
-
-    /**
-     * @param string $XML_ID
-     *
-     * @return $this
-     */
-    public function withXmlId(string $XML_ID)
-    {
-        $this->XML_ID = $XML_ID;
-
-        return $this;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isActive(): bool
-    {
-        return $this->active;
-    }
-
-    /**
-     * @param bool $active
-     *
-     * @return $this
-     */
-    public function withActive(bool $active)
-    {
-        $this->active = $active;
-
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getName(): string
-    {
-        return $this->NAME;
-    }
-
-    /**
-     * @param string $NAME
-     *
-     * @return $this
-     */
-    public function withName(string $NAME)
-    {
-        $this->NAME = $NAME;
-
-        return $this;
-    }
-
-    /**
-     * @return int
-     */
-    public function getSort(): int
-    {
-        return (int)$this->SORT;
-    }
-
-    /**
-     * @param int $sort
-     *
-     * @return $this
-     */
-    public function withSort(int $sort)
-    {
-        $this->SORT = $sort;
-
-        return $this;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public static function createFromPrimary(string $primary): ModelInterface
-    {
-        /**
-         * @todo Заглушка. Удалить после реализации создания в более конкретных классах.
-         */
-    }
-
 }

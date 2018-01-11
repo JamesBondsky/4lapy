@@ -4,6 +4,7 @@ namespace FourPaws\SapBundle\DependencyInjection\Compiler;
 
 use FourPaws\SapBundle\ReferenceDirectory\ReferenceRepositoryRegistry;
 use FourPaws\SapBundle\Repository\ReferenceRepository;
+use FourPaws\SapBundle\Subscriber\BitrixEvents;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
@@ -28,6 +29,7 @@ class ReferenceRepositoryRegistryPass implements CompilerPassInterface
         }
 
         $registry = $container->getDefinition(ReferenceRepositoryRegistry::class);
+        $eventRegistration = $container->getDefinition(BitrixEvents::class);
 
         $taggedServices = $container->findTaggedServiceIds('sap.reference');
 
@@ -37,8 +39,8 @@ class ReferenceRepositoryRegistryPass implements CompilerPassInterface
                 $repositoryId = 'sap.reference.repository.' . strtolower($property);
                 $definition = new Definition(ReferenceRepository::class, [new Reference($id)]);
                 $container->setDefinition($repositoryId, $definition);
-
                 $registry->addMethodCall('register', [$property, new Reference($repositoryId)]);
+                $eventRegistration->addMethodCall('add', [$property, new Reference($id)]);
             }
         }
     }

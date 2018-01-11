@@ -2,11 +2,11 @@
 
 namespace FourPaws\BitrixOrm\Model;
 
-
 use FourPaws\BitrixOrm\Model\Exceptions\CatalogProductNotFoundException;
+use FourPaws\BitrixOrm\Model\Interfaces\ActiveReadModelInterface;
 use FourPaws\BitrixOrm\Query\CatalogProductQuery;
 
-class CatalogProduct implements ModelInterface
+class CatalogProduct implements ActiveReadModelInterface
 {
     /**
      * @var int
@@ -75,16 +75,16 @@ class CatalogProduct implements ModelInterface
     /**
      * @param string $primary
      *
-     * @return CatalogProduct
      * @throws CatalogProductNotFoundException
+     * @return CatalogProduct
      */
-    public static function createFromPrimary(string $primary): ModelInterface
+    public static function createFromPrimary(string $primary): CatalogProduct
     {
         $fields = (new CatalogProductQuery())
             ->withFilter(['ID' => $primary])
             ->exec()
             ->current();
-        if($fields) {
+        if ($fields) {
             return new static($fields);
         }
 

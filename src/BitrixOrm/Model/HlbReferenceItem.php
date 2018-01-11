@@ -7,11 +7,6 @@ class HlbReferenceItem extends HlbItemBase
     /**
      * @var string
      */
-    protected $UF_NAME = '';
-
-    /**
-     * @var string
-     */
     protected $UF_LINK = '';
 
     /**
@@ -23,21 +18,6 @@ class HlbReferenceItem extends HlbItemBase
      * @var string
      */
     protected $UF_FULL_DESCRIPTION = '';
-
-    /**
-     * @var int
-     */
-    protected $UF_SORT = 500;
-
-    /**
-     * @var string
-     */
-    protected $UF_XML_ID = '';
-
-    /**
-     * @var string
-     */
-    protected $UF_CODE = '';
 
     //TODO UF_DEF типа "Да/Нет"
     //TODO UF_FILE типа "Файл"
@@ -99,82 +79,6 @@ class HlbReferenceItem extends HlbItemBase
     {
         $this->UF_FULL_DESCRIPTION = $fullDescription;
 
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getName(): string
-    {
-        return $this->UF_NAME;
-    }
-
-    /**
-     * @param string $name
-     *
-     * @return $this
-     */
-    public function withName(string $name)
-    {
-        $this->UF_NAME = $name;
-
-        return $this;
-    }
-
-    /**
-     * @return int
-     */
-    public function getSort(): int
-    {
-        return (int)$this->UF_SORT;
-    }
-
-    /**
-     * @param int $sort
-     *
-     * @return $this
-     */
-    public function withSort(int $sort)
-    {
-        $this->UF_SORT = $sort;
-
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getXmlId(): string
-    {
-        return $this->UF_XML_ID;
-    }
-
-    /**
-     * @param string $xmlId
-     *
-     * @return $this
-     */
-    public function withXmlId(string $xmlId)
-    {
-        $this->UF_XML_ID = $xmlId;
-
-        return $this;
-    }
-
-    public function getCode(): string
-    {
-        return $this->UF_CODE;
-    }
-
-    /**
-     * @param string $code
-     *
-     * @return $this
-     */
-    public function withCode(string $code)
-    {
-        $this->UF_CODE = $code;
         return $this;
     }
 }
