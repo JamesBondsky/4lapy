@@ -4,6 +4,13 @@ namespace FourPaws\SapBundle\Dto\In\Stock;
 
 use JMS\Serializer\Annotation as Serializer;
 
+/**
+ * Class Dc
+ * Класс для элемента <DC /> XML импорта складских остатков РЦ
+ *
+ * @package FourPaws\SapBundle\Dto\In
+ * @Serializer\XmlRoot("DC")
+  */
 class Dc
 {
     /**
@@ -49,8 +56,7 @@ class Dc
     }
 
     /**
-     * @param string $werksCode
-     *
+     * @param string $offerXmlId
      * @return Dc
      */
     public function setOfferXmlId(string $offerXmlId): Dc
