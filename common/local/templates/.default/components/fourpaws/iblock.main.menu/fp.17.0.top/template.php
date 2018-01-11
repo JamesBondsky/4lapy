@@ -4,7 +4,7 @@
 /**
  * Главное меню сайта
  *
- * @updated: 28.12.2017
+ * @updated: 11.01.2018
  */
 $this->setFrameMode(true);
 
@@ -114,7 +114,7 @@ foreach ($arResult['MENU_TREE'] as $arFirstLevelItem) {
                                         $sTmpTitle = 'Популярные бренды';
                                         ?><div class="b-menu-main__popular-brand">
                                             <div class="b-menu-main__title js-open-step-mobile"><?php
-                                                /*
+                                                //*
                                                 ?><a class="b-link b-link--brand-menu js-not-href js-not-href--brand-menu" href="<?=$sTmpUrl?>" title="<?=$sTmpTitle?>"><?php
                                                     echo '<span class="b-link__text b-link__text--brand-menu">'.$sTmpText.'</span>';
                                                     echo $sArrowDownIcoThird;
@@ -126,27 +126,23 @@ foreach ($arResult['MENU_TREE'] as $arFirstLevelItem) {
                                                 ?></span><?php
                                                 //*/
                                             ?></div>
-                                            <div class="b-popular-brand b-popular-brand--flex b-popular-brand--menu-dropdown js-step-mobile">
-                                                <div class="b-back-link"><?php
-                                                    /*
-                                                    ?><a class="b-back-link__link js-back-submenu" href="<?=$sTmpUrl?>" title="<?=$sTmpTitle?>"><?php
+                                            <div class="b-popular-brand b-popular-brand--flex b-popular-brand--menu-dropdown js-step-mobile"><?php
+                                                /*
+                                                ?><div class="b-popular-brand-item b-popular-brand-item--menu-dropdown">
+                                                    <a class="b-back-link__link js-back-submenu" href="<?=$sTmpUrl?>" title="<?=$sTmpTitle?>"><?php
                                                         echo $sArrowDownOrangeIco;
                                                         echo $sTmpText;
-                                                    ?></a><?php
-                                                    /*/
-                                                    ?><span class="b-back-link__link js-back-submenu"><?php
-                                                        echo $sArrowDownOrangeIco;
-                                                        echo $sTmpText;
-                                                    ?></span><?php
-                                                    //*/
-                                                ?></div><?php
+                                                    ?></a>
+                                                </div><?php
+                                                */
                                                 foreach ($arResult['SECTIONS_POPULAR_BRANDS'][$arSecondLevelItem['SECTION_HREF']['ID']] as $arBrandItem) {
                                                     ?><div class="b-popular-brand-item b-popular-brand-item--menu-dropdown">
                                                         <a class="b-popular-brand-item__link b-popular-brand-item__link--menu-dropdown" title="<?=$arBrandItem['NAME']?>" href="<?=$arBrandItem['DETAIL_PAGE_URL']?>"><?php
                                                             echo '<span class="b-popular-brand-item__text">'.$arBrandItem['NAME'].'</span>';
                                                             echo $sArrowDownIcoBrand;
                                                             if ($arBrandItem['PRINT_PICTURE']) {
-                                                                ?><img class="b-popular-brand-item__image js-image-wrapper" src="<?=$arBrandItem['PRINT_PICTURE']['SRC']?>" alt="<?=$arBrandItem['NAME']?>" title="<?=$arBrandItem['NAME']?>"><?php
+                                                                $arImg = $arBrandItem['PRINT_PICTURE'];
+                                                                ?><img class="b-popular-brand-item__image js-image-wrapper" src="<?=$arImg['SRC']?>" alt="<?=$arImg['ALT']?>" title="<?=$arImg['TITLE']?>"><?php
                                                             }
                                                         ?></a>
                                                     </div><?php
@@ -161,7 +157,8 @@ foreach ($arResult['MENU_TREE'] as $arFirstLevelItem) {
                 ?></ul>
             </div>
         </div>
-        <div class="b-menu-mobile js-menu-mobile js-step-mobile"></div><?php
+        <div class="b-menu-mobile js-menu-mobile js-step-mobile">
+        </div><?php
     } else {
         ?><div class="b-menu-dropdown b-menu-dropdown--brands js-menu-dropdown js-menu-brands-desktop">
             <div class="b-menu-brands js-menu-brand-content">
