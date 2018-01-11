@@ -2,10 +2,9 @@
 
 namespace FourPaws\SapBundle\Consumer;
 
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Catalog\StoreProductTable;
 use Bitrix\Catalog\StoreTable;
-use Bitrix\Main\Loader;
-use Bitrix\Main\SystemException;
 use Bitrix\Main\Result;
 use Bitrix\Main\Error;
 use FourPaws\SapBundle\Dto\In\Stock\Stock;
@@ -75,41 +74,11 @@ class StockConsumer implements ConsumerInterface
     }
 
     /**
-     * @return void
-     * @throws SystemException
-     */
-    protected function incModules()
-    {
-        if (!Loader::includeModule('iblock')) {
-            throw new SystemException('Module iblock is not installed');
-        }
-
-        if (!Loader::includeModule('catalog')) {
-            throw new SystemException('Module catalog is not installed');
-        }
-    }
-
-    /**
      * @return int
      */
     protected function getOffersIBlockId(): int
     {
-        static $iblockId = -1;
-        if ($iblockId < 0) {
-            $this->incModules();
-            $tmpItem = \CIBlock::GetList(
-                [
-                    'ID' => 'ASC'
-                ],
-                [
-                    'CODE' => IblockCode::OFFERS,
-                    'TYPE' => IblockType::CATALOG,
-                    'CHECK_PERMISSIONS' => 'N',
-                ]
-            )->fetch();
-            $iblockId = $tmpItem['ID'] ? $tmpItem['ID'] : 0;
-        }
-        return $iblockId;
+        return IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS);
     }
 
     /**
@@ -152,7 +121,6 @@ class StockConsumer implements ConsumerInterface
     {
         $return = [];
         if (!isset($this->offersCache[$xmlId])) {
-            $this->incModules();
             $items = \CIBlockElement::GetList(
                 [
                     'ID' => 'ASC'
@@ -220,7 +188,6 @@ class StockConsumer implements ConsumerInterface
     {
         $return = [];
         if (!isset($this->storesCache[$xmlId])) {
-            $this->incModules();
             $items = StoreTable::getList(
                 [
                     'order' => [
@@ -278,8 +245,6 @@ class StockConsumer implements ConsumerInterface
         }
 
         if ($result->isSuccess()) {
-            $this->incModules();
-
             $offerData = $offerElementDataResult->getData();
             $storeData = $storeDataResult->getData();
             $stockValue = doubleval($dcItem->getStockValue());
