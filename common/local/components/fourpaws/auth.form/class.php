@@ -33,6 +33,7 @@ use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
 use FourPaws\UserBundle\Exception\InvalidCredentialException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Exception\ValidationException;
@@ -332,9 +333,6 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      * @param string $phone
      *
      * @param string $confirmCode
-     *
-     * @throws ContactUpdateException
-     * @throws ManzanaServiceException
      * @throws ValidationException
      * @throws InvalidIdentifierException
      * @throws ServiceNotFoundException
@@ -364,6 +362,11 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 $e->getMessage(),
                 ['errors' => ['expiredConfirmCode' => $e->getMessage()]]
             );
+        } catch (NotFoundConfirmedCodeException $e) {
+            return JsonErrorResponse::createWithData(
+                $e->getMessage(),
+                ['errors' => ['notFoundConfirmCode' => $e->getMessage()]]
+            );
         } catch (WrongPhoneNumberException $e) {
             return JsonErrorResponse::createWithData(
                 $e->getMessage(),
@@ -380,8 +383,12 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             SerializerBuilder::create()->build()->fromArray($data, User::class)
         )) {
             /** @var ManzanaService $manzanaService */
+            $contactId = -2;
             $manzanaService = $container->get('manzana.service');
-            $contactId      = $manzanaService->getContactIdByPhone($phone);
+            try {
+                $contactId = $manzanaService->getContactIdByPhone($phone);
+            } catch (ManzanaServiceException $e) {
+            }
             if($contactId >= 0) {
                 $client = new Client();
                 if ($contactId > 0) {
@@ -391,7 +398,11 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 else{
                     $this->currentUserProvider->setClientPersonalDataByCurUser($client);
                 }
-                $manzanaService->updateContact($client);
+                try {
+                    $manzanaService->updateContact($client);
+                } catch (ManzanaServiceException $e) {
+                } catch (ContactUpdateException $e) {
+                }
             }
         }
         
