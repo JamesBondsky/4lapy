@@ -2,56 +2,136 @@
 
 namespace FourPaws\SapBundle\Repository;
 
-use Bitrix\Highloadblock\DataManager;
-use FourPaws\BitrixOrm\Query\HlbReferenceQuery;
+use Bitrix\Main\Entity\AddResult;
+use Bitrix\Main\Entity\UpdateResult;
+use Bitrix\Main\Error;
+use Doctrine\Common\Collections\Collection;
 use FourPaws\Catalog\Model\Offer;
-use FourPaws\SapBundle\Dto\In\Offers\Material;
-use FourPaws\SapBundle\Dto\In\Offers\Property;
-use FourPaws\SapBundle\Dto\In\Offers\PropertyValue;
-use FourPaws\SapBundle\Enum\OfferProperty;
-use FourPaws\SapBundle\ReferenceDirectory\SapReferenceStorage;
+use FourPaws\Catalog\Query\OfferQuery;
 
 class OfferRepository
 {
     /**
-     * @var SapReferenceStorage
+     * @var \CIBlockElement
      */
-    private $sapReferenceStorage;
+    private $iblockElement;
 
-    public function __construct(SapReferenceStorage $sapReferenceStorage)
+    public function __construct()
     {
-        $this->sapReferenceStorage = $sapReferenceStorage;
+        $this->iblockElement = new \CIBlockElement();
     }
 
-    public function createByMaterial(Material $material)
+    /**
+     * @param int $id
+     *
+     * @return Offer|null
+     */
+    public function find(int $id)
     {
+        return $this->findBy(['=ID' => $id], [], 1)->first();
     }
 
-    public function fillHlbReference(Offer $offer, Material $material)
+    /**
+     * @param string $xmlId
+     *
+     * @return Offer|null
+     */
+    public function findByXmlId(string $xmlId)
     {
-        $properties = $material->getProperties();
-
-        $colour = $properties->getProperty(OfferProperty::COLOUR);
-        $volume = $properties->getProperty(OfferProperty::VOLUME);
-        $clothingSize = $properties->getProperty(OfferProperty::CLOTHING_SIZE);
-        $kindOfPacking = $properties->getProperty(OfferProperty::KIND_OF_PACKING);
-        $seasonOfYear = $properties->getProperty(OfferProperty::SEASON_YEAR);
+        return $this->findBy(['XML_ID' => $xmlId], [], 1)->first();
     }
 
-    protected function getSapHlReference(Property $property)
+    /**
+     * @param array $criteria
+     * @param array $orderBy
+     * @param int   $limit
+     *
+     * @return Collection|Offer[]
+     */
+    public function findBy(array $criteria = [], array $orderBy = [], int $limit = 0): Collection
     {
-        /**
-         * @var PropertyValue $value
-         */
-        $value = $property->getValues()->first();
-        return $this->sapReferenceStorage->findByXmlId($property->getCode(), $value->getCode());
+        $query = $this->getQuery();
+        return $query
+            ->withFilter(array_merge($query->getBaseFilter(), $criteria))
+            ->withOrder($orderBy)
+            ->withNav($limit > 0 ? ['nTopCount' => $limit] : [])
+            ->exec();
     }
 
-    protected function getOrCreate(DataManager $dataManager, string $name, string $xmlId)
+    /**
+     * @param Offer $offer
+     *
+     * @return AddResult
+     */
+    public function add(Offer $offer)
     {
-        $hlbElement = (new HlbReferenceQuery($dataManager::query()))
-            ->withFilterParameter('=UF_XML_ID', $xmlId)
-            ->exec()
-            ->current();
+        $offer->withId(0);
+        $data = $offer->toArray();
+        unset($data['ID']);
+
+        $result = new AddResult();
+        if ($id = $this->iblockElement->Add($data)) {
+            $result->setId($id);
+            $offer->withId($id);
+        } elseif ($this->iblockElement->LAST_ERROR) {
+            $result->addError(new Error($this->iblockElement->LAST_ERROR));
+            $this->iblockElement->LAST_ERROR = null;
+        } else {
+            $result->addError(new Error('Неизвестная ошибка'));
+        }
+        return $result;
+    }
+
+    /**
+     * @param Offer $offer
+     *
+     * @return UpdateResult
+     */
+    public function update(Offer $offer)
+    {
+        $data = $offer->toArray();
+        $properties = $data['PROPERTY_VALUES'];
+        unset($data['PROPERTY_VALUES']);
+
+        $updateResult = new UpdateResult();
+        if ($this->iblockElement->Update($offer->getId(), $data)) {
+            $this->setProperties($offer->getId(), $properties);
+        } elseif ($this->iblockElement->LAST_ERROR) {
+            $updateResult->addError(new Error($this->iblockElement->LAST_ERROR));
+            $this->iblockElement->LAST_ERROR = null;
+        } else {
+            $updateResult->addError(new Error('Неизвестная ошибка'));
+        }
+        return $updateResult;
+    }
+
+    /**
+     * @param int  $id
+     * @param bool $active
+     *
+     * @return bool
+     */
+    public function setActive(int $id, bool $active = true)
+    {
+        return $this->iblockElement->Update($id, ['ACTIVE' => $active ? 'Y' : 'N']);
+    }
+
+    /**
+     * @param int   $elementId
+     * @param array $properties
+     */
+    public function setProperties(int $elementId, array $properties)
+    {
+        if ($properties) {
+            \CIBlockElement::SetPropertyValuesEx($elementId, $this->getQuery()->getSelect()['IBLOCK_ID'], $properties);
+        }
+    }
+
+    /**
+     * @return OfferQuery
+     */
+    protected function getQuery()
+    {
+        return new OfferQuery();
     }
 }

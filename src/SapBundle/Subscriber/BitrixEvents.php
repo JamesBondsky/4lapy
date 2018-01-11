@@ -27,29 +27,32 @@ class BitrixEvents implements ServiceHandlerInterface
          * @var DataManager $dataManager
          */
         $referenceStorage = Application::getInstance()->getContainer()->get(SapReferenceStorage::class);
-        foreach ($referenceStorage->getReferenceRegistry()->getCollection() as $code => $dataManager) {
-            $entity = $dataManager::getEntity();
-            $eventManager->addEventHandler(
-                $entity->getModule(),
-                static::compileEventName($entity, DataManager::EVENT_ON_AFTER_ADD),
-                function () use ($code, $referenceStorage) {
-                    $referenceStorage->clear($code);
-                }
-            );
-            $eventManager->addEventHandler(
-                $entity->getModule(),
-                static::compileEventName($entity, DataManager::EVENT_ON_AFTER_UPDATE),
-                function () use ($code, $referenceStorage) {
-                    $referenceStorage->clear($code);
-                }
-            );
-            $eventManager->addEventHandler(
-                $entity->getModule(),
-                static::compileEventName($entity, DataManager::EVENT_ON_AFTER_DELETE),
-                function () use ($code, $referenceStorage) {
-                    $referenceStorage->clear($code);
-                }
-            );
+        foreach ($referenceStorage->getReferenceRepositoryRegistry()->getCollection() as $code => $referenceRepository) {
+            /**
+             * @todo fix DataManager events
+             */
+//            $entity = $dataManager::getEntity();
+//            $eventManager->addEventHandler(
+//                $entity->getModule(),
+//                static::compileEventName($entity, DataManager::EVENT_ON_AFTER_ADD),
+//                function () use ($code, $referenceStorage) {
+//                    $referenceStorage->clear($code);
+//                }
+//            );
+//            $eventManager->addEventHandler(
+//                $entity->getModule(),
+//                static::compileEventName($entity, DataManager::EVENT_ON_AFTER_UPDATE),
+//                function () use ($code, $referenceStorage) {
+//                    $referenceStorage->clear($code);
+//                }
+//            );
+//            $eventManager->addEventHandler(
+//                $entity->getModule(),
+//                static::compileEventName($entity, DataManager::EVENT_ON_AFTER_DELETE),
+//                function () use ($code, $referenceStorage) {
+//                    $referenceStorage->clear($code);
+//                }
+//            );
         }
         return $eventManager;
     }
