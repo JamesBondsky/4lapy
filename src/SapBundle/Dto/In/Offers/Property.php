@@ -94,7 +94,7 @@ class Property
      *
      * @return Property
      */
-    public function setValues($values)
+    public function setValues($values): Property
     {
         $this->values = $values;
         return $this;

@@ -31,7 +31,7 @@ class SapReferenceRegistryPass implements CompilerPassInterface
         $taggedServices = $container->findTaggedServiceIds('sap.reference');
 
         foreach ($taggedServices as $id => $tags) {
-            $property = $tags[0]['type'] ?: '';
+            $property = $tags[0]['property'] ?: '';
             if ($property) {
                 $registry->addMethodCall('register', [$property, new Reference($id)]);
             }

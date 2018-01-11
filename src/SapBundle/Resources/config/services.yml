@@ -26,3 +26,6 @@ services:
     # todo: remove after development!
     FourPaws\SapBundle\Source\SourceRegistry:
         public: true
+
+    FourPaws\SapBundle\ReferenceDirectory\SapReferenceStorage:
+        public: true
