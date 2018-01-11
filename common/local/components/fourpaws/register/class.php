@@ -212,13 +212,10 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     /**
      * @param array $data
      *
-     * @throws NotAuthorizedException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
-     * @throws ManzanaServiceException
-     * @throws ContactUpdateException
      * @throws ServiceCircularReferenceException
      * @throws \RuntimeException
      * @return JsonResponse
@@ -255,14 +252,23 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         
         /** @var ManzanaService $manzanaService */
         $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
-        $contactId      = $manzanaService->getContactIdByCurUser($userEntity);
+        $contactId = -2;
+        try {
+            $contactId = $manzanaService->getContactIdByCurUser($userEntity);
+        } catch (ManzanaServiceException $e) {
+        } catch (NotAuthorizedException $e) {
+        }
         $client         = new Client();
         if ($contactId > 0) {
             $client->contactId = $contactId;
         }
         $this->currentUserProvider->setClientPersonalDataByCurUser($client, $userEntity);
-        $manzanaService->updateContact($client);
-        
+        try {
+            $manzanaService->updateContact($client);
+        } catch (ManzanaServiceException $e) {
+        } catch (ContactUpdateException $e) {
+        }
+    
         ob_start();
         /** @noinspection PhpIncludeInspection */
         include_once App::getDocumentRoot()
@@ -437,7 +443,6 @@ class FourPawsRegisterComponent extends \CBitrixComponent
      * @throws ServiceNotFoundException
      * @throws \Exception
      * @throws ApplicationCreateException
-     * @throws ManzanaServiceException
      * @throws ServiceCircularReferenceException
      * @return JsonResponse|string
      */
@@ -483,13 +488,16 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         
         /** @var ManzanaService $manzanaService */
         $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
-        $manzanaData    = $manzanaService->getUserDataByPhone($phone);
-        /** @var Clients $clients */
-        $clients = $manzanaData->clients;
-        if (\is_array($clients) && \count($clients) === 1) {
-            /** @noinspection PhpUnusedLocalVariableInspection */
-            /** @var Client $manzanaItem */
-            $manzanaItem = current($clients);
+        try {
+            $manzanaData = $manzanaService->getUserDataByPhone($phone);
+            /** @var Clients $clients */
+            $clients = $manzanaData->clients;
+            if (\is_array($clients) && \count($clients) === 1) {
+                /** @noinspection PhpUnusedLocalVariableInspection */
+                /** @var Client $manzanaItem */
+                $manzanaItem = current($clients);
+            }
+        } catch (ManzanaServiceException $e) {
         }
         
         return $mess;
