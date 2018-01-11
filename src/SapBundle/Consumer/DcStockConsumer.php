@@ -7,17 +7,14 @@ use Bitrix\Catalog\StoreProductTable;
 use Bitrix\Catalog\StoreTable;
 use Bitrix\Main\Result;
 use Bitrix\Main\Error;
-use FourPaws\SapBundle\Dto\In\Stock\Stock;
-use FourPaws\SapBundle\Dto\In\Stock\Dc;
+use FourPaws\SapBundle\Dto\In\DcStock\StockItem;
+use FourPaws\SapBundle\Dto\In\DcStock\DcStock;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\SapBundle\Exception\InvalidArgumentException;
 
-class StockConsumer implements ConsumerInterface
+class DcStockConsumer implements ConsumerInterface
 {
-    private $plantImCode = 'IM01';
-    private $plantDcCode = 'DC01';
-
     /** @var array $offersCache */
     protected $offersCache = [];
 
@@ -31,35 +28,23 @@ class StockConsumer implements ConsumerInterface
     protected $maxStoresCacheSize = 100;
 
     /**
-     * @param Stock $stock
+     * @param DcStock $dcStock
      *
      * @return bool
      */
-    public function consume($stock): bool
+    public function consume($dcStock): bool
     {
-        if (!$this->support($stock)) {
+        if (!$this->support($dcStock)) {
             return false;
         }
 
-        if (!$stock->getUploadToIm()) {
-            return false;
-        }
-
-        if (!$this->checkPlantImCode($stock->getPlantIm())) {
-            return false;
-        }
-
-        if (!$this->checkPlantDcCode($stock->getPlantDc())) {
-            return false;
-        }
-
-        foreach ($stock->getDcs() as $dcItem) {
-            if (!$dcItem instanceof Dc) {
-                throw new InvalidArgumentException(sprintf('Trying to pass not %s object', Dc::class));
+        foreach ($dcStock->getItems() as $stockItem) {
+            if (!$stockItem instanceof StockItem) {
+                throw new InvalidArgumentException(sprintf('Trying to pass not %s object', StockItem::class));
             }
-            $setStockResult = $this->setOfferStock($dcItem);
+            $this->setOfferStock($stockItem);
         }
-        
+
         return true;
     }
 
@@ -70,7 +55,7 @@ class StockConsumer implements ConsumerInterface
      */
     public function support($data): bool
     {
-        return \is_object($data) && $data instanceof Stock;
+        return \is_object($data) && $data instanceof DcStock;
     }
 
     /**
@@ -218,19 +203,21 @@ class StockConsumer implements ConsumerInterface
     }
 
     /**
-     * @param Dc $dcItem
+     * @param StockItem $stockItem
      * @param bool $getExtResult
      * @return Result
      */
-    protected function setOfferStock(Dc $dcItem, $getExtResult = true): Result
+    protected function setOfferStock(StockItem $stockItem, $getExtResult = true): Result
     {
         $result = new Result();
 
         $resultData = [];
-
+// !!!
+// Непонятно как следует обрабатывать значение $stockItem->getStockType()
+// !!!
         $offerElementDataResult = null;
         if ($result->isSuccess()) {
-            $offerElementDataResult = $this->getOfferElementDataByXmlId($dcItem->getOfferXmlId());
+            $offerElementDataResult = $this->getOfferElementDataByXmlId($stockItem->getOfferXmlId());
             if (!$offerElementDataResult->isSuccess()) {
                 $result->addErrors($offerElementDataResult->getErrors());
             }
@@ -238,7 +225,7 @@ class StockConsumer implements ConsumerInterface
 
         $storeDataResult = null;
         if ($result->isSuccess()) {
-            $storeDataResult = $this->getStoreDataByXmlId($dcItem->getWerksCode());
+            $storeDataResult = $this->getStoreDataByXmlId($stockItem->getPlantCode());
             if (!$storeDataResult->isSuccess()) {
                 $result->addErrors($storeDataResult->getErrors());
             }
@@ -247,7 +234,7 @@ class StockConsumer implements ConsumerInterface
         if ($result->isSuccess()) {
             $offerData = $offerElementDataResult->getData();
             $storeData = $storeDataResult->getData();
-            $stockValue = doubleval($dcItem->getStockValue());
+            $stockValue = doubleval($stockItem->getStockValue());
 
             $items = StoreProductTable::getList(
                 [
@@ -311,23 +298,5 @@ class StockConsumer implements ConsumerInterface
         $result->setData($resultData);
 
         return $result;
-    }
-    
-    /**
-     * @param string $plantImCode
-     * @return bool
-     */
-    protected function checkPlantImCode(string $plantImCode): bool
-    {
-        return $plantImCode == $this->plantImCode;
-    }
-
-    /**
-     * @param string $plantDcCode
-     * @return bool
-     */
-    protected function checkPlantDcCode(string $plantDcCode): bool
-    {
-        return $plantDcCode == $this->plantDcCode;
     }
 }
