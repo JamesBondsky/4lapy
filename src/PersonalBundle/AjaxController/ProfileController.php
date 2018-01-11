@@ -12,6 +12,8 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
+use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\External\Manzana\Model\Client;
@@ -223,12 +225,17 @@ class ProfileController extends Controller
             }
             
             $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
-            $contactId      = $manzanaService->getContactIdByCurUser();
-            if ($contactId >= 0) {
+            $client = null;
+            try {
+                $contactId = $manzanaService->getContactIdByCurUser();
                 $client = new Client();
-                if ($contactId > 0) {
-                    $client->contactId = $contactId;
-                }
+                $client->contactId = $contactId;
+            } catch (ManzanaServiceContactSearchMoreOneException $e) {
+            } catch (ManzanaServiceContactSearchNullException $e) {
+                $client = new Client();
+            } catch (ManzanaServiceException $e) {
+            }
+            if($client instanceof Client) {
                 $this->currentUserProvider->setClientPersonalDataByCurUser($client, $user);
                 $manzanaService->updateContact($client);
             }

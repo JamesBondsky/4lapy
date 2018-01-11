@@ -18,6 +18,8 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
+use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Exception\SmsSendErrorException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
@@ -380,16 +382,19 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         )) {
             /** @var ManzanaService $manzanaService */
             $manzanaService = $container->get('manzana.service');
-            $contactId      = $manzanaService->getContactIdByPhone($phone);
-            if($contactId >= 0) {
+            $client = null;
+            try {
+                $contactId = $manzanaService->getContactIdByPhone($phone);
                 $client = new Client();
-                if ($contactId > 0) {
-                    $client->contactId = $contactId;
-                    $client->phone = $phone;
-                }
-                else{
-                    $this->currentUserProvider->setClientPersonalDataByCurUser($client);
-                }
+                $client->contactId = $contactId;
+                $client->phone = $phone;
+            } catch (ManzanaServiceContactSearchMoreOneException $e) {
+            } catch (ManzanaServiceContactSearchNullException $e) {
+                $client = new Client();
+                $this->currentUserProvider->setClientPersonalDataByCurUser($client);
+            } catch (ManzanaServiceException $e) {
+            }
+            if($client instanceof Client) {
                 $manzanaService->updateContact($client);
             }
         }

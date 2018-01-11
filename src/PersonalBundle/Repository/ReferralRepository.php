@@ -6,16 +6,13 @@ use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Repository\BaseHlRepository;
 use FourPaws\PersonalBundle\Entity\Referral;
-use FourPaws\External\Manzana\Model\Referral as ManzaReferal;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
-use JMS\Serializer\ArrayTransformerInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
  * Class ReferralRepository
@@ -28,25 +25,6 @@ class ReferralRepository extends BaseHlRepository
     
     /** @var Referral $entity */
     protected $entity;
-    
-    private   $manzanaService;
-    
-    /**
-     * ReferralRepository constructor.
-     *
-     * @param ArrayTransformerInterface $arrayTransformer
-     * @param ValidatorInterface        $validator
-     *
-     * @throws \Exception
-     */
-    public function __construct(
-        ArrayTransformerInterface $arrayTransformer,
-        ValidatorInterface $validator
-    )
-    {
-        parent::__construct($arrayTransformer, $validator);
-        $this->manzanaService = App::getInstance()->getContainer()->get('manzana.service');
-    }
     
     /**
      * @return bool
@@ -81,38 +59,28 @@ class ReferralRepository extends BaseHlRepository
     {
         $curUserService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
         
-        $referals = $this->findBy(
+        $referrals = $this->findBy(
             [
                 'filter' => ['UF_USER_ID' => $curUserService->getCurrentUserId()],
-                'entityClass' => Referral::class,
+                'ttl'    => 360000,
             ]
         );
         
-        $arCards = [];
-        if(\is_array($referals) && !empty($referals)) {
-            /** @var Referral $item */
-            foreach ($referals as $key => $item) {
-                $arCards[$item->getCard()] = $key;
-            }
-        }
-        
-        $manzanaReferrals = $this->manzanaService->getUserReferralList($curUserService->getCurrentUser());
-        if(\is_array($manzanaReferrals) && !empty($manzanaReferrals)) {
-            /** @var ManzaReferal $item */
-            foreach ($manzanaReferrals as $item) {
-                if(!array_key_exists($item->cardNumber, $arCards)){
-                
-                }
-                else{
-                    /** @var Referral $referral */
-                    $referral =& $referals[$arCards[$item->cardNumber]];
-                    $referral->setBonus((float)$item->sumReferralBonus);
-                    $referral->setModerate($item->isQuestionnaireActual === 20000);
-                }
-            }
+        return $referrals;
+    }
     
+    /**
+     * @param array $params
+     *
+     * @return Referral[]|array
+     * @throws \Exception
+     */
+    public function findBy(array $params = []) : array
+    {
+        if (empty($params['entityClass'])) {
+            $params['entityClass'] = Referral::class;
         }
         
-        return $referals;
+        return parent::findBy($params);
     }
 }

@@ -14,12 +14,15 @@ use FourPaws\External\Manzana\Exception\ContactNotFoundException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\Manzana\Model\Card;
+use FourPaws\External\Manzana\Model\Card_by_contract_Cards;
 use FourPaws\External\Manzana\Model\Cards;
+use FourPaws\External\Manzana\Model\Cards_by_contract_Cards;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\Manzana\Model\Clients;
 use FourPaws\External\Manzana\Model\Contact;
 use FourPaws\External\Manzana\Model\Contacts;
 use FourPaws\External\Manzana\Model\ParameterBag;
+use FourPaws\External\Manzana\Model\ReferralParams;
 use FourPaws\External\Manzana\Model\Referrals;
 use FourPaws\External\Manzana\Model\ResultXmlFactory;
 use FourPaws\External\Traits\ManzanaServiceTrait;
@@ -70,6 +73,8 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     const CONTRACT_SEARCH_CARD_BY_NUMBER  = 'search_cards_by_number';
     
     protected $sessionId;
+    
+    protected $cards = [];
     
     /**
      * Отправка телефона
@@ -137,7 +142,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
                     $e->getMessage(),
                     $detail,
                     ''
-                    //var_export($parameters)
+                //var_export($parameters)
                 )
             );
             
@@ -221,55 +226,6 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     
     /**
      * Возвращает id, -1 если найдено больше 1 записи и 0 если не найдено записей
-     * @param User|null $user
-     *
-     * @return string
-     * @throws InvalidIdentifierException
-     * @throws ServiceNotFoundException
-     * @throws ApplicationCreateException
-     * @throws ManzanaServiceException
-     * @throws ConstraintDefinitionException
-     * @throws NotAuthorizedException
-     * @throws ServiceCircularReferenceException
-     */
-    public function getContactIdByCurUser(User $user = null) : string
-    {
-        if(!($user instanceof User)){
-            $user = App::getInstance()
-                       ->getContainer()
-                       ->get(CurrentUserProviderInterface::class)
-                       ->getCurrentUser();
-        }
-        return $this->getContactIdByPhone(
-            $user->getPersonalPhone()
-        );
-    }
-    
-    /**
-     * @todo сделать выбрасывание исключение если найдено больше 1 записи и если найдено 0 записей
-     * Возвращает id, -1 tесли найдено больше 1 записи и 0 если не найдено записей
-     *
-     * @param string $phone
-     *
-     * @return string
-     * @throws ManzanaServiceException
-     */
-    public function getContactIdByPhone(string $phone) : string
-    {
-        try {
-            $currentClient = $this->getContactByPhone($phone);
-            $contactId     = (string)$currentClient->contactId;
-        } catch (ManzanaServiceContactSearchMoreOneException $e) {
-            $contactId = -1;
-        } catch (ManzanaServiceContactSearchNullException $e) {
-            $contactId = 0;
-        }
-        
-        return $contactId;
-    }
-    
-    /**
-     * Возвращает id, -1 если найдено больше 1 записи и 0 если не найдено записей
      *
      * @param User|null $user
      *
@@ -286,20 +242,16 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     public function getContactByCurUser(User $user = null) : Client
     {
-        if(!($user instanceof User)){
-            $user = App::getInstance()
-                       ->getContainer()
-                       ->get(CurrentUserProviderInterface::class)
-                       ->getCurrentUser();
+        if (!($user instanceof User)) {
+            $user = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class)->getCurrentUser();
         }
+        
         return $this->getContactByPhone(
             $user->getPersonalPhone()
         );
     }
     
     /**
-     * Возвращает FourPaws\External\Manzana\Model\Client
-     *
      * @param string $phone
      *
      * @return Client
@@ -315,12 +267,12 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         if ($countClients === 1) {
             return current($clients);
         }
-    
+        
         if ($countClients > 1) {
             $this->logger->critical('Найдено больше одного пользователя с телефоном ' . $phone);
             throw new ManzanaServiceContactSearchMoreOneException('Найдено больше одного пользователя');
         }
-    
+        
         throw new ManzanaServiceContactSearchNullException('Пользователей не найдено');
     }
     
@@ -348,7 +300,6 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         
         try {
             $result = $this->execute(self::CONTRACT_CLIENT_SEARCH, $bag->getParameters());
-            
             $clients = $this->serializer->deserialize($result, Clients::class, 'xml');
         } catch (\Exception $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
@@ -418,103 +369,41 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      *
      * - первый шаг заполнения формы добавления реферала
      *
-     * @param array $params
+     * @param ReferralParams $referralParams
      *
      * @return string
-     * @throws ServiceNotFoundException
-     * @throws InvalidIdentifierException
-     * @throws CardNotFoundException
      */
-    public function addReferralByBonusCard(array $params = []) : string
+    public function addReferralByBonusCard(ReferralParams $referralParams) : string
     {
-        if(empty($params['contact_id']) || empty($params['cardnumber'])){
-            try {
-                $manzanaItem = $this->getContactByCurUser();
-                /** @noinspection NotOptimalIfConditionsInspection */
-                if(empty($params['contact_id'])){
-                    $manzanaParams['contact_id']     = $manzanaItem->contactId;
-                }
-                else{
-                    $manzanaParams['contact_id']     = $params['contact_id'];
-                }
-                /** @noinspection NotOptimalIfConditionsInspection */
-                if(empty($params['cardnumber'])){
-                    $currentCard = current($manzanaItem->cards);
-                    if(!($currentCard instanceof Card) || empty($currentCard->cardNumber)){
-                        throw new CardNotFoundException('не найдена карта');
-                    }
-                    $manzanaParams['cardnumber']     = $currentCard->cardNumber;
-                }
-                else{
-                    $manzanaParams['cardnumber']     = $params['cardnumber'];
-                }
-            } catch (ApplicationCreateException $e) {
-            } catch (ManzanaServiceContactSearchMoreOneException $e) {
-            } catch (ManzanaServiceContactSearchNullException $e) {
-            } catch (ManzanaServiceException $e) {
-            } catch (ConstraintDefinitionException $e) {
-            } catch (NotAuthorizedException $e) {
-            } catch (ServiceCircularReferenceException $e) {
-            }
-        }
-        else{
-            $manzanaParams['contact_id']     = $params['contact_id'];
-            $manzanaParams['cardnumber']     = $params['cardnumber'];
-        }
         $result = '';
-        if(!empty($manzanaParams)) {
-            if (!empty($params['firstname'])) {
-                $manzanaParams['firstname'] = $params['firstname'];
-            }
-            if (!empty($params['lastname'])) {
-                $manzanaParams['lastname'] = $params['lastname'];
-            }
-            if (!empty($params['middlename'])) {
-                $manzanaParams['middlename'] = $params['middlename'];
-            }
-            if (!empty($params['mobilephone'])) {
-                $manzanaParams['mobilephone'] = $params['mobilephone'];
-            }
-            if (!empty($params['emailaddress1'])) {
-                $manzanaParams['emailaddress1'] = $params['emailaddress1'];
-            }
-            if (!empty($params['birthdate'])) {
-                $manzanaParams['birthdate'] = $params['birthdate'];
-            }
-            if (!empty($params['gendercode'])) {
-                $manzanaParams['gendercode'] = $params['gendercode'];
-            }
-            $bag = new ParameterBag(
-                $manzanaParams
-            );
-            
-            try {
-                $rawResult = $this->execute(self::CONTRACT_CARD_ATTACH, $bag->getParameters());
+        $bag    = new ParameterBag($this->serializer->toArray($referralParams));
         
-                $result = ResultXmlFactory::getReferralCardAttachResultFromXml($this->serializer, $rawResult);
-                if (!$result->isError()) {
-                    $result = $result->getContactId();
-                }
-            } catch (AuthenticationException $e) {
-            } catch (\Exception $e) {
-                try {
-                    $detail = $e->detail->details->description;
-                } catch (\Throwable $e) {
-                    $detail = 'none';
-                }
-                switch($detail){
-                    case 'Card is completed':
-                        break;
-                    case 'Card is blocked':
-                        break;
-                    case 'Card is closed':
-                        break;
-                    case 'Card belongs to other referrer':
-                        break;
-                }
+        try {
+            $rawResult = $this->execute(self::CONTRACT_CARD_ATTACH, $bag->getParameters());
+            
+            $result = ResultXmlFactory::getReferralCardAttachResultFromXml($this->serializer, $rawResult);
+            if (!$result->isError()) {
+                $result = $result->getContactId();
+            }
+        } catch (AuthenticationException $e) {
+        } catch (\Exception $e) {
+            try {
+                $detail = $e->detail->details->description;
+            } catch (\Throwable $e) {
+                $detail = 'none';
+            }
+            switch ($detail) {
+                case 'Card is completed':
+                    break;
+                case 'Card is blocked':
+                    break;
+                case 'Card is closed':
+                    break;
+                case 'Card belongs to other referrer':
+                    break;
             }
         }
-    
+        
         return $result;
     }
     
@@ -545,25 +434,63 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     public function getUserReferralList(User $user = null) : array
     {
         $contact_id = $this->getContactIdByCurUser($user);
-        $referrals = [];
-        if($contact_id > 0) {
+        $referrals  = [];
+        if ($contact_id > 0) {
             $bag = new ParameterBag(
                 [
-                    'contact_id'       => (string)$contact_id
+                    'contact_id' => (string)$contact_id,
                 ]
             );
-    
+            
             try {
                 $result = $this->execute(self::CONTRACT_CONTACT_REFERRAL_CARDS, $bag->getParameters());
-                //echo '<pre>',var_dump($result),'</pre>';
                 /** @var Referrals $res */
-                $res = $this->serializer->deserialize($result, Referrals::class, 'xml');
+                $res       = $this->serializer->deserialize($result, Referrals::class, 'xml');
                 $referrals = $res->referrals->toArray();
             } catch (\Exception $e) {
                 throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
             }
         }
+        
         return $referrals;
+    }
+    
+    /**
+     * @param User|null $user
+     *
+     * @return string
+     * @throws ManzanaServiceContactSearchNullException
+     * @throws ManzanaServiceContactSearchMoreOneException
+     * @throws InvalidIdentifierException
+     * @throws ServiceNotFoundException
+     * @throws ApplicationCreateException
+     * @throws ManzanaServiceException
+     * @throws ConstraintDefinitionException
+     * @throws NotAuthorizedException
+     * @throws ServiceCircularReferenceException
+     */
+    public function getContactIdByCurUser(User $user = null) : string
+    {
+        if (!($user instanceof User)) {
+            $user = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class)->getCurrentUser();
+        }
+        
+        return $this->getContactIdByPhone(
+            $user->getPersonalPhone()
+        );
+    }
+    
+    /**
+     * @param string $phone
+     *
+     * @return string
+     * @throws ManzanaServiceContactSearchNullException
+     * @throws ManzanaServiceContactSearchMoreOneException
+     * @throws ManzanaServiceException
+     */
+    public function getContactIdByPhone(string $phone) : string
+    {
+        return (string)$this->getContactByPhone($phone)->contactId;
     }
     
     /**
@@ -613,7 +540,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         
         try {
             $result = $this->execute(self::CONTRACT_SEARCH_CARD_BY_NUMBER, $bag->getParameters());
-            
+            echo $result;
             $card = $this->serializer->deserialize($result, Cards::class, 'xml')->cards[0];
         } catch (\Exception $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
@@ -654,6 +581,55 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         }
         
         return $contact;
+    }
+    
+    /**
+     * @param $cardID
+     * @param $contactId
+     *
+     * @return Card_by_contract_Cards|null
+     * @throws ManzanaServiceException
+     */
+    public function getCardInfo($cardID, $contactId)
+    {
+        $cards = $this->getCardsByContactId($contactId);
+        if (\is_array($cards) && !empty($cards)) {
+            /** @var Card_by_contract_Cards $card */
+            foreach ($cards as $card) {
+                if ($card->cardNumber === $cardID) {
+                    return $card;
+                }
+            }
+            
+        }
+        
+        return null;
+    }
+    
+    /**
+     * @param $contactId
+     *
+     * @return Card_by_contract_Cards[]|array
+     * @throws ManzanaServiceException
+     */
+    public function getCardsByContactId($contactId) : array
+    {
+        if (!empty($this->cards[$contactId])) {
+            $cards = $this->cards[$contactId];
+        } else {
+            $bag = new ParameterBag(['contact_id' => $contactId]);
+            try {
+                $result = $this->execute(self::CONTRACT_CARDS, $bag->getParameters());
+                /** @var Cards_by_contract_Cards $cards */
+                $cards = $this->serializer->deserialize($result, Cards_by_contract_Cards::class, 'xml');
+                $cards = $cards->cards->toArray();
+                $this->cards[$contactId] = $cards;
+            } catch (\Exception $e) {
+                throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
+            }
+        }
+        
+        return $cards;
     }
     
     protected function clientSearch(array $data)

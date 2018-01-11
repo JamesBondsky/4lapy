@@ -8,6 +8,8 @@ namespace FourPaws\PersonalBundle\Service;
 
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
+use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\External\Manzana\Model\Client;
@@ -138,15 +140,19 @@ class AddressService
     {
         $container = App::getInstance()->getContainer();
         $manzanaService = $container->get('manzana.service');
-        $contactId = $manzanaService->getContactIdByCurUser();
-        if ($contactId >= 0) {
+        $client = null;
+        try {
+            $contactId = $manzanaService->getContactIdByCurUser();
             $client = new Client();
-            if ($contactId > 0) {
-                $client->contactId = $contactId;
-            } else {
-                $container->get(CurrentUserProviderInterface::class)->setClientPersonalDataByCurUser($client);
-            }
-            $manzanaService->setClientAddress($client, $address);
+            $client->contactId = $contactId;
+        } catch (ManzanaServiceContactSearchMoreOneException $e) {
+        } catch (ManzanaServiceContactSearchNullException $e) {
+            $client = new Client();
+            $container->get(CurrentUserProviderInterface::class)->setClientPersonalDataByCurUser($client);
+        } catch (ManzanaServiceException $e) {
+        }
+        if($client instanceof Client) {
+            $this->setClientAddress($client, $address);
             $manzanaService->updateContact($client);
         }
     }

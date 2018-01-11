@@ -183,6 +183,22 @@ class BaseRepository
         if (!empty($params['offset'])) {
             $query->setOffset($params['offset']);
         }
+        if (!empty($params['ttl'])) {
+            $query->setCacheTtl($params['ttl']);
+        }
+        if (!empty($params['group'])) {
+            $query->setGroup($params['group']);
+        }
+        if (!empty($params['runtime'])) {
+            if(\is_array($params['runtime'])) {
+                foreach ($params['runtime'] as $runtime) {
+                    $query->registerRuntimeField($runtime);
+                }
+            }
+            else{
+                $query->registerRuntimeField($params['runtime']);
+            }
+        }
         $result = $query->exec();
         if (0 === $result->getSelectedRowsCount()) {
             return [];

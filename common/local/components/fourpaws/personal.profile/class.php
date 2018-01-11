@@ -17,6 +17,8 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
+use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Exception\SmsSendErrorException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
@@ -154,7 +156,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             '#11#' => 'Ноября',
             '#12#' => 'Декабря',
         ];
-        preg_match('|#[0-9]{1,2}#|', $date, $matches);
+        preg_match('|#\d{1,2}#|', $date, $matches);
         if (!empty($matches[0])) {
             return str_replace($matches[0], $months[$matches[0]], $date);
         }
@@ -208,15 +210,19 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                 )
             )) {
                 $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
-                $contactId      = $manzanaService->getContactIdByCurUser();
-                if ($contactId >= 0) {
+                $client = null;
+                try {
+                    $contactId = $manzanaService->getContactIdByCurUser();
                     $client = new Client();
-                    if ($contactId > 0) {
-                        $client->contactId = $contactId;
-                        $client->phone     = $phone;
-                    } else {
-                        $this->currentUserProvider->setClientPersonalDataByCurUser($client);
-                    }
+                    $client->contactId = $contactId;
+                    $client->phone     = $phone;
+                } catch (ManzanaServiceContactSearchMoreOneException $e) {
+                } catch (ManzanaServiceContactSearchNullException $e) {
+                    $client = new Client();
+                    $this->currentUserProvider->setClientPersonalDataByCurUser($client);
+                } catch (ManzanaServiceException $e) {
+                }
+                if($client instanceof Client) {
                     $manzanaService->updateContact($client);
                 }
                 

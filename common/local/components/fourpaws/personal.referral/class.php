@@ -13,6 +13,8 @@ use Bitrix\Main\LoaderException;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\External\Exception\ManzanaServiceException;
+use FourPaws\PersonalBundle\Entity\Referral;
 use FourPaws\PersonalBundle\Service\ReferralService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
@@ -54,6 +56,7 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
     
     /**
      * {@inheritdoc}
+     * @throws ManzanaServiceException
      * @throws \Exception
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
@@ -67,8 +70,32 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
     {
         $this->setFrameMode(true);
         
-        if ($this->startResultCache()) {
-            $this->arResult['ITEMS'] = $this->referralService->getCurUserReferrals();
+        $this->arResult['ITEMS'] = $this->referralService->getCurUserReferrals();
+        $this->arResult['BONUS'] = 0;
+        $cacheItems              = [];
+        if (\is_array($this->arResult['ITEMS']) && !empty($this->arResult['ITEMS'])) {
+            /** @var Referral $item */
+            /** @noinspection ForeachSourceInspection */
+            foreach ($this->arResult['ITEMS'] as $item) {
+                $this->arResult['BONUS'] += $item->getBonus();
+                $cardId                  = $item->getCard();
+                $cacheItems[$cardId]     = [
+                    'bonus'         => $item->getBonus(),
+                    'card'          => $cardId,
+                    'moderated'     => $item->isModerate(),
+                    'dateEndActive' => $item->getDateEndActive(),
+                ];
+            }
+            if ($this->arResult['BONUS'] > 0) {
+                $this->arResult['BONUS'] = floor($this->arResult['BONUS']);
+            }
+            $this->arResult['FORMATED_BONUS'] = \number_format($this->arResult['BONUS'], 0, '.', ' ');
+            
+        }
+        /** @noinspection SummerTimeUnsafeTimeManipulationInspection */
+        /** кешируем на сутки, можно будет увеличить если обновления будут не очень частые - чтобы лишний кеш не хранился */
+        $cacheTime = 24 * 60 * 60;
+        if ($this->startResultCache($cacheTime, ['items' => $cacheItems])) {
             $this->includeComponentTemplate();
         }
         

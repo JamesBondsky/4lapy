@@ -74,11 +74,17 @@ class Referral extends BaseEntity
     
     /**
      * @var bool
+     * @Serializer\Type("bitrix_bool")
+     * @Serializer\SerializedName("UF_MODERATED")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
      */
     protected $moderate = false;
     
     /**
      * @var Date
+     * @Serializer\Type("bitrix_date")
+     * @Serializer\SerializedName("UF_CARD_CLOSED_DATE")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
      */
     protected $dateEndActive;
     
@@ -92,7 +98,7 @@ class Referral extends BaseEntity
      */
     public function getName() : string
     {
-        return $this->name;
+        return $this->name ?? '';
     }
     
     /**
@@ -112,7 +118,7 @@ class Referral extends BaseEntity
      */
     public function getUserId() : int
     {
-        return $this->userId;
+        return $this->userId ?? 0;
     }
     
     /**
@@ -132,7 +138,7 @@ class Referral extends BaseEntity
      */
     public function getLastName() : string
     {
-        return $this->lastName;
+        return $this->lastName ?? '';
     }
     
     /**
@@ -152,7 +158,7 @@ class Referral extends BaseEntity
      */
     public function getSecondName() : string
     {
-        return $this->secondName;
+        return $this->secondName ?? '';
     }
     
     /**
@@ -172,7 +178,7 @@ class Referral extends BaseEntity
      */
     public function getCard() : string
     {
-        return $this->card;
+        return $this->card ?? '';
     }
     
     /**
@@ -192,7 +198,7 @@ class Referral extends BaseEntity
      */
     public function getPhone() : string
     {
-        return $this->phone;
+        return $this->phone ?? '';
     }
     
     /**
@@ -212,7 +218,7 @@ class Referral extends BaseEntity
      */
     public function getEmail() : string
     {
-        return $this->email;
+        return $this->email ?? '';
     }
     
     /**
@@ -232,7 +238,7 @@ class Referral extends BaseEntity
      */
     public function isModerate() : bool
     {
-        return $this->moderate;
+        return $this->moderate ?? true;
     }
     
     /**
@@ -248,11 +254,11 @@ class Referral extends BaseEntity
     }
     
     /**
-     * @return Date
+     * @return Date|null
      */
-    public function getDateEndActive() : Date
+    public function getDateEndActive()
     {
-        return $this->dateEndActive;
+        return $this->dateEndActive ?? null;
     }
     
     /**
@@ -281,7 +287,7 @@ class Referral extends BaseEntity
      */
     public function getBonus() : float
     {
-        return $this->bonus;
+        return $this->bonus ?? (float)0;
     }
     
     /**

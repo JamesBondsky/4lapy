@@ -18,6 +18,8 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
+use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Exception\SmsSendErrorException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
@@ -254,13 +256,20 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         
         /** @var ManzanaService $manzanaService */
         $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
-        $contactId      = $manzanaService->getContactIdByCurUser($userEntity);
-        $client         = new Client();
-        if ($contactId > 0) {
+        $client = null;
+        try {
+            $contactId = $manzanaService->getContactIdByCurUser();
+            $client = new Client();
             $client->contactId = $contactId;
+        } catch (ManzanaServiceContactSearchMoreOneException $e) {
+        } catch (ManzanaServiceContactSearchNullException $e) {
+            $client = new Client();
+        } catch (ManzanaServiceException $e) {
         }
-        $this->currentUserProvider->setClientPersonalDataByCurUser($client, $userEntity);
-        $manzanaService->updateContact($client);
+        if($client instanceof Client) {
+            $this->currentUserProvider->setClientPersonalDataByCurUser($client);
+            $manzanaService->updateContact($client);
+        }
         
         ob_start();
         /** @noinspection PhpIncludeInspection */
@@ -328,13 +337,20 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         )) {
             /** @var ManzanaService $manzanaService */
             $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
-            $contactId      = $manzanaService->getContactIdByCurUser();
-            $client         = new Client();
-            if ($contactId > 0) {
+            $client = null;
+            try {
+                $contactId = $manzanaService->getContactIdByCurUser();
+                $client = new Client();
                 $client->contactId = $contactId;
+            } catch (ManzanaServiceContactSearchMoreOneException $e) {
+            } catch (ManzanaServiceContactSearchNullException $e) {
+                $client = new Client();
+            } catch (ManzanaServiceException $e) {
             }
-            $this->currentUserProvider->setClientPersonalDataByCurUser($client);
-            $manzanaService->updateContact($client);
+            if($client instanceof Client) {
+                $this->currentUserProvider->setClientPersonalDataByCurUser($client);
+                $manzanaService->updateContact($client);
+            }
         }
         
         return JsonSuccessResponse::create('Телефон сохранен', 200, [], ['reload' => true]);

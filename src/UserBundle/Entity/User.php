@@ -8,7 +8,6 @@ namespace FourPaws\UserBundle\Entity;
 
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
-use FourPaws\UserBundle\Exception\EmptyDateException;
 use JMS\Serializer\Annotation as Serializer;
 use Misd\PhoneNumberBundle\Validator\Constraints\PhoneNumber;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -549,7 +548,19 @@ class User
     }
     
     /**
-     * @throws EmptyDateException
+     * @return int|null
+     */
+    public function getManzanaGender()
+    {
+        $arGenders = [
+            'M' => 1,
+            'F' => 2,
+        ];
+        
+        return $arGenders[$this->getGender()] ?? null;
+    }
+    
+    /**
      * @return null|Date
      *
      */
@@ -573,6 +584,15 @@ class User
         $this->birthday = $birthday;
         
         return $this;
+    }
+    
+    public function getManzanaBirthday()
+    {
+        $birthday = $this->getBirthday();
+        if ($birthday instanceof Date) {
+            return new \DateTimeImmutable($birthday->format('Y-m-d\TH:i:s'));
+        }
+        return null;
     }
     
     /**
@@ -633,6 +653,14 @@ class User
         $this->emailConfirmed = $emailConfirmed;
         
         return $this;
+    }
+    
+    /**
+     * @return \DateTimeImmutable
+     */
+    public function getManzanaDateRegister() : \DateTimeImmutable
+    {
+        return new \DateTimeImmutable($this->getDateRegister()->format('Y-m-d\TH:i:s'));
     }
     
     /**
