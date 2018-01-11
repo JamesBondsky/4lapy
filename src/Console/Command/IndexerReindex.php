@@ -91,6 +91,6 @@ class IndexerReindex extends Command
             );
         }
         $this->searchService->getIndexHelper()->indexAll($noFilter);
-        $this->searchService->getIndexHelper()->cleanup();
+        $this->searchService->getIndexHelper()->cleanup($noFilter);
     }
 }
