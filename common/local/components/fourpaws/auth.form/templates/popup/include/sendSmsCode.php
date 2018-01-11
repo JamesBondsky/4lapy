@@ -28,8 +28,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="sms-code-3">SMS-код</label>
             </div>
-            <div class="b-input b-input--registration-form b-kek">
-                <input class="b-input__input-field b-input__input-field--registration-form b-kek"
+            <div class="b-input b-input--registration-form">
+                <input class="b-input__input-field b-input__input-field--registration-form"
                        type="text"
                        id="sms-code-3"
                        placeholder=""

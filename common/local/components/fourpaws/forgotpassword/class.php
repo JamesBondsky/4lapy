@@ -223,8 +223,8 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
             $recovery = $request->get('recovery', '');
             if ($recovery === 'phone') {
                 $title = 'Восстановление пароля';
-                $step = 'sendSmsCode';
-                $res  = $this->ajaxGetSendSmsCode($phone);
+                $step  = 'sendSmsCode';
+                $res   = $this->ajaxGetSendSmsCode($phone);
                 if ($res instanceof JsonResponse) {
                     return $res;
                 }
@@ -319,7 +319,34 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                 ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
             );
         }
-        
+    
+        try {
+            $users = $this->currentUserProvider->getUserRepository()->findBy(
+                [
+                    '=PERSONAL_PHONE' => PhoneHelper::normalizePhone(
+                        $phone
+                    ),
+                ]
+            );
+            if(count($users) > 1){
+                return JsonErrorResponse::createWithData(
+                    'Некорректный номер телефона',
+                    ['errors' => ['moreOneUsersByPhone' => '']]
+                );
+            }
+            elseif(count($users) === 0){
+                return JsonErrorResponse::createWithData(
+                    'Пользователей с номером '.$phone.' не найдено',
+                    ['errors' => ['notFoundUsers' => 'Пользователей с номером '.$phone.' не найдено']]
+                );
+            }
+        } catch (WrongPhoneNumberException $e) {
+            return JsonErrorResponse::createWithData(
+                'Пользователей с номером '.$phone.' найдено больше 1, пожалуйста обратитесь к администрации сайта',
+                ['errors' => ['wrongPhone' => 'Пользователей с номером '.$phone.' найдено больше 1, пожалуйста обратитесь к администрации сайта']]
+            );
+        }
+    
         try {
             App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::sendConfirmSms($phone);
         } catch (SmsSendErrorException $e) {

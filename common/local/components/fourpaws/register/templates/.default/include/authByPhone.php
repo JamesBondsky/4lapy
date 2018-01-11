@@ -25,10 +25,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                        value="<?= $phone ?>" />
                 <div class="b-error"><span class="js-message"></span></div>
             </div>
-            <div class="b-input-line__warning"><p class="b-input-line__text-warning">Пользователь с этим номером
-                                                                                     телефона уже зарегистрирован в
-                                                                                     нашем магазине.</p>
-                <p class="b-input-line__text-warning">Попробуйте ввести пароль для входа в систему.</p></div>
+            <div class="b-input-line__warning">
+                <p class="b-input-line__text-warning">Пользователь с этим номером телефона уже зарегистрирован в нашем
+                                                      магазине.</p>
+                <p class="b-input-line__text-warning">Попробуйте ввести пароль для входа в систему.</p>
+            </div>
         </div>
         <div class="b-input-line b-input-line--phone-two js-pass-forget">
             <div class="b-input-line__label-wrapper">
@@ -43,7 +44,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
-            <a class="b-link-gray" href="javascript:void(0);" title="Забыли пароль?">Забыли пароль?</a></div>
+            <a class="b-link-gray" href="/personal/forgot-password/" title="Забыли пароль?">Забыли пароль?</a></div>
         <button class="b-button b-button--social b-button--full-width">Далее</button>
     </form>
 </div>

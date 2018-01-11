@@ -8,7 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                                                                                                     новый пароль
     </div>
     <form class="b-registration__form js-form-validation js-registration-create-new-password js-recovery-form"
-          data-url="/ajax/user/auth/forgotPassword/">
+          data-url="/ajax/user/auth/forgotPassword/" method="post">
         <input type="hidden" name="action" value="savePassword">
         <input type="hidden" name="step" value="sendSmsCode">
         <input type="hidden" name="login" value="<?= $login ?? $arResult['EMAIL'] ?>">
@@ -33,7 +33,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-password-second">Повторите пароль</label>
             </div>
-            <div class="b-input b-input--registration-form b-kek">
+            <div class="b-input b-input--registration-form">
                 <input class="b-input__input-field b-input__input-field--registration-form"
                        id="registration-password-second"
                        placeholder=""

@@ -42,10 +42,14 @@ use FourPaws\App\Application as App;
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
-            <a class="b-link-gray" href="javascript:void(0);" data-url="" title="Отправить снова">Отправить снова</a>
+            <a class="b-link-gray"
+               href="javascript:void(0);"
+               data-url="/ajax/user/auth/register/"
+               data-phone="<?= $phone ?>"
+               data-action="resendSms"
+               title="Отправить снова">Отправить снова</a>
         </div>
-        <?= /** @noinspection PhpUnhandledExceptionInspection */
-        App::getInstance()->getContainer()->get('recaptcha.service')->getCaptcha(' b-registration__captcha'); ?>
+        <?= App::getInstance()->getContainer()->get('recaptcha.service')->getCaptcha(' b-registration__captcha'); ?>
         <button class="b-button b-button--social b-button--full-width">Подтвердить</button>
     </form>
 </div>

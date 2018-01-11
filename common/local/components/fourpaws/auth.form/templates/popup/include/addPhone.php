@@ -12,8 +12,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="mobile-number-5">Мобильный телефон</label>
             </div>
-            <div class="b-input b-input--registration-form b-kek">
-                <input class="b-input__input-field b-input__input-field--registration-form b-kek"
+            <div class="b-input b-input--registration-form">
+                <input class="b-input__input-field b-input__input-field--registration-form"
                        type="tel"
                        name="phone"
                        value="<?= $phone ?>"

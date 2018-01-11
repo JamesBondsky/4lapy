@@ -25,10 +25,11 @@ use FourPaws\External\Manzana\Model\Client;
             </div>
             <div class="b-input b-input--registration-form">
                 <input class="b-input__input-field b-input__input-field--registration-form"
-                       type="text"
                        id="registration-surname"
-                       name="LAST_NAME"
                        placeholder=""
+                       name="LAST_NAME"
+                       data-text="0"
+                       type="text"
                        value="<?= $manzanaItem instanceof Client ? $manzanaItem->lastName : '' ?>" />
                 <div class="b-error"><span class="js-message"></span>
                 </div>
@@ -44,6 +45,7 @@ use FourPaws\External\Manzana\Model\Client;
                        type="text"
                        id="registration-name"
                        name="NAME"
+                       data-text="1"
                        placeholder=""
                        value="<?= $manzanaItem instanceof Client ? $manzanaItem->firstName : '' ?>" />
                 <div class="b-error"><span class="js-message"></span>
@@ -59,6 +61,7 @@ use FourPaws\External\Manzana\Model\Client;
                        type="text"
                        id="registration-patronymic"
                        name="SECOND_NAME"
+                       data-text="2"
                        placeholder=""
                        value="<?= $manzanaItem instanceof Client ? $manzanaItem->secondName : '' ?>" />
                 <div class="b-error"><span class="js-message"></span>
@@ -74,6 +77,7 @@ use FourPaws\External\Manzana\Model\Client;
                        type="text"
                        id="registration-date-birth"
                        name="PERSONAL_BIRTHDAY"
+                       data-text="3"
                        placeholder=""
                        value="<?= $manzanaItem instanceof Client ? $manzanaItem->birthDate : '' ?>" />
                 <div class="b-error"><span class="js-message"></span>
@@ -151,7 +155,7 @@ use FourPaws\External\Manzana\Model\Client;
                 </span>
             </label>
         </div>
-        <button class="b-button b-button--social b-button--full-width" type="submit">Зарегистрироваться</button>
+        <button class="b-button b-button--social b-button--full-width">Зарегистрироваться</button>
     </form>
     <a class="b-registration__back" href="javascript:void(0);" title="Назад" data-action="get"
        data-step="step1"
