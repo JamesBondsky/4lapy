@@ -2,10 +2,13 @@
 
 namespace FourPaws\SapBundle\Enum;
 
-final class OfferProperty
+/**
+ * Class OfferProperty
+ * @package FourPaws\SapBundle\Enum
+ * Название свойств в САПе
+ */
+final class SapOfferProperty
 {
-
-
     /**
      * Цвет товара.
      * Единственный выбор из справочника «Цвет».
