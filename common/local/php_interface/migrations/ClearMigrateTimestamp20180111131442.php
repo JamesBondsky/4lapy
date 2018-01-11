@@ -13,10 +13,10 @@ class ClearMigrateTimestamp20180111131442 extends SprintMigrationBase
     public function up()
     {
         foreach (Factory::AVAILABLE_TYPES as $type) {
-            var_dump(exec(sprintf('cd %s; ./bin/console migrate:clear %s',
-                                  \dirname($_SERVER['DOCUMENT_ROOT']),
-                                  $type)));
-            var_dump(sprintf('cd %s; ./bin/console migrate:clear %s', \dirname($_SERVER['DOCUMENT_ROOT']), $type));
+            exec(sprintf('cd %s; ./bin/console migrate:clear %s',
+                         \dirname($_SERVER['DOCUMENT_ROOT']),
+                         $type));
+            sprintf('cd %s; ./bin/console migrate:clear %s', \dirname($_SERVER['DOCUMENT_ROOT']), $type);
         }
     }
     
