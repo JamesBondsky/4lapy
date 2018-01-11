@@ -61,7 +61,7 @@ class BasketService
             'PRODUCT_ID' => $offerId,
             'QUANTITY' => $quantity,
             'MODULE' => 'catalog',
-            'PRODUCT_PROVIDER_CLASS' => \Bitrix\Catalog\Product\Basket::getDefaultProviderName(),
+            'PRODUCT_PROVIDER_CLASS' => \Bitrix\Catalog\Product\CatalogProvider::class,
 //            'PROPS' => [[
 //                'NAME' => 'Тест',
 //                'CODE' => 'TEST',
