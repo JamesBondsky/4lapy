@@ -2,12 +2,14 @@
 
 namespace FourPaws\BitrixOrm\Model;
 
+use FourPaws\BitrixOrm\Model\Interfaces\ImageInterface;
+
 /**
  * Class Image
  *
  * @package FourPaws\BitrixOrm\Model
  */
-class Image extends File
+class Image extends File implements ImageInterface
 {
     /**
      * @var int
