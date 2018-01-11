@@ -26,3 +26,10 @@ services:
     # todo: remove after development!
     FourPaws\SapBundle\Source\SourceRegistry:
         public: true
+
+    FourPaws\SapBundle\ReferenceDirectory\SapReferenceStorage:
+        public: true
+
+    # Получить репозиторий напрямую нельзя
+    FourPaws\SapBundle\Repository\ReferenceRepository:
+        abstract: true
