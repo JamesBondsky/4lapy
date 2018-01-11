@@ -73,8 +73,8 @@ class MigrateClear extends Command implements LoggerAwareInterface
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $entity = $input->getArgument(self::ARG_ENTITY);
-        
-        if (!in_array(Factory::AVAILABLE_TYPES, $entity, true)) {
+    
+        if (!in_array($entity, Factory::AVAILABLE_TYPES, true)) {
             $this->logger->error(sprintf('Entity name must be one of it: %s.',
                                          implode(', ', Factory::AVAILABLE_TYPES)));
             

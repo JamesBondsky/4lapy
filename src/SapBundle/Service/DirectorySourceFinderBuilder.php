@@ -6,14 +6,12 @@ use Symfony\Component\Finder\Finder;
 
 class DirectorySourceFinderBuilder
 {
-    public static function build(string $path, string $fileType = 'xml')
+    public static function build(string $nameMask, string $path, string $fileType = 'xml')
     {
         return (new Finder())
-            ->in($path)
-            ->name('*.' . $fileType)
+            ->in($path)->name($nameMask . '.' . $fileType)
             ->files()
-            ->ignoreDotFiles(true)
-            ->sortByAccessedTime()
+            ->ignoreDotFiles(true)->sortByName()
             ->filter(function (\SplFileInfo $file) {
                 return $file->isReadable() && $file->isFile();
             });

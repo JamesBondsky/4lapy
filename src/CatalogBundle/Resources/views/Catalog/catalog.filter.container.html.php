@@ -8,10 +8,10 @@
  */
 
 use Bitrix\Main\Grid\Declension;
+use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
 use FourPaws\Catalog\Model\Filter\PriceFilter;
 use FourPaws\Catalog\Model\Filter\RangeFilterInterface;
-use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Sorting;
 use FourPaws\Catalog\Model\Variant;
 use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
@@ -33,7 +33,7 @@ $category = $APPLICATION->IncludeComponent(
         'SET_TITLE'    => 'Y',
         'CACHE_TIME'   => 10,
     ],
-    $component,
+    null,
     ['HIDE_ICONS' => 'Y']
 );
 ?>
@@ -45,7 +45,7 @@ $category = $APPLICATION->IncludeComponent(
         [
             'IBLOCK_SECTION' => $category,
         ],
-        $component,
+        null,
         ['HIDE_ICONS' => 'Y']
     );
     ?>

@@ -5,7 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 /**
  * Список элементов в разделах: Акции, Новости, Статьи
  *
- * @updated: 01.01.2018
+ * @updated: 10.01.2018
  */
 
 if (!$arResult['ITEMS']) {
@@ -13,7 +13,7 @@ if (!$arResult['ITEMS']) {
 }
 
 $arParams['RESIZE_WIDTH'] = isset($arParams['RESIZE_WIDTH']) ? $arParams['RESIZE_WIDTH'] : 305;
-$arParams['RESIZE_HEIGHT'] = isset($arParams['RESIZE_HEIGHT']) ? $arParams['RESIZE_HEIGHT'] : 160;
+$arParams['RESIZE_HEIGHT'] = isset($arParams['RESIZE_HEIGHT']) ? $arParams['RESIZE_HEIGHT'] : 120;
 $arParams['RESIZE_TYPE'] = isset($arParams['RESIZE_TYPE']) ? $arParams['RESIZE_TYPE'] : 'BX_RESIZE_IMAGE_EXACT';
 
 foreach ($arResult['ITEMS'] as &$arItem) {
