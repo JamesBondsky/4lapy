@@ -2,7 +2,12 @@
 
 namespace FourPaws\SapBundle\Enum;
 
-final class ProductProperty
+/**
+ * Class ProductProperty
+ * @package FourPaws\SapBundle\Enum
+ * Название свойств в САПе
+ */
+final class SapProductProperty
 {
     /**
      * Объединение по фасовке

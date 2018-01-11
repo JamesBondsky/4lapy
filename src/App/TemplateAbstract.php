@@ -130,7 +130,7 @@ abstract class TemplateAbstract
     
     public function isPartitionDir(string $src) : bool
     {
-        return preg_match(sprintf('~^%s/\w+~', $src), $this->getDir()) > 0;
+        return preg_match(sprintf('~^%s/[-/@\w]+~', $src), $this->getDir()) > 0;
     }
     
     public function isDir($dir) : bool

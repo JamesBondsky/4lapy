@@ -29,3 +29,7 @@ services:
 
     FourPaws\SapBundle\ReferenceDirectory\SapReferenceStorage:
         public: true
+
+    # Получить репозиторий напрямую нельзя
+    FourPaws\SapBundle\Repository\ReferenceRepository:
+        abstract: true
