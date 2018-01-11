@@ -154,6 +154,7 @@ class Catalog extends IBlockElement
                                                   'CATALOG'           => null,
                                                   'IBLOCK_SECTION_ID' => null,
                                                   'IBLOCK_ID'         => null,
+                                                  'XML_ID'            => null,
                                               ]);
             
             unset($mainProductData['PROPERTY_VALUES']['IMG']);
