@@ -22,6 +22,8 @@ class StringToReference extends AbstractConverter
 {
     const FIELD_EXTERNAL_KEY = 'UF_XML_ID';
     
+    const FIELD_CODE         = 'UF_CODE';
+    
     private $referenceCode;
     
     private $fieldToSearch;
@@ -193,8 +195,8 @@ class StringToReference extends AbstractConverter
         $externalKey = $this->transliterate($value);
         
         $fields = [
-            $fieldName               => $value,
-            self::FIELD_EXTERNAL_KEY => $externalKey,
+            $fieldName       => $value,
+            self::FIELD_CODE => $externalKey,
         ];
         
         $select = [self::FIELD_EXTERNAL_KEY];
@@ -204,7 +206,7 @@ class StringToReference extends AbstractConverter
         }
         
         $exists = $this->getDataClass()::getList([
-                                                     'filter' => [self::FIELD_EXTERNAL_KEY => $externalKey],
+                                                     'filter' => [self::FIELD_CODE => $externalKey],
                                                      'select' => $select,
                                                  ])->fetch();
         

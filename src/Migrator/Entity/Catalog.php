@@ -140,6 +140,27 @@ class Catalog extends IBlockElement
     public function updateItem(string $primary, array $data) : UpdateResult
     {
         $mainProductId = 0;
+    
+        /**
+         * Close all (exclude refs) from export
+         */
+        $data = array_diff_key($data,
+                               [
+                                   'ID'                 => null,
+                                   'NAME'               => null,
+                                   'ACTIVE'             => null,
+                                   'SORT'               => null,
+                                   'DATE_CREATE'        => null,
+                                   'CREATED_BY'         => null,
+                                   'TIMESTAMP_X'        => null,
+                                   'MODIFIED_BY'        => null,
+                                   'CODE'               => null,
+                                   'XML_ID'             => null,
+                                   'TAGS'               => null,
+                                   'SHOW_COUNTER'       => null,
+                                   'SHOW_COUNTER_START' => null,
+                                   'DETAIL_PICTURE'     => null,
+                               ]);
         
         if ($this->isMainProduct($data)) {
             /**
@@ -188,7 +209,7 @@ class Catalog extends IBlockElement
         foreach ($skuExternalIds as &$id) {
             $id = 'main_' . $id;
         }
-
+    
         unset($id);
         
         $result = MapTable::getInternalIdListByExternalIdList($skuExternalIds, $this->entity);
