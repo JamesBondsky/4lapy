@@ -267,6 +267,8 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 
     /**
      * @var string
+     * @Type("string")
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_COUNTRY = '';
 

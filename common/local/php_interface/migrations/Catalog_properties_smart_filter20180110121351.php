@@ -450,7 +450,7 @@ class Catalog_properties_smart_filter20180110121351 extends SprintMigrationBase
                     [],
                     [
                         'IBLOCK_ID'         => $iblockId,
-                        'IBLOCK_SECTION_ID' => $iblockSectionId,
+                        'SECTION_ID' => $iblockSectionId,
                         'CODE'              => $code,
                     ]
                 )->Fetch();
@@ -470,7 +470,7 @@ class Catalog_properties_smart_filter20180110121351 extends SprintMigrationBase
                             [],
                             [
                                 'IBLOCK_ID'         => $iblockId,
-                                'IBLOCK_SECTION_ID' => $section['ID'],
+                                'SECTION_ID' => $section['ID'],
                                 'CODE'              => $key,
                             ]
                         )->Fetch();
