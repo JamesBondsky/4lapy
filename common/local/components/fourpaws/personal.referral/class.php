@@ -95,7 +95,12 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
         /** @noinspection SummerTimeUnsafeTimeManipulationInspection */
         /** кешируем на сутки, можно будет увеличить если обновления будут не очень частые - чтобы лишний кеш не хранился */
         $cacheTime = 24 * 60 * 60;
-        if ($this->startResultCache($cacheTime, ['items' => $cacheItems])) {
+        if ($this->startResultCache($cacheTime,
+                                    [
+                                        'items' => $cacheItems,
+                                        'bonus' => $this->arResult['BONUS'],
+                                    ]
+        )) {
             $this->includeComponentTemplate();
         }
         
