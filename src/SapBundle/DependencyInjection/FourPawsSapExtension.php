@@ -29,7 +29,6 @@ class FourPawsSapExtension extends ConfigurableExtension
         $loader->load('services.yml');
         $this->registerConsumerTags($container);
         $this->registerSourceTags($container);
-        dump($mergedConfig);
         $this->configDirectoryFinder($mergedConfig['directory_sources'], $container);
     }
 
