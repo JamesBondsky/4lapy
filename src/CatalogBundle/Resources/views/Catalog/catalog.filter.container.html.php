@@ -61,7 +61,7 @@ $category = $APPLICATION->IncludeComponent(
         </div>
     </div>
     <div class="b-filter__wrapper b-filter__wrapper--scroll">
-        <form class="b-form js-filter-form">
+        <form class="b-form js-filter-form" action="<?= $APPLICATION->GetCurDir() ?>">
             <?= $view->render(
                 'FourPawsCatalogBundle:Catalog:catalog.filter.backLink.html.php',
                 [
@@ -107,16 +107,16 @@ $category = $APPLICATION->IncludeComponent(
                                 ?>
                                 <li class="b-filter-link-list__item">
                                     <label class="b-filter-link-list__label">
-                                        <input
-                                                class="b-filter-link-list__checkbox js-checkbox-change js-filter-control"
-                                                type="checkbox"
-                                                name="<?= $filter->getFilterCode() ?>"
-                                                value="<?= $variant->getValue() ?>"
-                                                id="<?= $filter->getFilterCode() ?>-<?= $id ?>"/>
-                                        <a
-                                                class="b-filter-link-list__link b-filter-link-list__link--checkbox"
-                                                href="javascript:void(0);"
-                                                title="<?= $variant->getName() ?>"
+                                        <input class="b-filter-link-list__checkbox js-checkbox-change js-filter-control"
+                                               type="checkbox"
+                                               name="<?= $filter->getFilterCode() ?>"
+                                               value="<?= $variant->getValue() ?>"
+                                               id="<?= $filter->getFilterCode() ?>-<?= $id ?>"
+                                               <?= $variant->isChecked() ? 'checked' : '' ?>
+                                        />
+                                        <a class="b-filter-link-list__link b-filter-link-list__link--checkbox"
+                                           href="javascript:void(0);"
+                                           title="<?= $variant->getName() ?>"
                                         ><?= $variant->getName() ?></a>
                                     </label>
                                 </li>
