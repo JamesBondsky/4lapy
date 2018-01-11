@@ -3,12 +3,15 @@
 namespace FourPaws\CatalogBundle\Service;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Highloadblock\DataManager;
 use CIBlockProperty;
 use CIBlockSectionPropertyLink;
 use Exception;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Filter\FilterInterface;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Symfony\Component\HttpFoundation\Request;
@@ -56,6 +59,17 @@ class FilterHelper implements LoggerAwareInterface
     public function getSectionPropertyLinks($iblockId, $sectionId = 0): array
     {
         $propertyLinks = CIBlockSectionPropertyLink::GetArray($iblockId, $sectionId);
+
+        if ($iblockId == IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS)) {
+            $propertyLinks = array_merge(
+                $propertyLinks,
+                CIBlockSectionPropertyLink::GetArray(
+                    IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
+                    0
+                )
+            );
+        }
+
         $propIdList = array_filter(
             array_map(
                 function ($propertyLinks) {

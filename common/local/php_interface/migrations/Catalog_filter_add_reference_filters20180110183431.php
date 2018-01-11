@@ -5,15 +5,20 @@ namespace Sprint\Migration;
 use Adv\Bitrixtools\Migration\SprintMigrationBase;
 use Bitrix\Highloadblock\DataManager;
 use FourPaws\App\Application;
+use FourPaws\Catalog\Model\Filter\ClothingSizeFilter;
+use FourPaws\Catalog\Model\Filter\ColourFilter;
 use FourPaws\Catalog\Model\Filter\ConsistenceFilter;
 use FourPaws\Catalog\Model\Filter\CountryFilter;
 use FourPaws\Catalog\Model\Filter\FeedSpecFilter;
 use FourPaws\Catalog\Model\Filter\FlavourFilter;
 use FourPaws\Catalog\Model\Filter\ManufactureMaterialFilter;
+use FourPaws\Catalog\Model\Filter\PackageTypeFilter;
 use FourPaws\Catalog\Model\Filter\PetTypeFilter;
 use FourPaws\Catalog\Model\Filter\PharmaGroupFilter;
 use FourPaws\Catalog\Model\Filter\PurposeFilter;
+use FourPaws\Catalog\Model\Filter\SeasonFilter;
 use FourPaws\Catalog\Model\Filter\TradeNameFilter;
+use FourPaws\Catalog\Model\Filter\VolumeReferenceFilter;
 
 class Catalog_filter_add_reference_filters20180110183431 extends SprintMigrationBase
 {
@@ -83,6 +88,41 @@ class Catalog_filter_add_reference_filters20180110183431 extends SprintMigration
             'UF_ACTIVE'     => 1,
             'UF_CODE'       => 'TRADE_NAME',
         ],
+        [
+            'UF_NAME'       => 'Цвет',
+            'UF_SORT'       => 1700,
+            'UF_CLASS_NAME' => ColourFilter::class,
+            'UF_ACTIVE'     => 1,
+            'UF_CODE'       => 'COLOUR',
+        ],
+        [
+            'UF_NAME'       => 'Размер',
+            'UF_SORT'       => 1800,
+            'UF_CLASS_NAME' => ClothingSizeFilter::class,
+            'UF_ACTIVE'     => 1,
+            'UF_CODE'       => 'CLOTHING_SIZE',
+        ],
+        [
+            'UF_NAME'       => 'Объем',
+            'UF_SORT'       => 1900,
+            'UF_CLASS_NAME' => VolumeReferenceFilter::class,
+            'UF_ACTIVE'     => 1,
+            'UF_CODE'       => 'VOLUME_REFERENCE',
+        ],
+        [
+            'UF_NAME'       => 'Сезон',
+            'UF_SORT'       => 2000,
+            'UF_CLASS_NAME' => SeasonFilter::class,
+            'UF_ACTIVE'     => 1,
+            'UF_CODE'       => 'SEASON_CLOTHES',
+        ],
+        [
+            'UF_NAME'       => 'Тип упаковки',
+            'UF_SORT'       => 2100,
+            'UF_CLASS_NAME' => PackageTypeFilter::class,
+            'UF_ACTIVE'     => 1,
+            'UF_CODE'       => 'KIND_OF_PACKING',
+        ],
     ];
 
     const FILTER_HL_BLOCK_SERVICE = 'bx.hlblock.filter';
@@ -109,7 +149,11 @@ class Catalog_filter_add_reference_filters20180110183431 extends SprintMigration
         /** @var DataManager $dataManager */
         $dataManager = Application::getInstance()->getContainer()->get(self::FILTER_HL_BLOCK_SERVICE);
 
-        $filters = $dataManager->getList(['UF_CODE' => array_column($this->filters, 'UF_CODE')]);
+        $filters = $dataManager->getList(
+            [
+                'filter' => ['UF_CODE' => array_column($this->filters, 'UF_CODE')],
+            ]
+        );
         while ($filter = $filters->fetch()) {
             $deleteResult = $dataManager->delete($filter['ID']);
             if ($deleteResult->isSuccess()) {

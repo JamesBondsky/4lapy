@@ -104,8 +104,9 @@ class Catalog_properties_smart_filter20180110121351 extends SprintMigrationBase
                 'FILTERS' => [
                     'MANUFACTURE_MATERIAL',
                     'PET_SIZE',
-                    'PET_GENDER'
-                    // цвет
+                    'PET_GENDER',
+                    'SEASON_CLOTHES'
+                    // цвет, размер
                 ],
             ],
             'namordniki-osheyniki-povodki'    => [
@@ -342,6 +343,7 @@ class Catalog_properties_smart_filter20180110121351 extends SprintMigrationBase
             'KIND_OF_PACKING',
             'COLOUR',
             'VOLUME_REFERENCE',
+            'CLOTHING_SIZE',
         ],
     ];
 
@@ -449,9 +451,9 @@ class Catalog_properties_smart_filter20180110121351 extends SprintMigrationBase
                 $section = \CIBlockSection::GetList(
                     [],
                     [
-                        'IBLOCK_ID'         => $iblockId,
+                        'IBLOCK_ID'  => $iblockId,
                         'SECTION_ID' => $iblockSectionId,
-                        'CODE'              => $code,
+                        'CODE'       => $code,
                     ]
                 )->Fetch();
                 if (!$section) {
@@ -469,9 +471,9 @@ class Catalog_properties_smart_filter20180110121351 extends SprintMigrationBase
                         $childSection = \CIBlockSection::GetList(
                             [],
                             [
-                                'IBLOCK_ID'         => $iblockId,
+                                'IBLOCK_ID'  => $iblockId,
                                 'SECTION_ID' => $section['ID'],
-                                'CODE'              => $key,
+                                'CODE'       => $key,
                             ]
                         )->Fetch();
                         if (!$childSection) {
