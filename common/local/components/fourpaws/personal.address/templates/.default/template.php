@@ -18,18 +18,7 @@ if (!\is_array($arResult['ITEMS']) || empty($arResult['ITEMS'])) {
     <?php /** @var Address $address */
     foreach ($arResult['ITEMS'] as $address) {
         $name = $address->getName(); ?>
-        <div class="b-account-border-block js-delivery-address js-delivery-address"
-             data-name="<?= $address->getName() ?>"
-             data-city="<?= $address->getCity() ?>"
-             data-street="<?= $address->getStreet() ?>"
-             data-number="<?= $address->getHouse() ?>"
-             data-corpus="<?= $address->getHousing() ?>"
-             data-flat="<?= $address->getFlat() ?>"
-             data-code="<?= $address->getIntercomCode() ?>"
-             data-floor="<?= $address->getFloor() ?>"
-             data-primary="<?= $address->isMain() ?>"
-             data-entrance="<?= $address->getEntrance() ?>"
-             data-id="<?= $address->getId() ?>">
+        <div class="b-account-border-block js-delivery-address">
             <div class="b-account-border-block__content js-delivery-address">
                 <?php if (!empty($name)) {
                     ?>
@@ -45,7 +34,7 @@ if (!\is_array($arResult['ITEMS']) || empty($arResult['ITEMS'])) {
                 </div>
                 <?php if ($address->isMain()) {
                     ?>
-                    <div class="b-account-border-block__label js-prim-address-check">Основной адрес</div>
+                    <div class="b-account-border-block__label">Основной адрес</div>
                     <?php
                 } ?>
             </div>
@@ -56,6 +45,17 @@ if (!\is_array($arResult['ITEMS']) || empty($arResult['ITEMS'])) {
                        title="Редактировать"
                        data-popup-id="edit-adress-popup"
                        data-url="/ajax/personal/address/update/"
+                       data-id="<?= $address->getId() ?>"
+                       data-address="<?= $address->getName() ?>"
+                       data-city="<?= $address->getCity() ?>"
+                       data-street="<?= $address->getStreet() ?>"
+                       data-home="<?= $address->getHouse() ?>"
+                       data-housing="<?= $address->getHousing() ?>"
+                       data-entrance="<?= $address->getEntrance() ?>"
+                       data-floor="<?= $address->getFloor() ?>"
+                       data-office="<?= $address->getFlat() ?>"
+                       data-doorphone="<?= $address->getIntercomCode() ?>"
+                       data-primary="<?= $address->isMain() ?>"
                     >
                         <span class="b-icon b-icon--account-block">
                             <?= new SvgDecorator('icon-edit', 21, 21) ?>
@@ -89,7 +89,7 @@ if (!\is_array($arResult['ITEMS']) || empty($arResult['ITEMS'])) {
                 <a class="b-link b-link--account-del b-link--account-del"
                    href="javascript:void(0)"
                    title="Удалить"
-                   data-url="/ajax/personal/address/delete/?id=<?= $address->getId() ?>"
+                   data-url="/ajax/personal/address/delete/"
                    data-id="<?= $address->getId() ?>">
                     <span class="b-link__text b-link__text--account-del">Удалить</span>
                 </a>
@@ -97,7 +97,7 @@ if (!\is_array($arResult['ITEMS']) || empty($arResult['ITEMS'])) {
         </div>
         <?php
     } ?>
-    <div class="b-account-border-block b-account-border-block--dashed b-account-border-block--dashed">
+    <div class="b-account-border-block b-account-border-block--dashed">
         <div class="b-account-border-block__content b-account-border-block__content--dashed">
             <div class="b-account-border-block__title b-account-border-block__title--dashed">Зачем добавлять адреса?
             </div>
@@ -118,4 +118,5 @@ if (!\is_array($arResult['ITEMS']) || empty($arResult['ITEMS'])) {
             </a>
         </div>
     </div>
+</div>
 </div>

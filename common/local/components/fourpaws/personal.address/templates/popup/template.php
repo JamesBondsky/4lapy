@@ -11,19 +11,20 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         <header class="b-registration__header">
             <h1 class="b-title b-title--h1 b-title--registration">Новый адрес доставки</h1>
         </header>
-        <form class="b-registration__form js-form-validation js-delivery-address-query" method="post">
-            <input class="js-data-id js-no-valid" name="id" value="" type="hidden">
-            <div class="b-input-line b-input-line--popup-authorization js-name js-small-input">
+        <form class="b-registration__form js-form-validation js-delivery-address-query" method="get">
+            <div class="js-id" style="display:none">
+                <input type="hidden" name="ID">
+            </div>
+            <div class="b-input-line b-input-line--popup-authorization js-name">
                 <div class="b-input-line__label-wrapper">
                     <label class="b-input-line__label" for="name-adress">Название</label>
                     <span class="b-input-line__require">(например, дом, работа, дача)</span>
                 </div>
-                <div class="b-input b-input--registration-form">
-                    <input class="b-input__input-field b-input__input-field--registration-form"
+                <div class="b-input b-input--registration-form b-kek">
+                    <input class="b-input__input-field b-input__input-field--registration-form b-kek"
                            type="text"
                            id="name-adress"
                            placeholder=""
-                           data-text="0"
                            name="UF_NAME" />
                     <div class="b-error"><span class="js-message"></span>
                     </div>
@@ -39,7 +40,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                            type="text"
                            id="city-adress"
                            placeholder=""
-                           data-text="1"
                            name="UF_CITY" />
                     <div class="b-error"><span class="js-message"></span>
                     </div>
@@ -55,7 +55,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                            type="text"
                            id="street-adress"
                            placeholder=""
-                           data-text="2"
                            name="UF_STREET" />
                     <div class="b-error"><span class="js-message"></span>
                     </div>
@@ -71,7 +70,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                         <input class="b-input__input-field b-input__input-field--registration-form js-home js-small-input"
                                id="home-adress"
                                type="text"
-                               data-text="3"
                                name="UF_HOUSE" />
                         <div class="b-error"><span class="js-message"></span>
                         </div>
