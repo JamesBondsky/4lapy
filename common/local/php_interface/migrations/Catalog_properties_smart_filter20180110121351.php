@@ -17,7 +17,7 @@ class Catalog_properties_smart_filter20180110121351 extends SprintMigrationBase
             'BRAND',
         ],
         'koshki'                         => [
-            'korm2'                           => [
+            'korm22'                           => [
                 'FILTERS' => [
                     'PET_AGE',
                     'FEED_SPECIFICATION',
@@ -27,7 +27,7 @@ class Catalog_properties_smart_filter20180110121351 extends SprintMigrationBase
                     // тип упаковки
                 ],
             ],
-            'lakomstva-vitaminy-dobavki'      => [
+            'lakomstva-vitaminy-dobavki22'      => [
                 'FILTERS' => [
                     'PET_AGE',
                     'FLAVOUR',
@@ -35,42 +35,42 @@ class Catalog_properties_smart_filter20180110121351 extends SprintMigrationBase
                     // тип упаковки
                 ],
             ],
-            'miski-kormushki-poilki1'         => [
+            'miski-kormushki-poilki12'         => [
                 'FILTERS' => [
                     'MANUFACTURE_MATERIAL',
                     // цвет, объем
                 ],
             ],
-            'sumki-perenoski2'                => [
+            'sumki-perenoski22'                => [
                 'FILTERS' => [
                     'MANUFACTURE_MATERIAL',
                     'PET_SIZE',
                 ],
             ],
-            'igrushki3'                       => [
+            'igrushki32'                       => [
                 'FILTERS' => [
                     'MANUFACTURE_MATERIAL',
                 ],
             ],
-            'shleyki-osheyniki-povodki'       => [
+            'shleyki-osheyniki-povodki22'       => [
                 'FILTERS' => [
                     'PET_SIZE',
                     'MANUFACTURE_MATERIAL',
                     // цвет
                 ],
             ],
-            'kogtetochki'                     => [
+            'kogtetochki22'                     => [
                 'FILTERS' => [
                     'MANUFACTURE_MATERIAL',
                 ],
             ],
-            'kletki-volery-dveri1'            => [
+            'kletki-volery-dveri12'            => [
                 'FILTERS' => [
                     'MANUFACTURE_MATERIAL',
                     'PET_SIZE',
                 ],
             ],
-            'zashchita-ot-blokh-i-kleshchey3' => [
+            'zashchita-ot-blokh-i-kleshchey32' => [
                 'FILTERS' => [
                     'PHARMA_GROUP',
                     'PET_AGE',
@@ -81,7 +81,7 @@ class Catalog_properties_smart_filter20180110121351 extends SprintMigrationBase
             ],
         ],
         'sobaki'                         => [
-            'korm3'                           => [
+            'korm33'                           => [
                 'FILTERS' => [
                     'PET_AGE',
                     'FEED_SPECIFICATION',
@@ -92,7 +92,7 @@ class Catalog_properties_smart_filter20180110121351 extends SprintMigrationBase
                     // тип упаковки
                 ],
             ],
-            'lakomstva-i-vitaminy1'           => [
+            'lakomstva-i-vitaminy33'           => [
                 'FILTERS' => [
                     'PET_AGE',
                     'PET_SIZE',
@@ -100,7 +100,7 @@ class Catalog_properties_smart_filter20180110121351 extends SprintMigrationBase
                     // тип упаковки
                 ],
             ],
-            'odezhda-i-obuv'                  => [
+            'odezhda-i-obuv33'                  => [
                 'FILTERS' => [
                     'MANUFACTURE_MATERIAL',
                     'PET_SIZE',
@@ -109,52 +109,52 @@ class Catalog_properties_smart_filter20180110121351 extends SprintMigrationBase
                     // цвет, размер
                 ],
             ],
-            'namordniki-osheyniki-povodki'    => [
+            'namordniki-osheyniki-povodki33'    => [
                 'FILTERS' => [
                     'MANUFACTURE_MATERIAL',
                     'PET_SIZE',
                     // цвет
                 ],
             ],
-            'bizhuteriya'                     => [
+            'bizhuteriya33'                     => [
                 'FILTERS' => [
                     'MANUFACTURE_MATERIAL',
                     // цвет
                 ],
             ],
-            'kletki-volery-dveri'             => [
+            'kletki-volery-dveri33'             => [
                 'FILTERS' => [
                     'MANUFACTURE_MATERIAL',
                     'PET_SIZE',
                 ],
             ],
-            'miski-kormushki-poilki'          => [
+            'miski-kormushki-poilki33'          => [
                 'FILTERS' => [
                     'MANUFACTURE_MATERIAL',
                     'PET_SIZE',
                     // цвет, объем
                 ],
             ],
-            'sumki-perenoski'                 => [
+            'sumki-perenoski33'                 => [
                 'FILTERS' => [
                     'MANUFACTURE_MATERIAL',
                     'PET_SIZE',
                 ],
             ],
-            'igrushki'                        => [
+            'igrushki33'                        => [
                 'FILTERS' => [
                     'MANUFACTURE_MATERIAL',
                     'PET_SIZE',
                 ],
             ],
-            'shleyki-osheyniki-povodki2'      => [
+            'shleyki-osheyniki-povodki33'      => [
                 'FILTERS' => [
                     'MANUFACTURE_MATERIAL',
                     'PET_SIZE',
                     // цвет
                 ],
             ],
-            'zashchita-ot-blokh-i-kleshchey2' => [
+            'zashchita-ot-blokh-i-kleshchey33' => [
                 'FILTERS' => [
                     'PHARMA_GROUP',
                     'PET_AGE',
@@ -174,7 +174,7 @@ class Catalog_properties_smart_filter20180110121351 extends SprintMigrationBase
             ],
         ],
         'gryzuny-i-khorki'               => [
-            'korm2'                           => [
+            'korm55'                           => [
                 'FILTERS' => [
                     'PET_AGE',
                     'FEED_SPECIFICATION',
@@ -182,44 +182,44 @@ class Catalog_properties_smart_filter20180110121351 extends SprintMigrationBase
                     // тип упаковки
                 ],
             ],
-            'lakomstva-i-vitaminy1'           => [
+            'lakomstva-i-vitaminy55'           => [
                 'FILTERS' => [
                     'PET_AGE',
                     'PET_TYPE',
                     // тип упаковки
                 ],
             ],
-            'domiki-lezhaki-gnezda'           => [
+            'domiki-lezhaki-gnezda55'           => [
                 'FILTERS' => [
                     'MANUFACTURE_MATERIAL',
                     'PET_SIZE',
                 ],
             ],
-            'igrushki2'                       => [
+            'igrushki55'                       => [
                 'FILTERS' => [
                     'MANUFACTURE_MATERIAL',
                     'PET_SIZE',
                 ],
             ],
-            'kletki'                          => [
+            'kletki55'                          => [
                 'FILTERS' => [
                     'MANUFACTURE_MATERIAL',
                     'PET_SIZE',
                 ],
             ],
-            'miski-kormushki-poilki2'         => [
+            'miski-kormushki-poilki55'         => [
                 'FILTERS' => [
                     'MANUFACTURE_MATERIAL',
                     // цвет, объем
                 ],
             ],
-            'sumki-perenoski2'                => [
+            'sumki-perenoski55'                => [
                 'FILTERS' => [
                     'MANUFACTURE_MATERIAL',
                     'PET_SIZE',
                 ],
             ],
-            'zashchita-ot-blokh-i-kleshchey2' => [
+            'zashchita-ot-blokh-i-kleshchey55' => [
                 'FILTERS' => [
                     'PHARMA_GROUP',
                     'PET_AGE',
@@ -230,7 +230,7 @@ class Catalog_properties_smart_filter20180110121351 extends SprintMigrationBase
             ],
         ],
         'ptitsy'                         => [
-            'korm'                            => [
+            'korm66'                            => [
                 'FILTERS' => [
                     'PET_AGE',
                     'FEED_SPECIFICATION',
@@ -238,37 +238,37 @@ class Catalog_properties_smart_filter20180110121351 extends SprintMigrationBase
                     // тип упаковки
                 ],
             ],
-            'lakomstva-i-vitaminy'            => [
+            'lakomstva-i-vitaminy66'            => [
                 'FILTERS' => [
                     'PET_AGE',
                     // тип упаковки
                 ],
             ],
-            'igrushki2'                       => [
+            'igrushki66'                       => [
                 'FILTERS' => [
                     'MANUFACTURE_MATERIAL',
                     'PET_SIZE',
                 ],
             ],
-            'kletki2'                         => [
+            'kletki66'                         => [
                 'FILTERS' => [
                     'MANUFACTURE_MATERIAL',
                     'PET_SIZE',
                 ],
             ],
-            'miski-kormushki-poilki1'         => [
+            'miski-kormushki-poilki66'         => [
                 'FILTERS' => [
                     'MANUFACTURE_MATERIAL',
                     // объем
                 ],
             ],
-            'sumki-perenoski1'                => [
+            'sumki-perenoski66'                => [
                 'FILTERS' => [
                     'MANUFACTURE_MATERIAL',
                     'PET_SIZE',
                 ],
             ],
-            'zashchita-ot-blokh-i-kleshchey1' => [
+            'zashchita-ot-blokh-i-kleshchey66' => [
                 'FILTERS' => [
                     'PHARMA_GROUP',
                     'PET_AGE',
@@ -278,50 +278,50 @@ class Catalog_properties_smart_filter20180110121351 extends SprintMigrationBase
             ],
         ],
         'ryby'                           => [
-            'akvariumy'         => [
+            'akvariumy77'         => [
                 'FILTERS' => [
                     'MANUFACTURE_MATERIAL',
                     // объем
                 ],
             ],
-            'korm-i-podkormka1' => [
+            'korm-i-podkormka77' => [
                 'FILTERS' => [
                     'FEED_SPECIFICATION',
                     'PET_TYPE',
                     // тип упаковки
                 ],
             ],
-            'dekor'             => [
+            'dekor77'             => [
                 'FILTERS' => [
                     'MANUFACTURE_MATERIAL',
                 ],
             ],
-            'oborudovanie'      => [
+            'oborudovanie77'      => [
                 'FILTERS' => [
                     'PURPOSE',
                 ],
             ],
         ],
         'reptilii'                       => [
-            'terrariumy-i-podstavki' => [
+            'terrariumy-i-podstavki88' => [
                 'FILTERS' => [
                     'MANUFACTURE_MATERIAL',
                     // объем
                 ],
             ],
-            'korm-i-podkormka'       => [
+            'korm-i-podkormka88'       => [
                 'FILTERS' => [
                     'FEED_SPECIFICATION',
                     'PET_TYPE',
                     // тип упаковки
                 ],
             ],
-            'dekor1'                 => [
+            'dekor88'                 => [
                 'FILTERS' => [
                     'MANUFACTURE_MATERIAL',
                 ],
             ],
-            'oborudovanie1'          => [
+            'oborudovanie88'          => [
                 'FILTERS' => [
                     'PURPOSE',
                 ],
