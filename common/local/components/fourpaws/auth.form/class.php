@@ -241,7 +241,6 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 ]
             );
         } catch (\Exception $e) {
-            //App::getInstance()->getRootDir()
             return JsonErrorResponse::createWithData(
                 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
                 ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
