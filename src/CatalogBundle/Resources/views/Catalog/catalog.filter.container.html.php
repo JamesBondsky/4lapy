@@ -10,6 +10,7 @@
 use Bitrix\Main\Grid\Declension;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
+use FourPaws\Catalog\Model\Filter\ActionsFilter;
 use FourPaws\Catalog\Model\Filter\PriceFilter;
 use FourPaws\Catalog\Model\Filter\RangeFilterInterface;
 use FourPaws\Catalog\Model\Sorting;
@@ -87,6 +88,9 @@ $category = $APPLICATION->IncludeComponent(
                     continue;
                 }
                 if ($filter instanceof RangeFilterInterface) {
+                    continue;
+                }
+                if ($filter instanceof ActionsFilter) {
                     continue;
                 }
                 if (!$filter->hasAvailableVariants()) {
@@ -197,19 +201,40 @@ $category = $APPLICATION->IncludeComponent(
                             <span class="b-select__arrow"></span>
                         </span>
                     </span>
-                    <span class="b-catalog-filter__discount js-discount-desktop-here">
-                      <ul class="b-filter-link-list b-filter-link-list--filter js-discount-checkbox js-filter-checkbox">
-                        <li class="b-filter-link-list__item">
-                          <label class="b-filter-link-list__label">
-                              <input class="b-filter-link-list__checkbox js-discount-input js-filter-control"
-                                     type="checkbox" name="filter-discount" value="filter-discount-0"
-                                     id="filter-discount-0"/>
-                              <a class="b-filter-link-list__link b-filter-link-list__link--checkbox"
-                                 href="javascript:void(0);" title="Товары со скидкой">Товары со скидкой</a>
-                          </label>
-                        </li>
-                      </ul>
-                    </span>
+                    <?php
+                    /**
+                     * @var FilterBase $filter
+                     */
+                    foreach ($filterCollection->getVisibleFilters() as $filter) {
+                        if (!$filter->hasAvailableVariants()) {
+                            continue;
+                        }
+                        if (!($filter instanceof ActionsFilter)) {
+                            continue;
+                        }
+                        ?>
+                        <span class="b-catalog-filter__discount js-discount-desktop-here">
+                            <ul class="b-filter-link-list b-filter-link-list--filter js-discount-checkbox js-filter-checkbox">
+                                <?php foreach ($filter->getAvailableVariants() as $id => $variant) { ?>
+                                    <li class="b-filter-link-list__item">
+                                        <label class="b-filter-link-list__label">
+                                            <input class="b-filter-link-list__checkbox js-discount-input js-filter-control"
+                                                   type="checkbox"
+                                                   name="<?= $filter->getFilterCode() ?>"
+                                                   value="<?= $variant->getValue() ?>"
+                                                   id="<?= $filter->getFilterCode() ?>-<?= $id ?>"
+                                                   <?= $variant->isChecked() ? 'checked' : '' ?>/>
+                                            <a class="b-filter-link-list__link b-filter-link-list__link--checkbox"
+                                               href="javascript:void(0);"
+                                               title="<?= $filter->getName() ?>">
+                                                <?= $filter->getName() ?>
+                                            </a>
+                                        </label>
+                                    </li>
+                                <?php } ?>
+                            </ul>
+                        </span>
+                    <?php } ?>
                 </div>
                 <div class="b-catalog-filter__type-part">
                     <a class="b-link b-link--type active js-link-type-normal"

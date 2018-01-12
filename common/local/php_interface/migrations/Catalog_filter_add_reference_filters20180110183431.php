@@ -5,6 +5,7 @@ namespace Sprint\Migration;
 use Adv\Bitrixtools\Migration\SprintMigrationBase;
 use Bitrix\Highloadblock\DataManager;
 use FourPaws\App\Application;
+use FourPaws\Catalog\Model\Filter\ActionsFilter;
 use FourPaws\Catalog\Model\Filter\ClothingSizeFilter;
 use FourPaws\Catalog\Model\Filter\ColourFilter;
 use FourPaws\Catalog\Model\Filter\ConsistenceFilter;
@@ -22,7 +23,7 @@ use FourPaws\Catalog\Model\Filter\VolumeReferenceFilter;
 
 class Catalog_filter_add_reference_filters20180110183431 extends SprintMigrationBase
 {
-    protected $description = 'Добавление новых классов фильтров (по свойствам-справочникам) в HL-блок с фильтрами';
+    protected $description = 'Добавление новых классов фильтров в HL-блок с фильтрами';
 
     protected $filters = [
         [
@@ -122,6 +123,13 @@ class Catalog_filter_add_reference_filters20180110183431 extends SprintMigration
             'UF_CLASS_NAME' => PackageTypeFilter::class,
             'UF_ACTIVE'     => 1,
             'UF_CODE'       => 'KIND_OF_PACKING',
+        ],
+        [
+            'UF_NAME'       => 'Товары со скидкой',
+            'UF_SORT'       => 2100,
+            'UF_CLASS_NAME' => ActionsFilter::class,
+            'UF_ACTIVE'     => 1,
+            'UF_CODE'       => 'hasActions',
         ],
     ];
 

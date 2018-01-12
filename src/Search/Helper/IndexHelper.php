@@ -311,6 +311,7 @@ class IndexHelper implements LoggerAwareInterface
                         'PROPERTY_CONSISTENCE'             => ['type' => 'keyword'],
                         'PROPERTY_FEED_SPECIFICATION'      => ['type' => 'keyword'],
                         'PROPERTY_PHARMA_GROUP'            => ['type' => 'keyword'],
+                        'hasActions'                       => ['type' => 'boolean']
                     ],
                 ],
             ],
