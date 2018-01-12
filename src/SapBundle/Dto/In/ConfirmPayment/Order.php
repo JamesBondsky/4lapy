@@ -94,7 +94,7 @@ class Order
      *
      * @var Collection|Item[]
      */
-    protected $items = null;
+    protected $items;
 
     /**
      * @return int
