@@ -267,6 +267,8 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 
     /**
      * @var string
+     * @Type("string")
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_COUNTRY = '';
 
@@ -529,6 +531,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @Groups({"elastic"})
      */
     protected $suggest;
+
+    /**
+     * @var bool
+     * @Type("bool")
+     * @Accessor(getter="hasActions")
+     * @Groups({"elastic"})
+     */
+    protected $hasActions;
 
     /**
      * @var string
@@ -1259,5 +1269,22 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     {
         $this->PROPERTY_PACKING_COMBINATION = $packingCombination;
         return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getActions()
+    {
+        // @todo возвращать коллекцию акций, когда они будут реализованы
+        return [];
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasActions(): bool
+    {
+        return !empty($this->getActions());
     }
 }
