@@ -4,6 +4,8 @@ namespace FourPaws\Catalog\Model\Filter\Abstraction;
 
 use Elastica\Aggregation\AbstractAggregation;
 use Elastica\Aggregation\Nested;
+use Elastica\Query\AbstractQuery;
+use Elastica\Query\Nested as NestedQuery;
 
 abstract class ReferenceFilterNested extends ReferenceFilterBase
 {
@@ -29,5 +31,16 @@ abstract class ReferenceFilterNested extends ReferenceFilterBase
         return (new Nested($this->getFilterCode(), $this->getPath()))->addAggregation(
             parent::getAggRule()
         );
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getFilterRule(): AbstractQuery
+    {
+        $query = new NestedQuery();
+        $query->setPath($this->getPath());
+
+        return $query->setQuery(parent::getFilterRule());
     }
 }
