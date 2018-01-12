@@ -281,7 +281,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                     Округлить до упаковки (<?= $offer->getMultiplicity() ?> шт.)<span>— скидка 3%</span>
                 </a>
             <?php } ?>
-            <a class="b-counter-basket__basket-link" href="javascript:void(0)" title="">
+            <a class="b-counter-basket__basket-link js-basket-add" href="javascript:void(0)" title="" data-offerId="<?= $offer->getId(); ?>" data-url="/ajax/sale/basket/add/">
                 <span class="b-counter-basket__basket-text">Добавить в корзину</span>
                 <span class="b-icon b-icon--advice"><?= new SvgDecorator('icon-cart', 20, 20) ?></span>
             </a>
