@@ -28,8 +28,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="sms-code-3">SMS-код</label>
             </div>
-            <div class="b-input b-input--registration-form b-kek">
-                <input class="b-input__input-field b-input__input-field--registration-form b-kek"
+            <div class="b-input b-input--registration-form">
+                <input class="b-input__input-field b-input__input-field--registration-form"
                        type="text"
                        id="sms-code-3"
                        placeholder=""
@@ -45,7 +45,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                title="Отправить снова">Отправить снова</a>
         </div>
         <div class="b-registration__captcha" data-sitekey=""></div>
-        <button class="b-button b-button--social b-button--full-width" type="submit">Подтвердить</button>
+        <button class="b-button b-button--social b-button--full-width">Подтвердить</button>
     </form>
 </div>
 <section class="b-registration__additional-info b-registration__additional-info--step">

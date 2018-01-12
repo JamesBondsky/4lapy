@@ -4,7 +4,7 @@
 /**
  * Бренды в меню (алфавитный указатель, сгруппированный список, популярные бренды)
  *
- * @updated: 28.12.2017
+ * @updated: 11.01.2017
  */
 $this->setFrameMode(true);
 
@@ -121,7 +121,8 @@ $sPopBrandsTitle = \Bitrix\Main\Localization\Loc::getMessage('MENU_BRANDS.POP_BR
                     ?><div class="b-popular-brand-item b-popular-brand-item--brands-menu">
                         <a class="b-popular-brand-item__link b-popular-brand-item__link--brands-menu" title="<?=$arItem['NAME']?>" href="<?=$arItem['DETAIL_PAGE_URL']?>"><?php
                             if($arItem['PRINT_PICTURE']) {
-                                ?><img class="b-popular-brand-item__image js-image-wrapper" src="<?=$arItem['PRINT_PICTURE']['SRC']?>" alt="<?=$arItem['NAME']?>" title="<?=$arItem['NAME']?>"><?php
+                                $arImg = $arItem['PRINT_PICTURE'];
+                                ?><img class="b-popular-brand-item__image js-image-wrapper" src="<?=$arImg['SRC']?>" alt="<?=$arImg['ALT']?>" title="<?=$arImg['TITLE']?>"><?php
                             }
                         ?></a>
                     </div><?php

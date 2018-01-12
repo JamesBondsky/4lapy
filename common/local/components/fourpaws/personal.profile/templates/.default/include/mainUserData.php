@@ -1,4 +1,7 @@
 <?php
+
+use FourPaws\Decorators\SvgDecorator;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
@@ -23,7 +26,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                 <div class="b-account-data__text">
                     <?= $arResult['CUR_USER']['PERSONAL_PHONE'] ?>
                 </div>
-                <span class="b-icon b-icon--account-profile<?= $arResult['CUR_USER']['PHONE_CONFIRMED'] ? ' active' : '' ?>"></span>
+                <span class="b-icon b-icon--account-profile<?= $arResult['CUR_USER']['PHONE_CONFIRMED'] ? ' active' : '' ?>">
+                    <?= new SvgDecorator('icon-check-account', 21, 17) ?>
+                </span>
             </div>
         </div>
     </div>
@@ -46,7 +51,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                 <div class="b-account-data__text">
                     <a href="mailto:<?= $arResult['CUR_USER']['EMAIL'] ?>"><?= $arResult['CUR_USER']['EMAIL'] ?></a>
                 </div>
-                <span class="b-icon b-icon--account-profile<?= $arResult['CUR_USER']['EMAIL_CONFIRMED'] ? ' active' : '' ?>"></span>
+                <span class="b-icon b-icon--account-profile<?= $arResult['CUR_USER']['EMAIL_CONFIRMED'] ? ' active' : '' ?>">
+                    <?= new SvgDecorator('icon-check-account', 21, 17) ?>
+                </span>
             </div>
         </div>
     </div>

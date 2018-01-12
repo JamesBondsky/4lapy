@@ -32,6 +32,7 @@ use FourPaws\UserBundle\Exception\EmptyDateException;
 use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\ConfirmCodeInterface;
@@ -75,7 +76,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
         }
         $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
-        $this->authUserProvider = $container->get(UserAuthorizationInterface::class);
+        $this->authUserProvider    = $container->get(UserAuthorizationInterface::class);
     }
     
     /**
@@ -100,15 +101,13 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         
         try {
             $curBirthday = $curUser->getBirthday();
-            if($curBirthday instanceof Date) {
-                try{
+            if ($curBirthday instanceof Date) {
+                try {
                     $birthday = $this->replaceRuMonth($curBirthday->format('j #n# Y'));
-                }
-                catch (\Exception $e){
+                } catch (\Exception $e) {
                     $birthday = '';
                 }
-            }
-            else{
+            } else {
                 $birthday = '';
             }
         } catch (EmptyDateException $e) {
@@ -167,7 +166,6 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
     /**
      * @param Request $request
      *
-     * @throws ContactUpdateException
      * @throws ValidationException
      * @throws InvalidIdentifierException
      * @throws ServiceNotFoundException
@@ -200,6 +198,11 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                 'Некорректный номер телефона',
                 ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
             );
+        } catch (NotFoundConfirmedCodeException $e) {
+            return JsonErrorResponse::createWithData(
+                'Не найден код подтверждения',
+                ['errors' => ['notFoundConfirmedCode' => 'Не найден код подтверждения']]
+            );
         }
         $data = ['UF_PHONE_CONFIRMED' => 'Y'];
         try {
@@ -210,10 +213,10 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                 )
             )) {
                 $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
-                $client = null;
+                $client         = null;
                 try {
-                    $contactId = $manzanaService->getContactIdByCurUser();
-                    $client = new Client();
+                    $contactId         = $manzanaService->getContactIdByCurUser();
+                    $client            = new Client();
                     $client->contactId = $contactId;
                     $client->phone     = $phone;
                 } catch (ManzanaServiceContactSearchMoreOneException $e) {
@@ -222,8 +225,12 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                     $this->currentUserProvider->setClientPersonalDataByCurUser($client);
                 } catch (ManzanaServiceException $e) {
                 }
-                if($client instanceof Client) {
-                    $manzanaService->updateContact($client);
+                if ($client instanceof Client) {
+                    try {
+                        $manzanaService->updateContact($client);
+                    } catch (ManzanaServiceException $e) {
+                    } catch (ContactUpdateException $e) {
+                    }
                 }
                 
                 return JsonSuccessResponse::create('Телефон верифицирован');
@@ -240,7 +247,6 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         } catch (ConstraintDefinitionException $e) {
         } catch (ApplicationCreateException $e) {
         } catch (ServiceCircularReferenceException $e) {
-        } catch (ManzanaServiceException $e) {
         } catch (NotAuthorizedException $e) {
         }
         
@@ -329,8 +335,9 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         
         ob_start();
         /** @noinspection PhpIncludeInspection */
-        include_once App::getDocumentRoot() . '/local/components/fourpaws/personal.profile/templates/.default/include/'
-                     . $step . '.php';
+        include_once App::getDocumentRoot()
+                     . '/local/components/fourpaws/personal.profile/templates/popupChangePhone/include/' . $step
+                     . '.php';
         $html = ob_get_clean();
         
         return JsonSuccessResponse::createWithData(

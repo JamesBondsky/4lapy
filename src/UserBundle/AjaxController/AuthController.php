@@ -81,7 +81,7 @@ class AuthController extends Controller
     }
     
     /**
-     * @Route("/register/", methods={"POST"})
+     * @Route("/register/", methods={"GET", "POST"})
      * @param Request $request
      *
      * @throws NotAuthorizedException

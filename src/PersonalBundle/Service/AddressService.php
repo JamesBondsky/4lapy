@@ -63,11 +63,8 @@ class AddressService
      * @param $data
      *
      * @throws \RuntimeException
-     * @throws NotAuthorizedException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
-     * @throws ContactUpdateException
-     * @throws ManzanaServiceException
      * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
      * @throws ServiceNotFoundException
@@ -117,7 +114,6 @@ class AddressService
                 $this->addressRepository->setEntity($address)->update();
             }
         } catch (ApplicationCreateException $e) {
-        } catch (NotAuthorizedException $e) {
         } catch (ServiceCircularReferenceException $e) {
         } catch (\Exception $e) {
         }
@@ -126,47 +122,61 @@ class AddressService
     /**
      * @param Address $address
      *
-     * @throws NotAuthorizedException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
-     * @throws ManzanaServiceException
-     * @throws ContactUpdateException
      * @throws ServiceCircularReferenceException
      * @throws \RuntimeException
      */
     protected function updateManzanaAddress(Address $address)
     {
-        $container = App::getInstance()->getContainer();
+        $container      = App::getInstance()->getContainer();
         $manzanaService = $container->get('manzana.service');
-        $client = null;
+        $client         = null;
         try {
-            $contactId = $manzanaService->getContactIdByCurUser();
-            $client = new Client();
+            $contactId         = $manzanaService->getContactIdByCurUser();
+            $client            = new Client();
             $client->contactId = $contactId;
         } catch (ManzanaServiceContactSearchMoreOneException $e) {
         } catch (ManzanaServiceContactSearchNullException $e) {
             $client = new Client();
             $container->get(CurrentUserProviderInterface::class)->setClientPersonalDataByCurUser($client);
         } catch (ManzanaServiceException $e) {
+        } catch (NotAuthorizedException $e) {
         }
-        if($client instanceof Client) {
+        if ($client instanceof Client) {
             $this->setClientAddress($client, $address);
-            $manzanaService->updateContact($client);
+            try {
+                $manzanaService->updateContact($client);
+            } catch (ManzanaServiceException $e) {
+            } catch (ContactUpdateException $e) {
+            }
         }
+    }
+    
+    /**
+     * @param Client  $client
+     * @param Address $address
+     */
+    public function setClientAddress(&$client, Address $address)
+    {
+        /** неоткуда взять область для обновления
+         * $client->addressStateOrProvince = '';*/
+        $client->addressCity   = $address->getCity();//Город
+        $client->address       = $address->getStreet();//Улица
+        $client->addressLine2  = $address->getHouse();//Дом
+        $client->addressLine3  = $address->getHousing();//Корпус
+        $client->plAddressFlat = $address->getFlat();//Квартира
     }
     
     /**
      * @param array $data
      *
      * @throws \RuntimeException
-     * @throws NotAuthorizedException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
-     * @throws ContactUpdateException
-     * @throws ManzanaServiceException
      * @throws ValidationException
      * @throws InvalidIdentifierException
      * @throws \Exception
@@ -203,20 +213,5 @@ class AddressService
     public function delete(int $id) : bool
     {
         return $this->addressRepository->delete($id);
-    }
-    
-    /**
-     * @param Client  $client
-     * @param Address $address
-     */
-    public function setClientAddress(&$client, Address $address)
-    {
-        /** неоткуда взять область для обновления
-         * $client->addressStateOrProvince = '';*/
-        $client->addressCity   = $address->getCity();//Город
-        $client->address       = $address->getStreet();//Улица
-        $client->addressLine2  = $address->getHouse();//Дом
-        $client->addressLine3  = $address->getHousing();//Корпус
-        $client->plAddressFlat = $address->getFlat();//Квартира
     }
 }

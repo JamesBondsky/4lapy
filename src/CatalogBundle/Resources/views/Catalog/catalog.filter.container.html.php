@@ -8,10 +8,11 @@
  */
 
 use Bitrix\Main\Grid\Declension;
+use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
+use FourPaws\Catalog\Model\Filter\ActionsFilter;
 use FourPaws\Catalog\Model\Filter\PriceFilter;
 use FourPaws\Catalog\Model\Filter\RangeFilterInterface;
-use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Sorting;
 use FourPaws\Catalog\Model\Variant;
 use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
@@ -31,9 +32,9 @@ $category = $APPLICATION->IncludeComponent(
     [
         'SECTION_CODE' => $catalogRequest->getCategory()->getCode(),
         'SET_TITLE'    => 'Y',
-        'CACHE_TIME'   => 10
+        'CACHE_TIME'   => 10,
     ],
-    $component,
+    null,
     ['HIDE_ICONS' => 'Y']
 );
 ?>
@@ -45,7 +46,7 @@ $category = $APPLICATION->IncludeComponent(
         [
             'IBLOCK_SECTION' => $category,
         ],
-        $component,
+        null,
         ['HIDE_ICONS' => 'Y']
     );
     ?>
@@ -61,7 +62,7 @@ $category = $APPLICATION->IncludeComponent(
         </div>
     </div>
     <div class="b-filter__wrapper b-filter__wrapper--scroll">
-        <form class="b-form js-filter-form">
+        <form class="b-form js-filter-form" action="<?= $APPLICATION->GetCurDir() ?>">
             <?= $view->render(
                 'FourPawsCatalogBundle:Catalog:catalog.filter.backLink.html.php',
                 [
@@ -89,6 +90,9 @@ $category = $APPLICATION->IncludeComponent(
                 if ($filter instanceof RangeFilterInterface) {
                     continue;
                 }
+                if ($filter instanceof ActionsFilter) {
+                    continue;
+                }
                 if (!$filter->hasAvailableVariants()) {
                     continue;
                 }
@@ -98,30 +102,38 @@ $category = $APPLICATION->IncludeComponent(
                         <h3 class="b-title b-title--filter-header">
                             <?= $filter->getName() ?>
                         </h3>
-                        <ul class="b-filter-link-list b-filter-link-list--filter js-filter-checkbox">
+                        <ul class="b-filter-link-list b-filter-link-list--filter js-accordion-filter js-filter-checkbox">
                             <?php
                             /**
                              * @var Variant $variant
                              */
-                            foreach ($filter->getAllVariants() as $id => $variant) {
+                            foreach ($filter->getAvailableVariants() as $id => $variant) {
                                 ?>
                                 <li class="b-filter-link-list__item">
                                     <label class="b-filter-link-list__label">
-                                        <input
-                                                class="b-filter-link-list__checkbox js-checkbox-change js-filter-control"
-                                                type="checkbox"
-                                                name="<?= $filter->getFilterCode() ?>"
-                                                value="<?= $variant->getValue() ?>"
-                                                id="<?= $filter->getFilterCode() ?>-<?= $id ?>"/>
-                                        <a
-                                                class="b-filter-link-list__link b-filter-link-list__link--checkbox"
-                                                href="javascript:void(0);"
-                                                title="<?= $variant->getName() ?>"
+                                        <input class="b-filter-link-list__checkbox js-checkbox-change js-filter-control"
+                                               type="checkbox"
+                                               name="<?= $filter->getFilterCode() ?>"
+                                               value="<?= $variant->getValue() ?>"
+                                               id="<?= $filter->getFilterCode() ?>-<?= $id ?>"
+                                               <?= $variant->isChecked() ? 'checked' : '' ?>
+                                        />
+                                        <a class="b-filter-link-list__link b-filter-link-list__link--checkbox"
+                                           href="javascript:void(0);"
+                                           title="<?= $variant->getName() ?>"
                                         ><?= $variant->getName() ?></a>
                                     </label>
                                 </li>
                                 <?php
                             } ?>
+                        </ul>
+                        <a class="b-link b-link--filter-more js-open-filter-all"
+                           href="javascript:void(0);" title="Показать все">
+                            Показать все
+                            <span class="b-icon b-icon--more">
+                                <?= new SvgDecorator('icon-arrow-down', 10, 10) ?>
+                            </span>
+                        </a>
                     </div>
                     <?php
                 }
@@ -138,24 +150,24 @@ $category = $APPLICATION->IncludeComponent(
 </aside>
 <main class="b-catalog__main" role="main">
     <div class="b-catalog-filter js-permutation-desktop-here">
-        <a
-                class="b-link b-link--open-filter js-permutation-filter js-open-filter"
-                href="javascript:void(0);"
-                title="Открыть фильтры"
-        >
-            <span class="b-icon b-icon--open-filter"><?= new SvgDecorator('icon-open-filter', 19, 14) ?></span>
+        <a class="b-link b-link--open-filter js-permutation-filter js-open-filter"
+           href="javascript:void(0);"
+           title="Открыть фильтры">
+            <span class="b-icon b-icon--open-filter">
+                <?= new SvgDecorator('icon-open-filter', 19, 14) ?>
+            </span>
         </a>
         <div class="b-catalog-filter__filter-part">
             <dl class="b-catalog-filter__row">
                 <dt class="b-catalog-filter__label">Часто ищут:
                 </dt>
-                <dd class="b-catalog-filter__block"><a class="b-link b-link--filter" href="javascript:void(0);"
-                                                       title="Hills для взрослых собак среднего размера">Hills
-                        для
-                        взрослых собак среднего размера</a><a class="b-link b-link--filter"
-                                                              href="javascript:void(0);"
-                                                              title="Chappy для маленьких собак">Chappy для
-                        маленьких собак</a>
+                <dd class="b-catalog-filter__block">
+                    <a class="b-link b-link--filter"
+                       href="javascript:void(0);"
+                       title="Hills для взрослых собак среднего размера"> Hills для взрослых собак среднего размера</a>
+                    <a class="b-link b-link--filter"
+                       href="javascript:void(0);"
+                       title="Chappy для маленьких собак">Chappy для маленьких собак</a>
                 </dd>
             </dl>
             <div class="b-line b-line--sort-desktop">
@@ -170,34 +182,59 @@ $category = $APPLICATION->IncludeComponent(
                     );
                     ?>
                     <span class="b-catalog-filter__label b-catalog-filter__label--amount"><?= $totalString ?></span>
-                    <span class="b-catalog-filter__sort"><span
-                                class="b-catalog-filter__label b-catalog-filter__label--sort">Сортировать по</span><span
-                                class="b-select b-select--sort js-filter-select">
-                      <select class="b-select__block b-select__block--sort js-filter-select" name="sort">
-                          <?php
-                          /**
-                           * @var Sorting $sort
-                           */
-                          foreach ($catalogRequest->getSorts() as $sort) {
-                              ?>
-                              <option value="<?= $sort->getValue() ?>" <?= $sort->isSelected(
-                              ) ? 'selected="selected"' : '' ?>><?= $sort->getName() ?></option>
-                              <?php
-                          }
-                          ?>
-                      </select><span class="b-select__arrow"></span></span></span><span
-                            class="b-catalog-filter__discount js-discount-desktop-here">
-                      <ul class="b-filter-link-list b-filter-link-list--filter js-discount-checkbox js-filter-checkbox">
-                        <li class="b-filter-link-list__item">
-                          <label class="b-filter-link-list__label"><input
-                                      class="b-filter-link-list__checkbox js-discount-input js-filter-control"
-                                      type="checkbox" name="filter-discount" value="filter-discount-0"
-                                      id="filter-discount-0"/><a
-                                      class="b-filter-link-list__link b-filter-link-list__link--checkbox"
-                                      href="javascript:void(0);" title="Товары со скидкой">Товары со скидкой</a>
-                          </label>
-                        </li>
-                      </ul></span>
+                    <span class="b-catalog-filter__sort">
+                        <span class="b-catalog-filter__label b-catalog-filter__label--sort">Сортировать по</span>
+                        <span class="b-select b-select--sort js-filter-select">
+                            <select class="b-select__block b-select__block--sort js-filter-select" name="sort">
+                                  <?php
+                                  /**
+                                   * @var Sorting $sort
+                                   */
+                                  foreach ($catalogRequest->getSorts() as $sort) {
+                                      ?>
+                                      <option value="<?= $sort->getValue() ?>" <?= $sort->isSelected(
+                                      ) ? 'selected="selected"' : '' ?>><?= $sort->getName() ?></option>
+                                      <?php
+                                  }
+                                  ?>
+                            </select>
+                            <span class="b-select__arrow"></span>
+                        </span>
+                    </span>
+                    <?php
+                    /**
+                     * @var FilterBase $filter
+                     */
+                    foreach ($filterCollection->getVisibleFilters() as $filter) {
+                        if (!$filter->hasAvailableVariants()) {
+                            continue;
+                        }
+                        if (!($filter instanceof ActionsFilter)) {
+                            continue;
+                        }
+                        ?>
+                        <span class="b-catalog-filter__discount js-discount-desktop-here">
+                            <ul class="b-filter-link-list b-filter-link-list--filter js-discount-checkbox js-filter-checkbox">
+                                <?php foreach ($filter->getAvailableVariants() as $id => $variant) { ?>
+                                    <li class="b-filter-link-list__item">
+                                        <label class="b-filter-link-list__label">
+                                            <input class="b-filter-link-list__checkbox js-discount-input js-filter-control"
+                                                   type="checkbox"
+                                                   name="<?= $filter->getFilterCode() ?>"
+                                                   value="<?= $variant->getValue() ?>"
+                                                   id="<?= $filter->getFilterCode() ?>-<?= $id ?>"
+                                                   <?= $variant->isChecked() ? 'checked' : '' ?>/>
+                                            <a class="b-filter-link-list__link b-filter-link-list__link--checkbox"
+                                               href="javascript:void(0);"
+                                               title="<?= $filter->getName() ?>">
+                                                <?= $filter->getName() ?>
+                                            </a>
+                                        </label>
+                                    </li>
+                                <?php } ?>
+                            </ul>
+                        </span>
+                    <?php } ?>
                 </div>
                 <div class="b-catalog-filter__type-part">
                     <a class="b-link b-link--type active js-link-type-normal"

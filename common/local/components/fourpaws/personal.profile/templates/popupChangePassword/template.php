@@ -13,6 +13,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         <form class="b-registration__form js-form-validation js-new-password"
               data-url="/ajax/personal/profile/changePassword/"
               method="post">
+            <input class="js-data-id js-no-valid" name="ID" value="<?= $arResult['CUR_USER']['ID'] ?>" type="hidden">
             <div class="b-input-line b-input-line--create-password">
                 <div class="b-input-line__label-wrapper">
                     <label class="b-input-line__label" for="registration-password-old-popup">Старый пароль</label>
@@ -21,6 +22,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                     <input class="b-input__input-field b-input__input-field--registration-form"
                            type="password"
                            id="registration-password-old-popup"
+                           data-password="0"
                            name="old_password"
                            placeholder="" />
                     <div class="b-error"><span class="js-message"></span>
@@ -39,6 +41,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                            type="password"
                            id="registration-password-first-popup"
                            name="password"
+                           data-password="1"
                            placeholder="" />
                     <div class="b-error"><span class="js-message"></span>
                     </div>
@@ -57,6 +60,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                            type="password"
                            id="registration-password-second-popup"
                            name="confirm_password"
+                           data-type="password_two"
                            placeholder="" />
                     <div class="b-error"><span class="js-message"></span>
                     </div>

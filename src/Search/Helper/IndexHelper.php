@@ -50,10 +50,11 @@ class IndexHelper implements LoggerAwareInterface
     /**
      * IndexHelper constructor.
      *
-     * @param Client  $client
-     * @param Factory $factory
+     * @param Client     $client
+     * @param Factory    $factory
      *
-     * @throws RuntimeException
+     * @param Serializer $serializer
+     * @param Producer   $catalogSyncProducer
      */
     public function __construct(Client $client, Factory $factory, Serializer $serializer, Producer $catalogSyncProducer)
     {
@@ -78,7 +79,7 @@ class IndexHelper implements LoggerAwareInterface
      */
     public function getCatalogIndex(): Index
     {
-        if (is_null($this->catalogIndex)) {
+        if (null === $this->catalogIndex) {
             $this->catalogIndex = $this->client->getIndex($this->getIndexName('catalog'));
         }
 
@@ -88,20 +89,19 @@ class IndexHelper implements LoggerAwareInterface
     /**
      * @param bool $force
      *
+     * @throws \Elastica\Exception\InvalidException
      * @throws RuntimeException
      * @return bool
      */
     public function createCatalogIndex(bool $force = false): bool
     {
+        $catalogIndex = $this->getCatalogIndex();
+        $indexExists = $catalogIndex->exists();
+        if ($indexExists && !$force) {
+            return false;
+        }
+
         try {
-            $catalogIndex = $this->getCatalogIndex();
-
-            $indexExists = $catalogIndex->exists();
-
-            if ($indexExists && !$force) {
-                return false;
-            }
-
             if ($indexExists && $force) {
                 $catalogIndex->delete();
             }
@@ -232,20 +232,23 @@ class IndexHelper implements LoggerAwareInterface
                         'offers'                           => [
                             'type'       => 'nested',
                             'properties' => [
-                                'active'                   => ['type' => 'boolean'],
-                                'dateActiveFrom'           => ['type' => 'date', 'format' => 'date_optional_time'],
-                                'dateActiveTo'             => ['type' => 'date', 'format' => 'date_optional_time'],
-                                'ID'                       => ['type' => 'integer'],
-                                'CODE'                     => ['type' => 'keyword'],
-                                'XML_ID'                   => ['type' => 'keyword'],
-                                'SORT'                     => ['type' => 'integer'],
-                                'NAME'                     => ['type' => 'text'],
-                                'PROPERTY_VOLUME'          => ['type' => 'float'],
-                                'PROPERTY_BARCODE'         => ['type' => 'keyword'],
-                                'PROPERTY_KIND_OF_PACKING' => ['type' => 'keyword'],
-                                'PROPERTY_REWARD_TYPE'     => ['type' => 'keyword'],
-                                'price'                    => ['type' => 'scaled_float', 'scaling_factor' => 100,],
-                                'currency'                 => ['type' => 'keyword'],
+                                'active'                    => ['type' => 'boolean'],
+                                'dateActiveFrom'            => ['type' => 'date', 'format' => 'date_optional_time'],
+                                'dateActiveTo'              => ['type' => 'date', 'format' => 'date_optional_time'],
+                                'ID'                        => ['type' => 'integer'],
+                                'CODE'                      => ['type' => 'keyword'],
+                                'XML_ID'                    => ['type' => 'keyword'],
+                                'SORT'                      => ['type' => 'integer'],
+                                'NAME'                      => ['type' => 'text'],
+                                'PROPERTY_VOLUME'           => ['type' => 'float'],
+                                'PROPERTY_VOLUME_REFERENCE' => ['type' => 'keyword'],
+                                'PROPERTY_COLOUR'           => ['type' => 'keyword'],
+                                'PROPERTY_CLOTHING_SIZE'    => ['type' => 'keyword'],
+                                'PROPERTY_BARCODE'          => ['type' => 'keyword'],
+                                'PROPERTY_KIND_OF_PACKING'  => ['type' => 'keyword'],
+                                'PROPERTY_REWARD_TYPE'      => ['type' => 'keyword'],
+                                'price'                     => ['type' => 'scaled_float', 'scaling_factor' => 100,],
+                                'currency'                  => ['type' => 'keyword'],
 //                                'prices'                   => [
 //                                    'type'       => 'nested',
 //                                    'properties' => [
@@ -277,6 +280,7 @@ class IndexHelper implements LoggerAwareInterface
                         'PROPERTY_PET_AGE'                 => ['type' => 'keyword'],
                         'PROPERTY_PET_AGE_ADDITIONAL'      => ['type' => 'keyword'],
                         'PROPERTY_PET_GENDER'              => ['type' => 'keyword'],
+                        'PROPERTY_PET_TYPE'                => ['type' => 'keyword'],
                         'PROPERTY_CATEGORY'                => ['type' => 'keyword'],
                         'PROPERTY_PURPOSE'                 => ['type' => 'keyword'],
                         'PROPERTY_LABEL'                   => ['type' => 'keyword'],
@@ -303,6 +307,11 @@ class IndexHelper implements LoggerAwareInterface
                                 'TYPE' => ['type' => 'keyword', 'index' => false],
                             ],
                         ],
+                        'PROPERTY_COUNTRY'                 => ['type' => 'keyword'],
+                        'PROPERTY_CONSISTENCE'             => ['type' => 'keyword'],
+                        'PROPERTY_FEED_SPECIFICATION'      => ['type' => 'keyword'],
+                        'PROPERTY_PHARMA_GROUP'            => ['type' => 'keyword'],
+                        'hasActions'                       => ['type' => 'boolean']
                     ],
                 ],
             ],
@@ -338,16 +347,16 @@ class IndexHelper implements LoggerAwareInterface
     /**
      * **Синхронно** индексирует товары в Elasticsearch
      *
-     * @param bool $filter
+     * @param bool $flushBaseFilter
      *
      * @throws \RuntimeException
      */
-    public function indexAll(bool $filter = false)
+    public function indexAll(bool $flushBaseFilter = false)
     {
         $query = (new ProductQuery())
             ->withOrder(['ID' => 'DESC']);
 
-        if ($filter) {
+        if ($flushBaseFilter) {
             $query->withFilter([]);
         }
         $dbAllProducts = $query->doExec();
@@ -370,7 +379,7 @@ class IndexHelper implements LoggerAwareInterface
             } else {
                 $indexError++;
             }
-            if ($indexOk % 500 == 0) {
+            if ($indexOk % 500 === 0) {
                 $this->log()->info(sprintf('Индексировано товаров %d...', $indexOk));
             }
         }
@@ -456,6 +465,7 @@ class IndexHelper implements LoggerAwareInterface
     }
 
     /**
+     * @throws \Elastica\Exception\InvalidException
      * @return Search
      */
     public function createProductSearch(): Search
@@ -476,17 +486,22 @@ class IndexHelper implements LoggerAwareInterface
     /**
      * Удаляет из Elasticsearch отсутствующие в БД товары
      *
-     * @throws RuntimeException
+     * @param bool $flushBaseFilter
+     *
+     * @throws \RuntimeException
      * @return bool
      */
-    public function cleanup(): bool
+    public function cleanup(bool $flushBaseFilter = false): bool
     {
         try {
             $totalDocumentsCount = 0;
             $deletedDocumentsCount = 0;
 
-            $productQuery = (new ProductQuery())->withFilter([])
+            $productQuery = (new ProductQuery())
                 ->withSelect(['ID']);
+            if ($flushBaseFilter) {
+                $productQuery->withFilter([]);
+            }
 
             $productSearch = $this->createProductSearch();
 
@@ -500,7 +515,7 @@ class IndexHelper implements LoggerAwareInterface
 
             //По всем пачкам из Elastic
             foreach ($scroll as $resultSet) {
-                if ($totalDocumentsCount == 0) {
+                if ($totalDocumentsCount === 0) {
                     $totalDocumentsCount = $resultSet->getTotalHits();
                 }
 
@@ -510,7 +525,7 @@ class IndexHelper implements LoggerAwareInterface
                     $productFromElasticIdList[] = $result->getId();
                 }
 
-                if (count($productFromElasticIdList) <= 0) {
+                if (\count($productFromElasticIdList) <= 0) {
                     continue;
                 }
 
@@ -524,7 +539,7 @@ class IndexHelper implements LoggerAwareInterface
 
                 $deleteIdList = array_diff($productFromElasticIdList, $productFromDbIdList);
 
-                if (count($deleteIdList) <= 0) {
+                if (\count($deleteIdList) <= 0) {
                     continue;
                 }
 
@@ -554,7 +569,7 @@ class IndexHelper implements LoggerAwareInterface
             $this->log()->error(
                 sprintf(
                     '[%s] %s (%s)',
-                    get_class($exception),
+                    \get_class($exception),
                     $exception->getMessage(),
                     $exception->getCode()
                 )

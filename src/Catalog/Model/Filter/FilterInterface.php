@@ -2,6 +2,7 @@
 
 namespace FourPaws\Catalog\Model\Filter;
 
+use Elastica\Aggregation\AbstractAggregation;
 use Elastica\Query\AbstractQuery;
 use FourPaws\Catalog\Collection\AggCollection;
 use FourPaws\Catalog\Collection\VariantCollection;
@@ -103,11 +104,17 @@ interface FilterInterface
     public function getFilterRule(): AbstractQuery;
 
     /**
-     * Возвращает правило аггрегации по фильтру.
+     * Возвращает коллекцию правил аггрегации по фильтру.
      *
      * @return AggCollection
      */
     public function getAggs(): AggCollection;
+
+    /**
+     * Возвращает правило аггрегации по фильтру.
+     * @return AbstractAggregation
+     */
+    public function getAggRule(): AbstractAggregation;
 
     /**
      * Проверяет, является ли фильтр видимым на странице.

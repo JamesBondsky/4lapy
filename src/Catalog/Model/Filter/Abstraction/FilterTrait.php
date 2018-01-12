@@ -2,6 +2,7 @@
 
 namespace FourPaws\Catalog\Model\Filter\Abstraction;
 
+use Elastica\Aggregation\AbstractAggregation;
 use Elastica\Aggregation\Terms;
 use FourPaws\Catalog\Collection\AggCollection;
 use FourPaws\Catalog\Collection\VariantCollection;
@@ -166,10 +167,14 @@ trait FilterTrait
      */
     public function getAggs(): AggCollection
     {
-        $termsAgg = (new Terms($this->getFilterCode()))->setField($this->getRuleCode())
-                                                       ->setSize(9999);
+        return new AggCollection([$this->getAggRule()]);
+    }
 
-        return new AggCollection([$termsAgg]);
+    public function getAggRule(): AbstractAggregation
+    {
+        return (new Terms($this->getFilterCode()))
+            ->setField($this->getRuleCode())
+            ->setSize(9999);
     }
 
     /**
@@ -204,6 +209,11 @@ trait FilterTrait
      */
     public function collapse(string $aggName, array $aggResult)
     {
+        // для nested-фильтров
+        if ($aggResult[$aggName]) {
+            $aggResult = $aggResult[$aggName];
+        }
+
         if (!array_key_exists('buckets', $aggResult) || !is_array($aggResult['buckets'])) {
             throw new InvalidArgumentException(
                 sprintf(

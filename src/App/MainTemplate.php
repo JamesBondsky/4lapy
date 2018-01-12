@@ -110,7 +110,7 @@ class MainTemplate extends TemplateAbstract
      */
     public function isDetailShares() : bool
     {
-        return !$this->isListShares() && $this->isPartitionDir('/customer/shares');
+        return $this->isPartitionDir('/customer/shares') && !$this->isListShares() && !$this->isListSharesFilter();
     }
     
     /**

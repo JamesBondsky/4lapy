@@ -2,7 +2,7 @@
 
 namespace FourPaws\UserBundle\Service;
 
-use CSaleUser;
+use Bitrix\Sale\Fuser;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\External\Manzana\Model\Client;
@@ -19,6 +19,10 @@ use FourPaws\UserBundle\Repository\UserRepository;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
+/**
+ * Class UserService
+ * @package FourPaws\UserBundle\Service
+ */
 class UserService implements
     CurrentUserProviderInterface,
     UserAuthorizationInterface,
@@ -40,6 +44,12 @@ class UserService implements
      */
     private $locationService;
 
+    /**
+     * UserService constructor.
+     *
+     * @param UserRepository $userRepository
+     * @param LocationService $locationService
+     */
     public function __construct(UserRepository $userRepository, LocationService $locationService)
     {
         /**
@@ -112,11 +122,22 @@ class UserService implements
     }
 
     /**
+     *
+     *
+     * @return int
+     */
+    public function getCurrentFUserId(): int
+    {
+        return (int)Fuser::getId();
+    }
+
+
+    /**
      * @return int
      */
     public function getAnonymousUserId(): int
     {
-        return CSaleUser::GetAnonymousUserID();
+        return \CSaleUser::GetAnonymousUserID();
     }
 
     /**
@@ -160,25 +181,25 @@ class UserService implements
             $city = reset($this->locationService->findLocationCity($name, $parentName, 1, true));
         }
 
-        if (!$city) {
-            return false;
+        if ($city) {
+            /** @noinspection SummerTimeUnsafeTimeManipulationInspection */
+            setcookie('user_city_id', $city['CODE'], 86400 * 30);
+
+            if ($this->isAuthorized()) {
+                $user = $this->getCurrentUser();
+                $user->setLocation($city['CODE']);
+                $this->userRepository->update($user);
+            }
         }
 
-        setcookie('user_city_id', $city['CODE'], 86400 * 30);
 
-        if ($this->isAuthorized()) {
-            $user = $this->getCurrentUser();
-            $user->setLocation($city['CODE']);
-            $this->userRepository->update($user);
-        }
-
-        return $city;
+        return $city ?: false;
     }
 
     /**
      * @return array
      */
-    public function getSelectedCity() : array
+    public function getSelectedCity(): array
     {
         $cityCode = null;
         if ($_COOKIE['user_city_id']) {
@@ -198,17 +219,17 @@ class UserService implements
 
         return $this->locationService->getDefaultLocation();
     }
-    
+
     /**
      * @return UserRepository
      */
-    public function getUserRepository() : UserRepository
+    public function getUserRepository(): UserRepository
     {
         return $this->userRepository;
     }
-    
+
     /**
-     * @param Client    $client
+     * @param Client $client
      * @param User|null $user
      *
      * @throws InvalidIdentifierException

@@ -137,20 +137,23 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
                     <?php foreach ($offers as $offer) { ?>
                         <?php
                         if ($mainCombinationType === 'SIZE') {
-                            $value = $offer->getClothingSize()->getName();
+                            $value = $offer->getClothingSize();
                         } else {
-                            $value = $offer->getVolumeReference()->getName();
+                            $value = $offer->getVolumeReference();
+                        }
+                        if (!$value) {
+                            continue;
                         }
                         ?>
                         <li class="b-weight-container__item b-weight-container__item--product <?= ($currentOffer->getId(
                             ) === $offer->getId()) ? 'active' : '' ?>">
                             <a class="b-weight-container__link b-weight-container__link--product js-price-product"
                                href="javascript:void(0);"
-                               data-weight=" <?= $value ?>"
+                               data-weight=" <?= $value->getName() ?>"
                                data-price="<?= $offer->getPrice() ?>"
                                data-image="<?= $mainImageIndex[$offer->getId()] ?>">
                                 <span class="b-weight-container__line">
-                                    <span class="b-weight-container__weight"><?= $value ?></span>
+                                    <span class="b-weight-container__weight"><?= $value->getName() ?></span>
                                     <span class="b-weight-container__price b-undefined">
                                         <?= $offer->getPrice() ?> <span class="b-ruble b-ruble--weight">₽</span>
                                     </span>
@@ -278,7 +281,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                     Округлить до упаковки (<?= $offer->getMultiplicity() ?> шт.)<span>— скидка 3%</span>
                 </a>
             <?php } ?>
-            <a class="b-counter-basket__basket-link" href="javascript:void(0)" title="">
+            <a class="b-counter-basket__basket-link js-basket-add" href="javascript:void(0)" title="" data-offerId="<?= $offer->getId(); ?>" data-url="/ajax/sale/basket/add/">
                 <span class="b-counter-basket__basket-text">Добавить в корзину</span>
                 <span class="b-icon b-icon--advice"><?= new SvgDecorator('icon-cart', 20, 20) ?></span>
             </a>

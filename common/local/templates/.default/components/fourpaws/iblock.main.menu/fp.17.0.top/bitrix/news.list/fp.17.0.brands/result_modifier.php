@@ -5,7 +5,7 @@
  * Бренды в меню (алфавитный указатель, сгруппированный список, популярные бренды)
  * result_modifier.php
  *
- * @updated: 28.12.2017
+ * @updated: 11.01.2018
  */
 if (!$arResult['ITEMS']) {
     return;
@@ -30,15 +30,6 @@ foreach ($arResult['ITEMS'] as $mKey => &$arItem) {
         if (!empty($arParams['RESIZE_WIDTH']) && !empty($arParams['RESIZE_HEIGHT'])) {
             try {
                 $bCrop = isset($arParams['RESIZE_TYPE']) && $arParams['RESIZE_TYPE'] == 'BX_RESIZE_IMAGE_EXACT';
-
-                if (is_array($mImgField)) {
-                    $obImg = new \FourPaws\BitrixOrm\Model\ResizeImageDecorator($mImgField);
-                } else {
-                    $obImg = \FourPaws\BitrixOrm\Model\ResizeImageDecorator::createFromPrimary($mImgField);
-                }
-                $obImg->setResizeWidth(!$bCrop ? $arParams['RESIZE_WIDTH'] : max(array($arParams['RESIZE_HEIGHT'], $arParams['RESIZE_WIDTH'])));
-                $obImg->setResizeHeight(!$bCrop ? $arParams['RESIZE_HEIGHT'] : max(array($arParams['RESIZE_HEIGHT'], $arParams['RESIZE_WIDTH'])));
-
                 if ($bCrop) {
                     if (is_array($mImgField)) {
                         $obImg = new \FourPaws\BitrixOrm\Model\CropImageDecorator($mImgField);
@@ -47,13 +38,22 @@ foreach ($arResult['ITEMS'] as $mKey => &$arItem) {
                     }
                     $obImg->setCropWidth($arParams['RESIZE_WIDTH']);
                     $obImg->setCropHeight($arParams['RESIZE_HEIGHT']);
+                } else {
+                    if (is_array($mImgField)) {
+                        $obImg = new \FourPaws\BitrixOrm\Model\ResizeImageDecorator($mImgField);
+                    } else {
+                        $obImg = \FourPaws\BitrixOrm\Model\ResizeImageDecorator::createFromPrimary($mImgField);
+                    }
+                    $obImg->setResizeWidth($arParams['RESIZE_WIDTH']);
+                    $obImg->setResizeHeight($arParams['RESIZE_HEIGHT']);
                 }
 
                 $arItem['PRINT_PICTURE'] = array(
                     'SRC' => $obImg->getSrc(),
+                    'TITLE' => isset($mImgField['TITLE']) ? $mImgField['TITLE'] : $arItem['NAME'],
+                    'ALT' => isset($mImgField['ALT']) ? $mImgField['ALT'] : $arItem['NAME'],
                 );
-            } catch (\Exception $obException) {
-            }
+            } catch (\Exception $obException) {}
         }
     }
 
