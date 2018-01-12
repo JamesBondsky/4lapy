@@ -22,6 +22,7 @@ use FourPaws\UserBundle\Exception\EmptyDateException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\ValidationException;
+use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use JMS\Serializer\SerializerBuilder;
@@ -55,7 +56,6 @@ class ProfileController extends Controller
      * @Route("/changePhone/", methods={"POST"})
      * @param Request $request
      *
-     * @throws ContactUpdateException
      * @throws ServiceNotFoundException
      * @throws ValidationException
      * @throws InvalidIdentifierException
@@ -173,17 +173,14 @@ class ProfileController extends Controller
      *
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
-     * @throws ContactUpdateException
-     * @throws ManzanaServiceException
      * @throws ServiceNotFoundException
      * @throws ValidationException
      * @throws InvalidIdentifierException
-     * @throws NotAuthorizedException
      * @return JsonResponse
      */
     public function changeDataAction(Request $request) : JsonResponse
     {
-        /** @var \FourPaws\UserBundle\Repository\UserRepository $userRepository */
+        /** @var UserRepository $userRepository */
         $userRepository = $this->currentUserProvider->getUserRepository();
         $data           = $request->request->getIterator()->getArrayCopy();
         if (!empty($data[''])) {
@@ -223,14 +220,26 @@ class ProfileController extends Controller
             }
             
             $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
-            $contactId      = $manzanaService->getContactIdByCurUser();
+            $contactId = -2;
+            try {
+                $contactId = $manzanaService->getContactIdByCurUser();
+            } catch (ManzanaServiceException $e) {
+            } catch (NotAuthorizedException $e) {
+            }
             if ($contactId >= 0) {
                 $client = new Client();
                 if ($contactId > 0) {
                     $client->contactId = $contactId;
                 }
-                $this->currentUserProvider->setClientPersonalDataByCurUser($client, $user);
-                $manzanaService->updateContact($client);
+                try {
+                    $this->currentUserProvider->setClientPersonalDataByCurUser($client, $user);
+                } catch (NotAuthorizedException $e) {
+                }
+                try {
+                    $manzanaService->updateContact($client);
+                } catch (ManzanaServiceException $e) {
+                } catch (ContactUpdateException $e) {
+                }
             }
             
             try {

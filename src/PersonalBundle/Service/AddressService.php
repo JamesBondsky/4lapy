@@ -61,11 +61,8 @@ class AddressService
      * @param $data
      *
      * @throws \RuntimeException
-     * @throws NotAuthorizedException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
-     * @throws ContactUpdateException
-     * @throws ManzanaServiceException
      * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
      * @throws ServiceNotFoundException
@@ -124,13 +121,10 @@ class AddressService
     /**
      * @param Address $address
      *
-     * @throws NotAuthorizedException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
-     * @throws ManzanaServiceException
-     * @throws ContactUpdateException
      * @throws ServiceCircularReferenceException
      * @throws \RuntimeException
      */
@@ -138,16 +132,28 @@ class AddressService
     {
         $container = App::getInstance()->getContainer();
         $manzanaService = $container->get('manzana.service');
-        $contactId = $manzanaService->getContactIdByCurUser();
+        $contactId = -2;
+        try {
+            $contactId = $manzanaService->getContactIdByCurUser();
+        } catch (ManzanaServiceException $e) {
+        } catch (NotAuthorizedException $e) {
+        }
         if ($contactId >= 0) {
             $client = new Client();
             if ($contactId > 0) {
                 $client->contactId = $contactId;
             } else {
-                $container->get(CurrentUserProviderInterface::class)->setClientPersonalDataByCurUser($client);
+                try {
+                    $container->get(CurrentUserProviderInterface::class)->setClientPersonalDataByCurUser($client);
+                } catch (NotAuthorizedException $e) {
+                }
             }
-            $manzanaService->setClientAddress($client, $address);
-            $manzanaService->updateContact($client);
+            $this->setClientAddress($client, $address);
+            try {
+                $manzanaService->updateContact($client);
+            } catch (ManzanaServiceException $e) {
+            } catch (ContactUpdateException $e) {
+            }
         }
     }
     
@@ -155,12 +161,9 @@ class AddressService
      * @param array $data
      *
      * @throws \RuntimeException
-     * @throws NotAuthorizedException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
-     * @throws ContactUpdateException
-     * @throws ManzanaServiceException
      * @throws ValidationException
      * @throws InvalidIdentifierException
      * @throws \Exception
