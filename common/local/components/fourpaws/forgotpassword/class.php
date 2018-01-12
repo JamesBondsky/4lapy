@@ -218,17 +218,20 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
         
         $phone = $request->get('phone', '');
         $email = $request->get('email', '');
+        $title = 'Восстановление пароля';
         if (empty($step)) {
             $recovery = $request->get('recovery', '');
             if ($recovery === 'phone') {
-                $step = 'sendSmsCode';
-                $res  = $this->ajaxGetSendSmsCode($phone);
+                $title = 'Восстановление пароля';
+                $step  = 'sendSmsCode';
+                $res   = $this->ajaxGetSendSmsCode($phone);
                 if ($res instanceof JsonResponse) {
                     return $res;
                 }
                 
                 $phone = $res;
             } elseif ($recovery === 'email') {
+                $title = 'Создание нового пароля';
                 /** @todo отправка письма для верификации */
                 $res = $this->ajaxGetSendEmailCode($email);
                 if ($res instanceof JsonResponse) {
@@ -251,6 +254,7 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
         
         switch ($step) {
             case 'createNewPassword':
+                $title = 'Создание нового пароля';
                 if (!empty($phone)) {
                     try {
                         $res = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::checkConfirmSms(
@@ -281,8 +285,11 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                 break;
         }
         
-        ob_start();
-        /** @noinspection PhpIncludeInspection */
+        ob_start(); ?>
+        <header class="b-registration__header">
+            <h1 class="b-title b-title--h1 b-title--registration"><?= $title ?></h1>
+        </header>
+        <?php /** @noinspection PhpIncludeInspection */
         include_once App::getDocumentRoot() . '/local/components/fourpaws/forgotpassword/templates/.default/include/'
                      . $step . '.php';
         $html = ob_get_clean();
@@ -312,7 +319,34 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                 ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
             );
         }
-        
+    
+        try {
+            $users = $this->currentUserProvider->getUserRepository()->findBy(
+                [
+                    '=PERSONAL_PHONE' => PhoneHelper::normalizePhone(
+                        $phone
+                    ),
+                ]
+            );
+            if(count($users) > 1){
+                return JsonErrorResponse::createWithData(
+                    'Некорректный номер телефона',
+                    ['errors' => ['moreOneUsersByPhone' => '']]
+                );
+            }
+            elseif(count($users) === 0){
+                return JsonErrorResponse::createWithData(
+                    'Пользователей с номером '.$phone.' не найдено',
+                    ['errors' => ['notFoundUsers' => 'Пользователей с номером '.$phone.' не найдено']]
+                );
+            }
+        } catch (WrongPhoneNumberException $e) {
+            return JsonErrorResponse::createWithData(
+                'Пользователей с номером '.$phone.' найдено больше 1, пожалуйста обратитесь к администрации сайта',
+                ['errors' => ['wrongPhone' => 'Пользователей с номером '.$phone.' найдено больше 1, пожалуйста обратитесь к администрации сайта']]
+            );
+        }
+    
         try {
             App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::sendConfirmSms($phone);
         } catch (SmsSendErrorException $e) {

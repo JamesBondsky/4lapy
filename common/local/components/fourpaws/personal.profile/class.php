@@ -165,7 +165,6 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
     /**
      * @param Request $request
      *
-     * @throws ContactUpdateException
      * @throws ValidationException
      * @throws InvalidIdentifierException
      * @throws ServiceNotFoundException
@@ -208,7 +207,12 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                 )
             )) {
                 $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
-                $contactId      = $manzanaService->getContactIdByCurUser();
+                $contactId = -2;
+                try {
+                    $contactId = $manzanaService->getContactIdByCurUser();
+                } catch (ManzanaServiceException $e) {
+                } catch (NotAuthorizedException $e) {
+                }
                 if ($contactId >= 0) {
                     $client = new Client();
                     if ($contactId > 0) {
@@ -217,7 +221,11 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                     } else {
                         $this->currentUserProvider->setClientPersonalDataByCurUser($client);
                     }
-                    $manzanaService->updateContact($client);
+                    try {
+                        $manzanaService->updateContact($client);
+                    } catch (ManzanaServiceException $e) {
+                    } catch (ContactUpdateException $e) {
+                    }
                 }
                 
                 return JsonSuccessResponse::create('Телефон верифицирован');
@@ -234,10 +242,9 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         } catch (ConstraintDefinitionException $e) {
         } catch (ApplicationCreateException $e) {
         } catch (ServiceCircularReferenceException $e) {
-        } catch (ManzanaServiceException $e) {
         } catch (NotAuthorizedException $e) {
         }
-        
+    
         return JsonErrorResponse::createWithData(
             'Ошибка верификации',
             ['errors' => ['verificationError' => 'Ошибка верификации']]
@@ -323,7 +330,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         
         ob_start();
         /** @noinspection PhpIncludeInspection */
-        include_once App::getDocumentRoot() . '/local/components/fourpaws/personal.profile/templates/.default/include/'
+        include_once App::getDocumentRoot() . '/local/components/fourpaws/personal.profile/templates/popupChangePhone/include/'
                      . $step . '.php';
         $html = ob_get_clean();
         

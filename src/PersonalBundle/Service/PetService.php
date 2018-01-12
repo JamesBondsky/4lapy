@@ -66,10 +66,7 @@ class PetService
      * @throws InvalidIdentifierException
      * @throws ServiceCircularReferenceException
      * @throws \RuntimeException
-     * @throws NotAuthorizedException
      * @throws ConstraintDefinitionException
-     * @throws ContactUpdateException
-     * @throws ManzanaServiceException
      * @throws ApplicationCreateException
      * @throws ValidationException
      * @throws \Exception
@@ -90,9 +87,6 @@ class PetService
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws \RuntimeException
-     * @throws NotAuthorizedException
-     * @throws ContactUpdateException
-     * @throws ManzanaServiceException
      * @throws ApplicationCreateException
      * @throws ValidationException
      * @throws InvalidIdentifierException
@@ -116,9 +110,6 @@ class PetService
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws \RuntimeException
-     * @throws NotAuthorizedException
-     * @throws ContactUpdateException
-     * @throws ManzanaServiceException
      * @throws ApplicationCreateException
      * @throws InvalidIdentifierException
      * @throws \Exception
@@ -140,10 +131,7 @@ class PetService
      * @throws InvalidIdentifierException
      * @throws \Exception
      * @throws ApplicationCreateException
-     * @throws ManzanaServiceException
-     * @throws ContactUpdateException
      * @throws ConstraintDefinitionException
-     * @throws NotAuthorizedException
      * @throws \RuntimeException
      * @throws ServiceCircularReferenceException
      */
@@ -151,7 +139,10 @@ class PetService
     {
         $container = App::getInstance()->getContainer();
         $types = [];
-        $pets = $this->getCurUserPets();
+        $pets = [];
+        try {
+            $pets = $this->getCurUserPets();
+        } catch (NotAuthorizedException $e) {}
         if(\is_array($pets) && !empty($pets)) {
             /** @var Pet $pet */
             foreach ($pets as $pet){
@@ -159,17 +150,29 @@ class PetService
             }
         }
         $manzanaService = $container->get('manzana.service');
-        
-        $contactId = $manzanaService->getContactIdByCurUser();
+    
+        $contactId = -2;
+        try {
+            $contactId = $manzanaService->getContactIdByCurUser();
+        } catch (ManzanaServiceException $e) {
+        } catch (NotAuthorizedException $e) {
+        }
         if ($contactId >= 0) {
             $client = new Client();
             if ($contactId > 0) {
                 $client->contactId = $contactId;
             } else {
-                $container->get(CurrentUserProviderInterface::class)->setClientPersonalDataByCurUser($client);
+                try {
+                    $container->get(CurrentUserProviderInterface::class)->setClientPersonalDataByCurUser($client);
+                } catch (NotAuthorizedException $e) {
+                }
             }
-            $manzanaService->setClientPets($client, $types);
-            $manzanaService->updateContact($client);
+            $this->setClientPets($client, $types);
+            try {
+                $manzanaService->updateContact($client);
+            } catch (ManzanaServiceException $e) {
+            } catch (ContactUpdateException $e) {
+            }
         }
     }
     

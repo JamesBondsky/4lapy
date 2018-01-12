@@ -46,7 +46,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                     </div>
                 </div>
             </div>
-            <button class="b-button b-button--social b-button--full-width b-button--popup-authorization" type="submit">
+            <button class="b-button b-button--social b-button--full-width b-button--popup-authorization">
                 Войти
             </button>
             <span class="b-registration__else b-registration__else--authorization">или</span>
