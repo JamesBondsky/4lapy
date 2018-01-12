@@ -40,20 +40,11 @@ class BasketComponent extends \CBitrixComponent
      */
     public function executeComponent(Basket $basket = null)
     {
-
-        try {
-            Loader::includeModule('sale');
-            Loader::includeModule('catalog');
-        } catch (LoaderException $e) {
-            ShowError($e->getMessage());
-            return;
-        }
-
         if (null === $basket) {
             $app = Application::getInstance();
             $basketService = $app->getContainer()->get(BasketService::class);
             $basket = $basketService->getBasket();
-            $order = Order::create('s1');
+            $order = Order::create(SITE_ID);
             $order->setBasket($basket);
         }
         $this->arResult['BASKET'] = $basket;
@@ -63,6 +54,4 @@ class BasketComponent extends \CBitrixComponent
         }
         $this->includeComponentTemplate($page);
     }
-
-
 }

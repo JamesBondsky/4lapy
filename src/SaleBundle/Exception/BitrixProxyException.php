@@ -25,7 +25,8 @@ class BitrixProxyException extends \Exception implements BaseExceptionInterface
 
     private static $messages = [
         self::NO_IBLOCK_ELEMENT => 'Товар не найден',
-        self::SALE_BASKET_ITEM_WRONG_AVAILABLE_QUANTITY => 'Товар не найден', //тут имеется в виду, что нет записи b_catalog_product
+        self::SALE_BASKET_ITEM_WRONG_AVAILABLE_QUANTITY => 'Товар не найден',
+        //тут имеется в виду, что нет записи b_catalog_product
         self::UNDEFINED_EXCEPTION => 'Неизвестная ошибка',
     ];
     /** @noinspection PhpUndefinedClassInspection */
@@ -37,13 +38,15 @@ class BitrixProxyException extends \Exception implements BaseExceptionInterface
      * @param \Throwable|null $previous
      */
 
-    public function __construct(Result $result, /** @noinspection PhpUndefinedClassInspection */ \Throwable $previous = null)
-    {
+    public function __construct(
+        Result $result,
+        /** @noinspection PhpUndefinedClassInspection */
+        \Throwable $previous = null
+    ) {
         $code = '';
         if ($error = $result->getErrors()) {
             $error = current($error);
             $code = $error->getCode();
-            //dump($error->getMessage());
         }
         $intCode = self::getIntCode($code);
         parent::__construct(
@@ -61,7 +64,6 @@ class BitrixProxyException extends \Exception implements BaseExceptionInterface
      */
     public static function getIntCode(string $bitrixCode): int
     {
-        //dump($bitrixCode);
         return \constant('self::' . $bitrixCode) ?? self::UNDEFINED_EXCEPTION;
     }
 

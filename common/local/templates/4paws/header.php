@@ -8,7 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var \CMain $APPLICATION
  */
 
-use Bitrix\Main\Application;use Bitrix\Main\Page\Asset;use FourPaws\App\Application as PawsApplication;use FourPaws\App\MainTemplate;use FourPaws\Decorators\SvgDecorator;
+use Bitrix\Main\Application;use Bitrix\Main\Page\Asset;use FourPaws\App\Application as PawsApplication;use FourPaws\App\MainTemplate;use FourPaws\Decorators\SvgDecorator;use FourPaws\SaleBundle\Service\BasketService;
 
 /** @var MainTemplate $template */
 $template = MainTemplate::getInstance(Application::getInstance()->getContext());
@@ -66,7 +66,7 @@ $markup = PawsApplication::markup();
                         ['HIDE_ICONS' => 'Y']
                     );
 
-                    echo \FourPaws\SaleBundle\Service\BasketService::getMiniBasketHtml();
+                    echo BasketService::getMiniBasketHtml();
 
                     ?>
                 </div>

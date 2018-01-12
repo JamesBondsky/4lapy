@@ -95,7 +95,7 @@ class BasketController extends Controller
         try {
             $this->basketService->deleteOfferFromBasket($basketId);
             $data = [
-                'basket' => '<basket html>'
+                'basket' => $this->basketService::getBasketHtml()
             ];
             $response = JsonSuccessResponse::createWithData(
                 '',
@@ -139,7 +139,7 @@ class BasketController extends Controller
         try {
             $this->basketService->updateBasketQuantity($basketId, $quantity);
             $data = [
-                'basket' => '<basket html>'
+                'basket' => $this->basketService::getBasketHtml()
             ];
             $response = JsonSuccessResponse::createWithData(
                 '',

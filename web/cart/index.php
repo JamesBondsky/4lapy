@@ -6,15 +6,12 @@
  * @author      Makeev Ilya
  * @copyright   ADV/web-engineering co.
  */
+
+use FourPaws\SaleBundle\Service\BasketService;
+
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 $APPLICATION->SetTitle('Корзина');
 
-$APPLICATION->IncludeComponent(
-    'fourpaws:basket',
-    '',
-    [],
-    false,
-    ['HIDE_ICONS' => 'Y']
-);
+echo BasketService::getBasketHtml();
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/footer.php';

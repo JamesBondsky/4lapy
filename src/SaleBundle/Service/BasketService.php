@@ -3,12 +3,14 @@ declare(strict_types=1);
 
 namespace FourPaws\SaleBundle\Service;
 
+use Bitrix\Catalog\Product\CatalogProvider;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\Compatible\DiscountCompatibility;
 use Bitrix\Sale\Fuser;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 
 /**
  * Class BasketService
@@ -22,19 +24,19 @@ class BasketService
     private $basket = null;
     /** @var array */
     private $context = null;
+    /**
+     * @var CurrentUserProviderInterface
+     */
+    private $currentUserProvider;
 
     /**
      * BasketService constructor.
-     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
+     *
+     * @param CurrentUserProviderInterface $currentUserProvider
      */
-    public function __construct()
+    public function __construct(CurrentUserProviderInterface $currentUserProvider)
     {
-        global $USER;
-        $this->setFUser(Fuser::getId())->setContext([
-            'SITE_ID' => SITE_ID,
-            'USER_ID' => $USER->GetID()
-        ]);
-
+        $this->currentUserProvider = $currentUserProvider;
     }
 
     /**
@@ -61,7 +63,7 @@ class BasketService
             'PRODUCT_ID' => $offerId,
             'QUANTITY' => $quantity,
             'MODULE' => 'catalog',
-            'PRODUCT_PROVIDER_CLASS' => \Bitrix\Catalog\Product\CatalogProvider::class,
+            'PRODUCT_PROVIDER_CLASS' => CatalogProvider::class,
 //            'PROPS' => [[
 //                'NAME' => 'Тест',
 //                'CODE' => 'TEST',
@@ -85,7 +87,6 @@ class BasketService
             throw new BitrixProxyException($result);
         }
         $this->getBasket()->save();
-        //dump($result);
 
         return true;
     }
@@ -108,11 +109,11 @@ class BasketService
             throw new InvalidArgumentException('Wrong $basketId');
         }
         $basketItem = $this->getBasket()->getItemById($basketId);
-        if(null === $basketItem) {
+        if (null === $basketItem) {
             throw new NotFoundException('BasketItem');
         }
         $result = $basketItem->delete();
-        if(!$result->isSuccess()) {
+        if (!$result->isSuccess()) {
             throw new BitrixProxyException($result);
         }
         $this->getBasket()->save();
@@ -142,51 +143,16 @@ class BasketService
             throw new InvalidArgumentException('Wrong $basketId');
         }
         $basketItem = $this->getBasket()->getItemById($basketId);
-        if(null === $basketItem) {
+        if (null === $basketItem) {
             throw new NotFoundException('BasketItem');
         }
         $result = $basketItem->setField('QUANTITY', $quantity);
-        if(!$result->isSuccess()) {
+        if (!$result->isSuccess()) {
             throw new BitrixProxyException($result);
         }
         $this->getBasket()->save();
         return true;
     }
-
-    /**
-     * @param int|null $fUser
-     *
-     * @return BasketService
-     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
-     */
-    public function setFUser(int $fUser): BasketService
-    {
-        if ($fUser < 1) {
-            throw new InvalidArgumentException('Wrong $fUser');
-        }
-        $this->fUser = $fUser;
-        return $this;
-    }
-
-    /**
-     * @param Basket $basket
-     *
-     * @return BasketService
-     */
-    public function setBasket(Basket $basket): BasketService
-    {
-        $this->basket = $basket;
-        return $this;
-    }
-
-    /**
-     * @return int
-     */
-    public function getFUser(): int
-    {
-        return $this->fUser;
-    }
-
 
     /**
      *
@@ -201,8 +167,7 @@ class BasketService
             /** @var Basket $basket */
             /** @noinspection PhpInternalEntityUsedInspection */
             DiscountCompatibility::stopUsageCompatible();
-            $basket = Basket::loadItemsForFUser($this->getFUser(), SITE_ID);
-            $this->setBasket($basket);
+            $this->basket = Basket::loadItemsForFUser($this->currentUserProvider->getCurrentFUserId(), SITE_ID);
         }
         return $this->basket;
     }
@@ -248,14 +213,22 @@ class BasketService
     }
 
     /**
-     * @param array $context
      *
-     * @return BasketService
+     *
+     * @return string
      */
-    public function setContext(array $context): BasketService
+    public static function getBasketHtml(): string
     {
-        $this->context = $context;
-        return $this;
+        global $APPLICATION;
+        ob_start();
+        $APPLICATION->IncludeComponent(
+            'fourpaws:basket',
+            '',
+            [],
+            false,
+            ['HIDE_ICONS' => 'Y']
+        );
+        return ob_get_clean();
     }
 
     /**
@@ -263,6 +236,9 @@ class BasketService
      */
     public function getContext(): array
     {
-        return $this->context;
+        return [
+            'SITE_ID' => SITE_ID,
+            'USER_ID' => $this->currentUserProvider->getCurrentUserId()
+        ];
     }
 }
