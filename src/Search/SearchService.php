@@ -74,6 +74,12 @@ class SearchService implements LoggerAwareInterface
 
         $resultSet = $search->search();
 
+        if ($resultSet->getTotalHits() && ($resultSet->getTotalHits() < $navigation->getFrom())) {
+            $navigation->withPage(1);
+            $search->getQuery()->setFrom($navigation->getFrom());
+            $resultSet = $search->search();
+        }
+
         $this->getAggsHelper()->collapseFilters($filters, $resultSet);
 
         return new ProductSearchResult($resultSet, $navigation);
