@@ -30,7 +30,7 @@ class ManualDayItem
      *
      * @var \DateTime
      */
-    protected $date = null;
+    protected $date;
 
     /**
      * @return int
