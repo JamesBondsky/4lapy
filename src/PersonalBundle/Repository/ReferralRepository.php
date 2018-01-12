@@ -11,8 +11,11 @@ use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use FourPaws\UserBundle\Service\UserService;
+use JMS\Serializer\ArrayTransformerInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
  * Class ReferralRepository
@@ -27,20 +30,42 @@ class ReferralRepository extends BaseHlRepository
     protected $entity;
     
     /**
+     * @var UserService
+     */
+    public $curUserService;
+    
+    /**
+     * ReferralRepository constructor.
+     *
+     * @param ArrayTransformerInterface $arrayTransformer
+     * @param ValidatorInterface        $validator
+     *
+     * @throws ServiceNotFoundException
+     * @throws \Exception
+     * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
+     */
+    public function __construct(
+        ArrayTransformerInterface $arrayTransformer,
+        ValidatorInterface $validator
+    )
+    {
+        parent::__construct($arrayTransformer, $validator);
+        $this->curUserService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
+    }
+    
+    /**
      * @return bool
      * @throws ServiceNotFoundException
      * @throws ValidationException
      * @throws \Exception
-     * @throws ApplicationCreateException
      * @throws BitrixRuntimeException
      * @throws NotAuthorizedException
-     * @throws ServiceCircularReferenceException
      */
     public function create() : bool
     {
         if ($this->entity->getUserId() === 0) {
-            $curUserService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
-            $this->entity->setUserId($curUserService->getCurrentUserId());
+            $this->entity->setUserId($this->curUserService->getCurrentUserId());
         }
         
         return parent::create();
@@ -51,17 +76,14 @@ class ReferralRepository extends BaseHlRepository
      * @throws InvalidIdentifierException
      * @throws ServiceNotFoundException
      * @throws \Exception
-     * @throws ApplicationCreateException
      * @throws NotAuthorizedException
-     * @throws ServiceCircularReferenceException
      */
     public function findByCurUser() : array
     {
-        $curUserService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
         
         $referrals = $this->findBy(
             [
-                'filter' => ['UF_USER_ID' => $curUserService->getCurrentUserId()],
+                'filter' => ['UF_USER_ID' => $this->curUserService->getCurrentUserId()],
                 'ttl'    => 360000,
             ]
         );

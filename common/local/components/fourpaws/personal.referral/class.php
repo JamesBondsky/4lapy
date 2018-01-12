@@ -13,12 +13,13 @@ use Bitrix\Main\LoaderException;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\PersonalBundle\Entity\Referral;
 use FourPaws\PersonalBundle\Service\ReferralService;
+use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Exception\ValidationException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -51,17 +52,18 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
             /** @noinspection PhpUnhandledExceptionInspection */
             throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
         }
-        $this->referralService = $container->get('address.service');
+        $this->referralService = $container->get('referral.service');
     }
     
     /**
      * {@inheritdoc}
-     * @throws ManzanaServiceException
+     * @throws SystemException
+     * @throws ValidationException
+     * @throws BitrixRuntimeException
      * @throws \Exception
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
-     * @throws NotAuthorizedException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws LoaderException
@@ -70,21 +72,30 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
     {
         $this->setFrameMode(true);
         
-        $this->arResult['ITEMS'] = $this->referralService->getCurUserReferrals();
-        $this->arResult['BONUS'] = 0;
-        $cacheItems              = [];
+        try {
+            $this->arResult['ITEMS'] = $this->referralService->getCurUserReferrals();
+        } catch (NotAuthorizedException $e) {
+        }
+        $this->arResult['COUNT']          = $this->referralService->getAllCountByUser();
+        $this->arResult['COUNT_ACTIVE']   = $this->referralService->getActiveCountByUser();
+        $this->arResult['COUNT_MODERATE'] = $this->referralService->getModeratedCountByUser();
+        $this->arResult['BONUS']          = 0;
+        $cacheItems                       = [];
+        $arResult['referral_type']        = $this->referralService->getReferralType();
         if (\is_array($this->arResult['ITEMS']) && !empty($this->arResult['ITEMS'])) {
             /** @var Referral $item */
             /** @noinspection ForeachSourceInspection */
             foreach ($this->arResult['ITEMS'] as $item) {
-                $this->arResult['BONUS'] += $item->getBonus();
-                $cardId                  = $item->getCard();
-                $cacheItems[$cardId]     = [
-                    'bonus'         => $item->getBonus(),
-                    'card'          => $cardId,
-                    'moderated'     => $item->isModerate(),
-                    'dateEndActive' => $item->getDateEndActive(),
-                ];
+                if ($item instanceof Referral) {
+                    $this->arResult['BONUS'] += $item->getBonus();
+                    $cardId                  = $item->getCard();
+                    $cacheItems[$cardId]     = [
+                        'bonus'         => $item->getBonus(),
+                        'card'          => $cardId,
+                        'moderated'     => $item->isModerate(),
+                        'dateEndActive' => $item->getDateEndActive(),
+                    ];
+                }
             }
             if ($this->arResult['BONUS'] > 0) {
                 $this->arResult['BONUS'] = floor($this->arResult['BONUS']);
@@ -95,11 +106,12 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
         /** @noinspection SummerTimeUnsafeTimeManipulationInspection */
         /** кешируем на сутки, можно будет увеличить если обновления будут не очень частые - чтобы лишний кеш не хранился */
         $cacheTime = 24 * 60 * 60;
-        if ($this->startResultCache($cacheTime,
-                                    [
-                                        'items' => $cacheItems,
-                                        'bonus' => $this->arResult['BONUS'],
-                                    ]
+        if ($this->startResultCache(
+            $cacheTime,
+            [
+                'items' => $cacheItems,
+                'bonus' => $this->arResult['BONUS'],
+            ]
         )) {
             $this->includeComponentTemplate();
         }

@@ -299,7 +299,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         );
         
         try {
-            $result = $this->execute(self::CONTRACT_CLIENT_SEARCH, $bag->getParameters());
+            $result  = $this->execute(self::CONTRACT_CLIENT_SEARCH, $bag->getParameters());
             $clients = $this->serializer->deserialize($result, Clients::class, 'xml');
         } catch (\Exception $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
@@ -423,6 +423,8 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      * @param User $user
      *
      * @return array
+     * @throws ManzanaServiceContactSearchNullException
+     * @throws ManzanaServiceContactSearchMoreOneException
      * @throws ServiceNotFoundException
      * @throws NotAuthorizedException
      * @throws InvalidIdentifierException
@@ -438,7 +440,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         if ($contact_id > 0) {
             $bag = new ParameterBag(
                 [
-                    'contact_id' => (string)$contact_id,
+                    'contact_id' => $contact_id,
                 ]
             );
             
@@ -540,7 +542,6 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         
         try {
             $result = $this->execute(self::CONTRACT_SEARCH_CARD_BY_NUMBER, $bag->getParameters());
-            echo $result;
             $card = $this->serializer->deserialize($result, Cards::class, 'xml')->cards[0];
         } catch (\Exception $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
@@ -621,9 +622,9 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
             try {
                 $result = $this->execute(self::CONTRACT_CARDS, $bag->getParameters());
                 /** @var Cards_by_contract_Cards $cards */
-                $cards = $this->serializer->deserialize($result, Cards_by_contract_Cards::class, 'xml');
-                $cards = $cards->cards->toArray();
-                $this->cards[$contactId] = $cards;
+                $this->cards[$contactId] =
+                $cards =
+                    $this->serializer->deserialize($result, Cards_by_contract_Cards::class, 'xml')->cards->toArray();
             } catch (\Exception $e) {
                 throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
             }

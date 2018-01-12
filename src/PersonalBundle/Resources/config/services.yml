@@ -24,7 +24,7 @@ services:
         public: true
 
     referral.service:
-        class: FourPaws\PersonalBundle\Service\ReferalService
+        class: FourPaws\PersonalBundle\Service\ReferralService
         public: true
 
     FourPaws\PersonalBundle\AjaxController\:

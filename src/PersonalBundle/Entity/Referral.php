@@ -17,8 +17,9 @@ class Referral extends BaseEntity
      * @var int
      * @Serializer\Type("integer")
      * @Serializer\SerializedName("UF_USER_ID")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
-     * @Assert\NotBlank(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Assert\NotBlank(groups={"create","read"})
+     * @Serializer\SkipWhenEmpty()
      */
     protected $userId;
     
@@ -26,92 +27,79 @@ class Referral extends BaseEntity
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_LAST_NAME")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
-    protected $lastName = '';
+    protected $lastName;
     
     /**
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_NAME")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
-    protected $name = '';
+    protected $name;
     
     /**
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_SECOND_NAME")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
-    protected $secondName = '';
+    protected $secondName;
     
     /**
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_CARD")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
-     * @Assert\NotBlank(groups={"create","read","update","delete"})
-     *
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Assert\NotBlank(groups={"create","read"})
+     * @Serializer\SkipWhenEmpty()
      */
-    protected $card = '';
+    protected $card;
     
     /**
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_PHONE")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
-    protected $phone = '';
+    protected $phone;
     
     /**
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_EMAIL")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
-    protected $email = '';
+    protected $email;
     
     /**
      * @var bool
      * @Serializer\Type("bitrix_bool")
      * @Serializer\SerializedName("UF_MODERATED")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
-    protected $moderate = false;
+    protected $moderate;
     
     /**
      * @var Date
      * @Serializer\Type("bitrix_date")
      * @Serializer\SerializedName("UF_CARD_CLOSED_DATE")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
     protected $dateEndActive;
     
     /**
      * @var float
      */
-    protected $bonus = 0;
-    
-    /**
-     * @return string
-     */
-    public function getName() : string
-    {
-        return $this->name ?? '';
-    }
-    
-    /**
-     * @param string $name
-     *
-     * @return self
-     */
-    public function setName(string $name) : self
-    {
-        $this->name = $name;
-        
-        return $this;
-    }
+    protected $bonus;
     
     /**
      * @return int
@@ -129,6 +117,185 @@ class Referral extends BaseEntity
     public function setUserId(int $userId) : self
     {
         $this->userId = $userId;
+        
+        return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getCard() : string
+    {
+        return $this->card ?? '';
+    }
+    
+    /**
+     * @param string $card
+     *
+     * @return self
+     */
+    public function setCard(string $card) : self
+    {
+        $this->card = $card;
+        
+        return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getPhone() : string
+    {
+        return $this->phone ?? '';
+    }
+    
+    /**
+     * @param string $phone
+     *
+     * @return self
+     */
+    public function setPhone(string $phone) : self
+    {
+        $this->phone = $phone;
+        
+        return $this;
+    }
+    
+    /**
+     * @return bool
+     */
+    public function isModerate() : bool
+    {
+        return $this->moderate ?? true;
+    }
+    
+    /**
+     * @param bool $moderate
+     *
+     * @return self
+     */
+    public function setModerate(bool $moderate) : self
+    {
+        $this->moderate = $moderate;
+        
+        return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getFormatedActiveDate() : string
+    {
+        $dateEndActive = $this->getDateEndActive();
+        if ($dateEndActive instanceof Date) {
+            return $this->replaceRuMonth($dateEndActive->format('d #m# Y'));
+        }
+        
+        return '';
+    }
+    
+    /**
+     * @return Date|null
+     */
+    public function getDateEndActive()
+    {
+        return $this->dateEndActive ?? null;
+    }
+    
+    /**
+     * @param Date|string|null $dateEndActive
+     *
+     * @return self
+     */
+    public function setDateEndActive($dateEndActive) : self
+    {
+        if (!($dateEndActive instanceof Date)) {
+            if (\strlen($dateEndActive) > 0) {
+                /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+                $this->dateEndActive = new Date($dateEndActive, 'd.m.Y');
+            } else {
+                $this->dateEndActive = null;
+            }
+        } else {
+            $this->dateEndActive = $dateEndActive;
+        }
+        
+        return $this;
+    }
+    
+    /**
+     * @param string $date
+     *
+     * @return string
+     */
+    public function replaceRuMonth(string $date) : string
+    {
+        /** @todo Русская локаль не помогла - может можно по другому? */
+        $months = [
+            '#1#'  => 'Января',
+            '#2#'  => 'Февраля',
+            '#3#'  => 'Марта',
+            '#4#'  => 'Апреля',
+            '#5#'  => 'Мая',
+            '#6#'  => 'Июня',
+            '#7#'  => 'Июля',
+            '#8#'  => 'Августа',
+            '#9#'  => 'Сентября',
+            '#10#' => 'Октября',
+            '#11#' => 'Ноября',
+            '#12#' => 'Декабря',
+        ];
+        preg_match('|#\d{1,2}#|', $date, $matches);
+        if (!empty($matches[0])) {
+            return str_replace($matches[0], $months[$matches[0]], $date);
+        }
+        
+        return $date;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getFullName()
+    {
+        $name       = $this->getName();
+        $lastName   = $this->getLastName();
+        $secondName = $this->getSecondName();
+        if (!empty($name)
+            && !empty($secondName)
+            && !empty($lastName)) {
+            $fullName = $name . ' ' . $secondName . $lastName;
+        } /** @noinspection NotOptimalIfConditionsInspection */ elseif (!empty($lastName)
+                                                                        && !empty($name)) {
+            $fullName = $lastName . ' ' . $name;
+        } /** @noinspection NotOptimalIfConditionsInspection */ elseif (!empty($name)
+                                                                        && !empty($secondName)) {
+            $fullName = $name . ' ' . $secondName;
+        } elseif (!empty($name)) {
+            $fullName = $name;
+        } else {
+            $fullName = $this->getEmail();
+        }
+        
+        return $fullName;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getName() : string
+    {
+        return $this->name ?? '';
+    }
+    
+    /**
+     * @param string $name
+     *
+     * @return self
+     */
+    public function setName(string $name) : self
+    {
+        $this->name = $name;
         
         return $this;
     }
@@ -176,46 +343,6 @@ class Referral extends BaseEntity
     /**
      * @return string
      */
-    public function getCard() : string
-    {
-        return $this->card ?? '';
-    }
-    
-    /**
-     * @param string $card
-     *
-     * @return self
-     */
-    public function setCard(string $card) : self
-    {
-        $this->card = $card;
-        
-        return $this;
-    }
-    
-    /**
-     * @return string
-     */
-    public function getPhone() : string
-    {
-        return $this->phone ?? '';
-    }
-    
-    /**
-     * @param string $phone
-     *
-     * @return self
-     */
-    public function setPhone(string $phone) : self
-    {
-        $this->phone = $phone;
-        
-        return $this;
-    }
-    
-    /**
-     * @return string
-     */
     public function getEmail() : string
     {
         return $this->email ?? '';
@@ -236,50 +363,11 @@ class Referral extends BaseEntity
     /**
      * @return bool
      */
-    public function isModerate() : bool
+    public function isEndActiveDate()
     {
-        return $this->moderate ?? true;
-    }
-    
-    /**
-     * @param bool $moderate
-     *
-     * @return self
-     */
-    public function setModerate(bool $moderate) : self
-    {
-        $this->moderate = $moderate;
+        $dateEndActive = $this->getDateEndActive();
         
-        return $this;
-    }
-    
-    /**
-     * @return Date|null
-     */
-    public function getDateEndActive()
-    {
-        return $this->dateEndActive ?? null;
-    }
-    
-    /**
-     * @param Date|string|null $dateEndActive
-     *
-     * @return self
-     */
-    public function setDateEndActive($dateEndActive) : self
-    {
-        if (!($dateEndActive instanceof Date)) {
-            if (\strlen($dateEndActive) > 0) {
-                /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-                $this->dateEndActive = new Date($dateEndActive, 'd.m.Y');
-            } else {
-                $this->dateEndActive = null;
-            }
-        } else {
-            $this->dateEndActive = $dateEndActive;
-        }
-        
-        return $this;
+        return $dateEndActive instanceof Date && $dateEndActive->getTimestamp() <= time();
     }
     
     /**

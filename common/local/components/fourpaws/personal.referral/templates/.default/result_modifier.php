@@ -24,7 +24,6 @@ $arResult['TABS'] = [
 /** @noinspection PhpUnhandledExceptionInspection */
 $request                   = Application::getInstance()->getContext()->getRequest();
 $requestUri                = $request->getRequestUri();
-$arResult['referral_type'] = $request->get('referral_type');
 foreach ($arResult['TABS'] as $code => &$tab) {
     $uri = new Uri($requestUri);
     $uri->deleteParams(['referral_type']);

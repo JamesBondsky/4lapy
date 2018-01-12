@@ -3,11 +3,13 @@
 namespace FourPaws\AppBundle\Repository;
 
 use Bitrix\Main\Entity\DataManager;
+use Bitrix\Main\ObjectPropertyException;
 use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\ValidationException;
+use JMS\Serializer\Annotation\SkipWhenEmpty;
 use JMS\Serializer\ArrayTransformerInterface;
 use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\SerializationContext;
@@ -95,7 +97,13 @@ class BaseRepository
             throw new BitrixRuntimeException('empty entity');
         }
         $this->checkIdentifier($this->entity->getId());
-        $validationResult = $this->validator->validate($this->entity, null, ['update']);
+        $validationResult = $this->validator->validate(
+            $this->entity,
+            [
+                new SkipWhenEmpty(),
+            ]
+            ['update']
+        );
         if ($validationResult->count() > 0) {
             throw new ValidationException('Wrong entity passed to update');
         }
@@ -190,12 +198,11 @@ class BaseRepository
             $query->setGroup($params['group']);
         }
         if (!empty($params['runtime'])) {
-            if(\is_array($params['runtime'])) {
+            if (\is_array($params['runtime'])) {
                 foreach ($params['runtime'] as $runtime) {
                     $query->registerRuntimeField($runtime);
                 }
-            }
-            else{
+            } else {
                 $query->registerRuntimeField($params['runtime']);
             }
         }
@@ -214,6 +221,22 @@ class BaseRepository
         }
         
         return $allItems;
+    }
+    
+    /**
+     * @param array $filter
+     *
+     * @return int
+     * @throws ObjectPropertyException
+     */
+    public function getCount(array $filter = []) : int
+    {
+        $query = $this->dataManager::query()->setCacheTtl(360000);
+        $query->countTotal(true);
+        if(!empty($filter)){
+            $query->setFilter($filter);
+        }
+        return $query->exec()->getCount();
     }
     
     /**
@@ -257,27 +280,31 @@ class BaseRepository
      * @param array  $data
      * @param string $entityClass
      *
+     * @param string $type
+     *
      * @return BaseEntity
      */
-    public function dataToEntity(array $data, string $entityClass) : BaseEntity
+    public function dataToEntity(array $data, string $entityClass, string $type = 'read') : BaseEntity
     {
         return $this->arrayTransformer->fromArray(
             $data,
             $entityClass,
-            DeserializationContext::create()->setGroups(['read'])
+            DeserializationContext::create()->setGroups([$type])
         );
     }
     
     /**
-     * @param string $entityClass
+     * @param BaseEntity $entity
+     *
+     * @param string     $type
      *
      * @return array
      */
-    public function entityToData(string $entityClass) : array
+    public function entityToData(BaseEntity $entity, string $type = 'read') : array
     {
         return $this->arrayTransformer->toArray(
-            $entityClass,
-            DeserializationContext::create()->setGroups(['read'])
+            $entity,
+            SerializationContext::create()->setGroups([$type])
         );
     }
 }

@@ -1,6 +1,7 @@
 <?php
 
 use FourPaws\Decorators\SvgDecorator;
+use FourPaws\PersonalBundle\Entity\Referral;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -70,12 +71,14 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                                 </ul>
                             </div>
                         <?php } ?>
-                        <div class="b-account-referal__text-number">Начислено за все время <span><?=$arResult['FORMATED_BONUS']?></span>
+                        <div class="b-account-referal__text-number">Начислено за все время
+                            <span><?= $arResult['FORMATED_BONUS'] ?></span>
                             <span class="b-ruble b-ruble--referal">&nbsp;₽</span>
                         </div>
                     </div>
                     <ul class="b-account-referal__list js-referal-list">
-                        <?php foreach ($arResult['ITEMS'] as $item) { ?>
+                        <?php /** @var Referral $item */
+                        foreach ($arResult['ITEMS'] as $item) { ?>
                             <li class="b-account-referal-item js-item-referal"
                                 data-referal="<?= $item->isModerate() ? 'moderate' : 'active-referal' ?>">
                                 <div class="b-account-referal-item__wrapper">
@@ -109,7 +112,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                                             <div class="b-account-referal-item__status b-account-referal-item__status--<?= !$item->isEndActiveDate(
                                             ) ? 'active' : 'not-active' ?>">
                                                 <?= !$item->isEndActiveDate() ? 'Активна до ' : 'Неактивна c ' ?>
-                                                "><span><?= $item->getFormatedActiveDate() ?></span>
+                                                <span><?= $item->getFormatedActiveDate() ?></span>
                                             </div>
                                             <?php
                                         } ?>
