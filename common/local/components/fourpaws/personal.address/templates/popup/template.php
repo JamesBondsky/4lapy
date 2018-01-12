@@ -12,7 +12,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             <h1 class="b-title b-title--h1 b-title--registration">Новый адрес доставки</h1>
         </header>
         <form class="b-registration__form js-form-validation js-delivery-address-query" method="post">
-            <input class="js-data-id js-no-valid" name="id" value="" type="hidden">
+            <input class="js-data-id js-no-valid" name="ID" value="" type="hidden">
             <div class="b-input-line b-input-line--popup-authorization js-name js-small-input">
                 <div class="b-input-line__label-wrapper">
                     <label class="b-input-line__label" for="name-adress">Название</label>
