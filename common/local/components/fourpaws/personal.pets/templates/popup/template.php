@@ -1,11 +1,3 @@
-<?php
-
-use FourPaws\Decorators\SvgDecorator;
-
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
-    die();
-}
-/** @var array $arResult */ ?>
 <section class="b-popup-pick-city b-popup-pick-city--add-pet js-popup-section" data-popup="edit-popup-pet">
     <a class="b-popup-pick-city__close b-popup-pick-city__close--add-pet js-close-popup"
        href="javascript:void(0);"
@@ -14,10 +6,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         <header class="b-registration__header">
             <h1 class="b-title b-title--h1 b-title--registration">Дэймон</h1>
         </header>
-        <form class="b-registration__form js-form-validation js-add-pet-query">
-            <div style="display:none" class="js-id">
-                <input type="hidden" name="ID">
-            </div>
+        <form class="b-registration__form js-form-validation js-add-pet-query" method="post" data-url="">
+            <input class="js-data-id js-no-valid" name="ID" value="" type="hidden">
             <div class="b-registration__wrapper-avatar">
                 <div class="b-registration__add-photos js-img">
                     <input class="b-registration__load js-no-valid js-drag-n-drop"
@@ -43,15 +33,16 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                             title="" />
                 </a>
             </div>
-            <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet js-name">
+            <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-pet js-name js-small-input">
                 <div class="b-input-line__label-wrapper">
                     <label class="b-input-line__label" for="name-pet">Имя питомца</label>
                 </div>
-                <div class="b-input b-input--registration-form b-kek">
-                    <input class="b-input__input-field b-input__input-field--registration-form b-kek"
+                <div class="b-input b-input--registration-form">
+                    <input class="b-input__input-field b-input__input-field--registration-form"
                            type="text"
                            id="name-pet"
                            placeholder=""
+                           data-text="0"
                            name="UF_NAME" />
                     <div class="b-error"><span class="js-message"></span>
                     </div>
@@ -79,11 +70,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                 <div class="b-input-line__label-wrapper">
                     <label class="b-input-line__label" for="breed-pet">Порода</label>
                 </div>
-                <div class="b-input b-input--registration-form b-kek">
-                    <input class="b-input__input-field b-input__input-field--registration-form b-kek"
+                <div class="b-input b-input--registration-form">
+                    <input class="b-input__input-field b-input__input-field--registration-form"
                            type="text"
                            id="breed-pet"
                            placeholder=""
+                           data-text="1"
                            name="UF_BREED" />
                     <div class="b-error"><span class="js-message"></span>
                     </div>
@@ -93,11 +85,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                 <div class="b-input-line__label-wrapper">
                     <label class="b-input-line__label" for="birthday-pet">Дата рождения</label>
                 </div>
-                <div class="b-input b-input--registration-form b-kek">
-                    <input class="b-input__input-field b-input__input-field--registration-form b-kek"
+                <div class="b-input b-input--registration-form">
+                    <input class="b-input__input-field b-input__input-field--registration-form"
                            type="text"
                            id="birthday-pet"
                            placeholder=""
+                           data-text="2"
                            name="UF_BIRTHDAY" />
                     <div class="b-error"><span class="js-message"></span>
                     </div>
@@ -109,6 +102,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                            type="radio"
                            name="UF_GENDER"
                            id="male"
+                           data-radio="0"
                            value="<?= $arResult['GENDER']['M']['ID'] ?>" />
                     <label class="b-radio__label b-radio__label--add-pet"
                            for="male"><span class="b-radio__text-label">Мальчик</span>
@@ -119,10 +113,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                            type="radio"
                            name="UF_GENDER"
                            id="female"
+                           data-radio="1"
                            value="<?= $arResult['GENDER']['F']['ID'] ?>" />
                     <label class="b-radio__label b-radio__label--add-pet"
                            for="female"><span class="b-radio__text-label">Девочка</span>
                     </label>
+                </div>
+                <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
             <button class="b-button b-button--subscribe-delivery">Сохранить</button>
