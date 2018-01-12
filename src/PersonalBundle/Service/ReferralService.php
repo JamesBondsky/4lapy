@@ -201,7 +201,7 @@ class ReferralService
                                                          Card_by_contract_Cards ? $cardInfo->getExpireDate()->format(
                                     'd.m.Y'
                                 ) : '',
-                                'UF_MODERATED'        => $item->isQuestionnaireActual !== 'Да' ? 'Y' : 'N',
+                                'UF_MODERATED'        => $item->isQuestionnaireActual === 'Не указано' ? 'Y' : 'N',
                             ]
                         );
                         try {
@@ -224,7 +224,7 @@ class ReferralService
                     if ($referral instanceof Referral) {
                         $referral->setBonus((float)$item->sumReferralBonus);
                         $lastModerate = $referral->isModerate();
-                        $referral->setModerate($item->isQuestionnaireActual !== 'Да');
+                        $referral->setModerate($item->isQuestionnaireActual === 'Не указано');
                         if ($lastModerate !== $referral->isModerate()) {
                             $this->update(
                                 [
