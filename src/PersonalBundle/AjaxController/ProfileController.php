@@ -22,6 +22,7 @@ use FourPaws\UserBundle\Exception\EmptyDateException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\ValidationException;
+use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use JMS\Serializer\SerializerBuilder;
@@ -179,7 +180,7 @@ class ProfileController extends Controller
      */
     public function changeDataAction(Request $request) : JsonResponse
     {
-        /** @var \FourPaws\UserBundle\Repository\UserRepository $userRepository */
+        /** @var UserRepository $userRepository */
         $userRepository = $this->currentUserProvider->getUserRepository();
         $data           = $request->request->getIterator()->getArrayCopy();
         if (!empty($data[''])) {

@@ -14,6 +14,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         <form class="b-registration__form js-form-validation js-edit-data-query"
               data-url="/ajax/personal/profile/changeData/"
               method="post">
+            <input class="js-data-id js-no-valid" name="id" value="<?= $arResult['CUR_USER']['ID'] ?>" type="hidden">
             <div class="b-input-line b-input-line--popup-authorization b-input-line--referal js-last-name">
                 <div class="b-input-line__label-wrapper">
                     <label class="b-input-line__label" for="data-last-name">Фамилия</label>
@@ -24,6 +25,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                            id="data-last-name"
                            name="LAST_NAME"
                            value="<?= $arResult['CUR_USER']['LAST_NAME'] ?>"
+                           data-text="0"
                            placeholder="" />
                     <div class="b-error"><span class="js-message"></span>
                     </div>
@@ -40,6 +42,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                            id="data-first-name"
                            name="NAME"
                            value="<?= $arResult['CUR_USER']['NAME'] ?>"
+                           data-text="1"
                            placeholder="" />
                     <div class="b-error"><span class="js-message"></span>
                     </div>
@@ -55,6 +58,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                            id="data-patronymic"
                            name="SECOND_NAME"
                            value="<?= $arResult['CUR_USER']['SECOND_NAME'] ?>"
+                           data-text="2"
                            placeholder="" />
                     <div class="b-error"><span class="js-message"></span>
                     </div>
@@ -70,6 +74,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                            id="data-date"
                            placeholder=""
                            name="PERSONAL_BIRTHDAY"
+                           data-text="3"
                            value="<?= $arResult['CUR_USER']['BIRTHDAY'] ?>" />
                     <div class="b-error"><span class="js-message"></span>
                     </div>
@@ -95,6 +100,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                     <input class="b-radio__input"
                            type="radio"
                            name="PERSONAL_GENDER"
+                           data-radio="0"
                            value="M" <?= $arResult['CUR_USER']['GENDER'] === 'M' ? ' checked' : '' ?>
                            id="male-people" />
                     <label class="b-radio__label b-radio__label--add-pet"
@@ -105,6 +111,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                     <input class="b-radio__input"
                            type="radio"
                            name="PERSONAL_GENDER"
+                           data-radio="1"
                            value="F" <?= $arResult['CUR_USER']['GENDER'] === 'F' ? ' checked' : '' ?>
                            id="female-people" />
                     <label class="b-radio__label b-radio__label--add-pet"
@@ -116,3 +123,4 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         </form>
     </div>
 </section>
+

@@ -330,7 +330,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         
         ob_start();
         /** @noinspection PhpIncludeInspection */
-        include_once App::getDocumentRoot() . '/local/components/fourpaws/personal.profile/templates/.default/include/'
+        include_once App::getDocumentRoot() . '/local/components/fourpaws/personal.profile/templates/popupChangePhone/include/'
                      . $step . '.php';
         $html = ob_get_clean();
         
