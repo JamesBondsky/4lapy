@@ -12,7 +12,6 @@ use Bitrix\Main\Mail\Event;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
-use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
@@ -34,7 +33,6 @@ use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\ValidationException;
-use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -78,7 +76,7 @@ class ReferralService
      * @throws ApplicationCreateException
      * @throws NotAuthorizedException
      * @throws ServiceCircularReferenceException
-     * @return Referral[]|array
+     * @return array|Referral[]
      */
     public function getCurUserReferrals() : array
     {
@@ -121,8 +119,8 @@ class ReferralService
     }
     
     /**
-     * @return string
      * @throws SystemException
+     * @return string
      */
     public function getReferralType() : string
     {
@@ -241,7 +239,6 @@ class ReferralService
                 /** обновляем если добавилась инфа, чтобы была актуальная постраничка, табы и поиск */
                 LocalRedirect($request->getRequestUri());
             }
-            
         }
     }
     
@@ -250,7 +247,6 @@ class ReferralService
      *
      * @param bool  $updateManzana
      *
-     * @return bool
      * @throws ValidationException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
@@ -259,6 +255,7 @@ class ReferralService
      * @throws ApplicationCreateException
      * @throws \Exception
      * @throws BitrixRuntimeException
+     * @return bool
      */
     public function add(array $data, bool $updateManzana = true) : bool
     {
@@ -272,7 +269,7 @@ class ReferralService
             }
             /** @var User $user */
             $user = $this->referralRepository->curUserService->getUserRepository()->find($entity->getUserId());
-            if($user instanceof User) {
+            if ($user instanceof User) {
                 Event::send(
                     [
                         'EVENT_NAME' => 'ReferralAdd',
@@ -292,12 +289,12 @@ class ReferralService
     /**
      * @param Referral $referral
      *
-     * @return ManzanaReferalParams
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws ApplicationCreateException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
+     * @return ManzanaReferalParams
      */
     public function getClientReferral(Referral $referral) : ManzanaReferalParams
     {
@@ -310,10 +307,7 @@ class ReferralService
         } catch (ManzanaServiceContactSearchNullException $e) {
             $contactClient = new Client();
             try {
-                App::getInstance()
-                   ->getContainer()
-                   ->get(CurrentUserProviderInterface::class)
-                   ->setClientPersonalDataByCurUser($contactClient);
+                $this->referralRepository->curUserService->setClientPersonalDataByCurUser($contactClient);
             } catch (NotAuthorizedException $e) {
             }
             try {
@@ -342,12 +336,12 @@ class ReferralService
     /**
      * @param array $data
      *
-     * @return bool
      * @throws ValidationException
      * @throws InvalidIdentifierException
      * @throws \Exception
      * @throws BitrixRuntimeException
      * @throws ConstraintDefinitionException
+     * @return bool
      */
     public function update(array $data) : bool
     {
