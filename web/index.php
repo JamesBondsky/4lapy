@@ -109,17 +109,17 @@ echo '<div class="b-container">';
  * Популярные бренды
  */
 $APPLICATION->IncludeComponent(
-	'bitrix:main.include',
-	'',
-	array(
-		'AREA_FILE_SHOW' => 'file',
-		'PATH' => '/local/include/blocks/index.popular_brands.php',
-		'EDIT_TEMPLATE' => '',
-	),
-	null,
-	array(
-		'HIDE_ICONS' => 'Y',
-	)
+    'bitrix:main.include',
+    '',
+    [
+        'AREA_FILE_SHOW' => 'file',
+        'PATH' => '/local/include/blocks/index.popular_brands.php',
+        'EDIT_TEMPLATE' => '',
+    ],
+    null,
+    [
+        'HIDE_ICONS' => 'Y',
+    ]
 );
 
 $APPLICATION->IncludeComponent('bitrix:main.include',
@@ -174,9 +174,21 @@ $APPLICATION->IncludeComponent('fourpaws:items.list',
                                ['HIDE_ICONS' => 'Y']);
 
 /**
- * @todo Просмотренные товары. Заменить компонентом и удалить файл.
+ * Просмотренные товары
  */
-require_once '_temp_viewed_products.php';
+$APPLICATION->IncludeComponent(
+    'bitrix:main.include',
+    '',
+    [
+        'AREA_FILE_SHOW' => 'file',
+        'PATH' => '/local/include/blocks/index.viewed_products.php',
+        'EDIT_TEMPLATE' => '',
+    ],
+    null,
+    [
+        'HIDE_ICONS' => 'Y',
+    ]
+);
 
 /**
  * Контейнер текста на странице.
