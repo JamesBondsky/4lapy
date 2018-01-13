@@ -23,6 +23,7 @@ use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Exception\SmsSendErrorException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\External\Manzana\Model\Client;
+use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\UserBundle\Entity\User;
@@ -103,7 +104,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             $curBirthday = $curUser->getBirthday();
             if ($curBirthday instanceof Date) {
                 try {
-                    $birthday = $this->replaceRuMonth($curBirthday->format('j #n# Y'));
+                    $birthday = DateHelper::replaceRuMonth($curBirthday->format('j #n# Y'), DateHelper::GENITIVE);
                 } catch (\Exception $e) {
                     $birthday = '';
                 }
@@ -131,36 +132,6 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         $this->includeComponentTemplate();
         
         return true;
-    }
-    
-    /**
-     * @param string $date
-     *
-     * @return string
-     */
-    public function replaceRuMonth(string $date) : string
-    {
-        /** @todo Русская локаль не помогла - может можно по другому? */
-        $months = [
-            '#1#'  => 'Января',
-            '#2#'  => 'Февраля',
-            '#3#'  => 'Марта',
-            '#4#'  => 'Апреля',
-            '#5#'  => 'Мая',
-            '#6#'  => 'Июня',
-            '#7#'  => 'Июля',
-            '#8#'  => 'Августа',
-            '#9#'  => 'Сентября',
-            '#10#' => 'Октября',
-            '#11#' => 'Ноября',
-            '#12#' => 'Декабря',
-        ];
-        preg_match('|#\d{1,2}#|', $date, $matches);
-        if (!empty($matches[0])) {
-            return str_replace($matches[0], $months[$matches[0]], $date);
-        }
-        
-        return $date;
     }
     
     /**

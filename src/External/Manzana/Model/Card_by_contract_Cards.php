@@ -1,7 +1,12 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\External\Manzana\Model;
 
+use FourPaws\Helpers\DateHelper;
 use JMS\Serializer\Annotation\ExclusionPolicy;
 use JMS\Serializer\Annotation\SerializedName;
 use JMS\Serializer\Annotation\Type;
@@ -204,50 +209,20 @@ class Card_by_contract_Cards
     public $balanceExtraNoLimit;
     
     /**
-     * @return \DateTimeImmutable
-     */
-    public function getExpireDate() : \DateTimeImmutable
-    {
-        return $this->expireDate;
-    }
-    
-    /**
      * @param string $format
      *
      * @return string
      */
     public function getFormatExpireDate(string $format = 'd #m# Y') : string
     {
-        return $this->replaceRuMonth($this->getExpireDate()->format($format));
+        return DateHelper::replaceRuMonth($this->getExpireDate()->format($format), DateHelper::GENITIVE);
     }
     
     /**
-     * @param string $date
-     *
-     * @return string
+     * @return \DateTimeImmutable
      */
-    public function replaceRuMonth(string $date) : string
+    public function getExpireDate() : \DateTimeImmutable
     {
-        /** @todo Русская локаль не помогла - может можно по другому? */
-        $months = [
-            '#1#'  => 'Января',
-            '#2#'  => 'Февраля',
-            '#3#'  => 'Марта',
-            '#4#'  => 'Апреля',
-            '#5#'  => 'Мая',
-            '#6#'  => 'Июня',
-            '#7#'  => 'Июля',
-            '#8#'  => 'Августа',
-            '#9#'  => 'Сентября',
-            '#10#' => 'Октября',
-            '#11#' => 'Ноября',
-            '#12#' => 'Декабря',
-        ];
-        preg_match('|#\d{1,2}#|', $date, $matches);
-        if (!empty($matches[0])) {
-            return str_replace($matches[0], $months[$matches[0]], $date);
-        }
-        
-        return $date;
+        return $this->expireDate;
     }
 }

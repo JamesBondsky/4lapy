@@ -8,6 +8,7 @@ namespace FourPaws\PersonalBundle\Entity;
 
 use Bitrix\Main\Type\Date;
 use FourPaws\AppBundle\Entity\BaseEntity;
+use FourPaws\Helpers\DateHelper;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -188,14 +189,14 @@ class Referral extends BaseEntity
     {
         $dateEndActive = $this->getDateEndActive();
         if ($dateEndActive instanceof Date) {
-            return $this->replaceRuMonth($dateEndActive->format('d #m# Y'));
+            return DateHelper::replaceRuMonth($dateEndActive->format('d #m# Y'), DateHelper::NOMINATIVE);
         }
         
         return '';
     }
     
     /**
-     * @return Date|null
+     * @return null|Date
      */
     public function getDateEndActive()
     {
@@ -203,7 +204,7 @@ class Referral extends BaseEntity
     }
     
     /**
-     * @param Date|string|null $dateEndActive
+     * @param null|Date|string $dateEndActive
      *
      * @return self
      */
@@ -221,36 +222,6 @@ class Referral extends BaseEntity
         }
         
         return $this;
-    }
-    
-    /**
-     * @param string $date
-     *
-     * @return string
-     */
-    public function replaceRuMonth(string $date) : string
-    {
-        /** @todo Русская локаль не помогла - может можно по другому? */
-        $months = [
-            '#1#'  => 'Января',
-            '#2#'  => 'Февраля',
-            '#3#'  => 'Марта',
-            '#4#'  => 'Апреля',
-            '#5#'  => 'Мая',
-            '#6#'  => 'Июня',
-            '#7#'  => 'Июля',
-            '#8#'  => 'Августа',
-            '#9#'  => 'Сентября',
-            '#10#' => 'Октября',
-            '#11#' => 'Ноября',
-            '#12#' => 'Декабря',
-        ];
-        preg_match('|#\d{1,2}#|', $date, $matches);
-        if (!empty($matches[0])) {
-            return str_replace($matches[0], $months[$matches[0]], $date);
-        }
-        
-        return $date;
     }
     
     /**

@@ -17,6 +17,7 @@ use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\External\Manzana\Model\Client;
+use FourPaws\Helpers\DateHelper;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -50,8 +51,7 @@ class ProfileController extends Controller
     public function __construct(
         UserAuthorizationInterface $userAuthorization,
         CurrentUserProviderInterface $currentUserProvider
-    )
-    {
+    ) {
         $this->currentUserProvider = $currentUserProvider;
     }
     
@@ -249,7 +249,7 @@ class ProfileController extends Controller
             try {
                 $curBirthday = $user->getBirthday();
                 if ($curBirthday instanceof Date) {
-                    $birthday = $profileClass->replaceRuMonth($curBirthday->format('d #n# Y'));
+                    $birthday = DateHelper::replaceRuMonth($curBirthday->format('d #n# Y'), DateHelper::GENITIVE);
                 } else {
                     $birthday = '';
                 }
