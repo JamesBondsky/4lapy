@@ -66,19 +66,22 @@ class ReferralService
     }
     
     /**
-     * @throws SystemException
-     * @throws ValidationException
-     * @throws BitrixRuntimeException
-     * @throws ConstraintDefinitionException
-     * @throws InvalidIdentifierException
+     * @param bool $redirectIfAdd
+     *
+     * @throws CardNotFoundException
      * @throws ServiceNotFoundException
+     * @throws ValidationException
+     * @throws InvalidIdentifierException
+     * @throws SystemException
      * @throws \Exception
      * @throws ApplicationCreateException
+     * @throws BitrixRuntimeException
+     * @throws ConstraintDefinitionException
      * @throws NotAuthorizedException
      * @throws ServiceCircularReferenceException
      * @return array|Referral[]
      */
-    public function getCurUserReferrals() : array
+    public function getCurUserReferrals(bool $redirectIfAdd = false) : array
     {
         /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
         $request = Application::getInstance()->getContext()->getRequest();
@@ -113,7 +116,7 @@ class ReferralService
             $referrals = $this->referralRepository->findByCurUser();
         }
         
-        $this->setDataByManzana($curUser, $referrals, $request);
+        $this->setDataByManzana($curUser, $referrals, $request, $redirectIfAdd);
         
         return $referrals;
     }
@@ -135,11 +138,14 @@ class ReferralService
         return $referralType;
     }
     
+    /** @noinspection MoreThanThreeArgumentsInspection */
     /**
-     * @param $curUser
-     * @param $referrals
-     * @param $request
+     * @param User        $curUser
+     * @param array       $referrals
+     * @param HttpRequest $request
+     * @param bool        $redirectIfAdd
      *
+     * @throws CardNotFoundException
      * @throws ServiceNotFoundException
      * @throws ValidationException
      * @throws InvalidIdentifierException
@@ -149,7 +155,7 @@ class ReferralService
      * @throws ConstraintDefinitionException
      * @throws ServiceCircularReferenceException
      */
-    private function setDataByManzana(User $curUser, array $referrals, HttpRequest $request)
+    private function setDataByManzana(User $curUser, array $referrals, HttpRequest $request, bool $redirectIfAdd)
     {
         $arCards = [];
         if (\is_array($referrals) && !empty($referrals)) {
@@ -162,8 +168,6 @@ class ReferralService
         $manzanaReferrals = [];
         try {
             $manzanaReferrals = $this->manzanaService->getUserReferralList($curUser);
-        } catch (ManzanaServiceContactSearchMoreOneException $e) {
-        } catch (ManzanaServiceContactSearchNullException $e) {
         } catch (ManzanaServiceException $e) {
         } catch (NotAuthorizedException $e) {
         }
@@ -213,7 +217,6 @@ class ReferralService
                             echo $e->getMessage();
                         }
                     } catch (ManzanaServiceException $e) {
-                    } catch (CardNotFoundException $e) {
                     }
                 }
                 /** @var Referral $referral */
@@ -235,7 +238,7 @@ class ReferralService
                 }
             }
             unset($referral);
-            if ($haveAdd) {
+            if ($haveAdd && $redirectIfAdd) {
                 /** обновляем если добавилась инфа, чтобы была актуальная постраничка, табы и поиск */
                 LocalRedirect($request->getRequestUri());
             }
@@ -247,6 +250,7 @@ class ReferralService
      *
      * @param bool  $updateManzana
      *
+     * @throws ContactUpdateException
      * @throws ValidationException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
@@ -273,7 +277,7 @@ class ReferralService
                 Event::send(
                     [
                         'EVENT_NAME' => 'ReferralAdd',
-                        'LID'        => 's1',
+                        'LID'        => SITE_ID,
                         'C_FIELDS'   => [
                             'CARD'       => $entity->getCard(),
                             'MAIN_PHONE' => tplvar('phone_main'),
@@ -294,6 +298,7 @@ class ReferralService
      * @throws ApplicationCreateException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
+     * @throws ContactUpdateException
      * @return ManzanaReferalParams
      */
     public function getClientReferral(Referral $referral) : ManzanaReferalParams
@@ -308,27 +313,25 @@ class ReferralService
             $contactClient = new Client();
             try {
                 $this->referralRepository->curUserService->setClientPersonalDataByCurUser($contactClient);
+                try {
+                    $res       = $this->manzanaService->updateContact($contactClient);
+                    $contactId = $res->contactId;
+                } catch (ManzanaServiceException $e) {
+                }
             } catch (NotAuthorizedException $e) {
-            }
-            try {
-                $res       = $this->manzanaService->updateContact($contactClient);
-                $contactId = $res->contactId;
-            } catch (ManzanaServiceException $e) {
-            } catch (ContactUpdateException $e) {
             }
         } catch (NotAuthorizedException $e) {
         } catch (ManzanaServiceException $e) {
         }
-        
         if (!empty($contactId)) {
-            $client->contactId  = $contactId;
-            $client->cardNumber = $referral->getCard();
-            $client->phone      = $referral->getPhone();
-            $client->email      = $referral->getEmail();
-            $client->lastName   = $referral->getLastName();
-            $client->secondName = $referral->getSecondName();
-            $client->name       = $referral->getName();
+            $client->contactId = $contactId;
         }
+        $client->cardNumber = $referral->getCard();
+        $client->phone      = $referral->getPhone();
+        $client->email      = $referral->getEmail();
+        $client->lastName   = $referral->getLastName();
+        $client->secondName = $referral->getSecondName();
+        $client->name       = $referral->getName();
         
         return $client;
     }
