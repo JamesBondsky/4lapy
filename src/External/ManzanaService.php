@@ -141,8 +141,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
                     $contract,
                     $e->getMessage(),
                     $detail,
-                    ''
-                //var_export($parameters)
+                    var_export($parameters)
                 )
             );
             
