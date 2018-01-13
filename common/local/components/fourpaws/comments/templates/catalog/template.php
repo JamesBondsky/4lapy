@@ -16,7 +16,7 @@ use FourPaws\Decorators\SvgDecorator;
 ?>
 <?php /** top catalog review block */
 ob_start(); ?>
-<li class="b-tab-title__item js-tab-item active">
+<li class="b-tab-title__item js-tab-item">
     <a class="b-tab-title__link js-tab-link"
        href="javascript:void(0);"
        title="Отзывы"

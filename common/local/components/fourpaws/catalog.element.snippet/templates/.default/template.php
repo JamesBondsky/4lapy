@@ -27,12 +27,10 @@ $firstOffer = $offers->first();
     <!--    <span class="b-common-item__sticker-wrap" style="background-color:;data-background:;"-->
     <!--    ><img class="b-common-item__sticker" src="images/inhtml/s-15proc.svg" alt="" role="presentation"/></span>-->
     <a class="b-common-item__image-wrap" href="<?= $product->getDetailPageUrl() ?>">
-        <img
-                class="b-common-item__image js-weight-img"
-                src="<?= $firstOffer->getResizeImages(240, 240)->first() ?>"
-                alt="<?= $firstOffer->getName() ?>"
-                title="<?= $firstOffer->getName() ?>"
-        />
+        <img class="b-common-item__image js-weight-img"
+             src="<?= $firstOffer->getResizeImages(240, 240)->first() ?>"
+             alt="<?= $firstOffer->getName() ?>"
+             title="<?= $firstOffer->getName() ?>" />
     </a>
     <div class="b-common-item__info-center-block">
         <a class="b-common-item__description-wrap" href="<?= $product->getDetailPageUrl() ?>" title="">
@@ -79,12 +77,7 @@ $firstOffer = $offers->first();
                 <div class="b-common-item__variant">Варианты фасовки</div>
             <?php } ?>
             <div class="b-weight-container b-weight-container--list">
-                <a
-                        class="b-weight-container__link b-weight-container__link--mobile js-mobile-select"
-                        href="javascript:void(0);"
-                        title=""
-                ></a>
-
+                <a class="b-weight-container__link b-weight-container__link--mobile js-mobile-select" href="javascript:void(0);" title=""></a>
                 <ul class="b-weight-container__list">
                     <?php
                     foreach ($offers as $offer) {
@@ -98,11 +91,9 @@ $firstOffer = $offers->first();
                         }
                         ?>
                         <li class="b-weight-container__item">
-                            <span
-                                    class="b-weight-container__link js-price <?= $firstOffer->getId() === $offer->getId(
-                                    ) ? 'active-link' : '' ?>"
-                                    data-price="<?= $offer->getPrice() ?>"
-                                    data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
+                            <span class="b-weight-container__link js-price <?= $firstOffer->getId() === $offer->getId() ? 'active-link' : '' ?>"
+                                  data-price="<?= $offer->getPrice() ?>" data-offerid="<?= $offer->getId() ?>"
+                                  data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
                             ><?= $value->getName() ?></span>
                         </li>
                         <?php
@@ -131,7 +122,7 @@ $firstOffer = $offers->first();
                 Самовызов
             </div>
         </div>
-        <a class="b-common-item__add-to-cart" href="javascript:void(0);" title="">
+        <a class="b-common-item__add-to-cart js-basket-add" href="javascript:void(0);" title="" data-url="/ajax/sale/basket/add/" data-offerid="<?= $firstOffer->getId() ?>">
             <span class="b-common-item__wrapper-link"
             ><span class="b-cart"
                 ><span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 12, 12) ?></span></span><span
