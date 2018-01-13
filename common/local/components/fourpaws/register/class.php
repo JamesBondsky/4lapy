@@ -221,6 +221,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
      * @throws ServiceCircularReferenceException
      * @throws \RuntimeException
      * @return JsonResponse
+     * @throws ContactUpdateException
      */
     public function ajaxRegister($data) : JsonResponse
     {
@@ -270,7 +271,6 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             try {
                 $manzanaService->updateContact($client);
             } catch (ManzanaServiceException $e) {
-            } catch (ContactUpdateException $e) {
             }
         }
         
@@ -291,6 +291,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     /**
      * @param Request $request
      *
+     * @throws ContactUpdateException
      * @throws ValidationException
      * @throws InvalidIdentifierException
      * @throws ServiceNotFoundException
@@ -355,15 +356,10 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             } catch (NotAuthorizedException $e) {
             }
             if ($client instanceof Client) {
-                try {
-                    $this->currentUserProvider->setClientPersonalDataByCurUser($client);
-                } catch (NotAuthorizedException $e) {
-                }
+                $this->currentUserProvider->setClientPersonalDataByCurUser($client);
                 try {
                     $manzanaService->updateContact($client);
-                } catch (ManzanaServiceException $e) {
-                } catch (ContactUpdateException $e) {
-                }
+                } catch (ManzanaServiceException $e) {}
             }
         }
         

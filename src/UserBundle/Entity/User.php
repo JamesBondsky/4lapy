@@ -552,12 +552,7 @@ class User
      */
     public function getManzanaGender()
     {
-        $arGenders = [
-            'M' => 1,
-            'F' => 2,
-        ];
-        
-        return $arGenders[$this->getGender()] ?? null;
+        return str_replace(['M','F'], [1,2], $this->getGender()) ?? null;
     }
     
     /**
