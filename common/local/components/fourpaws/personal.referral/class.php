@@ -11,8 +11,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\UI\PageNavigation;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\External\Manzana\Exception\CardNotFoundException;
 use FourPaws\PersonalBundle\Entity\Referral;
 use FourPaws\PersonalBundle\Service\ReferralService;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
@@ -73,8 +75,12 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
         $this->setFrameMode(true);
         
         try {
-            $this->arResult['ITEMS'] = $this->referralService->getCurUserReferrals();
+            $arResult['NAV'] = new PageNavigation("nav-referral");
+            $arResult['NAV']->allowAllRecords(false)->setPageSize(10)->initFromUri();
+            
+            $this->arResult['ITEMS'] = $this->referralService->getCurUserReferrals(true, $arResult['NAV']);
         } catch (NotAuthorizedException $e) {
+        } catch (CardNotFoundException $e) {
         }
         $this->arResult['COUNT']          = $this->referralService->getAllCountByUser();
         $this->arResult['COUNT_ACTIVE']   = $this->referralService->getActiveCountByUser();

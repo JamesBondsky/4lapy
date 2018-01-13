@@ -12,6 +12,7 @@ use Bitrix\Main\Mail\Event;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
+use Bitrix\Main\UI\PageNavigation;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
@@ -66,7 +67,8 @@ class ReferralService
     }
     
     /**
-     * @param bool $redirectIfAdd
+     * @param bool                $redirectIfAdd
+     * @param PageNavigation|null $nav
      *
      * @throws CardNotFoundException
      * @throws ServiceNotFoundException
@@ -81,7 +83,7 @@ class ReferralService
      * @throws ServiceCircularReferenceException
      * @return array|Referral[]
      */
-    public function getCurUserReferrals(bool $redirectIfAdd = false) : array
+    public function getCurUserReferrals(bool $redirectIfAdd = false, &$nav = null) : array
     {
         /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
         $request = Application::getInstance()->getContext()->getRequest();
@@ -103,6 +105,9 @@ class ReferralService
                     break;
             }
         }
+        if ($nav instanceof PageNavigation) {
+            $this->referralRepository->setNav($nav);
+        }
         $curUser = $this->referralRepository->curUserService->getCurrentUser();
         if (!empty($filter)) {
             $filter['UF_USER_ID'] = $curUser->getId();
@@ -114,6 +119,10 @@ class ReferralService
             );
         } else {
             $referrals = $this->referralRepository->findByCurUser();
+        }
+        if ($nav instanceof PageNavigation) {
+            $nav = $this->referralRepository->getNav();
+            $this->referralRepository->clearNav();
         }
         
         $this->setDataByManzana($curUser, $referrals, $request, $redirectIfAdd);

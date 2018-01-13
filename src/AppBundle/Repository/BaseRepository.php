@@ -4,6 +4,7 @@ namespace FourPaws\AppBundle\Repository;
 
 use Bitrix\Main\Entity\DataManager;
 use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\UI\PageNavigation;
 use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -38,6 +39,9 @@ class BaseRepository
     
     /** @var BaseEntity $entity */
     protected $entity;
+    
+    /** @var PageNavigation|null */
+    protected $nav;
     
     /**
      * @var DataManager
@@ -206,9 +210,17 @@ class BaseRepository
                 $query->registerRuntimeField($params['runtime']);
             }
         }
+        if ($this->nav instanceof PageNavigation) {
+            $query->setOffset($this->nav->getOffset());
+            $query->setLimit($this->nav->getLimit());
+        }
         $result = $query->exec();
         if (0 === $result->getSelectedRowsCount()) {
             return [];
+        }
+        
+        if ($this->nav instanceof PageNavigation) {
+            $this->nav->setRecordCount($result->getCount());
         }
         
         $allItems = $result->fetchAll();
@@ -233,9 +245,10 @@ class BaseRepository
     {
         $query = $this->dataManager::query()->setCacheTtl(360000);
         $query->countTotal(true);
-        if(!empty($filter)){
+        if (!empty($filter)) {
             $query->setFilter($filter);
         }
+        
         return $query->exec()->getCount();
     }
     
@@ -306,5 +319,26 @@ class BaseRepository
             $entity,
             SerializationContext::create()->setGroups([$type])
         );
+    }
+    
+    /**
+     * @return PageNavigation|null
+     */
+    public function getNav()
+    {
+        return $this->nav;
+    }
+    
+    /**
+     * @param PageNavigation $nav
+     */
+    public function setNav(PageNavigation $nav)
+    {
+        $this->nav = $nav;
+    }
+    
+    public function clearNav()
+    {
+        $this->nav = null;
     }
 }
