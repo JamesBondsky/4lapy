@@ -15,7 +15,7 @@ use JMS\Serializer\Annotation\XmlNamespace;
 use JMS\Serializer\Annotation\XmlRoot;
 
 /**
- * Class Card_by_contract_Cards
+ * Class CardByContractCards
  *
  * @package FourPaws\External\Manzana\Model
  *
@@ -23,7 +23,7 @@ use JMS\Serializer\Annotation\XmlRoot;
  * @XmlNamespace(uri="http://www.w3.org/2001/XMLSchema-instance", prefix="xsi")
  * @XmlRoot("Card")
  */
-class Card_by_contract_Cards
+class CardByContractCards
 {
     /**
      * @XmlElement(cdata=false)

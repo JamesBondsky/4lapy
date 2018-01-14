@@ -14,9 +14,9 @@ use FourPaws\External\Manzana\Exception\ContactNotFoundException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\Manzana\Model\Card;
-use FourPaws\External\Manzana\Model\Card_by_contract_Cards;
+use FourPaws\External\Manzana\Model\CardByContractCards;
 use FourPaws\External\Manzana\Model\Cards;
-use FourPaws\External\Manzana\Model\Cards_by_contract_Cards;
+use FourPaws\External\Manzana\Model\CardsByContractCards;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\Manzana\Model\Clients;
 use FourPaws\External\Manzana\Model\Contact;
@@ -587,14 +587,14 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      * @param $cardID
      * @param $contactId
      *
-     * @return Card_by_contract_Cards|null
+     * @return CardByContractCards|null
      * @throws ManzanaServiceException
      */
     public function getCardInfo($cardID, $contactId)
     {
         $cards = $this->getCardsByContactId($contactId);
         if (\is_array($cards) && !empty($cards)) {
-            /** @var Card_by_contract_Cards $card */
+            /** @var CardByContractCards $card */
             foreach ($cards as $card) {
                 if ($card->cardNumber === $cardID) {
                     return $card;
@@ -609,7 +609,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     /**
      * @param $contactId
      *
-     * @return Card_by_contract_Cards[]|array
+     * @return CardByContractCards[]|array
      * @throws ManzanaServiceException
      */
     public function getCardsByContactId($contactId) : array
@@ -620,10 +620,10 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
             $bag = new ParameterBag(['contact_id' => $contactId]);
             try {
                 $result = $this->execute(self::CONTRACT_CARDS, $bag->getParameters());
-                /** @var Cards_by_contract_Cards $cards */
+                /** @var CardsByContractCards $cards */
                 $this->cards[$contactId] =
                 $cards =
-                    $this->serializer->deserialize($result, Cards_by_contract_Cards::class, 'xml')->cards->toArray();
+                    $this->serializer->deserialize($result, CardsByContractCards::class, 'xml')->cards->toArray();
             } catch (\Exception $e) {
                 throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
             }

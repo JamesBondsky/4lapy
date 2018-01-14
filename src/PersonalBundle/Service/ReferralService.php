@@ -19,7 +19,7 @@ use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Exception\CardNotFoundException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
-use FourPaws\External\Manzana\Model\Card_by_contract_Cards;
+use FourPaws\External\Manzana\Model\CardByContractCards;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\Manzana\Model\Referral as ManzanaReferal;
 use FourPaws\External\Manzana\Model\ReferralParams as ManzanaReferalParams;
@@ -209,7 +209,7 @@ class ReferralService
                                 'UF_CARD'             => $item->cardNumber,
                                 'UF_USER_ID'          => $curUser->getId(),
                                 'UF_CARD_CLOSED_DATE' => $cardInfo instanceof
-                                                         Card_by_contract_Cards ? $cardInfo->getExpireDate()->format(
+                                                         CardByContractCards ? $cardInfo->getExpireDate()->format(
                                     'd.m.Y'
                                 ) : '',
                                 'UF_MODERATED'        => $item->isQuestionnaireActual === 'Не указано' ? 'Y' : 'N',

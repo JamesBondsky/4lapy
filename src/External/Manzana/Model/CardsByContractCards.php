@@ -10,7 +10,7 @@ use JMS\Serializer\Annotation\XmlNamespace;
 use JMS\Serializer\Annotation\XmlRoot;
 
 /**
- * Class Cards_by_contract_Cards
+ * Class CardsByContractCards
  *
  * @package FourPaws\External\Manzana\Model
  *
@@ -19,10 +19,10 @@ use JMS\Serializer\Annotation\XmlRoot;
  * @XmlNamespace(uri="http://www.w3.org/2001/XMLSchema-instance", prefix="xsi")
  * @XmlRoot("Cards")
  */
-class Cards_by_contract_Cards
+class CardsByContractCards
 {
     /**
-     * @Type("ArrayCollection<FourPaws\External\Manzana\Model\Card_by_contract_Cards>")
+     * @Type("ArrayCollection<FourPaws\External\Manzana\Model\CardByContractCards>")
      * @XmlList(entry="Card", inline=true)
      * @SerializedName("Cards")
      */
