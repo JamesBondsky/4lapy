@@ -12,6 +12,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use FourPaws\App\Templates\ViewsEnum;
 use FourPaws\Decorators\SvgDecorator;
+use FourPaws\Helpers\WordHelper;
 
 ?>
 <?php /** top catalog review block */
@@ -28,6 +29,28 @@ ob_start(); ?>
     </a>
 </li>
 <?php $APPLICATION->AddViewContent(ViewsEnum::PRODUCT_RATING_TAB_HEADER_VIEW, ob_get_clean()); ?>
+<?php /** top catalog review block */
+ob_start(); ?>
+<div class="b-rating b-rating--card">
+    <?php for ($i = 1; $i <= 5; $i++) {
+        ?>
+        <div class="b-rating__star-block<?= $arResult['RATING']
+                                            > $i ? ' b-rating__star-block--active' : '' ?>">
+            <span class="b-icon"><?= new SvgDecorator('icon-star', 12, 12) ?></span>
+        </div>
+        <?php
+    } ?>
+</div>
+<span class="b-common-item__rank-text b-common-item__rank-text--card b-common-item__rank-text--review">На основе <span
+            class="b-common-item__rank-num"><?= $arResult['COUNT_COMMENTS'] ?></span> <?= WordHelper::declension(
+        $arResult['COUNT_COMMENTS'],
+        [
+            'отзыва',
+            'отзывов',
+            'отзывов',
+        ]
+    ) ?></span>
+<?php $APPLICATION->AddViewContent(ViewsEnum::PRODUCT_RATING_STARS_VIEW, ob_get_clean()); ?>
 <div class="b-tab-content__container js-tab-content" data-tab-content="reviews">
     <div class="tab-content-review">
         <?php /** @noinspection PhpUnhandledExceptionInspection */
@@ -65,28 +88,6 @@ ob_start(); ?>
             } ?>
             <?php /** @noinspection PhpUnhandledExceptionInspection */
             $frame->end(); ?>
-            <?php /** top catalog review block */
-            ob_start(); ?>
-            <div class="b-rating b-rating--card">
-                <?php for ($i = 1; $i <= 5; $i++) {
-                    ?>
-                    <div class="b-rating__star-block<?= $arResult['RATING']
-                                                        > $i ? ' b-rating__star-block--active' : '' ?>">
-                        <span class="b-icon"><?= new SvgDecorator('icon-star', 12, 12) ?></span>
-                    </div>
-                    <?php
-                } ?>
-            </div>
-            <span class="b-common-item__rank-text b-common-item__rank-text--card b-common-item__rank-text--review">На основе <span
-                        class="b-common-item__rank-num"><?= $arResult['COUNT_COMMENTS'] ?></span> <?= \FourPaws\Helpers\WordHelper::declension(
-                    $arResult['COUNT_COMMENTS'],
-                    [
-                        'отзыва',
-                        'отзывов',
-                        'отзывов',
-                    ]
-                ) ?></span>
-            <?php $APPLICATION->AddViewContent(ViewsEnum::PRODUCT_RATING_STARS_VIEW, ob_get_clean()); ?>
             <div class="b-rate-block__right-side">
                 <?php /** @noinspection PhpUnhandledExceptionInspection */
                 $frame = $this->createFrame()->begin(''); ?>
@@ -104,7 +105,14 @@ ob_start(); ?>
                             } ?>
                         </div>
                         <span class="b-rate-block__rate-description">на основе <?= $arResult['COUNT_COMMENTS'] ?>
-                                                                     отзывов</span>
+                            <?= WordHelper::declension(
+                                $arResult['COUNT_COMMENTS'],
+                                [
+                                    'отзыва',
+                                    'отзывов',
+                                    'отзывов',
+                                ]
+                            ) ?></span>
                     </div>
                     <?php
                 } ?>

@@ -8,10 +8,12 @@
  * @var Offer $firstOffer
  */
 
+use FourPaws\App\Templates\ViewsEnum;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Decorators\SvgDecorator;
+use FourPaws\Helpers\HighloadHelper;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -37,26 +39,21 @@ $firstOffer = $offers->first();
             <span class="b-clipped-text b-clipped-text--three"
             ><span><strong><?= $product->getBrand()->getName() ?>  </strong><?= $product->getName() ?></span></span>
         </a>
-        <? /* @todo рейтинг товара */ ?>
-        <div class="b-common-item__rank">
-            <div class="b-rating">
-                <div class="b-rating__star-block">
-                    <span class="b-icon"><?= new SvgDecorator('icon-star', 12, 12) ?></span>
-                </div>
-                <div class="b-rating__star-block">
-                    <span class="b-icon"><?= new SvgDecorator('icon-star', 12, 12) ?></span>
-                </div>
-                <div class="b-rating__star-block">
-                    <span class="b-icon"><?= new SvgDecorator('icon-star', 12, 12) ?></span>
-                </div>
-                <div class="b-rating__star-block">
-                    <span class="b-icon"><?= new SvgDecorator('icon-star', 12, 12) ?></span>
-                </div>
-                <div class="b-rating__star-block">
-                    <span class="b-icon"><?= new SvgDecorator('icon-star', 12, 12) ?></span>
-                </div>
-            </div>
-            <span class="b-common-item__rank-text">На основе 12 отзывов</span>
+        <?php /** @noinspection PhpUnhandledExceptionInspection */
+        $APPLICATION->IncludeComponent(
+            'fourpaws:comments',
+            'catalog.snippet',
+            [
+                'HL_ID'              => HighloadHelper::getIdByName('Comments'),
+                'OBJECT_ID'          => $product->getId(),
+                'SORT_DESC'          => 'Y',
+                'ITEMS_COUNT'        => 5,
+                'ACTIVE_DATE_FORMAT' => 'd j Y',
+                'TYPE'               => 'catalog',
+            ],
+            $component,
+            ['HIDE_ICONS' => 'Y']
+        );?>
             <div class="b-common-item__rank-wrapper">
                 <span class="b-common-item__rank-text b-common-item__rank-text--green">Новинка</span>
                 <span class="b-common-item__rank-text b-common-item__rank-text--red">Выгода 15%</span>
