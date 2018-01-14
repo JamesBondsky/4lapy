@@ -26,6 +26,12 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 {
     use HitMetaInfoAwareTrait;
 
+    const AVAILABILITY_DELIVERY = 'delivery';
+
+    const AVAILABILITY_PICKUP = 'pickup';
+
+    const AVAILABILITY_BY_REQUEST = 'byRequest';
+
     /**
      * @var bool
      * @Type("bool")
@@ -546,6 +552,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @Groups({"elastic"})
      */
     protected $hasActions;
+
+    /**
+     * @var array
+     * @Type("array<string>")
+     * @Accessor(getter="getDeliveryAvailability")
+     * @Groups({"elastic"})
+     */
+    protected $deliveryAvailability;
 
     /**
      * @var string
@@ -1303,5 +1317,22 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     public function hasActions(): bool
     {
         return !empty($this->getActions());
+    }
+
+    /**
+     * @return array
+     */
+    public function getDeliveryAvailability(): array
+    {
+        // @todo учитывать региональные ограничения
+        $result = [self::AVAILABILITY_PICKUP];
+        if (!($this->isLowTemperatureRequired() || $this->isRefrigerated())) {
+            $result[] = self::AVAILABILITY_DELIVERY;
+        }
+        if ($this->isByRequest()) {
+            $result[] = self::AVAILABILITY_BY_REQUEST;
+        }
+
+        return $result;
     }
 }
