@@ -359,6 +359,13 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     protected $PROPERTY_LOW_TEMPERATURE = false;
 
     /**
+     * @var bool
+     * @Type("bool")
+     * @Groups({"elastic"})
+     */
+    protected $PROPERTY_REFRIGERATED = false;
+
+    /**
      * @var string
      * @Type("string")
      * @Groups({"elastic"})
@@ -945,6 +952,16 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
+     * Возвращает признак "Перевозить в холодильнике"
+     *
+     * @return bool
+     */
+    public function isRefrigerated()
+    {
+        return (bool)(int)$this->PROPERTY_REFRIGERATED;
+    }
+
+    /**
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
@@ -1242,15 +1259,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
             $this->offers = new ArrayCollection(
                 array_values(
                     (new OfferQuery())->withFilterParameter('=PROPERTY_CML2_LINK', $this->getId())
-                        ->exec()
-                        ->toArray()
+                                      ->exec()
+                                      ->toArray()
                 )
             );
         }
 
         return $this->offers;
     }
-
 
     /**
      * @return string
@@ -1268,6 +1284,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     public function setPackingCombination(string $packingCombination)
     {
         $this->PROPERTY_PACKING_COMBINATION = $packingCombination;
+
         return $this;
     }
 
