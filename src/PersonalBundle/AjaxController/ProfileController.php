@@ -12,9 +12,12 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
+use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\External\Manzana\Model\Client;
+use FourPaws\Helpers\DateHelper;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -220,17 +223,18 @@ class ProfileController extends Controller
             }
             
             $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
-            $contactId = -2;
+            $client         = null;
             try {
-                $contactId = $manzanaService->getContactIdByCurUser();
+                $contactId         = $manzanaService->getContactIdByCurUser();
+                $client            = new Client();
+                $client->contactId = $contactId;
+            } catch (ManzanaServiceContactSearchMoreOneException $e) {
+            } catch (ManzanaServiceContactSearchNullException $e) {
+                $client = new Client();
             } catch (ManzanaServiceException $e) {
             } catch (NotAuthorizedException $e) {
             }
-            if ($contactId >= 0) {
-                $client = new Client();
-                if ($contactId > 0) {
-                    $client->contactId = $contactId;
-                }
+            if ($client instanceof Client) {
                 try {
                     $this->currentUserProvider->setClientPersonalDataByCurUser($client, $user);
                 } catch (NotAuthorizedException $e) {
@@ -245,7 +249,7 @@ class ProfileController extends Controller
             try {
                 $curBirthday = $user->getBirthday();
                 if ($curBirthday instanceof Date) {
-                    $birthday = $profileClass->replaceRuMonth($curBirthday->format('d #n# Y'));
+                    $birthday = DateHelper::replaceRuMonth($curBirthday->format('d #n# Y'), DateHelper::GENITIVE);
                 } else {
                     $birthday = '';
                 }

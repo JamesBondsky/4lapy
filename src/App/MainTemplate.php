@@ -209,4 +209,20 @@ class MainTemplate extends TemplateAbstract
     {
         return $this->isDir('/personal/pets');
     }
+    
+    /**
+     * @return bool
+     */
+    public function hasPersonalReferral() : bool
+    {
+        return $this->isPersonalReferral();
+    }
+    
+    /**
+     * @return bool
+     */
+    public function isPersonalReferral() : bool
+    {
+        return $this->isDir('/personal/referral');
+    }
 }
