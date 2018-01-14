@@ -8,7 +8,6 @@
  * @var Offer $firstOffer
  */
 
-use FourPaws\App\Templates\ViewsEnum;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
