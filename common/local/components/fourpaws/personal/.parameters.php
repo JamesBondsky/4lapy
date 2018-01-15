@@ -40,9 +40,9 @@ $arComponentParameters = [
                 'DEFAULT'   => 'pets/',
                 'VARIABLES' => [],
             ],
-            'referal'      => [
+            'referral'      => [
                 'NAME'      => 'Реферальная программа',
-                'DEFAULT'   => 'referal/',
+                'DEFAULT'   => 'referral/',
                 'VARIABLES' => [],
             ],
             'subscribe'    => [

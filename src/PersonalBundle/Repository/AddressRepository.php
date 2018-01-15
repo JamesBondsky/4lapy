@@ -47,6 +47,20 @@ class AddressRepository extends BaseHlRepository
     }
     
     /**
+     * @param array $params
+     *
+     * @return Address[]|array
+     * @throws \Exception
+     */
+    public function findBy(array $params = []) : array
+    {
+        if(empty($params['entityClass'])){
+            $params['entityClass'] = Address::class;
+        }
+        return parent::findBy($params);
+    }
+    
+    /**
      * @param int $userId
      *
      * @return array
@@ -62,11 +76,6 @@ class AddressRepository extends BaseHlRepository
             $userId = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class)->getCurrentUserId();
         }
         
-        return $this->findBy(
-            [
-                'filter' => ['UF_USER_ID' => $userId],
-                'entityClass' => Address::class,
-            ]
-        );
+        return $this->findBy(['filter' => ['UF_USER_ID' => $userId]]);
     }
 }
