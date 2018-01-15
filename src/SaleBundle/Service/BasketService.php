@@ -6,10 +6,10 @@ namespace FourPaws\SaleBundle\Service;
 use Bitrix\Catalog\Product\CatalogProvider;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\Compatible\DiscountCompatibility;
-use Bitrix\Sale\Fuser;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 
 /**
@@ -18,12 +18,8 @@ use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
  */
 class BasketService
 {
-    /** @var int */
-    private $fUser = null;
     /** @var Basket */
     private $basket = null;
-    /** @var array */
-    private $context = null;
     /**
      * @var CurrentUserProviderInterface
      */
@@ -236,9 +232,16 @@ class BasketService
      */
     public function getContext(): array
     {
+        try {
+            $userId = $this->currentUserProvider->getCurrentUserId();
+        }
+        /** @noinspection BadExceptionsProcessingInspection */
+        catch(NotAuthorizedException $e) {
+            $userId = 0;
+        }
         return [
             'SITE_ID' => SITE_ID,
-            'USER_ID' => $this->currentUserProvider->getCurrentUserId()
+            'USER_ID' => $userId
         ];
     }
 }
