@@ -14,6 +14,8 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class SearchRequestConverter extends AbstractCatalogRequestConverter
 {
+    const SORT_DEFAULT = 'relevance';
+
     /**
      * @var CategoriesService
      */

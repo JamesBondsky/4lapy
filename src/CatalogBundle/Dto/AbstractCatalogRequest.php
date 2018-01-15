@@ -17,7 +17,7 @@ abstract class AbstractCatalogRequest implements CatalogSearchRequestInterface
 
     /**
      * @Assert\Expression(
-     *     "this.getSorts().count > 0"
+     *     "this.getSorts().count() > 0"
      * )
      * @var SortsCollection
      */

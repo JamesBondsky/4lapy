@@ -13,6 +13,7 @@ use FourPaws\Search\SearchService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
  * Class SearchController
@@ -20,9 +21,8 @@ use Symfony\Component\HttpFoundation\Request;
  * @package FourPaws\CatalogBundle\Controller
  * @Route("/search")
  */
-class SearchController
+class SearchController extends Controller
 {
-    const SEARCH_QUERY_MIN_LENGTH = 3;
 
     /**
      * @Route("/autocomplete/")
@@ -35,9 +35,13 @@ class SearchController
     {
         $res = [];
 
-        if (mb_strlen($request->query->get('text')) >= self::SEARCH_QUERY_MIN_LENGTH) {
-            /** @var SearchService $searchService */
-            $searchService = Application::getInstance()->getContainer()->get('search.service');
+        $query = $request->query->get('q');
+        /** @var SearchService $searchService */
+        $searchService = Application::getInstance()->getContainer()->get('search.service');
+        /** @var ValidatorInterface $validator */
+        $validator = $this->container->get('validator');
+
+        if (!$validator->validate($searchRequest)->count()) {
             /** @var ProductSearchResult $result */
             $result = $searchService->searchProducts(
                 new FilterCollection(),
