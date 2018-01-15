@@ -37,6 +37,8 @@ $category = $APPLICATION->IncludeComponent(
     null,
     ['HIDE_ICONS' => 'Y']
 );
+
+$filterCollection = $catalogRequest->getCategory()->getFilters();
 ?>
 <div class="b-catalog__wrapper-title b-catalog__wrapper-title--filter">
     <?php
@@ -69,9 +71,11 @@ $category = $APPLICATION->IncludeComponent(
                     'category' => $category,
                 ]
             ) ?>
-            <div class="b-filter__block b-filter__block--reset js-reset-link-block"><a
-                        class="b-link b-link--reset js-reset-filter" href="javascript:void(0);"
-                        title="Сбросить фильтры">Сбросить фильтры</a>
+            <div class="b-filter__block b-filter__block--reset js-reset-link-block"
+                <?= $filterCollection->hasCheckedFilter() ? 'style="display:block"' : '' ?>>
+                <a class="b-link b-link--reset js-reset-filter"
+                   href="<?= $APPLICATION->GetCurDir() ?>"
+                   title="Сбросить фильтры">Сбросить фильтры</a>
             </div>
             <?= $view->render(
                 'FourPawsCatalogBundle:Catalog:catalog.filter.category.list.html.php',
@@ -80,9 +84,6 @@ $category = $APPLICATION->IncludeComponent(
                 ]
             ) ?>
             <?php
-
-            $filterCollection = $catalogRequest->getCategory()->getFilters();
-
             foreach ($filterCollection->getVisibleFilters() as $filter) {
                 if ($filter instanceof PriceFilter) {
                     continue;
