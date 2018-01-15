@@ -47,6 +47,20 @@ class PetRepository extends BaseHlRepository
     }
     
     /**
+     * @param array $params
+     *
+     * @return Pet[]|array
+     * @throws \Exception
+     */
+    public function findBy(array $params = []) : array
+    {
+        if(empty($params['entityClass'])){
+            $params['entityClass'] = Pet::class;
+        }
+        return parent::findBy($params);
+    }
+    
+    /**
      * @return Pet[]|array
      * @throws InvalidIdentifierException
      * @throws ServiceNotFoundException
@@ -61,8 +75,7 @@ class PetRepository extends BaseHlRepository
         
         return $this->findBy(
             [
-                'filter' => ['UF_USER_ID' => $curUserService->getCurrentUserId()],
-                'entityClass' => Pet::class,
+                'filter' => ['UF_USER_ID' => $curUserService->getCurrentUserId()]
             ]
         );
     }

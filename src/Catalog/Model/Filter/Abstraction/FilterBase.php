@@ -3,6 +3,8 @@
 namespace FourPaws\Catalog\Model\Filter\Abstraction;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
+use Elastica\Aggregation\AbstractAggregation;
+use Elastica\Aggregation\Terms as AggTerms;
 use Elastica\Query\AbstractQuery;
 use Elastica\Query\Terms;
 use FourPaws\BitrixOrm\Model\HlbItemBase;
@@ -66,6 +68,13 @@ abstract class FilterBase extends HlbItemBase implements FilterInterface
             $array['UF_ACTIVE'] = BitrixUtils::bool2BitrixBool($array['UF_ACTIVE']);
         }
         return $array;
+    }
+
+    public function getAggRule(): AbstractAggregation
+    {
+        return (new AggTerms($this->getFilterCode()))
+            ->setField($this->getRuleCode())
+            ->setSize(9999);
     }
 
     /**

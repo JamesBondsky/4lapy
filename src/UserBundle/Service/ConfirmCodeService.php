@@ -8,14 +8,18 @@ namespace FourPaws\UserBundle\Service;
 
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Type\DateTime;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\External\Exception\SmsSendErrorException;
 use FourPaws\External\SmsService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
+use FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException;
 use FourPaws\UserBundle\Model\ConfirmCode;
 use FourPaws\UserBundle\Query\ConfirmCodeQuery;
 use FourPaws\UserBundle\Table\ConfirmCodeTable;
+use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /**
@@ -36,7 +40,7 @@ class ConfirmCodeService implements ConfirmCodeInterface
         $ConfirmCode      = $ConfirmCodeQuery->withFilter(
             ['<DATE' => DateTime::createFromTimestamp(time() - static::LIFE_TIME)]
         )->withSelect(['ID'])->exec();
-        /** @var \FourPaws\UserBundle\Model\ConfirmCode $confirmCode */
+        /** @var ConfirmCode $confirmCode */
         foreach ($ConfirmCode as $confirmCode) {
             ConfirmCodeTable::delete($confirmCode->getId());
         }
@@ -45,10 +49,15 @@ class ConfirmCodeService implements ConfirmCodeInterface
     /**
      * @param string $phone
      *
+     * @return bool
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws InvalidArgumentException
+     * @throws \RuntimeException
+     * @throws ApplicationCreateException
      * @throws \Exception
      * @throws SmsSendErrorException
      * @throws WrongPhoneNumberException
-     * @return bool
      */
     public static function sendConfirmSms(string $phone) : bool
     {
@@ -122,6 +131,7 @@ class ConfirmCodeService implements ConfirmCodeInterface
      * @param string $phone
      * @param string $confirmCode
      *
+     * @throws NotFoundConfirmedCodeException
      * @throws ServiceNotFoundException
      * @throws ExpiredConfirmCodeException
      * @throws WrongPhoneNumberException
@@ -148,6 +158,7 @@ class ConfirmCodeService implements ConfirmCodeInterface
     
     /**
      *
+     * @throws NotFoundConfirmedCodeException
      * @throws ExpiredConfirmCodeException
      * @throws \Exception
      *
@@ -156,8 +167,12 @@ class ConfirmCodeService implements ConfirmCodeInterface
     public static function getGeneratedCode() : string
     {
         $ConfirmCodeQuery = new ConfirmCodeQuery(ConfirmCodeTable::query());
-        /** @var \FourPaws\UserBundle\Model\ConfirmCode $confirmCode */
+        /** @var ConfirmCode $confirmCode */
         $confirmCode = $ConfirmCodeQuery->withFilter(['ID' => $_COOKIE['SMS_ID']])->exec()->first();
+        
+        if(!($confirmCode instanceof ConfirmCode)){
+            throw new NotFoundConfirmedCodeException('не найден код');
+        }
         if (static::isExpire($confirmCode)) {
             static::delCurrentCode();
             throw new ExpiredConfirmCodeException('истек срок действия кода');

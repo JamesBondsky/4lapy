@@ -20,23 +20,20 @@ abstract class IBlockElement extends IBlock
     /**
      * @inheritdoc
      */
-    public function getMap() : array
-    {
-        $map = array_diff(array_keys(array_filter(ElementTable::getMap(), self::getScalarEntityMapFilter())),
-                          [
-                              $this->entity->getPrimary(),
-                              'CREATED_BY',
-                              'MODIFIED_BY',
-                          ]);
+    public function getMap() : array {
+        $map = array_diff(array_keys(array_filter(ElementTable::getMap(), self::getScalarEntityMapFilter())), [
+                                                                                                                $this->entity->getPrimary(),
+                                                                                                                'CREATED_BY',
+                                                                                                                'MODIFIED_BY',
+                                                                                                            ]);
         
         $map = array_combine($map, $map);
         
-        $map = array_merge($map,
-                           [
-                               'user.CREATED_BY'  => 'CREATED_BY',
-                               'user.MODIFIED_BY' => 'MODIFIED_BY',
-                               'SECTIONS'         => 'SECTIONS',
-                           ]);
+        $map = array_merge($map, [
+                                   'user.CREATED_BY'  => 'CREATED_BY',
+                                   'user.MODIFIED_BY' => 'MODIFIED_BY',
+                                   'SECTIONS'         => 'SECTIONS',
+                               ]);
         
         return $map;
     }
@@ -50,9 +47,10 @@ abstract class IBlockElement extends IBlock
      * @throws LoaderException
      * @throws RuntimeException
      */
-    public function prepareData(array $data) : array
-    {
+    public function prepareData(array $data) : array {
         $data = parent::prepareData($data);
+        
+        $data['DETAIL_TEXT_TYPE'] = $data['DETAIL_TEXT_TYPE'] ?: 'html';
         
         foreach ($data as $k => $v) {
             if (strpos($k, 'PROPERTY_') === 0) {
@@ -76,8 +74,7 @@ abstract class IBlockElement extends IBlock
      * @throws LoaderException
      * @throws RuntimeException
      */
-    public function __construct(IBlockElementEntity $entity)
-    {
+    public function __construct(IBlockElementEntity $entity) {
         parent::__construct($entity);
     }
 }
