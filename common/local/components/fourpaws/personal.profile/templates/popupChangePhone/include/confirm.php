@@ -5,11 +5,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 /** @var string $phone */ ?>
 <div class="b-registration__step b-registration__step--two js-phone-change-two js-hidden-valid-fields">
     <input type="hidden" name="action" value="confirmPhone">
-    <div class="b-registration__text b-registration__text--phone">Ваш номер <span class="js-phone"
-                                                                                  id="js-resend"
-                                                                                  data-url="/ajax/personal/profile/changePhone/"
-                                                                                  data-phone="<?= $phone ?>"
-                                                                                  data-action="resendSms"><?= $phone ?></span>
+    <div class="b-registration__text b-registration__text--phone" id="js-resend"
+         data-url="/ajax/personal/profile/changePhone/"
+         data-phone="+7 (920) 161-24-27"
+         data-action="resendSms">Ваш номер <?= $phone ?>
     </div>
     <a class="b-registration__text b-registration__text--phone-edit js-open-popup"
        href="javascript:void(0);"

@@ -11,9 +11,10 @@ use FourPaws\App\Application as App;
 <div class="b-registration__content b-registration__content--moiety b-registration__content--step">
     <div class="b-step-form b-step-form--add-number">Шаг <span>1</span> из <span>2</span>
     </div>
-    <div class="b-registration__your-number">Ваш номер <span id="js-resend"
-                                                             data-url="/ajax/user/auth/register/"
-                                                             data-phone="<?= $phone ?> data-action=resendSms"><?= $phone ?></span>
+    <div class="b-registration__your-number" id="js-resend"
+         data-url="/ajax/user/auth/register/"
+         data-phone="+7 (920) 161-24-27"
+         data-action="resendSms">Ваш номер <?= $phone ?>
     </div>
     <a class="b-link-gray b-link-gray--add-number js-else-phone"
        href="javascript:void(0);"

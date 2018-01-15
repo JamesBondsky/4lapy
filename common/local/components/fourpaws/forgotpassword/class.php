@@ -20,7 +20,6 @@ use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
-use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
 use FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException;
 use FourPaws\UserBundle\Service\ConfirmCodeInterface;
@@ -99,6 +98,21 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
     {
         $password         = $request->get('password', '');
         $confirm_password = $request->get('confirmPassword', '');
+        $login            = $request->get('login', '');
+        
+        try {
+            $userId = $this->currentUserProvider->getUserRepository()->findIdentifierByRawLogin($login);
+        } catch (\FourPaws\UserBundle\Exception\TooManyUserFoundException $e) {
+            return JsonErrorResponse::createWithData(
+                'Найдено больше одного пользователя с данным логином ' . $login,
+                ['errors' => ['moreOneUser' => 'Найдено больше одного пользователя с данным логином ' . $login]]
+            );
+        } catch (\FourPaws\UserBundle\Exception\UsernameNotFoundException $e) {
+            return JsonErrorResponse::createWithData(
+                'Не найдено пользователей с данным логином ' . $login,
+                ['errors' => ['noUser' => 'Не найдено пользователей с данным логином ' . $login]]
+            );
+        }
         
         if (empty($password) || empty($confirm_password)) {
             return JsonErrorResponse::createWithData(
@@ -124,7 +138,13 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
         try {
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             $res = $this->currentUserProvider->getUserRepository()->update(
-                SerializerBuilder::create()->build()->fromArray(['PASSWORD' => $password], User::class)
+                SerializerBuilder::create()->build()->fromArray(
+                    [
+                        'ID'       => $userId,
+                        'PASSWORD' => $password,
+                    ],
+                    User::class
+                )
             );
             if (!$res) {
                 return JsonErrorResponse::createWithData(
@@ -132,18 +152,29 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                     ['errors' => ['errorUpdate' => 'Произошла ошибка при обновлении']]
                 );
             }
+    
+            /** @var UserAuthorizationInterface $authService */
+            $authService = App::getInstance()->getContainer()->get(UserAuthorizationInterface::class);
+            $res = $authService->authorize($userId);
             
-            return JsonSuccessResponse::create('Пароль обновлен');
+            if(!$authService->isAuthorized()){
+                return JsonErrorResponse::createWithData(
+                    'Произошла ошибка при авторизации',
+                    ['errors' => ['errorAuth' => 'Произошла ошибка при авторизации']]
+                );
+            }
+    
+            return JsonSuccessResponse::create('Пароль обновлен', 200, [], ['redirect'=>'/personal']);
         } catch (BitrixRuntimeException $e) {
             return JsonErrorResponse::createWithData(
                 'Произошла ошибка при обновлении ' . $e->getMessage(),
                 ['errors' => ['errorUpdate' => 'Произошла ошибка при обновлении ' . $e->getMessage()]]
             );
-        } catch (ConstraintDefinitionException $e) {
+        } catch (\Exception $e) {
         }
         
         return JsonErrorResponse::createWithData(
-            'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
+            'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта ' . $e->getMessage(),
             ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
         );
     }
@@ -266,7 +297,7 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                     try {
                         /** @var ConfirmCodeService $confirmService */
                         $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
-                        $res = $confirmService::checkConfirmSms(
+                        $res            = $confirmService::checkConfirmSms(
                             $phone,
                             $request->get('confirmCode')
                         );
@@ -340,7 +371,6 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                     ],
                 ]
             );
-            
         }
         
         if (count($users) === 0) {
