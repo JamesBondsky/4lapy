@@ -52,7 +52,7 @@ $firstOffer = $offers->first();
             ],
             $component,
             ['HIDE_ICONS' => 'Y']
-        ); ?>
+        );?>
         <div class="b-common-item__rank-wrapper">
             <span class="b-common-item__rank-text b-common-item__rank-text--green">Новинка</span>
             <span class="b-common-item__rank-text b-common-item__rank-text--red">Выгода 15%</span>
