@@ -8,7 +8,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var \CMain $APPLICATION
  */
 
-use Bitrix\Main\Application;use Bitrix\Main\Page\Asset;use FourPaws\App\Application as PawsApplication;use FourPaws\App\MainTemplate;use FourPaws\Decorators\SvgDecorator;use FourPaws\SaleBundle\Service\BasketService;
+use Bitrix\Main\Application;
+use Bitrix\Main\Page\Asset;
+use FourPaws\App\Application as PawsApplication;
+use FourPaws\App\MainTemplate;
+use FourPaws\Decorators\SvgDecorator;
+use FourPaws\SaleBundle\Service\BasketViewService;
 
 /** @var MainTemplate $template */
 $template = MainTemplate::getInstance(Application::getInstance()->getContext());
@@ -54,10 +59,10 @@ $markup = PawsApplication::markup();
                 /**
                  * @todo Форма поиска. Заменить компонентом и удалить файл.
                  */
-                require_once 'temp_search.php';
+                require_once __DIR__ .'/temp_search.php';
                 ?>
                 <div class="b-header-info">
-                    <?php require_once 'blocks/header/phone_block.php' ?>
+                    <?php require_once __DIR__ . '/blocks/header/phone_block.php' ?>
                     <?php $APPLICATION->IncludeComponent(
                         'fourpaws:auth.form',
                         '',
@@ -66,7 +71,7 @@ $markup = PawsApplication::markup();
                         ['HIDE_ICONS' => 'Y']
                     );
 
-                    echo BasketService::getMiniBasketHtml();
+                    echo PawsApplication::getInstance()->getContainer()->get(BasketViewService::class)->getMiniBasketHtml();
 
                     ?>
                 </div>
