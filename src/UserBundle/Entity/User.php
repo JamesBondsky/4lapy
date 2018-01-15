@@ -10,12 +10,14 @@ use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\Helpers\Traits\BitrixDateSerialization;
 use JMS\Serializer\Annotation as Serializer;
 use Misd\PhoneNumberBundle\Validator\Constraints\PhoneNumber;
 use Symfony\Component\Validator\Constraints as Assert;
 
 class User
 {
+    use BitrixDateSerialization;
     const BITRIX_TRUE  = 'Y';
     
     const BITRIX_FALSE = 'N';
@@ -171,10 +173,10 @@ class User
      * @Serializer\SkipWhenEmpty()
      */
     protected $gender;
-    
     /**
      * @var Date|null
-     * @Serializer\Type("bitrix_date")
+     * @Serializer\Type("Bitrix\Main\Type\Date")
+     * @Serializer\Accessor(getter="serializeBitrixDate",setter="deSerializeBitrixDate")
      * @Assert\Blank(groups={"create","read","update"})
      * @Serializer\SerializedName("PERSONAL_BIRTHDAY")
      * @Serializer\Groups(groups={"create","read","update"})
@@ -201,7 +203,8 @@ class User
     
     /**
      * @var DateTime|null
-     * @Serializer\Type("bitrix_date_time")
+     * @Serializer\Type("Bitrix\Main\Type\DateTime")
+     * @Serializer\Accessor(getter="serializeBitrixDateTime",setter="deSerializeBitrixDateTime")
      * @Serializer\SerializedName("DATE_REGISTER")
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()

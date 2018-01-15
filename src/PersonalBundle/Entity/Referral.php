@@ -9,11 +9,13 @@ namespace FourPaws\PersonalBundle\Entity;
 use Bitrix\Main\Type\Date;
 use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\Helpers\DateHelper;
+use FourPaws\Helpers\Traits\BitrixDateSerialization;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
 class Referral extends BaseEntity
 {
+    use BitrixDateSerialization;
     /**
      * @var int
      * @Serializer\Type("integer")
@@ -90,7 +92,8 @@ class Referral extends BaseEntity
     
     /**
      * @var Date
-     * @Serializer\Type("bitrix_date")
+     * @Serializer\Type("Bitrix\Main\Type\Date")
+     * @Serializer\Accessor(getter="serializeBitrixDate",setter="deSerializeBitrixDate")
      * @Serializer\SerializedName("UF_CARD_CLOSED_DATE")
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()

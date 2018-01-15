@@ -11,19 +11,22 @@ use Bitrix\Main\Type\Date;
 use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\BitrixOrm\Model\CropImageDecorator;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
+use FourPaws\Helpers\Traits\BitrixDateSerialization;
 use FourPaws\Helpers\WordHelper;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
 class Pet extends BaseEntity
 {
+    use BitrixDateSerialization;
     const PET_TYPE = 'PetType';
     
     /**
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_NAME")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
     protected $name = '';
     
@@ -31,8 +34,9 @@ class Pet extends BaseEntity
      * @var int
      * @Serializer\Type("integer")
      * @Serializer\SerializedName("UF_USER_ID")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
-     * @Assert\NotBlank(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Assert\NotBlank(groups={"create","read"})
+     * @Serializer\SkipWhenEmpty()
      */
     protected $userId;
     
@@ -40,8 +44,9 @@ class Pet extends BaseEntity
      * @var int
      * @Serializer\Type("int")
      * @Serializer\SerializedName("UF_FILE")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
-     * @Assert\NotBlank(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update",})
+     * @Assert\NotBlank(groups={"create","read"})
+     * @Serializer\SkipWhenEmpty()
      */
     protected $photo;
     
@@ -49,8 +54,9 @@ class Pet extends BaseEntity
      * @var int
      * @Serializer\Type("int")
      * @Serializer\SerializedName("UF_TYPE")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
-     * @Assert\NotBlank(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Assert\NotBlank(groups={"create","read"})
+     * @Serializer\SkipWhenEmpty()
      */
     protected $type;
     
@@ -58,20 +64,20 @@ class Pet extends BaseEntity
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_BREED")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
-     * @Assert\NotBlank(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Assert\NotBlank(groups={"create","read"})
+     * @Serializer\SkipWhenEmpty()
      */
     protected $breed = '';
     
-    /** @todo как сделать множественный тип на вход и выход */
     /**
      * @var Date|null
-     * @Serializer\Type("bitrix_date")
-     * @Assert\Blank(groups={"create","read","update","delete"})
+     * @Serializer\Type("Bitrix\Main\Type\Date")
+     * @Serializer\Accessor(getter="serializeBitrixDate",setter="deSerializeBitrixDate")
      * @Serializer\SkipWhenEmpty()
      * @Serializer\SerializedName("UF_BIRTHDAY")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
-     * @Assert\NotBlank(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
     protected $birthday;
     
@@ -79,8 +85,9 @@ class Pet extends BaseEntity
      * @var int
      * @Serializer\Type("int")
      * @Serializer\SerializedName("UF_GENDER")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
-     * @Assert\NotBlank(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Assert\NotBlank(groups={"create","read"})
+     * @Serializer\SkipWhenEmpty()
      */
     protected $gender;
     
