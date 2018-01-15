@@ -2,12 +2,15 @@
 
 namespace FourPaws\SapBundle\Repository;
 
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Main\Entity\AddResult;
 use Bitrix\Main\Entity\UpdateResult;
 use Bitrix\Main\Error;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 
 class OfferRepository
 {
@@ -24,7 +27,7 @@ class OfferRepository
     /**
      * @param int $id
      *
-     * @return Offer|null
+     * @return null|Offer
      */
     public function find(int $id)
     {
@@ -34,7 +37,7 @@ class OfferRepository
     /**
      * @param string $xmlId
      *
-     * @return Offer|null
+     * @return null|Offer
      */
     public function findByXmlId(string $xmlId)
     {
@@ -63,8 +66,9 @@ class OfferRepository
      *
      * @return AddResult
      */
-    public function add(Offer $offer)
+    public function add(Offer $offer): AddResult
     {
+        $offer->withIblockId($this->getIblockId());
         $offer->withId(0);
         $data = $offer->toArray();
         unset($data['ID']);
@@ -87,8 +91,9 @@ class OfferRepository
      *
      * @return UpdateResult
      */
-    public function update(Offer $offer)
+    public function update(Offer $offer): UpdateResult
     {
+        $offer->withIblockId($this->getIblockId());
         $data = $offer->toArray();
         $properties = $data['PROPERTY_VALUES'];
         unset($data['PROPERTY_VALUES']);
@@ -111,7 +116,7 @@ class OfferRepository
      *
      * @return bool
      */
-    public function setActive(int $id, bool $active = true)
+    public function setActive(int $id, bool $active = true): bool
     {
         return $this->iblockElement->Update($id, ['ACTIVE' => $active ? 'Y' : 'N']);
     }
@@ -119,19 +124,31 @@ class OfferRepository
     /**
      * @param int   $elementId
      * @param array $properties
+     *
      */
     public function setProperties(int $elementId, array $properties)
     {
         if ($properties) {
-            \CIBlockElement::SetPropertyValuesEx($elementId, $this->getQuery()->getSelect()['IBLOCK_ID'], $properties);
+            \CIBlockElement::SetPropertyValuesEx($elementId, $this->getIblockId(), $properties);
         }
     }
 
     /**
      * @return OfferQuery
      */
-    protected function getQuery()
+    protected function getQuery(): OfferQuery
     {
         return new OfferQuery();
+    }
+
+    /** @noinspection PhpDocMissingThrowsInspection */
+    /**
+     * @return int
+     */
+    protected function getIblockId(): int
+    {
+        /** @noinspection PhpUnhandledExceptionInspection */
+        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+        return IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS);
     }
 }

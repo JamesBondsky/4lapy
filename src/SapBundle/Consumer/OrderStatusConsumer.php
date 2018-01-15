@@ -20,5 +20,6 @@ class OrderStatusConsumer implements ConsumerInterface
         /**
          * @todo implement
          */
+        return false;
     }
 }

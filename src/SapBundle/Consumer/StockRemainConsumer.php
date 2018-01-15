@@ -20,5 +20,6 @@ class StockRemainConsumer implements ConsumerInterface
         /**
          * @todo implement
          */
+        return false;
     }
 }

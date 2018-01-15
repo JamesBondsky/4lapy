@@ -10,7 +10,6 @@ use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\SapBundle\Dto\In\Offers\Material;
 use FourPaws\SapBundle\Dto\In\Offers\Property;
 use FourPaws\SapBundle\Dto\In\Offers\PropertyValue;
-use FourPaws\SapBundle\Enum\SapOfferProperty;
 use FourPaws\SapBundle\Exception\CantCreateReferenceItem;
 use FourPaws\SapBundle\Exception\LogicException;
 use FourPaws\SapBundle\ReferenceDirectory\SapReferenceStorage;
@@ -40,6 +39,7 @@ class ReferenceService implements LoggerAwareInterface
      * @param string $xmlId
      * @param string $name
      *
+     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
      * @throws \FourPaws\SapBundle\Exception\LogicException
      * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
      * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
@@ -62,6 +62,7 @@ class ReferenceService implements LoggerAwareInterface
      * @param string $propertyCode
      * @param string $xmlId
      *
+     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
      * @return null|HlbReferenceItem
      */
     public function get(string $propertyCode, string $xmlId)
@@ -80,7 +81,8 @@ class ReferenceService implements LoggerAwareInterface
      */
     public function create(string $propertyCode, string $xmlId, string $name)
     {
-        $item = (new HlbReferenceItem())
+        $item = new HlbReferenceItem();
+        $item
             ->withCode($this->getUniqueCode($propertyCode, $name))
             ->withXmlId($xmlId)
             ->withName($name);
@@ -136,21 +138,11 @@ class ReferenceService implements LoggerAwareInterface
         }
     }
 
-    public function getOfferReferenceProperties(Material $material)
-    {
-        return [
-            'COLOUR'           => $this->getPropertyBitrixValue(SapOfferProperty::COLOUR, $material),
-            'KIND_OF_PACKING'  => $this->getPropertyBitrixValue(SapOfferProperty::KIND_OF_PACKING, $material),
-            'CLOTHING_SIZE'    => $this->getPropertyBitrixValue(SapOfferProperty::CLOTHING_SIZE, $material),
-            'VOLUME_REFERENCE' => $this->getPropertyBitrixValue(SapOfferProperty::VOLUME, $material),
-            'SEASON_YEAR'      => $this->getPropertyBitrixValue(SapOfferProperty::SEASON_YEAR, $material),
-        ];
-    }
-
     /**
      * @param string $propertyCode
      * @param string $name
      *
+     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
      * @return string
      */
     protected function getUniqueCode(string $propertyCode, string $name): string
@@ -184,7 +176,7 @@ class ReferenceService implements LoggerAwareInterface
      * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
      * @return array|string
      */
-    protected function getPropertyBitrixValue(string $code, Material $material, bool $multiple = false)
+    public function getPropertyBitrixValue(string $code, Material $material, bool $multiple = false)
     {
         $hlbElements = $this
             ->getPropertyValueHlbElement($material->getProperties()->getProperty($code));

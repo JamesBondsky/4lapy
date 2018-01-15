@@ -14,7 +14,7 @@ interface ItemInterface
      *
      * @return static
      */
-    public function withId(int $id): ItemInterface;
+    public function withId(int $id);
 
     /**
      * @return string
@@ -26,7 +26,7 @@ interface ItemInterface
      *
      * @return static
      */
-    public function withXmlId(string $xmlId): ItemInterface;
+    public function withXmlId(string $xmlId);
 
     /**
      * @return string
@@ -38,7 +38,7 @@ interface ItemInterface
      *
      * @return static
      */
-    public function withName(string $name): ItemInterface;
+    public function withName(string $name);
 
     /**
      * @return int
@@ -50,5 +50,5 @@ interface ItemInterface
      *
      * @return static
      */
-    public function withSort(int $sort): ItemInterface;
+    public function withSort(int $sort);
 }
