@@ -52,12 +52,13 @@ class ProfileController extends Controller
     public function __construct(
         UserAuthorizationInterface $userAuthorization,
         CurrentUserProviderInterface $currentUserProvider
-    ) {
+    )
+    {
         $this->currentUserProvider = $currentUserProvider;
     }
     
     /**
-     * @Route("/changePhone/", methods={"POST"})
+     * @Route("/changePhone/", methods={"POST","GET"})
      * @param Request $request
      *
      * @throws ConstraintDefinitionException
@@ -106,6 +107,7 @@ class ProfileController extends Controller
      */
     public function changePasswordAction(Request $request) : JsonResponse
     {
+        $id               = (int)$request->get('ID', 0);
         $old_password     = $request->get('old_password', '');
         $password         = $request->get('password', '');
         $confirm_password = $request->get('confirm_password', '');
@@ -148,7 +150,13 @@ class ProfileController extends Controller
         try {
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             $res = $this->currentUserProvider->getUserRepository()->update(
-                SerializerBuilder::create()->build()->fromArray(['PASSWORD' => $password], User::class)
+                SerializerBuilder::create()->build()->fromArray(
+                    [
+                        'ID'       => $id,
+                        'PASSWORD' => $password,
+                    ],
+                    User::class
+                )
             );
             if (!$res) {
                 return JsonErrorResponse::createWithData(
@@ -210,9 +218,7 @@ class ProfileController extends Controller
         
         try {
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-            $res = $userRepository->update(
-                $user
-            );
+            $res = $userRepository->update($user);
             if (!$res) {
                 return JsonErrorResponse::createWithData(
                     'Произошла ошибка при обновлении',

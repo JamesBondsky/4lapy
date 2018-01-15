@@ -10,14 +10,12 @@ use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
-use FourPaws\Helpers\Traits\BitrixDateSerialization;
 use JMS\Serializer\Annotation as Serializer;
 use Misd\PhoneNumberBundle\Validator\Constraints\PhoneNumber;
 use Symfony\Component\Validator\Constraints as Assert;
 
 class User
 {
-    use BitrixDateSerialization;
     const BITRIX_TRUE  = 'Y';
     
     const BITRIX_FALSE = 'N';
@@ -29,7 +27,6 @@ class User
      * @Serializer\Groups(groups={"read","update","delete"})
      * @Assert\NotBlank(groups={"read","update","delete"})
      * @Assert\GreaterThanOrEqual(value="1",groups={"read","update","delete"})
-     * @Assert\Blank(groups={"create"})
      */
     protected $id;
     
@@ -44,15 +41,14 @@ class User
     
     /**
      * @var bool
-     * @Serializer\SerializedName("ACTIVE")
      * @Serializer\Type("bitrix_bool")
+     * @Serializer\SerializedName("ACTIVE")
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $active;
     
     /**
-     * @Serializer\Type("string")
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("XML_ID")
@@ -173,11 +169,10 @@ class User
      * @Serializer\SkipWhenEmpty()
      */
     protected $gender;
+    
     /**
      * @var Date|null
-     * @Serializer\Type("Bitrix\Main\Type\Date")
-     * @Serializer\Accessor(getter="serializeBitrixDate",setter="deSerializeBitrixDate")
-     * @Assert\Blank(groups={"create","read","update"})
+     * @Serializer\Type("bitrix_date")
      * @Serializer\SerializedName("PERSONAL_BIRTHDAY")
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
@@ -203,8 +198,8 @@ class User
     
     /**
      * @var DateTime|null
-     * @Serializer\Type("Bitrix\Main\Type\DateTime")
-     * @Serializer\Accessor(getter="serializeBitrixDateTime",setter="deSerializeBitrixDateTime")
+     * @Serializer\Type("bitrix_date_time")
+     * @Serializer\Accessor(setter="deSerializeBitrixDateTime")
      * @Serializer\SerializedName("DATE_REGISTER")
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
@@ -294,28 +289,24 @@ class User
     /**
      * @return string
      */
-    public function getPersonalPhone() : string
-    {
-        return $this->personalPhone ?? '';
-    }
-    
-    /**
-     * @return string
-     */
     public function getNormalizePersonalPhone() : string
     {
-        if(!empty($this->getPersonalPhone())){
+        if (!empty($this->getPersonalPhone())) {
             try {
                 return PhoneHelper::normalizePhone($this->getPersonalPhone());
             } catch (WrongPhoneNumberException $e) {
             }
         }
+        
         return '';
     }
     
-    public function havePersonalPhone() : bool
+    /**
+     * @return string
+     */
+    public function getPersonalPhone() : string
     {
-        return !empty($this->getPersonalPhone()) ? true : false;
+        return $this->personalPhone ?? '';
     }
     
     /**
@@ -328,6 +319,11 @@ class User
         $this->personalPhone = $personalPhone;
         
         return $this;
+    }
+    
+    public function havePersonalPhone() : bool
+    {
+        return !empty($this->getPersonalPhone()) ? true : false;
     }
     
     /**
@@ -589,7 +585,30 @@ class User
      */
     public function getManzanaGender()
     {
-        return str_replace(['M','F'], [1,2], $this->getGender()) ?? null;
+        return str_replace(
+                   [
+                       'M',
+                       'F',
+                   ],
+                   [
+                       1,
+                       2,
+                   ],
+                   $this->getGender()
+               ) ?? null;
+    }
+    
+    /**
+     * @return \DateTimeImmutable|null
+     */
+    public function getManzanaBirthday()
+    {
+        $birthday = $this->getBirthday();
+        if ($birthday instanceof Date) {
+            return new \DateTimeImmutable($birthday->format('Y-m-d\TH:i:s'));
+        }
+        
+        return null;
     }
     
     /**
@@ -616,18 +635,6 @@ class User
         $this->birthday = $birthday;
         
         return $this;
-    }
-    
-    /**
-     * @return \DateTimeImmutable|null
-     */
-    public function getManzanaBirthday()
-    {
-        $birthday = $this->getBirthday();
-        if ($birthday instanceof Date) {
-            return new \DateTimeImmutable($birthday->format('Y-m-d\TH:i:s'));
-        }
-        return null;
     }
     
     /**

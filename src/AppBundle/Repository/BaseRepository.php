@@ -6,14 +6,21 @@ use Bitrix\Main\Entity\DataManager;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\UI\PageNavigation;
 use FourPaws\AppBundle\Entity\BaseEntity;
+use FourPaws\AppBundle\Serialization\ArrayOrFalseHandler;
+use FourPaws\AppBundle\Serialization\BitrixBooleanHandler;
+use FourPaws\AppBundle\Serialization\BitrixDateHandler;
+use FourPaws\AppBundle\Serialization\BitrixDateTimeHandler;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use JMS\Serializer\Annotation\SkipWhenEmpty;
-use JMS\Serializer\ArrayTransformerInterface;
 use JMS\Serializer\DeserializationContext;
+use JMS\Serializer\Exception\RuntimeException;
+use JMS\Serializer\Handler\HandlerRegistry;
 use JMS\Serializer\SerializationContext;
+use JMS\Serializer\Serializer;
+use JMS\Serializer\SerializerBuilder;
 use Symfony\Component\Validator\Constraints\GreaterThanOrEqual;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Type;
@@ -28,11 +35,6 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 class BaseRepository
 {
     /**
-     * @var ArrayTransformerInterface
-     */
-    protected $arrayTransformer;
-    
-    /**
      * @var ValidatorInterface
      */
     protected $validator;
@@ -43,6 +45,9 @@ class BaseRepository
     /** @var PageNavigation|null */
     protected $nav;
     
+    /** @var Serializer $builder */
+    protected $serializer;
+    
     /**
      * @var DataManager
      */
@@ -51,13 +56,22 @@ class BaseRepository
     /**
      * AddressRepository constructor.
      *
-     * @param ArrayTransformerInterface $arrayTransformer
-     * @param ValidatorInterface        $validator
+     * @param ValidatorInterface $validator
+     *
+     * @throws RuntimeException
      */
-    public function __construct(ArrayTransformerInterface $arrayTransformer, ValidatorInterface $validator)
+    public function __construct(ValidatorInterface $validator)
     {
-        $this->arrayTransformer = $arrayTransformer;
-        $this->validator        = $validator;
+        $this->validator  = $validator;
+        $this->serializer = SerializerBuilder::create()->configureHandlers(
+            function (HandlerRegistry $registry) {
+                $registry->registerSubscribingHandler(new BitrixDateHandler());
+                $registry->registerSubscribingHandler(new BitrixDateHandler());
+                $registry->registerSubscribingHandler(new BitrixDateTimeHandler());
+                $registry->registerSubscribingHandler(new BitrixBooleanHandler());
+                $registry->registerSubscribingHandler(new ArrayOrFalseHandler());
+            }
+        )->build();
     }
     
     /**
@@ -75,8 +89,9 @@ class BaseRepository
         if ($validationResult->count() > 0) {
             throw new ValidationException('Wrong entity passed to create');
         }
+        
         $res = $this->dataManager::add(
-            $this->arrayTransformer->toArray($this->entity, SerializationContext::create()->setGroups(['create']))
+            $this->builder->toArray($this->entity, SerializationContext::create()->setGroups(['create']))
         );
         if ($res->isSuccess()) {
             $this->entity->setId($res->getId());
@@ -114,7 +129,7 @@ class BaseRepository
         
         $res = $this->dataManager::update(
             $this->entity->getId(),
-            $this->arrayTransformer->toArray($this->entity, SerializationContext::create()->setGroups(['update']))
+            $this->serializer->toArray($this->entity, SerializationContext::create()->setGroups(['update']))
         );
         if ($res->isSuccess()) {
             return true;
@@ -225,7 +240,7 @@ class BaseRepository
         
         $allItems = $result->fetchAll();
         if (!empty($params['entityClass'])) {
-            return $this->arrayTransformer->fromArray(
+            return $this->serializer->fromArray(
                 $allItems,
                 sprintf('array<%s>', $params['entityClass']),
                 DeserializationContext::create()->setGroups(['read'])
@@ -299,7 +314,7 @@ class BaseRepository
      */
     public function dataToEntity(array $data, string $entityClass, string $type = 'read') : BaseEntity
     {
-        return $this->arrayTransformer->fromArray(
+        return $this->serializer->fromArray(
             $data,
             $entityClass,
             DeserializationContext::create()->setGroups([$type])
@@ -315,7 +330,7 @@ class BaseRepository
      */
     public function entityToData(BaseEntity $entity, string $type = 'read') : array
     {
-        return $this->arrayTransformer->toArray(
+        return $this->serializer->toArray(
             $entity,
             SerializationContext::create()->setGroups([$type])
         );

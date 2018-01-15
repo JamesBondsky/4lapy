@@ -11,14 +11,12 @@ use Bitrix\Main\Type\Date;
 use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\BitrixOrm\Model\CropImageDecorator;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
-use FourPaws\Helpers\Traits\BitrixDateSerialization;
 use FourPaws\Helpers\WordHelper;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
 class Pet extends BaseEntity
 {
-    use BitrixDateSerialization;
     const PET_TYPE = 'PetType';
     
     /**
@@ -72,8 +70,7 @@ class Pet extends BaseEntity
     
     /**
      * @var Date|null
-     * @Serializer\Type("Bitrix\Main\Type\Date")
-     * @Serializer\Accessor(getter="serializeBitrixDate",setter="deSerializeBitrixDate")
+     * @Serializer\Type("bitrix_date")
      * @Serializer\SkipWhenEmpty()
      * @Serializer\SerializedName("UF_BIRTHDAY")
      * @Serializer\Groups(groups={"create","read","update"})

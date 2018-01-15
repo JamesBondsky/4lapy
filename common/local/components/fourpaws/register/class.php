@@ -13,11 +13,16 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Type\Date;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\AppBundle\Serialization\ArrayOrFalseHandler;
+use FourPaws\AppBundle\Serialization\BitrixBooleanHandler;
+use FourPaws\AppBundle\Serialization\BitrixDateHandler;
+use FourPaws\AppBundle\Serialization\BitrixDateTimeHandler;
 use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
@@ -45,6 +50,10 @@ use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
 use GuzzleHttp\Exception\GuzzleException;
+use JMS\Serializer\DeserializationContext;
+use JMS\Serializer\Exception\RuntimeException;
+use JMS\Serializer\Handler\HandlerRegistry;
+use JMS\Serializer\Serializer;
 use JMS\Serializer\SerializerBuilder;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -70,11 +79,15 @@ class FourPawsRegisterComponent extends \CBitrixComponent
      */
     private $userRegistrationService;
     
+    /** @var Serializer */
+    private $serializer;
+    
     /**
      * FourPawsAuthFormComponent constructor.
      *
      * @param null|\CBitrixComponent $component
      *
+     * @throws RuntimeException
      * @throws ServiceNotFoundException
      * @throws SystemException
      * @throws \RuntimeException
@@ -94,6 +107,14 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         $this->currentUserProvider      = $container->get(CurrentUserProviderInterface::class);
         $this->userAuthorizationService = $container->get(UserAuthorizationInterface::class);
         $this->userRegistrationService  = $container->get(UserRegistrationProviderInterface::class);
+        $this->serializer               = SerializerBuilder::create()->configureHandlers(
+            function (HandlerRegistry $registry) {
+                $registry->registerSubscribingHandler(new BitrixDateHandler());
+                $registry->registerSubscribingHandler(new BitrixDateTimeHandler());
+                $registry->registerSubscribingHandler(new BitrixBooleanHandler());
+                $registry->registerSubscribingHandler(new ArrayOrFalseHandler());
+            }
+        )->build();
     }
     
     /** {@inheritdoc} */
@@ -216,6 +237,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     /**
      * @param array $data
      *
+     * @throws RuntimeException
      * @throws ValidationException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
@@ -242,8 +264,10 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         }
         
         $data['UF_PHONE_CONFIRMED'] = 'Y';
-        
-        $userEntity = SerializerBuilder::create()->build()->fromArray($data, User::class);
+    
+        /** @var User $userEntity */
+        $userEntity =
+            $this->serializer->fromArray($data, User::class, DeserializationContext::create()->setGroups('create'));
         try {
             $res = $this->userRegistrationService->register($userEntity);
             if (!$res) {
@@ -252,6 +276,9 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                     ['errors' => ['registerError' => 'При регистрации произошла ошибка']]
                 );
             }
+    
+            /** добавляем в зарегистрирвоанных пользователей */
+            \CUser::SetUserGroup($userEntity->getId(), [6]);
         } catch (BitrixRuntimeException $e) {
             return JsonErrorResponse::createWithData(
                 'При регистрации произошла ошибка - ' . $e->getMessage(),
@@ -267,7 +294,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
         $client         = null;
         try {
-            $contactId         = $manzanaService->getContactIdByCurUser();
+            $contactId         = $manzanaService->getContactIdByPhone($userEntity->getNormalizePersonalPhone());
             $client            = new Client();
             $client->contactId = $contactId;
         } catch (ManzanaServiceContactSearchMoreOneException $e) {
@@ -303,6 +330,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     /**
      * @param Request $request
      *
+     * @throws RuntimeException
      * @throws ValidationException
      * @throws InvalidIdentifierException
      * @throws ServiceNotFoundException
@@ -361,7 +389,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             'PERSONAL_PHONE'     => $phone,
         ];
         if ($this->currentUserProvider->getUserRepository()->update(
-            SerializerBuilder::create()->build()->fromArray($data, User::class)
+            $this->serializer->fromArray($data, User::class, DeserializationContext::create()->setGroups('create'))
         )) {
             /** @var ManzanaService $manzanaService */
             $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
@@ -406,7 +434,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     {
         $step  = $request->get('step', '');
         $phone = $request->get('phone', '');
-        if(!empty($phone)) {
+        if (!empty($phone)) {
             try {
                 $phone = PhoneHelper::normalizePhone($phone);
             } catch (WrongPhoneNumberException $e) {
@@ -558,6 +586,11 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 ]
             );
         } catch (UsernameNotFoundException $e) {
+        } catch (WrongPhoneNumberException $e) {
+            return JsonErrorResponse::createWithData(
+                'Некорректный номер телефона',
+                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
+            );
         }
         
         if ($id > 0) {
