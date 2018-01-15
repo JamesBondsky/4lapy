@@ -9,12 +9,14 @@ use FourPaws\External\Manzana\Model\Client;
 use FourPaws\Location\Exception\CityNotFoundException;
 use FourPaws\Location\LocationService;
 use FourPaws\UserBundle\Entity\User;
+use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidCredentialException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
+use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Repository\UserRepository;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -157,20 +159,26 @@ class UserService implements
      * @param User $user
      *
      * @return bool
-     * @throws \FourPaws\UserBundle\Exception\ValidationException
-     * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
+     * @throws ValidationException
+     * @throws BitrixRuntimeException
      */
     public function register(User $user): bool
     {
         return $this->userRepository->create($user);
     }
-
+    
     /**
      * @param string $code
      * @param string $name
+     * @param string $parentName
      *
      * @return bool|array
+     * @throws ValidationException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
      * @throws CityNotFoundException
+     * @throws NotAuthorizedException
+     * @throws BitrixRuntimeException
      */
     public function setSelectedCity(string $code = '', string $name = '', string $parentName = '')
     {
@@ -178,6 +186,7 @@ class UserService implements
         if ($code) {
             $city = $this->locationService->findLocationCityByCode($code);
         } else {
+            /** @noinspection PassingByReferenceCorrectnessInspection */
             $city = reset($this->locationService->findLocationCity($name, $parentName, 1, true));
         }
 
@@ -195,9 +204,12 @@ class UserService implements
 
         return $city ?: false;
     }
-
+    
     /**
      * @return array
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws NotAuthorizedException
      */
     public function getSelectedCity(): array
     {
@@ -235,8 +247,6 @@ class UserService implements
      * @throws InvalidIdentifierException
      * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
-     * @throws ConstraintDefinitionException
-     * @throws NotAuthorizedException
      * @throws ServiceCircularReferenceException
      */
     public function setClientPersonalDataByCurUser(&$client, User $user = null)

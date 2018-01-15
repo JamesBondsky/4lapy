@@ -21,8 +21,9 @@ use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Exception\SmsSendErrorException;
-use FourPaws\External\Manzana\Exception\ContactUpdateException;
+use FourPaws\External\Manzana\Exception\ManzanaException;
 use FourPaws\External\Manzana\Model\Client;
+use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
@@ -37,6 +38,7 @@ use FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\ConfirmCodeInterface;
+use FourPaws\UserBundle\Service\ConfirmCodeService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use JMS\Serializer\SerializerBuilder;
@@ -149,7 +151,17 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
     {
         $phone = $request->get('phone');
         try {
-            $res = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::checkConfirmSms(
+            $phone = PhoneHelper::normalizePhone($phone);
+        } catch (WrongPhoneNumberException $e) {
+            return JsonErrorResponse::createWithData(
+                'Некорректный номер телефона',
+                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
+            );
+        }
+        try {
+            /** @var ConfirmCodeService $confirmService */
+            $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+            $res            = $confirmService::checkConfirmSms(
                 $phone,
                 $request->get('confirmCode')
             );
@@ -183,6 +195,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                     User::class
                 )
             )) {
+                /** @var ManzanaService $manzanaService */
                 $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
                 $client         = null;
                 try {
@@ -200,7 +213,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                     try {
                         $manzanaService->updateContact($client);
                     } catch (ManzanaServiceException $e) {
-                    } catch (ContactUpdateException $e) {
+                    } catch (ManzanaException $e) {
                     }
                 }
                 
@@ -215,10 +228,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                     ],
                 ]
             );
-        } catch (ConstraintDefinitionException $e) {
-        } catch (ApplicationCreateException $e) {
-        } catch (ServiceCircularReferenceException $e) {
-        } catch (NotAuthorizedException $e) {
+        } catch (\Exception $e) {
         }
         
         return JsonErrorResponse::createWithData(
@@ -234,16 +244,9 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
      */
     public function ajaxResendSms(string $phone) : JsonResponse
     {
-        if (PhoneHelper::isPhone($phone)) {
-            try {
-                $phone = PhoneHelper::normalizePhone($phone);
-            } catch (WrongPhoneNumberException $e) {
-                return JsonErrorResponse::createWithData(
-                    'Некорректный номер телефона',
-                    ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
-                );
-            }
-        } else {
+        try {
+            $phone = PhoneHelper::normalizePhone($phone);
+        } catch (WrongPhoneNumberException $e) {
             return JsonErrorResponse::createWithData(
                 'Некорректный номер телефона',
                 ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
@@ -251,7 +254,9 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         }
         
         try {
-            $res = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::sendConfirmSms($phone);
+            /** @var ConfirmCodeService $confirmService */
+            $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+            $res            = $confirmService::sendConfirmSms($phone);
             if (!$res) {
                 return JsonErrorResponse::createWithData(
                     'Ошибка отправки смс, попробуйте позднее',
@@ -289,12 +294,21 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
      * @throws ValidationException
      * @throws InvalidIdentifierException
      * @return JsonResponse
+     * @throws ConstraintDefinitionException
      */
     public function ajaxGet(Request $request) : JsonResponse
     {
         $phone = $request->get('phone', '');
         $step  = $request->get('step', '');
         $mess  = '';
+        try {
+            $phone = PhoneHelper::normalizePhone($phone);
+        } catch (WrongPhoneNumberException $e) {
+            return JsonErrorResponse::createWithData(
+                'Некорректный номер телефона',
+                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
+            );
+        }
         switch ($step) {
             case 'confirm':
                 $mess = $this->ajaxGetConfirm($phone);
@@ -304,6 +318,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                 break;
         }
         
+        $phone = PhoneHelper::formatPhone($phone, '+7 (%s%s%s) %s%s%s-%s%s-%s%s');
         ob_start();
         /** @noinspection PhpIncludeInspection */
         include_once App::getDocumentRoot()
@@ -324,17 +339,11 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
     /**
      * @param string $phone
      *
+     * @throws ConstraintDefinitionException
      * @return JsonResponse|string
      */
     private function ajaxGetConfirm(string $phone)
     {
-        $mess = '';
-        try {
-            $phone = PhoneHelper::normalizePhone($phone);
-        } catch (WrongPhoneNumberException $e) {
-            return JsonSuccessResponse::create('Неверный формат номера телефона');
-        }
-        
         /** @var UserRepository $userRepository */
         $userRepository = $this->currentUserProvider->getUserRepository();
         $curUser        = $userRepository->findBy(['PERSONAL_PHONE' => $phone], [], 1);
@@ -367,7 +376,6 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                     ],
                 ]
             );
-        } catch (ConstraintDefinitionException $e) {
         }
         
         return $mess;

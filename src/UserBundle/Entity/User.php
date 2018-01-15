@@ -8,6 +8,8 @@ namespace FourPaws\UserBundle\Entity;
 
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
+use FourPaws\Helpers\Exception\WrongPhoneNumberException;
+use FourPaws\Helpers\PhoneHelper;
 use JMS\Serializer\Annotation as Serializer;
 use Misd\PhoneNumberBundle\Validator\Constraints\PhoneNumber;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -279,6 +281,25 @@ class User
     public function getPersonalPhone() : string
     {
         return $this->personalPhone ?? '';
+    }
+    
+    /**
+     * @return string
+     */
+    public function getNormalizePersonalPhone() : string
+    {
+        if(!empty($this->getPersonalPhone())){
+            try {
+                return PhoneHelper::normalizePhone($this->getPersonalPhone());
+            } catch (WrongPhoneNumberException $e) {
+            }
+        }
+        return '';
+    }
+    
+    public function havePersonalPhone() : bool
+    {
+        return !empty($this->getPersonalPhone()) ? true : false;
     }
     
     /**
@@ -581,6 +602,9 @@ class User
         return $this;
     }
     
+    /**
+     * @return \DateTimeImmutable|null
+     */
     public function getManzanaBirthday()
     {
         $birthday = $this->getBirthday();
