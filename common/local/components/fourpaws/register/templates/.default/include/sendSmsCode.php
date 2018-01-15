@@ -13,7 +13,7 @@ use FourPaws\App\Application as App;
     </div>
     <div class="b-registration__your-number" id="js-resend"
          data-url="/ajax/user/auth/register/"
-         data-phone="+7 (920) 161-24-27"
+         data-phone="<?= $phone ?>"
          data-action="resendSms">Ваш номер <?= $phone ?>
     </div>
     <a class="b-link-gray b-link-gray--add-number js-else-phone"
