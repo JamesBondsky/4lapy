@@ -30,7 +30,7 @@ use FourPaws\App\Application as App;
         <input type="hidden" name="action" value="<?= !empty($newAction) ? $newAction : 'get' ?>">
         <input type="hidden" name="step" value="step2">
         <input type="hidden" name="phone" value="<?= $phone ?>">
-        <div class="b-input-line b-input-line--add-number js-phone3-resend">
+        <div class="b-input-line b-input-line--add-number js-phone3-resend js-resend">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="sms-code-3">SMS-код</label>
             </div>
