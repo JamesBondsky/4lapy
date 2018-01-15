@@ -15,8 +15,9 @@ use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
-use FourPaws\External\Manzana\Exception\ContactUpdateException;
+use FourPaws\External\Manzana\Exception\ManzanaException;
 use FourPaws\External\Manzana\Model\Client;
+use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
@@ -51,14 +52,16 @@ class ProfileController extends Controller
     public function __construct(
         UserAuthorizationInterface $userAuthorization,
         CurrentUserProviderInterface $currentUserProvider
-    ) {
+    )
+    {
         $this->currentUserProvider = $currentUserProvider;
     }
     
     /**
-     * @Route("/changePhone/", methods={"POST"})
+     * @Route("/changePhone/", methods={"POST","GET"})
      * @param Request $request
      *
+     * @throws ConstraintDefinitionException
      * @throws ServiceNotFoundException
      * @throws ValidationException
      * @throws InvalidIdentifierException
@@ -104,6 +107,7 @@ class ProfileController extends Controller
      */
     public function changePasswordAction(Request $request) : JsonResponse
     {
+        $id               = (int)$request->get('ID', 0);
         $old_password     = $request->get('old_password', '');
         $password         = $request->get('password', '');
         $confirm_password = $request->get('confirm_password', '');
@@ -146,7 +150,13 @@ class ProfileController extends Controller
         try {
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             $res = $this->currentUserProvider->getUserRepository()->update(
-                SerializerBuilder::create()->build()->fromArray(['PASSWORD' => $password], User::class)
+                SerializerBuilder::create()->build()->fromArray(
+                    [
+                        'ID'       => $id,
+                        'PASSWORD' => $password,
+                    ],
+                    User::class
+                )
             );
             if (!$res) {
                 return JsonErrorResponse::createWithData(
@@ -186,7 +196,7 @@ class ProfileController extends Controller
         /** @var UserRepository $userRepository */
         $userRepository = $this->currentUserProvider->getUserRepository();
         $data           = $request->request->getIterator()->getArrayCopy();
-        if (!empty($data[''])) {
+        if (!empty($data['EMAIL'])) {
             if (filter_var($data['EMAIL'], FILTER_VALIDATE_EMAIL) === false) {
                 return JsonErrorResponse::createWithData(
                     'Некорректный email',
@@ -206,15 +216,9 @@ class ProfileController extends Controller
         /** @var User $user */
         $user = SerializerBuilder::create()->build()->fromArray($data, User::class);
         
-        \CBitrixComponent::includeComponentClass('fourpaws:personal.profile');
-        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-        $profileClass = new \FourPawsPersonalCabinetProfileComponent();
-        
         try {
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-            $res = $userRepository->update(
-                $user
-            );
+            $res = $userRepository->update($user);
             if (!$res) {
                 return JsonErrorResponse::createWithData(
                     'Произошла ошибка при обновлении',
@@ -222,6 +226,7 @@ class ProfileController extends Controller
                 );
             }
             
+            /** @var ManzanaService $manzanaService */
             $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
             $client         = null;
             try {
@@ -242,7 +247,7 @@ class ProfileController extends Controller
                 try {
                     $manzanaService->updateContact($client);
                 } catch (ManzanaServiceException $e) {
-                } catch (ContactUpdateException $e) {
+                } catch (ManzanaException $e) {
                 }
             }
             

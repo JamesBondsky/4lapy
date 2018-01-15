@@ -20,6 +20,9 @@ use FourPaws\BitrixOrm\Model\CropImageDecorator;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Service\StoreService;
+use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
+use FourPaws\UserBundle\Exception\InvalidIdentifierException;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 use FourPaws\UserBundle\Service\UserService;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -63,6 +66,9 @@ class FourPawsShopListComponent extends CBitrixComponent
     
     /**
      * {@inheritdoc}
+     * @throws NotAuthorizedException
+     * @throws ConstraintDefinitionException
+     * @throws InvalidIdentifierException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
@@ -70,16 +76,17 @@ class FourPawsShopListComponent extends CBitrixComponent
      */
     public function executeComponent()
     {
-        $this->storeService = App::getInstance()->getContainer()->get('store.service');
+        $container          = App::getInstance()->getContainer();
+        $this->storeService = $container->get('store.service');
         
-        $this->userService = App::getInstance()->getContainer()->get(UserCitySelectInterface::class);
+        $this->userService = $container->get(UserCitySelectInterface::class);
         
         $city = $this->userService->getSelectedCity();
         if ($this->startResultCache(false, ['location' => $city['CODE']])) {
-            $this->arResult['CITY']   = $city['NAME'];
-            $stores                   = $this->storeService->getByCurrentLocation($this->storeService::TYPE_SHOP);
-            $this->arResult['STORES'] = $stores->toArray();
-            
+            $this->arResult['CITY']      = $city['NAME'];
+            $this->arResult['CITY_CODE'] = $city['CODE'];
+            $stores                      = $this->storeService->getByCurrentLocation($this->storeService::TYPE_SHOP);
+            $this->arResult['STORES']    = $stores->toArray();
             if (!empty($this->arResult['STORES'])) {
                 list(
                     $this->arResult['SERVICES'], $this->arResult['METRO']
@@ -184,11 +191,13 @@ class FourPawsShopListComponent extends CBitrixComponent
                     $avgGpsS += $gpsS;
                 }
                 $result['items'][] = [
-                    'adress'     => $address,
+                    'addr'       => $address,
+                    'adress'     => $store->getDescription(),
                     'phone'      => $store->getPhone(),
                     'schedule'   => $store->getSchedule(),
                     'photo'      => $imageSrc,
-                    'metroClass' => 'b-delivery-list__col--' . $metroList[$metro]['UF_CLASS'],
+                    'metro'      => !empty($metro) ? $metroList[$metro]['UF_NAME'] : '',
+                    'metroClass' => !empty($metro) ? 'b-delivery-list__col--' . $metroList[$metro]['UF_CLASS'] : '',
                     'services'   => $services,
                     'gps_s'      => $gpsS,
                     'gps_n'      => $gpsN,

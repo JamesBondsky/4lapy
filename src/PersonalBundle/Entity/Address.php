@@ -16,7 +16,8 @@ class Address extends BaseEntity
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_NAME")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
     protected $name = '';
     
@@ -24,8 +25,9 @@ class Address extends BaseEntity
      * @var int
      * @Serializer\Type("integer")
      * @Serializer\SerializedName("UF_USER_ID")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
-     * @Assert\NotBlank(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Assert\NotBlank(groups={"create","read"})
+     * @Serializer\SkipWhenEmpty()
      */
     protected $userId;
     
@@ -33,8 +35,9 @@ class Address extends BaseEntity
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_CITY")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
-     * @Assert\NotBlank(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Assert\NotBlank(groups={"create","read"})
+     * @Serializer\SkipWhenEmpty()
      */
     protected $city = '';
     
@@ -42,7 +45,8 @@ class Address extends BaseEntity
      * @var int
      * @Serializer\Type("int")
      * @Serializer\SerializedName("UF_CITY_LOCATION")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
     protected $cityLocation = '';
     
@@ -50,8 +54,9 @@ class Address extends BaseEntity
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_STREET")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
-     * @Assert\NotBlank(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Assert\NotBlank(groups={"create","read"})
+     * @Serializer\SkipWhenEmpty()
      */
     protected $street = '';
     
@@ -59,8 +64,9 @@ class Address extends BaseEntity
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_HOUSE")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
-     * @Assert\NotBlank(groups={""create",read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Assert\NotBlank(groups={"create",read"})
+     * @Serializer\SkipWhenEmpty()
      */
     protected $house = '';
     
@@ -68,7 +74,8 @@ class Address extends BaseEntity
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_HOUSING")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
     protected $housing = '';
     
@@ -76,7 +83,8 @@ class Address extends BaseEntity
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_ENTRANCE")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
     protected $entrance = '';
     
@@ -84,7 +92,8 @@ class Address extends BaseEntity
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_FLOOR")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
     protected $floor = '';
     
@@ -92,7 +101,8 @@ class Address extends BaseEntity
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_FLAT")
-     * @Serializer\Groups(groups={"read"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
     protected $flat = '';
     
@@ -100,7 +110,8 @@ class Address extends BaseEntity
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_INTERCOM_CODE")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
     protected $intercomCode = '';
     
@@ -108,7 +119,8 @@ class Address extends BaseEntity
      * @var bool
      * @Serializer\Type("bitrix_bool")
      * @Serializer\SerializedName("UF_MAIN")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
     protected $main = false;
     
