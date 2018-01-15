@@ -406,13 +406,15 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     {
         $step  = $request->get('step', '');
         $phone = $request->get('phone', '');
-        try {
-            $phone = PhoneHelper::normalizePhone($phone);
-        } catch (WrongPhoneNumberException $e) {
-            return JsonErrorResponse::createWithData(
-                $e->getMessage(),
-                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
-            );
+        if(!empty($phone)) {
+            try {
+                $phone = PhoneHelper::normalizePhone($phone);
+            } catch (WrongPhoneNumberException $e) {
+                return JsonErrorResponse::createWithData(
+                    $e->getMessage(),
+                    ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
+                );
+            }
         }
         $mess  = '';
         $title = 'Регистрация';
