@@ -10,6 +10,7 @@
  */
 
 use FourPaws\App\Application;
+use FourPaws\Helpers\WordHelper;
 use FourPaws\Location\LocationService;
 use FourPaws\App\Templates\ViewsEnum;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
@@ -207,7 +208,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                         <span class="b-ruble b-ruble--product-information">&nbsp₽</span>
                         <?php if ($offer->getBonuses()) { ?>
                             <span class="b-product-information__bonus">+<?= $offer->getBonuses(
-                                ) ?> <?= \FourPaws\Helpers\WordHelper::declension(
+                                ) ?> <?= WordHelper::declension(
                                     $offer->getBonuses(),
                                     ['бонус', 'бонуса', 'бонусов']
                                 ) ?>
@@ -281,7 +282,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                     Округлить до упаковки (<?= $offer->getMultiplicity() ?> шт.)<span>— скидка 3%</span>
                 </a>
             <?php } ?>
-            <a class="b-counter-basket__basket-link" href="javascript:void(0)" title="">
+            <a class="b-counter-basket__basket-link js-basket-add" href="javascript:void(0)" title="" data-offerId="<?= $offer->getId(); ?>" data-url="/ajax/sale/basket/add/">
                 <span class="b-counter-basket__basket-text">Добавить в корзину</span>
                 <span class="b-icon b-icon--advice"><?= new SvgDecorator('icon-cart', 20, 20) ?></span>
             </a>

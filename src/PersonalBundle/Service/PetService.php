@@ -8,6 +8,8 @@ namespace FourPaws\PersonalBundle\Service;
 
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
+use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\External\Manzana\Model\Client;
@@ -45,20 +47,6 @@ class PetService
     }
     
     /**
-     * @throws InvalidIdentifierException
-     * @throws ServiceNotFoundException
-     * @throws \Exception
-     * @throws ApplicationCreateException
-     * @throws NotAuthorizedException
-     * @throws ServiceCircularReferenceException
-     * @return array
-     */
-    public function getCurUserPets() : array
-    {
-        return $this->petRepository->findByCurUser();
-    }
-    
-    /**
      * @param array $data
      *
      * @return bool
@@ -75,10 +63,105 @@ class PetService
     public function add(array $data) : bool
     {
         $res = $this->petRepository->setEntityFromData($data, Pet::class)->create();
-        if($res) {
+        if ($res) {
             $this->updateManzanaPets();
         }
+        
         return $res;
+    }
+    
+    /**
+     * @throws ServiceNotFoundException
+     * @throws InvalidIdentifierException
+     * @throws \Exception
+     * @throws ApplicationCreateException
+     * @throws ConstraintDefinitionException
+     * @throws \RuntimeException
+     * @throws ServiceCircularReferenceException
+     */
+    protected function updateManzanaPets()
+    {
+        $container = App::getInstance()->getContainer();
+        $types     = [];
+        $pets      = [];
+        try {
+            $pets = $this->getCurUserPets();
+        } catch (NotAuthorizedException $e) {
+        }
+        if (\is_array($pets) && !empty($pets)) {
+            /** @var Pet $pet */
+            foreach ($pets as $pet) {
+                $types[] = $pet->getXmlIdType();
+            }
+        }
+        $manzanaService = $container->get('manzana.service');
+        
+        $client = null;
+        try {
+            $contactId         = $manzanaService->getContactIdByCurUser();
+            $client            = new Client();
+            $client->contactId = $contactId;
+        } catch (ManzanaServiceContactSearchMoreOneException $e) {
+        } catch (ManzanaServiceContactSearchNullException $e) {
+            $client = new Client();
+            $container->get(CurrentUserProviderInterface::class)->setClientPersonalDataByCurUser($client);
+        } catch (ManzanaServiceException $e) {
+        } catch (NotAuthorizedException $e) {
+        }
+        if ($client instanceof Client) {
+            $this->setClientPets($client, $types);
+            try {
+                $manzanaService->updateContact($client);
+            } catch (ManzanaServiceException $e) {
+            } catch (ContactUpdateException $e) {
+            }
+        }
+    }
+    
+    /**
+     * @throws InvalidIdentifierException
+     * @throws ServiceNotFoundException
+     * @throws \Exception
+     * @throws ApplicationCreateException
+     * @throws NotAuthorizedException
+     * @throws ServiceCircularReferenceException
+     * @return array
+     */
+    public function getCurUserPets() : array
+    {
+        return $this->petRepository->findByCurUser();
+    }
+    
+    /**
+     * @param Client $client
+     * @param array  $types
+     */
+    public function setClientPets(&$client, array $types)
+    {
+        /** @todo set actual types */
+        $baseTypes        = [
+            'bird',
+            'cat',
+            'dog',
+            'fish',
+            'rodent',
+        ];
+        $client->ffBird   = \in_array('bird', $types, true) ? 1 : 0;
+        $client->ffCat    = \in_array('cat', $types, true) ? 1 : 0;
+        $client->ffDog    = \in_array('dog', $types, true) ? 1 : 0;
+        $client->ffFish   = \in_array('fish', $types, true) ? 1 : 0;
+        $client->ffRodent = \in_array('rodent', $types, true) ? 1 : 0;
+        $others           = 0;
+        if (\is_array($types) && !empty($types)) {
+            foreach ($types as $type) {
+                if (!\in_array($type, $baseTypes, true)) {
+                    $others = 1;
+                    break;
+                }
+            }
+            
+        }
+        $client->ffOthers = $others;
     }
     
     /**
@@ -98,9 +181,10 @@ class PetService
     public function update(array $data) : bool
     {
         $res = $this->petRepository->setEntityFromData($data, Pet::class)->update();
-        if($res) {
+        if ($res) {
             $this->updateManzanaPets();
         }
+        
         return $res;
     }
     
@@ -120,92 +204,10 @@ class PetService
     public function delete(int $id) : bool
     {
         $res = $this->petRepository->delete($id);
-        if($res) {
+        if ($res) {
             $this->updateManzanaPets();
         }
+        
         return $res;
-    }
-    
-    /**
-     * @throws ServiceNotFoundException
-     * @throws InvalidIdentifierException
-     * @throws \Exception
-     * @throws ApplicationCreateException
-     * @throws ConstraintDefinitionException
-     * @throws \RuntimeException
-     * @throws ServiceCircularReferenceException
-     */
-    protected function updateManzanaPets()
-    {
-        $container = App::getInstance()->getContainer();
-        $types = [];
-        $pets = [];
-        try {
-            $pets = $this->getCurUserPets();
-        } catch (NotAuthorizedException $e) {}
-        if(\is_array($pets) && !empty($pets)) {
-            /** @var Pet $pet */
-            foreach ($pets as $pet){
-                $types[]=$pet->getXmlIdType();
-            }
-        }
-        $manzanaService = $container->get('manzana.service');
-    
-        $contactId = -2;
-        try {
-            $contactId = $manzanaService->getContactIdByCurUser();
-        } catch (ManzanaServiceException $e) {
-        } catch (NotAuthorizedException $e) {
-        }
-        if ($contactId >= 0) {
-            $client = new Client();
-            if ($contactId > 0) {
-                $client->contactId = $contactId;
-            } else {
-                try {
-                    $container->get(CurrentUserProviderInterface::class)->setClientPersonalDataByCurUser($client);
-                } catch (NotAuthorizedException $e) {
-                }
-            }
-            $this->setClientPets($client, $types);
-            try {
-                $manzanaService->updateContact($client);
-            } catch (ManzanaServiceException $e) {
-            } catch (ContactUpdateException $e) {
-            }
-        }
-    }
-    
-    /**
-     * @param Client $client
-     * @param array  $types
-     */
-    public function setClientPets(&$client, array $types)
-    {
-        /** @todo set actual types*/
-        $baseTypes        =
-            [
-                'bird',
-                'cat',
-                'dog',
-                'fish',
-                'rodent',
-            ];
-        $client->ffBird   = \in_array('bird', $types, true) ? 1 : 0;
-        $client->ffCat    = \in_array('cat', $types, true) ? 1 : 0;
-        $client->ffDog    = \in_array('dog', $types, true) ? 1 : 0;
-        $client->ffFish   = \in_array('fish', $types, true) ? 1 : 0;
-        $client->ffRodent = \in_array('rodent', $types, true) ? 1 : 0;
-        $others           = 0;
-        if (\is_array($types) && !empty($types)) {
-            foreach ($types as $type) {
-                if (!\in_array($type, $baseTypes, true)) {
-                    $others = 1;
-                    break;
-                }
-            }
-            
-        }
-        $client->ffOthers = $others;
     }
 }

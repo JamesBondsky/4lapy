@@ -2,7 +2,7 @@
 
 namespace FourPaws\UserBundle\Service;
 
-use Bitrix\Main\Type\Date;
+use Bitrix\Sale\Fuser;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\External\Manzana\Model\Client;
@@ -10,17 +10,19 @@ use FourPaws\Location\Exception\CityNotFoundException;
 use FourPaws\Location\LocationService;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
-use FourPaws\UserBundle\Exception\EmptyDateException;
 use FourPaws\UserBundle\Exception\InvalidCredentialException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Repository\UserRepository;
-use CSaleUser;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
+/**
+ * Class UserService
+ * @package FourPaws\UserBundle\Service
+ */
 class UserService implements
     CurrentUserProviderInterface,
     UserAuthorizationInterface,
@@ -42,6 +44,12 @@ class UserService implements
      */
     private $locationService;
 
+    /**
+     * UserService constructor.
+     *
+     * @param UserRepository $userRepository
+     * @param LocationService $locationService
+     */
     public function __construct(UserRepository $userRepository, LocationService $locationService)
     {
         /**
@@ -114,11 +122,22 @@ class UserService implements
     }
 
     /**
+     *
+     *
+     * @return int
+     */
+    public function getCurrentFUserId(): int
+    {
+        return (int)Fuser::getId();
+    }
+
+
+    /**
      * @return int
      */
     public function getAnonymousUserId(): int
     {
-        return CSaleUser::GetAnonymousUserID();
+        return \CSaleUser::GetAnonymousUserID();
     }
 
     /**
@@ -162,25 +181,25 @@ class UserService implements
             $city = reset($this->locationService->findLocationCity($name, $parentName, 1, true));
         }
 
-        if (!$city) {
-            return false;
+        if ($city) {
+            /** @noinspection SummerTimeUnsafeTimeManipulationInspection */
+            setcookie('user_city_id', $city['CODE'], 86400 * 30);
+
+            if ($this->isAuthorized()) {
+                $user = $this->getCurrentUser();
+                $user->setLocation($city['CODE']);
+                $this->userRepository->update($user);
+            }
         }
 
-        setcookie('user_city_id', $city['CODE'], 86400 * 30);
 
-        if ($this->isAuthorized()) {
-            $user = $this->getCurrentUser();
-            $user->setLocation($city['CODE']);
-            $this->userRepository->update($user);
-        }
-
-        return $city;
+        return $city ?: false;
     }
 
     /**
      * @return array
      */
-    public function getSelectedCity() : array
+    public function getSelectedCity(): array
     {
         $cityCode = null;
         if ($_COOKIE['user_city_id']) {
@@ -200,17 +219,17 @@ class UserService implements
 
         return $this->locationService->getDefaultLocation();
     }
-    
+
     /**
      * @return UserRepository
      */
-    public function getUserRepository() : UserRepository
+    public function getUserRepository(): UserRepository
     {
         return $this->userRepository;
     }
-    
+
     /**
-     * @param Client    $client
+     * @param Client $client
      * @param User|null $user
      *
      * @throws InvalidIdentifierException
@@ -226,20 +245,14 @@ class UserService implements
             $user = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class)->getCurrentUser();
         }
         
-        try {
-            $birthday = $user->getBirthday();
-            if ($birthday instanceof Date) {
-                $client->birthDate = $birthday->format('d.m.Y');
-            }
-        } catch (EmptyDateException $e) {
-        }
+        $client->birthDate          = $user->getManzanaBirthday();
         $client->phone              = $user->getPersonalPhone();
         $client->firstName          = $user->getName();
         $client->secondName         = $user->getSecondName();
         $client->lastName           = $user->getLastName();
-        $client->genderCode         = $user->getGender();
+        $client->genderCode         = $user->getManzanaGender();
         $client->email              = $user->getEmail();
         $client->plLogin            = $user->getLogin();
-        $client->plRegistrationDate = $user->getDateRegister()->format('d.m.Y');
+        $client->plRegistrationDate = $user->getManzanaDateRegister();
     }
 }

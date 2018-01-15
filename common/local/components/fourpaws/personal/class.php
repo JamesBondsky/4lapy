@@ -25,7 +25,7 @@ class CPersonalCabinetComponent extends CBitrixComponent
             'bonus'     => 'bonus/',
             'orders'    => 'orders/',
             'pets'      => 'pets/',
-            'referal'   => 'referal/',
+            'referral'   => 'referral/',
             'subscribe' => 'subscribe/',
             'top'       => 'top/',
         ];
