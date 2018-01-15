@@ -8,7 +8,6 @@ namespace FourPaws\UserBundle\Entity;
 
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
-use FourPaws\UserBundle\Exception\EmptyDateException;
 use JMS\Serializer\Annotation as Serializer;
 use Misd\PhoneNumberBundle\Validator\Constraints\PhoneNumber;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -239,7 +238,7 @@ class User
      */
     public function getXmlId() : string
     {
-        return $this->xmlId;
+        return $this->xmlId ?? '';
     }
     
     /**
@@ -279,7 +278,7 @@ class User
      */
     public function getPersonalPhone() : string
     {
-        return (string)$this->personalPhone;
+        return $this->personalPhone ?? '';
     }
     
     /**
@@ -299,7 +298,7 @@ class User
      */
     public function getCheckWord() : string
     {
-        return $this->checkWord;
+        return $this->checkWord ?? '';
     }
     
     /**
@@ -440,7 +439,7 @@ class User
      */
     public function getName() : string
     {
-        return $this->name;
+        return $this->name ?? '';
     }
     
     /**
@@ -460,7 +459,7 @@ class User
      */
     public function getLastName() : string
     {
-        return $this->lastName;
+        return $this->lastName ?? '';
     }
     
     /**
@@ -480,7 +479,7 @@ class User
      */
     public function getSecondName() : string
     {
-        return $this->secondName;
+        return $this->secondName ?? '';
     }
     
     /**
@@ -533,7 +532,7 @@ class User
      */
     public function getGender()
     {
-        return $this->gender;
+        return $this->gender ?? null;
     }
     
     /**
@@ -549,7 +548,14 @@ class User
     }
     
     /**
-     * @throws EmptyDateException
+     * @return int|null
+     */
+    public function getManzanaGender()
+    {
+        return str_replace(['M','F'], [1,2], $this->getGender()) ?? null;
+    }
+    
+    /**
      * @return null|Date
      *
      */
@@ -573,6 +579,15 @@ class User
         $this->birthday = $birthday;
         
         return $this;
+    }
+    
+    public function getManzanaBirthday()
+    {
+        $birthday = $this->getBirthday();
+        if ($birthday instanceof Date) {
+            return new \DateTimeImmutable($birthday->format('Y-m-d\TH:i:s'));
+        }
+        return null;
     }
     
     /**
@@ -633,6 +648,14 @@ class User
         $this->emailConfirmed = $emailConfirmed;
         
         return $this;
+    }
+    
+    /**
+     * @return \DateTimeImmutable
+     */
+    public function getManzanaDateRegister() : \DateTimeImmutable
+    {
+        return new \DateTimeImmutable($this->getDateRegister()->format('Y-m-d\TH:i:s'));
     }
     
     /**

@@ -2,6 +2,8 @@
 
 namespace FourPaws\Catalog\Model\Filter\Abstraction;
 
+use Elastica\Aggregation\AbstractAggregation;
+use Elastica\Aggregation\Terms as AggTerms;
 use Elastica\Query\AbstractQuery;
 use Elastica\Query\Terms;
 use FourPaws\BitrixOrm\Model\HlbItemBase;
@@ -37,6 +39,13 @@ abstract class FilterBase extends HlbItemBase implements FilterInterface
                 ->withSort($fields['UF_SORT'] ?: $this->getSort())
                 ->withXmlId($fields['UF_CODE'] ?: $this->getXmlId());
         }
+    }
+
+    public function getAggRule(): AbstractAggregation
+    {
+        return (new AggTerms($this->getFilterCode()))
+            ->setField($this->getRuleCode())
+            ->setSize(9999);
     }
 
     /**

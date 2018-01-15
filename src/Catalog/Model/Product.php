@@ -26,6 +26,12 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 {
     use HitMetaInfoAwareTrait;
 
+    const AVAILABILITY_DELIVERY = 'delivery';
+
+    const AVAILABILITY_PICKUP = 'pickup';
+
+    const AVAILABILITY_BY_REQUEST = 'byRequest';
+
     /**
      * @var bool
      * @Type("bool")
@@ -267,6 +273,8 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 
     /**
      * @var string
+     * @Type("string")
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_COUNTRY = '';
 
@@ -355,6 +363,13 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @Groups({"elastic"})
      */
     protected $PROPERTY_LOW_TEMPERATURE = false;
+
+    /**
+     * @var bool
+     * @Type("bool")
+     * @Groups({"elastic"})
+     */
+    protected $PROPERTY_REFRIGERATED = false;
 
     /**
      * @var string
@@ -529,6 +544,22 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @Groups({"elastic"})
      */
     protected $suggest;
+
+    /**
+     * @var bool
+     * @Type("bool")
+     * @Accessor(getter="hasActions")
+     * @Groups({"elastic"})
+     */
+    protected $hasActions;
+
+    /**
+     * @var array
+     * @Type("array<string>")
+     * @Accessor(getter="getDeliveryAvailability")
+     * @Groups({"elastic"})
+     */
+    protected $deliveryAvailability;
 
     /**
      * @var string
@@ -935,6 +966,16 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
+     * Возвращает признак "Перевозить в холодильнике"
+     *
+     * @return bool
+     */
+    public function isRefrigerated()
+    {
+        return (bool)(int)$this->PROPERTY_REFRIGERATED;
+    }
+
+    /**
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
@@ -1232,15 +1273,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
             $this->offers = new ArrayCollection(
                 array_values(
                     (new OfferQuery())->withFilterParameter('=PROPERTY_CML2_LINK', $this->getId())
-                        ->exec()
-                        ->toArray()
+                                      ->exec()
+                                      ->toArray()
                 )
             );
         }
 
         return $this->offers;
     }
-
 
     /**
      * @return string
@@ -1258,6 +1298,41 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     public function setPackingCombination(string $packingCombination)
     {
         $this->PROPERTY_PACKING_COMBINATION = $packingCombination;
+
         return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getActions()
+    {
+        // @todo возвращать коллекцию акций, когда они будут реализованы
+        return [];
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasActions(): bool
+    {
+        return !empty($this->getActions());
+    }
+
+    /**
+     * @return array
+     */
+    public function getDeliveryAvailability(): array
+    {
+        // @todo учитывать региональные ограничения
+        $result = [self::AVAILABILITY_PICKUP];
+        if (!($this->isLowTemperatureRequired() || $this->isRefrigerated())) {
+            $result[] = self::AVAILABILITY_DELIVERY;
+        }
+        if ($this->isByRequest()) {
+            $result[] = self::AVAILABILITY_BY_REQUEST;
+        }
+
+        return $result;
     }
 }

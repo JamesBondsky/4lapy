@@ -124,6 +124,23 @@ $orderableBasket = $arResult['BASKET']->getOrderableItems();
                 }
                 ?>
             </section>
-        </main>
-    </div>
+        </main><?php
+        /**
+         * Просмотренные товары
+         */
+        $APPLICATION->IncludeFile(
+            'blocks/components/viewed_products.php',
+            [
+                'WRAP_CONTAINER_BLOCK' => 'N',
+                'WRAP_SECTION_BLOCK' => 'Y',
+                'SHOW_TOP_LINE' => 'Y',
+                'SHOW_BOTTOM_LINE' => 'N',
+            ],
+            [
+                'SHOW_BORDER' => false,
+                'NAME' => 'Блок просмотренных товаров',
+                'MODE' => 'php',
+            ]
+        );
+    ?></div>
 </div>

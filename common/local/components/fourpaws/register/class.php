@@ -18,6 +18,8 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
+use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Exception\SmsSendErrorException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
@@ -33,6 +35,7 @@ use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Exception\ValidationException;
@@ -211,16 +214,14 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     /**
      * @param array $data
      *
-     * @throws NotAuthorizedException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
-     * @throws ManzanaServiceException
-     * @throws ContactUpdateException
      * @throws ServiceCircularReferenceException
      * @throws \RuntimeException
      * @return JsonResponse
+     * @throws ContactUpdateException
      */
     public function ajaxRegister($data) : JsonResponse
     {
@@ -254,13 +255,24 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         
         /** @var ManzanaService $manzanaService */
         $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
-        $contactId      = $manzanaService->getContactIdByCurUser($userEntity);
-        $client         = new Client();
-        if ($contactId > 0) {
+        $client         = null;
+        try {
+            $contactId         = $manzanaService->getContactIdByCurUser();
+            $client            = new Client();
             $client->contactId = $contactId;
+        } catch (ManzanaServiceContactSearchMoreOneException $e) {
+        } catch (ManzanaServiceContactSearchNullException $e) {
+            $client = new Client();
+        } catch (ManzanaServiceException $e) {
+        } catch (NotAuthorizedException $e) {
         }
-        $this->currentUserProvider->setClientPersonalDataByCurUser($client, $userEntity);
-        $manzanaService->updateContact($client);
+        if ($client instanceof Client) {
+            $this->currentUserProvider->setClientPersonalDataByCurUser($client);
+            try {
+                $manzanaService->updateContact($client);
+            } catch (ManzanaServiceException $e) {
+            }
+        }
         
         ob_start();
         /** @noinspection PhpIncludeInspection */
@@ -279,9 +291,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     /**
      * @param Request $request
      *
-     * @throws NotAuthorizedException
      * @throws ContactUpdateException
-     * @throws ManzanaServiceException
      * @throws ValidationException
      * @throws InvalidIdentifierException
      * @throws ServiceNotFoundException
@@ -317,9 +327,15 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 'Некорректный номер телефона',
                 ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
             );
+        } catch (NotFoundConfirmedCodeException $e) {
+            return JsonErrorResponse::createWithData(
+                $e->getMessage(),
+                ['errors' => ['notFoundConfirmCode' => $e->getMessage()]]
+            );
         }
         
         $data = [
+            'ID'                 => $this->currentUserProvider->getCurrentUserId(),
             'UF_PHONE_CONFIRMED' => 'Y',
             'PERSONAL_PHONE'     => $phone,
         ];
@@ -328,13 +344,23 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         )) {
             /** @var ManzanaService $manzanaService */
             $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
-            $contactId      = $manzanaService->getContactIdByCurUser();
-            $client         = new Client();
-            if ($contactId > 0) {
+            $client         = null;
+            try {
+                $contactId         = $manzanaService->getContactIdByCurUser();
+                $client            = new Client();
                 $client->contactId = $contactId;
+            } catch (ManzanaServiceContactSearchMoreOneException $e) {
+            } catch (ManzanaServiceContactSearchNullException $e) {
+                $client = new Client();
+            } catch (ManzanaServiceException $e) {
+            } catch (NotAuthorizedException $e) {
             }
-            $this->currentUserProvider->setClientPersonalDataByCurUser($client);
-            $manzanaService->updateContact($client);
+            if ($client instanceof Client) {
+                $this->currentUserProvider->setClientPersonalDataByCurUser($client);
+                try {
+                    $manzanaService->updateContact($client);
+                } catch (ManzanaServiceException $e) {}
+            }
         }
         
         return JsonSuccessResponse::create('Телефон сохранен', 200, [], ['reload' => true]);
@@ -343,13 +369,12 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     /**
      * @param Request $request
      *
+     * @throws SystemException
      * @throws \RuntimeException
      * @throws GuzzleException
-     * @throws SystemException
      * @throws ServiceNotFoundException
      * @throws \Exception
      * @throws ApplicationCreateException
-     * @throws ManzanaServiceException
      * @throws WrongPhoneNumberException
      * @throws ServiceCircularReferenceException
      * @return JsonResponse
@@ -359,6 +384,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         $step  = $request->get('step', '');
         $phone = $request->get('phone', '');
         $mess  = '';
+        $title = 'Регистрация';
         switch ($step) {
             case 'step1':
             case 'addPhone':
@@ -394,7 +420,11 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 }
                 break;
         }
-        ob_start();
+        ob_start(); ?>
+        <header class="b-registration__header">
+            <h1 class="b-title b-title--h1 b-title--registration"><?= $title ?></h1>
+        </header>
+        <?php
         /** @noinspection PhpIncludeInspection */
         include_once App::getDocumentRoot() . '/local/components/fourpaws/register/templates/.default/include/' . $step
                      . '.php';
@@ -414,21 +444,23 @@ class FourPawsRegisterComponent extends \CBitrixComponent
      * @param string $confirmCode
      * @param string $phone
      *
+     * @throws SystemException
      * @throws \RuntimeException
      * @throws GuzzleException
-     * @throws SystemException
      * @throws ServiceNotFoundException
      * @throws \Exception
      * @throws ApplicationCreateException
-     * @throws ManzanaServiceException
      * @throws ServiceCircularReferenceException
      * @return JsonResponse|string
      */
     private function ajaxGetStep2($confirmCode, $phone)
     {
-        if (!App::getInstance()->getContainer()->get('recaptcha.service')->checkCaptcha()) {
+        $request   = Application::getInstance()->getContext()->getRequest();
+        $recaptcha = (string)$request->get('g-recaptcha-response');
+        if (!empty($recaptcha) && $request->offsetExists('g-recaptcha-response')
+            && !App::getInstance()->getContainer()->get('recaptcha.service')->checkCaptcha($recaptcha)) {
             return JsonErrorResponse::create(
-                'Проверка капчей не пройдена'
+                'Проверка капчи не пройдена'
             );
         }
         try {
@@ -452,18 +484,27 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 'Некорректный номер телефона',
                 ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
             );
+        } catch (NotFoundConfirmedCodeException $e) {
+            return JsonErrorResponse::createWithData(
+                $e->getMessage(),
+                ['errors' => ['expiredConfirmCode' => $e->getMessage()]]
+            );
+        } catch (Exception $e) {
         }
         $mess = 'Смс прошло проверку';
         
         /** @var ManzanaService $manzanaService */
         $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
-        $manzanaData    = $manzanaService->getUserDataByPhone($phone);
-        /** @var Clients $clients */
-        $clients = $manzanaData->clients;
-        if (\is_array($clients) && \count($clients) === 1) {
-            /** @noinspection PhpUnusedLocalVariableInspection */
-            /** @var Client $manzanaItem */
-            $manzanaItem = current($clients);
+        try {
+            $manzanaData = $manzanaService->getUserDataByPhone($phone);
+            /** @var Clients $clients */
+            $clients = $manzanaData->clients;
+            if (\is_array($clients) && \count($clients) === 1) {
+                /** @noinspection PhpUnusedLocalVariableInspection */
+                /** @var Client $manzanaItem */
+                $manzanaItem = current($clients);
+            }
+        } catch (ManzanaServiceException $e) {
         }
         
         return $mess;

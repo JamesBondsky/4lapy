@@ -8,6 +8,8 @@ namespace FourPaws\PersonalBundle\Service;
 
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
+use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\External\Manzana\Model\Client;
@@ -45,6 +47,78 @@ class PetService
     }
     
     /**
+     * @param array $data
+     *
+     * @return bool
+     * @throws ServiceNotFoundException
+     * @throws InvalidIdentifierException
+     * @throws ServiceCircularReferenceException
+     * @throws \RuntimeException
+     * @throws ConstraintDefinitionException
+     * @throws ApplicationCreateException
+     * @throws ValidationException
+     * @throws \Exception
+     * @throws BitrixRuntimeException
+     */
+    public function add(array $data) : bool
+    {
+        $res = $this->petRepository->setEntityFromData($data, Pet::class)->create();
+        if ($res) {
+            $this->updateManzanaPets();
+        }
+        
+        return $res;
+    }
+    
+    /**
+     * @throws ServiceNotFoundException
+     * @throws InvalidIdentifierException
+     * @throws \Exception
+     * @throws ApplicationCreateException
+     * @throws ConstraintDefinitionException
+     * @throws \RuntimeException
+     * @throws ServiceCircularReferenceException
+     */
+    protected function updateManzanaPets()
+    {
+        $container = App::getInstance()->getContainer();
+        $types     = [];
+        $pets      = [];
+        try {
+            $pets = $this->getCurUserPets();
+        } catch (NotAuthorizedException $e) {
+        }
+        if (\is_array($pets) && !empty($pets)) {
+            /** @var Pet $pet */
+            foreach ($pets as $pet) {
+                $types[] = $pet->getXmlIdType();
+            }
+        }
+        $manzanaService = $container->get('manzana.service');
+        
+        $client = null;
+        try {
+            $contactId         = $manzanaService->getContactIdByCurUser();
+            $client            = new Client();
+            $client->contactId = $contactId;
+        } catch (ManzanaServiceContactSearchMoreOneException $e) {
+        } catch (ManzanaServiceContactSearchNullException $e) {
+            $client = new Client();
+            $container->get(CurrentUserProviderInterface::class)->setClientPersonalDataByCurUser($client);
+        } catch (ManzanaServiceException $e) {
+        } catch (NotAuthorizedException $e) {
+        }
+        if ($client instanceof Client) {
+            $this->setClientPets($client, $types);
+            try {
+                $manzanaService->updateContact($client);
+            } catch (ManzanaServiceException $e) {
+            } catch (ContactUpdateException $e) {
+            }
+        }
+    }
+    
+    /**
      * @throws InvalidIdentifierException
      * @throws ServiceNotFoundException
      * @throws \Exception
@@ -59,135 +133,19 @@ class PetService
     }
     
     /**
-     * @param array $data
-     *
-     * @return bool
-     * @throws ServiceNotFoundException
-     * @throws InvalidIdentifierException
-     * @throws ServiceCircularReferenceException
-     * @throws \RuntimeException
-     * @throws NotAuthorizedException
-     * @throws ConstraintDefinitionException
-     * @throws ContactUpdateException
-     * @throws ManzanaServiceException
-     * @throws ApplicationCreateException
-     * @throws ValidationException
-     * @throws \Exception
-     * @throws BitrixRuntimeException
-     */
-    public function add(array $data) : bool
-    {
-        $res = $this->petRepository->setEntityFromData($data, Pet::class)->create();
-        if($res) {
-            $this->updateManzanaPets();
-        }
-        return $res;
-    }
-    
-    /**
-     * @param array $data
-     *
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws \RuntimeException
-     * @throws NotAuthorizedException
-     * @throws ContactUpdateException
-     * @throws ManzanaServiceException
-     * @throws ApplicationCreateException
-     * @throws ValidationException
-     * @throws InvalidIdentifierException
-     * @throws \Exception
-     * @throws BitrixRuntimeException
-     * @throws ConstraintDefinitionException
-     * @return bool
-     */
-    public function update(array $data) : bool
-    {
-        $res = $this->petRepository->setEntityFromData($data, Pet::class)->update();
-        if($res) {
-            $this->updateManzanaPets();
-        }
-        return $res;
-    }
-    
-    /**
-     * @param int $id
-     *
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws \RuntimeException
-     * @throws NotAuthorizedException
-     * @throws ContactUpdateException
-     * @throws ManzanaServiceException
-     * @throws ApplicationCreateException
-     * @throws InvalidIdentifierException
-     * @throws \Exception
-     * @throws BitrixRuntimeException
-     * @throws ConstraintDefinitionException
-     * @return bool
-     */
-    public function delete(int $id) : bool
-    {
-        $res = $this->petRepository->delete($id);
-        if($res) {
-            $this->updateManzanaPets();
-        }
-        return $res;
-    }
-    
-    /**
-     * @throws ServiceNotFoundException
-     * @throws InvalidIdentifierException
-     * @throws \Exception
-     * @throws ApplicationCreateException
-     * @throws ManzanaServiceException
-     * @throws ContactUpdateException
-     * @throws ConstraintDefinitionException
-     * @throws NotAuthorizedException
-     * @throws \RuntimeException
-     * @throws ServiceCircularReferenceException
-     */
-    protected function updateManzanaPets()
-    {
-        $container = App::getInstance()->getContainer();
-        $types = [];
-        $pets = $this->getCurUserPets();
-        if(\is_array($pets) && !empty($pets)) {
-            /** @var Pet $pet */
-            foreach ($pets as $pet){
-                $types[]=$pet->getXmlIdType();
-            }
-        }
-        $manzanaService = $container->get('manzana.service');
-        
-        $contactId = $manzanaService->getContactIdByCurUser();
-        if ($contactId >= 0) {
-            $client = new Client();
-            if ($contactId > 0) {
-                $client->contactId = $contactId;
-            } else {
-                $container->get(CurrentUserProviderInterface::class)->setClientPersonalDataByCurUser($client);
-            }
-            $manzanaService->setClientPets($client, $types);
-            $manzanaService->updateContact($client);
-        }
-    }
-    
-    /**
      * @param Client $client
      * @param array  $types
      */
     public function setClientPets(&$client, array $types)
     {
-        /** @todo set actual types*/
-        $baseTypes        =
-            [
-                'bird',
-                'cat',
-                'dog',
-                'fish',
-                'rodent',
-            ];
+        /** @todo set actual types */
+        $baseTypes        = [
+            'bird',
+            'cat',
+            'dog',
+            'fish',
+            'rodent',
+        ];
         $client->ffBird   = \in_array('bird', $types, true) ? 1 : 0;
         $client->ffCat    = \in_array('cat', $types, true) ? 1 : 0;
         $client->ffDog    = \in_array('dog', $types, true) ? 1 : 0;
@@ -204,5 +162,52 @@ class PetService
             
         }
         $client->ffOthers = $others;
+    }
+    
+    /**
+     * @param array $data
+     *
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws \RuntimeException
+     * @throws ApplicationCreateException
+     * @throws ValidationException
+     * @throws InvalidIdentifierException
+     * @throws \Exception
+     * @throws BitrixRuntimeException
+     * @throws ConstraintDefinitionException
+     * @return bool
+     */
+    public function update(array $data) : bool
+    {
+        $res = $this->petRepository->setEntityFromData($data, Pet::class)->update();
+        if ($res) {
+            $this->updateManzanaPets();
+        }
+        
+        return $res;
+    }
+    
+    /**
+     * @param int $id
+     *
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws \RuntimeException
+     * @throws ApplicationCreateException
+     * @throws InvalidIdentifierException
+     * @throws \Exception
+     * @throws BitrixRuntimeException
+     * @throws ConstraintDefinitionException
+     * @return bool
+     */
+    public function delete(int $id) : bool
+    {
+        $res = $this->petRepository->delete($id);
+        if ($res) {
+            $this->updateManzanaPets();
+        }
+        
+        return $res;
     }
 }

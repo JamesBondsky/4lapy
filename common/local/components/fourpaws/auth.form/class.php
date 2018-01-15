@@ -18,9 +18,10 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
+use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Exception\SmsSendErrorException;
-use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
@@ -32,7 +33,7 @@ use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
 use FourPaws\UserBundle\Exception\InvalidCredentialException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
-use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Exception\ValidationException;
@@ -97,10 +98,8 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 $this->arResult['STEP'] = 'begin';
             }
             
-            $currentUserService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
-            $userAuthService    = App::getInstance()->getContainer()->get(UserAuthorizationInterface::class);
-            if ($userAuthService->isAuthorized()) {
-                $curUser = $currentUserService->getCurrentUser();
+            if ($this->userAuthorizationService->isAuthorized()) {
+                $curUser = $this->currentUserProvider->getCurrentUser();
                 if (!empty($curUser->getExternalAuthId() && empty($curUser->getPersonalPhone()))) {
                     $this->arResult['STEP'] = 'addPhone';
                 } else {
@@ -251,8 +250,8 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         }
         
         ob_start();
-        require_once App::getInstance()->getRootDir()
-                     . '/local/components/fourpaws/auth.form/templates/.default/include/addPhone.php';
+        require_once App::getDocumentRoot()
+                     . '/local/components/fourpaws/auth.form/templates/popup/include/addPhone.php';
         $html = ob_get_clean();
         
         return JsonSuccessResponse::createWithData('Необходимо заполнить номер телефона', ['html' => $html]);
@@ -332,8 +331,6 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      *
      * @param string $confirmCode
      *
-     * @throws ContactUpdateException
-     * @throws ManzanaServiceException
      * @throws ValidationException
      * @throws InvalidIdentifierException
      * @throws ServiceNotFoundException
@@ -363,6 +360,11 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 $e->getMessage(),
                 ['errors' => ['expiredConfirmCode' => $e->getMessage()]]
             );
+        } catch (NotFoundConfirmedCodeException $e) {
+            return JsonErrorResponse::createWithData(
+                $e->getMessage(),
+                ['errors' => ['notFoundConfirmCode' => $e->getMessage()]]
+            );
         } catch (WrongPhoneNumberException $e) {
             return JsonErrorResponse::createWithData(
                 $e->getMessage(),
@@ -379,17 +381,21 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             SerializerBuilder::create()->build()->fromArray($data, User::class)
         )) {
             /** @var ManzanaService $manzanaService */
+            $contactId      = -2;
             $manzanaService = $container->get('manzana.service');
-            $contactId      = $manzanaService->getContactIdByPhone($phone);
-            if($contactId >= 0) {
+            $client         = null;
+            try {
+                $contactId         = $manzanaService->getContactIdByPhone($phone);
+                $client            = new Client();
+                $client->contactId = $contactId;
+                $client->phone     = $phone;
+            } catch (ManzanaServiceContactSearchMoreOneException $e) {
+            } catch (ManzanaServiceContactSearchNullException $e) {
                 $client = new Client();
-                if ($contactId > 0) {
-                    $client->contactId = $contactId;
-                    $client->phone = $phone;
-                }
-                else{
-                    $this->currentUserProvider->setClientPersonalDataByCurUser($client);
-                }
+                $this->currentUserProvider->setClientPersonalDataByCurUser($client);
+            } catch (ManzanaServiceException $e) {
+            }
+            if ($client instanceof Client) {
                 $manzanaService->updateContact($client);
             }
         }
@@ -408,8 +414,8 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      */
     public function ajaxGet($request) : JsonResponse
     {
-        $mess = '';
-        $step = $request->get('step', '');
+        $mess  = '';
+        $step  = $request->get('step', '');
         $phone = $request->get('phone', '');
         switch ($step) {
             case 'sendSmsCode':

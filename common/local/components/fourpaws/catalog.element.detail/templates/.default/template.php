@@ -10,6 +10,7 @@
  */
 
 use FourPaws\App\Application;
+use FourPaws\Helpers\WordHelper;
 use FourPaws\Location\LocationService;
 use FourPaws\App\Templates\ViewsEnum;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
@@ -207,7 +208,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                         <span class="b-ruble b-ruble--product-information">&nbsp₽</span>
                         <?php if ($offer->getBonuses()) { ?>
                             <span class="b-product-information__bonus">+<?= $offer->getBonuses(
-                                ) ?> <?= \FourPaws\Helpers\WordHelper::declension(
+                                ) ?> <?= WordHelper::declension(
                                     $offer->getBonuses(),
                                     ['бонус', 'бонуса', 'бонусов']
                                 ) ?>

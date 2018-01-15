@@ -14,7 +14,7 @@ $APPLICATION->SetTitle('Профиль');
             'orders'    => 'orders/',
             'personal'  => '',
             'pets'      => 'pets/',
-            'referal'   => 'referal/',
+            'referral'   => 'referral/',
             'subscribe' => 'subscribe/',
             'top'       => 'top/',
         ],

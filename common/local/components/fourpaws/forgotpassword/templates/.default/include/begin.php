@@ -17,22 +17,24 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         <div class="b-choice-recovery">
             <input class="b-choice-recovery__input js-recovery-telephone js-no-valid"
                    id="registration-recovery-telephone"
-                   type="radio"
                    name="recovery"
-                   value="phone"
-                   checked="checked" />
+                   checked="checked"
+                   data-url="/ajax/user/auth/forgotPassword/"
+                   type="radio"
+                   value="phone" />
             <label class="b-choice-recovery__label b-choice-recovery__label--left"
                    for="registration-recovery-telephone">Телефон</label>
             <input class="b-choice-recovery__input js-recovery-email js-no-valid"
                    id="registration-recovery-email"
+                   data-url="/ajax/user/auth/forgotPassword/"
                    type="radio"
                    value="email"
                    name="recovery" />
             <label class="b-choice-recovery__label b-choice-recovery__label--right" for="registration-recovery-email">Почта</label>
         </div>
         <div class="b-input-line b-input-line--create-password b-input-line--recovery js-telephone-recovery">
-            <div class="b-input b-input--registration-form b-kek">
-                <input class="b-input__input-field b-input__input-field--registration-form b-kek"
+            <div class="b-input b-input--registration-form">
+                <input class="b-input__input-field b-input__input-field--registration-form"
                        type="tel"
                        id="registration-tel-recovery"
                        name="phone"
@@ -43,12 +45,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             </div>
         </div>
         <div class="b-input-line b-input-line--create-password b-input-line--recovery js-email-recovery">
-            <div class="b-input b-input--registration-form b-kek">
-                <input class="b-input__input-field b-input__input-field--registration-form b-kek"
+            <div class="b-input b-input--registration-form">
+                <input class="b-input__input-field b-input__input-field--registration-form js-no-valid"
                        type="email"
                        id="registration-email-recovery"
-                       name="email"
-                       placeholder="" />
+                       placeholder=""
+                       name="email" />
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>

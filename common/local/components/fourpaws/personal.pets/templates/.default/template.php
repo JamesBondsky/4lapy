@@ -19,7 +19,16 @@ if (!\is_array($arResult['ITEMS']) || empty($arResult['ITEMS'])) {
     <?php /** @var Pet $pet */
     foreach ($arResult['ITEMS'] as $pet) {
         ?>
-        <div class="b-account-border-block b-account-border-block--pet js-parent-cont">
+        <div class="b-account-border-block b-account-border-block--pet js-parent-cont js-parent-cont--pet js-parent-cont"
+             data-image="<?= $pet->getResizeImgPath() ?>"
+             data-name-pet="<?= $pet->getName() ?>"
+             data-type="<?= $pet->getType() ?>"
+             data-breed="<?= $pet->getBreed() ?>"
+             data-data="<?php $birthday = $pet->getBirthday();
+             echo $birthday instanceof Date ? $birthday->format('d.m.Y') : '' ?>"
+             data-male="<?= $pet->getGender() === 'M' ? 1 : 0 ?>"
+             data-female="<?= $pet->getGender() === 'F' ? 1 : 0 ?>"
+             data-id="<?= $pet->getId() ?>">
             <div class="b-account-border-block__content b-account-border-block__content--pet js-parent-cont">
                 <div class="b-account-border-block__image-wrap">
                     <img class="b-account-border-block__image js-image-wrapper"
@@ -43,16 +52,7 @@ if (!\is_array($arResult['ITEMS']) || empty($arResult['ITEMS'])) {
                        href="javascript:void(0);"
                        data-url="/ajax/personal/pets/update/"
                        title="Редактировать"
-                       data-popup-id="edit-popup-pet"
-                       data-photo="<?= $pet->getResizeImgPath() ?>"
-                       data-id="<?= $pet->getId() ?>"
-                       data-name="<?= $pet->getName() ?>"
-                       data-type="<?= $pet->getType() ?>"
-                       data-birthday="<?php $birthday = $pet->getBirthday();
-                       echo $birthday instanceof Date ? $birthday->format('d.m.Y') : '' ?>"
-                       data-breed="<?= $pet->getBreed() ?>"
-                       data-gender="<?= $pet->getGender() ?>"
-                    >
+                       data-popup-id="edit-popup-pet">
                     <span class="b-icon b-icon--account-block">
                         <?= new SvgDecorator('icon-edit', 21, 21) ?>
                     </span>
@@ -86,7 +86,7 @@ if (!\is_array($arResult['ITEMS']) || empty($arResult['ITEMS'])) {
                 <a class="b-link b-link--account-del b-link--account-del"
                    href="javascript:void(0)"
                    title="Удалить"
-                   data-url="/ajax/personal/pets/add/delete/"
+                   data-url="/ajax/personal/pets/add/delete/?id=<?= $pet->getId() ?>"
                    data-id="<?= $pet->getId() ?>"
                 >
                     <span class="b-link__text b-link__text--account-del">Удалить</span>
@@ -94,7 +94,7 @@ if (!\is_array($arResult['ITEMS']) || empty($arResult['ITEMS'])) {
             </div>
         </div>
     <?php } ?>
-    <div class="b-account-border-block b-account-border-block--dashed">
+    <div class="b-account-border-block b-account-border-block--dashed b-account-border-block--dashed">
         <div class="b-account-border-block__content b-account-border-block__content--dashed">
             <div class="b-account-border-block__title b-account-border-block__title--dashed">
                 Зачем добавлять питомца?

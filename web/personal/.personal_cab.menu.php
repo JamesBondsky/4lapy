@@ -27,7 +27,7 @@ $aMenuLinks = [
     ],
     [
         'Реферальная программа',
-        '/personal/referal/',
+        '/personal/referral/',
     ],
     [
         'Подписка на доставку',
