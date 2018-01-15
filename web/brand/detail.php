@@ -71,4 +71,24 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
         )
     );?>
 </div>
+<div class="b-catalog">
+    <?php
+    /**
+     * Просмотренные товары
+     */
+    $APPLICATION->IncludeComponent(
+        'bitrix:main.include',
+        '',
+        [
+            'AREA_FILE_SHOW' => 'file',
+            'PATH' => '/local/include/blocks/viewed_products.php',
+            'EDIT_TEMPLATE' => '',
+        ],
+        null,
+        [
+            'HIDE_ICONS' => 'Y',
+        ]
+    );
+    ?>
+</div>
 <?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>

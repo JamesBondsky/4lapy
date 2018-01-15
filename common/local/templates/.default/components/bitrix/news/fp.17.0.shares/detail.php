@@ -5,13 +5,17 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 /**
  * Страница карточки акции в разделе Акции
  *
- * @updated: 01.01.2018
+ * @updated: 12.01.2018
  */
+
+/** @global $APPLICATION */
+/** @var array $arParams */
+/** @var array $arResult */
+/** @var CBitrixComponent $component */
 
 $APPLICATION->SetPageProperty('PUBLICATION_DETAIL_CONTAINER_1', 'b-container b-container--news-detail');
 $APPLICATION->SetPageProperty('PUBLICATION_DETAIL_CONTAINER_2', 'b-detail-page');
 
-/** @var CBitrixComponent $component */
 $this->setFrameMode(true);
 
 $APPLICATION->IncludeComponent(
@@ -70,18 +74,14 @@ $APPLICATION->IncludeComponent(
  * Распродажа
  */
 if (isset($arParams['SHOW_PRODUCTS_SALE']) && $arParams['SHOW_PRODUCTS_SALE'] === 'Y') {
-    $APPLICATION->IncludeComponent(
-    	'bitrix:main.include',
-	    '',
-    	array(
-	    	'AREA_FILE_SHOW' => 'file',
-		    'PATH' => '/local/templates/.default/blocks/components/products_sale.php',
-    		'EDIT_TEMPLATE' => '',
-	    ),
-    	null,
-    	array(
-	    	'HIDE_ICONS' => 'Y',
-    	)
+    $APPLICATION->IncludeFile(
+        'blocks/components/products_sale.php',
+        [],
+        [
+            'SHOW_BORDER' => false,
+            'NAME' => 'Блок распродажи товаров',
+            'MODE' => 'php',
+        ]
     );
 }
 
@@ -89,17 +89,13 @@ if (isset($arParams['SHOW_PRODUCTS_SALE']) && $arParams['SHOW_PRODUCTS_SALE'] ==
  * Рассказать в соцсетях
  */
 if (isset($arParams['USE_SHARE']) && $arParams['USE_SHARE'] === 'Y') {
-    $APPLICATION->IncludeComponent(
-    	'bitrix:main.include',
-	    '',
-    	array(
-	    	'AREA_FILE_SHOW' => 'file',
-		    'PATH' => '/local/templates/.default/blocks/components/social_share.php',
-    		'EDIT_TEMPLATE' => '',
-	    ),
-    	null,
-    	array(
-	    	'HIDE_ICONS' => 'Y',
-    	)
+    $APPLICATION->IncludeFile(
+        'blocks/components/social_share.php',
+        [],
+        [
+            'SHOW_BORDER' => false,
+            'NAME' => 'Блок Рассказать в соцсетях',
+            'MODE' => 'php',
+        ]
     );
 }
