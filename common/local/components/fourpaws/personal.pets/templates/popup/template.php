@@ -1,3 +1,4 @@
+<?php use FourPaws\Decorators\SvgDecorator;?>
 <section class="b-popup-pick-city b-popup-pick-city--add-pet js-popup-section" data-popup="edit-popup-pet">
     <a class="b-popup-pick-city__close b-popup-pick-city__close--add-pet js-close-popup"
        href="javascript:void(0);"
@@ -6,7 +7,7 @@
         <header class="b-registration__header">
             <h1 class="b-title b-title--h1 b-title--registration">Дэймон</h1>
         </header>
-        <form class="b-registration__form js-form-validation js-add-pet-query" method="post" data-url="">
+        <form class="b-registration__form js-form-validation js-add-pet-query" method="post" data-url="/ajax/personal/pets/add">
             <input class="js-data-id js-no-valid" name="ID" value="" type="hidden">
             <div class="b-registration__wrapper-avatar">
                 <div class="b-registration__add-photos js-img">
