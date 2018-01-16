@@ -81,9 +81,21 @@ $APPLICATION->IncludeComponent('bitrix:news.list',
                                ['HIDE_ICONS' => 'Y']);
 
 /**
- * @todo Популярные товары. Заменить компонентом и удалить файл.
+ * Популярные товары
  */
-require_once '_temp_popular.php';
+$APPLICATION->IncludeComponent(
+    'bitrix:main.include',
+    '',
+    [
+        'AREA_FILE_SHOW' => 'file',
+        'PATH' => '/local/include/blocks/index.popular_products.php',
+        'EDIT_TEMPLATE' => '',
+    ],
+    null,
+    [
+        'HIDE_ICONS' => 'Y',
+    ]
+);
 
 /**
  * @todo Распродажа (товары со скидкой). Заменить компонентом и удалить файл.
