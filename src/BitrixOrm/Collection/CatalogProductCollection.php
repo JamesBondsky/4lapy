@@ -4,17 +4,17 @@ namespace FourPaws\BitrixOrm\Collection;
 
 use FourPaws\App\Application;
 use FourPaws\BitrixOrm\Model\CatalogProduct;
-use JMS\Serializer\ArrayTransformerInterface;
+use JMS\Serializer\DeserializationContext;
 
 class CatalogProductCollection extends CdbResultCollectionBase
 {
-    private $transformer;
+    private $serializer;
 
     public function __construct(\CDBResult $result)
     {
         parent::__construct($result);
         /** @noinspection PhpUnhandledExceptionInspection */
-        $this->transformer = Application::getInstance()->getContainer()->get(ArrayTransformerInterface::class);
+        $this->serializer = Application::getInstance()->getContainer()->get('jms_serializer');
     }
 
     /**
@@ -23,7 +23,11 @@ class CatalogProductCollection extends CdbResultCollectionBase
     protected function fetchElement(): \Generator
     {
         while ($fields = $this->getCdbResult()->Fetch()) {
-            yield $this->transformer->fromArray($fields, CatalogProduct::class, ['read']);
+            yield $this->serializer->fromArray(
+                $fields,
+                CatalogProduct::class,
+                DeserializationContext::create()->setGroups(['read'])
+            );
         }
     }
 }

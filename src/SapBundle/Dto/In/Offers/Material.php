@@ -6,7 +6,9 @@
 
 namespace FourPaws\SapBundle\Dto\In\Offers;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use FourPaws\SapBundle\Exception\NotFoundBasicUomException;
 use JMS\Serializer\Annotation as Serializer;
 
 /**
@@ -31,17 +33,6 @@ class Material
      * @var string
      */
     protected $offerXmlId = '';
-
-    /**
-     * Старый номер материала
-     *
-     * @Serializer\XmlAttribute()
-     * @Serializer\Type("string")
-     * @Serializer\SerializedName("Old_Number")
-     *
-     * @var string
-     */
-    protected $oldOfferXmlId = '';
 
     /**
      * Наименование торгового предложения
@@ -118,19 +109,6 @@ class Material
      * @var int
      */
     protected $countInPack = 0;
-
-    /**
-     * Выгружать в ИМ
-     * На данный момент не используется
-     *
-     * @Serializer\XmlAttribute()
-     * @Serializer\SerializedName("For_IM")
-     * @Serializer\Type("sap_bool")
-     *
-     * @internal
-     * @var bool
-     */
-    protected $uploadToIm = false;
 
     /**
      * Не выгружать в ИМ
@@ -275,25 +253,6 @@ class Material
     /**
      * @return string
      */
-    public function getOldOfferXmlId(): string
-    {
-        return $this->oldOfferXmlId;
-    }
-
-    /**
-     * @param string $oldOfferXmlId
-     *
-     * @return Material
-     */
-    public function setOldOfferXmlId(string $oldOfferXmlId): Material
-    {
-        $this->oldOfferXmlId = $oldOfferXmlId;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
     public function getOfferName(): string
     {
         return $this->offerName;
@@ -402,25 +361,6 @@ class Material
     public function setCountInPack(int $countInPack): Material
     {
         $this->countInPack = $countInPack;
-        return $this;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isUploadToIm(): bool
-    {
-        return $this->uploadToIm;
-    }
-
-    /**
-     * @param bool $uploadToIm
-     *
-     * @return Material
-     */
-    public function setUploadToIm(bool $uploadToIm): Material
-    {
-        $this->uploadToIm = $uploadToIm;
         return $this;
     }
 
@@ -593,6 +533,43 @@ class Material
     {
         $this->retailPrice = $retailPrice;
         return $this;
+    }
+
+    /**
+     * @return BarCode[]|Collection
+     */
+    public function getAllBarcodes(): Collection
+    {
+        $newCollection = new ArrayCollection();
+        $collection = $this->getUnitsOfMeasure()->map(function (UnitOfMeasurement $uom) {
+            return $uom->getBarCodes();
+        });
+        foreach ($collection as $barCodes) {
+            foreach ($barCodes as $barCode) {
+                $newCollection->add($barCode);
+            }
+        }
+        return $newCollection;
+    }
+
+    /**
+     * @throws \FourPaws\SapBundle\Exception\NotFoundBasicUomException
+     * @return UnitOfMeasurement
+     */
+    public function getBasicUnitOfMeasure(): UnitOfMeasurement
+    {
+        $uom = $this->getUnitsOfMeasure()->filter(function (UnitOfMeasurement $unitOfMeasurement) {
+            return $unitOfMeasurement->getAlternativeUnitCode() === $this->getBasicUnitOfMeasurementCode();
+        })->current();
+
+        if ($uom) {
+            return $uom;
+        }
+        throw new NotFoundBasicUomException(sprintf(
+            'No basic unit of measure "%s" for material "%s"',
+            $this->getBasicUnitOfMeasurementCode(),
+            $this->getOfferXmlId()
+        ));
     }
 
     /**

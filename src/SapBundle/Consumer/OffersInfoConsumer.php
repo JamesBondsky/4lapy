@@ -3,7 +3,6 @@
 namespace FourPaws\SapBundle\Consumer;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
-use FourPaws\Catalog\Model\Offer;
 use FourPaws\SapBundle\Dto\In\Offers\Materials;
 use FourPaws\SapBundle\Service\Materials\OfferService;
 use FourPaws\SapBundle\Service\ReferenceService;
@@ -46,9 +45,8 @@ class OffersInfoConsumer implements ConsumerInterface, LoggerAwareInterface
                  * Создаем недостающие справочные даныне
                  */
                 $this->referenceService->fillFromMaterial($material);
+                $offer = $this->offerService->getByMaterial($material);
 
-                $offer = new Offer();
-                $this->offerService->fillFromMaterial($offer, $material);
                 dump($offer);
 //                $this->offerService->createFromMaterial($material);
             } catch (\Exception $exception) {

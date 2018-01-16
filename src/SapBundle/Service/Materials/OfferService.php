@@ -8,9 +8,8 @@ use FourPaws\BitrixOrm\Model\CatalogProduct;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\SapBundle\Dto\In\Offers\BarCode;
 use FourPaws\SapBundle\Dto\In\Offers\Material;
-use FourPaws\SapBundle\Dto\In\Offers\UnitOfMeasurement;
 use FourPaws\SapBundle\Enum\SapOfferProperty;
-use FourPaws\SapBundle\Exception\RuntimeException;
+use FourPaws\SapBundle\Repository\OfferRepository;
 use FourPaws\SapBundle\Service\ReferenceService;
 use Psr\Log\LoggerAwareInterface;
 
@@ -27,13 +26,31 @@ class OfferService implements LoggerAwareInterface
      * @var ReferenceService
      */
     private $referenceService;
+    /**
+     * @var OfferRepository
+     */
+    private $offerRepository;
 
     public function __construct(
         SlugifyInterface $slugify,
-        ReferenceService $referenceService
+        ReferenceService $referenceService,
+        OfferRepository $offerRepository
     ) {
         $this->slugify = $slugify;
         $this->referenceService = $referenceService;
+        $this->offerRepository = $offerRepository;
+    }
+
+    /**
+     * @param Material $material
+     *
+     * @return Offer
+     */
+    public function getByMaterial(Material $material): Offer
+    {
+        $offer = $this->offerRepository->findByXmlId($material->getOfferXmlId()) ?: new Offer();
+        $this->fillFromMaterial($offer, $material);
+        return $offer;
     }
 
     /**
@@ -45,80 +62,45 @@ class OfferService implements LoggerAwareInterface
     public function fillFromMaterial(Offer $offer, Material $material)
     {
         $offer
-            ->withActive($material->isNotUploadToIm())
+            ->withActive(!$material->isNotUploadToIm())
             ->withName($material->getOfferName())
-            ->withBarcodes($this->getBarcodes($material)->toArray())
             ->withXmlId($material->getOfferXmlId())
             ->withCode($offer->getCode() ?: $this->slugify->slugify($material->getOfferName()))
             ->withMultiplicity($material->getCountInPack());
 
         /**
-         * @todo На данный момент не описания полей по SAP
+         * @todo На данный момент нет описания полей по SAP
          * $offer->withFlavourCombination();
          * $offer->withColourCombination();
          */
 
+        /**
+         * @todo Brand!
+         */
+
+        $this->fillBarCodes($offer, $material);
         $this->fillVolume($offer, $material);
         $this->fillReferenceProperties($offer, $material);
+        $this->fillOfferCatalogProduct($offer, $material);
     }
 
-    protected function getCatalogProduct(Offer $offer, Material $material)
+    protected function fillOfferCatalogProduct(Offer $offer, Material $material)
     {
         $catalogProduct = $offer->getId() ? $offer->getCatalogProduct() : new CatalogProduct();
-        $basicUom = $this->getBasicUnitOfMeasure($material);
+        $basicUom = $material->getBasicUnitOfMeasure();
         $catalogProduct
             ->setWidth($basicUom->getWidth() * 1000)
             ->setHeight($basicUom->getHeight() * 1000)
             ->setLength($basicUom->getLength() * 1000)
             ->setWeight($basicUom->getGrossWeight() * 1000);
+        $offer->withCatalogProduct($catalogProduct);
     }
-
 
     protected function fillVolume(Offer $offer, Material $material)
     {
-        $offer->withVolume($this->getBasicUnitOfMeasure($material)->getVolume());
+        $offer->withVolume($material->getBasicUnitOfMeasure()->getVolume());
     }
 
-    protected function getBarcodes(Material $material)
-    {
-        $collection = $material->getUnitsOfMeasure()->map(function (UnitOfMeasurement $unitOfMeasurement) {
-            return $unitOfMeasurement->getBarCodes()->map(function (BarCode $barcode) {
-                return $barcode->getValue();
-            });
-        });
-        foreach ($collection as $key => $unitBarcodes) {
-            if (\is_array($unitBarcodes)) {
-                foreach ($unitBarcodes as $barcode) {
-                    $collection->add($barcode);
-                }
-                $collection->remove($key);
-            }
-        }
-        return $collection->filter(function ($string) {
-            return \is_string($string) && $string;
-        });
-    }
-
-    /**
-     * @param Material $material
-     *
-     * @throws \FourPaws\SapBundle\Exception\RuntimeException
-     * @return UnitOfMeasurement
-     */
-    protected function getBasicUnitOfMeasure(Material $material): UnitOfMeasurement
-    {
-        $basicCode = $material->getBasicUnitOfMeasurementCode() ?: Material::DEFAULT_BASE_UNIT_OF_MEASUREMENT_CODE;
-        $basicUom = $material
-            ->getUnitsOfMeasure()
-            ->filter(function (UnitOfMeasurement $unitOfMeasurement) use ($basicCode) {
-                return $unitOfMeasurement->getAlternativeUnitCode() === $basicCode;
-            })->current();
-
-        if ($basicUom) {
-            return $basicUom;
-        }
-        throw new RuntimeException(sprintf('No basic Unity Of measure for material %s', $material->getOfferXmlId()));
-    }
 
     protected function fillReferenceProperties(Offer $offer, Material $material)
     {
@@ -140,5 +122,17 @@ class OfferService implements LoggerAwareInterface
                 SapOfferProperty::SEASON_YEAR,
                 $material
             ));
+    }
+
+    /**
+     * @param Offer    $offer
+     * @param Material $material
+     */
+    protected function fillBarCodes(Offer $offer, Material $material)
+    {
+        $barcodes = $material->getAllBarcodes()->map(function (BarCode $barCode) {
+            return $barCode->getValue();
+        })->toArray();
+        $offer->withBarcodes($barcodes);
     }
 }

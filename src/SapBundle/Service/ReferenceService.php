@@ -104,6 +104,7 @@ class ReferenceService implements LoggerAwareInterface
     /**
      * @param Property $property
      *
+     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
      * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
      * @throws \FourPaws\SapBundle\Exception\LogicException
      * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
@@ -112,7 +113,7 @@ class ReferenceService implements LoggerAwareInterface
     public function getPropertyValueHlbElement(Property $property): Collection
     {
         $values = $property->getValues()->filter(function (PropertyValue $propertyValue) {
-            return $propertyValue->getCode() && $propertyValue->getName();
+            return $propertyValue->getName();
         });
         $collection = new ArrayCollection();
         foreach ($values as $value) {
@@ -125,6 +126,7 @@ class ReferenceService implements LoggerAwareInterface
     /**
      * @param Material $material
      *
+     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
      * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
      * @throws \FourPaws\SapBundle\Exception\LogicException
      * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
@@ -139,37 +141,11 @@ class ReferenceService implements LoggerAwareInterface
     }
 
     /**
-     * @param string $propertyCode
-     * @param string $name
-     *
-     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
-     * @return string
-     */
-    protected function getUniqueCode(string $propertyCode, string $name): string
-    {
-        $i = 0;
-        $code = $this->slugify->slugify($name);
-        do {
-            if ($i > 10) {
-                $resultCode = md5($code . microtime());
-                break;
-            }
-            $resultCode = $code . ($i > 0 ? $i : '');
-            $result = $this->referenceStorage->findByCallable(
-                $propertyCode,
-                function (HlbReferenceItem $item) use ($resultCode) {
-                    return $item->getCode() === $resultCode;
-                }
-            );
-        } while ($result->count());
-        return $resultCode;
-    }
-
-    /**
      * @param string   $code
      * @param Material $material
      * @param bool     $multiple
      *
+     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
      * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
      * @throws \FourPaws\SapBundle\Exception\LogicException
      * @throws \RuntimeException
@@ -197,5 +173,32 @@ class ReferenceService implements LoggerAwareInterface
                 );
         }
         return $result->first() ?: '';
+    }
+
+    /**
+     * @param string $propertyCode
+     * @param string $name
+     *
+     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
+     * @return string
+     */
+    protected function getUniqueCode(string $propertyCode, string $name): string
+    {
+        $i = 0;
+        $code = $this->slugify->slugify($name);
+        do {
+            if ($i > 10) {
+                $resultCode = md5($code . microtime());
+                break;
+            }
+            $resultCode = $code . ($i > 0 ? $i : '');
+            $result = $this->referenceStorage->findByCallable(
+                $propertyCode,
+                function (HlbReferenceItem $item) use ($resultCode) {
+                    return $item->getCode() === $resultCode;
+                }
+            );
+        } while ($result->count());
+        return $resultCode;
     }
 }

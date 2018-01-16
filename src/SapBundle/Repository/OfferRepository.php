@@ -145,7 +145,7 @@ class OfferRepository
     /**
      * @return int
      */
-    protected function getIblockId(): int
+    public function getIblockId(): int
     {
         /** @noinspection PhpUnhandledExceptionInspection */
         /** @noinspection ExceptionsAnnotatingAndHandlingInspection */

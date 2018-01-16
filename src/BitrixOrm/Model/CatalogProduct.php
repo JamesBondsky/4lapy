@@ -9,7 +9,7 @@ class CatalogProduct
     /**
      * @Serializer\SerializedName("ID")
      * @Serializer\Type("int")
-     * @Serializer\Groups("create","read")
+     * @Serializer\Groups({"create","read"})
      *
      * @var int
      */
@@ -20,7 +20,7 @@ class CatalogProduct
      *
      * @Serializer\SerializedName("WEIGHT")
      * @Serializer\Type("double")
-     * @Serializer\Groups("create","read","update")
+     * @Serializer\Groups({"create","read","update"})
      *
      * @var double
      */
@@ -31,7 +31,7 @@ class CatalogProduct
      *
      * @Serializer\SerializedName("HEIGHT")
      * @Serializer\Type("double")
-     * @Serializer\Groups("create","read","update")
+     * @Serializer\Groups({"create","read","update"})
      *
      * @var double
      */
@@ -42,7 +42,7 @@ class CatalogProduct
      *
      * @Serializer\SerializedName("WIDTH")
      * @Serializer\Type("double")
-     * @Serializer\Groups("create","read","update")
+     * @Serializer\Groups({"create","read","update"})
      *
      * @var double
      */
@@ -53,7 +53,7 @@ class CatalogProduct
      *
      * @Serializer\SerializedName("LENGTH")
      * @Serializer\Type("double")
-     * @Serializer\Groups("create","read","update")
+     * @Serializer\Groups({"create","read","update"})
      *
      * @var double
      */
@@ -64,7 +64,7 @@ class CatalogProduct
      *
      * @Serializer\SerializedName("ELEMENT_IBLOCK_ID")
      * @Serializer\Type("int")
-     * @Serializer\Groups("read")
+     * @Serializer\Groups({"read"})
      *
      * @var int
      */
@@ -75,7 +75,7 @@ class CatalogProduct
      *
      * @Serializer\SerializedName("ELEMENT_XML_ID")
      * @Serializer\Type("int")
-     * @Serializer\Groups("read")
+     * @Serializer\Groups({"read"})
      *
      * @var string
      */
@@ -86,7 +86,7 @@ class CatalogProduct
      *
      * @Serializer\SerializedName("ELEMENT_NAME")
      * @Serializer\Type("int")
-     * @Serializer\Groups("read")
+     * @Serializer\Groups({"read"})
      *
      * @var string
      */
@@ -97,7 +97,7 @@ class CatalogProduct
      *
      * @Serializer\SerializedName("MEASURE")
      * @Serializer\Type("int")
-     * @Serializer\Groups("create","read","update")
+     * @Serializer\Groups({"create","read","update"})
      *
      * @var int
      */
