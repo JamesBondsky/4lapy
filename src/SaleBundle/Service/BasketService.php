@@ -6,10 +6,10 @@ namespace FourPaws\SaleBundle\Service;
 use Bitrix\Catalog\Product\CatalogProvider;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\Compatible\DiscountCompatibility;
-use Bitrix\Sale\Fuser;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 
 /**
@@ -18,12 +18,8 @@ use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
  */
 class BasketService
 {
-    /** @var int */
-    private $fUser = null;
     /** @var Basket */
     private $basket = null;
-    /** @var array */
-    private $context = null;
     /**
      * @var CurrentUserProviderInterface
      */
@@ -173,72 +169,19 @@ class BasketService
     }
 
     /**
-     *
-     *
-     * @return string
-     */
-    public static function getMiniBasketHtml(): string
-    {
-        global $APPLICATION;
-        ob_start();
-        $APPLICATION->IncludeComponent(
-            'bitrix:sale.basket.basket.line',
-            'header.basket',
-            [
-                'COMPONENT_TEMPLATE' => 'header.basket',
-                'PATH_TO_BASKET' => '/cart/',
-                'PATH_TO_ORDER' => '/order/make/',
-                'SHOW_NUM_PRODUCTS' => 'Y',
-                'SHOW_TOTAL_PRICE' => 'Y',
-                'SHOW_EMPTY_VALUES' => 'Y',
-                'SHOW_PERSONAL_LINK' => 'Y',
-                'PATH_TO_PERSONAL' => '/personal/',
-                'SHOW_AUTHOR' => 'N',
-                'PATH_TO_REGISTER' => '',
-                'PATH_TO_AUTHORIZE' => '',
-                'PATH_TO_PROFILE' => '/personal/',
-                'SHOW_PRODUCTS' => 'Y',
-                'SHOW_DELAY' => 'N',
-                'SHOW_NOTAVAIL' => 'Y',
-                'SHOW_IMAGE' => 'Y',
-                'SHOW_PRICE' => 'Y',
-                'SHOW_SUMMARY' => 'N',
-                'POSITION_FIXED' => 'N',
-                'HIDE_ON_BASKET_PAGES' => 'N',
-            ],
-            false,
-            ['HIDE_ICONS' => 'Y']
-        );
-        return ob_get_clean();
-    }
-
-    /**
-     *
-     *
-     * @return string
-     */
-    public static function getBasketHtml(): string
-    {
-        global $APPLICATION;
-        ob_start();
-        $APPLICATION->IncludeComponent(
-            'fourpaws:basket',
-            '',
-            [],
-            false,
-            ['HIDE_ICONS' => 'Y']
-        );
-        return ob_get_clean();
-    }
-
-    /**
      * @return array
      */
     public function getContext(): array
     {
+        try {
+            $userId = $this->currentUserProvider->getCurrentUserId();
+        } /** @noinspection BadExceptionsProcessingInspection */
+        catch (NotAuthorizedException $e) {
+            $userId = 0;
+        }
         return [
             'SITE_ID' => SITE_ID,
-            'USER_ID' => $this->currentUserProvider->getCurrentUserId()
+            'USER_ID' => $userId
         ];
     }
 }

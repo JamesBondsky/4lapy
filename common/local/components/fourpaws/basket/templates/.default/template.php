@@ -7,6 +7,8 @@
  * @copyright   ADV/web-engineering co.
  */
 
+/** @global \FourPaws\Components\BasketComponent $component */
+
 use FourPaws\Decorators\SvgDecorator;
 
 /** @var \Bitrix\Sale\Basket $arResult ['BASKET'] */
@@ -24,14 +26,20 @@ $orderableBasket = $arResult['BASKET']->getOrderableItems();
                 <?php
                 /** @var \Bitrix\Sale\BasketItem $basketItem */
                 foreach ($orderableBasket as $basketItem) {
-
+                    $image = $component->getImage($basketItem->getProductId());
                     ?>
                     <div class="b-item-shopping">
                         <div class="b-common-item b-common-item--shopping-cart b-common-item--shopping">
                         <span class="b-common-item__image-wrap b-common-item__image-wrap--shopping-cart">
-                            <img class="b-common-item__image b-common-item__image--shopping-cart"
-                                 src=""
-                                 alt="<?= $basketItem->getField('NAME') ?>" title=""/>
+                            <?php
+                            if (null !== $image) {
+                                ?>
+                                <img class="b-common-item__image b-common-item__image--shopping-cart"
+                                     src="<?= $image; ?>"
+                                     alt="<?= $basketItem->getField('NAME') ?>" title=""/>
+                                <?php
+                            }
+                            ?>
                         </span>
                             <div class="b-common-item__info-center-block b-common-item__info-center-block--shopping-cart b-common-item__info-center-block--shopping">
                                 <a class="b-common-item__description-wrap b-common-item__description-wrap--shopping"
@@ -75,7 +83,8 @@ $orderableBasket = $arResult['BASKET']->getOrderableItems();
                                         href="javascript:void(0);"></a>
                             </div>
                             <div class="b-select b-select--shopping-cart">
-                                <select title="" class="b-select__block b-select__block--shopping-cart" name="shopping-cart">
+                                <select title="" class="b-select__block b-select__block--shopping-cart"
+                                        name="shopping-cart">
                                     <option value="" disabled="disabled" selected="selected">выберите</option>
                                     <option value="shopping-cart-0">1</option>
                                     <option value="shopping-cart-1">2</option>
@@ -115,6 +124,23 @@ $orderableBasket = $arResult['BASKET']->getOrderableItems();
                 }
                 ?>
             </section>
-        </main>
-    </div>
+        </main><?php
+        /**
+         * Просмотренные товары
+         */
+        $APPLICATION->IncludeFile(
+            'blocks/components/viewed_products.php',
+            [
+                'WRAP_CONTAINER_BLOCK' => 'N',
+                'WRAP_SECTION_BLOCK' => 'Y',
+                'SHOW_TOP_LINE' => 'Y',
+                'SHOW_BOTTOM_LINE' => 'N',
+            ],
+            [
+                'SHOW_BORDER' => false,
+                'NAME' => 'Блок просмотренных товаров',
+                'MODE' => 'php',
+            ]
+        );
+    ?></div>
 </div>

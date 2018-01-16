@@ -3,7 +3,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 /** @var string $phone */ ?>
-<div class="b-registration__content b-registration__content--moiety b-registration__content--step">
+<div class="b-registration__content b-registration__content--moiety b-registration__content--step" style="width:100% !important;">
     <div class="b-registration__text-instruction">Пожалуйста, введите номер телефона</div>
     <form class="b-registration__form js-form-validation" data-url="/ajax/user/auth/login/" method="post">
         <input type="hidden" name="action" value="get">
@@ -23,14 +23,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                 </div>
             </div>
         </div>
+        <div><span class="b-registration__auth-error"></span></div>
         <button class="b-button b-button--social b-button--full-width">Отправить код</button>
     </form>
 </div>
-<section class="b-registration__additional-info b-registration__additional-info--step">
-    <h3 class="b-registration__title-advantage">Зачем это нужно?</h3>
-    <ul class="b-social-advantage">
-        <li class="b-social-advantage__item">Для оперативной связи по поводу доставки</li>
-        <li class="b-social-advantage__item">Для привязки бонусной карты</li>
-        <li class="b-social-advantage__item">Телефон можно использовать как логин при входе</li>
-    </ul>
-</section>
