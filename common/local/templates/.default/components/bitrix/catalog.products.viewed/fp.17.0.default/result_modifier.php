@@ -89,6 +89,5 @@ foreach ($arResult['ITEMS'] as $item) {
             'DETAIL_PAGE_URL' => $item['DETAIL_PAGE_URL'],
             'IMG' => $printImg,
         ];
-        break;
     }
 }
