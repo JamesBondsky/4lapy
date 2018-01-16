@@ -13,6 +13,7 @@ use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService;
 use JMS\Serializer\ArrayTransformerInterface;
+use JMS\Serializer\Exception\RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -37,20 +38,19 @@ class ReferralRepository extends BaseHlRepository
     /**
      * ReferralRepository constructor.
      *
-     * @param ArrayTransformerInterface $arrayTransformer
-     * @param ValidatorInterface        $validator
+     * @param ValidatorInterface $validator
      *
+     * @throws RuntimeException
      * @throws ServiceNotFoundException
      * @throws \Exception
      * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
      */
     public function __construct(
-        ArrayTransformerInterface $arrayTransformer,
         ValidatorInterface $validator
     )
     {
-        parent::__construct($arrayTransformer, $validator);
+        parent::__construct($validator);
         $this->curUserService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
     }
     

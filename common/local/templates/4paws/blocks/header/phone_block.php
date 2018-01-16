@@ -49,7 +49,7 @@ use FourPaws\Helpers\FormHelper;
                     </a>
                 </li>
                 <li class="b-link-block__item">
-                    <a class="b-link-block__link js-link-phone-call" href="/compamy/feedback/" title="Обратная связь">
+                    <a class="b-link-block__link js-link-phone-call" href="/company/feedback/" title="Обратная связь">
                         <span class="b-icon">
                             <?= new SvgDecorator('icon-email-header', 16, 16) ?>
                         </span>
