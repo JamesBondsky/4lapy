@@ -1,5 +1,8 @@
 <?php
+
 use \Bitrix\Iblock\Component\ElementList;
+use Bitrix\Main\Web\HttpClient;
+use Bitrix\Main\Web\Json;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
@@ -21,23 +24,24 @@ class FourPawsCatalogPopularProducts extends ElementList
 
     public function onPrepareComponentParams($params)
     {
-        if (!isset($params['CACHE_TIME'])) {
-            $params['CACHE_TIME'] = 3600;
-        }
+        $params['CACHE_TYPE'] = isset($params['CACHE_TYPE']) ? $params['CACHE_TYPE'] : 'A';
+        $params['CACHE_TIME'] = isset($params['CACHE_TIME']) ? $params['CACHE_TIME'] : 3600;
 
         $params['IBLOCK_TYPE'] = IblockType::CATALOG;
         $params['IBLOCK_ID'] = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS);
         $params['CACHE_GROUPS'] = 'N';
         $params['PAGE_ELEMENT_COUNT'] = isset($params['PAGE_ELEMENT_COUNT']) ? intval($params['PAGE_ELEMENT_COUNT']) : 0;
-        $params['PAGE_ELEMENT_COUNT'] = $params['PAGE_ELEMENT_COUNT'] > 0 ?: 10;
+        $params['PAGE_ELEMENT_COUNT'] = $params['PAGE_ELEMENT_COUNT'] > 0 ? $params['PAGE_ELEMENT_COUNT'] : 10;
 
         $params = parent::onPrepareComponentParams($params);
+        $arParams['AJAX_ID'] = isset($params['AJAX_ID']) ? $params['AJAX_ID'] : '';
 
         // отложенная генерация результата (через ajax)
-        $params['DEFFERED_LOAD'] = 'Y';
-        // может быть задействован при дполнительной фильтрации по секции
-        $this->arParams['DEPTH'] = 5;
+        $params['DEFERRED_LOAD'] = 'Y';
+        // тип запрашиваемой рекомендации BigData
         $this->arParams['RCM_TYPE'] = 'personal';
+        // может быть задействован при дополнительной фильтрации по секции
+        $this->arParams['DEPTH'] = 5;
 
         return $params;
     }
@@ -69,8 +73,7 @@ class FourPawsCatalogPopularProducts extends ElementList
     protected function doAction()
     {
         $action = $this->getAction();
-        if (is_callable(array($this, $action.'Action')))
-        {
+        if (is_callable(array($this, $action.'Action'))) {
             call_user_func(array($this, $action.'Action'));
         }
     }
@@ -80,11 +83,13 @@ class FourPawsCatalogPopularProducts extends ElementList
      */
     protected function initialLoadAction()
     {
-        $this->arResult['BIG_DATA'] = $this->getBigDataInfo();
-        if ($this->arParams['DEFFERED_LOAD'] === 'Y') {
-            //
+        $this->arResult['RESULT_TYPE'] = 'INITIAL';
+        if ($this->arParams['DEFERRED_LOAD'] === 'Y') {
+            $this->arResult['BIG_DATA_SETTINGS'] = $this->getBigDataSettings();
         } else {
-            // to do
+            $this->arResult['RESULT_TYPE'] = 'RESULT';
+            $this->doBigDataRequest();
+            $this->initProductIds();
         }
         $this->loadData();
     }
@@ -94,48 +99,113 @@ class FourPawsCatalogPopularProducts extends ElementList
      */
     protected function bigDataLoadAction()
     {
-        $this->productIdMap = [];
-        $ids = $this->getProductIds();
-        if (!empty($ids)) {
-            foreach ($ids as $id) {
-                $this->productIdMap[$id] = $id;
-            }
+        $this->arResult['RESULT_TYPE'] = 'RESULT';
+
+        $this->arResult['BIG_DATA_RESPONSE']['ITEMS'] = $this->request->get('items');
+        if (!is_array($this->arResult['BIG_DATA_RESPONSE']['ITEMS'])) {
+            $this->arResult['BIG_DATA_RESPONSE']['ITEMS'] = [];
         }
+        $this->arResult['BIG_DATA_RESPONSE']['RECOMMENDATION_ID'] = trim($this->request->get('rid'));
+
+        $this->initProductIds();
+
         $this->loadData();
+    }
+
+    /**
+     * Отправляет запрос BigData
+     */
+    protected function doBigDataRequest()
+    {
+        $this->arResult['BIG_DATA_SETTINGS'] = $this->getBigDataSettings();
+        $this->arResult['BIG_DATA_RESPONSE']['ITEMS'] = [];
+        $this->arResult['BIG_DATA_RESPONSE']['RECOMMENDATION_ID'] = '';
+
+        $httpClient = new HttpClient();
+        $httpClient->setHeader('CMS', 'Bitrix');
+        $response = $httpClient->get($this->arResult['BIG_DATA_SETTINGS']['requestBaseUrl'].'?'.$this->arResult['BIG_DATA_SETTINGS']['requestUrlParams']);
+        $response = $response ? Json::decode($response) : [];
+        if (isset($response['id'])) {
+            $this->arResult['BIG_DATA_RESPONSE']['RECOMMENDATION_ID'] = trim($response['id']);
+        }
+        if (isset($response['items']) && is_array($response['items'])) {
+            $this->arResult['BIG_DATA_RESPONSE']['ITEMS'] = $response['items'];
+        }
+    }
+
+    /**
+     * Return array of big data settings.
+     *
+     * @return array
+     */
+    protected function getBigDataSettings()
+    {
+        $settings = [
+            'requestBaseUrl' => 'https://analytics.bitrix.info/crecoms/v1_0/recoms.php',
+            'requestUrlParams' => '',
+            'enabled' => true,
+            'count' => $this->arParams['PAGE_ELEMENT_COUNT'],
+            'js' => [
+                'cookiePrefix' => \COption::GetOptionString('main', 'cookie_name', 'BITRIX_SM'),
+                'cookieDomain' => $GLOBALS['APPLICATION']->GetCookieDomain(),
+                'serverTime' => time()
+            ],
+            'params' => $this->getBigDataServiceRequestParams($this->arParams['RCM_TYPE']),
+        ];
+
+        switch ($settings['params']['op']) {
+            case 'recommend':
+                $settings['requestUrlParams'] = str_replace(
+                    [
+                        '#OP#',
+                        '#UID#',
+                        '#COUNT#',
+                        '#AID#',
+                        '#IB#',
+                    ],
+                    [
+                        $settings['params']['op'],
+                        $settings['params']['uid'],
+                        $settings['params']['count'],
+                        $settings['params']['aid'],
+                        $settings['params']['ib'],
+                    ],
+                    'op=#OP#&uid=#UID#&count=#COUNT#&aid=#AID#&ib=#IB#'
+                );
+                break;
+        }
+
+        return $settings;
     }
 
     /**
      * Show cached component data or load if outdated.
      */
-    public function loadData($ids = [])
+    public function loadData()
     {
-        //if ($this->isCacheDisabled() || $this->startResultCache(false, $this->getAdditionalCacheId(), $this->getComponentCachePath())) {
-            $this->arResult['PRODUCTS'] = $this->getProducts(array_keys($this->productIdMap));
-            $this->includeComponentTemplate();
-        //}
-    }
-
-    /**
-     * @param array $ids
-     *
-     * @return \FourPaws\BitrixOrm\Collection\CollectionBase|null
-     */
-    protected function getProducts($ids)
-    {
-        if (empty($ids)) {
-            return null;
+        // нужно для генерации уникального идентификатора кеша
+        $this->productIdMap = [];
+        if (!empty($this->arResult['ids'])) {
+            foreach ($this->arResult['ids'] as $id) {
+                $this->productIdMap[$id] = $id;
+            }
         }
-        return (new ProductQuery())
-            ->withFilterParameter('ID', $ids)
-            ->exec();
+        $this->arParams['RESULT_TYPE'] = $this->arResult['RESULT_TYPE'];
+
+        if ($this->isCacheDisabled() || $this->startResultCache(false, $this->getAdditionalCacheId(), $this->getComponentCachePath())) {
+            $this->arResult['PRODUCTS'] = $this->getProducts($this->arResult['ids']);
+            $this->endResultCache();
+        }
+
+        $this->arResult['recommendationIdToProduct'] = $this->recommendationIdToProduct;
+
+        $this->includeComponentTemplate();
     }
 
     /**
-     * Return array of iblock element ids to show for "bigDataLoad" action.
-     *
-     * @return array
+     * Заполнение списка id элементов для дальнейшей их выборки
      */
-    protected function getProductIds()
+    protected function initProductIds()
     {
         $this->arParams['FILTER_IDS'] = [];
 
@@ -165,9 +235,7 @@ class FourPawsCatalogPopularProducts extends ElementList
         }
 
         // limit
-        $ids = array_slice($ids, 0, $this->arParams['PAGE_ELEMENT_COUNT']);
-
-        return $ids;
+        $this->arResult['ids'] = array_slice($ids, 0, $this->arParams['PAGE_ELEMENT_COUNT']);
     }
 
     /**
@@ -177,49 +245,46 @@ class FourPawsCatalogPopularProducts extends ElementList
      */
     protected function getFilter()
     {
-        return array(
+        return [
             'IBLOCK_ID' => $this->arParams['IBLOCK_ID'],
             'ACTIVE_DATE' => 'Y',
             'ACTIVE' => 'Y',
-        );
+        ];
     }
 
     /**
-     * Возвращает id элементов из ответа bigdata
+     * Возвращает отфильтрованные id элементов по ответу BigData
      *
      * @return array
      */
     protected function getBigDataResponseRecommendation()
     {
-        $ids = $this->request->get('items') ?: [];
-        if (!empty($ids)) {
-            $recommendationId = $this->request->get('rid');
-            $ids = $this->filterByParams($ids, $this->arParams['FILTER_IDS'], false);
-
+        $ids = [];
+        if (!empty($this->arResult['BIG_DATA_RESPONSE']['ITEMS'])) {
+            $ids = $this->filterByParams($this->arResult['BIG_DATA_RESPONSE']['ITEMS'], $this->arParams['FILTER_IDS'], false);
             foreach ($ids as $id) {
-                $this->recommendationIdToProduct[$id] = $recommendationId;
+                $this->recommendationIdToProduct[$id] = $this->arResult['BIG_DATA_RESPONSE']['RECOMMENDATION_ID'];
             }
         }
         return $ids;
     }
 
     /**
-     * Return array of big data settings.
-     *
+     * @param array $ids
      * @return array
      */
-    protected function getBigDataInfo()
+    protected function getProducts($ids)
     {
-        return array(
-            'enabled' => true,
-            'count' => $this->arParams['PAGE_ELEMENT_COUNT'],
-            'js' => array(
-                'cookiePrefix' => \COption::GetOptionString('main', 'cookie_name', 'BITRIX_SM'),
-                'cookieDomain' => $GLOBALS['APPLICATION']->GetCookieDomain(),
-                'serverTime' => time()
-            ),
-            'params' => $this->getBigDataServiceRequestParams($this->arParams['RCM_TYPE'])
-        );
+        $result = [];
+        if (empty($ids)) {
+            return $result;
+        }
+        $productQuery = new ProductQuery();
+        $productQuery->withFilterParameter('ID', $ids);
+        $productQueryCollection = $productQuery->exec();
+        foreach ($productQueryCollection as $product) {
+            $result[] = $product;
+        }
+        return $result;
     }
-
 }

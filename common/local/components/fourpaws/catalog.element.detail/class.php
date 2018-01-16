@@ -166,7 +166,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
     }
 
     /**
-     * Получение данных для bigdata
+     * Получение данных для BigData
      *
      * @return void
      */
