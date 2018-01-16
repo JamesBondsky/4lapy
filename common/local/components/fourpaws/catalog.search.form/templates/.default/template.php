@@ -25,14 +25,16 @@ use FourPaws\Decorators\SvgDecorator;
 ?>
 <div class="b-form-inline b-form-inline--search">
     <form class="b-form-inline__form b-form-inline__form--search js-popover-search"
-          data-url="<?= $arResult['SEARCH_URL'] ?>">
+          data-url="<?= $arResult['AUTOCOMPLETE_URL'] ?>"
+          action="<?= $arResult['SEARCH_URL'] ?>">
         <div class="b-input">
             <input class="b-input__input-field"
                    type="text"
                    id="header-search"
                    placeholder="Найти лучшее для вашего питомца…"
-                   name="text"
-                   autocomplete="off"/>
+                   name="query"
+                   autocomplete="off"
+                   value="<?= $arResult['QUERY'] ?>"/>
         </div>
         <button class="b-button b-button--form-inline b-button--search">
             <span class="b-icon">

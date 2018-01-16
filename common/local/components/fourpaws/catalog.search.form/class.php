@@ -3,6 +3,7 @@
 }
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\Context;
 use FourPaws\App\Application;
 
 /** @noinspection AutoloadingIssuesInspection */
@@ -12,10 +13,6 @@ class FourPawsCatalogSearchFormComponent extends \CBitrixComponent
     /** {@inheritdoc} */
     public function onPrepareComponentParams($params): array
     {
-        if (!isset($params['CACHE_TIME'])) {
-            $params['CACHE_TIME'] = 36000000;
-        }
-
         return $params;
     }
 
@@ -48,10 +45,18 @@ class FourPawsCatalogSearchFormComponent extends \CBitrixComponent
         $route = $routes->get('fourpaws_catalog_ajax_search_autocomplete');
         if (!$route) {
             $this->abortResultCache();
+            throw new Exception('Catalog autocomplete route not found');
+        }
+        $this->arResult['AUTOCOMPLETE_URL'] = $route->getPath();
+
+        $route = $routes->get('fourpaws_catalog_catalog_search');
+        if (!$route) {
+            $this->abortResultCache();
             throw new Exception('Catalog search route not found');
         }
-
         $this->arResult['SEARCH_URL'] = $route->getPath();
+
+        $this->arResult['QUERY'] = Context::getCurrent()->getRequest()->get('query');
 
         return $this;
     }

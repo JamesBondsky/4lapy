@@ -26,6 +26,14 @@ class CatalogController extends Controller
     }
 
     /**
+     * @Route("/search/")
+     */
+    public function searchAction()
+    {
+        return $this->redirect('/');
+    }
+
+    /**
      * @Route("/{path}/")
      *
      * @param RootCategoryRequest $rootCategoryRequest
