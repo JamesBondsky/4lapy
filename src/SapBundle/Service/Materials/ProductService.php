@@ -239,6 +239,7 @@ class ProductService
 
     protected function fillCountry(Product $product, Material $material)
     {
+        $product->withCountryXmlId('');
         if ($material->getCountryOfOriginCode() && $material->getCountryOfOriginName()) {
             $country = $this->referenceService->getOrCreate(
                 SapProductField::COUNTRY,
