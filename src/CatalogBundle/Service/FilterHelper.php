@@ -131,7 +131,7 @@ class FilterHelper implements LoggerAwareInterface
     /**
      * @return FilterInterface[]
      */
-    protected function getFilters(): array
+    public function getFilters(): array
     {
         $doGetFilterFieldsList = function () {
             $filterFieldsList = [];

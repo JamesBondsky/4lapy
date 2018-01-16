@@ -7,7 +7,9 @@ use Elastica\Query\Term;
 use Elastica\QueryBuilder;
 use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Model\Category;
+use FourPaws\Catalog\Model\Filter\CategoryFilter;
 use FourPaws\Catalog\Model\Filter\InternalFilter;
+use FourPaws\Catalog\Model\Filter\SectionFilter;
 use FourPaws\Location\LocationService;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
@@ -39,6 +41,16 @@ class FilterService implements LoggerAwareInterface
          */
         if ($category->getId()) {
             $filterCollection->add($category);
+        } else {
+            /*
+             * Для страницы поиска добавляем множественные фильтры по разделу и подразделу
+             */
+            $filters = $this->filterHelper->getFilters();
+            foreach ($filters as $filter) {
+                if (($filter instanceof CategoryFilter) || ($filter instanceof SectionFilter)) {
+                    $filterCollection->add($filter);
+                }
+            }
         }
         /**
          * Фильтры активности
