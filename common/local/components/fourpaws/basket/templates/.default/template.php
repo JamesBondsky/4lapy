@@ -13,10 +13,10 @@ use FourPaws\Decorators\SvgDecorator;
 
 /** @var \Bitrix\Sale\Basket $arResult ['BASKET'] */
 $orderableBasket = $arResult['BASKET']->getOrderableItems();
-
+if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
+    echo '<div class="b-shopping-cart">';
+}
 ?>
-
-<div class="b-shopping-cart">
     <div class="b-container">
         <h1 class="b-title b-title--h1 b-title--shopping-cart">Корзина</h1>
         <main class="b-shopping-cart__main" role="main">
@@ -143,4 +143,7 @@ $orderableBasket = $arResult['BASKET']->getOrderableItems();
             ]
         );
     ?></div>
-</div>
+<?php
+if (!isset($arParams['IS_AJAX']) || $arParams !== true) {
+    echo '</div>';
+}
