@@ -35,7 +35,6 @@ class SearchController extends Controller
     {
         $res = [];
 
-        $query = $request->query->get('q');
         /** @var SearchService $searchService */
         $searchService = Application::getInstance()->getContainer()->get('search.service');
         /** @var ValidatorInterface $validator */

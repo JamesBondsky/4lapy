@@ -105,7 +105,7 @@ class Category extends IblockSection implements FilterInterface
                     'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS),
                     'ID'        => 0,
                     'CODE'      => '',
-                    'NAME'      => 'Поиск товаров',
+                    'NAME'      => 'Результаты поиска',
                 ]
             )
         );
