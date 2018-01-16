@@ -227,7 +227,7 @@ class Referral extends BaseEntity
     /**
      * @return string
      */
-    public function getFullName()
+    public function getFullName() : string
     {
         $name       = $this->getName();
         $lastName   = $this->getLastName();
@@ -334,7 +334,7 @@ class Referral extends BaseEntity
     /**
      * @return bool
      */
-    public function isEndActiveDate()
+    public function isEndActiveDate() : bool
     {
         $dateEndActive = $this->getDateEndActive();
         

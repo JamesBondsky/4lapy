@@ -58,6 +58,10 @@ class AddressController extends Controller
                 );
             }
         } catch (\Exception $e) {
+            return JsonErrorResponse::createWithData(
+                $e->getMessage(),
+                ['errors' => ['systemError' => $e->getMessage()]]
+            );
         }
         
         return JsonErrorResponse::createWithData(

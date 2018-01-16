@@ -13,8 +13,8 @@ use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\UI\PageNavigation;
+use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Exception\CardNotFoundException;
@@ -34,6 +34,7 @@ use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\ValidationException;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -54,16 +55,24 @@ class ReferralService
      */
     public $manzanaService;
     
+    /** @var CurrentUserProviderInterface $currentUser */
+    private $currentUser;
+    
     /**
      * ReferralService constructor.
      *
      * @param ReferralRepository $referralRepository
      * @param ManzanaService     $manzanaService
+     *
+     * @throws ServiceNotFoundException
+     * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
      */
     public function __construct(ReferralRepository $referralRepository, ManzanaService $manzanaService)
     {
         $this->referralRepository = $referralRepository;
         $this->manzanaService     = $manzanaService;
+        $this->currentUser        = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
     }
     
     /**
@@ -259,7 +268,7 @@ class ReferralService
      *
      * @param bool  $updateManzana
      *
-     * @throws \FourPaws\External\Exception\ManzanaServiceException
+     * @throws ManzanaServiceException
      * @throws ContactUpdateException
      * @throws ValidationException
      * @throws ServiceNotFoundException
@@ -273,6 +282,9 @@ class ReferralService
      */
     public function add(array $data, bool $updateManzana = true) : bool
     {
+        if (empty($data['UF_USER_ID'])) {
+            $data['UF_USER_ID'] = $this->currentUser->getCurrentUserId();
+        }
         /** @var Referral $entity */
         $entity = $this->referralRepository->dataToEntity($data, Referral::class);
         $res    = $this->referralRepository->setEntity($entity)->create();
@@ -318,7 +330,6 @@ class ReferralService
         $contactId = '';
         try {
             $contactId = $this->manzanaService->getContactIdByCurUser();
-        } catch (ManzanaServiceContactSearchMoreOneException $e) {
         } catch (ManzanaServiceContactSearchNullException $e) {
             $contactClient = new Client();
             try {

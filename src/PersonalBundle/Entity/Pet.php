@@ -17,7 +17,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 class Pet extends BaseEntity
 {
-    const PET_TYPE = 'PetType';
+    const PET_TYPE = 'ForWho';
     
     /**
      * @var string
@@ -92,7 +92,7 @@ class Pet extends BaseEntity
     
     protected $stringGender = '';
     
-    protected $xmlIdType    = '';
+    protected $codeType    = '';
     
     /**
      * @return string
@@ -203,7 +203,7 @@ class Pet extends BaseEntity
                 ['UF_NAME']
             )->exec()->fetch();
         $this->stringType = $item['UF_NAME'];
-        $this->xmlIdType  = $item['UF_XML_ID'];
+        $this->codeType  = $item['UF_CODE'];
     }
     
     /**
@@ -233,16 +233,16 @@ class Pet extends BaseEntity
     /**
      * @return string
      */
-    public function getXmlIdType() : string
+    public function getCodeType() : string
     {
-        if (empty($this->xmlIdType) && $this->getType() > 0) {
+        if (empty($this->codeType) && $this->getType() > 0) {
             try {
                 $this->setStringType($this->getType());
             } catch (\Exception $e) {
             }
         }
         
-        return $this->xmlIdType;
+        return $this->codeType;
     }
     
     /**
