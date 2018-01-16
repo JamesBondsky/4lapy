@@ -119,7 +119,7 @@ class BasketComponent extends \CBitrixComponent
      */
     public function getImage($offerId)
     {
-        return $this->images[$offerId];
+        return $this->images[$offerId] ?? null;
     }
 
     /**
