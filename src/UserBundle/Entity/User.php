@@ -199,7 +199,6 @@ class User
     /**
      * @var DateTime|null
      * @Serializer\Type("bitrix_date_time")
-     * @Serializer\Accessor(setter="deSerializeBitrixDateTime")
      * @Serializer\SerializedName("DATE_REGISTER")
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
