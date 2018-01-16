@@ -41,8 +41,7 @@ class CatalogController extends Controller
         if (!$validator->validate($searchRequest)->count()) {
             /** @var ProductSearchResult $result */
             $result = Application::getInstance()->getContainer()->get('search.service')->searchProducts(
-                new FilterCollection(),
-    //            $searchRequest->getCategory()->getFilters(),
+                $searchRequest->getCategory()->getFilters(),
                 $searchRequest->getSorts()->getSelected(),
                 $searchRequest->getNavigation(),
                 $searchRequest->getSearchString()

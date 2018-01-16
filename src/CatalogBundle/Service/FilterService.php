@@ -37,8 +37,9 @@ class FilterService implements LoggerAwareInterface
         /**
          * При фильтрации по категории всегда фильтруем с ней
          */
-        $filterCollection->add($category);
-
+        if ($category->getId()) {
+            $filterCollection->add($category);
+        }
         /**
          * Фильтры активности
          */
