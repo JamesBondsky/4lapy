@@ -70,6 +70,7 @@ final class SapProductProperty
     /**
      * Содержит вес упаковки.
      * Единственный выбор из справочника значений.
+     * @internal
      */
     const WEIGHT_CAPACITY_PACKING = 'WEIGHT_CAPACITY_PACKING';
 

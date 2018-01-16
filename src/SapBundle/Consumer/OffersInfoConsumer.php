@@ -3,8 +3,12 @@
 namespace FourPaws\SapBundle\Consumer;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Main\Application;
+use Bitrix\Main\DB\Connection;
+use FourPaws\Catalog\Model\Product;
 use FourPaws\SapBundle\Dto\In\Offers\Materials;
 use FourPaws\SapBundle\Service\Materials\OfferService;
+use FourPaws\SapBundle\Service\Materials\ProductService;
 use FourPaws\SapBundle\Service\ReferenceService;
 use Psr\Log\LoggerAwareInterface;
 
@@ -16,20 +20,37 @@ class OffersInfoConsumer implements ConsumerInterface, LoggerAwareInterface
      * @var ReferenceService
      */
     private $referenceService;
+
     /**
      * @var OfferService
      */
     private $offerService;
 
-    public function __construct(ReferenceService $referenceService, OfferService $offerService)
-    {
+    /**
+     * @var ProductService
+     */
+    private $productService;
+
+    /**
+     * @var Connection
+     */
+    private $connection;
+
+    public function __construct(
+        ReferenceService $referenceService,
+        OfferService $offerService,
+        ProductService $productService
+    ) {
         $this->referenceService = $referenceService;
         $this->offerService = $offerService;
+        $this->productService = $productService;
+        $this->connection = Application::getConnection();
     }
 
     /**
      * @param Materials $offersInfo
      *
+     * @throws \Bitrix\Main\DB\SqlQueryException
      * @return bool
      */
     public function consume($offersInfo): bool
@@ -40,6 +61,7 @@ class OffersInfoConsumer implements ConsumerInterface, LoggerAwareInterface
         $result = true;
 
         foreach ($offersInfo->getMaterials() as $material) {
+            $this->connection->startTransaction();
             try {
                 /**
                  * Создаем недостающие справочные даныне
@@ -47,14 +69,17 @@ class OffersInfoConsumer implements ConsumerInterface, LoggerAwareInterface
                 $this->referenceService->fillFromMaterial($material);
                 $offer = $this->offerService->getByMaterial($material);
 
-                dump($offer);
+                $product = $this->productService->findByMaterial($material) ?: new Product();
+                $this->productService->fillProduct($product, $material);
+
+                dump($product);
 //                $this->offerService->createFromMaterial($material);
             } catch (\Exception $exception) {
                 /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
                 $this->log()->error($exception->getMessage(), $exception->getTrace());
                 $result = false;
-                continue;
             }
+            $this->connection->rollbackTransaction();
         }
 
         return $result;

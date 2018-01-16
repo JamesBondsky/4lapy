@@ -28,15 +28,10 @@ abstract class HlbItemBase implements ItemInterface, ToArrayInterface
      */
     protected $UF_XML_ID = '';
 
-    /**
-     * @var string
-     */
-    protected $UF_CODE = '';
-
     public function __construct(array $fields = [])
     {
         foreach ($fields as $field => $value) {
-            if (property_exists($this, $field)) {
+            if (($value || $value !== null) && property_exists($this, $field)) {
                 $this->{$field} = $value;
             }
         }
@@ -113,24 +108,6 @@ abstract class HlbItemBase implements ItemInterface, ToArrayInterface
         return $this;
     }
 
-    /**
-     * @return string
-     */
-    public function getCode(): string
-    {
-        return $this->UF_CODE;
-    }
-
-    /**
-     * @param string $code
-     *
-     * @return static
-     */
-    public function withCode(string $code)
-    {
-        $this->UF_CODE = $code;
-        return $this;
-    }
 
     public function toArray(): array
     {

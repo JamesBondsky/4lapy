@@ -23,6 +23,30 @@ class HlbReferenceItem extends HlbItemBase
     //TODO UF_FILE типа "Файл"
 
     /**
+     * @var string
+     */
+    protected $UF_CODE = '';
+
+    /**
+     * @return string
+     */
+    public function getCode(): string
+    {
+        return $this->UF_CODE;
+    }
+
+    /**
+     * @param string $code
+     *
+     * @return static
+     */
+    public function withCode(string $code)
+    {
+        $this->UF_CODE = $code;
+        return $this;
+    }
+
+    /**
      * @return string
      */
     public function getLink(): string

@@ -154,25 +154,27 @@ class ReferenceService implements LoggerAwareInterface
      */
     public function getPropertyBitrixValue(string $code, Material $material, bool $multiple = false)
     {
-        $hlbElements = $this
-            ->getPropertyValueHlbElement($material->getProperties()->getProperty($code));
+        $property = $material->getProperties()->getProperty($code);
+        $result = $multiple ? [] : '';
+        if ($property) {
+            $hlbElements = $this
+                ->getPropertyValueHlbElement($material->getProperties()->getProperty($code));
 
-        $result = $hlbElements->map(function (HlbReferenceItem $item) {
-            return $item->getXmlId();
-        });
+            $xmlIds = $hlbElements->map(function (HlbReferenceItem $item) {
+                return $item->getXmlId();
+            });
 
-        if ($multiple) {
-            return $result->toArray();
+            if (!$multiple && $xmlIds->count() > 1) {
+                $this
+                    ->log()
+                    ->error(
+                        sprintf('Get more than one value for not multiple property %s.', $code),
+                        $xmlIds->toArray()
+                    );
+            }
+            $result = $multiple ? $xmlIds->toArray() : $xmlIds->first();
         }
-        if ($result->count() > 1) {
-            $this
-                ->log()
-                ->error(
-                    sprintf('Get more than one value for not multiple property %s.', $code),
-                    $result->toArray()
-                );
-        }
-        return $result->first() ?: '';
+        return $result;
     }
 
     /**

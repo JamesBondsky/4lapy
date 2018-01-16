@@ -9,6 +9,7 @@ use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\SapBundle\Dto\In\Offers\Material;
+use FourPaws\SapBundle\Enum\SapProductField;
 use FourPaws\SapBundle\Enum\SapProductProperty;
 use FourPaws\SapBundle\Repository\BrandRepository;
 use FourPaws\SapBundle\Service\ReferenceService;
@@ -112,28 +113,29 @@ class ProductService
             ->withSTM(
                 (int)$material->getProperties()->getPropertyValues(
                     SapProductProperty::STM,
-                    1
+                    [1]
                 )->first() === 1
             )
             ->withLicenseRequired(
                 (int)$material->getProperties()->getPropertyValues(
                     SapProductProperty::LICENSE,
-                    1
+                    [1]
                 )->first() === 1
             )
             ->withLowTemperatureRequired(
                 (int)$material->getProperties()->getPropertyValues(
                     SapProductProperty::LOW_TEMPERATURE,
-                    1
+                    [1]
                 )->first() === 1
             )
             ->withIsFood(
                 (int)$material->getProperties()->getPropertyValues(
                     SapProductProperty::FOOD,
-                    1
+                    [1]
                 )->first() === 1
             );
         $this->fillReferenceProperties($product, $material);
+        $this->fillCountry($product, $material);
         /**
          * @todo fields
          */
@@ -229,5 +231,17 @@ class ProductService
                 SapProductProperty::CONSISTENCE,
                 $material
             ));
+    }
+
+    protected function fillCountry(Product $product, Material $material)
+    {
+        if ($material->getCountryOfOriginCode() && $material->getCountryOfOriginName()) {
+            $country = $this->referenceService->getOrCreate(
+                SapProductField::COUNTRY,
+                $material->getCountryOfOriginCode(),
+                $material->getCountryOfOriginName()
+            );
+            $product->withCountryXmlId($country->getXmlId());
+        }
     }
 }

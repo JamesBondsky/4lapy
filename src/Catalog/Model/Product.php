@@ -344,13 +344,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     protected $seasonClothes;
 
     /**
-     * @var string
-     * @Type("string")
-     * @Groups({"elastic"})
-     */
-    protected $PROPERTY_WEIGHT_CAPACITY_PACKING = '';
-
-    /**
      * @var bool
      * @Type("bool")
      * @Groups({"elastic"})
@@ -1267,25 +1260,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
-     * @return string
-     */
-    public function getWeightCapacityPacking(): string
-    {
-        return $this->PROPERTY_WEIGHT_CAPACITY_PACKING;
-    }
-
-    /**
-     * @param string $weightCapacity
-     *
-     * @return $this
-     */
-    public function withWeightCapacityPacking(string $weightCapacity)
-    {
-        $this->PROPERTY_WEIGHT_CAPACITY_PACKING = $weightCapacity;
-        return $this;
-    }
-
-    /**
      * Возвращает признак "Требуется лицензия"
      *
      * @return bool
@@ -1358,7 +1332,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     /**
      * @return string
      */
-    public function getPetTypeXmlId()
+    public function getPetTypeXmlId(): string
     {
         $this->PROPERTY_PET_TYPE = $this->PROPERTY_PET_TYPE ?: '';
         return $this->PROPERTY_PET_TYPE;

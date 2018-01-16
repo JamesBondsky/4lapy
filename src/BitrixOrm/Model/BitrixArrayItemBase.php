@@ -63,6 +63,10 @@ abstract class BitrixArrayItemBase implements ActiveReadModelInterface, ItemInte
     public function __construct(array $fields = [])
     {
         foreach ($fields as $field => $value) {
+            if ($value === null) {
+                continue;
+            }
+
             if ($this->isExists($field)) {
                 $this->{$field} = $value;
             } elseif ($this->isProperty($field)) {

@@ -533,7 +533,7 @@ class Offer extends IblockElement
         if ((null === $this->kindOfPacking) && $this->PROPERTY_KIND_OF_PACKING) {
             $this->kindOfPacking = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.packagetype'),
-                $this->PROPERTY_KIND_OF_PACKING
+                $this->getKindOfPackingXmlId()
             );
         }
 
@@ -571,7 +571,7 @@ class Offer extends IblockElement
         if ((null === $this->seasonYear) && $this->PROPERTY_SEASON_YEAR) {
             $this->seasonYear = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.year'),
-                $this->PROPERTY_SEASON_YEAR
+                $this->getSeasonYearXmlId()
             );
         }
 
@@ -630,7 +630,7 @@ class Offer extends IblockElement
         if ((null === $this->rewardType) && $this->PROPERTY_REWARD_TYPE) {
             $this->rewardType = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.rewardtype'),
-                $this->PROPERTY_REWARD_TYPE
+                $this->getRewardTypeXmlId()
             );
         }
 
