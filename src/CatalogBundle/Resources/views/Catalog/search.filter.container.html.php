@@ -8,6 +8,7 @@
  */
 
 use Bitrix\Main\Grid\Declension;
+use Bitrix\Main\Web\Uri;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
 use FourPaws\Catalog\Model\Filter\ActionsFilter;
@@ -16,6 +17,7 @@ use FourPaws\Catalog\Model\Filter\RangeFilterInterface;
 use FourPaws\Catalog\Model\Sorting;
 use FourPaws\Catalog\Model\Variant;
 use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
+use FourPaws\CatalogBundle\ParamConverter\Catalog\AbstractCatalogRequestConverter;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Search\Model\ProductSearchResult;
 use Symfony\Component\HttpFoundation\Request;
@@ -26,35 +28,15 @@ global $APPLICATION;
 /**
  * @var Category $category
  */
-$category = $APPLICATION->IncludeComponent(
-    'fourpaws:catalog.category',
-    '',
-    [
-        'SECTION_CODE' => $catalogRequest->getCategory()->getCode(),
-        'SET_TITLE'    => 'N',
-        'CACHE_TIME'   => 10,
-    ],
-    null,
-    ['HIDE_ICONS' => 'Y']
-);
+$category = $catalogRequest->getCategory();
 
 $filterCollection = $catalogRequest->getCategory()->getFilters();
+
+$queryUrl = new Uri($APPLICATION->GetCurDir());
+$queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalogRequest->getSearchString()]);
 ?>
 <div class="b-catalog__wrapper-title b-catalog__wrapper-title--filter">
-    <?php
-    $APPLICATION->IncludeComponent(
-        'fourpaws:breadcrumbs',
-        '',
-        [
-            'IBLOCK_SECTION' => $category,
-        ],
-        null,
-        ['HIDE_ICONS' => 'Y']
-    );
-    ?>
-    <h1 class="b-title b-title--h1 b-title--catalog-filter">
-        <?= implode(' ', [$category->getName(), $category->getParent()->getSuffix()]) ?>
-    </h1>
+    <h1 class="b-title b-title--h1 b-title--catalog-filter"><?= $catalogRequest->getCategory()->getName() ?></h1>
 </div>
 <aside class="b-filter b-filter--popup js-filter-popup">
     <div class="b-filter__top">
@@ -63,19 +45,19 @@ $filterCollection = $catalogRequest->getCategory()->getFilters();
             Фильтры
         </div>
     </div>
+    
+    
+    
     <div class="b-filter__wrapper b-filter__wrapper--scroll">
         <form class="b-form js-filter-form" action="<?= $APPLICATION->GetCurDir() ?>">
-            <?= $view->render(
-                'FourPawsCatalogBundle:Catalog:catalog.filter.backLink.html.php',
-                [
-                    'category' => $category,
-                ]
-            ) ?>
             <div class="b-filter__block b-filter__block--reset js-reset-link-block"
                 <?= $filterCollection->hasCheckedFilter() ? 'style="display:block"' : '' ?>>
                 <a class="b-link b-link--reset js-reset-filter"
-                   href="<?= $APPLICATION->GetCurDir() ?>"
+                   href="<?= $queryUrl->getUri() ?>"
                    title="Сбросить фильтры">Сбросить фильтры</a>
+            </div>
+            <div class="js-filter-input">
+                <input type="hidden" name="query" value="<?= $catalogRequest->getSearchString() ?>">
             </div>
             <?= $view->render(
                 'FourPawsCatalogBundle:Catalog:catalog.filter.category.list.html.php',

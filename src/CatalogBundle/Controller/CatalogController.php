@@ -47,10 +47,6 @@ class CatalogController extends Controller
                 $searchRequest->getNavigation(),
                 $searchRequest->getSearchString()
             );
-
-            if ($result->getProductCollection()->isEmpty()) {
-                $result = null;
-            }
         }
 
         $categories = (new CategoryQuery())

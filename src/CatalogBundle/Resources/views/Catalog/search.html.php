@@ -18,7 +18,7 @@ global $APPLICATION;
 $APPLICATION->SetTitle($catalogRequest->getCategory()->getName());
 ?>
     <div class="b-catalog">
-        <?php if ($productSearchResult) { ?>
+        <?php if ($productSearchResult && !$productSearchResult->getProductCollection()->isEmpty()) { ?>
             <div class="b-container b-container--catalog-filter">
                 <?= $view->render(
                     'FourPawsCatalogBundle:Catalog:search.filter.container.html.php',

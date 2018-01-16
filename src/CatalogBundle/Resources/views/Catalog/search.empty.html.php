@@ -21,8 +21,7 @@ global $APPLICATION;
 ?>
 <div class="b-container">
     <div class="b-catalog__wrapper-title b-catalog__wrapper-title--filter">
-        <h1 class="b-title b-title--h1 b-title--search"><? $APPLICATION->ShowTitle() ?>
-        </h1>
+        <h1 class="b-title b-title--h1 b-title--search"><?= $catalogRequest->getCategory()->getName() ?></h1>
         <p class="b-title b-title--result">К сожалению, по вашему запросу <?= $catalogRequest->getSearchString(
             ) ? '"<span>' . $catalogRequest->getSearchString() . '</span>"' : '' ?> ничего не найдено.
             Попробуйте найти подходящий товар в каталоге.

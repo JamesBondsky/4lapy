@@ -60,7 +60,9 @@ class FilterHelper implements LoggerAwareInterface
     {
         $propertyLinks = CIBlockSectionPropertyLink::GetArray($iblockId, $sectionId);
 
-        if ($iblockId == IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS)) {
+        if ($iblockId == IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS) &&
+            $sectionId != 0
+        ) {
             $propertyLinks = array_merge(
                 $propertyLinks,
                 CIBlockSectionPropertyLink::GetArray(
@@ -203,7 +205,7 @@ class FilterHelper implements LoggerAwareInterface
             return $availablePropIndexByCode;
         };
 
-        return (new BitrixCache())->withId(__METHOD__)
+        return (new BitrixCache())->withId(__METHOD__ . $categoryId)
             ->withTag('catalog:filters')
             ->resultOf($doGetAvailablePropIndexByCode);
     }
