@@ -75,7 +75,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                            placeholder=""
                            name="PERSONAL_BIRTHDAY"
                            data-text="3"
-                           value="<?= $arResult['CUR_USER']['BIRTHDAY'] ?>" />
+                           value="<?= $arResult['CUR_USER']['BIRTHDAY_POPUP'] ?>" />
                     <div class="b-error"><span class="js-message"></span>
                     </div>
                 </div>

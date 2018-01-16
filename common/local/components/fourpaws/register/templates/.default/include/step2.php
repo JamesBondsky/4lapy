@@ -19,7 +19,7 @@ use FourPaws\External\Manzana\Model\Client;
           method="post">
         <input type="hidden" name="action" value="register">
         <input type="hidden" name="PERSONAL_PHONE" value="<?= $phone ?>">
-        <div class="b-input-line b-input-line--user-data">
+        <div class="b-input-line b-input-line--user-data js-hidden-valid-fields">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-surname">Фамилия</label>
             </div>
@@ -52,7 +52,7 @@ use FourPaws\External\Manzana\Model\Client;
                 </div>
             </div>
         </div>
-        <div class="b-input-line b-input-line--user-data">
+        <div class="b-input-line b-input-line--user-data js-hidden-valid-fields">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-patronymic">Отчество</label>
             </div>
@@ -68,7 +68,7 @@ use FourPaws\External\Manzana\Model\Client;
                 </div>
             </div>
         </div>
-        <div class="b-input-line b-input-line--user-data">
+        <div class="b-input-line b-input-line--user-data js-date-valid js-hidden-valid-fields">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-date-birth">Дата рождения</label>
             </div>

@@ -20,9 +20,10 @@ use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
-use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
+use FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException;
 use FourPaws\UserBundle\Service\ConfirmCodeInterface;
+use FourPaws\UserBundle\Service\ConfirmCodeService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use JMS\Serializer\SerializerBuilder;
@@ -97,6 +98,21 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
     {
         $password         = $request->get('password', '');
         $confirm_password = $request->get('confirmPassword', '');
+        $login            = $request->get('login', '');
+        
+        try {
+            $userId = $this->currentUserProvider->getUserRepository()->findIdentifierByRawLogin($login);
+        } catch (\FourPaws\UserBundle\Exception\TooManyUserFoundException $e) {
+            return JsonErrorResponse::createWithData(
+                'Найдено больше одного пользователя с данным логином ' . $login,
+                ['errors' => ['moreOneUser' => 'Найдено больше одного пользователя с данным логином ' . $login]]
+            );
+        } catch (\FourPaws\UserBundle\Exception\UsernameNotFoundException $e) {
+            return JsonErrorResponse::createWithData(
+                'Не найдено пользователей с данным логином ' . $login,
+                ['errors' => ['noUser' => 'Не найдено пользователей с данным логином ' . $login]]
+            );
+        }
         
         if (empty($password) || empty($confirm_password)) {
             return JsonErrorResponse::createWithData(
@@ -122,7 +138,13 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
         try {
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             $res = $this->currentUserProvider->getUserRepository()->update(
-                SerializerBuilder::create()->build()->fromArray(['PASSWORD' => $password], User::class)
+                SerializerBuilder::create()->build()->fromArray(
+                    [
+                        'ID'       => $userId,
+                        'PASSWORD' => $password,
+                    ],
+                    User::class
+                )
             );
             if (!$res) {
                 return JsonErrorResponse::createWithData(
@@ -130,18 +152,29 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                     ['errors' => ['errorUpdate' => 'Произошла ошибка при обновлении']]
                 );
             }
+    
+            /** @var UserAuthorizationInterface $authService */
+            $authService = App::getInstance()->getContainer()->get(UserAuthorizationInterface::class);
+            $res = $authService->authorize($userId);
             
-            return JsonSuccessResponse::create('Пароль обновлен');
+            if(!$authService->isAuthorized()){
+                return JsonErrorResponse::createWithData(
+                    'Произошла ошибка при авторизации',
+                    ['errors' => ['errorAuth' => 'Произошла ошибка при авторизации']]
+                );
+            }
+    
+            return JsonSuccessResponse::create('Пароль обновлен', 200, [], ['redirect'=>'/personal']);
         } catch (BitrixRuntimeException $e) {
             return JsonErrorResponse::createWithData(
                 'Произошла ошибка при обновлении ' . $e->getMessage(),
                 ['errors' => ['errorUpdate' => 'Произошла ошибка при обновлении ' . $e->getMessage()]]
             );
-        } catch (ConstraintDefinitionException $e) {
+        } catch (\Exception $e) {
         }
         
         return JsonErrorResponse::createWithData(
-            'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
+            'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта ' . $e->getMessage(),
             ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
         );
     }
@@ -153,16 +186,9 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
      */
     public function ajaxResendSms($phone) : JsonResponse
     {
-        if (PhoneHelper::isPhone($phone)) {
-            try {
-                $phone = PhoneHelper::normalizePhone($phone);
-            } catch (WrongPhoneNumberException $e) {
-                return JsonErrorResponse::createWithData(
-                    'Некорректный номер телефона',
-                    ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
-                );
-            }
-        } else {
+        try {
+            $phone = PhoneHelper::normalizePhone($phone);
+        } catch (WrongPhoneNumberException $e) {
             return JsonErrorResponse::createWithData(
                 'Некорректный номер телефона',
                 ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
@@ -170,7 +196,9 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
         }
         
         try {
-            $res = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::sendConfirmSms($phone);
+            /** @var ConfirmCodeService $confirmService */
+            $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+            $res            = $confirmService::sendConfirmSms($phone);
             if (!$res) {
                 return JsonErrorResponse::createWithData(
                     'Ошибка отправки смс, попробуйте позднее',
@@ -217,6 +245,16 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
         $mess = '';
         
         $phone = $request->get('phone', '');
+        if (!empty($phone)) {
+            try {
+                $phone = PhoneHelper::normalizePhone($phone);
+            } catch (WrongPhoneNumberException $e) {
+                return JsonErrorResponse::createWithData(
+                    'Некорректный номер телефона',
+                    ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
+                );
+            }
+        }
         $email = $request->get('email', '');
         $title = 'Восстановление пароля';
         if (empty($step)) {
@@ -257,7 +295,9 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                 $title = 'Создание нового пароля';
                 if (!empty($phone)) {
                     try {
-                        $res = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::checkConfirmSms(
+                        /** @var ConfirmCodeService $confirmService */
+                        $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+                        $res            = $confirmService::checkConfirmSms(
                             $phone,
                             $request->get('confirmCode')
                         );
@@ -277,6 +317,11 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                             'Некорректный номер телефона',
                             ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
                         );
+                    } catch (NotFoundConfirmedCodeException $e) {
+                        return JsonErrorResponse::createWithData(
+                            $e->getMessage(),
+                            ['errors' => ['notFoundConfirmCode' => $e->getMessage()]]
+                        );
                     }
                 }
                 
@@ -284,7 +329,7 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                 $login = !empty($phone) ? $phone : $email;
                 break;
         }
-        
+        $phone = PhoneHelper::formatPhone($phone, '+7 (%s%s%s) %s%s%s-%s%s-%s%s');
         ob_start(); ?>
         <header class="b-registration__header">
             <h1 class="b-title b-title--h1 b-title--registration"><?= $title ?></h1>
@@ -311,44 +356,34 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
      */
     private function ajaxGetSendSmsCode($phone)
     {
-        try {
-            $phone = PhoneHelper::normalizePhone($phone);
-        } catch (WrongPhoneNumberException $e) {
+        $users = $this->currentUserProvider->getUserRepository()->findBy(
+            [
+                '=PERSONAL_PHONE' => $phone,
+            ]
+        );
+        if (count($users) > 1) {
             return JsonErrorResponse::createWithData(
-                'Некорректный номер телефона',
-                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
-            );
-        }
-    
-        try {
-            $users = $this->currentUserProvider->getUserRepository()->findBy(
+                'Пользователей с номером ' . $phone . ' найдено больше 1, пожалуйста обратитесь к администрации сайта',
                 [
-                    '=PERSONAL_PHONE' => PhoneHelper::normalizePhone(
-                        $phone
-                    ),
+                    'errors' => [
+                        'moreOneUsersByPhone' => 'Пользователей с номером ' . $phone
+                                                 . ' найдено больше 1, пожалуйста обратитесь к администрации сайта',
+                    ],
                 ]
             );
-            if(count($users) > 1){
-                return JsonErrorResponse::createWithData(
-                    'Некорректный номер телефона',
-                    ['errors' => ['moreOneUsersByPhone' => '']]
-                );
-            }
-            elseif(count($users) === 0){
-                return JsonErrorResponse::createWithData(
-                    'Пользователей с номером '.$phone.' не найдено',
-                    ['errors' => ['notFoundUsers' => 'Пользователей с номером '.$phone.' не найдено']]
-                );
-            }
-        } catch (WrongPhoneNumberException $e) {
+        }
+        
+        if (count($users) === 0) {
             return JsonErrorResponse::createWithData(
-                'Пользователей с номером '.$phone.' найдено больше 1, пожалуйста обратитесь к администрации сайта',
-                ['errors' => ['wrongPhone' => 'Пользователей с номером '.$phone.' найдено больше 1, пожалуйста обратитесь к администрации сайта']]
+                'Пользователей с номером ' . $phone . ' не найдено',
+                ['errors' => ['notFoundUsers' => 'Пользователей с номером ' . $phone . ' не найдено']]
             );
         }
-    
+        
         try {
-            App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::sendConfirmSms($phone);
+            /** @var ConfirmCodeService $confirmService */
+            $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+            $confirmService::sendConfirmSms($phone);
         } catch (SmsSendErrorException $e) {
             return JsonErrorResponse::createWithData(
                 'Ошибка отправки смс, попробуйте позднее',

@@ -12,6 +12,7 @@ use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\SaleBundle\Exception\BaseExceptionInterface;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Service\BasketService;
+use FourPaws\SaleBundle\Service\BasketViewService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
@@ -25,15 +26,21 @@ use Symfony\Component\HttpFoundation\Request;
 class BasketController extends Controller
 {
     private $basketService;
+    /**
+     * @var BasketViewService
+     */
+    private $basketViewService;
 
     /**
      * BasketController constructor.
      *
      * @param BasketService $basketService
+     * @param BasketViewService $basketViewService
      */
-    public function __construct(BasketService $basketService)
+    public function __construct(BasketService $basketService, BasketViewService $basketViewService)
     {
         $this->basketService = $basketService;
+        $this->basketViewService = $basketViewService;
     }
 
     /**
@@ -57,7 +64,7 @@ class BasketController extends Controller
             $this->basketService->addOfferToBasket($offerId, $quantity);
             $data = [
                 'remainQuantity' => 10,
-                'miniBasket' => $this->basketService::getMiniBasketHtml(),
+                'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
                 'disableAdd' => false
             ];
             $response = JsonSuccessResponse::createWithData(
@@ -95,7 +102,7 @@ class BasketController extends Controller
         try {
             $this->basketService->deleteOfferFromBasket($basketId);
             $data = [
-                'basket' => $this->basketService::getBasketHtml()
+                'basket' => $this->basketViewService->getBasketHtml()
             ];
             $response = JsonSuccessResponse::createWithData(
                 '',
@@ -139,7 +146,7 @@ class BasketController extends Controller
         try {
             $this->basketService->updateBasketQuantity($basketId, $quantity);
             $data = [
-                'basket' => $this->basketService::getBasketHtml()
+                'basket' => $this->basketViewService->getBasketHtml()
             ];
             $response = JsonSuccessResponse::createWithData(
                 '',

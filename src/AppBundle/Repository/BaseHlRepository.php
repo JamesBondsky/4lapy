@@ -3,7 +3,7 @@
 namespace FourPaws\AppBundle\Repository;
 
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
-use JMS\Serializer\ArrayTransformerInterface;
+use JMS\Serializer\Exception\RuntimeException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
@@ -18,17 +18,16 @@ class BaseHlRepository extends BaseRepository
     /**
      * BaseHlRepository constructor.
      *
-     * @param \JMS\Serializer\ArrayTransformerInterface                 $arrayTransformer
-     * @param \Symfony\Component\Validator\Validator\ValidatorInterface $validator
+     * @param ValidatorInterface $validator
      *
+     * @throws RuntimeException
      * @throws \Exception
      */
     public function __construct(
-        ArrayTransformerInterface $arrayTransformer,
         ValidatorInterface $validator
     )
     {
-        parent::__construct($arrayTransformer, $validator);
+        parent::__construct($validator);
         $baseHl = HLBlockFactory::createTableObject(static::HL_NAME);
         $this->setDataManager($baseHl);
     }

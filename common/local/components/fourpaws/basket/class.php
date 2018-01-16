@@ -10,11 +10,16 @@ declare(strict_types=1);
 
 namespace FourPaws\Components;
 
-use Bitrix\Main\Loader;
-use Bitrix\Main\LoaderException;
 use Bitrix\Sale\Basket;
+use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Order;
+use CBitrixComponent;
+use Doctrine\Common\Collections\Collection;
 use FourPaws\App\Application;
+use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
+use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
+use FourPaws\Catalog\Model\Offer;
+use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\SaleBundle\Service\BasketService;
 
 /** @noinspection AutoloadingIssuesInspection */
@@ -25,6 +30,26 @@ use FourPaws\SaleBundle\Service\BasketService;
  */
 class BasketComponent extends \CBitrixComponent
 {
+    private $basketService;
+    /** @var array $images */
+    private $images;
+
+    /**
+     * BasketComponent constructor.
+     *
+     * @param CBitrixComponent|null $component
+     *
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
+    public function __construct(CBitrixComponent $component = null)
+    {
+        parent::__construct($component);
+
+        $this->basketService = Application::getInstance()->getContainer()->get(BasketService::class);
+    }
+
     /** @noinspection PhpMissingParentCallCommonInspection */
     /**
      *
@@ -35,23 +60,81 @@ class BasketComponent extends \CBitrixComponent
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
      * @throws \Bitrix\Main\NotSupportedException
      * @throws \Bitrix\Main\ObjectNotFoundException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     *
      * @return mixed|void
      */
     public function executeComponent(Basket $basket = null)
     {
         if (null === $basket) {
-            $app = Application::getInstance();
-            $basketService = $app->getContainer()->get(BasketService::class);
-            $basket = $basketService->getBasket();
-            $order = Order::create(SITE_ID);
-            $order->setBasket($basket);
+            $basket = $this->basketService->getBasket();
         }
+        // привязывать к заказу нужно для расчета скидок
+        $order = Order::create(SITE_ID);
+        $order->setBasket($basket);
         $this->arResult['BASKET'] = $basket;
+        $this->loadImages();
+        $this->includeComponentTemplate($this->getPage());
+    }
+
+    private function loadImages()
+    {
+        $ids = [];
+        /** @var Basket $basket */
+        $basket = $this->arResult['BASKET'];
+        /** @var BasketItem $basketItem */
+        foreach ($basket->getBasketItems() as $basketItem) {
+            $ids[] = $basketItem->getProductId();
+        }
+        $ids = array_flip(array_flip(array_filter($ids)));
+
+        if (empty($ids)) {
+            return;
+        }
+
+        /**
+         * @var Offer[]|Collection $collection
+         */
+        $collection = (new OfferQuery())->withFilterParameter('ID', $ids)->exec();
+
+        foreach ($collection as $item) {
+            if(isset($this->images[$item->getId()])) {
+                continue;
+            }
+            /**
+             * @var ResizeImageCollection $images
+             * @var ResizeImageDecorator $image
+             */
+            $images = $item->getResizeImages(110, 110);
+            $this->images[$item->getId()] = $images->first();
+        }
+
+    }
+
+    /**
+     *
+     *
+     * @param $offerId
+     *
+     * @return ResizeImageDecorator|null
+     */
+    public function getImage($offerId)
+    {
+        return $this->images[$offerId];
+    }
+
+    /**
+     *
+     *
+     * @return string
+     */
+    private function getPage(): string
+    {
         $page = '';
+        /** @var Basket $basket */
+        $basket = $this->arResult['BASKET'];
         if (!$basket->count()) {
             $page = 'empty';
         }
-        $this->includeComponentTemplate($page);
+        return $page;
     }
 }
