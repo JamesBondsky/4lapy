@@ -41,7 +41,11 @@ class ProductService
     public function findByMaterial(Material $material)
     {
         $product = $this->findByOffer($material->getOfferXmlId());
-        $product = $product ?: $this->findByCombination($material->getProperties()->getPropertyValues(SapProductProperty::PACKING_COMBINATION)->first());
+        $product = $product ?: $this->findByCombination(
+            $material->getProperties()->getPropertyValues(
+                SapProductProperty::PACKING_COMBINATION
+            )->first()
+        );
         return $product;
     }
 
@@ -86,9 +90,9 @@ class ProductService
             '!PROPERTY_CML2_LINK' => false,
             'IBLOCK_ID'           => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
             'XML_ID'              => $xmlId,
-        ], false, false, ['ID']);
+        ], false, false, ['PROPERTY_CML2_LINK']);
         $data = $dbResult->Fetch();
-        $id = $data['ID'] ?? 0;
+        $id = $data['PROPERTY_CML2_LINK_VALUE'] ?? 0;
         if ($id) {
             return (new ProductQuery())->withFilter(['ID' => $id])->exec()->first();
         }
