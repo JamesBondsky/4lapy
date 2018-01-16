@@ -158,7 +158,7 @@ $arResult['IBLOCK_CODE'] = IblockTable::getList(
     [
         'filter' => ['ID' => $arParams['IBLOCK_ID']],
         'select' => ['CODE'],
-        'cache'  => ['ttl' => 360000],
+        'cache'  => ['ttl' => $arParams['CACHE_TIME']],
     ]
 )->fetch()['CODE'];
 /** @noinspection PhpUnhandledExceptionInspection */
