@@ -23,7 +23,8 @@ class Pet extends BaseEntity
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_NAME")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
     protected $name = '';
     
@@ -31,8 +32,9 @@ class Pet extends BaseEntity
      * @var int
      * @Serializer\Type("integer")
      * @Serializer\SerializedName("UF_USER_ID")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
-     * @Assert\NotBlank(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Assert\NotBlank(groups={"create","read"})
+     * @Serializer\SkipWhenEmpty()
      */
     protected $userId;
     
@@ -40,8 +42,9 @@ class Pet extends BaseEntity
      * @var int
      * @Serializer\Type("int")
      * @Serializer\SerializedName("UF_FILE")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
-     * @Assert\NotBlank(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update",})
+     * @Assert\NotBlank(groups={"create","read"})
+     * @Serializer\SkipWhenEmpty()
      */
     protected $photo;
     
@@ -49,8 +52,9 @@ class Pet extends BaseEntity
      * @var int
      * @Serializer\Type("int")
      * @Serializer\SerializedName("UF_TYPE")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
-     * @Assert\NotBlank(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Assert\NotBlank(groups={"create","read"})
+     * @Serializer\SkipWhenEmpty()
      */
     protected $type;
     
@@ -58,20 +62,19 @@ class Pet extends BaseEntity
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_BREED")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
-     * @Assert\NotBlank(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Assert\NotBlank(groups={"create","read"})
+     * @Serializer\SkipWhenEmpty()
      */
     protected $breed = '';
     
-    /** @todo как сделать множественный тип на вход и выход */
     /**
      * @var Date|null
      * @Serializer\Type("bitrix_date")
-     * @Assert\Blank(groups={"create","read","update","delete"})
      * @Serializer\SkipWhenEmpty()
      * @Serializer\SerializedName("UF_BIRTHDAY")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
-     * @Assert\NotBlank(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
     protected $birthday;
     
@@ -79,8 +82,9 @@ class Pet extends BaseEntity
      * @var int
      * @Serializer\Type("int")
      * @Serializer\SerializedName("UF_GENDER")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
-     * @Assert\NotBlank(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Assert\NotBlank(groups={"create","read"})
+     * @Serializer\SkipWhenEmpty()
      */
     protected $gender;
     

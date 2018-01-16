@@ -7,11 +7,12 @@
  * @copyright   ADV/web-engineering co.
  */
 
-use FourPaws\SaleBundle\Service\BasketService;
+use FourPaws\SaleBundle\Service\BasketViewService;
+use FourPaws\App\Application as PawsApplication;
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 $APPLICATION->SetTitle('Корзина');
 
-echo BasketService::getBasketHtml();
+echo PawsApplication::getInstance()->getContainer()->get(BasketViewService::class)->getBasketHtml();
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/footer.php';

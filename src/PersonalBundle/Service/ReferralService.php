@@ -259,6 +259,7 @@ class ReferralService
      *
      * @param bool  $updateManzana
      *
+     * @throws \FourPaws\External\Exception\ManzanaServiceException
      * @throws ContactUpdateException
      * @throws ValidationException
      * @throws ServiceNotFoundException

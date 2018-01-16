@@ -4,6 +4,11 @@ namespace FourPaws\UserBundle\Repository;
 
 use Bitrix\Main\UserTable;
 use CUser;
+use FourPaws\AppBundle\Serialization\ArrayOrFalseHandler;
+use FourPaws\AppBundle\Serialization\BitrixBooleanHandler;
+use FourPaws\AppBundle\Serialization\BitrixDateHandler;
+use FourPaws\AppBundle\Serialization\BitrixDateTimeHandler;
+use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
@@ -14,7 +19,11 @@ use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use JMS\Serializer\ArrayTransformerInterface;
 use JMS\Serializer\DeserializationContext;
+use JMS\Serializer\Exception\RuntimeException;
+use JMS\Serializer\Handler\HandlerRegistry;
 use JMS\Serializer\SerializationContext;
+use JMS\Serializer\Serializer;
+use JMS\Serializer\SerializerBuilder;
 use Symfony\Component\Validator\Constraints\GreaterThanOrEqual;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Type;
@@ -24,11 +33,9 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 class UserRepository
 {
     const FIELD_ID = 'ID';
-
-    /**
-     * @var ArrayTransformerInterface
-     */
-    private $arrayTransformer;
+    
+    /** @var Serializer $builder */
+    protected $serializer;
 
     /**
      * @var ValidatorInterface
@@ -44,10 +51,24 @@ class UserRepository
      * @var \CAllMain|\CMain
      */
     private $cmain;
-
-    public function __construct(ArrayTransformerInterface $arrayTransformer, ValidatorInterface $validator)
+    
+    /**
+     * UserRepository constructor.
+     *
+     * @param ValidatorInterface $validator
+     *
+     * @throws RuntimeException
+     */public function __construct(ValidatorInterface $validator)
     {
-        $this->arrayTransformer = $arrayTransformer;
+        $this->serializer = SerializerBuilder::create()->configureHandlers(
+            function (HandlerRegistry $registry) {
+                $registry->registerSubscribingHandler(new BitrixDateHandler());
+                $registry->registerSubscribingHandler(new BitrixDateTimeHandler());
+                $registry->registerSubscribingHandler(new BitrixBooleanHandler());
+                $registry->registerSubscribingHandler(new ArrayOrFalseHandler());
+            }
+        )->build();
+        
         $this->cuser = new CUser();
         $this->validator = $validator;
         global $APPLICATION;
@@ -70,7 +91,7 @@ class UserRepository
         }
 
         $result = $this->cuser->Add(
-            $this->arrayTransformer->toArray($user, SerializationContext::create()->setGroups(['create']))
+            $this->serializer->toArray($user, SerializationContext::create()->setGroups(['create']))
         );
         if ((int)$result > 0) {
             $user->setId((int)$result);
@@ -93,7 +114,8 @@ class UserRepository
         $result = $this->findBy([static::FIELD_ID => $id], [], 1);
         return reset($result);
     }
-
+    
+    /** @noinspection MoreThanThreeArgumentsInspection */
     /**
      * @param array $criteria
      * @param array $orderBy
@@ -118,49 +140,52 @@ class UserRepository
         /**
          * todo change group name to constant
          */
-        return $this->arrayTransformer->fromArray(
+        return $this->serializer->fromArray(
             $result->fetchAll(),
             sprintf('array<%s>', User::class),
             DeserializationContext::create()->setGroups(['read'])
         );
     }
-
+    
     /**
      * @param string $rawLogin
      *
-     * @param bool $onlyActive
+     * @param bool   $onlyActive
      *
-     * @throws \FourPaws\UserBundle\Exception\UsernameNotFoundException
-     * @throws \FourPaws\UserBundle\Exception\TooManyUserFoundException
+     * @throws UsernameNotFoundException
+     * @throws TooManyUserFoundException
      * @return int
+     * @throws WrongPhoneNumberException
      */
     public function findIdentifierByRawLogin(string $rawLogin, bool $onlyActive = true): int
     {
         return (int)$this->findIdAndLoginByRawLogin($rawLogin, $onlyActive)['ID'];
     }
-
+    
     /**
      * @param string $rawLogin
      *
-     * @param bool $onlyActive
+     * @param bool   $onlyActive
      *
-     * @throws \FourPaws\UserBundle\Exception\UsernameNotFoundException
-     * @throws \FourPaws\UserBundle\Exception\TooManyUserFoundException
+     * @throws UsernameNotFoundException
+     * @throws TooManyUserFoundException
      * @return string
+     * @throws WrongPhoneNumberException
      */
     public function findLoginByRawLogin(string $rawLogin, bool $onlyActive = true): string
     {
         return (string)$this->findIdAndLoginByRawLogin($rawLogin, $onlyActive)['LOGIN'];
     }
-
+    
     /**
      * @param string $rawLogin
      *
-     * @param bool $onlyActive
+     * @param bool   $onlyActive
      *
-     * @throws \FourPaws\UserBundle\Exception\UsernameNotFoundException
-     * @throws \FourPaws\UserBundle\Exception\TooManyUserFoundException
+     * @throws UsernameNotFoundException
+     * @throws TooManyUserFoundException
      * @return array|false
+     * @throws WrongPhoneNumberException
      */
     protected function findIdAndLoginByRawLogin(string $rawLogin, bool $onlyActive = true)
     {
@@ -209,7 +234,7 @@ class UserRepository
      * @throws BitrixRuntimeException
      * @return bool
      */
-    public function update(User $user)
+    public function update(User $user) : bool
     {
         $this->checkIdentifier($user->getId());
         $validationResult = $this->validator->validate($user, null, ['update']);
@@ -218,7 +243,7 @@ class UserRepository
         }
         if ($this->cuser->Update(
             $user->getId(),
-            $this->arrayTransformer->toArray($user, SerializationContext::create()->setGroups(['update']))
+            $this->serializer->toArray($user, SerializationContext::create()->setGroups(['update']))
         )) {
             return true;
         }
@@ -233,7 +258,7 @@ class UserRepository
      * @throws BitrixRuntimeException
      * @return bool
      */
-    public function delete(int $id)
+    public function delete(int $id) : bool
     {
         $this->checkIdentifier($id);
         if (CUser::Delete($id)) {
