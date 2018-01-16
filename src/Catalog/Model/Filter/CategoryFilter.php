@@ -48,6 +48,7 @@ class CategoryFilter extends FilterBase
 
             $categoryCollection = (new CategoryQuery())
                 ->withFilterParameter('!SECTION_ID', null)
+                ->withFilterParameter('DEPTH_LEVEL', 2)
                 ->exec();
 
             /** @var Category $category */

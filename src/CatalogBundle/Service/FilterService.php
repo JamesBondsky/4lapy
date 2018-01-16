@@ -41,16 +41,6 @@ class FilterService implements LoggerAwareInterface
          */
         if ($category->getId()) {
             $filterCollection->add($category);
-        } else {
-            /*
-             * Для страницы поиска добавляем множественные фильтры по разделу и подразделу
-             */
-            $filters = $this->filterHelper->getFilters();
-            foreach ($filters as $filter) {
-                if (($filter instanceof CategoryFilter) || ($filter instanceof SectionFilter)) {
-                    $filterCollection->add($filter);
-                }
-            }
         }
         /**
          * Фильтры активности
