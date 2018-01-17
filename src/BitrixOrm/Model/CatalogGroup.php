@@ -83,14 +83,13 @@ class CatalogGroup extends BitrixArrayItemBase
     /**
      * Устанавливает символьный код типа цен, несмотря на нелепое название.
      *
-     * @param string $NAME
+     * @param string $name
      *
      * @return $this
      */
-    public function withName(string $NAME)
+    public function withName(string $name): Interfaces\ItemInterface
     {
         /** @noinspection PhpIncompatibleReturnTypeInspection */
-        return parent::withName($NAME);
+        return parent::withName($name);
     }
-
 }

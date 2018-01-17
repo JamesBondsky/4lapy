@@ -86,7 +86,9 @@ class Property
      */
     public function getValues()
     {
-        return $this->values;
+        return $this->values->filter(function (PropertyValue $propertyValue) {
+            return $propertyValue->getName();
+        });
     }
 
     /**

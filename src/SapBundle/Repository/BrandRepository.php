@@ -24,19 +24,31 @@ class BrandRepository
         $this->iblockElement = new \CIBlockElement();
     }
 
+    /**
+     * @param string $xmlId
+     *
+     * @return null|Brand
+     */
     public function findByXmlId(string $xmlId)
     {
         $query = new BrandQuery();
-        $query->withFilter($query->getBaseFilter());
-        $query->withFilterParameter('=XML_ID', $xmlId);
+        $query->withFilter([
+            '=XML_ID' => $xmlId,
+        ]);
         return $query->exec()->current();
     }
 
+    /**
+     * @param string $code
+     *
+     * @return null|Brand
+     */
     public function findByCode(string $code)
     {
         $query = new BrandQuery();
-        $query->withFilter($query->getBaseFilter());
-        $query->withFilterParameter('=CODE', $code);
+        $query->withFilter([
+            '=CODE' => $code,
+        ]);
         return $query->exec()->current();
     }
 

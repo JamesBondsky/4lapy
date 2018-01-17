@@ -4,10 +4,12 @@ namespace FourPaws\Location\Model;
 
 use Bitrix\Main\Entity\DataManager;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Model\HlbItemBase;
-use FourPaws\BitrixOrm\Model\ModelInterface;
 use FourPaws\Location\Exception\CityNotFoundException;
 use FourPaws\Location\Query\CityQuery;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /**
  * Class User
@@ -18,32 +20,20 @@ use FourPaws\Location\Query\CityQuery;
  */
 class City extends HlbItemBase
 {
-    protected $UF_NAME;
+    protected $UF_LOCATION = [];
 
-    protected $UF_LOCATION;
+    protected $UF_DELIVERY_TEXT = '';
 
-    protected $UF_ACTIVE;
+    protected $UF_PHONE = '';
 
-    protected $UF_DELIVERY_TEXT;
-
-    protected $UF_PHONE;
-
-    protected $UF_WORKING_HOURS;
-
-    /**
-     * @return string
-     */
-    public function getName(): string
-    {
-        return (string)$this->UF_NAME;
-    }
+    protected $UF_WORKING_HOURS = '';
 
     /**
      * @return array
      */
     public function getLocations(): array
     {
-        return $this->UF_LOCATION ? $this->UF_LOCATION : [];
+        return $this->UF_LOCATION ?: [];
     }
 
     /**
@@ -52,14 +42,6 @@ class City extends HlbItemBase
     public function getPhone(): string
     {
         return (string)$this->UF_PHONE;
-    }
-
-    /**
-     * @return string
-     */
-    public function getActive(): bool
-    {
-        return (bool)$this->UF_ACTIVE;
     }
 
     /**
@@ -76,18 +58,6 @@ class City extends HlbItemBase
     public function getWorkingHours(): string
     {
         return (string)$this->UF_WORKING_HOURS;
-    }
-
-    /**
-     * @param string $name
-     *
-     * @return City
-     */
-    public function withName(string $name): City
-    {
-        $this->UF_NAME = $name;
-
-        return $this;
     }
 
     /**
@@ -114,18 +84,6 @@ class City extends HlbItemBase
         return $this;
     }
 
-    /**
-     * @param string $active
-     *
-     * @return City
-     */
-    public function withActive(bool $active): City
-    {
-        $this->UF_ACTIVE = $active;
-
-        return $this;
-    }
-
     public function withDeliveryText(string $deliveryText): City
     {
         $this->UF_DELIVERY_TEXT = $deliveryText;
@@ -134,7 +92,7 @@ class City extends HlbItemBase
     }
 
     /**
-     * @param string $active
+     * @param string $workingHours
      *
      * @return City
      */
@@ -148,10 +106,13 @@ class City extends HlbItemBase
     /**
      * @param string $id
      *
-     * @return \FourPaws\BitrixOrm\Model\ModelInterface
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
      * @throws CityNotFoundException
+     * @throws ApplicationCreateException
+     * @return City
      */
-    public static function createFromPrimary(string $id): ModelInterface
+    public static function createFromPrimary(string $id): City
     {
         /** @var DataManager $dataManager */
         $dataManager = Application::getInstance()->getContainer()->get('bx.hlblock.cities');
@@ -168,10 +129,13 @@ class City extends HlbItemBase
     /**
      * @param string $locationCode
      *
-     * @return ModelInterface
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
      * @throws CityNotFoundException
+     * @throws ApplicationCreateException
+     * @return City
      */
-    public static function createFromLocation(string $locationCode): ModelInterface
+    public static function createFromLocation(string $locationCode): City
     {
         /** @var DataManager $dataManager */
         $dataManager = Application::getInstance()->getContainer()->get('bx.hlblock.cities');
