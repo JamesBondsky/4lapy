@@ -52,7 +52,7 @@ class SectionFilter extends FilterBase
 
             /** @var Category $category */
             foreach ($categoryCollection as $category) {
-                $variants[] = (new Variant())->withName($category->getName())
+                $variants[] = (new Variant())->withName($category->getCanonicalName())
                                              ->withValue($category->getId());
             }
 
