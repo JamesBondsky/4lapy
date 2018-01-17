@@ -80,7 +80,9 @@ class SearchService implements LoggerAwareInterface
             $resultSet = $search->search();
         }
 
-        $this->getAggsHelper()->collapseFilters($filters, $resultSet);
+        if (!$filters->isEmpty()) {
+            $this->getAggsHelper()->collapseFilters($filters, $resultSet);
+        }
 
         return new ProductSearchResult($resultSet, $navigation);
     }

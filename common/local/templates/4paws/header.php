@@ -56,10 +56,13 @@ $markup = PawsApplication::markup();
                     <img src="/static/build/images/inhtml/logo.svg" alt="Четыре лапы" title="Четыре лапы" />
                 </a>
                 <?php
-                /**
-                 * @todo Форма поиска. Заменить компонентом и удалить файл.
-                 */
-                require_once __DIR__ .'/temp_search.php';
+                $APPLICATION->IncludeComponent(
+                    'fourpaws:catalog.search.form',
+                    '',
+                    [],
+                    false,
+                    ['HIDE_ICONS' => 'Y']
+                );
                 ?>
                 <div class="b-header-info">
                     <?php require_once __DIR__ . '/blocks/header/phone_block.php' ?>

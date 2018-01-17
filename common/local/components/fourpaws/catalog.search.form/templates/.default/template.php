@@ -1,16 +1,40 @@
 <?php
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
+    die();
+}
+
+/**
+ * @var \CBitrixComponentTemplate $this
+ *
+ * @var array $arParams
+ * @var array $arResult
+ * @var array $templateData
+ *
+ * @var string $componentPath
+ * @var string $templateName
+ * @var string $templateFile
+ * @var string $templateFolder
+ *
+ * @global CUser $USER
+ * @global CMain $APPLICATION
+ * @global CDatabase $DB
+ */
 
 use FourPaws\Decorators\SvgDecorator;
 
 ?>
 <div class="b-form-inline b-form-inline--search">
-    <form class="b-form-inline__form b-form-inline__form--search js-popover-search">
+    <form class="b-form-inline__form b-form-inline__form--search js-popover-search"
+          data-url="<?= $arResult['AUTOCOMPLETE_URL'] ?>"
+          action="<?= $arResult['SEARCH_URL'] ?>">
         <div class="b-input">
             <input class="b-input__input-field"
                    type="text"
                    id="header-search"
                    placeholder="Найти лучшее для вашего питомца…"
-                   name="text" />
+                   name="query"
+                   autocomplete="off"
+                   value="<?= $arResult['QUERY'] ?>"/>
         </div>
         <button class="b-button b-button--form-inline b-button--search">
             <span class="b-icon">
