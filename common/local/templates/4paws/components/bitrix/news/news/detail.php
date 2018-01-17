@@ -97,7 +97,9 @@ if ($cache->initCache(
     $res      = \CIBlockElement::GetProperty($arParams['IBLOCK_ID'], $elementID, [], ['CODE' => 'PRODUCTS']);
     $products = [];
     while ($item = $res->Fetch()) {
-        $products[] = $item['VALUE'];
+        if(!empty($item['VALUE']) && !in_array($item['VALUE'], $products)) {
+            $products[] = $item['VALUE'];
+        }
     }
     if (!empty($products)) {
         $query    = new ProductQuery();
