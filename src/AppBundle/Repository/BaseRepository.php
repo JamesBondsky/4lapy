@@ -45,7 +45,7 @@ class BaseRepository
     /** @var PageNavigation|null */
     protected $nav;
     
-    /** @var Serializer $builder */
+    /** @var Serializer $serializer */
     protected $serializer;
     
     /**
@@ -91,7 +91,7 @@ class BaseRepository
         }
         
         $res = $this->dataManager::add(
-            $this->builder->toArray($this->entity, SerializationContext::create()->setGroups(['create']))
+            $this->serializer->toArray($this->entity, SerializationContext::create()->setGroups(['create']))
         );
         if ($res->isSuccess()) {
             $this->entity->setId($res->getId());

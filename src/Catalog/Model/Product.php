@@ -378,6 +378,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 
     /**
      * @var string
+     * @Type("string")
      * @Groups({"elastic"})
      * TODO Есть риск, что это свойство окажется множественным
      */

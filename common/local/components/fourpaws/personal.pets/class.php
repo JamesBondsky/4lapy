@@ -75,13 +75,14 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
         
         if ($this->startResultCache()) {
             $this->arResult['ITEMS'] = $this->petService->getCurUserPets();
-            $this->includeComponentTemplate();
             
             /** получение пола */
             $this->setGenderVals();
             
             /** получение типов питомцев */
             $this->setPetTypes();
+    
+            $this->includeComponentTemplate();
         }
         
         return true;
