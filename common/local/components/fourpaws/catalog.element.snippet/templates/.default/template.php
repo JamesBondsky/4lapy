@@ -57,68 +57,68 @@ $firstOffer = $offers->first();
             <span class="b-common-item__rank-text b-common-item__rank-text--green">Новинка</span>
             <span class="b-common-item__rank-text b-common-item__rank-text--red">Выгода 15%</span>
         </div>
-    </div>
-    <?php if ($offers->count() > 1) { ?>
-        <?php
-        $mainCombinationType = '';
-        if ($firstOffer->getClothingSize()) {
-            $mainCombinationType = 'SIZE';
-        } elseif ($firstOffer->getVolumeReference()) {
-            $mainCombinationType = 'VOLUME';
-        }
-        ?>
-        <?php if ($mainCombinationType === 'SIZE') { ?>
-            <div class="b-common-item__variant">Размеры</div>
-        <?php } else { ?>
-            <div class="b-common-item__variant">Варианты фасовки</div>
-        <?php } ?>
-        <div class="b-weight-container b-weight-container--list">
-            <a class="b-weight-container__link b-weight-container__link--mobile js-mobile-select"
-               href="javascript:void(0);"
-               title=""></a>
-            <ul class="b-weight-container__list">
-                <?php
-                foreach ($offers as $offer) {
-                    if ($mainCombinationType === 'SIZE') {
-                        $value = $offer->getClothingSize();
-                    } else {
-                        $value = $offer->getVolumeReference();
-                    }
-                    if (!$value) {
-                        continue;
-                    }
-                    ?>
-                    <li class="b-weight-container__item">
-                            <span class="b-weight-container__link js-price <?= $firstOffer->getId() === $offer->getId(
-                            ) ? 'active-link' : '' ?>"
-                                  data-price="<?= $offer->getPrice() ?>" data-offerid="<?= $offer->getId() ?>"
-                                  data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
-                            ><?= $value->getName() ?></span>
-                    </li>
+        <?php if ($offers->count() > 1) { ?>
+            <?php
+            $mainCombinationType = '';
+            if ($firstOffer->getClothingSize()) {
+                $mainCombinationType = 'SIZE';
+            } elseif ($firstOffer->getVolumeReference()) {
+                $mainCombinationType = 'VOLUME';
+            }
+            ?>
+            <?php if ($mainCombinationType === 'SIZE') { ?>
+                <div class="b-common-item__variant">Размеры</div>
+            <?php } else { ?>
+                <div class="b-common-item__variant">Варианты фасовки</div>
+            <?php } ?>
+            <div class="b-weight-container b-weight-container--list">
+                <a class="b-weight-container__link b-weight-container__link--mobile js-mobile-select"
+                   href="javascript:void(0);"
+                   title=""></a>
+                <ul class="b-weight-container__list">
                     <?php
-                } ?>
-            </ul>
-        </div>
-    <?php } ?>
-    <div class="b-common-item__moreinfo">
-        <?php if ($firstOffer->getMultiplicity() > 1) { ?>
-            <div class="b-common-item__packing">
-                Упаковка <strong><?= $firstOffer->getMultiplicity() ?>шт.</strong>
+                    foreach ($offers as $offer) {
+                        if ($mainCombinationType === 'SIZE') {
+                            $value = $offer->getClothingSize();
+                        } else {
+                            $value = $offer->getVolumeReference();
+                        }
+                        if (!$value) {
+                            continue;
+                        }
+                        ?>
+                        <li class="b-weight-container__item">
+                                <span class="b-weight-container__link js-price <?= $firstOffer->getId() === $offer->getId(
+                                ) ? 'active-link' : '' ?>"
+                                      data-price="<?= $offer->getPrice() ?>" data-offerid="<?= $offer->getId() ?>"
+                                      data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
+                                ><?= $value->getName() ?></span>
+                        </li>
+                        <?php
+                    } ?>
+                </ul>
             </div>
         <?php } ?>
-        <?php if ($product->getCountry()) { ?>
-            <div class="b-common-item__country">
-                Страна производства <strong><?= $product->getCountry()->getName() ?></strong>
+        <div class="b-common-item__moreinfo">
+            <?php if ($firstOffer->getMultiplicity() > 1) { ?>
+                <div class="b-common-item__packing">
+                    Упаковка <strong><?= $firstOffer->getMultiplicity() ?>шт.</strong>
+                </div>
+            <?php } ?>
+            <?php if ($product->getCountry()) { ?>
+                <div class="b-common-item__country">
+                    Страна производства <strong><?= $product->getCountry()->getName() ?></strong>
+                </div>
+            <?php } ?>
+            <?php if ($firstOffer->isByRequest()) { ?>
+                <div class="b-common-item__order">
+                    Только под заказ
+                </div>
+            <?php } ?>
+            <?php /* @todo инфо о доставке/самовывозе */ ?>
+            <div class="b-common-item__pickup">
+                Самовывоз
             </div>
-        <?php } ?>
-        <?php if ($firstOffer->isByRequest()) { ?>
-            <div class="b-common-item__order">
-                Только под заказ
-            </div>
-        <?php } ?>
-        <?php /* @todo инфо о доставке/самовывозе */ ?>
-        <div class="b-common-item__pickup">
-            Самовызов
         </div>
     </div>
     <a class="b-common-item__add-to-cart js-basket-add"

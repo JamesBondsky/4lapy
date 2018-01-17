@@ -49,6 +49,10 @@ class PetController extends Controller
             );
         }
         
+        if(!empty($_FILES['UF_FILE'])){
+            $data['UF_FILE'] = \CFile::SaveFile($_FILES['UF_FILE'], '/pet');
+        }
+        
         try {
             if ($this->petService->add($data)) {
                 return JsonSuccessResponse::create(

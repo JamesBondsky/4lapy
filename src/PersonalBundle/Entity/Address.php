@@ -19,7 +19,7 @@ class Address extends BaseEntity
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
-    protected $name = '';
+    protected $name;
     
     /**
      * @var int
@@ -39,7 +39,7 @@ class Address extends BaseEntity
      * @Assert\NotBlank(groups={"create","read"})
      * @Serializer\SkipWhenEmpty()
      */
-    protected $city = '';
+    protected $city;
     
     /**
      * @var int
@@ -48,7 +48,7 @@ class Address extends BaseEntity
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
-    protected $cityLocation = '';
+    protected $cityLocation;
     
     /**
      * @var string
@@ -58,17 +58,17 @@ class Address extends BaseEntity
      * @Assert\NotBlank(groups={"create","read"})
      * @Serializer\SkipWhenEmpty()
      */
-    protected $street = '';
+    protected $street;
     
     /**
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_HOUSE")
      * @Serializer\Groups(groups={"create","read","update"})
-     * @Assert\NotBlank(groups={"create",read"})
+     * @Assert\NotBlank(groups={"create","read"})
      * @Serializer\SkipWhenEmpty()
      */
-    protected $house = '';
+    protected $house;
     
     /**
      * @var string
@@ -77,7 +77,7 @@ class Address extends BaseEntity
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
-    protected $housing = '';
+    protected $housing;
     
     /**
      * @var string
@@ -86,7 +86,7 @@ class Address extends BaseEntity
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
-    protected $entrance = '';
+    protected $entrance;
     
     /**
      * @var string
@@ -95,7 +95,7 @@ class Address extends BaseEntity
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
-    protected $floor = '';
+    protected $floor;
     
     /**
      * @var string
@@ -104,7 +104,7 @@ class Address extends BaseEntity
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
-    protected $flat = '';
+    protected $flat;
     
     /**
      * @var string
@@ -113,7 +113,7 @@ class Address extends BaseEntity
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
-    protected $intercomCode = '';
+    protected $intercomCode;
     
     /**
      * @var bool
@@ -122,7 +122,7 @@ class Address extends BaseEntity
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
-    protected $main = false;
+    protected $main;
     
     /**
      * @return string
@@ -149,7 +149,7 @@ class Address extends BaseEntity
      */
     public function isMain() : bool
     {
-        return $this->main;
+        return $this->main ?? false;
     }
     
     /**
@@ -169,7 +169,7 @@ class Address extends BaseEntity
      */
     public function getUserId() : int
     {
-        return $this->userId;
+        return $this->userId ?? 0;
     }
     
     /**
@@ -323,7 +323,7 @@ class Address extends BaseEntity
      */
     public function getHouse() : string
     {
-        return $this->house;
+        return $this->house ?? '';
     }
     
     /**
@@ -343,7 +343,7 @@ class Address extends BaseEntity
      */
     public function getStreet() : string
     {
-        return $this->street;
+        return $this->street ?? '';
     }
     
     /**
@@ -363,7 +363,7 @@ class Address extends BaseEntity
      */
     public function getCity() : string
     {
-        return $this->city;
+        return $this->city ?? '';
     }
     
     /**
