@@ -1,9 +1,9 @@
 <?php
 
-namespace FourPaws\PersonalBundle;
+namespace FourPaws\FoodSelectionBundle;
 
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
-class FourPawsPersonalBundle extends Bundle
+class FourPawsFoodSelectionBundle extends Bundle
 {
 }

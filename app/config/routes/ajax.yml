@@ -25,6 +25,11 @@ personal:
     type: annotation
     prefix: '/personal'
 
+food.selection:
+    resource: '@FourPawsFoodSelectionBundle/AjaxController'
+    type: annotation
+    prefix: '/food_selection'
+
 location.city.autocomplete:
   path: /location/city/autocomplete
   defaults: { _controller: '\FourPaws\Location\Controller\CityController::autocompleteAction' }
