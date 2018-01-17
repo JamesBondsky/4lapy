@@ -137,7 +137,6 @@ class PetService
      * @throws ServiceNotFoundException
      * @throws \Exception
      * @throws ApplicationCreateException
-     * @throws NotAuthorizedException
      * @throws ServiceCircularReferenceException
      * @return array
      */

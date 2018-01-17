@@ -228,6 +228,7 @@ class BaseRepository
         if ($this->nav instanceof PageNavigation) {
             $query->setOffset($this->nav->getOffset());
             $query->setLimit($this->nav->getLimit());
+            $query->countTotal(true);
         }
         $result = $query->exec();
         if (0 === $result->getSelectedRowsCount()) {

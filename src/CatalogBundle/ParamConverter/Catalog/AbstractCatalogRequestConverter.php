@@ -15,7 +15,8 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 abstract class AbstractCatalogRequestConverter implements ParamConverterInterface
 {
     const SORT_TYPE = 'sort';
-    const SEARCH_STRING = 'q';
+    const SORT_DEFAULT = 'popular';
+    const SEARCH_STRING = 'query';
 
     /**
      * @var ArrayTransformerInterface
@@ -95,7 +96,7 @@ abstract class AbstractCatalogRequestConverter implements ParamConverterInterfac
     protected function getSortsCollection(Request $request)
     {
         return $this->sortService->getSorts(
-            $request->query->get(static::SORT_TYPE, ''),
+            $request->query->get(static::SORT_TYPE, static::SORT_DEFAULT),
             (bool)$this->getSearchString($request)
         );
     }

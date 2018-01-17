@@ -42,8 +42,8 @@ $categoriesWithChildren = $category->getChild()->filter(
                 <div class="b-accordion b-accordion--filter">
                     <a class="b-accordion__header b-accordion__header--filter js-toggle-accordion"
                        href="javascript:void(0);"
-                       title="<?= $cat->getName() ?>">
-                        <?= $cat->getName() ?>
+                       title="<?= $cat->getCanonicalName() ?>">
+                        <?= $cat->getCanonicalName() ?>
                     </a>
                     <div class="b-accordion__block js-dropdown-block">
                         <ul class="b-filter-link-list">
@@ -51,8 +51,8 @@ $categoriesWithChildren = $category->getChild()->filter(
                                 <li class="b-filter-link-list__item">
                                     <a class="b-filter-link-list__link"
                                        href="<?= $child->getSectionPageUrl() ?>"
-                                       title="<?= $child->getName() ?>">
-                                        <?= $child->getName() ?>
+                                       title="<?= $child->getCanonicalName() ?>">
+                                        <?= $child->getCanonicalName() ?>
                                     </a>
                                 </li>
                             <?php } ?>

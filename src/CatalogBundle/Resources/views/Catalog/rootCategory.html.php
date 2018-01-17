@@ -49,7 +49,7 @@ $category = $APPLICATION->IncludeComponent(
                         </li>
                     </ul>
                 </nav>
-                <h1 class="b-title b-title--h1"><?= $category->getDisplayName() ?: $category->getName() ?></h1>
+                <h1 class="b-title b-title--h1"><?= $category->getCanonicalName() ?></h1>
             </div>
             <?php $APPLICATION->ShowViewContent(ViewsEnum::CATALOG_CATEGORY_ROOT_LEFT_BLOCK) ?>
             <?php $APPLICATION->ShowViewContent(ViewsEnum::CATALOG_CATEGORY_ROOT_MAIN_BLOCK) ?>
