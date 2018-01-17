@@ -12,7 +12,6 @@ use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService;
-use JMS\Serializer\ArrayTransformerInterface;
 use JMS\Serializer\Exception\RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -27,13 +26,13 @@ class ReferralRepository extends BaseHlRepository
 {
     const HL_NAME = 'Referral';
     
-    /** @var Referral $entity */
-    protected $entity;
-    
     /**
      * @var UserService
      */
     public $curUserService;
+    
+    /** @var Referral $entity */
+    protected $entity;
     
     /**
      * ReferralRepository constructor.

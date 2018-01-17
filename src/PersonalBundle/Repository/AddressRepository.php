@@ -7,7 +7,6 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Repository\BaseHlRepository;
 use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
-use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -32,7 +31,6 @@ class AddressRepository extends BaseHlRepository
      * @throws \Exception
      * @throws ApplicationCreateException
      * @throws BitrixRuntimeException
-     * @throws NotAuthorizedException
      * @throws ServiceCircularReferenceException
      */
     public function create() : bool
@@ -67,7 +65,6 @@ class AddressRepository extends BaseHlRepository
      * @throws ServiceNotFoundException
      * @throws \Exception
      * @throws ApplicationCreateException
-     * @throws NotAuthorizedException
      * @throws ServiceCircularReferenceException
      */
     public function findByCurUser(int $userId = 0) : array
