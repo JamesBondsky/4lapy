@@ -29,8 +29,8 @@ use Symfony\Component\Templating\PhpEngine;
                     <li class="b-filter-link-list__item">
                         <a class="b-filter-link-list__link"
                            href="<?= $child->getSectionPageUrl() ?>"
-                           title="<?= $child->getDisplayName() ?: $child->getName() ?>">
-                            <?= $child->getDisplayName() ?: $child->getName() ?>
+                           title="<?= $child->getCanonicalName() ?>">
+                            <?= $child->getCanonicalName() ?>
                         </a>
                     </li>
                 <?php } ?>

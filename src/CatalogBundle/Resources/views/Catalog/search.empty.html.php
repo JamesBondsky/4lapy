@@ -33,8 +33,8 @@ global $APPLICATION;
         <?php while ($category = $categories->next()) { ?>
             <a class="b-link b-link--filter b-link--filter-search"
                href="<?= $category->getSectionPageUrl() ?>"
-               title="<?= $category->getDisplayName() ? $category->getDisplayName() : $category->getName() ?>">
-                <?= $category->getDisplayName() ? $category->getDisplayName() : $category->getName() ?>
+               title="<?= $category->getCanonicalName() ?>">
+                <?= $category->getCanonicalName() ?>
             </a>
         <?php } ?>
     </div>

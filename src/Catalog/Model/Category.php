@@ -371,6 +371,15 @@ class Category extends IblockSection implements FilterInterface
         return new Terms($this->getRuleCode(), $sectionIdList);
     }
 
+    public function getCanonicalName()
+    {
+        $suffix = '';
+        if ($this->getParent()) {
+            $suffix = $this->getParent()->getSuffix();
+        }
+        return $this->getDisplayName() ?: trim(implode(' ', [$this->getName(), $suffix]));
+    }
+
     /**
      * @inheritdoc
      */
