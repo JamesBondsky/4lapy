@@ -70,7 +70,7 @@ class OfferRepository
     {
         $offer->withIblockId($this->getIblockId());
         $offer->withId(0);
-        $data = $offer->toArray();
+        $data = $this->toArray($offer);
         unset($data['ID']);
 
         $result = new AddResult();
@@ -94,7 +94,7 @@ class OfferRepository
     public function update(Offer $offer): UpdateResult
     {
         $offer->withIblockId($this->getIblockId());
-        $data = $offer->toArray();
+        $data = $this->toArray($offer);
         $properties = $data['PROPERTY_VALUES'];
         unset($data['PROPERTY_VALUES']);
 
@@ -134,15 +134,6 @@ class OfferRepository
     }
 
     /**
-     * @return OfferQuery
-     */
-    protected function getQuery(): OfferQuery
-    {
-        return new OfferQuery();
-    }
-
-    /** @noinspection PhpDocMissingThrowsInspection */
-    /**
      * @return int
      */
     public function getIblockId(): int
@@ -150,5 +141,40 @@ class OfferRepository
         /** @noinspection PhpUnhandledExceptionInspection */
         /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
         return IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS);
+    }
+
+    /**
+     * @param Offer $offer
+     *
+     * @return array
+     */
+    protected function toArray(Offer $offer): array
+    {
+        $data = $offer->toArray();
+
+        foreach ($data as $id => $value) {
+            if ($id === 'PROPERTY_VALUES') {
+                continue;
+            }
+
+            if (\is_bool($value)) {
+                $data[$id] = $value ? 'Y' : 'N';
+            }
+        }
+
+        $data['PROPERTY_VALUES'] = array_map(function ($value) {
+            return \is_bool($value) ? 1 : 0;
+        }, $data['PROPERTY_VALUES'] ?? []);
+        return $data;
+    }
+
+    /** @noinspection PhpDocMissingThrowsInspection */
+
+    /**
+     * @return OfferQuery
+     */
+    protected function getQuery(): OfferQuery
+    {
+        return new OfferQuery();
     }
 }

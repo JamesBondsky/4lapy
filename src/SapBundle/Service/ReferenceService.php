@@ -10,6 +10,7 @@ use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\SapBundle\Dto\In\Offers\Material;
 use FourPaws\SapBundle\Dto\In\Offers\Property;
 use FourPaws\SapBundle\Dto\In\Offers\PropertyValue;
+use FourPaws\SapBundle\Enum\SapProductField;
 use FourPaws\SapBundle\Exception\CantCreateReferenceItem;
 use FourPaws\SapBundle\Exception\LogicException;
 use FourPaws\SapBundle\ReferenceDirectory\SapReferenceStorage;
@@ -137,6 +138,20 @@ class ReferenceService implements LoggerAwareInterface
             if ($this->referenceStorage->getReferenceRepositoryRegistry()->has($property->getCode())) {
                 $this->getPropertyValueHlbElement($property);
             }
+        }
+
+        /**
+         * create or update country
+         */
+        $isSetCountry = $material->getCountryOfOriginCode() &&
+            $material->getCountryOfOriginName() &&
+            $this->referenceStorage->getReferenceRepositoryRegistry()->has(SapProductField::COUNTRY);
+        if ($isSetCountry) {
+            $this->getOrCreate(
+                SapProductField::COUNTRY,
+                $material->getCountryOfOriginCode(),
+                $material->getCountryOfOriginName()
+            );
         }
     }
 
