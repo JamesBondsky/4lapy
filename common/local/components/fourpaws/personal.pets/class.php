@@ -81,7 +81,7 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
             
             /** получение типов питомцев */
             $this->setPetTypes();
-    
+            
             $this->includeComponentTemplate();
         }
         
@@ -114,12 +114,13 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
     private function setPetTypes()
     {
         $this->arResult['PET_TYPES'] = [];
-        $res                         = HLBlockFactory::createTableObject(Pet::PET_TYPE)::query()->setSelect(
-            [
-                'ID',
-                'UF_NAME',
-            ]
-        )->setOrder(['UF_SORT' => 'asc'])->exec();
+        $res                         =
+            HLBlockFactory::createTableObject(Pet::PET_TYPE)::query()->setFilter(['UF_USE_BY_PET' => 1])->setSelect(
+                    [
+                        'ID',
+                        'UF_NAME',
+                    ]
+                )->setOrder(['UF_SORT' => 'asc'])->exec();
         while ($item = $res->fetch()) {
             $this->arResult['PET_TYPES'][] = $item;
         }

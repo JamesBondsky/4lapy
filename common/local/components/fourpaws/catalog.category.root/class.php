@@ -20,7 +20,7 @@ class CatalogCategoryRoot extends CatalogCategory
         /** @var Category $category */
         $category = $this->arResult['CATEGORY'];
         if ($this->arParams['SET_TITLE'] === 'Y') {
-            $APPLICATION->SetTitle($category->getDisplayName() ?: $category->getName());
+            $APPLICATION->SetTitle($category->getCanonicalName());
         }
 
         if (!$category->getChild()->count()) {

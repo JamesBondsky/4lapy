@@ -92,7 +92,7 @@ class Pet extends BaseEntity
     
     protected $stringGender = '';
     
-    protected $codeType    = '';
+    protected $codeType     = '';
     
     /**
      * @return string
@@ -199,11 +199,19 @@ class Pet extends BaseEntity
     protected function setStringType(int $type)
     {
         $item             =
-            HLBlockFactory::createTableObject(static::PET_TYPE)::query()->setFilter(['ID' => $type])->setSelect(
-                ['UF_NAME']
+            HLBlockFactory::createTableObject(static::PET_TYPE)::query()->setFilter(
+                [
+                    'ID'            => $type,
+                    'UF_USE_BY_PET' => 1,
+                ]
+            )->setSelect(
+                [
+                    'UF_NAME',
+                    'UF_CODE',
+                ]
             )->exec()->fetch();
         $this->stringType = $item['UF_NAME'];
-        $this->codeType  = $item['UF_CODE'];
+        $this->codeType   = $item['UF_CODE'];
     }
     
     /**
