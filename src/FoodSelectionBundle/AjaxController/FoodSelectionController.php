@@ -41,21 +41,14 @@ class FoodSelectionController extends Controller
      */
     public function showStepPetTypeAction(Request $request) : JsonResponse
     {
-        $data = $request->request->getIterator()->getArrayCopy();
+        $data = [];
+        $this->foodSelectionService->findBy($request->request->getIterator()->getArrayCopy());
         
-        if(1 === 2) {
-            return JsonSuccessResponse::create(
-                '',
-                200,
-                [],
-                ['reload' => true]
-            );
-        }
-        
-        
-        return JsonErrorResponse::createWithData(
-            'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
-            ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
+        return JsonSuccessResponse::create(
+            '',
+            200,
+            [],
+            ['reload' => true]
         );
     }
     

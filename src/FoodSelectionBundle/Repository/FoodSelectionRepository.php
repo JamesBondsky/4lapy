@@ -2,6 +2,7 @@
 
 namespace FourPaws\FoodSelectionBundle\Repository;
 
+use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use FourPaws\BitrixOrm\Query\IblockElementQuery;
 use FourPaws\Enum\IblockCode;
@@ -14,10 +15,42 @@ use FourPaws\Enum\IblockType;
  */
 class FoodSelectionRepository
 {
+    /**
+     * @param array $params
+     *
+     * @return array
+     */
     public function findBy(array $params = []) : array
     {
-       $query = new IblockElementQuery(IblockUtils::getIblockId(IblockType::CATALOG,
-                                                                IblockCode::FOOD_SELECTION));
-        $query->exec();
+        /** @var IblockElementQuery $query */
+        try {
+            $query = new IblockElementQuery(
+                IblockUtils::getIblockId(
+                    IblockType::CATALOG,
+                    IblockCode::FOOD_SELECTION
+                )
+            );
+            if (!isset($params['select'])) {
+                $params['select'] = ['*'];
+            }
+            $query->withSelect($params['select']);
+            if (!empty($params['filter'])) {
+                $query->withFilter($params['filter']);
+            }
+            if (!empty($params['order'])) {
+                $query->withOrder($params['order']);
+            }
+    
+            if (!empty($params['nav'])) {
+                $query->withNav($params['nav']);
+            }
+            if (!empty($params['group'])) {
+                $query->withGroup($params['group']);
+            }
+    
+            $res = $query->exec();
+            return $res->toArray();
+        } catch (IblockNotFoundException $e) {
+        }
     }
 }
