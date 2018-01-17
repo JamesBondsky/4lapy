@@ -1,0 +1,2 @@
+<?php
+$MESS['CATALOG_ITEM_SNIPPET_VERTICAL.ORDER_BY_REQUEST'] = 'Только под заказ';

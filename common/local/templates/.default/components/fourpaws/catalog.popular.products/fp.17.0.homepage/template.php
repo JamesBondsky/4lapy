@@ -16,7 +16,7 @@ if (!defined('B_PROLOG_INCLUDED')||B_PROLOG_INCLUDED!==true) {
  */
 
 //
-// Если выбрана отложенная загрузка результата, отправляем ajax-запрос
+// Если выбрана отложенная загрузка результата, то отправляем ajax-запрос
 //
 if ($arResult['RESULT_TYPE'] === 'INITIAL' && !empty($arResult['BIG_DATA_SETTINGS'])) {
     $signer = new \Bitrix\Main\Security\Sign\Signer();
@@ -25,6 +25,10 @@ if ($arResult['RESULT_TYPE'] === 'INITIAL' && !empty($arResult['BIG_DATA_SETTING
 
     ?><script type="text/javascript">
         (function() {
+            if (window.FourPawsCatalogPopularProductsComponent) {
+                return;
+            }
+
             window.FourPawsCatalogPopularProductsComponent = function(params) {
                 this.siteId = params.siteId || '';
                 this.ajaxId = params.ajaxId || '';
@@ -36,6 +40,7 @@ if ($arResult['RESULT_TYPE'] === 'INITIAL' && !empty($arResult['BIG_DATA_SETTING
                 this.bigData = params.bigData || {enabled: false};
 
                 if (this.bigData.enabled) {
+                    // эти переменные используются в FourPawsCatalogElementSnippet
                     BX.cookie_prefix = this.bigData.js.cookiePrefix || '';
                     BX.cookie_domain = this.bigData.js.cookieDomain || '';
                     BX.current_server_time = this.bigData.js.serverTime;
@@ -117,7 +122,7 @@ if ($arResult['RESULT_TYPE'] === 'INITIAL' && !empty($arResult['BIG_DATA_SETTING
             };
         })();
 
-        var tmp = new FourPawsCatalogPopularProductsComponent({
+        new FourPawsCatalogPopularProductsComponent({
             siteId: '<?=\CUtil::JSEscape(SITE_ID)?>',
             componentPath: '<?=\CUtil::JSEscape($componentPath)?>',
             bigData: <?=\CUtil::PhpToJSObject($arResult['BIG_DATA_SETTINGS'])?>,
@@ -157,14 +162,15 @@ if ($arResult['RESULT_TYPE'] === 'RESULT') {
                         $productId = $product->getId();
                         $APPLICATION->IncludeComponent(
                             'fourpaws:catalog.element.snippet',
-                            '',
+                            'vertical',
                             [
                                 'PRODUCT' => $product,
-                                // При клике на ссылку по рекомендации нужно писать в куки 4LP_RCM_PRODUCT_LOG значение лога: {PRODUCT_ID}-{RCM_ID}-{current_server_time}
-                                // записи для каждого элемента разделять точкой, пример: {PRODUCT_ID_1}-{RCM_ID_1}-{current_server_time_1}.{PRODUCT_ID_2}-{RCM_ID_2}-{current_server_time_2}
-                                // При этом следует удалить из лога, хранимого в куке, все записи старше 30 дней, а саму куку следует хранить 10 лет
-                                // (штатную реализация см. в js-функции rememberProductRecommendation шаблона bitrix:catalog.item)
-                                'RCM_ID' => isset($arResult['recommendationIdToProduct'][$productId]) ? $arResult['recommendationIdToProduct'][$productId] : '',
+                                'BIG_DATA' => [
+                                    'RCM_ID' => isset($arResult['recommendationIdToProduct'][$productId]) ? $arResult['recommendationIdToProduct'][$productId] : '',
+                                    'cookiePrefix' => isset($arResult['BIG_DATA_SETTINGS']['js']['cookiePrefix']) ? $arResult['BIG_DATA_SETTINGS']['js']['cookiePrefix'] : '',
+                                    'cookieDomain' => isset($arResult['BIG_DATA_SETTINGS']['js']['cookieDomain']) ? $arResult['BIG_DATA_SETTINGS']['js']['cookieDomain'] : '',
+                                    'serverTime' => isset($arResult['BIG_DATA_SETTINGS']['js']['serverTime']) ? $arResult['BIG_DATA_SETTINGS']['js']['serverTime'] : '',
+                                ],
                             ],
                             $component,
                             [
@@ -181,7 +187,7 @@ if ($arResult['RESULT_TYPE'] === 'RESULT') {
         // для отложенной загрузки через ajax-запрос результат отдаем в виде json
         $result = [];
         $result['HTML'] = ob_get_clean();
-        //$result['JS'] = \Bitrix\Main\Page\Asset::getInstance()->getJs();
+        $result['JS'] = \Bitrix\Main\Page\Asset::getInstance()->getJs();
         echo \Bitrix\Main\Web\Json::encode($result);
     }
 }

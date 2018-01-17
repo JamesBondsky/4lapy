@@ -36,8 +36,8 @@ class FourPawsCatalogPopularProducts extends ElementList
         $params = parent::onPrepareComponentParams($params);
         $arParams['AJAX_ID'] = isset($params['AJAX_ID']) ? $params['AJAX_ID'] : '';
 
-        // отложенная генерация результата (через ajax)
-        $params['DEFERRED_LOAD'] = 'Y';
+        // Y - отложенная генерация результата (через ajax)
+        $params['DEFERRED_LOAD'] = 'N';
         // тип запрашиваемой рекомендации BigData
         $this->arParams['RCM_TYPE'] = 'personal';
         // может быть задействован при дополнительной фильтрации по секции
