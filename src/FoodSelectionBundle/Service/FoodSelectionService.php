@@ -36,7 +36,7 @@ class FoodSelectionService
      *
      * @return array
      */
-    public function findBy(array $data = []) : array
+    public function getItems(array $data = []) : array
     {
         $params = [];
         if (!empty($data)){
@@ -44,6 +44,15 @@ class FoodSelectionService
             
             }
         }
-        return $this->foodSelectionRepository->findBy($params);
+        return $this->foodSelectionRepository->getItems($params);
+    }
+    
+    public function getSections() : array{
+        $params = [];
+        if (!empty($data)){
+            if(!empty($data[''])){
+            
+            }
+        }
     }
 }

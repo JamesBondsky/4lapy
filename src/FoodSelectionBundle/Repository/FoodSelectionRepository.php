@@ -5,6 +5,7 @@ namespace FourPaws\FoodSelectionBundle\Repository;
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use FourPaws\BitrixOrm\Query\IblockElementQuery;
+use FourPaws\BitrixOrm\Query\IblockSectionQuery;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 
@@ -20,7 +21,7 @@ class FoodSelectionRepository
      *
      * @return array
      */
-    public function findBy(array $params = []) : array
+    public function getItems(array $params = []) : array
     {
         /** @var IblockElementQuery $query */
         try {
@@ -51,6 +52,12 @@ class FoodSelectionRepository
             $res = $query->exec();
             return $res->toArray();
         } catch (IblockNotFoundException $e) {
+            return [];
         }
+    }
+    
+    public function getSections(array $params = []): array
+    {
+    //$query = new IblockSectionQuery();
     }
 }
