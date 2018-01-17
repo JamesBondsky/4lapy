@@ -79,8 +79,8 @@ class BitrixClearUser extends Command implements LoggerAwareInterface
         $minimalId   = $input->getArgument(self::ARGUMENT_MINIMAL_ID);
         $this->debug = $input->getOption(self::OPTION_DEBUG);
     
-        if ($minimalId < 6) {
-            throw new InvalidArgumentException('mid must be an integer, greater than 6');
+        if ($minimalId < 11) {
+            throw new InvalidArgumentException('mid must be an integer, greater than 10');
         }
         
         try {
