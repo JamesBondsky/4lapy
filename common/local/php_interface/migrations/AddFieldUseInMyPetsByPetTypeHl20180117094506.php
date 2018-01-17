@@ -2,9 +2,11 @@
 
 namespace Sprint\Migration;
 
+use Adv\Bitrixtools\Migration\SprintMigrationBase;
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
+use Bitrix\Main\Entity\DataManager;
 
-class AddFieldUseInMyPetsByPetTypeHl20180117094506 extends \Adv\Bitrixtools\Migration\SprintMigrationBase
+class AddFieldUseInMyPetsByPetTypeHl20180117094506 extends SprintMigrationBase
 {
     
     const HL_NAME    = 'ForWho';
@@ -61,23 +63,56 @@ class AddFieldUseInMyPetsByPetTypeHl20180117094506 extends \Adv\Bitrixtools\Migr
                 ]
             );
             
-            /** @var \Bitrix\Main\Entity\DataManager $dataManager */
+            /** @var DataManager $dataManager */
             try {
                 $dataManager = HLBlockFactory::createTableObject(static::HL_NAME);
-                $res         = $dataManager::query()->setSelect(['ID'])->setFilter(
-                    [
-                        'UF_CODE' => [
-                            'koshki',
-                            'sobaki',
-                            'ptitsy',
-                            'gryzuny',
-                            'ryby',
-                            'prochee',
-                        ],
-                    ]
-                )->exec();
+                $res         =
+                    $dataManager::query()->setSelect(
+                        [
+                            'ID',
+                            'XML_ID',
+                        ]
+                    )->setFilter(
+                        [
+                            'UF_XML_ID' => [
+                                '3',
+                                '11',
+                                '7',
+                                '2',
+                                '10',
+                                '00000120',
+                            ],
+                        ]
+                    )->exec();
                 while ($item = $res->fetch()) {
-                    $dataManager::update($item['ID'], ['UF_USE_BY_PET' => 'Y']);
+                    $code = '';
+                    switch ($item['XML_ID']) {
+                        case '3':
+                            $code = 'koshki';
+                            break;
+                        case '11':
+                            $code = 'sobaki';
+                            break;
+                        case '7':
+                            $code = 'ptitsy';
+                            break;
+                        case '2':
+                            $code = 'gryzuny';
+                            break;
+                        case '10':
+                            $code = 'ryby';
+                            break;
+                        case '00000120':
+                            $code = 'prochee';
+                            break;
+                    }
+                    $dataManager::update(
+                        $item['ID'],
+                        [
+                            'UF_USE_BY_PET' => 'Y',
+                            'UF_CODE'       => $code,
+                        ]
+                    );
                 }
             } catch (\Exception $e) {
             }
