@@ -560,6 +560,20 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      */
     protected $PROPERTY_PACKING_COMBINATION = '';
 
+    /**
+     * @var bool
+     * @Type("bool")
+     * @Groups({"elastic"})
+     */
+    protected $PROPERTY_TRANSPORT_ONLY_REFRIGERATOR = false;
+
+    /**
+     * @var bool
+     * @Type("bool")
+     * @Groups({"elastic"})
+     */
+    protected $PROPERTY_DC_SPECIAL_AREA_STORAGE = false;
+
     public function __construct(array $fields = [])
     {
         parent::__construct($fields);
@@ -1773,8 +1787,8 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
             $this->offers = new ArrayCollection(
                 array_values(
                     (new OfferQuery())->withFilterParameter('=PROPERTY_CML2_LINK', $this->getId())
-                                      ->exec()
-                                      ->toArray()
+                        ->exec()
+                        ->toArray()
                 )
             );
         }
@@ -1834,5 +1848,43 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         }
 
         return $result;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isTransportOnlyRefrigerator(): bool
+    {
+        return $this->PROPERTY_TRANSPORT_ONLY_REFRIGERATOR;
+    }
+
+    /**
+     * @param bool $onlyRefrigerator
+     *
+     * @return Product
+     */
+    public function withTransportOnlyRefrigerator(bool $onlyRefrigerator = true): Product
+    {
+        $this->PROPERTY_TRANSPORT_ONLY_REFRIGERATOR = $onlyRefrigerator;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isDeliveryAreaRestrict(): bool
+    {
+        return $this->PROPERTY_DC_SPECIAL_AREA_STORAGE;
+    }
+
+    /**
+     * @param bool $restrict
+     *
+     * @return Product
+     */
+    public function withDeliveryAreaRestrict(bool $restrict = true): Product
+    {
+        $this->PROPERTY_DC_SPECIAL_AREA_STORAGE = $restrict;
+        return $this;
     }
 }
