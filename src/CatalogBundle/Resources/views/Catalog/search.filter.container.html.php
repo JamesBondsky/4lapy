@@ -12,10 +12,6 @@ use Bitrix\Main\Web\Uri;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
 use FourPaws\Catalog\Model\Filter\ActionsFilter;
-use FourPaws\Catalog\Model\Filter\PriceFilter;
-use FourPaws\Catalog\Model\Filter\RangeFilterInterface;
-use FourPaws\Catalog\Model\Sorting;
-use FourPaws\Catalog\Model\Variant;
 use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
 use FourPaws\CatalogBundle\ParamConverter\Catalog\AbstractCatalogRequestConverter;
 use FourPaws\Decorators\SvgDecorator;
@@ -37,6 +33,11 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
 ?>
 <div class="b-catalog__wrapper-title b-catalog__wrapper-title--filter">
     <h1 class="b-title b-title--h1 b-title--catalog-filter"><?= $catalogRequest->getCategory()->getName() ?></h1>
+    <?php if ($catalogRequest->getSearchString() != $productSearchResult->getQuery()) { ?>
+        <p class="b-title b-title--result">
+            Возможно, вы имели ввиду «<span><?= $productSearchResult->getQuery() ?></span>»
+        </p>
+    <?php } ?>
 </div>
 <aside class="b-filter b-filter--popup js-filter-popup">
     <div class="b-filter__top">
@@ -57,7 +58,7 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
                    title="Сбросить фильтры">Сбросить фильтры</a>
             </div>
             <div class="js-filter-input">
-                <input type="hidden" name="query" value="<?= $catalogRequest->getSearchString() ?>">
+                <input type="hidden" name="query" value="<?= $productSearchResult->getQuery() ?>">
             </div>
             <?= $view->render(
                 'FourPawsCatalogBundle:Catalog:catalog.filter.category.list.html.php',
@@ -65,63 +66,12 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
                     'category' => $category,
                 ]
             ) ?>
-            <?php
-            foreach ($filterCollection->getVisibleFilters() as $filter) {
-                if ($filter instanceof PriceFilter) {
-                    continue;
-                }
-                if ($filter instanceof RangeFilterInterface) {
-                    continue;
-                }
-                if ($filter instanceof ActionsFilter) {
-                    continue;
-                }
-                if (!$filter->hasAvailableVariants()) {
-                    continue;
-                }
-                if ($filter instanceof FilterBase) {
-                    ?>
-                    <div class="b-filter__block">
-                        <h3 class="b-title b-title--filter-header">
-                            <?= $filter->getName() ?>
-                        </h3>
-                        <ul class="b-filter-link-list b-filter-link-list--filter js-accordion-filter js-filter-checkbox">
-                            <?php
-                            /**
-                             * @var Variant $variant
-                             */
-                            foreach ($filter->getAvailableVariants() as $id => $variant) {
-                                ?>
-                                <li class="b-filter-link-list__item">
-                                    <label class="b-filter-link-list__label">
-                                        <input class="b-filter-link-list__checkbox js-checkbox-change js-filter-control"
-                                               type="checkbox"
-                                               name="<?= $filter->getFilterCode() ?>"
-                                               value="<?= $variant->getValue() ?>"
-                                               id="<?= $filter->getFilterCode() ?>-<?= $id ?>"
-                                               <?= $variant->isChecked() ? 'checked' : '' ?>
-                                        />
-                                        <a class="b-filter-link-list__link b-filter-link-list__link--checkbox"
-                                           href="javascript:void(0);"
-                                           title="<?= $variant->getName() ?>"
-                                        ><?= $variant->getName() ?></a>
-                                    </label>
-                                </li>
-                                <?php
-                            } ?>
-                        </ul>
-                        <a class="b-link b-link--filter-more js-open-filter-all"
-                           href="javascript:void(0);" title="Показать все">
-                            Показать все
-                            <span class="b-icon b-icon--more">
-                                <?= new SvgDecorator('icon-arrow-down', 10, 10) ?>
-                            </span>
-                        </a>
-                    </div>
-                    <?php
-                }
-            }
-            ?>
+            <?= $view->render(
+                'FourPawsCatalogBundle:Catalog:catalog.filter.list.html.php',
+                [
+                    'filters' => $filterCollection->getVisibleFilters()
+                ]
+            ) ?>
             <div class="b-filter__block b-filter__block--discount js-discount-mobile-here">
             </div>
         </form>
@@ -143,7 +93,7 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
         <div class="b-catalog-filter__filter-part">
             <dl class="b-catalog-filter__row">
                 <dt class="b-catalog-filter__label b-catalog-filter__label--result">
-                    По запросу «<span><?= $catalogRequest->getSearchString() ?></span>» мы нашли
+                    По запросу «<span><?= $productSearchResult->getQuery() ?></span>» мы нашли
                 </dt>
             </dl>
             <div class="b-line b-line--sort-desktop">
@@ -158,25 +108,12 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
                     );
                     ?>
                     <span class="b-catalog-filter__label b-catalog-filter__label--amount"><?= $totalString ?></span>
-                    <span class="b-catalog-filter__sort">
-                        <span class="b-catalog-filter__label b-catalog-filter__label--sort">Сортировать по</span>
-                        <span class="b-select b-select--sort js-filter-select">
-                            <select class="b-select__block b-select__block--sort js-filter-select" name="sort">
-                                  <?php
-                                  /**
-                                   * @var Sorting $sort
-                                   */
-                                  foreach ($catalogRequest->getSorts() as $sort) {
-                                      ?>
-                                      <option value="<?= $sort->getValue() ?>" <?= $sort->isSelected(
-                                      ) ? 'selected="selected"' : '' ?>><?= $sort->getName() ?></option>
-                                      <?php
-                                  }
-                                  ?>
-                            </select>
-                            <span class="b-select__arrow"></span>
-                        </span>
-                    </span>
+                    <?= $view->render(
+                        'FourPawsCatalogBundle:Catalog:catalog.filter.sorts.html.php',
+                        [
+                            'sorts' => $catalogRequest->getSorts()
+                        ]
+                    ) ?>
                     <?php
                     /**
                      * @var FilterBase $filter
