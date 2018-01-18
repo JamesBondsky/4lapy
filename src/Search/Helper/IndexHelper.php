@@ -128,6 +128,14 @@ class IndexHelper implements LoggerAwareInterface
      */
     public function getCatalogIndexSettings(): array
     {
+        $qwertyRu = mb_split('\s', 'й ц у к е н г ш щ з х ъ ф ы в а п р о л д ж э я ч с м и т ь б ю');
+        $qwertyEn = mb_split('\s', 'q w e r t y u i o p [ ] a s d f g h j k l ; \' z x c v b n m , .');
+        $characterMap = function($value1, $value2) {
+            return $value1 . ' => ' . $value2;
+        };
+        $enToRuMapping = array_map($characterMap, $qwertyEn, $qwertyRu);
+        $ruToEnMapping = array_map($characterMap, $qwertyRu, $qwertyEn);
+
         return [
             'settings' => [
                 'number_of_shards' => 1,
@@ -135,6 +143,10 @@ class IndexHelper implements LoggerAwareInterface
                     [
                         'analyzer' => [
                             'default'          => [
+                                'char_filter' => [
+                                    'ru_en',
+                                    'en_ru',
+                                ],
                                 'type'      => 'custom',
                                 'tokenizer' => 'standard',
                                 'filter'    => [
@@ -144,6 +156,10 @@ class IndexHelper implements LoggerAwareInterface
                             'autocomplete'     => [
                                 'type'      => 'custom',
                                 'tokenizer' => 'standard',
+                                'char_filter' => [
+                                    'ru_en',
+                                    'en_ru',
+                                ],
                                 'filter'    => [
                                     'lowercase',
                                     'synonym',
@@ -153,6 +169,10 @@ class IndexHelper implements LoggerAwareInterface
                                 ],
                             ],
                             'full-text-search' => [
+                                'char_filter' => [
+                                    'ru_en',
+                                    'en_ru',
+                                ],
                                 'type'      => 'custom',
                                 'tokenizer' => 'standard',
                                 'filter'    => [
@@ -163,6 +183,10 @@ class IndexHelper implements LoggerAwareInterface
                                 ],
                             ],
                             'sounds-similar'   => [
+                                'char_filter' => [
+                                    'ru_en',
+                                    'en_ru',
+                                ],
                                 'tokenizer' => 'standard',
                                 'filter'    => [
                                     'lowercase',
@@ -199,6 +223,16 @@ class IndexHelper implements LoggerAwareInterface
                                 'synonyms_path' => 'resources/synonym.txt',
                             ],
                         ],
+                        'char_filter' => [
+                            'ru_en' => [
+                                'type' => 'mapping',
+                                'mappings' => $ruToEnMapping
+                            ],
+                            'en_ru' => [
+                                'type' => 'mapping',
+                                'mappings' => $enToRuMapping
+                            ]
+                        ]
                     ],
             ],
             'mappings' => [
