@@ -2,6 +2,7 @@
 
 namespace FourPaws\Catalog\Model\Filter\Abstraction;
 
+use Adv\Bitrixtools\Tools\BitrixUtils;
 use Elastica\Aggregation\AbstractAggregation;
 use Elastica\Aggregation\Terms as AggTerms;
 use Elastica\Query\AbstractQuery;
@@ -30,15 +31,43 @@ abstract class FilterBase extends HlbItemBase implements FilterInterface
 
     use FilterTrait;
 
+    /**
+     * @var bool
+     */
+    protected $UF_ACTIVE = true;
+
     public function __construct(array $fields = [])
     {
-        parent::__construct($fields);
-        if ($fields) {
-            $this
-                ->withName($fields['UF_NAME'] ?: $this->getName())
-                ->withSort($fields['UF_SORT'] ?: $this->getSort())
-                ->withXmlId($fields['UF_CODE'] ?: $this->getXmlId());
+        if (isset($fields['UF_ACTIVE'])) {
+            $fields['UF_ACTIVE'] = BitrixUtils::bitrixBool2bool($fields['UF_ACTIVE']);
         }
+        parent::__construct($fields);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function isActive(): bool
+    {
+        return $this->UF_ACTIVE;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function withActive(bool $active)
+    {
+        $this->UF_ACTIVE = $active;
+        return $this;
+    }
+
+    public function toArray(): array
+    {
+        $array = parent::toArray();
+        if (\is_bool($array['UF_ACTIVE'])) {
+            $array['UF_ACTIVE'] = BitrixUtils::bool2BitrixBool($array['UF_ACTIVE']);
+        }
+        return $array;
     }
 
     public function getAggRule(): AbstractAggregation
@@ -82,15 +111,15 @@ abstract class FilterBase extends HlbItemBase implements FilterInterface
     {
         $rawValue = $request->get($this->getFilterCode());
 
-        if (is_null($rawValue)) {
+        if (null === $rawValue) {
             return [];
         }
 
-        if (is_string($rawValue) && strpos($rawValue, static::VARIANT_DELIMITER)) {
+        if (\is_string($rawValue) && strpos($rawValue, static::VARIANT_DELIMITER)) {
             return explode(static::VARIANT_DELIMITER, $rawValue);
         }
 
-        if (is_array($rawValue)) {
+        if (\is_array($rawValue)) {
             return $rawValue;
         }
 

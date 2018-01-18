@@ -20,5 +20,6 @@ class ShopRemainConsumer implements ConsumerInterface
         /**
          * @todo implement
          */
+        return false;
     }
 }

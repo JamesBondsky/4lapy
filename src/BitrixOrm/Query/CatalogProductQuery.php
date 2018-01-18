@@ -2,9 +2,8 @@
 
 namespace FourPaws\BitrixOrm\Query;
 
-
-use Bitrix\Main\DB\Result;
 use CDBResult;
+use FourPaws\BitrixOrm\Collection\CatalogProductCollection;
 use FourPaws\BitrixOrm\Collection\CollectionBase;
 use FourPaws\BitrixOrm\Collection\CatalogProductCollection;
 
@@ -24,16 +23,17 @@ class CatalogProductQuery extends QueryBase
     /**
      * Непосредственное выполнение запроса через API Битрикса
      *
-     * @return mixed|CDBResult|Result
+     * @return CDBResult
      */
-    public function doExec()
+    public function doExec(): CDBResult
     {
         return \CCatalogProduct::GetList(
             $this->getOrder(),
             $this->getFilterWithBase(),
             $this->getGroup() ?: false,
             $this->getNav() ?: false,
-            $this->getSelectWithBase());
+            $this->getSelectWithBase()
+        );
     }
 
     /**
@@ -60,6 +60,7 @@ class CatalogProductQuery extends QueryBase
             'WIDTH',
             'LENGTH',
             'HEIGHT',
+            'MEASURE',
             'ELEMENT_IBLOCK_ID',
             'ELEMENT_XML_ID',
             'ELEMENT_NAME',
