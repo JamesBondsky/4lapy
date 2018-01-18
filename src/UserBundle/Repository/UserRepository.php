@@ -2,6 +2,8 @@
 
 namespace FourPaws\UserBundle\Repository;
 
+use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\UserGroupTable;
 use Bitrix\Main\UserTable;
 use CUser;
 use FourPaws\AppBundle\Serialization\ArrayOrFalseHandler;
@@ -17,7 +19,6 @@ use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Exception\ValidationException;
-use JMS\Serializer\ArrayTransformerInterface;
 use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\Exception\RuntimeException;
 use JMS\Serializer\Handler\HandlerRegistry;
@@ -289,5 +290,37 @@ class UserRepository
         if ($result->count()) {
             throw new InvalidIdentifierException(sprintf('Wrong identifier %s passed', $id));
         }
+    }
+    
+    /**
+     * @param int $id
+     *
+     * @return array
+     */
+    public function getUserGroups(int $id) : array
+    {
+        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+        $res    = UserGroupTable::query()->setFilter(
+            [
+                'USER_ID' => $id,
+                'LOGIC'   => 'AND',
+                [
+                    'LOGIC'            => 'OR',
+                    '>=DATE_ACTIVE_TO' => new DateTime(),
+                    'DATE_ACTIVE_TO'   => null,
+                ],
+                [
+                    'LOGIC'              => 'OR',
+                    '<=DATE_ACTIVE_FROM' => new DateTime(),
+                    'DATE_ACTIVE_FROM'   => null,
+                ],
+            ]
+        )->setSelect(['GROUP_ID'])->exec();
+        $groups = [];
+        while ($item = $res->fetch()) {
+            $groups[] = (int)$item['GROUP_ID'];
+        }
+        
+        return $groups;
     }
 }

@@ -22,6 +22,7 @@ use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\ValidationException;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -32,6 +33,14 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
      * @var ReferralService
      */
     private $referralService;
+    
+    /**
+     * @var CurrentUserProviderInterface
+     */
+    private $currentUserProvider;
+    
+    /** @todo нужно id группы или создать ее  */
+    protected static $accessUserGroup = 23;
     
     /**
      * AutoloadingIssuesInspection constructor.
@@ -55,6 +64,7 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
             throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
         }
         $this->referralService = $container->get('referral.service');
+        $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
     }
     
     /**
@@ -72,6 +82,15 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
      */
     public function executeComponent()
     {
+        try {
+            if(!\in_array((int)static::$accessUserGroup, $this->currentUserProvider->getUserGroups(), true)){
+                define('NEED_AUTH', true);
+                return null;
+            }
+        } catch (NotAuthorizedException $e) {
+            define('NEED_AUTH', true);
+            return null;
+        }
         $this->setFrameMode(true);
         
         try {
