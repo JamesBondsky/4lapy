@@ -242,7 +242,7 @@ class IndexHelper implements LoggerAwareInterface
                         'suggest'                          => [
                             'type'            => 'completion',
                             'analyzer'        => 'autocomplete',
-                            'search_analyzer' => 'standard',
+                            'search_analyzer' => 'default',
                         ],
                         'brand'                            => [
                             'properties' => [

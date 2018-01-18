@@ -3,9 +3,11 @@
 namespace FourPaws\Search;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Elastica\Query;
 use Elastica\Query\AbstractQuery;
 use Elastica\Query\BoolQuery;
 use Elastica\QueryBuilder;
+use Elastica\Suggest;
 use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Model\Filter\FilterInterface;
 use FourPaws\Catalog\Model\Sorting;
@@ -13,6 +15,7 @@ use FourPaws\Search\Helper\AggsHelper;
 use FourPaws\Search\Helper\IndexHelper;
 use FourPaws\Search\Model\Navigation;
 use FourPaws\Search\Model\ProductSearchResult;
+use FourPaws\Search\Model\ProductSuggestResult;
 use Psr\Log\LoggerAwareInterface;
 use RuntimeException;
 
@@ -85,6 +88,28 @@ class SearchService implements LoggerAwareInterface
         }
 
         return new ProductSearchResult($resultSet, $navigation);
+    }
+
+    /**
+     * Автокомплит для товаров
+     * @param $searchString
+     *
+     * @return ProductSuggestResult
+     */
+    public function productsAutocomplete($searchString): ProductSuggestResult
+    {
+        $suggest = new Suggest();
+
+        $completion = new Suggest\Completion('product_suggest', 'suggest');
+        $completion->setText($searchString);
+        $completion->setParam('fuzzy', ['fuzziness' => 2]);
+        $suggest->addSuggestion($completion);
+
+        $index = $this->getIndexHelper()->getCatalogIndex();
+        $query = Query::create($suggest);
+        $result = $index->search($query);
+
+        return new ProductSuggestResult($result);
     }
 
     /**
