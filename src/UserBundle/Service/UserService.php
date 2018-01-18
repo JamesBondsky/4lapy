@@ -265,4 +265,23 @@ class UserService implements
         $client->plLogin            = $user->getLogin();
         $client->plRegistrationDate = $user->getManzanaDateRegister();
     }
+    
+    /**
+     * @param int $id
+     *
+     * @return array
+     * @throws InvalidIdentifierException
+     * @throws NotAuthorizedException
+     */
+    public function getUserGroups(int $id = 0) : array
+    {
+        if (!($id === 0)) {
+            $id = $this->getCurrentUserId();
+        }
+        if ($id > 0) {
+            return $this->userRepository->getUserGroups($id);
+        }
+        
+        return [];
+    }
 }
