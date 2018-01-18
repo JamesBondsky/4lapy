@@ -31,6 +31,13 @@ class ProductService
         $this->brandRepository = $brandRepository;
     }
 
+    public function processMaterial(Material $material)
+    {
+        $product = $this->findByMaterial($material) ?: new Product();
+        $this->fillProduct($product, $material);
+        return $product;
+    }
+
     /**
      * @param Material $material
      *
@@ -38,7 +45,7 @@ class ProductService
      * @throws IblockNotFoundException
      * @return null|Product
      */
-    public function findByMaterial(Material $material)
+    protected function findByMaterial(Material $material)
     {
         $product = $this->findByOffer($material->getOfferXmlId());
         $product = $product ?: $this->findByCombination(
@@ -52,8 +59,14 @@ class ProductService
     /**
      * @param Product  $product
      * @param Material $material
+     *
+     * @throws \RuntimeException
+     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
+     * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
+     * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
+     * @throws \FourPaws\SapBundle\Exception\LogicException
      */
-    public function fillProduct(Product $product, Material $material)
+    protected function fillProduct(Product $product, Material $material)
     {
         $this->fillFields($product, $material);
         $this->fillProperties($product, $material);
@@ -111,6 +124,16 @@ class ProductService
             ->withBrandId($brand ? $brand->getId() : 0);
     }
 
+    /**
+     * @param Product  $product
+     * @param Material $material
+     *
+     * @throws \RuntimeException
+     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
+     * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
+     * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
+     * @throws \FourPaws\SapBundle\Exception\LogicException
+     */
     protected function fillProperties(Product $product, Material $material)
     {
         $product
@@ -145,6 +168,16 @@ class ProductService
          */
     }
 
+    /**
+     * @param Product  $product
+     * @param Material $material
+     *
+     * @throws \RuntimeException
+     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
+     * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
+     * @throws \FourPaws\SapBundle\Exception\LogicException
+     * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
+     */
     protected function fillReferenceProperties(Product $product, Material $material)
     {
         $product
@@ -237,6 +270,15 @@ class ProductService
             ));
     }
 
+    /**
+     * @param Product  $product
+     * @param Material $material
+     *
+     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
+     * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
+     * @throws \FourPaws\SapBundle\Exception\LogicException
+     * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
+     */
     protected function fillCountry(Product $product, Material $material)
     {
         $product->withCountryXmlId('');

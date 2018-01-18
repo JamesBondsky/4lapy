@@ -9,6 +9,7 @@ use FourPaws\Catalog\Model\Offer;
 use FourPaws\SapBundle\Dto\In\Offers\BarCode;
 use FourPaws\SapBundle\Dto\In\Offers\Material;
 use FourPaws\SapBundle\Enum\SapOfferProperty;
+use FourPaws\SapBundle\Exception\RuntimeException;
 use FourPaws\SapBundle\Repository\OfferRepository;
 use FourPaws\SapBundle\Service\ReferenceService;
 use Psr\Log\LoggerAwareInterface;
@@ -26,19 +27,49 @@ class OfferService implements LoggerAwareInterface
      * @var ReferenceService
      */
     private $referenceService;
+
     /**
      * @var OfferRepository
      */
     private $offerRepository;
+    /**
+     * @var CatalogProductService
+     */
+    private $catalogProductService;
 
     public function __construct(
         SlugifyInterface $slugify,
         ReferenceService $referenceService,
-        OfferRepository $offerRepository
+        OfferRepository $offerRepository,
+        CatalogProductService $catalogProductService
     ) {
         $this->slugify = $slugify;
         $this->referenceService = $referenceService;
         $this->offerRepository = $offerRepository;
+        $this->catalogProductService = $catalogProductService;
+    }
+
+    /**
+     * @param Material $material
+     * @throws \FourPaws\SapBundle\Exception\RuntimeException
+     * @return Offer
+     */
+    public function processMaterial(Material $material): Offer
+    {
+        $offer = $this->findByMaterial($material) ?: new Offer();
+        $this->fillFromMaterial($offer, $material);
+        $result = $this->updateOrCreate($offer);
+
+
+        if (!$result->isSuccess()) {
+            throw new RuntimeException(implode(', ', $result->getErrorMessages()));
+        }
+
+        if (!$this->catalogProductService->processMaterial($offer->getId(), $material)) {
+            throw new RuntimeException('Ошибка в обработке CatalogProduct');
+        }
+
+        return $offer;
     }
 
     /**
@@ -46,7 +77,7 @@ class OfferService implements LoggerAwareInterface
      *
      * @return null|Offer
      */
-    public function findByMaterial(Material $material)
+    protected function findByMaterial(Material $material)
     {
         return $this->offerRepository->findByXmlId($material->getOfferXmlId());
     }
@@ -63,11 +94,19 @@ class OfferService implements LoggerAwareInterface
      * @throws \FourPaws\SapBundle\Exception\NotFoundBasicUomException
      * @return void
      */
-    public function fillFromMaterial(Offer $offer, Material $material)
+    protected function fillFromMaterial(Offer $offer, Material $material)
     {
         $this->fillFields($offer, $material);
         $this->fillProperties($offer, $material);
         $this->fillOfferCatalogProduct($offer, $material);
+    }
+
+    protected function updateOrCreate(Offer $offer)
+    {
+        if ($offer->getId()) {
+            return $this->offerRepository->update($offer);
+        }
+        return $this->offerRepository->add($offer);
     }
 
     /**
