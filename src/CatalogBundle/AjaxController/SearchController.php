@@ -5,9 +5,10 @@ namespace FourPaws\CatalogBundle\AjaxController;
 use FourPaws\App\Application;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\CatalogBundle\Dto\SearchRequest;
-use FourPaws\Search\Model\ProductSuggestResult;
+use FourPaws\Search\Model\ProductSearchResult;
 use FourPaws\Search\SearchService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -40,8 +41,10 @@ class SearchController extends Controller
         $validator = $this->container->get('validator');
 
         if (!$validator->validate($searchRequest)->count()) {
-            /** @var ProductSuggestResult $result */
-            $result = $searchService->productsAutocomplete(
+            /** @var ProductSearchResult $result */
+            $result = $searchService->searchProducts(
+                new FilterCollection(),
+                $searchRequest->getSorts()->getSelected(),
                 $searchRequest->getNavigation(),
                 $searchRequest->getSearchString()
             );

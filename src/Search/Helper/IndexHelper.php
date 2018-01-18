@@ -143,10 +143,6 @@ class IndexHelper implements LoggerAwareInterface
                     [
                         'analyzer' => [
                             'default'          => [
-                                'char_filter' => [
-                                    'ru_en',
-                                    'en_ru',
-                                ],
                                 'type'      => 'custom',
                                 'tokenizer' => 'standard',
                                 'filter'    => [
@@ -156,10 +152,6 @@ class IndexHelper implements LoggerAwareInterface
                             'autocomplete'     => [
                                 'type'      => 'custom',
                                 'tokenizer' => 'standard',
-                                'char_filter' => [
-                                    'ru_en',
-                                    'en_ru',
-                                ],
                                 'filter'    => [
                                     'lowercase',
                                     'synonym',
@@ -234,7 +226,7 @@ class IndexHelper implements LoggerAwareInterface
                         'suggest'                          => [
                             'type'            => 'completion',
                             'analyzer'        => 'autocomplete',
-                            'search_analyzer' => 'default',
+                            'search_analyzer' => 'standard',
                         ],
                         'brand'                            => [
                             'properties' => [
