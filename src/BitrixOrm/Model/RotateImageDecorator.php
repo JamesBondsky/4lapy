@@ -26,15 +26,17 @@ class RotateImageDecorator extends Image implements RotateImageInterface
     /**
      * @param int $angle
      *
+     * @throws WrongRotateAngleException
      * @return $this
      *
-     * @throws WrongRotateAngleException
      */
     public function setAngle(int $angle)
     {
-        if (!in_array($angle, self::ALLOWABLE_ANGLE, true)) {
-            throw new WrongRotateAngleException(sprintf('Only %s angle value allowed',
-                                                        implode(', ', self::ALLOWABLE_ANGLE)));
+        if (!\in_array($angle, self::ALLOWABLE_ANGLE, true)) {
+            throw new WrongRotateAngleException(sprintf(
+                'Only %s angle value allowed',
+                                                        implode(', ', self::ALLOWABLE_ANGLE)
+            ));
         }
         
         $this->angle = $angle;

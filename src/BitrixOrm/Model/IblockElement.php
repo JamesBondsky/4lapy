@@ -106,15 +106,10 @@ class IblockElement extends BitrixArrayItemBase
      */
     protected $sectionIdList;
 
-    public function __construct(array $fields = [])
-    {
-        parent::__construct($fields);
-    }
-
     /**
      * @return string
      */
-    public function getDetailPageUrl()
+    public function getDetailPageUrl(): string
     {
         return $this->DETAIL_PAGE_URL;
     }
