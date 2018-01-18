@@ -157,7 +157,7 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
             $authService = App::getInstance()->getContainer()->get(UserAuthorizationInterface::class);
             $res = $authService->authorize($userId);
             
-            if(!$authService->isAuthorized()){
+            if(!$res){
                 return JsonErrorResponse::createWithData(
                     'Произошла ошибка при авторизации',
                     ['errors' => ['errorAuth' => 'Произошла ошибка при авторизации']]
