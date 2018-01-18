@@ -26,7 +26,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 $product = $arResult['PRODUCT'];
 $offers = $product->getOffers();
 $firstOffer = $offers->first();
-_log_array($offers, '$offers');
 
 $arParams['ITEM_ATTR_ID'] = isset($arParams['ITEM_ATTR_ID']) ? trim($arParams['ITEM_ATTR_ID']) : '';
 if (!strlen($arParams['ITEM_ATTR_ID'])) {
@@ -55,7 +54,8 @@ if (!strlen($arParams['ITEM_ATTR_ID'])) {
                 <span><?php
                     echo '<strong>'.$product->getBrand()->getName().'</strong>';
                     echo ' ';
-                    echo $product->getName();
+                    //echo $product->getName();
+                    echo $firstOffer->getName();
                 ?></span>
             </span>
         </a><?php
@@ -63,36 +63,63 @@ if (!strlen($arParams['ITEM_ATTR_ID'])) {
         //
         // Переключение торговых предложений
         //
-        if ($offers->count() > 1) {
+        $isWeightCapacityPacking = strlen(trim($product->getWeightCapacityPacking())) ? true : false;
+        if ($offers->count() > 1 || $isWeightCapacityPacking) {
+            $isOffersPrinted = false;
             $mainCombinationType = '';
             if ($firstOffer->getClothingSize()) {
                 $mainCombinationType = 'SIZE';
             } elseif ($firstOffer->getVolumeReference()) {
                 $mainCombinationType = 'VOLUME';
+            } elseif ($isWeightCapacityPacking) {
+                $mainCombinationType = 'WEIGHT';
             }
+            ob_start();
             ?><div class="b-weight-container b-weight-container--list">
                 <a class="b-weight-container__link b-weight-container__link--mobile js-mobile-select" href="javascript:void(0);"></a>
                 <ul class="b-weight-container__list"><?php
                     foreach ($offers as $offer) {
-                        if ($mainCombinationType === 'SIZE') {
-                            $value = $offer->getClothingSize();
-                        } else {
-                            $value = $offer->getVolumeReference();
+                        $value = '';
+                        switch($mainCombinationType) {
+                            case 'SIZE':
+                                $value = $offer->getClothingSize()->getName();
+                                break;
+
+                            case 'VOLUME':
+                                $value = $offer->getVolumeReference()->getName();
+                                break;
+
+                            case 'WEIGHT':
+                                $catalogProduct = $offer->getCatalogProduct();
+                                $weightGrams = $catalogProduct->getWeight();
+                                if ($weightGrams > 1000) {
+                                    $value = ($weightGrams / 1000).'&nbsp;'.Loc::getMessage('CATALOG_ITEM_SNIPPET_VERTICAL.MEASURE_KG');
+                                } else {
+                                    $value = $weightGrams.'&nbsp;'.Loc::getMessage('CATALOG_ITEM_SNIPPET_VERTICAL.MEASURE_G');
+                                }
+                                break;
                         }
-                        if (!$value) {
+                        if (!strlen($value)) {
                             continue;
                         }
+                        $isOffersPrinted = true;
                         $addAttr = '';
                         $addAttr .= ' data-price="'.$offer->getPrice().'"';
                         $addAttr .= ' data-offerid="'.$offer->getId().'"';
                         $addAttr .= ' data-image="'.$offer->getResizeImages(240, 240)->first().'"';
+                        $addAttr .= ' data-name="'.$offer->getName().'"';
                         $addClass = $firstOffer->getId() === $offer->getId() ? ' active-link' : '';
                         ?><li class="b-weight-container__item">
-                            <span<?=$addAttr?> class="b-weight-container__link js-price<?=$addClass?>"><?=$value->getName()?></span>
+                            <span<?=$addAttr?> class="b-weight-container__link js-price<?=$addClass?>"><?=$value?></span>
                         </li><?php
                     }
                 ?></ul>
             </div><?php
+            if ($isOffersPrinted) {
+                echo ob_get_clean();
+            } else {
+                ob_end_clean();
+            }
         }
 
         //

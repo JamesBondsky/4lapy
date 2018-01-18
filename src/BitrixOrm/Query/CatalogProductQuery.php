@@ -6,6 +6,7 @@ namespace FourPaws\BitrixOrm\Query;
 use Bitrix\Main\DB\Result;
 use CDBResult;
 use FourPaws\BitrixOrm\Collection\CollectionBase;
+use FourPaws\BitrixOrm\Collection\CatalogProductCollection;
 
 class CatalogProductQuery extends QueryBase
 {
@@ -17,7 +18,7 @@ class CatalogProductQuery extends QueryBase
      */
     public function exec(): CollectionBase
     {
-        // TODO: Implement exec() method.
+        return new CatalogProductCollection($this->doExec());
     }
 
     /**
