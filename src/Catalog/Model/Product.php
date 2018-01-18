@@ -559,7 +559,14 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @var string
      */
     protected $PROPERTY_PACKING_COMBINATION = '';
-
+    
+    /**
+     * @var string
+     * @Type("string")
+     * @Groups({"elastic"})
+     */
+    protected $PROPERTY_WEIGHT_CAPACITY_PACKING = '';
+    
     /**
      * @var bool
      * @Type("bool")
@@ -1886,5 +1893,12 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     {
         $this->PROPERTY_DC_SPECIAL_AREA_STORAGE = $restrict;
         return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getWeightCapacityPacking() : string {
+        return $this->PROPERTY_WEIGHT_CAPACITY_PACKING;
     }
 }
