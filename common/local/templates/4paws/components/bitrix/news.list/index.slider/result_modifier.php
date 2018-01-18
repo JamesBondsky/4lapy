@@ -16,10 +16,8 @@ if (empty($arResult['ITEMS']) || !\is_array($arResult['ITEMS'])) {
 }
 
 foreach ($arResult['ITEMS'] as &$item) {
-    if (isset($image)) {
-        unset($image);
-    }
     // изображение для десктопа
+    $image = null;
     if (!empty($item['DETAIL_PICTURE']) && is_array($item['DETAIL_PICTURE'])) {
         $image = new CropImageDecorator($item['DETAIL_PICTURE']);
     } elseif (is_numeric($item['~DETAIL_PICTURE']) && (int)$item['~DETAIL_PICTURE'] > 0) {
@@ -32,6 +30,7 @@ foreach ($arResult['ITEMS'] as &$item) {
     }
 
     // изображение для мобильного
+    $image = null;
     if (!empty($item['PREVIEW_PICTURE']) && is_array($item['PREVIEW_PICTURE'])) {
         $image = new CropImageDecorator($item['PREVIEW_PICTURE']);
     } elseif (is_numeric($item['~PREVIEW_PICTURE']) && (int)$item['~PREVIEW_PICTURE'] > 0) {
@@ -44,6 +43,7 @@ foreach ($arResult['ITEMS'] as &$item) {
     }
 
     // изображение для планшета
+    $image = null;
     if (!empty($item['DISPLAY_PROPERTIES']['IMG_TABLET']['FILE_VALUE']) && is_array($item['DISPLAY_PROPERTIES']['IMG_TABLET']['FILE_VALUE'])) {
         $image = new CropImageDecorator($item['DISPLAY_PROPERTIES']['IMG_TABLET']['FILE_VALUE']);
     } elseif (is_numeric($item['DISPLAY_PROPERTIES']['IMG_TABLET']['VALUE']) && (int)$item['DISPLAY_PROPERTIES']['IMG_TABLET']['VALUE'] > 0) {
