@@ -92,17 +92,20 @@ class SearchService implements LoggerAwareInterface
 
     /**
      * Автокомплит для товаров
-     * @param $searchString
+     *
+     * @param Navigation $navigation
+     * @param string $searchString
      *
      * @return ProductSuggestResult
      */
-    public function productsAutocomplete($searchString): ProductSuggestResult
+    public function productsAutocomplete(Navigation $navigation, string $searchString): ProductSuggestResult
     {
         $suggest = new Suggest();
 
         $completion = new Suggest\Completion('product_suggest', 'suggest');
         $completion->setText($searchString);
         $completion->setParam('fuzzy', ['fuzziness' => 2]);
+        $completion->setParam('size', $navigation->getSize());
         $suggest->addSuggestion($completion);
 
         $index = $this->getIndexHelper()->getCatalogIndex();

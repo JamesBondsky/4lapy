@@ -41,7 +41,10 @@ class SearchController extends Controller
 
         if (!$validator->validate($searchRequest)->count()) {
             /** @var ProductSuggestResult $result */
-            $result = $searchService->productsAutocomplete($searchRequest->getSearchString());
+            $result = $searchService->productsAutocomplete(
+                $searchRequest->getNavigation(),
+                $searchRequest->getSearchString()
+            );
 
             /** @var Product $product */
             foreach ($result->getProductCollection() as $product) {
