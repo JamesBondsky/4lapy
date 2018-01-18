@@ -32,7 +32,6 @@ use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
-use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Repository\UserRepository;
@@ -86,7 +85,6 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
-     * @throws NotAuthorizedException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws LoaderException
@@ -96,6 +94,8 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         $this->setFrameMode(true);
         
         if (!$this->authUserProvider->isAuthorized()) {
+            define('NEED_AUTH', true);
+            
             return null;
         }
         
@@ -113,7 +113,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         }
         
         $this->arResult['CUR_USER'] = [
-            'ID' => $curUser->getId(),
+            'ID'              => $curUser->getId(),
             'PERSONAL_PHONE'  => PhoneHelper::formatPhone($curUser->getPersonalPhone(), '+7 (%s%s%s) %s%s%s-%s%s-%s%s'),
             'EMAIL'           => $curUser->getEmail(),
             'FULL_NAME'       => $curUser->getFullName(),
@@ -148,10 +148,10 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
      */
     public function ajaxConfirmPhone(Request $request) : JsonResponse
     {
-        $phone = $request->get('phone');
-        $oldPhone       = $request->get('oldPhone', '');
+        $phone    = $request->get('phone');
+        $oldPhone = $request->get('oldPhone', '');
         try {
-            $phone = PhoneHelper::normalizePhone($phone);
+            $phone    = PhoneHelper::normalizePhone($phone);
             $oldPhone = PhoneHelper::normalizePhone($oldPhone);
         } catch (WrongPhoneNumberException $e) {
             return JsonErrorResponse::createWithData(
