@@ -280,7 +280,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             /** добавляем в зарегистрирвоанных пользователей */
             \CUser::SetUserGroup($userEntity->getId(), [6]);
         } catch (BitrixRuntimeException $e) {
-            return JsonErrorResponse::createWithData(
+            return JsonErrorResponse::creaсщташteWithData(
                 'При регистрации произошла ошибка - ' . $e->getMessage(),
                 [
                     'errors' => [
@@ -312,7 +312,9 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             } catch (ManzanaException $e) {
             }
         }
-        
+    
+        /** @noinspection PhpUnusedLocalVariableInspection */
+        $name = $userEntity->getName();
         ob_start();
         /** @noinspection PhpIncludeInspection */
         include_once App::getDocumentRoot()
