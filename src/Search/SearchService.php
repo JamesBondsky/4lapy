@@ -77,6 +77,18 @@ class SearchService implements LoggerAwareInterface
 
         $resultSet = $search->search();
 
+        // если задана строка поиска и не найдено совпадений, то пробуем в другой раскладке
+        if ($searchString && !$resultSet->getTotalHits()) {
+            $from = preg_match('/[ЁёА-я]/u', $searchString) ? 'ru' : 'en';
+            $to = $from === 'ru' ? 'en' : 'ru';
+            $searchString = \CSearchLanguage::ConvertKeyboardLayout($searchString, $from, $to);
+            $search->getQuery()->setParam('query', $this->getFullQueryRule($filters, $searchString));
+            $newResultSet = $search->search();
+            if ($newResultSet->getTotalHits()) {
+                $resultSet = $newResultSet;
+            }
+        }
+
         if ($resultSet->getTotalHits() && ($resultSet->getTotalHits() < $navigation->getFrom())) {
             $navigation->withPage(1);
             $search->getQuery()->setFrom($navigation->getFrom());
@@ -87,7 +99,7 @@ class SearchService implements LoggerAwareInterface
             $this->getAggsHelper()->collapseFilters($filters, $resultSet);
         }
 
-        return new ProductSearchResult($resultSet, $navigation);
+        return new ProductSearchResult($resultSet, $navigation, $searchString);
     }
 
     /**
@@ -110,6 +122,7 @@ class SearchService implements LoggerAwareInterface
 
         $index = $this->getIndexHelper()->getCatalogIndex();
         $query = Query::create($suggest);
+        $query->setMinScore(0.9);
         $result = $index->search($query);
 
         return new ProductSuggestResult($result);

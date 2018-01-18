@@ -169,10 +169,6 @@ class IndexHelper implements LoggerAwareInterface
                                 ],
                             ],
                             'full-text-search' => [
-                                'char_filter' => [
-                                    'ru_en',
-                                    'en_ru',
-                                ],
                                 'type'      => 'custom',
                                 'tokenizer' => 'standard',
                                 'filter'    => [
@@ -183,10 +179,6 @@ class IndexHelper implements LoggerAwareInterface
                                 ],
                             ],
                             'sounds-similar'   => [
-                                'char_filter' => [
-                                    'ru_en',
-                                    'en_ru',
-                                ],
                                 'tokenizer' => 'standard',
                                 'filter'    => [
                                     'lowercase',

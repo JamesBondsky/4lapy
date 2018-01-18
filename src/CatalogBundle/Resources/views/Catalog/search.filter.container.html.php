@@ -33,6 +33,11 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
 ?>
 <div class="b-catalog__wrapper-title b-catalog__wrapper-title--filter">
     <h1 class="b-title b-title--h1 b-title--catalog-filter"><?= $catalogRequest->getCategory()->getName() ?></h1>
+    <?php if ($catalogRequest->getSearchString() != $productSearchResult->getQuery()) { ?>
+        <p class="b-title b-title--result">
+            Возможно, вы имели ввиду «<span><?= $productSearchResult->getQuery() ?></span>»
+        </p>
+    <?php } ?>
 </div>
 <aside class="b-filter b-filter--popup js-filter-popup">
     <div class="b-filter__top">
@@ -53,7 +58,7 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
                    title="Сбросить фильтры">Сбросить фильтры</a>
             </div>
             <div class="js-filter-input">
-                <input type="hidden" name="query" value="<?= $catalogRequest->getSearchString() ?>">
+                <input type="hidden" name="query" value="<?= $productSearchResult->getQuery() ?>">
             </div>
             <?= $view->render(
                 'FourPawsCatalogBundle:Catalog:catalog.filter.category.list.html.php',
@@ -88,7 +93,7 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
         <div class="b-catalog-filter__filter-part">
             <dl class="b-catalog-filter__row">
                 <dt class="b-catalog-filter__label b-catalog-filter__label--result">
-                    По запросу «<span><?= $catalogRequest->getSearchString() ?></span>» мы нашли
+                    По запросу «<span><?= $productSearchResult->getQuery() ?></span>» мы нашли
                 </dt>
             </dl>
             <div class="b-line b-line--sort-desktop">

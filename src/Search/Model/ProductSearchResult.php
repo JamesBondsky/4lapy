@@ -27,6 +27,11 @@ class ProductSearchResult implements ProductResultInterface
     private $navigation;
 
     /**
+     * @var string
+     */
+    private $query;
+
+    /**
      * @var Factory
      */
     private $factory;
@@ -40,10 +45,11 @@ class ProductSearchResult implements ProductResultInterface
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
      */
-    public function __construct(ResultSet $resultSet, Navigation $navigation = null)
+    public function __construct(ResultSet $resultSet, Navigation $navigation = null, $query = '')
     {
         $this->resultSet = $resultSet;
         $this->navigation = $navigation;
+        $this->query = $query;
         $this->factory = Application::getInstance()->getContainer()->get('search.factory');
     }
 
@@ -83,5 +89,10 @@ class ProductSearchResult implements ProductResultInterface
     public function getResultSet(): ResultSet
     {
         return $this->resultSet;
+    }
+
+    public function getQuery(): string
+    {
+        return $this->query;
     }
 }
