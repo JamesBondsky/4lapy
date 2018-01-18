@@ -39,8 +39,7 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
      */
     private $currentUserProvider;
     
-    /** @todo нужно id группы или создать ее  */
-    protected static $accessUserGroup = 23;
+    protected static $accessUserGroup = 30;
     
     /**
      * AutoloadingIssuesInspection constructor.
