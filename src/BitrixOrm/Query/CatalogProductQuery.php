@@ -5,7 +5,6 @@ namespace FourPaws\BitrixOrm\Query;
 use CDBResult;
 use FourPaws\BitrixOrm\Collection\CatalogProductCollection;
 use FourPaws\BitrixOrm\Collection\CollectionBase;
-use FourPaws\BitrixOrm\Collection\CatalogProductCollection;
 
 class CatalogProductQuery extends QueryBase
 {

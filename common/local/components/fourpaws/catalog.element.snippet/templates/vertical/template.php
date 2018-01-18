@@ -63,7 +63,8 @@ if (!strlen($arParams['ITEM_ATTR_ID'])) {
         //
         // Переключение торговых предложений
         //
-        $isWeightCapacityPacking = strlen(trim($product->getWeightCapacityPacking())) ? true : false;
+        //$isWeightCapacityPacking = strlen(trim($product->getWeightCapacityPacking())) ? true : false;
+        $isWeightCapacityPacking = true;
         if ($offers->count() > 1 || $isWeightCapacityPacking) {
             $isOffersPrinted = false;
             $mainCombinationType = '';
