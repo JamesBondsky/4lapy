@@ -18,6 +18,11 @@ if (!(bool)$arResult['NavShowAlways']) {
     }
 }
 
+$class = '';
+if ($arParams['AJAX_MODE'] === 'Y') {
+    $class = 'js-pagination';
+}
+
 /**
  * на основе visual
  */
@@ -33,7 +38,7 @@ if (!(bool)$arResult['NavShowAlways']) {
                     ['#NUM#' => 1]
                 );
                 ?>
-                <a class="b-pagination__link  js-pagination" title="<?= $title ?>" href="<?= $arResult['PREV_URL'] ?>">Назад</a>
+                <a class="b-pagination__link <?= $class ?>" title="<?= $title ?>" href="<?= $arResult['PREV_URL'] ?>">Назад</a>
                 <?php
             } else {
                 ?>
@@ -52,21 +57,21 @@ if (!(bool)$arResult['NavShowAlways']) {
             if ($navRecordGroup === (int)$arResult['NavPageNomer']) {
                 ?>
                 <li class="b-pagination__item">
-                <a class="b-pagination__link js-pagination active"
+                <a class="b-pagination__link <?= $class ?> active"
                    href="javascript:void(0);"
                    title="<?= $title ?>"><?= $navRecordGroup ?></a>
                 </li><?php
             } elseif ($navRecordGroup === 1 && (bool)$arResult['bSavePage'] === false) {
                 ?>
             <li class="b-pagination__item <?= $arResult['HIDDEN'][$navRecordGroup] ?? '' ?>">
-                <a class="b-pagination__link js-pagination"
+                <a class="b-pagination__link <?= $class ?>"
                    href="<?= $arResult['BASE_URI'] ?>"
                    title="<?= $title ?>"><?= $navRecordGroup ?></a>
                 </li><?php
             } else {
                 ?>
             <li class="b-pagination__item <?= $arResult['HIDDEN'][$navRecordGroup] ?? '' ?>">
-                <a class="b-pagination__link js-pagination"
+                <a class="b-pagination__link <?= $class ?>"
                    href="<?= $arResult['URLS'][$navRecordGroup] ?>"
                    title="<?= $title ?>"><?= $navRecordGroup ?></a>
                 </li><?php
@@ -98,7 +103,7 @@ if (!(bool)$arResult['NavShowAlways']) {
                     ['#NUM#' => $arResult['NavPageCount']]
                 );
                 ?>
-                <a class="b-pagination__link js-pagination" title="<?= $title ?>" href="<?= $arResult['NEXT_URL'] ?>">
+                <a class="b-pagination__link <?= $class ?>" title="<?= $title ?>" href="<?= $arResult['NEXT_URL'] ?>">
                     Вперед
                 </a>
                 <?php

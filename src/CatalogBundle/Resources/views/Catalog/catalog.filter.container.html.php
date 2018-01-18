@@ -276,6 +276,7 @@ $filterCollection = $catalogRequest->getCategory()->getFilters();
             'NAV_RESULT'     => $productSearchResult->getProductCollection()->getCdbResult(),
             'SHOW_ALWAYS'    => false,
             'PAGE_PARAMETER' => 'page',
+            'AJAX_MODE'      => 'Y'
         ],
         $component,
         [
