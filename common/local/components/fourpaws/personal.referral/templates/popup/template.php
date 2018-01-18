@@ -18,7 +18,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                     <span class="b-input-line__require">(обязательно)</span>
                 </div>
                 <div class="b-input b-input--registration-form b-kek">
-                    <input class="b-input__input-field b-input__input-field--registration-form b-kek"
+                    <input class="b-input__input-field b-input__input-field--registration-form js-number-card js-offers"
                            type="text"
                            id="number-card"
                            placeholder=""
@@ -34,7 +34,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                     <label class="b-input-line__label" for="last-name">Фамилия</label>
                 </div>
                 <div class="b-input b-input--registration-form b-kek">
-                    <input class="b-input__input-field b-input__input-field--registration-form b-kek"
+                    <input class="b-input__input-field b-input__input-field--registration-form js-no-valid"
                            type="text"
                            id="last-name"
                            placeholder=""
@@ -48,7 +48,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                     <label class="b-input-line__label" for="first-name">Имя</label>
                 </div>
                 <div class="b-input b-input--registration-form b-kek">
-                    <input class="b-input__input-field b-input__input-field--registration-form b-kek"
+                    <input class="b-input__input-field b-input__input-field--registration-form js-no-valid"
                            type="text"
                            id="first-name"
                            placeholder=""
@@ -62,7 +62,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                     <label class="b-input-line__label" for="patronymic">Отчество</label>
                 </div>
                 <div class="b-input b-input--registration-form b-kek">
-                    <input class="b-input__input-field b-input__input-field--registration-form b-kek"
+                    <input class="b-input__input-field b-input__input-field--registration-formjs-no-valid"
                            type="text"
                            id="patronymic"
                            placeholder=""
@@ -76,7 +76,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                     <label class="b-input-line__label" for="phone-referal">Телефон</label>
                 </div>
                 <div class="b-input b-input--registration-form b-kek">
-                    <input class="b-input__input-field b-input__input-field--registration-form b-kek"
+                    <input class="b-input__input-field b-input__input-field--registration-form js-no-valid"
                            type="tel"
                            id="phone-referal"
                            placeholder=""
@@ -90,7 +90,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                     <label class="b-input-line__label" for="email-referal">Эл. почта</label>
                 </div>
                 <div class="b-input b-input--registration-form b-kek">
-                    <input class="b-input__input-field b-input__input-field--registration-form b-kek"
+                    <input class="b-input__input-field b-input__input-field--registration-form js-no-valid"
                            type="email"
                            id="email-referal"
                            placeholder=""
