@@ -18,22 +18,24 @@ if(!isset($template) || !($template instanceof MainTemplate)) {
     $template = MainTemplate::getInstance(Application::getInstance()->getContext());
 }
 
-if ($template->hasHeaderPublicationListContainer()) {
+if ($template->hasMainWrapper()) {
+    if ($template->hasHeaderPublicationListContainer()) {
     ?>
         </div>
     </div>
-<?}
-if ($template->hasHeaderBlockShopList()) {
-    ?>
+<?php }
+
+if ($template->hasHeaderBlockShopList()) { ?>
         </div>
     </div>
-<?}
-if ($template->hasHeaderPersonalContainer()) {
-?>
+<?php }
+
+if ($template->hasHeaderPersonalContainer()) { ?>
             </main>
         </div>
     </div>
-<?}?>
+<?php }
+} ?>
 </main>
 <footer class="b-footer">
     <div class="b-footer__communication">
