@@ -280,7 +280,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             /** добавляем в зарегистрирвоанных пользователей */
             \CUser::SetUserGroup($userEntity->getId(), [6]);
         } catch (BitrixRuntimeException $e) {
-            return JsonErrorResponse::creaсщташteWithData(
+            return JsonErrorResponse::createWithData(
                 'При регистрации произошла ошибка - ' . $e->getMessage(),
                 [
                     'errors' => [
