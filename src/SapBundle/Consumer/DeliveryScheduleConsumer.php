@@ -20,5 +20,6 @@ class DeliveryScheduleConsumer implements ConsumerInterface
         /**
          * @todo implement
          */
+        return false;
     }
 }

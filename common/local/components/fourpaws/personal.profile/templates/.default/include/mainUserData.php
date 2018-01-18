@@ -24,7 +24,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             </div>
             <div class="b-account-data__value">
                 <div class="b-account-data__text js-profile-phone">
-                    <?= $arResult['CUR_USER']['PERSONAL_PHONE'] ?>
+                    <?= $arResult['CUR_USER']['PERSONAL_PHONE'] ?: str_repeat('&nbsp;', 42) ?>
                 </div>
                 <span class="b-icon b-icon--account-profile<?= $arResult['CUR_USER']['PHONE_CONFIRMED'] ? ' active' : '' ?>">
                     <?= new SvgDecorator('icon-check-account', 21, 17) ?>
@@ -49,7 +49,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             </div>
             <div class="b-account-data__value">
                 <div class="b-account-data__text js-profile-email">
-                    <a href="mailto:<?= $arResult['CUR_USER']['EMAIL'] ?>"><?= $arResult['CUR_USER']['EMAIL'] ?></a>
+                    <a href="mailto:<?= $arResult['CUR_USER']['EMAIL'] ?>"><?= $arResult['CUR_USER']['EMAIL'] ?: str_repeat('&nbsp;', 42) ?></a>
                 </div>
                 <span class="b-icon b-icon--account-profile<?= $arResult['CUR_USER']['EMAIL_CONFIRMED'] ? ' active' : '' ?>">
                     <?= new SvgDecorator('icon-check-account', 21, 17) ?>

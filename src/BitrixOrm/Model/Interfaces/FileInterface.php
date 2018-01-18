@@ -7,7 +7,7 @@ namespace FourPaws\BitrixOrm\Model\Interfaces;
  *
  * @package FourPaws\BitrixOrm\Model
  */
-interface FileInterface extends ModelInterface
+interface FileInterface extends ActiveReadModelInterface
 {
     /**
      * @return int

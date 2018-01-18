@@ -6,14 +6,16 @@
 
 namespace FourPaws\BitrixOrm\Model;
 
+use FourPaws\BitrixOrm\Model\Interfaces\ActiveReadModelInterface;
+use FourPaws\BitrixOrm\Model\Interfaces\ToArrayInterface;
+
 /**
  * Class CustomTable
  *
  * @package FourPaws\BitrixOrm\Model
  */
-abstract class CustomTable implements ModelInterface
+abstract class CustomTable implements ActiveReadModelInterface, ToArrayInterface
 {
-    
     /**
      * ModelInterface constructor.
      *
@@ -41,17 +43,17 @@ abstract class CustomTable implements ModelInterface
     /**
      * @inheritDoc
      */
-    public static function createFromPrimary(string $primary) : ModelInterface
+    public static function createFromPrimary(string $primary)
     {
         /**
          * @todo Заглушка. Удалить после реализации создания в более конкретных классах.
          */
     }
-    
+
     /**
      * @return array
      */
-    public function toArray() : array
+    public function toArray(): array
     {
         $result = [];
         //TODO Дописать лучше часть про поля
@@ -60,7 +62,7 @@ abstract class CustomTable implements ModelInterface
                 $result[$field] = $value;
             }
         }
-        
+
         return $result;
     }
 }

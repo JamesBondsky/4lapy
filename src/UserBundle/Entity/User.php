@@ -641,7 +641,7 @@ class User
      */
     public function isPhoneConfirmed() : bool
     {
-        return $this->phoneConfirmed;
+        return $this->phoneConfirmed ?? false;
     }
     
     /**
@@ -681,7 +681,7 @@ class User
      */
     public function isEmailConfirmed() : bool
     {
-        return $this->emailConfirmed;
+        return $this->emailConfirmed ?? false;
     }
     
     /**
