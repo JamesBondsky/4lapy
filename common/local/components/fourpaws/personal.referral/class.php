@@ -22,6 +22,7 @@ use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\ValidationException;
+use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -32,6 +33,9 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
      * @var ReferralService
      */
     private $referralService;
+    
+    /** @var UserAuthorizationInterface */
+    private $authUserProvider;
     
     /**
      * AutoloadingIssuesInspection constructor.
@@ -54,7 +58,8 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
             /** @noinspection PhpUnhandledExceptionInspection */
             throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
         }
-        $this->referralService = $container->get('referral.service');
+        $this->referralService  = $container->get('referral.service');
+        $this->authUserProvider = $container->get(UserAuthorizationInterface::class);
     }
     
     /**
@@ -72,6 +77,12 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
      */
     public function executeComponent()
     {
+        if (!$this->authUserProvider->isAuthorized()) {
+            define('NEED_AUTH', true);
+            
+            return null;
+        }
+        
         $this->setFrameMode(true);
         
         try {
