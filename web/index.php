@@ -101,15 +101,22 @@ $APPLICATION->IncludeComponent(
  */
 require_once '_temp_sale.php';
 
-$APPLICATION->IncludeComponent('bitrix:main.include',
-                               'index.advantages',
-                               [
-                                   'COMPONENT_TEMPLATE' => '.default',
-                                   'AREA_FILE_SHOW'     => 'file',
-                                   'PATH'               => '/local/include/blocks/index.advantages.php',
-                                   'EDIT_TEMPLATE'      => '',
-                               ],
-                               false);
+/**
+ * Преимущества
+ */
+$APPLICATION->IncludeComponent(
+    'bitrix:main.include',
+    '',
+    [
+        'AREA_FILE_SHOW' => 'file',
+        'PATH' => '/local/include/blocks/advantages.php',
+        'EDIT_TEMPLATE' => '',
+    ],
+    null,
+    [
+        'HIDE_ICONS' => 'N'
+    ]
+);
 
 /**
  * Контейнер страницы. Не должен редактироваться в визуальном редакторе. Закрывается перед подключением подвала.

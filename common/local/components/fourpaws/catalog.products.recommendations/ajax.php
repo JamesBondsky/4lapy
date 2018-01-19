@@ -21,8 +21,8 @@ if (!\Bitrix\Main\Loader::includeModule('iblock')) {
 
 $signer = new \Bitrix\Main\Security\Sign\Signer();
 try {
-	$template = $signer->unsign($request->get('template'), 'catalog.popular.products');
-	$paramString = $signer->unsign($request->get('parameters'), 'catalog.popular.products');
+	$template = $signer->unsign($request->get('template'), 'catalog.products.recommendations');
+	$paramString = $signer->unsign($request->get('parameters'), 'catalog.products.recommendations');
 } catch (\Bitrix\Main\Security\Sign\BadSignatureException $e) {
 	die();
 }
@@ -37,7 +37,7 @@ if (isset($parameters['PARENT_NAME'])) {
 
 $APPLICATION->RestartBuffer();
 $APPLICATION->IncludeComponent(
-	'fourpaws:catalog.popular.products',
+	'fourpaws:catalog.products.recommendations',
 	$template,
 	$parameters,
 	$parent

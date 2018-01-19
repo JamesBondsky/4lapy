@@ -142,24 +142,11 @@ class CatalogElementDetailComponent extends \CBitrixComponent
                 $productId = $currentOffer ? $currentOffer->getId() : 0;
                 $productId = $productId > 0 ? $productId : $parentId;
 
-                // check if there was a recommendation
-                $recommendationId = '';
-                /*
-                $recommendationCookie = $GLOBALS['APPLICATION']->get_cookie(Catalog::getCookieLogName());
-                if (!empty($recommendationCookie)) {
-                    $recommendations = Catalog::decodeProductLog($recommendationCookie);
-                    if (is_array($recommendations) && isset($recommendations[$parentID])) {
-                        $recommendationId = $recommendations[$parentID][0];
-                    }
-                }
-                */
-
                 CatalogViewedProductTable::refresh(
                     $productId,
                     \CSaleBasket::GetBasketUserID(),
                     $this->getSiteId(),
-                    $parentId,
-                    $recommendationId
+                    $parentId
                 );
             }
         }
