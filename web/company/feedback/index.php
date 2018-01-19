@@ -6,12 +6,13 @@ use FourPaws\Helpers\FormHelper;
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 $APPLICATION->SetTitle('Обратная связь');
-
 echo '<div class="b-feedback-page">
             <h1 class="b-title b-title--h1 b-title--feedback">';
 $APPLICATION->ShowTitle(false);
 echo '</h1>
-            <div class="b-feedback-page__wrapper">';
+            <div class="b-feedback-page__wrapper';
+echo $_SESSION['FEEDBACK_SUCCESS'] === 'Y' ? ' b-feedback-page__wrapper--flex-center' : '';
+echo '">';
 ?>
 <?php
 if ($_SESSION['FEEDBACK_SUCCESS'] === 'Y') {
