@@ -3,13 +3,13 @@
 namespace FourPaws\SapBundle\Service\Materials;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
-use Cocur\Slugify\SlugifyInterface;
-use FourPaws\BitrixOrm\Model\CatalogProduct;
+use Bitrix\Main\Entity\AddResult;
+use Bitrix\Main\Entity\UpdateResult;
+use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\SapBundle\Dto\In\Offers\BarCode;
 use FourPaws\SapBundle\Dto\In\Offers\Material;
 use FourPaws\SapBundle\Enum\SapOfferProperty;
-use FourPaws\SapBundle\Exception\RuntimeException;
 use FourPaws\SapBundle\Repository\OfferRepository;
 use FourPaws\SapBundle\Service\ReferenceService;
 use Psr\Log\LoggerAwareInterface;
@@ -17,11 +17,6 @@ use Psr\Log\LoggerAwareInterface;
 class OfferService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
-
-    /**
-     * @var SlugifyInterface
-     */
-    private $slugify;
 
     /**
      * @var ReferenceService
@@ -32,25 +27,16 @@ class OfferService implements LoggerAwareInterface
      * @var OfferRepository
      */
     private $offerRepository;
-    /**
-     * @var CatalogProductService
-     */
-    private $catalogProductService;
 
-    public function __construct(
-        SlugifyInterface $slugify,
-        ReferenceService $referenceService,
-        OfferRepository $offerRepository,
-        CatalogProductService $catalogProductService
-    ) {
-        $this->slugify = $slugify;
+    public function __construct(ReferenceService $referenceService, OfferRepository $offerRepository)
+    {
         $this->referenceService = $referenceService;
         $this->offerRepository = $offerRepository;
-        $this->catalogProductService = $catalogProductService;
     }
 
     /**
      * @param Material $material
+     *
      * @throws \FourPaws\SapBundle\Exception\RuntimeException
      * @return Offer
      */
@@ -58,24 +44,34 @@ class OfferService implements LoggerAwareInterface
     {
         $offer = $this->findByMaterial($material) ?: new Offer();
         $this->fillFromMaterial($offer, $material);
-        $result = $this->updateOrCreate($offer);
-
-
-        if (!$result->isSuccess()) {
-            throw new RuntimeException(implode(', ', $result->getErrorMessages()));
-        }
-
-        if (!$this->catalogProductService->processMaterial($offer->getId(), $material)) {
-            throw new RuntimeException('Ошибка в обработке CatalogProduct');
-        }
 
         return $offer;
     }
 
     /**
+     * @param Offer $offer
+     *
+     * @return AddResult
+     */
+    public function create(Offer $offer): AddResult
+    {
+        return $this->offerRepository->create($offer);
+    }
+
+    /**
+     * @param Offer $offer
+     *
+     * @return UpdateResult
+     */
+    public function update(Offer $offer): UpdateResult
+    {
+        return $this->offerRepository->update($offer);
+    }
+
+    /**
      * @param Material $material
      *
-     * @return null|Offer
+     * @return null|IblockElement|Offer
      */
     protected function findByMaterial(Material $material)
     {
@@ -98,15 +94,6 @@ class OfferService implements LoggerAwareInterface
     {
         $this->fillFields($offer, $material);
         $this->fillProperties($offer, $material);
-        $this->fillOfferCatalogProduct($offer, $material);
-    }
-
-    protected function updateOrCreate(Offer $offer)
-    {
-        if ($offer->getId()) {
-            return $this->offerRepository->update($offer);
-        }
-        return $this->offerRepository->add($offer);
     }
 
     /**
@@ -118,8 +105,7 @@ class OfferService implements LoggerAwareInterface
         $offer
             ->withActive(!$material->isNotUploadToIm())
             ->withName($material->getOfferName())
-            ->withXmlId($material->getOfferXmlId())
-            ->withCode($offer->getCode() ?: $this->slugify->slugify($material->getOfferName()));
+            ->withXmlId($material->getOfferXmlId());
     }
 
     /**
@@ -144,26 +130,6 @@ class OfferService implements LoggerAwareInterface
         $this->fillReferenceProperties($offer, $material);
         $this->fillBarCodes($offer, $material);
         $this->fillVolume($offer, $material);
-    }
-
-    /**
-     * @param Offer    $offer
-     * @param Material $material
-     *
-     * @throws \FourPaws\SapBundle\Exception\NotFoundBasicUomException
-     */
-    protected function fillOfferCatalogProduct(Offer $offer, Material $material)
-    {
-        $catalogProduct = $offer->getId() ? $offer->getCatalogProduct() : new CatalogProduct();
-        $catalogProduct = $catalogProduct ?: new CatalogProduct();
-
-        $basicUom = $material->getBasicUnitOfMeasure();
-        $catalogProduct
-            ->setWidth($basicUom->getWidth() * 1000)
-            ->setHeight($basicUom->getHeight() * 1000)
-            ->setLength($basicUom->getLength() * 1000)
-            ->setWeight($basicUom->getGrossWeight() * 1000);
-        $offer->withCatalogProduct($catalogProduct);
     }
 
     /**

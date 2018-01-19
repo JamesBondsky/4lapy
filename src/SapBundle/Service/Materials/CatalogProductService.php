@@ -19,14 +19,22 @@ class CatalogProductService
     }
 
     /**
-     * @param int      $offerId
      * @param Material $material
+     *
+     * @return CatalogProduct
+     */
+    public function processMaterial(Material $material): CatalogProduct
+    {
+        return $this->createFromMaterial($material);
+    }
+
+    /**
+     * @param CatalogProduct $catalogProduct
      *
      * @return bool
      */
-    public function processMaterial(int $offerId, Material $material): bool
+    public function updateOrCreate(CatalogProduct $catalogProduct): bool
     {
-        $catalogProduct = $this->createFromMaterial($material)->setId($offerId);
         return $this->catalogProductRepository->createOrUpdate($catalogProduct);
     }
 

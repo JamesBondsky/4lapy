@@ -64,9 +64,7 @@ class IblockElementQuery extends IblockQueryBase
      */
     public function getBaseFilter(): array
     {
-        $filter = [
-            'SECTION_GLOBAL_ACTIVE' => 'Y',
-        ];
+        $filter = [];
 
         if ($this->iblockId) {
             $filter['IBLOCK_ID'] = $this->iblockId;
