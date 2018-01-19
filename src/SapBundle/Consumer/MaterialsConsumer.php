@@ -44,6 +44,7 @@ class MaterialsConsumer implements ConsumerInterface, LoggerAwareInterface
 
         $error = 0;
         foreach ($materials->getMaterials() as $material) {
+            $materials->getMaterials()->removeElement($material);
             if ($this->consumer->consume($material)) {
                 continue;
             }
