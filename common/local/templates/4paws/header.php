@@ -27,12 +27,12 @@ $markup = PawsApplication::markup();
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="google" value="notranslate">
     <meta name="format-detection" content="telephone=no">
-    
+
     <script src="/static/build/js/jquery/jquery.min.js"></script>
     <?php $APPLICATION->ShowHead(); ?>
     <title><?php $APPLICATION->ShowTitle() ?></title>
     <!--[if lte IE 9]>
-    <script data-skip-moving="true" src="js/html5shiv/html5shiv.min.js"></script><![endif]-->
+    <script data-skip-moving="true" src="/static/build/js/html5shiv/html5shiv.min.js"></script><![endif]-->
     <?php
     Asset::getInstance()->addCss($markup->getCssFile());
     Asset::getInstance()->addJs('https://api-maps.yandex.ru/2.1.56/?lang=ru_RU');
@@ -40,82 +40,115 @@ $markup = PawsApplication::markup();
 </head>
 <body>
 <?php $APPLICATION->ShowPanel() ?>
-<div class="b-page-wrapper js-this-scroll">
-    <header class="b-header js-header">
+<div class="b-page-wrapper <?= $template->getWrapperClass() ?> js-this-scroll">
+    <header class="b-header <?= $template->getHeaderClass() ?> js-header">
         <div class="b-container">
-            <div class="b-header__info">
-                <a class="b-hamburger b-hamburger--mobile-menu js-hamburger-menu-mobile" href="javascript:void(0);" title="">
-                    <span class="b-hamburger__hamburger-icon"></span>
-                </a>
-                <a class="b-hamburger js-hamburger-menu-main" href="javascript:void(0);" title="">
+            <?php if ($template->isShortHeaderFooter()) { ?>
+                <div class="b-header__info b-header__info--short-header">
+                    <a class="b-logo"
+                       href="javascript:void(0);"
+                       title="">
+                        <img src="/static/build/images/inhtml/logo.svg"
+                             alt="Четыре лапы"
+                             title="Четыре лапы"/>
+                    </a>
+                    <span class="b-header__phone-short-header">
+                        <?php $APPLICATION->IncludeComponent(
+                            'fourpaws:city.phone',
+                            'template.header.short',
+                            [],
+                            false,
+                            ['HIDE_ICONS' => 'Y']
+                        ) ?>
+                    </span>
+                    <div class="b-header-info b-header-info--short-header js-hide-open-menu">
+                        <?php require_once __DIR__ . '/blocks/header/phone_block.php' ?>
+                    </div>
+                </div>
+            <?php } else { ?>
+                <div class="b-header__info">
+                    <a class="b-hamburger b-hamburger--mobile-menu js-hamburger-menu-mobile"
+                       href="javascript:void(0);"
+                       title="">
+                        <span class="b-hamburger__hamburger-icon"></span>
+                    </a>
+                    <a class="b-hamburger js-hamburger-menu-main" href="javascript:void(0);" title="">
                     <span class="b-icon b-icon--hamburger">
                         <?= new SvgDecorator('icon-hamburger', 24, 18) ?>
                     </span>
-                </a>
-                <a class="b-logo" href="/" title="">
-                    <img src="/static/build/images/inhtml/logo.svg" alt="Четыре лапы" title="Четыре лапы" />
-                </a>
-                <?php
-                $APPLICATION->IncludeComponent(
-                    'fourpaws:catalog.search.form',
-                    '',
-                    [],
-                    false,
-                    ['HIDE_ICONS' => 'Y']
-                );
-                ?>
-                <div class="b-header-info">
-                    <?php require_once __DIR__ . '/blocks/header/phone_block.php' ?>
-                    <?php $APPLICATION->IncludeComponent(
-                        'fourpaws:auth.form',
+                    </a>
+                    <a class="b-logo" href="/" title="">
+                        <img src="/static/build/images/inhtml/logo.svg" alt="Четыре лапы" title="Четыре лапы"/>
+                    </a>
+                    <?php
+                    $APPLICATION->IncludeComponent(
+                        'fourpaws:catalog.search.form',
                         '',
                         [],
                         false,
                         ['HIDE_ICONS' => 'Y']
                     );
-
-                    echo PawsApplication::getInstance()->getContainer()->get(BasketViewService::class)->getMiniBasketHtml();
-
                     ?>
+                    <div class="b-header-info">
+                        <?php require_once __DIR__ . '/blocks/header/phone_block.php' ?>
+                        <?php $APPLICATION->IncludeComponent(
+                            'fourpaws:auth.form',
+                            '',
+                            [],
+                            false,
+                            ['HIDE_ICONS' => 'Y']
+                        );
+
+                        echo PawsApplication::getInstance()
+                                            ->getContainer()
+                                            ->get(BasketViewService::class)
+                                            ->getMiniBasketHtml();
+
+                        ?>
+                    </div>
                 </div>
-            </div>
-            <div class="b-header__menu js-minimal-menu js-nav-first-desktop">
-                <?php
-                /**
-                 * Основное меню.
-                 * dropdown передается через header_dropdown_menu
-                 */
-                $APPLICATION->IncludeComponent(
-                    'fourpaws:iblock.main.menu',
-                    'fp.17.0.top',
-                    [
-                        'MENU_IBLOCK_TYPE' => \FourPaws\Enum\IblockType::MENU,
-                        'MENU_IBLOCK_CODE' => \FourPaws\Enum\IblockCode::MAIN_MENU,
-                        'PRODUCTS_IBLOCK_TYPE' => \FourPaws\Enum\IblockType::CATALOG,
-                        'PRODUCTS_IBLOCK_CODE' => \FourPaws\Enum\IblockCode::PRODUCTS,
-                        'CACHE_TIME' => 3600,
-                        'CACHE_TYPE' => 'A',
-                        'MAX_DEPTH_LEVEL' => '4',
-                        'TEMPLATE_NO_CACHE' => 'N', // N - шаблон кэшируется
-                        'BRANDS_POPULAR_LIMIT' => '6',
-                    ],
-                    null,
-                    [
-                        'HIDE_ICONS' => 'Y'
-                    ]
-                );
-                ?>
-                <?php $APPLICATION->IncludeComponent('fourpaws:city.selector',
-                                                     '',
-                                                     [],
-                                                     false,
-                                                     ['HIDE_ICONS' => 'Y']) ?>
-            </div>
-            <?php $APPLICATION->IncludeComponent('fourpaws:city.delivery.info',
-                                                 'template.header',
-                                                 [],
-                                                 false,
-                                                 ['HIDE_ICONS' => 'Y']); ?>
+                <div class="b-header__menu js-minimal-menu js-nav-first-desktop">
+                    <?php
+                    /**
+                     * Основное меню.
+                     * dropdown передается через header_dropdown_menu
+                     */
+                    $APPLICATION->IncludeComponent(
+                        'fourpaws:iblock.main.menu',
+                        'fp.17.0.top',
+                        [
+                            'MENU_IBLOCK_TYPE'     => \FourPaws\Enum\IblockType::MENU,
+                            'MENU_IBLOCK_CODE'     => \FourPaws\Enum\IblockCode::MAIN_MENU,
+                            'PRODUCTS_IBLOCK_TYPE' => \FourPaws\Enum\IblockType::CATALOG,
+                            'PRODUCTS_IBLOCK_CODE' => \FourPaws\Enum\IblockCode::PRODUCTS,
+                            'CACHE_TIME'           => 3600,
+                            'CACHE_TYPE'           => 'A',
+                            'MAX_DEPTH_LEVEL'      => '4',
+                            'TEMPLATE_NO_CACHE'    => 'N', // N - шаблон кэшируется
+                            'BRANDS_POPULAR_LIMIT' => '6',
+                        ],
+                        null,
+                        [
+                            'HIDE_ICONS' => 'Y',
+                        ]
+                    );
+                    ?>
+                    <?php $APPLICATION->IncludeComponent(
+                        'fourpaws:city.selector',
+                        '',
+                        [],
+                        false,
+                        ['HIDE_ICONS' => 'Y']
+                    ) ?>
+                </div>
+                <?php $APPLICATION->IncludeComponent(
+                    'fourpaws:city.delivery.info',
+                    'template.header',
+                    [],
+                    false,
+                    ['HIDE_ICONS' => 'Y']
+                ); ?>
+            <?php } ?>
         </div>
     </header>
     <?php
@@ -127,25 +160,35 @@ $markup = PawsApplication::markup();
     $APPLICATION->ShowViewContent('header_dropdown_menu'); ?>
     <main class="b-wrapper<?= $template->getIndexMainClass() ?>" role="main">
         <?php if ($template->hasHeaderPublicationListContainer()) { ?>
-        <div class="<?php $APPLICATION->ShowProperty('PUBLICATION_LIST_CONTAINER_1',
-                                                     'b-container b-container--news') ?>">
+        <div class="<?php $APPLICATION->ShowProperty(
+            'PUBLICATION_LIST_CONTAINER_1',
+            'b-container b-container--news'
+        ) ?>">
             <div class="<?php $APPLICATION->ShowProperty('PUBLICATION_LIST_CONTAINER_2', 'b-news') ?>">
                 <h1 class="b-title b-title--h1"><?php $APPLICATION->ShowTitle(false) ?></h1>
                 <?php
                 }
-                
+
                 if ($template->hasHeaderDetailPageContainer()) {
                     ?>
-                    <div class="<?php $APPLICATION->ShowProperty('PUBLICATION_DETAIL_CONTAINER_1',
-                                                                 'b-container b-container--news-detail') ?>">
-                        <div class="<?php $APPLICATION->ShowProperty('PUBLICATION_DETAIL_CONTAINER_2',
-                                                                     'b-detail-page') ?>">
+                    <div class="<?php $APPLICATION->ShowProperty(
+                        'PUBLICATION_DETAIL_CONTAINER_1',
+                        'b-container b-container--news-detail'
+                    ) ?>">
+                        <div class="<?php $APPLICATION->ShowProperty(
+                            'PUBLICATION_DETAIL_CONTAINER_2',
+                            'b-detail-page'
+                        ) ?>">
                             <?php
-                            $APPLICATION->IncludeComponent('bitrix:breadcrumb', 'breadcrumb', [
-                                                                                  'PATH'       => '',
-                                                                                  'SITE_ID'    => SITE_ID,
-                                                                                  'START_FROM' => '0',
-                                                                              ]); ?>
+                            $APPLICATION->IncludeComponent(
+                                'bitrix:breadcrumb',
+                                'breadcrumb',
+                                [
+                                    'PATH'       => '',
+                                    'SITE_ID'    => SITE_ID,
+                                    'START_FROM' => '0',
+                                ]
+                            ); ?>
                             <h1 class="b-title b-title--h1">
                                 <?php $APPLICATION->ShowTitle(false) ?>
                             </h1>
@@ -154,37 +197,44 @@ $markup = PawsApplication::markup();
                         </div>
                     </div>
                 <?php }
-                
+
                 if ($template->hasHeaderPersonalContainer()) { ?>
                 <div class="b-account">
                     <div class="b-container b-container--account">
                         <div class="b-account__wrapper-title">
                             <h1 class="b-title b-title--h1"><?php $APPLICATION->ShowTitle(false) ?></h1>
                         </div>
-                        <?php $APPLICATION->IncludeComponent('bitrix:menu', 'personal.menu', [
-                                                                              'COMPONENT_TEMPLATE'    => 'personal.menu',
-                                                                              'ROOT_MENU_TYPE'        => 'personal_cab',
-                                                                              'MENU_CACHE_TYPE'       => 'A',
-                                                                              'MENU_CACHE_TIME'       => '360000',
-                                                                              'MENU_CACHE_USE_GROUPS' => 'N',
-                                                                              'MENU_CACHE_GET_VARS'   => [],
-                                                                              'MAX_LEVEL'             => '1',
-                                                                              'CHILD_MENU_TYPE'       => 'personal_cab',
-                                                                              'USE_EXT'               => 'N',
-                                                                              'DELAY'                 => 'N',
-                                                                              'ALLOW_MULTI_SELECT'    => 'N',
-                                                                          ], false); ?>
+                        <?php $APPLICATION->IncludeComponent(
+                            'bitrix:menu',
+                            'personal.menu',
+                            [
+                                'COMPONENT_TEMPLATE'    => 'personal.menu',
+                                'ROOT_MENU_TYPE'        => 'personal_cab',
+                                'MENU_CACHE_TYPE'       => 'A',
+                                'MENU_CACHE_TIME'       => '360000',
+                                'MENU_CACHE_USE_GROUPS' => 'N',
+                                'MENU_CACHE_GET_VARS'   => [],
+                                'MAX_LEVEL'             => '1',
+                                'CHILD_MENU_TYPE'       => 'personal_cab',
+                                'USE_EXT'               => 'N',
+                                'DELAY'                 => 'N',
+                                'ALLOW_MULTI_SELECT'    => 'N',
+                            ],
+                            false
+                        ); ?>
                         <main class="b-account__content" role="main">
                             <?php }
-                            
+
                             if ($template->hasHeaderBlockShopList()) { ?>
                             <div class="b-stores">
                                 <div class="b-container">
                                     <div class="b-stores__top">
-                                        <h1 class="b-title b-title--h1 b-title--stores-header"><?php $APPLICATION->ShowTitle(false) ?></h1>
+                                        <h1 class="b-title b-title--h1 b-title--stores-header"><?php $APPLICATION->ShowTitle(
+                                                false
+                                            ) ?></h1>
                                         <div class="b-stores__info">
                                             <p>Все магазины нашей сети работают без выходных и принимают банковские
-                                               карты к оплате</p>
+                                                карты к оплате</p>
                                         </div>
                                     </div>
                                     <?php }
