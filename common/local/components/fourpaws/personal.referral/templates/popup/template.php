@@ -17,7 +17,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                     <label class="b-input-line__label" for="number-card">Номер бонусной карты</label>
                     <span class="b-input-line__require">(обязательно)</span>
                 </div>
-                <div class="b-input b-input--registration-form b-kek">
+                <div class="b-input b-input--registration-form">
                     <input class="b-input__input-field b-input__input-field--registration-form js-number-card js-offers"
                            type="text"
                            id="number-card"
