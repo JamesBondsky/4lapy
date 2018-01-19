@@ -96,7 +96,7 @@ $product = $APPLICATION->IncludeComponent(
                             //    class="b-tab-title__text">Состав</span></a>
                             //</li>
                             /**
-                             * @todo Рекоммендация по питанию пока нет
+                             * @todo Рекомендация по питанию пока нет
                              */
                             /*<li class="b-tab-title__item js-tab-item">
                                 <a class="b-tab-title__link js-tab-link"
@@ -1083,6 +1083,21 @@ $product = $APPLICATION->IncludeComponent(
         </div>
     </div>
 <?php
+
+/**
+ * Похожие товары
+ */
+$APPLICATION->IncludeFile(
+    'blocks/components/similar_products.php',
+    [
+        'PRODUCT_ID' => $product->getId(),
+    ],
+    [
+        'SHOW_BORDER' => false,
+        'NAME' => 'Блок похожих товаров',
+        'MODE' => 'php',
+    ]
+);
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/footer.php';
 die();
