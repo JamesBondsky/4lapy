@@ -502,8 +502,13 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 ]
             );
         } catch (UsernameNotFoundException $e) {
+        } catch (WrongPhoneNumberException $e) {
+            return JsonErrorResponse::createWithData(
+                $e->getMessage(),
+                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
+            );
         }
-        
+    
         try {
             /** @var ConfirmCodeService $confirmService */
             $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
