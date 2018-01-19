@@ -31,7 +31,7 @@ use Symfony\Component\HttpFoundation\Request;
 class AuthController extends Controller
 {
     /**
-     * @Route("/login/", methods={"POST"})
+     * @Route("/login/", methods={"GET", "POST"})
      * @param Request $request
      *
      * @throws ValidationException
@@ -120,7 +120,7 @@ class AuthController extends Controller
     }
     
     /**
-     * @Route("/forgotPassword/", methods={"POST"})
+     * @Route("/forgotPassword/", methods={"GET", "POST"})
      * @param Request $request
      *
      * @throws ServiceNotFoundException
