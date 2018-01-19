@@ -94,9 +94,7 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
         
         try {
             if (!\in_array((int)static::$accessUserGroup, $this->currentUserProvider->getUserGroups(), true)) {
-                define('NEED_AUTH', true);
-                
-                return null;
+                LocalRedirect('/personal');
             }
         } catch (NotAuthorizedException $e) {
             define('NEED_AUTH', true);
