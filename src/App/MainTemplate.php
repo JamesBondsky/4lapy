@@ -275,7 +275,7 @@ class MainTemplate extends TemplateAbstract
 
     public function isOrderPage(): bool
     {
-        return $this->isDir('/sale/order');
+        return $this->isPartitionDir('/sale/order');
     }
 
     /**
