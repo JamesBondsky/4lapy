@@ -86,8 +86,14 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                 /** @var ConfirmCodeService $confirmService */
                 $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
                 if ($confirmService::getGeneratedCode() === $confirmAuth) {
+                    $backUrl = $request->get('backurl');
                     $this->authService->authorize($request->get('user_id'));
-                    $this->arResult['STEP'] = 'confirmPhone';
+                    if(!empty($backUrl)){
+                        LocalRedirect($backUrl);
+                    }
+                    else {
+                        $this->arResult['STEP'] = 'confirmPhone';
+                    }
                 }
             }
             
@@ -188,14 +194,15 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
             /** @var ConfirmCodeService $confirmService */
             $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
             $confirmService::setGeneratedCode('user_' . $userId);
-            
+    
+            $backUrl = $request->get('backurl', '');
             return JsonSuccessResponse::create(
                 'Пароль успешно изменен',
                 200,
                 [],
                 [
                     'redirect' => '/personal/forgot-password?confirm_auth=' . $confirmService::getGeneratedCode()
-                                  . '&user_id=' . $userId,
+                                  . '&user_id=' . $userId.'&backurl='.$backUrl
                 ]
             );
         } catch (BitrixRuntimeException $e) {
@@ -276,6 +283,8 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
     {
         $step = $request->get('step', '');
         $mess = '';
+        /** @noinspection PhpUnusedLocalVariableInspection */
+        $backUrl = $request->get('backurl', '');
         
         $phone = $request->get('phone', '');
         if (!empty($phone)) {

@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Main\Application;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
@@ -34,7 +36,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                 <div class="b-input-line__label-wrapper">
                     <label class="b-input-line__label" for="password-authorization">Пароль</label>
                     <a class="b-link-gray b-link-gray--label"
-                       href="/personal/forgot-password/"
+                       href="/personal/forgot-password/?backurl=<?= Application::getInstance()->getContext()->getRequest()->getRequestUri()?>"
                        title="Забыли пароль?">Забыли пароль?</a>
                 </div>
                 <div class="b-input b-input--registration-form">

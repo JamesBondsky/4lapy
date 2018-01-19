@@ -2,7 +2,9 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
-/** @var string $phone */ ?>
+/** @var string $phone
+ * @var string $backUrl
+ */ ?>
 <div class="b-registration__content b-registration__content--create-password">
     <div class="b-registration__text-instruction b-registration__text-instruction--create-password"
          id="js-resend"
@@ -18,6 +20,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
           data-url="/ajax/user/auth/forgotPassword/"
           method="post">
         <input type="hidden" name="action" value="get">
+        <input type="hidden" name="backurl" value="<?= $backUrl?>">
         <input type="hidden" name="step" value="createNewPassword">
         <input type="hidden" name="phone" value="<?= $phone ?>">
         <div class="b-input-line b-input-line--create-password b-input-line--recovery">
