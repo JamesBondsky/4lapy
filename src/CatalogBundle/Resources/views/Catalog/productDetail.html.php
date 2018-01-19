@@ -1085,6 +1085,23 @@ $product = $APPLICATION->IncludeComponent(
 <?php
 
 /**
+ * Преимущества
+ */
+$APPLICATION->IncludeComponent(
+    'bitrix:main.include',
+    '',
+    [
+        'AREA_FILE_SHOW' => 'file',
+        'PATH' => '/local/include/blocks/advantages.php',
+        'EDIT_TEMPLATE' => '',
+    ],
+    null,
+    [
+        'HIDE_ICONS' => 'N'
+    ]
+);
+
+/**
  * Похожие товары
  */
 $APPLICATION->IncludeFile(

@@ -206,7 +206,9 @@ class FourPawsCatalogProductsRecommendations extends ElementList
                 'aid' => $params['aid'],
                 'op' => 'postcross',
                 'eids' => implode(',', $this->arParams['POSTCROSS_IDS']),
-                'count' => $params['count']
+                'count' => $params['count'],
+                // не знаю, нужен ли этот параметр? Документации по типу postcross нет
+                //'ib' => $params['ib'],
             ];
         }
         return $params;
