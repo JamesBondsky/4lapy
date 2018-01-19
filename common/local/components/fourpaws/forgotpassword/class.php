@@ -102,6 +102,7 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
         
         try {
             $userId = $this->currentUserProvider->getUserRepository()->findIdentifierByRawLogin($login);
+            $formatedLogin = $this->currentUserProvider->getUserRepository()->findLoginByRawLogin($login);
         } catch (\FourPaws\UserBundle\Exception\TooManyUserFoundException $e) {
             return JsonErrorResponse::createWithData(
                 'Найдено больше одного пользователя с данным логином ' . $login,
@@ -112,8 +113,13 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                 'Не найдено пользователей с данным логином ' . $login,
                 ['errors' => ['noUser' => 'Не найдено пользователей с данным логином ' . $login]]
             );
+        } catch (WrongPhoneNumberException $e) {
+            return JsonErrorResponse::createWithData(
+                'Некорректный номер телефона',
+                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
+            );
         }
-        
+    
         if (empty($password) || empty($confirm_password)) {
             return JsonErrorResponse::createWithData(
                 'Должны быть заполнены все поля',
