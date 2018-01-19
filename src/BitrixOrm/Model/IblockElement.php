@@ -36,6 +36,13 @@ class IblockElement extends BitrixArrayItemBase
      * @JMS\Serializer\Annotation\Type("int")
      * @see BitrixArrayItemBase
      */
+    protected $IBLOCK_SECTION_ID = 0;
+
+    /**
+     * @var int
+     * @JMS\Serializer\Annotation\Type("int")
+     * @see BitrixArrayItemBase
+     */
     protected $SORT = 500;
 
     /**
@@ -105,6 +112,26 @@ class IblockElement extends BitrixArrayItemBase
      * @see BitrixArrayItemBase
      */
     protected $sectionIdList;
+
+    /**
+     * @return int
+     */
+    public function getIblockSectionId(): int
+    {
+        return (int)$this->IBLOCK_SECTION_ID;
+    }
+
+    /**
+     * @param int $id
+     *
+     * @return $this
+     */
+    public function withIblockSectionId(int $id)
+    {
+        $this->IBLOCK_SECTION_ID = $id;
+
+        return $this;
+    }
 
     /**
      * @return string
@@ -179,7 +206,7 @@ class IblockElement extends BitrixArrayItemBase
     {
         if (null === $this->detailText) {
             $this->detailText = (new TextContent())->withText($this->DETAIL_TEXT)
-                ->withType($this->DETAIL_TEXT_TYPE);
+                                                   ->withType($this->DETAIL_TEXT_TYPE);
         }
 
         return $this->detailText;

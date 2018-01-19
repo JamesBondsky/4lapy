@@ -22,16 +22,28 @@ use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\ValidationException;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
 {
+    protected static $accessUserGroup = 30;
+    
     /**
      * @var ReferralService
      */
     private $referralService;
+    
+    /** @var UserAuthorizationInterface */
+    private $authUserProvider;
+    
+    /**
+     * @var CurrentUserProviderInterface
+     */
+    private          $currentUserProvider;
     
     /**
      * AutoloadingIssuesInspection constructor.
@@ -54,7 +66,9 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
             /** @noinspection PhpUnhandledExceptionInspection */
             throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
         }
-        $this->referralService = $container->get('referral.service');
+        $this->referralService     = $container->get('referral.service');
+        $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
+        $this->authUserProvider    = $container->get(UserAuthorizationInterface::class);
     }
     
     /**
@@ -72,6 +86,21 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
      */
     public function executeComponent()
     {
+        if (!$this->authUserProvider->isAuthorized()) {
+            define('NEED_AUTH', true);
+            
+            return null;
+        }
+        
+        try {
+            if (!\in_array((int)static::$accessUserGroup, $this->currentUserProvider->getUserGroups(), true)) {
+                LocalRedirect('/personal');
+            }
+        } catch (NotAuthorizedException $e) {
+            define('NEED_AUTH', true);
+            
+            return null;
+        }
         $this->setFrameMode(true);
         
         try {

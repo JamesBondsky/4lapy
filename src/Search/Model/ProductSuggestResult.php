@@ -9,7 +9,7 @@ use FourPaws\App\Application;
 use FourPaws\Catalog\Collection\ProductCollection;
 use FourPaws\Search\Factory;
 
-class ProductSearchResult implements ProductResultInterface
+class ProductSuggestResult implements ProductResultInterface
 {
     /**
      * @var ProductCollection
@@ -22,16 +22,6 @@ class ProductSearchResult implements ProductResultInterface
     private $resultSet;
 
     /**
-     * @var Navigation
-     */
-    private $navigation;
-
-    /**
-     * @var string
-     */
-    private $query;
-
-    /**
      * @var Factory
      */
     private $factory;
@@ -40,16 +30,13 @@ class ProductSearchResult implements ProductResultInterface
      * ProductSearchResult constructor.
      *
      * @param ResultSet $resultSet
-     * @param Navigation $navigation
      *
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
      */
-    public function __construct(ResultSet $resultSet, Navigation $navigation = null, $query = '')
+    public function __construct(ResultSet $resultSet)
     {
         $this->resultSet = $resultSet;
-        $this->navigation = $navigation;
-        $this->query = $query;
         $this->factory = Application::getInstance()->getContainer()->get('search.factory');
     }
 
@@ -62,20 +49,16 @@ class ProductSearchResult implements ProductResultInterface
         if (null === $this->productCollection) {
             $productList = [];
 
-            /** @var Result $item */
-            foreach ($this->resultSet as $item) {
-                $productList[] = $this->factory->makeProductObject($item);
+            $suggests = $this->resultSet->getSuggests();
+            foreach ($suggests as $name => $data) {
+                $items = $data[0]['options'];
+                foreach ($items as $item) {
+                    $productList[] = $this->factory->makeProductObjectFromArray($item['_source']);
+                }
             }
 
             $cdbres = new CDBResult(null);
             $cdbres->InitFromArray($productList);
-
-            if ($this->navigation) {
-                $cdbres->NavRecordCount = $this->resultSet->getTotalHits();
-                $cdbres->NavPageNomer = $this->navigation->getPage();
-                $cdbres->NavPageSize = $this->navigation->getPageSize();
-                $cdbres->NavPageCount = ceil($this->resultSet->getTotalHits() / $this->navigation->getPageSize());
-            }
 
             $this->productCollection = new ProductCollection($cdbres);
         }
@@ -89,10 +72,5 @@ class ProductSearchResult implements ProductResultInterface
     public function getResultSet(): ResultSet
     {
         return $this->resultSet;
-    }
-
-    public function getQuery(): string
-    {
-        return $this->query;
     }
 }

@@ -33,7 +33,7 @@ $APPLICATION->IncludeComponent('bitrix:news.list',
                                    ],
                                    'PROPERTY_CODE'                   => [
                                        0 => 'LINK',
-                                       1 => '',
+                                       1 => 'IMG_TABLET',
                                    ],
                                    'CHECK_DATES'                     => 'Y',
                                    'DETAIL_URL'                      => '',

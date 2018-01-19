@@ -150,13 +150,15 @@ if ($arResult['RESULT_TYPE'] === 'RESULT') {
         ?><div class="b-container">
             <section class="b-common-section">
                 <div class="b-common-section__title-box b-common-section__title-box--popular">
-                    <h2 class="b-title b-title--popular"><?=Loc::getMessage('POPULAR_PRODUCTS_HOME.TITLE')?></h2>
-                    <a class="b-link b-link--title b-link--title" href="javascript:void(0)" title="<?=Loc::getMessage('POPULAR_PRODUCTS_HOME.ALL_LINK_TITLE')?>">
+                    <h2 class="b-title b-title--popular"><?=Loc::getMessage('POPULAR_PRODUCTS_HOME.TITLE')?></h2><?php
+                    /*
+                    ?><a class="b-link b-link--title b-link--title" href="javascript:void(0)" title="<?=Loc::getMessage('POPULAR_PRODUCTS_HOME.ALL_LINK_TITLE')?>">
                         <span class="b-link__text b-link__text--title"><?=Loc::getMessage('POPULAR_PRODUCTS_HOME.ALL_LINK')?></span>
                         <span class="b-link__mobile b-link__mobile--title"><?=Loc::getMessage('POPULAR_PRODUCTS_HOME.ALL')?></span><?php
                         echo new \FourPaws\Decorators\SvgDecorator('icon-arrow-right', 6, 10);
-                    ?></a>
-                </div>
+                    ?></a><?php
+                    */
+                ?></div>
                 <div class="b-common-section__content b-common-section__content--popular js-popular-product"><?php
                     foreach ($arResult['PRODUCTS'] as $product) {
                         $productId = $product->getId();

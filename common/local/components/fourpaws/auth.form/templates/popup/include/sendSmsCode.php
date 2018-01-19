@@ -22,7 +22,7 @@ use FourPaws\ReCaptcha\ReCaptchaService;
        data-action="get"
        data-step="addPhone"
        data-phone="<?= $phone ?>">Сменить номер</a>
-    <form class="b-registration__form js-form-validation js-registration-form"
+    <form class="b-registration__form js-form-validation js-registration-form js-ajax-form"
           id="reg-step3-form"
           data-url="/ajax/user/auth/login/"
           method="post">
