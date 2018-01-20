@@ -509,14 +509,15 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     private function ajaxGetStep2($confirmCode, $phone)
     {
         $request   = Application::getInstance()->getContext()->getRequest();
-        $recaptcha = (string)$request->get('g-recaptcha-response');
-        /** @var ReCaptchaService $recaptchaService */
-        $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
-        if (!empty($recaptcha) && $request->offsetExists('g-recaptcha-response')
-            && !$recaptchaService->checkCaptcha($recaptcha)) {
-            return JsonErrorResponse::create(
-                'Проверка капчи не пройдена'
-            );
+        if ($request->offsetExists('g-recaptcha-response')) {
+            $recaptcha = (string)$request->get('g-recaptcha-response');
+            /** @var ReCaptchaService $recaptchaService */
+            $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
+            if (!$recaptchaService->checkCaptcha($recaptcha)) {
+                return JsonErrorResponse::create(
+                    'Проверка капчи не пройдена'
+                );
+            }
         }
         try {
             /** @var ConfirmCodeService $confirmService */

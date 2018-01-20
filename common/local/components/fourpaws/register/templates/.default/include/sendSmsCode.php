@@ -4,6 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use FourPaws\App\Application as App;
+use FourPaws\ReCaptcha\ReCaptchaService;
 
 /** @var string $phone
  * @var string $newAction
@@ -50,7 +51,10 @@ use FourPaws\App\Application as App;
                data-action="resendSms"
                title="Отправить снова">Отправить снова</a>
         </div>
-        <?= App::getInstance()->getContainer()->get('recaptcha.service')->getCaptcha(' b-registration__captcha'); ?>
+        <?php /** @var ReCaptchaService $recaptchaService */
+        /** @noinspection PhpUnhandledExceptionInspection */
+        $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
+        echo $recaptchaService->getCaptcha(' b-registration__captcha') ?>
         <button class="b-button b-button--social b-button--full-width">Подтвердить</button>
     </form>
 </div>
