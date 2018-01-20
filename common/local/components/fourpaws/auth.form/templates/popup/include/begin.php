@@ -7,7 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 ?>
 <?php if ($component->getMode() === FourPawsAuthFormComponent::MODE_FORM) {
     ?>
-    <div class="b-registration b-registration--popup-authorization js-auth-block">
+    <div class="b-registration b-registration--popup-authorization js-auth-block js-ajax-replace-block">
         <header class="b-registration__header">
             <h1 class="b-title b-title--h1 b-title--registration">Авторизация</h1>
         </header>
