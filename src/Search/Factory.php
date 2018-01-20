@@ -108,10 +108,23 @@ class Factory
             );
         }
 
-        $source = json_encode($result->getSource());
+        $product = $this->makeProductObjectFromArray($result->getSource());
+        $product->withHitMetaInfo(HitMetaInfo::create($result));
+
+        return $product;
+    }
+
+    /**
+     * @param array $source
+     *
+     * @return Product
+     * @throws RuntimeException
+     */
+    public function makeProductObjectFromArray(array $source) {
+        $json = json_encode($source);
 
         $product = $this->serializer->deserialize(
-            $source,
+            $json,
             Product::class,
             'json',
             DeserializationContext::create()->setGroups(['elastic'])
@@ -121,9 +134,6 @@ class Factory
             throw new RuntimeException('Ошибка десериализации продукта');
         }
 
-        $product->withHitMetaInfo(HitMetaInfo::create($result));
-
         return $product;
     }
-
 }

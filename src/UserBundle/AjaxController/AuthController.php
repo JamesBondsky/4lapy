@@ -10,13 +10,9 @@ use Bitrix\Main\SystemException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
-use FourPaws\External\Exception\ManzanaServiceException;
-use FourPaws\External\Manzana\Exception\ContactUpdateException;
-use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
-use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use GuzzleHttp\Exception\GuzzleException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
@@ -35,12 +31,9 @@ use Symfony\Component\HttpFoundation\Request;
 class AuthController extends Controller
 {
     /**
-     * @Route("/login/", methods={"POST"})
+     * @Route("/login/", methods={"GET", "POST"})
      * @param Request $request
      *
-     * @throws NotAuthorizedException
-     * @throws ContactUpdateException
-     * @throws ManzanaServiceException
      * @throws ValidationException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
@@ -49,7 +42,6 @@ class AuthController extends Controller
      * @throws InvalidArgumentException
      * @throws \RuntimeException
      * @throws ApplicationCreateException
-     * @throws WrongPhoneNumberException
      * @throws ServiceCircularReferenceException
      * @throws \Exception
      * @return JsonResponse
@@ -57,7 +49,6 @@ class AuthController extends Controller
     public function loginAction(Request $request) : JsonResponse
     {
         $action = $request->get('action', '');
-        $phone  = $request->get('phone', '');
         \CBitrixComponent::includeComponentClass('fourpaws:auth.form');
         /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
         $loginClass = new \FourPawsAuthFormComponent();
@@ -66,13 +57,13 @@ class AuthController extends Controller
                 return $loginClass->ajaxLogin($request->get('login', ''), $request->get('password', ''));
                 break;
             case 'resendSms':
-                return $loginClass->ajaxResendSms($phone);
+                return $loginClass->ajaxResendSms($request->get('phone', ''));
                 break;
             case 'savePhone':
-                return $loginClass->ajaxSavePhone($phone, $request->get('confirmCode', ''));
+                return $loginClass->ajaxSavePhone($request->get('phone', ''), $request->get('confirmCode', ''));
                 break;
             case 'get':
-                return $loginClass->ajaxGet($request, $phone);
+                return $loginClass->ajaxGet($request);
                 break;
         }
         
@@ -83,20 +74,16 @@ class AuthController extends Controller
     }
     
     /**
-     * @Route("/register/", methods={"POST"})
+     * @Route("/register/", methods={"GET", "POST"})
      * @param Request $request
      *
-     * @throws NotAuthorizedException
      * @throws ValidationException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws BitrixRuntimeException
-     * @throws ContactUpdateException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws \RuntimeException
-     * @throws WrongPhoneNumberException
-     * @throws ManzanaServiceException
      * @throws ApplicationCreateException
      * @throws SystemException
      * @throws GuzzleException
@@ -133,7 +120,7 @@ class AuthController extends Controller
     }
     
     /**
-     * @Route("/forgotPassword/", methods={"POST"})
+     * @Route("/forgotPassword/", methods={"GET", "POST"})
      * @param Request $request
      *
      * @throws ServiceNotFoundException

@@ -17,6 +17,7 @@ use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -27,6 +28,9 @@ class FourPawsPersonalCabinetAddressComponent extends CBitrixComponent
      * @var AddressService
      */
     private $addressService;
+    
+    /** @var UserAuthorizationInterface */
+    private $authUserProvider;
     
     /**
      * AutoloadingIssuesInspection constructor.
@@ -49,7 +53,8 @@ class FourPawsPersonalCabinetAddressComponent extends CBitrixComponent
             /** @noinspection PhpUnhandledExceptionInspection */
             throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
         }
-        $this->addressService = $container->get('address.service');
+        $this->addressService   = $container->get('address.service');
+        $this->authUserProvider = $container->get(UserAuthorizationInterface::class);
     }
     
     /**
@@ -65,6 +70,12 @@ class FourPawsPersonalCabinetAddressComponent extends CBitrixComponent
      */
     public function executeComponent()
     {
+        if (!$this->authUserProvider->isAuthorized()) {
+            define('NEED_AUTH', true);
+            
+            return null;
+        }
+        
         $this->setFrameMode(true);
         
         if ($this->startResultCache()) {

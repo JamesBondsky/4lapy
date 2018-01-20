@@ -3,7 +3,9 @@
 namespace FourPaws\App;
 
 use Circle\RestClientBundle\CircleRestClientBundle;
+use Cocur\Slugify\Bridge\Symfony\CocurSlugifyBundle;
 use FOS\RestBundle\FOSRestBundle;
+use FourPaws\PersonalBundle\FourPawsPersonalBundle;
 use FourPaws\AppBundle\FourPawsAppBundle;
 use FourPaws\CatalogBundle\FourPawsCatalogBundle;
 use FourPaws\DeliveryBundle\FourPawsDeliveryBundle;
@@ -73,6 +75,7 @@ class AppKernel extends Kernel
             new JMSSerializerBundle(),
             new NelmioApiDocBundle(),
             new MisdPhoneNumberBundle(),
+            new CocurSlugifyBundle(),
 
             /** Internal bundles */
             new FourPawsAppBundle(),
@@ -82,6 +85,7 @@ class AppKernel extends Kernel
             new FourPawsSaleBundle(),
             new FourPawsStoreBundle(),
             new FourPawsSapBundle(),
+            new FourPawsPersonalBundle(),
         ];
 
         if (\in_array($this->getEnvironment(), ['dev', 'test'], true)) {

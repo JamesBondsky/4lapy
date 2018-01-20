@@ -15,6 +15,7 @@ class CategoryQuery extends IblockSectionQuery
     {
         return [
             'IBLOCK_ID',
+            'IBLOCK_SECTION_ID',
             'ID',
             'NAME',
             'XML_ID',
@@ -25,6 +26,8 @@ class CategoryQuery extends IblockSectionQuery
             'LEFT_MARGIN',
             'RIGHT_MARGIN',
             'UF_SYMLINK',
+            'UF_DISPLAY_NAME',
+            'UF_SUFFIX',
             'PICTURE',
         ];
     }

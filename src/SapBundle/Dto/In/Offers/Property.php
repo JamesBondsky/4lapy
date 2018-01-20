@@ -86,7 +86,9 @@ class Property
      */
     public function getValues()
     {
-        return $this->values;
+        return $this->values->filter(function (PropertyValue $propertyValue) {
+            return $propertyValue->getName();
+        });
     }
 
     /**
@@ -94,7 +96,7 @@ class Property
      *
      * @return Property
      */
-    public function setValues($values)
+    public function setValues($values): Property
     {
         $this->values = $values;
         return $this;

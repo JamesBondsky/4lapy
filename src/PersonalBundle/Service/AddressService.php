@@ -8,9 +8,11 @@ namespace FourPaws\PersonalBundle\Service;
 
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
-use FourPaws\External\Manzana\Exception\ContactUpdateException;
+use FourPaws\External\Manzana\Exception\ManzanaException;
 use FourPaws\External\Manzana\Model\Client;
+use FourPaws\External\ManzanaService;
 use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\PersonalBundle\Repository\AddressRepository;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
@@ -34,21 +36,28 @@ class AddressService
      */
     private $addressRepository;
     
+    /** @var CurrentUserProviderInterface $currentUser */
+    private $currentUser;
+    
     /**
      * AddressService constructor.
      *
      * @param AddressRepository $addressRepository
+     *
+     * @throws ServiceNotFoundException
+     * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
      */
     public function __construct(AddressRepository $addressRepository)
     {
         $this->addressRepository = $addressRepository;
+        $this->currentUser       = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
     }
     
     /**
      * @throws ServiceNotFoundException
      * @throws \Exception
      * @throws ApplicationCreateException
-     * @throws NotAuthorizedException
      * @throws ServiceCircularReferenceException
      * @return array
      */
@@ -61,11 +70,8 @@ class AddressService
      * @param $data
      *
      * @throws \RuntimeException
-     * @throws NotAuthorizedException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
-     * @throws ContactUpdateException
-     * @throws ManzanaServiceException
      * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
      * @throws ServiceNotFoundException
@@ -76,6 +82,9 @@ class AddressService
      */
     public function add(array $data) : bool
     {
+        if (empty($data['UF_USER_ID'])) {
+            $data['UF_USER_ID'] = $this->currentUser->getCurrentUserId();
+        }
         if ($data['UF_MAIN'] === 'Y') {
             $this->disableMainItem();
         }
@@ -100,10 +109,7 @@ class AddressService
             $addresses = $this->addressRepository->findBy(
                 [
                     'filter'      => [
-                        'UF_USER_ID' => App::getInstance()
-                                           ->getContainer()
-                                           ->get(CurrentUserProviderInterface::class)
-                                           ->getCurrentUserId(),
+                        'UF_USER_ID' => $this->currentUser->getCurrentUserId(),
                         'UF_MAIN'    => 'Y',
                     ],
                     'entityClass' => Address::class,
@@ -114,9 +120,6 @@ class AddressService
                 $address->setMain(false);
                 $this->addressRepository->setEntity($address)->update();
             }
-        } catch (ApplicationCreateException $e) {
-        } catch (NotAuthorizedException $e) {
-        } catch (ServiceCircularReferenceException $e) {
         } catch (\Exception $e) {
         }
     }
@@ -124,43 +127,64 @@ class AddressService
     /**
      * @param Address $address
      *
-     * @throws NotAuthorizedException
-     * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
+     * @throws InvalidIdentifierException
      * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
-     * @throws ManzanaServiceException
-     * @throws ContactUpdateException
      * @throws ServiceCircularReferenceException
      * @throws \RuntimeException
      */
     protected function updateManzanaAddress(Address $address)
     {
         $container = App::getInstance()->getContainer();
+        /** @var ManzanaService $manzanaService */
         $manzanaService = $container->get('manzana.service');
-        $contactId = $manzanaService->getContactIdByCurUser();
-        if ($contactId >= 0) {
+        $client         = null;
+        try {
+            $contactId         = $manzanaService->getContactIdByCurUser();
+            $client            = new Client();
+            $client->contactId = $contactId;
+        } catch (ManzanaServiceContactSearchNullException $e) {
             $client = new Client();
-            if ($contactId > 0) {
-                $client->contactId = $contactId;
-            } else {
-                $container->get(CurrentUserProviderInterface::class)->setClientPersonalDataByCurUser($client);
+            try {
+                $this->currentUser->setClientPersonalDataByCurUser($client);
+            } catch (NotAuthorizedException $e) {
             }
-            $manzanaService->setClientAddress($client, $address);
-            $manzanaService->updateContact($client);
+        } catch (ManzanaServiceException $e) {
+        } catch (NotAuthorizedException $e) {
         }
+        if ($client instanceof Client) {
+            $this->setClientAddress($client, $address);
+            try {
+                $manzanaService->updateContact($client);
+            } catch (ManzanaServiceException $e) {
+            } catch (ManzanaException $e) {
+            }
+        }
+    }
+    
+    /**
+     * @param Client  $client
+     * @param Address $address
+     */
+    public function setClientAddress(&$client, Address $address)
+    {
+        /** неоткуда взять область для обновления
+         * $client->addressStateOrProvince = '';*/
+        $client->addressCity   = $address->getCity();//Город
+        $client->address       = $address->getStreet();//Улица
+        $client->addressLine2  = $address->getHouse();//Дом
+        $client->addressLine3  = $address->getHousing();//Корпус
+        $client->plAddressFlat = $address->getFlat();//Квартира
     }
     
     /**
      * @param array $data
      *
      * @throws \RuntimeException
-     * @throws NotAuthorizedException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
-     * @throws ContactUpdateException
-     * @throws ManzanaServiceException
      * @throws ValidationException
      * @throws InvalidIdentifierException
      * @throws \Exception
@@ -197,20 +221,5 @@ class AddressService
     public function delete(int $id) : bool
     {
         return $this->addressRepository->delete($id);
-    }
-    
-    /**
-     * @param Client  $client
-     * @param Address $address
-     */
-    public function setClientAddress(&$client, Address $address)
-    {
-        /** неоткуда взять область для обновления
-         * $client->addressStateOrProvince = '';*/
-        $client->addressCity   = $address->getCity();//Город
-        $client->address       = $address->getStreet();//Улица
-        $client->addressLine2  = $address->getHouse();//Дом
-        $client->addressLine3  = $address->getHousing();//Корпус
-        $client->plAddressFlat = $address->getFlat();//Квартира
     }
 }

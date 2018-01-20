@@ -23,8 +23,9 @@ use FourPaws\Decorators\SvgDecorator;
         <a class="<?= ($component->getMode()
                        === FourPawsAuthFormComponent::MODE_FORM) ? 'b-link js-open-popup js-open-popup' : 'b-header-info__link js-open-popover' ?>"
            href="javascript:void(0);"
-           title="Войти"<?= ($component->getMode()
-                             === FourPawsAuthFormComponent::MODE_FORM) ? ' data-popup-id="authorization"' : '' ?>>
+           title="<?= $component->getMode()
+                      === FourPawsAuthFormComponent::MODE_FORM ? 'Войти' : $arResult['NAME'] ?>"<?= ($component->getMode(
+            ) === FourPawsAuthFormComponent::MODE_FORM) ? ' data-popup-id="authorization"' : '' ?>>
                 <span class="b-icon">
                 <?= new SvgDecorator('icon-person', 16, 16) ?>
             </span>

@@ -15,13 +15,12 @@ abstract class ReferenceFilterBase extends FilterBase
     abstract protected function getHlBlockServiceName(): string;
 
     /**
-     * @return VariantCollection
      * @throws \Exception
+     * @return VariantCollection
      */
     protected function doGetAllVariants(): VariantCollection
     {
         $doGetAllVariants = function () {
-
             $dataManager = Application::getHlBlockDataManager($this->getHlBlockServiceName());
 
             $variants = [];
@@ -38,7 +37,6 @@ abstract class ReferenceFilterBase extends FilterBase
             }
 
             return $variants;
-
         };
 
         $variants = (new BitrixCache())->withId(__METHOD__ . $this->getFilterCode())
@@ -47,5 +45,4 @@ abstract class ReferenceFilterBase extends FilterBase
 
         return new VariantCollection($variants);
     }
-
 }

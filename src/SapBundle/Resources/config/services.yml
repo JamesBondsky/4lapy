@@ -26,3 +26,17 @@ services:
     # todo: remove after development!
     FourPaws\SapBundle\Source\SourceRegistry:
         public: true
+
+    # Получить репозиторий напрямую нельзя
+    FourPaws\SapBundle\Repository\ReferenceRepository:
+        abstract: true
+
+    # Необходимо для битровых событий
+    # todo переписать на symfony-style
+    FourPaws\SapBundle\ReferenceDirectory\SapReferenceStorage:
+        public: true
+
+    # Необходимо для битровых событий
+    # todo переписать на symfony-style
+    FourPaws\SapBundle\Subscriber\BitrixEvents:
+        public: true

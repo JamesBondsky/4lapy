@@ -3,9 +3,11 @@
 namespace FourPaws\Search;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Elastica\Query;
 use Elastica\Query\AbstractQuery;
 use Elastica\Query\BoolQuery;
 use Elastica\QueryBuilder;
+use Elastica\Suggest;
 use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Model\Filter\FilterInterface;
 use FourPaws\Catalog\Model\Sorting;
@@ -13,6 +15,7 @@ use FourPaws\Search\Helper\AggsHelper;
 use FourPaws\Search\Helper\IndexHelper;
 use FourPaws\Search\Model\Navigation;
 use FourPaws\Search\Model\ProductSearchResult;
+use FourPaws\Search\Model\ProductSuggestResult;
 use Psr\Log\LoggerAwareInterface;
 use RuntimeException;
 
@@ -74,9 +77,55 @@ class SearchService implements LoggerAwareInterface
 
         $resultSet = $search->search();
 
-        $this->getAggsHelper()->collapseFilters($filters, $resultSet);
+        // если задана строка поиска и не найдено совпадений, то пробуем в другой раскладке
+        if ($searchString && !$resultSet->getTotalHits()) {
+            $from = preg_match('/[ЁёА-я]/u', $searchString) ? 'ru' : 'en';
+            $to = $from === 'ru' ? 'en' : 'ru';
+            $searchString = \CSearchLanguage::ConvertKeyboardLayout($searchString, $from, $to);
+            $search->getQuery()->setParam('query', $this->getFullQueryRule($filters, $searchString));
+            $newResultSet = $search->search();
+            if ($newResultSet->getTotalHits()) {
+                $resultSet = $newResultSet;
+            }
+        }
 
-        return new ProductSearchResult($resultSet);
+        if ($resultSet->getTotalHits() && ($resultSet->getTotalHits() < $navigation->getFrom())) {
+            $navigation->withPage(1);
+            $search->getQuery()->setFrom($navigation->getFrom());
+            $resultSet = $search->search();
+        }
+
+        if (!$filters->isEmpty()) {
+            $this->getAggsHelper()->collapseFilters($filters, $resultSet);
+        }
+
+        return new ProductSearchResult($resultSet, $navigation, $searchString);
+    }
+
+    /**
+     * Автокомплит для товаров
+     *
+     * @param Navigation $navigation
+     * @param string $searchString
+     *
+     * @return ProductSuggestResult
+     */
+    public function productsAutocomplete(Navigation $navigation, string $searchString): ProductSuggestResult
+    {
+        $suggest = new Suggest();
+
+        $completion = new Suggest\Completion('product_suggest', 'suggest');
+        $completion->setText($searchString);
+        $completion->setParam('fuzzy', ['fuzziness' => 2]);
+        $completion->setParam('size', $navigation->getSize());
+        $suggest->addSuggestion($completion);
+
+        $index = $this->getIndexHelper()->getCatalogIndex();
+        $query = Query::create($suggest);
+        $query->setMinScore(0.9);
+        $result = $index->search($query);
+
+        return new ProductSuggestResult($result);
     }
 
     /**

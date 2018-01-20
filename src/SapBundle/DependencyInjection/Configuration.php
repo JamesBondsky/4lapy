@@ -23,12 +23,14 @@ class Configuration implements ConfigurationInterface
             ->addDefaultsIfNotSet()
             ->children()
             ->append($this->getDirectorySourceNode())
+            ->append($this->getPipelinesNode())
             ->end();
         return $treeBuilder;
     }
 
     /**
      * @throws \RuntimeException
+     *
      * @return ArrayNodeDefinition|NodeDefinition
      */
     public function getDirectorySourceNode()
@@ -40,13 +42,42 @@ class Configuration implements ConfigurationInterface
             ->useAttributeAsKey('name')
             ->arrayPrototype()
             ->children()
-            ->scalarNode('entity')->isRequired()->end()
-            ->scalarNode('in')->isRequired()->end()
-            ->scalarNode('out')->isRequired()->end()
-            ->scalarNode('error')->isRequired()->end()
-            ->scalarNode('filetype')->defaultValue('xml')->end()
+            ->scalarNode('entity')
+            ->isRequired()
+            ->end()
+            ->scalarNode('in')
+            ->isRequired()
+            ->end()
+            ->scalarNode('out')
+            ->isRequired()
+            ->end()
+            ->scalarNode('error')
+            ->isRequired()
+            ->end()
+            ->scalarNode('filemask')
+            ->defaultValue('*')
+            ->end()
+            ->scalarNode('filetype')
+            ->defaultValue('xml')
+            ->end()
             ->end()
             ->end();
+    
+        return $node;
+    }
+    
+    /**
+     * @throws \RuntimeException
+     *
+     * @return ArrayNodeDefinition|NodeDefinition
+     */
+    public function getPipelinesNode()
+    {
+        $treeBuilder = new TreeBuilder();
+        
+        $node = $treeBuilder->root('pipelines');
+        $node->arrayPrototype()->scalarPrototype()->end()->end();
+        
         return $node;
     }
 }

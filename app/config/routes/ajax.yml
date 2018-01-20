@@ -10,6 +10,11 @@ sale:
     type: annotation
     prefix: '/sale'
 
+catalog:
+    resource: "@FourPawsCatalogBundle/AjaxController"
+    type: annotation
+    prefix: '/catalog'
+
 delivery:
     resource: '@FourPawsDeliveryBundle/AjaxController'
     type: annotation

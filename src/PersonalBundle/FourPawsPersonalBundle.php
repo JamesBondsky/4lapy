@@ -1,6 +1,6 @@
 <?php
 
-namespace FourPaws\AddressBundle;
+namespace FourPaws\PersonalBundle;
 
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 

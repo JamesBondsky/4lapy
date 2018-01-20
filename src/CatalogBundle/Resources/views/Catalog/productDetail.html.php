@@ -9,6 +9,7 @@ use FourPaws\CatalogBundle\Dto\ProductDetailRequest;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Catalog\Model\Product;
+use FourPaws\Helpers\HighloadHelper;
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 
@@ -24,16 +25,13 @@ $product = $APPLICATION->IncludeComponent(
     ],
     $component
 );
-
-$APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab', [], $component);
-
 ?>
     <div class="b-product-card">
         <div class="b-container">
             <?php
             $APPLICATION->IncludeComponent(
                 'fourpaws:breadcrumbs',
-                'product',
+                '',
                 [
                     'IBLOCK_ELEMENT' => $product,
                 ],
@@ -74,61 +72,12 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                     </div>
                 </div>
 
-                <div class="b-advice">
-                    <h2 class="b-title b-title--advice">Часто берут вместе</h2>
-                    <div class="b-advice__list">
-                        <div class="b-advice__list-items">
-                            <a class="b-advice__item" href="javascript:void(0)" title="">
-                                <span class="b-advice__image-wrapper"><img class="b-advice__image"
-                                                                           src="/static/build/images/content/akana.png"
-                                                                           alt=""
-                                                                           title="" role="presentation"/></span>
-                                <span class="b-advice__block"><span
-                                            class="b-clipped-text b-clipped-text--advice"><span><strong>Акана</strong> корм для собак всех пород ягненок/яблоки</span></span>
-                                    <span class="b-advice__info"><span class="b-advice__weight">6 кг</span><span
-                                                class="b-advice__cost">3 719 <span
-                                                    class="b-ruble b-ruble--advice">₽</span></span></span></span>
-                            </a>
-                            <div class="b-advice__sign b-advice__sign--plus"></div>
-                            <a class="b-advice__item" href="javascript:void(0)" title=""><span
-                                        class="b-advice__image-wrapper"><img class="b-advice__image"
-                                                                             src="/static/build/images/content/food-1.jpg"
-                                                                             alt=""
-                                                                             title="" role="presentation"/></span><span
-                                        class="b-advice__block"><span
-                                            class="b-clipped-text b-clipped-text--advice"><span><strong>Хиллс</strong> корм для собак с курицей консервы</span></span><span
-                                            class="b-advice__info"><span class="b-advice__weight">370 г</span><span
-                                                class="b-advice__cost">239 <span
-                                                    class="b-ruble b-ruble--advice">₽</span></span></span></span></a>
-                            <div
-                                    class="b-advice__sign b-advice__sign--plus"></div>
-                            <a class="b-advice__item" href="javascript:void(0)" title=""><span
-                                        class="b-advice__image-wrapper"><img class="b-advice__image"
-                                                                             src="/static/build/images/content/fresh-step.png"
-                                                                             alt=""
-                                                                             title="" role="presentation"/></span><span
-                                        class="b-advice__block"><span
-                                            class="b-clipped-text b-clipped-text--advice"><span><strong>Роял Канин</strong> корм для поощрения при обучении и дресси…</span></span><span
-                                            class="b-advice__info"><span class="b-advice__weight">50 г</span><span
-                                                class="b-advice__cost">57 <span
-                                                    class="b-ruble b-ruble--advice">₽</span></span></span></span></a>
-                        </div>
-                        <div class="b-advice__list-cost">
-                            <div class="b-advice__sign b-advice__sign--equally"></div>
-                            <div class="b-advice__cost-wrapper">
-                                <span class="b-advice__total-price">4 015 <span class="b-ruble b-ruble--total">₽</span></span>
-                                <a class="b-advice__basket-link" href="javascript:void(0)" title="">
-                                    <span class="b-advice__basket-text">В корзину</span>
-                                    <span class="b-icon b-icon--advice"><?= new SvgDecorator(
-                                            'icon-cart',
-                                            20,
-                                            20
-                                        ) ?></span>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <?php
+                /**
+                 * @todo implement and remove
+                 */
+                include 'tmp_action_set.html.php';
+                ?>
             </div>
             <div class="b-product-card__tab">
                 <div class="b-tab">
@@ -147,7 +96,7 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                             //    class="b-tab-title__text">Состав</span></a>
                             //</li>
                             /**
-                             * @todo Рекоммендация по питанию пока нет
+                             * @todo Рекомендация по питанию пока нет
                              */
                             /*<li class="b-tab-title__item js-tab-item">
                                 <a class="b-tab-title__link js-tab-link"
@@ -191,7 +140,21 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
                             <div>3</div>
                         </div>
                         */
-                        $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_RATING_TAB_VIEW);
+                        /** @noinspection PhpUnhandledExceptionInspection */
+                        $APPLICATION->IncludeComponent(
+                            'fourpaws:comments',
+                            'catalog',
+                            [
+                                'HL_ID'              => HighloadHelper::getIdByName('Comments'),
+                                'OBJECT_ID'          => $product->getId(),
+                                'SORT_DESC'          => 'Y',
+                                'ITEMS_COUNT'        => 5,
+                                'ACTIVE_DATE_FORMAT' => 'd j Y',
+                                'TYPE'               => 'catalog',
+                            ],
+                            $component,
+                            ['HIDE_ICONS' => 'Y']
+                        );
                         ?>
                         <?php $APPLICATION->IncludeComponent(
                             'fourpaws:city.delivery.info',
@@ -1120,6 +1083,38 @@ $APPLICATION->IncludeComponent('fourpaws:catalog.product.reviews', 'product_tab'
         </div>
     </div>
 <?php
+
+/**
+ * Преимущества
+ */
+$APPLICATION->IncludeComponent(
+    'bitrix:main.include',
+    '',
+    [
+        'AREA_FILE_SHOW' => 'file',
+        'PATH' => '/local/include/blocks/advantages.php',
+        'EDIT_TEMPLATE' => '',
+    ],
+    null,
+    [
+        'HIDE_ICONS' => 'N'
+    ]
+);
+
+/**
+ * Похожие товары
+ */
+$APPLICATION->IncludeFile(
+    'blocks/components/similar_products.php',
+    [
+        'PRODUCT_ID' => $product->getId(),
+    ],
+    [
+        'SHOW_BORDER' => false,
+        'NAME' => 'Блок похожих товаров',
+        'MODE' => 'php',
+    ]
+);
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/footer.php';
 die();

@@ -46,6 +46,7 @@ class IblockElementQuery extends IblockQueryBase
             'DATE_ACTIVE_TO',
             'IBLOCK_ID',
             'ID',
+            'IBLOCK_SECTION_ID',
             'NAME',
             'XML_ID',
             'CODE',
@@ -64,9 +65,7 @@ class IblockElementQuery extends IblockQueryBase
      */
     public function getBaseFilter(): array
     {
-        $filter = [
-            'SECTION_GLOBAL_ACTIVE' => 'Y',
-        ];
+        $filter = [];
 
         if ($this->iblockId) {
             $filter['IBLOCK_ID'] = $this->iblockId;

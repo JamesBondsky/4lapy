@@ -25,6 +25,17 @@ class ResultXmlFactory
     }
     
     /**
+     * @param SerializerInterface $serializer
+     * @param string              $xml
+     *
+     * @return array|\FourPaws\External\Manzana\Model\ReferralCardAttachResult|object
+     */
+    public static function getReferralCardAttachResultFromXml(SerializerInterface $serializer, string $xml)
+    {
+        return $serializer->deserialize(self::getWrappedXml($xml), ReferralCardAttachResult::class, 'xml');
+    }
+    
+    /**
      * @param string $xml
      *
      * @return string

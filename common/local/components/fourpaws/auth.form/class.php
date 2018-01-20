@@ -18,9 +18,11 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
+use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Exception\SmsSendErrorException;
-use FourPaws\External\Manzana\Exception\ContactUpdateException;
+use FourPaws\External\Manzana\Exception\ManzanaException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
@@ -33,10 +35,12 @@ use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
 use FourPaws\UserBundle\Exception\InvalidCredentialException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Service\ConfirmCodeInterface;
+use FourPaws\UserBundle\Service\ConfirmCodeService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use JMS\Serializer\SerializerBuilder;
@@ -97,10 +101,8 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 $this->arResult['STEP'] = 'begin';
             }
             
-            $currentUserService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
-            $userAuthService    = App::getInstance()->getContainer()->get(UserAuthorizationInterface::class);
-            if ($userAuthService->isAuthorized()) {
-                $curUser = $currentUserService->getCurrentUser();
+            if ($this->userAuthorizationService->isAuthorized()) {
+                $curUser = $this->currentUserProvider->getCurrentUser();
                 if (!empty($curUser->getExternalAuthId() && empty($curUser->getPersonalPhone()))) {
                     $this->arResult['STEP'] = 'addPhone';
                 } else {
@@ -208,11 +210,9 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         }
         try {
             $this->userAuthorizationService->login($rawLogin, $password);
-            if ($this->userAuthorizationService->isAuthorized()) {
-                $phone = $this->currentUserProvider->getCurrentUser()->getPersonalPhone();
-                if (empty($phone)) {
-                    $needWritePhone = true;
-                }
+            if ($this->userAuthorizationService->isAuthorized()
+                && !$this->currentUserProvider->getCurrentUser()->havePersonalPhone()) {
+                $needWritePhone = true;
             }
         } catch (UsernameNotFoundException $e) {
             return JsonErrorResponse::createWithData(
@@ -250,9 +250,12 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             return JsonSuccessResponse::create('Вы успешно авторизованы.', 200, [], ['reload' => true]);
         }
         
-        ob_start();
-        require_once App::getInstance()->getRootDir()
-                     . '/local/components/fourpaws/auth.form/templates/.default/include/addPhone.php';
+        ob_start(); ?>
+        <header class="b-registration__header">
+            <h1 class="b-title b-title--h1 b-title--registration">Добавление телефона</h1>
+        </header>
+        <?php require_once App::getDocumentRoot()
+                           . '/local/components/fourpaws/auth.form/templates/popup/include/addPhone.php';
         $html = ob_get_clean();
         
         return JsonSuccessResponse::createWithData('Необходимо заполнить номер телефона', ['html' => $html]);
@@ -280,14 +283,13 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      * @param string $phone
      *
      * @throws ServiceNotFoundException
-     * @throws WrongPhoneNumberException
      * @return JsonResponse
      */
     public function ajaxResendSms($phone) : JsonResponse
     {
-        if (PhoneHelper::isPhone($phone)) {
+        try {
             $phone = PhoneHelper::normalizePhone($phone);
-        } else {
+        } catch (WrongPhoneNumberException $e) {
             return JsonErrorResponse::createWithData(
                 'Некорректный номер телефона',
                 ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
@@ -295,7 +297,9 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         }
         
         try {
-            $res = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::sendConfirmSms($phone);
+            /** @var ConfirmCodeService $confirmService */
+            $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+            $res            = $confirmService::sendConfirmSms($phone);
             if (!$res) {
                 return JsonErrorResponse::createWithData(
                     'Ошибка при отправке смс, попробуйте позднее',
@@ -332,9 +336,6 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      *
      * @param string $confirmCode
      *
-     * @throws NotAuthorizedException
-     * @throws ContactUpdateException
-     * @throws ManzanaServiceException
      * @throws ValidationException
      * @throws InvalidIdentifierException
      * @throws ServiceNotFoundException
@@ -349,7 +350,17 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
     {
         $container = App::getInstance()->getContainer();
         try {
-            $res = $container->get(ConfirmCodeInterface::class)::checkConfirmSms(
+            $phone = PhoneHelper::normalizePhone($phone);
+        } catch (WrongPhoneNumberException $e) {
+            return JsonErrorResponse::createWithData(
+                $e->getMessage(),
+                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
+            );
+        }
+        try {
+            /** @var ConfirmCodeService $confirmService */
+            $confirmService = $container->get(ConfirmCodeInterface::class);
+            $res            = $confirmService::checkConfirmSms(
                 $phone,
                 $confirmCode
             );
@@ -364,6 +375,11 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 $e->getMessage(),
                 ['errors' => ['expiredConfirmCode' => $e->getMessage()]]
             );
+        } catch (NotFoundConfirmedCodeException $e) {
+            return JsonErrorResponse::createWithData(
+                $e->getMessage(),
+                ['errors' => ['notFoundConfirmCode' => $e->getMessage()]]
+            );
         } catch (WrongPhoneNumberException $e) {
             return JsonErrorResponse::createWithData(
                 $e->getMessage(),
@@ -372,6 +388,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         }
         
         $data = [
+            'ID'                 => $this->currentUserProvider->getCurrentUserId(),
             'PERSONAL_PHONE'     => $phone,
             'UF_PHONE_CONFIRMED' => 'Y',
         ];
@@ -381,17 +398,27 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         )) {
             /** @var ManzanaService $manzanaService */
             $manzanaService = $container->get('manzana.service');
-            $contactId      = $manzanaService->getContactIdByPhone($phone);
-            if($contactId >= 0) {
+            $client         = null;
+            try {
+                $contactId         = $manzanaService->getContactIdByPhone($phone);
+                $client            = new Client();
+                $client->contactId = $contactId;
+                $client->phone     = $phone;
+            } catch (ManzanaServiceContactSearchMoreOneException $e) {
+            } catch (ManzanaServiceContactSearchNullException $e) {
                 $client = new Client();
-                if ($contactId > 0) {
-                    $client->contactId = $contactId;
-                    $client->phone = $phone;
-                }
-                else{
+                try {
                     $this->currentUserProvider->setClientPersonalDataByCurUser($client);
+                } catch (NotAuthorizedException $e) {
                 }
-                $manzanaService->updateContact($client);
+            } catch (ManzanaServiceException $e) {
+            }
+            if ($client instanceof Client) {
+                try {
+                    $manzanaService->updateContact($client);
+                } catch (ManzanaServiceException $e) {
+                } catch (ManzanaException $e) {
+                }
             }
         }
         
@@ -400,27 +427,44 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
     
     /**
      * @param Request $request
-     * @param  string $phone
      *
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
      * @throws ServiceNotFoundException
-     * @throws WrongPhoneNumberException
      * @return JsonResponse
      */
-    public function ajaxGet($request, $phone) : JsonResponse
+    public function ajaxGet($request) : JsonResponse
     {
-        $mess = '';
-        $step = $request->get('step', '');
+        $mess  = '';
+        $step  = $request->get('step', '');
+        $phone = $request->get('phone', '');
+        try {
+            $phone = PhoneHelper::normalizePhone($phone);
+        } catch (WrongPhoneNumberException $e) {
+            return JsonErrorResponse::createWithData(
+                $e->getMessage(),
+                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
+            );
+        }
+        $title = 'Авторизация';
         switch ($step) {
+            case 'addPhone':
+                $title = 'Добавление телефона';
+                break;
             case 'sendSmsCode':
-                $mess = $this->ajaxGetSendSmsCode($phone);
+                $title = 'Подтверждение телефона';
+                $mess  = $this->ajaxGetSendSmsCode($phone);
                 if ($mess instanceof JsonResponse) {
                     return $mess;
                 }
                 break;
         }
-        ob_start();
+        $phone = PhoneHelper::formatPhone($phone, '+7 (%s%s%s) %s%s%s-%s%s-%s%s');
+        ob_start(); ?>
+        <header class="b-registration__header">
+            <h1 class="b-title b-title--h1 b-title--registration"><?= $title ?></h1>
+        </header>
+        <?php
         /** @noinspection PhpIncludeInspection */
         include_once App::getDocumentRoot() . '/local/components/fourpaws/auth.form/templates/popup/include/' . $step
                      . '.php';
@@ -442,20 +486,10 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
      * @throws ServiceNotFoundException
-     * @throws WrongPhoneNumberException
      * @return JsonResponse|string
      */
     private function ajaxGetSendSmsCode($phone)
     {
-        if (PhoneHelper::isPhone($phone)) {
-            $phone = PhoneHelper::normalizePhone($phone);
-        } else {
-            return JsonErrorResponse::createWithData(
-                'Некорректный номер телефона',
-                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
-            );
-        }
-        
         try {
             $this->currentUserProvider->getUserRepository()->findIdentifierByRawLogin($phone);
         } catch (TooManyUserFoundException $e) {
@@ -469,11 +503,17 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 ]
             );
         } catch (UsernameNotFoundException $e) {
+        } catch (WrongPhoneNumberException $e) {
+            return JsonErrorResponse::createWithData(
+                $e->getMessage(),
+                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
+            );
         }
         
-        $mess = '';
         try {
-            $res = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::sendConfirmSms($phone);
+            /** @var ConfirmCodeService $confirmService */
+            $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+            $res            = $confirmService::sendConfirmSms($phone);
             if ($res) {
                 $mess = 'Смс успешно отправлено';
             } else {

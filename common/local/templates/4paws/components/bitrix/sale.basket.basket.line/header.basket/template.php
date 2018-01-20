@@ -21,8 +21,11 @@
 
 use FourPaws\Decorators\SvgDecorator;
 
+if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
+    echo '<div class="b-header-info__item b-header-info__item--cart">';
+}
 ?>
-<div class="b-header-info__item b-header-info__item--cart">
+
     <a class="b-header-info__link" href="<?= $arParams['PATH_TO_BASKET'] ?>" title="Корзина">
         <span class="b-icon">
             <?= new SvgDecorator('icon-cart', 16, 16) ?>
@@ -44,10 +47,13 @@ use FourPaws\Decorators\SvgDecorator;
                 <a class="b-cart-item__name"
                    href="javascript:void(0);"
                    title="Роял Канин корм для собак крупных пород ма…">Роял Канин корм для собак
-                                                                       крупных пород ма…</a>
+                    крупных пород ма…</a>
                 <span class="b-cart-item__weight">15 кг</span>
                 <span class="b-cart-item__amount">(1 шт.)</span>
             </div>
         </div>
     </div>
-</div>
+<?php
+if (!isset($arParams['IS_AJAX']) || $arParams !== true) {
+    echo '</div>';
+}

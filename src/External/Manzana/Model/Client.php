@@ -225,7 +225,7 @@ class Client
     public $plShopsName;
     
     /**
-     * @Type("DateTimeImmutable<'Y-m-d\TH:i:s.u'>")
+     * @Type("DateTimeImmutable<'Y-m-d\TH:i:s'>")
      * @SerializedName("pl_registration_date")
      */
     public $plRegistrationDate;

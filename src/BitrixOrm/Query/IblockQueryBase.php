@@ -10,7 +10,7 @@ abstract class IblockQueryBase extends QueryBase
          * По умолчанию следует выбирать активные и доступные элементы.
          * При необходимости для конкретного Query можно просто вызвать withFilter([]), чтобы выбрать всё.
          */
-        $this->withFilter(self::getActiveAccessableElementsFilter());
+        $this->withFilter(static::getActiveAccessableElementsFilter());
     }
 
     /**

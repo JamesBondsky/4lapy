@@ -5,6 +5,7 @@ namespace FourPaws\ProductAutoSort;
 use Adv\Bitrixtools\Exception\IblockPropertyNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Iblock\SectionTable;
 use CIBlockElement;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
@@ -394,6 +395,30 @@ class ProductAutoSortService implements LoggerAwareInterface
     private function convertToCategoriesToProducts(array $productsToCategoryIndex)
     {
         $categoriesToProductIndex = [];
+
+        if (empty($productsToCategoryIndex)) {
+            return $categoriesToProductIndex;
+        }
+
+        $categoryDepthLevels = [];
+        $categories = SectionTable::getList(
+            [
+                'filter' => [
+                    'ID' => array_keys($categoriesToProductIndex),
+                ],
+                'select' => ['ID', 'DEPTH_LEVEL'],
+            ]
+        );
+        while ($category = $categories->fetch()) {
+            $categoryDepthLevels[$category['ID']] = $category['DEPTH_LEVEL'];
+        }
+
+        uksort(
+            $productsToCategoryIndex,
+            function ($categoryId1, $categoryId2) use ($categoryDepthLevels) {
+                return $categoryDepthLevels[$categoryId1] > $categoryDepthLevels[$categoryId2] ? -1 : 1;
+            }
+        );
 
         foreach ($productsToCategoryIndex as $categoryId => $productIdList) {
             foreach ($productIdList as $productId) {

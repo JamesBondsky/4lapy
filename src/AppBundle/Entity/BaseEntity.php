@@ -23,7 +23,6 @@ abstract class BaseEntity
      * @Serializer\Groups(groups={"read","update","delete"})
      * @Assert\NotBlank(groups={"read","update","delete"})
      * @Assert\GreaterThanOrEqual(value="1",groups={"read","update","delete"})
-     * @Assert\Blank(groups={"create"})
      */
     protected $id;
     
@@ -32,7 +31,7 @@ abstract class BaseEntity
      */
     public function getId() : int
     {
-        return $this->id;
+        return $this->id ?? 0;
     }
     
     /**

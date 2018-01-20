@@ -18,7 +18,6 @@ use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\BitrixOrm\Query\CatalogProductQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Query\ProductQuery;
-use FourPaws\StoreBundle\Service\StoreService;
 use JMS\Serializer\Annotation\Accessor;
 use JMS\Serializer\Annotation as Serializer;
 use JMS\Serializer\Annotation\Groups;
@@ -202,11 +201,6 @@ class Offer extends IblockElement
     /**
      * @var string
      */
-    protected $PROPERTY_PACKING_COMBINATION = '';
-
-    /**
-     * @var string
-     */
     protected $PROPERTY_COLOUR_COMBINATION = '';
 
     /**
@@ -303,6 +297,7 @@ class Offer extends IblockElement
     public function withImages(Collection $images)
     {
         $this->images = $images;
+        $this->resizeImages = null;
         return $this;
     }
 
@@ -349,10 +344,10 @@ class Offer extends IblockElement
     /**
      * @return Product
      */
-    public function getProduct()
+    public function getProduct(): Product
     {
         if (null === $this->product) {
-            $this->product = (new ProductQuery())->withFilter(['=ID' => (int)$this->PROPERTY_CML2_LINK])
+            $this->product = (new ProductQuery())->withFilter(['=ID' => $this->getCml2Link()])
                 ->exec()
                 ->current();
 
@@ -362,6 +357,26 @@ class Offer extends IblockElement
         }
 
         return $this->product;
+    }
+
+    /**
+     * @return int
+     */
+    public function getCml2Link(): int
+    {
+        return (int)$this->PROPERTY_CML2_LINK;
+    }
+
+    /**
+     * @param int $productId
+     *
+     * @return $this
+     */
+    public function withCml2Link(int $productId)
+    {
+        $this->PROPERTY_CML2_LINK = $productId;
+        $this->product = null;
+        return $this;
     }
 
     /**
@@ -383,6 +398,26 @@ class Offer extends IblockElement
     }
 
     /**
+     * @return string
+     */
+    public function getColourXmlId(): string
+    {
+        return (string)$this->PROPERTY_COLOUR;
+    }
+
+    /**
+     * @param string $xmlId
+     *
+     * @return $this
+     */
+    public function withColourXmlId(string $xmlId)
+    {
+        $this->PROPERTY_COLOUR = $xmlId;
+        $this->colour = null;
+        return $this;
+    }
+
+    /**
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
@@ -401,11 +436,37 @@ class Offer extends IblockElement
     }
 
     /**
+     * @return string
+     */
+    public function getVolumeReferenceXmlId(): string
+    {
+        return (string)$this->PROPERTY_VOLUME_REFERENCE;
+    }
+
+    /**
+     * @param string $xmlId
+     *
+     * @return $this
+     */
+    public function withVolumeReferenceXmlId(string $xmlId)
+    {
+        $this->PROPERTY_VOLUME_REFERENCE = $xmlId;
+        $this->volumeReference = null;
+        return $this;
+    }
+
+    /**
      * @return float
      */
-    public function getVolume()
+    public function getVolume(): float
     {
         return (float)$this->PROPERTY_VOLUME;
+    }
+
+    public function withVolume(float $volume)
+    {
+        $this->PROPERTY_VOLUME = $volume;
+        return $this;
     }
 
     /**
@@ -426,12 +487,39 @@ class Offer extends IblockElement
         return $this->clothingSize;
     }
 
+    public function getClothingSizeXmlId(): string
+    {
+        return (string)$this->PROPERTY_CLOTHING_SIZE;
+    }
+
+    public function withClothingSizeXmlId(string $xmlId)
+    {
+        $this->PROPERTY_CLOTHING_SIZE = $xmlId;
+        $this->clothingSize = null;
+        return $this;
+    }
+
     /**
      * @return string[]
      */
-    public function getBarcodes()
+    public function getBarcodes(): array
     {
+        $this->PROPERTY_BARCODE = \is_array($this->PROPERTY_BARCODE) ? $this->PROPERTY_BARCODE : [];
         return $this->PROPERTY_BARCODE;
+    }
+
+    /**
+     * @param string[] $barcodes
+     *
+     * @return $this
+     */
+    public function withBarcodes(array $barcodes)
+    {
+        $barcodes = array_filter($barcodes, function ($value) {
+            return $value && \is_string($value);
+        });
+        $this->PROPERTY_BARCODE = $barcodes;
+        return $this;
     }
 
     /**
@@ -445,11 +533,31 @@ class Offer extends IblockElement
         if ((null === $this->kindOfPacking) && $this->PROPERTY_KIND_OF_PACKING) {
             $this->kindOfPacking = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.packagetype'),
-                $this->PROPERTY_KIND_OF_PACKING
+                $this->getKindOfPackingXmlId()
             );
         }
 
         return $this->kindOfPacking;
+    }
+
+    /**
+     * @return string
+     */
+    public function getKindOfPackingXmlId(): string
+    {
+        return (string)$this->PROPERTY_KIND_OF_PACKING;
+    }
+
+    /**
+     * @param string $xmlId
+     *
+     * @return $this
+     */
+    public function withKindOfPackingXmlId(string $xmlId)
+    {
+        $this->kindOfPacking = null;
+        $this->PROPERTY_KIND_OF_PACKING = $xmlId;
+        return $this;
     }
 
     /**
@@ -463,7 +571,7 @@ class Offer extends IblockElement
         if ((null === $this->seasonYear) && $this->PROPERTY_SEASON_YEAR) {
             $this->seasonYear = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.year'),
-                $this->PROPERTY_SEASON_YEAR
+                $this->getSeasonYearXmlId()
             );
         }
 
@@ -471,11 +579,42 @@ class Offer extends IblockElement
     }
 
     /**
+     * @return string
+     */
+    public function getSeasonYearXmlId(): string
+    {
+        return (string)$this->PROPERTY_SEASON_YEAR;
+    }
+
+    /**
+     * @param string $xmlId
+     *
+     * @return $this
+     */
+    public function withSeasonYearXmlId(string $xmlId)
+    {
+        $this->seasonYear = null;
+        $this->PROPERTY_SEASON_YEAR = $xmlId;
+        return $this;
+    }
+
+    /**
      * @return int
      */
-    public function getMultiplicity()
+    public function getMultiplicity(): int
     {
         return (int)$this->PROPERTY_MULTIPLICITY;
+    }
+
+    /**
+     * @param int $multiplicity
+     *
+     * @return $this
+     */
+    public function withMultiplicity(int $multiplicity)
+    {
+        $this->PROPERTY_MULTIPLICITY = $multiplicity;
+        return $this;
     }
 
     /**
@@ -491,7 +630,7 @@ class Offer extends IblockElement
         if ((null === $this->rewardType) && $this->PROPERTY_REWARD_TYPE) {
             $this->rewardType = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.rewardtype'),
-                $this->PROPERTY_REWARD_TYPE
+                $this->getRewardTypeXmlId()
             );
         }
 
@@ -501,38 +640,82 @@ class Offer extends IblockElement
     /**
      * @return string
      */
-    public function getPackingCombination()
+    public function getRewardTypeXmlId(): string
     {
-        return $this->PROPERTY_PACKING_COMBINATION;
+        return (string)$this->PROPERTY_REWARD_TYPE;
+    }
+
+    /**
+     * @param string $xmlId
+     *
+     * @return $this
+     */
+    public function withRewardTypeXmlId(string $xmlId)
+    {
+        $this->rewardType = null;
+        $this->PROPERTY_REWARD_TYPE = $xmlId;
+        return $this;
     }
 
     /**
      * @return string
      */
-    public function getColourCombination()
+    public function getColourCombination(): string
     {
-        return $this->PROPERTY_COLOUR_COMBINATION;
+        return (string)$this->PROPERTY_COLOUR_COMBINATION;
+    }
+
+    public function withColourCombination(string $colourCombination)
+    {
+        $this->PROPERTY_COLOUR_COMBINATION = $colourCombination;
+        return $this;
     }
 
     /**
      * @return string
      */
-    public function getFlavourCombination()
+    public function getFlavourCombination(): string
     {
-        return $this->PROPERTY_FLAVOUR_COMBINATION;
+        return (string)$this->PROPERTY_FLAVOUR_COMBINATION;
+    }
+
+    public function withFlavourCombination(string $flavourCombination)
+    {
+        $this->PROPERTY_FLAVOUR_COMBINATION = $flavourCombination;
+        return $this;
     }
 
     /**
      * @return string
      */
-    public function getOldUrl()
+    public function getOldUrl(): string
     {
-        return $this->PROPERTY_OLD_URL;
+        return (string)$this->PROPERTY_OLD_URL;
     }
 
+    /**
+     * @param string $oldUrl
+     *
+     * @return $this
+     */
+    public function withOldUrl(string $oldUrl)
+    {
+        $this->PROPERTY_OLD_URL = $oldUrl;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
     public function isByRequest(): bool
     {
         return (bool)$this->PROPERTY_BY_REQUEST;
+    }
+
+    public function withByRequest(bool $byRequest)
+    {
+        $this->PROPERTY_BY_REQUEST = $byRequest;
+        return $this;
     }
 
     /**
@@ -580,7 +763,14 @@ class Offer extends IblockElement
      */
     public function getImagesIds(): array
     {
+        $this->PROPERTY_IMG = \is_array($this->PROPERTY_IMG) ? $this->PROPERTY_IMG : [];
         return $this->PROPERTY_IMG;
+    }
+
+    public function withImagesIds(array $ids)
+    {
+        $this->PROPERTY_IMG = $ids;
+        return $this;
     }
 
     /**

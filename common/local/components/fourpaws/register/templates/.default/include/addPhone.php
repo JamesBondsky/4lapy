@@ -5,7 +5,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 /** @var string $phone */ ?>
 <div class="b-registration__content b-registration__content--moiety b-registration__content--step">
     <div class="b-registration__text-instruction">Пожалуйста, введите номер телефона</div>
-    <form class="b-registration__form js-form-validation" data-url="/ajax/user/auth/register/" method="post">
+    <form class="b-registration__form js-form-validation js-registration-form"
+          data-url="/ajax/user/auth/register/"
+          method="post">
         <input type="hidden" name="action" value="get">
         <input type="hidden" name="step" value="sendSmsCode">
         <input type="hidden" name="newAction" value="savePhone">
@@ -24,7 +26,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                 </div>
             </div>
         </div>
-        <button class="b-button b-button--social b-button--full-width" type="submit">Отправить код</button>
+        <button class="b-button b-button--social b-button--full-width">Отправить код</button>
     </form>
 </div>
 <section class="b-registration__additional-info b-registration__additional-info--step">

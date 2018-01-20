@@ -4,7 +4,6 @@ namespace FourPaws\SapBundle\Service;
 
 use FourPaws\SapBundle\Consumer\ConsumerRegistryInterface;
 use FourPaws\SapBundle\Dto\In\Offers\Materials;
-use FourPaws\SapBundle\Dto\In\Prices\Prices;
 use FourPaws\SapBundle\Model\SourceMessageInterface;
 use FourPaws\SapBundle\Source\SourceRegistryInterface;
 

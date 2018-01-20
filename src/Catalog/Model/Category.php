@@ -53,6 +53,17 @@ class Category extends IblockSection implements FilterInterface
     protected $PICTURE = 0;
 
     /**
+     * @var string
+     */
+    protected $UF_DISPLAY_NAME = '';
+
+    /**
+     * @var string
+     */
+    protected $UF_SUFFIX = '';
+
+
+    /**
      * @var FilterCollection
      */
     private $filterList;
@@ -94,7 +105,7 @@ class Category extends IblockSection implements FilterInterface
                     'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS),
                     'ID'        => 0,
                     'CODE'      => '',
-                    'NAME'      => 'Поиск товаров',
+                    'NAME'      => 'Результаты поиска',
                 ]
             )
         );
@@ -119,6 +130,44 @@ class Category extends IblockSection implements FilterInterface
     public function setPictureId(int $pictureId)
     {
         $this->PICTURE = $pictureId;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDisplayName(): string
+    {
+        return (string)$this->UF_DISPLAY_NAME;
+    }
+
+    /**
+     * @param $name
+     *
+     * @return $this
+     */
+    public function withDisplayName($name)
+    {
+        $this->UF_DISPLAY_NAME = $name;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSuffix(): string
+    {
+        return (string)$this->UF_SUFFIX;
+    }
+
+    /**
+     * @param $name
+     *
+     * @return $this
+     */
+    public function withSuffix($suffix)
+    {
+        $this->UF_SUFFIX = $suffix;
         return $this;
     }
 
@@ -320,6 +369,15 @@ class Category extends IblockSection implements FilterInterface
         }
 
         return new Terms($this->getRuleCode(), $sectionIdList);
+    }
+
+    public function getCanonicalName()
+    {
+        $suffix = '';
+        if ($this->getParent()) {
+            $suffix = $this->getParent()->getSuffix();
+        }
+        return $this->getDisplayName() ?: trim(implode(' ', [$this->getName(), $suffix]));
     }
 
     /**

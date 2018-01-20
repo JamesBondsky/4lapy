@@ -2,13 +2,17 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
-/** @var string $login */ ?>
+/** @var string $login
+ * @var string $backUrl
+ */ ?>
 <div class="b-registration__content b-registration__content--create-password">
     <div class="b-registration__text-instruction b-registration__text-instruction--create-password">Введите и повторите
                                                                                                     новый пароль
     </div>
-    <form class="b-registration__form js-form-validation" data-url="/ajax/user/auth/forgotPassword/">
+    <form class="b-registration__form js-form-validation js-registration-create-new-password js-recovery-form"
+          data-url="/ajax/user/auth/forgotPassword/" method="post">
         <input type="hidden" name="action" value="savePassword">
+        <input type="hidden" name="backurl" value="<?= $backUrl?>">
         <input type="hidden" name="step" value="sendSmsCode">
         <input type="hidden" name="login" value="<?= $login ?? $arResult['EMAIL'] ?>">
         <div class="b-input-line b-input-line--create-password">
@@ -17,10 +21,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             </div>
             <div class="b-input b-input--registration-form">
                 <input class="b-input__input-field b-input__input-field--registration-form"
-                       type="password"
                        id="registration-password-first"
+                       placeholder=""
                        name="password"
-                       placeholder="" />
+                       type="password">
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
@@ -34,12 +38,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             </div>
             <div class="b-input b-input--registration-form">
                 <input class="b-input__input-field b-input__input-field--registration-form"
-                       type="password"
                        id="registration-password-second"
+                       placeholder=""
                        name="confirmPassword"
-                       placeholder="" />
-                <div class="b-error"><span class="js-message"></span>
-                </div>
+                       data-type="password_two"
+                       type="password">
+                <div class="b-error"><span class="js-message"></span></div>
             </div>
             <a class="b-input-line__eye js-open-password" href="javascript:void(0);" title=""></a>
         </div>

@@ -1,4 +1,7 @@
 <?php
+
+define('NEED_AUTH', true);
+
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 $APPLICATION->SetTitle('Профиль');
 ?>
@@ -14,7 +17,7 @@ $APPLICATION->SetTitle('Профиль');
             'orders'    => 'orders/',
             'personal'  => '',
             'pets'      => 'pets/',
-            'referal'   => 'referal/',
+            'referral'   => 'referral/',
             'subscribe' => 'subscribe/',
             'top'       => 'top/',
         ],

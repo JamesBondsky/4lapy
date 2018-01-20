@@ -15,6 +15,9 @@ services:
         # but if a service is unused, it's removed anyway
         exclude: '../../{Entity,Tests}'
 
-    FourPaws\UserBundle\Service\BasketService:
+    FourPaws\SaleBundle\Service\BasketService:
         class: FourPaws\SaleBundle\Service\BasketService
+        public: true
+
+    FourPaws\SaleBundle\Service\BasketViewService:
         public: true
