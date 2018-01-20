@@ -2,7 +2,9 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
-/** @var string $login */ ?>
+/** @var string $login
+ * @var string $backUrl
+ */ ?>
 <div class="b-registration__content b-registration__content--create-password">
     <div class="b-registration__text-instruction b-registration__text-instruction--create-password">Введите и повторите
                                                                                                     новый пароль
@@ -10,6 +12,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     <form class="b-registration__form js-form-validation js-registration-create-new-password js-recovery-form"
           data-url="/ajax/user/auth/forgotPassword/" method="post">
         <input type="hidden" name="action" value="savePassword">
+        <input type="hidden" name="backurl" value="<?= $backUrl?>">
         <input type="hidden" name="step" value="sendSmsCode">
         <input type="hidden" name="login" value="<?= $login ?? $arResult['EMAIL'] ?>">
         <div class="b-input-line b-input-line--create-password">
