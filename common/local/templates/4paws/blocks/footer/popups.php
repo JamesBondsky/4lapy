@@ -260,7 +260,7 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
                 </h1>
             </header>
             <div class="b-registration__content b-registration__content--simple-text">
-                <div class="b-registration__text-instruction js-popup-simple-text">Код выслан повторно</div>
+                <div class="b-registration__text-instruction js-popup-simple-text"></div>
             </div>
         </div>
     </section>

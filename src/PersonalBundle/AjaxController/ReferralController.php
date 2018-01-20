@@ -51,7 +51,7 @@ class ReferralController extends Controller
         try {
             if ($this->referralService->add($data)) {
                 return JsonSuccessResponse::create(
-                    '',
+                    'Реферал добавлен, ожидайте модерации',
                     200,
                     [],
                     ['reload' => true]
@@ -84,7 +84,7 @@ class ReferralController extends Controller
         try {
             if ($this->referralService->referralRepository->findBy($card)) {
                 return JsonSuccessResponse::create(
-                    '',
+                    'Информация о карте получена',
                     200,
                     [],
                     ['reload' => true]

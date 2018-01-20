@@ -94,41 +94,40 @@ class PetService
     {
         $container = App::getInstance()->getContainer();
         $types     = [];
-        $pets      = [];
         try {
             $pets = $this->getCurUserPets();
-        } catch (NotAuthorizedException $e) {
-        }
-        if (\is_array($pets) && !empty($pets)) {
-            /** @var Pet $pet */
-            foreach ($pets as $pet) {
-                $types[] = $pet->getCodeType();
+            if (\is_array($pets) && !empty($pets)) {
+                /** @var Pet $pet */
+                foreach ($pets as $pet) {
+                    $types[] = $pet->getCodeType();
+                }
             }
-        }
-        /** @var ManzanaService $manzanaService */
-        $manzanaService = $container->get('manzana.service');
-        
-        $client = null;
-        try {
-            $contactId         = $manzanaService->getContactIdByCurUser();
-            $client            = new Client();
-            $client->contactId = $contactId;
-        } catch (ManzanaServiceContactSearchNullException $e) {
-            $client = new Client();
+            /** @var ManzanaService $manzanaService */
+            $manzanaService = $container->get('manzana.service');
+    
+            $client = null;
             try {
-                $this->currentUser->setClientPersonalDataByCurUser($client);
+                $contactId         = $manzanaService->getContactIdByCurUser();
+                $client            = new Client();
+                $client->contactId = $contactId;
+            } catch (ManzanaServiceContactSearchNullException $e) {
+                $client = new Client();
+                try {
+                    $this->currentUser->setClientPersonalDataByCurUser($client);
+                } catch (NotAuthorizedException $e) {
+                }
+            } catch (ManzanaServiceException $e) {
             } catch (NotAuthorizedException $e) {
             }
-        } catch (ManzanaServiceException $e) {
-        } catch (NotAuthorizedException $e) {
-        }
-        if ($client instanceof Client) {
-            $this->setClientPets($client, $types);
-            try {
-                $manzanaService->updateContact($client);
-            } catch (ManzanaServiceException $e) {
-            } catch (ContactUpdateException $e) {
+            if ($client instanceof Client) {
+                $this->setClientPets($client, $types);
+                try {
+                    $manzanaService->updateContact($client);
+                } catch (ManzanaServiceException $e) {
+                } catch (ContactUpdateException $e) {
+                }
             }
+        } catch (NotAuthorizedException $e) {
         }
     }
     
@@ -163,7 +162,7 @@ class PetService
         ];
         $client->ffBird   = \in_array('ptitsy', $types, true) || \in_array('ptitsy-gryzuny', $types, true) ? 1 : 0;
         $client->ffCat    = \in_array('koshki', $types, true) || \in_array('koshki-sobaki', $types, true) ? 1 : 0;
-        $client->ffDog    = \in_array('sobaki', $types, true)  || \in_array('koshki-sobaki', $types, true) ? 1 : 0;
+        $client->ffDog    = \in_array('sobaki', $types, true) || \in_array('koshki-sobaki', $types, true) ? 1 : 0;
         $client->ffFish   = \in_array('ryby', $types, true) ? 1 : 0;
         $client->ffRodent = \in_array('gryzuny', $types, true) || \in_array('ptitsy-gryzuny', $types, true) ? 1 : 0;
         $others           = 0;
