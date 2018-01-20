@@ -25,6 +25,15 @@ class StringToIblock extends AbstractConverter
     
     private          $fieldToSearch;
     
+    private $code;
+    
+    /**
+     * @param mixed $code
+     */
+    public function setCode(string $code) {
+        $this->code = $code;
+    }
+    
     protected static $iblockValues = [];
     
     /**
@@ -75,6 +84,10 @@ class StringToIblock extends AbstractConverter
             return $data;
         }
         
+        if ($this->code) {
+            $this->setCode($data[$this->code]);
+        }
+        
         $fieldToSearch = $this->getFieldToSearch();
         
         if (!is_array($data[$fieldName])) {
@@ -110,19 +123,18 @@ class StringToIblock extends AbstractConverter
      */
     protected function addValue(string $value, string $fieldName) : string
     {
-        
         $cIBlockElement = new \CIBlockElement();
         
-        $code = \CUtil::translit($value,
-                                 'ru',
-                                 [
-                                     'replace_space' => '-',
-                                     'replace_other' => '-',
-                                 ]);
+        if (!$this->code) {
+            $this->setCode(\CUtil::translit($value, 'ru', [
+                                               'replace_space' => '-',
+                                               'replace_other' => '-',
+                                           ]));
+        }
         
         $exists = ElementTable::getList([
                                             'filter' => [
-                                                'CODE'      => $code,
+                                                'CODE'      => $this->code,
                                                 'IBLOCK_ID' => $this->getIblockId(),
                                             ],
                                             'select' => [self::FIELD_EXTERNAL_KEY],
@@ -134,7 +146,7 @@ class StringToIblock extends AbstractConverter
         
         $fields = [
             $fieldName  => $value,
-            'CODE'      => $code,
+            'CODE'      => $this->code,
             'IBLOCK_ID' => $this->getIblockId(),
         ];
         

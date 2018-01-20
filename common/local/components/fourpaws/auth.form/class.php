@@ -388,6 +388,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         }
         
         $data = [
+            'ID'                 => $this->currentUserProvider->getCurrentUserId(),
             'PERSONAL_PHONE'     => $phone,
             'UF_PHONE_CONFIRMED' => 'Y',
         ];
@@ -452,16 +453,16 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 break;
             case 'sendSmsCode':
                 $title = 'Подтверждение телефона';
-                $mess = $this->ajaxGetSendSmsCode($phone);
+                $mess  = $this->ajaxGetSendSmsCode($phone);
                 if ($mess instanceof JsonResponse) {
                     return $mess;
                 }
                 break;
         }
         $phone = PhoneHelper::formatPhone($phone, '+7 (%s%s%s) %s%s%s-%s%s-%s%s');
-        ob_start();?>
+        ob_start(); ?>
         <header class="b-registration__header">
-            <h1 class="b-title b-title--h1 b-title--registration"><?=$title?></h1>
+            <h1 class="b-title b-title--h1 b-title--registration"><?= $title ?></h1>
         </header>
         <?php
         /** @noinspection PhpIncludeInspection */
@@ -508,7 +509,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
             );
         }
-    
+        
         try {
             /** @var ConfirmCodeService $confirmService */
             $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);

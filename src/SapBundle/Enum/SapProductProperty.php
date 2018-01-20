@@ -164,4 +164,20 @@ final class SapProductProperty
      * 00000002 – «Нет».
      */
     const FOOD = 'FOOD';
+
+    /**
+     * Содержит индикатор необходимости хранения товара в холодильнике.
+     * Единственный выбор из списка значений:
+     * 110000001 – «Да»;
+     * 110000002 – «Нет».
+     */
+    const TRANSPORT_ONLY_REFRIGERATOR = 'TRANSPORT_ONLY_REFRIGERATOR';
+
+    /**
+     * Содержит индикатор ограниченности области доставки.
+     * Единственный выбор из списка значений:
+     * 990000001 – «Да»;
+     * 990000002 – «Нет».
+     */
+    const DC_SPECIAL_AREA_STORAGE = 'DC_SPECIAL_AREA_STORAGE';
 }

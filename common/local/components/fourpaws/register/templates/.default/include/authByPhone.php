@@ -44,7 +44,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
-            <a class="b-link-gray" href="/personal/forgot-password/" title="Забыли пароль?">Забыли пароль?</a></div>
+            <a class="b-link-gray" href="/personal/forgot-password/?backurl=/personal/register" title="Забыли пароль?">Забыли пароль?</a></div>
         <button class="b-button b-button--social b-button--full-width">Далее</button>
     </form>
 </div>

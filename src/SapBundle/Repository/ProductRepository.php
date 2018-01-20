@@ -4,20 +4,20 @@ namespace FourPaws\SapBundle\Repository;
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use FourPaws\BitrixOrm\Query\IblockElementQuery;
-use FourPaws\Catalog\Query\BrandQuery;
+use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 
-class BrandRepository extends IblockElementRepository
+class ProductRepository extends IblockElementRepository
 {
-
     /**
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @return int
      */
     public function getIblockId(): int
     {
-        return IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::BRANDS);
+        /** @noinspection PhpUnhandledExceptionInspection */
+        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+        return IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS);
     }
 
     /**
@@ -25,7 +25,7 @@ class BrandRepository extends IblockElementRepository
      */
     protected function getQuery(): IblockElementQuery
     {
-        return (new BrandQuery())
+        return (new ProductQuery())
             ->withFilter([]);
     }
 }
