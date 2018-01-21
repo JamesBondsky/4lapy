@@ -50,7 +50,6 @@ class BitrixBooleanHandler implements SubscribingHandlerInterface
     
     public function deserialize(JsonDeserializationVisitor $visitor, $data, array $type, Context $context)
     {
-        echo '<pre>',var_dump($data),'</pre>';
         $data = ($data === self::BITRIX_TRUE || $data == self::BITRIX_TRUE_INT);
         
         return $visitor->getNavigator()->accept(
