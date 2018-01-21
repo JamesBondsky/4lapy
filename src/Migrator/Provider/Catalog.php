@@ -252,7 +252,7 @@ class Catalog extends IBlockElement
         try {
             $brandConverter = new StringToIblock('PROPERTY_BRAND_NAME');
             $brandConverter->setIblockId(Utils::getIblockId('catalog', 'brands'));
-            $brandConverter->setCode('PROPERTY_BRAND');
+            $brandConverter->setXmlId('PROPERTY_BRAND');
             
             $converters[] = $brandConverter;
         } catch (\Exception $e) {

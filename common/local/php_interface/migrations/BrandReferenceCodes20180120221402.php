@@ -35,8 +35,14 @@ class BrandReferenceCodes20180120221402 extends SprintMigrationBase
         foreach ($data as $element) {
             $element['name'] = str_replace("'", "''", $element['name']);
             $element['id']   = str_replace("'", "''", $element['id']);
-            $connection->query(sprintf("UPDATE b_iblock_element SET CODE='%s', NAME='%s' WHERE IBLOCK_ID='%s' AND NAME='%s'",
-                                       $element['id'], $element['name'], $id, $element['id']));
+            $code            = \CUtil::translit($element['name'], 'ru', [
+                'replace_space' => '-',
+                'replace_other' => '-',
+            ]);
+            $connection->query(sprintf("UPDATE b_iblock_element SET CODE='%s', XML_ID='%s', NAME='%s' WHERE IBLOCK_ID='%s' AND NAME='%s'",
+                                       $code, $element['id'], $element['name'], $id, $element['name']));
+            $connection->query(sprintf("UPDATE b_iblock_element SET CODE='%s', XML_ID='%s', NAME='%s' WHERE IBLOCK_ID='%s' AND NAME='%s'",
+                                       $code, $element['id'], $element['name'], $id, $element['id']));
         }
     }
     
