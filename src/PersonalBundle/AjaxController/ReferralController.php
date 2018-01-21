@@ -48,6 +48,9 @@ class ReferralController extends Controller
                 ['errors' => ['emptyData' => 'Не указаны данные для добавления']]
             );
         }
+        if(!empty($data['UF_CARD'])){
+            $data['UF_CARD'] = preg_replace("/\D/", '', $data['UF_CARD']);
+        }
         try {
             if ($this->referralService->add($data)) {
                 return JsonSuccessResponse::create(
@@ -75,6 +78,9 @@ class ReferralController extends Controller
     public function getUserInfoAction(Request $request) : JsonResponse
     {
         $card = $request->get('card');
+        if(!empty($card)){
+            $card = preg_replace("/\D/", '', $card);
+        }
         if (empty($card)) {
             return JsonErrorResponse::createWithData(
                 'Не указан код карты',

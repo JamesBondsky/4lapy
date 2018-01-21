@@ -92,16 +92,16 @@ class PetController extends Controller
                 ['errors' => ['emptyIdError' => 'Не указан элемент для обновления']]
             );
         }
-    
-        echo '<pre>',var_dump($_FILES['UF_FILE']),'</pre>';
-        if(!empty($_FILES['UF_FILE'])){
-            $data['UF_FILE'] = \CFile::SaveFile($_FILES['UF_FILE'], '/pet');
-        }
-        echo '<pre>',var_dump($data['UF_FILE']),'</pre>';
-        die();
         
+        if(!empty($_FILES['UF_PHOTO'])){
+            $data['UF_PHOTO'] = \CFile::SaveFile($_FILES['UF_PHOTO'], '/pet');
+        }
+        
+        echo '<pre>',print_r($data, true),'</pre>';
+        //die();
         try {
             if ($this->petService->update($data)) {
+                die();
                 return JsonSuccessResponse::create(
                     'Информация о питомце успешно обновлена',
                     200,
@@ -110,6 +110,7 @@ class PetController extends Controller
                 );
             }
         } catch (\Exception $e) {
+            echo $e->getMessage();
         }
         
         return JsonErrorResponse::createWithData(

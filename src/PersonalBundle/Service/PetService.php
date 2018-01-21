@@ -73,7 +73,7 @@ class PetService
         if (empty($data['UF_USER_ID'])) {
             $data['UF_USER_ID'] = $this->currentUser->getCurrentUserId();
         }
-        $res = $this->petRepository->setEntityFromData($data, Pet::class)->create();
+        $res = $this->petRepository->setEntityFromData($data, Pet::class)->addFileKey('UF_PHOTO')->create();
         if ($res) {
             $this->updateManzanaPets();
         }
@@ -194,7 +194,7 @@ class PetService
      */
     public function update(array $data) : bool
     {
-        $res = $this->petRepository->setEntityFromData($data, Pet::class)->update();
+        $res = $this->petRepository->setEntityFromData($data, Pet::class)->addFileKey('UF_PHOTO')->update();
         if ($res) {
             $this->updateManzanaPets();
         }
