@@ -97,11 +97,8 @@ class PetController extends Controller
             $data['UF_PHOTO'] = \CFile::SaveFile($_FILES['UF_PHOTO'], '/pet');
         }
         
-        echo '<pre>',print_r($data, true),'</pre>';
-        //die();
         try {
             if ($this->petService->update($data)) {
-                die();
                 return JsonSuccessResponse::create(
                     'Информация о питомце успешно обновлена',
                     200,
@@ -110,7 +107,6 @@ class PetController extends Controller
                 );
             }
         } catch (\Exception $e) {
-            echo $e->getMessage();
         }
         
         return JsonErrorResponse::createWithData(

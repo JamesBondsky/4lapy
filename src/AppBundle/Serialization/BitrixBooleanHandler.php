@@ -12,7 +12,7 @@ class BitrixBooleanHandler implements SubscribingHandlerInterface
 {
     const BITRIX_TRUE     = 'Y';
     
-    const BITRIX_TRUE_INT = 1;
+    const BITRIX_TRUE_INT = '1';
     
     const BITRIX_FALSE    = 'N';
     
@@ -50,7 +50,7 @@ class BitrixBooleanHandler implements SubscribingHandlerInterface
     
     public function deserialize(JsonDeserializationVisitor $visitor, $data, array $type, Context $context)
     {
-        $data = ($data === self::BITRIX_TRUE || $data == self::BITRIX_TRUE_INT);
+        $data = ($data === self::BITRIX_TRUE || $data === self::BITRIX_TRUE_INT);
         
         return $visitor->getNavigator()->accept(
             $data,
