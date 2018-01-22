@@ -113,6 +113,44 @@ four_paws_sap:
       out: '%sap.product.directory.out%'
       error: '%sap.product.directory.error%'
       filemask: 'Mat_*'
+    price:
+      entity: FourPaws\SapBundle\Dto\In\Prices\Prices
+      in: '%sap.prices.directory.in%'
+      out: '%sap.prices.directory.out%'
+      error: '%sap.prices.directory.error%'
+      filemask: 'Prc_*'
+    stock_quantity:
+      entity: FourPaws\SapBundle\Dto\In\DcStock\DcStock
+      in: '%sap.stock.directory.in%'
+      out: '%sap.stock.directory.out%'
+      error: '%sap.stock.directory.error%'
+      filemask: 'Stc_*'
+    order_status:
+      entity: FourPaws\SapBundle\Dto\In\Orders\Order
+      in: '%sap.order.status.directory.in%'
+      out: '%sap.order.status.directory.out%'
+      error: '%sap.order.status.directory.error%'
+      filemask: 'OrdersIM_*'
+    payment_order:
+      entity: FourPaws\SapBundle\Dto\In\ConfirmPayment\Order
+      in: '%sap.payment.directory.in%'
+      out: '%sap.payment.directory.out%'
+      error: '%sap.payment.directory.error%'
+      filemask: 'DP_*'
+    schedule:
+      entity: FourPaws\SapBundle\Dto\In\DeliverySchedule\DeliverySchedule
+      in: '%sap.schedule.directory.in%'
+      out: '%sap.schedule.directory.out%'
+      error: '%sap.schedule.directory.error%'
+      filemask: 'Sched_*'
+    shop_quantity:
+      entity: FourPaws\SapBundle\Dto\In\StoresStock\StoresStock
+      in: '%sap.shop.directory.in%'
+      out: '%sap.shop.directory.out%'
+      error: '%sap.shop.directory.error%'
+      filemask: 'sapbi_balance_*'
+      filetype: 'csv'
+
   pipelines:
     catalog:
       - FourPaws\SapBundle\Consumer\OffersInfoConsumer
