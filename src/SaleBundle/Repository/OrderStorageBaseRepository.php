@@ -2,6 +2,7 @@
 
 namespace FourPaws\SaleBundle\Repository;
 
+use JMS\Serializer\ArrayTransformerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 abstract class OrderStorageBaseRepository implements OrderStorageRepositoryInterface
@@ -11,8 +12,14 @@ abstract class OrderStorageBaseRepository implements OrderStorageRepositoryInter
      */
     protected $validator;
 
-    public function __construct(ValidatorInterface $validator)
+    /**
+     * @var ArrayTransformerInterface
+     */
+    protected $arrayTransformer;
+
+    public function __construct(ArrayTransformerInterface $arrayTransformer, ValidatorInterface $validator)
     {
+        $this->arrayTransformer = $arrayTransformer;
         $this->validator = $validator;
     }
 }

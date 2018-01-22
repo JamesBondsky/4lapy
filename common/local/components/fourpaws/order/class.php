@@ -31,13 +31,6 @@ class FourPawsOrderComponent extends \CBitrixComponent
      */
     protected $currentStep;
 
-    protected $stepOrder = [
-        OrderService::AUTH_STEP,
-        OrderService::DELIVERY_STEP,
-        OrderService::PAYMENT_STEP,
-        OrderService::COMPLETE_STEP,
-    ];
-
     /** @var OrderService */
     protected $orderService;
 
@@ -104,7 +97,6 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
         $order = null;
         $storage = null;
-        $errors = [];
         if ($this->currentStep === OrderService::COMPLETE_STEP) {
             /**
              * При переходе на страницу "спасибо за заказ" мы ищем заказ с переданным id
@@ -125,96 +117,16 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 Tools::process404('', true, true, true);
             }
         } else {
-            $request = Context::getCurrent()->getRequest();
             if (!$storage = $this->orderService->getStorage()) {
                 $this->abortResultCache();
                 throw new Exception('Failed to initialize storage');
-            }
-
-            /**
-             * Если была отправлена форма, то мы ее проверяем и сохраняем в storage
-             * При наличии ошибок отображаем их пользователю
-             * При отсутствии таковых редиректим дальше
-             */
-            if ($request->isPost()) {
-                $storage = $this->updateFromRequest($storage, $request);
-
-                try {
-                    $this->orderService->updateStorage($storage);
-                    $nextStep = $this->getNextStep($this->currentStep);
-
-                    /**
-                     * Если форма заполнена до конца, мы создаем заказ и очищаем хранилище
-                     */
-                    if ($nextStep === OrderService::COMPLETE_STEP) {
-                        if (!$order = $this->makeOrder($storage)) {
-                            $this->abortResultCache();
-                            throw new Exception('Failed to create order');
-                        }
-                    }
-
-                    $hash = $order->getHash();
-                    $this->redirect($nextStep, $order);
-                } catch (OrderStorageValidationException $e) {
-                    $errors = $e->getErrors();
-                }
             }
         }
         $this->arResult = [
             'ORDER'   => $order,
             'STORAGE' => $storage,
-            'ERRORS'  => $errors,
         ];
 
         return $this;
-    }
-
-    /**
-     * @param string $step
-     *
-     * @return mixed
-     */
-    protected function getNextStep(string $step)
-    {
-        $key = array_search($step, $this->stepOrder, true);
-
-        return $this->stepOrder[++$key];
-    }
-
-    protected function updateFromRequest(OrderStorage $storage, Request $request)
-    {
-        // @todo update storage
-
-        return $storage;
-    }
-
-    /**
-     * @param OrderStorage $storage
-     *
-     * @return bool|Order
-     */
-    protected function makeOrder(OrderStorage $storage)
-    {
-        // @todo create order
-        return false;
-    }
-
-    protected function redirect(string $nextStep, $order)
-    {
-        /** @var UserAuthorizationInterface $userService */
-        $userService = \FourPaws\App\Application::getInstance()->getContainer()->get(
-            UserAuthorizationInterface::class
-        );
-
-        $url = $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[$nextStep];
-        if ($order instanceof Order) {
-            if (!$userService->isAuthorized()) {
-                $hash = $order->getHash();
-            }
-
-            // @todo make url
-        }
-
-        LocalRedirect($url);
     }
 }

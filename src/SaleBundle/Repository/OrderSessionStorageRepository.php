@@ -7,6 +7,8 @@ use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
 use FourPaws\SaleBundle\Service\OrderService;
+use JMS\Serializer\DeserializationContext;
+use JMS\Serializer\SerializationContext;
 
 class OrderSessionStorageRepository extends OrderStorageBaseRepository
 {
@@ -19,7 +21,12 @@ class OrderSessionStorageRepository extends OrderStorageBaseRepository
         }
 
         $data = $_SESSION[self::SESSION_KEY] ?? [];
-        // @todo Implement findByFuser() method.
+
+        return $this->arrayTransformer->fromArray(
+            $data,
+            OrderStorage::class,
+            DeserializationContext::create()->setGroups(['read'])
+        );
     }
 
     public function save(OrderStorage $storage, string $step = OrderService::AUTH_STEP): bool
@@ -33,12 +40,21 @@ class OrderSessionStorageRepository extends OrderStorageBaseRepository
             throw new OrderStorageValidationException($validationResult, 'Wrong entity passed to create');
         }
 
-        // @todo Implement save() method.
+        $_SESSION[self::SESSION_KEY] = $this->arrayTransformer->toArray(
+            $storage,
+            SerializationContext::create()->setGroups(
+                ['update']
+            )
+        );
+
+        return true;
     }
 
     public function clear(OrderStorage $storage): bool
     {
-        // @todo Implement clear() method.
+        unset($_SESSION[self::SESSION_KEY]);
+
+        return true;
     }
 
     protected function checkFuserId($fuserId): bool

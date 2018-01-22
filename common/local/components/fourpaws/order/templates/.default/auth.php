@@ -2,6 +2,19 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
+
+use FourPaws\SaleBundle\Entity\OrderStorage;
+
+/**
+ * @var array $arParams
+ * @var array $arResult
+ */
+
+/**
+ * @var OrderStorage $storage
+ */
+$storage = $arResult['STORAGE'];
+
 ?>
 <div class="b-container">
     <h1 class="b-title b-title--h1 b-title--order">Оформление заказа
@@ -28,7 +41,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                     </header>
                     <form class="b-order-contacts__form js-form-validation"
                           id="order-step"
-                          data-url="/json/order-step-1.json">
+                          data-url="<?= $arResult['URL']['AUTH_VALIDATION'] ?>">
                         <div class="b-input-line">
                             <div class="b-input-line__label-wrapper">
                                 <label class="b-input-line__label" for="order-name">Имя
@@ -39,18 +52,20 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                                        type="text"
                                        id="order-name"
                                        placeholder=""
-                                       name="text"
-                                       data-url="">
+                                       name="name"
+                                       data-url=""
+                                       value="<?= $storage->getName() ?>">
                                 <div class="b-error"><span class="js-message"></span>
                                 </div>
                             </div>
                         </div>
                         <div class="b-input-line">
                             <div class="b-input-line__label-wrapper js-information-comment">
-                                <label class="b-input-line__label" for="order-phone">Мобильный телефон
-                                </label><span class="b-input-line__require">(обязательно)</span><a class="b-information-link b-information-link--input js-popover-information-open"
-                                                                                                   href="javascript:void(0);"
-                                                                                                   title="">
+                                <label class="b-input-line__label" for="order-phone">Мобильный телефон</label>
+                                <span class="b-input-line__require">(обязательно)</span>
+                                <a class="b-information-link b-information-link--input js-popover-information-open"
+                                   href="javascript:void(0);"
+                                   title="">
                                     <span class="b-information-link__icon">i</span>
                                     <div class="b-popover-information b-popover-information--input js-popover-information">
                                     </div>
@@ -62,9 +77,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                                            type="tel"
                                            id="order-phone"
                                            placeholder=""
-                                           name="tel"
+                                           name="phone"
                                            data-url=""
-                                           data-tel="0">
+                                           data-tel="0"
+                                           value="<?= $storage->getPhone() ?>">
                                     <div class="b-error"><span class="js-message"></span>
                                     </div>
                                 </div>
@@ -74,9 +90,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                         <div class="b-input-line">
                             <div class="b-input-line__label-wrapper js-information-comment">
                                 <label class="b-input-line__label" for="order-email">Эл. почта
-                                </label><a class="b-information-link b-information-link--input js-popover-information-open"
-                                           href="javascript:void(0);"
-                                           title=""> <span class="b-information-link__icon">i</span>
+                                </label>
+                                <a class="b-information-link b-information-link--input js-popover-information-open"
+                                   href="javascript:void(0);"
+                                   title=""> <span class="b-information-link__icon">i</span>
                                     <div class="b-popover-information b-popover-information--input js-popover-information">
                                     </div>
                                 </a>
@@ -88,8 +105,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                                            id="order-email"
                                            placeholder=""
                                            name="email"
-                                           data-url="">
-                                    <div class="b-error"><span class="js-message"></span>
+                                           data-url=""
+                                           value="<?= $storage->getEmail() ?>">
+                                    <div class="b-error">
+                                        <span class="js-message"></span>
                                     </div>
                                 </div>
                                 <span class="b-input-line__comment js-comment">Для проверки статуса заказов и для рассылки новостей и акций</span>
@@ -99,21 +118,27 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                             <div class="b-order-contacts__link-block">
                                 <a class="b-link b-link--add-phone js-order-add-phone-link"
                                    href="javascript:void(0);"
-                                   title="">Дополнительный
-                                    телефон</a><a class="b-information-link b-information-link--additional-telephone-order js-additional-telephone js-popover-information-open"
-                                                  href="javascript:void(0);"
-                                                  title=""> <span class="b-information-link__icon">i</span>
+                                   title=""
+                                    <?= $storage->getAltPhone() ? 'style="display:none"' : '' ?>>
+                                    Дополнительный телефон
+                                </a>
+                                <a class="b-information-link b-information-link--additional-telephone-order js-additional-telephone js-popover-information-open"
+                                   href="javascript:void(0);"
+                                   title=""> <span class="b-information-link__icon">i</span>
                                     <div class="b-popover-information b-popover-information--additional-telephone-order js-popover-information">
                                     </div>
-                                </a><span class="b-order-contacts__text js-additional-telephone-info">Если мы не дозвонимся по основному телефону</span>
+                                </a>
+                                <span class="b-order-contacts__text js-additional-telephone-info">Если мы не дозвонимся по основному телефону</span>
                             </div>
-                            <div class="b-order-contacts__layout js-order-add-phone js-hidden-valid-fields">
+                            <div class="b-order-contacts__layout js-order-add-phone js-hidden-valid-fields"
+                                <?= $storage->getAltPhone() ? 'style="display:block"' : '' ?>>
                                 <div class="b-input-line">
                                     <div class="b-input-line__label-wrapper js-information-comment">
                                         <label class="b-input-line__label" for="order-phone-dop">Дополнительный телефон
-                                        </label><a class="b-information-link b-information-link--input js-popover-information-open"
-                                                   href="javascript:void(0);"
-                                                   title=""> <span class="b-information-link__icon">i</span>
+                                        </label>
+                                        <a class="b-information-link b-information-link--input js-popover-information-open"
+                                           href="javascript:void(0);"
+                                           title=""> <span class="b-information-link__icon">i</span>
                                             <div class="b-popover-information b-popover-information--input js-popover-information">
                                             </div>
                                         </a>
@@ -124,7 +149,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                                                     type="tel"
                                                     id="order-phone-dop"
                                                     placeholder=""
-                                                    name="tel"
+                                                    name="PROPERTY_PHONE_ALT"
                                                     data-url=""
                                                     data-tel="1">
                                             <div class="b-error"><span class="js-message"></span>
@@ -136,23 +161,31 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                             </div>
                         </div>
                         <div class="b-input-line">
-                            <div class="b-input-line__label-wrapper"><span class="b-input-line__label">Как с вами связаться для подтверждения заказа</span>
+                            <div class="b-input-line__label-wrapper">
+                                <span class="b-input-line__label">Как с вами связаться для подтверждения заказа</span>
                             </div>
-                            <div class="b-radio b-radio--tablet-big"><input class="b-radio__input"
-                                                                            type="radio"
-                                                                            name="order-confirm"
-                                                                            id="order-call"
-                                                                            checked="checked"
-                                                                            data-radio="0">
+                            <?php // @todo show enum values ?>
+                            <div class="b-radio b-radio--tablet-big">
+                                <input class="b-radio__input"
+                                       type="radio"
+                                       name="communicationWay"
+                                       id="order-call"
+                                       <?= $storage->getCommunicationWay() == '02' ? 'checked="checked"' : '' ?>
+                                       data-radio="0"
+                                       value="02">
                                 <label class="b-radio__label b-radio__label--tablet-big"
-                                       for="order-call"><span class="b-radio__text-label">Звонок оператора</span>
+                                       for="order-call">
+                                    <span class="b-radio__text-label">Звонок оператора</span>
                                 </label>
                             </div>
-                            <div class="b-radio b-radio--tablet-big"><input class="b-radio__input"
-                                                                            type="radio"
-                                                                            name="order-confirm"
-                                                                            id="order-sms"
-                                                                            data-radio="1">
+                            <div class="b-radio b-radio--tablet-big">
+                                <input class="b-radio__input"
+                                       type="radio"
+                                       name="communicationWay"
+                                       id="order-sms"
+                                       <?= $storage->getCommunicationWay() == '01' ? 'checked="checked"' : '' ?>
+                                       data-radio="1"
+                                       value="01">
                                 <label class="b-radio__label b-radio__label--tablet-big"
                                        for="order-sms"><span class="b-radio__text-label">SMS-сообщение</span>
                                 </label>

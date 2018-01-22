@@ -7,6 +7,7 @@ use Bitrix\Sale\Order;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Repository\OrderStorageRepositoryInterface;
+use Symfony\Component\HttpFoundation\Request;
 
 class OrderService
 {
@@ -23,7 +24,7 @@ class OrderService
      */
     protected $storageRepository;
 
-    public function construct(OrderStorageRepositoryInterface $orderStorageRepository)
+    public function __construct(OrderStorageRepositoryInterface $orderStorageRepository)
     {
         $this->storageRepository = $orderStorageRepository;
     }
@@ -78,6 +79,12 @@ class OrderService
         }
     }
 
+    public function setStorageValuesFromRequest(OrderStorage $storage, Request $request): OrderStorage
+    {
+        // @todo set values from request
+        return $storage;
+    }
+
     /**
      * @param OrderStorage $storage
      *
@@ -104,5 +111,15 @@ class OrderService
         } catch (NotFoundException $e) {
             return false;
         }
+    }
+
+    /**
+     * @param OrderStorage $storage
+     *
+     * @return Order
+     */
+    public function createOrder(OrderStorage $storage): Order
+    {
+        // @todo create order
     }
 }

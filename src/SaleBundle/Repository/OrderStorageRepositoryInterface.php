@@ -3,6 +3,7 @@
 namespace FourPaws\SaleBundle\Repository;
 
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Service\OrderService;
 
 interface OrderStorageRepositoryInterface
 {
@@ -18,7 +19,7 @@ interface OrderStorageRepositoryInterface
      *
      * @return bool
      */
-    public function save(OrderStorage $storage): bool;
+    public function save(OrderStorage $storage, string $step = OrderService::AUTH_STEP): bool;
 
     /**
      * @param OrderStorage $storage
