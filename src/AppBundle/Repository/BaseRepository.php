@@ -53,6 +53,8 @@ class BaseRepository
      */
     private $dataManager;
     
+    private $fileKeys;
+    
     /**
      * AddressRepository constructor.
      *
@@ -89,9 +91,12 @@ class BaseRepository
         if ($validationResult->count() > 0) {
             throw new ValidationException('Wrong entity passed to create');
         }
+    
+        $data =$this->serializer->toArray($this->entity, SerializationContext::create()->setGroups(['create']));
+        $this->fixFileData($data);
         
         $res = $this->dataManager::add(
-            $this->serializer->toArray($this->entity, SerializationContext::create()->setGroups(['create']))
+            $data
         );
         if ($res->isSuccess()) {
             $this->entity->setId($res->getId());
@@ -100,6 +105,24 @@ class BaseRepository
         }
         
         throw new BitrixRuntimeException(implode(', ', $res->getErrorMessages()));
+    }
+    
+    /** fix для сохранения файлов, конечно с юзанием лишний раз харда
+     *
+     * @todo переписать на установку и забор значений без сохранения и удаления
+     * @param $data
+     */
+    private function fixFileData(&$data)
+    {
+        $fileKeys = $this->getFileKeys();
+        if (!empty($fileKeys)) {
+            foreach ($fileKeys as $fileKey) {
+                if (\array_key_exists($fileKey, $data) && (int)$data[$fileKey] > 0) {
+                    $data[$fileKey] = \CFile::MakeFileArray(\CFile::GetPath($data[$fileKey]));
+                    \CFile::Delete($data[$fileKey]);
+                }
+            }
+        }
     }
     
     /**
@@ -127,9 +150,12 @@ class BaseRepository
             throw new ValidationException('Wrong entity passed to update');
         }
         
+        $data =$this->serializer->toArray($this->entity, SerializationContext::create()->setGroups(['update']));
+        $this->fixFileData($data);
+        
         $res = $this->dataManager::update(
             $this->entity->getId(),
-            $this->serializer->toArray($this->entity, SerializationContext::create()->setGroups(['update']))
+            $data
         );
         if ($res->isSuccess()) {
             return true;
@@ -353,8 +379,41 @@ class BaseRepository
         $this->nav = $nav;
     }
     
+    /**
+     *
+     */
     public function clearNav()
     {
         $this->nav = null;
+    }
+    
+    /**
+     * @return array
+     */
+    public function getFileKeys() : array
+    {
+        return $this->fileKeys ?? [];
+    }
+    
+    /**
+     * @param array $fileKeys
+     *
+     * @return BaseRepository
+     */
+    public function setFileKeys(array $fileKeys) : BaseRepository
+    {
+        $this->fileKeys=$fileKeys;
+        return $this;
+    }
+    
+    /**
+     * @param string $key
+     *
+     * @return BaseRepository
+     */
+    public function addFileKey(string $key) : BaseRepository
+    {
+        $this->fileKeys[] = $key;
+        return $this;
     }
 }

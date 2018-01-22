@@ -16,9 +16,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     <div class="b-account-adress">
         <?php /** @var Pet $pet */
         if (\is_array($arResult['ITEMS']) && !empty($arResult['ITEMS'])) {
-            foreach ($arResult['ITEMS'] as $pet) {
-                ?>
-                <div class="b-account-border-block b-account-border-block--pet js-parent-cont js-parent-cont--pet js-parent-cont"
+            foreach ($arResult['ITEMS'] as $pet) {?>
+                <div class="b-account-border-block b-account-border-block--pet js-parent-cont js-parent-cont--pet"
                      data-image="<?= $pet->getResizeImgPath() ?>"
                      data-name-pet="<?= $pet->getName() ?>"
                      data-type="<?= $pet->getType() ?>"

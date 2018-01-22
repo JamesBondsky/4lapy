@@ -26,14 +26,14 @@ class Pet extends BaseEntity
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
-    protected $name = '';
+    protected $name;
     
     /**
      * @var int
      * @Serializer\Type("integer")
      * @Serializer\SerializedName("UF_USER_ID")
      * @Serializer\Groups(groups={"create","read","update"})
-     * @Assert\NotBlank(groups={"create","read"})
+     * @Assert\NotBlank(groups={"create"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $userId;
@@ -41,9 +41,8 @@ class Pet extends BaseEntity
     /**
      * @var int
      * @Serializer\Type("int")
-     * @Serializer\SerializedName("UF_FILE")
+     * @Serializer\SerializedName("UF_PHOTO")
      * @Serializer\Groups(groups={"create","read","update",})
-     * @Assert\NotBlank(groups={"create","read"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $photo;
@@ -53,7 +52,7 @@ class Pet extends BaseEntity
      * @Serializer\Type("int")
      * @Serializer\SerializedName("UF_TYPE")
      * @Serializer\Groups(groups={"create","read","update"})
-     * @Assert\NotBlank(groups={"create","read"})
+     * @Assert\NotBlank(groups={"create"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $type;
@@ -63,15 +62,14 @@ class Pet extends BaseEntity
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_BREED")
      * @Serializer\Groups(groups={"create","read","update"})
-     * @Assert\NotBlank(groups={"create","read"})
+     * @Assert\NotBlank(groups={"create"})
      * @Serializer\SkipWhenEmpty()
      */
-    protected $breed = '';
+    protected $breed;
     
     /**
      * @var Date|null
      * @Serializer\Type("bitrix_date")
-     * @Serializer\SkipWhenEmpty()
      * @Serializer\SerializedName("UF_BIRTHDAY")
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
@@ -83,7 +81,6 @@ class Pet extends BaseEntity
      * @Serializer\Type("int")
      * @Serializer\SerializedName("UF_GENDER")
      * @Serializer\Groups(groups={"create","read","update"})
-     * @Assert\NotBlank(groups={"create","read"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $gender;
@@ -139,7 +136,12 @@ class Pet extends BaseEntity
      */
     public function getImgPath() : string
     {
-        return \CFile::GetPath($this->getPhoto());
+        $photo = $this->getPhoto();
+        if ($photo > 0) {
+            return \CFile::GetPath($photo);
+        }
+        
+        return '';
     }
     
     /**
@@ -147,7 +149,7 @@ class Pet extends BaseEntity
      */
     public function getPhoto() : int
     {
-        return $this->photo;
+        return $this->photo ?? 0;
     }
     
     /**
@@ -165,15 +167,17 @@ class Pet extends BaseEntity
     /**
      * @return string
      */
-    public function getResizeImgPath()
+    public function getResizeImgPath() : string
     {
-        try {
-            return CropImageDecorator::createFromPrimary($this->getPhoto())
-                                     ->setCropWidth(110)
-                                     ->setCropHeight(110)
-                                     ->getSrc();
-        } catch (FileNotFoundException $e) {
+        $photo = $this->getPhoto();
+        if ($photo > 0) {
+            try {
+                return CropImageDecorator::createFromPrimary($photo)->setCropWidth(110)->setCropHeight(110)->getSrc();
+            } catch (FileNotFoundException $e) {
+            }
         }
+        
+        return '';
     }
     
     /**
@@ -198,18 +202,17 @@ class Pet extends BaseEntity
      */
     protected function setStringType(int $type)
     {
-        $item             =
-            HLBlockFactory::createTableObject(static::PET_TYPE)::query()->setFilter(
-                [
-                    'ID'            => $type,
-                    'UF_USE_BY_PET' => 1,
-                ]
-            )->setSelect(
-                [
-                    'UF_NAME',
-                    'UF_CODE',
-                ]
-            )->exec()->fetch();
+        $item             = HLBlockFactory::createTableObject(static::PET_TYPE)::query()->setFilter(
+            [
+                'ID'            => $type,
+                'UF_USE_BY_PET' => 1,
+            ]
+        )->setSelect(
+            [
+                'UF_NAME',
+                'UF_CODE',
+            ]
+        )->exec()->fetch();
         $this->stringType = $item['UF_NAME'];
         $this->codeType   = $item['UF_CODE'];
     }
@@ -280,8 +283,11 @@ class Pet extends BaseEntity
             return '';
         }
         
+        $ost         = $years - floor($years);
+        $yearsByWord = (int)$ost > 0 ? $ost : $years;
+        
         return $years . ' ' . WordHelper::declension(
-                $years,
+                $yearsByWord,
                 [
                     'год',
                     'года',
@@ -302,7 +308,9 @@ class Pet extends BaseEntity
         $date     = new \DateTime($this->getBirthday()->format('Y-m-d'));
         $interval = $date->diff(new \DateTime(date('Y-m-d')));
         
-        return (float)$interval->format('%Y') + ((float)$interval->format('%m') / 12);
+        $years = (float)$interval->format('%Y') + ((float)$interval->format('%m') / 12);
+        
+        return floor($years * 10) / 10;
     }
     
     /**
