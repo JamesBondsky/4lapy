@@ -1,5 +1,7 @@
-$('form.js-referal-form input#number-card').on('change', function () {
-    var val = $(this).val();
+$('body').on('keydown', 'form.js-referal-form input#number-card', function () {
+    var val = $(this).val().replace(/\D/g, '');
+    console.log(val, 'val');
+    console.log(val.length, 'val.length');
     if (val.length === 13) {
         $.ajax({
                    url:      $(this).data('url'),

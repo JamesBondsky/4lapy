@@ -51,6 +51,7 @@ class ReferralController extends Controller
         if(!empty($data['UF_CARD'])){
             $data['UF_CARD'] = preg_replace("/\D/", '', $data['UF_CARD']);
         }
+        $data['UF_MODERATED'] = 'Y';
         try {
             if ($this->referralService->add($data)) {
                 return JsonSuccessResponse::create(
