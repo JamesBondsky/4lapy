@@ -1,22 +1,16 @@
 <?php if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
-/** @var array $arParams */
-/** @var array $arResult */
-/** @noinspection PhpUndefinedClassInspection */
-/** @global CMain $APPLICATION */
-/** @noinspection PhpUndefinedClassInspection */
-/** @global CUser $USER */
-/** @noinspection PhpUndefinedClassInspection */
-/** @global CDatabase $DB */
-/** @noinspection PhpUndefinedClassInspection */
-/** @var CBitrixComponentTemplate $this */
-/** @var string $templateName */
-/** @var string $templateFile */
-/** @var string $templateFolder */
-/** @var string $componentPath */
-/** @noinspection PhpUndefinedClassInspection */
-/** @var CBitrixComponent $component */
+
+/**
+ * @var \CBitrixComponentTemplate $this
+ *
+ * @var array                     $arParams
+ * @var array                     $arResult
+ *
+ * @global CMain                  $APPLICATION
+ */
+
 $this->setFrameMode(true);
 ?>
 

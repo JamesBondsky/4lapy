@@ -57,7 +57,7 @@ final class MetroToReference extends StringToReference
         $dataClass = $this->getDataClass('MetroWays');
         
         $exists = $dataClass::getList([
-                                          'filter' => ['=UF_XML_ID' => md5($name)],
+                                          'filter' => ['=UF_XML_ID' => $this->transliterate($name)],
                                           'select' => ['ID'],
                                       ])->fetch();
         
@@ -80,7 +80,7 @@ final class MetroToReference extends StringToReference
      */
     protected function addValue(string $value, string $fieldName) : string
     {
-        $externalKey = md5($value);
+        $externalKey = $this->transliterate($value);
         
         $fields = [
             $fieldName               => $value,
@@ -120,7 +120,7 @@ final class MetroToReference extends StringToReference
     private function setBranch(DataManager $dataManager, string $name, string $color) : string
     {
         $result = $dataManager::add([
-                                        'UF_XML_ID'      => md5($name),
+                                        'UF_XML_ID'      => $this->transliterate($name),
                                         'UF_NAME'        => $name,
                                         'UF_COLOUR_CODE' => $color,
                                     ]);

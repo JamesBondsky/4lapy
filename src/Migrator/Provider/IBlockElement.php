@@ -3,7 +3,10 @@
 namespace FourPaws\Migrator\Provider;
 
 use Bitrix\Iblock\ElementTable;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\LoaderException;
 use FourPaws\Migrator\Entity\IBlockElement as IBlockElementEntity;
+use RuntimeException;
 
 /**
  * Class IBlockElement
@@ -17,23 +20,20 @@ abstract class IBlockElement extends IBlock
     /**
      * @inheritdoc
      */
-    public function getMap() : array
-    {
-        $map = array_diff(array_keys(array_filter(ElementTable::getMap(), self::getScalarEntityMapFilter())),
-                          [
-                              $this->entity->getPrimary(),
-                              'CREATED_BY',
-                              'MODIFIED_BY',
-                          ]);
+    public function getMap() : array {
+        $map = array_diff(array_keys(array_filter(ElementTable::getMap(), self::getScalarEntityMapFilter())), [
+                                                                                                                $this->entity->getPrimary(),
+                                                                                                                'CREATED_BY',
+                                                                                                                'MODIFIED_BY',
+                                                                                                            ]);
         
         $map = array_combine($map, $map);
         
-        $map = array_merge($map,
-                           [
-                               'user.CREATED_BY'  => 'CREATED_BY',
-                               'user.MODIFIED_BY' => 'MODIFIED_BY',
-                               'SECTIONS'         => 'SECTIONS',
-                           ]);
+        $map = array_merge($map, [
+                                   'user.CREATED_BY'  => 'CREATED_BY',
+                                   'user.MODIFIED_BY' => 'MODIFIED_BY',
+                                   'SECTIONS'         => 'SECTIONS',
+                               ]);
         
         return $map;
     }
@@ -43,17 +43,19 @@ abstract class IBlockElement extends IBlock
      *
      * @return array
      *
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \RuntimeException
+     * @throws ArgumentException
+     * @throws LoaderException
+     * @throws RuntimeException
      */
-    public function prepareData(array $data) : array
-    {
+    public function prepareData(array $data) : array {
         $data = parent::prepareData($data);
+        
+        $data['DETAIL_TEXT_TYPE'] = $data['DETAIL_TEXT_TYPE'] ?: 'html';
         
         foreach ($data as $k => $v) {
             if (strpos($k, 'PROPERTY_') === 0) {
-                $data['PROPERTY_VALUES'][str_replace('PROPERTY_', '', $k)] = $v;
+                $code                           = str_replace('PROPERTY_', '', $k);
+                $data['PROPERTY_VALUES'][$code] = $v;
                 
                 unset($data[$k]);
             }
@@ -69,11 +71,10 @@ abstract class IBlockElement extends IBlock
      *
      * @param IBlockElementEntity $entity
      *
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \RuntimeException
+     * @throws LoaderException
+     * @throws RuntimeException
      */
-    public function __construct(IBlockElementEntity $entity)
-    {
+    public function __construct(IBlockElementEntity $entity) {
         parent::__construct($entity);
     }
 }

@@ -3,18 +3,21 @@
 namespace FourPaws\Console\Command;
 
 use FourPaws\Migrator\Factory;
+use FourPaws\Migrator\IblockNotFoundException;
 use FourPaws\Migrator\Installer;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LogLevel;
+use RuntimeException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Exception\InvalidArgumentException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException as DeInvalidArgumentException;
 
 /**
  * Class MigrateData
@@ -49,7 +52,7 @@ class MigrateData extends Command implements LoggerAwareInterface
                            'Limit of entities, 100 by default')
              ->addArgument(self::ARG_MIGRATE_LIST,
                            InputArgument::IS_ARRAY,
-                           'Migration type, one or more of this: articles, catalog, city_phone, news, shops, sale, user')
+                           sprintf('Migration type, one or more of this: %s', implode(', ', Factory::AVAILABLE_TYPES)))
              ->addOption('force', 'f', InputOption::VALUE_NONE, 'Force migrate (disable time period check)');
     }
     
@@ -59,7 +62,10 @@ class MigrateData extends Command implements LoggerAwareInterface
      *
      * @return null
      *
+     * @throws DeInvalidArgumentException
+     * @throws IblockNotFoundException
      * @throws InvalidArgumentException
+     * @throws RuntimeException
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
@@ -106,9 +112,6 @@ class MigrateData extends Command implements LoggerAwareInterface
      */
     protected function logResult()
     {
-        /**
-         * @todo log a migration result
-         */
         $this->log(LogLevel::INFO, 'Data migration done');
     }
 }

@@ -52,7 +52,8 @@ class Catalog extends IBlockElement
             'PROPERTY_ANIMALS_AGE'           => 'PROPERTY_PET_AGE',
             'PROPERTY_ANIMALS_AGE_BLOSHINKI' => 'PROPERTY_PET_AGE_ADDITIONAL',
             
-            'PROPERTY_BRAND' => 'PROPERTY_BRAND',
+            'PROPERTY_BRAND'      => 'PROPERTY_BRAND',
+            'PROPERTY_BRAND_NAME' => 'PROPERTY_BRAND_NAME',
             
             'PROPERTY_CODE_COLOUR' => 'PROPERTY_CODE_COLOUR',
             'PROPERTY_COLOUR'      => 'PROPERTY_COLOUR',
@@ -191,12 +192,6 @@ class Catalog extends IBlockElement
         $parasiteTypeConverter = new StringToReference('PROPERTY_TYPE_OF_PARASITE');
         $parasiteTypeConverter->setReferenceCode('ParasiteType');
         
-        $countryConverter = new CountryToReference('PROPERTY_COUNTRY');
-        $countryConverter->setReferenceCode('Country');
-        
-        $colorConverter = new ColorToReference('PROPERTY_COLOUR');
-        $colorConverter->setReferenceCode('Colour');
-        
         $petAgeConverter = new StringToReference('PROPERTY_PET_AGE');
         $petAgeConverter->setReferenceCode('PetAge');
         
@@ -231,20 +226,37 @@ class Catalog extends IBlockElement
             $materialConverter,
             $productFormConverter,
             $parasiteTypeConverter,
-            $countryConverter,
             $petAgeConverter,
             $petAgeAdditionalConverter,
-            $colorConverter,
             $rewardTypeConverter,
         ];
+    
+        try {
+            $countryConverter = new CountryToReference('PROPERTY_COUNTRY');
+            $countryConverter->setReferenceCode('Country');
+        
+            $converters[] = $countryConverter;
+        } catch (\Exception $e) {
+            $this->getLogger()->error($e->getMessage());
+        }
+    
+        try {
+            $colorConverter = new ColorToReference('PROPERTY_COLOUR');
+            $colorConverter->setReferenceCode('Colour');
+        
+            $converters[] = $colorConverter;
+        } catch (\Exception $e) {
+            $this->getLogger()->error($e->getMessage());
+        }
         
         try {
-            $brandConverter = new StringToIblock('PROPERTY_BRAND');
+            $brandConverter = new StringToIblock('PROPERTY_BRAND_NAME');
             $brandConverter->setIblockId(Utils::getIblockId('catalog', 'brands'));
+            $brandConverter->setXmlId('PROPERTY_BRAND');
             
             $converters[] = $brandConverter;
         } catch (\Exception $e) {
-            $this->getLogger()->error("Brand convert error: {$e->getMessage()}");
+            $this->getLogger()->error(sprintf('Brand convert error: %s', $e->getMessage()));
         }
         
         return $converters;

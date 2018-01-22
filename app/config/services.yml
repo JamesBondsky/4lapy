@@ -9,10 +9,6 @@ services:
     autoconfigure: true
     public: true
 
-  catalog.service:
-    class: FourPaws\Catalog\CatalogService
-    arguments: ['@bx.hlblock.filter', '@jms_serializer']
-
   search.factory:
     class: FourPaws\Search\Factory
     arguments: ['@jms_serializer']
@@ -29,13 +25,18 @@ services:
   search.service:
     class: FourPaws\Search\SearchService
     arguments:
+      - '@search.index_helper'
+
+  search.index_helper:
+    class: FourPaws\Search\Helper\IndexHelper
+    arguments:
       - '@elastica.client'
-      - '@jms_serializer'
       - '@search.factory'
+      - '@jms_serializer'
       - '@old_sound_rabbit_mq.catalog_sync_producer'
 
-  user.service:
-    class: FourPaws\User\UserService
+  location.service:
+    class: FourPaws\Location\LocationService
 
   health.service:
     class: FourPaws\Health\HealthService
@@ -43,9 +44,33 @@ services:
   sms.service:
     class: FourPaws\External\SmsService
 
+  manzana.guzzle:
+    class: GuzzleHttp\Client
+    arguments:
+      - curl: '%manzana.guzzle.curl%'
+
+  async.soap.factory:
+    class: Meng\AsyncSoap\Guzzle\Factory
+
+  manzana.soap:
+    class: Meng\AsyncSoap\SoapClientInteface
+    factory: 'async.soap.factory:create'
+    arguments: ['@manzana.guzzle', '%manzana.wdsl%']
+
+  manzana.pos.soap:
+    class: Meng\AsyncSoap\SoapClientInteface
+    factory: 'async.soap.factory:create'
+    arguments: ['@manzana.guzzle', '%manzana.pos.wdsl%']
+
   manzana.service:
     class: FourPaws\External\ManzanaService
-    arguments: ['@jms_serializer', '@health.service']
+    arguments: ['@jms_serializer', '@manzana.soap', '%manzana%']
+    calls:
+      - [setServiceLogger]
+
+  manzana.sync_consumer:
+    class: FourPaws\External\Manzana\Consumer\ManzanaContactConsumer
+    arguments: ['@jms_serializer', '@manzana.service']
 
   expertsender.service:
     class: FourPaws\External\ExpertsenderService
@@ -60,10 +85,34 @@ services:
     class: JMS\Serializer\Naming\SerializedNameAnnotationStrategy
     arguments: ['@jms_identical_property_naming_strategy']
 
-  # Fix "FOS Rest Bundle is incompatible with Sensio Framework Extra Bundle v4.0"
-  # @see https://github.com/FriendsOfSymfony/FOSRestBundle/issues/1768
-  sensio_framework_extra.view.listener:
-      alias: Sensio\Bundle\FrameworkExtraBundle\EventListener\TemplateListener
+  jms_serializer.array_or_false_handler:
+      class: FourPaws\AppBundle\Serialization\ArrayOrFalseHandler
+      tags:
+          - { name: jms_serializer.subscribing_handler }
 
-  sensio_framework_extra.converter.listener:
-      alias: Sensio\Bundle\FrameworkExtraBundle\EventListener\ParamConverterListener
+  jms_serializer.bitrix_boolean_handler:
+      class: FourPaws\AppBundle\Serialization\BitrixBooleanHandler
+      tags:
+          - { name: jms_serializer.subscribing_handler }
+
+  jms_serializer.bitrix_date_handler:
+      class: FourPaws\AppBundle\Serialization\BitrixDateHandler
+      tags:
+          - { name: jms_serializer.subscribing_handler }
+
+  jms_serializer.bitrix_date_time_handler:
+      class: FourPaws\AppBundle\Serialization\BitrixDateTimeHandler
+      tags:
+          - { name: jms_serializer.subscribing_handler }
+
+  recaptcha.guzzle:
+      class: GuzzleHttp\Client
+      arguments:
+        - curl: '%recaptcha.guzzle.curl%'
+
+  recaptcha.service:
+      class: FourPaws\ReCaptcha\ReCaptchaService
+      arguments: ['@recaptcha.guzzle', '%recaptcha%']
+
+  form.service:
+      class: FourPaws\Form\FormService

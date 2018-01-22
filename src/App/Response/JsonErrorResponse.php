@@ -3,7 +3,6 @@
 namespace FourPaws\App\Response;
 
 use FourPaws\App\Model\ResponseContent\JsonContent;
-use Symfony\Component\HttpFoundation\JsonResponse;
 
 /**
  * Class JsonErrorResponse
@@ -15,11 +14,15 @@ class JsonErrorResponse extends JsonResponse
     /**
      * Создаётся JsonResponse с предустановленным JsonContent и success = false
      *
+     * @param array $options
+     *
      * @inheritdoc
      */
-    public static function create($data = null, $status = 200, $headers = [])
+    public static function create($message = null, $status = 200, $headers = [], array $options = [])
     {
-        return parent::create(new JsonContent($data, false), $status, $headers);
+        $content = static::buildContent($message, false, null, $options);
+
+        return parent::create($content, $status, $headers);
     }
     
     /**
@@ -28,11 +31,18 @@ class JsonErrorResponse extends JsonResponse
      * @param string $message
      * @param array  $data
      * @param int    $status
+     * @param array  $options
      *
      * @return JsonResponse
      */
-    public static function createWithData(string $message = '', array $data = [], int $status = 200) : JsonResponse
-    {
-        return parent::create(new JsonContent($message, false, $data), $status);
+    public static function createWithData(
+        string $message = '',
+        array $data = [],
+        int $status = 200,
+        array $options = []
+    ): JsonResponse {
+        $content = static::buildContent($message, false, $data, $options);
+
+        return parent::create($content, $status);
     }
 }

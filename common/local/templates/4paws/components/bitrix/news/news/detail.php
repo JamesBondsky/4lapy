@@ -2,28 +2,26 @@
     die();
 }
 
+use Bitrix\Iblock\IblockTable;
 use Bitrix\Main\Application;
+use Bitrix\Main\Data\Cache;
+use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Decorators\FullHrefDecorator;
+use FourPaws\Decorators\SvgDecorator;
+use FourPaws\Helpers\HighloadHelper;
 
-/** @var array $arParams */
-/** @var array $arResult */
-/** @noinspection PhpUndefinedClassInspection */
-/** @global CMain $APPLICATION */
-/** @noinspection PhpUndefinedClassInspection */
-/** @global CUser $USER */
-/** @noinspection PhpUndefinedClassInspection */
-/** @global CDatabase $DB */
-/** @noinspection PhpUndefinedClassInspection */
-/** @var CBitrixComponentTemplate $this */
-/** @var string $templateName */
-/** @var string $templateFile */
-/** @var string $templateFolder */
-/** @var string $componentPath */
-/** @noinspection PhpUndefinedClassInspection */
+/**
+ * @var \CBitrixComponentTemplate $this
+ *
+ * @var array                     $arParams
+ * @var array                     $arResult
+ * @global CMain                  $APPLICATION
+ */
+
 /** @var CBitrixComponent $component */
 $this->setFrameMode(true);
 
-$APPLICATION->IncludeComponent(
+$elementID = $APPLICATION->IncludeComponent(
     'bitrix:news.detail',
     '',
     [
@@ -81,9 +79,55 @@ $APPLICATION->IncludeComponent(
     ['HIDE_ICONS' => 'Y']
 );
 
-/** TODO сделать распродажу с каталогом после готовности каталога со списком товаров */
-
-?>
+$cache    = Cache::createInstance();
+$products = [];
+if ($cache->initCache(
+    $arParams['CACHE_TIME'],
+    serialize(
+        [
+            'ITEM_ID'   => $elementID,
+            'IBLOCK_ID' => $arParams['IBLOCK_ID'],
+            'TYPE'      => 'DETAIL_NEWS_PRODUCTS',
+        ]
+    )
+)) {
+    $vars     = $cache->getVars();
+    $products = $vars['products'];
+} else {
+    $res      = \CIBlockElement::GetProperty($arParams['IBLOCK_ID'], $elementID, [], ['CODE' => 'PRODUCTS']);
+    $products = [];
+    while ($item = $res->Fetch()) {
+        if(!empty($item['VALUE']) && !in_array($item['VALUE'], $products)) {
+            $products[] = $item['VALUE'];
+        }
+    }
+    if (!empty($products)) {
+        $query    = new ProductQuery();
+        $res      = $query->withFilter(['=XML_ID' => $products])->exec();
+        $products = $res->toArray();
+    }
+    $cache->endDataCache(['products' => $products]); // записываем в кеш
+}
+if (!empty($products)) {
+    ?>
+    <div class="b-container">
+        <section class="b-common-section">
+            <div class="b-common-section__title-box b-common-section__title-box--sale">
+                <h2 class="b-title b-title--sale">Товары</h2>
+            </div>
+            <div class="b-common-section__content b-common-section__content--sale js-popular-product">
+                <?php foreach ($products as $product) {
+                    $APPLICATION->IncludeComponent(
+                        'fourpaws:catalog.element.snippet',
+                        '',
+                        ['PRODUCT' => $product]
+                    );
+                } ?>
+            </div>
+        </section>
+    </div>
+    <?php
+} ?>
     <div class="b-container">
         <div class="b-social-big">
             <p>Рассказать в соцсетях</p>
@@ -91,7 +135,8 @@ $APPLICATION->IncludeComponent(
                 <div class="ya-share2"
                      data-lang="en"
                      data-services="facebook,odnoklassniki,vkontakte"
-                     data-url="<?= new FullHrefDecorator(
+                     data-url="<?= /** @noinspection PhpUnhandledExceptionInspection */
+                     new FullHrefDecorator(
                          Application::getInstance()->getContext()->getRequest()->getRequestUri()
                      ) ?>"
                      data-title="<?php $APPLICATION->ShowTitle(false) ?>"
@@ -102,8 +147,30 @@ $APPLICATION->IncludeComponent(
             </div>
         </div>
     </div>
-<?php /** TODO сделать добавление комментариев после готовности верстки по комментариям
- * использовать компонент forum.topic.reviews
- * комментарии на базе форума */
 
-/** TODO подумать о необходимости сниппета, лучше использовать свойства - удобнее и проще управлять */
+<?php
+/** @noinspection PhpUnhandledExceptionInspection */
+$arResult['IBLOCK_CODE'] = IblockTable::getList(
+    [
+        'filter' => ['ID' => $arParams['IBLOCK_ID']],
+        'select' => ['CODE'],
+        'cache'  => ['ttl' => $arParams['CACHE_TIME']],
+    ]
+)->fetch()['CODE'];
+/** @noinspection PhpUnhandledExceptionInspection */
+$APPLICATION->IncludeComponent(
+    'fourpaws:comments',
+    '',
+    [
+        'HL_ID'              => HighloadHelper::getIdByName('Comments'),
+        'OBJECT_ID'          => $elementID,
+        'SORT_DESC'          => 'Y',
+        'ITEMS_COUNT'        => 5,
+        'ACTIVE_DATE_FORMAT' => 'd j Y',
+        'TYPE'               => !empty($arResult['IBLOCK_CODE']) ? $arResult['IBLOCK_CODE'] : 'iblock',
+    ],
+    $component,
+    ['HIDE_ICONS' => 'Y']
+);
+
+/** @todo подумать о необходимости сниппета, лучше использовать свойства - удобнее и проще управлять */

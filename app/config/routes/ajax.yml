@@ -5,9 +5,64 @@ user:
     type: annotation
     prefix: '/user'
 
+sale:
+    resource: '@FourPawsSaleBundle/AjaxController'
+    type: annotation
+    prefix: '/sale'
+
+catalog:
+    resource: "@FourPawsCatalogBundle/AjaxController"
+    type: annotation
+    prefix: '/catalog'
+
+delivery:
+    resource: '@FourPawsDeliveryBundle/AjaxController'
+    type: annotation
+    prefix: '/delivery'
+
+store:
+    resource: '@FourPawsStoreBundle/AjaxController'
+    type: annotation
+    prefix: '/store'
+
+personal:
+    resource: '@FourPawsPersonalBundle/AjaxController'
+    type: annotation
+    prefix: '/personal'
+
+location.city.autocomplete:
+  path: /location/city/autocomplete
+  defaults: { _controller: '\FourPaws\Location\Controller\CityController::autocompleteAction' }
+  methods: [GET]
+
+location.city.list:
+  path: /location/city/list/
+  defaults: { _controller: '\FourPaws\Location\Controller\CityController::listAction' }
+  methods: [GET]
+
 autosort.property.hint:
   path: /autosort/property-hint/{propertyId}
   defaults: { _controller: '\FourPaws\ProductAutoSort\Controller\AutosortController::propertyHint' }
   methods: [GET]
   requirements:
     propertyId: '\d+'
+
+comments.add:
+  path: /comments/add/
+  defaults: { _controller: '\FourPaws\Comments\AjaxController\CommentsController::addAction' }
+  methods: [POST]
+
+comments.next:
+  path: /comments/next/
+  defaults: { _controller: '\FourPaws\Comments\AjaxController\CommentsController::nextAction' }
+  methods: [GET]
+
+form.feedback:
+  path: /form/feedback/add/
+  defaults: { _controller: '\FourPaws\Form\AjaxController\FeedBackController::addAction' }
+  methods: [POST]
+
+form.callback:
+  path: /form/callback/add/
+  defaults: { _controller: '\FourPaws\Form\AjaxController\CallBackController::addAction' }
+  methods: [POST]

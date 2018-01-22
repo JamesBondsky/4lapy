@@ -8,10 +8,34 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var \CMain $APPLICATION
  */
 
+use Bitrix\Main\Application;
 use FourPaws\App\Application as PawsApplication;
+use FourPaws\App\MainTemplate;
 
 $markup = PawsApplication::markup();
-?>
+/** @var MainTemplate $template */
+if(!isset($template) || !($template instanceof MainTemplate)) {
+    $template = MainTemplate::getInstance(Application::getInstance()->getContext());
+}
+
+if ($template->hasMainWrapper()) {
+    if ($template->hasHeaderPublicationListContainer()) {
+    ?>
+        </div>
+    </div>
+<?php }
+
+if ($template->hasHeaderBlockShopList()) { ?>
+        </div>
+    </div>
+<?php }
+
+if ($template->hasHeaderPersonalContainer()) { ?>
+            </main>
+        </div>
+    </div>
+<?php }
+} ?>
 </main>
 <footer class="b-footer">
     <div class="b-footer__communication">
@@ -63,7 +87,9 @@ $markup = PawsApplication::markup();
         </div>
     </div>
 </footer>
+<div class="b-shadow b-shadow--popover js-open-shadow"></div>
 </div>
+<?php require_once 'blocks/footer/popups.php' ?>
 <script src="<?= $markup->getJsFile() ?>"></script>
 </body>
 </html>

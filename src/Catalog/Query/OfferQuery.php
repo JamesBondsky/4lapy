@@ -40,11 +40,11 @@ class OfferQuery extends IblockElementQuery
             'PROPERTY_SEASON_YEAR',
             'PROPERTY_MULTIPLICITY',
             'PROPERTY_REWARD_TYPE',
-            'PROPERTY_PACKING_COMBINATION',
             'PROPERTY_COLOUR_COMBINATION',
             'PROPERTY_FLAVOUR_COMBINATION',
             'PROPERTY_OLD_URL',
-
+            'PROPERTY_BY_REQUEST',
+            'CATALOG_GROUP_2',
         ];
     }
 
@@ -63,5 +63,4 @@ class OfferQuery extends IblockElementQuery
     {
         return new OfferCollection($this->doExec());
     }
-
 }

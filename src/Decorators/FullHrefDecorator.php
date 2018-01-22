@@ -1,8 +1,14 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\Decorators;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Application;
+use Bitrix\Main\SystemException;
 
 /**
  * Project specific SvgDecorator
@@ -36,10 +42,21 @@ class FullHrefDecorator
      */
     public function __toString()
     {
-        return $this->getFullPublicPath();
+        try {
+            return $this->getFullPublicPath();
+        } catch (SystemException $e) {
+            try {
+                $logger = LoggerFactory::create('fullHrefDecorator');
+                $logger->critical('Системная ошибка при получении пукбличного пути ' . $e->getTraceAsString());
+            } catch (\RuntimeException $e) {
+            }
+            
+            return '';
+        }
     }
     
     /**
+     * @throws SystemException
      * @return string
      */
     public function getFullPublicPath() : string

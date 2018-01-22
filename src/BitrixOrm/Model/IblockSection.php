@@ -6,6 +6,9 @@ use FourPaws\BitrixOrm\Model\Traits\IblockModelTrait;
 
 abstract class IblockSection extends BitrixArrayItemBase
 {
+    const ROOT_SECTION_NAME = 'root';
+    const ROOT_SECTION_CODE = 'root';
+
     use IblockModelTrait;
 
     /**
@@ -50,11 +53,69 @@ abstract class IblockSection extends BitrixArrayItemBase
     protected $SECTION_PAGE_URL = '';
 
     /**
+     * @var int
+     */
+    protected $IBLOCK_SECTION_ID = 0;
+
+    /**
+     * @var int
+     */
+    protected $ELEMENT_CNT = 0;
+
+    protected function getElementCount(): int
+    {
+        return $this->ELEMENT_CNT;
+    }
+
+    /**
+     * @param int $elementCount
+     *
+     * @return static
+     */
+    protected function setElementCount(int $elementCount)
+    {
+        $this->ELEMENT_CNT = $elementCount;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getIblockSectionId(): int
+    {
+        return (int)$this->IBLOCK_SECTION_ID;
+    }
+
+    /**
+     * @param int $IBLOCK_SECTION_ID
+     *
+     * @return static
+     */
+    public function setIblockSectionId(int $IBLOCK_SECTION_ID)
+    {
+        $this->IBLOCK_SECTION_ID = $IBLOCK_SECTION_ID;
+        return $this;
+    }
+
+
+    /**
      * @return int
      */
     public function getDepthLevel(): int
     {
         return (int)$this->DEPTH_LEVEL;
+    }
+
+    /**
+     * @param string $url
+     *
+     * @return $this
+     */
+    public function withSectionPageUrl(string $url)
+    {
+        $this->SECTION_PAGE_URL = $url;
+
+        return $this;
     }
 
     /**
@@ -115,17 +176,5 @@ abstract class IblockSection extends BitrixArrayItemBase
     public function getSectionPageUrl(): string
     {
         return $this->SECTION_PAGE_URL;
-    }
-
-    /**
-     * @param string $url
-     *
-     * @return $this
-     */
-    public function withSectionPageUrl(string $url)
-    {
-        $this->SECTION_PAGE_URL = $url;
-
-        return $this;
     }
 }

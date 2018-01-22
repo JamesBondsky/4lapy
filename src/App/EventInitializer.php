@@ -3,9 +3,14 @@
 namespace FourPaws\App;
 
 use Bitrix\Main\EventManager;
+use FourPaws\DeliveryBundle\Event as DeliveryEvent;
+use FourPaws\IblockProps\Event as IblockPropsEvent;
 use FourPaws\ProductAutoSort\Event as ProductAutoSortEvent;
-use FourPaws\Search\Event as CatalogEvent;
-use FourPaws\User\UserServiceHandlers;
+use FourPaws\SaleBundle\EventController\Event as SaleEvent;
+use FourPaws\SapBundle\Subscriber\BitrixEvents;
+use FourPaws\Search\EventHandlers as SearchEventHandlers;
+use FourPaws\UserBundle\EventController\Event as UserEvent;
+use FourPaws\UserProps\Event as UserPropLocationEvent;
 
 /**
  * Class EventInitializer
@@ -17,9 +22,14 @@ use FourPaws\User\UserServiceHandlers;
 final class EventInitializer
 {
     const SERVICE_HANDLER_CLASSES = [
-        UserServiceHandlers::class,
+        DeliveryEvent::class,
+        IblockPropsEvent::class,
         ProductAutoSortEvent::class,
-        CatalogEvent::class,
+        SaleEvent::class,
+        SearchEventHandlers::class,
+        UserEvent::class,
+        UserPropLocationEvent::class,
+        BitrixEvents::class,
     ];
 
     /**
@@ -38,17 +48,16 @@ final class EventInitializer
     }
 
     /**
-     * @return \Generator
-     *
      * @throws \ReflectionException
      * @throws \RuntimeException
+     * @return \Generator
      */
     private function getServiceHandlerClassList()
     {
         foreach (self::SERVICE_HANDLER_CLASSES as $serviceHandlerClass) {
             $interfaces = (new \ReflectionClass($serviceHandlerClass))->getInterfaceNames();
 
-            if (!in_array(ServiceHandlerInterface::class, $interfaces, true)) {
+            if (!\in_array(ServiceHandlerInterface::class, $interfaces, true)) {
                 throw new \RuntimeException('Handler class must be an instance of ServiceHandlerInterface');
             }
 

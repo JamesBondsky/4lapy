@@ -4,27 +4,34 @@ namespace FourPaws\Catalog\Model;
 
 use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
+use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Collection\HlbReferenceItemCollection;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\BitrixOrm\Model\IblockElement;
-use FourPaws\BitrixOrm\Model\TextContent;
+use FourPaws\BitrixOrm\Type\TextContent;
+use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Query\BrandQuery;
 use FourPaws\Catalog\Query\OfferQuery;
-use FourPaws\Catalog\ReferenceUtils;
+use FourPaws\Search\Model\HitMetaInfoAwareInterface;
+use FourPaws\Search\Model\HitMetaInfoAwareTrait;
 use JMS\Serializer\Annotation\Accessor;
 use JMS\Serializer\Annotation\Groups;
 use JMS\Serializer\Annotation\Type;
+use RuntimeException;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 
-/**
- * Class Product
- * @package FourPaws\Catalog\Model
- *
- *
- * TODO Не хватает цен
- * TODO Не хватает привязок ко всем разделам инфоблока
- */
-class Product extends IblockElement
+class Product extends IblockElement implements HitMetaInfoAwareInterface
 {
+    use HitMetaInfoAwareTrait;
+
+    const AVAILABILITY_DELIVERY = 'delivery';
+
+    const AVAILABILITY_PICKUP = 'pickup';
+
+    const AVAILABILITY_BY_REQUEST = 'byRequest';
+
     /**
      * @var bool
      * @Type("bool")
@@ -54,6 +61,20 @@ class Product extends IblockElement
      * @Groups({"elastic"})
      */
     protected $ID = 0;
+
+    /**
+     * @var string
+     * @Type("string")
+     * @Groups({"elastic"})
+     */
+    protected $CODE = '';
+
+    /**
+     * @var string
+     * @Type("string")
+     * @Groups({"elastic"})
+     */
+    protected $XML_ID = '';
 
     /**
      * @var string
@@ -134,7 +155,7 @@ class Product extends IblockElement
 
     /**
      * @var string[]
-     * @Type("string")
+     * @Type("array")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_FOR_WHO = [];
@@ -252,6 +273,8 @@ class Product extends IblockElement
 
     /**
      * @var string
+     * @Type("string")
+     * @Groups({"elastic"})
      */
     protected $PROPERTY_COUNTRY = '';
 
@@ -321,13 +344,6 @@ class Product extends IblockElement
     protected $seasonClothes;
 
     /**
-     * @var string
-     * @Type("string")
-     * @Groups({"elastic"})
-     */
-    protected $PROPERTY_WEIGHT_CAPACITY_PACKING = '';
-
-    /**
      * @var bool
      * @Type("bool")
      * @Groups({"elastic"})
@@ -340,6 +356,13 @@ class Product extends IblockElement
      * @Groups({"elastic"})
      */
     protected $PROPERTY_LOW_TEMPERATURE = false;
+
+    /**
+     * @var bool
+     * @Type("bool")
+     * @Groups({"elastic"})
+     */
+    protected $PROPERTY_REFRIGERATED = false;
 
     /**
      * @var string
@@ -355,6 +378,7 @@ class Product extends IblockElement
 
     /**
      * @var string
+     * @Type("string")
      * @Groups({"elastic"})
      * TODO Есть риск, что это свойство окажется множественным
      */
@@ -492,12 +516,20 @@ class Product extends IblockElement
     protected $specifications;
 
     /**
-     * @var ArrayCollection
+     * @var Collection
      * @Type("ArrayCollection<FourPaws\Catalog\Model\Offer>")
      * @Accessor(getter="getOffers")
      * @Groups({"elastic"})
      */
     protected $offers;
+
+    /**
+     * @var int[] ID всех разделов инфоблока, к которым прикреплён элемент.
+     * @Type("array")
+     * @Accessor(getter="getSectionsIdList")
+     * @Groups({"elastic"})
+     */
+    protected $sectionIdList;
 
     /**
      * @var string[]
@@ -506,6 +538,48 @@ class Product extends IblockElement
      * @Groups({"elastic"})
      */
     protected $suggest;
+
+    /**
+     * @var bool
+     * @Type("bool")
+     * @Accessor(getter="hasActions")
+     * @Groups({"elastic"})
+     */
+    protected $hasActions;
+
+    /**
+     * @var array
+     * @Type("array<string>")
+     * @Accessor(getter="getDeliveryAvailability")
+     * @Groups({"elastic"})
+     */
+    protected $deliveryAvailability;
+
+    /**
+     * @var string
+     */
+    protected $PROPERTY_PACKING_COMBINATION = '';
+    
+    /**
+     * @var string
+     * @Type("string")
+     * @Groups({"elastic"})
+     */
+    protected $PROPERTY_WEIGHT_CAPACITY_PACKING = '';
+    
+    /**
+     * @var bool
+     * @Type("bool")
+     * @Groups({"elastic"})
+     */
+    protected $PROPERTY_TRANSPORT_ONLY_REFRIGERATOR = false;
+
+    /**
+     * @var bool
+     * @Type("bool")
+     * @Groups({"elastic"})
+     */
+    protected $PROPERTY_DC_SPECIAL_AREA_STORAGE = false;
 
     public function __construct(array $fields = [])
     {
@@ -524,35 +598,6 @@ class Product extends IblockElement
     }
 
     /**
-     * @internal Специально для Elasitcsearch храним коллецию без ключей, т.к. ассоциативный массив с торговыми
-     * предложениями туда передавать нельзя: это будет объект, а не массив объектов.
-     *
-     * @return ArrayCollection
-     */
-    public function getOffers(): ArrayCollection
-    {
-        if (is_null($this->offers)) {
-            $this->offers = new ArrayCollection(
-                array_values(
-                    (new OfferQuery())->withFilterParameter('=PROPERTY_CML2_LINK', $this->getId())
-                                      ->exec()
-                                      ->toArray()
-                )
-            );
-        }
-
-        return $this->offers;
-    }
-
-    /**
-     * @return int
-     */
-    public function getBrandId(): int
-    {
-        return (int)$this->PROPERTY_BRAND;
-    }
-
-    /**
      * @param int $id
      *
      * @return $this
@@ -563,18 +608,9 @@ class Product extends IblockElement
 
         //Сбросить бренд, чтобы выбрался новый.
         $this->brand = null;
-        //Освежить вспомогательное свойство с именем бренда
-        $this->PROPERTY_BRAND_NAME = $this->getBrand()->getName();
+        $this->PROPERTY_BRAND_NAME = '';
 
         return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getBrandName(): string
-    {
-        return $this->PROPERTY_BRAND_NAME;
     }
 
     /**
@@ -582,7 +618,7 @@ class Product extends IblockElement
      */
     public function getBrand(): Brand
     {
-        if (is_null($this->brand)) {
+        if (null === $this->brand) {
             $this->brand = (new BrandQuery())->withFilter(['=ID' => $this->getBrandId()])->exec()->current();
             /**
              * Если бренд не найден, "заткнуть" пустышкой.
@@ -594,6 +630,25 @@ class Product extends IblockElement
         }
 
         return $this->brand;
+    }
+
+    /**
+     * @return int
+     */
+    public function getBrandId(): int
+    {
+        return (int)$this->PROPERTY_BRAND;
+    }
+
+    /**
+     * @return string
+     */
+    public function getBrandName(): string
+    {
+        if (!$this->PROPERTY_BRAND_NAME && $this->PROPERTY_BRAND) {
+            $this->PROPERTY_BRAND_NAME = $this->getBrand()->getName();
+        }
+        return $this->PROPERTY_BRAND_NAME;
     }
 
     /**
@@ -611,27 +666,81 @@ class Product extends IblockElement
     }
 
     /**
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      * @return HlbReferenceItemCollection
      */
-    public function getForWho()
+    public function getForWho(): HlbReferenceItemCollection
     {
-        if (is_null($this->forWho)) {
-            $this->forWho = ReferenceUtils::getReferenceMulti('bx.hlblock.forwho', $this->PROPERTY_FOR_WHO);
+        if (null === $this->forWho) {
+            $this->forWho = ReferenceUtils::getReferenceMulti(
+                Application::getHlBlockDataManager('bx.hlblock.forwho'),
+                $this->getForWhoXmlIds()
+            );
         }
 
         return $this->forWho;
     }
 
     /**
+     * @param array $xmlIds
+     *
+     * @return $this
+     */
+    public function withForWhoXmlIds(array $xmlIds = [])
+    {
+        $this->PROPERTY_FOR_WHO = $xmlIds;
+        $this->forWho = null;
+        return $this;
+    }
+
+    /**
+     * @return array|string[]
+     */
+    public function getForWhoXmlIds(): array
+    {
+        $this->PROPERTY_FOR_WHO = $this->PROPERTY_FOR_WHO ?: [];
+        return $this->PROPERTY_FOR_WHO;
+    }
+
+    /**
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      * @return HlbReferenceItemCollection
      */
-    public function getPetSize()
+    public function getPetSize(): HlbReferenceItemCollection
     {
-        if (is_null($this->petSize)) {
-            $this->petSize = ReferenceUtils::getReferenceMulti('bx.hlblock.petsize', $this->PROPERTY_PET_SIZE);
+        if (null === $this->petSize) {
+            $this->petSize = ReferenceUtils::getReferenceMulti(
+                Application::getHlBlockDataManager('bx.hlblock.petsize'),
+                $this->getPetSizeXmlIds()
+            );
         }
 
         return $this->petSize;
+    }
+
+    /**
+     * @return array|string[]
+     */
+    public function getPetSizeXmlIds(): array
+    {
+        $this->PROPERTY_PET_SIZE = $this->PROPERTY_PET_SIZE ?: [];
+        return $this->PROPERTY_PET_SIZE;
+    }
+
+    /**
+     * @param array $xmlIds
+     *
+     * @return $this
+     */
+    public function withPetSizeXmlIds(array $xmlIds)
+    {
+        $this->petSize = null;
+        $this->PROPERTY_PET_SIZE = $xmlIds;
+        return $this;
     }
 
     /**
@@ -639,50 +748,135 @@ class Product extends IblockElement
      *
      * \attention Это всего лишь одноимённое свойство из SAP и никак не связано с категориями каталога на сайте.
      *
-     * @return HlbReferenceItem
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
+     * @return null|HlbReferenceItem
      */
     public function getCategory()
     {
-        if (is_null($this->category)) {
-            $this->category = ReferenceUtils::getReference('bx.hlblock.productcategory', $this->PROPERTY_CATEGORY);
+        if ((null === $this->category) && $this->PROPERTY_CATEGORY) {
+            $this->category = ReferenceUtils::getReference(
+                Application::getHlBlockDataManager('bx.hlblock.productcategory'),
+                $this->getSapCategoryXmlId()
+            );
         }
 
         return $this->category;
     }
 
     /**
-     * @return HlbReferenceItem
+     * @return string
+     */
+    public function getSapCategoryXmlId(): string
+    {
+        $this->PROPERTY_CATEGORY = $this->PROPERTY_CATEGORY ?: '';
+        return $this->PROPERTY_CATEGORY;
+    }
+
+    /**
+     * @param string $xmlId
+     *
+     * @return $this
+     */
+    public function withSapCategoryXmlId(string $xmlId)
+    {
+        $this->category = null;
+        $this->PROPERTY_CATEGORY = $xmlId;
+        return $this;
+    }
+
+    /**
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
+     * @return null|HlbReferenceItem
      */
     public function getPurpose()
     {
-        if (is_null($this->purpose)) {
-            $this->purpose = ReferenceUtils::getReference('bx.hlblock.purpose', $this->PROPERTY_PURPOSE);
+        if ((null === $this->purpose) && $this->PROPERTY_PURPOSE) {
+            $this->purpose = ReferenceUtils::getReference(
+                Application::getHlBlockDataManager('bx.hlblock.purpose'),
+                $this->getPurposeXmlId()
+            );
         }
 
         return $this->purpose;
     }
 
     /**
+     * @return string
+     */
+    public function getPurposeXmlId(): string
+    {
+        $this->PROPERTY_PURPOSE = $this->PROPERTY_PURPOSE ?: '';
+        return $this->PROPERTY_PURPOSE;
+    }
+
+    /**
+     * @param string $xmlId
+     *
+     * @return $this
+     */
+    public function withPurposeXmlId(string $xmlId)
+    {
+        $this->purpose = null;
+        $this->PROPERTY_PURPOSE = $xmlId;
+        return $this;
+    }
+
+    /**
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      * @return HlbReferenceItemCollection
      */
-    public function getPetAge()
+    public function getPetAge(): HlbReferenceItemCollection
     {
-        if (is_null($this->petAge)) {
-            $this->petAge = ReferenceUtils::getReferenceMulti('bx.hlblock.petage', $this->PROPERTY_PET_AGE);
+        if (null === $this->petAge) {
+            $this->petAge = ReferenceUtils::getReferenceMulti(
+                Application::getHlBlockDataManager('bx.hlblock.petage'),
+                $this->getPetAgeXmlIds()
+            );
         }
 
         return $this->petAge;
     }
 
     /**
+     * @return array
+     */
+    public function getPetAgeXmlIds(): array
+    {
+        $this->PROPERTY_PET_AGE = $this->PROPERTY_PET_AGE ?: [];
+        return $this->PROPERTY_PET_AGE;
+    }
+
+    /**
+     * @param array $xmlIds
+     *
+     * @return $this
+     */
+    public function withPetAgeXmlIds(array $xmlIds)
+    {
+        $this->petAge = null;
+        $this->PROPERTY_PET_AGE = $xmlIds;
+        return $this;
+    }
+
+
+    /**
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      * @return HlbReferenceItemCollection
      */
-    public function getPetAgeAdditional()
+    public function getPetAgeAdditional(): HlbReferenceItemCollection
     {
-        if (is_null($this->petAgeAdditional)) {
+        if (null === $this->petAgeAdditional) {
             $this->petAgeAdditional = ReferenceUtils::getReferenceMulti(
-                'bx.hlblock.petageadditional',
-                $this->PROPERTY_PET_AGE_ADDITIONAL
+                Application::getHlBlockDataManager('bx.hlblock.petageadditional'),
+                $this->getPetAgeAdditionalXmlIds()
             );
         }
 
@@ -690,37 +884,121 @@ class Product extends IblockElement
     }
 
     /**
-     * @return HlbReferenceItem
+     * @return array|string[]
+     */
+    public function getPetAgeAdditionalXmlIds(): array
+    {
+        $this->PROPERTY_PET_AGE_ADDITIONAL = $this->PROPERTY_PET_AGE_ADDITIONAL ?: [];
+        return $this->PROPERTY_PET_AGE_ADDITIONAL;
+    }
+
+    /**
+     * @param array $xmlIds
+     *
+     * @return $this
+     */
+    public function withPetAgeAdditionalXmlIds(array $xmlIds)
+    {
+        $this->petAgeAdditional = null;
+        $this->PROPERTY_PET_AGE_ADDITIONAL = $xmlIds;
+        return $this;
+    }
+
+    /**
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
+     * @return null|HlbReferenceItem
      */
     public function getPetBreed()
     {
-        if (is_null($this->petBreed)) {
-            $this->petBreed = ReferenceUtils::getReference('bx.hlblock.petbreed', $this->PROPERTY_PET_BREED);
+        if ((null === $this->petBreed) && $this->getPetBreedXmlId()) {
+            $this->petBreed = ReferenceUtils::getReference(
+                Application::getHlBlockDataManager('bx.hlblock.petbreed'),
+                $this->getPetBreedXmlId()
+            );
         }
 
         return $this->petBreed;
     }
 
     /**
-     * @return HlbReferenceItem
+     * @return string
+     */
+    public function getPetBreedXmlId(): string
+    {
+        $this->PROPERTY_PET_BREED = $this->PROPERTY_PET_BREED ?: '';
+        return $this->PROPERTY_PET_BREED;
+    }
+
+    /**
+     * @param string $xmlId
+     *
+     * @return $this
+     */
+    public function withPetBreedXmlId(string $xmlId)
+    {
+        $this->petBreed = null;
+        $this->PROPERTY_PET_BREED = $xmlId;
+        return $this;
+    }
+
+    /**
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
+     * @return null|HlbReferenceItem
      */
     public function getPetGender()
     {
-        if (is_null($this->petGender)) {
-            $this->petGender = ReferenceUtils::getReference('bx.hlblock.petgender', $this->PROPERTY_PET_GENDER);
+        if ((null === $this->petGender) && $this->getPetGenderXmlId()) {
+            $this->petGender = ReferenceUtils::getReference(
+                Application::getHlBlockDataManager('bx.hlblock.petgender'),
+                $this->getPetGenderXmlId()
+            );
         }
 
         return $this->petGender;
     }
 
     /**
+     * @return string
+     */
+    public function getPetGenderXmlId(): string
+    {
+        $this->PROPERTY_PET_GENDER = $this->PROPERTY_PET_GENDER ?: '';
+        return $this->PROPERTY_PET_GENDER;
+    }
+
+    /**
+     * @param string $xmlId
+     *
+     * @return $this
+     */
+    public function withPetGenderXmlId(string $xmlId)
+    {
+        $this->petGender = null;
+        $this->PROPERTY_PET_GENDER = $xmlId;
+        return $this;
+    }
+
+    /**
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      * @return HlbReferenceItemCollection
      */
-    public function getLabels()
+    public function getLabels(): HlbReferenceItemCollection
     {
-        if (is_null($this->label)) {
-            $this->label = ReferenceUtils::getReferenceMulti('bx.hlblock.label', $this->PROPERTY_LABEL);
-            //TODO Добавить динамический запрос шильдиков по акциям, в которых в данном регионе участвует этот продукт
+        if (null === $this->label) {
+            $this->label = ReferenceUtils::getReferenceMulti(
+                Application::getHlBlockDataManager('bx.hlblock.label'),
+                $this->getLabelsXmlId()
+            );
+            /*
+             * TODO Добавить динамический запрос шильдиков по акциям, в которых в данном регионе участвует этот продукт
+             */
+
             //TODO Сделать, чтобы это была отдельная коллекция объектов "Шильдик", а не просто элемент справочника.
         }
 
@@ -728,60 +1006,176 @@ class Product extends IblockElement
     }
 
     /**
+     * @return array|string[]
+     */
+    public function getLabelsXmlId(): array
+    {
+        $this->PROPERTY_LABEL = $this->PROPERTY_LABEL ?: [];
+        return $this->PROPERTY_LABEL;
+    }
+
+    /**
+     * @param array $xmlIds
+     *
+     * @return $this
+     */
+    public function withLabelsXmlIds(array $xmlIds)
+    {
+        $this->label = null;
+        $this->PROPERTY_LABEL = $xmlIds;
+        return $this;
+    }
+
+    /**
      * Возвращает признак "товар собственной торговой марки"
      *
      * @return bool
      */
-    public function isSTM()
+    public function isSTM(): bool
     {
-        return (bool)(int)$this->PROPERTY_STM;
+        return (bool)$this->PROPERTY_STM;
     }
 
     /**
-     * @return HlbReferenceItem
+     * @param bool $isSTM
+     *
+     * @return $this
+     */
+    public function withSTM(bool $isSTM = true)
+    {
+        $this->PROPERTY_STM = $isSTM;
+        return $this;
+    }
+
+    /**
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
+     * @return null|HlbReferenceItem
      */
     public function getCountry()
     {
-        if (is_null($this->country)) {
-            $this->country = ReferenceUtils::getReference('bx.hlblock.country', $this->PROPERTY_COUNTRY);
+        if ((null === $this->country) && $this->PROPERTY_COUNTRY) {
+            $this->country = ReferenceUtils::getReference(
+                Application::getHlBlockDataManager('bx.hlblock.country'),
+                $this->PROPERTY_COUNTRY
+            );
         }
 
         return $this->country;
     }
 
     /**
+     * @return string
+     */
+    public function getCountryXmlId(): string
+    {
+        $this->PROPERTY_COUNTRY = $this->PROPERTY_COUNTRY ?: '';
+        return $this->PROPERTY_COUNTRY;
+    }
+
+    /**
+     * @param string $xmlId
+     *
+     * @return $this
+     */
+    public function withCountryXmlId(string $xmlId)
+    {
+        $this->country = null;
+        $this->PROPERTY_COUNTRY = $xmlId;
+        return $this;
+    }
+
+    /**
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      * @return HlbReferenceItemCollection
      */
-    public function getTradeNames()
+    public function getTradeNames(): HlbReferenceItemCollection
     {
-        if (is_null($this->tradeName)) {
-            $this->tradeName = ReferenceUtils::getReferenceMulti('bx.hlblock.tradename', $this->PROPERTY_TRADE_NAME);
+        if (null === $this->tradeName) {
+            $this->tradeName = ReferenceUtils::getReferenceMulti(
+                Application::getHlBlockDataManager('bx.hlblock.tradename'),
+                $this->getTradeNameXmlIds()
+            );
         }
 
         return $this->tradeName;
     }
 
     /**
+     * @return array|string[]
+     */
+    public function getTradeNameXmlIds(): array
+    {
+        $this->PROPERTY_TRADE_NAME = $this->PROPERTY_TRADE_NAME ?: [];
+        return $this->PROPERTY_TRADE_NAME;
+    }
+
+    /**
+     * @param array $xmlIds
+     *
+     * @return $this
+     */
+    public function withTradeNameXmlIds(array $xmlIds)
+    {
+        $this->tradeName = null;
+        $this->PROPERTY_TRADE_NAME = $xmlIds;
+        return $this;
+    }
+
+    /**
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      * @return HlbReferenceItemCollection
      */
-    public function getMakers()
+    public function getMakers(): HlbReferenceItemCollection
     {
-        if (is_null($this->maker)) {
-            $this->maker = ReferenceUtils::getReferenceMulti('bx.hlblock.maker', $this->PROPERTY_MAKER);
+        if (null === $this->maker) {
+            $this->maker = ReferenceUtils::getReferenceMulti(
+                Application::getHlBlockDataManager('bx.hlblock.maker'),
+                $this->getMakersXmlIds()
+            );
         }
 
         return $this->maker;
     }
 
     /**
+     * @return array|string[]
+     */
+    public function getMakersXmlIds(): array
+    {
+        $this->PROPERTY_MAKER = $this->PROPERTY_MAKER ?: [];
+        return $this->PROPERTY_MAKER;
+    }
+
+    /**
+     * @param array $xmlIds
+     *
+     * @return $this
+     */
+    public function withMakersXmlIds(array $xmlIds)
+    {
+        $this->maker = null;
+        $this->PROPERTY_MAKER = $xmlIds;
+        return $this;
+    }
+
+    /**
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      * @return HlbReferenceItemCollection
      */
-    public function getManagersOfCategory()
+    public function getManagersOfCategory(): HlbReferenceItemCollection
     {
-        if (is_null($this->managerOfCategory)) {
+        if (null === $this->managerOfCategory) {
             $this->managerOfCategory = ReferenceUtils::getReferenceMulti(
-                'bx.hlblock.categorymanager',
-                $this->PROPERTY_MANAGER_OF_CATEGORY
+                Application::getHlBlockDataManager('bx.hlblock.categorymanager'),
+                $this->getManagersOfCategoryXmlIds()
             );
         }
 
@@ -789,14 +1183,38 @@ class Product extends IblockElement
     }
 
     /**
+     * @return array|string[]
+     */
+    public function getManagersOfCategoryXmlIds(): array
+    {
+        $this->PROPERTY_MANAGER_OF_CATEGORY = $this->PROPERTY_MANAGER_OF_CATEGORY ?: [];
+        return $this->PROPERTY_MANAGER_OF_CATEGORY;
+    }
+
+    /**
+     * @param array $xmlIds
+     *
+     * @return $this
+     */
+    public function withManagersOfCategoryXmlIds(array $xmlIds)
+    {
+        $this->managerOfCategory = null;
+        $this->PROPERTY_MANAGER_OF_CATEGORY = $xmlIds;
+        return $this;
+    }
+
+    /**
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      * @return HlbReferenceItemCollection
      */
-    public function getManufactureMaterials()
+    public function getManufactureMaterials(): HlbReferenceItemCollection
     {
-        if (is_null($this->manufactureMaterial)) {
+        if (null === $this->manufactureMaterial) {
             $this->manufactureMaterial = ReferenceUtils::getReferenceMulti(
-                'bx.hlblock.material',
-                $this->PROPERTY_MANUFACTURE_MATERIAL
+                Application::getHlBlockDataManager('bx.hlblock.material'),
+                $this->getManufactureMaterialsXmlIds()
             );
         }
 
@@ -804,14 +1222,38 @@ class Product extends IblockElement
     }
 
     /**
+     * @return array|string[]
+     */
+    public function getManufactureMaterialsXmlIds(): array
+    {
+        $this->PROPERTY_MANUFACTURE_MATERIAL = $this->PROPERTY_MANUFACTURE_MATERIAL ?: [];
+        return $this->PROPERTY_MANUFACTURE_MATERIAL;
+    }
+
+    /**
+     * @param array $xmlIds
+     *
+     * @return $this
+     */
+    public function withManufactureMaterialsXmlIds(array $xmlIds)
+    {
+        $this->manufactureMaterial = null;
+        $this->PROPERTY_MANUFACTURE_MATERIAL = $xmlIds;
+        return $this;
+    }
+
+    /**
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      * @return HlbReferenceItemCollection
      */
-    public function getClothesSeasons()
+    public function getClothesSeasons(): HlbReferenceItemCollection
     {
-        if (is_null($this->seasonClothes)) {
+        if (null === $this->seasonClothes) {
             $this->seasonClothes = ReferenceUtils::getReferenceMulti(
-                'bx.hlblock.season',
-                $this->PROPERTY_SEASON_CLOTHES
+                Application::getHlBlockDataManager('bx.hlblock.season'),
+                $this->getClothesSeasonsXmlIds()
             );
         }
 
@@ -819,11 +1261,24 @@ class Product extends IblockElement
     }
 
     /**
-     * @return string
+     * @return array|string[]
      */
-    public function getWeightCapacityPacking()
+    public function getClothesSeasonsXmlIds(): array
     {
-        return $this->PROPERTY_WEIGHT_CAPACITY_PACKING;
+        $this->PROPERTY_SEASON_CLOTHES = $this->PROPERTY_SEASON_CLOTHES ?: [];
+        return $this->PROPERTY_SEASON_CLOTHES;
+    }
+
+    /**
+     * @param array $xmlIds
+     *
+     * @return $this
+     */
+    public function withClothesSeasonsXmlIds(array $xmlIds)
+    {
+        $this->seasonClothes = null;
+        $this->PROPERTY_SEASON_CLOTHES = $xmlIds;
+        return $this;
     }
 
     /**
@@ -831,9 +1286,20 @@ class Product extends IblockElement
      *
      * @return bool
      */
-    public function isLicenseRequired()
+    public function isLicenseRequired(): bool
     {
-        return (bool)(int)$this->PROPERTY_LICENSE;
+        return (bool)$this->PROPERTY_LICENSE;
+    }
+
+    /**
+     * @param bool $licenseRequired
+     *
+     * @return $this
+     */
+    public function withLicenseRequired(bool $licenseRequired = true)
+    {
+        $this->PROPERTY_LICENSE = $licenseRequired;
+        return $this;
     }
 
     /**
@@ -841,50 +1307,154 @@ class Product extends IblockElement
      *
      * @return bool
      */
-    public function isLowTemperatureRequired()
+    public function isLowTemperatureRequired(): bool
     {
-        return (bool)(int)$this->PROPERTY_LOW_TEMPERATURE;
+        return (bool)$this->PROPERTY_LOW_TEMPERATURE;
     }
 
     /**
-     * @return HlbReferenceItem
+     * @param bool $isLowTemperature
+     *
+     * @return $this
+     */
+    public function withLowTemperatureRequired($isLowTemperature = true)
+    {
+        $this->PROPERTY_LOW_TEMPERATURE = $isLowTemperature;
+        return $this;
+    }
+
+    /**
+     * Возвращает признак "Перевозить в холодильнике"
+     *
+     * @return bool
+     */
+    public function isRefrigerated()
+    {
+        return (bool)(int)$this->PROPERTY_REFRIGERATED;
+    }
+
+    /**
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
+     * @return null|HlbReferenceItem
      */
     public function getPetType()
     {
-        if (is_null($this->petType)) {
-            $this->petType = ReferenceUtils::getReference('bx.hlblock.pettype', $this->PROPERTY_PET_TYPE);
+        if ((null === $this->petType) && $this->PROPERTY_PET_TYPE) {
+            $this->petType = ReferenceUtils::getReference(
+                Application::getHlBlockDataManager('bx.hlblock.pettype'),
+                $this->PROPERTY_PET_TYPE
+            );
         }
 
         return $this->petType;
     }
 
     /**
-     * @return HlbReferenceItem
+     * @return string
+     */
+    public function getPetTypeXmlId(): string
+    {
+        $this->PROPERTY_PET_TYPE = $this->PROPERTY_PET_TYPE ?: '';
+        return $this->PROPERTY_PET_TYPE;
+    }
+
+    /**
+     * @param string $xmlId
+     *
+     * @return $this
+     */
+    public function withPetTypeXmlId(string $xmlId)
+    {
+        $this->petType = null;
+        $this->PROPERTY_PET_TYPE = $xmlId;
+        return $this;
+    }
+
+    /**
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
+     * @return null|HlbReferenceItem
      */
     public function getPharmaGroup()
     {
-        if (is_null($this->pharmaGroup)) {
-            $this->pharmaGroup = ReferenceUtils::getReference('bx.hlblock.pharmagroup', $this->PROPERTY_PHARMA_GROUP);
+        if ((null === $this->pharmaGroup) && $this->getPharmaGroupXmlId()) {
+            $this->pharmaGroup = ReferenceUtils::getReference(
+                Application::getHlBlockDataManager('bx.hlblock.pharmagroup'),
+                $this->getPharmaGroupXmlId()
+            );
         }
 
         return $this->pharmaGroup;
     }
 
     /**
+     * @return string
+     */
+    public function getPharmaGroupXmlId(): string
+    {
+        $this->PROPERTY_PHARMA_GROUP = $this->PROPERTY_PHARMA_GROUP ?: '';
+        return $this->PROPERTY_PHARMA_GROUP;
+    }
+
+    /**
+     * @param string $xmlId
+     *
+     * @return $this
+     */
+    public function withPharmaGroupXmlId(string $xmlId)
+    {
+        $this->pharmaGroup = null;
+        $this->PROPERTY_PHARMA_GROUP = $xmlId;
+        return $this;
+    }
+
+    /**
+     * @todo Ацессоры продолжить
+     */
+
+    /**
      * Возвращает специализацию корма
      *
-     * @return HlbReferenceItem
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
+     * @return null|HlbReferenceItem
      */
     public function getFeedSpecification()
     {
-        if (is_null($this->feedSpecification)) {
+        if ((null === $this->feedSpecification) && $this->getFeedSpecificationXmlId()) {
             $this->feedSpecification = ReferenceUtils::getReference(
-                'bx.hlblock.feedspec',
-                $this->PROPERTY_FEED_SPECIFICATION
+                Application::getHlBlockDataManager('bx.hlblock.feedspec'),
+                $this->getFeedSpecificationXmlId()
             );
         }
 
         return $this->feedSpecification;
+    }
+
+
+    /**
+     * @return string
+     */
+    public function getFeedSpecificationXmlId(): string
+    {
+        $this->PROPERTY_FEED_SPECIFICATION = $this->PROPERTY_FEED_SPECIFICATION ?: '';
+        return $this->PROPERTY_FEED_SPECIFICATION;
+    }
+
+    /**
+     * @param string $xmlId
+     *
+     * @return $this
+     */
+    public function withFeedSpecificationXmlId(string $xmlId)
+    {
+        $this->feedSpecification = null;
+        $this->PROPERTY_FEED_SPECIFICATION = $xmlId;
+        return $this;
     }
 
     /**
@@ -892,46 +1462,114 @@ class Product extends IblockElement
      *
      * @return bool
      */
-    public function isFood()
+    public function isFood(): bool
     {
-        return (bool)(int)$this->PROPERTY_FOOD;
+        return (bool)$this->PROPERTY_FOOD;
     }
 
     /**
-     * @return HlbReferenceItem
+     * @param bool $isFood
+     *
+     * @return $this
+     */
+    public function withIsFood(bool $isFood = true)
+    {
+        $this->PROPERTY_FOOD = $isFood;
+        return $this;
+    }
+
+    /**
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
+     * @return null|HlbReferenceItem
      */
     public function getConsistence()
     {
-        if (is_null($this->consistence)) {
-            $this->consistence = ReferenceUtils::getReference('bx.hlblock.consistence', $this->PROPERTY_CONSISTENCE);
+        if ((null === $this->consistence) && $this->getConsistenceXmlId()) {
+            $this->consistence = ReferenceUtils::getReference(
+                Application::getHlBlockDataManager('bx.hlblock.consistence'),
+                $this->getConsistenceXmlId()
+            );
         }
 
         return $this->consistence;
     }
 
     /**
-     * @return HlbReferenceItemCollection
+     * @return string
      */
-    public function getFlavour()
+    public function getConsistenceXmlId(): string
     {
-        if (is_null($this->flavour)) {
-            $this->flavour = ReferenceUtils::getReferenceMulti('bx.hlblock.flavour', $this->PROPERTY_FLAVOUR);
+        $this->PROPERTY_CONSISTENCE = $this->PROPERTY_CONSISTENCE ?: '';
+        return $this->PROPERTY_CONSISTENCE;
+    }
+
+    /**
+     * @param string $xmlId
+     *
+     * @return $this
+     */
+    public function withConsistenceXmlId(string $xmlId)
+    {
+        $this->consistence = null;
+        $this->PROPERTY_CONSISTENCE = $xmlId;
+        return $this;
+    }
+
+    /**
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
+     * @return Collection|HlbReferenceItem[]
+     */
+    public function getFlavour(): Collection
+    {
+        if (null === $this->flavour) {
+            $this->flavour = ReferenceUtils::getReferenceMulti(
+                Application::getHlBlockDataManager('bx.hlblock.flavour'),
+                $this->getFlavourXmlIds()
+            );
         }
 
         return $this->flavour;
     }
 
     /**
+     * @return array|string[]
+     */
+    public function getFlavourXmlIds(): array
+    {
+        $this->PROPERTY_FLAVOUR = $this->PROPERTY_FLAVOUR ?: [];
+        return $this->PROPERTY_FLAVOUR;
+    }
+
+    /**
+     * @param array $xmlIds
+     *
+     * @return $this
+     */
+    public function withFlavourXmlIds(array $xmlIds)
+    {
+        $this->flavour = null;
+        $this->PROPERTY_FLAVOUR = $xmlIds;
+        return $this;
+    }
+
+    /**
      * Возвращает особенности ингридиентов
      *
-     * @return HlbReferenceItemCollection
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
+     * @return Collection|HlbReferenceItem[]
      */
-    public function getFeaturesOfIngredients()
+    public function getFeaturesOfIngredients(): Collection
     {
-        if (is_null($this->featuresOfIngredients)) {
+        if (null === $this->featuresOfIngredients) {
             $this->featuresOfIngredients = ReferenceUtils::getReferenceMulti(
-                'bx.hlblock.ingridientfeatures',
-                $this->PROPERTY_FEATURES_OF_INGREDIENTS
+                Application::getHlBlockDataManager('bx.hlblock.ingridientfeatures'),
+                $this->getFeaturesOfIngredientsXmlIds()
             );
         }
 
@@ -939,16 +1577,40 @@ class Product extends IblockElement
     }
 
     /**
+     * @return array|string[]
+     */
+    public function getFeaturesOfIngredientsXmlIds(): array
+    {
+        $this->PROPERTY_FEATURES_OF_INGREDIENTS = $this->PROPERTY_FEATURES_OF_INGREDIENTS ?: [];
+        return $this->PROPERTY_FEATURES_OF_INGREDIENTS;
+    }
+
+    /**
+     * @param array $xmlIds
+     *
+     * @return $this
+     */
+    public function withFeaturesOfIngredientsXmlIds(array $xmlIds)
+    {
+        $this->featuresOfIngredients = null;
+        $this->PROPERTY_FEATURES_OF_INGREDIENTS = $xmlIds;
+        return $this;
+    }
+
+    /**
      * Возвращает формы выпуска продукта
      *
-     * @return HlbReferenceItemCollection
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
+     * @return Collection|HlbReferenceItem[]
      */
-    public function getProductForms()
+    public function getProductForms(): Collection
     {
-        if (is_null($this->productForm)) {
+        if (null === $this->productForm) {
             $this->productForm = ReferenceUtils::getReferenceMulti(
-                'bx.hlblock.productform',
-                $this->PROPERTY_PRODUCT_FORM
+                Application::getHlBlockDataManager('bx.hlblock.productform'),
+                $this->getProductFormsXmlIds()
             );
         }
 
@@ -956,15 +1618,39 @@ class Product extends IblockElement
     }
 
     /**
+     * @return array
+     */
+    public function getProductFormsXmlIds(): array
+    {
+        $this->PROPERTY_PRODUCT_FORM = $this->PROPERTY_PRODUCT_FORM ?: [];
+        return $this->PROPERTY_PRODUCT_FORM;
+    }
+
+    /**
+     * @param array $xmlIds
+     *
+     * @return $this
+     */
+    public function withProductFormsXmlIds(array $xmlIds)
+    {
+        $this->productForm = null;
+        $this->PROPERTY_PRODUCT_FORM = $xmlIds;
+        return $this;
+    }
+
+    /**
      * Возвращает типы паразитов.
      *
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
      * @return HlbReferenceItemCollection
      */
     public function getTypesOfParasites()
     {
-        if (is_null($this->typeOfParasite)) {
+        if (null === $this->typeOfParasite) {
             $this->typeOfParasite = ReferenceUtils::getReferenceMulti(
-                'bx.hlblock.parasitetype',
+                Application::getHlBlockDataManager('bx.hlblock.parasitetype'),
                 $this->PROPERTY_TYPE_OF_PARASITE
             );
         }
@@ -1047,7 +1733,7 @@ class Product extends IblockElement
      */
     public function getSuggest()
     {
-        if (is_null($this->suggest)) {
+        if (null === $this->suggest) {
             $fullName = $this->getName();
             $suggest = explode(' ', $fullName);
             array_unshift($suggest, $fullName);
@@ -1055,7 +1741,7 @@ class Product extends IblockElement
             /** @var Offer $offer */
             foreach ($this->getOffers() as $offer) {
                 $suggest[] = $offer->getSkuId();
-                if (is_array($offer->getBarcodes())) {
+                if (\is_array($offer->getBarcodes())) {
                     foreach ($offer->getBarcodes() as $barcode) {
                         $suggest[] = $barcode;
                     }
@@ -1065,7 +1751,7 @@ class Product extends IblockElement
             $suggest = array_filter(
                 $suggest,
                 function ($token) {
-                    return trim($token) != '' && strlen($token) >= 3;
+                    return trim($token) != '' && \strlen($token) >= 3;
                 }
             );
 
@@ -1075,9 +1761,144 @@ class Product extends IblockElement
              * `java.lang.IllegalArgumentException: unknown field name [0], must be one of [input, weight, contexts]`
              */
             $this->suggest = array_values(array_unique($suggest));
-
         }
 
         return $this->suggest;
+    }
+
+    /**
+     * Проверяет, под заказ данный товар или нет
+     *
+     * @return bool
+     */
+    public function isByRequest(): bool
+    {
+        $result = true;
+        /** @var Offer $offer */
+        foreach ($this->getOffers() as $offer) {
+            $result &= $offer->isByRequest();
+        }
+
+        return $result;
+    }
+
+    /*
+     * @internal Специально для Elasitcsearch храним коллецию без ключей, т.к. ассоциативный массив с торговыми
+     * предложениями туда передавать нельзя: это будет объект, а не массив объектов.
+     *
+     * @return Collection|Offer[]
+     */
+    public function getOffers(): Collection
+    {
+        if (null === $this->offers) {
+            $this->offers = new ArrayCollection(
+                array_values(
+                    (new OfferQuery())->withFilterParameter('=PROPERTY_CML2_LINK', $this->getId())
+                        ->exec()
+                        ->toArray()
+                )
+            );
+        }
+
+        return $this->offers;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPackingCombination(): string
+    {
+        return $this->PROPERTY_PACKING_COMBINATION;
+    }
+
+    /**
+     * @param string $packingCombination
+     *
+     * @return static
+     */
+    public function setPackingCombination(string $packingCombination)
+    {
+        $this->PROPERTY_PACKING_COMBINATION = $packingCombination;
+
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getActions()
+    {
+        // @todo возвращать коллекцию акций, когда они будут реализованы
+        return [];
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasActions(): bool
+    {
+        return !empty($this->getActions());
+    }
+
+    /**
+     * @return array
+     */
+    public function getDeliveryAvailability(): array
+    {
+        // @todo учитывать региональные ограничения
+        $result = [self::AVAILABILITY_PICKUP];
+        if (!($this->isLowTemperatureRequired() || $this->isRefrigerated())) {
+            $result[] = self::AVAILABILITY_DELIVERY;
+        }
+        if ($this->isByRequest()) {
+            $result[] = self::AVAILABILITY_BY_REQUEST;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isTransportOnlyRefrigerator(): bool
+    {
+        return $this->PROPERTY_TRANSPORT_ONLY_REFRIGERATOR;
+    }
+
+    /**
+     * @param bool $onlyRefrigerator
+     *
+     * @return Product
+     */
+    public function withTransportOnlyRefrigerator(bool $onlyRefrigerator = true): Product
+    {
+        $this->PROPERTY_TRANSPORT_ONLY_REFRIGERATOR = $onlyRefrigerator;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isDeliveryAreaRestrict(): bool
+    {
+        return $this->PROPERTY_DC_SPECIAL_AREA_STORAGE;
+    }
+
+    /**
+     * @param bool $restrict
+     *
+     * @return Product
+     */
+    public function withDeliveryAreaRestrict(bool $restrict = true): Product
+    {
+        $this->PROPERTY_DC_SPECIAL_AREA_STORAGE = $restrict;
+        return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getWeightCapacityPacking() : string {
+        return $this->PROPERTY_WEIGHT_CAPACITY_PACKING;
     }
 }

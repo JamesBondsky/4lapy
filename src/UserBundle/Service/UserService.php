@@ -2,16 +2,34 @@
 
 namespace FourPaws\UserBundle\Service;
 
+use Bitrix\Sale\Fuser;
+use FourPaws\App\Application as App;
+use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\External\Manzana\Model\Client;
+use FourPaws\Location\Exception\CityNotFoundException;
+use FourPaws\Location\LocationService;
 use FourPaws\UserBundle\Entity\User;
+use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidCredentialException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
+use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Repository\UserRepository;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
-class UserService implements CurrentUserProviderInterface, UserAuthorizationInterface, UserRegistrationProviderInterface
+/**
+ * Class UserService
+ * @package FourPaws\UserBundle\Service
+ */
+class UserService implements
+    CurrentUserProviderInterface,
+    UserAuthorizationInterface,
+    UserRegistrationProviderInterface,
+    UserCitySelectInterface
 {
     /**
      * @var \CAllUser|\CUser
@@ -23,7 +41,18 @@ class UserService implements CurrentUserProviderInterface, UserAuthorizationInte
      */
     private $userRepository;
 
-    public function __construct(UserRepository $userRepository)
+    /**
+     * @var LocationService
+     */
+    private $locationService;
+
+    /**
+     * UserService constructor.
+     *
+     * @param UserRepository $userRepository
+     * @param LocationService $locationService
+     */
+    public function __construct(UserRepository $userRepository, LocationService $locationService)
     {
         /**
          * todo move to factory service
@@ -31,6 +60,7 @@ class UserService implements CurrentUserProviderInterface, UserAuthorizationInte
         global $USER;
         $this->bitrixUserService = $USER;
         $this->userRepository = $userRepository;
+        $this->locationService = $locationService;
     }
 
 
@@ -94,6 +124,25 @@ class UserService implements CurrentUserProviderInterface, UserAuthorizationInte
     }
 
     /**
+     *
+     *
+     * @return int
+     */
+    public function getCurrentFUserId(): int
+    {
+        return (int)Fuser::getId();
+    }
+
+
+    /**
+     * @return int
+     */
+    public function getAnonymousUserId(): int
+    {
+        return \CSaleUser::GetAnonymousUserID();
+    }
+
+    /**
      * @throws NotAuthorizedException
      * @return int
      */
@@ -110,9 +159,129 @@ class UserService implements CurrentUserProviderInterface, UserAuthorizationInte
      * @param User $user
      *
      * @return bool
+     * @throws ValidationException
+     * @throws BitrixRuntimeException
      */
     public function register(User $user): bool
     {
-        return true;
+        return $this->userRepository->create($user);
+    }
+    
+    /**
+     * @param string $code
+     * @param string $name
+     * @param string $parentName
+     *
+     * @return bool|array
+     * @throws ValidationException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws CityNotFoundException
+     * @throws NotAuthorizedException
+     * @throws BitrixRuntimeException
+     */
+    public function setSelectedCity(string $code = '', string $name = '', string $parentName = '')
+    {
+        $city = null;
+        if ($code) {
+            $city = $this->locationService->findLocationCityByCode($code);
+        } else {
+            /** @noinspection PassingByReferenceCorrectnessInspection */
+            $city = reset($this->locationService->findLocationCity($name, $parentName, 1, true));
+        }
+
+        if ($city) {
+            /** @noinspection SummerTimeUnsafeTimeManipulationInspection */
+            setcookie('user_city_id', $city['CODE'], 86400 * 30);
+
+            if ($this->isAuthorized()) {
+                $user = $this->getCurrentUser();
+                $user->setLocation($city['CODE']);
+                $this->userRepository->update($user);
+            }
+        }
+
+
+        return $city ?: false;
+    }
+    
+    /**
+     * @return array
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws NotAuthorizedException
+     */
+    public function getSelectedCity(): array
+    {
+        $cityCode = null;
+        if ($_COOKIE['user_city_id']) {
+            $cityCode = $_COOKIE['user_city_id'];
+        } elseif ($this->isAuthorized()) {
+            if (($user = $this->getCurrentUser()) && $user->getLocation()) {
+                $cityCode = $user->getLocation();
+            }
+        }
+
+        if ($cityCode) {
+            try {
+                return $this->locationService->findLocationCityByCode($cityCode);
+            } catch (CityNotFoundException $e) {
+            }
+        }
+
+        return $this->locationService->getDefaultLocation();
+    }
+
+    /**
+     * @return UserRepository
+     */
+    public function getUserRepository(): UserRepository
+    {
+        return $this->userRepository;
+    }
+
+    /**
+     * @param Client $client
+     * @param User|null $user
+     *
+     * @throws InvalidIdentifierException
+     * @throws ServiceNotFoundException
+     * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
+     */
+    public function setClientPersonalDataByCurUser(&$client, User $user = null)
+    {
+        if (!($user instanceof User)) {
+            $user = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class)->getCurrentUser();
+        }
+        
+        $client->birthDate          = $user->getManzanaBirthday();
+        $client->phone              = $user->getPersonalPhone();
+        $client->firstName          = $user->getName();
+        $client->secondName         = $user->getSecondName();
+        $client->lastName           = $user->getLastName();
+        $client->genderCode         = $user->getManzanaGender();
+        $client->email              = $user->getEmail();
+        $client->plLogin            = $user->getLogin();
+        $client->plRegistrationDate = $user->getManzanaDateRegister();
+    }
+    
+    /**
+     * @param int $id
+     *
+     * @return array
+     * @throws InvalidIdentifierException
+     * @throws NotAuthorizedException
+     */
+    public function getUserGroups(int $id = 0) : array
+    {
+        if ($id === 0) {
+            $id = $this->getCurrentUserId();
+        }
+        if ($id > 0) {
+            return $this->userRepository->getUserGroups($id);
+        }
+        
+        return [];
     }
 }

@@ -23,14 +23,28 @@
 <div class="b-main-slider js-main-slider">
     <?php foreach ($arResult['ITEMS'] as $item) { ?>
         <div class="b-main-item js-image-wrapper">
-            <a class="b-main-item__link-main"
-               href="<?= $item['PROPERTIES']['LINK']['VALUE'] ?>"
-               title="<?= $item['NAME'] ?>">
-                <img class="b-main-item__slider-background js-image-wrapper"
-                     src="<?= $item['PICTURE'] ?>"
-                     alt="<?= $item['NAME'] ?>"
-                     role="presentation" />
-            </a>
+            <a class="b-main-item__link-main" href="<?= $item['PROPERTIES']['LINK']['VALUE'] ?>" title="<?= $item['NAME'] ?>"><?php
+                if (!empty($item['DESKTOP_PICTURE'])) {
+                    ?><img class="b-main-item__slider-background b-main-item__slider-background--desktop js-image-wrapper"
+                           src="<?= $item['DESKTOP_PICTURE'] ?>"
+                           alt="<?= $item['NAME'] ?>"
+                           role="presentation"><?php
+                }
+
+                if (!empty($item['TABLET_PICTURE'])) {
+                    ?><img class="b-main-item__slider-background b-main-item__slider-background--tablet js-image-wrapper"
+                           src="<?= $item['TABLET_PICTURE'] ?>"
+                           alt="<?= $item['NAME'] ?>"
+                           role="presentation"><?php
+                }
+
+                if (!empty($item['MOBILE_PICTURE'])) {
+                    ?><img class="b-main-item__slider-background b-main-item__slider-background--mobile js-image-wrapper"
+                           src="<?= $item['MOBILE_PICTURE'] ?>"
+                           alt="<?= $item['NAME'] ?>"
+                           role="presentation"><?php
+                }
+            ?></a>
         </div>
     <?php } ?>
 </div>

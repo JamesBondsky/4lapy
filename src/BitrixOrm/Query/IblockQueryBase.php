@@ -10,9 +10,9 @@ abstract class IblockQueryBase extends QueryBase
          * По умолчанию следует выбирать активные и доступные элементы.
          * При необходимости для конкретного Query можно просто вызвать withFilter([]), чтобы выбрать всё.
          */
-        $this->withFilter(self::getActiveAccessableElementsFilter());
+        $this->withFilter(static::getActiveAccessableElementsFilter());
     }
-    
+
     /**
      * Возвращает фильтр активных и доступных элементов инфоблока.
      *
@@ -21,7 +21,7 @@ abstract class IblockQueryBase extends QueryBase
      *
      * @return array
      */
-    public static function getActiveAccessableElementsFilter() : array
+    public static function getActiveAccessableElementsFilter(): array
     {
         return [
             'CHECK_PERMISSIONS' => 'Y',

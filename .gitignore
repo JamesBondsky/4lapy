@@ -31,3 +31,9 @@ node_modules/
 
 ### Php Unit
 phpunit.xml
+
+### Storm & OS
+Thumbs.db
+Desktop.ini
+.idea
+.DS_Store

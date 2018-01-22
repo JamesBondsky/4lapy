@@ -3,9 +3,16 @@
 namespace FourPaws\App;
 
 use Circle\RestClientBundle\CircleRestClientBundle;
+use Cocur\Slugify\Bridge\Symfony\CocurSlugifyBundle;
 use FOS\RestBundle\FOSRestBundle;
+use FourPaws\PersonalBundle\FourPawsPersonalBundle;
 use FourPaws\AppBundle\FourPawsAppBundle;
 use FourPaws\MobileApiBundle\FourPawsMobileApiBundle;
+use FourPaws\CatalogBundle\FourPawsCatalogBundle;
+use FourPaws\DeliveryBundle\FourPawsDeliveryBundle;
+use FourPaws\SaleBundle\FourPawsSaleBundle;
+use FourPaws\SapBundle\FourPawsSapBundle;
+use FourPaws\StoreBundle\FourPawsStoreBundle;
 use FourPaws\UserBundle\FourPawsUserBundle;
 use JMS\SerializerBundle\JMSSerializerBundle;
 use Misd\PhoneNumberBundle\MisdPhoneNumberBundle;
@@ -39,6 +46,18 @@ class AppKernel extends Kernel
     protected static $documentRoot;
 
     /**
+     * @return string
+     */
+    public static function getDocumentRoot(): string
+    {
+        if (null === static::$documentRoot) {
+            static::$documentRoot = \dirname(__DIR__, 2) . '/web';
+        }
+
+        return static::$documentRoot;
+    }
+
+    /**
      * Returns an array of bundles to register.
      *
      * @return BundleInterface[] An array of bundle instances
@@ -58,11 +77,18 @@ class AppKernel extends Kernel
             new JMSSerializerBundle(),
             new NelmioApiDocBundle(),
             new MisdPhoneNumberBundle(),
+            new CocurSlugifyBundle(),
 
             /** Internal bundles */
             new FourPawsAppBundle(),
             new FourPawsMobileApiBundle(),
             new FourPawsUserBundle(),
+            new FourPawsCatalogBundle(),
+            new FourPawsDeliveryBundle(),
+            new FourPawsSaleBundle(),
+            new FourPawsStoreBundle(),
+            new FourPawsSapBundle(),
+            new FourPawsPersonalBundle(),
         ];
 
         if (\in_array($this->getEnvironment(), ['dev', 'test'], true)) {
@@ -91,18 +117,6 @@ class AppKernel extends Kernel
     public function getRootDir()
     {
         return \dirname(static::getDocumentRoot());
-    }
-
-    /**
-     * @return string
-     */
-    public static function getDocumentRoot(): string
-    {
-        if (null === static::$documentRoot) {
-            static::$documentRoot = \dirname(__DIR__, 2) . '/web';
-        }
-
-        return static::$documentRoot;
     }
 
     /**

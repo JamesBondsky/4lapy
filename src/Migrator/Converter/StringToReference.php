@@ -22,6 +22,8 @@ class StringToReference extends AbstractConverter
 {
     const FIELD_EXTERNAL_KEY = 'UF_XML_ID';
     
+    const FIELD_CODE         = 'UF_CODE';
+    
     private $referenceCode;
     
     private $fieldToSearch;
@@ -49,6 +51,24 @@ class StringToReference extends AbstractConverter
     public function getFieldToSearch() : string
     {
         return $this->fieldToSearch;
+    }
+    
+    /**
+     * @param string $from
+     *
+     * @return string
+     */
+    public function transliterate(string $from)
+    {
+        return \CUtil::translit($from,
+                                'ru',
+                                [
+                                    'max_len'               => '255',
+                                    'change_case'           => 'L',
+                                    'replace_space'         => '-',
+                                    'replace_other'         => '-',
+                                    'delete_repeat_replace' => 'true',
+                                ]);
     }
     
     /**
@@ -172,11 +192,12 @@ class StringToReference extends AbstractConverter
      */
     protected function addValue(string $value, string $fieldName) : string
     {
-        $externalKey = md5($value);
+        $externalKey = $this->transliterate($value);
         
         $fields = [
             $fieldName               => $value,
             self::FIELD_EXTERNAL_KEY => $externalKey,
+            self::FIELD_CODE         => $externalKey,
         ];
         
         $select = [self::FIELD_EXTERNAL_KEY];
@@ -186,7 +207,7 @@ class StringToReference extends AbstractConverter
         }
         
         $exists = $this->getDataClass()::getList([
-                                                     'filter' => [self::FIELD_EXTERNAL_KEY => $externalKey],
+                                                     'filter' => [self::FIELD_CODE => $externalKey],
                                                      'select' => $select,
                                                  ])->fetch();
         

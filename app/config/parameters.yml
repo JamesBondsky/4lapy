@@ -4,6 +4,17 @@ parameters:
   locale: ru
   secret: 7371018148815e9de0f88dba6a44126524d6a80e
 
+  manzana:
+    login: "%env(MANZANA_LOGIN)%"
+    password: "%env(MANZANA_PASSWORD)%"
+    wdsl: "%env(MANZANA_HOST)%"
+    pos: kuvi_pos
+    business_unit: kuvi_shop
+  manzana.wdsl: "%env(MANZANA_HOST)%"
+  manzana.pos.wdsl: "%env(MANZANA_HOST_POS)%"
+  manzana.guzzle.curl:
+    !php/const:CURLOPT_CONNECTTIMEOUT: 3
+
   migrator:
     token: c81789b482ecbe6976f496a9697d75de
 
@@ -18,9 +29,31 @@ parameters:
     url: https://api.esv2.com
     key: ivaacmVjzakOzRLeYjKy
 
+  recaptcha:
+    key: '%env(RECAPTCHA_KEY)%'
+    secretKey: '%env(RECAPTCHA_SECRET_KEY)%'
+    serviceUri: 'https://www.google.com/recaptcha/api/siteverify'
+
+  recaptcha.guzzle.curl:
+    !php/const:CURLOPT_CONNECTTIMEOUT: 3
+
+  callback:
+    baseUri: 'https://4584.vats-on.ru'
+    login: '%env(CALLBACK_LOGIN)%'
+    pass: '%env(CALLBACK_PASS)%'
+
+  callback.guzzle.curl:
+    !php/const:CURLOPT_CONNECTTIMEOUT: 3
+
   # See \Elastica\Client::$_config for more options
   elastica.client_options:
     - timeout: 60
+      # ВНИМАНИЕ! Логирование следует включать только временно при отладке,
+      # т.к. оно записывает очень много данных в лог.
     - log: false
     - bigintConversion: false
     - retryOnConflict: 0
+
+  sap.product.directory.in: '/home/vagrant'
+  sap.product.directory.out: '/out'
+  sap.product.directory.error: '/error'
