@@ -19,43 +19,48 @@ class StringToIblock extends AbstractConverter
 {
     const FIELD_EXTERNAL_KEY = 'ID';
     
-    const DEFAULT_VALUE_KEY  = 'NAME';
+    const DEFAULT_VALUE_KEY = 'NAME';
     
-    private          $iblockId;
+    private $iblockId;
     
-    private          $fieldToSearch;
+    private $fieldToSearch;
+    
+    private $xmlId;
+    
+    /**
+     * @param mixed $xmlId
+     */
+    public function setXmlId(string $xmlId) {
+        $this->xmlId = $xmlId;
+    }
     
     protected static $iblockValues = [];
     
     /**
      * @return string
      */
-    public function getFieldToSearch() : string
-    {
+    public function getFieldToSearch() : string {
         return $this->fieldToSearch;
     }
     
     /**
      * @param string $fieldToSearch
      */
-    public function setFieldToSearch(string $fieldToSearch = self::DEFAULT_VALUE_KEY)
-    {
+    public function setFieldToSearch(string $fieldToSearch = self::DEFAULT_VALUE_KEY) {
         $this->fieldToSearch = $fieldToSearch;
     }
     
     /**
      * @return string
      */
-    public function getIblockId() : string
-    {
+    public function getIblockId() : string {
         return $this->iblockId;
     }
     
     /**
      * @param string $iblockId
      */
-    public function setIblockId(string $iblockId)
-    {
+    public function setIblockId(string $iblockId) {
         $this->iblockId = $iblockId;
     }
     
@@ -66,13 +71,16 @@ class StringToIblock extends AbstractConverter
      *
      * @throws \Exception
      */
-    public function convert(array $data) : array
-    {
+    public function convert(array $data) : array {
         $isArray   = true;
         $fieldName = $this->getFieldName();
         
         if (!$data[$fieldName]) {
             return $data;
+        }
+        
+        if ($this->xmlId) {
+            $this->setXmlId($data[$this->xmlId]);
         }
         
         $fieldToSearch = $this->getFieldToSearch();
@@ -108,17 +116,13 @@ class StringToIblock extends AbstractConverter
      * @throws ReferenceException
      * @throws \Bitrix\Main\ArgumentException
      */
-    protected function addValue(string $value, string $fieldName) : string
-    {
-        
+    protected function addValue(string $value, string $fieldName) : string {
         $cIBlockElement = new \CIBlockElement();
         
-        $code = \CUtil::translit($value,
-                                 'ru',
-                                 [
-                                     'replace_space' => '-',
-                                     'replace_other' => '-',
-                                 ]);
+        $code = \CUtil::translit($value, 'ru', [
+                'replace_space' => '-',
+                'replace_other' => '-',
+            ]);
         
         $exists = ElementTable::getList([
                                             'filter' => [
@@ -135,6 +139,7 @@ class StringToIblock extends AbstractConverter
         $fields = [
             $fieldName  => $value,
             'CODE'      => $code,
+            'XML_ID'    => $this->xmlId ?: $code,
             'IBLOCK_ID' => $this->getIblockId(),
         ];
         
@@ -163,12 +168,9 @@ class StringToIblock extends AbstractConverter
      *
      * @throws \Exception
      */
-    protected function searchValue($value, $fieldToSearch)
-    {
+    protected function searchValue($value, $fieldToSearch) {
         $referenceValues = $this->getReferenceValues();
-        $position        = array_search($value,
-                                        array_column($referenceValues, $fieldToSearch),
-                                        true);
+        $position        = array_search($value, array_column($referenceValues, $fieldToSearch), true);
         
         return $position === false ? '' : $referenceValues[$position][self::FIELD_EXTERNAL_KEY];
     }
@@ -178,18 +180,13 @@ class StringToIblock extends AbstractConverter
      *
      * @throws \Exception
      */
-    protected function getReferenceValues() : array
-    {
+    protected function getReferenceValues() : array {
         if (!self::$iblockValues) {
-            $collection = \CIBlockElement::GetList([],
-                                                   ['IBLOCK_ID' => $this->getIblockId()],
-                                                   false,
-                                                   false,
-                                                   [
-                                                       'NAME',
-                                                       'ID',
-                                                       'CODE',
-                                                   ]);
+            $collection = \CIBlockElement::GetList([], ['IBLOCK_ID' => $this->getIblockId()], false, false, [
+                                                         'NAME',
+                                                         'ID',
+                                                         'CODE',
+                                                     ]);
             
             while ($element = $collection->Fetch()) {
                 self::$iblockValues[] = $element;
@@ -206,8 +203,7 @@ class StringToIblock extends AbstractConverter
      *
      * @throws \Bitrix\Main\LoaderException
      */
-    public function __construct(string $fieldName)
-    {
+    public function __construct(string $fieldName) {
         if (!Loader::includeModule('iblock')) {
             throw new LoaderException('Module iblock must be installed');
         }

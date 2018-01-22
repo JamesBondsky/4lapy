@@ -97,7 +97,9 @@ if ($cache->initCache(
     $res      = \CIBlockElement::GetProperty($arParams['IBLOCK_ID'], $elementID, [], ['CODE' => 'PRODUCTS']);
     $products = [];
     while ($item = $res->Fetch()) {
-        $products[] = $item['VALUE'];
+        if(!empty($item['VALUE']) && !in_array($item['VALUE'], $products)) {
+            $products[] = $item['VALUE'];
+        }
     }
     if (!empty($products)) {
         $query    = new ProductQuery();
@@ -111,13 +113,7 @@ if (!empty($products)) {
     <div class="b-container">
         <section class="b-common-section">
             <div class="b-common-section__title-box b-common-section__title-box--sale">
-                <h2 class="b-title b-title--sale">Распродажа</h2>
-                <?php /** @todo Нужна ссылка на страницу распродажи */?>
-                <a class="b-link b-link--title b-link--title" href="javascript:void(0)" title="Показать все">
-                    <span class="b-link__text b-link__text--title">Показать все</span>
-                    <span class="b-link__mobile b-link__mobile--title">Все</span>
-                    <span class="b-icon"><?= new SvgDecorator('icon-arrow-right', 6, 10) ?></span>
-                </a>
+                <h2 class="b-title b-title--sale">Товары</h2>
             </div>
             <div class="b-common-section__content b-common-section__content--sale js-popular-product">
                 <?php foreach ($products as $product) {

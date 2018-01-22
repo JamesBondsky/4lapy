@@ -6,6 +6,7 @@
 
 namespace FourPaws\SapBundle\Dto\In\Offers;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\SapBundle\Exception\LogicException;
 use JMS\Serializer\Annotation as Serializer;
@@ -64,5 +65,25 @@ class Properties
         }
 
         return $properties->current();
+    }
+
+    /**
+     * @param string $code
+     * @param array  $default
+     *
+     * @throws LogicException
+     * @return Collection
+     */
+    public function getPropertyValues(string $code, array $default = []): Collection
+    {
+        $values = $default;
+        $property = $this->getProperty($code);
+        if ($property instanceof Property) {
+            $propertyValues = $property->getValues()->map(function (PropertyValue $propertyValue) {
+                return $propertyValue->getCode();
+            });
+            $values = $propertyValues->count() ? $propertyValues->getValues() : $values;
+        }
+        return new ArrayCollection($values);
     }
 }

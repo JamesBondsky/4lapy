@@ -344,13 +344,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     protected $seasonClothes;
 
     /**
-     * @var string
-     * @Type("string")
-     * @Groups({"elastic"})
-     */
-    protected $PROPERTY_WEIGHT_CAPACITY_PACKING = '';
-
-    /**
      * @var bool
      * @Type("bool")
      * @Groups({"elastic"})
@@ -566,6 +559,27 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @var string
      */
     protected $PROPERTY_PACKING_COMBINATION = '';
+    
+    /**
+     * @var string
+     * @Type("string")
+     * @Groups({"elastic"})
+     */
+    protected $PROPERTY_WEIGHT_CAPACITY_PACKING = '';
+    
+    /**
+     * @var bool
+     * @Type("bool")
+     * @Groups({"elastic"})
+     */
+    protected $PROPERTY_TRANSPORT_ONLY_REFRIGERATOR = false;
+
+    /**
+     * @var bool
+     * @Type("bool")
+     * @Groups({"elastic"})
+     */
+    protected $PROPERTY_DC_SPECIAL_AREA_STORAGE = false;
 
     public function __construct(array $fields = [])
     {
@@ -594,8 +608,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 
         //Сбросить бренд, чтобы выбрался новый.
         $this->brand = null;
-        //Освежить вспомогательное свойство с именем бренда
-        $this->PROPERTY_BRAND_NAME = $this->getBrand()->getName();
+        $this->PROPERTY_BRAND_NAME = '';
 
         return $this;
     }
@@ -632,6 +645,9 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      */
     public function getBrandName(): string
     {
+        if (!$this->PROPERTY_BRAND_NAME && $this->PROPERTY_BRAND) {
+            $this->PROPERTY_BRAND_NAME = $this->getBrand()->getName();
+        }
         return $this->PROPERTY_BRAND_NAME;
     }
 
@@ -655,16 +671,37 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @throws ServiceCircularReferenceException
      * @return HlbReferenceItemCollection
      */
-    public function getForWho()
+    public function getForWho(): HlbReferenceItemCollection
     {
         if (null === $this->forWho) {
             $this->forWho = ReferenceUtils::getReferenceMulti(
                 Application::getHlBlockDataManager('bx.hlblock.forwho'),
-                $this->PROPERTY_FOR_WHO
+                $this->getForWhoXmlIds()
             );
         }
 
         return $this->forWho;
+    }
+
+    /**
+     * @param array $xmlIds
+     *
+     * @return $this
+     */
+    public function withForWhoXmlIds(array $xmlIds = [])
+    {
+        $this->PROPERTY_FOR_WHO = $xmlIds;
+        $this->forWho = null;
+        return $this;
+    }
+
+    /**
+     * @return array|string[]
+     */
+    public function getForWhoXmlIds(): array
+    {
+        $this->PROPERTY_FOR_WHO = $this->PROPERTY_FOR_WHO ?: [];
+        return $this->PROPERTY_FOR_WHO;
     }
 
     /**
@@ -673,16 +710,37 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @throws ServiceCircularReferenceException
      * @return HlbReferenceItemCollection
      */
-    public function getPetSize()
+    public function getPetSize(): HlbReferenceItemCollection
     {
         if (null === $this->petSize) {
             $this->petSize = ReferenceUtils::getReferenceMulti(
                 Application::getHlBlockDataManager('bx.hlblock.petsize'),
-                $this->PROPERTY_PET_SIZE
+                $this->getPetSizeXmlIds()
             );
         }
 
         return $this->petSize;
+    }
+
+    /**
+     * @return array|string[]
+     */
+    public function getPetSizeXmlIds(): array
+    {
+        $this->PROPERTY_PET_SIZE = $this->PROPERTY_PET_SIZE ?: [];
+        return $this->PROPERTY_PET_SIZE;
+    }
+
+    /**
+     * @param array $xmlIds
+     *
+     * @return $this
+     */
+    public function withPetSizeXmlIds(array $xmlIds)
+    {
+        $this->petSize = null;
+        $this->PROPERTY_PET_SIZE = $xmlIds;
+        return $this;
     }
 
     /**
@@ -700,11 +758,32 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         if ((null === $this->category) && $this->PROPERTY_CATEGORY) {
             $this->category = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.productcategory'),
-                $this->PROPERTY_CATEGORY
+                $this->getSapCategoryXmlId()
             );
         }
 
         return $this->category;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSapCategoryXmlId(): string
+    {
+        $this->PROPERTY_CATEGORY = $this->PROPERTY_CATEGORY ?: '';
+        return $this->PROPERTY_CATEGORY;
+    }
+
+    /**
+     * @param string $xmlId
+     *
+     * @return $this
+     */
+    public function withSapCategoryXmlId(string $xmlId)
+    {
+        $this->category = null;
+        $this->PROPERTY_CATEGORY = $xmlId;
+        return $this;
     }
 
     /**
@@ -718,7 +797,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         if ((null === $this->purpose) && $this->PROPERTY_PURPOSE) {
             $this->purpose = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.purpose'),
-                $this->PROPERTY_PURPOSE
+                $this->getPurposeXmlId()
             );
         }
 
@@ -726,21 +805,24 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
-     * @throws ApplicationCreateException
-     * @throws RuntimeException
-     * @throws ServiceCircularReferenceException
-     * @return HlbReferenceItemCollection
+     * @return string
      */
-    public function getPetAge()
+    public function getPurposeXmlId(): string
     {
-        if (null === $this->petAge) {
-            $this->petAge = ReferenceUtils::getReferenceMulti(
-                Application::getHlBlockDataManager('bx.hlblock.petage'),
-                $this->PROPERTY_PET_AGE
-            );
-        }
+        $this->PROPERTY_PURPOSE = $this->PROPERTY_PURPOSE ?: '';
+        return $this->PROPERTY_PURPOSE;
+    }
 
-        return $this->petAge;
+    /**
+     * @param string $xmlId
+     *
+     * @return $this
+     */
+    public function withPurposeXmlId(string $xmlId)
+    {
+        $this->purpose = null;
+        $this->PROPERTY_PURPOSE = $xmlId;
+        return $this;
     }
 
     /**
@@ -749,16 +831,77 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @throws ServiceCircularReferenceException
      * @return HlbReferenceItemCollection
      */
-    public function getPetAgeAdditional()
+    public function getPetAge(): HlbReferenceItemCollection
+    {
+        if (null === $this->petAge) {
+            $this->petAge = ReferenceUtils::getReferenceMulti(
+                Application::getHlBlockDataManager('bx.hlblock.petage'),
+                $this->getPetAgeXmlIds()
+            );
+        }
+
+        return $this->petAge;
+    }
+
+    /**
+     * @return array
+     */
+    public function getPetAgeXmlIds(): array
+    {
+        $this->PROPERTY_PET_AGE = $this->PROPERTY_PET_AGE ?: [];
+        return $this->PROPERTY_PET_AGE;
+    }
+
+    /**
+     * @param array $xmlIds
+     *
+     * @return $this
+     */
+    public function withPetAgeXmlIds(array $xmlIds)
+    {
+        $this->petAge = null;
+        $this->PROPERTY_PET_AGE = $xmlIds;
+        return $this;
+    }
+
+
+    /**
+     * @throws ApplicationCreateException
+     * @throws RuntimeException
+     * @throws ServiceCircularReferenceException
+     * @return HlbReferenceItemCollection
+     */
+    public function getPetAgeAdditional(): HlbReferenceItemCollection
     {
         if (null === $this->petAgeAdditional) {
             $this->petAgeAdditional = ReferenceUtils::getReferenceMulti(
                 Application::getHlBlockDataManager('bx.hlblock.petageadditional'),
-                $this->PROPERTY_PET_AGE_ADDITIONAL
+                $this->getPetAgeAdditionalXmlIds()
             );
         }
 
         return $this->petAgeAdditional;
+    }
+
+    /**
+     * @return array|string[]
+     */
+    public function getPetAgeAdditionalXmlIds(): array
+    {
+        $this->PROPERTY_PET_AGE_ADDITIONAL = $this->PROPERTY_PET_AGE_ADDITIONAL ?: [];
+        return $this->PROPERTY_PET_AGE_ADDITIONAL;
+    }
+
+    /**
+     * @param array $xmlIds
+     *
+     * @return $this
+     */
+    public function withPetAgeAdditionalXmlIds(array $xmlIds)
+    {
+        $this->petAgeAdditional = null;
+        $this->PROPERTY_PET_AGE_ADDITIONAL = $xmlIds;
+        return $this;
     }
 
     /**
@@ -769,14 +912,35 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      */
     public function getPetBreed()
     {
-        if ((null === $this->petBreed) && $this->PROPERTY_PET_BREED) {
+        if ((null === $this->petBreed) && $this->getPetBreedXmlId()) {
             $this->petBreed = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.petbreed'),
-                $this->PROPERTY_PET_BREED
+                $this->getPetBreedXmlId()
             );
         }
 
         return $this->petBreed;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPetBreedXmlId(): string
+    {
+        $this->PROPERTY_PET_BREED = $this->PROPERTY_PET_BREED ?: '';
+        return $this->PROPERTY_PET_BREED;
+    }
+
+    /**
+     * @param string $xmlId
+     *
+     * @return $this
+     */
+    public function withPetBreedXmlId(string $xmlId)
+    {
+        $this->petBreed = null;
+        $this->PROPERTY_PET_BREED = $xmlId;
+        return $this;
     }
 
     /**
@@ -787,14 +951,35 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      */
     public function getPetGender()
     {
-        if ((null === $this->petGender) && $this->PROPERTY_PET_GENDER) {
+        if ((null === $this->petGender) && $this->getPetGenderXmlId()) {
             $this->petGender = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.petgender'),
-                $this->PROPERTY_PET_GENDER
+                $this->getPetGenderXmlId()
             );
         }
 
         return $this->petGender;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPetGenderXmlId(): string
+    {
+        $this->PROPERTY_PET_GENDER = $this->PROPERTY_PET_GENDER ?: '';
+        return $this->PROPERTY_PET_GENDER;
+    }
+
+    /**
+     * @param string $xmlId
+     *
+     * @return $this
+     */
+    public function withPetGenderXmlId(string $xmlId)
+    {
+        $this->petGender = null;
+        $this->PROPERTY_PET_GENDER = $xmlId;
+        return $this;
     }
 
     /**
@@ -803,12 +988,12 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @throws ServiceCircularReferenceException
      * @return HlbReferenceItemCollection
      */
-    public function getLabels()
+    public function getLabels(): HlbReferenceItemCollection
     {
         if (null === $this->label) {
             $this->label = ReferenceUtils::getReferenceMulti(
                 Application::getHlBlockDataManager('bx.hlblock.label'),
-                $this->PROPERTY_LABEL
+                $this->getLabelsXmlId()
             );
             /*
              * TODO Добавить динамический запрос шильдиков по акциям, в которых в данном регионе участвует этот продукт
@@ -821,13 +1006,45 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
+     * @return array|string[]
+     */
+    public function getLabelsXmlId(): array
+    {
+        $this->PROPERTY_LABEL = $this->PROPERTY_LABEL ?: [];
+        return $this->PROPERTY_LABEL;
+    }
+
+    /**
+     * @param array $xmlIds
+     *
+     * @return $this
+     */
+    public function withLabelsXmlIds(array $xmlIds)
+    {
+        $this->label = null;
+        $this->PROPERTY_LABEL = $xmlIds;
+        return $this;
+    }
+
+    /**
      * Возвращает признак "товар собственной торговой марки"
      *
      * @return bool
      */
-    public function isSTM()
+    public function isSTM(): bool
     {
-        return (bool)(int)$this->PROPERTY_STM;
+        return (bool)$this->PROPERTY_STM;
+    }
+
+    /**
+     * @param bool $isSTM
+     *
+     * @return $this
+     */
+    public function withSTM(bool $isSTM = true)
+    {
+        $this->PROPERTY_STM = $isSTM;
+        return $this;
     }
 
     /**
@@ -849,17 +1066,38 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
+     * @return string
+     */
+    public function getCountryXmlId(): string
+    {
+        $this->PROPERTY_COUNTRY = $this->PROPERTY_COUNTRY ?: '';
+        return $this->PROPERTY_COUNTRY;
+    }
+
+    /**
+     * @param string $xmlId
+     *
+     * @return $this
+     */
+    public function withCountryXmlId(string $xmlId)
+    {
+        $this->country = null;
+        $this->PROPERTY_COUNTRY = $xmlId;
+        return $this;
+    }
+
+    /**
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
      * @return HlbReferenceItemCollection
      */
-    public function getTradeNames()
+    public function getTradeNames(): HlbReferenceItemCollection
     {
         if (null === $this->tradeName) {
             $this->tradeName = ReferenceUtils::getReferenceMulti(
                 Application::getHlBlockDataManager('bx.hlblock.tradename'),
-                $this->PROPERTY_TRADE_NAME
+                $this->getTradeNameXmlIds()
             );
         }
 
@@ -867,17 +1105,38 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
+     * @return array|string[]
+     */
+    public function getTradeNameXmlIds(): array
+    {
+        $this->PROPERTY_TRADE_NAME = $this->PROPERTY_TRADE_NAME ?: [];
+        return $this->PROPERTY_TRADE_NAME;
+    }
+
+    /**
+     * @param array $xmlIds
+     *
+     * @return $this
+     */
+    public function withTradeNameXmlIds(array $xmlIds)
+    {
+        $this->tradeName = null;
+        $this->PROPERTY_TRADE_NAME = $xmlIds;
+        return $this;
+    }
+
+    /**
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
      * @return HlbReferenceItemCollection
      */
-    public function getMakers()
+    public function getMakers(): HlbReferenceItemCollection
     {
         if (null === $this->maker) {
             $this->maker = ReferenceUtils::getReferenceMulti(
                 Application::getHlBlockDataManager('bx.hlblock.maker'),
-                $this->PROPERTY_MAKER
+                $this->getMakersXmlIds()
             );
         }
 
@@ -885,17 +1144,38 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
+     * @return array|string[]
+     */
+    public function getMakersXmlIds(): array
+    {
+        $this->PROPERTY_MAKER = $this->PROPERTY_MAKER ?: [];
+        return $this->PROPERTY_MAKER;
+    }
+
+    /**
+     * @param array $xmlIds
+     *
+     * @return $this
+     */
+    public function withMakersXmlIds(array $xmlIds)
+    {
+        $this->maker = null;
+        $this->PROPERTY_MAKER = $xmlIds;
+        return $this;
+    }
+
+    /**
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
      * @return HlbReferenceItemCollection
      */
-    public function getManagersOfCategory()
+    public function getManagersOfCategory(): HlbReferenceItemCollection
     {
         if (null === $this->managerOfCategory) {
             $this->managerOfCategory = ReferenceUtils::getReferenceMulti(
                 Application::getHlBlockDataManager('bx.hlblock.categorymanager'),
-                $this->PROPERTY_MANAGER_OF_CATEGORY
+                $this->getManagersOfCategoryXmlIds()
             );
         }
 
@@ -903,17 +1183,38 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
+     * @return array|string[]
+     */
+    public function getManagersOfCategoryXmlIds(): array
+    {
+        $this->PROPERTY_MANAGER_OF_CATEGORY = $this->PROPERTY_MANAGER_OF_CATEGORY ?: [];
+        return $this->PROPERTY_MANAGER_OF_CATEGORY;
+    }
+
+    /**
+     * @param array $xmlIds
+     *
+     * @return $this
+     */
+    public function withManagersOfCategoryXmlIds(array $xmlIds)
+    {
+        $this->managerOfCategory = null;
+        $this->PROPERTY_MANAGER_OF_CATEGORY = $xmlIds;
+        return $this;
+    }
+
+    /**
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
      * @return HlbReferenceItemCollection
      */
-    public function getManufactureMaterials()
+    public function getManufactureMaterials(): HlbReferenceItemCollection
     {
         if (null === $this->manufactureMaterial) {
             $this->manufactureMaterial = ReferenceUtils::getReferenceMulti(
                 Application::getHlBlockDataManager('bx.hlblock.material'),
-                $this->PROPERTY_MANUFACTURE_MATERIAL
+                $this->getManufactureMaterialsXmlIds()
             );
         }
 
@@ -921,17 +1222,38 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
+     * @return array|string[]
+     */
+    public function getManufactureMaterialsXmlIds(): array
+    {
+        $this->PROPERTY_MANUFACTURE_MATERIAL = $this->PROPERTY_MANUFACTURE_MATERIAL ?: [];
+        return $this->PROPERTY_MANUFACTURE_MATERIAL;
+    }
+
+    /**
+     * @param array $xmlIds
+     *
+     * @return $this
+     */
+    public function withManufactureMaterialsXmlIds(array $xmlIds)
+    {
+        $this->manufactureMaterial = null;
+        $this->PROPERTY_MANUFACTURE_MATERIAL = $xmlIds;
+        return $this;
+    }
+
+    /**
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
      * @return HlbReferenceItemCollection
      */
-    public function getClothesSeasons()
+    public function getClothesSeasons(): HlbReferenceItemCollection
     {
         if (null === $this->seasonClothes) {
             $this->seasonClothes = ReferenceUtils::getReferenceMulti(
                 Application::getHlBlockDataManager('bx.hlblock.season'),
-                $this->PROPERTY_SEASON_CLOTHES
+                $this->getClothesSeasonsXmlIds()
             );
         }
 
@@ -939,11 +1261,24 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
-     * @return string
+     * @return array|string[]
      */
-    public function getWeightCapacityPacking()
+    public function getClothesSeasonsXmlIds(): array
     {
-        return $this->PROPERTY_WEIGHT_CAPACITY_PACKING;
+        $this->PROPERTY_SEASON_CLOTHES = $this->PROPERTY_SEASON_CLOTHES ?: [];
+        return $this->PROPERTY_SEASON_CLOTHES;
+    }
+
+    /**
+     * @param array $xmlIds
+     *
+     * @return $this
+     */
+    public function withClothesSeasonsXmlIds(array $xmlIds)
+    {
+        $this->seasonClothes = null;
+        $this->PROPERTY_SEASON_CLOTHES = $xmlIds;
+        return $this;
     }
 
     /**
@@ -951,9 +1286,20 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return bool
      */
-    public function isLicenseRequired()
+    public function isLicenseRequired(): bool
     {
-        return (bool)(int)$this->PROPERTY_LICENSE;
+        return (bool)$this->PROPERTY_LICENSE;
+    }
+
+    /**
+     * @param bool $licenseRequired
+     *
+     * @return $this
+     */
+    public function withLicenseRequired(bool $licenseRequired = true)
+    {
+        $this->PROPERTY_LICENSE = $licenseRequired;
+        return $this;
     }
 
     /**
@@ -961,9 +1307,20 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return bool
      */
-    public function isLowTemperatureRequired()
+    public function isLowTemperatureRequired(): bool
     {
-        return (bool)(int)$this->PROPERTY_LOW_TEMPERATURE;
+        return (bool)$this->PROPERTY_LOW_TEMPERATURE;
+    }
+
+    /**
+     * @param bool $isLowTemperature
+     *
+     * @return $this
+     */
+    public function withLowTemperatureRequired($isLowTemperature = true)
+    {
+        $this->PROPERTY_LOW_TEMPERATURE = $isLowTemperature;
+        return $this;
     }
 
     /**
@@ -995,6 +1352,27 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
+     * @return string
+     */
+    public function getPetTypeXmlId(): string
+    {
+        $this->PROPERTY_PET_TYPE = $this->PROPERTY_PET_TYPE ?: '';
+        return $this->PROPERTY_PET_TYPE;
+    }
+
+    /**
+     * @param string $xmlId
+     *
+     * @return $this
+     */
+    public function withPetTypeXmlId(string $xmlId)
+    {
+        $this->petType = null;
+        $this->PROPERTY_PET_TYPE = $xmlId;
+        return $this;
+    }
+
+    /**
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
@@ -1002,15 +1380,40 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      */
     public function getPharmaGroup()
     {
-        if ((null === $this->pharmaGroup) && $this->PROPERTY_PHARMA_GROUP) {
+        if ((null === $this->pharmaGroup) && $this->getPharmaGroupXmlId()) {
             $this->pharmaGroup = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.pharmagroup'),
-                $this->PROPERTY_PHARMA_GROUP
+                $this->getPharmaGroupXmlId()
             );
         }
 
         return $this->pharmaGroup;
     }
+
+    /**
+     * @return string
+     */
+    public function getPharmaGroupXmlId(): string
+    {
+        $this->PROPERTY_PHARMA_GROUP = $this->PROPERTY_PHARMA_GROUP ?: '';
+        return $this->PROPERTY_PHARMA_GROUP;
+    }
+
+    /**
+     * @param string $xmlId
+     *
+     * @return $this
+     */
+    public function withPharmaGroupXmlId(string $xmlId)
+    {
+        $this->pharmaGroup = null;
+        $this->PROPERTY_PHARMA_GROUP = $xmlId;
+        return $this;
+    }
+
+    /**
+     * @todo Ацессоры продолжить
+     */
 
     /**
      * Возвращает специализацию корма
@@ -1022,14 +1425,36 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      */
     public function getFeedSpecification()
     {
-        if ((null === $this->feedSpecification) && $this->PROPERTY_FEED_SPECIFICATION) {
+        if ((null === $this->feedSpecification) && $this->getFeedSpecificationXmlId()) {
             $this->feedSpecification = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.feedspec'),
-                $this->PROPERTY_FEED_SPECIFICATION
+                $this->getFeedSpecificationXmlId()
             );
         }
 
         return $this->feedSpecification;
+    }
+
+
+    /**
+     * @return string
+     */
+    public function getFeedSpecificationXmlId(): string
+    {
+        $this->PROPERTY_FEED_SPECIFICATION = $this->PROPERTY_FEED_SPECIFICATION ?: '';
+        return $this->PROPERTY_FEED_SPECIFICATION;
+    }
+
+    /**
+     * @param string $xmlId
+     *
+     * @return $this
+     */
+    public function withFeedSpecificationXmlId(string $xmlId)
+    {
+        $this->feedSpecification = null;
+        $this->PROPERTY_FEED_SPECIFICATION = $xmlId;
+        return $this;
     }
 
     /**
@@ -1037,9 +1462,20 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return bool
      */
-    public function isFood()
+    public function isFood(): bool
     {
-        return (bool)(int)$this->PROPERTY_FOOD;
+        return (bool)$this->PROPERTY_FOOD;
+    }
+
+    /**
+     * @param bool $isFood
+     *
+     * @return $this
+     */
+    public function withIsFood(bool $isFood = true)
+    {
+        $this->PROPERTY_FOOD = $isFood;
+        return $this;
     }
 
     /**
@@ -1050,10 +1486,10 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      */
     public function getConsistence()
     {
-        if ((null === $this->consistence) && $this->PROPERTY_CONSISTENCE) {
+        if ((null === $this->consistence) && $this->getConsistenceXmlId()) {
             $this->consistence = ReferenceUtils::getReference(
                 Application::getHlBlockDataManager('bx.hlblock.consistence'),
-                $this->PROPERTY_CONSISTENCE
+                $this->getConsistenceXmlId()
             );
         }
 
@@ -1061,21 +1497,63 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
+     * @return string
+     */
+    public function getConsistenceXmlId(): string
+    {
+        $this->PROPERTY_CONSISTENCE = $this->PROPERTY_CONSISTENCE ?: '';
+        return $this->PROPERTY_CONSISTENCE;
+    }
+
+    /**
+     * @param string $xmlId
+     *
+     * @return $this
+     */
+    public function withConsistenceXmlId(string $xmlId)
+    {
+        $this->consistence = null;
+        $this->PROPERTY_CONSISTENCE = $xmlId;
+        return $this;
+    }
+
+    /**
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
-     * @return null|HlbReferenceItemCollection
+     * @return Collection|HlbReferenceItem[]
      */
-    public function getFlavour()
+    public function getFlavour(): Collection
     {
-        if ((null === $this->flavour) && $this->PROPERTY_FLAVOUR) {
+        if (null === $this->flavour) {
             $this->flavour = ReferenceUtils::getReferenceMulti(
                 Application::getHlBlockDataManager('bx.hlblock.flavour'),
-                $this->PROPERTY_FLAVOUR
+                $this->getFlavourXmlIds()
             );
         }
 
         return $this->flavour;
+    }
+
+    /**
+     * @return array|string[]
+     */
+    public function getFlavourXmlIds(): array
+    {
+        $this->PROPERTY_FLAVOUR = $this->PROPERTY_FLAVOUR ?: [];
+        return $this->PROPERTY_FLAVOUR;
+    }
+
+    /**
+     * @param array $xmlIds
+     *
+     * @return $this
+     */
+    public function withFlavourXmlIds(array $xmlIds)
+    {
+        $this->flavour = null;
+        $this->PROPERTY_FLAVOUR = $xmlIds;
+        return $this;
     }
 
     /**
@@ -1084,18 +1562,39 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
-     * @return HlbReferenceItemCollection
+     * @return Collection|HlbReferenceItem[]
      */
-    public function getFeaturesOfIngredients()
+    public function getFeaturesOfIngredients(): Collection
     {
         if (null === $this->featuresOfIngredients) {
             $this->featuresOfIngredients = ReferenceUtils::getReferenceMulti(
                 Application::getHlBlockDataManager('bx.hlblock.ingridientfeatures'),
-                $this->PROPERTY_FEATURES_OF_INGREDIENTS
+                $this->getFeaturesOfIngredientsXmlIds()
             );
         }
 
         return $this->featuresOfIngredients;
+    }
+
+    /**
+     * @return array|string[]
+     */
+    public function getFeaturesOfIngredientsXmlIds(): array
+    {
+        $this->PROPERTY_FEATURES_OF_INGREDIENTS = $this->PROPERTY_FEATURES_OF_INGREDIENTS ?: [];
+        return $this->PROPERTY_FEATURES_OF_INGREDIENTS;
+    }
+
+    /**
+     * @param array $xmlIds
+     *
+     * @return $this
+     */
+    public function withFeaturesOfIngredientsXmlIds(array $xmlIds)
+    {
+        $this->featuresOfIngredients = null;
+        $this->PROPERTY_FEATURES_OF_INGREDIENTS = $xmlIds;
+        return $this;
     }
 
     /**
@@ -1104,18 +1603,39 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
-     * @return HlbReferenceItemCollection
+     * @return Collection|HlbReferenceItem[]
      */
-    public function getProductForms()
+    public function getProductForms(): Collection
     {
         if (null === $this->productForm) {
             $this->productForm = ReferenceUtils::getReferenceMulti(
                 Application::getHlBlockDataManager('bx.hlblock.productform'),
-                $this->PROPERTY_PRODUCT_FORM
+                $this->getProductFormsXmlIds()
             );
         }
 
         return $this->productForm;
+    }
+
+    /**
+     * @return array
+     */
+    public function getProductFormsXmlIds(): array
+    {
+        $this->PROPERTY_PRODUCT_FORM = $this->PROPERTY_PRODUCT_FORM ?: [];
+        return $this->PROPERTY_PRODUCT_FORM;
+    }
+
+    /**
+     * @param array $xmlIds
+     *
+     * @return $this
+     */
+    public function withProductFormsXmlIds(array $xmlIds)
+    {
+        $this->productForm = null;
+        $this->PROPERTY_PRODUCT_FORM = $xmlIds;
+        return $this;
     }
 
     /**
@@ -1274,8 +1794,8 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
             $this->offers = new ArrayCollection(
                 array_values(
                     (new OfferQuery())->withFilterParameter('=PROPERTY_CML2_LINK', $this->getId())
-                                      ->exec()
-                                      ->toArray()
+                        ->exec()
+                        ->toArray()
                 )
             );
         }
@@ -1335,5 +1855,50 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         }
 
         return $result;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isTransportOnlyRefrigerator(): bool
+    {
+        return $this->PROPERTY_TRANSPORT_ONLY_REFRIGERATOR;
+    }
+
+    /**
+     * @param bool $onlyRefrigerator
+     *
+     * @return Product
+     */
+    public function withTransportOnlyRefrigerator(bool $onlyRefrigerator = true): Product
+    {
+        $this->PROPERTY_TRANSPORT_ONLY_REFRIGERATOR = $onlyRefrigerator;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isDeliveryAreaRestrict(): bool
+    {
+        return $this->PROPERTY_DC_SPECIAL_AREA_STORAGE;
+    }
+
+    /**
+     * @param bool $restrict
+     *
+     * @return Product
+     */
+    public function withDeliveryAreaRestrict(bool $restrict = true): Product
+    {
+        $this->PROPERTY_DC_SPECIAL_AREA_STORAGE = $restrict;
+        return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getWeightCapacityPacking() : string {
+        return $this->PROPERTY_WEIGHT_CAPACITY_PACKING;
     }
 }

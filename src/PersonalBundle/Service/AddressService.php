@@ -58,7 +58,6 @@ class AddressService
      * @throws ServiceNotFoundException
      * @throws \Exception
      * @throws ApplicationCreateException
-     * @throws NotAuthorizedException
      * @throws ServiceCircularReferenceException
      * @return array
      */
@@ -90,7 +89,10 @@ class AddressService
             $this->disableMainItem();
         }
         
-        $res = $this->addressRepository->setEntityFromData($data, Address::class)->create();
+        /** @var Address $entity */
+        $entity = $this->addressRepository->dataToEntity($data, Address::class);
+        $entity->setCityLocationByEntity();
+        $res = $this->addressRepository->setEntity($entity)->create();
         if ($res) {
             if ($data['UF_MAIN'] === 'Y') {
                 /** @noinspection PhpParamsInspection */
@@ -199,7 +201,10 @@ class AddressService
             $this->disableMainItem();
         }
         
-        $res = $this->addressRepository->setEntityFromData($data, Address::class)->update();
+        /** @var Address $entity */
+        $entity = $this->addressRepository->dataToEntity($data, Address::class);
+        $entity->setCityLocationByEntity();
+        $res = $this->addressRepository->setEntity($entity)->update();
         if ($res) {
             if ($data['UF_MAIN'] === 'Y') {
                 /** @noinspection PhpParamsInspection */

@@ -113,27 +113,24 @@ $this->setFrameMode(true);
             <?php } ?>
         </ul>
         <ul class="b-popup-pick-city__list-general js-tab-content-city" data-content-city="other">
-            <?php foreach ($arResult['POPULAR_CITIES'] as $letter => $cities) { ?>
+            <?php foreach ($arResult['POPULAR_CITIES'] as $city) { ?>
                 <li class="b-popup-pick-city__item-general">
-                    <div class="b-popup-pick-city__litter"><?= $letter ?></div>
                     <ul class="b-popup-pick-city__list-litter">
-                        <?php foreach ($cities as $city) { ?>
-                            <?php $class = ($city['CODE'] == $arResult['SELECTED_CITY']['CODE']) ? 'b-popup-pick-city__city-link--active' : '' ?>
-                            <li class="b-popup-pick-city__item-litter">
-                                <a class="b-popup-pick-city__city-link js-my-city <?= $class ?>"
-                                   href="javascript:void(0)"
-                                   title="<?= $city['NAME'] ?>"
-                                   data-url="<?= $arResult['CITY_SET_URL'] ?>"
-                                   data-code="<?= $city['CODE'] ?>">
-                                    <?= $city['NAME'] ?>
-                                    <?php if (!empty($city['SHOPS'])) { ?>
-                                        <span class="b-icon b-icon--market">
-                                            <?= new SvgDecorator('icon-pin', 13, 16) ?>
-                                        </span>
-                                    <?php } ?>
-                                </a>
-                            </li>
-                        <?php } ?>
+                        <?php $class = ($city['CODE'] == $arResult['SELECTED_CITY']['CODE']) ? 'b-popup-pick-city__city-link--active' : '' ?>
+                        <li class="b-popup-pick-city__item-litter">
+                            <a class="b-popup-pick-city__city-link js-my-city <?= $class ?>"
+                               href="javascript:void(0)"
+                               title="<?= $city['NAME'] ?>"
+                               data-url="<?= $arResult['CITY_SET_URL'] ?>"
+                               data-code="<?= $city['CODE'] ?>">
+                                <?= $city['NAME'] ?>
+                                <?php if (!empty($city['SHOPS'])) { ?>
+                                    <span class="b-icon b-icon--market">
+                                        <?= new SvgDecorator('icon-pin', 13, 16) ?>
+                                    </span>
+                                <?php } ?>
+                            </a>
+                        </li>
                     </ul>
                 </li>
             <?php } ?>
@@ -166,27 +163,24 @@ $this->setFrameMode(true);
             <?php } ?>
         </ul>
         <ul class="b-popup-pick-city__list-general js-tab-content-city" data-content-city="other">
-            <?php foreach ($arResult['POPULAR_CITIES'] as $letter => $cities) { ?>
+            <?php foreach ($arResult['POPULAR_CITIES'] as $city) { ?>
                 <li class="b-popup-pick-city__item-general">
-                    <div class="b-popup-pick-city__litter"><?= $letter ?></div>
                     <ul class="b-popup-pick-city__list-litter">
-                        <?php foreach ($cities as $city) { ?>
-                            <?php $class = ($city['CODE'] == $arResult['SELECTED_CITY']['CODE']) ? 'b-popup-pick-city__city-link--active' : '' ?>
-                            <li class="b-popup-pick-city__item-litter">
-                                <a class="b-popup-pick-city__city-link <?= $class ?>"
-                                   href="javascript:void(0)"
-                                   title="<?= $city['NAME'] ?>"
-                                   data-url="<?= $arResult['CITY_SET_URL'] ?>"
-                                   data-code="<?= $city['CODE'] ?>">
-                                    <?= $city['NAME'] ?>
-                                    <?php if (!empty($city['SHOPS'])) { ?>
-                                        <span class="b-icon b-icon--market">
-                                            <?= new SvgDecorator('icon-pin', 13, 16) ?>
-                                        </span>
-                                    <?php } ?>
-                                </a>
-                            </li>
-                        <?php } ?>
+                        <?php $class = ($city['CODE'] == $arResult['SELECTED_CITY']['CODE']) ? 'b-popup-pick-city__city-link--active' : '' ?>
+                        <li class="b-popup-pick-city__item-litter">
+                            <a class="b-popup-pick-city__city-link <?= $class ?>"
+                               href="javascript:void(0)"
+                               title="<?= $city['NAME'] ?>"
+                               data-url="<?= $arResult['CITY_SET_URL'] ?>"
+                               data-code="<?= $city['CODE'] ?>">
+                                <?= $city['NAME'] ?>
+                                <?php if (!empty($city['SHOPS'])) { ?>
+                                    <span class="b-icon b-icon--market">
+                                        <?= new SvgDecorator('icon-pin', 13, 16) ?>
+                                    </span>
+                                <?php } ?>
+                            </a>
+                        </li>
                     </ul>
                 </li>
             <?php } ?>

@@ -2,39 +2,69 @@
 
 namespace FourPaws\BitrixOrm\Model;
 
+use JMS\Serializer\Annotation as Serializer;
 
-use FourPaws\BitrixOrm\Model\Exceptions\CatalogProductNotFoundException;
-use FourPaws\BitrixOrm\Query\CatalogProductQuery;
-
-class CatalogProduct implements ModelInterface
+class CatalogProduct
 {
     /**
+     * @Serializer\SerializedName("ID")
+     * @Serializer\Type("int")
+     * @Serializer\Groups({"create","read"})
+     *
      * @var int
      */
     protected $id = 0;
 
     /**
+     * Вес единицы товара
+     *
+     * @Serializer\SerializedName("WEIGHT")
+     * @Serializer\Type("double")
+     * @Serializer\Groups({"create","read","update"})
+     *
      * @var double
      */
     protected $weight = 0;
 
     /**
+     * Высота товара (в мм).
+     *
+     * @Serializer\SerializedName("HEIGHT")
+     * @Serializer\Type("double")
+     * @Serializer\Groups({"create","read","update"})
+     *
      * @var double
      */
     protected $height = 0;
 
     /**
+     * Ширина товара (в мм).
+     *
+     * @Serializer\SerializedName("WIDTH")
+     * @Serializer\Type("double")
+     * @Serializer\Groups({"create","read","update"})
+     *
      * @var double
      */
     protected $width = 0;
 
     /**
+     * Длина товара (в мм).
+     *
+     * @Serializer\SerializedName("LENGTH")
+     * @Serializer\Type("double")
+     * @Serializer\Groups({"create","read","update"})
+     *
      * @var double
      */
     protected $length = 0;
 
     /**
      * Код инфоблока товара
+     *
+     * @Serializer\SerializedName("ELEMENT_IBLOCK_ID")
+     * @Serializer\Type("int")
+     * @Serializer\Groups({"read"})
      *
      * @var int
      */
@@ -43,6 +73,10 @@ class CatalogProduct implements ModelInterface
     /**
      * Внешний код товара
      *
+     * @Serializer\SerializedName("ELEMENT_XML_ID")
+     * @Serializer\Type("int")
+     * @Serializer\Groups({"read"})
+     *
      * @var string
      */
     protected $productXmlId = '';
@@ -50,46 +84,24 @@ class CatalogProduct implements ModelInterface
     /**
      * Название товара
      *
+     * @Serializer\SerializedName("ELEMENT_NAME")
+     * @Serializer\Type("int")
+     * @Serializer\Groups({"read"})
+     *
      * @var string
      */
     protected $productName = '';
 
     /**
-     * ModelInterface constructor.
+     * ID единицы измерения
      *
-     * @param array $fields
-     */
-    public function __construct(array $fields = [])
-    {
-        $this
-            ->setId((int)$fields['ID'])
-            ->setWeight((float)$fields['WEIGHT'])
-            ->setHeight((float)$fields['HEIGHT'])
-            ->setWidth((float)$fields['WIDTH'])
-            ->setLength((float)$fields['LENGTH'])
-            ->setProductIblockId((string)$fields['ELEMENT_IBLOCK_ID'])
-            ->setProductXmlId($fields['ELEMENT_XML_ID'])
-            ->setProductName($fields['ELEMENT_NAME']);
-    }
-
-    /**
-     * @param string $primary
+     * @Serializer\SerializedName("MEASURE")
+     * @Serializer\Type("int")
+     * @Serializer\Groups({"create","read","update"})
      *
-     * @return CatalogProduct
-     * @throws CatalogProductNotFoundException
+     * @var int
      */
-    public static function createFromPrimary(string $primary): ModelInterface
-    {
-        $fields = (new CatalogProductQuery())
-            ->withFilter(['ID' => $primary])
-            ->exec()
-            ->current();
-        if($fields) {
-            return new static($fields);
-        }
-
-        throw new CatalogProductNotFoundException(sprintf('Product with identifier %s not found', $primary));
-    }
+    protected $measureId = 0;
 
     /**
      * @return int
@@ -101,6 +113,7 @@ class CatalogProduct implements ModelInterface
 
     /**
      * @param int $id
+     *
      * @return CatalogProduct
      */
     public function setId(int $id): CatalogProduct
@@ -119,6 +132,7 @@ class CatalogProduct implements ModelInterface
 
     /**
      * @param float $weight
+     *
      * @return CatalogProduct
      */
     public function setWeight(float $weight): CatalogProduct
@@ -137,6 +151,7 @@ class CatalogProduct implements ModelInterface
 
     /**
      * @param float $height
+     *
      * @return CatalogProduct
      */
     public function setHeight(float $height): CatalogProduct
@@ -155,6 +170,7 @@ class CatalogProduct implements ModelInterface
 
     /**
      * @param float $width
+     *
      * @return CatalogProduct
      */
     public function setWidth(float $width): CatalogProduct
@@ -173,6 +189,7 @@ class CatalogProduct implements ModelInterface
 
     /**
      * @param float $length
+     *
      * @return CatalogProduct
      */
     public function setLength(float $length): CatalogProduct
@@ -190,16 +207,6 @@ class CatalogProduct implements ModelInterface
     }
 
     /**
-     * @param int $productIblockId
-     * @return CatalogProduct
-     */
-    public function setProductIblockId(int $productIblockId): CatalogProduct
-    {
-        $this->productIblockId = $productIblockId;
-        return $this;
-    }
-
-    /**
      * @return string
      */
     public function getProductXmlId(): string
@@ -208,30 +215,10 @@ class CatalogProduct implements ModelInterface
     }
 
     /**
-     * @param string $productXmlId
-     * @return CatalogProduct
-     */
-    public function setProductXmlId(string $productXmlId): CatalogProduct
-    {
-        $this->productXmlId = $productXmlId;
-        return $this;
-    }
-
-    /**
      * @return string
      */
     public function getProductName(): string
     {
         return $this->productName;
-    }
-
-    /**
-     * @param string $productName
-     * @return CatalogProduct
-     */
-    public function setProductName(string $productName): CatalogProduct
-    {
-        $this->productName = $productName;
-        return $this;
     }
 }

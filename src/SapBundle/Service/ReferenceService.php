@@ -10,7 +10,7 @@ use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\SapBundle\Dto\In\Offers\Material;
 use FourPaws\SapBundle\Dto\In\Offers\Property;
 use FourPaws\SapBundle\Dto\In\Offers\PropertyValue;
-use FourPaws\SapBundle\Enum\SapOfferProperty;
+use FourPaws\SapBundle\Enum\SapProductField;
 use FourPaws\SapBundle\Exception\CantCreateReferenceItem;
 use FourPaws\SapBundle\Exception\LogicException;
 use FourPaws\SapBundle\ReferenceDirectory\SapReferenceStorage;
@@ -40,6 +40,7 @@ class ReferenceService implements LoggerAwareInterface
      * @param string $xmlId
      * @param string $name
      *
+     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
      * @throws \FourPaws\SapBundle\Exception\LogicException
      * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
      * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
@@ -62,6 +63,7 @@ class ReferenceService implements LoggerAwareInterface
      * @param string $propertyCode
      * @param string $xmlId
      *
+     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
      * @return null|HlbReferenceItem
      */
     public function get(string $propertyCode, string $xmlId)
@@ -80,7 +82,8 @@ class ReferenceService implements LoggerAwareInterface
      */
     public function create(string $propertyCode, string $xmlId, string $name)
     {
-        $item = (new HlbReferenceItem())
+        $item = new HlbReferenceItem();
+        $item
             ->withCode($this->getUniqueCode($propertyCode, $name))
             ->withXmlId($xmlId)
             ->withName($name);
@@ -102,6 +105,7 @@ class ReferenceService implements LoggerAwareInterface
     /**
      * @param Property $property
      *
+     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
      * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
      * @throws \FourPaws\SapBundle\Exception\LogicException
      * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
@@ -110,7 +114,7 @@ class ReferenceService implements LoggerAwareInterface
     public function getPropertyValueHlbElement(Property $property): Collection
     {
         $values = $property->getValues()->filter(function (PropertyValue $propertyValue) {
-            return $propertyValue->getCode() && $propertyValue->getName();
+            return $propertyValue->getName();
         });
         $collection = new ArrayCollection();
         foreach ($values as $value) {
@@ -123,6 +127,7 @@ class ReferenceService implements LoggerAwareInterface
     /**
      * @param Material $material
      *
+     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
      * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
      * @throws \FourPaws\SapBundle\Exception\LogicException
      * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
@@ -134,23 +139,64 @@ class ReferenceService implements LoggerAwareInterface
                 $this->getPropertyValueHlbElement($property);
             }
         }
+
+        /**
+         * create or update country
+         */
+        $isSetCountry = $material->getCountryOfOriginCode() &&
+            $material->getCountryOfOriginName() &&
+            $this->referenceStorage->getReferenceRepositoryRegistry()->has(SapProductField::COUNTRY);
+        if ($isSetCountry) {
+            $this->getOrCreate(
+                SapProductField::COUNTRY,
+                $material->getCountryOfOriginCode(),
+                $material->getCountryOfOriginName()
+            );
+        }
     }
 
-    public function getOfferReferenceProperties(Material $material)
+    /**
+     * @param string   $code
+     * @param Material $material
+     * @param bool     $multiple
+     *
+     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
+     * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
+     * @throws \FourPaws\SapBundle\Exception\LogicException
+     * @throws \RuntimeException
+     * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
+     * @return array|string
+     */
+    public function getPropertyBitrixValue(string $code, Material $material, bool $multiple = false)
     {
-        return [
-            'COLOUR'           => $this->getPropertyBitrixValue(SapOfferProperty::COLOUR, $material),
-            'KIND_OF_PACKING'  => $this->getPropertyBitrixValue(SapOfferProperty::KIND_OF_PACKING, $material),
-            'CLOTHING_SIZE'    => $this->getPropertyBitrixValue(SapOfferProperty::CLOTHING_SIZE, $material),
-            'VOLUME_REFERENCE' => $this->getPropertyBitrixValue(SapOfferProperty::VOLUME, $material),
-            'SEASON_YEAR'      => $this->getPropertyBitrixValue(SapOfferProperty::SEASON_YEAR, $material),
-        ];
+        $property = $material->getProperties()->getProperty($code);
+        $result = $multiple ? [] : '';
+        if ($property) {
+            $hlbElements = $this
+                ->getPropertyValueHlbElement($material->getProperties()->getProperty($code));
+
+            $xmlIds = $hlbElements->map(function (HlbReferenceItem $item) {
+                return $item->getXmlId();
+            });
+
+            if (!$multiple && $xmlIds->count() > 1) {
+                $this
+                    ->log()
+                    ->error(
+                        sprintf('Get more than one value for not multiple property %s.', $code),
+                        $xmlIds->toArray()
+                    );
+            }
+            $result = $multiple ? $xmlIds->toArray() : $xmlIds->first();
+        }
+        return $result;
     }
 
     /**
      * @param string $propertyCode
      * @param string $name
      *
+     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
      * @return string
      */
     protected function getUniqueCode(string $propertyCode, string $name): string
@@ -171,39 +217,5 @@ class ReferenceService implements LoggerAwareInterface
             );
         } while ($result->count());
         return $resultCode;
-    }
-
-    /**
-     * @param string   $code
-     * @param Material $material
-     * @param bool     $multiple
-     *
-     * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
-     * @throws \FourPaws\SapBundle\Exception\LogicException
-     * @throws \RuntimeException
-     * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
-     * @return array|string
-     */
-    protected function getPropertyBitrixValue(string $code, Material $material, bool $multiple = false)
-    {
-        $hlbElements = $this
-            ->getPropertyValueHlbElement($material->getProperties()->getProperty($code));
-
-        $result = $hlbElements->map(function (HlbReferenceItem $item) {
-            return $item->getXmlId();
-        });
-
-        if ($multiple) {
-            return $result->toArray();
-        }
-        if ($result->count() > 1) {
-            $this
-                ->log()
-                ->error(
-                    sprintf('Get more than one value for not multiple property %s.', $code),
-                    $result->toArray()
-                );
-        }
-        return $result->first() ?: '';
     }
 }

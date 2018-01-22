@@ -23,9 +23,9 @@ class PhoneHelper
      */
     public static function normalizePhone(string $rawPhone): string
     {
-        $phone = preg_replace('~(^(\D)*7|8)|\D~', '', $rawPhone);
-
-        if (strlen($phone) === 10) {
+        $phone = preg_replace('~(^(\D)*7|^8)|\D~', '', $rawPhone);
+        
+        if (mb_strlen($phone) === 10) {
             return $phone;
         }
 

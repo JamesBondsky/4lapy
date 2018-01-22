@@ -52,4 +52,13 @@ interface CurrentUserProviderInterface
      * @return int
      */
     public function getCurrentFUserId(): int;
+    
+    /**
+     * @param int $id
+     *
+     * @return array
+     * @throws InvalidIdentifierException
+     * @throws NotAuthorizedException
+     */
+    public function getUserGroups(int $id = 0) : array;
 }

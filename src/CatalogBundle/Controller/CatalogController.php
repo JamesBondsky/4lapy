@@ -3,12 +3,17 @@
 namespace FourPaws\CatalogBundle\Controller;
 
 use FourPaws\App\Application;
+use FourPaws\Catalog\Collection\FilterCollection;
+use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\CatalogBundle\Dto\ChildCategoryRequest;
 use FourPaws\CatalogBundle\Dto\RootCategoryRequest;
+use FourPaws\CatalogBundle\Dto\SearchRequest;
+use FourPaws\Search\Model\ProductSearchResult;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
  * Class CatalogController
@@ -23,6 +28,42 @@ class CatalogController extends Controller
     public function rootAction()
     {
         return $this->redirect('/');
+    }
+
+    /**
+     * @Route("/search/")
+     */
+    public function searchAction(Request $request, SearchRequest $searchRequest): Response
+    {
+        $result = null;
+        /** @var ValidatorInterface $validator */
+        $validator = $this->container->get('validator');
+        if (!$validator->validate($searchRequest)->count()) {
+            /** @var ProductSearchResult $result */
+            $result = Application::getInstance()->getContainer()->get('search.service')->searchProducts(
+                $searchRequest->getCategory()->getFilters(),
+                $searchRequest->getSorts()->getSelected(),
+                $searchRequest->getNavigation(),
+                $searchRequest->getSearchString()
+            );
+        }
+
+        $categories = (new CategoryQuery())
+            ->withFilterParameter('SECTION_ID', false)
+            ->exec();
+
+        if ($request->query->get('partial') === 'Y') {
+            $tpl = 'FourPawsCatalogBundle:Catalog:search.filter.container.html.php';
+        } else {
+            $tpl = 'FourPawsCatalogBundle:Catalog:search.html.php';
+        }
+
+        return $this->render($tpl, [
+            'request'             => $request,
+            'productSearchResult' => $result,
+            'catalogRequest'      => $searchRequest,
+            'categories'      => $categories
+        ]);
     }
 
     /**

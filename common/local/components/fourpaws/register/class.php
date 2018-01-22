@@ -13,7 +13,6 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\SystemException;
-use Bitrix\Main\Type\Date;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
@@ -312,7 +311,9 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             } catch (ManzanaException $e) {
             }
         }
-        
+    
+        /** @noinspection PhpUnusedLocalVariableInspection */
+        $name = $userEntity->getName();
         ob_start();
         /** @noinspection PhpIncludeInspection */
         include_once App::getDocumentRoot()
@@ -508,14 +509,15 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     private function ajaxGetStep2($confirmCode, $phone)
     {
         $request   = Application::getInstance()->getContext()->getRequest();
-        $recaptcha = (string)$request->get('g-recaptcha-response');
-        /** @var ReCaptchaService $recaptchaService */
-        $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
-        if (!empty($recaptcha) && $request->offsetExists('g-recaptcha-response')
-            && !$recaptchaService->checkCaptcha($recaptcha)) {
-            return JsonErrorResponse::create(
-                'Проверка капчи не пройдена'
-            );
+        if ($request->offsetExists('g-recaptcha-response')) {
+            $recaptcha = (string)$request->get('g-recaptcha-response');
+            /** @var ReCaptchaService $recaptchaService */
+            $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
+            if (!$recaptchaService->checkCaptcha($recaptcha)) {
+                return JsonErrorResponse::create(
+                    'Проверка капчи не пройдена'
+                );
+            }
         }
         try {
             /** @var ConfirmCodeService $confirmService */

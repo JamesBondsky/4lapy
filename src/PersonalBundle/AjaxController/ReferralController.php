@@ -9,6 +9,7 @@ namespace FourPaws\PersonalBundle\AjaxController;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\External\Manzana\Model\Card;
 use FourPaws\PersonalBundle\Service\ReferralService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -48,10 +49,14 @@ class ReferralController extends Controller
                 ['errors' => ['emptyData' => 'Не указаны данные для добавления']]
             );
         }
+        if(!empty($data['UF_CARD'])){
+            $data['UF_CARD'] = preg_replace("/\D/", '', $data['UF_CARD']);
+        }
+        $data['UF_MODERATED'] = 'Y';
         try {
             if ($this->referralService->add($data)) {
                 return JsonSuccessResponse::create(
-                    '',
+                    'Реферал добавлен, ожидайте модерации',
                     200,
                     [],
                     ['reload' => true]
@@ -75,6 +80,9 @@ class ReferralController extends Controller
     public function getUserInfoAction(Request $request) : JsonResponse
     {
         $card = $request->get('card');
+        if(!empty($card)){
+            $card = preg_replace("/\D/", '', $card);
+        }
         if (empty($card)) {
             return JsonErrorResponse::createWithData(
                 'Не указан код карты',
@@ -82,15 +90,21 @@ class ReferralController extends Controller
             );
         }
         try {
-            if ($this->referralService->referralRepository->findBy($card)) {
-                return JsonSuccessResponse::create(
-                    '',
-                    200,
-                    [],
-                    ['reload' => true]
+            /** @var Card $currentCard */
+            $currentCard = $this->referralService->manzanaService->searchCardByNumber($card);
+                $cardInfo    = [
+                    'last_name'=>$currentCard->lastName,
+                    'name'=>$currentCard->firstName,
+                    'second_name'=>$currentCard->secondName,
+                    'phone'=>$currentCard->phone,
+                    'email'=>$currentCard->email
+                ];
+                return JsonSuccessResponse::createWithData(
+                    'Информация о карте получена',
+                    ['card'=>$cardInfo]
                 );
-            }
         } catch (\Exception $e) {
+            echo $e->getMessage();
         }
         
         return JsonErrorResponse::createWithData(

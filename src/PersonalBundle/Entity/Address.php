@@ -6,6 +6,7 @@
 
 namespace FourPaws\PersonalBundle\Entity;
 
+use Bitrix\Sale\Location\LocationTable;
 use FourPaws\AppBundle\Entity\BaseEntity;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -42,8 +43,8 @@ class Address extends BaseEntity
     protected $city;
     
     /**
-     * @var int
-     * @Serializer\Type("int")
+     * @var string
+     * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_CITY_LOCATION")
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
@@ -379,22 +380,71 @@ class Address extends BaseEntity
     }
     
     /**
-     * @return int
+     * @return string
      */
-    public function getCityLocation() : int
+    public function getCityLocation() : string
     {
         return $this->cityLocation ?? 0;
     }
     
     /**
-     * @param int $cityLocation
+     * @param string $cityLocation
      *
      * @return Address
      */
-    public function setCityLocation(int $cityLocation) : Address
+    public function setCityLocation(string $cityLocation) : Address
     {
         $this->cityLocation = $cityLocation;
         
         return $this;
+    }
+    
+    public function setCityLocationByEntity()
+    {
+        $street = $this->getStreet();
+        $city   = $this->getCity();
+        $query  = LocationTable::query();
+        $continue = false;
+        if (!empty($street)) {
+            $continue = true;
+            $query->where(
+                [
+                    [
+                        'NAME.NAME',
+                        'like',
+                        $street . '%'
+                    ],
+                    [
+                        'PARENT.NAME.NAME',
+                        'like',
+                        $city . '%'
+                    ],
+                    [
+                        'DEPTH_LEVEL',
+                        '=',
+                        5
+                    ]
+                ]
+            );
+        } elseif (!empty($city)) {
+            $continue = true;
+            $query->where(
+                [
+                    [
+                        'NAME.NAME',
+                        'like',
+                        $city . '%',
+                    ],
+                    [
+                        'DEPTH_LEVEL',
+                        '=',
+                        4
+                    ]
+                ]
+            );
+        }
+        if($continue) {
+            $this->setCityLocation((string)$query->setSelect(['CODE'])->exec()->fetch()['CODE']);
+        }
     }
 }

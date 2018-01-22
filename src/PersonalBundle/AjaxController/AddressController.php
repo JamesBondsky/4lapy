@@ -51,7 +51,7 @@ class AddressController extends Controller
         try {
             if ($this->addressService->add($data)) {
                 return JsonSuccessResponse::create(
-                    '',
+                    'Адресс доставки добавлен',
                     200,
                     [],
                     ['reload' => true]
@@ -94,7 +94,7 @@ class AddressController extends Controller
         try {
             if ($this->addressService->update($data)) {
                 return JsonSuccessResponse::create(
-                    '',
+                    'Адресс доставки обновлен',
                     200,
                     [],
                     ['reload' => true]
@@ -127,7 +127,7 @@ class AddressController extends Controller
         try {
             if ($this->addressService->delete($delId)) {
                 return JsonSuccessResponse::create(
-                    '',
+                    'Адрес доставки удален',
                     200,
                     [],
                     ['reload' => true]

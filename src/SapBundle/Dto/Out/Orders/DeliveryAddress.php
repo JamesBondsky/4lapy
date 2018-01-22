@@ -4,6 +4,13 @@ namespace FourPaws\SapBundle\Dto\Out\Orders;
 
 use JMS\Serializer\Annotation as Serializer;
 
+/**
+ * Class DeliveryAddress
+ *
+ * @todo отнаследоваться от общего dto delivery
+ *
+ * @package FourPaws\SapBundle\Dto\In\Orders
+ */
 class DeliveryAddress
 {
     /**

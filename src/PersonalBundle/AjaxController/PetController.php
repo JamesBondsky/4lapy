@@ -56,7 +56,7 @@ class PetController extends Controller
         try {
             if ($this->petService->add($data)) {
                 return JsonSuccessResponse::create(
-                    '',
+                    'Информация о питомце успешно добавлена',
                     200,
                     [],
                     ['reload' => true]
@@ -93,10 +93,14 @@ class PetController extends Controller
             );
         }
         
+        if(!empty($_FILES['UF_PHOTO'])){
+            $data['UF_PHOTO'] = \CFile::SaveFile($_FILES['UF_PHOTO'], '/pet');
+        }
+        
         try {
             if ($this->petService->update($data)) {
                 return JsonSuccessResponse::create(
-                    '',
+                    'Информация о питомце успешно обновлена',
                     200,
                     [],
                     ['reload' => true]
@@ -130,7 +134,7 @@ class PetController extends Controller
         try {
             if ($this->petService->delete($delId)) {
                 return JsonSuccessResponse::create(
-                    '',
+                    'Информация о питомце удалена',
                     200,
                     [],
                     ['reload' => true]

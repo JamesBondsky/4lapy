@@ -3,7 +3,6 @@
 namespace FourPaws\Location;
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
-use Bitrix\Highloadblock\DataManager;
 use Bitrix\Sale\Location\ExternalTable;
 use Bitrix\Sale\Location\GroupLocationTable;
 use Bitrix\Sale\Location\TypeTable;
@@ -11,7 +10,7 @@ use CBitrixComponent;
 use CBitrixLocationSelectorSearchComponent;
 use CIBlockElement;
 use FourPaws\App\Application;
-use FourPaws\BitrixOrm\Model\ModelInterface;
+use FourPaws\BitrixOrm\Model\Interfaces\ActiveReadModelInterface;
 use FourPaws\Enum\CitiesSectionCode;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
@@ -70,7 +69,7 @@ class LocationService
                 'SERVICE.CODE'  => self::REGION_SERVICE_CODE,
             ];
 
-            if (!empty ($location['PATH'])) {
+            if (!empty($location['PATH'])) {
                 $filter['LOCATION.CODE'] = array_merge(
                     [$filter['LOCATION.CODE']],
                     array_column($location['PATH'], 'CODE')
@@ -182,8 +181,8 @@ class LocationService
      * @param bool $exact
      * @param array $additionalFilter
      *
-     * @return array
      * @throws CityNotFoundException
+     * @return array
      */
     public function findLocation(
         string $query,
@@ -281,7 +280,7 @@ class LocationService
      * Поиск местоположений с типом "город" и "деревня" по названию
      *
      * @param string $query
-     * @param int|null $limit
+     * @param null|int $limit
      * @param bool $exact
      *
      * @return array
@@ -323,8 +322,8 @@ class LocationService
      *
      * @param string $code
      *
-     * @return array
      * @throws CityNotFoundException
+     * @return array
      */
     public function findLocationCityByCode(string $code = ''): array
     {
@@ -441,7 +440,7 @@ class LocationService
     /**
      * Получение эл-та из HL-блока Cities по коду местоположения
      *
-     * @return City|null
+     * @return null|City
      */
     public function getDefaultCity()
     {
@@ -457,7 +456,7 @@ class LocationService
      *
      * @param $locationCode
      *
-     * @return ModelInterface|null
+     * @return null|\FourPaws\BitrixOrm\Model\Interfaces\ActiveReadModelInterface
      */
     public function getCity($locationCode)
     {
@@ -472,11 +471,10 @@ class LocationService
      * Получение эл-та из HL-блока,
      * привязанного к выбранному городу пользователя
      *
-     * @return ModelInterface|null
+     * @return null|ActiveReadModelInterface
      */
     public function getCurrentCity()
     {
-
         if ($locationCode = $this->getCurrentLocation()) {
             if ($city = $this->getCity($locationCode)) {
                 return $city;
