@@ -56,7 +56,8 @@ $frame = $this->createFrame(); ?>
                            type="text"
                            id="stores-search"
                            name="search"
-                           placeholder="Поиск по адресу, метро и названию ТЦ" />
+                           placeholder="Поиск по адресу, метро и названию ТЦ"
+                           data-url="/ajax/store/list/search/" />
                     <div class="b-error"><span class="js-message"></span>
                     </div>
                 </div>
@@ -116,7 +117,7 @@ $frame = $this->createFrame(); ?>
             <div class="b-tab-delivery-map b-tab-delivery-map--stores js-content-map">
                 <a class="b-link b-link b-link--popup-back b-link b-link--popup-choose-shop js-product-list js-map-shoose-shop"
                    href="javascript:void(0);">Выберите магазин</a>
-                <div class="b-tab-delivery-map__map" id="map" data-url="/ajax/store/list/chooseCity/?code=<?= $arResult['CITY_CODE'] ?>" data-code="<?= $arResult['CITY_CODE'] ?>"></div>
+                <div class="b-tab-delivery-map__map" id="map" data-url="/ajax/store/list/chooseCity/?code=<?= $arResult['CITY_CODE'] ?>"></div>
                 <a class="b-link b-link--close-baloon js-product-list"
                    href="javascript:void(0);"
                    title="">
