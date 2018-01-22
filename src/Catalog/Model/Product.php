@@ -1794,6 +1794,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
             $this->offers = new ArrayCollection(
                 array_values(
                     (new OfferQuery())->withFilterParameter('=PROPERTY_CML2_LINK', $this->getId())
+                        ->withOrder(['CATALOG_WEIGHT' => 'ASC'])
                         ->exec()
                         ->toArray()
                 )
