@@ -6,6 +6,10 @@
 
 namespace FourPaws\FoodSelectionBundle\Service;
 
+use Adv\Bitrixtools\Exception\IblockNotFoundException;
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use FourPaws\FoodSelectionBundle\Repository\FoodSelectionRepository;
 
 /**
@@ -32,27 +36,31 @@ class FoodSelectionService
     }
     
     /**
-     * @param array $data
+     * @param array $params
      *
      * @return array
+     * @throws IblockNotFoundException
      */
-    public function getItems(array $data = []) : array
+    public function getItems(array $params = []) : array
     {
-        $params = [];
-        if (!empty($data)){
-            if(!empty($data[''])){
-            
-            }
+        if (!isset($params['filter']['IBLOCK_ID'])) {
+            $params['filter']['IBLOCK_ID'] = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::FOOD_SELECTION);
         }
         return $this->foodSelectionRepository->getItems($params);
     }
     
-    public function getSections() : array{
-        $params = [];
-        if (!empty($data)){
-            if(!empty($data[''])){
-            
-            }
+    /**
+     * @param array $params
+     *
+     * @return array
+     * @throws IblockNotFoundException
+     */
+    public function getSections(array $params = []) : array
+    {
+        if (!isset($params['filter']['IBLOCK_ID'])) {
+            $params['filter']['IBLOCK_ID'] = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::FOOD_SELECTION);
         }
+        
+        return $this->foodSelectionRepository->getSections($params);
     }
 }

@@ -3,7 +3,7 @@
 namespace FourPaws\BitrixOrm\Query;
 
 use FourPaws\BitrixOrm\Collection\CollectionBase;
-use FourPaws\BitrixOrm\Collection\IblockElementCollection;
+use FourPaws\BitrixOrm\Collection\IblockSectCollection;
 
 /**
  * Class IblockElementQuery
@@ -16,70 +16,64 @@ class IblockSectQuery extends IblockSectionQuery
      * @var int
      */
     protected $iblockId;
-
+    
     public function __construct($iblockId = null)
     {
         parent::__construct();
-
+        
         $this->iblockId = $iblockId;
     }
-
+    
     /**
-     * @return \CDBResult
+     * Исполняет запрос и возвращает коллекцию сущностей. Например, элементов инфоблока.
+     *
+     * @return IblockSectCollection
      */
-    public function doExec(): \CDBResult
+    public function exec() : CollectionBase
     {
-        return \CIBlockElement::GetList(
-            $this->getOrder(),
-            $this->getFilterWithBase(),
-            $this->getGroup() ?: false,
-            $this->getNav() ?: false,
-            $this->getSelectWithBase()
-        );
+        return new IblockSectCollection($this->doExec());
     }
-
-    public function getBaseSelect(): array
+    
+    /**
+     * Возвращает базовый фильтр - та его часть, которую нельзя изменить. Например, ID инфоблока.
+     *
+     * @return array
+     */
+    public function getBaseFilter() : array
+    {
+        $filter = [
+            'GLOBAL_ACTIVE' => 'Y',
+        ];
+    
+        if ($this->iblockId) {
+            $filter['IBLOCK_ID'] = $this->iblockId;
+        }
+    
+        return $filter;
+    }
+    
+    /**
+     * Возвращает базовую выборку полей. Например, те поля, которые обязательно нужны для создания сущности.
+     *
+     * @return array
+     */
+    public function getBaseSelect() : array
     {
         return [
-            'ACTIVE',
-            'DATE_ACTIVE_FROM',
-            'DATE_ACTIVE_TO',
-            'IBLOCK_ID',
             'ID',
+            'ACTIVE',
+            'IBLOCK_ID',
+            'IBLOCK_SECTION_ID',
             'NAME',
             'XML_ID',
             'CODE',
             'SORT',
-            'DETAIL_PAGE_URL',
+            'PICTURE',
+            'DESCRIPTION',
+            'DESCRIPTION_TYPE',
+            'DEPTH_LEVEL',
             'SECTION_PAGE_URL',
-            'LIST_PAGE_URL',
-            'CANONICAL_PAGE_URL',
-            'PREVIEW_TEXT',
-            'DETAIL_TEXT',
+            'DETAIL_PICTURE',
         ];
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getBaseFilter(): array
-    {
-        $filter = [
-            'SECTION_GLOBAL_ACTIVE' => 'Y',
-        ];
-
-        if ($this->iblockId) {
-            $filter['IBLOCK_ID'] = $this->iblockId;
-        }
-
-        return $filter;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function exec(): CollectionBase
-    {
-        return new IblockElementCollection($this->doExec());
     }
 }
