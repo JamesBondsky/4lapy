@@ -8,7 +8,7 @@ use FourPaws\ReCaptcha\ReCaptchaService;
 
 /** @var string $phone */ ?>
 <div class="b-registration__content b-registration__content--moiety b-registration__content--step"
-     style="padding: 0!important; border: none !important;">
+     style="padding: 0!important; border: none !important; width: 100% !important;">
     <div class="b-registration__your-number" id="js-resend"
          data-url="/ajax/user/auth/login/"
          data-method="post"
