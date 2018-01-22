@@ -9,6 +9,7 @@ namespace FourPaws\PersonalBundle\AjaxController;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\External\Manzana\Model\Card;
 use FourPaws\PersonalBundle\Service\ReferralService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -89,15 +90,21 @@ class ReferralController extends Controller
             );
         }
         try {
-            if ($this->referralService->referralRepository->findBy($card)) {
-                return JsonSuccessResponse::create(
+            /** @var Card $currentCard */
+            $currentCard = $this->referralService->manzanaService->searchCardByNumber($card);
+                $cardInfo    = [
+                    'last_name'=>$currentCard->lastName,
+                    'name'=>$currentCard->firstName,
+                    'second_name'=>$currentCard->secondName,
+                    'phone'=>$currentCard->phone,
+                    'email'=>$currentCard->email
+                ];
+                return JsonSuccessResponse::createWithData(
                     'Информация о карте получена',
-                    200,
-                    [],
-                    ['reload' => true]
+                    ['card'=>$cardInfo]
                 );
-            }
         } catch (\Exception $e) {
+            echo $e->getMessage();
         }
         
         return JsonErrorResponse::createWithData(
