@@ -1,8 +1,8 @@
 <?php
 
-use Bitrix\Main\DB\MysqliConnection;
 use Adv\Bitrixtools\Tools\Log\ExceptionLogger;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\DB\MysqliConnection;
 
 /*
  * Обязательно нужно подключить vendor/autoload.php ,
@@ -51,18 +51,16 @@ return [
             'value'    =>
                 [
                     'debug'                      => (bool)getenv('EXCEPTION_HANDLING_DEBUG'),
-                    'handled_errors_types'       => E_ERROR
+                    'handled_errors_types'       => (E_ERROR
                         | E_PARSE
                         | E_CORE_ERROR
                         | E_COMPILE_ERROR
-                        | E_USER_ERROR
-                        | E_RECOVERABLE_ERROR,
-                    'exception_errors_types'     => E_ERROR
+                        | E_USER_ERROR | E_RECOVERABLE_ERROR) & ~E_NOTICE,
+                    'exception_errors_types'     => (E_ERROR
                         | E_PARSE
                         | E_CORE_ERROR
                         | E_COMPILE_ERROR
-                        | E_USER_ERROR
-                        | E_RECOVERABLE_ERROR,
+                        | E_USER_ERROR | E_RECOVERABLE_ERROR) & ~E_NOTICE,
                     'ignore_silence'             => false,
                     'assertion_throws_exception' => true,
                     'assertion_error_type'       => E_USER_ERROR,
