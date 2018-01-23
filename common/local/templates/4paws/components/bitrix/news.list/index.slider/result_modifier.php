@@ -38,7 +38,7 @@ foreach ($arResult['ITEMS'] as &$item) {
         $image = CropImageDecorator::createFromPrimary($item['~PREVIEW_PICTURE']);
     }
     if ($image instanceof CropImageDecorator) {
-        $image->setCropWidth(1440)->setCropHeight(300);
+        $image->setCropWidth(768)->setCropHeight(250);
         $item['MOBILE_PICTURE'] = $image;
     }
 
@@ -51,8 +51,9 @@ foreach ($arResult['ITEMS'] as &$item) {
         $image = CropImageDecorator::createFromPrimary($item['DISPLAY_PROPERTIES']['IMG_TABLET']['VALUE']);
     }
     if ($image instanceof CropImageDecorator) {
-        $image->setCropWidth(1440)->setCropHeight(300);
+        $image->setCropWidth(320)->setCropHeight(160);
         $item['TABLET_PICTURE'] = $image;
     }
 }
+
 unset($item);
