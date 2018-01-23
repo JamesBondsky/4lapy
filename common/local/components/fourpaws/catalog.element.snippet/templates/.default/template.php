@@ -62,7 +62,7 @@ $firstOffer = $offers->first();
             $mainCombinationType = '';
             if ($firstOffer->getClothingSize()) {
                 $mainCombinationType = 'SIZE';
-            } elseif ($firstOffer->getVolumeReference()) {
+            } else {
                 $mainCombinationType = 'VOLUME';
             }
             ?>
@@ -78,10 +78,17 @@ $firstOffer = $offers->first();
                 <ul class="b-weight-container__list">
                     <?php
                     foreach ($offers as $offer) {
+                        $value = null;
                         if ($mainCombinationType === 'SIZE') {
-                            $value = $offer->getClothingSize();
+                            if ($offer->getClothingSize()) {
+                                $value = $offer->getClothingSize()->getName();
+                            }
                         } else {
-                            $value = $offer->getVolumeReference();
+                            if ($offer->getVolumeReference()) {
+                                $value = $offer->getVolumeReference()->getName();
+                            } elseif ($weight = $offer->getCatalogProduct()->getWeight()) {
+                                $value = \FourPaws\Helpers\WordHelper::showWeight($weight);
+                            }
                         }
                         if (!$value) {
                             continue;
@@ -92,7 +99,7 @@ $firstOffer = $offers->first();
                                 ) ? 'active-link' : '' ?>"
                                       data-price="<?= $offer->getPrice() ?>" data-offerid="<?= $offer->getId() ?>"
                                       data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
-                                ><?= $value->getName() ?></span>
+                                ><?= $value ?></span>
                         </li>
                         <?php
                     } ?>
