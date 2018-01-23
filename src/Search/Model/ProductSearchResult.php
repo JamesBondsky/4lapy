@@ -9,7 +9,7 @@ use FourPaws\App\Application;
 use FourPaws\Catalog\Collection\ProductCollection;
 use FourPaws\Search\Factory;
 
-class ProductSearchResult
+class ProductSearchResult implements ProductResultInterface
 {
     /**
      * @var ProductCollection
@@ -27,6 +27,11 @@ class ProductSearchResult
     private $navigation;
 
     /**
+     * @var string
+     */
+    private $query;
+
+    /**
      * @var Factory
      */
     private $factory;
@@ -40,10 +45,11 @@ class ProductSearchResult
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
      */
-    public function __construct(ResultSet $resultSet, Navigation $navigation = null)
+    public function __construct(ResultSet $resultSet, Navigation $navigation = null, $query = '')
     {
         $this->resultSet = $resultSet;
         $this->navigation = $navigation;
+        $this->query = $query;
         $this->factory = Application::getInstance()->getContainer()->get('search.factory');
     }
 
@@ -83,5 +89,10 @@ class ProductSearchResult
     public function getResultSet(): ResultSet
     {
         return $this->resultSet;
+    }
+
+    public function getQuery(): string
+    {
+        return $this->query;
     }
 }

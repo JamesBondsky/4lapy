@@ -128,6 +128,14 @@ class IndexHelper implements LoggerAwareInterface
      */
     public function getCatalogIndexSettings(): array
     {
+        $qwertyRu = mb_split('\s', 'й ц у к е н г ш щ з х ъ ф ы в а п р о л д ж э я ч с м и т ь б ю');
+        $qwertyEn = mb_split('\s', 'q w e r t y u i o p [ ] a s d f g h j k l ; \' z x c v b n m , .');
+        $characterMap = function($value1, $value2) {
+            return $value1 . ' => ' . $value2;
+        };
+        $enToRuMapping = array_map($characterMap, $qwertyEn, $qwertyRu);
+        $ruToEnMapping = array_map($characterMap, $qwertyRu, $qwertyEn);
+
         return [
             'settings' => [
                 'number_of_shards' => 1,
@@ -199,6 +207,16 @@ class IndexHelper implements LoggerAwareInterface
                                 'synonyms_path' => 'resources/synonym.txt',
                             ],
                         ],
+                        'char_filter' => [
+                            'ru_en' => [
+                                'type' => 'mapping',
+                                'mappings' => $ruToEnMapping
+                            ],
+                            'en_ru' => [
+                                'type' => 'mapping',
+                                'mappings' => $enToRuMapping
+                            ]
+                        ]
                     ],
             ],
             'mappings' => [
@@ -232,20 +250,23 @@ class IndexHelper implements LoggerAwareInterface
                         'offers'                           => [
                             'type'       => 'nested',
                             'properties' => [
-                                'active'                   => ['type' => 'boolean'],
-                                'dateActiveFrom'           => ['type' => 'date', 'format' => 'date_optional_time'],
-                                'dateActiveTo'             => ['type' => 'date', 'format' => 'date_optional_time'],
-                                'ID'                       => ['type' => 'integer'],
-                                'CODE'                     => ['type' => 'keyword'],
-                                'XML_ID'                   => ['type' => 'keyword'],
-                                'SORT'                     => ['type' => 'integer'],
-                                'NAME'                     => ['type' => 'text'],
-                                'PROPERTY_VOLUME'          => ['type' => 'float'],
-                                'PROPERTY_BARCODE'         => ['type' => 'keyword'],
-                                'PROPERTY_KIND_OF_PACKING' => ['type' => 'keyword'],
-                                'PROPERTY_REWARD_TYPE'     => ['type' => 'keyword'],
-                                'price'                    => ['type' => 'scaled_float', 'scaling_factor' => 100,],
-                                'currency'                 => ['type' => 'keyword'],
+                                'active'                    => ['type' => 'boolean'],
+                                'dateActiveFrom'            => ['type' => 'date', 'format' => 'date_optional_time'],
+                                'dateActiveTo'              => ['type' => 'date', 'format' => 'date_optional_time'],
+                                'ID'                        => ['type' => 'integer'],
+                                'CODE'                      => ['type' => 'keyword'],
+                                'XML_ID'                    => ['type' => 'keyword'],
+                                'SORT'                      => ['type' => 'integer'],
+                                'NAME'                      => ['type' => 'text'],
+                                'PROPERTY_VOLUME'           => ['type' => 'float'],
+                                'PROPERTY_VOLUME_REFERENCE' => ['type' => 'keyword'],
+                                'PROPERTY_COLOUR'           => ['type' => 'keyword'],
+                                'PROPERTY_CLOTHING_SIZE'    => ['type' => 'keyword'],
+                                'PROPERTY_BARCODE'          => ['type' => 'keyword'],
+                                'PROPERTY_KIND_OF_PACKING'  => ['type' => 'keyword'],
+                                'PROPERTY_REWARD_TYPE'      => ['type' => 'keyword'],
+                                'price'                     => ['type' => 'scaled_float', 'scaling_factor' => 100,],
+                                'currency'                  => ['type' => 'keyword'],
 //                                'prices'                   => [
 //                                    'type'       => 'nested',
 //                                    'properties' => [
@@ -277,6 +298,7 @@ class IndexHelper implements LoggerAwareInterface
                         'PROPERTY_PET_AGE'                 => ['type' => 'keyword'],
                         'PROPERTY_PET_AGE_ADDITIONAL'      => ['type' => 'keyword'],
                         'PROPERTY_PET_GENDER'              => ['type' => 'keyword'],
+                        'PROPERTY_PET_TYPE'                => ['type' => 'keyword'],
                         'PROPERTY_CATEGORY'                => ['type' => 'keyword'],
                         'PROPERTY_PURPOSE'                 => ['type' => 'keyword'],
                         'PROPERTY_LABEL'                   => ['type' => 'keyword'],
@@ -303,6 +325,12 @@ class IndexHelper implements LoggerAwareInterface
                                 'TYPE' => ['type' => 'keyword', 'index' => false],
                             ],
                         ],
+                        'PROPERTY_COUNTRY'                 => ['type' => 'keyword'],
+                        'PROPERTY_CONSISTENCE'             => ['type' => 'keyword'],
+                        'PROPERTY_FEED_SPECIFICATION'      => ['type' => 'keyword'],
+                        'PROPERTY_PHARMA_GROUP'            => ['type' => 'keyword'],
+                        'hasActions'                       => ['type' => 'boolean'],
+                        'deliveryAvailability'             => ['type' => 'keyword']
                     ],
                 ],
             ],

@@ -101,7 +101,7 @@ abstract class Event implements ServiceHandlerInterface
             $result = $autosort->defineProductsCategories([$arFields['ID']]);
 
             //Результат вызова не имеет смысла, т.к. не позволяет определить ошибку
-            (new CIBlockElement())->SetElementSection($arFields['ID'], $result[$arFields['ID']]);
+            (new CIBlockElement())->SetElementSection($arFields['ID'], $result[$arFields['ID']], false, 0, $result[$arFields['ID']][0]);
 
             //Снятие флажка
             CIBlockElement::SetPropertyValuesEx($arFields['ID'], $arFields['IBLOCK_ID'], ['APPLY_AUTOSORT' => 0]);

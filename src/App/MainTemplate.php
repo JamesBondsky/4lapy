@@ -42,6 +42,21 @@ class MainTemplate extends TemplateAbstract
     }
     
     /**
+     * Страница, недоступная для неавторизованных
+     *
+     * @return bool
+     */
+    public function isForbidden() : bool
+    {
+        /**
+         * It's bitrix way
+         */
+        global $USER;
+        
+        return \defined('NEED_AUTH') && NEED_AUTH === true && !$USER->IsAuthorized();
+    }
+    
+    /**
      * @return bool
      */
     public function hasHeaderPublicationListContainer() : bool
@@ -208,5 +223,30 @@ class MainTemplate extends TemplateAbstract
     public function isPersonalPet() : bool
     {
         return $this->isDir('/personal/pets');
+    }
+    
+    /**
+     * @return bool
+     */
+    public function hasPersonalReferral() : bool
+    {
+        return $this->isPersonalReferral();
+    }
+    
+    /**
+     * @return bool
+     */
+    public function isPersonalReferral() : bool
+    {
+        return $this->isDir('/personal/referral');
+    }
+    
+    /**
+     * Нет основного враппера
+     *
+     * @return bool
+     */
+    public function hasMainWrapper() {
+        return !$this->isForbidden() && !$this->is404();
     }
 }

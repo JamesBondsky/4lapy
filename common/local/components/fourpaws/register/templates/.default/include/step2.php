@@ -13,27 +13,29 @@ use FourPaws\External\Manzana\Model\Client;
 <div class="b-registration__content b-registration__content--moiety b-registration__content--step b-registration__content--back">
     <div class="b-step-form">Шаг <span>2</span> из <span>2</span>
     </div>
-    <form class="b-registration__form b-registration__form--margin js-form-validation"
+    <form class="b-registration__form b-registration__form--margin js-form-validation js-registration-form"
+          id="reg-step5-form"
           data-url="/ajax/user/auth/register/"
           method="post">
         <input type="hidden" name="action" value="register">
         <input type="hidden" name="PERSONAL_PHONE" value="<?= $phone ?>">
-        <div class="b-input-line b-input-line--user-data">
+        <div class="b-input-line b-input-line--user-data js-no-valid">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-surname">Фамилия</label>
             </div>
             <div class="b-input b-input--registration-form">
                 <input class="b-input__input-field b-input__input-field--registration-form"
-                       type="text"
                        id="registration-surname"
-                       name="LAST_NAME"
                        placeholder=""
+                       name="LAST_NAME"
+                       data-text="0"
+                       type="text"
                        value="<?= $manzanaItem instanceof Client ? $manzanaItem->lastName : '' ?>" />
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
         </div>
-        <div class="b-input-line b-input-line--user-data">
+        <div class="b-input-line b-input-line--user-data js-small-input">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-name">Имя</label>
                 <span class="b-input-line__require">(обязательно)</span>
@@ -43,13 +45,14 @@ use FourPaws\External\Manzana\Model\Client;
                        type="text"
                        id="registration-name"
                        name="NAME"
+                       data-text="1"
                        placeholder=""
                        value="<?= $manzanaItem instanceof Client ? $manzanaItem->firstName : '' ?>" />
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
         </div>
-        <div class="b-input-line b-input-line--user-data">
+        <div class="b-input-line b-input-line--user-data js-no-valid">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-patronymic">Отчество</label>
             </div>
@@ -58,13 +61,14 @@ use FourPaws\External\Manzana\Model\Client;
                        type="text"
                        id="registration-patronymic"
                        name="SECOND_NAME"
+                       data-text="2"
                        placeholder=""
                        value="<?= $manzanaItem instanceof Client ? $manzanaItem->secondName : '' ?>" />
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
         </div>
-        <div class="b-input-line b-input-line--user-data">
+        <div class="b-input-line b-input-line--user-data js-date-valid js-hidden-valid-fields">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-date-birth">Дата рождения</label>
             </div>
@@ -73,13 +77,14 @@ use FourPaws\External\Manzana\Model\Client;
                        type="text"
                        id="registration-date-birth"
                        name="PERSONAL_BIRTHDAY"
+                       data-text="3"
                        placeholder=""
                        value="<?= $manzanaItem instanceof Client ? $manzanaItem->birthDate : '' ?>" />
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
         </div>
-        <div class="b-input-line b-input-line--user-data">
+        <div class="b-input-line b-input-line--user-data js-small-input">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-email">Эл. почта</label>
             </div>
@@ -94,7 +99,7 @@ use FourPaws\External\Manzana\Model\Client;
                 </div>
             </div>
         </div>
-        <div class="b-input-line b-input-line--user-data">
+        <div class="b-input-line b-input-line--user-data js-small-input">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-password-5">Пароль</label>
                 <span class="b-input-line__require">(обязательно)</span>
@@ -119,12 +124,18 @@ use FourPaws\External\Manzana\Model\Client;
                        name="PERSONAL_GENDER"
                        id="registration-male"
                        value="M"
+                       data-radio="0"
                        checked="checked" />
                 <label class="b-radio__label" for="registration-male"><span class="b-radio__text-label">мужской</span>
                 </label>
             </div>
             <div class="b-radio">
-                <input class="b-radio__input" type="radio" name="PERSONAL_GENDER" id="registration-female" value="F" />
+                <input class="b-radio__input"
+                       type="radio"
+                       name="PERSONAL_GENDER"
+                       id="registration-female"
+                       value="F"
+                       data-radio="1" />
                 <label class="b-radio__label" for="registration-female"><span class="b-radio__text-label">женский</span>
                 </label>
             </div>
@@ -144,7 +155,7 @@ use FourPaws\External\Manzana\Model\Client;
                 </span>
             </label>
         </div>
-        <button class="b-button b-button--social b-button--full-width" type="submit">Зарегистрироваться</button>
+        <button class="b-button b-button--social b-button--full-width">Зарегистрироваться</button>
     </form>
     <a class="b-registration__back" href="javascript:void(0);" title="Назад" data-action="get"
        data-step="step1"

@@ -12,9 +12,13 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
+use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
-use FourPaws\External\Manzana\Exception\ContactUpdateException;
+use FourPaws\External\Manzana\Exception\ManzanaException;
 use FourPaws\External\Manzana\Model\Client;
+use FourPaws\External\ManzanaService;
+use FourPaws\Helpers\DateHelper;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -22,6 +26,7 @@ use FourPaws\UserBundle\Exception\EmptyDateException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\ValidationException;
+use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use JMS\Serializer\SerializerBuilder;
@@ -47,15 +52,16 @@ class ProfileController extends Controller
     public function __construct(
         UserAuthorizationInterface $userAuthorization,
         CurrentUserProviderInterface $currentUserProvider
-    ) {
+    )
+    {
         $this->currentUserProvider = $currentUserProvider;
     }
     
     /**
-     * @Route("/changePhone/", methods={"POST"})
+     * @Route("/changePhone/", methods={"POST","GET"})
      * @param Request $request
      *
-     * @throws ContactUpdateException
+     * @throws ConstraintDefinitionException
      * @throws ServiceNotFoundException
      * @throws ValidationException
      * @throws InvalidIdentifierException
@@ -101,6 +107,7 @@ class ProfileController extends Controller
      */
     public function changePasswordAction(Request $request) : JsonResponse
     {
+        $id               = (int)$request->get('ID', 0);
         $old_password     = $request->get('old_password', '');
         $password         = $request->get('password', '');
         $confirm_password = $request->get('confirm_password', '');
@@ -143,7 +150,13 @@ class ProfileController extends Controller
         try {
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             $res = $this->currentUserProvider->getUserRepository()->update(
-                SerializerBuilder::create()->build()->fromArray(['PASSWORD' => $password], User::class)
+                SerializerBuilder::create()->build()->fromArray(
+                    [
+                        'ID'       => $id,
+                        'PASSWORD' => $password,
+                    ],
+                    User::class
+                )
             );
             if (!$res) {
                 return JsonErrorResponse::createWithData(
@@ -173,20 +186,17 @@ class ProfileController extends Controller
      *
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
-     * @throws ContactUpdateException
-     * @throws ManzanaServiceException
      * @throws ServiceNotFoundException
      * @throws ValidationException
      * @throws InvalidIdentifierException
-     * @throws NotAuthorizedException
      * @return JsonResponse
      */
     public function changeDataAction(Request $request) : JsonResponse
     {
-        /** @var \FourPaws\UserBundle\Repository\UserRepository $userRepository */
+        /** @var UserRepository $userRepository */
         $userRepository = $this->currentUserProvider->getUserRepository();
         $data           = $request->request->getIterator()->getArrayCopy();
-        if (!empty($data[''])) {
+        if (!empty($data['EMAIL'])) {
             if (filter_var($data['EMAIL'], FILTER_VALIDATE_EMAIL) === false) {
                 return JsonErrorResponse::createWithData(
                     'Некорректный email',
@@ -206,15 +216,9 @@ class ProfileController extends Controller
         /** @var User $user */
         $user = SerializerBuilder::create()->build()->fromArray($data, User::class);
         
-        \CBitrixComponent::includeComponentClass('fourpaws:personal.profile');
-        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-        $profileClass = new \FourPawsPersonalCabinetProfileComponent();
-        
         try {
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-            $res = $userRepository->update(
-                $user
-            );
+            $res = $userRepository->update($user);
             if (!$res) {
                 return JsonErrorResponse::createWithData(
                     'Произошла ошибка при обновлении',
@@ -222,21 +226,35 @@ class ProfileController extends Controller
                 );
             }
             
+            /** @var ManzanaService $manzanaService */
             $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
-            $contactId      = $manzanaService->getContactIdByCurUser();
-            if ($contactId >= 0) {
+            $client         = null;
+            try {
+                $contactId         = $manzanaService->getContactIdByCurUser();
+                $client            = new Client();
+                $client->contactId = $contactId;
+            } catch (ManzanaServiceContactSearchMoreOneException $e) {
+            } catch (ManzanaServiceContactSearchNullException $e) {
                 $client = new Client();
-                if ($contactId > 0) {
-                    $client->contactId = $contactId;
+            } catch (ManzanaServiceException $e) {
+            } catch (NotAuthorizedException $e) {
+            }
+            if ($client instanceof Client) {
+                try {
+                    $this->currentUserProvider->setClientPersonalDataByCurUser($client, $user);
+                } catch (NotAuthorizedException $e) {
                 }
-                $this->currentUserProvider->setClientPersonalDataByCurUser($client, $user);
-                $manzanaService->updateContact($client);
+                try {
+                    $manzanaService->updateContact($client);
+                } catch (ManzanaServiceException $e) {
+                } catch (ManzanaException $e) {
+                }
             }
             
             try {
                 $curBirthday = $user->getBirthday();
                 if ($curBirthday instanceof Date) {
-                    $birthday = $profileClass->replaceRuMonth($curBirthday->format('d #n# Y'));
+                    $birthday = DateHelper::replaceRuMonth($curBirthday->format('d #n# Y'), DateHelper::GENITIVE);
                 } else {
                     $birthday = '';
                 }

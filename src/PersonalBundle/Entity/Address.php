@@ -6,6 +6,7 @@
 
 namespace FourPaws\PersonalBundle\Entity;
 
+use Bitrix\Sale\Location\LocationTable;
 use FourPaws\AppBundle\Entity\BaseEntity;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -16,16 +17,18 @@ class Address extends BaseEntity
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_NAME")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
-    protected $name = '';
+    protected $name;
     
     /**
      * @var int
      * @Serializer\Type("integer")
      * @Serializer\SerializedName("UF_USER_ID")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
-     * @Assert\NotBlank(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Assert\NotBlank(groups={"create","read"})
+     * @Serializer\SkipWhenEmpty()
      */
     protected $userId;
     
@@ -33,84 +36,94 @@ class Address extends BaseEntity
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_CITY")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
-     * @Assert\NotBlank(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Assert\NotBlank(groups={"create","read"})
+     * @Serializer\SkipWhenEmpty()
      */
-    protected $city = '';
+    protected $city;
     
     /**
-     * @var int
-     * @Serializer\Type("int")
+     * @var string
+     * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_CITY_LOCATION")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
-    protected $cityLocation = '';
+    protected $cityLocation;
     
     /**
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_STREET")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
-     * @Assert\NotBlank(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Assert\NotBlank(groups={"create","read"})
+     * @Serializer\SkipWhenEmpty()
      */
-    protected $street = '';
+    protected $street;
     
     /**
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_HOUSE")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
-     * @Assert\NotBlank(groups={""create",read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Assert\NotBlank(groups={"create","read"})
+     * @Serializer\SkipWhenEmpty()
      */
-    protected $house = '';
+    protected $house;
     
     /**
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_HOUSING")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
-    protected $housing = '';
+    protected $housing;
     
     /**
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_ENTRANCE")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
-    protected $entrance = '';
+    protected $entrance;
     
     /**
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_FLOOR")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
-    protected $floor = '';
+    protected $floor;
     
     /**
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_FLAT")
-     * @Serializer\Groups(groups={"read"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
-    protected $flat = '';
+    protected $flat;
     
     /**
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_INTERCOM_CODE")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
-    protected $intercomCode = '';
+    protected $intercomCode;
     
     /**
      * @var bool
      * @Serializer\Type("bitrix_bool")
      * @Serializer\SerializedName("UF_MAIN")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
-    protected $main = false;
+    protected $main;
     
     /**
      * @return string
@@ -137,7 +150,7 @@ class Address extends BaseEntity
      */
     public function isMain() : bool
     {
-        return $this->main;
+        return $this->main ?? false;
     }
     
     /**
@@ -157,7 +170,7 @@ class Address extends BaseEntity
      */
     public function getUserId() : int
     {
-        return $this->userId;
+        return $this->userId ?? 0;
     }
     
     /**
@@ -311,7 +324,7 @@ class Address extends BaseEntity
      */
     public function getHouse() : string
     {
-        return $this->house;
+        return $this->house ?? '';
     }
     
     /**
@@ -331,7 +344,7 @@ class Address extends BaseEntity
      */
     public function getStreet() : string
     {
-        return $this->street;
+        return $this->street ?? '';
     }
     
     /**
@@ -351,7 +364,7 @@ class Address extends BaseEntity
      */
     public function getCity() : string
     {
-        return $this->city;
+        return $this->city ?? '';
     }
     
     /**
@@ -367,22 +380,71 @@ class Address extends BaseEntity
     }
     
     /**
-     * @return int
+     * @return string
      */
-    public function getCityLocation() : int
+    public function getCityLocation() : string
     {
         return $this->cityLocation ?? 0;
     }
     
     /**
-     * @param int $cityLocation
+     * @param string $cityLocation
      *
      * @return Address
      */
-    public function setCityLocation(int $cityLocation) : Address
+    public function setCityLocation(string $cityLocation) : Address
     {
         $this->cityLocation = $cityLocation;
         
         return $this;
+    }
+    
+    public function setCityLocationByEntity()
+    {
+        $street = $this->getStreet();
+        $city   = $this->getCity();
+        $query  = LocationTable::query();
+        $continue = false;
+        if (!empty($street)) {
+            $continue = true;
+            $query->where(
+                [
+                    [
+                        'NAME.NAME',
+                        'like',
+                        $street . '%'
+                    ],
+                    [
+                        'PARENT.NAME.NAME',
+                        'like',
+                        $city . '%'
+                    ],
+                    [
+                        'DEPTH_LEVEL',
+                        '=',
+                        5
+                    ]
+                ]
+            );
+        } elseif (!empty($city)) {
+            $continue = true;
+            $query->where(
+                [
+                    [
+                        'NAME.NAME',
+                        'like',
+                        $city . '%',
+                    ],
+                    [
+                        'DEPTH_LEVEL',
+                        '=',
+                        4
+                    ]
+                ]
+            );
+        }
+        if($continue) {
+            $this->setCityLocation((string)$query->setSelect(['CODE'])->exec()->fetch()['CODE']);
+        }
     }
 }

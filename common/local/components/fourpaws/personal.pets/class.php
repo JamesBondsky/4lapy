@@ -22,6 +22,7 @@ use FourPaws\PersonalBundle\Service\PetService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -32,6 +33,9 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
      * @var PetService
      */
     private $petService;
+    
+    /** @var UserAuthorizationInterface */
+    private $authUserProvider;
     
     /**
      * AutoloadingIssuesInspection constructor.
@@ -54,7 +58,8 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
             /** @noinspection PhpUnhandledExceptionInspection */
             throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
         }
-        $this->petService = $container->get('pet.service');
+        $this->petService       = $container->get('pet.service');
+        $this->authUserProvider = $container->get(UserAuthorizationInterface::class);
     }
     
     /**
@@ -71,17 +76,23 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
      */
     public function executeComponent()
     {
+        if (!$this->authUserProvider->isAuthorized()) {
+            define('NEED_AUTH', true);
+            
+            return null;
+        }
+        
         $this->setFrameMode(true);
         
         if ($this->startResultCache()) {
             $this->arResult['ITEMS'] = $this->petService->getCurUserPets();
-            $this->includeComponentTemplate();
-            
             /** получение пола */
             $this->setGenderVals();
             
             /** получение типов питомцев */
             $this->setPetTypes();
+            
+            $this->includeComponentTemplate();
         }
         
         return true;
@@ -94,7 +105,7 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
     private function setGenderVals()
     {
         $this->arResult['GENDER'] = [];
-        $userFieldId              = UserFieldTable::query()->setSelect(['ID'])->setFilter(
+        $userFieldId              = UserFieldTable::query()->setSelect(['ID', 'XML_ID'])->setFilter(
             [
                 'FIELD_NAME' => 'UF_GENDER',
                 'ENTITY_ID'  => 'HLBLOCK_' . HighloadHelper::getIdByName('Pet'),
@@ -113,12 +124,13 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
     private function setPetTypes()
     {
         $this->arResult['PET_TYPES'] = [];
-        $res                         = HLBlockFactory::createTableObject(Pet::PET_TYPE)::query()->setSelect(
-            [
-                'ID',
-                'UF_NAME',
-            ]
-        )->setOrder(['UF_SORT' => 'asc'])->exec();
+        $res                         =
+            HLBlockFactory::createTableObject(Pet::PET_TYPE)::query()->setFilter(['UF_USE_BY_PET' => 1])->setSelect(
+                [
+                    'ID',
+                    'UF_NAME',
+                ]
+            )->setOrder(['UF_SORT' => 'asc'])->exec();
         while ($item = $res->fetch()) {
             $this->arResult['PET_TYPES'][] = $item;
         }

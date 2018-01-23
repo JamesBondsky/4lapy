@@ -10,6 +10,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use Bitrix\Main\Web\Uri;
 
+$arResult['NavQueryString'] = html_entity_decode($arResult['NavQueryString']);
 $arResult['BASE_URI'] = $arResult['sUrlPath'];
 $arResult['BASE_URI'] .= $arResult['NavQueryString'] !== '' ? '?' . $arResult['NavQueryString'] : '';
 

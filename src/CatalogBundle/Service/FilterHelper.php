@@ -3,12 +3,17 @@
 namespace FourPaws\CatalogBundle\Service;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Highloadblock\DataManager;
 use CIBlockProperty;
 use CIBlockSectionPropertyLink;
 use Exception;
 use FourPaws\Catalog\Model\Category;
+use FourPaws\Catalog\Model\Filter\CategoryFilter;
 use FourPaws\Catalog\Model\Filter\FilterInterface;
+use FourPaws\Catalog\Model\Filter\SectionFilter;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Symfony\Component\HttpFoundation\Request;
@@ -56,6 +61,19 @@ class FilterHelper implements LoggerAwareInterface
     public function getSectionPropertyLinks($iblockId, $sectionId = 0): array
     {
         $propertyLinks = CIBlockSectionPropertyLink::GetArray($iblockId, $sectionId);
+
+        if ($iblockId == IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS) &&
+            $sectionId != 0
+        ) {
+            $propertyLinks = array_merge(
+                $propertyLinks,
+                CIBlockSectionPropertyLink::GetArray(
+                    IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
+                    0
+                )
+            );
+        }
+
         $propIdList = array_filter(
             array_map(
                 function ($propertyLinks) {
@@ -105,17 +123,30 @@ class FilterHelper implements LoggerAwareInterface
         } catch (Exception $e) {
         }
 
-        return array_filter($this->getFilters(), function (FilterInterface $filter) use ($availablePropIndexByCode) {
-            return
-                !$filter->getPropCode() ||
-                array_key_exists($filter->getPropCode(), $availablePropIndexByCode);
-        });
+        return array_filter(
+            $this->getFilters(),
+            function (FilterInterface $filter) use ($categoryId, $availablePropIndexByCode) {
+                // для поиска разрешаем все фильтры, т.к. на данный момент неизвестно, какие разделы каталога выбраны
+                if (!$categoryId) {
+                    return true;
+                }
+
+                // чтобы в каталоге не появлялись множественные фильтры по разделу и категории
+                if ($categoryId && (($filter instanceof CategoryFilter) || $filter instanceof SectionFilter)) {
+                    return false;
+                }
+
+                return
+                    !$filter->getPropCode() ||
+                    array_key_exists($filter->getPropCode(), $availablePropIndexByCode);
+            }
+        );
     }
 
     /**
      * @return FilterInterface[]
      */
-    protected function getFilters(): array
+    public function getFilters(): array
     {
         $doGetFilterFieldsList = function () {
             $filterFieldsList = [];
@@ -189,7 +220,7 @@ class FilterHelper implements LoggerAwareInterface
             return $availablePropIndexByCode;
         };
 
-        return (new BitrixCache())->withId(__METHOD__)
+        return (new BitrixCache())->withId(__METHOD__ . $categoryId)
             ->withTag('catalog:filters')
             ->resultOf($doGetAvailablePropIndexByCode);
     }

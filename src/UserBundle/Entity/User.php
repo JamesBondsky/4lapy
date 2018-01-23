@@ -8,7 +8,8 @@ namespace FourPaws\UserBundle\Entity;
 
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
-use FourPaws\UserBundle\Exception\EmptyDateException;
+use FourPaws\Helpers\Exception\WrongPhoneNumberException;
+use FourPaws\Helpers\PhoneHelper;
 use JMS\Serializer\Annotation as Serializer;
 use Misd\PhoneNumberBundle\Validator\Constraints\PhoneNumber;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -26,7 +27,6 @@ class User
      * @Serializer\Groups(groups={"read","update","delete"})
      * @Assert\NotBlank(groups={"read","update","delete"})
      * @Assert\GreaterThanOrEqual(value="1",groups={"read","update","delete"})
-     * @Assert\Blank(groups={"create"})
      */
     protected $id;
     
@@ -34,36 +34,38 @@ class User
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("EXTERNAL_AUTH_ID")
+     * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
-     * @Serializer\Groups(groups={"create","read","update","delete"})
      */
-    protected $externalAuthId = 0;
+    protected $externalAuthId;
     
     /**
      * @var bool
-     * @Serializer\SerializedName("ACTIVE")
      * @Serializer\Type("bitrix_bool")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\SerializedName("ACTIVE")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
-    protected $active = true;
+    protected $active;
     
     /**
-     * @Serializer\Type("string")
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("XML_ID")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
-    protected $xmlId = '';
+    protected $xmlId;
     
     /**
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("LOGIN")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
-     * @Assert\NotBlank(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Assert\NotBlank(groups={"create","read"})
+     * @Serializer\SkipWhenEmpty()
      */
-    protected $login = '';
+    protected $login;
     
     /**
      * @var string
@@ -73,7 +75,7 @@ class User
      * @Serializer\SkipWhenEmpty()
      * @Assert\NotBlank(groups={"create"})
      */
-    protected $password = '';
+    protected $password;
     
     /**
      * @var string
@@ -81,116 +83,125 @@ class User
      * @Serializer\SerializedName("PASSWORD")
      * @Serializer\Groups(groups={"read"})
      * @Assert\NotBlank(groups={"read"})
+     * @Serializer\SkipWhenEmpty()
      */
-    protected $encryptedPassword = '';
+    protected $encryptedPassword;
     
     /**
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("NAME")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
-    protected $name = '';
+    protected $name;
     
     /**
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("SECOND_NAME")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
-    protected $secondName = '';
+    protected $secondName;
     
     /**
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("LAST_NAME")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
-    protected $lastName = '';
+    protected $lastName;
     
     /**
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("EMAIL")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
-     * @Assert\Email(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Assert\Email(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
-    protected $email = '';
+    protected $email;
     
     /**
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("PERSONAL_PHONE")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
      * @PhoneNumber(defaultRegion="RU",type="mobile")
+     * @Serializer\SkipWhenEmpty()
      */
-    protected $personalPhone = '';
+    protected $personalPhone;
     
     /**
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("CHECKWORD")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
-    protected $checkWord = '';
+    protected $checkWord;
     
     /**
      * @var bool
      * @Serializer\Type("boolean")
      * @Serializer\SerializedName("UF_CONFIRMATION")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
-    protected $personalDataConfirmed = false;
+    protected $personalDataConfirmed;
     
     /**
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_LOCATION")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
-    protected $location = '';
+    protected $location;
     
     /**
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("PERSONAL_GENDER")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
-    protected $gender = '';
+    protected $gender;
     
-    /** @todo как сделать множественный тип на вход и выход */
     /**
      * @var Date|null
      * @Serializer\Type("bitrix_date")
-     * @Assert\Blank(groups={"create","read","update","delete"})
-     * @Serializer\SkipWhenEmpty()
      * @Serializer\SerializedName("PERSONAL_BIRTHDAY")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
     protected $birthday;
     
     /** @var bool
      * @Serializer\Type("boolean")
      * @Serializer\SerializedName("UF_EMAIL_CONFIRMED")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
-    protected $emailConfirmed = false;
+    protected $emailConfirmed;
     
     /**
      * @var bool
      * @Serializer\Type("boolean")
      * @Serializer\SerializedName("UF_PHONE_CONFIRMED")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
-    protected $phoneConfirmed = false;
+    protected $phoneConfirmed;
     
-    /** @todo как сделать множественный тип на вход */
     /**
      * @var DateTime|null
      * @Serializer\Type("bitrix_date_time")
-     * @Serializer\SkipWhenEmpty()
      * @Serializer\SerializedName("DATE_REGISTER")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
      */
     protected $dateRegister;
     
@@ -239,7 +250,7 @@ class User
      */
     public function getXmlId() : string
     {
-        return $this->xmlId;
+        return $this->xmlId ?? '';
     }
     
     /**
@@ -277,9 +288,24 @@ class User
     /**
      * @return string
      */
+    public function getNormalizePersonalPhone() : string
+    {
+        if (!empty($this->getPersonalPhone())) {
+            try {
+                return PhoneHelper::normalizePhone($this->getPersonalPhone());
+            } catch (WrongPhoneNumberException $e) {
+            }
+        }
+        
+        return '';
+    }
+    
+    /**
+     * @return string
+     */
     public function getPersonalPhone() : string
     {
-        return (string)$this->personalPhone;
+        return $this->personalPhone ?? '';
     }
     
     /**
@@ -294,12 +320,17 @@ class User
         return $this;
     }
     
+    public function havePersonalPhone() : bool
+    {
+        return !empty($this->getPersonalPhone()) ? true : false;
+    }
+    
     /**
      * @return string
      */
     public function getCheckWord() : string
     {
-        return $this->checkWord;
+        return $this->checkWord ?? '';
     }
     
     /**
@@ -440,7 +471,7 @@ class User
      */
     public function getName() : string
     {
-        return $this->name;
+        return $this->name ?? '';
     }
     
     /**
@@ -460,7 +491,7 @@ class User
      */
     public function getLastName() : string
     {
-        return $this->lastName;
+        return $this->lastName ?? '';
     }
     
     /**
@@ -480,7 +511,7 @@ class User
      */
     public function getSecondName() : string
     {
-        return $this->secondName;
+        return $this->secondName ?? '';
     }
     
     /**
@@ -533,7 +564,7 @@ class User
      */
     public function getGender()
     {
-        return $this->gender;
+        return $this->gender ?? null;
     }
     
     /**
@@ -549,7 +580,37 @@ class User
     }
     
     /**
-     * @throws EmptyDateException
+     * @return int|null
+     */
+    public function getManzanaGender()
+    {
+        return str_replace(
+                   [
+                       'M',
+                       'F',
+                   ],
+                   [
+                       1,
+                       2,
+                   ],
+                   $this->getGender()
+               ) ?? null;
+    }
+    
+    /**
+     * @return \DateTimeImmutable|null
+     */
+    public function getManzanaBirthday()
+    {
+        $birthday = $this->getBirthday();
+        if ($birthday instanceof Date) {
+            return new \DateTimeImmutable($birthday->format('Y-m-d\TH:i:s'));
+        }
+        
+        return null;
+    }
+    
+    /**
      * @return null|Date
      *
      */
@@ -580,7 +641,7 @@ class User
      */
     public function isPhoneConfirmed() : bool
     {
-        return $this->phoneConfirmed;
+        return $this->phoneConfirmed ?? false;
     }
     
     /**
@@ -620,7 +681,7 @@ class User
      */
     public function isEmailConfirmed() : bool
     {
-        return $this->emailConfirmed;
+        return $this->emailConfirmed ?? false;
     }
     
     /**
@@ -633,6 +694,14 @@ class User
         $this->emailConfirmed = $emailConfirmed;
         
         return $this;
+    }
+    
+    /**
+     * @return \DateTimeImmutable
+     */
+    public function getManzanaDateRegister() : \DateTimeImmutable
+    {
+        return new \DateTimeImmutable($this->getDateRegister()->format('Y-m-d\TH:i:s'));
     }
     
     /**

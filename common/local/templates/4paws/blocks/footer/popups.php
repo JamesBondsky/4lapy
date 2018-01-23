@@ -2,28 +2,18 @@
 
 use Bitrix\Main\Application;
 use FourPaws\App\MainTemplate;
+use FourPaws\Decorators\SvgDecorator;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
+
 /** @var MainTemplate $template */
 /** @noinspection PhpUnhandledExceptionInspection */
 $template = MainTemplate::getInstance(Application::getInstance()->getContext()); ?>
 <div class="b-popup-wrapper js-popup-wrapper">
-    <?php $APPLICATION->IncludeComponent(
-        'fourpaws:city.selector',
-        'popup',
-        [],
-        false,
-        ['HIDE_ICONS' => 'Y']
-    );
-    $APPLICATION->IncludeComponent(
-        'fourpaws:auth.form',
-        'popup',
-        [],
-        false,
-        ['HIDE_ICONS' => 'Y']
-    ); ?>
+    <?php $APPLICATION->IncludeComponent('fourpaws:city.selector', 'popup', [], false, ['HIDE_ICONS' => 'Y']);
+    $APPLICATION->IncludeComponent('fourpaws:auth.form', 'popup', [], false, ['HIDE_ICONS' => 'Y']); ?>
     <section class="b-popup-pick-city b-popup-pick-city--subscribe-delivery js-popup-section"
              data-popup="subscribe-delivery">
         <a class="b-popup-pick-city__close b-popup-pick-city__close--subscribe-delivery js-close-popup"
@@ -65,34 +55,28 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
                                                                                            момент
                 </div>
                 <ul class="b-registration__info-delivery">
-                    <li class="b-registration__item-delivery"><span class="b-icon b-icon--delivery-calendar"><svg class="b-icon__svg"
-                                                                                                                  viewBox="0 0 16 17 "
-                                                                                                                  width="16px"
-                                                                                                                  height="17px"><use
-                                        class="b-icon__use"
-                                        xlink:href="icons.svg#icon-delivery-calendar"></use></svg></span>
+                    <li class="b-registration__item-delivery">
+                        <span class="b-icon b-icon--delivery-calendar">
+                            <?= new SvgDecorator('icon-delivery-calendar', 16, 17) ?>
+                        </span>
                         <div class="b-registration__text b-registration__text--info-delivery">
                             <p>Параметры подписки: по субботам, раз в неделю, с 10 до 20.</p>
                             <p>Первая доставка: суббота 20.07.2017 с 10 до 20</p>
                         </div>
                     </li>
-                    <li class="b-registration__item-delivery"><span class="b-icon b-icon--delivery-calendar"><svg class="b-icon__svg"
-                                                                                                                  viewBox="0 0 18 12 "
-                                                                                                                  width="18px"
-                                                                                                                  height="12px"><use
-                                        class="b-icon__use"
-                                        xlink:href="icons.svg#icon-delivery-car"></use></svg></span>
+                    <li class="b-registration__item-delivery">
+                        <span class="b-icon b-icon--delivery-calendar">
+                            <?= new SvgDecorator('icon-delivery-car', 18, 12) ?>
+                        </span>
                         <div class="b-registration__text b-registration__text--info-delivery">
                             <p>Доставка курьером, по адресу:</p>
                             <p>г. Москва, ул. Ленина, д. 4, кв. 24, под. 3, эт. 4</p>
                         </div>
                     </li>
-                    <li class="b-registration__item-delivery"><span class="b-icon b-icon--delivery-calendar"><svg class="b-icon__svg"
-                                                                                                                  viewBox="0 0 18 14 "
-                                                                                                                  width="18px"
-                                                                                                                  height="14px"><use
-                                        class="b-icon__use"
-                                        xlink:href="icons.svg#icon-delivery-dollar"></use></svg></span>
+                    <li class="b-registration__item-delivery">
+                        <span class="b-icon b-icon--delivery-calendar">
+                            <?= new SvgDecorator('icon-delivery-dollar', 18, 14) ?>
+                        </span>
                         <div class="b-registration__text b-registration__text--info-delivery">
                             <p>Оплата: наличными или картой при получении.</p>
                         </div>
@@ -102,99 +86,22 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
             </form>
         </div>
     </section>
-    <section class="b-popup-pick-city b-popup-pick-city--add-referal js-popup-section" data-popup="add-referal">
-        <a class="b-popup-pick-city__close b-popup-pick-city__close--add-referal js-close-popup"
-           href="javascript:void(0);"
-           title="Закрыть"></a>
-        <div class="b-registration b-registration--add-referal">
-            <header class="b-registration__header">
-                <h1 class="b-title b-title--h1 b-title--registration">Новый реферал</h1>
-            </header>
-            <form class="b-registration__form js-form-validation">
-                <div class="b-input-line b-input-line--popup-authorization b-input-line--referal">
-                    <div class="b-input-line__label-wrapper">
-                        <label class="b-input-line__label" for="number-card">Номер бонусной карты</label>
-                        <span class="b-input-line__require">(обязательно)</span>
-                    </div>
-                    <input class="b-input b-input--registration-form" type="text" id="number-card" placeholder="" />
-                </div>
-                <div class="b-input-line b-input-line--popup-authorization b-input-line--referal">
-                    <div class="b-input-line__label-wrapper">
-                        <label class="b-input-line__label" for="last-name">Фамилия</label>
-                    </div>
-                    <input class="b-input b-input--registration-form" type="text" id="last-name" placeholder="" />
-                </div>
-                <div class="b-input-line b-input-line--popup-authorization b-input-line--referal">
-                    <div class="b-input-line__label-wrapper">
-                        <label class="b-input-line__label" for="first-name">Имя</label>
-                    </div>
-                    <input class="b-input b-input--registration-form" type="text" id="first-name" placeholder="" />
-                </div>
-                <div class="b-input-line b-input-line--popup-authorization b-input-line--referal">
-                    <div class="b-input-line__label-wrapper">
-                        <label class="b-input-line__label" for="patronymic">Отчество</label>
-                    </div>
-                    <input class="b-input b-input--registration-form" type="text" id="patronymic" placeholder="" />
-                </div>
-                <div class="b-input-line b-input-line--popup-authorization b-input-line--referal">
-                    <div class="b-input-line__label-wrapper">
-                        <label class="b-input-line__label" for="phone-referal">Телефон</label>
-                    </div>
-                    <input class="b-input b-input--registration-form" type="tel" id="phone-referal" placeholder="" />
-                </div>
-                <div class="b-input-line b-input-line--popup-authorization b-input-line--referal">
-                    <div class="b-input-line__label-wrapper">
-                        <label class="b-input-line__label" for="email-referal">Эл. почта</label>
-                    </div>
-                    <input class="b-input b-input--registration-form" type="email" id="email-referal" placeholder="" />
-                </div>
-                <button class="b-button b-button--subscribe-delivery">Сохранить</button>
-                <div class="b-registration__text b-registration__text--referal">Начисление баллов начнется после
-                                                                                успешной проверки данных
-                </div>
-            </form>
-        </div>
-    </section>
-    <?php if ($template->hasPersonalAddress()) {
-        $APPLICATION->IncludeComponent(
-            'fourpaws:personal.address',
-            'popup',
-            [],
-            $component,
-            ['HIDE_ICONS' => 'Y']
-        );
+    <?php if ($template->hasPersonalReferral()) {
+        $APPLICATION->IncludeComponent('fourpaws:personal.referral', 'popup', [], $component, ['HIDE_ICONS' => 'Y']);
+    }
+    if ($template->hasPersonalAddress()) {
+        $APPLICATION->IncludeComponent('fourpaws:personal.address', 'popup', [], $component, ['HIDE_ICONS' => 'Y']);
     }
     if ($template->hasPersonalPet()) {
-        $APPLICATION->IncludeComponent(
-            'fourpaws:personal.pets',
-            'popup',
-            [],
-            $component,
-            ['HIDE_ICONS' => 'Y']
-        );
+        $APPLICATION->IncludeComponent('fourpaws:personal.pets', 'popup', [], $component, ['HIDE_ICONS' => 'Y']);
     }
     if ($template->hasPersonalProfile()) {
-        $APPLICATION->IncludeComponent(
-            'fourpaws:personal.profile',
-            'popupChangePassword',
-            [],
-            $component,
-            ['HIDE_ICONS' => 'Y']
-        );
-        $APPLICATION->IncludeComponent(
-            'fourpaws:personal.profile',
-            'popupChangeData',
-            [],
-            $component,
-            ['HIDE_ICONS' => 'Y']
-        );
-        $APPLICATION->IncludeComponent(
-            'fourpaws:personal.profile',
-            'popupChangePhone',
-            [],
-            $component,
-            ['HIDE_ICONS' => 'Y']
-        );
+        $APPLICATION->IncludeComponent('fourpaws:personal.profile', 'popupChangePassword', [], $component,
+                                       ['HIDE_ICONS' => 'Y']);
+        $APPLICATION->IncludeComponent('fourpaws:personal.profile', 'popupChangeData', [], $component,
+                                       ['HIDE_ICONS' => 'Y']);
+        $APPLICATION->IncludeComponent('fourpaws:personal.profile', 'popupChangePhone', [], $component,
+                                       ['HIDE_ICONS' => 'Y']);
     } ?>
     <div class="b-popup-wrapper__wrapper-modal">
         <section class="b-popup-pick-city b-popup-pick-city--choose-gift js-popup-section"
@@ -207,7 +114,7 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
             </header>
             <div class="b-common-item b-common-item--popup-gift">
                 <span class="b-common-item__image-wrap b-common-item__image-wrap--popup-gift"><img class="b-common-item__image b-common-item__image--popup-gift"
-                                                                                                   src="images/content/hills-cat.jpg"
+                                                                                                   src="/static/build/images/content/hills-cat.jpg"
                                                                                                    alt="для щенков с ягненком и рисом"
                                                                                                    title="" /></span>
                 <div
@@ -225,7 +132,7 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
             </div>
             <div class="b-common-item b-common-item--popup-gift">
                 <span class="b-common-item__image-wrap b-common-item__image-wrap--popup-gift"><img class="b-common-item__image b-common-item__image--popup-gift"
-                                                                                                   src="images/content/clean-cat.jpg"
+                                                                                                   src="/static/build/images/content/clean-cat.jpg"
                                                                                                    alt="собак мелкие и миниатюрные породы Лайт"
                                                                                                    title="" /></span>
                 <div
@@ -243,7 +150,7 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
             </div>
             <div class="b-common-item b-common-item--popup-gift">
                 <span class="b-common-item__image-wrap b-common-item__image-wrap--popup-gift"><img class="b-common-item__image b-common-item__image--popup-gift"
-                                                                                                   src="images/content/royal-canin-2.jpg"
+                                                                                                   src="/static/build/images/content/royal-canin-2.jpg"
                                                                                                    alt="для собак мини пород Сеньор"
                                                                                                    title="" /></span>
                 <div class="b-common-item__info-center-block b-common-item__info-center-block--popup-gift">
@@ -260,7 +167,7 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
             </div>
             <div class="b-common-item b-common-item--popup-gift">
                 <span class="b-common-item__image-wrap b-common-item__image-wrap--popup-gift"><img class="b-common-item__image b-common-item__image--popup-gift"
-                                                                                                   src="images/content/hills-cat.jpg"
+                                                                                                   src="/static/build/images/content/hills-cat.jpg"
                                                                                                    alt="ля собак идеальный вес состоит"
                                                                                                    title="" /></span>
                 <div class="b-common-item__info-center-block b-common-item__info-center-block--popup-gift">
@@ -277,7 +184,7 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
             </div>
             <div class="b-common-item b-common-item--popup-gift">
                 <span class="b-common-item__image-wrap b-common-item__image-wrap--popup-gift"><img class="b-common-item__image b-common-item__image--popup-gift"
-                                                                                                   src="images/content/royal-canin-2.jpg"
+                                                                                                   src="/static/build/images/content/royal-canin-2.jpg"
                                                                                                    alt="для собак миниатюрных пород с ягненком вкусным"
                                                                                                    title="" /></span>
                 <div
@@ -295,4 +202,5 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
             </div>
         </section>
     </div>
+    <?php include 'modal_popup.php' ?>
 </div>

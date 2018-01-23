@@ -4,7 +4,10 @@
 
 use Bitrix\Iblock\IblockTable;
 use Bitrix\Main\Application;
+use Bitrix\Main\Data\Cache;
+use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Decorators\FullHrefDecorator;
+use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\HighloadHelper;
 
 /**
@@ -76,9 +79,55 @@ $elementID = $APPLICATION->IncludeComponent(
     ['HIDE_ICONS' => 'Y']
 );
 
-/** @todo сделать распродажу с каталогом после готовности каталога со списком товаров */
-
-?>
+$cache    = Cache::createInstance();
+$products = [];
+if ($cache->initCache(
+    $arParams['CACHE_TIME'],
+    serialize(
+        [
+            'ITEM_ID'   => $elementID,
+            'IBLOCK_ID' => $arParams['IBLOCK_ID'],
+            'TYPE'      => 'DETAIL_NEWS_PRODUCTS',
+        ]
+    )
+)) {
+    $vars     = $cache->getVars();
+    $products = $vars['products'];
+} else {
+    $res      = \CIBlockElement::GetProperty($arParams['IBLOCK_ID'], $elementID, [], ['CODE' => 'PRODUCTS']);
+    $products = [];
+    while ($item = $res->Fetch()) {
+        if(!empty($item['VALUE']) && !in_array($item['VALUE'], $products)) {
+            $products[] = $item['VALUE'];
+        }
+    }
+    if (!empty($products)) {
+        $query    = new ProductQuery();
+        $res      = $query->withFilter(['=XML_ID' => $products])->exec();
+        $products = $res->toArray();
+    }
+    $cache->endDataCache(['products' => $products]); // записываем в кеш
+}
+if (!empty($products)) {
+    ?>
+    <div class="b-container">
+        <section class="b-common-section">
+            <div class="b-common-section__title-box b-common-section__title-box--sale">
+                <h2 class="b-title b-title--sale">Товары</h2>
+            </div>
+            <div class="b-common-section__content b-common-section__content--sale js-popular-product">
+                <?php foreach ($products as $product) {
+                    $APPLICATION->IncludeComponent(
+                        'fourpaws:catalog.element.snippet',
+                        '',
+                        ['PRODUCT' => $product]
+                    );
+                } ?>
+            </div>
+        </section>
+    </div>
+    <?php
+} ?>
     <div class="b-container">
         <div class="b-social-big">
             <p>Рассказать в соцсетях</p>
@@ -103,9 +152,9 @@ $elementID = $APPLICATION->IncludeComponent(
 /** @noinspection PhpUnhandledExceptionInspection */
 $arResult['IBLOCK_CODE'] = IblockTable::getList(
     [
-        'filter' => ['ID' => $arParams['ID']],
+        'filter' => ['ID' => $arParams['IBLOCK_ID']],
         'select' => ['CODE'],
-        'cache'  => ['ttl' => 360000],
+        'cache'  => ['ttl' => $arParams['CACHE_TIME']],
     ]
 )->fetch()['CODE'];
 /** @noinspection PhpUnhandledExceptionInspection */

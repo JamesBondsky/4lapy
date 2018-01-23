@@ -12,6 +12,10 @@ use FourPaws\UserBundle\Repository\UserRepository;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
+/**
+ * Interface CurrentUserProviderInterface
+ * @package FourPaws\UserBundle\Service
+ */
 interface CurrentUserProviderInterface
 {
     /**
@@ -23,14 +27,14 @@ interface CurrentUserProviderInterface
      * @return int
      */
     public function getCurrentUserId(): int;
-    
+
     /**
      * @return UserRepository
      */
-    public function getUserRepository() : UserRepository;
-    
+    public function getUserRepository(): UserRepository;
+
     /**
-     * @param Client    $client
+     * @param Client $client
      * @param User|null $user
      *
      * @throws InvalidIdentifierException
@@ -41,4 +45,20 @@ interface CurrentUserProviderInterface
      * @throws ServiceCircularReferenceException
      */
     public function setClientPersonalDataByCurUser(&$client, User $user = null);
+
+    /**
+     *
+     *
+     * @return int
+     */
+    public function getCurrentFUserId(): int;
+    
+    /**
+     * @param int $id
+     *
+     * @return array
+     * @throws InvalidIdentifierException
+     * @throws NotAuthorizedException
+     */
+    public function getUserGroups(int $id = 0) : array;
 }

@@ -8,8 +8,10 @@ namespace FourPaws\StoreBundle\AjaxController;
 
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -21,13 +23,13 @@ use Symfony\Component\HttpFoundation\Request;
 class StoreListController extends Controller
 {
     /**
-     * @Route("/order/", methods={"POST"})
-     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @Route("/order/", methods={"GET"})
+     * @param Request $request
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException
+     * @throws ServiceNotFoundException
+     * @throws FileNotFoundException
      * @throws \Exception
-     * @return \FourPaws\App\Response\JsonResponse
+     * @return JsonResponse
      */
     public function orderAction(Request $request) : JsonResponse
     {
@@ -45,13 +47,13 @@ class StoreListController extends Controller
     }
     
     /**
-     * @Route("/checkboxFilter/", methods={"POST"})
-     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @Route("/checkboxFilter/", methods={"GET"})
+     * @param Request $request
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws ServiceNotFoundException
      * @throws \Exception
-     * @throws \FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException
-     * @return \FourPaws\App\Response\JsonResponse
+     * @throws FileNotFoundException
+     * @return JsonResponse
      */
     public function checkboxFilterAction(Request $request) : JsonResponse
     {
@@ -70,12 +72,12 @@ class StoreListController extends Controller
     
     /**
      * @Route("/search/", methods={"POST"})
-     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @param Request $request
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws ServiceNotFoundException
      * @throws \Exception
-     * @throws \FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException
-     * @return \FourPaws\App\Response\JsonResponse
+     * @throws FileNotFoundException
+     * @return JsonResponse
      */
     public function searchAction(Request $request) : JsonResponse
     {
@@ -93,13 +95,13 @@ class StoreListController extends Controller
     }
     
     /**
-     * @Route("/chooseCity/", methods={"POST"})
-     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @Route("/chooseCity/", methods={"GET"})
+     * @param Request $request
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws ServiceNotFoundException
      * @throws \Exception
-     * @throws \FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException
-     * @return \FourPaws\App\Response\JsonResponse
+     * @throws FileNotFoundException
+     * @return JsonResponse
      */
     public function chooseCityAction(Request $request) : JsonResponse
     {

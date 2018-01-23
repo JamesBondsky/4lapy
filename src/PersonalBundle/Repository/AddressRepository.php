@@ -7,7 +7,6 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Repository\BaseHlRepository;
 use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
-use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -32,7 +31,6 @@ class AddressRepository extends BaseHlRepository
      * @throws \Exception
      * @throws ApplicationCreateException
      * @throws BitrixRuntimeException
-     * @throws NotAuthorizedException
      * @throws ServiceCircularReferenceException
      */
     public function create() : bool
@@ -47,13 +45,26 @@ class AddressRepository extends BaseHlRepository
     }
     
     /**
+     * @param array $params
+     *
+     * @return Address[]|array
+     * @throws \Exception
+     */
+    public function findBy(array $params = []) : array
+    {
+        if(empty($params['entityClass'])){
+            $params['entityClass'] = Address::class;
+        }
+        return parent::findBy($params);
+    }
+    
+    /**
      * @param int $userId
      *
      * @return array
      * @throws ServiceNotFoundException
      * @throws \Exception
      * @throws ApplicationCreateException
-     * @throws NotAuthorizedException
      * @throws ServiceCircularReferenceException
      */
     public function findByCurUser(int $userId = 0) : array
@@ -62,11 +73,6 @@ class AddressRepository extends BaseHlRepository
             $userId = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class)->getCurrentUserId();
         }
         
-        return $this->findBy(
-            [
-                'filter' => ['UF_USER_ID' => $userId],
-                'entityClass' => Address::class,
-            ]
-        );
+        return $this->findBy(['filter' => ['UF_USER_ID' => $userId]]);
     }
 }

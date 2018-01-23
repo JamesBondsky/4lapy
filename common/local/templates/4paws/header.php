@@ -8,7 +8,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var \CMain $APPLICATION
  */
 
-use Bitrix\Main\Application;use Bitrix\Main\Page\Asset;use FourPaws\App\Application as PawsApplication;use FourPaws\App\MainTemplate;use FourPaws\Decorators\SvgDecorator;
+use Bitrix\Main\Application;
+use Bitrix\Main\Page\Asset;
+use FourPaws\App\Application as PawsApplication;
+use FourPaws\App\MainTemplate;
+use FourPaws\Decorators\SvgDecorator;
+use FourPaws\SaleBundle\Service\BasketViewService;
 
 /** @var MainTemplate $template */
 $template = MainTemplate::getInstance(Application::getInstance()->getContext());
@@ -51,45 +56,27 @@ $markup = PawsApplication::markup();
                     <img src="/static/build/images/inhtml/logo.svg" alt="Четыре лапы" title="Четыре лапы" />
                 </a>
                 <?php
-                /**
-                 * @todo Форма поиска. Заменить компонентом и удалить файл.
-                 */
-                require_once 'temp_search.php';
+                $APPLICATION->IncludeComponent(
+                    'fourpaws:catalog.search.form',
+                    '',
+                    [],
+                    false,
+                    ['HIDE_ICONS' => 'Y']
+                );
                 ?>
                 <div class="b-header-info">
-                    <?php require_once 'blocks/header/phone_block.php' ?>
-                    <?php $APPLICATION->IncludeComponent('fourpaws:auth.form',
-                                                         '',
-                                                         [],
-                                                         false,
-                                                         ['HIDE_ICONS' => 'Y']);
+                    <?php require_once __DIR__ . '/blocks/header/phone_block.php' ?>
+                    <?php $APPLICATION->IncludeComponent(
+                        'fourpaws:auth.form',
+                        '',
+                        [],
+                        false,
+                        ['HIDE_ICONS' => 'Y']
+                    );
 
-                    $APPLICATION->IncludeComponent('bitrix:sale.basket.basket.line',
-                                                   'header.basket',
-                                                   [
-                                                       'COMPONENT_TEMPLATE'   => 'header.basket',
-                                                       'PATH_TO_BASKET'       => '/personal/cart/',
-                                                       'PATH_TO_ORDER'        => '/personal/order/make/',
-                                                       'SHOW_NUM_PRODUCTS'    => 'Y',
-                                                       'SHOW_TOTAL_PRICE'     => 'Y',
-                                                       'SHOW_EMPTY_VALUES'    => 'Y',
-                                                       'SHOW_PERSONAL_LINK'   => 'Y',
-                                                       'PATH_TO_PERSONAL'     => '/personal/',
-                                                       'SHOW_AUTHOR'          => 'N',
-                                                       'PATH_TO_REGISTER'     => '',
-                                                       'PATH_TO_AUTHORIZE'    => '',
-                                                       'PATH_TO_PROFILE'      => '/personal/',
-                                                       'SHOW_PRODUCTS'        => 'Y',
-                                                       'SHOW_DELAY'           => 'N',
-                                                       'SHOW_NOTAVAIL'        => 'Y',
-                                                       'SHOW_IMAGE'           => 'Y',
-                                                       'SHOW_PRICE'           => 'Y',
-                                                       'SHOW_SUMMARY'         => 'N',
-                                                       'POSITION_FIXED'       => 'N',
-                                                       'HIDE_ON_BASKET_PAGES' => 'N',
-                                                   ],
-                                                   false,
-                                                   ['HIDE_ICONS' => 'Y']); ?>
+                    echo PawsApplication::getInstance()->getContainer()->get(BasketViewService::class)->getMiniBasketHtml();
+
+                    ?>
                 </div>
             </div>
             <div class="b-header__menu js-minimal-menu js-nav-first-desktop">
@@ -132,13 +119,16 @@ $markup = PawsApplication::markup();
         </div>
     </header>
     <?php
+    if ($template->hasMainWrapper()) {
+
     /**
      * Основное меню. dropdown
      */
     $APPLICATION->ShowViewContent('header_dropdown_menu'); ?>
     <main class="b-wrapper<?= $template->getIndexMainClass() ?>" role="main">
         <?php if ($template->hasHeaderPublicationListContainer()) { ?>
-        <div class="<?php $APPLICATION->ShowProperty('PUBLICATION_LIST_CONTAINER_1', 'b-container b-container--news') ?>">
+        <div class="<?php $APPLICATION->ShowProperty('PUBLICATION_LIST_CONTAINER_1',
+                                                     'b-container b-container--news') ?>">
             <div class="<?php $APPLICATION->ShowProperty('PUBLICATION_LIST_CONTAINER_2', 'b-news') ?>">
                 <h1 class="b-title b-title--h1"><?php $APPLICATION->ShowTitle(false) ?></h1>
                 <?php
@@ -146,16 +136,16 @@ $markup = PawsApplication::markup();
                 
                 if ($template->hasHeaderDetailPageContainer()) {
                     ?>
-                    <div class="<?php $APPLICATION->ShowProperty('PUBLICATION_DETAIL_CONTAINER_1', 'b-container b-container--news-detail') ?>">
-                        <div class="<?php $APPLICATION->ShowProperty('PUBLICATION_DETAIL_CONTAINER_2', 'b-detail-page') ?>">
+                    <div class="<?php $APPLICATION->ShowProperty('PUBLICATION_DETAIL_CONTAINER_1',
+                                                                 'b-container b-container--news-detail') ?>">
+                        <div class="<?php $APPLICATION->ShowProperty('PUBLICATION_DETAIL_CONTAINER_2',
+                                                                     'b-detail-page') ?>">
                             <?php
-                            $APPLICATION->IncludeComponent('bitrix:breadcrumb',
-                                                           'breadcrumb',
-                                                           [
-                                                               'PATH'       => '',
-                                                               'SITE_ID'    => SITE_ID,
-                                                               'START_FROM' => '0',
-                                                           ]); ?>
+                            $APPLICATION->IncludeComponent('bitrix:breadcrumb', 'breadcrumb', [
+                                                                                  'PATH'       => '',
+                                                                                  'SITE_ID'    => SITE_ID,
+                                                                                  'START_FROM' => '0',
+                                                                              ]); ?>
                             <h1 class="b-title b-title--h1">
                                 <?php $APPLICATION->ShowTitle(false) ?>
                             </h1>
@@ -171,22 +161,19 @@ $markup = PawsApplication::markup();
                         <div class="b-account__wrapper-title">
                             <h1 class="b-title b-title--h1"><?php $APPLICATION->ShowTitle(false) ?></h1>
                         </div>
-                        <?php $APPLICATION->IncludeComponent('bitrix:menu',
-                                                             'personal.menu',
-                                                             [
-                                                                 'COMPONENT_TEMPLATE'    => 'personal.menu',
-                                                                 'ROOT_MENU_TYPE'        => 'personal_cab',
-                                                                 'MENU_CACHE_TYPE'       => 'A',
-                                                                 'MENU_CACHE_TIME'       => '360000',
-                                                                 'MENU_CACHE_USE_GROUPS' => 'N',
-                                                                 'MENU_CACHE_GET_VARS'   => [],
-                                                                 'MAX_LEVEL'             => '1',
-                                                                 'CHILD_MENU_TYPE'       => 'personal_cab',
-                                                                 'USE_EXT'               => 'N',
-                                                                 'DELAY'                 => 'N',
-                                                                 'ALLOW_MULTI_SELECT'    => 'N',
-                                                             ],
-                                                             false); ?>
+                        <?php $APPLICATION->IncludeComponent('bitrix:menu', 'personal.menu', [
+                                                                              'COMPONENT_TEMPLATE'    => 'personal.menu',
+                                                                              'ROOT_MENU_TYPE'        => 'personal_cab',
+                                                                              'MENU_CACHE_TYPE'       => 'A',
+                                                                              'MENU_CACHE_TIME'       => '360000',
+                                                                              'MENU_CACHE_USE_GROUPS' => 'N',
+                                                                              'MENU_CACHE_GET_VARS'   => [],
+                                                                              'MAX_LEVEL'             => '1',
+                                                                              'CHILD_MENU_TYPE'       => 'personal_cab',
+                                                                              'USE_EXT'               => 'N',
+                                                                              'DELAY'                 => 'N',
+                                                                              'ALLOW_MULTI_SELECT'    => 'N',
+                                                                          ], false); ?>
                         <main class="b-account__content" role="main">
                             <?php }
                             
@@ -200,4 +187,5 @@ $markup = PawsApplication::markup();
                                                карты к оплате</p>
                                         </div>
                                     </div>
-                                    <?php } ?>
+                                    <?php }
+                                    } ?>
