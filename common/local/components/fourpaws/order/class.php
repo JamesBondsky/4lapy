@@ -4,16 +4,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use Bitrix\Main\Context;
-use Bitrix\Main\Request;
-use Bitrix\Sale\Order;
 use Bitrix\Iblock\Component\Tools;
+use Bitrix\Sale\BasketItem;
+use FourPaws\App\Application;
 use FourPaws\SaleBundle\Exception\NotFoundException;
-use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
+use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderService;
-use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
-use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 
 /** @noinspection AutoloadingIssuesInspection */
@@ -90,6 +87,13 @@ class FourPawsOrderComponent extends \CBitrixComponent
      */
     protected function prepareResult()
     {
+        /** @var BasketService $basketService */
+        $basketService = Application::getInstance()->getContainer()->get(BasketService::class);
+        $basket = $basketService->getBasket()->getOrderableItems();
+        if ($basket->isEmpty()) {
+            LocalRedirect('/cart');
+        }
+
         /** @var CurrentUserProviderInterface $userService */
         $userService = \FourPaws\App\Application::getInstance()->getContainer()->get(
             CurrentUserProviderInterface::class
@@ -122,9 +126,29 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 throw new Exception('Failed to initialize storage');
             }
         }
+
+        /** @var \Symfony\Bundle\FrameworkBundle\Routing\Router $router */
+        $router = Application::getInstance()->getContainer()->get('router');
+        /** @var Symfony\Component\Routing\RouteCollection $routeCollection */
+        $routeCollection = $router->getRouteCollection();
+        $routes = [
+            'AUTH_VALIDATION'     => 'fourpaws_sale_ajax_order_validateauth',
+            'DELIVERY_VALIDATION' => 'fourpaws_sale_ajax_order_validatedelivery',
+            'PAYMENT_VALIDATION'  => 'fourpaws_sale_ajax_order_validatepayment',
+        ];
+        $ajaxUrl = [];
+        foreach ($routes as $key => $name) {
+            if (!$route = $routeCollection->get($name)) {
+                continue;
+            }
+            $ajaxUrl[$key] = $route->getPath();
+        }
+
         $this->arResult = [
-            'ORDER'   => $order,
-            'STORAGE' => $storage,
+            'ORDER'             => $order,
+            'BASKET'            => $basket,
+            'STORAGE'           => $storage,
+            'URL'               => $ajaxUrl,
         ];
 
         return $this;

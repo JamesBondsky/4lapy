@@ -276,7 +276,7 @@ class OrderStorage
      * @Serializer\Type("string")
      * @Serializer\SerializedName("PROPERTY_CITY")
      * @Serializer\Groups(groups={"read","update","delete"})
-     * @Assert\NotBlank(groups={"auth", "payment","delivery"})
+     * @Assert\NotBlank(groups={"payment","delivery"})
      */
     protected $city = '';
 
@@ -287,7 +287,7 @@ class OrderStorage
      * @Serializer\Type("string")
      * @Serializer\SerializedName("PROPERTY_CITY_CODE")
      * @Serializer\Groups(groups={"read","update","delete"})
-     * @Assert\NotBlank(groups={"auth", "payment","delivery"})
+     * @Assert\NotBlank(groups={"payment","delivery"})
      */
     protected $cityCode = '';
 

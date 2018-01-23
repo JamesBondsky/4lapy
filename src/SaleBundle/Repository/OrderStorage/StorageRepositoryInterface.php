@@ -1,11 +1,11 @@
 <?php
 
-namespace FourPaws\SaleBundle\Repository;
+namespace FourPaws\SaleBundle\Repository\OrderStorage;
 
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Service\OrderService;
 
-interface OrderStorageRepositoryInterface
+interface StorageRepositoryInterface
 {
     /**
      * @param int $fuserId

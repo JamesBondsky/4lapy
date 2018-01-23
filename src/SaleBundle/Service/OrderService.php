@@ -2,15 +2,22 @@
 
 namespace FourPaws\SaleBundle\Service;
 
-use Bitrix\Sale\Fuser;
 use Bitrix\Sale\Order;
+use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Entity\OrderStorage;
-use FourPaws\SaleBundle\Repository\OrderStorageRepositoryInterface;
+use FourPaws\SaleBundle\Repository\OrderPropertyEnum\BaseRepository as OrderPropertyEnumBaseRepository;
+use FourPaws\SaleBundle\Repository\OrderStorage\StorageRepositoryInterface;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use Symfony\Component\DependencyInjection\ContainerAwareInterface;
+use Symfony\Component\DependencyInjection\ContainerAwareTrait;
 use Symfony\Component\HttpFoundation\Request;
 
-class OrderService
+class OrderService implements ContainerAwareInterface
 {
+    use ContainerAwareTrait;
+
     const AUTH_STEP = 'auth';
 
     const DELIVERY_STEP = 'delivery';
@@ -20,13 +27,27 @@ class OrderService
     const COMPLETE_STEP = 'complete';
 
     /**
-     * @var OrderStorageRepositoryInterface
+     * @var StorageRepositoryInterface
      */
     protected $storageRepository;
 
-    public function __construct(OrderStorageRepositoryInterface $orderStorageRepository)
-    {
+    /**
+     * @var CurrentUserProviderInterface
+     */
+    protected $currentUserProvider;
+
+    /**
+     * OrderService constructor.
+     *
+     * @param StorageRepositoryInterface $orderStorageRepository
+     * @param CurrentUserProviderInterface $currentUserProvider
+     */
+    public function __construct(
+        StorageRepositoryInterface $orderStorageRepository,
+        CurrentUserProviderInterface $currentUserProvider
+    ) {
         $this->storageRepository = $orderStorageRepository;
+        $this->currentUserProvider = $currentUserProvider;
     }
 
     /**
@@ -69,7 +90,7 @@ class OrderService
     public function getStorage($fuserId = null)
     {
         if (!$fuserId) {
-            $fuserId = Fuser::getId();
+            $fuserId = $this->currentUserProvider->getCurrentFUserId();
         }
 
         try {
@@ -79,9 +100,41 @@ class OrderService
         }
     }
 
-    public function setStorageValuesFromRequest(OrderStorage $storage, Request $request): OrderStorage
+    /**
+     * @param OrderStorage $storage
+     * @param Request $request
+     * @param string $step
+     *
+     * @return OrderStorage
+     */
+    public function setStorageValuesFromRequest(OrderStorage $storage, Request $request, string $step): OrderStorage
     {
-        // @todo set values from request
+        /**
+         * Чтобы нельзя было, например, обойти проверку капчи,
+         * отправив в POST данные со всех форм разом
+         */
+        $availableValues = [];
+        switch ($step) {
+            case self::AUTH_STEP:
+                $availableValues = [
+                    'name',
+                    'phone',
+                    'email',
+                    'altPhone',
+                ];
+                break;
+        }
+
+        foreach ($request->request as $name => $value) {
+            if (!in_array($name, $availableValues)) {
+                continue;
+            }
+            $setter = 'set' . ucfirst($name);
+            if (method_exists($storage, $setter)) {
+                $storage->$setter($value);
+            }
+        }
+
         return $storage;
     }
 
@@ -121,5 +174,23 @@ class OrderService
     public function createOrder(OrderStorage $storage): Order
     {
         // @todo create order
+    }
+
+    /**
+     * @param $class
+     *
+     * @return ArrayCollection
+     * @throws InvalidArgumentException
+     */
+    public function getPropertyVariants(string $class): ArrayCollection
+    {
+        /** @var OrderPropertyEnumBaseRepository $repository */
+        $repository = $this->container->get($class);
+
+        if (!$repository instanceof OrderPropertyEnumBaseRepository) {
+            throw new InvalidArgumentException('Wrong class name passed');
+        }
+
+        return $repository->getAvailableVariants();
     }
 }

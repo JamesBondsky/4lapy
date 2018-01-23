@@ -22,18 +22,18 @@ class WordHelper
 
     public static function showWeight(float $weight)
     {
-        $result = '';
+        $result = [];
 
         $kg = floor($weight / 1000);
         if ($kg) {
-            $result = $kg . ' кг';
+            $result[] = $kg . ' кг';
         }
 
         $g = $weight % 1000;
         if ($g) {
-            $result = $g . ' г';
+            $result[] = $g . ' г';
         }
 
-        return $result;
+        return implode(' ', $result);
     }
 }

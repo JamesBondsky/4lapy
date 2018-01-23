@@ -3,17 +3,34 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+use FourPaws\App\Application;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\SaleBundle\Repository\OrderPropertyEnum\ComWayRepository;
+use FourPaws\SaleBundle\Entity\OrderPropertyEnum;
+use FourPaws\UserBundle\Service\UserAuthorizationInterface;
+use FourPaws\ReCaptcha\ReCaptchaService;
 
 /**
  * @var array $arParams
  * @var array $arResult
  */
 
-/**
- * @var OrderStorage $storage
- */
+/** @var OrderStorage $storage */
 $storage = $arResult['STORAGE'];
+
+$serviceContainer = Application::getInstance()->getContainer();
+
+/** @var OrderService $orderService */
+$orderService = $serviceContainer->get(OrderService::class);
+/** @var UserAuthorizationInterface $userAuthProvider */
+$userAuthProvider = $serviceContainer->get(UserAuthorizationInterface::class);
+/** @var ReCaptchaService $recaptchaService */
+$recaptchaService = $serviceContainer->get('recaptcha.service');
+
+$communicationWays = $orderService->getPropertyVariants(ComWayRepository::class);
+/** @var OrderPropertyEnum $currentCommWay */
+$currentCommWay = $communicationWays[$storage->getCommunicationWay()] ?? $communicationWays[ComWayRepository::CODE_SMS];
 
 ?>
 <div class="b-container">
@@ -41,6 +58,7 @@ $storage = $arResult['STORAGE'];
                     </header>
                     <form class="b-order-contacts__form js-form-validation"
                           id="order-step"
+                          method="post"
                           data-url="<?= $arResult['URL']['AUTH_VALIDATION'] ?>">
                         <div class="b-input-line">
                             <div class="b-input-line__label-wrapper">
@@ -149,9 +167,10 @@ $storage = $arResult['STORAGE'];
                                                     type="tel"
                                                     id="order-phone-dop"
                                                     placeholder=""
-                                                    name="PROPERTY_PHONE_ALT"
+                                                    name="altPhone"
                                                     data-url=""
-                                                    data-tel="1">
+                                                    data-tel="1"
+                                                    value="<?= $storage->getAltPhone() ?>">
                                             <div class="b-error"><span class="js-message"></span>
                                             </div>
                                         </div>
@@ -164,187 +183,35 @@ $storage = $arResult['STORAGE'];
                             <div class="b-input-line__label-wrapper">
                                 <span class="b-input-line__label">Как с вами связаться для подтверждения заказа</span>
                             </div>
-                            <?php // @todo show enum values ?>
-                            <div class="b-radio b-radio--tablet-big">
-                                <input class="b-radio__input"
-                                       type="radio"
-                                       name="communicationWay"
-                                       id="order-call"
-                                       <?= $storage->getCommunicationWay() == '02' ? 'checked="checked"' : '' ?>
-                                       data-radio="0"
-                                       value="02">
-                                <label class="b-radio__label b-radio__label--tablet-big"
-                                       for="order-call">
-                                    <span class="b-radio__text-label">Звонок оператора</span>
-                                </label>
-                            </div>
-                            <div class="b-radio b-radio--tablet-big">
-                                <input class="b-radio__input"
-                                       type="radio"
-                                       name="communicationWay"
-                                       id="order-sms"
-                                       <?= $storage->getCommunicationWay() == '01' ? 'checked="checked"' : '' ?>
-                                       data-radio="1"
-                                       value="01">
-                                <label class="b-radio__label b-radio__label--tablet-big"
-                                       for="order-sms"><span class="b-radio__text-label">SMS-сообщение</span>
-                                </label>
-                            </div>
+                            <?php /** @var \FourPaws\SaleBundle\Entity\OrderPropertyEnum $commWay */ ?>
+                            <?php foreach ($communicationWays as $commWay) { ?>
+                                <?php
+                                $isSelected = $commWay->getValue() == $currentCommWay->getValue();
+                                ?>
+                                <div class="b-radio b-radio--tablet-big">
+                                    <input class="b-radio__input"
+                                           type="radio"
+                                           name="communicationWay"
+                                           id="order-<?= $commWay->getValue() ?>"
+                                        <?= $isSelected ? 'checked="checked"' : '' ?>
+                                           data-radio="0"
+                                           value="<?= $commWay->getValue() ?>">
+                                    <label class="b-radio__label b-radio__label--tablet-big"
+                                           for="order-<?= $commWay->getValue() ?>">
+                                        <span class="b-radio__text-label"><?= $commWay->getName() ?></span>
+                                    </label>
+                                </div>
+                            <?php } ?>
                         </div>
+                        <?php if (!$userAuthProvider->isAuthorized()) { ?>
+                            <div class="b-input-line">
+                                <?= $recaptchaService->getCaptcha() ?>
+                            </div>
+                        <?php } ?>
                     </form>
                 </article>
             </div>
-            <aside class="b-order__list">
-                <h4 class="b-title b-title--order-list js-popup-mobile-link">Заказ: 14 товаров (16 кг) на сумму 13 269 ₽
-                </h4>
-                <div class="b-order-list js-popup-mobile">
-                    <a class="b-link b-link--popup-back b-link--popup-choose-shop js-popup-mobile-close">Информация о
-                        заказе</a>
-                    <ul class="b-order-list__list js-order-list-block">
-                        <li class="b-order-list__item">
-                            <div class="b-order-list__order-text">
-                                <div class="b-order-list__clipped-text">
-                                    <div class="b-order-list__text-backed">Moderna Миска двойная пластиковая для кошек
-                                        2*350 мл wildl болльшой большой текст
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="b-order-list__order-value">399 ₽
-                            </div>
-                        </li>
-                        <li class="b-order-list__item">
-                            <div class="b-order-list__order-text">
-                                <div class="b-order-list__clipped-text">
-                                    <div class="b-order-list__text-backed">Mealfeel консервы для кошек с домашней
-                                        птицей, 100 г
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="b-order-list__order-value">599 ₽
-                            </div>
-                        </li>
-                        <li class="b-order-list__item">
-                            <div class="b-order-list__order-text">
-                                <div class="b-order-list__clipped-text">
-                                    <div class="b-order-list__text-backed">Домоседы Антицарапки (желтые)
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="b-order-list__order-value">377 ₽
-                            </div>
-                        </li>
-                        <li class="b-order-list__item">
-                            <div class="b-order-list__order-text">
-                                <div class="b-order-list__clipped-text">
-                                    <div class="b-order-list__text-backed">Petmax Носки черные с якорем разм. L
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="b-order-list__order-value">897 ₽
-                            </div>
-                        </li>
-                        <li class="b-order-list__item">
-                            <div class="b-order-list__order-text">
-                                <div class="b-order-list__clipped-text">
-                                    <div class="b-order-list__text-backed">Петмакс Игрушка для кошки Шар сизалевый с
-                                        игрушкой, 11,5 с…
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="b-order-list__order-value">419 ₽
-                            </div>
-                        </li>
-                        <li class="b-order-list__item">
-                            <div class="b-order-list__order-text">
-                                <div class="b-order-list__clipped-text">
-                                    <div class="b-order-list__text-backed">Петмакс Игрушка для кошек Мячик сизалевый 5
-                                        см
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="b-order-list__order-value">119 ₽
-                            </div>
-                        </li>
-                        <li class="b-order-list__item">
-                            <div class="b-order-list__order-text">
-                                <div class="b-order-list__clipped-text">
-                                    <div class="b-order-list__text-backed">Murmix лакомство для кошек снеки с лососем,
-                                        уп. 50 г
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="b-order-list__order-value">890 ₽
-                            </div>
-                        </li>
-                        <li class="b-order-list__item">
-                            <div class="b-order-list__order-text">
-                                <div class="b-order-list__clipped-text">
-                                    <div class="b-order-list__text-backed">АВЗ Шампунь FRUTTY CAT для кошек Сочный
-                                        грейпфрут 250 м…
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="b-order-list__order-value">890 ₽
-                            </div>
-                        </li>
-                        <li class="b-order-list__item">
-                            <div class="b-order-list__order-text">
-                                <div class="b-order-list__clipped-text">
-                                    <div class="b-order-list__text-backed">Концентрированный кондиционер Жизненный
-                                        кератин Artero …
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="b-order-list__order-value">890 ₽
-                            </div>
-                        </li>
-                        <li class="b-order-list__item">
-                            <div class="b-order-list__order-text">
-                                <div class="b-order-list__clipped-text">
-                                    <div class="b-order-list__text-backed">Корм для кошек Хиллс Тунец стерилайз, меш. 8
-                                        кг
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="b-order-list__order-value">3 556 ₽
-                            </div>
-                        </li>
-                        <li class="b-order-list__item">
-                            <div class="b-order-list__order-text">
-                                <div class="b-order-list__clipped-text">
-                                    <div class="b-order-list__text-backed">Фурминатор для больших кошек короткошерстных
-                                        пород 7см
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="b-order-list__order-value">2 012 ₽
-                            </div>
-                        </li>
-                        <li class="b-order-list__item">
-                            <div class="b-order-list__order-text">
-                                <div class="b-order-list__clipped-text">
-                                    <div class="b-order-list__text-backed">Moderna Туалет-домик для кошек 50см Friends
-                                        forever синий
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="b-order-list__order-value">2 699 ₽
-                            </div>
-                        </li>
-                        <li class="b-order-list__item">
-                            <div class="b-order-list__order-text">
-                                <div class="b-order-list__clipped-text">
-                                    <div class="b-order-list__text-backed">Petmax Игрушка для кошек Мыши с перьями 7 см
-                                        (2 шт)
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="b-order-list__order-value">299 ₽
-                            </div>
-                        </li>
-                    </ul>
-                </div>
-            </aside>
+            <?php include 'include/basket.php' ?>
         </div>
 
         <button class="b-button b-button--social b-button--next b-button--fixed-bottom js-order-next js-valid-out-sub">

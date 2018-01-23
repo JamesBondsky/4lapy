@@ -1,16 +1,16 @@
 <?php
 
-namespace FourPaws\SaleBundle\Repository;
+namespace FourPaws\SaleBundle\Repository\OrderStorage;
 
-use Bitrix\Sale\Fuser;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
 use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\SerializationContext;
 
-class OrderSessionStorageRepository extends OrderStorageBaseRepository
+class SessionStorageRepository extends StorageBaseRepository
 {
     const SESSION_KEY = 'ORDER';
 
@@ -20,7 +20,16 @@ class OrderSessionStorageRepository extends OrderStorageBaseRepository
             throw new NotFoundException('Wrong fuser id');
         }
 
-        $data = $_SESSION[self::SESSION_KEY] ?? [];
+        $data = $_SESSION[self::SESSION_KEY];
+        $data['FUSER_ID'] = $this->currentUserProvider->getCurrentFUserId();
+
+        try {
+            $user = $this->currentUserProvider->getCurrentUser();
+            $data['NAME'] = $user->getName();
+            $data['PHONE'] = $user->getPersonalPhone();
+            $data['EMAIL'] = $user->getEmail();
+        } catch (NotAuthorizedException $e) {
+        }
 
         return $this->arrayTransformer->fromArray(
             $data,
@@ -59,6 +68,6 @@ class OrderSessionStorageRepository extends OrderStorageBaseRepository
 
     protected function checkFuserId($fuserId): bool
     {
-        return $fuserId === Fuser::getId();
+        return $fuserId === $this->currentUserProvider->getCurrentFUserId();
     }
 }
