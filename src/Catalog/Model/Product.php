@@ -1794,6 +1794,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
             $this->offers = new ArrayCollection(
                 array_values(
                     (new OfferQuery())->withFilterParameter('=PROPERTY_CML2_LINK', $this->getId())
+                        ->withOrder(['CATALOG_WEIGHT' => 'ASC'])
                         ->exec()
                         ->toArray()
                 )
@@ -1816,7 +1817,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return static
      */
-    public function setPackingCombination(string $packingCombination)
+    public function withPackingCombination(string $packingCombination)
     {
         $this->PROPERTY_PACKING_COMBINATION = $packingCombination;
 
@@ -1898,7 +1899,8 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     /**
      * @return string
      */
-    public function getWeightCapacityPacking() : string {
+    public function getWeightCapacityPacking() : string
+    {
         return $this->PROPERTY_WEIGHT_CAPACITY_PACKING;
     }
 }

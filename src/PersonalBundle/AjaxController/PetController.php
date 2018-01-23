@@ -48,9 +48,10 @@ class PetController extends Controller
                 ['errors' => ['emptyData' => 'Не указаны данные для добавления']]
             );
         }
-        
-        if(!empty($_FILES['UF_FILE'])){
-            $data['UF_FILE'] = \CFile::SaveFile($_FILES['UF_FILE'], '/pet');
+    
+        if(!empty($_FILES['UF_PHOTO'])){
+            $data['UF_PHOTO'] = 1;
+            $data['UF_PHOTO_TMP'] = $_FILES['UF_PHOTO'];
         }
         
         try {
@@ -92,9 +93,10 @@ class PetController extends Controller
                 ['errors' => ['emptyIdError' => 'Не указан элемент для обновления']]
             );
         }
-        
+    
         if(!empty($_FILES['UF_PHOTO'])){
-            $data['UF_PHOTO'] = \CFile::SaveFile($_FILES['UF_PHOTO'], '/pet');
+            $data['UF_PHOTO'] = 1;
+            $data['UF_PHOTO_TMP'] = $_FILES['UF_PHOTO'];
         }
         
         try {

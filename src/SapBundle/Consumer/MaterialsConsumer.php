@@ -58,7 +58,7 @@ class MaterialsConsumer implements ConsumerInterface, LoggerAwareInterface
             ->log(LogLevel::INFO, sprintf('Ошибка импорта %s товаров', $error));
 
 
-        return $error > 0;
+        return $error === 0;
     }
 
     /**

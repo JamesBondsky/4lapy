@@ -40,7 +40,7 @@ $currentOffer = $product->getOffers()->first();
 $mainCombinationType = '';
 if ($currentOffer->getClothingSize()) {
     $mainCombinationType = 'SIZE';
-} elseif ($currentOffer->getVolumeReference()) {
+} else {
     $mainCombinationType = 'VOLUME';
 }
 
@@ -137,10 +137,17 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
                 <ul class="b-weight-container__list b-weight-container__list--product">
                     <?php foreach ($offers as $offer) { ?>
                         <?php
+                        $value = null;
                         if ($mainCombinationType === 'SIZE') {
-                            $value = $offer->getClothingSize();
+                            if ($offer->getClothingSize()) {
+                                $value = $offer->getClothingSize()->getName();
+                            }
                         } else {
-                            $value = $offer->getVolumeReference();
+                            if ($offer->getVolumeReference()) {
+                                $value = $offer->getVolumeReference()->getName();
+                            } else {
+                                $value = WordHelper::showWeight($offer->getCatalogProduct()->getWeight());
+                            }
                         }
                         if (!$value) {
                             continue;
@@ -150,11 +157,11 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
                             ) === $offer->getId()) ? 'active' : '' ?>">
                             <a class="b-weight-container__link b-weight-container__link--product js-price-product"
                                href="javascript:void(0);"
-                               data-weight=" <?= $value->getName() ?>"
+                               data-weight=" <?= $value ?>"
                                data-price="<?= $offer->getPrice() ?>"
                                data-image="<?= $mainImageIndex[$offer->getId()] ?>">
                                 <span class="b-weight-container__line">
-                                    <span class="b-weight-container__weight"><?= $value->getName() ?></span>
+                                    <span class="b-weight-container__weight"><?= $value ?></span>
                                     <span class="b-weight-container__price b-undefined">
                                         <?= $offer->getPrice() ?> <span class="b-ruble b-ruble--weight">₽</span>
                                     </span>
@@ -176,23 +183,26 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
 ?>
 <?php /** @var Offer $offer */ ?>
 <?php foreach ($offers as $offer) { ?>
+    <?php if (($offer->getId() !== $currentOffer->getId())) continue ?>
     <div class="b-product-card__info" <?= ($offer->getId() !== $currentOffer->getId()) ? 'style="display:none"' : '' ?>>
         <div class="b-product-information">
             <ul class="b-product-information__list">
-                <?php if ($offer->getVolumeReference()) { ?>
-                    <li class="b-product-information__item">
-                        <?php if (mb_strpos($offer->getVolumeReference()->getName(), 'л') !== false) { ?>
-                            <div class="b-product-information__title-info js-info-product">Объем</div>
-                        <?php } else { ?>
-                            <div class="b-product-information__title-info js-info-product">Вес</div>
-                        <?php } ?>
-                        <div class="b-product-information__value"><?= $offer->getVolumeReference()->getName() ?></div>
-                    </li>
-                <?php } ?>
                 <?php if ($offer->getClothingSize()) { ?>
                     <li class="b-product-information__item">
                         <div class="b-product-information__title-info js-info-product">Размер</div>
                         <div class="b-product-information__value"><?= $offer->getClothingSize()->getName() ?></div>
+                    </li>
+                <?php } elseif ($offer->getVolumeReference()) { ?>
+                    <li class="b-product-information__item">
+                        <div class="b-product-information__title-info js-info-product">Объем</div>
+                        <div class="b-product-information__value"><?= $offer->getVolumeReference()->getName() ?></div>
+                    </li>
+                <?php } elseif ($offer->getCatalogProduct()->getWeight()) { ?>
+                    <li class="b-product-information__item">
+                        <div class="b-product-information__title-info js-info-product">Вес</div>
+                        <div class="b-product-information__value">
+                            <?= WordHelper::showWeight($offer->getCatalogProduct()->getWeight()) ?>
+                        </div>
                     </li>
                 <?php } ?>
                 <li class="b-product-information__item">
@@ -282,7 +292,11 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                     Округлить до упаковки (<?= $offer->getMultiplicity() ?> шт.)<span>— скидка 3%</span>
                 </a>
             <?php } ?>
-            <a class="b-counter-basket__basket-link js-basket-add" href="javascript:void(0)" title="" data-offerId="<?= $offer->getId(); ?>" data-url="/ajax/sale/basket/add/">
+            <a class="b-counter-basket__basket-link js-basket-add"
+               href="javascript:void(0)"
+               title=""
+               data-offerId="<?= $offer->getId(); ?>"
+               data-url="/ajax/sale/basket/add/">
                 <span class="b-counter-basket__basket-text">Добавить в корзину</span>
                 <span class="b-icon b-icon--advice"><?= new SvgDecorator('icon-cart', 20, 20) ?></span>
             </a>
