@@ -53,7 +53,7 @@ class BaseRepository
      */
     private $dataManager;
     
-    private $fileKeys;
+    private $fileList;
     
     /**
      * AddressRepository constructor.
@@ -91,13 +91,14 @@ class BaseRepository
         if ($validationResult->count() > 0) {
             throw new ValidationException('Wrong entity passed to create');
         }
-    
-        $data =$this->serializer->toArray($this->entity, SerializationContext::create()->setGroups(['create']));
+        
+        $data = $this->serializer->toArray($this->entity, SerializationContext::create()->setGroups(['create']));
         $this->fixFileData($data);
         
         $res = $this->dataManager::add(
             $data
         );
+        $this->clearFileList();
         if ($res->isSuccess()) {
             $this->entity->setId($res->getId());
             
@@ -107,22 +108,27 @@ class BaseRepository
         throw new BitrixRuntimeException(implode(', ', $res->getErrorMessages()));
     }
     
-    /** fix для сохранения файлов, конечно с юзанием лишний раз харда
-     *
-     * @todo переписать на установку и забор значений без сохранения и удаления
+    /** fix для сохранения файлов,
      * @param $data
      */
     private function fixFileData(&$data)
     {
-        $fileKeys = $this->getFileKeys();
-        if (!empty($fileKeys)) {
-            foreach ($fileKeys as $fileKey) {
-                if (\array_key_exists($fileKey, $data) && (int)$data[$fileKey] > 0) {
-                    $data[$fileKey] = \CFile::MakeFileArray(\CFile::GetPath($data[$fileKey]));
-                    \CFile::Delete($data[$fileKey]);
+        $fileList = $this->getFileList();
+        if (!empty($fileList)) {
+            foreach ($fileList as $code => $file) {
+                if (\array_key_exists($code, $data) && (int)$data[$code] === 1) {
+                    $data[$code] = $file;
                 }
             }
         }
+    }
+    
+    /**
+     * @return array
+     */
+    public function getFileList() : array
+    {
+        return $this->fileList ?? [];
     }
     
     /**
@@ -150,13 +156,14 @@ class BaseRepository
             throw new ValidationException('Wrong entity passed to update');
         }
         
-        $data =$this->serializer->toArray($this->entity, SerializationContext::create()->setGroups(['update']));
+        $data = $this->serializer->toArray($this->entity, SerializationContext::create()->setGroups(['update']));
         $this->fixFileData($data);
         
         $res = $this->dataManager::update(
             $this->entity->getId(),
             $data
         );
+        $this->clearFileList();
         if ($res->isSuccess()) {
             return true;
         }
@@ -388,32 +395,31 @@ class BaseRepository
     }
     
     /**
-     * @return array
-     */
-    public function getFileKeys() : array
-    {
-        return $this->fileKeys ?? [];
-    }
-    
-    /**
-     * @param array $fileKeys
+     * @param array $filelist
      *
      * @return BaseRepository
      */
-    public function setFileKeys(array $fileKeys) : BaseRepository
+    public function setFileList(array $filelist) : BaseRepository
     {
-        $this->fileKeys=$fileKeys;
+        $this->fileList = $filelist;
+        
         return $this;
     }
     
     /**
-     * @param string $key
+     * @param array  $file
      *
      * @return BaseRepository
      */
-    public function addFileKey(string $key) : BaseRepository
+    public function addFileList(array $file = []) : BaseRepository
     {
-        $this->fileKeys[] = $key;
+        $this->fileList[key($file)] = current($file);
+        
         return $this;
+    }
+    
+    public function clearFileList()
+    {
+        $this->fileList = null;
     }
 }
