@@ -86,7 +86,6 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
         
         if ($this->startResultCache()) {
             $this->arResult['ITEMS'] = $this->petService->getCurUserPets();
-            
             /** получение пола */
             $this->setGenderVals();
             
@@ -106,7 +105,7 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
     private function setGenderVals()
     {
         $this->arResult['GENDER'] = [];
-        $userFieldId              = UserFieldTable::query()->setSelect(['ID'])->setFilter(
+        $userFieldId              = UserFieldTable::query()->setSelect(['ID', 'XML_ID'])->setFilter(
             [
                 'FIELD_NAME' => 'UF_GENDER',
                 'ENTITY_ID'  => 'HLBLOCK_' . HighloadHelper::getIdByName('Pet'),

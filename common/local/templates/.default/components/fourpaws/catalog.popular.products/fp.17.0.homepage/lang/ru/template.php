@@ -1,5 +1,0 @@
-<?php
-$MESS['POPULAR_PRODUCTS_HOME.TITLE'] = 'Популярные товары';
-$MESS['POPULAR_PRODUCTS_HOME.ALL_LINK_TITLE'] = 'Показать все';
-$MESS['POPULAR_PRODUCTS_HOME.ALL_LINK'] = 'Показать все';
-$MESS['POPULAR_PRODUCTS_HOME.ALL'] = 'Все';

@@ -9,6 +9,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\Application;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -22,6 +23,8 @@ use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
 use FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException;
+use FourPaws\UserBundle\Exception\TooManyUserFoundException;
+use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Service\ConfirmCodeInterface;
 use FourPaws\UserBundle\Service\ConfirmCodeService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -38,6 +41,9 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
      * @var CurrentUserProviderInterface
      */
     private $currentUserProvider;
+    
+    /** @var UserAuthorizationInterface $authService */
+    private $authService;
     
     /**
      * FourPawsAuthFormComponent constructor.
@@ -61,17 +67,35 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
             throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
         }
         $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
+        $this->authService         = $container->get(UserAuthorizationInterface::class);
     }
     
     /** {@inheritdoc} */
     public function executeComponent()
     {
         try {
-            $userAuthService = App::getInstance()->getContainer()->get(UserAuthorizationInterface::class);
-            if ($userAuthService->isAuthorized()) {
+            if ($this->authService->isAuthorized()) {
                 LocalRedirect('/personal/');
             }
             $this->arResult['STEP'] = 'begin';
+            
+            /** авторизация и показ сообщения об успешной смене */
+            $request     = Application::getInstance()->getContext()->getRequest();
+            $confirmAuth = $request->get('confirm_auth');
+            if (!empty($confirmAuth)) {
+                /** @var ConfirmCodeService $confirmService */
+                $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+                if ($confirmService::getGeneratedCode() === $confirmAuth) {
+                    $backUrl = $request->get('backurl');
+                    $this->authService->authorize($request->get('user_id'));
+                    if(!empty($backUrl)){
+                        LocalRedirect($backUrl);
+                    }
+                    else {
+                        $this->arResult['STEP'] = 'confirmPhone';
+                    }
+                }
+            }
             
             /** @todo перешли по ссылке из письма для восстановления пароля */
             if (1 === 2) {
@@ -102,15 +126,20 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
         
         try {
             $userId = $this->currentUserProvider->getUserRepository()->findIdentifierByRawLogin($login);
-        } catch (\FourPaws\UserBundle\Exception\TooManyUserFoundException $e) {
+        } catch (TooManyUserFoundException $e) {
             return JsonErrorResponse::createWithData(
                 'Найдено больше одного пользователя с данным логином ' . $login,
                 ['errors' => ['moreOneUser' => 'Найдено больше одного пользователя с данным логином ' . $login]]
             );
-        } catch (\FourPaws\UserBundle\Exception\UsernameNotFoundException $e) {
+        } catch (UsernameNotFoundException $e) {
             return JsonErrorResponse::createWithData(
                 'Не найдено пользователей с данным логином ' . $login,
                 ['errors' => ['noUser' => 'Не найдено пользователей с данным логином ' . $login]]
+            );
+        } catch (WrongPhoneNumberException $e) {
+            return JsonErrorResponse::createWithData(
+                'Некорректный номер телефона',
+                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
             );
         }
         
@@ -152,19 +181,30 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                     ['errors' => ['errorUpdate' => 'Произошла ошибка при обновлении']]
                 );
             }
-    
-            /** @var UserAuthorizationInterface $authService */
-            $authService = App::getInstance()->getContainer()->get(UserAuthorizationInterface::class);
-            $res = $authService->authorize($userId);
             
-            if(!$authService->isAuthorized()){
+            $res = $this->authService->authorize($userId);
+            
+            if (!$res) {
                 return JsonErrorResponse::createWithData(
                     'Произошла ошибка при авторизации',
                     ['errors' => ['errorAuth' => 'Произошла ошибка при авторизации']]
                 );
             }
+            
+            /** @var ConfirmCodeService $confirmService */
+            $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+            $confirmService::setGeneratedCode('user_' . $userId);
     
-            return JsonSuccessResponse::create('Пароль обновлен', 200, [], ['redirect'=>'/personal']);
+            $backUrl = $request->get('backurl', '');
+            return JsonSuccessResponse::create(
+                'Пароль успешно изменен',
+                200,
+                [],
+                [
+                    'redirect' => '/personal/forgot-password?confirm_auth=' . $confirmService::getGeneratedCode()
+                                  . '&user_id=' . $userId.'&backurl='.$backUrl
+                ]
+            );
         } catch (BitrixRuntimeException $e) {
             return JsonErrorResponse::createWithData(
                 'Произошла ошибка при обновлении ' . $e->getMessage(),
@@ -243,6 +283,8 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
     {
         $step = $request->get('step', '');
         $mess = '';
+        /** @noinspection PhpUnusedLocalVariableInspection */
+        $backUrl = $request->get('backurl', '');
         
         $phone = $request->get('phone', '');
         if (!empty($phone)) {

@@ -25,10 +25,3 @@ foreach ($arResult['MOSCOW_CITIES'] as $city) {
     $cities[$letter][] = $city;
 }
 $arResult['MOSCOW_CITIES'] = $cities;
-
-$cities = [];
-foreach ($arResult['POPULAR_CITIES'] as $city) {
-    $letter = mb_strtoupper(mb_substr($city['NAME'], 0, 1));
-    $cities[$letter][] = $city;
-}
-$arResult['POPULAR_CITIES'] = $cities;

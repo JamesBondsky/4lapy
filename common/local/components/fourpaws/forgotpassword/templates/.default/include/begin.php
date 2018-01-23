@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\Main\Application;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
@@ -13,7 +16,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     <form class="b-registration__form js-form-validation js-recovery-form"
           data-url="/ajax/user/auth/forgotPassword/"
           method="post">
-        <input type="hidden" name="action" value="get" class="js-no-valid">
+        <input type="hidden" name="action" value="get">
+        <input type="hidden" name="backurl" value="<?= Application::getInstance()->getContext()->getRequest()->get('backurl')?>">
         <div class="b-choice-recovery">
             <input class="b-choice-recovery__input js-recovery-telephone js-no-valid"
                    id="registration-recovery-telephone"

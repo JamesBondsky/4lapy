@@ -2,86 +2,30 @@
 
 namespace FourPaws\SapBundle\Repository;
 
-use Cocur\Slugify\SlugifyInterface;
-use FourPaws\Catalog\Model\Brand;
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use FourPaws\BitrixOrm\Query\IblockElementQuery;
 use FourPaws\Catalog\Query\BrandQuery;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 
-class BrandRepository
+class BrandRepository extends IblockElementRepository
 {
-    /**
-     * @var SlugifyInterface
-     */
-    private $slugify;
 
     /**
-     * @var \CIBlockElement
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @return int
      */
-    private $iblockElement;
-
-    public function __construct(SlugifyInterface $slugify)
+    public function getIblockId(): int
     {
-        $this->slugify = $slugify;
-        $this->iblockElement = new \CIBlockElement();
+        return IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::BRANDS);
     }
 
     /**
-     * @param string $xmlId
-     *
-     * @return null|Brand
+     * @return IblockElementQuery
      */
-    public function findByXmlId(string $xmlId)
+    protected function getQuery(): IblockElementQuery
     {
-        $query = new BrandQuery();
-        $query->withFilter([
-            '=XML_ID' => $xmlId,
-        ]);
-        return $query->exec()->current();
-    }
-
-    /**
-     * @param string $code
-     *
-     * @return null|Brand
-     */
-    public function findByCode(string $code)
-    {
-        $query = new BrandQuery();
-        $query->withFilter([
-            '=CODE' => $code,
-        ]);
-        return $query->exec()->current();
-    }
-
-    /**
-     *
-     * @param string $xmlId
-     * @param string $name
-     *
-     * @return null|Brand
-     */
-    public function getOrCreate(string $xmlId, string $name)
-    {
-        return $this->findByXmlId($xmlId) ?: $this->create($xmlId, $name);
-    }
-
-    /**
-     *
-     * @param string $xmlId
-     * @param string $name
-     *
-     * @return null|Brand
-     */
-    public function create(string $xmlId, string $name)
-    {
-        $brand = new Brand();
-        $brand
-            ->withName($name)
-            ->withXmlId($xmlId)
-            ->withCode($this->slugify->slugify($name));
-        if ($id = $this->iblockElement->Add($brand->toArray())) {
-            $brand->withId($id);
-        }
-
-        return $id > 0 ? $brand : null;
+        return (new BrandQuery())
+            ->withFilter([]);
     }
 }

@@ -275,7 +275,7 @@ class UserService implements
      */
     public function getUserGroups(int $id = 0) : array
     {
-        if (!($id === 0)) {
+        if ($id === 0) {
             $id = $this->getCurrentUserId();
         }
         if ($id > 0) {

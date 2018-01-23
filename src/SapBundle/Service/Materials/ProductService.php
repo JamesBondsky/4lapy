@@ -4,14 +4,17 @@ namespace FourPaws\SapBundle\Service\Materials;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Bitrix\Main\Entity\AddResult;
+use Bitrix\Main\Entity\UpdateResult;
+use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\Catalog\Model\Product;
-use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\SapBundle\Dto\In\Offers\Material;
 use FourPaws\SapBundle\Enum\SapProductField;
 use FourPaws\SapBundle\Enum\SapProductProperty;
 use FourPaws\SapBundle\Repository\BrandRepository;
+use FourPaws\SapBundle\Repository\ProductRepository;
 use FourPaws\SapBundle\Service\ReferenceService;
 
 class ProductService
@@ -20,15 +23,52 @@ class ProductService
      * @var ReferenceService
      */
     private $referenceService;
+
     /**
      * @var BrandRepository
      */
     private $brandRepository;
 
-    public function __construct(ReferenceService $referenceService, BrandRepository $brandRepository)
-    {
+    /**
+     * @var ProductRepository
+     */
+    private $productRepository;
+
+    public function __construct(
+        ReferenceService $referenceService,
+        BrandRepository $brandRepository,
+        ProductRepository $productRepository
+    ) {
         $this->referenceService = $referenceService;
         $this->brandRepository = $brandRepository;
+        $this->productRepository = $productRepository;
+    }
+
+    public function processMaterial(Material $material): Product
+    {
+        $product = $this->findByMaterial($material) ?: new Product();
+        $this->fillProduct($product, $material);
+        return $product;
+    }
+
+    /**
+     * @param Product $product
+     *
+     * @return AddResult
+     */
+    public function create(Product $product): AddResult
+    {
+        return $this->productRepository->create($product);
+    }
+
+    /**
+     * @param Product $product
+     *
+     * @return UpdateResult
+     */
+    public function update(Product $product): UpdateResult
+    {
+        return $this->productRepository->update($product);
     }
 
     /**
@@ -38,7 +78,7 @@ class ProductService
      * @throws IblockNotFoundException
      * @return null|Product
      */
-    public function findByMaterial(Material $material)
+    protected function findByMaterial(Material $material)
     {
         $product = $this->findByOffer($material->getOfferXmlId());
         $product = $product ?: $this->findByCombination(
@@ -52,8 +92,14 @@ class ProductService
     /**
      * @param Product  $product
      * @param Material $material
+     *
+     * @throws \RuntimeException
+     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
+     * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
+     * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
+     * @throws \FourPaws\SapBundle\Exception\LogicException
      */
-    public function fillProduct(Product $product, Material $material)
+    protected function fillProduct(Product $product, Material $material)
     {
         $this->fillFields($product, $material);
         $this->fillProperties($product, $material);
@@ -70,19 +116,16 @@ class ProductService
             return null;
         }
 
-        return (new ProductQuery())
-            ->withFilter([
-                'PROPERTY_PACKING_COMBINATION' => $combination,
-            ])
-            ->exec()
-            ->current();
+        return $this->productRepository->findBy([
+            'PROPERTY_PACKING_COMBINATION' => $combination,
+        ], [], 1)->first();
     }
 
     /**
      * @param string $xmlId
      *
      * @throws IblockNotFoundException
-     * @return null|Product
+     * @return null|IblockElement|Product
      */
     protected function findByOffer(string $xmlId)
     {
@@ -94,7 +137,7 @@ class ProductService
         $data = $dbResult->Fetch();
         $id = $data['PROPERTY_CML2_LINK_VALUE'] ?? 0;
         if ($id) {
-            return (new ProductQuery())->withFilter(['ID' => $id])->exec()->first();
+            return $this->productRepository->find($id);
         }
         return null;
     }
@@ -105,12 +148,20 @@ class ProductService
      */
     protected function fillFields(Product $product, Material $material)
     {
-        $brand = $this->brandRepository->getOrCreate($material->getBrandCode(), $material->getBrandName());
         $product
-            ->withName($material->getProductName() ?: $material->getOfferName())
-            ->withBrandId($brand ? $brand->getId() : 0);
+            ->withName($material->getProductName() ?: $material->getOfferName());
     }
 
+    /**
+     * @param Product  $product
+     * @param Material $material
+     *
+     * @throws \RuntimeException
+     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
+     * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
+     * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
+     * @throws \FourPaws\SapBundle\Exception\LogicException
+     */
     protected function fillProperties(Product $product, Material $material)
     {
         $product
@@ -145,6 +196,16 @@ class ProductService
          */
     }
 
+    /**
+     * @param Product  $product
+     * @param Material $material
+     *
+     * @throws \RuntimeException
+     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
+     * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
+     * @throws \FourPaws\SapBundle\Exception\LogicException
+     * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
+     */
     protected function fillReferenceProperties(Product $product, Material $material)
     {
         $product
@@ -237,6 +298,15 @@ class ProductService
             ));
     }
 
+    /**
+     * @param Product  $product
+     * @param Material $material
+     *
+     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
+     * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
+     * @throws \FourPaws\SapBundle\Exception\LogicException
+     * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
+     */
     protected function fillCountry(Product $product, Material $material)
     {
         $product->withCountryXmlId('');

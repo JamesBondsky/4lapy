@@ -19,7 +19,7 @@ use FourPaws\External\Manzana\Model\Client;
           method="post">
         <input type="hidden" name="action" value="register">
         <input type="hidden" name="PERSONAL_PHONE" value="<?= $phone ?>">
-        <div class="b-input-line b-input-line--user-data js-hidden-valid-fields">
+        <div class="b-input-line b-input-line--user-data js-no-valid">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-surname">Фамилия</label>
             </div>
@@ -35,7 +35,7 @@ use FourPaws\External\Manzana\Model\Client;
                 </div>
             </div>
         </div>
-        <div class="b-input-line b-input-line--user-data">
+        <div class="b-input-line b-input-line--user-data js-small-input">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-name">Имя</label>
                 <span class="b-input-line__require">(обязательно)</span>
@@ -52,7 +52,7 @@ use FourPaws\External\Manzana\Model\Client;
                 </div>
             </div>
         </div>
-        <div class="b-input-line b-input-line--user-data js-hidden-valid-fields">
+        <div class="b-input-line b-input-line--user-data js-no-valid">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-patronymic">Отчество</label>
             </div>
@@ -84,7 +84,7 @@ use FourPaws\External\Manzana\Model\Client;
                 </div>
             </div>
         </div>
-        <div class="b-input-line b-input-line--user-data">
+        <div class="b-input-line b-input-line--user-data js-small-input">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-email">Эл. почта</label>
             </div>
@@ -99,7 +99,7 @@ use FourPaws\External\Manzana\Model\Client;
                 </div>
             </div>
         </div>
-        <div class="b-input-line b-input-line--user-data">
+        <div class="b-input-line b-input-line--user-data js-small-input">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-password-5">Пароль</label>
                 <span class="b-input-line__require">(обязательно)</span>

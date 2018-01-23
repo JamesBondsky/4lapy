@@ -28,6 +28,9 @@ $aMenuLinks = [
     [
         'Реферальная программа',
         '/personal/referral/',
+        array(),
+        array(),
+        "\\in_array(30, \$USER->GetUserGroupArray())"
     ],
     [
         'Подписка на доставку',

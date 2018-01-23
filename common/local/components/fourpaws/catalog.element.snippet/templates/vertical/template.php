@@ -142,6 +142,21 @@ if (!strlen($arParams['ITEM_ATTR_ID'])) {
         // Информация об особенностях покупки товара
         //
         ob_start();
+
+        //
+        // @todo инфо о скидке
+        //
+        /*
+        ?><div class="b-common-item__benefin">
+            <span class="b-common-item__prev-price">100<span class="b-ruble b-ruble--prev-price">₽</span></span>
+            <span class="b-common-item__discount">
+                <span class="b-common-item__disc">Скидка</span>
+                <span class="b-common-item__discount-price">200</span>
+                <span class="b-common-item__currency"><span class="b-ruble b-ruble--discount">₽</span></span>
+            </span>
+        </div><?php
+        */
+
         if ($firstOffer->isByRequest()) {
             ?><div class="b-common-item__info-wrap">
                 <span class="b-common-item__text"><?=Loc::getMessage('CATALOG_ITEM_SNIPPET_VERTICAL.ORDER_BY_REQUEST')?></span>

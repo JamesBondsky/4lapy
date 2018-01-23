@@ -250,9 +250,12 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             return JsonSuccessResponse::create('Вы успешно авторизованы.', 200, [], ['reload' => true]);
         }
         
-        ob_start();
-        require_once App::getDocumentRoot()
-                     . '/local/components/fourpaws/auth.form/templates/popup/include/addPhone.php';
+        ob_start(); ?>
+        <header class="b-registration__header">
+            <h1 class="b-title b-title--h1 b-title--registration">Добавление телефона</h1>
+        </header>
+        <?php require_once App::getDocumentRoot()
+                           . '/local/components/fourpaws/auth.form/templates/popup/include/addPhone.php';
         $html = ob_get_clean();
         
         return JsonSuccessResponse::createWithData('Необходимо заполнить номер телефона', ['html' => $html]);
@@ -385,6 +388,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         }
         
         $data = [
+            'ID'                 => $this->currentUserProvider->getCurrentUserId(),
             'PERSONAL_PHONE'     => $phone,
             'UF_PHONE_CONFIRMED' => 'Y',
         ];
@@ -442,16 +446,25 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
             );
         }
+        $title = 'Авторизация';
         switch ($step) {
+            case 'addPhone':
+                $title = 'Добавление телефона';
+                break;
             case 'sendSmsCode':
-                $mess = $this->ajaxGetSendSmsCode($phone);
+                $title = 'Подтверждение телефона';
+                $mess  = $this->ajaxGetSendSmsCode($phone);
                 if ($mess instanceof JsonResponse) {
                     return $mess;
                 }
                 break;
         }
         $phone = PhoneHelper::formatPhone($phone, '+7 (%s%s%s) %s%s%s-%s%s-%s%s');
-        ob_start();
+        ob_start(); ?>
+        <header class="b-registration__header">
+            <h1 class="b-title b-title--h1 b-title--registration"><?= $title ?></h1>
+        </header>
+        <?php
         /** @noinspection PhpIncludeInspection */
         include_once App::getDocumentRoot() . '/local/components/fourpaws/auth.form/templates/popup/include/' . $step
                      . '.php';
@@ -490,6 +503,11 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 ]
             );
         } catch (UsernameNotFoundException $e) {
+        } catch (WrongPhoneNumberException $e) {
+            return JsonErrorResponse::createWithData(
+                $e->getMessage(),
+                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
+            );
         }
         
         try {
