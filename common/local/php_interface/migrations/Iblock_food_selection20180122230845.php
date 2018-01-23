@@ -3,6 +3,7 @@
 namespace Sprint\Migration;
 
 use Adv\Bitrixtools\Migration\SprintMigrationBase;
+use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 
 class Iblock_food_selection20180122230845 extends SprintMigrationBase
 {
@@ -268,25 +269,45 @@ class Iblock_food_selection20180122230845 extends SprintMigrationBase
             ]
         );
         //Возраст питомца
-        $this->addSection('Юниор (до 1 года)', 'age', $catId);
-        $this->addSection('Эдалт (от 1 до 3 лет)', 'age', $catId);
-        $this->addSection('Сеньор (больше 3-х лет)', 'age', $catId);
-        //Размер питомца
-        $this->addSection('Мелкий', 'age', $catId);
-        $this->addSection('Средний', 'age', $catId);
-        $this->addSection('Крупный', 'age', $catId);
+        $this->addSection('Юниор (до 1 года)', 'pet_age', $catId);
+        $this->addSection('Эдалт (от 1 до 3 лет)', 'pet_age', $catId);
+        $this->addSection('Сеньор (больше 3-х лет)', 'pet_age', $catId);
         //Специализация корма
-        $this->addSection('', 'age', $catId);
+        try {
+            $dataManager = HLBlockFactory::createTableObject('Purpose');
+            $res = $dataManager::query()->setSelect(['UF_NAME'])->whereNotNull('UF_NAME')->exec();
+            while($item = $res->fetch()){
+                $this->addSection($item['UF_NAME'], 'purpose', $catId);
+            }
+        } catch (\Exception $e) {
+        }
         //Особенности ингредиентов
-        $this->addSection('Беззерновой', 'age', $catId);
-        $this->addSection('Холистик', 'age', $catId);
-        $this->addSection('На свежем мясе', 'age', $catId);
-        $this->addSection('Монопротеиновый', 'age', $catId);
+        try {
+            $dataManager = HLBlockFactory::createTableObject('IngridientFeatures');
+            $res = $dataManager::query()->setSelect(['UF_NAME'])->whereNotNull('UF_NAME')->exec();
+            while($item = $res->fetch()){
+                $this->addSection($item['UF_NAME'], 'ingridient', $catId);
+            }
+        } catch (\Exception $e) {
+        }
         //Тип корма
-        $this->addSection('Сухой', 'age', $catId);
-        $this->addSection('Влажный', 'age', $catId);
+        try {
+            $dataManager = HLBlockFactory::createTableObject('Consistence');
+            $res = $dataManager::query()->setSelect(['UF_NAME'])->whereNotNull('UF_NAME')->exec();
+            while($item = $res->fetch()){
+                $this->addSection($item['UF_NAME'], 'consistence', $catId);
+            }
+        } catch (\Exception $e) {
+        }
         //Вкус корма
-        $this->addSection('', 'age', $catId);
+        try {
+            $dataManager = HLBlockFactory::createTableObject('Flavour');
+            $res = $dataManager::query()->setSelect(['UF_NAME'])->whereNotNull('UF_NAME')->exec();
+            while($item = $res->fetch()){
+                $this->addSection($item['UF_NAME'], 'flavour', $catId);
+            }
+        } catch (\Exception $e) {
+        }
         
         //Собака
         $dogId = $helper->Iblock()->addSectionIfNotExists(
@@ -299,6 +320,50 @@ class Iblock_food_selection20180122230845 extends SprintMigrationBase
                 'SORT'              => 200,
             ]
         );
+        //Возраст питомца
+        $this->addSection('Юниор (до 1 года)', 'pet_age', $dogId);
+        $this->addSection('Эдалт (от 1 до 3 лет)', 'pet_age', $dogId);
+        $this->addSection('Сеньор (больше 3-х лет)', 'pet_age', $dogId);
+        //Размер питомца
+        $this->addSection('Мелкий', 'pet_size', $dogId);
+        $this->addSection('Средний', 'pet_size', $dogId);
+        $this->addSection('Крупный', 'pet_size', $dogId);
+        //Специализация корма
+        try {
+            $dataManager = HLBlockFactory::createTableObject('Purpose');
+            $res = $dataManager::query()->setSelect(['UF_NAME'])->whereNotNull('UF_NAME')->exec();
+            while($item = $res->fetch()){
+                $this->addSection($item['UF_NAME'], 'food_purpose', $dogId);
+            }
+        } catch (\Exception $e) {
+        }
+        //Особенности ингредиентов
+        try {
+            $dataManager = HLBlockFactory::createTableObject('IngridientFeatures');
+            $res = $dataManager::query()->setSelect(['UF_NAME'])->whereNotNull('UF_NAME')->exec();
+            while($item = $res->fetch()){
+                $this->addSection($item['UF_NAME'], 'food_ingridient', $dogId);
+            }
+        } catch (\Exception $e) {
+        }
+        //Тип корма
+        try {
+            $dataManager = HLBlockFactory::createTableObject('Consistence');
+            $res = $dataManager::query()->setSelect(['UF_NAME'])->whereNotNull('UF_NAME')->exec();
+            while($item = $res->fetch()){
+                $this->addSection($item['UF_NAME'], 'food_consistence', $dogId);
+            }
+        } catch (\Exception $e) {
+        }
+        //Вкус корма
+        try {
+            $dataManager = HLBlockFactory::createTableObject('Flavour');
+            $res = $dataManager::query()->setSelect(['UF_NAME'])->whereNotNull('UF_NAME')->exec();
+            while($item = $res->fetch()){
+                $this->addSection($item['UF_NAME'], 'food_flavour', $dogId);
+            }
+        } catch (\Exception $e) {
+        }
     }
     
     private function addSection(string $name, string $type, int $iblockSectionId = 0)
