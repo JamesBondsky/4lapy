@@ -42,7 +42,7 @@ class Pet extends BaseEntity
      * @var int
      * @Serializer\Type("int")
      * @Serializer\SerializedName("UF_PHOTO")
-     * @Serializer\Groups(groups={"create","read","update",})
+     * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $photo;
