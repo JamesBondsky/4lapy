@@ -2,15 +2,15 @@
 
 namespace FourPaws\SapBundle\Source;
 
+use FourPaws\SapBundle\Exception\RuntimeException;
 use FourPaws\SapBundle\Model\SourceMessageInterface;
 use Generator;
-use RuntimeException;
 use Symfony\Component\Finder\Finder;
 
 /**
  * Class DirectorySource
  *
- * @todo Много вопросов по классу
+ * @todo    Много вопросов по классу
  *
  * @package FourPaws\SapBundle\Source
  */
@@ -21,43 +21,91 @@ class DirectorySource implements SourceInterface
      */
     private $inFinder;
     
+    private $success;
+    
+    private $error;
+    
     /**
      * DirectorySource constructor.
      *
-     * @param \Symfony\Component\Finder\Finder $inFinder
-     * @param string                           $success
-     * @param string                           $error
+     * @param Finder $inFinder
+     * @param string $success (success folder)
+     * @param string $error   (error folder)
      */
-    public function __construct(Finder $inFinder, string $success, string $error) {
+    public function __construct(Finder $inFinder, string $success, string $error)
+    {
         $this->inFinder = $inFinder;
+        
+        $this->success = $success;
+        $this->checkPath($success);
+        
+        $this->error = $error;
+        $this->checkPath($error);
     }
     
     /**
      * @param SourceMessageInterface $sourceMessage
      *
+     * @throws RuntimeException
+     *
      * @return bool
      */
-    public function ack(SourceMessageInterface $sourceMessage) : bool {
-        // TODO: Implement ack() method.
+    public function ack(SourceMessageInterface $sourceMessage) : bool
+    {
+        /**
+         * @var FileSourceInterface $sourceMessage
+         */
+        $this->move($sourceMessage, $this->success);
+        
+        return true;
     }
     
     /**
      * @param SourceMessageInterface $sourceMessage
      *
+     * @throws RuntimeException
+     *
      * @return bool
      */
-    public function noAck(SourceMessageInterface $sourceMessage) : bool {
-        // TODO: Implement noAck() method.
+    public function noAck(SourceMessageInterface $sourceMessage) : bool
+    {
+        /**
+         * @var FileSourceInterface $sourceMessage
+         */
+        $this->move($sourceMessage, $this->error);
+        
+        return true;
     }
     
     /**
+     * @throws \RuntimeException
      * @throws RuntimeException
      *
      * @return SourceMessageInterface[]|Generator
      */
-    public function generator() {
+    public function generator()
+    {
         foreach ($this->inFinder as $fileInfo) {
-            yield new SourceMessage($fileInfo->getInode(), $fileInfo->getType(), $fileInfo->getContents());
+            yield (new FileSourceMessage($fileInfo->getInode(),
+                                         $fileInfo->getType(),
+                                         $fileInfo->getContents()))->setName($fileInfo->getFilename())
+                                                                   ->setDirectory($fileInfo->getPath());
+        }
+    }
+    
+    /**
+     * @param FileSourceInterface $source
+     * @param string              $destination
+     */
+    protected function move(FileSourceInterface $source, string $destination)
+    {
+        rename($source->getDirectory() . $source->getName(), $destination . $source->getName());
+    }
+    
+    protected function checkPath($destination)
+    {
+        if (!\is_dir($destination) && !\mkdir($destination) && !\is_dir($destination)) {
+            throw new RuntimeException(sprintf('Wrong destination: %s', $destination));
         }
     }
 }

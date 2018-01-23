@@ -5,15 +5,15 @@ namespace FourPaws\SapBundle\Model;
 interface SourceMessageInterface
 {
     /**
-     * @return mixed
+     * @return string
      */
-    public function getId();
-
+    public function getId() : string;
+    
     /**
      * @return string
      */
-    public function getType(): string;
-
+    public function getType() : string;
+    
     /**
      * @return mixed
      */
