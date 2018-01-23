@@ -54,6 +54,37 @@ parameters:
     - bigintConversion: false
     - retryOnConflict: 0
 
-  sap.product.directory.in: '/home/vagrant'
-  sap.product.directory.out: '/out'
-  sap.product.directory.error: '/error'
+  # Sap directories
+  sap.directory: '/home/vagrant/project/common/upload/sap-exchange'
+
+  sap.product.directory.in: '%sap.directory%'
+  sap.product.directory.out: '%sap.directory%/ArchMat/'
+  sap.product.directory.error: '%sap.directory%/ArchMat_Errors/'
+
+  sap.prices.directory.in: '%sap.directory%'
+  sap.prices.directory.out: '%sap.directory%/ArchPrice/'
+  sap.prices.directory.error: '%sap.directory%/ArchPrice_Errors/'
+
+  sap.stock.directory.in: '%sap.directory%'
+  sap.stock.directory.out: '%sap.directory%/ArchStock/'
+  sap.stock.directory.error: '%sap.directory%/ArchStock_Errors/'
+
+  sap.order.directory.out: '%sap.directory%'
+
+  sap.order.status.directory.in: '%sap.directory%'
+  sap.order.status.directory.out: '%sap.directory%/ArchZakaz/'
+  sap.order.status.directory.error: '%sap.directory%/ArchZakaz_Errors/'
+
+  sap.payment.directory.in: '%sap.directory%'
+  sap.payment.directory.out: '%sap.directory%/ArchZakazOplata/'
+  sap.payment.directory.error: '%sap.directory%/ArchZakazOplata_Errors/'
+
+  sap.payment.confirmation.directory.out: '%sap.directory%'
+
+  sap.schedule.directory.in: '%sap.directory%'
+  sap.schedule.directory.out: '%sap.directory%/ArchSchedule/'
+  sap.schedule.directory.error: '%sap.directory%/ArchSchedule_Errors/'
+
+  sap.shop.directory.in: '%sap.directory%/SAPBW/'
+  sap.shop.directory.out: '%sap.directory%/SAPBW/'
+  sap.shop.directory.error: '%sap.directory%/SAPBW_Errors/'
