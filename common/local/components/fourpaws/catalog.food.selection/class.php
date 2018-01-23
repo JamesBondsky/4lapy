@@ -4,6 +4,7 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
+use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Application as App;
@@ -40,19 +41,26 @@ class CFourPawsFoodSelectionComponent extends CBitrixComponent
             throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
         }
         
-        $this->foodSelectionService = $container->get('foodselection.service');
+        $this->foodSelectionService = $container->get('food_selection.service');
     }
     
     /**
      * {@inheritdoc}
+     * @throws \RuntimeException
      */
     public function executeComponent()
     {
         $this->setFrameMode(true);
         
         if ($this->startResultCache()) {
-            $this->arResult['PET_TYPES'] =
-                $this->foodSelectionService->getSections(['filter' => ['=DEPTH_LEVEL' => 1]]);
+            try {
+                $this->arResult['PET_TYPES'] =
+                    $this->foodSelectionService->getSections(['filter' => ['=DEPTH_LEVEL' => 1]]);
+            } catch (IblockNotFoundException $e) {
+                $logger = LoggerFactory::create('component');
+                $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
+                $this->abortResultCache();
+            }
             $this->includeComponentTemplate();
         }
         

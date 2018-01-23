@@ -91,8 +91,6 @@ class FoodSelectionRepository
             }
         
             $res = $query->exec();
-            echo '<pre>',var_dump($res),'</pre>';
-            echo '<pre>',var_dump($res->toArray()),'</pre>';
             return $res->toArray();
         } catch (IblockNotFoundException $e) {
             return [];

@@ -16,8 +16,14 @@
  * @global CDatabase              $DB
  */
 
+use FourPaws\BitrixOrm\Model\IblockSect;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
+}
+
+if (!\is_array($arResult['PET_TYPES']) || empty($arResult['PET_TYPES'])) {
+    return;
 }
 
 $frame = $this->createFrame(); ?>
@@ -35,31 +41,22 @@ $frame = $this->createFrame(); ?>
             <div class="b-quest b-quest--step-1 js-quest js-quest--step-1">
                 <h3 class="b-quest__title">Питомец</h3>
                 <h4 class="b-quest__subtitle">Тип</h4>
-                <? /** @var Sect $item */
-                foreach($arResult['PET_TYPES'] as $key => $item){?>
-                <div class="b-radio b-radio--q-food">
-                    <input class="b-radio__input"
-                           type="radio"
-                           name="pet_type"
-                           value="cat"
-                           id="id-quest-type-<?=$key+1?>" />
-                    <label class="b-radio__label b-radio__label--q-food"
-                           for="id-quest-type-<?=$key+1?>">
-                        <span class="b-radio__text-label">Кошка</span>
-                    </label>
-                </div>
-                <?}?>
-                <div class="b-radio b-radio--q-food">
-                    <input class="b-radio__input"
-                           type="radio"
-                           name="pet_type"
-                           value="dog"
-                           id="id-quest-type-2" />
-                    <label class="b-radio__label b-radio__label--q-food"
-                           for="id-quest-type-2">
-                        <span class="b-radio__text-label">Собака</span>
-                    </label>
-                </div>
+                <?php
+                /** @var IblockSect $item */
+                foreach ($arResult['PET_TYPES'] as $key => $item) {
+                    ?>
+                    <div class="b-radio b-radio--q-food">
+                        <input class="b-radio__input"
+                               type="radio"
+                               name="pet_type"
+                               value="<?= $item->getId() ?>"
+                               id="id-quest-type-<?= $key + 1 ?>" />
+                        <label class="b-radio__label b-radio__label--q-food"
+                               for="id-quest-type-<?= $key + 1 ?>">
+                            <span class="b-radio__text-label">Кошка</span>
+                        </label>
+                    </div>
+                <?php } ?>
             </div>
             <a class="b-button b-button--mobile-show b-button--gray b-button--full-width b-button--q-food js-q-food-show-product"
                href="javascript:void(0);"
