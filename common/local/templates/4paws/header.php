@@ -8,12 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var \CMain $APPLICATION
  */
 
-use Bitrix\Main\Application;
-use Bitrix\Main\Page\Asset;
-use FourPaws\App\Application as PawsApplication;
-use FourPaws\App\MainTemplate;
-use FourPaws\Decorators\SvgDecorator;
-use FourPaws\SaleBundle\Service\BasketViewService;
+use Bitrix\Main\Application;use Bitrix\Main\Page\Asset;use FourPaws\App\Application as PawsApplication;use FourPaws\App\MainTemplate;use FourPaws\Decorators\SvgDecorator;use FourPaws\SaleBundle\Service\BasketViewService;
 
 /** @var MainTemplate $template */
 $template = MainTemplate::getInstance(Application::getInstance()->getContext());
@@ -29,6 +24,7 @@ $markup = PawsApplication::markup();
     <meta name="format-detection" content="telephone=no">
     
     <script src="/static/build/js/jquery/jquery.min.js"></script>
+    <script data-skip-moving="true">window.js_static = '/static/build/'</script>
     <?php $APPLICATION->ShowHead(); ?>
     <title><?php $APPLICATION->ShowTitle() ?></title>
     <!--[if lte IE 9]>
