@@ -11,11 +11,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 if (!\is_array($sections) || empty($sections)) {
     return;
 } ?>
-<div class="b-quest b-quest--step-<?= $nextStep ?> js-quest js-quest--step-<?= $nextStep ?>">
+<div class="b-quest b-quest--step-<?= $nextStep ?> js-quest js-quest--step-<?= $nextStep ?>" style="display: block">
     <h4 class="b-quest__subtitle">Вкус</h4>
     <div class="b-select b-select--recall b-select--q-food">
         <select class="b-select__block b-select__block--recall b-select__block--q-food"
-                name="quest-taste"
+                name="food_flavour"
                 data-select="2">
             <option selected="selected">Любой</option>
             <?php /** @var IblockSect $item */

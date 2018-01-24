@@ -35,7 +35,8 @@ class EntityConstructor
         
         if (class_exists($entity_data_class)) {
             // rebuild if it's already exists
-            Entity\Base::destroy($entity_data_class);
+            //Entity\Base::destroy($entity_data_class);
+            return $entity_data_class;
         }
         
         $eval = '

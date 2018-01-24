@@ -167,6 +167,8 @@ class FoodSelectionRepository
             ]
         );
         $query->setGroup('ID');
+        echo $query->getQuery();
+        //$query->dump();
         
         $res     = $query->exec();
         $itemIds = [];

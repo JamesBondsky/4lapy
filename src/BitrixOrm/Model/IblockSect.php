@@ -143,19 +143,19 @@ class IblockSect extends BitrixArrayItemBase
     }
     
     /**
-     * @return int
+     * @return string
      */
-    public function getCode() : int
+    public function getCode() : string
     {
-        return $this->CODE;
+        return $this->CODE ?? '';
     }
     
     /**
-     * @param int $code
+     * @param string $code
      *
      * @return $this
      */
-    public function withCode(int $code)
+    public function withCode(string $code)
     {
         $this->CODE = $code;
         
