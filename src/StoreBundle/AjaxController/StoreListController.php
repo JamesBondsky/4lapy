@@ -113,7 +113,8 @@ class StoreListController extends Controller
             '',
             $shopListClass->getStores(
                 $shopListClass->getFilterByRequest($request),
-                $shopListClass->getOrderByRequest($request)
+                $shopListClass->getOrderByRequest($request),
+                true
             )
         );
     }
