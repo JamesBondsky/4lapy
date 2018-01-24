@@ -27,8 +27,6 @@ $markup = PawsApplication::markup();
     <script data-skip-moving="true">window.js_static = '/static/build/'</script>
     <?php $APPLICATION->ShowHead(); ?>
     <title><?php $APPLICATION->ShowTitle() ?></title>
-    <!--[if lte IE 9]>
-    <script data-skip-moving="true" src="js/html5shiv/html5shiv.min.js"></script><![endif]-->
     <?php
     Asset::getInstance()->addCss($markup->getCssFile());
     Asset::getInstance()->addJs('https://api-maps.yandex.ru/2.1.56/?lang=ru_RU');
