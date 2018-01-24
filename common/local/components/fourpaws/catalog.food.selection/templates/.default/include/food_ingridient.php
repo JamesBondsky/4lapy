@@ -12,13 +12,12 @@ if (!\is_array($sections) || empty($sections)) {
     return;
 } ?>
 <div class="b-quest b-quest--step-<?= $nextStep ?> js-quest js-quest--step-<?= $nextStep ?>">
-    <h3 class="b-quest__title">Корм</h3>
-    <h4 class="b-quest__subtitle">Специализация</h4>
+    <h4 class="b-quest__subtitle">Особенности</h4>
     <div class="b-select b-select--recall b-select--q-food">
         <select class="b-select__block b-select__block--recall b-select__block--q-food"
-                name="quest-spec"
-                data-select="<?= ++$_SESSION['SELECT_NUMBER'] ?>">
-            <option selected="selected">Любой</option>
+                name="quest-hang"
+                data-select="1">
+            <option selected="selected">Не важно</option>
             <?php /** @var IblockSect $item */
             foreach ($sections as $key => $item) {
                 ?>

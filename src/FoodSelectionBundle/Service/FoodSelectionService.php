@@ -7,15 +7,11 @@
 namespace FourPaws\FoodSelectionBundle\Service;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
-use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
-use Bitrix\Highloadblock\HighloadBlockTable;
-use Bitrix\Iblock\ElementTable;
+use Bitrix\Main\SystemException;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\FoodSelectionBundle\Repository\FoodSelectionRepository;
-use FourPaws\Helpers\HighloadHelper;
-use FourPaws\Migrator\Entity\HighloadBlock;
 
 /**
  * Class FoodSelectionService
@@ -29,27 +25,30 @@ class FoodSelectionService
      */
     private $foodSelectionRepository;
     
+    private $iblockId;
+    
     /**
      * FoodSelectionService constructor.
      *
      * @param FoodSelectionRepository $foodSelectionRepository
      *
+     * @throws IblockNotFoundException
      */
     public function __construct(FoodSelectionRepository $foodSelectionRepository)
     {
         $this->foodSelectionRepository = $foodSelectionRepository;
+        $this->iblockId                = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::FOOD_SELECTION);
     }
     
     /**
      * @param array $params
      *
      * @return array
-     * @throws IblockNotFoundException
      */
     public function getItems(array $params = []) : array
     {
         if (!isset($params['filter']['IBLOCK_ID'])) {
-            $params['filter']['IBLOCK_ID'] = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::FOOD_SELECTION);
+            $params['filter']['IBLOCK_ID'] = $this->iblockId;
         }
         
         return $this->foodSelectionRepository->getItems($params);
@@ -61,10 +60,12 @@ class FoodSelectionService
      * @param int    $depthLvl
      *
      * @return array
-     * @throws IblockNotFoundException
      */
-    public function getSectionsByXmlIdAndParentSection(string $xmlId, int $parentSectionID = 0, int $depthLvl = 0) : array
-    {
+    public function getSectionsByXmlIdAndParentSection(
+        string $xmlId,
+        int $parentSectionID = 0,
+        int $depthLvl = 0
+    ) : array {
         $filter = ['=XML_ID' => $xmlId];
         if ($parentSectionID > 0) {
             $filter['=IBLOCK_SECTION_ID'] = $parentSectionID;
@@ -80,26 +81,26 @@ class FoodSelectionService
      * @param array $params
      *
      * @return array
-     * @throws IblockNotFoundException
      */
     public function getSections(array $params = []) : array
     {
         if (!isset($params['filter']['IBLOCK_ID'])) {
-            $params['filter']['IBLOCK_ID'] = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::FOOD_SELECTION);
+            $params['filter']['IBLOCK_ID'] = $this->iblockId;
         }
         
         return $this->foodSelectionRepository->getSections($params);
     }
     
-    public function getItemsBySections(array $sections)
+    /**
+     * @param array $sections
+     *
+     * @param int   $mainSect
+     *
+     * @throws SystemException
+     * @return array
+     */
+    public function getProductsBySections(array $sections, int $mainSect) : array
     {
-        //$tableData = []
-        HighloadBlockTable::compileEntity($tableData);
-        //$query=ElementTable::query();
-        //$query->registerRuntimeField(new \Bitrix\Main\Entity\ReferenceField(
-        //    $REF_NAME,
-        //    ElementP::getEntity(),
-        //    ['=this.' => 'ref.']
-        //))
+        return $this->foodSelectionRepository->getProductsBySections($sections, $mainSect, $this->iblockId);
     }
 }

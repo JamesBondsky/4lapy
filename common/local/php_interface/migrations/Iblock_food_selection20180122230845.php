@@ -8,7 +8,7 @@ use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 class Iblock_food_selection20180122230845 extends SprintMigrationBase
 {
     
-    protected $description = '';
+    protected $description = 'Подбор корма - инфоблок и структура разделов';
     
     /** @var HelperManager $helper */
     private $helper;
@@ -265,6 +265,7 @@ class Iblock_food_selection20180122230845 extends SprintMigrationBase
                 'ACTIVE'            => 'Y',
                 'IBLOCK_SECTION_ID' => false,
                 'NAME'              => 'Кошка',
+                'CODE'              => 'cat',
                 'SORT'              => 100,
             ]
         );
@@ -274,10 +275,10 @@ class Iblock_food_selection20180122230845 extends SprintMigrationBase
         $this->addSection('Сеньор (больше 3-х лет)', 'pet_age', $catId);
         //Специализация корма
         try {
-            $dataManager = HLBlockFactory::createTableObject('Purpose');
+            $dataManager = HLBlockFactory::createTableObject('FeedSpec');
             $res = $dataManager::query()->setSelect(['UF_NAME'])->whereNotNull('UF_NAME')->exec();
             while($item = $res->fetch()){
-                $this->addSection($item['UF_NAME'], 'purpose', $catId);
+                $this->addSection($item['UF_NAME'], 'food_spec', $catId);
             }
         } catch (\Exception $e) {
         }
@@ -286,7 +287,7 @@ class Iblock_food_selection20180122230845 extends SprintMigrationBase
             $dataManager = HLBlockFactory::createTableObject('IngridientFeatures');
             $res = $dataManager::query()->setSelect(['UF_NAME'])->whereNotNull('UF_NAME')->exec();
             while($item = $res->fetch()){
-                $this->addSection($item['UF_NAME'], 'ingridient', $catId);
+                $this->addSection($item['UF_NAME'], 'food_ingridient', $catId);
             }
         } catch (\Exception $e) {
         }
@@ -295,7 +296,7 @@ class Iblock_food_selection20180122230845 extends SprintMigrationBase
             $dataManager = HLBlockFactory::createTableObject('Consistence');
             $res = $dataManager::query()->setSelect(['UF_NAME'])->whereNotNull('UF_NAME')->exec();
             while($item = $res->fetch()){
-                $this->addSection($item['UF_NAME'], 'consistence', $catId);
+                $this->addSection($item['UF_NAME'], 'food_consistence', $catId);
             }
         } catch (\Exception $e) {
         }
@@ -304,7 +305,7 @@ class Iblock_food_selection20180122230845 extends SprintMigrationBase
             $dataManager = HLBlockFactory::createTableObject('Flavour');
             $res = $dataManager::query()->setSelect(['UF_NAME'])->whereNotNull('UF_NAME')->exec();
             while($item = $res->fetch()){
-                $this->addSection($item['UF_NAME'], 'flavour', $catId);
+                $this->addSection($item['UF_NAME'], 'food_flavour', $catId);
             }
         } catch (\Exception $e) {
         }
@@ -330,10 +331,10 @@ class Iblock_food_selection20180122230845 extends SprintMigrationBase
         $this->addSection('Крупный', 'pet_size', $dogId);
         //Специализация корма
         try {
-            $dataManager = HLBlockFactory::createTableObject('Purpose');
+            $dataManager = HLBlockFactory::createTableObject('FeedSpec');
             $res = $dataManager::query()->setSelect(['UF_NAME'])->whereNotNull('UF_NAME')->exec();
             while($item = $res->fetch()){
-                $this->addSection($item['UF_NAME'], 'food_purpose', $dogId);
+                $this->addSection($item['UF_NAME'], 'food_spec', $dogId);
             }
         } catch (\Exception $e) {
         }
@@ -377,7 +378,7 @@ class Iblock_food_selection20180122230845 extends SprintMigrationBase
             $data['XML_ID'] = $type;
         }
         $data['CODE'] = \CUtil::translit($data['NAME'], 'ru');
-        $this->helper->Iblock()->addSectionIfNotExists(
+        $this->helper->Iblock()->addSection(
             $this->iblockId,
             $data
         );
