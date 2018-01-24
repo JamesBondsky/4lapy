@@ -153,10 +153,10 @@ four_paws_sap:
 
   pipelines:
     catalog:
-      - FourPaws\SapBundle\Consumer\MaterialsConsumer
-      - FourPaws\SapBundle\Consumer\PriceConsumer
-      - FourPaws\SapBundle\Consumer\StockRemainConsumer
-      - FourPaws\SapBundle\Consumer\ShopRemainConsumer
+      - FourPaws\SapBundle\Dto\In\Offers\Materials
+      - FourPaws\SapBundle\Dto\In\Prices\Prices
+      - FourPaws\SapBundle\Dto\In\DcStock\DcStock
+      - FourPaws\SapBundle\Dto\In\StoresStock\StoresStock
     order_status:
       - FourPaws\SapBundle\Consumer\OrderStatusConsumer
     delivery_schedule:
