@@ -35,7 +35,7 @@ $frame = $this->createFrame(); ?>
                     <div class="b-checkbox b-checkbox--stores">
                         <input class="b-checkbox__input"
                                type="checkbox"
-                               name="stores-sort"
+                               name="stores-sort[]"
                                id="stores-sort-<?= $key ?>"
                                data-url="/ajax/store/list/checkboxFilter/"
                                value="<?= $service['ID'] ?>" />
@@ -117,7 +117,9 @@ $frame = $this->createFrame(); ?>
             <div class="b-tab-delivery-map b-tab-delivery-map--stores js-content-map">
                 <a class="b-link b-link b-link--popup-back b-link b-link--popup-choose-shop js-product-list js-map-shoose-shop"
                    href="javascript:void(0);">Выберите магазин</a>
-                <div class="b-tab-delivery-map__map" id="map" data-url="/ajax/store/list/chooseCity/?code=<?= $arResult['CITY_CODE'] ?>"></div>
+                <div class="b-tab-delivery-map__map"
+                     id="map"
+                     data-url="/ajax/store/list/chooseCity/?code=<?= $arResult['CITY_CODE'] ?>"></div>
                 <a class="b-link b-link--close-baloon js-product-list"
                    href="javascript:void(0);"
                    title="">
@@ -125,6 +127,14 @@ $frame = $this->createFrame(); ?>
                         <?= new SvgDecorator('icon-close-baloon', 18, 18) ?>
                     </span>
                 </a>
+            </div>
+        </div>
+        <div class="b-preloader js-preload-stores">
+            <div class="b-preloader__spinner">
+                <img class="b-preloader__image"
+                     src="/static/build/images/inhtml/spinner.svg"
+                     alt="spinner"
+                     title="">
             </div>
         </div>
     </div>
