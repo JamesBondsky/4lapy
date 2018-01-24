@@ -2,8 +2,6 @@
 
 namespace FourPaws\SapBundle\Source;
 
-use FourPaws\SapBundle\Model\SourceMessageInterface;
-
 class SourceMessage implements SourceMessageInterface
 {
     private $id;

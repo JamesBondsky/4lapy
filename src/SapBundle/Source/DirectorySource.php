@@ -3,14 +3,11 @@
 namespace FourPaws\SapBundle\Source;
 
 use FourPaws\SapBundle\Exception\RuntimeException;
-use FourPaws\SapBundle\Model\SourceMessageInterface;
 use Generator;
 use Symfony\Component\Finder\Finder;
 
 /**
  * Class DirectorySource
- *
- * @todo    Много вопросов по классу
  *
  * @package FourPaws\SapBundle\Source
  */

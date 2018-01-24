@@ -1,6 +1,6 @@
 <?php
 
-namespace FourPaws\SapBundle\Model;
+namespace FourPaws\SapBundle\Source;
 
 interface SourceMessageInterface
 {
