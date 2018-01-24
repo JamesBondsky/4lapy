@@ -85,13 +85,9 @@ class FourPawsShopListComponent extends CBitrixComponent
         if ($this->startResultCache(false, ['location' => $city['CODE']])) {
             $this->arResult['CITY']      = $city['NAME'];
             $this->arResult['CITY_CODE'] = $city['CODE'];
-            $stores                      = $this->storeService->getByCurrentLocation($this->storeService::TYPE_SHOP);
-            $this->arResult['STORES']    = $stores->toArray();
-            if (!empty($this->arResult['STORES'])) {
-                list(
-                    $this->arResult['SERVICES'], $this->arResult['METRO']
-                    ) = $this->getFullStoreInfo($this->arResult['STORES']);
-            }
+    
+            $this->arResult['SERVICES'] = $this->storeService->getServicesInfo();
+            $this->arResult['METRO'] = $this->storeService->getMetroInfo();
             
             $this->includeComponentTemplate();
         }
@@ -130,8 +126,8 @@ class FourPawsShopListComponent extends CBitrixComponent
         }
         
         return [
-            'services' => $services,
-            'metro'    => $metro,
+            $services,
+            $metro,
         ];
     }
     

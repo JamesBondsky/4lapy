@@ -13,9 +13,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
-if (!is_array($arResult['STORES']) || empty($arResult['STORES'])) {
-    return;
-}
 
 $frame = $this->createFrame(); ?>
 <div class="b-stores__block">
@@ -119,7 +116,7 @@ $frame = $this->createFrame(); ?>
                    href="javascript:void(0);">Выберите магазин</a>
                 <div class="b-tab-delivery-map__map"
                      id="map"
-                     data-url="/ajax/store/list/chooseCity/?code=<?= $arResult['CITY_CODE'] ?>"></div>
+                     data-url="/ajax/store/list/chooseCity/"></div>
                 <a class="b-link b-link--close-baloon js-product-list"
                    href="javascript:void(0);"
                    title="">
