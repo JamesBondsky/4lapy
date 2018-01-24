@@ -68,13 +68,13 @@ class FoodSelectionService
     ) : array {
         $filter = ['=XML_ID' => $xmlId];
         if ($parentSectionID > 0) {
-            $filter['=IBLOCK_SECTION_ID'] = $parentSectionID;
+            $filter['=SECTION_ID'] = $parentSectionID;
         }
         if ($depthLvl > 0) {
             $filter['=DEPTH_LEVEL'] = $depthLvl;
         }
         
-        return $this->getSections(['filter' => $filter,]);
+        return $this->getSections(['filter' => $filter]);
     }
     
     /**

@@ -9,7 +9,7 @@ if ((!\is_array($recommendedItems) || empty($recommendedItems)) || (!\is_array($
 }
 global $APPLICATION; ?>
 
-<p class="b-food__text b-food__text--recomend">Мы рекомендуем</p>22
+<p class="b-food__text b-food__text--recomend">Мы рекомендуем</p>
 <div class="b-common-wrapper b-common-wrapper--visible js-catalog-wrapper">
     <?php foreach ($recommendedItems as $product) {
         $APPLICATION->IncludeComponent(
@@ -42,4 +42,3 @@ global $APPLICATION; ?>
         } ?>
     </div>
 </section>
-<?die();?>

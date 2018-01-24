@@ -18,16 +18,29 @@ class CatalogElementSnippet extends \CBitrixComponent
 
     public function executeComponent()
     {
-        //if ($this->startResultCache($this->arParams['CACHE_TIME'])) {
+        if( $this->arParams['CACHE_TIME'] > 0){
+            if ($this->startResultCache($this->arParams['CACHE_TIME'])) {
             parent::executeComponent();
-
+    
             if ($this->arParams['PRODUCT']) {
                 $this->arResult['PRODUCT'] = $this->arParams['PRODUCT'];
-
+        
                 $this->includeComponentTemplate();
                 return;
             }
-            //$this->abortResultCache();
-        //}
+            $this->abortResultCache();
+            }
+        }
+        else{
+            parent::executeComponent();
+    
+            if ($this->arParams['PRODUCT']) {
+                $this->arResult['PRODUCT'] = $this->arParams['PRODUCT'];
+        
+                $this->includeComponentTemplate();
+                return;
+            }
+        }
+        
     }
 }

@@ -7,6 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 /** @var int $nextStep
  * @var array $sections
+ * @var string $nextUrl
  */
 if (!\is_array($sections) || empty($sections)) {
     return;
@@ -22,7 +23,8 @@ if (!\is_array($sections) || empty($sections)) {
                    id="id-quest-size-<?= $key ?>"
                    data-radio="<?= ++$_SESSION['RADIO_NUMBER'] ?>"
                    type="radio"
-                   value="<?= $item->getId() ?>">
+                   value="<?= $item->getId() ?>"
+                   data-url="<?=$nextUrl?>">
             <label class="b-radio__label b-radio__label--q-food" for="id-quest-size-<?= $key ?>">
                 <span class="b-radio__text-label"><?= $item->getName() ?></span>
             </label>

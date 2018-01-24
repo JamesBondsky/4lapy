@@ -36,7 +36,7 @@ $frame = $this->createFrame(); ?>
     <a class="b-button b-button--gray b-button--full-width b-button--q-food js-q-food-parameter"
        href="javascript:void(0);"
        title="Изменить параметры">Изменить параметры</a>
-    <form class="b-food__form js-food-selection" action="/ajax/food_selection/show/step/pet/type/">
+    <form class="b-food__form js-food-selection">
         <div class="js-quest-food">
             <div class="b-quest b-quest--step-1 js-quest js-quest--step-1">
                 <h3 class="b-quest__title">Питомец</h3>
@@ -50,7 +50,8 @@ $frame = $this->createFrame(); ?>
                                type="radio"
                                name="pet_type"
                                value="<?= $item->getId() ?>"
-                               id="id-quest-type-<?= $key ?>" />
+                               id="id-quest-type-<?= $key ?>"
+                               data-url="/ajax/food_selection/show/step/pet/type/"/>
                         <label class="b-radio__label b-radio__label--q-food"
                                for="id-quest-type-<?= $key ?>">
                             <span class="b-radio__text-label"><?= $item->getName() ?></span>
@@ -64,3 +65,4 @@ $frame = $this->createFrame(); ?>
         </div>
     </form>
 </aside>
+<main class="b-food__main b-food__main--q-food js-quest js-quest--step-final" role="main"></main>

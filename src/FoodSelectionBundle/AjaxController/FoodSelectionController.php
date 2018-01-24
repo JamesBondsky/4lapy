@@ -47,7 +47,7 @@ class FoodSelectionController extends Controller
     public function showStepPetTypeAction(Request $request) : JsonResponse
     {
         $_SESSION['SELECT_NUMBER'] = $_SESSION['RADIO_NUMBER'] = -1;
-        $petType                   = $request->get('pet_type');
+        $petType                   = $request->query->get('pet_type');
         /** @var IblockSect $sect */
         $petTypeSections      = $this->foodSelectionService->getSections(
             [
@@ -64,12 +64,12 @@ class FoodSelectionController extends Controller
         $nextUrl  = '/ajax/food_selection/show/step/pet/age/';
         ob_start();
         /** @noinspection PhpIncludeInspection */
-        require_once App::getDocumentRoot()
+        include_once App::getDocumentRoot()
                      . '/local/components/fourpaws/catalog.food.selection/templates/.default/include/' . $step . '.php';
         $html = ob_get_clean();
         
         return JsonSuccessResponse::createWithData(
-            'Успех',
+            'Успешный аякс',
             [
                 'showItems' => false,
                 'html'      => $html,
@@ -91,7 +91,7 @@ class FoodSelectionController extends Controller
      */
     public function showStepPetAgeAction(Request $request) : JsonResponse
     {
-        $petType = $request->get('pet_type');
+        $petType = $request->query->get('pet_type');
         if ($_SESSION['PET_TYPE'] === 'dog') {
             $step     = 'pet_size';
             $nextStep = 3;
@@ -106,12 +106,12 @@ class FoodSelectionController extends Controller
         $sections = $this->foodSelectionService->getSectionsByXmlIdAndParentSection($step, $petType, 2);
         ob_start();
         /** @noinspection PhpIncludeInspection */
-        require_once App::getDocumentRoot()
+        include_once App::getDocumentRoot()
                      . '/local/components/fourpaws/catalog.food.selection/templates/.default/include/' . $step . '.php';
         $html = ob_get_clean();
         
         return JsonSuccessResponse::createWithData(
-            '',
+            'Успешный аякс',
             [
                 'html' => $html,
                 'food' => [
@@ -132,7 +132,7 @@ class FoodSelectionController extends Controller
      */
     public function showStepPetSizeAction(Request $request) : JsonResponse
     {
-        $petType = $request->get('pet_type');
+        $petType = $request->query->get('pet_type');
         $step    = 'food_spec';
         /** @noinspection PhpUnusedLocalVariableInspection */
         $sections = $this->foodSelectionService->getSectionsByXmlIdAndParentSection($step, $petType, 2);
@@ -140,12 +140,12 @@ class FoodSelectionController extends Controller
         $nextUrl  = '/ajax/food_selection/show/step/food/specialize/';
         ob_start();
         /** @noinspection PhpIncludeInspection */
-        require_once App::getDocumentRoot()
+        include_once App::getDocumentRoot()
                      . '/local/components/fourpaws/catalog.food.selection/templates/.default/include/' . $step . '.php';
         $html = ob_get_clean();
         
         return JsonSuccessResponse::createWithData(
-            '',
+            'Успешный аякс',
             [
                 'html' => $html,
                 'food' => [
@@ -166,7 +166,7 @@ class FoodSelectionController extends Controller
      */
     public function showStepFoodSpecializeAction(Request $request) : JsonResponse
     {
-        $petType = $request->get('pet_type');
+        $petType = $request->query->get('pet_type');
         $step    = 'food_ingridient';
         /** @noinspection PhpUnusedLocalVariableInspection */
         $sections = $this->foodSelectionService->getSectionsByXmlIdAndParentSection($step, $petType, 2);
@@ -174,12 +174,12 @@ class FoodSelectionController extends Controller
         $nextUrl  = '/ajax/food_selection/show/step/food/features/';
         ob_start();
         /** @noinspection PhpIncludeInspection */
-        require_once App::getDocumentRoot()
+        include_once App::getDocumentRoot()
                      . '/local/components/fourpaws/catalog.food.selection/templates/.default/include/' . $step . '.php';
         $html = ob_get_clean();
         
         return JsonSuccessResponse::createWithData(
-            '',
+            'Успешный аякс',
             [
                 'html' => $html,
                 'food' => [
@@ -200,7 +200,7 @@ class FoodSelectionController extends Controller
      */
     public function showStepFoodFeaturesAction(Request $request) : JsonResponse
     {
-        $petType = $request->get('pet_type');
+        $petType = $request->query->get('pet_type');
         $step    = 'food_consistence';
         /** @noinspection PhpUnusedLocalVariableInspection */
         $sections = $this->foodSelectionService->getSectionsByXmlIdAndParentSection($step, $petType, 2);
@@ -208,12 +208,12 @@ class FoodSelectionController extends Controller
         $nextUrl  = '/ajax/food_selection/show/step/food/type/';
         ob_start();
         /** @noinspection PhpIncludeInspection */
-        require_once App::getDocumentRoot()
+        include_once App::getDocumentRoot()
                      . '/local/components/fourpaws/catalog.food.selection/templates/.default/include/' . $step . '.php';
         $html = ob_get_clean();
         
         return JsonSuccessResponse::createWithData(
-            '',
+            'Успешный аякс',
             [
                 'html' => $html,
                 'food' => [
@@ -234,7 +234,7 @@ class FoodSelectionController extends Controller
      */
     public function showStepFoodTypeAction(Request $request) : JsonResponse
     {
-        $petType = $request->get('pet_type');
+        $petType = $request->query->get('pet_type');
         $step    = 'food_flavour';
         /** @noinspection PhpUnusedLocalVariableInspection */
         $sections = $this->foodSelectionService->getSectionsByXmlIdAndParentSection($step, $petType, 2);
@@ -242,12 +242,12 @@ class FoodSelectionController extends Controller
         $nextUrl  = '/ajax/food_selection/show/items/';
         ob_start();
         /** @noinspection PhpIncludeInspection */
-        require_once App::getDocumentRoot()
+        include_once App::getDocumentRoot()
                      . '/local/components/fourpaws/catalog.food.selection/templates/.default/include/' . $step . '.php';
         $html = ob_get_clean();
         
         return JsonSuccessResponse::createWithData(
-            '',
+            'Успешный аякс',
             [
                 'html' => $html,
                 'food' => [
@@ -281,15 +281,19 @@ class FoodSelectionController extends Controller
         $alsoItems = $this->foodSelectionService->getProductsBySections(array_values($data), $typeId);
         ob_start();
         /** @noinspection PhpIncludeInspection */
-        require_once App::getDocumentRoot()
+        include_once App::getDocumentRoot()
                      . '/local/components/fourpaws/catalog.food.selection/templates/.default/include/' . $step . '.php';
         $html = ob_get_clean();
         
         return JsonSuccessResponse::createWithData(
-            '',
+            'Успешный аякс',
             [
                 'html'      => $html,
                 'showItems' => true,
+                'food' => [
+                    'next_step_url' => '',
+                    'num'           => '',
+                ],
             ]
         );
     }
