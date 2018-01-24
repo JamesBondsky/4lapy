@@ -23,15 +23,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 $category = $arResult['CATEGORY'];
 
-/**
- * Удаляем категории без детей
- * @todo Что делать с такими категориями?
- */
-$categoriesWithChildren = $category->getChild()->filter(
-    function (Category $category) {
-        return $category->getChild()->count() > 0;
-    }
-);
+$categoriesWithChildren = $category->getChild(false);
 
 ?>
 <?php $this->setViewTarget(ViewsEnum::CATALOG_CATEGORY_ROOT_LEFT_BLOCK) ?>
@@ -47,7 +39,7 @@ $categoriesWithChildren = $category->getChild()->filter(
                     </a>
                     <div class="b-accordion__block js-dropdown-block">
                         <ul class="b-filter-link-list">
-                            <?php foreach ($cat->getChild() as $child) { ?>
+                            <?php foreach ($cat->getChild(false) as $child) { ?>
                                 <li class="b-filter-link-list__item">
                                     <a class="b-filter-link-list__link"
                                        href="<?= $child->getSectionPageUrl() ?>"

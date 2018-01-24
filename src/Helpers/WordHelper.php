@@ -19,4 +19,21 @@ class WordHelper
 
         return $forms[$key];
     }
+
+    public static function showWeight(float $weight)
+    {
+        $result = '';
+
+        $kg = floor($weight / 1000);
+        if ($kg) {
+            $result = $kg . ' кг';
+        }
+
+        $g = $weight % 1000;
+        if ($g) {
+            $result = $g . ' г';
+        }
+
+        return $result;
+    }
 }

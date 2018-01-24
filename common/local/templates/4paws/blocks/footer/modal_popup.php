@@ -10,7 +10,7 @@
             <span class="b-title b-title--h1 b-title--popup-error">Ошибка</span>
         </header>
         <div class="b-registration__content b-registration__content--simple-text">
-            <div class="b-registration__text-instruction js-popup-simple-text">Код выслан повторно</div>
+            <div class="b-registration__text-instruction js-popup-simple-text"></div>
         </div>
     </div>
 </section>

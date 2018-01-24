@@ -1,5 +1,9 @@
 <?
-require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
+
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
+
+require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/header.php");
 $APPLICATION->SetTitle("Акции");
 ?>
 <?php $APPLICATION->IncludeComponent(
@@ -38,8 +42,8 @@ $APPLICATION->SetTitle("Акции");
         'DISPLAY_BOTTOM_PAGER' => 'Y',
         'FILE_404' => '',
         'HIDE_LINK_WHEN_NO_DETAIL' => 'N',
-        'IBLOCK_ID' => \FourPaws\Enum\IblockCode::SHARES,
-        'IBLOCK_TYPE' => \FourPaws\Enum\IblockType::PUBLICATION,
+        'IBLOCK_ID' => IblockCode::SHARES,
+        'IBLOCK_TYPE' => IblockType::PUBLICATION,
         'INCLUDE_IBLOCK_INTO_CHAIN' => 'N',
         'LIST_ACTIVE_DATE_FORMAT' => 'j F Y',
         'LIST_FIELD_CODE' => [
@@ -49,7 +53,7 @@ $APPLICATION->SetTitle("Акции");
         'MESSAGE_404' => '',
         'META_DESCRIPTION' => '-',
         'META_KEYWORDS' => '-',
-        'NEWS_COUNT' => '8',
+        'NEWS_COUNT' => '16',
         'PAGER_BASE_LINK_ENABLE' => 'N',
         'PAGER_DESC_NUMBERING' => 'N',
         'PAGER_DESC_NUMBERING_CACHE_TIME' => '36000',

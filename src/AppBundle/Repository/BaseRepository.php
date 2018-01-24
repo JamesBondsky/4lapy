@@ -53,6 +53,8 @@ class BaseRepository
      */
     private $dataManager;
     
+    private $fileList;
+    
     /**
      * AddressRepository constructor.
      *
@@ -90,9 +92,13 @@ class BaseRepository
             throw new ValidationException('Wrong entity passed to create');
         }
         
+        $data = $this->serializer->toArray($this->entity, SerializationContext::create()->setGroups(['create']));
+        $this->fixFileData($data);
+        
         $res = $this->dataManager::add(
-            $this->serializer->toArray($this->entity, SerializationContext::create()->setGroups(['create']))
+            $data
         );
+        $this->clearFileList();
         if ($res->isSuccess()) {
             $this->entity->setId($res->getId());
             
@@ -100,6 +106,29 @@ class BaseRepository
         }
         
         throw new BitrixRuntimeException(implode(', ', $res->getErrorMessages()));
+    }
+    
+    /** fix для сохранения файлов,
+     * @param $data
+     */
+    private function fixFileData(&$data)
+    {
+        $fileList = $this->getFileList();
+        if (!empty($fileList)) {
+            foreach ($fileList as $code => $file) {
+                if (\array_key_exists($code, $data) && (int)$data[$code] === 1) {
+                    $data[$code] = $file;
+                }
+            }
+        }
+    }
+    
+    /**
+     * @return array
+     */
+    public function getFileList() : array
+    {
+        return $this->fileList ?? [];
     }
     
     /**
@@ -127,10 +156,14 @@ class BaseRepository
             throw new ValidationException('Wrong entity passed to update');
         }
         
+        $data = $this->serializer->toArray($this->entity, SerializationContext::create()->setGroups(['update']));
+        $this->fixFileData($data);
+        
         $res = $this->dataManager::update(
             $this->entity->getId(),
-            $this->serializer->toArray($this->entity, SerializationContext::create()->setGroups(['update']))
+            $data
         );
+        $this->clearFileList();
         if ($res->isSuccess()) {
             return true;
         }
@@ -353,8 +386,40 @@ class BaseRepository
         $this->nav = $nav;
     }
     
+    /**
+     *
+     */
     public function clearNav()
     {
         $this->nav = null;
+    }
+    
+    /**
+     * @param array $filelist
+     *
+     * @return BaseRepository
+     */
+    public function setFileList(array $filelist) : BaseRepository
+    {
+        $this->fileList = $filelist;
+        
+        return $this;
+    }
+    
+    /**
+     * @param array  $file
+     *
+     * @return BaseRepository
+     */
+    public function addFileList(array $file = []) : BaseRepository
+    {
+        $this->fileList[key($file)] = current($file);
+        
+        return $this;
+    }
+    
+    public function clearFileList()
+    {
+        $this->fileList = null;
     }
 }

@@ -188,6 +188,12 @@ class ProductService
                     SapProductProperty::FOOD,
                     [1]
                 )->first() === 1
+            )
+            ->withPackingCombination(
+                (string)$material->getProperties()->getPropertyValues(
+                    SapProductProperty::PACKING_COMBINATION,
+                    ['']
+                )->first()
             );
         $this->fillReferenceProperties($product, $material);
         $this->fillCountry($product, $material);
