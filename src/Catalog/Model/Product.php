@@ -1817,7 +1817,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return static
      */
-    public function setPackingCombination(string $packingCombination)
+    public function withPackingCombination(string $packingCombination)
     {
         $this->PROPERTY_PACKING_COMBINATION = $packingCombination;
 
@@ -1899,7 +1899,8 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     /**
      * @return string
      */
-    public function getWeightCapacityPacking() : string {
+    public function getWeightCapacityPacking() : string
+    {
         return $this->PROPERTY_WEIGHT_CAPACITY_PACKING;
     }
 }

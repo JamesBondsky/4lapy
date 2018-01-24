@@ -7,7 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 ?>
-<nav class="b-breadcrumbs">
+<nav class="b-breadcrumbs <?= $arParams['ADDITIONAL_CLASS'] ?? '' ?>">
     <ul class="b-breadcrumbs__list">
         <?php if ($arParams['SHOW_LINK_TO_MAIN'] === 'Y') { ?>
             <li class="b-breadcrumbs__item">

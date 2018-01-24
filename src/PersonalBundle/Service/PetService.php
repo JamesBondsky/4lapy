@@ -73,7 +73,11 @@ class PetService
         if (empty($data['UF_USER_ID'])) {
             $data['UF_USER_ID'] = $this->currentUser->getCurrentUserId();
         }
-        $res = $this->petRepository->setEntityFromData($data, Pet::class)->addFileKey('UF_PHOTO')->create();
+        $this->petRepository->setEntityFromData($data, Pet::class);
+        if(!empty($data['UF_PHOTO_TMP'])) {
+            $this->petRepository->addFileList(['UF_PHOTO' => $data['UF_PHOTO_TMP']]);
+        }
+        $res = $this->petRepository->create();
         if ($res) {
             $this->updateManzanaPets();
         }
@@ -104,7 +108,7 @@ class PetService
             }
             /** @var ManzanaService $manzanaService */
             $manzanaService = $container->get('manzana.service');
-    
+            
             $client = null;
             try {
                 $contactId         = $manzanaService->getContactIdByCurUser();
@@ -194,7 +198,11 @@ class PetService
      */
     public function update(array $data) : bool
     {
-        $res = $this->petRepository->setEntityFromData($data, Pet::class)->addFileKey('UF_PHOTO')->update();
+        $this->petRepository->setEntityFromData($data, Pet::class);
+        if(!empty($data['UF_PHOTO_TMP'])) {
+            $this->petRepository->addFileList(['UF_PHOTO' => $data['UF_PHOTO_TMP']]);
+        }
+        $res = $this->petRepository->update();
         if ($res) {
             $this->updateManzanaPets();
         }
