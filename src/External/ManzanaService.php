@@ -25,6 +25,7 @@ use FourPaws\External\Manzana\Model\ParameterBag;
 use FourPaws\External\Manzana\Model\ReferralParams;
 use FourPaws\External\Manzana\Model\Referrals;
 use FourPaws\External\Manzana\Model\ResultXmlFactory;
+use FourPaws\External\Manzana\Model\CardValidateResult;
 use FourPaws\External\Traits\ManzanaServiceTrait;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -490,7 +491,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     {
         return (string)$this->getContactByPhone($phone)->contactId;
     }
-    
+
     /**
      * Передача номера бонусной карты для проверки валидности
      * Контракт в ML: card_validate
@@ -500,23 +501,22 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      *
      * @param string $cardNumber
      *
-     * @return bool
+     * @return CardValidateResult
      *
      * @throws ManzanaServiceException
      */
-    public function validateCardByNumber(string $cardNumber) : bool
+    public function validateCardByNumber(string $cardNumber) : CardValidateResult
     {
+        $cardValidateResult = null;
         $bag = new ParameterBag(['cardnumber' => $cardNumber]);
-        
         try {
             $result = $this->execute(self::CONTRACT_CARD_VALIDATE, $bag->getParameters());
-            /** @noinspection PhpUndefinedFieldInspection */
-            $result = $result->cardid->__toString() !== '';
+            $cardValidateResult = $this->serializer->deserialize($result, CardValidateResult::class, 'xml');
         } catch (\Throwable $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
         }
-        
-        return $result;
+
+        return $cardValidateResult;
     }
     
     /**
