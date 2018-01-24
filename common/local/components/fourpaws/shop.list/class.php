@@ -199,13 +199,13 @@ class FourPawsShopListComponent extends CBitrixComponent
                     'metro'      => !empty($metro) ? $metroList[$metro]['UF_NAME'] : '',
                     'metroClass' => !empty($metro) ? 'b-delivery-list__col--' . $metroList[$metro]['UF_CLASS'] : '',
                     'services'   => $services,
-                    'gps_s'      => $gpsS,
-                    'gps_n'      => $gpsN,
+                    'gps_s'      => $gpsN, //revert $gpsS
+                    'gps_n'      => $gpsS, //revert $gpsN
                 ];
             }
             $countStores         = count($stores);
-            $result['avg_gps_s'] = $avgGpsS / $countStores;
-            $result['avg_gps_n'] = $avgGpsN / $countStores;
+            $result['avg_gps_s'] = $avgGpsN / $countStores; //revert $avgGpsS
+            $result['avg_gps_n'] = $avgGpsS / $countStores; //revert $avgGpsN
         }
         
         return $result;
