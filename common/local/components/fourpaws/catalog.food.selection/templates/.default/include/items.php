@@ -42,3 +42,4 @@ global $APPLICATION; ?>
         } ?>
     </div>
 </section>
+<?die();?>
