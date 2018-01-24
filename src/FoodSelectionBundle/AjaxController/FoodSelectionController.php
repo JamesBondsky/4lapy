@@ -38,7 +38,7 @@ class FoodSelectionController extends Controller
     
     /**
      * Тип питомца
-     * @Route("/step/pet/type/", methods={"POST"})
+     * @Route("/step/pet/type/", methods={"GET"})
      *
      * @param Request $request
      *
@@ -84,7 +84,7 @@ class FoodSelectionController extends Controller
     
     /**
      * Возраст питомца
-     * @Route("/step/pet/age/", methods={"POST"})
+     * @Route("/step/pet/age/", methods={"GET"})
      *
      * @param Request $request
      *
@@ -128,7 +128,7 @@ class FoodSelectionController extends Controller
     
     /**
      * Размер питомца
-     * @Route("/step/pet/size/", methods={"POST"})
+     * @Route("/step/pet/size/", methods={"GET"})
      *
      * @param Request $request
      *
@@ -165,7 +165,7 @@ class FoodSelectionController extends Controller
     
     /**
      * Специализация корма
-     * @Route("/step/food/specialize/", methods={"POST"})
+     * @Route("/step/food/specialize/", methods={"GET"})
      *
      * @param Request $request
      *
@@ -202,7 +202,7 @@ class FoodSelectionController extends Controller
     
     /**
      * Особенности корма
-     * @Route("/step/food/features/", methods={"POST"})
+     * @Route("/step/food/features/", methods={"GET"})
      *
      * @param Request $request
      *
@@ -239,7 +239,7 @@ class FoodSelectionController extends Controller
     
     /**
      * Тип корма
-     * @Route("/step/food/type/", methods={"POST"})
+     * @Route("/step/food/type/", methods={"GET"})
      *
      * @param Request $request
      *
@@ -276,7 +276,7 @@ class FoodSelectionController extends Controller
     
     /**
      * Вкус корма - показ элементов
-     * @Route("/items/", methods={"POST"})
+     * @Route("/items/", methods={"GET"})
      *
      * @param Request $request
      *
