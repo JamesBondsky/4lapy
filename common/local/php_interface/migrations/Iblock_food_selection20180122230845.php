@@ -70,7 +70,7 @@ class Iblock_food_selection20180122230845 extends SprintMigrationBase
                 'RIGHTS_MODE'        => 'S',
                 'SECTION_PROPERTY'   => null,
                 'PROPERTY_INDEX'     => null,
-                'VERSION'            => '1',
+                'VERSION'            => '2',
                 'LAST_CONV_ELEMENT'  => '0',
                 'SOCNET_GROUP_ID'    => null,
                 'EDIT_FILE_BEFORE'   => '',
