@@ -29,7 +29,7 @@ foreach (array_values($childCategories) as $index => $childCategory) {
             </h2>
         </div>
         <div class="b-common-section__content b-common-section__content--catalog js-catalog-main">
-            <?php foreach ($childCategory->getChild() as $childChildCategory) {
+            <?php foreach ($childCategory->getChild(false) as $childChildCategory) {
                 /* @todo ссылка на картинку-заглушку  */
                 $src = '/empty';
                 if ($childChildCategory->getPictureId()) {
