@@ -27,6 +27,18 @@ framework:
   templating:
     engines: ['php', 'twig']
 
+security:
+  providers:
+    bitrix:
+      id: FourPaws\UserBundle\Security\BitrixUserProvider
+  firewalls:
+    main:
+      anonymous: ~
+      logout: ~
+      guard:
+        authenticators:
+          - FourPaws\UserBundle\Security\BitrixAuthenticator
+
 circle_rest_client:
   curl:
     defaults:

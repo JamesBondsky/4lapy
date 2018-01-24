@@ -3,7 +3,6 @@
 namespace FourPaws\CatalogBundle\Controller;
 
 use FourPaws\App\Application;
-use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\CatalogBundle\Dto\ChildCategoryRequest;
 use FourPaws\CatalogBundle\Dto\RootCategoryRequest;
@@ -62,7 +61,7 @@ class CatalogController extends Controller
             'request'             => $request,
             'productSearchResult' => $result,
             'catalogRequest'      => $searchRequest,
-            'categories'      => $categories
+            'categories'      => $categories,
         ]);
     }
 
