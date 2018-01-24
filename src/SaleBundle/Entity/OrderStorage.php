@@ -3,8 +3,11 @@
 namespace FourPaws\SaleBundle\Entity;
 
 use DateTime;
+use FourPaws\Helpers\Exception\WrongPhoneNumberException;
+use FourPaws\Helpers\PhoneHelper;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
+use FourPaws\SaleBundle\Validation as SaleValidation;
 use Misd\PhoneNumberBundle\Validator\Constraints\PhoneNumber;
 
 class OrderStorage
@@ -205,7 +208,7 @@ class OrderStorage
      * @Serializer\Type("string")
      * @Serializer\SerializedName("PROPERTY_COM_WAY")
      * @Serializer\Groups(groups={"read","update","delete"})
-     * @Assert\NotBlank(groups={"auth", "payment","delivery"})
+     * @SaleValidation\OrderPropertyVariant(propertyCode ="COM_WAY", groups={"auth", "payment","delivery"})
      */
     protected $communicationWay = '';
 
@@ -386,7 +389,10 @@ class OrderStorage
      */
     public function setPhone(string $phone): OrderStorage
     {
-        $this->phone = $phone;
+        try {
+            $this->phone = PhoneHelper::normalizePhone($phone);
+        } catch (WrongPhoneNumberException $e) {
+        }
 
         return $this;
     }
@@ -406,7 +412,10 @@ class OrderStorage
      */
     public function setAltPhone(string $altPhone): OrderStorage
     {
-        $this->altPhone = $altPhone;
+        try {
+            $this->altPhone = PhoneHelper::normalizePhone($altPhone);
+        } catch (WrongPhoneNumberException $e) {
+        }
 
         return $this;
     }

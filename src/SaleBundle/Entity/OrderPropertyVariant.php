@@ -4,7 +4,7 @@ namespace FourPaws\SaleBundle\Entity;
 
 use JMS\Serializer\Annotation as Serializer;
 
-class OrderPropertyEnum
+class OrderPropertyVariant
 {
     /**
      * @var int
@@ -65,9 +65,9 @@ class OrderPropertyEnum
     /**
      * @param mixed $id
      *
-     * @return OrderPropertyEnum
+     * @return OrderPropertyVariant
      */
-    public function setId(int $id): OrderPropertyEnum
+    public function setId(int $id): OrderPropertyVariant
     {
         $this->id = $id;
 
@@ -85,9 +85,9 @@ class OrderPropertyEnum
     /**
      * @param mixed $propertyId
      *
-     * @return OrderPropertyEnum
+     * @return OrderPropertyVariant
      */
-    public function setPropertyId($propertyId): OrderPropertyEnum
+    public function setPropertyId($propertyId): OrderPropertyVariant
     {
         $this->propertyId = $propertyId;
 
@@ -105,9 +105,9 @@ class OrderPropertyEnum
     /**
      * @param string $propertyCode
      *
-     * @return OrderPropertyEnum
+     * @return OrderPropertyVariant
      */
-    public function setPropertyCode(string $propertyCode): OrderPropertyEnum
+    public function setPropertyCode(string $propertyCode): OrderPropertyVariant
     {
         $this->propertyCode = $propertyCode;
 
@@ -125,9 +125,9 @@ class OrderPropertyEnum
     /**
      * @param string $name
      *
-     * @return OrderPropertyEnum
+     * @return OrderPropertyVariant
      */
-    public function setName(string $name): OrderPropertyEnum
+    public function setName(string $name): OrderPropertyVariant
     {
         $this->name = $name;
 
@@ -145,9 +145,9 @@ class OrderPropertyEnum
     /**
      * @param string $value
      *
-     * @return OrderPropertyEnum
+     * @return OrderPropertyVariant
      */
-    public function setValue(string $value): OrderPropertyEnum
+    public function setValue(string $value): OrderPropertyVariant
     {
         $this->value = $value;
 
@@ -165,9 +165,9 @@ class OrderPropertyEnum
     /**
      * @param int $sort
      *
-     * @return OrderPropertyEnum
+     * @return OrderPropertyVariant
      */
-    public function setSort(int $sort): OrderPropertyEnum
+    public function setSort(int $sort): OrderPropertyVariant
     {
         $this->sort = $sort;
 

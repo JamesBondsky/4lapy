@@ -73,7 +73,12 @@ class OrderController extends Controller
         }
 
         if (!empty($validationErrors)) {
-            return JsonErrorResponse::createWithData('', ['errors' => $validationErrors]);
+            return JsonErrorResponse::createWithData(
+                '',
+                ['errors' => $validationErrors],
+                200,
+                ['reload' => true]
+            );
         }
 
         return JsonSuccessResponse::create(
@@ -115,14 +120,19 @@ class OrderController extends Controller
      */
     public function validatePaymentAction(Request $request): JsonResponse
     {
-        $storage = $this->orderService->setStorageValuesFromRequest(
-            $this->orderService->getStorage(),
-            $request
-        );
-        try {
-            $this->orderService->updateStorage($storage, OrderService::PAYMENT_STEP);
-        } catch (OrderStorageValidationException $e) {
+        $validationErrors = $this->fillStorage($request, OrderService::PAYMENT_STEP);
+        if (!empty($validationErrors)) {
+            return JsonErrorResponse::createWithData('', ['errors' => $validationErrors]);
         }
+
+        /*
+        return JsonSuccessResponse::create(
+            '',
+            200,
+            [],
+            ['redirect' => '/sale/order/' . OrderService::PAYMENT_STEP]
+        );
+        */
     }
 
     /**
@@ -142,7 +152,8 @@ class OrderController extends Controller
         $errors = [];
         $storage = $this->orderService->setStorageValuesFromRequest(
             $this->orderService->getStorage(),
-            $request
+            $request,
+            $step
         );
 
         try {

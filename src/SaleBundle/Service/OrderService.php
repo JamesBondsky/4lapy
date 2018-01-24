@@ -7,7 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Entity\OrderStorage;
-use FourPaws\SaleBundle\Repository\OrderPropertyEnum\BaseRepository as OrderPropertyEnumBaseRepository;
+use FourPaws\SaleBundle\Repository\OrderPropertyVariantRepository;
 use FourPaws\SaleBundle\Repository\OrderStorage\StorageRepositoryInterface;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
@@ -26,6 +26,10 @@ class OrderService implements ContainerAwareInterface
 
     const COMPLETE_STEP = 'complete';
 
+    const COMMUNICATION_SMS = '01';
+
+    const COMMUNICATION_PHONE = '02';
+
     /**
      * @var StorageRepositoryInterface
      */
@@ -37,6 +41,11 @@ class OrderService implements ContainerAwareInterface
     protected $currentUserProvider;
 
     /**
+     * @var OrderPropertyVariantRepository
+     */
+    protected $variantRepository;
+
+    /**
      * OrderService constructor.
      *
      * @param StorageRepositoryInterface $orderStorageRepository
@@ -44,10 +53,12 @@ class OrderService implements ContainerAwareInterface
      */
     public function __construct(
         StorageRepositoryInterface $orderStorageRepository,
-        CurrentUserProviderInterface $currentUserProvider
+        CurrentUserProviderInterface $currentUserProvider,
+        OrderPropertyVariantRepository $variantRepository
     ) {
         $this->storageRepository = $orderStorageRepository;
         $this->currentUserProvider = $currentUserProvider;
+        $this->variantRepository = $variantRepository;
     }
 
     /**
@@ -121,6 +132,7 @@ class OrderService implements ContainerAwareInterface
                     'phone',
                     'email',
                     'altPhone',
+                    'communicationWay',
                 ];
                 break;
         }
@@ -177,20 +189,14 @@ class OrderService implements ContainerAwareInterface
     }
 
     /**
-     * @param $class
+     * @param string $propertyCode
+     * @param array $additionalFilter
      *
      * @return ArrayCollection
      * @throws InvalidArgumentException
      */
-    public function getPropertyVariants(string $class): ArrayCollection
+    public function getPropertyVariants(string $propertyCode, array $additionalFilter = []): ArrayCollection
     {
-        /** @var OrderPropertyEnumBaseRepository $repository */
-        $repository = $this->container->get($class);
-
-        if (!$repository instanceof OrderPropertyEnumBaseRepository) {
-            throw new InvalidArgumentException('Wrong class name passed');
-        }
-
-        return $repository->getAvailableVariants();
+        return $this->variantRepository->getAvailableVariants($propertyCode, $additionalFilter);
     }
 }

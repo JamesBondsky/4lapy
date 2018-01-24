@@ -7,7 +7,7 @@ use FourPaws\App\Application;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Repository\OrderPropertyEnum\ComWayRepository;
-use FourPaws\SaleBundle\Entity\OrderPropertyEnum;
+use FourPaws\SaleBundle\Entity\OrderPropertyVariant;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use FourPaws\ReCaptcha\ReCaptchaService;
 
@@ -28,9 +28,17 @@ $userAuthProvider = $serviceContainer->get(UserAuthorizationInterface::class);
 /** @var ReCaptchaService $recaptchaService */
 $recaptchaService = $serviceContainer->get('recaptcha.service');
 
-$communicationWays = $orderService->getPropertyVariants(ComWayRepository::class);
-/** @var OrderPropertyEnum $currentCommWay */
-$currentCommWay = $communicationWays[$storage->getCommunicationWay()] ?? $communicationWays[ComWayRepository::CODE_SMS];
+$communicationWays = $orderService->getPropertyVariants(
+    'COM_WAY',
+    [
+        'VALUE' => [
+            OrderService::COMMUNICATION_PHONE,
+            OrderService::COMMUNICATION_SMS,
+        ],
+    ]
+);
+/** @var OrderPropertyVariant $currentCommWay */
+$currentCommWay = $communicationWays[$storage->getCommunicationWay()];
 
 ?>
 <div class="b-container">
@@ -183,10 +191,10 @@ $currentCommWay = $communicationWays[$storage->getCommunicationWay()] ?? $commun
                             <div class="b-input-line__label-wrapper">
                                 <span class="b-input-line__label">Как с вами связаться для подтверждения заказа</span>
                             </div>
-                            <?php /** @var \FourPaws\SaleBundle\Entity\OrderPropertyEnum $commWay */ ?>
+                            <?php /** @var \FourPaws\SaleBundle\Entity\OrderPropertyVariant $commWay */ ?>
                             <?php foreach ($communicationWays as $commWay) { ?>
                                 <?php
-                                $isSelected = $commWay->getValue() == $currentCommWay->getValue();
+                                $isSelected = $currentCommWay && ($commWay->getValue() == $currentCommWay->getValue());
                                 ?>
                                 <div class="b-radio b-radio--tablet-big">
                                     <input class="b-radio__input"

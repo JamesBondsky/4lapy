@@ -27,7 +27,3 @@ services:
         public: true
         calls:
           - [setContainer, ['@service_container']]
-
-    FourPaws\SaleBundle\Repository\OrderPropertyEnum\ComWayRepository:
-        class: FourPaws\SaleBundle\Repository\OrderPropertyEnum\ComWayRepository
-        public: true

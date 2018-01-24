@@ -23,8 +23,8 @@ class PhoneHelper
      */
     public static function normalizePhone(string $rawPhone): string
     {
-        $phone = preg_replace('~(^(\D)*7|^8)|\D~', '', $rawPhone);
-        
+        $phone = preg_replace('~(^(\d)*7|^8)|\D~', '', $rawPhone);
+
         if (mb_strlen($phone) === 10) {
             return $phone;
         }
@@ -60,6 +60,7 @@ class PhoneHelper
     {
         try {
             $normalized = self::normalizePhone($phone);
+
             return vsprintf($format, str_split($normalized));
         } catch (WrongPhoneNumberException $e) {
             return $phone;

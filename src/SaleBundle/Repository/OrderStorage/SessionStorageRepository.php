@@ -22,12 +22,21 @@ class SessionStorageRepository extends StorageBaseRepository
 
         $data = $_SESSION[self::SESSION_KEY];
         $data['FUSER_ID'] = $this->currentUserProvider->getCurrentFUserId();
+        if (!$data['PROPERTY_COM_WAY']) {
+            $data['PROPERTY_COM_WAY'] = OrderService::COMMUNICATION_SMS;
+        }
 
         try {
             $user = $this->currentUserProvider->getCurrentUser();
-            $data['NAME'] = $user->getName();
-            $data['PHONE'] = $user->getPersonalPhone();
-            $data['EMAIL'] = $user->getEmail();
+            if (!$data['NAME']) {
+                $data['NAME'] = $user->getName();
+            }
+            if (!$data['PHONE']) {
+                $data['PHONE'] = $user->getPersonalPhone();
+            }
+            if (!$data['EMAIL']) {
+                $data['EMAIL'] = $user->getEmail();
+            }
         } catch (NotAuthorizedException $e) {
         }
 
