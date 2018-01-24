@@ -167,15 +167,12 @@ class FoodSelectionRepository
             ]
         );
         $query->setGroup('ID');
-        echo $query->getQuery();
-        //$query->dump();
         
         $res     = $query->exec();
         $itemIds = [];
         while ($item = $res->fetch()) {
-            $itemIds[] = $item['ID'];
+            $itemIds[] = $item['ITEM'];
         }
-        
         $products = [];
         if (!empty($itemIds)) {
             $query    = new ProductQuery();

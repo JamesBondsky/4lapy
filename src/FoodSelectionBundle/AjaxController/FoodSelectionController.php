@@ -276,7 +276,6 @@ class FoodSelectionController extends Controller
         $step = 'items';
         /** @noinspection PhpUnusedLocalVariableInspection */
         $recommendedItems = $this->foodSelectionService->getProductsBySections(array_values($data), $typeId);
-        echo '<pre>',var_dump($recommendedItems),'</pre>';
         unset($data['food_consistence']);
         /** @noinspection PhpUnusedLocalVariableInspection */
         $alsoItems = $this->foodSelectionService->getProductsBySections(array_values($data), $typeId);
