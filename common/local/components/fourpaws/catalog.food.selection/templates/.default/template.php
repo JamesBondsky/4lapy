@@ -50,10 +50,10 @@ $frame = $this->createFrame(); ?>
                                type="radio"
                                name="pet_type"
                                value="<?= $item->getId() ?>"
-                               id="id-quest-type-<?= $key + 1 ?>" />
+                               id="id-quest-type-<?= $key ?>" />
                         <label class="b-radio__label b-radio__label--q-food"
-                               for="id-quest-type-<?= $key + 1 ?>">
-                            <span class="b-radio__text-label"><?$item->getName()?></span>
+                               for="id-quest-type-<?= $key ?>">
+                            <span class="b-radio__text-label"><?= $item->getName() ?></span>
                         </label>
                     </div>
                 <?php } ?>
