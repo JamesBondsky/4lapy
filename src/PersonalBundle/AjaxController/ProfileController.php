@@ -197,8 +197,12 @@ class ProfileController extends Controller
             }
         }
         
-        $curUser = $userRepository->findBy(['EMAIL' => $data['EMAIL']], [], 1);
-        if ($curUser instanceof User || (\is_array($curUser) && !empty($curUser))) {
+        $haveUsers = $userRepository->havePhoneAndEmailByUsers(
+            [
+                'EMAIL'          => $data['EMAIL']
+            ]
+        );
+        if($haveUsers['email']){
             return JsonErrorResponse::createWithData(
                 'Такой email уже существует',
                 ['errors' => ['haveEmail' => 'Такой email уже существует']]
@@ -225,7 +229,6 @@ class ProfileController extends Controller
                 $contactId         = $manzanaService->getContactIdByCurUser();
                 $client            = new Client();
                 $client->contactId = $contactId;
-            } catch (ManzanaServiceContactSearchMoreOneException $e) {
             } catch (ManzanaServiceContactSearchNullException $e) {
                 $client = new Client();
             } catch (ManzanaServiceException $e) {

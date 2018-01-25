@@ -4,15 +4,15 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "5149c911c4fcb5bd0f32934e4b6e4e20",
+    "content-hash": "f339dc808eb0cb8d3ac9ef16a621c645",
     "packages": [
         {
             "name": "adv/bitrix-tools",
-            "version": "v1.0.12",
+            "version": "v1.0.13",
             "source": {
                 "type": "git",
                 "url": "ssh://git@scm.adv.ru:7999/adv/bitrix-tools.git",
-                "reference": "d79716e1a1c791f93dd280dc3176d29e064614aa"
+                "reference": "46d7d1a128b0ae13b8a6c5b7537138f085567700"
             },
             "require": {
                 "andreyryabin/sprint.migration": "^2.0",
@@ -34,20 +34,20 @@
                 }
             ],
             "description": "Bitrix tools",
-            "time": "2017-12-13T11:36:56+00:00"
+            "time": "2018-01-19T08:02:19+00:00"
         },
         {
             "name": "andreyryabin/sprint.migration",
-            "version": "2.5.1",
+            "version": "2.5.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/andreyryabin/sprint.migration.git",
-                "reference": "5eb363ab976d3c1fc64fc9d58f364c0c2aaec897"
+                "reference": "0a411515a83b400e7acebc59aefeb4950034d2cb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/andreyryabin/sprint.migration/zipball/5eb363ab976d3c1fc64fc9d58f364c0c2aaec897",
-                "reference": "5eb363ab976d3c1fc64fc9d58f364c0c2aaec897",
+                "url": "https://api.github.com/repos/andreyryabin/sprint.migration/zipball/0a411515a83b400e7acebc59aefeb4950034d2cb",
+                "reference": "0a411515a83b400e7acebc59aefeb4950034d2cb",
                 "shasum": ""
             },
             "require": {
@@ -65,7 +65,7 @@
                 "bitrix",
                 "migration"
             ],
-            "time": "2017-07-30T19:36:44+00:00"
+            "time": "2017-11-07T19:11:59+00:00"
         },
         {
             "name": "behat/gherkin",
@@ -178,16 +178,16 @@
         },
         {
             "name": "cocur/slugify",
-            "version": "v3.0.1",
+            "version": "v3.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/cocur/slugify.git",
-                "reference": "1fdf2b1219a199301db3d7c60c16d895bba6ccde"
+                "reference": "b2ccf7b735f4f3df3979aef2e1ebf8e19ca772f7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/cocur/slugify/zipball/1fdf2b1219a199301db3d7c60c16d895bba6ccde",
-                "reference": "1fdf2b1219a199301db3d7c60c16d895bba6ccde",
+                "url": "https://api.github.com/repos/cocur/slugify/zipball/b2ccf7b735f4f3df3979aef2e1ebf8e19ca772f7",
+                "reference": "b2ccf7b735f4f3df3979aef2e1ebf8e19ca772f7",
                 "shasum": ""
             },
             "require": {
@@ -239,7 +239,7 @@
                 "slug",
                 "slugify"
             ],
-            "time": "2017-09-24T10:29:04+00:00"
+            "time": "2018-01-22T09:00:48+00:00"
         },
         {
             "name": "codeception/codeception",
@@ -339,16 +339,16 @@
         },
         {
             "name": "composer/installers",
-            "version": "v1.4.0",
+            "version": "v1.5.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/composer/installers.git",
-                "reference": "9ce17fb70e9a38dd8acff0636a29f5cf4d575c1b"
+                "reference": "049797d727261bf27f2690430d935067710049c2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/composer/installers/zipball/9ce17fb70e9a38dd8acff0636a29f5cf4d575c1b",
-                "reference": "9ce17fb70e9a38dd8acff0636a29f5cf4d575c1b",
+                "url": "https://api.github.com/repos/composer/installers/zipball/049797d727261bf27f2690430d935067710049c2",
+                "reference": "049797d727261bf27f2690430d935067710049c2",
                 "shasum": ""
             },
             "require": {
@@ -360,7 +360,7 @@
             },
             "require-dev": {
                 "composer/composer": "1.0.*@dev",
-                "phpunit/phpunit": "4.1.*"
+                "phpunit/phpunit": "^4.8.36"
             },
             "type": "composer-plugin",
             "extra": {
@@ -431,15 +431,18 @@
                 "lavalite",
                 "lithium",
                 "magento",
+                "majima",
                 "mako",
                 "mediawiki",
                 "modulework",
+                "modx",
                 "moodle",
                 "osclass",
                 "phpbb",
                 "piwik",
                 "ppi",
                 "puppet",
+                "pxcms",
                 "reindex",
                 "roundcube",
                 "shopware",
@@ -452,7 +455,7 @@
                 "zend",
                 "zikula"
             ],
-            "time": "2017-08-09T07:53:48+00:00"
+            "time": "2017-12-29T09:13:20+00:00"
         },
         {
             "name": "doctrine/annotations",
@@ -964,16 +967,16 @@
         },
         {
             "name": "exsyst/swagger",
-            "version": "v0.3.1",
+            "version": "v0.3.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/GuilhemN/swagger.git",
-                "reference": "fdf1a4a3b6516486b27111b016a68cb532d322f8"
+                "reference": "b8235e5312f86ab6caaf3c6728972e6832bab32f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/GuilhemN/swagger/zipball/fdf1a4a3b6516486b27111b016a68cb532d322f8",
-                "reference": "fdf1a4a3b6516486b27111b016a68cb532d322f8",
+                "url": "https://api.github.com/repos/GuilhemN/swagger/zipball/b8235e5312f86ab6caaf3c6728972e6832bab32f",
+                "reference": "b8235e5312f86ab6caaf3c6728972e6832bab32f",
                 "shasum": ""
             },
             "require": {
@@ -999,7 +1002,7 @@
                 }
             ],
             "description": "A php library to manipulate Swagger specifications",
-            "time": "2017-10-11T05:23:09+00:00"
+            "time": "2017-12-19T19:46:02+00:00"
         },
         {
             "name": "facebook/webdriver",
@@ -1208,16 +1211,16 @@
         },
         {
             "name": "giggsey/libphonenumber-for-php",
-            "version": "8.8.8",
+            "version": "8.8.10",
             "source": {
                 "type": "git",
                 "url": "https://github.com/giggsey/libphonenumber-for-php.git",
-                "reference": "502d5e5e2fea5f5c58782558d04e664607a3dffd"
+                "reference": "df46f26492f88fb6d226929cadf60d3111f868ce"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/giggsey/libphonenumber-for-php/zipball/502d5e5e2fea5f5c58782558d04e664607a3dffd",
-                "reference": "502d5e5e2fea5f5c58782558d04e664607a3dffd",
+                "url": "https://api.github.com/repos/giggsey/libphonenumber-for-php/zipball/df46f26492f88fb6d226929cadf60d3111f868ce",
+                "reference": "df46f26492f88fb6d226929cadf60d3111f868ce",
                 "shasum": ""
             },
             "require": {
@@ -1272,7 +1275,7 @@
                 "phonenumber",
                 "validation"
             ],
-            "time": "2017-12-06T20:11:38+00:00"
+            "time": "2018-01-24T14:12:25+00:00"
         },
         {
             "name": "giggsey/locale",
@@ -2032,35 +2035,35 @@
         },
         {
             "name": "misd/phone-number-bundle",
-            "version": "v1.2.0",
+            "version": "v1.3.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/misd-service-development/phone-number-bundle.git",
-                "reference": "44888e72dc9bf6f22949a6659be45330580ea84e"
+                "reference": "32e569b8aa4378e89345668e0cc526d1e0e5837a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/misd-service-development/phone-number-bundle/zipball/44888e72dc9bf6f22949a6659be45330580ea84e",
-                "reference": "44888e72dc9bf6f22949a6659be45330580ea84e",
+                "url": "https://api.github.com/repos/misd-service-development/phone-number-bundle/zipball/32e569b8aa4378e89345668e0cc526d1e0e5837a",
+                "reference": "32e569b8aa4378e89345668e0cc526d1e0e5837a",
                 "shasum": ""
             },
             "require": {
                 "giggsey/libphonenumber-for-php": "~5.7|~6.0|~7.0|~8.0",
                 "php": ">=5.3.3",
-                "symfony/framework-bundle": "~2.1|~3.0"
+                "symfony/framework-bundle": "~2.1|~3.0|^4.0"
             },
             "conflict": {
                 "twig/twig": "<1.12.0"
             },
             "require-dev": {
                 "doctrine/doctrine-bundle": "~1.0",
-                "jms/serializer-bundle": "~0.11|~1.0",
-                "phpunit/phpunit": "~4.0",
-                "symfony/form": "~2.3|~3.0",
-                "symfony/serializer": "~2.7|~3.1",
-                "symfony/templating": "~2.1|~3.0",
-                "symfony/twig-bundle": "~2.1|~3.0",
-                "symfony/validator": "~2.1|~3.0"
+                "jms/serializer-bundle": "~0.11|~1.0|~2.0",
+                "phpunit/phpunit": "~4.0|^5.7",
+                "symfony/form": "~2.3|~3.0|^4.0",
+                "symfony/serializer": "~2.7|~3.1|^4.0",
+                "symfony/templating": "~2.1|~3.0|^4.0",
+                "symfony/twig-bundle": "~2.1|~3.0|^4.0",
+                "symfony/validator": "~2.1|~3.0|^4.0"
             },
             "suggest": {
                 "doctrine/doctrine-bundle": "Add a DBAL mapping type",
@@ -2074,13 +2077,16 @@
             "type": "symfony-bundle",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "1.1.x-dev"
+                    "dev-master": "1.3.x-dev"
                 }
             },
             "autoload": {
                 "psr-4": {
                     "Misd\\PhoneNumberBundle\\": ""
-                }
+                },
+                "exclude-from-classmap": [
+                    "/Tests/"
+                ]
             },
             "notification-url": "https://packagist.org/downloads/",
             "license": [
@@ -2095,7 +2101,7 @@
                 "phonenumber",
                 "telephone number"
             ],
-            "time": "2016-12-17T17:15:49+00:00"
+            "time": "2018-01-18T09:06:41+00:00"
         },
         {
             "name": "monolog/monolog",
@@ -3166,16 +3172,16 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "5.7.25",
+            "version": "5.7.26",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "4b1c822a68ae6577df38a59eb49b046712ec0f6a"
+                "reference": "7fbc25c13309de0c4c9bb48b7361f1eca34c7fbd"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/4b1c822a68ae6577df38a59eb49b046712ec0f6a",
-                "reference": "4b1c822a68ae6577df38a59eb49b046712ec0f6a",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/7fbc25c13309de0c4c9bb48b7361f1eca34c7fbd",
+                "reference": "7fbc25c13309de0c4c9bb48b7361f1eca34c7fbd",
                 "shasum": ""
             },
             "require": {
@@ -3244,7 +3250,7 @@
                 "testing",
                 "xunit"
             ],
-            "time": "2017-11-14T14:50:51+00:00"
+            "time": "2017-12-17T06:14:38+00:00"
         },
         {
             "name": "phpunit/phpunit-mock-objects",
@@ -3646,12 +3652,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/Roave/SecurityAdvisories.git",
-                "reference": "40b035345ed34a4cc92c842f60a6cc739101542f"
+                "reference": "eca509e364dcea7b7f41f9452d575684cc8e3fb4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Roave/SecurityAdvisories/zipball/40b035345ed34a4cc92c842f60a6cc739101542f",
-                "reference": "40b035345ed34a4cc92c842f60a6cc739101542f",
+                "url": "https://api.github.com/repos/Roave/SecurityAdvisories/zipball/eca509e364dcea7b7f41f9452d575684cc8e3fb4",
+                "reference": "eca509e364dcea7b7f41f9452d575684cc8e3fb4",
                 "shasum": ""
             },
             "conflict": {
@@ -3665,9 +3671,10 @@
                 "codeigniter/framework": "<=3.0.6",
                 "composer/composer": "<=1.0.0-alpha11",
                 "contao-components/mediaelement": ">=2.14.2,<2.21.1",
-                "contao/core": ">=2,<3.5.31",
+                "contao/core": ">=2,<3.5.32",
                 "contao/core-bundle": ">=4,<4.4.8",
                 "contao/listing-bundle": ">=4,<4.4.8",
+                "contao/newsletter-bundle": ">=4,<4.1",
                 "doctrine/annotations": ">=1,<1.2.7",
                 "doctrine/cache": ">=1,<1.3.2|>=1.4,<1.4.2",
                 "doctrine/common": ">=2,<2.4.3|>=2.5,<2.5.1",
@@ -3702,10 +3709,10 @@
                 "oro/platform": ">=1.7,<1.7.4",
                 "phpmailer/phpmailer": ">=5,<5.2.24",
                 "phpunit/phpunit": ">=4.8.19,<4.8.28|>=5.0.10,<5.6.3",
-                "phpxmlrpc/extras": "<6.0.1",
+                "phpxmlrpc/extras": "<0.6.1",
                 "pusher/pusher-php-server": "<2.2.1",
                 "sabre/dav": ">=1.6,<1.6.99|>=1.7,<1.7.11|>=1.8,<1.8.9",
-                "shopware/shopware": "<5.2.25",
+                "shopware/shopware": "<5.3.7",
                 "silverstripe/cms": ">=3,<=3.0.11|>=3.1,<3.1.11",
                 "silverstripe/forum": "<=0.6.1|>=0.7,<=0.7.3",
                 "silverstripe/framework": ">=3,<3.3",
@@ -3734,7 +3741,7 @@
                 "symfony/web-profiler-bundle": ">=2,<2.3.19|>=2.4,<2.4.9|>=2.5,<2.5.4",
                 "symfony/yaml": ">=2,<2.0.22|>=2.1,<2.1.7",
                 "thelia/backoffice-default-template": ">=2.1,<2.1.2",
-                "thelia/thelia": ">=2.1,<2.1.2|>=2.1.0-beta1,<2.1.3",
+                "thelia/thelia": ">=2.1.0-beta1,<2.1.3|>=2.1,<2.1.2",
                 "twig/twig": "<1.20",
                 "typo3/cms": ">=6.2,<6.2.30|>=7,<7.6.22|>=8,<8.7.5",
                 "typo3/flow": ">=1,<1.0.4|>=1.1,<1.1.1|>=2,<2.0.1|>=2.3,<2.3.16|>=3,<3.0.10|>=3.1,<3.1.7|>=3.2,<3.2.7|>=3.3,<3.3.5",
@@ -3783,7 +3790,7 @@
                 }
             ],
             "description": "Prevents installation of composer packages with known security vulnerabilities: no API, simply require it",
-            "time": "2017-12-12T00:38:43+00:00"
+            "time": "2018-01-22T14:51:56+00:00"
         },
         {
             "name": "ruflin/elastica",
@@ -4358,16 +4365,16 @@
         },
         {
             "name": "sensio/framework-extra-bundle",
-            "version": "v5.1.3",
+            "version": "v5.1.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sensiolabs/SensioFrameworkExtraBundle.git",
-                "reference": "0696496cb3e2d23add645d424699e5c723238aad"
+                "reference": "072c00c52b947e88a1e619e9ff426cee6c8c482b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sensiolabs/SensioFrameworkExtraBundle/zipball/0696496cb3e2d23add645d424699e5c723238aad",
-                "reference": "0696496cb3e2d23add645d424699e5c723238aad",
+                "url": "https://api.github.com/repos/sensiolabs/SensioFrameworkExtraBundle/zipball/072c00c52b947e88a1e619e9ff426cee6c8c482b",
+                "reference": "072c00c52b947e88a1e619e9ff426cee6c8c482b",
                 "shasum": ""
             },
             "require": {
@@ -4423,7 +4430,7 @@
                 "annotations",
                 "controllers"
             ],
-            "time": "2017-12-04T18:33:55+00:00"
+            "time": "2018-01-12T13:08:16+00:00"
         },
         {
             "name": "somework/composer-symlinks",
@@ -5148,16 +5155,16 @@
         },
         {
             "name": "webarchitect609/bitrix-cache",
-            "version": "v1.0.1",
+            "version": "v1.0.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/webarchitect609/bitrix-cache.git",
-                "reference": "3fbd62a73b20e55a3204f4bd1d103b3f6ea8db20"
+                "reference": "890e74277b8c46ad5f9e24eb436acc8a8d922271"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/webarchitect609/bitrix-cache/zipball/3fbd62a73b20e55a3204f4bd1d103b3f6ea8db20",
-                "reference": "3fbd62a73b20e55a3204f4bd1d103b3f6ea8db20",
+                "url": "https://api.github.com/repos/webarchitect609/bitrix-cache/zipball/890e74277b8c46ad5f9e24eb436acc8a8d922271",
+                "reference": "890e74277b8c46ad5f9e24eb436acc8a8d922271",
                 "shasum": ""
             },
             "require": {
@@ -5185,7 +5192,7 @@
                 "bitrix",
                 "cache"
             ],
-            "time": "2017-05-25T09:45:26+00:00"
+            "time": "2018-01-24T09:46:20+00:00"
         },
         {
             "name": "webarchitect609/bitrix-neverinclude",
@@ -5427,16 +5434,16 @@
         },
         {
             "name": "zendframework/zend-diactoros",
-            "version": "1.6.1",
+            "version": "1.7.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/zendframework/zend-diactoros.git",
-                "reference": "c8664b92a6d5bc229e48b0923486c097e45a7877"
+                "reference": "ed6ce7e2105c400ca10277643a8327957c0384b7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/zendframework/zend-diactoros/zipball/c8664b92a6d5bc229e48b0923486c097e45a7877",
-                "reference": "c8664b92a6d5bc229e48b0923486c097e45a7877",
+                "url": "https://api.github.com/repos/zendframework/zend-diactoros/zipball/ed6ce7e2105c400ca10277643a8327957c0384b7",
+                "reference": "ed6ce7e2105c400ca10277643a8327957c0384b7",
                 "shasum": ""
             },
             "require": {
@@ -5455,8 +5462,8 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "1.6-dev",
-                    "dev-develop": "1.7-dev"
+                    "dev-master": "1.7.x-dev",
+                    "dev-develop": "1.8.x-dev"
                 }
             },
             "autoload": {
@@ -5475,7 +5482,7 @@
                 "psr",
                 "psr-7"
             ],
-            "time": "2017-10-12T15:24:51+00:00"
+            "time": "2018-01-04T18:21:48+00:00"
         },
         {
             "name": "zendframework/zend-eventmanager",
@@ -5597,16 +5604,16 @@
     "packages-dev": [
         {
             "name": "composer/ca-bundle",
-            "version": "1.0.8",
+            "version": "1.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/composer/ca-bundle.git",
-                "reference": "9dd73a03951357922d8aee6cc084500de93e2343"
+                "reference": "943b2c4fcad1ef178d16a713c2468bf7e579c288"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/composer/ca-bundle/zipball/9dd73a03951357922d8aee6cc084500de93e2343",
-                "reference": "9dd73a03951357922d8aee6cc084500de93e2343",
+                "url": "https://api.github.com/repos/composer/ca-bundle/zipball/943b2c4fcad1ef178d16a713c2468bf7e579c288",
+                "reference": "943b2c4fcad1ef178d16a713c2468bf7e579c288",
                 "shasum": ""
             },
             "require": {
@@ -5615,12 +5622,9 @@
                 "php": "^5.3.2 || ^7.0"
             },
             "require-dev": {
-                "phpunit/phpunit": "^4.5",
+                "phpunit/phpunit": "^4.8.35",
                 "psr/log": "^1.0",
-                "symfony/process": "^2.5 || ^3.0"
-            },
-            "suggest": {
-                "symfony/process": "This is necessary to reliably check whether openssl_x509_parse is vulnerable on older php versions, but can be ignored on PHP 5.5.6+"
+                "symfony/process": "^2.5 || ^3.0 || ^4.0"
             },
             "type": "library",
             "extra": {
@@ -5652,7 +5656,7 @@
                 "ssl",
                 "tls"
             ],
-            "time": "2017-09-11T07:24:36+00:00"
+            "time": "2017-11-29T09:37:33+00:00"
         },
         {
             "name": "composer/semver",
@@ -5718,16 +5722,16 @@
         },
         {
             "name": "friendsofphp/php-cs-fixer",
-            "version": "v2.9.0",
+            "version": "v2.10.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/FriendsOfPHP/PHP-CS-Fixer.git",
-                "reference": "454ddbe65da6a9297446f442bad244e8a99a9a38"
+                "reference": "513a3765b56dd029175f9f32995566657ee89dda"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/FriendsOfPHP/PHP-CS-Fixer/zipball/454ddbe65da6a9297446f442bad244e8a99a9a38",
-                "reference": "454ddbe65da6a9297446f442bad244e8a99a9a38",
+                "url": "https://api.github.com/repos/FriendsOfPHP/PHP-CS-Fixer/zipball/513a3765b56dd029175f9f32995566657ee89dda",
+                "reference": "513a3765b56dd029175f9f32995566657ee89dda",
                 "shasum": ""
             },
             "require": {
@@ -5754,10 +5758,12 @@
             "require-dev": {
                 "johnkary/phpunit-speedtrap": "^1.1 || ^2.0@dev",
                 "justinrainbow/json-schema": "^5.0",
+                "keradus/cli-executor": "^1.0",
                 "mikey179/vfsstream": "^1.6",
                 "php-coveralls/php-coveralls": "^2.0",
                 "php-cs-fixer/accessible-object": "^1.0",
                 "phpunit/phpunit": "^5.7.23 || ^6.4.3",
+                "phpunitgoodpractices/traits": "^1.0",
                 "symfony/phpunit-bridge": "^3.2.2 || ^4.0"
             },
             "suggest": {
@@ -5768,16 +5774,22 @@
                 "php-cs-fixer"
             ],
             "type": "application",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "2.10-dev"
+                }
+            },
             "autoload": {
                 "psr-4": {
                     "PhpCsFixer\\": "src/"
                 },
                 "classmap": [
-                    "tests/Test/Assert/AssertTokensTrait.php",
                     "tests/Test/AbstractFixerTestCase.php",
                     "tests/Test/AbstractIntegrationTestCase.php",
+                    "tests/Test/Assert/AssertTokensTrait.php",
                     "tests/Test/IntegrationCase.php",
-                    "tests/Test/IntegrationCaseFactory.php"
+                    "tests/Test/IntegrationCaseFactory.php",
+                    "tests/TestCase.php"
                 ]
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -5795,7 +5807,7 @@
                 }
             ],
             "description": "A tool to automatically fix PHP code style",
-            "time": "2017-12-08T16:36:20+00:00"
+            "time": "2018-01-10T17:16:15+00:00"
         },
         {
             "name": "gecko-packages/gecko-php-unit",
@@ -5948,16 +5960,16 @@
         },
         {
             "name": "sensiolabs/security-checker",
-            "version": "v4.1.6",
+            "version": "v4.1.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sensiolabs/security-checker.git",
-                "reference": "387b6a3b723ba35588b33d5f8d14e28ed608bd30"
+                "reference": "d539ccba2b4dce515de04f16b7ed7ae5b9eeb434"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sensiolabs/security-checker/zipball/387b6a3b723ba35588b33d5f8d14e28ed608bd30",
-                "reference": "387b6a3b723ba35588b33d5f8d14e28ed608bd30",
+                "url": "https://api.github.com/repos/sensiolabs/security-checker/zipball/d539ccba2b4dce515de04f16b7ed7ae5b9eeb434",
+                "reference": "d539ccba2b4dce515de04f16b7ed7ae5b9eeb434",
                 "shasum": ""
             },
             "require": {
@@ -5989,7 +6001,7 @@
                 }
             ],
             "description": "A security checker for your composer.lock",
-            "time": "2017-10-29T18:48:08+00:00"
+            "time": "2018-01-11T05:54:03+00:00"
         },
         {
             "name": "symfony/polyfill-php72",
