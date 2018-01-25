@@ -4,10 +4,6 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
-/*
- * @copyright Copyright (c) ADV/web-engineering co
- */
-
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
@@ -85,18 +81,88 @@ class FourPawsShopListComponent extends CBitrixComponent
         if ($this->startResultCache(false, ['location' => $city['CODE']])) {
             $this->arResult['CITY']      = $city['NAME'];
             $this->arResult['CITY_CODE'] = $city['CODE'];
-            $stores                      = $this->storeService->getByCurrentLocation($this->storeService::TYPE_SHOP);
-            $this->arResult['STORES']    = $stores->toArray();
-            if (!empty($this->arResult['STORES'])) {
-                list(
-                    $this->arResult['SERVICES'], $this->arResult['METRO']
-                    ) = $this->getFullStoreInfo($this->arResult['STORES']);
-            }
+            
+            $this->arResult['SERVICES'] = $this->storeService->getServicesInfo();
+            $this->arResult['METRO']    = $this->storeService->getMetroInfo();
             
             $this->includeComponentTemplate();
         }
         
         return true;
+    }
+    
+    /**
+     * @param array $filter
+     * @param array $order
+     *
+     * @throws FileNotFoundException
+     * @throws ServiceNotFoundException
+     * @throws \Exception
+     * @return array
+     */
+    public function getStores(array $filter = [], array $order = [], $returnActiveServices = false) : array
+    {
+        $result          = [];
+        $storeRepository = $this->storeService->getRepository();
+        $filter          = array_merge($filter, $this->storeService->getTypeFilter($this->storeService::TYPE_SHOP));
+        $storeCollection = $storeRepository->findBy($filter, $order);
+        $stores          = $storeCollection->toArray();
+        if (!empty($stores)) {
+            list($servicesList, $metroList) = $this->getFullStoreInfo($stores);
+            
+            /** @var Store $store */
+            $avgGpsN = 0;
+            $avgGpsS = 0;
+            foreach ($stores as $store) {
+                $metro   = $store->getMetro();
+                $address = $store->getAddress();
+                
+                $image    = $store->getImageId();
+                $imageSrc = '';
+                if (!empty($image) && is_numeric($image) && $image > 0) {
+                    $imageSrc =
+                        CropImageDecorator::createFromPrimary($image)->setCropWidth(630)->setCropHeight(360)->getSrc();
+                }
+                
+                $services = [];
+                if (\is_array($servicesList) && !empty($servicesList)) {
+                    foreach ($servicesList as $service) {
+                        $services[] = $service['UF_NAME'];
+                    }
+                }
+                
+                $gpsS = $store->getLongitude();
+                $gpsN = $store->getLatitude();
+                if ($gpsN > 0) {
+                    $avgGpsN += $gpsN;
+                }
+                if ($gpsS > 0) {
+                    $avgGpsS += $gpsS;
+                }
+                $result['items'][] = [
+                    'addr'       => $address,
+                    'adress'     => $store->getDescription(),
+                    'phone'      => $store->getPhone(),
+                    'schedule'   => $store->getSchedule(),
+                    'photo'      => $imageSrc,
+                    'metro'      => !empty($metro) ? 'м. ' . $metroList[$metro]['UF_NAME'] : '',
+                    'metroClass' => !empty($metro) ? 'b-delivery-list__col--' . $metroList[$metro]['UF_CLASS'] : '',
+                    'services'   => $services,
+                    'gps_s'      => $gpsN,
+                    //revert $gpsS
+                    'gps_n'      => $gpsS,
+                    //revert $gpsN
+                ];
+            }
+            $countStores         = count($stores);
+            $result['avg_gps_s'] = $avgGpsN / $countStores; //revert $avgGpsS
+            $result['avg_gps_n'] = $avgGpsS / $countStores; //revert $avgGpsN
+            if ($returnActiveServices) {
+                $result['services'] = $servicesList;
+            }
+        }
+        
+        return $result;
     }
     
     /**
@@ -130,85 +196,9 @@ class FourPawsShopListComponent extends CBitrixComponent
         }
         
         return [
-            'services' => $services,
-            'metro'    => $metro,
+            $services,
+            $metro,
         ];
-    }
-    
-    /**
-     * @param array $filter
-     * @param array $order
-     *
-     * @throws FileNotFoundException
-     * @throws ServiceNotFoundException
-     * @throws \Exception
-     * @return array
-     */
-    public function getStores(array $filter = [], array $order = []) : array
-    {
-        $result          = [];
-        $storeRepository = $this->storeService->getRepository();
-        $filter          = array_merge($filter, $this->storeService->getTypeFilter($this->storeService::TYPE_SHOP));
-        $storeCollection = $storeRepository->findBy($filter, $order);
-        $stores          = $storeCollection->toArray();
-        if (!empty($stores)) {
-            list(
-                $servicesList, $metroList
-                ) = $this->getFullStoreInfo($stores);
-            
-            /** @var Store $store */
-            $avgGpsN = 0;
-            $avgGpsS = 0;
-            foreach ($stores as $store) {
-                $address = '';
-                $metro   = $store->getMetro();
-                if (!empty($metro) && is_array($metroList) && !empty($metroList) && isset($metroList[$metro])) {
-                    $address .= $metroList[$metro]['UF_NAME'] . ', ';
-                }
-                $address .= $store->getAddress();
-                
-                $image    = $store->getImageId();
-                $imageSrc = '';
-                if (!empty($image) && is_numeric($image) && $image > 0) {
-                    $imageSrc = CropImageDecorator::createFromPrimary($image)->setCropWidth(630)->setCropHeight(
-                        360
-                    )->getSrc();
-                }
-                
-                $services = [];
-                if (\is_array($servicesList) && !empty($servicesList)) {
-                    foreach ($servicesList as $service) {
-                        $services[] = $service['UF_NAME'];
-                    }
-                }
-                
-                $gpsS = $store->getLongitude();
-                $gpsN = $store->getLatitude();
-                if ($gpsN > 0) {
-                    $avgGpsN += $gpsN;
-                }
-                if ($gpsS > 0) {
-                    $avgGpsS += $gpsS;
-                }
-                $result['items'][] = [
-                    'addr'       => $address,
-                    'adress'     => $store->getDescription(),
-                    'phone'      => $store->getPhone(),
-                    'schedule'   => $store->getSchedule(),
-                    'photo'      => $imageSrc,
-                    'metro'      => !empty($metro) ? $metroList[$metro]['UF_NAME'] : '',
-                    'metroClass' => !empty($metro) ? 'b-delivery-list__col--' . $metroList[$metro]['UF_CLASS'] : '',
-                    'services'   => $services,
-                    'gps_s'      => $gpsS,
-                    'gps_n'      => $gpsN,
-                ];
-            }
-            $countStores         = count($stores);
-            $result['avg_gps_s'] = $avgGpsS / $countStores;
-            $result['avg_gps_n'] = $avgGpsN / $countStores;
-        }
-        
-        return $result;
     }
     
     /**

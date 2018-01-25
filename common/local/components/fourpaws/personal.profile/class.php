@@ -39,7 +39,6 @@ use FourPaws\UserBundle\Service\ConfirmCodeInterface;
 use FourPaws\UserBundle\Service\ConfirmCodeService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
-use JMS\Serializer\SerializerBuilder;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
@@ -189,16 +188,10 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             );
         }
         $data = [
-            'ID'                 => (int)$request->get('ID', 0),
             'UF_PHONE_CONFIRMED' => 'Y',
         ];
         try {
-            if ($this->currentUserProvider->getUserRepository()->update(
-                SerializerBuilder::create()->build()->fromArray(
-                    $data,
-                    User::class
-                )
-            )) {
+            if ($this->currentUserProvider->getUserRepository()->updateData((int)$request->get('ID', 0), $data)) {
                 /** @var ManzanaService $manzanaService */
                 $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
                 $client         = null;
@@ -361,8 +354,12 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
     {
         /** @var UserRepository $userRepository */
         $userRepository = $this->currentUserProvider->getUserRepository();
-        $curUser        = $userRepository->findBy(['PERSONAL_PHONE' => $phone], [], 1);
-        if ($curUser instanceof User || (\is_array($curUser) && !empty($curUser))) {
+        $haveUsers = $userRepository->havePhoneAndEmailByUsers(
+            [
+                'PERSONAL_PHONE' => $phone,
+            ]
+        );
+        if($haveUsers['phone']){
             return JsonErrorResponse::createWithData(
                 'Такой телефон уже существует',
                 ['errors' => ['havePhone' => 'Такой телефон уже существует']]
@@ -371,15 +368,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         
         try {
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-            $res = $userRepository->update(
-                SerializerBuilder::create()->build()->fromArray(
-                    [
-                        'ID'             => $id,
-                        'PERSONAL_PHONE' => $phone,
-                    ],
-                    User::class
-                )
-            );
+            $res = $userRepository->updatePhone($id, $phone);
             if (!$res) {
                 return JsonErrorResponse::createWithData(
                     'Произошла ошибка при обновлении',

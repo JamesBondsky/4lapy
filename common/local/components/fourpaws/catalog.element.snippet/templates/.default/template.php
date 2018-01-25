@@ -25,8 +25,6 @@ $firstOffer = $offers->first();
 ?>
 
 <div class="b-common-item b-common-item--catalog-item js-product-item">
-    <!--    <span class="b-common-item__sticker-wrap" style="background-color:;data-background:;"-->
-    <!--    ><img class="b-common-item__sticker" src="images/inhtml/s-15proc.svg" alt="" role="presentation"/></span>-->
     <a class="b-common-item__image-wrap" href="<?= $product->getDetailPageUrl() ?>">
         <img class="b-common-item__image js-weight-img"
              src="<?= $firstOffer->getResizeImages(240, 240)->first() ?>"
@@ -138,15 +136,4 @@ $firstOffer = $offers->first();
                 ><span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 12, 12) ?></span></span><span
                         class="b-common-item__price js-price-block"><?= $firstOffer->getPrice() ?></span><span
                         class="b-common-item__currency"> <span class="b-ruble">₽</span></span></span></a>
-    <!--        <div class="b-common-item__additional-information">-->
-    <!--            <div class="b-common-item__benefin">-->
-    <!--                <span class="b-common-item__prev-price">-->
-    <?php //= $firstOffer->getPrice()?><!-- <span-->
-    <!--                            class="b-ruble b-ruble--prev-price">₽</span></span>-->
-    <!--                <span class="b-common-item__discount"><span class="b-common-item__disc">Скидка</span><span-->
-    <!--                            class="b-common-item__discount-price">200</span><span-->
-    <!--                            class="b-common-item__currency"> <span-->
-    <!--                                class="b-ruble b-ruble--discount">₽</span></span></span>-->
-    <!--            </div>-->
-    <!--        </div>-->
 </div>

@@ -158,9 +158,9 @@ class UserService implements
     /**
      * @param User $user
      *
-     * @return bool
      * @throws ValidationException
      * @throws BitrixRuntimeException
+     * @return bool
      */
     public function register(User $user): bool
     {
@@ -172,13 +172,13 @@ class UserService implements
      * @param string $name
      * @param string $parentName
      *
-     * @return bool|array
      * @throws ValidationException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws CityNotFoundException
      * @throws NotAuthorizedException
      * @throws BitrixRuntimeException
+     * @return array|bool
      */
     public function setSelectedCity(string $code = '', string $name = '', string $parentName = '')
     {
@@ -206,10 +206,10 @@ class UserService implements
     }
     
     /**
-     * @return array
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws NotAuthorizedException
+     * @return array
      */
     public function getSelectedCity(): array
     {
@@ -242,7 +242,7 @@ class UserService implements
 
     /**
      * @param Client $client
-     * @param User|null $user
+     * @param null|User $user
      *
      * @throws InvalidIdentifierException
      * @throws ServiceNotFoundException
@@ -269,9 +269,9 @@ class UserService implements
     /**
      * @param int $id
      *
-     * @return array
      * @throws InvalidIdentifierException
      * @throws NotAuthorizedException
+     * @return array
      */
     public function getUserGroups(int $id = 0) : array
     {
@@ -279,7 +279,7 @@ class UserService implements
             $id = $this->getCurrentUserId();
         }
         if ($id > 0) {
-            return $this->userRepository->getUserGroups($id);
+            return $this->userRepository->getUserGroupsIds($id);
         }
         
         return [];

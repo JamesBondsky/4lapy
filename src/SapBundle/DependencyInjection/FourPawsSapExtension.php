@@ -83,16 +83,13 @@ class FourPawsSapExtension extends ConfigurableExtension
         }
     }
     
-    /**
+    /**-
      * @param array            $pipelines
+     * @param array            $directorySources
      * @param ContainerBuilder $container
      */
-    protected function configPipelines(array $pipelines, ContainerBuilder $container)
+    protected function configPipelines(array $pipelines, array $directorySources, ContainerBuilder $container)
     {
-        foreach ($pipelines as $name => $pipeline) {
-            /**
-             * @todo configure pipelines from sources, pipelines, finder and many other entities.
-             */
-        }
+    
     }
 }
