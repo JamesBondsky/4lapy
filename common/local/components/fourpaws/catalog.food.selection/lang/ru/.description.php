@@ -1,0 +1,4 @@
+<?php
+$MESS['COMPONENT_FOOD_SELECTION_NAME']        = 'Подбор корма';
+$MESS['COMPONENT_FOOD_SELECTION_DESCRIPTION'] = 'Подбор корма';
+$MESS['MAIN_FOOD_SELECTION_GROUP_NAME']       = 'Каталог';
