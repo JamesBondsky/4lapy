@@ -90,12 +90,6 @@ class FourPawsSapExtension extends ConfigurableExtension
      */
     protected function configPipelines(array $pipelines, array $directorySources, ContainerBuilder $container)
     {
-        dump([$pipelines, $directorySources]);
-        
-        foreach ($pipelines as $name => $pipeline) {
-            foreach ($pipeline as $service) {
-                a
-            }
-        }
+    
     }
 }
