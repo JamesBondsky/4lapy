@@ -1,5 +1,12 @@
 <?php
-require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
+
+use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
+
+require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/header.php");
+
+$elementCode = $_REQUEST['ELEMENT_CODE'];
 ?>
 <div class="b-container">
 	<?$APPLICATION->IncludeComponent(
@@ -7,9 +14,9 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
         'fp.17.0.brand',
         array(
             'ELEMENT_ID' => '',
-            'ELEMENT_CODE' => $_REQUEST['ELEMENT_CODE'],
-            'IBLOCK_TYPE' => \FourPaws\Enum\IblockType::CATALOG,
-            'IBLOCK_ID' => \FourPaws\Enum\IblockCode::BRANDS,
+            'ELEMENT_CODE' => $elementCode,
+            'IBLOCK_TYPE' => IblockType::CATALOG,
+            'IBLOCK_ID' => IblockCode::BRANDS,
             'FIELD_CODE' => array(
                 'NAME',
                 'PREVIEW_PICTURE',
@@ -72,6 +79,12 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
     );?>
 </div>
 <div class="b-catalog">
+    <?php $query = new ProductQuery;
+    $productsCollection = $query->withFilter(['PROPERTY_BRAND.CODE' => $elementCode])->exec();
+    $products = $productsCollection->toArray();
+    foreach($products as $product){
+        $product
+    }?>
     <?php
     /**
      * Просмотренные товары
