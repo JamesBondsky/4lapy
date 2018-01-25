@@ -6,11 +6,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Iblock\Component\Tools;
 use FourPaws\App\Application;
+use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderService;
-use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
-use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Service\UserCitySelectInterface;
 
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsOrderComponent extends \CBitrixComponent
@@ -34,14 +34,6 @@ class FourPawsOrderComponent extends \CBitrixComponent
     {
         $this->orderService = \FourPaws\App\Application::getInstance()->getContainer()->get(OrderService::class);
         parent::__construct($component);
-    }
-
-    /** {@inheritdoc} */
-    public function onPrepareComponentParams($params): array
-    {
-
-
-        return parent::onPrepareComponentParams($params);
     }
 
     /** {@inheritdoc} */
@@ -86,43 +78,34 @@ class FourPawsOrderComponent extends \CBitrixComponent
      */
     protected function prepareResult()
     {
+        $serviceContainer = Application::getInstance()->getContainer();
+
         /** @var BasketService $basketService */
-        $basketService = Application::getInstance()->getContainer()->get(BasketService::class);
+        $basketService = $serviceContainer->get(BasketService::class);
         $basket = $basketService->getBasket()->getOrderableItems();
         if ($basket->isEmpty()) {
             LocalRedirect('/cart');
         }
 
-        /** @var CurrentUserProviderInterface $userService */
-        $userService = \FourPaws\App\Application::getInstance()->getContainer()->get(
-            CurrentUserProviderInterface::class
-        );
-
         $order = null;
-        $storage = null;
+        if (!$storage = $this->orderService->getStorage()) {
+            $this->abortResultCache();
+            throw new Exception('Failed to initialize storage');
+        }
+
         if ($this->currentStep === OrderService::COMPLETE_STEP) {
             /**
              * При переходе на страницу "спасибо за заказ" мы ищем заказ с переданным id
              */
             try {
-                $userId = $userService->getCurrentUserId();
-            } catch (NotAuthorizedException $e) {
-                $userId = null;
-            }
-            try {
                 $order = $this->orderService->getById(
                     $this->arParams['ORDER_ID'],
                     true,
-                    $userId,
+                    $storage->getUserId(),
                     $this->arParams['HASH']
                 );
             } catch (NotFoundException $e) {
                 Tools::process404('', true, true, true);
-            }
-        } else {
-            if (!$storage = $this->orderService->getStorage()) {
-                $this->abortResultCache();
-                throw new Exception('Failed to initialize storage');
             }
         }
 
@@ -143,11 +126,31 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $ajaxUrl[$key] = $route->getPath();
         }
 
+        /** @var UserCitySelectInterface $userCityService */
+        $userCityService = Application::getInstance()->getContainer()->get(UserCitySelectInterface::class);
+        $selectedCity = $userCityService->getSelectedCity();
+
+        $deliveries = [];
+        $addresses = [];
+
+        if ($this->currentStep === OrderService::DELIVERY_STEP) {
+            $deliveries = $this->orderService->getDeliveries();
+
+            if ($storage->getUserId()) {
+                /** @var AddressService $addressService */
+                $addressService = Application::getInstance()->getContainer()->get('address.service');
+                $addresses = $addressService->getAddressesByUser($storage->getUserId(), $selectedCity['CODE']);
+            }
+        }
+
         $this->arResult = [
-            'ORDER'             => $order,
-            'BASKET'            => $basket,
-            'STORAGE'           => $storage,
-            'URL'               => $ajaxUrl,
+            'ORDER'              => $order,
+            'BASKET'             => $basket,
+            'STORAGE'            => $storage,
+            'URL'                => $ajaxUrl,
+            'SELECTED_CITY'      => $selectedCity,
+            'ADDRESSES'          => $addresses,
+            'DELIVERIES'         => $deliveries,
         ];
 
         return $this;

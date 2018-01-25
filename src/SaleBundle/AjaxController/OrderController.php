@@ -85,7 +85,7 @@ class OrderController extends Controller
             '',
             200,
             [],
-            ['redirect' => '/sale/order/' . OrderService::DELIVERY_STEP]
+            ['redirect' => '/sale/order/' . OrderService::DELIVERY_STEP . '/']
         );
     }
 
@@ -107,7 +107,7 @@ class OrderController extends Controller
             '',
             200,
             [],
-            ['redirect' => '/sale/order/' . OrderService::PAYMENT_STEP]
+            ['redirect' => '/sale/order/' . OrderService::PAYMENT_STEP. '/']
         );
     }
 

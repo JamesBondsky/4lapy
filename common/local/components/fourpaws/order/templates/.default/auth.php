@@ -6,7 +6,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use FourPaws\App\Application;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Service\OrderService;
-use FourPaws\SaleBundle\Repository\OrderPropertyEnum\ComWayRepository;
 use FourPaws\SaleBundle\Entity\OrderPropertyVariant;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use FourPaws\ReCaptcha\ReCaptchaService;
@@ -23,8 +22,6 @@ $serviceContainer = Application::getInstance()->getContainer();
 
 /** @var OrderService $orderService */
 $orderService = $serviceContainer->get(OrderService::class);
-/** @var UserAuthorizationInterface $userAuthProvider */
-$userAuthProvider = $serviceContainer->get(UserAuthorizationInterface::class);
 /** @var ReCaptchaService $recaptchaService */
 $recaptchaService = $serviceContainer->get('recaptcha.service');
 
@@ -211,7 +208,7 @@ $currentCommWay = $communicationWays[$storage->getCommunicationWay()];
                                 </div>
                             <?php } ?>
                         </div>
-                        <?php if (!$userAuthProvider->isAuthorized()) { ?>
+                        <?php if (!$storage->getUserId()) { ?>
                             <div class="b-input-line">
                                 <?= $recaptchaService->getCaptcha() ?>
                             </div>

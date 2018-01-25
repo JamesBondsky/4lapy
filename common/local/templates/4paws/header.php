@@ -40,7 +40,7 @@ $markup = PawsApplication::markup();
             <?php if ($template->isShortHeaderFooter()) { ?>
                 <div class="b-header__info b-header__info--short-header">
                     <a class="b-logo"
-                       href="javascript:void(0);"
+                       href="/"
                        title="">
                         <img src="/static/build/images/inhtml/logo.svg"
                              alt="Четыре лапы"

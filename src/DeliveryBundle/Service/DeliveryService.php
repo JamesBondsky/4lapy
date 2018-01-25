@@ -4,6 +4,7 @@ namespace FourPaws\DeliveryBundle\Service;
 
 use Bitrix\Currency\CurrencyManager;
 use Bitrix\Sale\Basket;
+use Bitrix\Sale\BasketBase;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Delivery\DeliveryLocationTable;
@@ -84,13 +85,35 @@ class DeliveryService
      *
      * @return array
      */
-    public function getByProduct(Offer $offer, string $locationCode = null, array $codes = []): array
+    public function getByProduct(Offer $offer, string $locationCode = '', array $codes = []): array
+    {
+        $basket = Basket::createFromRequest([]);
+        $basketItem = BasketItem::create($basket, 'sale', $offer->getId());
+        $basketItem->setFieldNoDemand('CAN_BUY', 'Y');
+        $basketItem->setFieldNoDemand('PRICE', $offer->getPrice());
+        $basketItem->setFieldNoDemand('QUANTITY', 1);
+        $basket->addItem($basketItem);
+
+        return $this->getByBasket($basket, $locationCode, $codes);
+
+    }
+
+    /**
+     * Получение доставок для корзины
+     *
+     * @param Basket $basket
+     * @param string $locationCode
+     * @param array $codes коды доставок для расчета
+     *
+     * @return array
+     */
+    public function getByBasket(BasketBase $basket, string $locationCode = '', array $codes = []): array
     {
         if (!$locationCode) {
             $locationCode = $this->getCurrentLocation();
         }
 
-        $shipment = $this->generateShipment($locationCode, $offer);
+        $shipment = $this->generateShipment($locationCode, $basket);
 
         return $this->calculateDeliveries($shipment, $codes);
     }
@@ -156,7 +179,8 @@ class DeliveryService
                     ],
                     true
                 )) {
-                    $calculationResult->setPeriodFrom($_SESSION['DPD_DATA'][$service->getCode()]['DAYS']);
+                    $calculationResult->setPeriodFrom($_SESSION['DPD_DATA'][$service->getCode()]['DAYS_FROM']);
+                    $calculationResult->setPeriodTo($_SESSION['DPD_DATA'][$service->getCode()]['DAYS_TO']);
                     $calculationResult->setData(
                         array_merge(
                             $calculationResult->getData(),
@@ -338,7 +362,7 @@ class DeliveryService
         return $this->locationService->getCurrentLocation();
     }
 
-    protected function generateShipment(string $locationCode, Offer $offer = null): Shipment
+    protected function generateShipment(string $locationCode, BasketBase $basket = null): Shipment
     {
         $order = Order::create(
             SITE_ID,
@@ -346,14 +370,10 @@ class DeliveryService
             CurrencyManager::getBaseCurrency()
         );
 
-        $basket = Basket::createFromRequest([]);
-        if ($offer) {
-            $basketItem = BasketItem::create($basket, 'sale', $offer->getId());
-            $basketItem->setFieldNoDemand('CAN_BUY', 'Y');
-            $basketItem->setFieldNoDemand('PRICE', $offer->getPrice());
-            $basketItem->setFieldNoDemand('QUANTITY', 1);
-            $basket->addItem($basketItem);
+        if (!$basket) {
+            $basket = Basket::createFromRequest([]);
         }
+
         $order->setBasket($basket);
 
         $propertyCollection = $order->getPropertyCollection();

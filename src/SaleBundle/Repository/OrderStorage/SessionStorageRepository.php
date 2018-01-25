@@ -20,25 +20,7 @@ class SessionStorageRepository extends StorageBaseRepository
             throw new NotFoundException('Wrong fuser id');
         }
 
-        $data = $_SESSION[self::SESSION_KEY];
-        $data['FUSER_ID'] = $this->currentUserProvider->getCurrentFUserId();
-        if (!$data['PROPERTY_COM_WAY']) {
-            $data['PROPERTY_COM_WAY'] = OrderService::COMMUNICATION_SMS;
-        }
-
-        try {
-            $user = $this->currentUserProvider->getCurrentUser();
-            if (!$data['NAME']) {
-                $data['NAME'] = $user->getName();
-            }
-            if (!$data['PHONE']) {
-                $data['PHONE'] = $user->getPersonalPhone();
-            }
-            if (!$data['EMAIL']) {
-                $data['EMAIL'] = $user->getEmail();
-            }
-        } catch (NotAuthorizedException $e) {
-        }
+        $data = $this->setInitialValues($_SESSION[self::SESSION_KEY] ?? []);
 
         return $this->arrayTransformer->fromArray(
             $data,

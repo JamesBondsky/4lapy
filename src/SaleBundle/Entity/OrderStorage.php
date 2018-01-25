@@ -2,7 +2,6 @@
 
 namespace FourPaws\SaleBundle\Entity;
 
-use DateTime;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use JMS\Serializer\Annotation as Serializer;
@@ -10,6 +9,12 @@ use Symfony\Component\Validator\Constraints as Assert;
 use FourPaws\SaleBundle\Validation as SaleValidation;
 use Misd\PhoneNumberBundle\Validator\Constraints\PhoneNumber;
 
+/**
+ * Class OrderStorage
+ * @package FourPaws\SaleBundle\Entity
+ * @SaleValidation\OrderDelivery(groups={"delivery","payment"})
+ * @SaleValidation\OrderAddress(groups={"delivery","payment"})
+ */
 class OrderStorage
 {
     /**
@@ -22,6 +27,16 @@ class OrderStorage
      * @Assert\NotBlank(groups={"auth","delivery","payment"})
      */
     protected $fuserId = 0;
+
+    /**
+     * ID пользователя корзины
+     *
+     * @var int
+     * @Serializer\Type("integer")
+     * @Serializer\SerializedName("USER_ID")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     */
+    protected $userId = 0;
 
     /**
      * ID типа оплаты
@@ -44,6 +59,16 @@ class OrderStorage
      * @Assert\NotBlank(groups={"payment","delivery"})
      */
     protected $deliveryId = 0;
+
+    /**
+     * Комментарий к заказу
+     *
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("USER_DESCRIPTION")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     */
+    protected $comment = '';
 
     /**
      * Имя
@@ -91,13 +116,22 @@ class OrderStorage
     protected $email = '';
 
     /**
+     * Адрес (ID)
+     *
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("PROPERTY_ADDRESS_ID")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     */
+    protected $addressId = 0;
+
+    /**
      * Улица
      *
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("PROPERTY_STREET")
      * @Serializer\Groups(groups={"read","update","delete"})
-     * @Assert\NotBlank(groups={"payment","delivery"})
      */
     protected $street = '';
 
@@ -162,24 +196,24 @@ class OrderStorage
     protected $profileName = '';
 
     /**
-     * Дата доставки
+     * Дата доставки (индекс выбранного значения из select'а)
      *
-     * @var DateTime
-     * @Serializer\Type("string")
+     * @var int
+     * @Serializer\Type("int")
      * @Serializer\SerializedName("PROPERTY_DELIVERY_DATE")
      * @Serializer\Groups(groups={"read","update","delete"})
      */
-    protected $deliveryDate;
+    protected $deliveryDate = 0;
 
     /**
-     * Интервал доставки
+     * Интервал доставки (индекс выбранного значения из select'а)
      *
-     * @var string
-     * @Serializer\Type("string")
+     * @var int
+     * @Serializer\Type("int")
      * @Serializer\SerializedName("PROPERTY_DELIVERY_INTERVAL")
      * @Serializer\Groups(groups={"read","update","delete"})
      */
-    protected $deliveryInterval = '';
+    protected $deliveryInterval = 0;
 
     /**
      * Код места доставки
@@ -213,16 +247,6 @@ class OrderStorage
     protected $communicationWay = '';
 
     /**
-     * Довоз с РЦ для курьера
-     *
-     * @var bool
-     * @Serializer\Type("bool")
-     * @Serializer\SerializedName("PROPERTY_REGION_COURIER_FROM_DC")
-     * @Serializer\Groups(groups={"read","update","delete"})
-     */
-    protected $regionCourierFromDC = false;
-
-    /**
      * Код источника заказа
      *
      * @var string
@@ -243,43 +267,12 @@ class OrderStorage
     protected $partnerCode = '';
 
     /**
-     * Заказ из приложения
-     *
-     * @var bool
-     * @Serializer\Type("bool")
-     * @Serializer\SerializedName("PROPERTY_FROM_APP")
-     * @Serializer\Groups(groups={"read","update","delete"})
-     */
-    protected $fromApp = false;
-
-    /**
-     * Наличие одежды
-     *
-     * @var bool
-     * @Serializer\Type("bool")
-     * @Serializer\SerializedName("PROPERTY_HAS_CLOTHES")
-     * @Serializer\Groups(groups={"read","update","delete"})
-     */
-    protected $hasClothes = false;
-
-    /**
-     * Выгружен в SAP
-     *
-     * @var bool
-     * @Serializer\Type("bool")
-     * @Serializer\SerializedName("PROPERTY_IS_EXPORTED")
-     * @Serializer\Groups(groups={"read","update","delete"})
-     */
-    protected $isExported = false;
-
-    /**
      * Город
      *
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("PROPERTY_CITY")
      * @Serializer\Groups(groups={"read","update","delete"})
-     * @Assert\NotBlank(groups={"payment","delivery"})
      */
     protected $city = '';
 
@@ -290,7 +283,6 @@ class OrderStorage
      * @Serializer\Type("string")
      * @Serializer\SerializedName("PROPERTY_CITY_CODE")
      * @Serializer\Groups(groups={"read","update","delete"})
-     * @Assert\NotBlank(groups={"payment","delivery"})
      */
     protected $cityCode = '';
 
@@ -312,6 +304,11 @@ class OrderStorage
         $this->fuserId = $fuserId;
 
         return $this;
+    }
+
+    public function getUserId(): int
+    {
+        return $this->userId;
     }
 
     /**
@@ -350,6 +347,26 @@ class OrderStorage
     public function setDeliveryId(int $deliveryId): OrderStorage
     {
         $this->deliveryId = $deliveryId;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getComment(): string
+    {
+        return $this->comment;
+    }
+
+    /**
+     * @param string $comment
+     *
+     * @return OrderStorage
+     */
+    public function setComment(string $comment): OrderStorage
+    {
+        $this->comment = $comment;
 
         return $this;
     }
@@ -436,6 +453,26 @@ class OrderStorage
     public function setEmail(string $email): OrderStorage
     {
         $this->email = $email;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getAddressId(): int
+    {
+        return $this->addressId;
+    }
+
+    /**
+     * @param int $addressId
+     *
+     * @return OrderStorage
+     */
+    public function setAddressId(int $addressId): OrderStorage
+    {
+        $this->addressId = $addressId;
 
         return $this;
     }
@@ -581,19 +618,19 @@ class OrderStorage
     }
 
     /**
-     * @return DateTime
+     * @return int
      */
-    public function getDeliveryDate(): DateTime
+    public function getDeliveryDate(): int
     {
-        return $this->deliveryDate;
+        return (int)$this->deliveryDate;
     }
 
     /**
-     * @param DateTime $deliveryDate
+     * @param int $deliveryDate
      *
      * @return OrderStorage
      */
-    public function setDeliveryDate(DateTime $deliveryDate): OrderStorage
+    public function setDeliveryDate(int $deliveryDate): OrderStorage
     {
         $this->deliveryDate = $deliveryDate;
 
@@ -601,19 +638,19 @@ class OrderStorage
     }
 
     /**
-     * @return string
+     * @return int
      */
-    public function getDeliveryInterval(): string
+    public function getDeliveryInterval(): int
     {
-        return $this->deliveryInterval;
+        return (int)$this->deliveryInterval;
     }
 
     /**
-     * @param string $deliveryInterval
+     * @param int $deliveryInterval
      *
      * @return OrderStorage
      */
-    public function setDeliveryInterval(string $deliveryInterval): OrderStorage
+    public function setDeliveryInterval(int $deliveryInterval): OrderStorage
     {
         $this->deliveryInterval = $deliveryInterval;
 
@@ -681,26 +718,6 @@ class OrderStorage
     }
 
     /**
-     * @return bool
-     */
-    public function isRegionCourierFromDC(): bool
-    {
-        return $this->regionCourierFromDC;
-    }
-
-    /**
-     * @param bool $regionCourierFromDC
-     *
-     * @return OrderStorage
-     */
-    public function setRegionCourierFromDC(bool $regionCourierFromDC): OrderStorage
-    {
-        $this->regionCourierFromDC = $regionCourierFromDC;
-
-        return $this;
-    }
-
-    /**
      * @return string
      */
     public function getSourceCode(): string
@@ -736,66 +753,6 @@ class OrderStorage
     public function setPartnerCode(string $partnerCode): OrderStorage
     {
         $this->partnerCode = $partnerCode;
-
-        return $this;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isFromApp(): bool
-    {
-        return $this->fromApp;
-    }
-
-    /**
-     * @param bool $fromApp
-     *
-     * @return OrderStorage
-     */
-    public function setFromApp(bool $fromApp): OrderStorage
-    {
-        $this->fromApp = $fromApp;
-
-        return $this;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isHasClothes(): bool
-    {
-        return $this->hasClothes;
-    }
-
-    /**
-     * @param bool $hasClothes
-     *
-     * @return OrderStorage
-     */
-    public function setHasClothes(bool $hasClothes): OrderStorage
-    {
-        $this->hasClothes = $hasClothes;
-
-        return $this;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isExported(): bool
-    {
-        return $this->isExported;
-    }
-
-    /**
-     * @param bool $isExported
-     *
-     * @return OrderStorage
-     */
-    public function setIsExported(bool $isExported): OrderStorage
-    {
-        $this->isExported = $isExported;
 
         return $this;
     }

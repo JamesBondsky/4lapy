@@ -53,6 +53,7 @@ class Calculator extends \Ipolh\DPD\Delivery\DPD
         }
 
         $interval = explode('-', Option::get(IPOLH_DPD_MODULE, 'DELIVERY_TIME_PERIOD'));
+        /* по ТЗ - дата доставки DPD рассчитывается как "то, что вернуло DPD" + 1 день */
         if ($profile == DeliveryService::DPD_DELIVERY_CODE) {
             $result['DPD_TARIFF']['DAYS']++;
         }
@@ -64,7 +65,8 @@ class Calculator extends \Ipolh\DPD\Delivery\DPD
                     'TO'   => $interval[1],
                 ],
             ],
-            'DAYS'      => $result['DPD_TARIFF']['DAYS'],
+            'DAYS_FROM' => $result['DPD_TARIFF']['DAYS'],
+            'DAYS_TO' => $result['DPD_TARIFF']['DAYS'] + 10,
         ];
 
         $result['VALUE'] = floor($result['VALUE']);

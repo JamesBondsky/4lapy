@@ -2,8 +2,10 @@
 
 namespace FourPaws\SaleBundle\Service;
 
+use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Order;
 use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Entity\OrderStorage;
@@ -36,29 +38,32 @@ class OrderService implements ContainerAwareInterface
     protected $storageRepository;
 
     /**
-     * @var CurrentUserProviderInterface
-     */
-    protected $currentUserProvider;
-
-    /**
      * @var OrderPropertyVariantRepository
      */
     protected $variantRepository;
 
     /**
+     * @var BasketService
+     */
+    protected $basketService;
+
+    /**
+     * @var CalculationResult[]
+     */
+    protected $deliveries;
+
+    /**
      * OrderService constructor.
      *
      * @param StorageRepositoryInterface $orderStorageRepository
-     * @param CurrentUserProviderInterface $currentUserProvider
+     * @param OrderPropertyVariantRepository $variantRepository
      */
     public function __construct(
-        StorageRepositoryInterface $orderStorageRepository,
-        CurrentUserProviderInterface $currentUserProvider,
+        StorageRepositoryInterface $storageRepository,
         OrderPropertyVariantRepository $variantRepository
     ) {
-        $this->storageRepository = $orderStorageRepository;
-        $this->currentUserProvider = $currentUserProvider;
         $this->variantRepository = $variantRepository;
+        $this->storageRepository = $storageRepository;
     }
 
     /**
@@ -101,7 +106,7 @@ class OrderService implements ContainerAwareInterface
     public function getStorage($fuserId = null)
     {
         if (!$fuserId) {
-            $fuserId = $this->currentUserProvider->getCurrentFUserId();
+            $fuserId = $this->container->get(CurrentUserProviderInterface::class)->getCurrentFUserId();
         }
 
         try {
@@ -135,6 +140,21 @@ class OrderService implements ContainerAwareInterface
                     'communicationWay',
                 ];
                 break;
+            case self::DELIVERY_STEP:
+                $availableValues = [
+                    'deliveryId',
+                    'addressId',
+                    'street',
+                    'house',
+                    'building',
+                    'floor',
+                    'apartment',
+                    'deliveryDate',
+                    'deliveryInterval',
+                    'deliveryPlaceCode',
+                    'dpdTerminalCode',
+                    'comment'
+                ];
         }
 
         foreach ($request->request as $name => $value) {
@@ -198,5 +218,24 @@ class OrderService implements ContainerAwareInterface
     public function getPropertyVariants(string $propertyCode, array $additionalFilter = []): ArrayCollection
     {
         return $this->variantRepository->getAvailableVariants($propertyCode, $additionalFilter);
+    }
+
+    /**
+     * @param bool $reload
+     *
+     * @return CalculationResult[]
+     */
+    public function getDeliveries($reload = false): array
+    {
+        if (null === $this->deliveries || $reload) {
+            /** @var DeliveryService $deliveryService */
+            $deliveryService = $this->container->get('delivery.service');
+            /** @var BasketService $basketService */
+            $basketService = $this->container->get(BasketService::class);
+            $basket = $basketService->getBasket()->getOrderableItems();
+            $this->deliveries = $deliveryService->getByBasket($basket);
+        }
+
+        return $this->deliveries;
     }
 }

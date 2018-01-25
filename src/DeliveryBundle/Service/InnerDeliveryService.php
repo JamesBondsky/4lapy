@@ -107,6 +107,8 @@ class InnerDeliveryService extends DeliveryServiceHandlerBase
             $result->setPeriodFrom(1);
         }
 
+        $result->setPeriodTo($result->getPeriodFrom() + 10);
+
         return $result;
     }
 
