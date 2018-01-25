@@ -388,4 +388,50 @@ class UserRepository
             throw new InvalidIdentifierException(sprintf('Wrong identifier %s passed', $id));
         }
     }
+    
+    public function havePhoneAndEmailByUsers(array $params) : array
+    {
+        $return = [
+            'phone' => false,
+            'email' => false,
+        ];
+        
+        if (empty($params)) {
+            return $return;
+        }
+        
+        $filter = [
+            [
+                'LOGIC' => 'OR',
+            ],
+        ];
+        if (!empty($params['EMAIL'])) {
+            $filter[0]['EMAIL'] = $params['EMAIL'];
+        }
+        if (!empty($params['PERSONAL_PHONE'])) {
+            $filter[0]['PERSONAL_PHONE'] = $params['PERSONAL_PHONE'];
+        }
+        $users = $this->findBy(
+            $filter,
+            [],
+            1
+        );
+        if (\is_array($users) && !empty($users)) {
+            /** @var User $user */
+            $return = [
+                'phone' => false,
+                'email' => false,
+            ];
+            foreach ($users as $user) {
+                if ($user->getPersonalPhone() === $params['PERSONAL_PHONE']) {
+                    $return['phone'] = true;
+                }
+                if($user->getEmail() === $params['EMAIL']){
+                    $return['email'] = true;
+                }
+            }
+        }
+        
+        return $return;
+    }
 }

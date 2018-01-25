@@ -262,7 +262,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         
         /** @var UserRepository $userRepository */
         $userRepository = $this->currentUserProvider->getUserRepository();
-        $haveUsers      = $userRepository->haveUsersByPhoneAndEmail(
+        $haveUsers      = $userRepository->havePhoneAndEmailByUsers(
             [
                 'PERSONAL_PHONE' => $data['PERSONAL_PHONE'],
                 'EMAIL'          => $data['EMAIL'],

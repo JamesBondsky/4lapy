@@ -361,7 +361,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
     {
         /** @var UserRepository $userRepository */
         $userRepository = $this->currentUserProvider->getUserRepository();
-        $haveUsers = $userRepository->haveUsersByPhoneAndEmail(
+        $haveUsers = $userRepository->havePhoneAndEmailByUsers(
             [
                 'PERSONAL_PHONE' => $phone,
             ]

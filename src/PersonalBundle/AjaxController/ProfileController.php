@@ -205,7 +205,7 @@ class ProfileController extends Controller
             }
         }
         
-        $haveUsers = $userRepository->haveUsersByPhoneAndEmail(
+        $haveUsers = $userRepository->havePhoneAndEmailByUsers(
             [
                 'EMAIL'          => $data['EMAIL']
             ]
