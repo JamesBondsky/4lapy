@@ -28,7 +28,6 @@ use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Location\Model\City;
-use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
@@ -43,7 +42,6 @@ use FourPaws\UserBundle\Service\ConfirmCodeInterface;
 use FourPaws\UserBundle\Service\ConfirmCodeService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
-use JMS\Serializer\SerializerBuilder;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
@@ -388,13 +386,13 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         }
         
         $data = [
-            'ID'                 => $this->currentUserProvider->getCurrentUserId(),
             'PERSONAL_PHONE'     => $phone,
             'UF_PHONE_CONFIRMED' => 'Y',
         ];
         
-        if ($this->currentUserProvider->getUserRepository()->update(
-            SerializerBuilder::create()->build()->fromArray($data, User::class)
+        if ($this->currentUserProvider->getUserRepository()->updateData(
+            $this->currentUserProvider->getCurrentUserId(),
+            $data
         )) {
             /** @var ManzanaService $manzanaService */
             $manzanaService = $container->get('manzana.service');
