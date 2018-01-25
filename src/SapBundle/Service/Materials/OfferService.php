@@ -80,6 +80,7 @@ class OfferService implements LoggerAwareInterface
             if ($result) {
                 $this->log()->debug(sprintf('Деактивирован оффер %s [%s]', $id, $xmlId));
             }
+            return $result;
         }
         return true;
     }
