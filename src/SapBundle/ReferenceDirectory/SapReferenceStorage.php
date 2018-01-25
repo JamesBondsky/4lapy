@@ -2,13 +2,17 @@
 
 namespace FourPaws\SapBundle\ReferenceDirectory;
 
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\BitrixOrm\Collection\HlbReferenceItemCollection;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
+use Psr\Log\LoggerAwareInterface;
 
-class SapReferenceStorage
+class SapReferenceStorage implements LoggerAwareInterface
 {
+    use LazyLoggerAwareTrait;
+
     /**
      * @var Collection|HlbReferenceItemCollection[]
      */
@@ -56,6 +60,7 @@ class SapReferenceStorage
     public function findByCallable(string $propertyCode, callable $callable)
     {
         if (!$this->collection->offsetExists($propertyCode)) {
+            $this->log()->debug(sprintf('Loading %s property', $propertyCode));
             $this->collection->set($propertyCode, $this->referenceRepositoryRegistry->get($propertyCode)->findBy());
         }
 
@@ -73,6 +78,7 @@ class SapReferenceStorage
      */
     public function clear(string $propertyCode)
     {
+        $this->log()->debug(sprintf('Clear %s property', $propertyCode));
         $this->collection->remove($propertyCode);
         return $this;
     }
