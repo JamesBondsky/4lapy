@@ -38,20 +38,20 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 class UserRepository
 {
     const FIELD_ID = 'ID';
-
+    
     /** @var Serializer $builder */
     protected $serializer;
-
+    
     /**
      * @var ValidatorInterface
      */
     private $validator;
-
+    
     /**
      * @var CUser
      */
     private $cuser;
-
+    
     /**
      * @var \CAllMain|\CMain
      */
@@ -60,7 +60,7 @@ class UserRepository
      * @var LazyCallbackValueLoader
      */
     private $lazyCallbackValueLoader;
-
+    
     /**
      * UserRepository constructor.
      *
@@ -78,15 +78,15 @@ class UserRepository
                 $registry->registerSubscribingHandler(new ArrayOrFalseHandler());
             }
         )->build();
-
+        
         $this->cuser = new CUser();
         $this->validator = $validator;
         global $APPLICATION;
         $this->cmain = $APPLICATION;
         $this->lazyCallbackValueLoader = $lazyCallbackValueLoader;
     }
-
-
+    
+    
     /**
      * @param User $user
      *
@@ -100,7 +100,7 @@ class UserRepository
         if ($validationResult->count() > 0) {
             throw new ValidationException('Wrong entity passed to create');
         }
-
+        
         $result = $this->cuser->Add(
             $this->serializer->toArray($user, SerializationContext::create()->setGroups(['create']))
         );
@@ -108,10 +108,10 @@ class UserRepository
             $user->setId((int)$result);
             return true;
         }
-
+        
         throw new BitrixRuntimeException($this->cuser->LAST_ERROR);
     }
-
+    
     /**
      * @param int $id
      *
@@ -125,7 +125,7 @@ class UserRepository
         $result = $this->findBy([static::FIELD_ID => $id], [], 1);
         return reset($result);
     }
-
+    
     /** @noinspection MoreThanThreeArgumentsInspection */
     /**
      * @param array    $criteria
@@ -138,16 +138,16 @@ class UserRepository
     public function findBy(array $criteria = [], array $orderBy = [], int $limit = null, int $offset = null): array
     {
         $result = UserTable::query()
-            ->setSelect(['*', 'UF_*'])
-            ->setFilter($criteria)
-            ->setOrder($orderBy)
-            ->setLimit($limit)
-            ->setOffset($offset)
-            ->exec();
+                           ->setSelect(['*', 'UF_*'])
+                           ->setFilter($criteria)
+                           ->setOrder($orderBy)
+                           ->setLimit($limit)
+                           ->setOffset($offset)
+                           ->exec();
         if (0 === $result->getSelectedRowsCount()) {
             return [];
         }
-
+        
         /**
          * todo change group name to constant
          */
@@ -156,7 +156,7 @@ class UserRepository
             sprintf('array<%s>', User::class),
             DeserializationContext::create()->setGroups(['read'])
         );
-
+        
         return array_map(function (User $user) {
             /**
              * @var Collection|VirtualProxyInterface $groups
@@ -170,7 +170,7 @@ class UserRepository
             return $user;
         }, $users ?: []);
     }
-
+    
     /**
      * @param string $rawLogin
      *
@@ -185,7 +185,7 @@ class UserRepository
     {
         return (int)$this->findIdAndLoginByRawLogin($rawLogin, $onlyActive)['ID'];
     }
-
+    
     /**
      * @param string $rawLogin
      *
@@ -200,7 +200,7 @@ class UserRepository
     {
         return (string)$this->findIdAndLoginByRawLogin($rawLogin, $onlyActive)['LOGIN'];
     }
-
+    
     /**
      * @param string $rawLogin
      * @param bool   $onlyActive
@@ -218,7 +218,7 @@ class UserRepository
         }
         return false;
     }
-
+    
     /**
      * @param User $user
      *
@@ -243,7 +243,7 @@ class UserRepository
         }
         throw new BitrixRuntimeException($this->cuser->LAST_ERROR);
     }
-
+    
     /**
      * @param int $id
      *
@@ -258,11 +258,11 @@ class UserRepository
         if (CUser::Delete($id)) {
             return true;
         }
-
+        
         $bitrixException = $this->cmain->GetException();
         throw new BitrixRuntimeException($bitrixException->GetString(), $bitrixException->GetID() ?: null);
     }
-
+    
     /**
      * @param int $id
      *
@@ -274,7 +274,7 @@ class UserRepository
             return $group->getId();
         })->toArray();
     }
-
+    
     /** @noinspection PhpDocMissingThrowsInspection
      * @param int $id
      *
@@ -285,36 +285,36 @@ class UserRepository
         /** @noinspection PhpUnhandledExceptionInspection */
         /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
         $res = UserGroupTable::query()
-            ->setFilter([
-                'USER_ID'       => $id,
-                '!GROUP.ACTIVE' => null,
-                'LOGIC'         => 'AND',
-                [
-                    'LOGIC'            => 'OR',
-                    '>=DATE_ACTIVE_TO' => new DateTime(),
-                    'DATE_ACTIVE_TO'   => null,
-                ],
-                [
-                    'LOGIC'              => 'OR',
-                    '<=DATE_ACTIVE_FROM' => new DateTime(),
-                    'DATE_ACTIVE_FROM'   => null,
-                ],
-            ])
-            ->addSelect('GROUP_ID')
-            ->addSelect('GROUP.NAME', 'GROUP_NAME')
-            ->addSelect('GROUP.STRING_ID', 'GROUP_CODE')
-            ->addSelect('GROUP.NAME', 'GROUP_NAME')
-            ->addSelect('GROUP.ACTIVE', 'GROUP_ACTIVE')
-            ->exec();
-
+                             ->setFilter([
+                                             'USER_ID'       => $id,
+                                             '!GROUP.ACTIVE' => null,
+                                             'LOGIC'         => 'AND',
+                                             [
+                                                 'LOGIC'            => 'OR',
+                                                 '>=DATE_ACTIVE_TO' => new DateTime(),
+                                                 'DATE_ACTIVE_TO'   => null,
+                                             ],
+                                             [
+                                                 'LOGIC'              => 'OR',
+                                                 '<=DATE_ACTIVE_FROM' => new DateTime(),
+                                                 'DATE_ACTIVE_FROM'   => null,
+                                             ],
+                                         ])
+                             ->addSelect('GROUP_ID')
+                             ->addSelect('GROUP.NAME', 'GROUP_NAME')
+                             ->addSelect('GROUP.STRING_ID', 'GROUP_CODE')
+                             ->addSelect('GROUP.NAME', 'GROUP_NAME')
+                             ->addSelect('GROUP.ACTIVE', 'GROUP_ACTIVE')
+                             ->exec();
+        
         $data = array_filter($res->fetchAll(), function ($group) {
             return $group && $group['GROUP_ACTIVE'];
         });
-
+        
         $groups = $this->serializer->fromArray($data, sprintf('array<%s>', Group::class)) ?? [];
         return new ArrayCollection($groups);
     }
-
+    
     /**
      * @param string $rawLogin
      *
@@ -328,45 +328,45 @@ class UserRepository
     protected function findIdAndLoginByRawLogin(string $rawLogin, bool $onlyActive = true): array
     {
         $query = UserTable::query()
-            ->addSelect('ID')
-            ->addSelect('LOGIN')
-            ->setFilter(
-                [
-                    [
-                        'LOGIC' => 'OR',
-                        [
-                            '=LOGIN' => $rawLogin,
-                        ],
-                        [
-                            '=EMAIL' => $rawLogin,
-                        ],
-                        [
-                            '=PERSONAL_PHONE' => PhoneHelper::isPhone($rawLogin) ? PhoneHelper::normalizePhone(
-                                $rawLogin
-                            ) : $rawLogin,
-                        ],
-                    ],
-                ]
-            );
+                          ->addSelect('ID')
+                          ->addSelect('LOGIN')
+                          ->setFilter(
+                              [
+                                  [
+                                      'LOGIC' => 'OR',
+                                      [
+                                          '=LOGIN' => $rawLogin,
+                                      ],
+                                      [
+                                          '=EMAIL' => $rawLogin,
+                                      ],
+                                      [
+                                          '=PERSONAL_PHONE' => PhoneHelper::isPhone($rawLogin) ? PhoneHelper::normalizePhone(
+                                              $rawLogin
+                                          ) : $rawLogin,
+                                      ],
+                                  ],
+                              ]
+                          );
         if ($onlyActive) {
             $query->addFilter('ACTIVE', 'Y');
         }
         $result = $query->exec();
-
+        
         $data = $result->fetchRaw() ?: [];
         $data = array_filter($data);
         $isValidData = isset($data['ID'], $data['LOGIN']);
-
+        
         if ($isValidData && 1 === $result->getSelectedRowsCount()) {
             return $result->fetchRaw();
         }
         if (!$isValidData || 0 === $result->getSelectedRowsCount()) {
             throw new UsernameNotFoundException(sprintf('No user with such raw login %s', $rawLogin));
         }
-
+        
         throw new TooManyUserFoundException('Found more than one user with same raw login');
     }
-
+    
     /**
      * @param int $id
      *
@@ -387,5 +387,51 @@ class UserRepository
         if ($result->count()) {
             throw new InvalidIdentifierException(sprintf('Wrong identifier %s passed', $id));
         }
+    }
+    
+    public function havePhoneAndEmailByUsers(array $params) : array
+    {
+        $return = [
+            'phone' => false,
+            'email' => false,
+        ];
+        
+        if (empty($params)) {
+            return $return;
+        }
+        
+        $filter = [
+            [
+                'LOGIC' => 'OR',
+            ],
+        ];
+        if (!empty($params['EMAIL'])) {
+            $filter[0]['EMAIL'] = $params['EMAIL'];
+        }
+        if (!empty($params['PERSONAL_PHONE'])) {
+            $filter[0]['PERSONAL_PHONE'] = $params['PERSONAL_PHONE'];
+        }
+        $users = $this->findBy(
+            $filter,
+            [],
+            1
+        );
+        if (\is_array($users) && !empty($users)) {
+            /** @var User $user */
+            $return = [
+                'phone' => false,
+                'email' => false,
+            ];
+            foreach ($users as $user) {
+                if ($user->getPersonalPhone() === $params['PERSONAL_PHONE']) {
+                    $return['phone'] = true;
+                }
+                if($user->getEmail() === $params['EMAIL']){
+                    $return['email'] = true;
+                }
+            }
+        }
+        
+        return $return;
     }
 }
