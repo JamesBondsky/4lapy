@@ -16,3 +16,6 @@ ajax.routes:
 app.catalog:
     resource: "@FourPawsCatalogBundle/Controller/"
     type: annotation
+
+app.api:
+    resource: "@FourPawsMobileApiBundle/Resources/config/routing.yml"
