@@ -5,11 +5,13 @@ namespace FourPaws\App;
 use Circle\RestClientBundle\CircleRestClientBundle;
 use Cocur\Slugify\Bridge\Symfony\CocurSlugifyBundle;
 use FOS\RestBundle\FOSRestBundle;
+
 use FourPaws\FoodSelectionBundle\FourPawsFoodSelectionBundle;
-use FourPaws\PersonalBundle\FourPawsPersonalBundle;
 use FourPaws\AppBundle\FourPawsAppBundle;
 use FourPaws\CatalogBundle\FourPawsCatalogBundle;
 use FourPaws\DeliveryBundle\FourPawsDeliveryBundle;
+use FourPaws\MobileApiBundle\FourPawsMobileApiBundle;
+use FourPaws\PersonalBundle\FourPawsPersonalBundle;
 use FourPaws\SaleBundle\FourPawsSaleBundle;
 use FourPaws\SapBundle\FourPawsSapBundle;
 use FourPaws\StoreBundle\FourPawsStoreBundle;
@@ -18,9 +20,11 @@ use JMS\SerializerBundle\JMSSerializerBundle;
 use Misd\PhoneNumberBundle\MisdPhoneNumberBundle;
 use Nelmio\ApiDocBundle\NelmioApiDocBundle;
 use OldSound\RabbitMqBundle\OldSoundRabbitMqBundle;
+use Sensio\Bundle\DistributionBundle\SensioDistributionBundle;
 use Sensio\Bundle\FrameworkExtraBundle\SensioFrameworkExtraBundle;
 use Symfony\Bundle\DebugBundle\DebugBundle;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
+use Symfony\Bundle\SecurityBundle\SecurityBundle;
 use Symfony\Bundle\TwigBundle\TwigBundle;
 use Symfony\Bundle\WebProfilerBundle\WebProfilerBundle;
 use Symfony\Component\Config\Loader\LoaderInterface;
@@ -68,6 +72,7 @@ class AppKernel extends Kernel
             new FrameworkBundle(),
             new TwigBundle(),
             new SensioFrameworkExtraBundle(),
+            new SecurityBundle(),
 
             /** External bundles */
             new CircleRestClientBundle(),
@@ -80,6 +85,7 @@ class AppKernel extends Kernel
 
             /** Internal bundles */
             new FourPawsAppBundle(),
+            new FourPawsMobileApiBundle(),
             new FourPawsUserBundle(),
             new FourPawsCatalogBundle(),
             new FourPawsDeliveryBundle(),
@@ -93,6 +99,7 @@ class AppKernel extends Kernel
         if (\in_array($this->getEnvironment(), ['dev', 'test'], true)) {
             $bundles[] = new DebugBundle();
             $bundles[] = new WebProfilerBundle();
+            $bundles[] = new SensioDistributionBundle();
         }
         return $bundles;
     }

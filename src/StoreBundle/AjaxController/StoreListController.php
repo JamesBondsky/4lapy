@@ -38,7 +38,7 @@ class StoreListController extends Controller
         $shopListClass = new \FourPawsShopListComponent();
         
         return JsonSuccessResponse::createWithData(
-            '',
+            'Подгрузка успешна',
             $shopListClass->getStores(
                 $shopListClass->getFilterByRequest($request),
                 $shopListClass->getOrderByRequest($request)
@@ -62,7 +62,7 @@ class StoreListController extends Controller
         $shopListClass = new \FourPawsShopListComponent();
         
         return JsonSuccessResponse::createWithData(
-            '',
+            'Подгрузка успешна',
             $shopListClass->getStores(
                 $shopListClass->getFilterByRequest($request),
                 $shopListClass->getOrderByRequest($request)
@@ -86,7 +86,7 @@ class StoreListController extends Controller
         $shopListClass = new \FourPawsShopListComponent();
         
         return JsonSuccessResponse::createWithData(
-            '',
+            'Подгрузка успешна',
             $shopListClass->getStores(
                 $shopListClass->getFilterByRequest($request),
                 $shopListClass->getOrderByRequest($request)
@@ -110,10 +110,11 @@ class StoreListController extends Controller
         $shopListClass = new \FourPawsShopListComponent();
         
         return JsonSuccessResponse::createWithData(
-            '',
+            'Подгрузка успешна',
             $shopListClass->getStores(
                 $shopListClass->getFilterByRequest($request),
-                $shopListClass->getOrderByRequest($request)
+                $shopListClass->getOrderByRequest($request),
+                true
             )
         );
     }
