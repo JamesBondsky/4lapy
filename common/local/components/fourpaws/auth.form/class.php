@@ -28,7 +28,6 @@ use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Location\Model\City;
-use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
@@ -39,11 +38,11 @@ use FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Exception\ValidationException;
+use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\ConfirmCodeInterface;
 use FourPaws\UserBundle\Service\ConfirmCodeService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
-use JMS\Serializer\SerializerBuilder;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
@@ -388,13 +387,13 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         }
         
         $data = [
-            'ID'                 => $this->currentUserProvider->getCurrentUserId(),
             'PERSONAL_PHONE'     => $phone,
             'UF_PHONE_CONFIRMED' => 'Y',
         ];
         
-        if ($this->currentUserProvider->getUserRepository()->update(
-            SerializerBuilder::create()->build()->fromArray($data, User::class)
+        if ($this->currentUserProvider->getUserRepository()->updateData(
+            $this->currentUserProvider->getCurrentUserId(),
+            $data
         )) {
             /** @var ManzanaService $manzanaService */
             $manzanaService = $container->get('manzana.service');
@@ -428,8 +427,6 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
     /**
      * @param Request $request
      *
-     * @throws ServiceCircularReferenceException
-     * @throws ApplicationCreateException
      * @throws ServiceNotFoundException
      * @return JsonResponse
      */
@@ -483,30 +480,22 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
     /**
      * @param string $phone
      *
-     * @throws ServiceCircularReferenceException
-     * @throws ApplicationCreateException
      * @throws ServiceNotFoundException
      * @return JsonResponse|string
      */
     private function ajaxGetSendSmsCode($phone)
     {
-        try {
-            $this->currentUserProvider->getUserRepository()->findIdentifierByRawLogin($phone);
-        } catch (TooManyUserFoundException $e) {
+        /** @var UserRepository $userRepository */
+        $userRepository = $this->currentUserProvider->getUserRepository();
+        $haveUsers = $userRepository->havePhoneAndEmailByUsers(
+            [
+                'PERSONAL_PHONE' => $phone,
+            ]
+        );
+        if($haveUsers['phone']){
             return JsonErrorResponse::createWithData(
-                'Найдено больше одного совпадения, обратитесь на горячую линию по телефону' . $this->getSitePhone(),
-                [
-                    'errors' => [
-                        'moreOneUser' => 'Найдено больше одного совпадения, обратитесь на горячую линию по телефону'
-                                         . $this->getSitePhone(),
-                    ],
-                ]
-            );
-        } catch (UsernameNotFoundException $e) {
-        } catch (WrongPhoneNumberException $e) {
-            return JsonErrorResponse::createWithData(
-                $e->getMessage(),
-                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
+                'Такой телефон уже существует',
+                ['errors' => ['havePhone' => 'Такой телефон уже существует']]
             );
         }
         

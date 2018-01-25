@@ -5,6 +5,8 @@ namespace FourPaws\App;
 use Circle\RestClientBundle\CircleRestClientBundle;
 use Cocur\Slugify\Bridge\Symfony\CocurSlugifyBundle;
 use FOS\RestBundle\FOSRestBundle;
+
+use FourPaws\FoodSelectionBundle\FourPawsFoodSelectionBundle;
 use FourPaws\AppBundle\FourPawsAppBundle;
 use FourPaws\CatalogBundle\FourPawsCatalogBundle;
 use FourPaws\DeliveryBundle\FourPawsDeliveryBundle;
@@ -91,6 +93,7 @@ class AppKernel extends Kernel
             new FourPawsStoreBundle(),
             new FourPawsSapBundle(),
             new FourPawsPersonalBundle(),
+            new FourPawsFoodSelectionBundle(),
         ];
 
         if (\in_array($this->getEnvironment(), ['dev', 'test'], true)) {

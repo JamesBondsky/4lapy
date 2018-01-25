@@ -56,6 +56,7 @@ class UserRepository
      * @var \CAllMain|\CMain
      */
     private $cmain;
+
     /**
      * @var LazyCallbackValueLoader
      */
@@ -67,6 +68,8 @@ class UserRepository
      * @param ValidatorInterface      $validator
      *
      * @param LazyCallbackValueLoader $lazyCallbackValueLoader
+     *
+     * @throws \JMS\Serializer\Exception\RuntimeException
      */
     public function __construct(ValidatorInterface $validator, LazyCallbackValueLoader $lazyCallbackValueLoader)
     {
@@ -85,7 +88,6 @@ class UserRepository
         $this->cmain = $APPLICATION;
         $this->lazyCallbackValueLoader = $lazyCallbackValueLoader;
     }
-
 
     /**
      * @param User $user
@@ -106,6 +108,7 @@ class UserRepository
         );
         if ((int)$result > 0) {
             $user->setId((int)$result);
+
             return true;
         }
 
@@ -123,6 +126,7 @@ class UserRepository
     {
         $this->checkIdentifier($id);
         $result = $this->findBy([static::FIELD_ID => $id], [], 1);
+
         return reset($result);
     }
 
@@ -157,18 +161,23 @@ class UserRepository
             DeserializationContext::create()->setGroups(['read'])
         );
 
-        return array_map(function (User $user) {
-            /**
-             * @var Collection|VirtualProxyInterface $groups
-             */
-            $groups = $this
-                ->lazyCallbackValueLoader
-                ->load(ArrayCollection::class, function () use ($user) {
-                    return $this->getUserGroups($user->getId());
-                });
-            $user->setGroups($groups);
-            return $user;
-        }, $users ?: []);
+        return array_map(
+            function (User $user) {
+                /**
+                 * @var Collection|VirtualProxyInterface $groups
+                 */
+                $groups = $this->lazyCallbackValueLoader->load(
+                    ArrayCollection::class,
+                    function () use ($user) {
+                        return $this->getUserGroups($user->getId());
+                    }
+                );
+                $user->setGroups($groups);
+
+                return $user;
+            },
+            $users ?: []
+        );
     }
 
     /**
@@ -212,10 +221,12 @@ class UserRepository
     {
         try {
             $this->findIdAndLoginByRawLogin($rawLogin, $onlyActive);
+
             return true;
         } catch (UsernameNotFoundException $exception) {
         } catch (WrongPhoneNumberException $e) {
         }
+
         return false;
     }
 
@@ -230,18 +241,64 @@ class UserRepository
      */
     public function update(User $user): bool
     {
-        $this->checkIdentifier($user->getId());
         $validationResult = $this->validator->validate($user, null, ['update']);
         if ($validationResult->count() > 0) {
             throw new ValidationException('Wrong entity passed to update');
         }
-        if ($this->cuser->Update(
+
+        return $this->updateData(
             $user->getId(),
             $this->serializer->toArray($user, SerializationContext::create()->setGroups(['update']))
+        );
+    }
+
+    /**
+     * @param int   $id
+     * @param array $data
+     *
+     * @throws InvalidIdentifierException
+     * @throws BitrixRuntimeException
+     * @throws ConstraintDefinitionException
+     * @return bool
+     */
+    public function updateData(int $id, array $data): bool
+    {
+        $this->checkIdentifier($id);
+        if ($this->cuser->Update(
+            $id,
+            $data
         )) {
             return true;
         }
         throw new BitrixRuntimeException($this->cuser->LAST_ERROR);
+    }
+
+    /**
+     * @param int    $id
+     * @param string $password
+     *
+     * @throws InvalidIdentifierException
+     * @throws BitrixRuntimeException
+     * @throws ConstraintDefinitionException
+     * @return bool
+     */
+    public function updatePassword(int $id, string $password): bool
+    {
+        return $this->updateData($id, ['PASSWORD' => $password]);
+    }
+
+    /**
+     * @param int    $id
+     * @param string $phone
+     *
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws BitrixRuntimeException
+     * @return bool
+     */
+    public function updatePhone(int $id, string $phone): bool
+    {
+        return $this->updateData($id, ['PERSONAL_PHONE' => $phone]);
     }
 
     /**
@@ -273,6 +330,76 @@ class UserRepository
         return $this->getUserGroups($id)->map(function (Group $group) {
             return $group->getId();
         })->toArray();
+    }
+
+    public function havePhoneAndEmailByUsers(array $params): array
+    {
+        $return = [
+            'phone' => false,
+            'email' => false,
+        ];
+
+        if (empty($params)) {
+            return $return;
+        }
+
+        $filter = [
+            [
+                'LOGIC' => 'OR',
+            ],
+        ];
+        if (!empty($params['EMAIL'])) {
+            $filter[0]['EMAIL'] = $params['EMAIL'];
+        }
+        if (!empty($params['PERSONAL_PHONE'])) {
+            $filter[0]['PERSONAL_PHONE'] = $params['PERSONAL_PHONE'];
+        }
+        $users = $this->findBy(
+            $filter,
+            [],
+            1
+        );
+        if (\is_array($users) && !empty($users)) {
+            /** @var User $user */
+            $return = [
+                'phone' => false,
+                'email' => false,
+            ];
+            foreach ($users as $user) {
+                if ($user->getPersonalPhone() === $params['PERSONAL_PHONE']) {
+                    $return['phone'] = true;
+                }
+                if ($user->getEmail() === $params['EMAIL']) {
+                    $return['email'] = true;
+                }
+            }
+        }
+
+        return $return;
+    }
+
+    /**
+     * @param array  $data
+     * @param string $group
+     *
+     * @return array
+     */
+    public function prepareData(array $data, string $group = 'update'): array
+    {
+        $formattedData = $this->serializer->toArray(
+            $this->serializer->fromArray($data, DeserializationContext::create()->setGroups([$group])),
+            SerializationContext::create()->setGroups([$group])
+        );
+        foreach ($data as $key => $val) {
+            if (!array_key_exists($key, $formattedData)) {
+                unset($data[$key]);
+            }
+        }
+        if (isset($data['ID'])) {
+            unset($data['ID']);
+        }
+
+        return $data;
     }
 
     /** @noinspection PhpDocMissingThrowsInspection
@@ -358,8 +485,9 @@ class UserRepository
         $isValidData = isset($data['ID'], $data['LOGIN']);
 
         if ($isValidData && 1 === $result->getSelectedRowsCount()) {
-            return $result->fetchRaw();
+            return $data;
         }
+
         if (!$isValidData || 0 === $result->getSelectedRowsCount()) {
             throw new UsernameNotFoundException(sprintf('No user with such raw login %s', $rawLogin));
         }

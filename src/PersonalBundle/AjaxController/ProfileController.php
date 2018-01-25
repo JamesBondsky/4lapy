@@ -149,15 +149,7 @@ class ProfileController extends Controller
         
         try {
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-            $res = $this->currentUserProvider->getUserRepository()->update(
-                SerializerBuilder::create()->build()->fromArray(
-                    [
-                        'ID'       => $id,
-                        'PASSWORD' => $password,
-                    ],
-                    User::class
-                )
-            );
+            $res = $this->currentUserProvider->getUserRepository()->updatePassword($id, $password);
             if (!$res) {
                 return JsonErrorResponse::createWithData(
                     'Произошла ошибка при обновлении',
@@ -205,8 +197,12 @@ class ProfileController extends Controller
             }
         }
         
-        $curUser = $userRepository->findBy(['EMAIL' => $data['EMAIL']], [], 1);
-        if ($curUser instanceof User || (\is_array($curUser) && !empty($curUser))) {
+        $haveUsers = $userRepository->havePhoneAndEmailByUsers(
+            [
+                'EMAIL'          => $data['EMAIL']
+            ]
+        );
+        if($haveUsers['email']){
             return JsonErrorResponse::createWithData(
                 'Такой email уже существует',
                 ['errors' => ['haveEmail' => 'Такой email уже существует']]
@@ -218,7 +214,7 @@ class ProfileController extends Controller
         
         try {
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-            $res = $userRepository->update($user);
+            $res = $userRepository->updateData($user->getId(), $userRepository->prepareData($data));
             if (!$res) {
                 return JsonErrorResponse::createWithData(
                     'Произошла ошибка при обновлении',
@@ -233,7 +229,6 @@ class ProfileController extends Controller
                 $contactId         = $manzanaService->getContactIdByCurUser();
                 $client            = new Client();
                 $client->contactId = $contactId;
-            } catch (ManzanaServiceContactSearchMoreOneException $e) {
             } catch (ManzanaServiceContactSearchNullException $e) {
                 $client = new Client();
             } catch (ManzanaServiceException $e) {
