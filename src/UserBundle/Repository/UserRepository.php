@@ -415,8 +415,9 @@ class UserRepository
         $isValidData = isset($data['ID'], $data['LOGIN']);
         
         if ($isValidData && 1 === $result->getSelectedRowsCount()) {
-            return $result->fetchRaw();
+            return $data;
         }
+    
         if (!$isValidData || 0 === $result->getSelectedRowsCount()) {
             throw new UsernameNotFoundException(sprintf('No user with such raw login %s', $rawLogin));
         }
