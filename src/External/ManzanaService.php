@@ -501,11 +501,31 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      *
      * @param string $cardNumber
      *
-     * @return CardValidateResult
+     * @return bool
      *
      * @throws ManzanaServiceException
      */
-    public function validateCardByNumber(string $cardNumber) : CardValidateResult
+    public function validateCardByNumber(string $cardNumber) : bool
+    {
+        $cardValidateResult = $this->validateCardByNumberRaw($cardNumber);
+        //$result = $cardValidateResult->cardId !== '';
+        $result = $cardValidateResult->isValid ? true : false;
+
+        return $result;
+    }
+
+    /**
+     * Проверка валидности карты и получение ее ID
+     * Контракт в ML: card_validate
+     *
+     * - форма замены бонусной карты
+     * - регистрация бонусной карты сотрудником магазина в ЛК магазина
+     *
+     * @param string $cardNumber
+     * @return CardValidateResult
+     * @throws ManzanaServiceException
+     */
+    public function validateCardByNumberRaw(string $cardNumber) : CardValidateResult
     {
         $cardValidateResult = null;
         $bag = new ParameterBag(['cardnumber' => $cardNumber]);
@@ -518,7 +538,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
 
         return $cardValidateResult;
     }
-    
+
     /**
      * Получение данных о держателе бонусной карты
      *

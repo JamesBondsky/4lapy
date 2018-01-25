@@ -204,7 +204,15 @@ class User
      * @Serializer\SkipWhenEmpty()
      */
     protected $dateRegister;
-    
+
+    /** @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("UF_DISCOUNT_CARD")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $discountCardNumber;
+
     /**
      * @return int
      */
@@ -723,4 +731,25 @@ class User
         
         return $this;
     }
+
+    /**
+     * @return string
+     */
+    public function getDiscountCardNumber() : string
+    {
+        return $this->discountCardNumber ?? '';
+    }
+
+    /**
+     * @param string $discountCardNumber
+     *
+     * @return User
+     */
+    public function setDiscountCardNumber(string $discountCardNumber) : User
+    {
+        $this->discountCardNumber = $discountCardNumber;
+
+        return $this;
+    }
+
 }

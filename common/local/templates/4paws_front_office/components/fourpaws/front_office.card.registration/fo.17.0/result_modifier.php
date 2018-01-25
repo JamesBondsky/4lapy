@@ -15,14 +15,13 @@ $arResult['POSTED_STEP'] = 0;
 
 $arResult['WAS_POSTED'] = $arResult['ACTION'] !== 'initialLoad';
 
-$arResult['PRINT_FIELDS'] = [];
-
 $firstStepFields = ['cardNumber'];
 $secondStepFields = ['lastName', 'firstName', 'secondName', 'genderCode', 'birthDay'];
 $thirdStepFields = ['phone'];
 $fourthStepFields = ['email'];
-
 $printFields = array_merge($firstStepFields, $secondStepFields, $thirdStepFields, $fourthStepFields);
+
+$arResult['PRINT_FIELDS'] = [];
 foreach ($printFields as $fieldName) {
     $arResult['PRINT_FIELDS'][$fieldName] = [
         'VALUE' => '',
@@ -39,9 +38,12 @@ if (!empty($arResult['CARD_DATA']['USER'])) {
     $arResult['PRINT_FIELDS']['birthDay']['VALUE'] = $arResult['CARD_DATA']['USER']['BIRTHDAY'];
     $arResult['PRINT_FIELDS']['genderCode']['VALUE'] = $arResult['CARD_DATA']['USER']['GENDER_CODE'];
     $arResult['PRINT_FIELDS']['phone']['VALUE'] = $arResult['CARD_DATA']['USER']['PHONE'];
+    /*
     if (strpos($arResult['PRINT_FIELDS']['phone']['VALUE'], '7') === 0) {
         $arResult['PRINT_FIELDS']['phone']['VALUE'] = substr($arResult['PRINT_FIELDS']['phone']['VALUE'], 1);
     }
+    */
+    $arResult['PRINT_FIELDS']['email']['VALUE'] = $arResult['CARD_DATA']['USER']['EMAIL'];
 }
 
 // заполним значениями результата отправки формы
