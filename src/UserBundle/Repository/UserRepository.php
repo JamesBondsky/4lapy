@@ -37,17 +37,17 @@ class UserRepository
     
     /** @var Serializer $builder */
     protected $serializer;
-
+    
     /**
      * @var ValidatorInterface
      */
     private $validator;
-
+    
     /**
      * @var CUser
      */
     private $cuser;
-
+    
     /**
      * @var \CAllMain|\CMain
      */
@@ -59,7 +59,8 @@ class UserRepository
      * @param ValidatorInterface $validator
      *
      * @throws RuntimeException
-     */public function __construct(ValidatorInterface $validator)
+     */
+    public function __construct(ValidatorInterface $validator)
     {
         $this->serializer = SerializerBuilder::create()->configureHandlers(
             function (HandlerRegistry $registry) {
@@ -70,13 +71,12 @@ class UserRepository
             }
         )->build();
         
-        $this->cuser = new CUser();
+        $this->cuser     = new CUser();
         $this->validator = $validator;
         global $APPLICATION;
         $this->cmain = $APPLICATION;
     }
-
-
+    
     /**
      * @param User $user
      *
@@ -84,24 +84,25 @@ class UserRepository
      * @throws BitrixRuntimeException
      * @return bool
      */
-    public function create(User $user): bool
+    public function create(User $user) : bool
     {
         $validationResult = $this->validator->validate($user, null, ['create']);
         if ($validationResult->count() > 0) {
             throw new ValidationException('Wrong entity passed to create');
         }
-
+        
         $result = $this->cuser->Add(
             $this->serializer->toArray($user, SerializationContext::create()->setGroups(['create']))
         );
         if ((int)$result > 0) {
             $user->setId((int)$result);
+            
             return true;
         }
-
+        
         throw new BitrixRuntimeException($this->cuser->LAST_ERROR);
     }
-
+    
     /**
      * @param int $id
      *
@@ -113,31 +114,58 @@ class UserRepository
     {
         $this->checkIdentifier($id);
         $result = $this->findBy([static::FIELD_ID => $id], [], 1);
+        
         return reset($result);
     }
     
     /** @noinspection MoreThanThreeArgumentsInspection */
+    
     /**
-     * @param array $criteria
-     * @param array $orderBy
+     * @param int $id
+     *
+     * @throws ConstraintDefinitionException
+     * @throws InvalidIdentifierException
+     */
+    protected function checkIdentifier(int $id)
+    {
+        try {
+            $result = $this->validator->validate(
+                $id,
+                [
+                    new NotBlank(),
+                    new GreaterThanOrEqual(['value' => 1]),
+                    new Type(['type' => 'integer']),
+                ],
+                ['delete']
+            );
+        } catch (ValidatorException $exception) {
+            throw new ConstraintDefinitionException('Wrong constraint configuration');
+        }
+        if ($result->count()) {
+            throw new InvalidIdentifierException(sprintf('Wrong identifier %s passed', $id));
+        }
+    }
+    
+    /**
+     * @param array    $criteria
+     * @param array    $orderBy
      * @param null|int $limit
      * @param null|int $offset
      *
      * @return User[]
      */
-    public function findBy(array $criteria = [], array $orderBy = [], int $limit = null, int $offset = null): array
+    public function findBy(array $criteria = [], array $orderBy = [], int $limit = null, int $offset = null) : array
     {
-        $result = UserTable::query()
-            ->setSelect(['*', 'UF_*'])
-            ->setFilter($criteria)
-            ->setOrder($orderBy)
-            ->setLimit($limit)
-            ->setOffset($offset)
-            ->exec();
+        $result = UserTable::query()->setSelect(
+            [
+                '*',
+                'UF_*',
+            ]
+        )->setFilter($criteria)->setOrder($orderBy)->setLimit($limit)->setOffset($offset)->exec();
         if (0 === $result->getSelectedRowsCount()) {
             return [];
         }
-
+        
         /**
          * todo change group name to constant
          */
@@ -146,6 +174,52 @@ class UserRepository
             sprintf('array<%s>', User::class),
             DeserializationContext::create()->setGroups(['read'])
         );
+    }
+    
+    public function haveUsersByPhoneAndEmail(array $params) : array
+    {
+        $return = [
+            'phone' => false,
+            'email' => false,
+        ];
+        
+        if (empty($params)) {
+            return $return;
+        }
+        
+        $filter = [
+            [
+                'LOGIC' => 'OR',
+            ],
+        ];
+        if (!empty($params['EMAIL'])) {
+            $filter[0]['EMAIL'] = $params['EMAIL'];
+        }
+        if (!empty($params['PERSONAL_PHONE'])) {
+            $filter[0]['PERSONAL_PHONE'] = $params['PERSONAL_PHONE'];
+        }
+        $users = $this->findBy(
+            $filter,
+            [],
+            1
+        );
+        if (\is_array($users) && !empty($users)) {
+            /** @var User $user */
+            $return = [
+                'phone' => false,
+                'email' => false,
+            ];
+            foreach ($users as $user) {
+                if ($user->getPersonalPhone() === $params['PERSONAL_PHONE']) {
+                    $return['phone'] = true;
+                }
+                if($user->getEmail() === $params['EMAIL']){
+                    $return['email'] = true;
+                }
+            }
+        }
+    
+        return $return;
     }
     
     /**
@@ -158,24 +232,9 @@ class UserRepository
      * @return int
      * @throws WrongPhoneNumberException
      */
-    public function findIdentifierByRawLogin(string $rawLogin, bool $onlyActive = true): int
+    public function findIdentifierByRawLogin(string $rawLogin, bool $onlyActive = true) : int
     {
         return (int)$this->findIdAndLoginByRawLogin($rawLogin, $onlyActive)['ID'];
-    }
-    
-    /**
-     * @param string $rawLogin
-     *
-     * @param bool   $onlyActive
-     *
-     * @throws UsernameNotFoundException
-     * @throws TooManyUserFoundException
-     * @return string
-     * @throws WrongPhoneNumberException
-     */
-    public function findLoginByRawLogin(string $rawLogin, bool $onlyActive = true): string
-    {
-        return (string)$this->findIdAndLoginByRawLogin($rawLogin, $onlyActive)['LOGIN'];
     }
     
     /**
@@ -190,10 +249,8 @@ class UserRepository
      */
     protected function findIdAndLoginByRawLogin(string $rawLogin, bool $onlyActive = true)
     {
-        $query = UserTable::query()
-            ->addSelect('ID')
-            ->addSelect('LOGIN')
-            ->setFilter([
+        $query = UserTable::query()->addSelect('ID')->addSelect('LOGIN')->setFilter(
+            [
                 [
                     'LOGIC' => 'OR',
                     [
@@ -214,18 +271,32 @@ class UserRepository
             $query->addFilter('ACTIVE', 'Y');
         }
         $result = $query->exec();
-
-
+        
         if (1 === $result->getSelectedRowsCount()) {
             return $result->fetchRaw();
         }
         if (0 === $result->getSelectedRowsCount()) {
             throw new UsernameNotFoundException(sprintf('No user with such raw login %s', $rawLogin));
         }
-
+        
         throw new TooManyUserFoundException('Found more than one user with same raw login');
     }
-
+    
+    /**
+     * @param string $rawLogin
+     *
+     * @param bool   $onlyActive
+     *
+     * @throws UsernameNotFoundException
+     * @throws TooManyUserFoundException
+     * @return string
+     * @throws WrongPhoneNumberException
+     */
+    public function findLoginByRawLogin(string $rawLogin, bool $onlyActive = true) : string
+    {
+        return (string)$this->findIdAndLoginByRawLogin($rawLogin, $onlyActive)['LOGIN'];
+    }
+    
     /**
      * @param User $user
      *
@@ -250,7 +321,7 @@ class UserRepository
         }
         throw new BitrixRuntimeException($this->cuser->LAST_ERROR);
     }
-
+    
     /**
      * @param int $id
      *
@@ -265,31 +336,9 @@ class UserRepository
         if (CUser::Delete($id)) {
             return true;
         }
-
+        
         $bitrixException = $this->cmain->GetException();
         throw new BitrixRuntimeException($bitrixException->GetString(), $bitrixException->GetID() ?: null);
-    }
-
-    /**
-     * @param int $id
-     *
-     * @throws ConstraintDefinitionException
-     * @throws InvalidIdentifierException
-     */
-    protected function checkIdentifier(int $id)
-    {
-        try {
-            $result = $this->validator->validate($id, [
-                new NotBlank(),
-                new GreaterThanOrEqual(['value' => 1]),
-                new Type(['type' => 'integer']),
-            ], ['delete']);
-        } catch (ValidatorException $exception) {
-            throw new ConstraintDefinitionException('Wrong constraint configuration');
-        }
-        if ($result->count()) {
-            throw new InvalidIdentifierException(sprintf('Wrong identifier %s passed', $id));
-        }
     }
     
     /**
