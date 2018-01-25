@@ -85,50 +85,14 @@ class FourPawsShopListComponent extends CBitrixComponent
         if ($this->startResultCache(false, ['location' => $city['CODE']])) {
             $this->arResult['CITY']      = $city['NAME'];
             $this->arResult['CITY_CODE'] = $city['CODE'];
-    
+            
             $this->arResult['SERVICES'] = $this->storeService->getServicesInfo();
-            $this->arResult['METRO'] = $this->storeService->getMetroInfo();
+            $this->arResult['METRO']    = $this->storeService->getMetroInfo();
             
             $this->includeComponentTemplate();
         }
         
         return true;
-    }
-    
-    /**
-     *
-     * @param array $stores
-     *
-     * @throws \Exception
-     * @return array
-     */
-    public function getFullStoreInfo(array $stores) : array
-    {
-        $servicesIds = [];
-        $metroIds    = [];
-        /** @var Store $store */
-        foreach ($stores as $store) {
-            /** @noinspection SlowArrayOperationsInLoopInspection */
-            $servicesIds = array_merge($servicesIds, $store->getServices());
-            $metro       = $store->getMetro();
-            if ($metro > 0) {
-                $metroIds[] = $metro;
-            }
-        }
-        $services = [];
-        if (!empty($servicesIds)) {
-            $services = $this->storeService->getServicesInfo(['ID' => array_unique($servicesIds)]);
-        }
-        
-        $metro = [];
-        if (!empty($metroIds)) {
-            $metro = $this->storeService->getMetroInfo(['ID' => array_unique($metroIds)]);
-        }
-        
-        return [
-            $services,
-            $metro,
-        ];
     }
     
     /**
@@ -140,7 +104,7 @@ class FourPawsShopListComponent extends CBitrixComponent
      * @throws \Exception
      * @return array
      */
-    public function getStores(array $filter = [], array $order = []) : array
+    public function getStores(array $filter = [], array $order = [], $returnActiveServices = false) : array
     {
         $result          = [];
         $storeRepository = $this->storeService->getRepository();
@@ -195,16 +159,57 @@ class FourPawsShopListComponent extends CBitrixComponent
                     'metro'      => !empty($metro) ? $metroList[$metro]['UF_NAME'] : '',
                     'metroClass' => !empty($metro) ? 'b-delivery-list__col--' . $metroList[$metro]['UF_CLASS'] : '',
                     'services'   => $services,
-                    'gps_s'      => $gpsN, //revert $gpsS
-                    'gps_n'      => $gpsS, //revert $gpsN
+                    'gps_s'      => $gpsN,
+                    //revert $gpsS
+                    'gps_n'      => $gpsS,
+                    //revert $gpsN
                 ];
             }
             $countStores         = count($stores);
             $result['avg_gps_s'] = $avgGpsN / $countStores; //revert $avgGpsS
             $result['avg_gps_n'] = $avgGpsS / $countStores; //revert $avgGpsN
+            if ($returnActiveServices) {
+                $result['services'] = $servicesList;
+            }
         }
         
         return $result;
+    }
+    
+    /**
+     *
+     * @param array $stores
+     *
+     * @throws \Exception
+     * @return array
+     */
+    public function getFullStoreInfo(array $stores) : array
+    {
+        $servicesIds = [];
+        $metroIds    = [];
+        /** @var Store $store */
+        foreach ($stores as $store) {
+            /** @noinspection SlowArrayOperationsInLoopInspection */
+            $servicesIds = array_merge($servicesIds, $store->getServices());
+            $metro       = $store->getMetro();
+            if ($metro > 0) {
+                $metroIds[] = $metro;
+            }
+        }
+        $services = [];
+        if (!empty($servicesIds)) {
+            $services = $this->storeService->getServicesInfo(['ID' => array_unique($servicesIds)]);
+        }
+        
+        $metro = [];
+        if (!empty($metroIds)) {
+            $metro = $this->storeService->getMetroInfo(['ID' => array_unique($metroIds)]);
+        }
+        
+        return [
+            $services,
+            $metro,
+        ];
     }
     
     /**

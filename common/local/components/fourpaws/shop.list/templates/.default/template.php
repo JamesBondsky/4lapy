@@ -26,7 +26,7 @@ $frame = $this->createFrame(); ?>
     <div class="b-stores-sort">
         <?php if (\is_array($arResult['SERVICES']) && !empty($arResult['SERVICES'])) {
             ?>
-            <div class="b-stores-sort__checkbox-block">
+            <div class="b-stores-sort__checkbox-block" data-url="/ajax/store/list/checkboxFilter/">
                 <?php foreach ($arResult['SERVICES'] as $key => $service) {
                     ?>
                     <div class="b-checkbox b-checkbox--stores">
