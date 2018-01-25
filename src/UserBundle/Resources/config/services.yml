@@ -40,6 +40,9 @@ services:
         public: true
         tags: ['controller.service_arguments']
 
+    FourPaws\UserBundle\Repository\UserRepository:
+        public: true
+
     # Временное решение. Ввиду вызова из компонентов
 #    FourPaws\UserBundle\Service\UserService:
 #        public: true

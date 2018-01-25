@@ -1,0 +1,12 @@
+imports:
+  - { resource: config_dev.yml }
+
+framework:
+  test: ~
+
+services:
+    FourPaws\MobileApiBundle\Services\Security\TokenGeneratorInterface:
+        class: FourPaws\MobileApiBundle\Services\Security\FakeTokenGenerator
+
+    FourPaws\MobileApiBundle\Services\CaptchaServiceInterface:
+        class: FourPaws\MobileApiBundle\Services\FakeCaptchaService
