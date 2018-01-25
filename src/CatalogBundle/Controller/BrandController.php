@@ -4,7 +4,6 @@ namespace FourPaws\CatalogBundle\Controller;
 
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\CatalogBundle\Dto\CatalogBrandRequest;
 use FourPaws\CatalogBundle\Exception\RuntimeException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
