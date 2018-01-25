@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace Sprint\Migration;
 
 use Adv\Bitrixtools\Migration\SprintMigrationBase;
@@ -7,7 +11,6 @@ use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 
 class Iblock_food_selection20180122230845 extends SprintMigrationBase
 {
-    
     protected $description = 'Подбор корма - инфоблок и структура разделов';
     
     /** @var HelperManager $helper */
@@ -217,7 +220,6 @@ class Iblock_food_selection20180122230845 extends SprintMigrationBase
                 ],
             ]
         );
-        $helper->Iblock()->updateIblockFields()
         
         $helper->Iblock()->addPropertyIfNotExists(
             $iblockId,
@@ -258,7 +260,7 @@ class Iblock_food_selection20180122230845 extends SprintMigrationBase
             ]
         );
         
-        \CIBlock::SetPermission($iblockId, Array("2"=>"R"));
+        \CIBlock::SetPermission($iblockId, ["2" => "R"]);
         
         /** add sections */
         //Кошка
@@ -279,8 +281,8 @@ class Iblock_food_selection20180122230845 extends SprintMigrationBase
         //Специализация корма
         try {
             $dataManager = HLBlockFactory::createTableObject('FeedSpec');
-            $res = $dataManager::query()->setSelect(['UF_NAME'])->whereNotNull('UF_NAME')->exec();
-            while($item = $res->fetch()){
+            $res         = $dataManager::query()->setSelect(['UF_NAME'])->whereNotNull('UF_NAME')->exec();
+            while ($item = $res->fetch()) {
                 $this->addSection($item['UF_NAME'], 'food_spec', $catId);
             }
         } catch (\Exception $e) {
@@ -288,8 +290,8 @@ class Iblock_food_selection20180122230845 extends SprintMigrationBase
         //Особенности ингредиентов
         try {
             $dataManager = HLBlockFactory::createTableObject('IngridientFeatures');
-            $res = $dataManager::query()->setSelect(['UF_NAME'])->whereNotNull('UF_NAME')->exec();
-            while($item = $res->fetch()){
+            $res         = $dataManager::query()->setSelect(['UF_NAME'])->whereNotNull('UF_NAME')->exec();
+            while ($item = $res->fetch()) {
                 $this->addSection($item['UF_NAME'], 'food_ingridient', $catId);
             }
         } catch (\Exception $e) {
@@ -297,8 +299,8 @@ class Iblock_food_selection20180122230845 extends SprintMigrationBase
         //Тип корма
         try {
             $dataManager = HLBlockFactory::createTableObject('Consistence');
-            $res = $dataManager::query()->setSelect(['UF_NAME'])->whereNotNull('UF_NAME')->exec();
-            while($item = $res->fetch()){
+            $res         = $dataManager::query()->setSelect(['UF_NAME'])->whereNotNull('UF_NAME')->exec();
+            while ($item = $res->fetch()) {
                 $this->addSection($item['UF_NAME'], 'food_consistence', $catId);
             }
         } catch (\Exception $e) {
@@ -306,8 +308,8 @@ class Iblock_food_selection20180122230845 extends SprintMigrationBase
         //Вкус корма
         try {
             $dataManager = HLBlockFactory::createTableObject('Flavour');
-            $res = $dataManager::query()->setSelect(['UF_NAME'])->whereNotNull('UF_NAME')->exec();
-            while($item = $res->fetch()){
+            $res         = $dataManager::query()->setSelect(['UF_NAME'])->whereNotNull('UF_NAME')->exec();
+            while ($item = $res->fetch()) {
                 $this->addSection($item['UF_NAME'], 'food_flavour', $catId);
             }
         } catch (\Exception $e) {
@@ -335,8 +337,8 @@ class Iblock_food_selection20180122230845 extends SprintMigrationBase
         //Специализация корма
         try {
             $dataManager = HLBlockFactory::createTableObject('FeedSpec');
-            $res = $dataManager::query()->setSelect(['UF_NAME'])->whereNotNull('UF_NAME')->exec();
-            while($item = $res->fetch()){
+            $res         = $dataManager::query()->setSelect(['UF_NAME'])->whereNotNull('UF_NAME')->exec();
+            while ($item = $res->fetch()) {
                 $this->addSection($item['UF_NAME'], 'food_spec', $dogId);
             }
         } catch (\Exception $e) {
@@ -344,8 +346,8 @@ class Iblock_food_selection20180122230845 extends SprintMigrationBase
         //Особенности ингредиентов
         try {
             $dataManager = HLBlockFactory::createTableObject('IngridientFeatures');
-            $res = $dataManager::query()->setSelect(['UF_NAME'])->whereNotNull('UF_NAME')->exec();
-            while($item = $res->fetch()){
+            $res         = $dataManager::query()->setSelect(['UF_NAME'])->whereNotNull('UF_NAME')->exec();
+            while ($item = $res->fetch()) {
                 $this->addSection($item['UF_NAME'], 'food_ingridient', $dogId);
             }
         } catch (\Exception $e) {
@@ -353,8 +355,8 @@ class Iblock_food_selection20180122230845 extends SprintMigrationBase
         //Тип корма
         try {
             $dataManager = HLBlockFactory::createTableObject('Consistence');
-            $res = $dataManager::query()->setSelect(['UF_NAME'])->whereNotNull('UF_NAME')->exec();
-            while($item = $res->fetch()){
+            $res         = $dataManager::query()->setSelect(['UF_NAME'])->whereNotNull('UF_NAME')->exec();
+            while ($item = $res->fetch()) {
                 $this->addSection($item['UF_NAME'], 'food_consistence', $dogId);
             }
         } catch (\Exception $e) {
@@ -362,8 +364,8 @@ class Iblock_food_selection20180122230845 extends SprintMigrationBase
         //Вкус корма
         try {
             $dataManager = HLBlockFactory::createTableObject('Flavour');
-            $res = $dataManager::query()->setSelect(['UF_NAME'])->whereNotNull('UF_NAME')->exec();
-            while($item = $res->fetch()){
+            $res         = $dataManager::query()->setSelect(['UF_NAME'])->whereNotNull('UF_NAME')->exec();
+            while ($item = $res->fetch()) {
                 $this->addSection($item['UF_NAME'], 'food_flavour', $dogId);
             }
         } catch (\Exception $e) {
@@ -392,7 +394,5 @@ class Iblock_food_selection20180122230845 extends SprintMigrationBase
         $helper = new HelperManager();
         
         //your code ...
-        
     }
-    
 }
