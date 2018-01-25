@@ -56,6 +56,7 @@ class UserRepository
      * @var \CAllMain|\CMain
      */
     private $cmain;
+    
     /**
      * @var LazyCallbackValueLoader
      */
@@ -67,6 +68,8 @@ class UserRepository
      * @param ValidatorInterface      $validator
      *
      * @param LazyCallbackValueLoader $lazyCallbackValueLoader
+     *
+     * @throws \JMS\Serializer\Exception\RuntimeException
      */
     public function __construct(ValidatorInterface $validator, LazyCallbackValueLoader $lazyCallbackValueLoader)
     {
@@ -79,13 +82,12 @@ class UserRepository
             }
         )->build();
         
-        $this->cuser = new CUser();
+        $this->cuser     = new CUser();
         $this->validator = $validator;
         global $APPLICATION;
-        $this->cmain = $APPLICATION;
+        $this->cmain                   = $APPLICATION;
         $this->lazyCallbackValueLoader = $lazyCallbackValueLoader;
     }
-    
     
     /**
      * @param User $user
@@ -94,7 +96,7 @@ class UserRepository
      * @throws BitrixRuntimeException
      * @return bool
      */
-    public function create(User $user): bool
+    public function create(User $user) : bool
     {
         $validationResult = $this->validator->validate($user, null, ['create']);
         if ($validationResult->count() > 0) {
@@ -106,6 +108,7 @@ class UserRepository
         );
         if ((int)$result > 0) {
             $user->setId((int)$result);
+            
             return true;
         }
         
@@ -123,6 +126,7 @@ class UserRepository
     {
         $this->checkIdentifier($id);
         $result = $this->findBy([static::FIELD_ID => $id], [], 1);
+        
         return reset($result);
     }
     
@@ -135,7 +139,7 @@ class UserRepository
      *
      * @return User[]
      */
-    public function findBy(array $criteria = [], array $orderBy = [], int $limit = null, int $offset = null): array
+    public function findBy(array $criteria = [], array $orderBy = [], int $limit = null, int $offset = null) : array
     {
         $result = UserTable::query()
                            ->setSelect(['*', 'UF_*'])
@@ -157,18 +161,23 @@ class UserRepository
             DeserializationContext::create()->setGroups(['read'])
         );
         
-        return array_map(function (User $user) {
-            /**
-             * @var Collection|VirtualProxyInterface $groups
-             */
-            $groups = $this
-                ->lazyCallbackValueLoader
-                ->load(ArrayCollection::class, function () use ($user) {
-                    return $this->getUserGroups($user->getId());
-                });
-            $user->setGroups($groups);
-            return $user;
-        }, $users ?: []);
+        return array_map(
+            function (User $user) {
+                /**
+                 * @var Collection|VirtualProxyInterface $groups
+                 */
+                $groups = $this->lazyCallbackValueLoader->load(
+                    ArrayCollection::class,
+                    function () use ($user) {
+                        return $this->getUserGroups($user->getId());
+                    }
+                );
+                $user->setGroups($groups);
+                
+                return $user;
+            },
+            $users ?: []
+        );
     }
     
     /**
@@ -181,7 +190,7 @@ class UserRepository
      * @throws WrongPhoneNumberException
      * @return int
      */
-    public function findIdentifierByRawLogin(string $rawLogin, bool $onlyActive = true): int
+    public function findIdentifierByRawLogin(string $rawLogin, bool $onlyActive = true) : int
     {
         return (int)$this->findIdAndLoginByRawLogin($rawLogin, $onlyActive)['ID'];
     }
@@ -196,7 +205,7 @@ class UserRepository
      * @throws WrongPhoneNumberException
      * @return string
      */
-    public function findLoginByRawLogin(string $rawLogin, bool $onlyActive = true): string
+    public function findLoginByRawLogin(string $rawLogin, bool $onlyActive = true) : string
     {
         return (string)$this->findIdAndLoginByRawLogin($rawLogin, $onlyActive)['LOGIN'];
     }
@@ -208,14 +217,16 @@ class UserRepository
      * @throws \FourPaws\UserBundle\Exception\TooManyUserFoundException
      * @return bool
      */
-    public function isExist(string $rawLogin, bool $onlyActive = true): bool
+    public function isExist(string $rawLogin, bool $onlyActive = true) : bool
     {
         try {
             $this->findIdAndLoginByRawLogin($rawLogin, $onlyActive);
+            
             return true;
         } catch (UsernameNotFoundException $exception) {
         } catch (WrongPhoneNumberException $e) {
         }
+        
         return false;
     }
     
@@ -228,20 +239,66 @@ class UserRepository
      * @throws BitrixRuntimeException
      * @return bool
      */
-    public function update(User $user): bool
+    public function update(User $user) : bool
     {
-        $this->checkIdentifier($user->getId());
         $validationResult = $this->validator->validate($user, null, ['update']);
         if ($validationResult->count() > 0) {
             throw new ValidationException('Wrong entity passed to update');
         }
-        if ($this->cuser->Update(
+        
+        return $this->updateData(
             $user->getId(),
             $this->serializer->toArray($user, SerializationContext::create()->setGroups(['update']))
+        );
+    }
+    
+    /**
+     * @param int   $id
+     * @param array $data
+     *
+     * @return bool
+     * @throws InvalidIdentifierException
+     * @throws BitrixRuntimeException
+     * @throws ConstraintDefinitionException
+     */
+    public function updateData(int $id, array $data) : bool
+    {
+        $this->checkIdentifier($id);
+        if ($this->cuser->Update(
+            $id,
+            $data
         )) {
             return true;
         }
         throw new BitrixRuntimeException($this->cuser->LAST_ERROR);
+    }
+    
+    /**
+     * @param int    $id
+     * @param string $password
+     *
+     * @return bool
+     * @throws InvalidIdentifierException
+     * @throws BitrixRuntimeException
+     * @throws ConstraintDefinitionException
+     */
+    public function updatePassword(int $id, string $password) : bool
+    {
+        return $this->updateData($id, ['PASSWORD' => $password]);
+    }
+    
+    /**
+     * @param int    $id
+     * @param string $phone
+     *
+     * @return bool
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws BitrixRuntimeException
+     */
+    public function updatePhone(int $id, string $phone) : bool
+    {
+        return $this->updateData($id, ['PERSONAL_PHONE' => $phone]);
     }
     
     /**
@@ -252,7 +309,7 @@ class UserRepository
      * @throws BitrixRuntimeException
      * @return bool
      */
-    public function delete(int $id): bool
+    public function delete(int $id) : bool
     {
         $this->checkIdentifier($id);
         if (CUser::Delete($id)) {
@@ -268,7 +325,7 @@ class UserRepository
      *
      * @return array
      */
-    public function getUserGroupsIds(int $id): array
+    public function getUserGroupsIds(int $id) : array
     {
         return $this->getUserGroups($id)->map(function (Group $group) {
             return $group->getId();
@@ -433,5 +490,29 @@ class UserRepository
         }
         
         return $return;
+    }
+    
+    /**
+     * @param array  $data
+     * @param string $group
+     *
+     * @return array
+     */
+    public function prepareData(array $data, string $group = 'update') : array
+    {
+        $formatedData = $this->serializer->toArray(
+            $this->serializer->fromArray($data, DeSerializationContext::create()->setGroups([$group])),
+            SerializationContext::create()->setGroups([$group])
+        );
+        foreach ($data as $key => $val) {
+            if (!array_key_exists($key, $formatedData)) {
+                unset($data[$key]);
+            }
+        }
+        if (isset($data['ID'])) {
+            unset($data['ID']);
+        }
+        
+        return $data;
     }
 }
