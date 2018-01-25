@@ -215,6 +215,7 @@ class ReferenceService implements LoggerAwareInterface
                     return $item->getCode() === $resultCode;
                 }
             );
+            $i++;
         } while ($result->count());
         return $resultCode;
     }
