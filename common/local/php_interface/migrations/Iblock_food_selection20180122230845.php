@@ -217,6 +217,7 @@ class Iblock_food_selection20180122230845 extends SprintMigrationBase
                 ],
             ]
         );
+        $helper->Iblock()->updateIblockFields()
         
         $helper->Iblock()->addPropertyIfNotExists(
             $iblockId,
@@ -256,6 +257,8 @@ class Iblock_food_selection20180122230845 extends SprintMigrationBase
                 'HINT'               => '',
             ]
         );
+        
+        \CIBlock::SetPermission($iblockId, Array("2"=>"R"));
         
         /** add sections */
         //Кошка
