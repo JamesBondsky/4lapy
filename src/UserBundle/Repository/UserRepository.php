@@ -6,12 +6,16 @@ use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UserGroupTable;
 use Bitrix\Main\UserTable;
 use CUser;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use FourPaws\AppBundle\Serialization\ArrayOrFalseHandler;
 use FourPaws\AppBundle\Serialization\BitrixBooleanHandler;
 use FourPaws\AppBundle\Serialization\BitrixDateHandler;
 use FourPaws\AppBundle\Serialization\BitrixDateTimeHandler;
+use FourPaws\AppBundle\Service\LazyCallbackValueLoader;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\UserBundle\Entity\Group;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -20,11 +24,11 @@ use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use JMS\Serializer\DeserializationContext;
-use JMS\Serializer\Exception\RuntimeException;
 use JMS\Serializer\Handler\HandlerRegistry;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\Serializer;
 use JMS\Serializer\SerializerBuilder;
+use ProxyManager\Proxy\VirtualProxyInterface;
 use Symfony\Component\Validator\Constraints\GreaterThanOrEqual;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Type;
@@ -37,29 +41,34 @@ class UserRepository
     
     /** @var Serializer $builder */
     protected $serializer;
-
+    
     /**
      * @var ValidatorInterface
      */
     private $validator;
-
+    
     /**
      * @var CUser
      */
     private $cuser;
-
+    
     /**
      * @var \CAllMain|\CMain
      */
     private $cmain;
+    /**
+     * @var LazyCallbackValueLoader
+     */
+    private $lazyCallbackValueLoader;
     
     /**
      * UserRepository constructor.
      *
-     * @param ValidatorInterface $validator
+     * @param ValidatorInterface      $validator
      *
-     * @throws RuntimeException
-     */public function __construct(ValidatorInterface $validator)
+     * @param LazyCallbackValueLoader $lazyCallbackValueLoader
+     */
+    public function __construct(ValidatorInterface $validator, LazyCallbackValueLoader $lazyCallbackValueLoader)
     {
         $this->serializer = SerializerBuilder::create()->configureHandlers(
             function (HandlerRegistry $registry) {
@@ -74,9 +83,10 @@ class UserRepository
         $this->validator = $validator;
         global $APPLICATION;
         $this->cmain = $APPLICATION;
+        $this->lazyCallbackValueLoader = $lazyCallbackValueLoader;
     }
-
-
+    
+    
     /**
      * @param User $user
      *
@@ -90,7 +100,7 @@ class UserRepository
         if ($validationResult->count() > 0) {
             throw new ValidationException('Wrong entity passed to create');
         }
-
+        
         $result = $this->cuser->Add(
             $this->serializer->toArray($user, SerializationContext::create()->setGroups(['create']))
         );
@@ -98,10 +108,10 @@ class UserRepository
             $user->setId((int)$result);
             return true;
         }
-
+        
         throw new BitrixRuntimeException($this->cuser->LAST_ERROR);
     }
-
+    
     /**
      * @param int $id
      *
@@ -118,8 +128,8 @@ class UserRepository
     
     /** @noinspection MoreThanThreeArgumentsInspection */
     /**
-     * @param array $criteria
-     * @param array $orderBy
+     * @param array    $criteria
+     * @param array    $orderBy
      * @param null|int $limit
      * @param null|int $offset
      *
@@ -128,24 +138,37 @@ class UserRepository
     public function findBy(array $criteria = [], array $orderBy = [], int $limit = null, int $offset = null): array
     {
         $result = UserTable::query()
-            ->setSelect(['*', 'UF_*'])
-            ->setFilter($criteria)
-            ->setOrder($orderBy)
-            ->setLimit($limit)
-            ->setOffset($offset)
-            ->exec();
+                           ->setSelect(['*', 'UF_*'])
+                           ->setFilter($criteria)
+                           ->setOrder($orderBy)
+                           ->setLimit($limit)
+                           ->setOffset($offset)
+                           ->exec();
         if (0 === $result->getSelectedRowsCount()) {
             return [];
         }
-
+        
         /**
          * todo change group name to constant
          */
-        return $this->serializer->fromArray(
+        $users = $this->serializer->fromArray(
             $result->fetchAll(),
             sprintf('array<%s>', User::class),
             DeserializationContext::create()->setGroups(['read'])
         );
+        
+        return array_map(function (User $user) {
+            /**
+             * @var Collection|VirtualProxyInterface $groups
+             */
+            $groups = $this
+                ->lazyCallbackValueLoader
+                ->load(ArrayCollection::class, function () use ($user) {
+                    return $this->getUserGroups($user->getId());
+                });
+            $user->setGroups($groups);
+            return $user;
+        }, $users ?: []);
     }
     
     /**
@@ -155,8 +178,8 @@ class UserRepository
      *
      * @throws UsernameNotFoundException
      * @throws TooManyUserFoundException
-     * @return int
      * @throws WrongPhoneNumberException
+     * @return int
      */
     public function findIdentifierByRawLogin(string $rawLogin, bool $onlyActive = true): int
     {
@@ -170,8 +193,8 @@ class UserRepository
      *
      * @throws UsernameNotFoundException
      * @throws TooManyUserFoundException
-     * @return string
      * @throws WrongPhoneNumberException
+     * @return string
      */
     public function findLoginByRawLogin(string $rawLogin, bool $onlyActive = true): string
     {
@@ -180,52 +203,22 @@ class UserRepository
     
     /**
      * @param string $rawLogin
-     *
      * @param bool   $onlyActive
      *
-     * @throws UsernameNotFoundException
-     * @throws TooManyUserFoundException
-     * @return array|false
-     * @throws WrongPhoneNumberException
+     * @throws \FourPaws\UserBundle\Exception\TooManyUserFoundException
+     * @return bool
      */
-    protected function findIdAndLoginByRawLogin(string $rawLogin, bool $onlyActive = true)
+    public function isExist(string $rawLogin, bool $onlyActive = true): bool
     {
-        $query = UserTable::query()
-            ->addSelect('ID')
-            ->addSelect('LOGIN')
-            ->setFilter([
-                [
-                    'LOGIC' => 'OR',
-                    [
-                        '=LOGIN' => $rawLogin,
-                    ],
-                    [
-                        '=EMAIL' => $rawLogin,
-                    ],
-                    [
-                        '=PERSONAL_PHONE' => PhoneHelper::isPhone($rawLogin) ? PhoneHelper::normalizePhone(
-                            $rawLogin
-                        ) : $rawLogin,
-                    ],
-                ],
-            ]
-        );
-        if ($onlyActive) {
-            $query->addFilter('ACTIVE', 'Y');
+        try {
+            $this->findIdAndLoginByRawLogin($rawLogin, $onlyActive);
+            return true;
+        } catch (UsernameNotFoundException $exception) {
+        } catch (WrongPhoneNumberException $e) {
         }
-        $result = $query->exec();
-
-
-        if (1 === $result->getSelectedRowsCount()) {
-            return $result->fetchRaw();
-        }
-        if (0 === $result->getSelectedRowsCount()) {
-            throw new UsernameNotFoundException(sprintf('No user with such raw login %s', $rawLogin));
-        }
-
-        throw new TooManyUserFoundException('Found more than one user with same raw login');
+        return false;
     }
-
+    
     /**
      * @param User $user
      *
@@ -235,7 +228,7 @@ class UserRepository
      * @throws BitrixRuntimeException
      * @return bool
      */
-    public function update(User $user) : bool
+    public function update(User $user): bool
     {
         $this->checkIdentifier($user->getId());
         $validationResult = $this->validator->validate($user, null, ['update']);
@@ -250,7 +243,7 @@ class UserRepository
         }
         throw new BitrixRuntimeException($this->cuser->LAST_ERROR);
     }
-
+    
     /**
      * @param int $id
      *
@@ -259,17 +252,121 @@ class UserRepository
      * @throws BitrixRuntimeException
      * @return bool
      */
-    public function delete(int $id) : bool
+    public function delete(int $id): bool
     {
         $this->checkIdentifier($id);
         if (CUser::Delete($id)) {
             return true;
         }
-
+        
         $bitrixException = $this->cmain->GetException();
         throw new BitrixRuntimeException($bitrixException->GetString(), $bitrixException->GetID() ?: null);
     }
-
+    
+    /**
+     * @param int $id
+     *
+     * @return array
+     */
+    public function getUserGroupsIds(int $id): array
+    {
+        return $this->getUserGroups($id)->map(function (Group $group) {
+            return $group->getId();
+        })->toArray();
+    }
+    
+    /** @noinspection PhpDocMissingThrowsInspection
+     * @param int $id
+     *
+     * @return Collection|Group[]
+     */
+    protected function getUserGroups(int $id): Collection
+    {
+        /** @noinspection PhpUnhandledExceptionInspection */
+        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+        $res = UserGroupTable::query()
+                             ->setFilter([
+                                             'USER_ID'       => $id,
+                                             '!GROUP.ACTIVE' => null,
+                                             'LOGIC'         => 'AND',
+                                             [
+                                                 'LOGIC'            => 'OR',
+                                                 '>=DATE_ACTIVE_TO' => new DateTime(),
+                                                 'DATE_ACTIVE_TO'   => null,
+                                             ],
+                                             [
+                                                 'LOGIC'              => 'OR',
+                                                 '<=DATE_ACTIVE_FROM' => new DateTime(),
+                                                 'DATE_ACTIVE_FROM'   => null,
+                                             ],
+                                         ])
+                             ->addSelect('GROUP_ID')
+                             ->addSelect('GROUP.NAME', 'GROUP_NAME')
+                             ->addSelect('GROUP.STRING_ID', 'GROUP_CODE')
+                             ->addSelect('GROUP.NAME', 'GROUP_NAME')
+                             ->addSelect('GROUP.ACTIVE', 'GROUP_ACTIVE')
+                             ->exec();
+        
+        $data = array_filter($res->fetchAll(), function ($group) {
+            return $group && $group['GROUP_ACTIVE'];
+        });
+        
+        $groups = $this->serializer->fromArray($data, sprintf('array<%s>', Group::class)) ?? [];
+        return new ArrayCollection($groups);
+    }
+    
+    /**
+     * @param string $rawLogin
+     *
+     * @param bool   $onlyActive
+     *
+     * @throws UsernameNotFoundException
+     * @throws TooManyUserFoundException
+     * @throws WrongPhoneNumberException
+     * @return array
+     */
+    protected function findIdAndLoginByRawLogin(string $rawLogin, bool $onlyActive = true): array
+    {
+        $query = UserTable::query()
+                          ->addSelect('ID')
+                          ->addSelect('LOGIN')
+                          ->setFilter(
+                              [
+                                  [
+                                      'LOGIC' => 'OR',
+                                      [
+                                          '=LOGIN' => $rawLogin,
+                                      ],
+                                      [
+                                          '=EMAIL' => $rawLogin,
+                                      ],
+                                      [
+                                          '=PERSONAL_PHONE' => PhoneHelper::isPhone($rawLogin) ? PhoneHelper::normalizePhone(
+                                              $rawLogin
+                                          ) : $rawLogin,
+                                      ],
+                                  ],
+                              ]
+                          );
+        if ($onlyActive) {
+            $query->addFilter('ACTIVE', 'Y');
+        }
+        $result = $query->exec();
+        
+        $data = $result->fetchRaw() ?: [];
+        $data = array_filter($data);
+        $isValidData = isset($data['ID'], $data['LOGIN']);
+        
+        if ($isValidData && 1 === $result->getSelectedRowsCount()) {
+            return $result->fetchRaw();
+        }
+        if (!$isValidData || 0 === $result->getSelectedRowsCount()) {
+            throw new UsernameNotFoundException(sprintf('No user with such raw login %s', $rawLogin));
+        }
+        
+        throw new TooManyUserFoundException('Found more than one user with same raw login');
+    }
+    
     /**
      * @param int $id
      *
@@ -292,35 +389,49 @@ class UserRepository
         }
     }
     
-    /**
-     * @param int $id
-     *
-     * @return array
-     */
-    public function getUserGroups(int $id) : array
+    public function havePhoneAndEmailByUsers(array $params) : array
     {
-        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-        $res    = UserGroupTable::query()->setFilter(
-            [
-                'USER_ID' => $id,
-                'LOGIC'   => 'AND',
-                [
-                    'LOGIC'            => 'OR',
-                    '>=DATE_ACTIVE_TO' => new DateTime(),
-                    'DATE_ACTIVE_TO'   => null,
-                ],
-                [
-                    'LOGIC'              => 'OR',
-                    '<=DATE_ACTIVE_FROM' => new DateTime(),
-                    'DATE_ACTIVE_FROM'   => null,
-                ],
-            ]
-        )->setSelect(['GROUP_ID'])->exec();
-        $groups = [];
-        while ($item = $res->fetch()) {
-            $groups[] = (int)$item['GROUP_ID'];
+        $return = [
+            'phone' => false,
+            'email' => false,
+        ];
+        
+        if (empty($params)) {
+            return $return;
         }
         
-        return $groups;
+        $filter = [
+            [
+                'LOGIC' => 'OR',
+            ],
+        ];
+        if (!empty($params['EMAIL'])) {
+            $filter[0]['EMAIL'] = $params['EMAIL'];
+        }
+        if (!empty($params['PERSONAL_PHONE'])) {
+            $filter[0]['PERSONAL_PHONE'] = $params['PERSONAL_PHONE'];
+        }
+        $users = $this->findBy(
+            $filter,
+            [],
+            1
+        );
+        if (\is_array($users) && !empty($users)) {
+            /** @var User $user */
+            $return = [
+                'phone' => false,
+                'email' => false,
+            ];
+            foreach ($users as $user) {
+                if ($user->getPersonalPhone() === $params['PERSONAL_PHONE']) {
+                    $return['phone'] = true;
+                }
+                if($user->getEmail() === $params['EMAIL']){
+                    $return['email'] = true;
+                }
+            }
+        }
+        
+        return $return;
     }
 }

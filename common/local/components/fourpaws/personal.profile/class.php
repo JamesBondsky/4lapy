@@ -361,8 +361,12 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
     {
         /** @var UserRepository $userRepository */
         $userRepository = $this->currentUserProvider->getUserRepository();
-        $curUser        = $userRepository->findBy(['PERSONAL_PHONE' => $phone], [], 1);
-        if ($curUser instanceof User || (\is_array($curUser) && !empty($curUser))) {
+        $haveUsers = $userRepository->havePhoneAndEmailByUsers(
+            [
+                'PERSONAL_PHONE' => $phone,
+            ]
+        );
+        if($haveUsers['phone']){
             return JsonErrorResponse::createWithData(
                 'Такой телефон уже существует',
                 ['errors' => ['havePhone' => 'Такой телефон уже существует']]
