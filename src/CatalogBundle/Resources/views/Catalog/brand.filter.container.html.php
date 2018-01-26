@@ -41,7 +41,7 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
     <div class="b-filter__wrapper b-filter__wrapper--scroll">
         <form class="b-form js-filter-form" action="<?= $APPLICATION->GetCurDir() ?>">
             <div class="b-filter__block b-filter__block--reset js-reset-link-block"
-                <?= $filterCollection->hasCheckedFilter() ? 'style="display:block"' : '' ?>>
+                <?= $filterCollection->hasCheckedFilterBrand() ? 'style="display:block"' : '' ?>>
                 <a class="b-link b-link--reset js-reset-filter"
                    href="<?= $queryUrl->getUri() ?>"
                    title="Сбросить фильтры">Сбросить фильтры</a>
