@@ -87,6 +87,7 @@ use FourPaws\External\Manzana\Model\Client;
         <div class="b-input-line b-input-line--user-data js-small-input">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-email">Эл. почта</label>
+                <span class="b-input-line__require">(обязательно)</span>
             </div>
             <div class="b-input b-input--registration-form">
                 <input class="b-input__input-field b-input__input-field--registration-form"
@@ -161,7 +162,7 @@ use FourPaws\External\Manzana\Model\Client;
        data-step="step1"
        data-phone="<?= $phone ?>">
         <span class="b-icon b-icon--back-long">
-            <?= new SvgDecorator('icon-back-form', 13, 21) ?>
+            <?= new SvgDecorator('icon-back-form', 13, 11) ?>
         </span>Назад
     </a>
 </div>
