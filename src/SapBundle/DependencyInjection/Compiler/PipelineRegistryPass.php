@@ -3,13 +3,14 @@
 namespace FourPaws\SapBundle\DependencyInjection\Compiler;
 
 use FourPaws\SapBundle\Pipeline\PipelineRegistry;
+use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Reference;
 
-class PipelineRegistryPass
+class PipelineRegistryPass implements CompilerPassInterface
 {
     public function process(ContainerBuilder $container)
     {
-        dump($container);
         if (!$container->has(PipelineRegistry::class)) {
             return;
         }
@@ -19,7 +20,11 @@ class PipelineRegistryPass
         $taggedServices = $container->findTaggedServiceIds('sap.pipeline');
         
         foreach ($taggedServices as $id => $tags) {
-            $registry->addMethodCall('register', [new Reference($id)]);
+            $registry->addMethodCall('register',
+                                     [
+                                         $tags[0]['name'],
+                                         new Reference($id),
+                                     ]);
         }
     }
 }

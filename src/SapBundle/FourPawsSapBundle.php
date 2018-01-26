@@ -3,6 +3,7 @@
 namespace FourPaws\SapBundle;
 
 use FourPaws\SapBundle\DependencyInjection\Compiler\ConsumerRegistryPass;
+use FourPaws\SapBundle\DependencyInjection\Compiler\PipelineRegistryPass;
 use FourPaws\SapBundle\DependencyInjection\Compiler\ReferenceRepositoryRegistryPass;
 use FourPaws\SapBundle\DependencyInjection\Compiler\SourceRegistryPass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -16,5 +17,6 @@ class FourPawsSapBundle extends Bundle
         $container->addCompilerPass(new ConsumerRegistryPass());
         $container->addCompilerPass(new SourceRegistryPass());
         $container->addCompilerPass(new ReferenceRepositoryRegistryPass());
+        $container->addCompilerPass(new PipelineRegistryPass());
     }
 }
