@@ -3,18 +3,22 @@
 namespace FourPaws\SapBundle\Consumer;
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Catalog\StoreProductTable;
 use Bitrix\Catalog\StoreTable;
-use Bitrix\Main\Result;
 use Bitrix\Main\Error;
-use FourPaws\SapBundle\Dto\In\DcStock\StockItem;
-use FourPaws\SapBundle\Dto\In\DcStock\DcStock;
+use Bitrix\Main\Result;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\SapBundle\Dto\In\DcStock\DcStock;
+use FourPaws\SapBundle\Dto\In\DcStock\StockItem;
 use FourPaws\SapBundle\Exception\InvalidArgumentException;
+use Psr\Log\LoggerAwareInterface;
 
-class DcStockConsumer implements ConsumerInterface
+class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
 {
+    use LazyLoggerAwareTrait;
+
     /** @var array $offersCache */
     protected $offersCache = [];
 
@@ -38,14 +42,42 @@ class DcStockConsumer implements ConsumerInterface
             return false;
         }
 
-        foreach ($dcStock->getItems() as $stockItem) {
+        $result = true;
+
+        $this->log()->info(sprintf('Импортируется %s остатков', $dcStock->getItems()->count()));
+        foreach ($dcStock->getItems() as $id => $stockItem) {
+            $this->log()->debug(sprintf(
+                'Импортируется остаток %s для оффера с xml id %s для склада %s',
+                $id + 1,
+                $stockItem->getOfferXmlId(),
+                $stockItem->getPlantCode()
+            ));
             if (!$stockItem instanceof StockItem) {
                 throw new InvalidArgumentException(sprintf('Trying to pass not %s object', StockItem::class));
             }
-            $this->setOfferStock($stockItem);
+            $setResult = $this->setOfferStock($stockItem);
+            $result &= $setResult->isSuccess();
+            if ($setResult->isSuccess()) {
+                $this->log()->debug(sprintf(
+                    'Проимпортирован остаток %s для оффера с xml id %s  для склада %s',
+                    $id + 1,
+                    $stockItem->getOfferXmlId(),
+                    $stockItem->getPlantCode()
+                ));
+            } else {
+                foreach ($setResult->getErrors() as $error) {
+                    $this->log()->error(sprintf(
+                        'Ошибка импорта остатка %s для оффера с xml id %s для склада %s: %s',
+                        $id + 1,
+                        $stockItem->getOfferXmlId(),
+                        $stockItem->getPlantCode(),
+                        $error->getMessage()
+                    ));
+                }
+            }
         }
 
-        return true;
+        return $result;
     }
 
     /**
@@ -85,12 +117,15 @@ class DcStockConsumer implements ConsumerInterface
             if ($item) {
                 $result->setData(
                     [
-                        'ID' => $item['ID'],
+                        'ID'        => $item['ID'],
                         'IBLOCK_ID' => $item['IBLOCK_ID'],
                     ]
                 );
             } else {
-                $result->addError(new Error('Не найден элемент торгового предложения по внешнему коду: '.$xmlId, 200));
+                $result->addError(new Error(
+                    'Не найден элемент торгового предложения по внешнему коду: ' . $xmlId,
+                    200
+                ));
             }
         }
 
@@ -100,44 +135,6 @@ class DcStockConsumer implements ConsumerInterface
     /**
      * @param string $xmlId
      *
-     * @return array
-     */
-    private function getOfferElementByXmlId($xmlId): array
-    {
-        $return = [];
-        if (!isset($this->offersCache[$xmlId])) {
-            $items = \CIBlockElement::GetList(
-                [
-                    'ID' => 'ASC'
-                ],
-                [
-                    'IBLOCK_ID' => $this->getOffersIBlockId(),
-                    '=XML_ID' => $xmlId,
-                ],
-                false,
-                false,
-                [
-                    'ID', 'IBLOCK_ID',
-                ]
-            );
-            if ($item = $items->fetch()) {
-                $return = $item;
-            }
-
-            $this->offersCache[$xmlId] = $return;
-            
-            if ($this->maxOffersCacheSize > 0 && count($this->offersCache) > $this->maxOffersCacheSize) {
-                $this->offersCache = array_slice($this->offersCache, 1, null, true);
-            }
-        } else {
-            $return = $this->offersCache[$xmlId];
-        }
-
-        return $return;
-    }
-
-    /**
-     * @param string $xmlId
      * @return Result
      */
     protected function getStoreDataByXmlId(string $xmlId): Result
@@ -158,7 +155,7 @@ class DcStockConsumer implements ConsumerInterface
                     ]
                 );
             } else {
-                $result->addError(new Error('Не найден склад по внешнему коду: '.$xmlId, 200));
+                $result->addError(new Error('Не найден склад по внешнему коду: ' . $xmlId, 200));
             }
         }
 
@@ -167,6 +164,7 @@ class DcStockConsumer implements ConsumerInterface
 
     /**
      * @param string $xmlId
+     *
      * @return array
      */
     protected function getStoreByXmlId(string $xmlId): array
@@ -175,8 +173,8 @@ class DcStockConsumer implements ConsumerInterface
         if (!isset($this->storesCache[$xmlId])) {
             $items = StoreTable::getList(
                 [
-                    'order' => [
-                        'ID' => 'ASC'
+                    'order'  => [
+                        'ID' => 'ASC',
                     ],
                     'filter' => [
                         '=XML_ID' => $xmlId,
@@ -204,7 +202,8 @@ class DcStockConsumer implements ConsumerInterface
 
     /**
      * @param StockItem $stockItem
-     * @param bool $getExtResult
+     * @param bool      $getExtResult
+     *
      * @return Result
      */
     protected function setOfferStock(StockItem $stockItem, $getExtResult = true): Result
@@ -212,9 +211,9 @@ class DcStockConsumer implements ConsumerInterface
         $result = new Result();
 
         $resultData = [];
-// !!!
-// Непонятно как следует обрабатывать значение $stockItem->getStockType()
-// !!!
+        // !!!
+        // Непонятно как следует обрабатывать значение $stockItem->getStockType()
+        // !!!
         $offerElementDataResult = null;
         if ($result->isSuccess()) {
             $offerElementDataResult = $this->getOfferElementDataByXmlId($stockItem->getOfferXmlId());
@@ -238,13 +237,13 @@ class DcStockConsumer implements ConsumerInterface
 
             $items = StoreProductTable::getList(
                 [
-                    'order' => [
-                        'ID' => 'ASC'
+                    'order'  => [
+                        'ID' => 'ASC',
                     ],
                     'filter' => [
                         '=PRODUCT_ID' => $offerData['ID'],
-                        '=STORE_ID' => $storeData['ID'],
-                    ]
+                        '=STORE_ID'   => $storeData['ID'],
+                    ],
                 ]
             );
             $wasUpdated = false;
@@ -280,8 +279,8 @@ class DcStockConsumer implements ConsumerInterface
                 // Добавление новой записи
                 $fields = [
                     'PRODUCT_ID' => $offerData['ID'],
-                    'STORE_ID' => $storeData['ID'],
-                    'AMOUNT' => $stockValue,
+                    'STORE_ID'   => $storeData['ID'],
+                    'AMOUNT'     => $stockValue,
                 ];
                 $actionResult = StoreProductTable::add($fields);
                 if ($getExtResult) {
@@ -298,5 +297,45 @@ class DcStockConsumer implements ConsumerInterface
         $result->setData($resultData);
 
         return $result;
+    }
+
+    /**
+     * @param string $xmlId
+     *
+     * @return array
+     */
+    private function getOfferElementByXmlId($xmlId): array
+    {
+        $return = [];
+        if (!isset($this->offersCache[$xmlId])) {
+            $items = \CIBlockElement::GetList(
+                [
+                    'ID' => 'ASC',
+                ],
+                [
+                    'IBLOCK_ID' => $this->getOffersIBlockId(),
+                    '=XML_ID'   => $xmlId,
+                ],
+                false,
+                false,
+                [
+                    'ID',
+                    'IBLOCK_ID',
+                ]
+            );
+            if ($item = $items->fetch()) {
+                $return = $item;
+            }
+
+            $this->offersCache[$xmlId] = $return;
+
+            if ($this->maxOffersCacheSize > 0 && count($this->offersCache) > $this->maxOffersCacheSize) {
+                $this->offersCache = array_slice($this->offersCache, 1, null, true);
+            }
+        } else {
+            $return = $this->offersCache[$xmlId];
+        }
+
+        return $return;
     }
 }
