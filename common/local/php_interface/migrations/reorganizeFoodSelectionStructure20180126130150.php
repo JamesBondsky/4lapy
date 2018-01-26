@@ -72,26 +72,36 @@ class reorganizeFoodSelectionStructure20180126130150 extends \Adv\Bitrixtools\Mi
                 //установка связи разделов кошек и собак
                 $updateItemSections[$sectIdCode[$sect['CODE'] . '_' . $sect['XML_ID']]] = $sect['ID'];
                 //привязка к новым корневым разделам разделов собак
-                $this->updateIblockSectParent($sect['ID'], $rootSectionsIds[$sect['XML_ID']]);
+                $this->helper->Iblock()->updateSection($sect['ID'],
+                                                       [
+                                                           'IBLOCK_SECTION_ID' => $rootSectionsIds[$sect['XML_ID']],
+                                                           'XML_ID'            => $sect['ID'],
+                                                       ]
+                );
             }
         }
         
         //link cat sections by dog
-        $res =
-            SectionElementTable::query()->setSelect(['ITEM_ID' => 'IBLOCK_ELEMENT_ID', 'SECTION_ID' => 'IBLOCK_SECTION_ID'])->setFilter(
+        $res           =
+            SectionElementTable::query()->setSelect(
+                [
+                    'ITEM_ID'    => 'IBLOCK_ELEMENT_ID',
+                    'SECTION_ID' => 'IBLOCK_SECTION_ID',
+                ]
+            )->setFilter(
                 ['IBLOCK_SECTION_ID' => array_keys($updateItemSections)]
             )->exec();
         $itemsSections = [];
-        while($item = $res->fetch()){
+        while ($item = $res->fetch()) {
             $itemsSections[$item['ITEM_ID']][] = $item['SECTION_ID'];
         }
         $obEl = new \CIBlockElement;
-        foreach($itemsSections as $itemId => $itemSections){
+        foreach ($itemsSections as $itemId => $itemSections) {
             $newItemSections = [];
             foreach ($itemSections as $itemSection) {
                 $newItemSections[] = $updateItemSections[$itemSection];
             }
-    
+            
             $obEl->SetElementSection($item['ITEM_ID'], $newItemSections);
         }
         
@@ -102,7 +112,12 @@ class reorganizeFoodSelectionStructure20180126130150 extends \Adv\Bitrixtools\Mi
         
         //move petType sections
         foreach ($petTypeSection as $sectId) {
-            $this->updateIblockSectParent($sectId, $rootSectionsIds['pet_type']);
+            $this->helper->Iblock()->updateSection($sectId,
+                                                   [
+                                                       'IBLOCK_SECTION_ID' => $rootSectionsIds['pet_type'],
+                                                       'XML_ID'            => $sectId,
+                                                   ]
+            );
         }
     }
     
@@ -123,11 +138,6 @@ class reorganizeFoodSelectionStructure20180126130150 extends \Adv\Bitrixtools\Mi
         );
         
         return \is_bool($id) ? 0 : $id;
-    }
-    
-    private function updateIblockSectParent(int $sectId, int $parentSect)
-    {
-        $this->helper->Iblock()->updateSection($sectId, ['IBLOCK_SECTION_ID' => $parentSect]);
     }
     
     public function down()
