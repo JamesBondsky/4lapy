@@ -56,10 +56,10 @@ if ($showForm) {
                             $errMess = 'Пожалуйста, укажите номер карты';
                             break;
                         case 'not_found':
-                            $errMess = 'Увы, мы не нашли этой карты :-(';
+                            $errMess = 'Карта не найдена или невалидна';
                             break;
                         case 'activated':
-                            $errMess = 'Увы, но карта уже активирована :-(';
+                            $errMess = 'Карта уже активирована';
                             break;
                     }
                 }
@@ -193,8 +193,8 @@ if ($showForm) {
                             break;
                     }
                 }
-                $male = $component::GENDER_CODE_M;
-                $female = $component::GENDER_CODE_F;
+                $male = $component::EXTERNAL_GENDER_CODE_M;
+                $female = $component::EXTERNAL_GENDER_CODE_F;
                 ?><div class="form-page__field-wrap">
                     <select name="<?=$fieldName?>">
                         <option value="">Укажите свой пол</option>
@@ -336,8 +336,9 @@ if ($showForm) {
                 echo '</div>';
             }
 
+            $btnText = $arResult['STEP'] >= 4 ? 'Зарегистрировать карту' : 'ДАЛЕЕ';
             ?><div class="form-page__submit-wrap">
-                <input class="form-page__btn inline-block" type="submit" value="ДАЛЕЕ">
+                <input class="form-page__btn inline-block" type="submit" value="<?=$btnText?>">
             </div>
         </div>
     </form><?php

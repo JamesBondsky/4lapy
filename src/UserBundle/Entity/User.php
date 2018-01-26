@@ -219,6 +219,15 @@ class User implements UserInterface
      */
     protected $groups;
 
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("UF_DISCOUNT_CARD")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $discountCardNumber = '';
+
     public function __construct()
     {
         $this->roles = new ArrayCollection();
@@ -887,5 +896,33 @@ class User implements UserInterface
     {
         $this->password = '';
         return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDiscountCardNumber() : string
+    {
+        return $this->discountCardNumber ?? '';
+    }
+
+    /**
+     * @param string $discountCardNumber
+     *
+     * @return User
+     */
+    public function setDiscountCardNumber(string $discountCardNumber) : User
+    {
+        $this->discountCardNumber = $discountCardNumber;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isFastOrderUser() : bool
+    {
+        return (strpos($this->getEmail(), '@fastorder.ru') !== false);
     }
 }
