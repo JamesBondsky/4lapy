@@ -1,3 +1,4 @@
 imports:
-  - { resource: config.yml }
+  - { resource: parameters_prod.yml }
+  - { resource: config_prod.yml }
   - { resource: services_prod.yml }

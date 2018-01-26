@@ -2,8 +2,6 @@
 
 namespace FourPaws\SapBundle\Source;
 
-use FourPaws\SapBundle\Model\SourceMessageInterface;
-
 interface SourceRegistryInterface
 {
     /**
@@ -12,26 +10,26 @@ interface SourceRegistryInterface
      *
      * @return SourceRegistryInterface
      */
-    public function register(string $type, SourceInterface $source): SourceRegistryInterface;
-
+    public function register(string $type, SourceInterface $source) : SourceRegistryInterface;
+    
     /**
      * @param string $type
      *
      * @return \Generator|SourceMessageInterface[]
      */
-    public function generator(string $type): \Generator;
-
+    public function generator(string $type) : \Generator;
+    
     /**
      * @param SourceMessageInterface $sourceMessage
      *
      * @return bool
      */
-    public function ack(SourceMessageInterface $sourceMessage): bool;
-
+    public function ack(SourceMessageInterface $sourceMessage) : bool;
+    
     /**
      * @param SourceMessageInterface $sourceMessage
      *
      * @return bool
      */
-    public function noAck(SourceMessageInterface $sourceMessage): bool;
+    public function noAck(SourceMessageInterface $sourceMessage) : bool;
 }
