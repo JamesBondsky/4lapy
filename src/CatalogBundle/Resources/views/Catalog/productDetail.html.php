@@ -5,10 +5,10 @@
  */
 
 use FourPaws\App\Templates\ViewsEnum;
-use FourPaws\CatalogBundle\Dto\ProductDetailRequest;
-use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Catalog\Model\Product;
+use FourPaws\CatalogBundle\Dto\ProductDetailRequest;
+use FourPaws\Decorators\SvgDecorator;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\HighloadHelper;
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
@@ -86,24 +86,23 @@ $product = $APPLICATION->IncludeComponent(
                             <?php
                             $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB_HEADER);
 
-                            /**
-                             * @todo Состава пока нет
-                             */
-                            //<li class="b-tab-title__item js-tab-item">
-                            //    <a class="b-tab-title__link js-tab-link"
-                            //    href="javascript:void(0);" title="Состав"
-                            //    data-tab="composition"><span
-                            //    class="b-tab-title__text">Состав</span></a>
-                            //</li>
-                            /**
-                             * @todo Рекомендация по питанию пока нет
-                             */
-                            /*<li class="b-tab-title__item js-tab-item">
-                                <a class="b-tab-title__link js-tab-link"
-                                   href="javascript:void(0);" title="Рекомендации по питанию"
-                                   data-tab="recommendations"><span class="b-tab-title__text">Рекомендации по питанию</span></a>
-                            </li>*/
+                            if ($product->getComposition()->getText()) { ?>
+                                <li class="b-tab-title__item js-tab-item">
+                                    <a class="b-tab-title__link js-tab-link"
+                                       href="javascript:void(0);" title="Состав"
+                                       data-tab="composition"><span
+                                                class="b-tab-title__text">Состав</span></a>
+                                </li>
+                            <?php }
 
+                            if ($product->getNormsOfUse()->getText()) { ?>
+                                <li class="b-tab-title__item js-tab-item">
+                                    <a class="b-tab-title__link js-tab-link"
+                                       href="javascript:void(0);" title="Рекомендации по питанию"
+                                       data-tab="recommendations"><span class="b-tab-title__text">Рекомендации по питанию</span></a>
+                                </li>
+                            <?php }
+                            
                             $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_RATING_TAB_HEADER_VIEW);
                             $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_DETAIL_DELIVERY_PAYMENT_TAB_HEADER);
                             ?>
@@ -125,21 +124,18 @@ $product = $APPLICATION->IncludeComponent(
                         <?php
                         $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB);
 
-                        /**
-                         * @todo Состава пока нет
-                         */
-                        /*<div class="b-tab-content__container js-tab-content" data-tab-content="composition">
-                            <div>2</div>
-                        </div>*/
+                        if ($product->getComposition()->getText()) { ?>
+                            <div class="b-tab-content__container js-tab-content" data-tab-content="composition">
+                                <div><?= $product->getComposition()->getText() ?></div>
+                            </div>
+                        <?php }
 
-                        /**
-                         * @todo Рекомендация по питанию пока нет
-                         */
-                        /*
-                         <div class="b-tab-content__container js-tab-content" data-tab-content="recommendations">
-                            <div>3</div>
-                        </div>
-                        */
+                        if ($product->getNormsOfUse()->getText()) { ?>
+                            <div class="b-tab-content__container js-tab-content" data-tab-content="recommendations">
+                                <div><?= $product->getNormsOfUse()->getText() ?>></div>
+                            </div>
+                        <?php }
+
                         /** @noinspection PhpUnhandledExceptionInspection */
                         $APPLICATION->IncludeComponent(
                             'fourpaws:comments',
