@@ -1,17 +1,21 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace Sprint\Migration;
 
+use Adv\Bitrixtools\Migration\SprintMigrationBase;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Iblock\SectionElementTable;
 use Bitrix\Iblock\SectionTable;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 
-class reorganizeFoodSelectionStructure20180126130150 extends \Adv\Bitrixtools\Migration\SprintMigrationBase
+class reorganizeFoodSelectionStructure20180126130150 extends SprintMigrationBase
 {
-    
-    protected $description = "Переформирование структуры заполнения корма и миграция";
+    protected $description = 'Переформирование структуры заполнения корма и миграция';
     
     private   $iblockId;
     
@@ -72,25 +76,25 @@ class reorganizeFoodSelectionStructure20180126130150 extends \Adv\Bitrixtools\Mi
                 //установка связи разделов кошек и собак
                 $updateItemSections[$sectIdCode[$sect['CODE'] . '_' . $sect['XML_ID']]] = $sect['ID'];
                 //привязка к новым корневым разделам разделов собак
-                $this->helper->Iblock()->updateSection($sect['ID'],
-                                                       [
-                                                           'IBLOCK_SECTION_ID' => $rootSectionsIds[$sect['XML_ID']],
-                                                           'XML_ID'            => $sect['ID'],
-                                                       ]
+                $this->helper->Iblock()->updateSection(
+                    $sect['ID'],
+                    [
+                        'IBLOCK_SECTION_ID' => $rootSectionsIds[$sect['XML_ID']],
+                        'XML_ID'            => $sect['ID'],
+                    ]
                 );
             }
         }
         
         //link cat sections by dog
-        $res           =
-            SectionElementTable::query()->setSelect(
-                [
-                    'ITEM_ID'    => 'IBLOCK_ELEMENT_ID',
-                    'SECTION_ID' => 'IBLOCK_SECTION_ID',
-                ]
-            )->setFilter(
-                ['IBLOCK_SECTION_ID' => array_keys($updateItemSections)]
-            )->exec();
+        $res           = SectionElementTable::query()->setSelect(
+            [
+                'ITEM_ID'    => 'IBLOCK_ELEMENT_ID',
+                'SECTION_ID' => 'IBLOCK_SECTION_ID',
+            ]
+        )->setFilter(
+            ['IBLOCK_SECTION_ID' => array_keys($updateItemSections)]
+        )->exec();
         $itemsSections = [];
         while ($item = $res->fetch()) {
             $itemsSections[$item['ITEM_ID']][] = $item['SECTION_ID'];
@@ -98,8 +102,10 @@ class reorganizeFoodSelectionStructure20180126130150 extends \Adv\Bitrixtools\Mi
         $obEl = new \CIBlockElement;
         foreach ($itemsSections as $itemId => $itemSections) {
             $newItemSections = [];
-            foreach ($itemSections as $itemSection) {
-                $newItemSections[] = $updateItemSections[$itemSection];
+            if (\is_array($itemSections) && !empty($itemSections)) {
+                foreach ($itemSections as $itemSection) {
+                    $newItemSections[] = $updateItemSections[$itemSection];
+                }
             }
             
             $obEl->SetElementSection($item['ITEM_ID'], $newItemSections);
@@ -112,11 +118,12 @@ class reorganizeFoodSelectionStructure20180126130150 extends \Adv\Bitrixtools\Mi
         
         //move petType sections
         foreach ($petTypeSection as $sectId) {
-            $this->helper->Iblock()->updateSection($sectId,
-                                                   [
-                                                       'IBLOCK_SECTION_ID' => $rootSectionsIds['pet_type'],
-                                                       'XML_ID'            => $sectId,
-                                                   ]
+            $this->helper->Iblock()->updateSection(
+                $sectId,
+                [
+                    'IBLOCK_SECTION_ID' => $rootSectionsIds['pet_type'],
+                    'XML_ID'            => $sectId,
+                ]
             );
         }
     }
@@ -143,5 +150,4 @@ class reorganizeFoodSelectionStructure20180126130150 extends \Adv\Bitrixtools\Mi
     public function down()
     {
     }
-    
 }
