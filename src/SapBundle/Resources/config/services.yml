@@ -23,7 +23,6 @@ services:
     FourPaws\SapBundle\Consumer\ConsumerRegistry:
         public: true
 
-    # todo: remove after development!
     FourPaws\SapBundle\Pipeline\PipelineRegistry:
         public: true
 
@@ -43,4 +42,8 @@ services:
     # Необходимо для битровых событий
     # todo переписать на symfony-style
     FourPaws\SapBundle\Subscriber\BitrixEvents:
+        public: true
+
+    # todo как автовайрить?..
+    FourPaws\SapBundle\Service\SapService:
         public: true

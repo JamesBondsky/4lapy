@@ -3,6 +3,10 @@
 namespace FourPaws\SapBundle\Command;
 
 use Exception;
+use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\SapBundle\Pipeline\PipelineRegistry;
+use FourPaws\SapBundle\Service\SapService;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use Psr\Log\LoggerAwareInterface;
@@ -25,18 +29,32 @@ class ImportCommand extends Command implements LoggerAwareInterface
     
     const ARGUMENT_PIPELINE = 'pipeline';
     
-    protected $debug = false;
+    protected $debug    = false;
     
     protected $hasError = false;
     
     /**
+     * @var PipelineRegistry
+     */
+    protected $pipelineRegistry;
+    
+    /**
+     * @var \Symfony\Component\DependencyInjection\Container
+     */
+    protected $container;
+    
+    /**
      * @param null $name
+     *
+     * @todo возможно ли вынести PipelineRegistry и SapService в конструктор?..
      *
      * @throws LogicException
      * @throws Exception
      * @throws \InvalidArgumentException
+     * @throws ApplicationCreateException
      */
-    public function __construct($name = null) {
+    public function __construct($name = null)
+    {
         parent::__construct($name);
         $this->setLogger(new Logger('Sap_exchange', [new StreamHandler(STDOUT, Logger::DEBUG)]));
     }
@@ -44,16 +62,18 @@ class ImportCommand extends Command implements LoggerAwareInterface
     /**
      * @throws InvalidArgumentException
      */
-    public function configure() {
-        /**
-         * @todo get pipelines from configuration
-         */
-        $pipelines = ['catalog', 'order_status', 'delivery_schedule'];
+    public function configure()
+    {
+        $this->container        = Application::getInstance()->getContainer();
+        $this->pipelineRegistry = $this->container->get(PipelineRegistry::class);
         
         $this->setName('fourpaws:sap:import')
-             ->setDescription('Sap exchange. Start exchange by type.')
-             ->addArgument(self::ARGUMENT_PIPELINE, InputArgument::REQUIRED,
-                           sprintf('Pipeline. %s', implode(', ', $pipelines)));
+             ->setDescription('Sap exchange. Start exchange by type.')->addArgument(self::ARGUMENT_PIPELINE,
+                                                                                    InputArgument::REQUIRED,
+                                                                                    sprintf('Pipeline. %s',
+                                                                                            implode(', ',
+                                                                                                    $this->pipelineRegistry->getCollection()
+                                                                                                                           ->getKeys())));
     }
     
     /**
@@ -64,20 +84,21 @@ class ImportCommand extends Command implements LoggerAwareInterface
      *
      * @throws InvalidArgumentException
      */
-    public function execute(InputInterface $input, OutputInterface $output) {
-        $pipeline = $input->getArgument(self::ARGUMENT_PIPELINE);
+    public function execute(InputInterface $input, OutputInterface $output)
+    {
+        $available = $this->pipelineRegistry->getCollection()->getKeys();
+        $pipeline  = $input->getArgument(self::ARGUMENT_PIPELINE);
         
-        /**
-         * @todo check type; or factory
-         */
-        if (\in_array($pipeline, [], true)) {
-            throw new InvalidArgumentException('Wrong pipeline');
+        if (!\in_array($pipeline, $available, true)) {
+            throw new InvalidArgumentException(sprintf('Wrong pipeline %s, available: %s',
+                                                       $pipeline,
+                                                       implode(', ', $available)));
         }
         
         try {
-            /**
-             * @todo implement command execute
-             */
+            $sapService = $this->container->get(SapService::class);
+            $sapService->execute($pipeline);
+            
             $this->logger->info(sprintf('%s`s exchange is done.', $pipeline));
         } catch (\Exception $e) {
             $this->logger->error(sprintf('Unknown error: %s', $e->getMessage()));
