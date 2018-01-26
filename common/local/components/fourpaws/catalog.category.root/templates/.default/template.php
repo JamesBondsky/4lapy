@@ -23,7 +23,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 $category = $arResult['CATEGORY'];
 
-$categoriesWithChildren = $category->getChild();
+$categoriesWithChildren = $category
+    ->getChild()
+    ->filter(function (Category $category) {
+        return $category->getChild()->count();
+    });
 
 ?>
 <?php $this->setViewTarget(ViewsEnum::CATALOG_CATEGORY_ROOT_LEFT_BLOCK) ?>
