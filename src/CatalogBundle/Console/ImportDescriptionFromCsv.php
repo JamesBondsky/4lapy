@@ -73,7 +73,7 @@ class ImportDescriptionFromCsv extends Command implements LoggerAwareInterface
                     $element = $element ?: '';
                     return trim($element);
                 }, $data);
-                list($xmlId, , $detailText, $composition, $normsOfUse) = $data;
+                list($xmlId, $name, $detailText, $composition, $normsOfUse) = $data;
                 if (!$xmlId) {
                     $this->log()->error('No xml id was passed');
                     continue;
@@ -96,6 +96,7 @@ class ImportDescriptionFromCsv extends Command implements LoggerAwareInterface
                     $this->connect->startTransaction();
 
                     $updateResult = $this->cIblockElement->Update($productId, [
+                        'NAME'        => $name,
                         'IBLOCK_ID'   => $iblockId,
                         'DETAIL_TEXT' => $detailText,
                     ]);
