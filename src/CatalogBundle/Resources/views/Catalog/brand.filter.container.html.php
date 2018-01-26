@@ -28,8 +28,6 @@ $category = $catalogRequest->getCategory();
 
 $filterCollection = $catalogRequest->getCategory()->getFilters();
 
-$queryUrl = new Uri($APPLICATION->GetCurDir());
-$queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalogRequest->getSearchString()]);
 ?>
 <aside class="b-filter b-filter--popup js-filter-popup">
     <div class="b-filter__top">
@@ -43,7 +41,7 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
             <div class="b-filter__block b-filter__block--reset js-reset-link-block"
                 <?= $filterCollection->hasCheckedFilterBrand() ? 'style="display:block"' : '' ?>>
                 <a class="b-link b-link--reset js-reset-filter"
-                   href="<?= $queryUrl->getUri() ?>"
+                   href="<?= $APPLICATION->GetCurDir() ?>"
                    title="Сбросить фильтры">Сбросить фильтры</a>
             </div>
             <?= $view->render(
