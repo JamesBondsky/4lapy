@@ -76,6 +76,10 @@ class MaterialConsumer implements ConsumerInterface, LoggerAwareInterface
         }
 
         try {
+            if ($material->isNotUploadToIm()) {
+                return $this->offerService->deativate($material->getOfferXmlId());
+            }
+
             $this->connection->startTransaction();
             $this->referenceService->fillFromMaterial($material);
             $this->connection->commitTransaction();
