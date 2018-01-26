@@ -1,0 +1,8 @@
+---
+
+parameters:
+  # Sap directories
+  sap.directory: ''
+
+imports:
+  - { resource: parameters.yml }

@@ -5,13 +5,13 @@ parameters:
   secret: 7371018148815e9de0f88dba6a44126524d6a80e
 
   manzana:
-    login: "%env(MANZANA_LOGIN)%"
-    password: "%env(MANZANA_PASSWORD)%"
-    wdsl: "%env(MANZANA_HOST)%"
+    login: '%env(MANZANA_LOGIN)%'
+    password: '%env(MANZANA_PASSWORD)%'
+    wdsl: '%env(MANZANA_HOST)%'
     pos: kuvi_pos
     business_unit: kuvi_shop
-  manzana.wdsl: "%env(MANZANA_HOST)%"
-  manzana.pos.wdsl: "%env(MANZANA_HOST_POS)%"
+  manzana.wdsl: '%env(MANZANA_HOST)%'
+  manzana.pos.wdsl: '%env(MANZANA_HOST_POS)%'
   manzana.guzzle.curl:
     !php/const:CURLOPT_CONNECTTIMEOUT: 3
 
@@ -21,8 +21,8 @@ parameters:
   sms:
     start_messaging: '09:00'
     stop_messaging: '21:00'
-    login: "%env(SMS_LOGIN)%"
-    password: "%env(SMS_PASSWORD)%"
+    login: '%env(SMS_LOGIN)%'
+    password: '%env(SMS_PASSWORD)%'
     originator: 4lapy
 
   expertsender:
@@ -55,8 +55,6 @@ parameters:
     - retryOnConflict: 0
 
   # Sap directories
-  sap.directory: '/home/vagrant/project/common/upload/sap-exchange'
-
   sap.product.directory.in: '%sap.directory%'
   sap.product.directory.out: '%sap.directory%/ArchMat/'
   sap.product.directory.error: '%sap.directory%/ArchMat_Errors/'

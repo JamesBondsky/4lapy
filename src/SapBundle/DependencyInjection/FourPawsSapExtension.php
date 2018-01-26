@@ -81,20 +81,23 @@ class FourPawsSapExtension extends ConfigurableExtension
      */
     protected function configPipelines(array $pipelines, ContainerBuilder $container)
     {
+        $allSources = $container->findTaggedServiceIds('sap.source');
+        
         foreach ($pipelines as $name => $pipeline) {
-            foreach ($pipelines as $pipelineSource) {
-                $sources = array_filter($container->findTaggedServiceIds('sap.source'),
-                    function ($a) use ($pipelineSource) {
-                        return \in_array($a[0]['type'], $pipelineSource, true);
-                    });
-            
-                if (\is_array($sources) && $sources) {
-                    $definition =
-                        $container->register('sap.pipeline.' . $name)
-                                  ->setClass(Pipeline::class)
-                                  ->addTag('sap.pipeline', ['name' => $name]);
-                
-                    foreach ($sources as $serviceId => $source) {
+            $definition =
+                $container->register('sap.pipeline.' . $name)
+                          ->setClass(Pipeline::class)
+                          ->addTag('sap.pipeline', ['name' => $name]);
+    
+            foreach ($pipeline as $pipelineSource) {
+                $source = array_filter($allSources,
+                    function ($value, $key) use ($pipelineSource) {
+                        return $pipelineSource === $value[0]['type'];
+                    },
+                                       ARRAY_FILTER_USE_BOTH);
+        
+                if (\is_array($source)) {
+                    foreach ($source as $serviceId => $serviceContext) {
                         $definition->addMethodCall('add', [new Reference($serviceId)]);
                     }
                 }

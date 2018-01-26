@@ -5,7 +5,6 @@ namespace FourPaws\SapBundle\Pipeline;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\SapBundle\Source\SourceInterface;
-use FourPaws\SapBundle\Source\SourceMessageInterface;
 
 class Pipeline implements PipelineInterface
 {
@@ -30,7 +29,7 @@ class Pipeline implements PipelineInterface
     }
     
     /**
-     * @return \Generator|SourceMessageInterface[]
+     * @inheritdoc
      */
     public function generator()
     {
