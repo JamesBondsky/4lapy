@@ -3,6 +3,7 @@
 namespace FourPaws\SapBundle\DependencyInjection;
 
 use FourPaws\SapBundle\Consumer\ConsumerInterface;
+use FourPaws\SapBundle\Pipeline\PipelineInterface;
 use FourPaws\SapBundle\Service\DirectorySourceFinderBuilder;
 use FourPaws\SapBundle\Source\DirectorySource;
 use FourPaws\SapBundle\Source\SourceInterface;
@@ -29,7 +30,9 @@ class FourPawsSapExtension extends ConfigurableExtension
         $loader->load('services.yml');
         $this->registerConsumerTags($container);
         $this->registerSourceTags($container);
+        $this->registerPipelineTags($container);
         $this->configDirectoryFinder($mergedConfig['directory_sources'], $container);
+        $this->configPipelines($mergedConfig['pipelines'], $mergedConfig['directory_sources'], $container);
     }
 
     protected function registerConsumerTags(ContainerBuilder $container)
@@ -44,6 +47,11 @@ class FourPawsSapExtension extends ConfigurableExtension
         $container
             ->registerForAutoconfiguration(SourceInterface::class)
             ->addTag('sap.source');
+    }
+    
+    protected function registerPipelineTags(ContainerBuilder $container)
+    {
+        $container->registerForAutoconfiguration(PipelineInterface::class)->addTag('sap.pipeline');
     }
 
     /**
@@ -73,5 +81,15 @@ class FourPawsSapExtension extends ConfigurableExtension
                 ->addArgument($source['error'])
                 ->addTag('sap.source', ['type' => $source['entity']]);
         }
+    }
+    
+    /**-
+     * @param array            $pipelines
+     * @param array            $directorySources
+     * @param ContainerBuilder $container
+     */
+    protected function configPipelines(array $pipelines, array $directorySources, ContainerBuilder $container)
+    {
+    
     }
 }

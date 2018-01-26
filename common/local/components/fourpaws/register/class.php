@@ -402,13 +402,10 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         }
         
         $data = [
-            'ID'                 => $this->currentUserProvider->getCurrentUserId(),
             'UF_PHONE_CONFIRMED' => 'Y',
             'PERSONAL_PHONE'     => $phone,
         ];
-        if ($this->currentUserProvider->getUserRepository()->update(
-            $this->serializer->fromArray($data, User::class, DeserializationContext::create()->setGroups('create'))
-        )) {
+        if ($this->currentUserProvider->getUserRepository()->updateData($this->currentUserProvider->getCurrentUserId(), $data)) {
             /** @var ManzanaService $manzanaService */
             $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
             $client         = null;

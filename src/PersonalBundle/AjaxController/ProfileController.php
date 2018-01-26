@@ -149,15 +149,7 @@ class ProfileController extends Controller
         
         try {
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-            $res = $this->currentUserProvider->getUserRepository()->update(
-                SerializerBuilder::create()->build()->fromArray(
-                    [
-                        'ID'       => $id,
-                        'PASSWORD' => $password,
-                    ],
-                    User::class
-                )
-            );
+            $res = $this->currentUserProvider->getUserRepository()->updatePassword($id, $password);
             if (!$res) {
                 return JsonErrorResponse::createWithData(
                     'Произошла ошибка при обновлении',
@@ -222,7 +214,7 @@ class ProfileController extends Controller
         
         try {
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-            $res = $userRepository->update($user);
+            $res = $userRepository->updateData($user->getId(), $userRepository->prepareData($data));
             if (!$res) {
                 return JsonErrorResponse::createWithData(
                     'Произошла ошибка при обновлении',

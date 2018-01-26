@@ -4,10 +4,6 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
-/*
- * @copyright Copyright (c) ADV/web-engineering co
- */
-
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
@@ -112,27 +108,20 @@ class FourPawsShopListComponent extends CBitrixComponent
         $storeCollection = $storeRepository->findBy($filter, $order);
         $stores          = $storeCollection->toArray();
         if (!empty($stores)) {
-            list(
-                $servicesList, $metroList
-                ) = $this->getFullStoreInfo($stores);
+            list($servicesList, $metroList) = $this->getFullStoreInfo($stores);
             
             /** @var Store $store */
             $avgGpsN = 0;
             $avgGpsS = 0;
             foreach ($stores as $store) {
-                $address = '';
                 $metro   = $store->getMetro();
-                if (!empty($metro) && is_array($metroList) && !empty($metroList) && isset($metroList[$metro])) {
-                    $address .= $metroList[$metro]['UF_NAME'] . ', ';
-                }
-                $address .= $store->getAddress();
+                $address = $store->getAddress();
                 
                 $image    = $store->getImageId();
                 $imageSrc = '';
                 if (!empty($image) && is_numeric($image) && $image > 0) {
-                    $imageSrc = CropImageDecorator::createFromPrimary($image)->setCropWidth(630)->setCropHeight(
-                        360
-                    )->getSrc();
+                    $imageSrc =
+                        CropImageDecorator::createFromPrimary($image)->setCropWidth(630)->setCropHeight(360)->getSrc();
                 }
                 
                 $services = [];
@@ -156,7 +145,7 @@ class FourPawsShopListComponent extends CBitrixComponent
                     'phone'      => $store->getPhone(),
                     'schedule'   => $store->getSchedule(),
                     'photo'      => $imageSrc,
-                    'metro'      => !empty($metro) ? $metroList[$metro]['UF_NAME'] : '',
+                    'metro'      => !empty($metro) ? 'м. ' . $metroList[$metro]['UF_NAME'] : '',
                     'metroClass' => !empty($metro) ? 'b-delivery-list__col--' . $metroList[$metro]['UF_CLASS'] : '',
                     'services'   => $services,
                     'gps_s'      => $gpsN,
