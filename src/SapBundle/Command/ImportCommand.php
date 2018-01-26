@@ -19,13 +19,13 @@ use Symfony\Component\Console\Output\OutputInterface;
  *
  * @package FourPaws\SapBundle\Command
  */
-class SapCommand extends Command implements LoggerAwareInterface
+class ImportCommand extends Command implements LoggerAwareInterface
 {
     use LoggerAwareTrait;
     
-    const ARGUMENT_TYPE = 'type';
+    const ARGUMENT_PIPELINE = 'pipeline';
     
-    protected $debug    = false;
+    protected $debug = false;
     
     protected $hasError = false;
     
@@ -36,22 +36,24 @@ class SapCommand extends Command implements LoggerAwareInterface
      * @throws Exception
      * @throws \InvalidArgumentException
      */
-    public function __construct($name = null)
-    {
+    public function __construct($name = null) {
         parent::__construct($name);
-        $this->setLogger(new Logger('Sap', [new StreamHandler(STDOUT, Logger::DEBUG)]));
+        $this->setLogger(new Logger('Sap_exchange', [new StreamHandler(STDOUT, Logger::DEBUG)]));
     }
     
     /**
      * @throws InvalidArgumentException
      */
-    public function configure()
-    {
-        $this->setName('fourpaws:sap:exchange')
-            ->setDescription('Sap exchange. Start exchange by type.')
-            ->addArgument(self::ARGUMENT_TYPE,
-                          InputArgument::REQUIRED,
-                          'Exchange type, one of this: offers, price');
+    public function configure() {
+        /**
+         * @todo get pipelines from configuration
+         */
+        $pipelines = ['catalog', 'order_status', 'delivery_schedule'];
+        
+        $this->setName('fourpaws:sap:import')
+             ->setDescription('Sap exchange. Start exchange by type.')
+             ->addArgument(self::ARGUMENT_PIPELINE, InputArgument::REQUIRED,
+                           sprintf('Pipeline. %s', implode(', ', $pipelines)));
     }
     
     /**
@@ -62,22 +64,21 @@ class SapCommand extends Command implements LoggerAwareInterface
      *
      * @throws InvalidArgumentException
      */
-    public function execute(InputInterface $input, OutputInterface $output)
-    {
-        $type   = $input->getArgument(self::ARGUMENT_TYPE);
-    
+    public function execute(InputInterface $input, OutputInterface $output) {
+        $pipeline = $input->getArgument(self::ARGUMENT_PIPELINE);
+        
         /**
          * @todo check type; or factory
          */
-        if (\in_array($type, [], true)) {
-            throw new InvalidArgumentException('');
+        if (\in_array($pipeline, [], true)) {
+            throw new InvalidArgumentException('Wrong pipeline');
         }
         
         try {
             /**
              * @todo implement command execute
              */
-            $this->logger->info(sprintf('%s`s exchange is done.', $type));
+            $this->logger->info(sprintf('%s`s exchange is done.', $pipeline));
         } catch (\Exception $e) {
             $this->logger->error(sprintf('Unknown error: %s', $e->getMessage()));
         }

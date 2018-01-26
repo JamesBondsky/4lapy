@@ -80,13 +80,12 @@ class ProductService
      */
     protected function findByMaterial(Material $material)
     {
-        $product = $this->findByOffer($material->getOfferXmlId());
-        $product = $product ?: $this->findByCombination(
+        $product = $this->findByCombination(
             $material->getProperties()->getPropertyValues(
                 SapProductProperty::PACKING_COMBINATION
             )->first()
         );
-        return $product;
+        return $product ?: $this->findByOffer($material->getOfferXmlId());
     }
 
     /**
@@ -148,8 +147,16 @@ class ProductService
      */
     protected function fillFields(Product $product, Material $material)
     {
-        $product
-            ->withName($material->getProductName() ?: $material->getOfferName());
+        if (!$product->getName()) {
+            $product->withName($material->getProductName() ?: $material->getOfferName());
+        }
+
+        if (!$product->getId()) {
+            /**
+             * По умолчанию создающиеся товары должны быть деактивированными
+             */
+            $product->withActive(false);
+        }
     }
 
     /**

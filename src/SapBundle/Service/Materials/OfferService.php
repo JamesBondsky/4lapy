@@ -69,6 +69,23 @@ class OfferService implements LoggerAwareInterface
     }
 
     /**
+     * @param string $xmlId
+     *
+     * @return bool
+     */
+    public function deativate(string $xmlId)
+    {
+        if ($id = $this->offerRepository->findIdByXmlId($xmlId)) {
+            $result = $this->offerRepository->setActive($id, false);
+            if ($result) {
+                $this->log()->debug(sprintf('Деактивирован оффер %s [%s]', $id, $xmlId));
+            }
+            return $result;
+        }
+        return true;
+    }
+
+    /**
      * @param Material $material
      *
      * @return null|IblockElement|Offer
