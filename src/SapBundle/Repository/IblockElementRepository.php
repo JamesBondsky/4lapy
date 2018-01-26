@@ -83,6 +83,23 @@ abstract class IblockElementRepository
     }
 
     /**
+     * @param string $xmlId
+     *
+     * @return null|int
+     */
+    public function findIdByXmlId(string $xmlId)
+    {
+        $data = $this->getQuery()
+            ->withFilterParameter('=XML_ID', $xmlId)
+            ->withSelect(['ID'])
+            ->withNav(['nTopCount' => 1])
+            ->doExec()
+            ->Fetch();
+        $id = $data['ID'] ?? null;
+        return $id ? (int)$id : null;
+    }
+
+    /**
      * @param int  $id
      * @param bool $active
      *
