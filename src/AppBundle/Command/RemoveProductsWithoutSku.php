@@ -18,7 +18,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- * Class BitrixClearUser
+ * Class RemoveProductsWithoutSku
  *
  * @package FourPaws\AppBundle\Command
  */
@@ -29,7 +29,7 @@ class RemoveProductsWithoutSku extends Command implements LoggerAwareInterface
     private $errorCount = 0;
     
     /**
-     * BitrixClearHighloadBlock constructor.
+     * RemoveProductsWithoutSku constructor.
      *
      * @param null $name
      *
