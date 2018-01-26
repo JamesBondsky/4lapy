@@ -23,7 +23,7 @@ Vagrant.configure("2") do |config|
 
   # Sub provision - apply to compiled box only
   config.vm.provision "shell",
-    path: "local/php_interface/subprovision.sh",
+    path: "common/local/php_interface/subprovision.sh",
     privileged: false,
     keep_color: true
 
@@ -39,10 +39,10 @@ Vagrant.configure("2") do |config|
   config.vm.network "forwarded_port", guest: 80, host: 8880
 
   config.vm.provider "virtualbox" do |v|
-      v.memory = 3072
+      v.memory = 6144
       v.cpus = 2
   end
 
-  config.vm.synced_folder ".", "/home/vagrant/htdocs", owner: "vagrant", group: "vagrant", create: true
+  config.vm.synced_folder ".", "/home/vagrant/project", owner: "vagrant", group: "vagrant", create: true
 
 end

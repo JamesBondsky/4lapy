@@ -1,0 +1,207 @@
+---
+
+services:
+
+  bx.hlblock.factory:
+    class: 'Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory'
+
+  bx.hlblock.base:
+    class: Bitrix\Highloadblock\DataManager
+    abstract: true
+    factory: 'bx.hlblock.factory:createTableObject'
+
+  bx.hlblock.parasitetype:
+    arguments: ['ParasiteType']
+    parent: bx.hlblock.base
+
+  bx.hlblock.label:
+    arguments: ['Label']
+    parent: bx.hlblock.base
+
+  bx.hlblock.filter:
+    arguments: ['Filter']
+    parent: bx.hlblock.base
+
+  bx.hlblock.publicationtype:
+    arguments: ['PublicationType']
+    parent: bx.hlblock.base
+
+  bx.hlblock.rewardtype:
+    arguments: ['RewardType']
+    parent: bx.hlblock.base
+
+  bx.hlblock.petageadditional:
+    arguments: ['PetAgeAdditional']
+    parent: bx.hlblock.base
+
+  bx.hlblock.storeservices:
+    arguments: ['StoreServices']
+    parent: bx.hlblock.base
+
+  bx.hlblock.metrostations:
+    arguments: ['MetroStations']
+    parent: bx.hlblock.base
+
+  bx.hlblock.metroways:
+    arguments: ['MetroWays']
+    parent: bx.hlblock.base
+
+  bx.hlblock.cities:
+    arguments: ['Cities']
+    parent: bx.hlblock.base
+
+  bx.hlblock.deliveryschedule:
+    arguments: ['DeliverySchedule']
+    parent: bx.hlblock.base
+
+  # Свойства продукта
+  bx.hlblock.forwho:
+    arguments: ['ForWho']
+    parent: bx.hlblock.base
+    tags:
+      - {name: sap.reference, property: !php/const:FourPaws\SapBundle\Enum\SapProductProperty::FOR_WHO}
+
+  bx.hlblock.tradename:
+    arguments: ['TradeName']
+    parent: bx.hlblock.base
+    tags:
+      - {name: sap.reference, property: !php/const:FourPaws\SapBundle\Enum\SapProductProperty::TRADE_NAME}
+
+  bx.hlblock.categorymanager:
+    arguments: ['CategoryManager']
+    parent: bx.hlblock.base
+    tags:
+      - {name: sap.reference, property: !php/const:FourPaws\SapBundle\Enum\SapProductProperty::MANAGER_OF_CATEGORY}
+
+  bx.hlblock.material:
+    arguments: ['Material']
+    parent: bx.hlblock.base
+    tags:
+      - {name: sap.reference, property: !php/const:FourPaws\SapBundle\Enum\SapProductProperty::MANUFACTURE_MATERIAL}
+
+  bx.hlblock.maker:
+    arguments: ['Maker']
+    parent: bx.hlblock.base
+    tags:
+      - {name: sap.reference, property: !php/const:FourPaws\SapBundle\Enum\SapProductProperty::MAKER}
+
+  bx.hlblock.petsize:
+    arguments: ['PetSize']
+    parent: bx.hlblock.base
+    tags:
+      - {name: sap.reference, property: !php/const:FourPaws\SapBundle\Enum\SapProductProperty::SIZE_OF_THE_ANIMAL_BIRD}
+
+  bx.hlblock.season:
+    arguments: ['Season']
+    parent: bx.hlblock.base
+    tags:
+      - {name: sap.reference, property: !php/const:FourPaws\SapBundle\Enum\SapProductProperty::SEASON_CLOTHES}
+
+  bx.hlblock.purpose:
+    arguments: ['Purpose']
+    parent: bx.hlblock.base
+    tags:
+      - {name: sap.reference, property: !php/const:FourPaws\SapBundle\Enum\SapProductProperty::PURPOSE}
+
+  bx.hlblock.productcategory:
+    arguments: ['ProductCategory']
+    parent: bx.hlblock.base
+    tags:
+      - {name: sap.reference, property: !php/const:FourPaws\SapBundle\Enum\SapProductProperty::CATEGORY}
+
+  bx.hlblock.petage:
+    arguments: ['PetAge']
+    parent: bx.hlblock.base
+    tags:
+      - {name: sap.reference, property: !php/const:FourPaws\SapBundle\Enum\SapProductProperty::ANIMALS_AGE}
+
+  bx.hlblock.productform:
+    arguments: ['ProductForm']
+    parent: bx.hlblock.base
+    tags:
+      - {name: sap.reference, property: !php/const:FourPaws\SapBundle\Enum\SapProductProperty::PRODUCT_FORM}
+
+  bx.hlblock.pettype:
+    arguments: ['PetType']
+    parent: bx.hlblock.base
+    tags:
+      - {name: sap.reference, property: !php/const:FourPaws\SapBundle\Enum\SapProductProperty::KIND_OF_ANIMAL}
+
+  bx.hlblock.pharmagroup:
+    arguments: ['PharmaGroup']
+    parent: bx.hlblock.base
+    tags:
+      - {name: sap.reference, property: !php/const:FourPaws\SapBundle\Enum\SapProductProperty::PHARMA_GROUP}
+
+  bx.hlblock.feedspec:
+    arguments: ['FeedSpec']
+    parent: bx.hlblock.base
+    tags:
+      - {name: sap.reference, property: !php/const:FourPaws\SapBundle\Enum\SapProductProperty::FEED_SPECIFICATION}
+
+  bx.hlblock.flavour:
+    arguments: ['Flavour']
+    parent: bx.hlblock.base
+    tags:
+      - {name: sap.reference, property: !php/const:FourPaws\SapBundle\Enum\SapProductProperty::FLAVOUR}
+
+  bx.hlblock.ingridientfeatures:
+    arguments: ['IngridientFeatures']
+    parent: bx.hlblock.base
+    tags:
+      - {name: sap.reference, property: !php/const:FourPaws\SapBundle\Enum\SapProductProperty::FEATURES_OF_INGREDIENTS}
+
+  bx.hlblock.petbreed:
+    arguments: ['PetBreed']
+    parent: bx.hlblock.base
+    tags:
+      - {name: sap.reference, property: !php/const:FourPaws\SapBundle\Enum\SapProductProperty::BREED_OF_ANIMAL}
+
+  bx.hlblock.petgender:
+    arguments: ['PetGender']
+    parent: bx.hlblock.base
+    tags:
+      - {name: sap.reference, property: !php/const:FourPaws\SapBundle\Enum\SapProductProperty::GENDER_OF_ANIMAL}
+
+  bx.hlblock.consistence:
+    arguments: ['Consistence']
+    parent: bx.hlblock.base
+    tags:
+      - {name: sap.reference, property: !php/const:FourPaws\SapBundle\Enum\SapProductProperty::CONSISTENCE}
+
+  bx.hlblock.country:
+    arguments: ['Country']
+    parent: bx.hlblock.base
+    tags:
+      - {name: sap.reference, property: !php/const:FourPaws\SapBundle\Enum\SapProductField::COUNTRY}
+
+  # Свойства оффера
+  bx.hlblock.colour:
+    arguments: ['Colour']
+    parent: bx.hlblock.base
+    tags:
+      - {name: sap.reference, property: !php/const:FourPaws\SapBundle\Enum\SapOfferProperty::COLOUR}
+
+  bx.hlblock.volume:
+    arguments: ['Volume']
+    parent: bx.hlblock.base
+    tags:
+      - {name: sap.reference, property: !php/const:FourPaws\SapBundle\Enum\SapOfferProperty::VOLUME}
+
+  bx.hlblock.clothingsize:
+    arguments: ['ClothingSize']
+    parent: bx.hlblock.base
+    tags:
+      - {name: sap.reference, property: !php/const:FourPaws\SapBundle\Enum\SapOfferProperty::CLOTHING_SIZE}
+
+  bx.hlblock.year:
+    arguments: ['Year']
+    parent: bx.hlblock.base
+    tags:
+      - {name: sap.reference, property: !php/const:FourPaws\SapBundle\Enum\SapOfferProperty::SEASON_YEAR}
+
+  bx.hlblock.packagetype:
+    arguments: ['PackageType']
+    parent: bx.hlblock.base
+    tags:
+      - {name: sap.reference, property: !php/const:FourPaws\SapBundle\Enum\SapOfferProperty::KIND_OF_PACKING}

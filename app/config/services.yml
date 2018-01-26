@@ -1,0 +1,118 @@
+---
+
+imports:
+  - { resource: services/bitrix-hl-blocks.yml }
+
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: true
+
+  search.factory:
+    class: FourPaws\Search\Factory
+    arguments: ['@jms_serializer']
+
+  elastica.client:
+    class: Elastica\Client
+    factory: 'search.factory:createElasticaClient'
+    arguments: ['%elastica.client_options%']
+
+  search.sync_consumer:
+    class: FourPaws\Search\Consumer\CatalogSyncConsumer
+    arguments: ['@jms_serializer', '@search.service']
+
+  search.service:
+    class: FourPaws\Search\SearchService
+    arguments:
+      - '@search.index_helper'
+
+  search.index_helper:
+    class: FourPaws\Search\Helper\IndexHelper
+    arguments:
+      - '@elastica.client'
+      - '@search.factory'
+      - '@jms_serializer'
+      - '@old_sound_rabbit_mq.catalog_sync_producer'
+
+  location.service:
+    class: FourPaws\Location\LocationService
+
+  health.service:
+    class: FourPaws\Health\HealthService
+
+  sms.service:
+    class: FourPaws\External\SmsService
+
+  manzana.guzzle:
+    class: GuzzleHttp\Client
+    arguments:
+      - curl: '%manzana.guzzle.curl%'
+
+  async.soap.factory:
+    class: Meng\AsyncSoap\Guzzle\Factory
+
+  manzana.soap:
+    class: Meng\AsyncSoap\SoapClientInteface
+    factory: 'async.soap.factory:create'
+    arguments: ['@manzana.guzzle', '%manzana.wdsl%']
+
+  manzana.pos.soap:
+    class: Meng\AsyncSoap\SoapClientInteface
+    factory: 'async.soap.factory:create'
+    arguments: ['@manzana.guzzle', '%manzana.pos.wdsl%']
+
+  manzana.service:
+    class: FourPaws\External\ManzanaService
+    arguments: ['@jms_serializer', '@manzana.soap', '%manzana%']
+    calls:
+      - [setServiceLogger]
+
+  manzana.sync_consumer:
+    class: FourPaws\External\Manzana\Consumer\ManzanaContactConsumer
+    arguments: ['@jms_serializer', '@manzana.service']
+
+  expertsender.service:
+    class: FourPaws\External\ExpertsenderService
+
+  product.autosort.service:
+    class: FourPaws\ProductAutoSort\ProductAutoSortService
+
+  jms_identical_property_naming_strategy:
+    class: JMS\Serializer\Naming\IdenticalPropertyNamingStrategy
+
+  jms_serialized_name_annotation_strategy:
+    class: JMS\Serializer\Naming\SerializedNameAnnotationStrategy
+    arguments: ['@jms_identical_property_naming_strategy']
+
+  jms_serializer.array_or_false_handler:
+      class: FourPaws\AppBundle\Serialization\ArrayOrFalseHandler
+      tags:
+          - { name: jms_serializer.subscribing_handler }
+
+  jms_serializer.bitrix_boolean_handler:
+      class: FourPaws\AppBundle\Serialization\BitrixBooleanHandler
+      tags:
+          - { name: jms_serializer.subscribing_handler }
+
+  jms_serializer.bitrix_date_handler:
+      class: FourPaws\AppBundle\Serialization\BitrixDateHandler
+      tags:
+          - { name: jms_serializer.subscribing_handler }
+
+  jms_serializer.bitrix_date_time_handler:
+      class: FourPaws\AppBundle\Serialization\BitrixDateTimeHandler
+      tags:
+          - { name: jms_serializer.subscribing_handler }
+
+  recaptcha.guzzle:
+      class: GuzzleHttp\Client
+      arguments:
+        - curl: '%recaptcha.guzzle.curl%'
+
+  recaptcha.service:
+      class: FourPaws\ReCaptcha\ReCaptchaService
+      arguments: ['@recaptcha.guzzle', '%recaptcha%']
+
+  form.service:
+      class: FourPaws\Form\FormService

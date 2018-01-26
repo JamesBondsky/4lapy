@@ -1,9 +1,39 @@
-/bitrix/
-/upload/
+/common/bitrix
+/common/upload
 /.vagrant/
-/local/cache/
-/local/modules/sprint.migration/
-/local/php_interface/vendor/
+/common/local/cache/
+/common/local/doc/html/
+/common/local/modules/sprint.migration/
+/vendor/
 node_modules/
-sitemap*.xml
-!/robots.txt
+/web/sitemap*.xml
+!/web/robots.txt
+.php_cs.cache
+
+/var/*
+!/var/cache
+/var/cache/*
+!var/cache/.gitkeep
+
+!/var/logs
+/var/logs/*
+!var/logs/.gitkeep
+
+### Symlinks
+/web/bitrix
+/web/static
+/web/local
+/web/upload
+/web/bundles
+
+### Symfony Assets install Path
+/web/bundles
+
+### Php Unit
+phpunit.xml
+
+### Storm & OS
+Thumbs.db
+Desktop.ini
+.idea
+.DS_Store
