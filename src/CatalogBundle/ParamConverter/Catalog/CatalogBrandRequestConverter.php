@@ -66,7 +66,7 @@ class CatalogBrandRequestConverter extends AbstractCatalogRequestConverter
     /**
      * @return CatalogBrandRequest
      */
-    protected function getCatalogRequestObject()
+    protected function getCatalogRequestObject() : CatalogBrandRequest
     {
         return new CatalogBrandRequest();
     }
@@ -79,7 +79,7 @@ class CatalogBrandRequestConverter extends AbstractCatalogRequestConverter
      * @throws \Exception
      * @return bool
      */
-    protected function configureCustom(Request $request, ParamConverter $configuration, $object)
+    protected function configureCustom(Request $request, ParamConverter $configuration, $object) : bool
     {
         if (!$request->attributes->has(static::BRAND_PARAM)) {
             return false;
