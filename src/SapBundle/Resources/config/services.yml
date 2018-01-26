@@ -24,6 +24,10 @@ services:
         public: true
 
     # todo: remove after development!
+    FourPaws\SapBundle\Pipeline\PipelineRegistry:
+        public: true
+
+    # todo: remove after development!
     FourPaws\SapBundle\Source\SourceRegistry:
         public: true
 

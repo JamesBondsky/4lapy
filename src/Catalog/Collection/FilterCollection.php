@@ -6,6 +6,7 @@ use Adv\Bitrixtools\Collection\ObjectArrayCollection;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\Catalog\Model\Category;
+use FourPaws\Catalog\Model\Filter\BrandFilter;
 use FourPaws\Catalog\Model\Filter\FilterInterface;
 use FourPaws\Catalog\Model\Filter\InternalFilter;
 use FourPaws\Catalog\Model\Variant;
@@ -33,6 +34,29 @@ class FilterCollection extends ObjectArrayCollection
             }
         }
 
+        return false;
+    }
+    
+    /**
+     * Возвращает bool true, если хотя бы один фильтр выбран без учёта фильтрации по категории и бренду
+     *
+     * @return bool
+     */
+    public function hasCheckedFilterBrand(): bool
+    {
+        /** @var FilterInterface $filter */
+        foreach ($this as $filter) {
+            //Категория особый фильтр, который, кроме особых случаев, выбран.
+            if (
+                !($filter instanceof Category)
+                && !($filter instanceof InternalFilter)
+                && !($filter instanceof BrandFilter)
+                && $filter->hasCheckedVariants()
+            ) {
+                return true;
+            }
+        }
+        
         return false;
     }
 
