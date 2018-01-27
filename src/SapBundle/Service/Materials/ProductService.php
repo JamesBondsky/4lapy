@@ -13,7 +13,6 @@ use FourPaws\Enum\IblockType;
 use FourPaws\SapBundle\Dto\In\Offers\Material;
 use FourPaws\SapBundle\Enum\SapProductField;
 use FourPaws\SapBundle\Enum\SapProductProperty;
-
 use FourPaws\SapBundle\Repository\ProductRepository;
 use FourPaws\SapBundle\Service\ReferenceService;
 
@@ -160,6 +159,8 @@ class ProductService
              * По умолчанию создающиеся товары должны быть деактивированными
              */
             $product->withActive(false);
+        } else {
+            $product->withActive(!$material->isNotUploadToIm());
         }
     }
 
