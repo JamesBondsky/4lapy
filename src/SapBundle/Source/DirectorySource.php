@@ -21,13 +21,15 @@ class DirectorySource implements SourceInterface
     private $success;
     
     private $error;
-    
+
     /**
      * DirectorySource constructor.
      *
      * @param Finder $inFinder
      * @param string $success (success folder)
      * @param string $error   (error folder)
+     *
+     * @throws \FourPaws\SapBundle\Exception\RuntimeException
      */
     public function __construct(Finder $inFinder, string $success, string $error)
     {
@@ -78,14 +80,16 @@ class DirectorySource implements SourceInterface
      * @throws \RuntimeException
      * @throws RuntimeException
      *
-     * @return SourceMessageInterface[]|Generator
+     * @return Generator|SourceMessageInterface[]
      */
     public function generator()
     {
         foreach ($this->inFinder as $fileInfo) {
-            yield (new FileSourceMessage($fileInfo->getInode(),
+            yield (new FileSourceMessage(
+                $fileInfo->getInode(),
                                          $fileInfo->getType(),
-                                         $fileInfo->getContents()))->setName($fileInfo->getFilename())
+                                         $fileInfo->getContents()
+            ))->setName($fileInfo->getFilename())
                                                                    ->setDirectory($fileInfo->getPath());
         }
     }
@@ -98,7 +102,12 @@ class DirectorySource implements SourceInterface
     {
         rename($source->getDirectory() . $source->getName(), $destination . $source->getName());
     }
-    
+
+    /**
+     * @param $destination
+     *
+     * @throws \FourPaws\SapBundle\Exception\RuntimeException
+     */
     protected function checkPath($destination)
     {
         if (!\is_dir($destination) && !\mkdir($destination) && !\is_dir($destination)) {

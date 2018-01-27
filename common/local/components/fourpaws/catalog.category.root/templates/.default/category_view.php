@@ -30,18 +30,18 @@ foreach (array_values($childCategories) as $index => $childCategory) {
             </h2>
         </div>
         <div class="b-common-section__content b-common-section__content--catalog js-catalog-main">
-            <?php foreach ($childCategory->getChild(false) as $childChildCategory) {
-                $src = MediaEnum::NO_IMAGE_WEB_PATH;
-                if ($childChildCategory->getPictureId()) {
-                    try {
-                        $picture =
+            <?php foreach ($childCategory->getChild() as $childChildCategory) {
+        $src = MediaEnum::NO_IMAGE_WEB_PATH;
+        if ($childChildCategory->getPictureId()) {
+            try {
+                $picture =
                             ResizeImageDecorator::createFromPrimary($childChildCategory->getPictureId())
                                                 ->setResizeWidth(180)
                                                 ->setResizeHeight(180);
-                        $src     = $picture->getSrc();
-                    } catch (FileNotFoundException $e) {
-                    }
-                } ?>
+                $src     = $picture->getSrc();
+            } catch (FileNotFoundException $e) {
+            }
+        } ?>
                 <div class="b-common-item b-common-item--catalog js-product-item">
                     <a class="b-common-item__link" href="<?= $childChildCategory->getSectionPageUrl() ?>"
                        title="<?= $childChildCategory->getName() ?>">
@@ -58,7 +58,8 @@ foreach (array_values($childCategories) as $index => $childCategory) {
                         </span>
                     </a>
                 </div>
-            <?php } ?>
+            <?php
+    } ?>
         </div>
     </section>
     <?php

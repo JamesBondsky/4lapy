@@ -33,7 +33,7 @@ class BitrixClearUser extends Command implements LoggerAwareInterface
     
     protected $debug    = false;
     
-    protected $hasError = false;
+    private $hasError = false;
     
     /**
      * BitrixClearHighloadBlock constructor.
@@ -57,22 +57,26 @@ class BitrixClearUser extends Command implements LoggerAwareInterface
     {
         $this->setName('bitrix:clear:user')
             ->setDescription('Clear users')
-            ->addOption(self::OPTION_DEBUG,
+            ->addOption(
+                self::OPTION_DEBUG,
                         self::OPTION_DEBUG[0],
                         InputOption::VALUE_NONE,
-                        'Show debug messages')
-            ->addArgument(self::ARGUMENT_MINIMAL_ID,
+                        'Show debug messages'
+            )
+            ->addArgument(
+                self::ARGUMENT_MINIMAL_ID,
                           InputArgument::REQUIRED,
-                          'Minimal user id. Must be an integer, greater than 6');
+                          'Minimal user id. Must be an integer, greater than 6'
+            );
     }
     
     /**
      * @param InputInterface  $input
      * @param OutputInterface $output
      *
+     * @throws InvalidArgumentException
      * @return null
      *
-     * @throws InvalidArgumentException
      */
     public function execute(InputInterface $input, OutputInterface $output)
     {
@@ -120,9 +124,7 @@ class BitrixClearUser extends Command implements LoggerAwareInterface
      */
     private function removeUser(int $id)
     {
-        $user = new \CUser();
-        
-        if ($user->Delete($id)) {
+        if (\CUser::Delete($id)) {
             $this->debugMessage(sprintf('User with id %s was removed', $id));
         } else {
             global $APPLICATION;

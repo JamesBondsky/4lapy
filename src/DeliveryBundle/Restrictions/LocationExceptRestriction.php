@@ -27,8 +27,7 @@ class LocationExceptRestriction extends Restrictions\Base
 
         if (!$deliveryZone = $deliveryService->getDeliveryZoneCodeByLocation(
             $locationCode,
-            $deliveryId,
-            true
+            $deliveryId
         )) {
             return false;
         }

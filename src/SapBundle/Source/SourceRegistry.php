@@ -8,7 +8,11 @@ use FourPaws\SapBundle\Model\SourceCollection;
 class SourceRegistry implements SourceRegistryInterface
 {
     protected $collection;
-    
+
+    /**
+     * SourceRegistry constructor.
+     * @throws \InvalidArgumentException
+     */
     public function __construct()
     {
         $this->collection = new SourceCollection();
