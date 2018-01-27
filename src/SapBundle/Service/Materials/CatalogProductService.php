@@ -21,6 +21,7 @@ class CatalogProductService
     /**
      * @param Material $material
      *
+     * @throws \FourPaws\SapBundle\Exception\NotFoundBasicUomException
      * @return CatalogProduct
      */
     public function processMaterial(Material $material): CatalogProduct
@@ -41,6 +42,7 @@ class CatalogProductService
     /**
      * @param Material $material
      *
+     * @throws \FourPaws\SapBundle\Exception\NotFoundBasicUomException
      * @return CatalogProduct
      */
     protected function createFromMaterial(Material $material): CatalogProduct

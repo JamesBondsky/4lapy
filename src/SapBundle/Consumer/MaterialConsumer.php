@@ -118,6 +118,7 @@ class MaterialConsumer implements ConsumerInterface, LoggerAwareInterface
     /**
      * @param Material $material
      *
+     * @throws \RuntimeException
      * @throws LoggedException
      * @return Brand
      */
@@ -153,6 +154,12 @@ class MaterialConsumer implements ConsumerInterface, LoggerAwareInterface
      *
      * @param Brand    $brand
      *
+     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
+     * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
+     * @throws \FourPaws\SapBundle\Exception\LogicException
+     * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \RuntimeException
      * @throws LoggedException
      * @return Product
      */
@@ -191,6 +198,11 @@ class MaterialConsumer implements ConsumerInterface, LoggerAwareInterface
      * @param Material $material
      * @param Product  $product
      *
+     * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
+     * @throws \FourPaws\SapBundle\Exception\NotFoundBasicUomException
+     * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
+     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
+     * @throws \FourPaws\SapBundle\Exception\LogicException
      * @throws \FourPaws\SapBundle\Exception\RuntimeException
      * @throws LoggedException
      * @return Offer
@@ -230,6 +242,8 @@ class MaterialConsumer implements ConsumerInterface, LoggerAwareInterface
      * @param Material $material
      * @param Offer    $offer
      *
+     * @throws \FourPaws\SapBundle\Exception\NotFoundBasicUomException
+     * @throws \RuntimeException
      * @throws LoggedException
      * @return CatalogProduct
      */

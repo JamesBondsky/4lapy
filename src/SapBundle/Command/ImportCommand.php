@@ -58,8 +58,9 @@ class ImportCommand extends Command implements LoggerAwareInterface
         parent::__construct($name);
         $this->setLogger(new Logger('Sap_exchange', [new StreamHandler(STDOUT, Logger::DEBUG)]));
     }
-    
+
     /**
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws InvalidArgumentException
      */
     public function configure()
@@ -68,21 +69,27 @@ class ImportCommand extends Command implements LoggerAwareInterface
         $this->pipelineRegistry = $this->container->get(PipelineRegistry::class);
         
         $this->setName('fourpaws:sap:import')
-             ->setDescription('Sap exchange. Start exchange by type.')->addArgument(self::ARGUMENT_PIPELINE,
+             ->setDescription('Sap exchange. Start exchange by type.')->addArgument(
+                 self::ARGUMENT_PIPELINE,
                                                                                     InputArgument::REQUIRED,
-                                                                                    sprintf('Pipeline. %s',
-                                                                                            implode(', ',
+                                                                                    sprintf(
+                                                                                        'Pipeline. %s',
+                                                                                            implode(
+                                                                                                ', ',
                                                                                                     $this->pipelineRegistry->getCollection()
-                                                                                                                           ->getKeys())));
+                                                                                                                           ->getKeys()
+                                                                                            )
+                                                                                    )
+             );
     }
     
     /**
      * @param InputInterface  $input
      * @param OutputInterface $output
      *
+     * @throws InvalidArgumentException
      * @return null
      *
-     * @throws InvalidArgumentException
      */
     public function execute(InputInterface $input, OutputInterface $output)
     {
@@ -90,9 +97,11 @@ class ImportCommand extends Command implements LoggerAwareInterface
         $pipeline  = $input->getArgument(self::ARGUMENT_PIPELINE);
         
         if (!\in_array($pipeline, $available, true)) {
-            throw new InvalidArgumentException(sprintf('Wrong pipeline %s, available: %s',
+            throw new InvalidArgumentException(sprintf(
+                'Wrong pipeline %s, available: %s',
                                                        $pipeline,
-                                                       implode(', ', $available)));
+                                                       implode(', ', $available)
+            ));
         }
         
         try {

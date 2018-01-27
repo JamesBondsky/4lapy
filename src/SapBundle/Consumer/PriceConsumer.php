@@ -5,6 +5,7 @@ namespace FourPaws\SapBundle\Consumer;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Catalog;
 use Bitrix\Main\Error;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Result;
 use Bitrix\Main\SystemException;
 use FourPaws\Enum\IblockCode;
@@ -26,14 +27,18 @@ class PriceConsumer implements ConsumerInterface, LoggerAwareInterface
     protected $recalcPrices = true;
 
     /** @var array $offersCache */
-    protected $offersCache = [];
+    private $offersCache = [];
 
     /** @var int $maxOffersCacheSize */
-    protected $maxOffersCacheSize = 100;
+    private $maxOffersCacheSize = 100;
 
     /**
      * @param Prices $prices
      *
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \RuntimeException
      * @return bool
      */
     public function consume($prices): bool
@@ -103,20 +108,24 @@ class PriceConsumer implements ConsumerInterface, LoggerAwareInterface
     }
 
     /**
+     * @throws \Bitrix\Main\LoaderException
+     * @throws SystemException
      * @return void
      */
     protected function incModules()
     {
-        if (!\Bitrix\Main\Loader::includeModule('iblock')) {
+        if (!Loader::includeModule('iblock')) {
             throw new SystemException('Module iblock is not installed');
         }
 
-        if (!\Bitrix\Main\Loader::includeModule('catalog')) {
+        if (!Loader::includeModule('catalog')) {
             throw new SystemException('Module catalog is not installed');
         }
     }
 
     /**
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Bitrix\Main\LoaderException
      * @return int
      */
     protected function getOffersIBlockId(): int
@@ -133,8 +142,8 @@ class PriceConsumer implements ConsumerInterface, LoggerAwareInterface
                     'TYPE'              => IblockType::CATALOG,
                     'CHECK_PERMISSIONS' => 'N',
                 ]
-            )->fetch();
-            $iblockId = $tmpItem['ID'] ? $tmpItem['ID'] : 0;
+            )->Fetch();
+            $iblockId = $tmpItem['ID'] ?: 0;
         }
         return $iblockId;
     }
@@ -142,6 +151,8 @@ class PriceConsumer implements ConsumerInterface, LoggerAwareInterface
     /**
      * @param string $xmlId
      *
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Bitrix\Main\LoaderException
      * @return Result
      */
     protected function getOfferElementDataByXmlId($xmlId): Result
@@ -149,7 +160,7 @@ class PriceConsumer implements ConsumerInterface, LoggerAwareInterface
         $result = new Result();
 
         $xmlId = trim($xmlId);
-        if (!strlen($xmlId)) {
+        if ('' === $xmlId) {
             $result->addError(new Error('Не задан внешний код торгового предложения', 100));
         }
 
@@ -174,15 +185,18 @@ class PriceConsumer implements ConsumerInterface, LoggerAwareInterface
     }
 
     /**
-     * @param Result $offerElementData
+     * @param Result $offersResult
      * @param Item   $priceItem
      * @param string $regionCode
      * @param bool   $getExtResult
      *
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Bitrix\Main\LoaderException
      * @return Result
      */
     protected function setOfferPrices(
-        Result $offerElementData,
+        Result $offersResult,
         Item $priceItem,
         $regionCode,
         $getExtResult = true
@@ -191,7 +205,7 @@ class PriceConsumer implements ConsumerInterface, LoggerAwareInterface
 
         $resultData = [];
 
-        $offerElementData = $offerElementData->getData();
+        $offerElementData = $offersResult->getData();
         if (empty($offerElementData['ID'])) {
             $result->addError(new Error('Не задан id торгового предложения', 100));
         }
@@ -209,16 +223,16 @@ class PriceConsumer implements ConsumerInterface, LoggerAwareInterface
                 $setPricesList[$tmpPriceTypeId] = [
                     'PRODUCT_ID'       => $productId,
                     'CATALOG_GROUP_ID' => $tmpPriceTypeId,
-                    'PRICE'            => doubleval($priceItem->getRetailPrice()),
+                    'PRICE'            => $priceItem->getRetailPrice(),
                     'CURRENCY'         => $currency,
                 ];
             }
 
             $setPropsList = [];
-            $setPropsList['PRICE_ACTION'] = doubleval($priceItem->getActionPrice());
+            $setPropsList['PRICE_ACTION'] = $priceItem->getActionPrice();
             $setPropsList['PRICE_ACTION'] = $setPropsList['PRICE_ACTION'] > 0 ? $setPropsList['PRICE_ACTION'] : '';
             $setPropsList['COND_FOR_ACTION'] = trim($priceItem->getPriceType());
-            $setPropsList['COND_VALUE'] = doubleval($priceItem->getDiscountValue());
+            $setPropsList['COND_VALUE'] = $priceItem->getDiscountValue();
             $setPropsList['COND_VALUE'] = $setPropsList['COND_VALUE'] == 0 ? '' : $setPropsList['COND_VALUE'];
 
             if ($setPricesList) {
@@ -242,7 +256,7 @@ class PriceConsumer implements ConsumerInterface, LoggerAwareInterface
                     ]
                 );
                 $processedPriceTypes = [];
-                while ($item = $items->fetch()) {
+                while ($item = $items->Fetch()) {
                     if (isset($setPricesList[$item['CATALOG_GROUP_ID']])) {
                         if ($setPricesList[$item['CATALOG_GROUP_ID']]['PRICE'] <= 0) {
                             $delPrices[] = $item['ID'];
@@ -333,7 +347,7 @@ class PriceConsumer implements ConsumerInterface, LoggerAwareInterface
             }
 
             // обновление свойств
-            if ($result->isSuccess() && $setPropsList) {
+            if ($setPropsList && $result->isSuccess()) {
                 \CIBlockElement::SetPropertyValuesEx(
                     $offerElementData['ID'],
                     $offerElementData['IBLOCK_ID'],
@@ -360,10 +374,13 @@ class PriceConsumer implements ConsumerInterface, LoggerAwareInterface
     protected function isBasePriceRegionCode($regionCode)
     {
         $regionCode = ToUpper(trim($regionCode));
-        return !strlen($regionCode) || $regionCode == static::BASE_PRICE_REGION_CODE;
+        return '' === $regionCode || $regionCode == static::BASE_PRICE_REGION_CODE;
     }
 
     /**
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\ArgumentException
      * @return array
      */
     protected function getPriceTypesList()
@@ -384,6 +401,9 @@ class PriceConsumer implements ConsumerInterface, LoggerAwareInterface
     }
 
     /**
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\ArgumentException
      * @return array
      */
     protected function getBasePriceType()
@@ -401,6 +421,9 @@ class PriceConsumer implements ConsumerInterface, LoggerAwareInterface
     }
 
     /**
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\ArgumentException
      * @return int
      */
     protected function getBasePriceTypeId()
@@ -412,6 +435,9 @@ class PriceConsumer implements ConsumerInterface, LoggerAwareInterface
     /**
      * @param string $xmlId
      *
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\ArgumentException
      * @return array
      */
     protected function getPriceTypeByXmlId($xmlId)
@@ -422,12 +448,15 @@ class PriceConsumer implements ConsumerInterface, LoggerAwareInterface
         $priceTypesList = $this->getPriceTypesList();
 
 
-        return isset($priceTypesList[$xmlId]) ? $priceTypesList[$xmlId] : [];
+        return $priceTypesList[$xmlId] ?? [];
     }
 
     /**
      * @param string $xmlId
      *
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\ArgumentException
      * @return int
      */
     protected function getPriceTypeIdByXmlId($xmlId)
@@ -439,6 +468,8 @@ class PriceConsumer implements ConsumerInterface, LoggerAwareInterface
     /**
      * @param string $xmlId
      *
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Bitrix\Main\LoaderException
      * @return array
      */
     private function getOfferElementByXmlId($xmlId): array
@@ -461,14 +492,14 @@ class PriceConsumer implements ConsumerInterface, LoggerAwareInterface
                     'IBLOCK_ID',
                 ]
             );
-            if ($item = $items->fetch()) {
+            if ($item = $items->Fetch()) {
                 $return = $item;
             }
 
             $this->offersCache[$xmlId] = $return;
 
-            if ($this->maxOffersCacheSize > 0 && count($this->offersCache) > $this->maxOffersCacheSize) {
-                $this->offersCache = array_slice($this->offersCache, 1, null, true);
+            if ($this->maxOffersCacheSize > 0 && \count($this->offersCache) > $this->maxOffersCacheSize) {
+                $this->offersCache = \array_slice($this->offersCache, 1, null, true);
             }
         } else {
             $return = $this->offersCache[$xmlId];

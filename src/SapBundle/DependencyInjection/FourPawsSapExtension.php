@@ -34,17 +34,17 @@ class FourPawsSapExtension extends ConfigurableExtension
         $this->configDirectoryFinder($mergedConfig['directory_sources'], $container);
         $this->configPipelines($mergedConfig['pipelines'], $container);
     }
-    
+
     protected function registerConsumerTags(ContainerBuilder $container)
     {
         $container->registerForAutoconfiguration(ConsumerInterface::class)->addTag('sap.consumer');
     }
-    
+
     protected function registerSourceTags(ContainerBuilder $container)
     {
         $container->registerForAutoconfiguration(SourceInterface::class)->addTag('sap.source');
     }
-    
+
     /**
      * @param array            $directorySources
      * @param ContainerBuilder $container
@@ -55,47 +55,49 @@ class FourPawsSapExtension extends ConfigurableExtension
     {
         foreach ($directorySources as $name => $source) {
             $container->register('sap.source.finder.' . $name)
-                      ->setClass(Finder::class)
-                      ->addArgument($source['filemask'])
-                      ->addArgument($source['in'])
-                      ->addArgument($source['filetype'])
-                      ->setFactory([
-                                       new Reference(DirectorySourceFinderBuilder::class),
-                                       'build',
-                                   ]);
-    
+                ->setClass(Finder::class)
+                ->addArgument($source['filemask'])
+                ->addArgument($source['in'])
+                ->addArgument($source['filetype'])
+                ->setFactory([
+                    new Reference(DirectorySourceFinderBuilder::class),
+                    'build',
+                ]);
+
             $container->register('sap.source.' . $name)
-                      ->setClass(DirectorySource::class)
-                      ->addArgument(new Reference('sap.source.finder.' . $name))
-                      ->addArgument($source['out'])
-                      ->addArgument($source['error'])
-                      ->addTag('sap.source', ['type' => $source['entity']]);
+                ->setClass(DirectorySource::class)
+                ->addArgument(new Reference('sap.source.finder.' . $name))
+                ->addArgument($source['out'])
+                ->addArgument($source['error'])
+                ->addTag('sap.source', ['type' => $source['entity']]);
         }
     }
-    
+
     /**
-     * @throws InvalidArgumentException
      *
      * @param array            $pipelines
      * @param ContainerBuilder $container
+     * @throws InvalidArgumentException
      */
     protected function configPipelines(array $pipelines, ContainerBuilder $container)
     {
         $allSources = $container->findTaggedServiceIds('sap.source');
-        
+
         foreach ($pipelines as $name => $pipeline) {
             $definition =
                 $container->register('sap.pipeline.' . $name)
-                          ->setClass(Pipeline::class)
-                          ->addTag('sap.pipeline', ['name' => $name]);
-    
+                    ->setClass(Pipeline::class)
+                    ->addTag('sap.pipeline', ['name' => $name]);
+
             foreach ($pipeline as $pipelineSource) {
-                $source = array_filter($allSources,
-                    function ($value, $key) use ($pipelineSource) {
+                $source = array_filter(
+                    $allSources,
+                    function ($value) use ($pipelineSource) {
                         return $pipelineSource === $value[0]['type'];
                     },
-                                       ARRAY_FILTER_USE_BOTH);
-        
+                    ARRAY_FILTER_USE_BOTH
+                );
+
                 if (\is_array($source)) {
                     foreach ($source as $serviceId => $serviceContext) {
                         $definition->addMethodCall('add', [new Reference($serviceId)]);

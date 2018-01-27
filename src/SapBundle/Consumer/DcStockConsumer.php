@@ -20,10 +20,10 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
     use LazyLoggerAwareTrait;
 
     /** @var array $offersCache */
-    protected $offersCache = [];
+    private $offersCache = [];
 
     /** @var int $maxOffersCacheSize */
-    protected $maxOffersCacheSize = 100;
+    private $maxOffersCacheSize = 100;
 
     /** @var array $storesCache */
     protected $storesCache = [];
@@ -34,6 +34,10 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
     /**
      * @param DcStock $dcStock
      *
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\SapBundle\Exception\InvalidArgumentException
+     * @throws \RuntimeException
      * @return bool
      */
     public function consume($dcStock): bool
@@ -91,6 +95,7 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
     }
 
     /**
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @return int
      */
     protected function getOffersIBlockId(): int
@@ -101,6 +106,7 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
     /**
      * @param string $xmlId
      *
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @return Result
      */
     protected function getOfferElementDataByXmlId($xmlId): Result
@@ -108,7 +114,7 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
         $result = new Result();
 
         $xmlId = trim($xmlId);
-        if (!strlen($xmlId)) {
+        if ('' === $xmlId) {
             $result->addError(new Error('Не задан внешний код торгового предложения', 100));
         }
 
@@ -135,6 +141,7 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
     /**
      * @param string $xmlId
      *
+     * @throws \Bitrix\Main\ArgumentException
      * @return Result
      */
     protected function getStoreDataByXmlId(string $xmlId): Result
@@ -142,7 +149,7 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
         $result = new Result();
 
         $xmlId = trim($xmlId);
-        if (!strlen($xmlId)) {
+        if ('' === $xmlId) {
             $result->addError(new Error('Не задан внешний код склада', 100));
         }
 
@@ -165,6 +172,7 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
     /**
      * @param string $xmlId
      *
+     * @throws \Bitrix\Main\ArgumentException
      * @return array
      */
     protected function getStoreByXmlId(string $xmlId): array
@@ -190,8 +198,8 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
 
             $this->storesCache[$xmlId] = $return;
 
-            if ($this->maxStoresCacheSize > 0 && count($this->storesCache) > $this->maxStoresCacheSize) {
-                $this->storesCache = array_slice($this->storesCache, 1, null, true);
+            if ($this->maxStoresCacheSize > 0 && \count($this->storesCache) > $this->maxStoresCacheSize) {
+                $this->storesCache = \array_slice($this->storesCache, 1, null, true);
             }
         } else {
             $return = $this->storesCache[$xmlId];
@@ -204,6 +212,9 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
      * @param StockItem $stockItem
      * @param bool      $getExtResult
      *
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Exception
      * @return Result
      */
     protected function setOfferStock(StockItem $stockItem, $getExtResult = true): Result
@@ -233,7 +244,7 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
         if ($result->isSuccess()) {
             $offerData = $offerElementDataResult->getData();
             $storeData = $storeDataResult->getData();
-            $stockValue = doubleval($stockItem->getStockValue());
+            $stockValue = $stockItem->getStockValue();
 
             $items = StoreProductTable::getList(
                 [
@@ -302,6 +313,7 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
     /**
      * @param string $xmlId
      *
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @return array
      */
     private function getOfferElementByXmlId($xmlId): array
@@ -323,14 +335,14 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
                     'IBLOCK_ID',
                 ]
             );
-            if ($item = $items->fetch()) {
+            if ($item = $items->Fetch()) {
                 $return = $item;
             }
 
             $this->offersCache[$xmlId] = $return;
 
-            if ($this->maxOffersCacheSize > 0 && count($this->offersCache) > $this->maxOffersCacheSize) {
-                $this->offersCache = array_slice($this->offersCache, 1, null, true);
+            if ($this->maxOffersCacheSize > 0 && \count($this->offersCache) > $this->maxOffersCacheSize) {
+                $this->offersCache = \array_slice($this->offersCache, 1, null, true);
             }
         } else {
             $return = $this->offersCache[$xmlId];

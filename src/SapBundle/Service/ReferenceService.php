@@ -40,6 +40,7 @@ class ReferenceService implements LoggerAwareInterface
      * @param string $xmlId
      * @param string $name
      *
+     * @throws \RuntimeException
      * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
      * @throws \FourPaws\SapBundle\Exception\LogicException
      * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
@@ -63,6 +64,7 @@ class ReferenceService implements LoggerAwareInterface
      * @param string $propertyCode
      * @param string $xmlId
      *
+     * @throws \RuntimeException
      * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
      * @return null|HlbReferenceItem
      */
@@ -76,6 +78,7 @@ class ReferenceService implements LoggerAwareInterface
      * @param string $xmlId
      * @param string $name
      *
+     * @throws \RuntimeException
      * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
      * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
      * @return null|HlbReferenceItem
@@ -105,6 +108,7 @@ class ReferenceService implements LoggerAwareInterface
     /**
      * @param Property $property
      *
+     * @throws \RuntimeException
      * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
      * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
      * @throws \FourPaws\SapBundle\Exception\LogicException
@@ -127,6 +131,7 @@ class ReferenceService implements LoggerAwareInterface
     /**
      * @param Material $material
      *
+     * @throws \RuntimeException
      * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
      * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
      * @throws \FourPaws\SapBundle\Exception\LogicException
@@ -196,6 +201,7 @@ class ReferenceService implements LoggerAwareInterface
      * @param string $propertyCode
      * @param string $name
      *
+     * @throws \RuntimeException
      * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
      * @return string
      */
