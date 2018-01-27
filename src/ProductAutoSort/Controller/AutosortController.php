@@ -34,6 +34,7 @@ class AutosortController
                 )
             );
         }
+        $hintList = null;
 
         /**
          * Для HL-блоков (Справочники)
@@ -44,7 +45,7 @@ class AutosortController
                 $arProperty['USER_TYPE_SETTINGS'],
                 $arProperty['USER_TYPE_SETTINGS']['TABLE_NAME']
             )
-            && 'directory' == $arProperty['USER_TYPE']
+            && 'directory' === $arProperty['USER_TYPE']
             && trim($arProperty['USER_TYPE_SETTINGS']['TABLE_NAME']) != ''
         ) {
             $hintList = $this->getHintForDirectory($arProperty['USER_TYPE_SETTINGS']['TABLE_NAME']);
@@ -55,7 +56,7 @@ class AutosortController
          */
         if (
             isset($arProperty['PROPERTY_TYPE'], $arProperty['LINK_IBLOCK_ID'])
-            && 'E' == $arProperty['PROPERTY_TYPE']
+            && 'E' === $arProperty['PROPERTY_TYPE']
             && $arProperty['LINK_IBLOCK_ID'] > 0
         ) {
             $hintList = $this->getHintForIblock((int)$arProperty['LINK_IBLOCK_ID']);
@@ -81,16 +82,16 @@ class AutosortController
             ];
         }
 
-        if (!isset($hintList)) {
+        if (null === $hintList) {
             return JsonResponse::create(
                 new JsonContent(
-                    sprintf('Подсказки для этого типа свойства не поддерживаются', $propertyId),
+                    'Подсказки для этого типа свойства не поддерживаются',
                     false
                 )
             );
         }
 
-        if (is_array($hintList) && count($hintList) > 0) {
+        if (\is_array($hintList) && \count($hintList) > 0) {
             array_unshift($hintList, ['name' => '- выберите -', 'value' => '']);
         }
 
