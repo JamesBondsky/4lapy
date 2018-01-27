@@ -6,8 +6,10 @@ use Bitrix\Currency\CurrencyManager;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Delivery\Services\Base;
 use Bitrix\Sale\Shipment;
+use Doctrine\Common\Collections\Collection;
 use FourPaws\App\Application;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
@@ -22,11 +24,6 @@ abstract class DeliveryServiceHandlerBase extends Base implements DeliveryServic
      * @var bool
      */
     protected static $isCalculatePriceImmediately = true;
-
-    /**
-     * @var bool
-     */
-    protected static $whetherAdminExtraServicesShow = false;
 
     /**
      * @var bool
@@ -59,27 +56,9 @@ abstract class DeliveryServiceHandlerBase extends Base implements DeliveryServic
         $this->storeService = Application::getInstance()->getContainer()->get('store.service');
         $this->deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
         $this->userService = Application::getInstance()
-                                        ->getContainer()
-                                        ->get('FourPaws\UserBundle\Service\UserCitySelectInterface');
+            ->getContainer()
+            ->get(UserCitySelectInterface::class);
         parent::__construct($initParams);
-    }
-
-    /**
-     * @param Shipment $shipment
-     *
-     * @return bool
-     */
-    public function isCompatible(Shipment $shipment)
-    {
-        return parent::isCompatible($shipment);
-    }
-
-    /**
-     * @return bool
-     */
-    public function isCalculatePriceImmediately()
-    {
-        return static::$isCalculatePriceImmediately;
     }
 
     /**
@@ -88,50 +67,6 @@ abstract class DeliveryServiceHandlerBase extends Base implements DeliveryServic
     public static function whetherAdminExtraServicesShow()
     {
         return static::$whetherAdminExtraServicesShow;
-    }
-
-    /**
-     * @return array
-     */
-    protected function getConfigStructure()
-    {
-        $currency = $this->currency;
-
-        if (Loader::includeModule('currency')) {
-            $currencyList = CurrencyManager::getCurrencyList();
-            if (isset($currencyList[$this->currency])) {
-                $currency = $currencyList[$this->currency];
-            }
-            unset($currencyList);
-        }
-
-        $result = [
-            "MAIN" => [
-                "TITLE"       => Loc::getMessage("SALE_DLVR_HANDL_SMPL_TAB_MAIN"),
-                "DESCRIPTION" => Loc::getMessage("SALE_DLVR_HANDL_SMPL_TAB_MAIN_DESCR"),
-                "ITEMS"       => [
-                    "CURRENCY" => [
-                        "TYPE"       => "DELIVERY_READ_ONLY",
-                        "NAME"       => Loc::getMessage("SALE_DLVR_HANDL_SMPL_CURRENCY"),
-                        "VALUE"      => $this->currency,
-                        "VALUE_VIEW" => $currency,
-                    ],
-                ],
-            ],
-        ];
-
-        return $result;
-    }
-
-    protected function calculateConcrete(Shipment $shipment)
-    {
-        $result = new \Bitrix\Sale\Delivery\CalculationResult();
-
-        if (!$this->deliveryService->getDeliveryZoneCode($shipment)) {
-            $result->addError(new Error('Не указано местоположение доставки'));
-        }
-
-        return $result;
     }
 
     public static function getStocks($locationCode, $offerData)
@@ -155,6 +90,9 @@ abstract class DeliveryServiceHandlerBase extends Base implements DeliveryServic
         $offersByRequest = $offers->filter(function (Offer $offer) {
             return $offer->isByRequest();
         });
+        /**
+         * @var Collection|Offer[] $availableOffers
+         */
         $availableOffers = $offers->filter(function (Offer $offer) {
             return !$offer->isByRequest();
         });
@@ -177,9 +115,61 @@ abstract class DeliveryServiceHandlerBase extends Base implements DeliveryServic
 
         return [
             'AVAILABLE_OFFERS'   => $availableOffers,
-            'OFFERS_BY_REQUEST'   => $offersByRequest,
+            'OFFERS_BY_REQUEST'  => $offersByRequest,
             'STOCKS'             => $stocks,
             'DELIVERY_SCHEDULES' => $deliverySchedules,
         ];
+    }
+
+    /**
+     * @return bool
+     */
+    public function isCalculatePriceImmediately()
+    {
+        return static::$isCalculatePriceImmediately;
+    }
+
+    /**
+     * @return array
+     */
+    protected function getConfigStructure()
+    {
+        $currency = $this->currency;
+
+        if (Loader::includeModule('currency')) {
+            $currencyList = CurrencyManager::getCurrencyList();
+            if (isset($currencyList[$this->currency])) {
+                $currency = $currencyList[$this->currency];
+            }
+            unset($currencyList);
+        }
+
+        $result = [
+            'MAIN' => [
+                'TITLE'       => Loc::getMessage('SALE_DLVR_HANDL_SMPL_TAB_MAIN'),
+                'DESCRIPTION' => Loc::getMessage('SALE_DLVR_HANDL_SMPL_TAB_MAIN_DESCR'),
+                'ITEMS'       => [
+                    'CURRENCY' => [
+                        'TYPE'       => 'DELIVERY_READ_ONLY',
+                        'NAME'       => Loc::getMessage('SALE_DLVR_HANDL_SMPL_CURRENCY'),
+                        'VALUE'      => $this->currency,
+                        'VALUE_VIEW' => $currency,
+                    ],
+                ],
+            ],
+        ];
+
+        return $result;
+    }
+
+    protected function calculateConcrete(Shipment $shipment)
+    {
+        $result = new CalculationResult();
+
+        if (!$this->deliveryService->getDeliveryZoneCode($shipment)) {
+            $result->addError(new Error('Не указано местоположение доставки'));
+        }
+
+        return $result;
     }
 }
