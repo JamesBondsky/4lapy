@@ -45,7 +45,6 @@ class EventHandlers implements ServiceHandlerInterface, LoggerAwareInterface
          */
 
         foreach (['OnAfterIBlockElementUpdate', 'OnAfterIblockElementAdd'] as $eventType) {
-
             $eventManager->addEventHandler('iblock', $eventType, [$myself, 'updateInElastic']);
         }
         $eventManager->addEventHandler(
@@ -77,15 +76,10 @@ class EventHandlers implements ServiceHandlerInterface, LoggerAwareInterface
     public function updateInElastic($arFields)
     {
         try {
-
             $this->doActionInElastic(CatalogSyncMsg::ACTION_UPDATE, $arFields);
-
         } catch (Exception $exception) {
-
             $this->logException($exception);
-
         }
-
     }
 
     /**
@@ -101,20 +95,17 @@ class EventHandlers implements ServiceHandlerInterface, LoggerAwareInterface
             }
 
             $offerFields = (new OfferQuery())->withFilter(['=ID' => (int)$arFields['PRODUCT_ID']])
-                                             ->withSelect(['IBLOCK_ID', 'ID'])
-                                             ->doExec()
-                                             ->Fetch();
+                ->withSelect(['IBLOCK_ID', 'ID'])
+                ->doExec()
+                ->Fetch();
 
             if (false == $offerFields) {
                 return;
             }
 
             $this->updateInElastic($offerFields);
-
         } catch (Exception $exception) {
-
             $this->logException($exception);
-
         }
     }
 
@@ -134,20 +125,15 @@ class EventHandlers implements ServiceHandlerInterface, LoggerAwareInterface
     public function deleteInElastic($arFields)
     {
         try {
-
             $this->doActionInElastic(CatalogSyncMsg::ACTION_DELETE, $arFields);
-
         } catch (Exception $exception) {
-
             $this->logException($exception);
-
         }
-
     }
 
     /**
      * @param string $action
-     * @param array $arFields
+     * @param array  $arFields
      */
     protected function doActionInElastic(string $action, array $arFields)
     {
@@ -164,29 +150,6 @@ class EventHandlers implements ServiceHandlerInterface, LoggerAwareInterface
     }
 
     /**
-     * @param string $action
-     * @param string $entityType
-     * @param int $entityId
-     */
-    private function publishCatSyncMsg(string $action, string $entityType, int $entityId)
-    {
-        $newCatSyncMsg = new CatalogSyncMsg($action, $entityType, $entityId);
-
-        /** @noinspection PhpNonStrictObjectEqualityInspection */
-        if (!is_null(self::$lastSyncMessage) && $newCatSyncMsg->equals(self::$lastSyncMessage)) {
-            /**
-             * Предотвращение дублирования, если только что
-             * было отправлено точно такое же (по содержимому!)
-             * синхронизационное сообщение.
-             */
-            return;
-        }
-
-        $this->searchService->getIndexHelper()->publishSyncMessage($newCatSyncMsg);
-        self::$lastSyncMessage = $newCatSyncMsg;
-    }
-
-    /**
      * @param $exception
      */
     protected function logException(Throwable $exception)
@@ -194,7 +157,7 @@ class EventHandlers implements ServiceHandlerInterface, LoggerAwareInterface
         $this->logger->error(
             sprintf(
                 "[%s] %s (%s)\n%s\n",
-                get_class($exception),
+                \get_class($exception),
                 $exception->getMessage(),
                 $exception->getCode(),
                 $exception->getTraceAsString()
@@ -215,19 +178,40 @@ class EventHandlers implements ServiceHandlerInterface, LoggerAwareInterface
         $iblockId = (int)$arFields['IBLOCK_ID'];
 
         if (IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS) === $iblockId) {
-
             return CatalogSyncMsg::ENTITY_TYPE_PRODUCT;
+        }
 
-        } elseif (IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS) === $iblockId) {
-
+        if (IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS) === $iblockId) {
             return CatalogSyncMsg::ENTITY_TYPE_OFFER;
-
-        } elseif (IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::BRANDS) === $iblockId) {
-
+        }
+        
+        if (IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::BRANDS) === $iblockId) {
             return CatalogSyncMsg::ENTITY_TYPE_BRAND;
-
         }
 
         return '';
+    }
+
+    /**
+     * @param string $action
+     * @param string $entityType
+     * @param int    $entityId
+     */
+    private function publishCatSyncMsg(string $action, string $entityType, int $entityId)
+    {
+        $newCatSyncMsg = new CatalogSyncMsg($action, $entityType, $entityId);
+
+        /** @noinspection PhpNonStrictObjectEqualityInspection */
+        if (null !== self::$lastSyncMessage && $newCatSyncMsg->equals(self::$lastSyncMessage)) {
+            /**
+             * Предотвращение дублирования, если только что
+             * было отправлено точно такое же (по содержимому!)
+             * синхронизационное сообщение.
+             */
+            return;
+        }
+
+        $this->searchService->getIndexHelper()->publishSyncMessage($newCatSyncMsg);
+        self::$lastSyncMessage = $newCatSyncMsg;
     }
 }
