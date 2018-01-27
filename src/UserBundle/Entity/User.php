@@ -332,6 +332,16 @@ class User implements UserInterface
     /**
      * @return string
      */
+    public function getManzanaNormalizePersonalPhone(): string
+    {
+        $value = $this->getNormalizePersonalPhone();
+
+        return strlen($value) ? '7'.$value : '';
+    }
+
+    /**
+     * @return string
+     */
     public function getPersonalPhone(): string
     {
         return $this->personalPhone ?? '';

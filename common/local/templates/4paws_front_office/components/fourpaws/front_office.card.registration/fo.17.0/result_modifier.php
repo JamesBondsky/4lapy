@@ -5,15 +5,24 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 /**
- * @global CMain $APPLICATION
+ * @global \CMain $APPLICATION
  * @var array $arParams
  * @var array $arResult
+ * @var \CBitrixComponentTemplate $this
  */
 
 $arResult['STEP'] = 1;
 $arResult['POSTED_STEP'] = 0;
 
 $arResult['WAS_POSTED'] = $arResult['ACTION'] !== 'initialLoad';
+
+$arResult['USE_AJAX'] = isset($arParams['USE_AJAX']) && $arParams['USE_AJAX'] === 'N' ? 'N' : 'Y';
+$arResult['IS_AJAX_REQUEST'] = isset($arResult['FIELD_VALUES']['ajaxContext']) ? 'Y' : 'N';
+if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
+    $signer = new \Bitrix\Main\Security\Sign\Signer();
+    $arResult['JS']['signedTemplate'] = $signer->sign($this->GetName(), 'front_office.card.registration');
+    $arResult['JS']['signedParams'] = $signer->sign(base64_encode(serialize($arResult['ORIGINAL_PARAMETERS'])), 'front_office.card.registration');
+}
 
 $firstStepFields = ['cardNumber'];
 $secondStepFields = ['lastName', 'firstName', 'secondName', 'genderCode', 'birthDay'];
@@ -38,11 +47,6 @@ if (!empty($arResult['CARD_DATA']['USER'])) {
     $arResult['PRINT_FIELDS']['birthDay']['VALUE'] = $arResult['CARD_DATA']['USER']['BIRTHDAY'];
     $arResult['PRINT_FIELDS']['genderCode']['VALUE'] = $arResult['CARD_DATA']['USER']['GENDER_CODE'];
     $arResult['PRINT_FIELDS']['phone']['VALUE'] = $arResult['CARD_DATA']['USER']['PHONE'];
-    /*
-    if (strpos($arResult['PRINT_FIELDS']['phone']['VALUE'], '7') === 0) {
-        $arResult['PRINT_FIELDS']['phone']['VALUE'] = substr($arResult['PRINT_FIELDS']['phone']['VALUE'], 1);
-    }
-    */
     $arResult['PRINT_FIELDS']['email']['VALUE'] = $arResult['CARD_DATA']['USER']['EMAIL'];
 }
 

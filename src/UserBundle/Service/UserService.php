@@ -256,7 +256,9 @@ class UserService implements
         }
         
         $client->birthDate          = $user->getManzanaBirthday();
-        $client->phone              = $user->getPersonalPhone();
+        // в Манзане телефон хранится с семеркой
+        //$client->phone              = $user->getPersonalPhone();
+        $client->phone              = $user->getManzanaNormalizePersonalPhone();
         $client->firstName          = $user->getName();
         $client->secondName         = $user->getSecondName();
         $client->lastName           = $user->getLastName();

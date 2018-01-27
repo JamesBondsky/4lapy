@@ -28,7 +28,7 @@ $(document).ready(function () {
 
 	$('#page').on('change', '#email', function (ev) {
 		var p = /^[-\w.]+@([A-z0-9][-A-z0-9]+\.)+[A-z]{2,4}$/;
-		if (!p.test(this.value)) {
+		if (this.value != '' && !p.test(this.value)) {
 			ev.preventDefault();
 			alert('В поле Email введены недопустимые символы!');
 		}

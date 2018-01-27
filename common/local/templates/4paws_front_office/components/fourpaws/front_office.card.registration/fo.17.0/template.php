@@ -18,18 +18,23 @@ $showForm = true;
 
 $errBlock = '<div class="form-page__message b-icon"><i class="icon icon-warning"></i><span class="text-h4 text-icon">%s</span></div>';
 
+echo '<div id="refreshingBlockContainer">';
+
 if (isset($arResult['REGISTRATION_STATUS'])) {
     if ($arResult['REGISTRATION_STATUS'] === 'SUCCESS') {
         $showForm = false;
 
         ?><h2 class="text-h3">Поздравляем! Вы успешно зарегистрировали бонусную карту и теперь можете оплачивать покупки бонусами!</h2>
         <h3 class="text-h4 mb-l">Предъявляйте карту при каждом посещении магазина, получайте и накапливайте бонусы. Оплачивайте Ваши покупки бонусами без ограничений!</h3>
-        <div><a href="/front-office/bonus/" class="btn inline-block">Следующий клиент</a></div><?php
+        <div><a href="<?=$arParams['CURRENT_PAGE']?>" class="btn inline-block">Следующий клиент</a></div><?php
     }
 }
 
 if ($showForm) {
-    ?><form class="form-page mb-l" action="" method="post">
+    $attr = '';
+    $attr .= ' data-ajax-url="'.$componentPath.'/ajax.php"';
+    $attr .= ' data-result-container="#refreshingBlockContainer"';
+    ?><form class="form-page mb-l" action=""<?=$attr?>  method="post">
         <div>
             <input type="hidden" name="formName" value="cardRegistration">
             <input type="hidden" name="action" value="postForm">
@@ -331,15 +336,91 @@ if ($showForm) {
 
             // вывод ошибок регистрации карты, если есть
             if (isset($arResult['REGISTRATION_STATUS']) && $arResult['REGISTRATION_STATUS'] === 'ERROR') {
+                $errMessages = [];
+                foreach ($arResult['ERROR']['REGISTRATION'] as $errCode => $errMsg) {
+                    $errMessages[] = strlen($errCode) ? '['.$errCode.'] '.$errMsg : $errMsg;
+                }
                 echo '<div class="form-page__field-wrap">';
-                echo sprintf($errBlock, 'Ошибка регистрации карты:<br>'.implode('<br>', $arResult['ERROR']['REGISTRATION']));
+                echo sprintf($errBlock, 'Ошибка регистрации карты:<br>'.implode('<br>', $errMessages));
                 echo '</div>';
             }
 
             $btnText = $arResult['STEP'] >= 4 ? 'Зарегистрировать карту' : 'ДАЛЕЕ';
             ?><div class="form-page__submit-wrap">
-                <input class="form-page__btn inline-block" type="submit" value="<?=$btnText?>">
+                <input id="ajaxSubmitButton" class="form-page__btn inline-block" type="submit" value="<?=$btnText?>">
             </div>
         </div>
     </form><?php
+}
+
+echo '</div>';
+
+
+if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
+    ?><script data-name="front_office_card_registration" type="text/javascript">
+        $(document).ready(
+            function() {
+                $('body').on(
+                    'click',
+                    '#ajaxSubmitButton',
+                    function(event) {
+                        event.preventDefault();
+
+                        var siteId = '<?=\CUtil::JSEscape(SITE_ID)?>';
+                        var siteTemplateId = '<?=\CUtil::JSEscape(SITE_TEMPLATE_ID)?>';
+                        var componentPath = '<?=\CUtil::JSEscape($componentPath)?>';
+                        var template = '<?=\CUtil::JSEscape($arResult['JS']['signedTemplate'])?>';
+                        var parameters = '<?=\CUtil::JSEscape($arResult['JS']['signedParams'])?>';
+
+                        var submitButton = $(this);
+                        var submitForm = submitButton.closest('form');
+                        var ajaxUrl = submitForm.data('ajax-url');
+                        var resultContainerSelector = submitForm.data('result-container');
+
+                        submitButton.attr('disabled', true);
+                        submitForm.find('.form-page__submit-wrap').addClass('loading');
+
+                        var formData = submitForm.serializeArray();
+                        var sendData = {
+                            'ajaxContext': {
+                                'siteId': siteId,
+                                'siteTemplateId': siteTemplateId,
+                                'componentPath': componentPath,
+                                'template': template,
+                                'parameters': parameters
+                            }
+                        };
+
+                        $.each(
+                            formData,
+                            function(i, field) {
+                                sendData[field.name] = field.value;
+                            }
+                        );
+
+                        $.ajax({
+                            type: 'POST',
+                            dataType: 'html',
+                            url: ajaxUrl,
+                            data: sendData,
+                            error: function(x, e) {
+                                alert('Error ' + x.status);
+                            },
+                            complete: function(xhr, status) {
+                                $(resultContainerSelector).replaceWith(xhr.responseText);
+                                $('html, body').animate(
+                                    {
+                                        scrollTop: $(document).height()
+                                    },
+                                    200
+                                );
+                                submitButton.removeAttr('disabled');
+                                submitForm.find('.form-page__submit-wrap').removeClass('loading');
+                            }
+                        });
+                    }
+                )
+            }
+        );
+    </script><?php
 }
