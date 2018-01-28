@@ -20,8 +20,9 @@ if (!\is_array($sections) || empty($sections)) {
                id="id-quest-type-food-default"
                data-radio="<?= ++$_SESSION['RADIO_NUMBER'] ?>"
                type="radio"
+               value="0"
                data-url="<?=$nextUrl?>"
-               checked>
+        >
         <label class="b-radio__label b-radio__label--q-food" for="id-quest-type-food-default">
             <span class="b-radio__text-label">Любой</span>
         </label>
