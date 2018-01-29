@@ -6,6 +6,7 @@ use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Order;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\ReCaptcha\ReCaptchaService;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Entity\OrderStorage;
@@ -51,6 +52,17 @@ class OrderService implements ContainerAwareInterface
      * @var CalculationResult[]
      */
     protected $deliveries;
+
+    /**
+     * Порядок оформления заказа
+     * @var array
+     */
+    protected $stepOrder = [
+        OrderService::AUTH_STEP,
+        OrderService::DELIVERY_STEP,
+        OrderService::PAYMENT_STEP,
+        OrderService::COMPLETE_STEP,
+    ];
 
     /**
      * OrderService constructor.
@@ -138,6 +150,7 @@ class OrderService implements ContainerAwareInterface
                     'email',
                     'altPhone',
                     'communicationWay',
+                    'captchaFilled',
                 ];
                 break;
             case self::DELIVERY_STEP:
@@ -153,7 +166,7 @@ class OrderService implements ContainerAwareInterface
                     'deliveryInterval',
                     'deliveryPlaceCode',
                     'dpdTerminalCode',
-                    'comment'
+                    'comment',
                 ];
         }
 
@@ -237,5 +250,30 @@ class OrderService implements ContainerAwareInterface
         }
 
         return $this->deliveries;
+    }
+
+    /**
+     * Вычисляет шаг оформления заказа в соотвествии с состоянием хранилища
+     *
+     * @param OrderStorage $storage
+     * @param string $startStep
+     */
+    public function validateStorage(OrderStorage $storage, string $startStep = self::AUTH_STEP): string
+    {
+        $steps = array_reverse($this->stepOrder);
+        $stepIndex = array_search($startStep, $steps);
+        if ($stepIndex === false) {
+            return $startStep;
+        }
+
+        $realStep = $startStep;
+        $steps = array_slice($steps, $stepIndex);
+        foreach ($steps as $step) {
+            if ($this->storageRepository->validate($storage, $step)->count()) {
+                $realStep = $step;
+            }
+        }
+
+        return $realStep;
     }
 }

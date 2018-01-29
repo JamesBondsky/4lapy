@@ -39,6 +39,17 @@ class OrderStorage
     protected $userId = 0;
 
     /**
+     * Заполнял ли пользователь капчу
+     *
+     * @var bool
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("CAPTCHA_FILLED")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     * @Assert\IsTrue(groups={"auth","delivery","payment"})
+     */
+    protected $captchaFilled = false;
+
+    /**
      * ID типа оплаты
      *
      * @var int
@@ -306,9 +317,32 @@ class OrderStorage
         return $this;
     }
 
+    /**
+     * @return int
+     */
     public function getUserId(): int
     {
         return $this->userId;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isCaptchaFilled(): bool
+    {
+        return $this->captchaFilled;
+    }
+
+    /**
+     * @param bool $filled
+     *
+     * @return OrderStorage
+     */
+    public function setCaptchaFilled(bool $filled): OrderStorage
+    {
+        $this->captchaFilled = $filled;
+
+        return $this;
     }
 
     /**

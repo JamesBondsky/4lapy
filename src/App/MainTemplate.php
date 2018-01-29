@@ -273,9 +273,20 @@ class MainTemplate extends TemplateAbstract
         return $this->isDir('/personal/referral');
     }
 
+    /**
+     * @return bool
+     */
     public function isOrderPage(): bool
     {
         return $this->isPartitionDir('/sale/order');
+    }
+
+    /**
+     * @return bool
+     */
+    public function isOrderDeliveryPage(): bool
+    {
+        return $this->isDir('/sale/order/delivery');
     }
 
     /**

@@ -7,6 +7,8 @@
 namespace FourPaws\StoreBundle\Service;
 
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
+use Doctrine\Common\Collections\Collection;
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\Location\LocationService;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
@@ -275,18 +277,28 @@ class StoreService
     /**
      * Получить наличие офферов на указанных складах
      *
-     * @param int[]           $offerIds
+     * @param Collection      $offers
      * @param StoreCollection $stores
      *
      * @return StockCollection
      */
-    public function getStocks(array $offerIds, StoreCollection $stores) : StockCollection
+    public function getStocks(Collection $offers, StoreCollection $stores) : StockCollection
     {
+        if ($offers->isEmpty()) {
+            return new StockCollection();
+        }
+
         $storeIds = [];
         foreach ($stores as $store) {
             $storeIds[] = $store->getId();
         }
-        
+
+        $offerIds = [];
+        /** @var Offer $offer */
+        foreach ($offers as $offer) {
+            $offerIds[] = $offer->getId();
+        }
+
         return $this->stockRepository->findBy(
             [
                 'PRODUCT_ID' => $offerIds,

@@ -217,8 +217,7 @@ if ($storage->getAddressId()) {
                 $date = (new DateTime())->modify('+' . ($start + $i) . ' days');
                 $dateString = FormatDate('l, d.m.Y', $date->getTimestamp());
                 ?>
-                <option value="<?= $i ?>" <?= $storage->getDeliveryDate(
-                ) == ($i) ? 'selected="selected"' : '' ?>>
+                <option value="<?= $i ?>" <?= $storage->getDeliveryDate() == ($i) ? 'selected="selected"' : '' ?>>
                     <?= $dateString ?>
                 </option>
             <?php } ?>
@@ -227,8 +226,8 @@ if ($storage->getAddressId()) {
 </div>
 <?php if (!empty($delivery->getData()['INTERVALS'])) { ?>
     <div class="b-input-line b-input-line--interval">
-        <div class="b-input-line__label-wrapper b-input-line__label-wrapper--interval"><span
-                    class="b-input-line__label">интервал</span>
+        <div class="b-input-line__label-wrapper b-input-line__label-wrapper--interval">
+            <span class="b-input-line__label">интервал</span>
         </div>
         <div class="b-select b-select--recall b-select--feedback-page b-select--interval">
             <select class="b-select__block b-select__block--recall b-select__block--feedback-page b-select__block--interval"
@@ -249,15 +248,16 @@ if ($storage->getAddressId()) {
 <?php } ?>
 <div class="b-input-line b-input-line--textarea b-input-line--address-textarea">
     <div class="b-input-line__label-wrapper">
-        <label class="b-input-line__label" for="order-comment">Комментарий к
-            заказу
+        <label class="b-input-line__label" for="order-comment">
+            Комментарий к заказу
         </label>
     </div>
     <div class="b-input b-input--registration-form">
-                                        <textarea class="b-input__input-field b-input__input-field--textarea b-input__input-field--registration-form"
-                                                  id="order-comment"
-                                                  name="comment"><?= $storage->getComment() ?></textarea>
-        <div class="b-error"><span class="js-message"></span>
+        <textarea class="b-input__input-field b-input__input-field--textarea b-input__input-field--registration-form"
+                  id="order-comment"
+                  name="comment"><?= $storage->getComment() ?></textarea>
+        <div class="b-error">
+            <span class="js-message"></span>
         </div>
     </div>
 </div>

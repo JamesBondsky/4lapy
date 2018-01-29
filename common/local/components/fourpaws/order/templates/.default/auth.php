@@ -208,7 +208,7 @@ $currentCommWay = $communicationWays[$storage->getCommunicationWay()];
                                 </div>
                             <?php } ?>
                         </div>
-                        <?php if (!$storage->getUserId()) { ?>
+                        <?php if (!$storage->getUserId() && !$storage->isCaptchaFilled()) { ?>
                             <div class="b-input-line">
                                 <?= $recaptchaService->getCaptcha() ?>
                             </div>

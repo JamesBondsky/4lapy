@@ -10,6 +10,7 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\StoreBundle\Collection\StockCollection;
+use Doctrine\Common\Collections\ArrayCollection;
 
 CBitrixComponent::includeComponentClass('fourpaws:city.delivery.info');
 
@@ -68,7 +69,7 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
                 );
 
                 if (!$this->arParams['STOCKS']) {
-                    $stocks = $this->storeService->getStocks([$this->arParams['OFFER']->getId()], $stores);
+                    $stocks = $this->storeService->getStocks(new ArrayCollection($this->arParams['OFFER']), $stores);
                 }
                 $this->arResult['CURRENT']['PICKUP']['SHOP_COUNT'] = $this->getShopCount(
                     $this->arResult['CURRENT']['LOCATION']['CODE']
@@ -112,7 +113,7 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
             $locationCode,
             StoreService::TYPE_SHOP
         );
-        $stocks = $this->storeService->getStocks([$this->arParams['OFFER']->getId()], $stores);
+        $stocks = $this->storeService->getStocks(new ArrayCollection($this->arParams['OFFER']->getId()), $stores);
 
         return count($stocks);
     }

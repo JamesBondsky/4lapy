@@ -6,13 +6,20 @@ use Bitrix\Currency\CurrencyManager;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Sale\BasketBase;
+use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\Services\Base;
 use Bitrix\Sale\Shipment;
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
+use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\Location\LocationService;
 use FourPaws\StoreBundle\Collection\StockCollection;
+use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 
@@ -134,52 +141,124 @@ abstract class DeliveryServiceHandlerBase extends Base implements DeliveryServic
         return $result;
     }
 
-    public static function getStocks($locationCode, $offerData)
+    /**
+     * Получает коллекцию офферов и проставляет им наличие
+     *
+     * @param string $locationCode
+     * @param BasketBase $basket
+     *
+     * @return bool|OfferCollection
+     */
+    public static function getOffers(string $locationCode, BasketBase $basket)
     {
-        /* @todo нужно как-то оптимизировать метод, т.к. он выполняется для каждого профиля доставки, который подходит по зоне */
-        if (empty($offerData)) {
-            return [];
+        if ($basket->isEmpty()) {
+            return false;
         }
+
+        $offerIds = [];
+        /** @var BasketItem $basketItem */
+        foreach ($basket as $basketItem) {
+            $offerId = $basketItem->getProductId();
+            $quantity = $basketItem->getQuantity();
+            if (!$offerId || !$quantity) {
+                continue;
+            }
+            $offerIds[] = $offerId;
+        }
+
+        if (empty($offerIds)) {
+            return false;
+        }
+
         /** @var StoreService $storeService */
         $storeService = Application::getInstance()->getContainer()->get('store.service');
         $stores = $storeService->getByLocation($locationCode);
         if ($stores->isEmpty()) {
-            return [];
+            return false;
         }
 
-        $offers = (new OfferQuery())->withFilterParameter('ID', array_keys($offerData))->exec();
+        /** @var OfferCollection $offers */
+        $offers = (new OfferQuery())->withFilterParameter('ID', $offerIds)->exec();
         if ($offers->isEmpty()) {
-            return [];
+            return false;
         }
 
-        $offersByRequest = $offers->filter(function (Offer $offer) {
-            return $offer->isByRequest();
-        });
-        $availableOffers = $offers->filter(function (Offer $offer) {
-            return !$offer->isByRequest();
-        });
+        $offers->loadStocks($stores);
 
-        if (!$availableOffers->isEmpty()) {
-            $offerIds = [];
-            foreach ($availableOffers as $offer) {
-                $offerIds[] = $offer->getId();
+        return $offers;
+    }
+
+    /**
+     * @param BasketBase $basket
+     * @param OfferCollection $offers
+     * @param StoreCollection $storesAvailable склады, где товары считается "в наличии"
+     * @param StoreCollection $storesDelay склады, с которых производится поставка на $storesAvailable
+     * @param StockResultCollection $stockResultCollection
+     * @return StockResultCollection
+     */
+    public static function getStocks(
+        BasketBase $basket,
+        OfferCollection $offers,
+        StoreCollection $storesAvailable,
+        StoreCollection $storesDelay,
+        StockResultCollection $stockResultCollection = null
+    ): array {
+        if (!$stockResultCollection) {
+            $stockResultCollection = new StockResultCollection();
+        }
+
+        /** @var Offer $offer */
+        foreach ($offers as $offer) {
+            $basketItem = $basket->getExistsItem('catalog', $offer->getId());
+            if (!$basketItem) {
+                continue;
             }
-            $stocks = $storeService->getStocks($offerIds, $stores);
-        } else {
-            $stocks = new StockCollection();
+            $neededAmount = $basketItem->getQuantity();
+
+            $stockResult = new StockResult();
+            $stockResult->setAmount($neededAmount)
+                        ->setStores($storesAvailable);
+
+            if ($offer->isByRequest()) {
+                $stockResult->setType(StockResult::TYPE_DELAYED);
+                continue;
+            }
+
+            $stocks = $offer->getStocks();
+            $availableAmount = $stocks->filterByStores($storesAvailable)->getTotalAmount();
+            if ($availableAmount < $neededAmount) {
+                $stockResult->setAmount($availableAmount);
+                $neededAmount -= $availableAmount;
+            } else {
+                $neededAmount = 0;
+            }
+
+            /**
+             * Товар в наличии не полностью. Часть будет отложена
+             */
+            if ($neededAmount) {
+                $delayedAmount = $stocks->filterByStores($storesDelay)->getTotalAmount();
+                if ($delayedAmount >= $neededAmount) {
+                    $delayedStockResult = (new StockResult())->setType(StockResult::TYPE_DELAYED)
+                                                             ->setAmount($neededAmount);
+                    $stockResultCollection->add($delayedStockResult);
+                } else {
+                    /**
+                     * Товар не в наличии
+                     */
+                    $stockResult->setType(StockResult::TYPE_UNAVAILABLE)
+                                ->setAmount($basketItem->getQuantity())
+                                ->setStores(
+                                    new StoreCollection(
+                                        array_merge($storesDelay->toArray(), $storesAvailable->toArray())
+                                    )
+                                );
+                }
+            }
+
+            $stockResultCollection->add($stockResult);
         }
 
-        /* @todo получение графиков поставок */
-        $deliverySchedules = [];
-        if (!$offersByRequest->isEmpty()) {
-            $deliverySchedules = [];
-        }
-
-        return [
-            'AVAILABLE_OFFERS'   => $availableOffers,
-            'OFFERS_BY_REQUEST'   => $offersByRequest,
-            'STOCKS'             => $stocks,
-            'DELIVERY_SCHEDULES' => $deliverySchedules,
-        ];
+        return $stockResultCollection;
     }
 }

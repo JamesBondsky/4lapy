@@ -4,6 +4,7 @@ namespace FourPaws\SaleBundle\Repository\OrderStorage;
 
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Service\OrderService;
+use Symfony\Component\Validator\ConstraintViolationListInterface;
 
 interface StorageRepositoryInterface
 {
@@ -27,4 +28,12 @@ interface StorageRepositoryInterface
      * @return bool
      */
     public function clear(OrderStorage $storage): bool;
+
+    /**
+     * @param OrderStorage $storage
+     * @param string $step
+     *
+     * @return ConstraintViolationListInterface
+     */
+    public function validate(OrderStorage $storage, string $step): ConstraintViolationListInterface;
 }

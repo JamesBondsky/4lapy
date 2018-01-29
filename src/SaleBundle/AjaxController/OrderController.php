@@ -6,6 +6,7 @@ use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\ReCaptcha\ReCaptchaService;
+use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
@@ -66,11 +67,11 @@ class OrderController extends Controller
      */
     public function validateAuthAction(Request $request): JsonResponse
     {
-        if (!$this->userAuthProvider->isAuthorized() && !$this->recaptcha->checkCaptcha()) {
-            $validationErrors = ['recaptcha' => 'Пожалуйста, заполните captcha'];
-        } else {
-            $validationErrors = $this->fillStorage($request, OrderService::AUTH_STEP);
+        $storage = $this->orderService->getStorage();
+        if (!$this->userAuthProvider->isAuthorized() && !$storage->isCaptchaFilled()) {
+            $request->request->add(['captchaFilled' => $this->recaptcha->checkCaptcha()]);
         }
+        $validationErrors = $this->fillStorage($storage, $request, OrderService::AUTH_STEP);
 
         if (!empty($validationErrors)) {
             return JsonErrorResponse::createWithData(
@@ -98,7 +99,13 @@ class OrderController extends Controller
      */
     public function validateDeliveryAction(Request $request): JsonResponse
     {
-        $validationErrors = $this->fillStorage($request, OrderService::DELIVERY_STEP);
+        $storage = $this->orderService->getStorage();
+        $currentStep = OrderService::DELIVERY_STEP;
+        if ($this->orderService->validateStorage($storage, $currentStep) != $currentStep) {
+            return JsonErrorResponse::create('', 200, [], ['reload' => true]);
+        }
+
+        $validationErrors = $this->fillStorage($storage, $request, $currentStep);
         if (!empty($validationErrors)) {
             return JsonErrorResponse::createWithData('', ['errors' => $validationErrors]);
         }
@@ -107,7 +114,7 @@ class OrderController extends Controller
             '',
             200,
             [],
-            ['redirect' => '/sale/order/' . OrderService::PAYMENT_STEP. '/']
+            ['redirect' => '/sale/order/' . OrderService::PAYMENT_STEP . '/']
         );
     }
 
@@ -120,7 +127,13 @@ class OrderController extends Controller
      */
     public function validatePaymentAction(Request $request): JsonResponse
     {
-        $validationErrors = $this->fillStorage($request, OrderService::PAYMENT_STEP);
+        $storage = $this->orderService->getStorage();
+        $currentStep = OrderService::PAYMENT_STEP;
+        if ($this->orderService->validateStorage($storage, $currentStep) != $currentStep) {
+            return JsonErrorResponse::create('', 200, [], ['reload' => true]);
+        }
+
+        $validationErrors = $this->fillStorage($storage, $request, $currentStep);
         if (!empty($validationErrors)) {
             return JsonErrorResponse::createWithData('', ['errors' => $validationErrors]);
         }
@@ -130,7 +143,7 @@ class OrderController extends Controller
             '',
             200,
             [],
-            ['redirect' => '/sale/order/' . OrderService::PAYMENT_STEP]
+            ['redirect' => '/sale/order/' . OrderService::PAYMENT_STEP . '/']
         );
         */
     }
@@ -147,11 +160,19 @@ class OrderController extends Controller
         return $this->stepOrder[++$key];
     }
 
-    protected function fillStorage(Request $request, string $step): array
+    protected function validate($step)
+    {
+        $storage = $this->orderService->getStorage();
+
+        return $this->orderService->validateStorage($storage, $step);
+
+    }
+
+    protected function fillStorage(OrderStorage $storage, Request $request, string $step): array
     {
         $errors = [];
-        $storage = $this->orderService->setStorageValuesFromRequest(
-            $this->orderService->getStorage(),
+        $this->orderService->setStorageValuesFromRequest(
+            $storage,
             $request,
             $step
         );
@@ -167,4 +188,5 @@ class OrderController extends Controller
 
         return $errors;
     }
+
 }

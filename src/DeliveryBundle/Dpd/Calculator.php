@@ -10,6 +10,8 @@ use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Service\DeliveryServiceHandlerBase;
 use FourPaws\Location\LocationService;
+use FourPaws\SaleBundle\Service\BasketService;
+use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Service\StoreService;
 
 if (!Loader::includeModule('ipol.dpd')) {
@@ -41,15 +43,40 @@ class Calculator extends \Ipolh\DPD\Delivery\DPD
         }
 
         if (!empty($arOrder['ITEMS'])) {
-            $offerData = [];
-            foreach ($arOrder['ITEMS'] as $item) {
-                if (!$item['PRODUCT_ID'] || !$item['QUANTITY']) {
-                    continue;
+            /** @var BasketService $basketService */
+            $basketService = Application::getInstance()->getContainer()->get(BasketService::class);
+            /** @var StoreService $storeService */
+            $storeService = Application::getInstance()->getContainer()->get('store.service');
+
+            $basket = $basketService->getBasket()->getOrderableItems();
+
+            $storesAvailable = $storeService->getByLocation(
+                LocationService::LOCATION_CODE_MOSCOW,
+                StoreService::TYPE_STORE
+            );
+            $storesDelay = new StoreCollection();
+            if ($offers = DeliveryServiceHandlerBase::getOffers(
+                LocationService::LOCATION_CODE_MOSCOW,
+                $basket
+            )) {
+                $stockResult = DeliveryServiceHandlerBase::getStocks($basket, $offers, $storesAvailable, $storesDelay);
+                if (!$stockResult->getUnavailable()->isEmpty()) {
+                    $result = [
+                        'RESULT' => 'ERROR',
+                        'TEXT'   => 'Присутствуют товары не в наличии',
+                    ];
+
+                    return $result;
                 }
-                $offerData[$item['PRODUCT_ID']] = $item['QUANTITY'];
+
+                if (!$stockResult->getDelayed()->isEmpty()) {
+                    /**
+                     * @todo расчет графиков доставки для dpd
+                     * получившееся кол-во дней нужно прибавить к $result['DPD_TARIFF']['DAYS']
+                     */
+                    $result['DPD_TARIFF']['DAYS'] += 10;
+                }
             }
-            $stockData = DeliveryServiceHandlerBase::getStocks(LocationService::LOCATION_CODE_MOSCOW, $offerData);
-            /* @todo проверка остатков для DPD */
         }
 
         $interval = explode('-', Option::get(IPOLH_DPD_MODULE, 'DELIVERY_TIME_PERIOD'));
@@ -66,7 +93,7 @@ class Calculator extends \Ipolh\DPD\Delivery\DPD
                 ],
             ],
             'DAYS_FROM' => $result['DPD_TARIFF']['DAYS'],
-            'DAYS_TO' => $result['DPD_TARIFF']['DAYS'] + 10,
+            'DAYS_TO'   => $result['DPD_TARIFF']['DAYS'] + 10,
         ];
 
         $result['VALUE'] = floor($result['VALUE']);

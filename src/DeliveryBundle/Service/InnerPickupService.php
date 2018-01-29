@@ -7,6 +7,7 @@ use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\Shipment;
+use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Stock;
@@ -65,39 +66,14 @@ class InnerPickupService extends DeliveryServiceHandlerBase
             return $result;
         }
         $deliveryLocation = $this->deliveryService->getDeliveryLocation($shipment);
+        $basket = $shipment->getParentOrder()->getBasket()->getOrderableItems();
 
-        /* @todo учитывать график поставок для товаров под заказ */
-        $order = $shipment->getParentOrder();
-        $propertyCollection = $order->getPropertyCollection();
-
-        $offerData = [];
-        $basketCollection = $order->getBasket();
-
-        /** @var BasketItem $basketItem */
-        foreach ($basketCollection as $basketItem) {
-            if (!$basketItem->canBuy()) {
-                continue;
-            }
-            $offerId = $basketItem->getProductId();
-            $quantity = $basketItem->getQuantity();
-            if (!$offerId || !$quantity) {
-                continue;
-            }
-            $offerData[$offerId] = $quantity;
-        }
-
-        if ($basketCollection->isEmpty() || empty($offerData)) {
-            $result->setPeriodFrom(1);
-            $result->setPeriodType(CalculationResult::PERIOD_TYPE_HOUR);
-
-            return $result;
-        }
         $stores = $this->storeService->getByLocation($deliveryLocation, StoreService::TYPE_ALL);
         $shops = $stores->getShops();
 
         $shopCode = null;
         /* @var PropertyValue $prop */
-        foreach ($propertyCollection as $prop) {
+        foreach ($shipment->getParentOrder()->getPropertyCollection() as $prop) {
             if ($prop->getField('CODE') == self::ORDER_DELIVERY_PLACE_CODE_PROP) {
                 $shopCode = $prop->getValue();
                 break;
@@ -120,70 +96,55 @@ class InnerPickupService extends DeliveryServiceHandlerBase
             }
         }
 
-        $stockData = self::getStocks($deliveryLocation, $offerData);
-        /** @var StockCollection $stocks */
-        $stocks = $stockData['STOCKS'];
+        if (!$offers = static::getOffers($deliveryLocation, $basket)) {
+            $result->setPeriodType(CalculationResult::PERIOD_TYPE_HOUR);
+            $result->setPeriodFrom(1);
 
-        foreach ($offerData as $offerId => $quantity) {
-            if ($stocks->filterByOfferId($offerId)->isEmpty()) {
-                $result->addError(
-                    new Error(
-                        'Товар ' . $offerId . ' недоступен'
-                    )
-                );
-            }
-        }
-        if (!$result->isSuccess()) {
             return $result;
         }
 
-        /** @var bool $getFromShop флаг того, что товары будут получены из магазина */
-        $getFromShop = true;
-        $shopStocks = $stocks->filterByStores($shops);
-        $availableIn = [];
-        foreach ($offerData as $offerId => $quantity) {
-            $offerStocks = $shopStocks->filterByOfferId($offerId);
-            if ($offerStocks->isEmpty()) {
-                $getFromShop = false;
+        switch ($this->deliveryService->getDeliveryZoneCode($shipment)) {
+            case DeliveryService::ZONE_1:
+            case DeliveryService::ZONE_2:
+            case DeliveryService::ZONE_3:
+                /**
+                 * условие доставки в эту зону - наличие в магазине
+                 * условие отложенной доставки в эту зону - наличие на складе
+                 */
+                $delayStores = $stores;
                 break;
-            }
-            /** @var Stock $offerStock */
-            foreach ($offerStocks as $offerStock) {
-                if ($offerStock->getAmount() < $quantity) {
-                    continue;
-                }
-                $availableIn[$offerId][] = $offerStock->getStoreId();
-            }
+            default:
+                $result->addError(new Error('Доставка не работает для этой зоны'));
+
+                return $result;
         }
 
-        // находим магазины, в которых есть все товары в нужном кол-ве
-        if ($getFromShop) {
-            if (count($offerData) == 1) {
-                $availableShopIds = reset($availableIn);
-            } else {
-                $availableShopIds = array_intersect(...$availableIn);
-            }
-
-            if (empty($availableShopIds)) {
-                $getFromShop = false;
-            } else {
-                $result->setData(
-                    [
-                        'AVAILABLE_IN' => $shops->filter(
-                            function (Store $shop) use ($availableShopIds) {
-                                return in_array($shop->getId(), $availableShopIds);
-                            }
-                        ),
-                    ]
-                );
-            }
+        $stockResult = new StockResultCollection();
+        /** @var Store $shop */
+        foreach ($shops as $shop) {
+            $availableStores = new StoreCollection($shop);
+            $stockResult = static::getStocks($basket, $offers, $availableStores, $delayStores, $stockResult);
         }
 
-        if ($getFromShop) {
-            $result->setPeriodFrom(1);
-            $result->setPeriodType(CalculationResult::PERIOD_TYPE_HOUR);
+        $data['STOCK_RESULT'] = $stockResult;
+        $result->setData($data);
+
+        if ($shopCode) {
+            if (!$stockResult->getUnavailable()->isEmpty()) {
+                $result->addError(new Error('Присутствуют товары не в наличии'));
+
+                return $result;
+            }
+
+            if ($stockResult->getDelayed()->isEmpty()) {
+                $result->setPeriodFrom(1);
+                $result->setPeriodType(CalculationResult::PERIOD_TYPE_HOUR);
+            } else {
+                /* @todo расчет сроков по графику поставок в магазин */
+                $result->setPeriodFrom(10);
+                $result->setPeriodType(CalculationResult::PERIOD_TYPE_DAY);
+            }
         } else {
-            /* @todo расчет сроков по графику поставок в магазин */
             $result->setPeriodFrom(1);
             $result->setPeriodType(CalculationResult::PERIOD_TYPE_HOUR);
         }

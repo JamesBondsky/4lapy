@@ -18,6 +18,8 @@ use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\BitrixOrm\Query\CatalogProductQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\StoreBundle\Collection\StockCollection;
+use FourPaws\StoreBundle\Entity\Stock;
 use JMS\Serializer\Annotation\Accessor;
 use JMS\Serializer\Annotation as Serializer;
 use JMS\Serializer\Annotation\Groups;
@@ -261,6 +263,11 @@ class Offer extends IblockElement
      * @var Collection|Image[]
      */
     protected $resizeImages;
+
+    /**
+     * @var StockCollection
+     */
+    protected $stocks;
 
     public function __construct(array $fields = [])
     {
@@ -842,6 +849,30 @@ class Offer extends IblockElement
     {
         /* @@todo расчет бонусов */
         return 112;
+    }
+
+    /**
+     * @param StockCollection $stocks
+     *
+     * @return Offer
+     */
+    public function withStocks(StockCollection $stocks): Offer
+    {
+        $this->stocks = $stocks;
+
+        return $this;
+    }
+
+    /**
+     * @return StockCollection
+     */
+    public function getStocks(): StockCollection
+    {
+        if (!$this->stocks) {
+            $this->stocks = new StockCollection();
+        }
+
+        return $this->stocks;
     }
 
     protected function checkOptimalPrice()

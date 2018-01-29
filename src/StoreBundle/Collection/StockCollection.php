@@ -40,4 +40,35 @@ class StockCollection extends BaseCollection
             }
         );
     }
+
+    /**
+     * @return int
+     */
+    public function getTotalAmount(): int
+    {
+        $amount = 0;
+        /** @var Stock $stock */
+        foreach ($this->getIterator() as $stock) {
+            $amount += $stock->getAmount();
+        }
+
+        return $amount;
+    }
+
+    /**
+     * @param $offerId
+     *
+     * @return int
+     */
+    public function getAmountByOfferId($offerId): int
+    {
+        $stocks = $this->filterByOfferId($offerId);
+        $amount = 0;
+        /** @var Stock $stock */
+        foreach ($stocks->getIterator() as $stock) {
+            $amount += $stock->getAmount();
+        }
+
+        return $amount;
+    }
 }

@@ -41,28 +41,26 @@ class FourPawsOrderComponent extends \CBitrixComponent
     {
         global $APPLICATION;
         try {
-            if ($this->startResultCache()) {
-                $variables = [];
-                $componentPage = CComponentEngine::ParseComponentPath(
-                    $this->arParams['SEF_FOLDER'],
-                    self::DEFAULT_TEMPLATES_404,
-                    $variables
-                );
+            $variables = [];
+            $componentPage = CComponentEngine::ParseComponentPath(
+                $this->arParams['SEF_FOLDER'],
+                self::DEFAULT_TEMPLATES_404,
+                $variables
+            );
 
-                if (!$componentPage) {
-                    LocalRedirect($this->arParams['SEF_FOLDER']);
-                }
-
-                $this->currentStep = $componentPage;
-
-                if ($this->arParams['SET_TITLE'] === 'Y') {
-                    $APPLICATION->SetTitle('Оформление заказа');
-                }
-
-                $this->prepareResult();
-
-                $this->includeComponentTemplate($componentPage);
+            if (!$componentPage) {
+                LocalRedirect($this->arParams['SEF_FOLDER']);
             }
+
+            $this->currentStep = $componentPage;
+
+            if ($this->arParams['SET_TITLE'] === 'Y') {
+                $APPLICATION->SetTitle('Оформление заказа');
+            }
+
+            $this->prepareResult();
+
+            $this->includeComponentTemplate($componentPage);
         } catch (\Exception $e) {
             try {
                 $logger = LoggerFactory::create('component');
@@ -89,8 +87,12 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
         $order = null;
         if (!$storage = $this->orderService->getStorage()) {
-            $this->abortResultCache();
             throw new Exception('Failed to initialize storage');
+        }
+
+        $realStep = $this->orderService->validateStorage($storage, $this->currentStep);
+        if ($realStep != $this->currentStep) {
+            LocalRedirect($this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[$realStep]);
         }
 
         if ($this->currentStep === OrderService::COMPLETE_STEP) {

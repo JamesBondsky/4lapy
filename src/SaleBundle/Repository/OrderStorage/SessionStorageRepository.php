@@ -35,7 +35,7 @@ class SessionStorageRepository extends StorageBaseRepository
             throw new NotFoundException('Wrong fuser id');
         }
 
-        $validationResult = $this->validator->validate($storage, null, [$step]);
+        $validationResult = $this->validate($storage, $step);
         if ($validationResult->count() > 0) {
             throw new OrderStorageValidationException($validationResult, 'Wrong entity passed to create');
         }
