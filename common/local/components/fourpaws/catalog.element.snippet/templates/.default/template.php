@@ -95,11 +95,12 @@ $firstOffer = $offers->first();
                         }
                         ?>
                         <li class="b-weight-container__item">
-                                <span class="b-weight-container__link js-price unavailable-link <?= $firstOffer->getId() === $offer->getId(
+                            <a href="javascript:void(0)"
+                               class="b-weight-container__link js-price <?= $firstOffer->getId() === $offer->getId(
                                 ) ? 'active-link' : '' ?>"
-                                      data-price="<?= $offer->getPrice() ?>" data-offerid="<?= $offer->getId() ?>"
-                                      data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
-                                ><?= $value ?></span>
+                               data-price="<?= $offer->getPrice() ?>" data-offerid="<?= $offer->getId() ?>"
+                               data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
+                            ><?= $value ?></a>
                         </li>
                         <?php
                     } ?>
