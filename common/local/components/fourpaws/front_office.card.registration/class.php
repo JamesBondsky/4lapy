@@ -49,7 +49,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
 
     public function __construct($component = null)
     {
-        // LazyLoggerAwareTrait не умеет присваивать имя классам без неймспейса
+        // LazyLoggerAwareTrait не умеет присваивать имя по классам без неймспейса
         // делаем это вручную
         $this->logName = __CLASS__;
 
@@ -60,7 +60,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
     public function onPrepareComponentParams($params)
     {
         $params['CURRENT_PAGE'] = isset($params['CURRENT_PAGE']) ? trim($params['CURRENT_PAGE']) : '';
-        if (!strlen($params['CURRENT_PAGE'])) {
+        if (!$params['CURRENT_PAGE']) {
             $params['CURRENT_PAGE'] = $this->request->getRequestedPage();
             // отсечение index.php
             if (substr($params['CURRENT_PAGE'], -10) === '/index.php') {
@@ -75,7 +75,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
 
         $params['SEND_USER_REGISTRATION_SMS'] = isset($params['SEND_USER_REGISTRATION_SMS']) && $params['SEND_USER_REGISTRATION_SMS'] === 'N' ? 'N' : 'Y';
         $params['REGISTRATION_SMS_TEXT'] = $params['REGISTRATION_SMS_TEXT'] ?? '';
-        if (!strlen($params['REGISTRATION_SMS_TEXT'])) {
+        if (!$params['REGISTRATION_SMS_TEXT']) {
             $params['REGISTRATION_SMS_TEXT'] = 'Спасибо за регистрацию на сайте 4lapy.ru! 
             Теперь Вам доступны все возможности личного кабинета! Номер вашего телефона является логином, пароль для доступа #PASSWORD#. 
             Для авторизации перейдите по ссылке http://4lapy.ru/personal/.';
@@ -294,7 +294,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
     {
         $fieldName = 'cardNumber';
         $value = $this->trimValue($this->getFormFieldValue($fieldName));
-        if (!strlen($value)) {
+        if ($value === '') {
             $this->setFieldError($fieldName, 'Undefined card number', 'empty');
         } else {
             $continue = true;
@@ -369,7 +369,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
         ];
         foreach ($tmpList as $fieldName) {
             $value = $this->trimValue($this->getFormFieldValue($fieldName));
-            if (!strlen($value)) {
+            if ($value === '') {
                 $this->setFieldError($fieldName, 'Undefined', 'empty');
             } else {
                 if (strlen($value) < 3 || preg_match('/[^а-яА-ЯёЁ\-\s]/u', $value)) {
@@ -380,7 +380,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
 
         $fieldName = 'birthDay';
         $value = $this->trimValue($this->getFormFieldValue($fieldName));
-        if (!strlen($value)) {
+        if ($value === '') {
             $this->setFieldError($fieldName, 'Undefined', 'empty');
         } else {
             if(!preg_match('/^\d{2}\.\d{2}\.\d{4}$/', $value)) {
@@ -394,7 +394,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
 
         $fieldName = 'genderCode';
         $value = $this->trimValue($this->getFormFieldValue($fieldName));
-        if (!strlen($value)) {
+        if ($value === '') {
             $this->setFieldError($fieldName, 'Undefined', 'empty');
         } else {
             if($value != static::EXTERNAL_GENDER_CODE_M && $value != static::EXTERNAL_GENDER_CODE_F) {
@@ -407,11 +407,11 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
     {
         $fieldName = 'phone';
         $value = $this->trimValue($this->getFormFieldValue($fieldName));
-        if (!strlen($value)) {
+        if ($value === '') {
             $this->setFieldError($fieldName, 'Undefined phone number', 'empty');
         } else {
             $phone = $this->cleanPhoneNumberValue($value);
-            if (strlen($phone)) {
+            if ($phone !== '') {
                 // Наличие юзера с таким номером в БД сайта
                 // Проверка делалась в старой реализации, по текущему ТЗ она не требуется
                 //if ($this->searchUserByPhoneNumber($phone)) {
@@ -427,7 +427,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
     {
         $fieldName = 'email';
         $value = $this->trimValue($this->getFormFieldValue($fieldName));
-        if (strlen($value)) {
+        if ($value !== '') {
             if (!check_email($value)) {
                 $this->setFieldError($fieldName, 'Not valid', 'not_valid');
             } else {
@@ -446,14 +446,14 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
         $result = new Result();
 
         $phone = $this->cleanPhoneNumberValue($this->getFormFieldValue('phone'));
-        if (!strlen($phone)) {
+        if ($phone === '') {
             $result->addError(
                 new Error('Не задан номер телефона', 'emptyPhoneField')
             );
         }
 
         $cardNumber = $this->trimValue($this->getFormFieldValue('cardNumber'));
-        if (!strlen($cardNumber)) {
+        if ($cardNumber === '') {
             $result->addError(
                 new Error('Не задан номер карты', 'emptyCardNumberField')
             );
@@ -495,7 +495,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
                     // бонусная карта привязывается к профилю пользователя.
                     // Если найден пользователь с указанным телефоном и другим номером бонусной карты,
                     // данные о номере бонусной карты обновляются в профиле пользователя.
-                    if (!strlen($cardNumberUser) || $cardNumberUser != $cardNumber) {
+                    if ($cardNumberUser === '' || $cardNumberUser != $cardNumber) {
                         $updateUser = true;
                     }
                     */
@@ -506,7 +506,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
                     // Если найден пользователь с указанным номером бонусной карты без номера телефона или
                     // с другим номером телефона, данные о номере телефона обновляются в профиле пользователя.
                     // Бонусная карта привязывается к профилю пользователя
-                    if (!strlen($phoneUser) || $phoneUser != $phone) {
+                    if ($phoneUser === '' || $phoneUser != $phone) {
                         $updateUser = true;
                     }
                     */
@@ -632,14 +632,14 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
         $value = $this->trimValue(
             $this->getFormFieldValue('email')
         );
-        if (strlen($value)) {
+        if ($value !== '') {
             $fields['EMAIL'] = $value;
         }
 
         $value = $this->trimValue(
             $this->getFormFieldValue('birthDay')
         );
-        if (strlen($value)) {
+        if ($value !== '') {
             try {
                 $fields['PERSONAL_BIRTHDAY'] = (new \Bitrix\Main\Type\Date($value, 'd.m.Y'));
             } catch (\Exception $exception) {}
@@ -694,14 +694,14 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
         $value = $this->trimValue(
             $this->getFormFieldValue('email')
         );
-        if (strlen($value)) {
+        if ($value !== '') {
             $user->setEmail($value);
         }
 
         $value = $this->trimValue(
             $this->getFormFieldValue('birthDay')
         );
-        if (strlen($value)) {
+        if ($value !== '') {
             try {
                 $user->setBirthday(
                     (new \Bitrix\Main\Type\Date($value, 'd.m.Y'))
@@ -837,7 +837,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
         $result = new Result();
 
         $phoneManzana = $user->getManzanaNormalizePersonalPhone();
-        if (!strlen($phoneManzana)) {
+        if ($phoneManzana === '') {
             $result->addError(
                 new Error('Не задан телефон для отправки данных в Manzana Loyalty', 'manzanaUpdateContactEmptyPhone')
             );
@@ -865,7 +865,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
                 try {
                     $manzanaClient = new Client();
                     $this->getUserService()->setClientPersonalDataByCurUser($manzanaClient, $user);
-                    if (strlen($contactId)) {
+                    if ($contactId !== '') {
                         $manzanaClient->contactId = $contactId;
                     }
                     // В старой реализации передавалось это поле с таким значением
@@ -928,12 +928,12 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
     {
         $result = new Result();
 
-        if (!strlen($phone)) {
+        if ($phone === '') {
             $result->addError(
                 new Error('Не задан телефон для отправки SMS', 'sendSmsEmptyPhone')
             );
         }
-        if (!strlen($text)) {
+        if ($text === '') {
             $result->addError(
                 new Error('Не задано сообщение SMS', 'sendSmsEmptyText')
             );
@@ -987,7 +987,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
     {
         $user = null;
         $phone = trim($phone);
-        if (strlen($phone)) {
+        if ($phone !== '') {
             // ищем пользователя с таким телефоном в БД сайта
             $items = $this->getUserListByParams(
                 [
@@ -1024,7 +1024,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
     {
         $user = null;
         $email = trim($email);
-        if (strlen($email)) {
+        if ($email !== '') {
             $items = $this->getUserListByParams(
                 [
                     'filter' => [
@@ -1056,7 +1056,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
     {
         $user = null;
         $cardNumber = trim($cardNumber);
-        if (strlen($cardNumber)) {
+        if ($cardNumber !== '') {
             $items = $this->getUserListByParams(
                 [
                     'filter' => [

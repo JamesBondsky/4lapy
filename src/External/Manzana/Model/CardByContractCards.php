@@ -161,7 +161,7 @@ class CardByContractCards
     
     /**
      * @XmlElement(cdata=false)
-     * @Type("DateTimeImmutable<'Y-m-d\TH:i:s.u'>")
+     * @Type("DateTimeImmutable<'Y-m-d\TH:i:s'>")
      * @SerializedName("pl_effectdate")
      */
     public $effectDate;
