@@ -111,7 +111,7 @@ if (!strlen($arParams['ITEM_ATTR_ID'])) {
                         $addAttr .= ' data-name="'.$offer->getName().'"';
                         $addClass = $firstOffer->getId() === $offer->getId() ? ' active-link' : '';
                         ?><li class="b-weight-container__item">
-                            <span<?=$addAttr?> class="b-weight-container__link js-price<?=$addClass?>"><?=$value?></span>
+                            <span<?=$addAttr?> class="b-weight-container__link unavailable-link js-price<?=$addClass?>"><?=$value?></span>
                         </li><?php
                     }
                 ?></ul>
