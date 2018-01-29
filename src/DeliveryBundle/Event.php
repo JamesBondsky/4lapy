@@ -2,9 +2,8 @@
 
 namespace FourPaws\DeliveryBundle;
 
-use Bitrix\Main\Event as BitrixEvent;
-use Bitrix\Main\EventResult;
 use Bitrix\Main\EventManager;
+use Bitrix\Main\EventResult;
 use FourPaws\App\ServiceHandlerInterface;
 
 class Event implements ServiceHandlerInterface
@@ -28,29 +27,30 @@ class Event implements ServiceHandlerInterface
     }
 
     /**
-     * @param BitrixEvent $event
-     *
      * @return EventResult
      */
-    public static function addCustomDeliveryServices(BitrixEvent $event)
+    public static function addCustomDeliveryServices()
     {
         $result = new EventResult(
             EventResult::SUCCESS,
             [
-                '\FourPaws\DeliveryBundle\Service\InnerDeliveryService' => __DIR__ . '/Service/InnerDeliveryService.php',
-                '\FourPaws\DeliveryBundle\Service\InnerPickupService'   => __DIR__ . '/Service/InnerPickupService.php',
+                Service\InnerDeliveryService::class => __DIR__ . '/Service/InnerDeliveryService.php',
+                Service\InnerPickupService::class   => __DIR__ . '/Service/InnerPickupService.php',
             ]
         );
 
         return $result;
     }
 
-    public static function addCustomRestrictions(BitrixEvent $event)
+    /**
+     * @return EventResult
+     */
+    public static function addCustomRestrictions()
     {
         return new EventResult(
             EventResult::SUCCESS,
             [
-                '\FourPaws\DeliveryBundle\Restrictions\LocationExceptRestriction' => __DIR__ . '/Restrictions/LocationExceptRestriction.php',
+                Restrictions\LocationExceptRestriction::class => __DIR__ . '/Restrictions/LocationExceptRestriction.php',
             ]
         );
     }

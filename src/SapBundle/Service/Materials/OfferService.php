@@ -37,6 +37,11 @@ class OfferService implements LoggerAwareInterface
     /**
      * @param Material $material
      *
+     * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
+     * @throws \FourPaws\SapBundle\Exception\NotFoundBasicUomException
+     * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
+     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
+     * @throws \FourPaws\SapBundle\Exception\LogicException
      * @throws \FourPaws\SapBundle\Exception\RuntimeException
      * @return Offer
      */
@@ -71,6 +76,7 @@ class OfferService implements LoggerAwareInterface
     /**
      * @param string $xmlId
      *
+     * @throws \RuntimeException
      * @return bool
      */
     public function deativate(string $xmlId)
@@ -99,7 +105,6 @@ class OfferService implements LoggerAwareInterface
      * @param Offer    $offer
      * @param Material $material
      *
-     * @throws \RuntimeException
      * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
      * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
      * @throws \FourPaws\SapBundle\Exception\LogicException

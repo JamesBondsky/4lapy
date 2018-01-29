@@ -51,8 +51,9 @@ class BitrixDateTimeHandler implements SubscribingHandlerInterface
         }
         
         return $data;
-    }/** @noinspection MoreThanThreeArgumentsInspection */
-    
+    }
+
+    /** @noinspection MoreThanThreeArgumentsInspection */
     /**
      * @param JsonDeserializationVisitor                 $visitor
      * @param                                            $data

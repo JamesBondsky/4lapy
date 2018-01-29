@@ -23,12 +23,14 @@ use FourPaws\Helpers\WordHelper;
         <?php
     } ?>
 </div>
-<span class="b-common-item__rank-text b-common-item__rank-text--card b-common-item__rank-text--review">На основе <span
-            class="b-common-item__rank-num"><?= $arResult['COUNT_COMMENTS'] ?></span> <?= WordHelper::declension(
-        $arResult['COUNT_COMMENTS'],
-        [
+<span class="b-common-item__rank-text b-common-item__rank-text--card b-common-item__rank-text--review">
+    <?php if ($arResult['COUNT_COMMENTS']) { ?>
+        На основе
+        <span class="b-common-item__rank-num"><?= $arResult['COUNT_COMMENTS'] ?></span>
+        <?= WordHelper::declension($arResult['COUNT_COMMENTS'], [
             'отзыва',
             'отзывов',
             'отзывов',
-        ]
-    ) ?></span>
+        ]) ?>
+    <?php } ?>
+</span>

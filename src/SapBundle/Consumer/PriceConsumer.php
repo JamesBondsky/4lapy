@@ -2,17 +2,22 @@
 
 namespace FourPaws\SapBundle\Consumer;
 
-use FourPaws\SapBundle\Dto\In\Prices\Prices;
-use FourPaws\SapBundle\Dto\In\Prices\Item;
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Catalog;
+use Bitrix\Main\Error;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Result;
+use Bitrix\Main\SystemException;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
-use Bitrix\Main\SystemException;
-use Bitrix\Main\Result;
-use Bitrix\Main\Error;
-use Bitrix\Catalog;
+use FourPaws\SapBundle\Dto\In\Prices\Item;
+use FourPaws\SapBundle\Dto\In\Prices\Prices;
+use Psr\Log\LoggerAwareInterface;
 
-class PriceConsumer implements ConsumerInterface
+class PriceConsumer implements ConsumerInterface, LoggerAwareInterface
 {
+    use LazyLoggerAwareTrait;
+
     const BASE_PRICE_REGION_CODE = 'IM01';
 
     /** @var string $defaultCurrencyCode */
@@ -22,14 +27,18 @@ class PriceConsumer implements ConsumerInterface
     protected $recalcPrices = true;
 
     /** @var array $offersCache */
-    protected $offersCache = [];
+    private $offersCache = [];
 
     /** @var int $maxOffersCacheSize */
-    protected $maxOffersCacheSize = 100;
+    private $maxOffersCacheSize = 100;
 
     /**
      * @param Prices $prices
      *
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \RuntimeException
      * @return bool
      */
     public function consume($prices): bool
@@ -39,21 +48,53 @@ class PriceConsumer implements ConsumerInterface
         }
 
         if (!$prices->getUploadToIm()) {
+            $this->log()->info(sprintf(
+                'Импорт для региона %s пропущен. Выставлен флаг не импортировать.',
+                $prices->getRegionCode()
+            ));
             return false;
         }
 
-        foreach ($prices->getItems() as $priceItem) {
+        $result = true;
+
+        $this->log()->info(sprintf(
+            'Импортируются цены для региона %s. Количество %s',
+            $prices->getRegionCode(),
+            $prices->getItems()->count()
+        ));
+        foreach ($prices->getItems() as $id => $priceItem) {
             $offerElementData = $this->getOfferElementDataByXmlId($priceItem->getOfferXmlId());
             if (!$offerElementData->isSuccess()) {
+                $this->log()->error(sprintf(
+                    'Импорт для региона %s пропущен. Ну найден оффер с xml id %s',
+                    $prices->getRegionCode(),
+                    $priceItem->getOfferXmlId()
+                ));
+
                 continue;
             }
             $setOffersResult = $this->setOfferPrices($offerElementData, $priceItem, $prices->getRegionCode());
+            $result &= $setOffersResult->isSuccess();
+            if ($setOffersResult->isSuccess()) {
+                $this->log()->debug(sprintf(
+                    '[%s] Проимпортированы цены для региона %s. Оффер %s.',
+                    $id + 1,
+                    $prices->getRegionCode(),
+                    $priceItem->getOfferXmlId()
+                ));
+            } else {
+                foreach ($setOffersResult->getErrors() as $error) {
+                    $this->log()->error(sprintf(
+                        'Импорт цен для региона %s. Оффер %s. Ошибка %s',
+                        $prices->getRegionCode(),
+                        $priceItem->getOfferXmlId(),
+                        $error->getMessage()
+                    ));
+                }
+            }
         }
 
-// !!!
-// непонятно при каких условиях какой результат возвращать
-// !!!
-        return true;
+        return $result;
     }
 
     /**
@@ -67,20 +108,24 @@ class PriceConsumer implements ConsumerInterface
     }
 
     /**
+     * @throws \Bitrix\Main\LoaderException
+     * @throws SystemException
      * @return void
      */
     protected function incModules()
     {
-        if (!\Bitrix\Main\Loader::includeModule('iblock')) {
+        if (!Loader::includeModule('iblock')) {
             throw new SystemException('Module iblock is not installed');
         }
 
-        if (!\Bitrix\Main\Loader::includeModule('catalog')) {
+        if (!Loader::includeModule('catalog')) {
             throw new SystemException('Module catalog is not installed');
         }
     }
 
     /**
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Bitrix\Main\LoaderException
      * @return int
      */
     protected function getOffersIBlockId(): int
@@ -90,15 +135,15 @@ class PriceConsumer implements ConsumerInterface
             $this->incModules();
             $tmpItem = \CIBlock::GetList(
                 [
-                    'ID' => 'ASC'
+                    'ID' => 'ASC',
                 ],
                 [
-                    'CODE' => IblockCode::OFFERS,
-                    'TYPE' => IblockType::CATALOG,
+                    'CODE'              => IblockCode::OFFERS,
+                    'TYPE'              => IblockType::CATALOG,
                     'CHECK_PERMISSIONS' => 'N',
                 ]
-            )->fetch();
-            $iblockId = $tmpItem['ID'] ? $tmpItem['ID'] : 0;
+            )->Fetch();
+            $iblockId = $tmpItem['ID'] ?: 0;
         }
         return $iblockId;
     }
@@ -106,6 +151,8 @@ class PriceConsumer implements ConsumerInterface
     /**
      * @param string $xmlId
      *
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Bitrix\Main\LoaderException
      * @return Result
      */
     protected function getOfferElementDataByXmlId($xmlId): Result
@@ -113,7 +160,7 @@ class PriceConsumer implements ConsumerInterface
         $result = new Result();
 
         $xmlId = trim($xmlId);
-        if (!strlen($xmlId)) {
+        if ('' === $xmlId) {
             $result->addError(new Error('Не задан внешний код торгового предложения', 100));
         }
 
@@ -122,12 +169,15 @@ class PriceConsumer implements ConsumerInterface
             if ($item) {
                 $result->setData(
                     [
-                        'ID' => $item['ID'],
+                        'ID'        => $item['ID'],
                         'IBLOCK_ID' => $item['IBLOCK_ID'],
                     ]
                 );
             } else {
-                $result->addError(new Error('Не найден элемент торгового предложения по внешнему коду: '.$xmlId, 200));
+                $result->addError(new Error(
+                    'Не найден элемент торгового предложения по внешнему коду: ' . $xmlId,
+                    200
+                ));
             }
         }
 
@@ -135,60 +185,27 @@ class PriceConsumer implements ConsumerInterface
     }
 
     /**
-     * @param string $xmlId
-     *
-     * @return array
-     */
-    private function getOfferElementByXmlId($xmlId): array
-    {
-        $return = [];
-        if (!isset($this->offersCache[$xmlId])) {
-            $this->incModules();
-            $items = \CIBlockElement::GetList(
-                [
-                    'ID' => 'ASC'
-                ],
-                [
-                    'IBLOCK_ID' => $this->getOffersIBlockId(),
-                    '=XML_ID' => $xmlId,
-                ],
-                false,
-                false,
-                [
-                    'ID', 'IBLOCK_ID',
-                ]
-            );
-            if ($item = $items->fetch()) {
-                $return = $item;
-            }
-
-            $this->offersCache[$xmlId] = $return;
-            
-            if ($this->maxOffersCacheSize > 0 && count($this->offersCache) > $this->maxOffersCacheSize) {
-                $this->offersCache = array_slice($this->offersCache, 1, null, true);
-            }
-        } else {
-            $return = $this->offersCache[$xmlId];
-        }
-
-        return $return;
-    }
-
-    /**
-     * @param Result $offerElementData
-     * @param Item $priceItem
+     * @param Result $offersResult
+     * @param Item   $priceItem
      * @param string $regionCode
-     * @param bool $getExtResult
+     * @param bool   $getExtResult
      *
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Bitrix\Main\LoaderException
      * @return Result
      */
-    protected function setOfferPrices(Result $offerElementData, Item $priceItem, $regionCode, $getExtResult = true): Result
-    {
+    protected function setOfferPrices(
+        Result $offersResult,
+        Item $priceItem,
+        $regionCode,
+        $getExtResult = true
+    ): Result {
         $result = new Result();
 
         $resultData = [];
 
-        $offerElementData = $offerElementData->getData();
+        $offerElementData = $offersResult->getData();
         if (empty($offerElementData['ID'])) {
             $result->addError(new Error('Не задан id торгового предложения', 100));
         }
@@ -204,65 +221,74 @@ class PriceConsumer implements ConsumerInterface
             $tmpPriceTypeId = $this->getPriceTypeIdByXmlId($regionCode);
             if ($tmpPriceTypeId) {
                 $setPricesList[$tmpPriceTypeId] = [
-                    'PRODUCT_ID' => $productId,
+                    'PRODUCT_ID'       => $productId,
                     'CATALOG_GROUP_ID' => $tmpPriceTypeId,
-                    'PRICE' => doubleval($priceItem->getRetailPrice()),
-                    'CURRENCY' => $currency,
+                    'PRICE'            => $priceItem->getRetailPrice(),
+                    'CURRENCY'         => $currency,
                 ];
             }
 
             $setPropsList = [];
-            $setPropsList['PRICE_ACTION'] = doubleval($priceItem->getActionPrice());
+            $setPropsList['PRICE_ACTION'] = $priceItem->getActionPrice();
             $setPropsList['PRICE_ACTION'] = $setPropsList['PRICE_ACTION'] > 0 ? $setPropsList['PRICE_ACTION'] : '';
             $setPropsList['COND_FOR_ACTION'] = trim($priceItem->getPriceType());
-            $setPropsList['COND_VALUE'] = doubleval($priceItem->getDiscountValue());
+            $setPropsList['COND_VALUE'] = $priceItem->getDiscountValue();
             $setPropsList['COND_VALUE'] = $setPropsList['COND_VALUE'] == 0 ? '' : $setPropsList['COND_VALUE'];
 
             if ($setPricesList) {
                 // обновление существующих цен
                 $items = \CPrice::GetListEx(
                     [
-                        'ID' => 'ASC'
+                        'ID' => 'ASC',
                     ],
                     [
-                        'PRODUCT_ID' => $productId,
-                        'CURRENCY' => $currency,
+                        'PRODUCT_ID'    => $productId,
+                        'CURRENCY'      => $currency,
 // !!!
 // непонятно что делать с ценами, зависящими от количества, если таковые будут
 // !!!
                         'QUANTITY_FROM' => false,
-                        'QUANTITY_TO' => false,
+                        'QUANTITY_TO'   => false,
 // !!!
 // непонятно что делать с наценками, если таковые будут
 // !!!
-                        'EXTRA_ID' => false,
+                        'EXTRA_ID'      => false,
                     ]
                 );
                 $processedPriceTypes = [];
-                while ($item = $items->fetch()) {
+                while ($item = $items->Fetch()) {
                     if (isset($setPricesList[$item['CATALOG_GROUP_ID']])) {
                         if ($setPricesList[$item['CATALOG_GROUP_ID']]['PRICE'] <= 0) {
                             $delPrices[] = $item['ID'];
                         } else {
-                            $res = \CPrice::Update($item['ID'], $setPricesList[$item['CATALOG_GROUP_ID']], $this->recalcPrices);
+                            $res = \CPrice::Update(
+                                $item['ID'],
+                                $setPricesList[$item['CATALOG_GROUP_ID']],
+                                $this->recalcPrices
+                            );
 
                             if ($getExtResult) {
                                 $tmpResult = new Result();
                                 if (!$res) {
                                     $tmpResult->addError(new Error($GLOBALS['APPLICATION']->GetException()));
                                 }
-                                $tmpResult->setData(array_merge($setPricesList[$item['CATALOG_GROUP_ID']], ['ID' => $item['ID']]));
+                                $tmpResult->setData(array_merge(
+                                    $setPricesList[$item['CATALOG_GROUP_ID']],
+                                    ['ID' => $item['ID']]
+                                ));
                                 $resultData['update'][] = $tmpResult;
                             }
 
                             if (!$res) {
-                                $result->addError(new Error('Ошибка при обновлении цены id '.$item['ID'].': '.$GLOBALS['APPLICATION']->GetException(), 210));
+                                $result->addError(new Error(
+                                    'Ошибка при обновлении цены id ' . $item['ID'] . ': ' . $GLOBALS['APPLICATION']->GetException(),
+                                    210
+                                ));
                             }
                         }
 
                         unset($setPricesList[$item['CATALOG_GROUP_ID']]);
                         $processedPriceTypes[$item['CATALOG_GROUP_ID']] = $item['CATALOG_GROUP_ID'];
-
                     } elseif (isset($processedPriceTypes[$item['CATALOG_GROUP_ID']])) {
                         // удаление цен с уже обработанным типом (возможно, задублировались по какой-то причине)
                         $delPrices[] = $item['ID'];
@@ -289,7 +315,10 @@ class PriceConsumer implements ConsumerInterface
                     }
 
                     if (!$newPriceId) {
-                        $result->addError(new Error('Ошибка при добавлении цены: '.$GLOBALS['APPLICATION']->GetException(), 220));
+                        $result->addError(new Error(
+                            'Ошибка при добавлении цены: ' . $GLOBALS['APPLICATION']->GetException(),
+                            220
+                        ));
                     }
                 }
             }
@@ -309,14 +338,21 @@ class PriceConsumer implements ConsumerInterface
                     }
 
                     if (!$res) {
-                        $result->addError(new Error('Ошибка при удалении цены id '.$priceId.': '.$GLOBALS['APPLICATION']->GetException(), 230));
+                        $result->addError(new Error(
+                            'Ошибка при удалении цены id ' . $priceId . ': ' . $GLOBALS['APPLICATION']->GetException(),
+                            230
+                        ));
                     }
                 }
             }
 
             // обновление свойств
-            if ($result->isSuccess() && $setPropsList) {
-                \CIBlockElement::SetPropertyValuesEx($offerElementData['ID'], $offerElementData['IBLOCK_ID'], $setPropsList);
+            if ($setPropsList && $result->isSuccess()) {
+                \CIBlockElement::SetPropertyValuesEx(
+                    $offerElementData['ID'],
+                    $offerElementData['IBLOCK_ID'],
+                    $setPropsList
+                );
                 if ($getExtResult) {
                     $tmpResult = new Result();
                     $tmpResult->setData($setPropsList);
@@ -332,20 +368,24 @@ class PriceConsumer implements ConsumerInterface
 
     /**
      * @param string $regionCode
+     *
      * @return bool
      */
     protected function isBasePriceRegionCode($regionCode)
     {
         $regionCode = ToUpper(trim($regionCode));
-        return !strlen($regionCode) || $regionCode == static::BASE_PRICE_REGION_CODE;
+        return '' === $regionCode || $regionCode == static::BASE_PRICE_REGION_CODE;
     }
 
     /**
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\ArgumentException
      * @return array
      */
     protected function getPriceTypesList()
     {
-        static $return = array();
+        static $return = [];
         if (empty($return)) {
             $this->incModules();
             $items = Catalog\GroupTable::getList(
@@ -361,11 +401,14 @@ class PriceConsumer implements ConsumerInterface
     }
 
     /**
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\ArgumentException
      * @return array
      */
     protected function getBasePriceType()
     {
-        static $return = array();
+        static $return = [];
         if (empty($return)) {
             foreach ($this->getPriceTypesList() as $item) {
                 if ($item['BASE'] === 'Y') {
@@ -378,6 +421,9 @@ class PriceConsumer implements ConsumerInterface
     }
 
     /**
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\ArgumentException
      * @return int
      */
     protected function getBasePriceTypeId()
@@ -388,26 +434,77 @@ class PriceConsumer implements ConsumerInterface
 
     /**
      * @param string $xmlId
+     *
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\ArgumentException
      * @return array
      */
     protected function getPriceTypeByXmlId($xmlId)
     {
         if ($this->isBasePriceRegionCode($xmlId)) {
             return $this->getBasePriceType();
-        } else {
-            $priceTypesList = $this->getPriceTypesList();
         }
+        $priceTypesList = $this->getPriceTypesList();
 
-        return isset($priceTypesList[$xmlId]) ? $priceTypesList[$xmlId] : [];
+
+        return $priceTypesList[$xmlId] ?? [];
     }
 
     /**
      * @param string $xmlId
+     *
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\ArgumentException
      * @return int
      */
     protected function getPriceTypeIdByXmlId($xmlId)
     {
         $priceType = $this->getPriceTypeByXmlId($xmlId);
         return $priceType ? $priceType['ID'] : 0;
+    }
+
+    /**
+     * @param string $xmlId
+     *
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Bitrix\Main\LoaderException
+     * @return array
+     */
+    private function getOfferElementByXmlId($xmlId): array
+    {
+        $return = [];
+        if (!isset($this->offersCache[$xmlId])) {
+            $this->incModules();
+            $items = \CIBlockElement::GetList(
+                [
+                    'ID' => 'ASC',
+                ],
+                [
+                    'IBLOCK_ID' => $this->getOffersIBlockId(),
+                    '=XML_ID'   => $xmlId,
+                ],
+                false,
+                false,
+                [
+                    'ID',
+                    'IBLOCK_ID',
+                ]
+            );
+            if ($item = $items->Fetch()) {
+                $return = $item;
+            }
+
+            $this->offersCache[$xmlId] = $return;
+
+            if ($this->maxOffersCacheSize > 0 && \count($this->offersCache) > $this->maxOffersCacheSize) {
+                $this->offersCache = \array_slice($this->offersCache, 1, null, true);
+            }
+        } else {
+            $return = $this->offersCache[$xmlId];
+        }
+
+        return $return;
     }
 }

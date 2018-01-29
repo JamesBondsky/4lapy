@@ -6,7 +6,7 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\Loader;
-use FourPaws\App\Application;
+
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Service\DeliveryServiceHandlerBase;
 use FourPaws\Location\LocationService;
@@ -22,7 +22,9 @@ if (!Loader::includeModule('ipol.dpd')) {
     return;
 }
 
-class Calculator extends \Ipolh\DPD\Delivery\DPD
+use Ipolh\DPD\Delivery\DPD;
+
+class Calculator extends DPD
 {
     public static function callback($method)
     {
@@ -33,14 +35,7 @@ class Calculator extends \Ipolh\DPD\Delivery\DPD
     {
         $result = parent::Calculate($profile, $arConfig, $arOrder, $STEP, $TEMP);
 
-        switch ($profile) {
-            case 'PICKUP':
-                $profile = DeliveryService::DPD_PICKUP_CODE;
-                break;
-            default:
-                $profile = DeliveryService::DPD_DELIVERY_CODE;
-                break;
-        }
+        $profile = $profile === 'PICKUP' ? DeliveryService::DPD_PICKUP_CODE : DeliveryService::DPD_DELIVERY_CODE;
 
         if (!empty($arOrder['ITEMS'])) {
             /** @var BasketService $basketService */
@@ -128,7 +123,7 @@ class Calculator extends \Ipolh\DPD\Delivery\DPD
             $profiles = [];
         }
 
-        $event = new Event(IPOLH_DPD_MODULE, "onCompabilityBefore", [$profiles, $arOrder, $arConfig]);
+        $event = new Event(IPOLH_DPD_MODULE, 'onCompabilityBefore', [$profiles, $arOrder, $arConfig]);
         $event->send();
 
         foreach ($event->getResults() as $eventResult) {

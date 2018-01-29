@@ -33,6 +33,7 @@ class SapReferenceStorage implements LoggerAwareInterface
      * @param string $propertyCode
      * @param string $xmlId
      *
+     * @throws \RuntimeException
      * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
      * @return null|HlbReferenceItem
      */
@@ -54,6 +55,7 @@ class SapReferenceStorage implements LoggerAwareInterface
      * @param string   $propertyCode
      * @param callable $callable
      *
+     * @throws \RuntimeException
      * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
      * @return Collection|HlbReferenceItem[]|HlbReferenceItemCollection
      */
@@ -74,6 +76,7 @@ class SapReferenceStorage implements LoggerAwareInterface
     /**
      * @param string $propertyCode
      *
+     * @throws \RuntimeException
      * @return static
      */
     public function clear(string $propertyCode)

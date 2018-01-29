@@ -12,6 +12,7 @@ use Bitrix\Iblock\ElementTable;
 use Bitrix\Iblock\PropertyTable;
 use Bitrix\Iblock\SectionElementTable;
 use Bitrix\Iblock\SectionTable;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\SystemException;
@@ -77,7 +78,7 @@ class FoodSelectionRepository
      */
     public function getSections(array $params = []) : array
     {
-        /** @var IblockElementQuery $query */
+        /** @var IblockSectQuery $query */
         try {
             $query = new IblockSectQuery(
                 IblockUtils::getIblockId(
@@ -114,12 +115,13 @@ class FoodSelectionRepository
     /**
      * @param array $sections
      *
-     * @param int   $mainSect
+     * @param int   $iblockId
      *
-     * @throws SystemException
      * @return array
+     * @throws ArgumentException
+     * @throws SystemException
      */
-    public function getProductsBySections(array $sections, int $mainSect, int $iblockId) : array
+    public function getProductsBySections(array $sections, int $iblockId) : array
     {
         $countSections = \count($sections);
         $propId        = PropertyTable::query()->setFilter(
@@ -149,13 +151,7 @@ class FoodSelectionRepository
                 [
                     'IBLOCK_ELEMENT_ID',
                 ]
-            )->registerRuntimeField(
-                new ReferenceField(
-                    'PARENT_SECT',
-                    SectionTable::getEntity(),
-                    ['=this.IBLOCK_SECTION_ID' => 'ref.ID']
-                )
-            )->whereIn('IBLOCK_SECTION_ID', $sections)->where('PARENT_SECT.IBLOCK_SECTION_ID', '=', $mainSect)->where(
+            )->whereIn('IBLOCK_SECTION_ID', $sections)->where(
                     Query::expr()->count('IBLOCK_ELEMENT_ID'),
                     '>=',
                     $countSections

@@ -77,6 +77,8 @@ class ProductQuery extends IblockElementQuery
             'PROPERTY_GROUP_NAME',
             'PROPERTY_PRODUCED_BY_HOLDER',
             'PROPERTY_SPECIFICATIONS',
+            'PROPERTY_COMPOSITION',
+            'PROPERTY_NORMS_OF_USE',
             'PROPERTY_PACKING_COMBINATION',
         ];
     }

@@ -3,7 +3,6 @@
 namespace FourPaws\Search\Helper;
 
 use Elastica\Aggregation\AbstractAggregation;
-use Elastica\Aggregation\GlobalAggregation;
 use Elastica\Query;
 use Elastica\QueryBuilder\DSL\Aggregation;
 use Elastica\ResultSet;
@@ -22,7 +21,7 @@ class AggsHelper
     /**
      * Применяет аггрегации к запросу.
      *
-     * @param $query
+     * @param                  $query
      * @param FilterCollection $filters
      *
      * @return Query
@@ -41,7 +40,7 @@ class AggsHelper
      * Схлопывает фильтры по результатам запроса по поиску товаров.
      *
      * @param FilterCollection $filterCollection
-     * @param ResultSet $resultSet
+     * @param ResultSet        $resultSet
      *
      * @throws UnexpectedValueException
      */
@@ -57,16 +56,12 @@ class AggsHelper
 
             /** @var AbstractAggregation $agg */
             foreach ($filter->getAggs() as $agg) {
-
                 $filterByAggNameIndex[$agg->getName()] = $filter;
-
             }
-
         }
 
         $aggregations = $resultSet->getAggregations();
         $this->findAndApplyFilterAggResult($filterByAggNameIndex, $aggregations);
-
     }
 
     /**
@@ -78,17 +73,13 @@ class AggsHelper
     private function findAndApplyFilterAggResult(array $filterByAggNameIndex, array $aggregations)
     {
         foreach ($aggregations as $aggName => $aggResult) {
-
             if (array_key_exists($aggName, $filterByAggNameIndex)) {
 
                 /** @var FilterInterface $filter */
                 $filter = $filterByAggNameIndex[$aggName];
                 $filter->collapse($aggName, $aggResult);
-
-            } elseif (is_array($aggResult)) {
-
+            } elseif (\is_array($aggResult)) {
                 $this->findAndApplyFilterAggResult($filterByAggNameIndex, $aggResult);
-
             }
         }
     }
@@ -96,8 +87,8 @@ class AggsHelper
     /**
      * @param array $buckets
      *
-     * @return BucketCollection
      * @throws UnexpectedValueException
+     * @return BucketCollection
      */
     public static function makeBucketCollection(array $buckets): BucketCollection
     {
@@ -109,7 +100,7 @@ class AggsHelper
             }
 
             $bucketObject = (new Bucket())->withKey(trim($bucket['key']))
-                                          ->withDocCount((int)$bucket['doc_count']);
+                ->withDocCount((int)$bucket['doc_count']);
 
             $bucketCollection->set($bucketObject->getKey(), $bucketObject);
         }
@@ -158,17 +149,13 @@ class AggsHelper
                 foreach ($currentFilter->getAggs() as $aggregation) {
                     $result->add($aggregation);
                 }
-
             } else {
-
-                if (!isset($globAgg) || !($globAgg instanceof GlobalAggregation)) {
-                    /**
-                     * Подготовить глобальную аггрегацию
-                     */
-                    $globAgg = $aggBuilder->global_agg('glob');
-                    $result->add($globAgg);
-
-                }
+                
+                /**
+                 * Подготовить глобальную аггрегацию
+                 */
+                $globAgg = $aggBuilder->global_agg('glob');
+                $result->add($globAgg);
 
                 //Если выбран, то будет вложенная агрегация с фильтрацией по остальным выбранным фильтрам
                 foreach ($currentFilter->getAggs() as $aggregation) {
@@ -185,7 +172,6 @@ class AggsHelper
 
                     /** @var FilterInterface $filter */
                     foreach ($otherCheckedFilters as $filter) {
-
                         $subFilterAgg = $aggBuilder->filter(
                             'subFilter_' . ++$subCnt,
                             $filter->getFilterRule()

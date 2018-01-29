@@ -1,19 +1,19 @@
 <?php
 
-namespace FourPaws\SapBundle\Model;
+namespace FourPaws\SapBundle\Source;
 
 interface SourceMessageInterface
 {
     /**
-     * @return mixed
+     * @return string
      */
-    public function getId();
-
+    public function getId() : string;
+    
     /**
      * @return string
      */
-    public function getType(): string;
-
+    public function getType() : string;
+    
     /**
      * @return mixed
      */

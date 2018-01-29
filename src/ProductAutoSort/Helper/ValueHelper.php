@@ -24,26 +24,27 @@ class ValueHelper implements LoggerAwareInterface
     /**
      * Синхронизирует значение для условия свойства элемента
      *
-     * @param int $ufId
-     * @param int $sectionId
-     * @param int $propertyId
+     * @param int   $ufId
+     * @param int   $sectionId
+     * @param int   $propertyId
      * @param mixed $value
      */
     public function syncValue(int $ufId, int $sectionId, int $propertyId, $value)
     {
+        $existingItem = null;
+        $newItem = null;
         try {
-
             $existingItem = ElementPropertyConditionTable::query()
-                                                         ->setSelect(['ID'])
-                                                         ->setFilter(
-                                                             [
-                                                                 '=UF_ID'       => $ufId,
-                                                                 '=SECTION_ID'  => $sectionId,
-                                                                 '=PROPERTY_ID' => $propertyId,
-                                                             ]
-                                                         )
-                                                         ->exec()
-                                                         ->fetch();
+                ->setSelect(['ID'])
+                ->setFilter(
+                    [
+                        '=UF_ID'       => $ufId,
+                        '=SECTION_ID'  => $sectionId,
+                        '=PROPERTY_ID' => $propertyId,
+                    ]
+                )
+                ->exec()
+                ->fetch();
 
             /**
              * Пустая строка расценивается как незаполненное свойство
@@ -76,21 +77,11 @@ class ValueHelper implements LoggerAwareInterface
                     )
                 );
             }
-
         } catch (Exception $exception) {
-
-            if (!isset($existingItem)) {
-                $existingItem = null;
-            }
-
-            if (!isset($newItem)) {
-                $newItem = null;
-            }
-
             $this->log()->error(
                 sprintf(
                     "[%s] %s (%s)\n%s\n",
-                    get_class($exception),
+                    \get_class($exception),
                     $exception->getMessage(),
                     $exception->getCode(),
                     $exception->getTraceAsString()
@@ -100,34 +91,33 @@ class ValueHelper implements LoggerAwareInterface
                     'newItem'      => $newItem,
                 ]
             );
-
         }
     }
 
     /**
      * Синхронизирует множество значений для условия свойства элемента
      *
-     * @param int $ufId
-     * @param int $sectionId
+     * @param int   $ufId
+     * @param int   $sectionId
      * @param array $valueList
      */
     public function syncValueMulti(int $ufId, int $sectionId, array $valueList)
     {
+        $existingItem = null;
         try {
             /**
              * Удалить все записи для данного ufId + sectionId, чтобы не пытаться отловить удалённые значения.
              */
             $dbExistingItemList = ElementPropertyConditionTable::query()
-                                                               ->setSelect(['ID'])
-                                                               ->setFilter(
-                                                                   [
-                                                                       '=UF_ID'      => $ufId,
-                                                                       '=SECTION_ID' => $sectionId,
-                                                                   ]
-                                                               )
-                                                               ->exec();
+                ->setSelect(['ID'])
+                ->setFilter(
+                    [
+                        '=UF_ID'      => $ufId,
+                        '=SECTION_ID' => $sectionId,
+                    ]
+                )
+                ->exec();
             while ($existingItem = $dbExistingItemList->fetch()) {
-
                 $result = ElementPropertyConditionTable::delete($existingItem['ID']);
 
                 if (!$result->isSuccess()) {
@@ -140,18 +130,15 @@ class ValueHelper implements LoggerAwareInterface
                             'existingItem' => $existingItem,
                         ]
                     );
-
                 }
-
             }
 
             /**
              * Создать отдельные значения
              */
             foreach ($valueList as $serializedValue) {
-
-                $value = unserialize($serializedValue);
-                if (!is_array($value)) {
+                $value = unserialize($serializedValue, false);
+                if (!\is_array($value)) {
                     continue;
                 }
 
@@ -179,17 +166,11 @@ class ValueHelper implements LoggerAwareInterface
                     );
                 }
             }
-
         } catch (Exception $exception) {
-
-            if (!isset($existingItem)) {
-                $existingItem = null;
-            }
-
             $this->log()->error(
                 sprintf(
                     "[%s] %s (%s)\n%s\n",
-                    get_class($exception),
+                    \get_class($exception),
                     $exception->getMessage(),
                     $exception->getCode(),
                     $exception->getTraceAsString()
@@ -198,7 +179,6 @@ class ValueHelper implements LoggerAwareInterface
                     'existingItem' => $existingItem,
                 ]
             );
-
         }
     }
 
@@ -206,15 +186,14 @@ class ValueHelper implements LoggerAwareInterface
     {
         try {
             $dbValues = ElementPropertyConditionTable::query()
-                                                     ->setSelect(['ID'])
-                                                     ->setFilter(
-                                                         [
-                                                             '=SECTION_ID' => $sectionId,
-                                                         ]
-                                                     )
-                                                     ->exec();
+                ->setSelect(['ID'])
+                ->setFilter(
+                    [
+                        '=SECTION_ID' => $sectionId,
+                    ]
+                )
+                ->exec();
             while ($value = $dbValues->fetch()) {
-
                 $result = ElementPropertyConditionTable::delete($value['ID']);
 
                 if (!$result->isSuccess()) {
@@ -227,22 +206,18 @@ class ValueHelper implements LoggerAwareInterface
                             'value' => $value,
                         ]
                     );
-
                 }
-
             }
         } catch (Exception $exception) {
-
             $this->log()->error(
                 sprintf(
                     "[%s] %s (%s)\n%s\n",
-                    get_class($exception),
+                    \get_class($exception),
                     $exception->getMessage(),
                     $exception->getCode(),
                     $exception->getTraceAsString()
                 )
             );
-
         }
     }
 
