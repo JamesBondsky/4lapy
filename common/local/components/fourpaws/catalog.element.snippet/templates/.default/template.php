@@ -51,10 +51,12 @@ $firstOffer = $offers->first();
             $component,
             ['HIDE_ICONS' => 'Y']
         );?>
+        <? /**
+        @todo new; shares
         <div class="b-common-item__rank-wrapper">
             <span class="b-common-item__rank-text b-common-item__rank-text--green">Новинка</span>
             <span class="b-common-item__rank-text b-common-item__rank-text--red">Выгода 15%</span>
-        </div>
+        </div> */ ?>
         <?php if ($offers->count() > 1) { ?>
             <?php
             $mainCombinationType = '';
@@ -93,11 +95,12 @@ $firstOffer = $offers->first();
                         }
                         ?>
                         <li class="b-weight-container__item">
-                                <span class="b-weight-container__link js-price <?= $firstOffer->getId() === $offer->getId(
+                            <a href="javascript:void(0)"
+                               class="b-weight-container__link js-price <?= $firstOffer->getId() === $offer->getId(
                                 ) ? 'active-link' : '' ?>"
-                                      data-price="<?= $offer->getPrice() ?>" data-offerid="<?= $offer->getId() ?>"
-                                      data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
-                                ><?= $value ?></span>
+                               data-price="<?= $offer->getPrice() ?>" data-offerid="<?= $offer->getId() ?>"
+                               data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
+                            ><?= $value ?></a>
                         </li>
                         <?php
                     } ?>

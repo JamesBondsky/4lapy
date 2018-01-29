@@ -22,6 +22,10 @@ class LocationExceptRestriction extends Restrictions\Base
 
     public static function check($locationCode, array $restrictionParams, $deliveryId = 0)
     {
+        if (!$locationCode) {
+            return false;
+        }
+
         /** @var DeliveryService $deliveryService */
         $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
 

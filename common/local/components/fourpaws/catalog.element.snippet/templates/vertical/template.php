@@ -1,9 +1,10 @@
 <?php
+
+use Bitrix\Main\Localization\Loc;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Decorators\SvgDecorator;
-use Bitrix\Main\Localization\Loc;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -111,7 +112,8 @@ if (!strlen($arParams['ITEM_ATTR_ID'])) {
                         $addAttr .= ' data-name="'.$offer->getName().'"';
                         $addClass = $firstOffer->getId() === $offer->getId() ? ' active-link' : '';
                         ?><li class="b-weight-container__item">
-                            <span<?=$addAttr?> class="b-weight-container__link js-price<?=$addClass?>"><?=$value?></span>
+                        <a<?= $addAttr ?> href="javascript:void(0)"
+                                          class="b-weight-container__link js-price<?= $addClass ?>"><?= $value ?></a>
                         </li><?php
                     }
                 ?></ul>
