@@ -274,6 +274,12 @@ class FoodSelectionController extends Controller
     {
         $data = $request->query->getIterator()->getArrayCopy();
         \TrimArr($data);
+        foreach ($data as $key => $val) {
+            if((int)$val <= 0){
+                unset($data[$key]);
+            }
+        }
+    
         $step = 'items';
         /** @noinspection PhpUnusedLocalVariableInspection */
         $recommendedItems = $this->foodSelectionService->getProductsBySections(array_values($data));
