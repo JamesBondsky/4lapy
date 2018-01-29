@@ -122,7 +122,7 @@ class InnerPickupService extends DeliveryServiceHandlerBase
         $stockResult = new StockResultCollection();
         /** @var Store $shop */
         foreach ($shops as $shop) {
-            $availableStores = new StoreCollection($shop);
+            $availableStores = new StoreCollection([$shop]);
             $stockResult = static::getStocks($basket, $offers, $availableStores, $delayStores, $stockResult);
         }
 
@@ -140,8 +140,7 @@ class InnerPickupService extends DeliveryServiceHandlerBase
                 $result->setPeriodFrom(1);
                 $result->setPeriodType(CalculationResult::PERIOD_TYPE_HOUR);
             } else {
-                /* @todo расчет сроков по графику поставок в магазин */
-                $result->setPeriodFrom(10);
+                $result->setPeriodFrom($stockResult->getDeliveryDate()->diff(new \DateTime())->days);
                 $result->setPeriodType(CalculationResult::PERIOD_TYPE_DAY);
             }
         } else {

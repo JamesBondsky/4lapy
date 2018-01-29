@@ -4,6 +4,7 @@ namespace FourPaws\DeliveryBundle\Entity;
 
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\StoreBundle\Collection\StoreCollection;
+use \DateTime;
 
 class StockResult
 {
@@ -32,6 +33,11 @@ class StockResult
      * @var string
      */
     protected $type = self::TYPE_AVAILABLE;
+
+    /**
+     * @var null|DateTime
+     */
+    protected $deliveryDate;
 
     /**
      * @return int
@@ -113,6 +119,26 @@ class StockResult
     public function setType(string $type): StockResult
     {
         $this->type = $type;
+
+        return $this;
+    }
+
+    /**
+     * @return DateTime
+     */
+    public function getDeliveryDate(): DateTime
+    {
+        return $this->deliveryDate;
+    }
+
+    /**
+     * @param DateTime $deliveryDate
+     *
+     * @return StockResult
+     */
+    public function setDeliveryDate(DateTime $deliveryDate): StockResult
+    {
+        $this->deliveryDate = $deliveryDate;
 
         return $this;
     }

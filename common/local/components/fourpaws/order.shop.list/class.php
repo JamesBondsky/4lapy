@@ -5,10 +5,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use FourPaws\App\Application;
+use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\StoreBundle\Service\StoreService;
+use FourPaws\StoreBundle\Entity\Store;
+use Bitrix\Sale\BasketItem;
 
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsOrderShopListComponent extends \CBitrixComponent
@@ -41,7 +46,7 @@ class FourPawsOrderShopListComponent extends \CBitrixComponent
     }
 
     /**
-     * @throws Exception
+     * @throws \RuntimeException
      */
     protected function prepareResult()
     {
@@ -65,14 +70,63 @@ class FourPawsOrderShopListComponent extends \CBitrixComponent
             return;
         }
 
+        $offerIds = [];
         $basket = $basketService->getBasket()->getOrderableItems();
-        if ($basket->isEmpty()) {
+        /** @var BasketItem $item */
+        foreach ($basket as $item) {
+            if (!$item->getProductId()) {
+                continue;
+            }
+
+            $offerIds[] = $item->getProductId();
+        }
+
+        if ($basket->isEmpty() || empty($offerIds)) {
             throw new \RuntimeException('Basket is empty');
+        }
+
+        $offers = (new OfferQuery())->withFilterParameter('ID', $offerIds)->exec();
+        if ($offers->isEmpty()) {
+            throw new \RuntimeException('Offers not found');
         }
 
         $shops = $storeService->getByLocation($storage->getCityCode(), StoreService::TYPE_SHOP);
         if ($shops->isEmpty()) {
             throw new \RuntimeException('No shops found');
         }
+
+        /** @var StockResultCollection $stockResult */
+        $stockResult = $pickupDelivery->getData()['STOCK_RESULT'];
+        $resultByShop = [];
+        /** @var Store $shop */
+        foreach ($shops as $shop) {
+            $stockResultByShop = $stockResult->filterByStore($shop);
+            if (!$stockResultByShop->getUnavailable()->isEmpty()) {
+                continue;
+            }
+
+            $resultByShop[$shop->getXmlId()] = [];
+
+            $delayed = $stockResultByShop->getDelayed();
+            $resultByShop[$shop->getXmlId()]['DELAYED_AMOUNT'] = 0;
+            if (!$delayed->isEmpty()) {
+                $resultByShop[$shop->getXmlId()]['DELAYED_AMOUNT'] = $delayed->getAmount();
+            }
+
+            $available = $stockResultByShop->getAvailable();
+            $resultByShop[$shop->getXmlId()]['AVAILABLE_AMOUNT'] = 0;
+            if (!$available->isEmpty()) {
+                $resultByShop[$shop->getXmlId()]['AVAILABLE_AMOUNT'] = $available->getAmount();
+            }
+            $resultByShop[$shop->getXmlId()]['STOCK_RESULT'] = $stockResultByShop;
+        }
+
+        $this->arResult = [
+            'PICKUP_DELIVERY'      => $pickupDelivery,
+            'SHOPS'                => $shops,
+            'BASKET'               => $basket,
+            'STOCK_RESULT_BY_SHOP' => $resultByShop,
+            'OFFERS'               => $offers,
+        ];
     }
 }

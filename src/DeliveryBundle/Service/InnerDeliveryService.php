@@ -113,6 +113,8 @@ class InnerDeliveryService extends DeliveryServiceHandlerBase
             } else {
                 $result->setPeriodFrom(1);
             }
+
+            return $result;
         }
 
         switch ($this->deliveryService->getDeliveryZoneCode($shipment)) {
@@ -149,8 +151,7 @@ class InnerDeliveryService extends DeliveryServiceHandlerBase
         }
 
         if (!$stockResult->getDelayed()->isEmpty()) {
-            /* @todo должен быть расчет с учетом графиков поставки */
-            $result->setPeriodFrom(10);
+            $result->setPeriodFrom($stockResult->getDeliveryDate()->diff(new \DateTime())->days);
         } else {
             if ($this->canDeliverToday()) {
                 $result->setPeriodFrom(0);

@@ -70,11 +70,7 @@ class Calculator extends \Ipolh\DPD\Delivery\DPD
                 }
 
                 if (!$stockResult->getDelayed()->isEmpty()) {
-                    /**
-                     * @todo расчет графиков доставки для dpd
-                     * получившееся кол-во дней нужно прибавить к $result['DPD_TARIFF']['DAYS']
-                     */
-                    $result['DPD_TARIFF']['DAYS'] += 10;
+                    $result['DPD_TARIFF']['DAYS'] += $stockResult->getDeliveryDate()->diff(new \DateTime())->days;
                 }
             }
         }

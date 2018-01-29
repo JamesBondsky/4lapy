@@ -194,6 +194,7 @@ abstract class DeliveryServiceHandlerBase extends Base implements DeliveryServic
      * @param StoreCollection $storesAvailable склады, где товары считается "в наличии"
      * @param StoreCollection $storesDelay склады, с которых производится поставка на $storesAvailable
      * @param StockResultCollection $stockResultCollection
+     *
      * @return StockResultCollection
      */
     public static function getStocks(
@@ -202,14 +203,24 @@ abstract class DeliveryServiceHandlerBase extends Base implements DeliveryServic
         StoreCollection $storesAvailable,
         StoreCollection $storesDelay,
         StockResultCollection $stockResultCollection = null
-    ): array {
+    ): StockResultCollection {
         if (!$stockResultCollection) {
             $stockResultCollection = new StockResultCollection();
         }
 
+        $date = new \DateTime();
+        $hour = (int)$date->format('H');
+
         /** @var Offer $offer */
         foreach ($offers as $offer) {
-            $basketItem = $basket->getExistsItem('catalog', $offer->getId());
+            $basketItem = null;
+            /** @var BasketItem $item */
+            foreach ($basket as $item) {
+                if ($item->getProductId() == $offer->getId()) {
+                    $basketItem = $item;
+                    break;
+                }
+            }
             if (!$basketItem) {
                 continue;
             }
@@ -217,7 +228,19 @@ abstract class DeliveryServiceHandlerBase extends Base implements DeliveryServic
 
             $stockResult = new StockResult();
             $stockResult->setAmount($neededAmount)
+                        ->setOffer($offer)
                         ->setStores($storesAvailable);
+            $totalSchedule = $storesAvailable->getTotalSchedule();
+            $pickupDate = clone($date);
+            if ($hour < $totalSchedule['from']) {
+                $pickupDate->setTime($totalSchedule['from'] + 1, 0, 0);
+            } elseif ($hour > $totalSchedule['to']) {
+                $pickupDate->modify('+1 day');
+                $pickupDate->setTime($totalSchedule['from'] + 1, 0, 0);
+            } else {
+                $pickupDate->modify('+1 hour');
+            }
+            $stockResult->setDeliveryDate($pickupDate);
 
             if ($offer->isByRequest()) {
                 $stockResult->setType(StockResult::TYPE_DELAYED);
@@ -240,7 +263,9 @@ abstract class DeliveryServiceHandlerBase extends Base implements DeliveryServic
                 $delayedAmount = $stocks->filterByStores($storesDelay)->getTotalAmount();
                 if ($delayedAmount >= $neededAmount) {
                     $delayedStockResult = (new StockResult())->setType(StockResult::TYPE_DELAYED)
-                                                             ->setAmount($neededAmount);
+                                                             ->setAmount($neededAmount)
+                        /* @todo расчет по графику поставок */
+                                                             ->setDeliveryDate((new \DateTime())->modify('+10 days'));
                     $stockResultCollection->add($delayedStockResult);
                 } else {
                     /**
