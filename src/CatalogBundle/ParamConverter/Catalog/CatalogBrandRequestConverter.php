@@ -3,6 +3,7 @@
 namespace FourPaws\CatalogBundle\ParamConverter\Catalog;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
+use FourPaws\Catalog\Exception\BrandMoreOneFoundException;
 use FourPaws\Catalog\Exception\BrandNotFoundException;
 use FourPaws\Catalog\Model\Filter\BrandFilter;
 use FourPaws\Catalog\Model\Filter\FilterInterface;
@@ -93,7 +94,9 @@ class CatalogBrandRequestConverter extends AbstractCatalogRequestConverter
         try {
             $brand = $this->brandService->getByCode($value);
         } catch (BrandNotFoundException $e) {
-            throw new NotFoundHttpException(sprintf('Бренд %s не найден', $value), $e->getCode(), $e);
+            require_once $_SERVER['DOCUMENT_ROOT'].'/404.php';
+        } catch (BrandMoreOneFoundException $e) {
+            require_once $_SERVER['DOCUMENT_ROOT'].'/404.php';
         }
 
         try {
