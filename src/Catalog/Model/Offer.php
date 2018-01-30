@@ -899,9 +899,25 @@ class Offer extends IblockElement
     public function getLink() : string
     {
         if (!$this->link) {
-            $this->link = sprintf('%s?offer=%s', $this->product->getDetailPageUrl(), $this->getId());
+            $this->link = sprintf('%s?offer=%s', $this->getProduct()->getDetailPageUrl(), $this->getId());
         }
         
         return $this->link;
+    }
+    
+    /**
+     * Optimization: internal current product set
+     *
+     * @throws \InvalidArgumentException
+     *
+     * @param Product $product
+     */
+    public function setProduct(Product $product)
+    {
+        if ($product->getId() !== $this->getCml2Link()) {
+            throw new \InvalidArgumentException('Wrong product set');
+        }
+        
+        $this->product = $product;
     }
 }

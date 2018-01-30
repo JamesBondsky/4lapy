@@ -68,6 +68,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_SLIDER_VIEW);
                     if (!$offer->getImagesIds()) {
                         continue;
                     }
+    
                     $images = $offer->getResizeImages(480, 480);
                     foreach ($images as $id => $image) {
                         /**

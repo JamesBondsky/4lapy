@@ -22,10 +22,9 @@
 use FourPaws\Decorators\SvgDecorator;
 
 $this->setFrameMode(true);
-?>
+
+$frame = $this->createFrame()->begin() ?>
 <div class="b-header__wrapper-for-popover js-city-permutation">
-    <?php $frame = $this->createFrame()->begin() ?>
-    
     <a class="b-combobox b-combobox--header js-open-popover"
        href="javascript:void(0);"
        title="<?= $arResult['SELECTED_CITY']['NAME'] ?>">
@@ -37,21 +36,23 @@ $this->setFrameMode(true);
                 <?= new SvgDecorator('icon-arrow-down', 13, 13) ?>
             </span>
     </a>
-    <div class="b-popover b-popover--blue-arrow b-popover--city js-your-city js-popover">
-        <p class="b-popover__text">Ваш город&nbsp;&mdash;
-            <span><?= $arResult['SELECTED_CITY']['NAME'] ?></span>?
-        </p>
-        <a class="b-popover__link js-set-my-city js-get-loction"
-           href="javascript:void(0)"
-           title=""
-           data-url="<?= $arResult['CITY_SET_URL'] ?>"
-           data-code="<?= $arResult['SELECTED_CITY']['CODE'] ?>">Да</a>
-        <a class="b-popover__link b-popover__link--last js-open-popup"
-           href="javascript:void(0)"
-           title=""
-           data-popup-id="pick-city">Нет, выбрать другой</a>
-    </div>
-    <?php $frame->beginStub() ?>
+</div>
+<div class="b-popover b-popover--blue-arrow b-popover--city js-your-city js-popover">
+    <p class="b-popover__text">Ваш город&nbsp;&mdash;
+        <span><?= $arResult['SELECTED_CITY']['NAME'] ?></span>?
+    </p>
+    <a class="b-popover__link js-set-my-city js-get-loction"
+       href="javascript:void(0)"
+       title=""
+       data-url="<?= $arResult['CITY_SET_URL'] ?>"
+       data-code="<?= $arResult['SELECTED_CITY']['CODE'] ?>">Да</a>
+    <a class="b-popover__link b-popover__link--last js-open-popup"
+       href="javascript:void(0)"
+       title=""
+       data-popup-id="pick-city">Нет, выбрать другой</a>
+</div>
+<?php $frame->beginStub() ?>
+<div class="b-header__wrapper-for-popover js-city-permutation">
     <a class="b-combobox b-combobox--header js-open-popover"
        href="javascript:void(0);"
        title="<?= $arResult['DEFAULT_CITY']['NAME'] ?>">
@@ -63,19 +64,19 @@ $this->setFrameMode(true);
             <?= new SvgDecorator('icon-arrow-down', 13, 13) ?>
         </span>
     </a>
-    <div class="b-popover b-popover--blue-arrow b-popover--city js-your-city js-popover">
-        <p class="b-popover__text">Ваш город&nbsp;&mdash;
-            <span><?= $arResult['DEFAULT_CITY']['NAME'] ?></span>?
-        </p>
-        <a class="b-popover__link js-set-my-city js-get-loction"
-           href="javascript:void(0)"
-           title=""
-           data-url="<?= $arResult['CITY_SET_URL'] ?>"
-           data-code="<?= $arResult['SELECTED_CITY']['CODE'] ?>">Да</a>
-        <a class="b-popover__link b-popover__link--last js-open-popup"
-           href="javascript:void(0)"
-           title=""
-           data-popup-id="pick-city">Нет, выбрать другой</a>
-    </div>
-    <?php $frame->end() ?>
 </div>
+<div class="b-popover b-popover--blue-arrow b-popover--city js-your-city js-popover">
+    <p class="b-popover__text">Ваш город&nbsp;&mdash;
+        <span><?= $arResult['DEFAULT_CITY']['NAME'] ?></span>?
+    </p>
+    <a class="b-popover__link js-set-my-city js-get-loction"
+       href="javascript:void(0)"
+       title=""
+       data-url="<?= $arResult['CITY_SET_URL'] ?>"
+       data-code="<?= $arResult['SELECTED_CITY']['CODE'] ?>">Да</a>
+    <a class="b-popover__link b-popover__link--last js-open-popup"
+       href="javascript:void(0)"
+       title=""
+       data-popup-id="pick-city">Нет, выбрать другой</a>
+</div>
+<?php $frame->end() ?>

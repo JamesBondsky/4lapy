@@ -1845,8 +1845,8 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 
         return $result;
     }
-
-    /*
+    
+    /**
      * @internal Специально для Elasitcsearch храним коллецию без ключей, т.к. ассоциативный массив с торговыми
      * предложениями туда передавать нельзя: это будет объект, а не массив объектов.
      *
@@ -1863,6 +1863,19 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
                         ->toArray()
                 )
             );
+    
+            /**
+             * @var Offer $offer
+             */
+            foreach ($this->offers as $offer) {
+                try {
+                    $offer->setProduct($this);
+                } catch (\InvalidArgumentException $e) {
+                    /**
+                     * Никогда не должна возникнуть такая ситуация
+                     */
+                }
+            }
         }
 
         return $this->offers;
