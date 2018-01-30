@@ -5,9 +5,10 @@
  * @var Product         $product
  * @var OfferCollection $offers
  * @var Offer           $offer
- * @var Offer           $firstOffer
+ * @var Offer           $currentOffer
  */
 
+use FourPaws\App\Templates\MediaEnum;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
@@ -18,25 +19,37 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
-$product    = $arResult['PRODUCT'];
-$offers     = $product->getOffers();
-$firstOffer = $offers->first();
+$product = $arResult['PRODUCT'];
+$offers  = $product->getOffers();
+
+/**
+ * @todo hotfix. Вынести в компонент. Завязать текущий оффер на фильтр.
+ */
+foreach ($offers as $offer) {
+    if ($offer->getImages()->count() >= 1 && $offer->getImages()->first() !== MediaEnum::NO_IMAGE_WEB_PATH) {
+        $currentOffer = $offer;
+    }
+}
+
+if (!$currentOffer) {
+    $currentOffer = $offers->first();
+}
 
 ?>
 
 <div class="b-common-item b-common-item--catalog-item js-product-item">
     <a class="b-common-item__image-wrap" href="<?= $product->getDetailPageUrl() ?>">
         <img class="b-common-item__image js-weight-img"
-             src="<?= $firstOffer->getResizeImages(240, 240)->first() ?>"
-             alt="<?= $firstOffer->getName() ?>"
-             title="<?= $firstOffer->getName() ?>" />
+             src="<?= $currentOffer->getResizeImages(240, 240)->first() ?>"
+             alt="<?= $currentOffer->getName() ?>"
+             title="<?= $currentOffer->getName() ?>" />
     </a>
     <div class="b-common-item__info-center-block">
         <a class="b-common-item__description-wrap" href="<?= $product->getDetailPageUrl() ?>" title="">
             <span class="b-clipped-text b-clipped-text--three"
             ><span><strong><?= $product->getBrand()->getName() ?>  </strong><?= $product->getName() ?></span></span>
         </a>
-        <?php /** @noinspection PhpUnhandledExceptionInspection */
+        <?php
         $APPLICATION->IncludeComponent(
             'fourpaws:comments',
             'catalog.snippet',
@@ -48,19 +61,21 @@ $firstOffer = $offers->first();
                 'ACTIVE_DATE_FORMAT' => 'd j Y',
                 'TYPE'               => 'catalog',
             ],
-            $component,
+            false,
             ['HIDE_ICONS' => 'Y']
         );?>
-        <? /**
-        @todo new; shares
         <div class="b-common-item__rank-wrapper">
-            <span class="b-common-item__rank-text b-common-item__rank-text--green">Новинка</span>
-            <span class="b-common-item__rank-text b-common-item__rank-text--red">Выгода 15%</span>
-        </div> */ ?>
+            &nbsp;
+            <?php /**
+             * @todo new; shares
+             * <span class="b-common-item__rank-text b-common-item__rank-text--green">Новинка</span>
+             * <span class="b-common-item__rank-text b-common-item__rank-text--red">Выгода 15%</span>
+             */ ?>
+        </div>
         <?php if ($offers->count() > 1) { ?>
             <?php
             $mainCombinationType = '';
-            if ($firstOffer->getClothingSize()) {
+            if ($currentOffer->getClothingSize()) {
                 $mainCombinationType = 'SIZE';
             } else {
                 $mainCombinationType = 'VOLUME';
@@ -96,7 +111,7 @@ $firstOffer = $offers->first();
                         ?>
                         <li class="b-weight-container__item">
                             <a href="javascript:void(0)"
-                               class="b-weight-container__link js-price <?= $firstOffer->getId() === $offer->getId(
+                               class="b-weight-container__link js-price <?= $currentOffer->getId() === $offer->getId(
                                 ) ? 'active-link' : '' ?>"
                                data-price="<?= $offer->getPrice() ?>" data-offerid="<?= $offer->getId() ?>"
                                data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
@@ -108,9 +123,9 @@ $firstOffer = $offers->first();
             </div>
         <?php } ?>
         <div class="b-common-item__moreinfo">
-            <?php if ($firstOffer->getMultiplicity() > 1) { ?>
+            <?php if ($currentOffer->getMultiplicity() > 1) { ?>
                 <div class="b-common-item__packing">
-                    Упаковка <strong><?= $firstOffer->getMultiplicity() ?>шт.</strong>
+                    Упаковка <strong><?= $currentOffer->getMultiplicity() ?>шт.</strong>
                 </div>
             <?php } ?>
             <?php if ($product->getCountry()) { ?>
@@ -118,7 +133,7 @@ $firstOffer = $offers->first();
                     Страна производства <strong><?= $product->getCountry()->getName() ?></strong>
                 </div>
             <?php } ?>
-            <?php if ($firstOffer->isByRequest()) { ?>
+            <?php if ($currentOffer->isByRequest()) { ?>
                 <div class="b-common-item__order">
                     Только под заказ
                 </div>
@@ -133,10 +148,15 @@ $firstOffer = $offers->first();
        href="javascript:void(0);"
        title=""
        data-url="/ajax/sale/basket/add/"
-       data-offerid="<?= $firstOffer->getId() ?>">
-            <span class="b-common-item__wrapper-link"
-            ><span class="b-cart"
-                ><span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 12, 12) ?></span></span><span
-                        class="b-common-item__price js-price-block"><?= $firstOffer->getPrice() ?></span><span
-                        class="b-common-item__currency"> <span class="b-ruble">₽</span></span></span></a>
+       data-offerid="<?= $currentOffer->getId() ?>">
+        <span class="b-common-item__wrapper-link">
+            <span class="b-cart">
+                <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 12, 12) ?></span>
+            </span>
+            <span class="b-common-item__price js-price-block"><?= $currentOffer->getPrice() ?></span>
+            <span class="b-common-item__currency">
+                <span class="b-ruble">₽</span>
+            </span>
+        </span>
+    </a>
 </div>
