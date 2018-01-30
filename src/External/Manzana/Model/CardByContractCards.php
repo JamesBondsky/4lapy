@@ -68,6 +68,8 @@ class CardByContractCards
     public $balance;
     
     /**
+     * Скидка
+     *
      * @XmlElement(cdata=false)
      * @Type("float")
      * @SerializedName("pl_discount")
@@ -89,6 +91,8 @@ class CardByContractCards
     public $sum;
     
     /**
+     * Сумма со скидкой
+     *
      * @XmlElement(cdata=false)
      * @Type("float")
      * @SerializedName("pl_summdiscounted")
@@ -167,6 +171,8 @@ class CardByContractCards
     public $effectDate;
     
     /**
+     * Получено баллов
+     *
      * @XmlElement(cdata=false)
      * @Type("float")
      * @SerializedName("pl_credit")
@@ -174,6 +180,8 @@ class CardByContractCards
     public $credit;
     
     /**
+     * Потрачено баллов
+     *
      * @XmlElement(cdata=false)
      * @Type("float")
      * @SerializedName("pl_debet")

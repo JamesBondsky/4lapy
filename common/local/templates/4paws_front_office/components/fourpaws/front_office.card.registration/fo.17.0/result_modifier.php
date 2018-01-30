@@ -72,7 +72,7 @@ foreach ($printFields as $fieldName) {
 // определение текущего шага
 if ($arResult['WAS_POSTED']) {
     $exactStep = 0;
-    if(!$exactStep && $arResult['POSTED_STEP'] >= 1) {
+    if (!$exactStep && $arResult['POSTED_STEP'] >= 1) {
         $arResult['STEP'] = 2;
         foreach ($firstStepFields as $fieldName) {
             if (!empty($arResult['ERROR']['FIELD'][$fieldName])) {
@@ -81,7 +81,7 @@ if ($arResult['WAS_POSTED']) {
             }
         }
     }
-    if(!$exactStep && $arResult['POSTED_STEP'] >= 2) {
+    if (!$exactStep && $arResult['POSTED_STEP'] >= 2) {
         $arResult['STEP'] = 3;
         foreach ($secondStepFields as $fieldName) {
             if (!empty($arResult['ERROR']['FIELD'][$fieldName])) {
@@ -90,7 +90,7 @@ if ($arResult['WAS_POSTED']) {
             }
         }
     }
-    if(!$exactStep && $arResult['POSTED_STEP'] >= 3) {
+    if (!$exactStep && $arResult['POSTED_STEP'] >= 3) {
         $arResult['STEP'] = 4;
         foreach ($thirdStepFields as $fieldName) {
             if (!empty($arResult['ERROR']['FIELD'][$fieldName])) {
@@ -99,7 +99,7 @@ if ($arResult['WAS_POSTED']) {
             }
         }
     }
-    if(!$exactStep && $arResult['POSTED_STEP'] >= 4) {
+    if (!$exactStep && $arResult['POSTED_STEP'] >= 4) {
         $arResult['STEP'] = 5;
         foreach ($fourthStepFields as $fieldName) {
             if (!empty($arResult['ERROR']['FIELD'][$fieldName])) {

@@ -51,7 +51,7 @@ if ($showForm) {
                 $errMess = '';
                 /** @var Bitrix\Main\Error $error */
                 $error = $fieldMeta['ERROR'];
-                if($error) {
+                if ($error) {
                     $errMess = 'Неизвестная ошибка';
                     switch ($error->getCode()) {
                         case 'exception':
@@ -72,7 +72,7 @@ if ($showForm) {
                 <div class="form-page__field-wrap">
                     <label for="<?=$fieldName?>" class="form-page__label">Номер вашей карты</label>
                     <input id="<?=$fieldName?>" name="<?=$fieldName?>" value="<?=$value?>"<?=$attr?> class="form-page__field mb-l" type="text"><?
-                    if(strlen($errMess)) {
+                    if ($errMess) {
                         echo sprintf($errBlock, $errMess);
                     }
                 ?></div><?php
@@ -90,7 +90,7 @@ if ($showForm) {
                 $errMess = '';
                 /** @var Bitrix\Main\Error $error */
                 $error = $fieldMeta['ERROR'];
-                if($error) {
+                if ($error) {
                     $errMess = 'Неизвестная ошибка';
                     /** @var Bitrix\Main\Error $error */
                     $error = $arResult['ERROR']['FIELD'][$fieldName];
@@ -109,7 +109,7 @@ if ($showForm) {
                 ?><div class="form-page__field-wrap">
                     <label for="<?=$fieldName?>" class="form-page__label">Фамилия</label>
                     <input id="<?=$fieldName?>" name="<?=$fieldName?>" value="<?=$value?>"<?=$attr?> class="form-page__field mb-l" type="text"><?php
-                    if(strlen($errMess)) {
+                    if ($errMess) {
                         echo sprintf($errBlock, $errMess);
                     }
                 ?></div><?php
@@ -124,7 +124,7 @@ if ($showForm) {
                 $errMess = '';
                 /** @var Bitrix\Main\Error $error */
                 $error = $fieldMeta['ERROR'];
-                if($error) {
+                if ($error) {
                     $errMess = 'Неизвестная ошибка';
                     switch ($error->getCode()) {
                         case 'exception':
@@ -141,7 +141,7 @@ if ($showForm) {
                 ?><div class="form-page__field-wrap">
                     <label for="<?=$fieldName?>" class="form-page__label">Имя</label>
                     <input id="<?=$fieldName?>" name="<?=$fieldName?>" value="<?=$value?>"<?=$attr?> class="form-page__field mb-l" type="text"><?php
-                    if(strlen($errMess)) {
+                    if ($errMess) {
                         echo sprintf($errBlock, $errMess);
                     }
                 ?></div><?php
@@ -156,7 +156,7 @@ if ($showForm) {
                 $errMess = '';
                 /** @var Bitrix\Main\Error $error */
                 $error = $fieldMeta['ERROR'];
-                if($error) {
+                if ($error) {
                     $errMess = 'Неизвестная ошибка';
                     switch ($error->getCode()) {
                         case 'exception':
@@ -173,7 +173,7 @@ if ($showForm) {
                 ?><div class="form-page__field-wrap">
                     <label for="<?=$fieldName?>" class="form-page__label">Отчество</label>
                     <input id="<?=$fieldName?>" name="<?=$fieldName?>" value="<?=$value?>"<?=$attr?> class="form-page__field mb-l" type="text"><?php
-                    if(strlen($errMess)) {
+                    if ($errMess) {
                         echo sprintf($errBlock, $errMess);
                     }
                 ?></div><?php
@@ -186,7 +186,7 @@ if ($showForm) {
                 $errMess = '';
                 /** @var Bitrix\Main\Error $error */
                 $error = $fieldMeta['ERROR'];
-                if($error) {
+                if ($error) {
                     $errMess = 'Неизвестная ошибка';
                     switch ($error->getCode()) {
                         case 'exception':
@@ -206,7 +206,7 @@ if ($showForm) {
                         <option<?=($value == $male ? ' selected="selected"' : '')?> value="<?=$male?>">Мужской</option>
                         <option<?=($value == $female ? ' selected="selected"' : '')?> value="<?=$female?>">Женский</option>
                     </select><?php
-                    if(strlen($errMess)) {
+                    if ($errMess) {
                         echo sprintf($errBlock, $errMess);
                     }
                 ?></div><?php
@@ -221,7 +221,7 @@ if ($showForm) {
                 $errMess = '';
                 /** @var Bitrix\Main\Error $error */
                 $error = $fieldMeta['ERROR'];
-                if($error) {
+                if ($error) {
                     $errMess = 'Неизвестная ошибка';
                     switch ($error->getCode()) {
                         case 'exception':
@@ -239,7 +239,7 @@ if ($showForm) {
                 ?><div class="form-page__field-wrap">
                     <label for="<?=$fieldName?>" class="form-page__label">Дата вашего рождения дд.мм.гггг</label>
                     <input id="<?=$fieldName?>" name="<?=$fieldName?>" value="<?=$value?>"<?=$attr?> class="form-page__field mb-l" type="text"><?php
-                    if(strlen($errMess)) {
+                    if ($errMess) {
                         echo sprintf($errBlock, $errMess);
                     }
                 ?></div><?php
@@ -257,7 +257,7 @@ if ($showForm) {
                 $errMess = '';
                 /** @var Bitrix\Main\Error $error */
                 $error = $fieldMeta['ERROR'];
-                if($error) {
+                if ($error) {
                     $errMess = 'Неизвестная ошибка';
                     /** @var Bitrix\Main\Error $error */
                     $error = $arResult['ERROR']['FIELD'][$fieldName];
@@ -279,7 +279,7 @@ if ($showForm) {
                 ?><div class="form-page__field-wrap">
                     <label for="<?=$fieldName?>" class="form-page__label">Мобильный телефон (10 знаков без 7 или 8 в формате 9ХХХХХХХХХ)</label>
                     <input id="<?=$fieldName?>" name="<?=$fieldName?>" value="<?=$value?>"<?=$attr?> class="form-page__field mb-l" type="text"><?php
-                    if(strlen($errMess)) {
+                    if ($errMess) {
                         echo sprintf($errBlock, $errMess);
                         /*
                     } else {
@@ -306,7 +306,7 @@ if ($showForm) {
                 $errMess = '';
                 /** @var Bitrix\Main\Error $error */
                 $error = $fieldMeta['ERROR'];
-                if($error) {
+                if ($error) {
                     $errMess = 'Неизвестная ошибка';
                     /** @var Bitrix\Main\Error $error */
                     $error = $arResult['ERROR']['FIELD'][$fieldName];
@@ -325,7 +325,7 @@ if ($showForm) {
                 ?><div class="form-page__field-wrap">
                     <label for="<?=$fieldName?>" class="form-page__label">Ваш email (поле необязательно для заполнения)</label>
                     <input id="<?=$fieldName?>" name="<?=$fieldName?>" value="<?=$value?>"<?=$attr?> class="form-page__field mb-l" type="text"><?php
-                    if(strlen($errMess)) {
+                    if ($errMess) {
                         echo sprintf($errBlock, $errMess);
                     }
                 ?></div><?php
@@ -338,7 +338,7 @@ if ($showForm) {
             if (isset($arResult['REGISTRATION_STATUS']) && $arResult['REGISTRATION_STATUS'] === 'ERROR') {
                 $errMessages = [];
                 foreach ($arResult['ERROR']['REGISTRATION'] as $errCode => $errMsg) {
-                    $errMessages[] = strlen($errCode) ? '['.$errCode.'] '.$errMsg : $errMsg;
+                    $errMessages[] = $errCode !== '' ? '['.$errCode.'] '.$errMsg : $errMsg;
                 }
                 echo '<div class="form-page__field-wrap">';
                 echo sprintf($errBlock, 'Ошибка регистрации карты:<br>'.implode('<br>', $errMessages));

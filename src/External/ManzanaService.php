@@ -17,6 +17,10 @@ use FourPaws\External\Manzana\Model\Card;
 use FourPaws\External\Manzana\Model\CardByContractCards;
 use FourPaws\External\Manzana\Model\Cards;
 use FourPaws\External\Manzana\Model\CardsByContractCards;
+use FourPaws\External\Manzana\Model\ChequeByContractCheques;
+use FourPaws\External\Manzana\Model\ChequeByContractContactCheques;
+use FourPaws\External\Manzana\Model\ChequesByContractCheques;
+use FourPaws\External\Manzana\Model\ChequesByContractContactCheques;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\Manzana\Model\Clients;
 use FourPaws\External\Manzana\Model\Contact;
@@ -72,7 +76,9 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     const CONTRACT_CHEQUE_ITEMS           = 'cheque_items';
     
     const CONTRACT_SEARCH_CARD_BY_NUMBER  = 'search_cards_by_number';
-    
+
+    const CONTRACT_CHEQUES = 'cheques';
+
     protected $sessionId;
     
     protected $cards = [];
@@ -652,5 +658,45 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     protected function clientSearch(array $data)
     {
     
+    }
+
+    /**
+     * @param $cardId
+     *
+     * @return ChequeByContractCheques[]|array
+     * @throws ManzanaServiceException
+     */
+    public function getChequesByCardId(string $cardId) : array
+    {
+        $cheques = [];
+        $bag = new ParameterBag(['card_id' => $cardId]);
+        try {
+            $result = $this->execute(self::CONTRACT_CHEQUES, $bag->getParameters());
+            $cheques = $this->serializer->deserialize($result, ChequesByContractCheques::class, 'xml')->cheques->toArray();
+        } catch (\Exception $e) {
+            throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
+        }
+
+        return $cheques;
+    }
+
+    /**
+     * @param $contactId
+     *
+     * @return ChequeByContractContactCheques[]|array
+     * @throws ManzanaServiceException
+     */
+    public function getChequesByContactId($contactId) : array
+    {
+        $cheques = [];
+        $bag = new ParameterBag(['contact_id' => $contactId]);
+        try {
+            $result = $this->execute(self::CONTRACT_CONTACT_CHEQUES, $bag->getParameters());
+            $cheques = $this->serializer->deserialize($result, ChequesByContractContactCheques::class, 'xml')->cheques->toArray();
+        } catch (\Exception $e) {
+            throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
+        }
+
+        return $cheques;
     }
 }
