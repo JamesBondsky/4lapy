@@ -3,40 +3,17 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
-if (!$arResult['PICKUP_DELIVERY']) {
-    return;
-}
-
-use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Main\Grid\Declension;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
-use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\StoreBundle\Entity\Store;
 
 /**
  * @var array $arResult
  * @var array $arParams
- * @var CalculationResult $pickup
  * @var StockResultCollection $resultByShop
  */
 
-function getDateDiffString(\DateTime $currentDate, \DateTime $deliveryDate)
-{
-    if ($deliveryDate->format('d') == $currentDate->format('d')) {
-        $hdiff = $deliveryDate->format('H') - $currentDate->format('H');
-        $str = 'через ' . ($hdiff > 1 ? $hdiff : '') . ' ' . (new Declension(
-                'час', 'часа', 'часов'
-            ))->get($hdiff);
-    } else {
-        $str = FormatDate('X', $deliveryDate->getTimestamp());
-    }
-
-    return $str;
-}
-
-$pickup = $arResult['PICKUP_DELIVERY'];
-$currentDate = new \DateTime();
 ?>
 <section class="b-popup-wrapper__wrapper-modal b-popup-wrapper__wrapper-modal--order js-popup-section"
          data-popup="popup-order-stores">
@@ -112,7 +89,7 @@ $currentDate = new \DateTime();
                                        id="stores-search"
                                        placeholder="Поиск по адресу, метро и названию ТЦ"
                                        name="text"
-                                       data-url="json/mapobjects-stores.json"/>
+                                       data-url="<?= $arResult['STORE_LIST_URL'] ?>"/>
                                 <div class="b-error">
                                     <span class="js-message"></span>
                                 </div>
@@ -123,11 +100,7 @@ $currentDate = new \DateTime();
                         <ul class="b-delivery-list b-delivery-list--order js-delivery-list">
                             <?php /** @var Store $shop */ ?>
                             <?php foreach ($arResult['SHOPS_FULL'] as $shop) {
-                                /** @var StockResultCollection $stockResult */
                                 $stockResult = $arResult['STOCK_RESULT_BY_SHOP'][$shop->getXmlId()]['STOCK_RESULT'];
-                                if ($stockResult->getDelayed()->isEmpty()) {
-                                    continue;
-                                }
                                 include 'include/shop.php';
                                 ?>
                             <?php } ?>
@@ -138,11 +111,7 @@ $currentDate = new \DateTime();
                         <ul class="b-delivery-list b-delivery-list--order js-delivery-part-list" <?= empty($arResult['SHOPS_PARTIAL']) ? 'style="display:none"' : '' ?>>
                             <?php /** @var Store $shop */ ?>
                             <?php foreach ($arResult['SHOPS_PARTIAL'] as $shop) {
-                                /** @var StockResultCollection $stockResult */
                                 $stockResult = $arResult['STOCK_RESULT_BY_SHOP'][$shop->getXmlId()]['STOCK_RESULT'];
-                                if ($stockResult->getDelayed()->isEmpty()) {
-                                    continue;
-                                }
                                 include 'include/shop.php';
                                 ?>
                             <?php } ?>
@@ -151,7 +120,7 @@ $currentDate = new \DateTime();
                 </div>
                 <div class="b-availability__show-block">
                     <div class="b-tab-delivery-map b-tab-delivery-map--order js-content-map">
-                        <div class="b-tab-delivery-map__map" id="map" data-url="/ajax/store/list/order/">
+                        <div class="b-tab-delivery-map__map" id="map" data-url="<?= $arResult['STORE_LIST_URL'] ?>">
                         </div>
                         <a class="b-link b-link--close-baloon js-product-list" href="javascript:void(0);" title="">
                             <span class="b-icon b-icon--close-baloon">

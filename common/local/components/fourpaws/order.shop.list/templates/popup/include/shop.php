@@ -4,6 +4,8 @@ use FourPaws\Decorators\SvgDecorator;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\DeliveryBundle\Entity\StockResult;
+use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
+use Bitrix\Sale\Delivery\CalculationResult;
 
 /**
  * @var array $arResult
@@ -14,6 +16,10 @@ use FourPaws\DeliveryBundle\Entity\StockResult;
 $available = $stockResult->getAvailable();
 $delayed = $stockResult->getDelayed();
 
+/** @var CalculationResult $fullResult */
+$fullResult = $arResult['STOCK_RESULT_BY_SHOP'][$shop->getXmlId()]['FULL_RESULT'];
+/** @var CalculationResult $partialResult */
+$partialResult = $arResult['STOCK_RESULT_BY_SHOP'][$shop->getXmlId()]['PARTIAL_RESULT'];
 $metro = $arResult['METRO'][$shop->getMetro()];
 ?>
 <li class="b-delivery-list__item">
@@ -31,19 +37,20 @@ $metro = $arResult['METRO'][$shop->getMetro()];
         <span class="b-delivery-list__col b-delivery-list__col--time"><?= $shop->getSchedule() ?></span>
         <?php if (!$available->isEmpty()) { ?>
             <span class="b-delivery-list__col b-delivery-list__col--self-picked">
-                <?php
-                $deliveryDate = $available->getDeliveryDate();
-                $str = getDateDiffString($currentDate, $deliveryDate);
-                ?>
-                заказ можно забрать <?= $str ?>
+                заказ можно забрать <?= DeliveryTimeHelper::showTime(
+                    $partialResult,
+                    $available->getDeliveryDate(),
+                    true,
+                    false
+                ) ?>
             </span>
         <?php } else { ?>
             <span class="b-delivery-list__col b-delivery-list__col--self-picked">
-                полный заказ будет доступен <?= mb_strtolower(
-                    FormatDate(
-                        'd.m (D) с H:00',
-                        $stockResult->getDeliveryDate()->getTimestamp()
-                    )
+                полный заказ будет доступен <?= DeliveryTimeHelper::showTime(
+                    $fullResult,
+                    $stockResult->getDeliveryDate(),
+                    true,
+                    false
                 ) ?>
             </span>
         <?php } ?>
@@ -81,9 +88,11 @@ $metro = $arResult['METRO'][$shop->getMetro()];
             <?php if (!$available->isEmpty()) { ?>
                 <div class="b-input-line b-input-line--myself">
                     <div class="b-input-line__label-wrapper">
-                        <? $str = getDateDiffString(
-                            $currentDate,
-                            $available->getDeliveryDate()
+                        <? $str = DeliveryTimeHelper::showTime(
+                            $partialResult,
+                            $available->getDeliveryDate(),
+                            true,
+                            false
                         ) ?>
                         <?php if ($delayed->isEmpty()) { ?>
                             <span class="b-input-line__label"> Можно забрать <?= $str ?></span>
@@ -94,9 +103,8 @@ $metro = $arResult['METRO'][$shop->getMetro()];
                                 <?php /** @var StockResult $delayedItem */ ?>
                                 <?php foreach ($delayed as $delayedItem) { ?>
                                     <li class="b-input-line__text-item">
-                                        <?php $delayedItem->getOffer()
-                                                          ->getProduct()
-                                                          ->getName() ?>
+                                        <?= $delayedItem->getOffer()
+                                                        ->getName() ?>
                                         <?php if ($delayedItem->getAmount() > 1) { ?>
                                             (<?= $delayedItem->getAmount() ?> шт)
                                         <?php } ?>
@@ -113,11 +121,11 @@ $metro = $arResult['METRO'][$shop->getMetro()];
                         <span class="b-input-line__label"> Полный заказ будет доступен </span>
                     </div>
                     <div class="b-input-line__text-line">
-                        <?= mb_strtolower(
-                            FormatDate(
-                                'd.m (D) с H:00',
-                                $stockResult->getDeliveryDate()->getTimestamp()
-                            )
+                        <?= DeliveryTimeHelper::showTime(
+                            $fullResult,
+                            $stockResult->getDeliveryDate(),
+                            true,
+                            false
                         ) ?>
                     </div>
                 </div>

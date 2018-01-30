@@ -5,6 +5,8 @@ namespace FourPaws\DeliveryBundle\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Entity\StockResult;
+use FourPaws\DeliveryBundle\Exception\NotFoundException;
+use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 
 class StockResultCollection extends ArrayCollection
@@ -54,9 +56,11 @@ class StockResultCollection extends ArrayCollection
     {
         return $this->filter(
             function (StockResult $stockResult) use ($store) {
-                return $stockResult->getStores()->exists(function ($i, Store $stockResultStore) use ($store) {
-                    return $stockResultStore->getId() === $store->getId();
-                });
+                return $stockResult->getStores()->exists(
+                    function ($i, Store $stockResultStore) use ($store) {
+                        return $stockResultStore->getId() === $store->getId();
+                    }
+                );
             }
         );
     }
@@ -102,5 +106,72 @@ class StockResultCollection extends ArrayCollection
         }
 
         return $deliveryDate;
+    }
+
+    /**
+     * @param bool $skipUnavailable
+     *
+     * @return StoreCollection
+     * @throws NotFoundException
+     */
+    public function getStores($skipUnavailable = true)
+    {
+        $result = new StoreCollection();
+        /** @var StockResult $item */
+        foreach ($this->getIterator() as $item) {
+            if ($skipUnavailable && $item->getType() === StockResult::TYPE_UNAVAILABLE) {
+                continue;
+            }
+
+            $stores = $item->getStores();
+            /** @var Store $store */
+            foreach ($stores as $store) {
+                if (!isset($result[$store->getXmlId()])) {
+                    $result[$store->getXmlId()] = $store;
+                }
+            }
+        }
+
+        if ($result->isEmpty()) {
+            throw new NotFoundException('No stores found');
+        }
+
+        return $result;
+    }
+
+    public function getOffers($skipUnavailable = true): ArrayCollection
+    {
+        $result = new ArrayCollection();
+        /** @var StockResult $item */
+        foreach ($this->getIterator() as $item) {
+            if ($skipUnavailable && $item->getType() === StockResult::TYPE_UNAVAILABLE) {
+                continue;
+            }
+
+            $offer = $item->getOffer();
+            if (!isset($result[$offer->getId()])) {
+                $result[$offer->getId()] = $offer;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return float
+     */
+    public function getPrice($skipUnavailable = true): float
+    {
+        $price = 0;
+        /** @var StockResult $item */
+        foreach ($this->getIterator() as $item) {
+            if ($skipUnavailable && $item->getType() === StockResult::TYPE_UNAVAILABLE) {
+                continue;
+            }
+
+            $price += $item->getPrice() * $item->getAmount();
+        }
+
+        return $price;
     }
 }

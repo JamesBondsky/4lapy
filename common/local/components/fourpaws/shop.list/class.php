@@ -29,11 +29,11 @@ use Symfony\Component\HttpFoundation\Request;
 class FourPawsShopListComponent extends CBitrixComponent
 {
     /** @var StoreService $storeService */
-    private $storeService;
-    
+    protected $storeService;
+
     /** @var UserService $userService */
-    private $userService;
-    
+    protected $userService;
+
     /**
      * FourPawsShopListComponent constructor.
      *
@@ -49,9 +49,9 @@ class FourPawsShopListComponent extends CBitrixComponent
         parent::__construct($component);
         try {
             $container = App::getInstance()->getContainer();
-            
+
             $this->storeService = $container->get('store.service');
-            $this->userService  = $container->get(UserCitySelectInterface::class);
+            $this->userService = $container->get(UserCitySelectInterface::class);
         } catch (ApplicationCreateException $e) {
             $logger = LoggerFactory::create('component');
             $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
@@ -59,7 +59,7 @@ class FourPawsShopListComponent extends CBitrixComponent
             throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
         }
     }
-    
+
     /**
      * {@inheritdoc}
      * @throws NotAuthorizedException
@@ -72,25 +72,21 @@ class FourPawsShopListComponent extends CBitrixComponent
      */
     public function executeComponent()
     {
-        $container          = App::getInstance()->getContainer();
+        $container = App::getInstance()->getContainer();
         $this->storeService = $container->get('store.service');
-        
+
         $this->userService = $container->get(UserCitySelectInterface::class);
-        
+
         $city = $this->userService->getSelectedCity();
         if ($this->startResultCache(false, ['location' => $city['CODE']])) {
-            $this->arResult['CITY']      = $city['NAME'];
-            $this->arResult['CITY_CODE'] = $city['CODE'];
-            
-            $this->arResult['SERVICES'] = $this->storeService->getServicesInfo();
-            $this->arResult['METRO']    = $this->storeService->getMetroInfo();
-            
+            $this->prepareResult();
+
             $this->includeComponentTemplate();
         }
-        
+
         return true;
     }
-    
+
     /**
      * @param array $filter
      * @param array $order
@@ -100,37 +96,35 @@ class FourPawsShopListComponent extends CBitrixComponent
      * @throws \Exception
      * @return array
      */
-    public function getStores(array $filter = [], array $order = [], $returnActiveServices = false) : array
+    public function getStores(array $filter = [], array $order = [], $returnActiveServices = false): array
     {
-        $result          = [];
-        $storeRepository = $this->storeService->getRepository();
-        $filter          = array_merge($filter, $this->storeService->getTypeFilter($this->storeService::TYPE_SHOP));
-        $storeCollection = $storeRepository->findBy($filter, $order);
-        $stores          = $storeCollection->toArray();
+        $result = [];
+        $stores = $this->getStoreList($filter, $order);
+
         if (!empty($stores)) {
             list($servicesList, $metroList) = $this->getFullStoreInfo($stores);
-            
+
             /** @var Store $store */
             $avgGpsN = 0;
             $avgGpsS = 0;
             foreach ($stores as $store) {
-                $metro   = $store->getMetro();
+                $metro = $store->getMetro();
                 $address = $store->getAddress();
-                
-                $image    = $store->getImageId();
+
+                $image = $store->getImageId();
                 $imageSrc = '';
                 if (!empty($image) && is_numeric($image) && $image > 0) {
                     $imageSrc =
                         CropImageDecorator::createFromPrimary($image)->setCropWidth(630)->setCropHeight(360)->getSrc();
                 }
-                
+
                 $services = [];
                 if (\is_array($servicesList) && !empty($servicesList)) {
                     foreach ($servicesList as $service) {
                         $services[] = $service['UF_NAME'];
                     }
                 }
-                
+
                 $gpsS = $store->getLongitude();
                 $gpsN = $store->getLatitude();
                 if ($gpsN > 0) {
@@ -140,6 +134,7 @@ class FourPawsShopListComponent extends CBitrixComponent
                     $avgGpsS += $gpsS;
                 }
                 $result['items'][] = [
+                    'id'         => $store->getXmlId(),
                     'addr'       => $address,
                     'adress'     => $store->getDescription(),
                     'phone'      => $store->getPhone(),
@@ -154,17 +149,17 @@ class FourPawsShopListComponent extends CBitrixComponent
                     //revert $gpsN
                 ];
             }
-            $countStores         = count($stores);
+            $countStores = count($stores);
             $result['avg_gps_s'] = $avgGpsN / $countStores; //revert $avgGpsS
             $result['avg_gps_n'] = $avgGpsS / $countStores; //revert $avgGpsN
             if ($returnActiveServices) {
                 $result['services'] = $servicesList;
             }
         }
-        
+
         return $result;
     }
-    
+
     /**
      *
      * @param array $stores
@@ -172,15 +167,15 @@ class FourPawsShopListComponent extends CBitrixComponent
      * @throws \Exception
      * @return array
      */
-    public function getFullStoreInfo(array $stores) : array
+    public function getFullStoreInfo(array $stores): array
     {
         $servicesIds = [];
-        $metroIds    = [];
+        $metroIds = [];
         /** @var Store $store */
         foreach ($stores as $store) {
             /** @noinspection SlowArrayOperationsInLoopInspection */
             $servicesIds = array_merge($servicesIds, $store->getServices());
-            $metro       = $store->getMetro();
+            $metro = $store->getMetro();
             if ($metro > 0) {
                 $metroIds[] = $metro;
             }
@@ -189,26 +184,26 @@ class FourPawsShopListComponent extends CBitrixComponent
         if (!empty($servicesIds)) {
             $services = $this->storeService->getServicesInfo(['ID' => array_unique($servicesIds)]);
         }
-        
+
         $metro = [];
         if (!empty($metroIds)) {
             $metro = $this->storeService->getMetroInfo(['ID' => array_unique($metroIds)]);
         }
-        
+
         return [
             $services,
             $metro,
         ];
     }
-    
+
     /**
      * @param Request $request
      *
      * @return array
      */
-    public function getFilterByRequest(Request $request) : array
+    public function getFilterByRequest(Request $request): array
     {
-        $result     = [];
+        $result = [];
         $storesSort = $request->get('stores-sort');
         if (\is_array($storesSort) && !empty($storesSort)) {
             $result['UF_SERVICES'] = $storesSort;
@@ -225,19 +220,19 @@ class FourPawsShopListComponent extends CBitrixComponent
                 '%METRO.UF_NAME' => $search,
             ];
         }
-        
+
         return $result;
     }
-    
+
     /**
      * @param Request $request
      *
      * @return array
      */
-    public function getOrderByRequest(Request $request) : array
+    public function getOrderByRequest(Request $request): array
     {
         $result = [];
-        $sort   = $request->get('sort');
+        $sort = $request->get('sort');
         if (!empty($sort)) {
             switch ($sort) {
                 case 'city':
@@ -251,7 +246,26 @@ class FourPawsShopListComponent extends CBitrixComponent
                     break;
             }
         }
-        
+
         return $result;
+    }
+
+    protected function prepareResult()
+    {
+        $city = $this->userService->getSelectedCity();
+
+        $this->arResult['CITY'] = $city['NAME'];
+        $this->arResult['CITY_CODE'] = $city['CODE'];
+
+        $this->arResult['SERVICES'] = $this->storeService->getServicesInfo();
+        $this->arResult['METRO'] = $this->storeService->getMetroInfo();
+    }
+
+    protected function getStoreList(array $filter, array $order): array
+    {
+        $storeRepository = $this->storeService->getRepository();
+        $filter = array_merge($filter, $this->storeService->getTypeFilter($this->storeService::TYPE_SHOP));
+        $storeCollection = $storeRepository->findBy($filter, $order);
+        return $storeCollection->toArray();
     }
 }

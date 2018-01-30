@@ -164,7 +164,8 @@ abstract class DeliveryServiceHandlerBase extends Base implements DeliveryServic
             $stockResult = new StockResult();
             $stockResult->setAmount($neededAmount)
                         ->setOffer($offer)
-                        ->setStores($storesAvailable);
+                        ->setStores($storesAvailable)
+                        ->setPrice($basketItem->getPrice());
             $totalSchedule = $storesAvailable->getTotalSchedule();
             $pickupDate = clone($date);
             if ($hour < $totalSchedule['from']) {
@@ -201,6 +202,7 @@ abstract class DeliveryServiceHandlerBase extends Base implements DeliveryServic
                                                              ->setAmount($neededAmount)
                                                              ->setOffer($offer)
                                                              ->setStores($storesAvailable)
+                                                             ->setPrice($basketItem->getPrice())
                         /* @todo расчет по графику поставок */
                                                              ->setDeliveryDate((new \DateTime())->modify('+10 days'));
                     $stockResultCollection->add($delayedStockResult);

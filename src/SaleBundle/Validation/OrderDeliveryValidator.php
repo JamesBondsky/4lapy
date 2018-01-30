@@ -2,6 +2,7 @@
 
 namespace FourPaws\SaleBundle\Validation;
 
+use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Service\OrderService;
@@ -29,6 +30,10 @@ class OrderDeliveryValidator extends ConstraintValidator
         if (!$entity instanceof OrderStorage || !$constraint instanceof OrderDelivery) {
             return;
         }
+
+        /** @var DeliveryService $deliveryService */
+        $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+
         /**
          * Проверка, что выбрана доставка
          */
@@ -55,13 +60,11 @@ class OrderDeliveryValidator extends ConstraintValidator
             return;
         }
 
-        $deliveryCode = $delivery->getData()['DELIVERY_CODE'];
-
         /**
          * Если выбрана курьерская доставка, проверим, что выбрана дата доставки и интервал
          * Если выбран самовывоз, проверим, что выбран магазин или терминал DPD
          */
-        if (\in_array($deliveryCode, DeliveryService::DELIVERY_CODES, true)) {
+        if ($deliveryService->isDelivery($delivery)) {
             /*
              * это число в общем случае должно быть от 1
              * до разницы между минимальной и максимальной датами доставки включительно
@@ -78,12 +81,10 @@ class OrderDeliveryValidator extends ConstraintValidator
                     $this->context->addViolation($constraint->deliveryIntervalMessage);
                 }
             }
-        } elseif (\in_array($deliveryCode, DeliveryService::PICKUP_CODES, true)) {
-            if ($deliveryCode === DeliveryService::INNER_PICKUP_CODE) {
-                /* @todo проверка магазина */
-            } elseif ($deliveryCode === DeliveryService::DPD_PICKUP_CODE) {
-                /* @todo проверка терминала */
-            }
+        } elseif ($deliveryService->isInnerPickup($delivery)) {
+            /* @todo проверка магазина */
+        } elseif ($deliveryService->isDpdPickup($delivery)) {
+            /* @todo проверка терминала */
         }
     }
 }

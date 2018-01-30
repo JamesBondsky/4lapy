@@ -167,6 +167,7 @@ class OrderService implements ContainerAwareInterface
                     'deliveryPlaceCode',
                     'dpdTerminalCode',
                     'comment',
+                    'partialGet'
                 ];
         }
 

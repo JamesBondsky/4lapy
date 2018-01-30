@@ -59,6 +59,27 @@ class OrderController extends Controller
     }
 
     /**
+     * @Route("/store-search/", methods={"GET"})
+     * @param Request $request
+     *
+     * @return JsonResponse
+     */
+    public function storeSearchAction(Request $request): JsonResponse
+    {
+        \CBitrixComponent::includeComponentClass('fourpaws:order.shop.list');
+        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+        $shopListClass = new \FourPawsOrderShopListComponent();
+
+        return JsonSuccessResponse::createWithData(
+            'Подгрузка успешна',
+            $shopListClass->getStores(
+                $shopListClass->getFilterByRequest($request),
+                $shopListClass->getOrderByRequest($request)
+            )
+        );
+    }
+
+    /**
      * @Route("/validate/auth", methods={"POST"})
      *
      * @param \Symfony\Component\HttpFoundation\Request $request

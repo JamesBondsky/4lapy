@@ -41,6 +41,9 @@ class OrderAddressValidator extends ConstraintValidator
             return;
         }
 
+        /** @var DeliveryService $deliveryService */
+        $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+
         /**
          * Не выбрана доставка - не проверяем. Должен ругнуться другой валидатор
          */
@@ -64,11 +67,10 @@ class OrderAddressValidator extends ConstraintValidator
             return;
         }
 
-        $deliveryCode = $delivery->getData()['DELIVERY_CODE'];
         /**
          * Если выбранный способ доставки - не курьерская доставка, то не проверяем.
          */
-        if (in_array($deliveryCode, DeliveryService::DELIVERY_CODES)) {
+        if (!$deliveryService->isDelivery($delivery)) {
             return;
         }
 

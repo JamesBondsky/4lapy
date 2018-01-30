@@ -30,6 +30,11 @@ class StockResult
     protected $stores;
 
     /**
+     * @var float
+     */
+    protected $price = 0;
+
+    /**
      * @var string
      */
     protected $type = self::TYPE_AVAILABLE;
@@ -139,6 +144,26 @@ class StockResult
     public function setDeliveryDate(DateTime $deliveryDate): StockResult
     {
         $this->deliveryDate = $deliveryDate;
+
+        return $this;
+    }
+
+    /**
+     * @return float
+     */
+    public function getPrice(): float
+    {
+        return $this->price;
+    }
+
+    /**
+     * @param float $price
+     *
+     * @return StockResult
+     */
+    public function setPrice(float $price): StockResult
+    {
+        $this->price = $price;
 
         return $this;
     }

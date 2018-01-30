@@ -298,6 +298,14 @@ class OrderStorage
     protected $cityCode = '';
 
     /**
+     * @var bool
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("PARTIAL_GET")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     */
+    protected $partialGet = false;
+
+    /**
      * @return int
      */
     public function getFuserId(): int
@@ -827,6 +835,26 @@ class OrderStorage
     public function setCityCode(string $cityCode): OrderStorage
     {
         $this->cityCode = $cityCode;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isPartialGet(): bool
+    {
+        return $this->partialGet;
+    }
+
+    /**
+     * @param bool $partialGet
+     *
+     * @return OrderStorage
+     */
+    public function setPartialGet(bool $partialGet): OrderStorage
+    {
+        $this->partialGet = $partialGet;
 
         return $this;
     }

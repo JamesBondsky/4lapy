@@ -7,39 +7,13 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\Location\LocationService;
 use FourPaws\Helpers\CurrencyHelper;
+use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use Bitrix\Sale\Delivery\CalculationResult;
-use Bitrix\Main\Grid\Declension;
 
 /**
  * @var array $arParams
  * @var array $arResult
  */
-
-function showDeliveryTime(CalculationResult $calculationResult, $short = false)
-{
-    $result = '';
-    switch ($calculationResult->getPeriodType()) {
-        case CalculationResult::PERIOD_TYPE_DAY:
-            $date = new DateTime();
-            $date->modify('+' . ($calculationResult->getPeriodFrom()) . ' days');
-            if ($short) {
-                $result = FormatDate('l, d F', $date->getTimestamp());
-            } else {
-                $result = FormatDate('l, d F', $date->getTimestamp());
-            }
-
-            break;
-        case CalculationResult::PERIOD_TYPE_HOUR:
-            $result .= 'через ';
-            $result .= ($calculationResult->getPeriodFrom() == 1) ? '' : $calculationResult->getPeriodFrom() . ' ';
-            $result .= (new Declension('час', 'часа', 'часов'))->get($calculationResult->getPeriodFrom());
-            break;
-    }
-
-    $result .= ', ' . CurrencyHelper::formatPrice($calculationResult->getPrice());
-
-    return mb_strtolower($result);
-}
 
 /** @var OrderStorage $storage */
 $storage = $arResult['STORAGE'];
@@ -49,7 +23,18 @@ $deliveries = $arResult['DELIVERIES'];
 
 $delivery = null;
 $pickup = null;
+$selectedDelivery = null;
+$selectedDeliveryId = $storage->getDeliveryId();
 foreach ($deliveries as $calculationResult) {
+    $deliveryId = $calculationResult->getData()['DELIVERY_ID'];
+    if (!$selectedDeliveryId) {
+        $selectedDeliveryId = $deliveryId;
+    }
+
+    if ($selectedDeliveryId === (int)$deliveryId) {
+        $selectedDelivery = $calculationResult;
+    }
+
     $deliveryCode = $calculationResult->getData()['DELIVERY_CODE'];
     if (in_array($deliveryCode, DeliveryService::DELIVERY_CODES)) {
         $delivery = $calculationResult;
@@ -58,9 +43,15 @@ foreach ($deliveries as $calculationResult) {
     }
 }
 
+if (!$selectedDelivery) {
+    $selectedDelivery = reset($deliveries);
+    $selectedDeliveryId = (int)$selectedDelivery->getData()['DELIVERY_ID'];
+}
+
 ?>
 <div class="b-container">
-    <h1 class="b-title b-title--h1 b-title--order">Оформление заказа
+    <h1 class="b-title b-title--h1 b-title--order">
+        Оформление заказа
     </h1>
     <div class="b-order js-order-whole-block">
         <div class="b-tab-list">
@@ -114,10 +105,10 @@ foreach ($deliveries as $calculationResult) {
                                             )['DELIVERY_NAME'] ?></span>
                                     </span>
                                     <span class="b-choice-recovery__addition-text">
-                                        <?= showDeliveryTime($delivery) ?>
+                                        <?= DeliveryTimeHelper::showTime($delivery) ?>
                                     </span>
                                     <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile">
-                                        <?= showDeliveryTime($delivery, true) ?>
+                                        <?= DeliveryTimeHelper::showTime($delivery, null, true) ?>
                                 </label>
                             <?php } ?>
                             <?php if ($pickup) { ?>
@@ -132,22 +123,26 @@ foreach ($deliveries as $calculationResult) {
                                     <span class="b-choice-recovery__main-text"><?= $pickup->getData(
                                         )['DELIVERY_NAME'] ?></span>
                                     <span class="b-choice-recovery__addition-text">
-                                        <?= showDeliveryTime($pickup) ?>
+                                        <?= DeliveryTimeHelper::showTime($pickup) ?>
                                     </span>
                                     <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile">
-                                        <?= showDeliveryTime($pickup, true) ?>
+                                        <?= DeliveryTimeHelper::showTime($pickup, null, true) ?>
                                     </span>
                                 </label>
                             <?php } ?>
                         </div>
                         <ul class="b-radio-tab">
                             <? if ($delivery) { ?>
-                                <li class="b-radio-tab__tab js-telephone-recovery">
+                                <li class="b-radio-tab__tab js-telephone-recovery"
+                                    <?= $selectedDeliveryId !== (int)$delivery->getData(
+                                    )['DELIVERY_ID'] ? 'style="display:none"' : '' ?>>
                                     <?php include 'include/delivery.php' ?>
                                 </li>
                             <?php } ?>
                             <?php if ($pickup) { ?>
-                                <li class="b-radio-tab__tab js-email-recovery">
+                                <li class="b-radio-tab__tab js-email-recovery"
+                                    <?= $selectedDeliveryId !== (int)$pickup->getData(
+                                    )['DELIVERY_ID'] ? 'style="display:none"' : '' ?>>
                                     <?php include 'include/pickup.php' ?>
                                 </li>
                             <?php } ?>
@@ -162,31 +157,37 @@ foreach ($deliveries as $calculationResult) {
                 <li class="b-order-list__item b-order-list__item--cost b-order-list__item--order-step-two">
                     <div class="b-order-list__order-text b-order-list__order-text--order-step-two">
                         <div class="b-order-list__clipped-text">
-                            <div class="b-order-list__text-backed">Товары с учетом всех скидок
+                            <div class="b-order-list__text-backed">
+                                Товары с учетом всех скидок
                             </div>
                         </div>
                     </div>
-                    <div class="b-order-list__order-value b-order-list__order-value--order-step-two">13 269 ₽
+                    <div class="b-order-list__order-value b-order-list__order-value--order-step-two">
+                        <?= CurrencyHelper::formatPrice($basket->getPrice()) ?>
                     </div>
                 </li>
                 <li class="b-order-list__item b-order-list__item--cost b-order-list__item--order-step-two">
                     <div class="b-order-list__order-text b-order-list__order-text--order-step-two">
                         <div class="b-order-list__clipped-text">
-                            <div class="b-order-list__text-backed">Доставка
+                            <div class="b-order-list__text-backed">
+                                <?= $selectedDelivery->getData()['DELIVERY_NAME'] ?>
                             </div>
                         </div>
                     </div>
-                    <div class="b-order-list__order-value b-order-list__order-value--order-step-two">350 ₽
+                    <div class="b-order-list__order-value b-order-list__order-value--order-step-two">
+                        <?= CurrencyHelper::formatPrice($selectedDelivery->getPrice()) ?>
                     </div>
                 </li>
                 <li class="b-order-list__item b-order-list__item--cost b-order-list__item--order-step-two">
                     <div class="b-order-list__order-text b-order-list__order-text--order-step-two">
                         <div class="b-order-list__clipped-text">
-                            <div class="b-order-list__text-backed">Итого к оплате
+                            <div class="b-order-list__text-backed">
+                                Итого к оплате
                             </div>
                         </div>
                     </div>
-                    <div class="b-order-list__order-value b-order-list__order-value--order-step-two">13 619 ₽
+                    <div class="b-order-list__order-value b-order-list__order-value--order-step-two">
+                        <?= CurrencyHelper::formatPrice($basket->getPrice() + $selectedDelivery->getPrice()) ?>
                     </div>
                 </li>
             </ul>

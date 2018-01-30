@@ -13,7 +13,9 @@ use Bitrix\Sale\Location\LocationTable;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Shipment;
 use FourPaws\Catalog\Model\Offer;
+use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\Location\LocationService;
+use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Service\UserService;
 use WebArch\BitrixCache\BitrixCache;
@@ -354,6 +356,53 @@ class DeliveryService
         return $result;
     }
 
+    /**
+     * @param CalculationResult $calculationResult
+     *
+     * @return bool
+     */
+    public function isPickup(CalculationResult $calculationResult): bool
+    {
+        return \in_array($calculationResult->getData()['DELIVERY_CODE'], static::PICKUP_CODES, true);
+    }
+
+    /**
+     * @param CalculationResult $calculationResult
+     *
+     * @return bool
+     */
+    public function isDelivery(CalculationResult $calculationResult): bool
+    {
+        return \in_array($calculationResult->getData()['DELIVERY_CODE'], static::DELIVERY_CODES, true);
+    }
+
+    public function isInnerPickup(CalculationResult $calculationResult): bool
+    {
+        return $calculationResult->getData()['DELIVERY_CODE'] === static::INNER_PICKUP_CODE;
+    }
+
+    public function isDpdPickup(CalculationResult $calculationResult): bool
+    {
+        return $calculationResult->getData()['DELIVERY_CODE'] === static::DPD_PICKUP_CODE;
+    }
+
+    public function isInnerDelivery(CalculationResult $calculationResult): bool
+    {
+        return $calculationResult->getData()['DELIVERY_CODE'] === static::INNER_DELIVERY_CODE;
+    }
+
+    public function isDpdDelivery(CalculationResult $calculationResult): bool
+    {
+        return $calculationResult->getData()['DELIVERY_CODE'] === static::DPD_DELIVERY_CODE;
+    }
+
+    public function getStoresByDelivery(CalculationResult $delivery): StoreCollection
+    {
+        /** @var StockResultCollection $stockResult */
+        $stockResult = $delivery->getData()['STOCK_RESULT'];
+        return $stockResult->getStores();
+    }
+    
     /**
      * @return string
      */

@@ -6,10 +6,16 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Iblock\Component\Tools;
 use FourPaws\App\Application;
+use Bitrix\Sale\Delivery\CalculationResult;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\StoreBundle\Service\StoreService;
+use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 
 /** @noinspection AutoloadingIssuesInspection */
@@ -80,6 +86,8 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
         /** @var BasketService $basketService */
         $basketService = $serviceContainer->get(BasketService::class);
+        /** @var StoreService $storeService */
+        $storeService = $serviceContainer->get('store.service');
         $basket = $basketService->getBasket()->getOrderableItems();
         if ($basket->isEmpty()) {
             LocalRedirect('/cart');
@@ -143,18 +151,90 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 $addressService = Application::getInstance()->getContainer()->get('address.service');
                 $addresses = $addressService->getAddressesByUser($storage->getUserId(), $selectedCity['CODE']);
             }
+
+            $this->getPickupData($deliveries, $storage);
         }
 
-        $this->arResult = [
-            'ORDER'              => $order,
-            'BASKET'             => $basket,
-            'STORAGE'            => $storage,
-            'URL'                => $ajaxUrl,
-            'SELECTED_CITY'      => $selectedCity,
-            'ADDRESSES'          => $addresses,
-            'DELIVERIES'         => $deliveries,
-        ];
+        $this->arResult['ORDER'] = $order;
+        $this->arResult['METRO'] = $storeService->getMetroInfo();
+        $this->arResult['BASKET'] = $basket;
+        $this->arResult['STORAGE'] = $storage;
+        $this->arResult['URL'] = $ajaxUrl;
+        $this->arResult['SELECTED_CITY'] = $selectedCity;
+        $this->arResult['ADDRESSES'] = $addresses;
+        $this->arResult['DELIVERIES'] = $deliveries;
 
         return $this;
+    }
+
+    /**
+     * @param array $deliveries
+     * @param OrderStorage $storage
+     */
+    protected function getPickupData(array $deliveries, OrderStorage $storage)
+    {
+        /** @var DeliveryService $deliveryService */
+        $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+        /** @var StoreService $storeService */
+        $storeService = Application::getInstance()->getContainer()->get('store.service');
+        $pickup = null;
+        foreach ($deliveries as $calculationResult) {
+            if ($deliveryService->isPickup($calculationResult)) {
+                $pickup = $calculationResult;
+            }
+        }
+
+        if (!$pickup) {
+            return;
+        }
+
+        $partialPickup = clone $pickup;
+        /** @var StockResultCollection $stockResult */
+        $stockResult = $pickup->getData()['STOCK_RESULT'];
+
+        if ($deliveryService->isDpdPickup($pickup)) {
+            /* @todo получить терминалы DPD */
+            // $shops = $deliveryService->getDpdTerminals();
+        } else {
+            $selectedShopCode = $storage->getDeliveryPlaceCode();
+            $shops = $stockResult->getStores();
+
+            $selectedShop = null;
+            if (!$selectedShopCode || !isset($shops[$selectedShopCode])) {
+                /** @var Store $shop */
+                foreach ($shops as $shop) {
+                    if ($stockResult->filterByStore($shop)->getDelayed()->isEmpty()) {
+                        $selectedShop = $shop;
+                        break;
+                    }
+                }
+
+                if (!$selectedShop) {
+                    $selectedShop = $shops->first();
+                }
+            } else {
+                $selectedShop = $shops[$selectedShopCode];
+            }
+
+            $deliveryDate = $stockResult->getDeliveryDate();
+            $partialDeliveryDate = $stockResult->getAvailable()->getDeliveryDate();
+
+            $updateDeliveryDate = function (CalculationResult $pickup, \DateTime $deliveryDate) {
+                $date = new \DateTime();
+                if ($deliveryDate->format('z') !== $date->format('z')) {
+                    $pickup->setPeriodType(CalculationResult::PERIOD_TYPE_DAY);
+                    $pickup->setPeriodFrom($deliveryDate->format('z') - $date->format('z'));
+                } else {
+                    $pickup->setPeriodType(CalculationResult::PERIOD_TYPE_HOUR);
+                    $pickup->setPeriodFrom($deliveryDate->format('G') - $date->format('G'));
+                }
+            };
+
+            $updateDeliveryDate($pickup, $deliveryDate);
+            $updateDeliveryDate($partialPickup, $partialDeliveryDate);
+        }
+
+        $this->arResult['SELECTED_SHOP'] = $selectedShop;
+        $this->arResult['PARTIAL_PICKUP'] = $partialPickup;
     }
 }
