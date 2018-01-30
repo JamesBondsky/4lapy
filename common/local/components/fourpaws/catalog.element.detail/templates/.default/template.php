@@ -339,7 +339,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
         <div class="b-preloader">
             <div class="b-preloader__spinner">
                 <img class="b-preloader__image"
-                     src="/static/buildimages/inhtml/spinner.svg"
+                     src="/static/build/images/inhtml/spinner.svg"
                      alt="spinner"
                      title="" />
             </div>
