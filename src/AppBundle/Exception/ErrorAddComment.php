@@ -4,7 +4,7 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
-namespace FourPaws\Comments\Exception;
+namespace FourPaws\AppBundle\Exception;
 
 class ErrorAddComment extends \Exception
 {
