@@ -54,12 +54,12 @@ autosort.property.hint:
 
 comments.add:
   path: /comments/add/
-  defaults: { _controller: '\FourPaws\Comments\AjaxController\CommentsController::addAction' }
+  defaults: { _controller: '\FourPaws\AppBundle\AjaxController\CommentsController::addAction' }
   methods: [POST]
 
 comments.next:
   path: /comments/next/
-  defaults: { _controller: '\FourPaws\Comments\AjaxController\CommentsController::nextAction' }
+  defaults: { _controller: '\FourPaws\AppBundle\AjaxController\CommentsController::nextAction' }
   methods: [GET]
 
 form.feedback:
