@@ -98,6 +98,9 @@ class FourPawsOrderShopListComponent extends \CBitrixComponent
         /** @var StockResultCollection $stockResult */
         $stockResult = $pickupDelivery->getData()['STOCK_RESULT'];
         $resultByShop = [];
+        $shopsPartial = [];
+        $shopsFull = [];
+
         /** @var Store $shop */
         foreach ($shops as $shop) {
             $stockResultByShop = $stockResult->filterByStore($shop);
@@ -111,6 +114,9 @@ class FourPawsOrderShopListComponent extends \CBitrixComponent
             $resultByShop[$shop->getXmlId()]['DELAYED_AMOUNT'] = 0;
             if (!$delayed->isEmpty()) {
                 $resultByShop[$shop->getXmlId()]['DELAYED_AMOUNT'] = $delayed->getAmount();
+                $shopsPartial[] = $shop;
+            } else {
+                $shopsFull[] = $shop;
             }
 
             $available = $stockResultByShop->getAvailable();
@@ -123,7 +129,10 @@ class FourPawsOrderShopListComponent extends \CBitrixComponent
 
         $this->arResult = [
             'PICKUP_DELIVERY'      => $pickupDelivery,
+            'METRO'                => $storeService->getMetroInfo(),
             'SHOPS'                => $shops,
+            'SHOPS_PARTIAL'        => $shopsPartial,
+            'SHOPS_FULL'           => $shopsFull,
             'BASKET'               => $basket,
             'STOCK_RESULT_BY_SHOP' => $resultByShop,
             'OFFERS'               => $offers,

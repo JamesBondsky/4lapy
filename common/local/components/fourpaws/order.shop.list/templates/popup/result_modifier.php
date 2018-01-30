@@ -24,29 +24,31 @@ if (empty($arResult['STOCK_RESULT_BY_SHOP'])) {
 
 /** @var array $stockResultByShop */
 $stockResultByShop = $arResult['STOCK_RESULT_BY_SHOP'];
-uasort(
-    $arResult['SHOPS'],
-    function ($shop1, $shop2) use ($stockResultByShop) {
-        /** @var Store $shop1 */
-        /** @var Store $shop2 */
-        $shopData1 = $stockResultByShop[$shop1->getXmlId()];
-        $shopData2 = $stockResultByShop[$shop2->getXmlId()];
 
-        if ($shopData1['AVAILABLE_AMOUNT'] != $shopData2['AVAILABLE_AMOUNT']) {
-            return ($shopData1['AVAILABLE_AMOUNT'] > $shopData2['AVAILABLE_AMOUNT']) ? -1 : 1;
-        }
+$sortFunc = function ($shop1, $shop2) use ($stockResultByShop) {
+    /** @var Store $shop1 */
+    /** @var Store $shop2 */
+    $shopData1 = $stockResultByShop[$shop1->getXmlId()];
+    $shopData2 = $stockResultByShop[$shop2->getXmlId()];
 
-        /** @var StockResultCollection $stockResult1 */
-        $stockResult1 = $shopData1['STOCK_RESULT'];
-        /** @var StockResultCollection $stockResult2 */
-        $stockResult2 = $shopData2['STOCK_RESULT'];
-        $deliveryDate1 = $stockResult1->getDeliveryDate();
-        $deliveryDate2 = $stockResult2->getDeliveryDate();
-
-        if ($deliveryDate1 != $deliveryDate2) {
-            return ($shopData1['AVAILABLE_AMOUNT'] > $shopData2['AVAILABLE_AMOUNT']) ? 1 : -1;
-        }
-
-        return $shop1->getAddress() > $shop2->getAddress() ? 1 : -1;
+    if ($shopData1['AVAILABLE_AMOUNT'] != $shopData2['AVAILABLE_AMOUNT']) {
+        return ($shopData1['AVAILABLE_AMOUNT'] > $shopData2['AVAILABLE_AMOUNT']) ? -1 : 1;
     }
-);
+
+    /** @var StockResultCollection $stockResult1 */
+    $stockResult1 = $shopData1['STOCK_RESULT'];
+    /** @var StockResultCollection $stockResult2 */
+    $stockResult2 = $shopData2['STOCK_RESULT'];
+    $deliveryDate1 = $stockResult1->getDeliveryDate();
+    $deliveryDate2 = $stockResult2->getDeliveryDate();
+
+    if ($deliveryDate1 != $deliveryDate2) {
+        return ($shopData1['AVAILABLE_AMOUNT'] > $shopData2['AVAILABLE_AMOUNT']) ? 1 : -1;
+    }
+
+    return $shop1->getAddress() > $shop2->getAddress() ? 1 : -1;
+};
+
+uasort($arResult['SHOPS'], $sortFunc);
+uasort($arResult['SHOPS_FULL'], $sortFunc);
+uasort($arResult['SHOPS_PARTIAL'], $sortFunc);

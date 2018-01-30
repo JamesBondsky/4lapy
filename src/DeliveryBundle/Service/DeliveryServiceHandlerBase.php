@@ -199,24 +199,23 @@ abstract class DeliveryServiceHandlerBase extends Base implements DeliveryServic
                 if ($delayedAmount >= $neededAmount) {
                     $delayedStockResult = (new StockResult())->setType(StockResult::TYPE_DELAYED)
                                                              ->setAmount($neededAmount)
+                                                             ->setOffer($offer)
+                                                             ->setStores($storesAvailable)
                         /* @todo расчет по графику поставок */
                                                              ->setDeliveryDate((new \DateTime())->modify('+10 days'));
                     $stockResultCollection->add($delayedStockResult);
                 } else {
                     /**
-                     * Товар не в наличии
+                     * Товар не в наличии (в нужном кол-ве)
                      */
                     $stockResult->setType(StockResult::TYPE_UNAVAILABLE)
-                                ->setAmount($basketItem->getQuantity())
-                                ->setStores(
-                                    new StoreCollection(
-                                        array_merge($storesDelay->toArray(), $storesAvailable->toArray())
-                                    )
-                                );
+                                ->setAmount($basketItem->getQuantity());
                 }
             }
 
-            $stockResultCollection->add($stockResult);
+            if ($stockResult->getAmount()) {
+                $stockResultCollection->add($stockResult);
+            }
         }
 
         return $stockResultCollection;

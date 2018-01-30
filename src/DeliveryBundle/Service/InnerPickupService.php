@@ -68,8 +68,9 @@ class InnerPickupService extends DeliveryServiceHandlerBase
         $deliveryLocation = $this->deliveryService->getDeliveryLocation($shipment);
         $basket = $shipment->getParentOrder()->getBasket()->getOrderableItems();
 
-        $stores = $this->storeService->getByLocation($deliveryLocation, StoreService::TYPE_ALL);
-        $shops = $stores->getShops();
+        $storesAll = $this->storeService->getByLocation($deliveryLocation, StoreService::TYPE_ALL);
+        $shops = $storesAll->getShops();
+        $stores = $storesAll->getStores();
 
         $shopCode = null;
         /* @var PropertyValue $prop */

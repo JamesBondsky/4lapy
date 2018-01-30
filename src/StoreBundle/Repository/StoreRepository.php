@@ -57,9 +57,7 @@ class StoreRepository extends BaseRepository
             $orderBy = $this->getDefaultOrder();
         }
         
-        if (empty($criteria)) {
-            $criteria = $this->getDefaultFilter();
-        }
+        $criteria = array_merge($this->getDefaultFilter(), $criteria);
         
         $query = StoreTable::query();
         $query->setSelect(

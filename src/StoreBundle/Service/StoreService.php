@@ -216,7 +216,7 @@ class StoreService
         
         if (\is_array($branchIds) && !empty($branchIds)) {
             $highloadBranch   = HLBlockFactory::createTableObject('MetroWays');
-            $res              = $highloadBranch::query()->setFilter(['ID' => $branchIds])->exec();
+            $res              = $highloadBranch::query()->setFilter(['ID' => $branchIds])->setSelect(['*'])->exec();
             $reverseBranchIds = [];
             foreach ($branchIds as $id => $branch) {
                 $reverseBranchIds[$branch][] = $id;
@@ -230,7 +230,7 @@ class StoreService
                 }
             }
         }
-        
+
         return $result;
     }
     
