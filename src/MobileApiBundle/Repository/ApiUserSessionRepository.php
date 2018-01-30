@@ -3,18 +3,18 @@
 namespace FourPaws\MobileApiBundle\Repository;
 
 use FourPaws\AppBundle\Enum\CrudGroups;
-use FourPaws\MobileApiBundle\Entity\Session;
+use FourPaws\MobileApiBundle\Entity\ApiUserSession;
 use FourPaws\MobileApiBundle\Exception\BitrixException;
 use FourPaws\MobileApiBundle\Exception\InvalidIdentifierException;
 use FourPaws\MobileApiBundle\Exception\ValidationException;
 use FourPaws\MobileApiBundle\Exception\WrongTransformerResultException;
-use FourPaws\MobileApiBundle\Tables\UserSessionTable;
+use FourPaws\MobileApiBundle\Tables\ApiUserSessionTable;
 use JMS\Serializer\ArrayTransformerInterface;
 use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\SerializationContext;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-class UserSessionRepository implements UserSessionRepositoryInterface
+class ApiUserSessionRepository implements ApiUserSessionRepositoryInterface
 {
     const FIELD_TOKEN = 'TOKEN';
     const FIELD_ID = 'ID';
@@ -37,8 +37,9 @@ class UserSessionRepository implements UserSessionRepositoryInterface
 
     /**
      * @param int $id
+     *
      * @throws InvalidIdentifierException
-     * @return null|Session
+     * @return null|ApiUserSession
      */
     public function find(int $id)
     {
@@ -51,8 +52,9 @@ class UserSessionRepository implements UserSessionRepositoryInterface
 
     /**
      * @param string $token
+     *
      * @throws InvalidIdentifierException
-     * @return null|Session
+     * @return null|ApiUserSession
      */
     public function findByToken(string $token)
     {
@@ -68,11 +70,12 @@ class UserSessionRepository implements UserSessionRepositoryInterface
      * @param array    $orderBy
      * @param null|int $limit
      * @param null|int $offset
-     * @return Session[]
+     *
+     * @return ApiUserSession[]
      */
     public function findBy(array $criteria = [], array $orderBy = [], int $limit = null, int $offset = null): array
     {
-        $query = UserSessionTable::query()
+        $query = ApiUserSessionTable::query()
             ->addSelect('*');
         if ($criteria) {
             $query->setFilter($criteria);
@@ -94,19 +97,19 @@ class UserSessionRepository implements UserSessionRepositoryInterface
         }
         return $this->transformer->fromArray(
             $dbResult->fetchAll(),
-            'array<' . Session::class . '>',
+            'array<' . ApiUserSession::class . '>',
             DeserializationContext::create()->setGroups([CrudGroups::READ])
         );
     }
 
     /**
-     * @param Session $session
+     * @param ApiUserSession $session
      * @throws ValidationException
      * @throws BitrixException
      * @throws WrongTransformerResultException
      * @return bool
      */
-    public function create(Session $session): bool
+    public function create(ApiUserSession $session): bool
     {
         $validationResult = $this->validator->validate($session, null, [CrudGroups::CREATE]);
         if ($validationResult->count() > 0) {
@@ -122,7 +125,7 @@ class UserSessionRepository implements UserSessionRepositoryInterface
             throw new WrongTransformerResultException('Wrong transform result for session');
         }
         try {
-            $result = UserSessionTable::add($data);
+            $result = ApiUserSessionTable::add($data);
         } catch (\Exception $exception) {
             throw new BitrixException($exception->getMessage(), $exception->getCode(), $exception);
         }
@@ -133,13 +136,13 @@ class UserSessionRepository implements UserSessionRepositoryInterface
     }
 
     /**
-     * @param Session $session
+     * @param ApiUserSession $session
      * @throws ValidationException
      * @throws BitrixException
      * @throws WrongTransformerResultException
      * @return bool
      */
-    public function update(Session $session): bool
+    public function update(ApiUserSession $session): bool
     {
         $validationResult = $this->validator->validate($session, null, [CrudGroups::UPDATE]);
         if ($validationResult->count() > 0) {
@@ -156,7 +159,7 @@ class UserSessionRepository implements UserSessionRepositoryInterface
             throw new WrongTransformerResultException('Wrong transform result for session');
         }
         try {
-            $result = UserSessionTable::update($session->getId(), $data);
+            $result = ApiUserSessionTable::update($session->getId(), $data);
         } catch (\Exception $exception) {
             throw new BitrixException($exception->getMessage(), $exception->getCode(), $exception);
         }
@@ -173,7 +176,7 @@ class UserSessionRepository implements UserSessionRepositoryInterface
     {
         if ($id > 0) {
             try {
-                $result = UserSessionTable::delete($id);
+                $result = ApiUserSessionTable::delete($id);
             } catch (\Exception $exception) {
                 throw new BitrixException($exception->getMessage(), $exception->getCode(), $exception);
             }
