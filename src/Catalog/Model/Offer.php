@@ -323,6 +323,7 @@ class Offer extends IblockElement
                     return true;
                 });
             }
+    
             if ($height) {
                 $this->resizeImages->forAll(function ($key, ResizeImageDecorator $image) use ($height) {
                     $image->setResizeHeight($height);

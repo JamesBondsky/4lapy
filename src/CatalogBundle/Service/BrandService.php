@@ -3,6 +3,7 @@
 namespace FourPaws\CatalogBundle\Service;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
+use FourPaws\Catalog\Exception\BrandMoreOneFoundException;
 use FourPaws\Catalog\Exception\BrandNotFoundException;
 use FourPaws\Catalog\Model\Brand;
 use FourPaws\Catalog\Model\Category;
@@ -12,8 +13,10 @@ class BrandService
 {
     /**
      * @param string $brandCode
+     *
      * @throws BrandNotFoundException
      * @return Brand
+     * @throws BrandMoreOneFoundException
      */
     public function getByCode(string $brandCode): Brand
     {
@@ -26,7 +29,7 @@ class BrandService
         }
 
         if ($brandCollection->count() > 1) {
-            throw new BrandNotFoundException(
+            throw new BrandMoreOneFoundException(
                 sprintf('Найдено более одного бренда с кодом `%s`', $brandCode)
             );
         }
