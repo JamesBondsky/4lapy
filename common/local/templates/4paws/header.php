@@ -106,12 +106,12 @@ $markup = PawsApplication::markup();
                                                      [],
                                                      false,
                                                      ['HIDE_ICONS' => 'Y']) ?>
+                <?php $APPLICATION->IncludeComponent('fourpaws:city.delivery.info',
+                                                     'template.header',
+                                                     [],
+                                                     false,
+                                                     ['HIDE_ICONS' => 'Y']); ?>
             </div>
-            <?php $APPLICATION->IncludeComponent('fourpaws:city.delivery.info',
-                                                 'template.header',
-                                                 [],
-                                                 false,
-                                                 ['HIDE_ICONS' => 'Y']); ?>
         </div>
     </header>
     <?php

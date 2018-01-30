@@ -36,20 +36,20 @@ $frame = $this->createFrame()->begin() ?>
                 <?= new SvgDecorator('icon-arrow-down', 13, 13) ?>
             </span>
     </a>
-</div>
-<div class="b-popover b-popover--blue-arrow b-popover--city js-your-city js-popover">
-    <p class="b-popover__text">Ваш город&nbsp;&mdash;
-        <span><?= $arResult['SELECTED_CITY']['NAME'] ?></span>?
-    </p>
-    <a class="b-popover__link js-set-my-city js-get-loction"
-       href="javascript:void(0)"
-       title=""
-       data-url="<?= $arResult['CITY_SET_URL'] ?>"
-       data-code="<?= $arResult['SELECTED_CITY']['CODE'] ?>">Да</a>
-    <a class="b-popover__link b-popover__link--last js-open-popup"
-       href="javascript:void(0)"
-       title=""
-       data-popup-id="pick-city">Нет, выбрать другой</a>
+    <div class="b-popover b-popover--blue-arrow b-popover--city js-your-city js-popover">
+        <p class="b-popover__text">Ваш город&nbsp;&mdash;
+            <span><?= $arResult['SELECTED_CITY']['NAME'] ?></span>?
+        </p>
+        <a class="b-popover__link js-set-my-city js-get-loction"
+           href="javascript:void(0)"
+           title=""
+           data-url="<?= $arResult['CITY_SET_URL'] ?>"
+           data-code="<?= $arResult['SELECTED_CITY']['CODE'] ?>">Да</a>
+        <a class="b-popover__link b-popover__link--last js-open-popup"
+           href="javascript:void(0)"
+           title=""
+           data-popup-id="pick-city">Нет, выбрать другой</a>
+    </div>
 </div>
 <?php $frame->beginStub() ?>
 <div class="b-header__wrapper-for-popover js-city-permutation">
@@ -64,19 +64,19 @@ $frame = $this->createFrame()->begin() ?>
             <?= new SvgDecorator('icon-arrow-down', 13, 13) ?>
         </span>
     </a>
-</div>
-<div class="b-popover b-popover--blue-arrow b-popover--city js-your-city js-popover">
-    <p class="b-popover__text">Ваш город&nbsp;&mdash;
-        <span><?= $arResult['DEFAULT_CITY']['NAME'] ?></span>?
-    </p>
-    <a class="b-popover__link js-set-my-city js-get-loction"
-       href="javascript:void(0)"
-       title=""
-       data-url="<?= $arResult['CITY_SET_URL'] ?>"
-       data-code="<?= $arResult['SELECTED_CITY']['CODE'] ?>">Да</a>
-    <a class="b-popover__link b-popover__link--last js-open-popup"
-       href="javascript:void(0)"
-       title=""
-       data-popup-id="pick-city">Нет, выбрать другой</a>
+    <div class="b-popover b-popover--blue-arrow b-popover--city js-your-city js-popover">
+        <p class="b-popover__text">Ваш город&nbsp;&mdash;
+            <span><?= $arResult['DEFAULT_CITY']['NAME'] ?></span>?
+        </p>
+        <a class="b-popover__link js-set-my-city js-get-loction"
+           href="javascript:void(0)"
+           title=""
+           data-url="<?= $arResult['CITY_SET_URL'] ?>"
+           data-code="<?= $arResult['SELECTED_CITY']['CODE'] ?>">Да</a>
+        <a class="b-popover__link b-popover__link--last js-open-popup"
+           href="javascript:void(0)"
+           title=""
+           data-popup-id="pick-city">Нет, выбрать другой</a>
+    </div>
 </div>
 <?php $frame->end() ?>
