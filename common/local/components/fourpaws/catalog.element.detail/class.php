@@ -10,11 +10,11 @@ use Bitrix\Main\Analytics\Counter;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Text\JsExpression;
+use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
-use FourPaws\Catalog\Model\Category;
-use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Catalog\Query\CategoryQuery;
+use FourPaws\Catalog\Query\ProductQuery;
 
 /** @noinspection AutoloadingIssuesInspection */
 class CatalogElementDetailComponent extends \CBitrixComponent
@@ -36,8 +36,6 @@ class CatalogElementDetailComponent extends \CBitrixComponent
 
     public function executeComponent()
     {
-        global $APPLICATION;
-
         if (!$this->arParams['CODE']) {
             Tools::process404([], true, true, true);
         }
@@ -52,16 +50,15 @@ class CatalogElementDetailComponent extends \CBitrixComponent
                 $this->abortResultCache();
                 Tools::process404([], true, true, true);
             }
-
-            if ($this->arParams['SET_TITLE'] === 'Y') {
-                $APPLICATION->SetTitle($product->getName());
-            }
-
-            $sectionId = intval(reset($product->getSectionsIdList()));
+    
+            $sectionId = (int)reset($product->getSectionsIdList());
 
             $this->arResult = [
                 'PRODUCT' => $product,
                 'SECTION_CHAIN' => $this->getSectionChain($sectionId),
+                /**
+                 * @todo впилить seo
+                 */
                 // возможно, понадобится в будущем
                 //'SECTION' => $this->getSection($sectionId),
             ];
@@ -72,7 +69,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
         // bigdata
         $this->obtainCounterData();
         $this->sendCounters();
-
+        $this->setMeta();
         $this->saveViewedProduct();
 
         return $this->arResult['PRODUCT'];
@@ -239,6 +236,18 @@ class CatalogElementDetailComponent extends \CBitrixComponent
     {
         if (isset($this->arResult['counterData']) && Catalog::isOn())  {
             Counter::sendData('ct', $this->arResult['counterData']);
+        }
+    }
+    
+    /**
+     * @todo from inheritedProperties
+     */
+    protected function setMeta()
+    {
+        global $APPLICATION;
+        
+        if ($this->arParams['SET_TITLE'] === 'Y') {
+            $APPLICATION->SetTitle($this->arResult['PRODUCT']->getName());
         }
     }
 }

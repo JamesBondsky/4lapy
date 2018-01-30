@@ -40,29 +40,25 @@ $product = $APPLICATION->IncludeComponent(
             ?>
             <div class="b-product-card__top">
                 <div class="b-product-card__title-product">
-                    <?php
-                    $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_DETAIL_TITLE_VIEW);
-                    ?>
+                    <?php $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_DETAIL_TITLE_VIEW); ?>
                     <div class="b-common-item b-common-item--card">
                         <div class="b-common-item__rank b-common-item__rank--card">
-                            <?php
-                            $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_RATING_STARS_VIEW);
-                            /**
-                             * @todo implement Акции и Шильдики
-                             */
-                            ?>
+                            <?php $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_RATING_STARS_VIEW); ?>
                             <div class="b-common-item__rank-wrapper">
-                                <span class="b-common-item__rank-text b-common-item__rank-text--green b-common-item__rank-text--card">Новинка</span>
-                                <span class="b-common-item__rank-text b-common-item__rank-text--red">4+1 в подарок при покупке</span>
+                                <?php
+                                /** @todo implement Акции и Шильдики
+                                 * <span class="b-common-item__rank-text b-common-item__rank-text--green
+                                 * b-common-item__rank-text--card">Новинка</span>
+                                 * <span class="b-common-item__rank-text b-common-item__rank-text--red">4+1 в подарок
+                                 * при покупке</span>
+                                 */ ?>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="b-product-card__product">
                     <div class="b-product-card__permutation-weight js-weight-tablet"></div>
-                    <?php
-                    $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_DETAIL_SLIDER_VIEW);
-                    ?>
+                    <?php $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_DETAIL_SLIDER_VIEW); ?>
 
                     <div class="b-product-card__info-product js-weight-here">
                         <?php
