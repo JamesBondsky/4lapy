@@ -28,9 +28,7 @@ use FourPaws\StoreBundle\Entity\Store;
                        href="javascript:void(0);">Выберите пункт самовывоза</a>
                     <h4 class="b-availability__header b-availability__header--desktop">
                         Наши магазины
-                        <span class="b-availability__header-amount">(всего <?= count(
-                                $arResult['STOCK_RESULT_BY_SHOP']
-                            ) ?>)</span>
+                        <span class="b-availability__header-amount">(всего 0)</span>
                     </h4>
                     <h4 class="b-availability__header b-availability__header--tablet active">Выберите пункт самовывоза
                     </h4>
@@ -53,7 +51,6 @@ use FourPaws\StoreBundle\Entity\Store;
                     </ul>
                     <div class="b-stores-sort b-stores-sort--order b-stores-sort--balloon">
                         <div class="b-stores-sort__checkbox-block b-stores-sort__checkbox-block--balloon">
-                            <?php /*
                             <div class="b-checkbox b-checkbox--stores b-checkbox--order">
                                 <input class="b-checkbox__input"
                                        type="checkbox"
@@ -63,22 +60,21 @@ use FourPaws\StoreBundle\Entity\Store;
                                        for="stores-sort-1">
                                     <span class="b-checkbox__text">работают
                                         <span class="b-checkbox__text-desktop">круглосуточно</span>
-                                        <span class="b-checkbox__text-mobile">24 часа</span></span>
+                                        <span class="b-checkbox__text-mobile">24 часа</span>
+                                    </span>
                                 </label>
                             </div>
-                            */ ?>
-                            <?php if (!empty($arResult['SHOPS_FULL'])) { ?>
-                                <div class="b-checkbox b-checkbox--stores b-checkbox--order">
-                                    <input class="b-checkbox__input"
-                                           type="checkbox"
-                                           name="stores-sort-avlbl"
-                                           id="stores-sort-2"
-                                           value="в наличии сегодня"/>
-                                    <label class="b-checkbox__name b-checkbox__name--stores b-checkbox__name--order"
-                                           for="stores-sort-2"><span class="b-checkbox__text">в наличии сегодня</span>
-                                    </label>
-                                </div>
-                            <?php } ?>
+                            <div class="b-checkbox b-checkbox--stores b-checkbox--order">
+                                <input class="b-checkbox__input"
+                                       type="checkbox"
+                                       name="stores-sort-avlbl"
+                                       id="stores-sort-2"
+                                       value="в наличии сегодня"/>
+                                <label class="b-checkbox__name b-checkbox__name--stores b-checkbox__name--order"
+                                       for="stores-sort-2">
+                                    <span class="b-checkbox__text">в наличии сегодня</span>
+                                </label>
+                            </div>
                         </div>
                     </div>
                     <div class="b-form-inline b-form-inline--order-search">
@@ -98,23 +94,13 @@ use FourPaws\StoreBundle\Entity\Store;
                     </div>
                     <div class="b-tab-delivery b-tab-delivery--order js-content-list js-map-list-scroll">
                         <ul class="b-delivery-list b-delivery-list--order js-delivery-list">
-                            <?php /** @var Store $shop */ ?>
-                            <?php foreach ($arResult['SHOPS_FULL'] as $shop) {
-                                $stockResult = $arResult['STOCK_RESULT_BY_SHOP'][$shop->getXmlId()]['STOCK_RESULT'];
-                                include 'include/shop.php';
-                                ?>
-                            <?php } ?>
+                            <?php include 'include/shop.php' ?>
                         </ul>
-                        <h4 class="b-tab-delivery__addition-header" <?= empty($arResult['SHOPS_PARTIAL']) ? 'style="display:none"' : '' ?>>
+                        <h4 class="b-tab-delivery__addition-header">
                             Заказ в наличии частично
                         </h4>
-                        <ul class="b-delivery-list b-delivery-list--order js-delivery-part-list" <?= empty($arResult['SHOPS_PARTIAL']) ? 'style="display:none"' : '' ?>>
-                            <?php /** @var Store $shop */ ?>
-                            <?php foreach ($arResult['SHOPS_PARTIAL'] as $shop) {
-                                $stockResult = $arResult['STOCK_RESULT_BY_SHOP'][$shop->getXmlId()]['STOCK_RESULT'];
-                                include 'include/shop.php';
-                                ?>
-                            <?php } ?>
+                        <ul class="b-delivery-list b-delivery-list--order js-delivery-part-list">
+                            <?php include 'include/shop.php' ?>
                         </ul>
                     </div>
                 </div>

@@ -13,47 +13,19 @@ use Bitrix\Sale\Delivery\CalculationResult;
  * @var Store $shop
  */
 
-$available = $stockResult->getAvailable();
-$delayed = $stockResult->getDelayed();
-
-/** @var CalculationResult $fullResult */
-$fullResult = $arResult['STOCK_RESULT_BY_SHOP'][$shop->getXmlId()]['FULL_RESULT'];
-/** @var CalculationResult $partialResult */
-$partialResult = $arResult['STOCK_RESULT_BY_SHOP'][$shop->getXmlId()]['PARTIAL_RESULT'];
-$metro = $arResult['METRO'][$shop->getMetro()];
 ?>
 <li class="b-delivery-list__item">
     <a class="b-delivery-list__link js-shop-link b-active"
-       id="shop_id<?= $shop->getXmlId() ?>"
-       data-shop-id="<?= $shop->getXmlId() ?>"
+       id="shop_id1"
+       data-shop-id="{{id}}"
        href="javascript:void(0);"
        title="">
         <span class="b-delivery-list__col b-delivery-list__col--addr">
-            <?php if ($metro) { ?>
-                <span class="b-delivery-list__col b-delivery-list__col--color b-delivery-list__col--<?= $metro['BRANCH']['UF_CLASS'] ?>"></span>
-            <?php } ?>
-            <?= $shop->getAddress() ?>
+            <span class="b-delivery-list__col b-delivery-list__col--color b-delivery-list__col--blue"></span>
+            {{adress}}
         </span>
-        <span class="b-delivery-list__col b-delivery-list__col--time"><?= $shop->getSchedule() ?></span>
-        <?php if (!$available->isEmpty()) { ?>
-            <span class="b-delivery-list__col b-delivery-list__col--self-picked">
-                заказ можно забрать <?= DeliveryTimeHelper::showTime(
-                    $partialResult,
-                    $available->getDeliveryDate(),
-                    true,
-                    false
-                ) ?>
-            </span>
-        <?php } else { ?>
-            <span class="b-delivery-list__col b-delivery-list__col--self-picked">
-                полный заказ будет доступен <?= DeliveryTimeHelper::showTime(
-                    $fullResult,
-                    $stockResult->getDeliveryDate(),
-                    true,
-                    false
-                ) ?>
-            </span>
-        <?php } ?>
+        <span class="b-delivery-list__col b-delivery-list__col--time">{{schedule}}</span>
+        <span class="b-delivery-list__col b-delivery-list__col--self-picked">{{pickup}}</span>
     </a>
     <div class="b-order-info-baloon">
         <a class="b-link b-link--popup-back b-link--order b-link--desktop js-close-order-baloon"
@@ -65,15 +37,16 @@ $metro = $arResult['METRO'][$shop->getMetro()];
             Вернуться к списку
         </a>
         <a class="b-link b-link--popup-back b-link--baloon js-close-order-baloon"
-           href="javascript:void(0);">Пункт самовывоза</a>
-        <div class="b-order-info-baloon__content js-order-info-baloon-scroll">
+           href="javascript:void(0);">
+            Пункт самовывоза
+        </a>
+        <div class="b-order-info-baloon__content js-order-info-baloon-scroll"
+             id="scroll-{{id}}">
             <ul class="b-delivery-list">
                 <li class="b-delivery-list__item b-delivery-list__item--myself">
                     <span class="b-delivery-list__link b-delivery-list__link--myself">
-                        <?php if ($metro) { ?>
-                            <span class="b-delivery-list__col b-delivery-list__col--color b-delivery-list__col--<?= $metro['BRANCH']['UF_CLASS'] ?>"></span>
-                        <?php } ?>
-                        <?= $shop->getAddress() ?>
+                        <span class="b-delivery-list__col b-delivery-list__col--color b-delivery-list__col--blue"></span>
+                        м. Улица Академика Янгеля, ул. Чертановская, д. 63/2, Москва
                     </span>
                 </li>
             </ul>
@@ -82,88 +55,66 @@ $metro = $arResult['METRO'][$shop->getMetro()];
                     <span class="b-input-line__label">Время работы</span>
                 </div>
                 <div class="b-input-line__text-line b-input-line__text-line--myself">
-                    <?= $shop->getSchedule() ?>
+                    пн–пт: 09:00–21:00
+                </div>
+                <div class="b-input-line__text-line b-input-line__text-line--myself">
+                    сб: 10:00–21:00
+                </div>
+                <div class="b-input-line__text-line b-input-line__text-line--myself">
+                    вс: 10:00–20:00
                 </div>
             </div>
-            <?php if (!$available->isEmpty()) { ?>
-                <div class="b-input-line b-input-line--myself">
-                    <div class="b-input-line__label-wrapper">
-                        <? $str = DeliveryTimeHelper::showTime(
-                            $partialResult,
-                            $available->getDeliveryDate(),
-                            true,
-                            false
-                        ) ?>
-                        <?php if ($delayed->isEmpty()) { ?>
-                            <span class="b-input-line__label"> Можно забрать <?= $str ?></span>
-                        <?php } else { ?>
-                            <span class="b-input-line__label"> Можно забрать <?= $str ?>
-                                , кроме </span>
-                            <ol class="b-input-line__text-list">
-                                <?php /** @var StockResult $delayedItem */ ?>
-                                <?php foreach ($delayed as $delayedItem) { ?>
-                                    <li class="b-input-line__text-item">
-                                        <?= $delayedItem->getOffer()
-                                                        ->getName() ?>
-                                        <?php if ($delayedItem->getAmount() > 1) { ?>
-                                            (<?= $delayedItem->getAmount() ?> шт)
-                                        <?php } ?>
-                                    </li>
-                                <?php } ?>
-                            </ol>
-                        <?php } ?>
-                    </div>
-                </div>
-            <?php } ?>
-            <?php if (!$delayed->isEmpty()) { ?>
-                <div class="b-input-line b-input-line--myself">
-                    <div class="b-input-line__label-wrapper">
-                        <span class="b-input-line__label"> Полный заказ будет доступен </span>
-                    </div>
-                    <div class="b-input-line__text-line">
-                        <?= DeliveryTimeHelper::showTime(
-                            $fullResult,
-                            $stockResult->getDeliveryDate(),
-                            true,
-                            false
-                        ) ?>
-                    </div>
-                </div>
-            <?php } ?>
             <div class="b-input-line b-input-line--myself">
                 <div class="b-input-line__label-wrapper">
-                    <span class="b-input-line__label"> Оплата в магазине </span>
+                    <span class="b-input-line__label">Можно забрать через час, кроме</span>
+                    <ol class="b-input-line__text-list">
+                        <li class="b-input-line__text-item">
+                            Moderna Миска пластиковая для кошек 210 мл friends forever синяя
+                        </li>
+                        <li class="b-input-line__text-item">
+                            Ламистер Mealfell
+                        </li>
+                    </ol>
+                </div>
+            </div>
+            <div class="b-input-line b-input-line--myself">
+                <div class="b-input-line__label-wrapper">
+                    <span class="b-input-line__label">Полный заказ будет доступен</span>
+                </div>
+                <div class="b-input-line__text-line">
+                    05.09 (среда) с 15:00
+                </div>
+            </div>
+            <div class="b-input-line b-input-line--myself">
+                <div class="b-input-line__label-wrapper">
+                    <span class="b-input-line__label">Оплата в магазине</span>
                 </div>
                 <div class="b-input-line__text-line">
                     <span class="b-input-line__pay-type">
                         <span class="b-icon b-icon--icon-cash">
                             <?= new SvgDecorator('icon-cash', 16, 12) ?>
-                        </span>
-                        наличными
+                        </span>наличными
                     </span>
                     <span class="b-input-line__pay-type">
                         <span class="b-icon b-icon--icon-bank">
                             <?= new SvgDecorator('icon-bank-card', 16, 12) ?>
-                        </span>
-                        банковской картой
+                        </span>банковской картой
                     </span>
                 </div>
             </div>
             <div class="b-input-line b-input-line--pin">
                 <a class="b-link b-link--pin js-shop-link"
                    href="javascript:void(0);"
-                   title="">
+                   title=""
+                   data-shop-id="{{id}}">
                     <span class="b-icon b-icon--pin">
                         <?= new SvgDecorator('icon-geo', 16, 16) ?>
-                    </span>
-                    Показать на карте
-                </a>
+                    </span>Показать на карте</a>
             </div>
             <a class="b-button b-button--order-balloon js-shop-myself"
                href="javascript:void(0);"
                title=""
-               data-shopId="<?= $shop->getXmlId() ?>"
-               data-url="json/mapobjects-order-shop.json">
+               data-shopId="{{id}}">
                 Выбрать этот пункт самовывоза
             </a>
         </div>
