@@ -2,7 +2,7 @@
 
 parameters:
   # Sap directories
-  sap.directory: ''
+  sap.directory: '/home/sap-exchange/writable/'
 
 imports:
   - { resource: parameters.yml }
