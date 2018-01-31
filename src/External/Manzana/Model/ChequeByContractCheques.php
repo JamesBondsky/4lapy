@@ -12,7 +12,7 @@ use JMS\Serializer\Annotation\XmlRoot;
 
 /**
  * Class ChequeByContractCheques
- * Элементы результата метода getChequesByCardId (cheques)
+ * Элемент результата метода getChequesByCardId (cheques)
  *
  * @package FourPaws\External\Manzana\Model
  *
@@ -43,9 +43,7 @@ class ChequeByContractCheques
     /**
      * Дата
      *
-     * @var \DateTimeImmutable
-     * @XmlElement(cdata=false)
-     * @Type("DateTimeImmutable<'Y-m-d\TH:i:s'>")
+     * @Type("manzana_date_time_short")
      * @SerializedName("Date")
      */
     public $date;
@@ -116,8 +114,7 @@ class ChequeByContractCheques
     /**
      * Дата обработки чека
      *
-     * @XmlElement(cdata=false)
-     * @Type("DateTimeImmutable<'Y-m-d\TH:i:s.u'>")
+     * @Type("manzana_date_time_short")
      * @SerializedName("Processed")
      */
     public $processed;
@@ -169,4 +166,11 @@ class ChequeByContractCheques
      */
     public $paidByBonus;
 
+    /**
+     * @return bool
+     */
+    public function hasItemsBool()
+    {
+        return (int)$this->hasItems === 2;
+    }
 }
