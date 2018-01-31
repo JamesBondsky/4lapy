@@ -82,7 +82,6 @@
     "sensio/framework-extra-bundle": "^5.0",
     "somework/composer-symlinks": "^0.3.0",
     "somework/expert-sender-api": "^0.4.5",
-    "symfony/security": "^3.4",
     "symfony/symfony": "3.3.*",
     "twig/twig": "^1.0",
     "webarchitect609/bitrix-cache": "^1.0",

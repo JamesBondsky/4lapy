@@ -4,7 +4,7 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
-namespace FourPaws\Comments\AjaxController;
+namespace FourPaws\AppBundle\AjaxController;
 
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\LoaderException;
@@ -15,8 +15,8 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
-use FourPaws\Comments\Exception\EmptyUserDataComments;
-use FourPaws\Comments\Exception\ErrorAddComment;
+use FourPaws\AppBundle\Exception\EmptyUserDataComments;
+use FourPaws\AppBundle\Exception\ErrorAddComment;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\UserBundle\Exception\WrongEmailException;
 use Psr\Cache\InvalidArgumentException;
@@ -27,7 +27,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceExce
 /**
  * Class CommentsController
  *
- * @package FourPaws\Comments\AjaxController
+ * @package FourPaws\AppBundle\AjaxController
  * @Route("/comments")
  */
 class CommentsController extends Controller

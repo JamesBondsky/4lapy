@@ -71,7 +71,7 @@ class StoreListController extends Controller
     }
     
     /**
-     * @Route("/search/", methods={"POST"})
+     * @Route("/search/", methods={"GET"})
      * @param Request $request
      *
      * @throws ServiceNotFoundException

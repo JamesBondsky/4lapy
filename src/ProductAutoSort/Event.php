@@ -43,7 +43,6 @@ abstract class Event implements ServiceHandlerInterface
         foreach (['OnAfterIBlockElementUpdate', 'OnAfterIblockElementAdd'] as $eventTYpe) {
             $eventManager->addEventHandler('iblock', $eventTYpe, [self::class, 'autosortProduct']);
         }
-
     }
 
     /**
@@ -51,7 +50,7 @@ abstract class Event implements ServiceHandlerInterface
      */
     public static function includeJquery()
     {
-        if (!defined('ADMIN_SECTION')) {
+        if (!\defined('ADMIN_SECTION')) {
             return;
         }
         Asset::getInstance()->addJs('/local/include/js/jquery.min.js');
@@ -81,7 +80,6 @@ abstract class Event implements ServiceHandlerInterface
     public static function autosortProduct($arFields)
     {
         try {
-
             $productIblockId = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS);
 
             $applyAutosortPropId = IblockUtils::getPropertyId($productIblockId, 'APPLY_AUTOSORT');
@@ -105,19 +103,16 @@ abstract class Event implements ServiceHandlerInterface
 
             //Снятие флажка
             CIBlockElement::SetPropertyValuesEx($arFields['ID'], $arFields['IBLOCK_ID'], ['APPLY_AUTOSORT' => 0]);
-
         } catch (Exception $exception) {
-
             self::log()->error(
                 sprintf(
                     "[%s] %s (%s)\n%s\n",
-                    get_class($exception),
+                    \get_class($exception),
                     $exception->getMessage(),
                     $exception->getCode(),
                     $exception->getTraceAsString()
                 )
             );
-
         }
     }
 

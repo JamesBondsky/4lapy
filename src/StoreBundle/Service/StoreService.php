@@ -7,6 +7,7 @@
 namespace FourPaws\StoreBundle\Service;
 
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\Location\LocationService;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
@@ -293,5 +294,29 @@ class StoreService
                 'STORE_ID'   => $storeIds,
             ]
         );
+    }
+
+    /**
+     * @param Offer $offer
+     *
+     * @return StockCollection
+     */
+    public function getStocksByOffer(Offer $offer): StockCollection
+    {
+        $getStocks = function () use ($offer) {
+            return $this->stockRepository->findBy(
+                [
+                    'PRODUCT_ID' => $offer->getId(),
+                ]
+            );
+        };
+
+        $data = (new BitrixCache())
+            ->withId(__METHOD__ . '__' . $offer->getId())
+            ->withTag('catalog:stocks')
+            ->withTag('catalog:stocks:' . $offer->getId())
+            ->resultOf($getStocks);
+
+        return $data['result'];
     }
 }

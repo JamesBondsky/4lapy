@@ -45,7 +45,6 @@ class ProductAutoSortService implements LoggerAwareInterface
      */
     public function defineProductsCategories(array $productIdList)
     {
-
         $productIdList = array_filter(
             $productIdList,
             function ($id) {
@@ -86,8 +85,8 @@ class ProductAutoSortService implements LoggerAwareInterface
         $allCategoryList = [];
 
         $dbCategoryCandidatesList = ElementPropertyConditionTable::query()
-                                                                 ->setSelect(['*'])
-                                                                 ->exec();
+            ->setSelect(['*'])
+            ->exec();
         /**
          * Потенциально тонкое место: проверяя категорию, запрашивать разом все товары каталога.
          * Может потребоваться порционное ограничение, если не будет хватать вычислительных ресурсов.
@@ -99,6 +98,73 @@ class ProductAutoSortService implements LoggerAwareInterface
         $productsToCategoryIndex = $this->testCandidateCategories($allCategoryList);
 
         return $this->convertToCategoriesToProducts($productsToCategoryIndex);
+    }
+
+    /**
+     * Синхронизирует значение для условия свойства элемента
+     *
+     * @param int   $ufId
+     * @param int   $sectionId
+     * @param int   $propertyId
+     * @param mixed $value
+     */
+    public function syncValue(int $ufId, int $sectionId, int $propertyId, $value)
+    {
+        $this->getValueHelper()->syncValue($ufId, $sectionId, $propertyId, $value);
+    }
+
+    /**
+     * Синхронизирует множество значений для условия свойства элемента
+     *
+     * @param int   $ufId
+     * @param int   $sectionId
+     * @param array $valueList
+     */
+    public function syncValueMulti(int $ufId, int $sectionId, array $valueList)
+    {
+        $this->getValueHelper()->syncValueMulti($ufId, $sectionId, $valueList);
+    }
+
+    /**
+     * Удалить все значения для категории.
+     *
+     * @param int $sectionId
+     */
+    public function deleteValue(int $sectionId)
+    {
+        $this->getValueHelper()->deleteValue($sectionId);
+    }
+
+    /**
+     * @return ValueHelper
+     */
+    public function getValueHelper()
+    {
+        if (null === $this->valueHelper) {
+            $this->valueHelper = new ValueHelper();
+        }
+
+        return $this->valueHelper;
+    }
+
+    /**
+     * @return PropertyHelper
+     */
+    public function getPropertyHelper()
+    {
+        if (null === $this->propertyHelper) {
+            $this->propertyHelper = new PropertyHelper();
+        }
+
+        return $this->propertyHelper;
+    }
+
+    /**
+     * @return LoggerInterface
+     */
+    public function log()
+    {
+        return $this->logger;
     }
 
     /**
@@ -116,7 +182,6 @@ class ProductAutoSortService implements LoggerAwareInterface
 
         /** @var Product $product */
         foreach ($productCollection as $product) {
-
             $productAsArray = $product->toArray();
 
             $categoryFilter = $this->appendToRawCandidateFilter(
@@ -134,11 +199,7 @@ class ProductAutoSortService implements LoggerAwareInterface
                     $offerAsArray['PROPERTY_VALUES'],
                     IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS)
                 );
-
             }
-
-            $z = 1;
-
         }
 
         if (empty($categoryFilter)) {
@@ -153,10 +214,10 @@ class ProductAutoSortService implements LoggerAwareInterface
 
         //Сначала узнаём ID категорий кандидатов
         $dbCategoryCandidatesList = ElementPropertyConditionTable::query()
-                                                                 ->setFilter($categoryFilter)
-                                                                 ->setSelect(['SECTION_ID'])
-                                                                 ->setGroup(['SECTION_ID'])
-                                                                 ->exec();
+            ->setFilter($categoryFilter)
+            ->setSelect(['SECTION_ID'])
+            ->setGroup(['SECTION_ID'])
+            ->exec();
 
         $candidateIdList = [];
 
@@ -170,9 +231,9 @@ class ProductAutoSortService implements LoggerAwareInterface
 
         //Для кандидатов извлекаем все их условия
         $dbCategoryCandidatesList = ElementPropertyConditionTable::query()
-                                                                 ->setFilter(['=SECTION_ID' => $candidateIdList])
-                                                                 ->setSelect(['*'])
-                                                                 ->exec();
+            ->setFilter(['=SECTION_ID' => $candidateIdList])
+            ->setSelect(['*'])
+            ->exec();
         while ($candidate = $dbCategoryCandidatesList->fetch()) {
             $candidateCategoryList[$candidate['SECTION_ID']][] = $candidate;
         }
@@ -183,39 +244,34 @@ class ProductAutoSortService implements LoggerAwareInterface
     /**
      * @param array $categoryFilter
      * @param array $elementPropertyValues
-     * @param int $iblockId
+     * @param int   $iblockId
      *
      * @return array
      */
     private function appendToRawCandidateFilter($categoryFilter, array $elementPropertyValues, int $iblockId)
     {
         foreach ($elementPropertyValues as $code => $value) {
-
             try {
-
                 $propertyId = IblockUtils::getPropertyId($iblockId, $code);
 
                 //Если множественное пустое свойство, то это эквивалентно незаполненности свойства
                 if (
+                    \is_array($value) &&
+                    \count($value) == 0 &&
                     $this->getPropertyHelper()->isMultipleProperty($propertyId)
-                    && is_array($value)
-                    && count($value) == 0
                 ) {
                     $value = null;
                 }
 
                 if (!$this->getPropertyHelper()->isMultipleProperty($propertyId)) {
-
                     $categoryFilter = $this->appendToRawCandidateFilterNewValue(
                         $categoryFilter,
                         $propertyId,
                         $value
                     );
-
                 } else {
                     //Множественное свойство раскладываем на отдельные значения
                     foreach ($value as $singleValue) {
-
                         $categoryFilter = $this->appendToRawCandidateFilterNewValue(
                             $categoryFilter,
                             $propertyId,
@@ -223,7 +279,6 @@ class ProductAutoSortService implements LoggerAwareInterface
                         );
                     }
                 }
-
             } catch (IblockPropertyNotFoundException $exception) {
                 /**
                  * Является ошибкой преобразования PROPERTY_BRAND.NAME в код свойства, а потому не важно.
@@ -253,7 +308,7 @@ class ProductAutoSortService implements LoggerAwareInterface
                 $conditionList,
                 function ($condition) {
                     return
-                        is_array($condition)
+                        \is_array($condition)
                         && isset($condition['PROPERTY_ID'])
                         && $this->getPropertyHelper()->isProductProperty($condition['PROPERTY_ID']);
                 }
@@ -268,7 +323,7 @@ class ProductAutoSortService implements LoggerAwareInterface
                 $conditionList,
                 function ($condition) {
                     return
-                        is_array($condition)
+                        \is_array($condition)
                         && isset($condition['PROPERTY_ID'])
                         && $this->getPropertyHelper()->isOfferProperty($condition['PROPERTY_ID']);
                 }
@@ -285,7 +340,6 @@ class ProductAutoSortService implements LoggerAwareInterface
 
             //Продукты, которые и по своим условиям, и по условиям для торговых предложений подходят под критерии.
             $productsToCategoryIndex[$categoryId] = array_intersect($matchingProducts, $matchingOffers);
-
         }
 
         return $productsToCategoryIndex;
@@ -304,7 +358,6 @@ class ProductAutoSortService implements LoggerAwareInterface
         $productFilter = $this->makeRawElementFilterByProperty($productConditionList);
 
         if (!empty($productFilter)) {
-
             $productFilter['IBLOCK_ID'] = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS);
             if (!empty($productIdList)) {
                 $productFilter['=ID'] = $productIdList;
@@ -320,7 +373,6 @@ class ProductAutoSortService implements LoggerAwareInterface
             while ($product = $dbMatchingProducts->Fetch()) {
                 $matchingProducts[] = (int)$product['ID'];
             }
-
         }
 
         return $matchingProducts;
@@ -339,7 +391,6 @@ class ProductAutoSortService implements LoggerAwareInterface
         $offerFilter = $this->makeRawElementFilterByProperty($offerConditions);
 
         if (!empty($offerFilter)) {
-
             $offerFilter['IBLOCK_ID'] = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS);
             if (!empty($productIdList)) {
                 $offerFilter['=PROPERTY_CML2_LINK'] = $productIdList;
@@ -355,7 +406,6 @@ class ProductAutoSortService implements LoggerAwareInterface
             while ($offer = $dbMatchingOffers->Fetch()) {
                 $matchingProducts[] = (int)$offer['PROPERTY_CML2_LINK_VALUE'];
             }
-
         }
 
         return $matchingProducts;
@@ -381,7 +431,6 @@ class ProductAutoSortService implements LoggerAwareInterface
             $rawPropFilter[$condition['PROPERTY_ID']]['LOGIC'] = 'OR';
 
             $rawPropFilter[$condition['PROPERTY_ID']][] = ['PROPERTY_' . $condition['PROPERTY_ID'] => $value];
-
         }
 
         return $rawPropFilter;
@@ -430,83 +479,16 @@ class ProductAutoSortService implements LoggerAwareInterface
     }
 
     /**
-     * Синхронизирует значение для условия свойства элемента
-     *
-     * @param int $ufId
-     * @param int $sectionId
-     * @param int $propertyId
-     * @param mixed $value
-     */
-    public function syncValue(int $ufId, int $sectionId, int $propertyId, $value)
-    {
-        $this->getValueHelper()->syncValue($ufId, $sectionId, $propertyId, $value);
-    }
-
-    /**
-     * Синхронизирует множество значений для условия свойства элемента
-     *
-     * @param int $ufId
-     * @param int $sectionId
-     * @param array $valueList
-     */
-    public function syncValueMulti(int $ufId, int $sectionId, array $valueList)
-    {
-        $this->getValueHelper()->syncValueMulti($ufId, $sectionId, $valueList);
-    }
-
-    /**
-     * Удалить все значения для категории.
-     *
-     * @param int $sectionId
-     */
-    public function deleteValue(int $sectionId)
-    {
-        $this->getValueHelper()->deleteValue($sectionId);
-    }
-
-    /**
-     * @return ValueHelper
-     */
-    public function getValueHelper()
-    {
-        if (is_null($this->valueHelper)) {
-            $this->valueHelper = new ValueHelper();
-        }
-
-        return $this->valueHelper;
-    }
-
-    /**
-     * @return PropertyHelper
-     */
-    public function getPropertyHelper()
-    {
-        if (is_null($this->propertyHelper)) {
-            $this->propertyHelper = new PropertyHelper();
-        }
-
-        return $this->propertyHelper;
-    }
-
-    /**
-     * @return LoggerInterface
-     */
-    public function log()
-    {
-        return $this->logger;
-    }
-
-    /**
      * @param array $categoryFilter
-     * @param int $propertyId
-     * @param $value
+     * @param int   $propertyId
+     * @param       $value
      *
      * @return array
      */
     private function appendToRawCandidateFilterNewValue(array $categoryFilter, int $propertyId, $value)
     {
         //Т.к. нужна фильтрация по конкретному значению, нельзя пропускать значения в виде массива.
-        if (is_array($value)) {
+        if (\is_array($value)) {
             return $categoryFilter;
         }
 
@@ -515,9 +497,8 @@ class ProductAutoSortService implements LoggerAwareInterface
          */
         if (isset($categoryFilter[$propertyId])) {
             foreach ($categoryFilter[$propertyId] as $condition) {
-
                 if (
-                    is_array($condition)
+                    \is_array($condition)
                     && array_key_exists('PROPERTY_ID', $condition)
                     && array_key_exists('PROPERTY_VALUE', $condition)
                     && $condition['PROPERTY_ID'] == $propertyId
@@ -526,7 +507,6 @@ class ProductAutoSortService implements LoggerAwareInterface
                 ) {
                     return $categoryFilter;
                 }
-
             }
         }
 

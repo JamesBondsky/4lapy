@@ -3,7 +3,6 @@
 namespace FourPaws\Search\Model;
 
 use CDBResult;
-use Elastica\Result;
 use Elastica\ResultSet;
 use FourPaws\App\Application;
 use FourPaws\Catalog\Collection\ProductCollection;

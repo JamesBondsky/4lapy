@@ -13,7 +13,6 @@ use FourPaws\Enum\IblockType;
 use FourPaws\SapBundle\Dto\In\Offers\Material;
 use FourPaws\SapBundle\Enum\SapProductField;
 use FourPaws\SapBundle\Enum\SapProductProperty;
-use FourPaws\SapBundle\Repository\BrandRepository;
 use FourPaws\SapBundle\Repository\ProductRepository;
 use FourPaws\SapBundle\Service\ReferenceService;
 
@@ -25,25 +24,29 @@ class ProductService
     private $referenceService;
 
     /**
-     * @var BrandRepository
-     */
-    private $brandRepository;
-
-    /**
      * @var ProductRepository
      */
     private $productRepository;
 
     public function __construct(
         ReferenceService $referenceService,
-        BrandRepository $brandRepository,
         ProductRepository $productRepository
     ) {
         $this->referenceService = $referenceService;
-        $this->brandRepository = $brandRepository;
         $this->productRepository = $productRepository;
     }
 
+    /**
+     * @param Material $material
+     *
+     * @throws \RuntimeException
+     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
+     * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
+     * @throws \FourPaws\SapBundle\Exception\LogicException
+     * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
+     * @throws IblockNotFoundException
+     * @return Product
+     */
     public function processMaterial(Material $material): Product
     {
         $product = $this->findByMaterial($material) ?: new Product();
@@ -80,13 +83,12 @@ class ProductService
      */
     protected function findByMaterial(Material $material)
     {
-        $product = $this->findByOffer($material->getOfferXmlId());
-        $product = $product ?: $this->findByCombination(
+        $product = $this->findByCombination(
             $material->getProperties()->getPropertyValues(
                 SapProductProperty::PACKING_COMBINATION
             )->first()
         );
-        return $product;
+        return $product ?: $this->findByOffer($material->getOfferXmlId());
     }
 
     /**
@@ -148,8 +150,18 @@ class ProductService
      */
     protected function fillFields(Product $product, Material $material)
     {
-        $product
-            ->withName($material->getProductName() ?: $material->getOfferName());
+        if (!$product->getName()) {
+            $product->withName($material->getProductName() ?: $material->getOfferName());
+        }
+
+        if (!$product->getId()) {
+            /**
+             * По умолчанию создающиеся товары должны быть деактивированными
+             */
+            $product->withActive(false);
+        } else {
+            $product->withActive(!$material->isNotUploadToIm());
+        }
     }
 
     /**
@@ -308,6 +320,7 @@ class ProductService
      * @param Product  $product
      * @param Material $material
      *
+     * @throws \RuntimeException
      * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
      * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
      * @throws \FourPaws\SapBundle\Exception\LogicException

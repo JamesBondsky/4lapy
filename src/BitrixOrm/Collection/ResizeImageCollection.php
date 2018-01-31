@@ -91,17 +91,21 @@ class ResizeImageCollection extends ObjectArrayCollection
         $isExist = $this->exists(function ($key, ResizeImageDecorator $element) use ($image) {
             return $element->getId() === $image->getId();
         });
+    
         if (!$isExist) {
             $resizedImage = new ResizeImageDecorator($image->getFields());
+        
             if ($this->getWidth()) {
                 $resizedImage->setResizeWidth($this->getWidth());
             }
+        
             if ($this->getHeight()) {
                 $resizedImage->setResizeHeight($this->getHeight());
             }
 
             $this->add($resizedImage);
         }
+    
         return $this;
     }
 

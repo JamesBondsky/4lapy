@@ -52,8 +52,8 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
     /**
      * @param AMQPMessage $msg
      *
-     * @return mixed|void
      * @throws RuntimeException
+     * @return mixed|void
      */
     public function execute(AMQPMessage $msg)
     {
@@ -75,37 +75,24 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
             $cagalogSyncMessage->isForProductEntity()
             && ($cagalogSyncMessage->isForAddAction() || $cagalogSyncMessage->isForUpdateAction())
         ) {
-
             $this->updateProduct($cagalogSyncMessage->getEntityId());
-
         } elseif ($cagalogSyncMessage->isForProductEntity() && $cagalogSyncMessage->isForDeleteAction()) {
-
             $this->deleteProduct($cagalogSyncMessage->getEntityId());
-
         } elseif (
             $cagalogSyncMessage->isForOfferEntity()
             && ($cagalogSyncMessage->isForAddAction() || $cagalogSyncMessage->isForUpdateAction())
         ) {
-
             $this->updateOffer($cagalogSyncMessage->getEntityId());
-
         } elseif ($cagalogSyncMessage->isForOfferEntity() && $cagalogSyncMessage->isForDeleteAction()) {
-
             $this->deleteOffer($cagalogSyncMessage->getEntityId());
-
         } elseif (
             $cagalogSyncMessage->isForBrandEntity()
             && ($cagalogSyncMessage->isForAddAction() || $cagalogSyncMessage->isForUpdateAction())
         ) {
-
             $this->updateBrand($cagalogSyncMessage->getEntityId());
-
         } elseif ($cagalogSyncMessage->isForBrandEntity() && $cagalogSyncMessage->isForDeleteAction()) {
-
             $this->deleteBrand($cagalogSyncMessage->getEntityId());
-
         } else {
-
             $this->log()->alert(
                 sprintf(
                     'Неподдерживаемый тип синхронизационного сообщения: type= %s , action = %s',
@@ -113,7 +100,6 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
                     $cagalogSyncMessage->getAction()
                 )
             );
-
         }
     }
 
@@ -145,10 +131,9 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
             sprintf(
                 'Обновление продукта #%d: %s',
                 $productId,
-                ($indexProductResult) ? 'успех' : 'ошибка'
+                $indexProductResult ? 'успех' : 'ошибка'
             )
         );
-
     }
 
     /**
@@ -209,10 +194,9 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
                 'Обновление продукта #%d по офферу #%d: %s',
                 $product->getId(),
                 $offerId,
-                ($indexProductResult) ? 'успех' : 'ошибка'
+                $indexProductResult ? 'успех' : 'ошибка'
             )
         );
-
     }
 
     /**
@@ -255,7 +239,6 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
                                              ->withFilter(['=PROPERTY_BRAND' => $brand->getId()])
                                              ->doExec();
         while ($arProduct = $dbProductList->Fetch()) {
-
             $productId = (int)$arProduct['ID'];
 
             $catSyncMsg->withEntityId($productId);
@@ -269,9 +252,7 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
                     $brandId
                 )
             );
-
         }
-
     }
 
     /**
@@ -290,7 +271,6 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
                 ($deleteBrandResult ? 'успех' : 'ошибка')
             )
         );
-
     }
 
     /**
@@ -309,20 +289,19 @@ class CatalogSyncConsumer implements ConsumerInterface, LoggerAwareInterface
 
     private function includeBitrix()
     {
-        defined('NO_KEEP_STATISTIC') || define('NO_KEEP_STATISTIC', 'Y');
-        defined('NOT_CHECK_PERMISSIONS') || define('NOT_CHECK_PERMISSIONS', true);
-        defined('NO_AGENT_CHECK') || define('NO_AGENT_CHECK', true);
-        defined('PUBLIC_AJAX_MODE') || define('PUBLIC_AJAX_MODE', true);
+        \defined('NO_KEEP_STATISTIC') || \define('NO_KEEP_STATISTIC', 'Y');
+        \defined('NOT_CHECK_PERMISSIONS') || \define('NOT_CHECK_PERMISSIONS', true);
+        \defined('NO_AGENT_CHECK') || \define('NO_AGENT_CHECK', true);
+        \defined('PUBLIC_AJAX_MODE') || \define('PUBLIC_AJAX_MODE', true);
 
         if (empty($_SERVER['DOCUMENT_ROOT'])) {
-            $_SERVER['DOCUMENT_ROOT'] = realpath(__DIR__ . '/../../../../../');
+            $_SERVER['DOCUMENT_ROOT'] = \dirname(__DIR__, 5) . '/';
         }
 
         $GLOBALS['DOCUMENT_ROOT'] = $_SERVER['DOCUMENT_ROOT'];
 
         /** @noinspection PhpIncludeInspection */
         require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_before.php';
-
     }
 
     /**

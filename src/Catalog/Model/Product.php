@@ -514,7 +514,27 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @var TextContent
      */
     protected $specifications;
-
+    
+    /**
+     * @var array
+     */
+    protected $PROPERTY_COMPOSITION = [];
+    
+    /**
+     * @var TextContent
+     */
+    protected $composition;
+    
+    /**
+     * @var array
+     */
+    protected $PROPERTY_NORMS_OF_USE = [];
+    
+    /**
+     * @var TextContent
+     */
+    protected $normsOfUse;
+    
     /**
      * @var Collection
      * @Type("ArrayCollection<FourPaws\Catalog\Model\Offer>")
@@ -585,12 +605,28 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     {
         parent::__construct($fields);
         /**
+         * @todo отрефакторить нахрен
+         *
          * Если свойство не заполнено, битрикс для его значения возвращает bool false. А если это заполненное свойство
          * типа "HTML/текст", то его значение - массив из двух строк. Однако, mapping для Elasticsearch не может
          * одновременно относиться к свойству и как к boolean и как к объекту.
          */
         if (false === $this->PROPERTY_SPECIFICATIONS) {
             $this->PROPERTY_SPECIFICATIONS = [
+                'TYPE' => '',
+                'TEXT' => '',
+            ];
+        }
+    
+        if (false === $this->PROPERTY_COMPOSITION) {
+            $this->PROPERTY_COMPOSITION = [
+                'TYPE' => '',
+                'TEXT' => '',
+            ];
+        }
+    
+        if (false === $this->PROPERTY_NORMS_OF_USE) {
+            $this->PROPERTY_NORMS_OF_USE = [
                 'TYPE' => '',
                 'TEXT' => '',
             ];
@@ -1663,7 +1699,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return string
      */
-    public function getYmlName()
+    public function getYmlName() : string
     {
         return $this->PROPERTY_YML_NAME;
     }
@@ -1673,7 +1709,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return string
      */
-    public function getSalesNotes()
+    public function getSalesNotes() : string
     {
         return $this->PROPERTY_SALES_NOTES;
     }
@@ -1685,7 +1721,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return string
      */
-    public function getGroupId()
+    public function getGroupId() : string
     {
         return $this->PROPERTY_GROUP;
     }
@@ -1697,7 +1733,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return string
      */
-    public function getGroupName()
+    public function getGroupName() : string
     {
         return $this->PROPERTY_GROUP_NAME;
     }
@@ -1707,7 +1743,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return bool
      */
-    public function isProducedByHolderRequest()
+    public function isProducedByHolderRequest() : bool
     {
         return (bool)(int)$this->PROPERTY_PRODUCED_BY_HOLDER;
     }
@@ -1717,13 +1753,41 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return TextContent
      */
-    public function getSpecifications()
+    public function getSpecifications() : TextContent
     {
         if (!($this->specifications instanceof TextContent)) {
             $this->specifications = new TextContent($this->PROPERTY_SPECIFICATIONS);
         }
 
         return $this->specifications;
+    }
+    
+    /**
+     * Возвращает состав товара.
+     *
+     * @return TextContent
+     */
+    public function getComposition() : TextContent
+    {
+        if (!($this->composition instanceof TextContent)) {
+            $this->composition = new TextContent($this->PROPERTY_COMPOSITION);
+        }
+        
+        return $this->composition;
+    }
+    
+    /**
+     * Возвращает нормы.
+     *
+     * @return TextContent
+     */
+    public function getNormsOfUse() : TextContent
+    {
+        if (!($this->normsOfUse instanceof TextContent)) {
+            $this->normsOfUse = new TextContent($this->PROPERTY_NORMS_OF_USE);
+        }
+        
+        return $this->normsOfUse;
     }
 
     /**
@@ -1781,8 +1845,8 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 
         return $result;
     }
-
-    /*
+    
+    /**
      * @internal Специально для Elasitcsearch храним коллецию без ключей, т.к. ассоциативный массив с торговыми
      * предложениями туда передавать нельзя: это будет объект, а не массив объектов.
      *
@@ -1799,6 +1863,19 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
                         ->toArray()
                 )
             );
+    
+            /**
+             * @var Offer $offer
+             */
+            foreach ($this->offers as $offer) {
+                try {
+                    $offer->setProduct($this);
+                } catch (\InvalidArgumentException $e) {
+                    /**
+                     * Никогда не должна возникнуть такая ситуация
+                     */
+                }
+            }
         }
 
         return $this->offers;

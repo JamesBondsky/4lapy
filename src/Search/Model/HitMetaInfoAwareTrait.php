@@ -14,7 +14,7 @@ trait HitMetaInfoAwareTrait
      */
     public function getHitMetaInfo(): HitMetaInfo
     {
-        if (is_null($this->hitMetaInfo)) {
+        if (null === $this->hitMetaInfo) {
             $this->hitMetaInfo = new HitMetaInfo();
         }
 
@@ -32,5 +32,4 @@ trait HitMetaInfoAwareTrait
 
         return $this;
     }
-
 }

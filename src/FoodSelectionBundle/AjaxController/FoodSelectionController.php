@@ -59,7 +59,10 @@ class FoodSelectionController extends Controller
         $_SESSION['PET_TYPE'] = $sect->getCode();
         $step                 = 'pet_age';
         /** @noinspection PhpUnusedLocalVariableInspection */
-        $sections = $this->foodSelectionService->getSectionsByXmlIdAndParentSection($step, $petType, 2);
+        $sections =
+            $this->foodSelectionService->getSectionsByParentSectionId(
+                $this->foodSelectionService->getSectionIdByXmlId($step, 1)
+            );
         $nextStep = 2;
         $nextUrl  = '/ajax/food_selection/show/step/pet/age/';
         ob_start();
@@ -85,13 +88,10 @@ class FoodSelectionController extends Controller
      * Возраст питомца
      * @Route("/step/pet/age/", methods={"GET"})
      *
-     * @param Request $request
-     *
      * @return JsonResponse
      */
-    public function showStepPetAgeAction(Request $request) : JsonResponse
+    public function showStepPetAgeAction() : JsonResponse
     {
-        $petType = $request->query->get('pet_type');
         if ($_SESSION['PET_TYPE'] === 'dog') {
             $step     = 'pet_size';
             $nextStep = 3;
@@ -103,7 +103,10 @@ class FoodSelectionController extends Controller
         }
         unset($_SESSION['PET_TYPE']);
         /** @noinspection PhpUnusedLocalVariableInspection */
-        $sections = $this->foodSelectionService->getSectionsByXmlIdAndParentSection($step, $petType, 2);
+        $sections =
+            $this->foodSelectionService->getSectionsByParentSectionId(
+                $this->foodSelectionService->getSectionIdByXmlId($step, 1)
+            );
         ob_start();
         /** @noinspection PhpIncludeInspection */
         include_once App::getDocumentRoot()
@@ -126,16 +129,16 @@ class FoodSelectionController extends Controller
      * Размер питомца
      * @Route("/step/pet/size/", methods={"GET"})
      *
-     * @param Request $request
-     *
      * @return JsonResponse
      */
-    public function showStepPetSizeAction(Request $request) : JsonResponse
+    public function showStepPetSizeAction() : JsonResponse
     {
-        $petType = $request->query->get('pet_type');
-        $step    = 'food_spec';
+        $step = 'food_spec';
         /** @noinspection PhpUnusedLocalVariableInspection */
-        $sections = $this->foodSelectionService->getSectionsByXmlIdAndParentSection($step, $petType, 2);
+        $sections =
+            $this->foodSelectionService->getSectionsByParentSectionId(
+                $this->foodSelectionService->getSectionIdByXmlId($step, 1)
+            );
         $nextStep = 4;
         $nextUrl  = '/ajax/food_selection/show/step/food/specialize/';
         ob_start();
@@ -160,16 +163,16 @@ class FoodSelectionController extends Controller
      * Специализация корма
      * @Route("/step/food/specialize/", methods={"GET"})
      *
-     * @param Request $request
-     *
      * @return JsonResponse
      */
-    public function showStepFoodSpecializeAction(Request $request) : JsonResponse
+    public function showStepFoodSpecializeAction() : JsonResponse
     {
-        $petType = $request->query->get('pet_type');
-        $step    = 'food_ingridient';
+        $step = 'food_ingridient';
         /** @noinspection PhpUnusedLocalVariableInspection */
-        $sections = $this->foodSelectionService->getSectionsByXmlIdAndParentSection($step, $petType, 2);
+        $sections =
+            $this->foodSelectionService->getSectionsByParentSectionId(
+                $this->foodSelectionService->getSectionIdByXmlId($step, 1)
+            );
         $nextStep = 5;
         $nextUrl  = '/ajax/food_selection/show/step/food/features/';
         ob_start();
@@ -194,16 +197,16 @@ class FoodSelectionController extends Controller
      * Особенности корма
      * @Route("/step/food/features/", methods={"GET"})
      *
-     * @param Request $request
-     *
      * @return JsonResponse
      */
-    public function showStepFoodFeaturesAction(Request $request) : JsonResponse
+    public function showStepFoodFeaturesAction() : JsonResponse
     {
-        $petType = $request->query->get('pet_type');
-        $step    = 'food_consistence';
+        $step = 'food_consistence';
         /** @noinspection PhpUnusedLocalVariableInspection */
-        $sections = $this->foodSelectionService->getSectionsByXmlIdAndParentSection($step, $petType, 2);
+        $sections =
+            $this->foodSelectionService->getSectionsByParentSectionId(
+                $this->foodSelectionService->getSectionIdByXmlId($step, 1)
+            );
         $nextStep = 6;
         $nextUrl  = '/ajax/food_selection/show/step/food/type/';
         ob_start();
@@ -228,16 +231,16 @@ class FoodSelectionController extends Controller
      * Тип корма
      * @Route("/step/food/type/", methods={"GET"})
      *
-     * @param Request $request
-     *
      * @return JsonResponse
      */
-    public function showStepFoodTypeAction(Request $request) : JsonResponse
+    public function showStepFoodTypeAction() : JsonResponse
     {
-        $petType = $request->query->get('pet_type');
-        $step    = 'food_flavour';
+        $step = 'food_flavour';
         /** @noinspection PhpUnusedLocalVariableInspection */
-        $sections = $this->foodSelectionService->getSectionsByXmlIdAndParentSection($step, $petType, 2);
+        $sections =
+            $this->foodSelectionService->getSectionsByParentSectionId(
+                $this->foodSelectionService->getSectionIdByXmlId($step, 1)
+            );
         $nextStep = 7;
         $nextUrl  = '/ajax/food_selection/show/items/';
         ob_start();
@@ -271,14 +274,18 @@ class FoodSelectionController extends Controller
     {
         $data = $request->query->getIterator()->getArrayCopy();
         \TrimArr($data);
-        $typeId = $data['pet_type'];
-        unset($data['pet_type']);
+        foreach ($data as $key => $val) {
+            if((int)$val <= 0){
+                unset($data[$key]);
+            }
+        }
+    
         $step = 'items';
         /** @noinspection PhpUnusedLocalVariableInspection */
-        $recommendedItems = $this->foodSelectionService->getProductsBySections(array_values($data), $typeId);
+        $recommendedItems = $this->foodSelectionService->getProductsBySections(array_values($data));
         unset($data['food_consistence']);
         /** @noinspection PhpUnusedLocalVariableInspection */
-        $alsoItems = $this->foodSelectionService->getProductsBySections(array_values($data), $typeId);
+        $alsoItems = $this->foodSelectionService->getProductsBySections(array_values($data));
         ob_start();
         /** @noinspection PhpIncludeInspection */
         include_once App::getDocumentRoot()
@@ -290,7 +297,7 @@ class FoodSelectionController extends Controller
             [
                 'html'      => $html,
                 'showItems' => true,
-                'food' => [
+                'food'      => [
                     'next_step_url' => '',
                     'num'           => '',
                 ],

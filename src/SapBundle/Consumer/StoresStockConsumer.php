@@ -5,21 +5,20 @@ namespace FourPaws\SapBundle\Consumer;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Catalog\StoreProductTable;
 use Bitrix\Catalog\StoreTable;
-use Bitrix\Main\Result;
 use Bitrix\Main\Error;
-use FourPaws\SapBundle\Dto\In\StoresStock\StoresStock;
-use FourPaws\SapBundle\Dto\In\StoresStock\StockItem;
+use Bitrix\Main\Result;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
-use FourPaws\SapBundle\Exception\InvalidArgumentException;
+use FourPaws\SapBundle\Dto\In\StoresStock\StockItem;
+use FourPaws\SapBundle\Dto\In\StoresStock\StoresStock;
 
 class StoresStockConsumer implements ConsumerInterface
 {
     /** @var array $offersCache */
-    protected $offersCache = [];
+    private $offersCache = [];
 
     /** @var int $maxOffersCacheSize */
-    protected $maxOffersCacheSize = 100;
+    private $maxOffersCacheSize = 100;
 
     /** @var array $storesCache */
     protected $storesCache = [];
@@ -30,6 +29,8 @@ class StoresStockConsumer implements ConsumerInterface
     /**
      * @param StoresStock $storesStock
      *
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
      * @return bool
      */
     public function consume($storesStock): bool
@@ -39,9 +40,6 @@ class StoresStockConsumer implements ConsumerInterface
         }
 
         foreach ($storesStock->getItems() as $stockItem) {
-            if (!$stockItem instanceof StockItem) {
-                throw new InvalidArgumentException(sprintf('Trying to pass not %s object', StockItem::class));
-            }
             $this->setOfferStock($stockItem);
         }
 
@@ -59,6 +57,7 @@ class StoresStockConsumer implements ConsumerInterface
     }
 
     /**
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @return int
      */
     protected function getOffersIBlockId(): int
@@ -69,6 +68,7 @@ class StoresStockConsumer implements ConsumerInterface
     /**
      * @param string $xmlId
      *
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @return Result
      */
     protected function getOfferElementDataByXmlId($xmlId): Result
@@ -76,7 +76,7 @@ class StoresStockConsumer implements ConsumerInterface
         $result = new Result();
 
         $xmlId = trim($xmlId);
-        if (!strlen($xmlId)) {
+        if ('' === $xmlId) {
             $result->addError(new Error('Не задан внешний код торгового предложения', 100));
         }
 
@@ -100,6 +100,7 @@ class StoresStockConsumer implements ConsumerInterface
     /**
      * @param string $xmlId
      *
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @return array
      */
     private function getOfferElementByXmlId($xmlId): array
@@ -108,7 +109,7 @@ class StoresStockConsumer implements ConsumerInterface
         if (!isset($this->offersCache[$xmlId])) {
             $items = \CIBlockElement::GetList(
                 [
-                    'ID' => 'ASC'
+                    'ID' => 'ASC',
                 ],
                 [
                     'IBLOCK_ID' => $this->getOffersIBlockId(),
@@ -120,14 +121,14 @@ class StoresStockConsumer implements ConsumerInterface
                     'ID', 'IBLOCK_ID',
                 ]
             );
-            if ($item = $items->fetch()) {
+            if ($item = $items->Fetch()) {
                 $return = $item;
             }
 
             $this->offersCache[$xmlId] = $return;
             
-            if ($this->maxOffersCacheSize > 0 && count($this->offersCache) > $this->maxOffersCacheSize) {
-                $this->offersCache = array_slice($this->offersCache, 1, null, true);
+            if ($this->maxOffersCacheSize > 0 && \count($this->offersCache) > $this->maxOffersCacheSize) {
+                $this->offersCache = \array_slice($this->offersCache, 1, null, true);
             }
         } else {
             $return = $this->offersCache[$xmlId];
@@ -138,6 +139,8 @@ class StoresStockConsumer implements ConsumerInterface
 
     /**
      * @param string $xmlId
+     *
+     * @throws \Bitrix\Main\ArgumentException
      * @return Result
      */
     protected function getStoreDataByXmlId(string $xmlId): Result
@@ -145,7 +148,7 @@ class StoresStockConsumer implements ConsumerInterface
         $result = new Result();
 
         $xmlId = trim($xmlId);
-        if (!strlen($xmlId)) {
+        if ('' === $xmlId) {
             $result->addError(new Error('Не задан внешний код склада', 100));
         }
 
@@ -167,6 +170,8 @@ class StoresStockConsumer implements ConsumerInterface
 
     /**
      * @param string $xmlId
+     *
+     * @throws \Bitrix\Main\ArgumentException
      * @return array
      */
     protected function getStoreByXmlId(string $xmlId): array
@@ -176,7 +181,7 @@ class StoresStockConsumer implements ConsumerInterface
             $items = StoreTable::getList(
                 [
                     'order' => [
-                        'ID' => 'ASC'
+                        'ID' => 'ASC',
                     ],
                     'filter' => [
                         '=XML_ID' => $xmlId,
@@ -192,8 +197,8 @@ class StoresStockConsumer implements ConsumerInterface
 
             $this->storesCache[$xmlId] = $return;
 
-            if ($this->maxStoresCacheSize > 0 && count($this->storesCache) > $this->maxStoresCacheSize) {
-                $this->storesCache = array_slice($this->storesCache, 1, null, true);
+            if ($this->maxStoresCacheSize > 0 && \count($this->storesCache) > $this->maxStoresCacheSize) {
+                $this->storesCache = \array_slice($this->storesCache, 1, null, true);
             }
         } else {
             $return = $this->storesCache[$xmlId];
@@ -204,7 +209,11 @@ class StoresStockConsumer implements ConsumerInterface
 
     /**
      * @param StockItem $stockItem
-     * @param bool $getExtResult
+     * @param bool      $getExtResult
+     *
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Exception
      * @return Result
      */
     protected function setOfferStock(StockItem $stockItem, $getExtResult = true): Result
@@ -232,17 +241,17 @@ class StoresStockConsumer implements ConsumerInterface
         if ($result->isSuccess()) {
             $offerData = $offerElementDataResult->getData();
             $storeData = $storeDataResult->getData();
-            $stockValue = doubleval($stockItem->getStockValue());
+            $stockValue = $stockItem->getStockValue();
 
             $items = StoreProductTable::getList(
                 [
                     'order' => [
-                        'ID' => 'ASC'
+                        'ID' => 'ASC',
                     ],
                     'filter' => [
                         '=PRODUCT_ID' => $offerData['ID'],
                         '=STORE_ID' => $storeData['ID'],
-                    ]
+                    ],
                 ]
             );
             $wasUpdated = false;

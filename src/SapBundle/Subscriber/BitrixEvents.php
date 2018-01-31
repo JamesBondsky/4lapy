@@ -28,6 +28,7 @@ class BitrixEvents implements ServiceHandlerInterface
      *
      * @param \Bitrix\Main\EventManager $eventManager
      *
+     * @throws \RuntimeException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException

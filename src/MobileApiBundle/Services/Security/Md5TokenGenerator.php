@@ -2,18 +2,18 @@
 
 namespace FourPaws\MobileApiBundle\Services\Security;
 
-use FourPaws\MobileApiBundle\Entity\Session;
+use FourPaws\MobileApiBundle\Entity\ApiUserSession;
 use FourPaws\MobileApiBundle\Exception\InvalidIdentifierException;
-use FourPaws\MobileApiBundle\Repository\UserSessionRepository;
+use FourPaws\MobileApiBundle\Repository\ApiUserSessionRepository;
 
 class Md5TokenGenerator implements TokenGeneratorInterface
 {
     /**
-     * @var UserSessionRepository
+     * @var ApiUserSessionRepository
      */
     private $repository;
 
-    public function __construct(UserSessionRepository $repository)
+    public function __construct(ApiUserSessionRepository $repository)
     {
         $this->repository = $repository;
     }
@@ -45,6 +45,6 @@ class Md5TokenGenerator implements TokenGeneratorInterface
      */
     protected function checkExist(string $token): bool
     {
-        return $this->repository->findByToken($token) instanceof Session;
+        return $this->repository->findByToken($token) instanceof ApiUserSession;
     }
 }

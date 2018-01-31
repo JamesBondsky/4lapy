@@ -12,7 +12,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     <form class="b-registration__form js-form-validation js-registration-create-new-password js-recovery-form"
           data-url="/ajax/user/auth/forgotPassword/" method="post">
         <input type="hidden" name="action" value="savePassword">
-        <input type="hidden" name="backurl" value="<?= $backUrl?>">
+        <input type="hidden" name="backurl" value="<?= $backUrl ?>">
         <input type="hidden" name="step" value="sendSmsCode">
         <input type="hidden" name="login" value="<?= $login ?? $arResult['EMAIL'] ?>">
         <div class="b-input-line b-input-line--create-password">
@@ -24,7 +24,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                        id="registration-password-first"
                        placeholder=""
                        name="password"
-                       type="password">
+                       type="password"
+                       tabindex="1">
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
@@ -42,11 +43,14 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                        placeholder=""
                        name="confirmPassword"
                        data-type="password_two"
-                       type="password">
+                       type="password"
+                       tabindex="2">
                 <div class="b-error"><span class="js-message"></span></div>
             </div>
             <a class="b-input-line__eye js-open-password" href="javascript:void(0);" title=""></a>
         </div>
-        <button class="b-button b-button--social b-button--full-width b-button--create-password">Сохранить</button>
+        <button class="b-button b-button--social b-button--full-width b-button--create-password" tabindex="3">
+            Сохранить
+        </button>
     </form>
 </div>

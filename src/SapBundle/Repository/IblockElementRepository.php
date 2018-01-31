@@ -90,7 +90,7 @@ abstract class IblockElementRepository
     public function findIdByXmlId(string $xmlId)
     {
         $data = $this->getQuery()
-            ->withFilterParameter('=XML_ID', $xmlId)
+            ->withFilter(['=XML_ID' => $xmlId])
             ->withSelect(['ID'])
             ->withNav(['nTopCount' => 1])
             ->doExec()
