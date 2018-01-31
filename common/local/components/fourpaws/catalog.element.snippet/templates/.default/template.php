@@ -41,32 +41,44 @@ if (!empty($arParams['CURRENT_OFFER']) && $arParams['CURRENT_OFFER'] instanceof 
 } ?>
 
 <div class="b-common-item b-common-item--catalog-item js-product-item">
-    <a class="b-common-item__image-wrap" href="<?= $product->getDetailPageUrl() ?>">
-        <img class="b-common-item__image js-weight-img"
-             src="<?= $currentOffer->getResizeImages(240, 240)->first() ?>"
-             alt="<?= $currentOffer->getName() ?>"
-             title="<?= $currentOffer->getName() ?>" />
-    </a>
+    <?php if ($offer->getImages()->count() > 0) { ?>
+        <a class="b-common-item__image-wrap" href="<?= $product->getDetailPageUrl() ?>">
+            <img class="b-common-item__image js-weight-img"
+                 src="<?= $currentOffer->getResizeImages(240, 240)->first() ?>"
+                 alt="<?= $currentOffer->getName() ?>"
+                 title="<?= $currentOffer->getName() ?>" />
+        </a>
+    <?php } ?>
     <div class="b-common-item__info-center-block">
         <a class="b-common-item__description-wrap" href="<?= $product->getDetailPageUrl() ?>" title="">
-            <span class="b-clipped-text b-clipped-text--three"
-            ><span><strong><?= $product->getBrand()->getName() ?>  </strong><?= $product->getName() ?></span></span>
+            <span class="b-clipped-text b-clipped-text--three">
+                <span>
+                    <?php $brand = $product->getBrand(); ?>
+                    <?php if (!empty($brand)) { ?>
+                        <strong><?= $product->getBrand()->getName() ?>  </strong><?php } ?>
+    
+                    <?= $product->getName() ?>
+                </span>
+            </span>
         </a>
         <?php
-        $APPLICATION->IncludeComponent(
-            'fourpaws:comments',
-            'catalog.snippet',
-            [
-                'HL_ID'              => HighloadHelper::getIdByName('Comments'),
-                'OBJECT_ID'          => $product->getId(),
-                'SORT_DESC'          => 'Y',
-                'ITEMS_COUNT'        => 5,
-                'ACTIVE_DATE_FORMAT' => 'd j Y',
-                'TYPE'               => 'catalog',
-            ],
-            false,
-            ['HIDE_ICONS' => 'Y']
-        ); ?>
+        $productId = $product->getId();
+        if ($productId > 0) {
+            $APPLICATION->IncludeComponent(
+                'fourpaws:comments',
+                'catalog.snippet',
+                [
+                    'HL_ID'              => HighloadHelper::getIdByName('Comments'),
+                    'OBJECT_ID'          => $productId,
+                    'SORT_DESC'          => 'Y',
+                    'ITEMS_COUNT'        => 5,
+                    'ACTIVE_DATE_FORMAT' => 'd j Y',
+                    'TYPE'               => 'catalog',
+                ],
+                false,
+                ['HIDE_ICONS' => 'Y']
+            );
+        } ?>
         <div class="b-common-item__rank-wrapper">
             &nbsp
             <?php /**
@@ -159,11 +171,14 @@ if (!empty($arParams['CURRENT_OFFER']) && $arParams['CURRENT_OFFER'] instanceof 
                 Самовывоз
             </div>
         </div>
-        <a class="b-common-item__add-to-cart js-basket-add"
-           href="javascript:void(0);"
-           title=""
-           data-url="/ajax/sale/basket/add/"
-           data-offerid="<?= $currentOffer->getId() ?>">
+        <?php $offerId = $currentOffer->getId();
+        if ($offerId > 0) {
+            ?>
+            <a class="b-common-item__add-to-cart js-basket-add"
+               href="javascript:void(0);"
+               title=""
+               data-url="/ajax/sale/basket/add/"
+               data-offerid="<?= $offerId ?>">
         <span class="b-common-item__wrapper-link">
             <span class="b-cart">
                 <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 12, 12) ?></span>
@@ -173,8 +188,23 @@ if (!empty($arParams['CURRENT_OFFER']) && $arParams['CURRENT_OFFER'] instanceof 
                 <span class="b-ruble">₽</span>
             </span>
         </span>
-        </a>
-        <?php //
+            </a>
+        <?php } else {
+            ?>
+            <a class="b-common-item__add-to-cart" href="javascript:void(0);"
+               title="">
+                <span class="b-common-item__wrapper-link">
+                    <span class="b-cart">
+                        <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 12, 12) ?></span>
+                    </span>
+                    <span class="b-common-item__price js-price-block"><?= $currentOffer->getPrice() ?></span>
+                    <span class="b-common-item__currency">
+                        <span class="b-ruble">₽</span>
+                    </span>
+                </span>
+            </a>
+        <?php }
+        //
         // Информация об особенностях покупки товара
         //
         ob_start();
