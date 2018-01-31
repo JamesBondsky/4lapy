@@ -63,7 +63,7 @@ if (!$currentOffer) {
             ],
             false,
             ['HIDE_ICONS' => 'Y']
-        );?>
+        ); ?>
         <div class="b-common-item__rank-wrapper">
             &nbsp;
             <?php /**
@@ -92,7 +92,9 @@ if (!$currentOffer) {
                    title=""></a>
                 <ul class="b-weight-container__list">
                     <?php
+                    $i = 0;
                     foreach ($offers as $offer) {
+                        $i++;
                         $value = null;
                         if ($mainCombinationType === 'SIZE') {
                             if ($offer->getClothingSize()) {
@@ -111,8 +113,8 @@ if (!$currentOffer) {
                         ?>
                         <li class="b-weight-container__item">
                             <a href="javascript:void(0)"
-                               class="b-weight-container__link js-price <?= $currentOffer->getId() === $offer->getId(
-                                ) ? 'active-link' : '' ?>"
+                               class="b-weight-container__link js-price<?= $currentOffer->getId() === $offer->getId(
+                               ) ? ' active-link' : '' ?><?= $i >= 4 ? ' mobile-hidden' : '' ?>"
                                data-price="<?= $offer->getPrice() ?>" data-offerid="<?= $offer->getId() ?>"
                                data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
                             ><?= $value ?></a>
@@ -120,6 +122,11 @@ if (!$currentOffer) {
                         <?php
                     } ?>
                 </ul>
+                <div class="b-weight-container__dropdown-list__wrapper<?= $offers->count() > 3 ? ' _active' : '' ?>">
+                    <p class="js-show-weight">Еще <?= $offers->count() - 3 ?></p>
+                    <div class="b-weight-container__dropdown-list">
+                    </div>
+                </div>
             </div>
         <?php } ?>
         <div class="b-common-item__moreinfo">
@@ -143,12 +150,11 @@ if (!$currentOffer) {
                 Самовывоз
             </div>
         </div>
-    </div>
-    <a class="b-common-item__add-to-cart js-basket-add"
-       href="javascript:void(0);"
-       title=""
-       data-url="/ajax/sale/basket/add/"
-       data-offerid="<?= $currentOffer->getId() ?>">
+        <a class="b-common-item__add-to-cart js-basket-add"
+           href="javascript:void(0);"
+           title=""
+           data-url="/ajax/sale/basket/add/"
+           data-offerid="<?= $currentOffer->getId() ?>">
         <span class="b-common-item__wrapper-link">
             <span class="b-cart">
                 <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 12, 12) ?></span>
@@ -158,5 +164,25 @@ if (!$currentOffer) {
                 <span class="b-ruble">₽</span>
             </span>
         </span>
-    </a>
+        </a>
+        <?php //
+        // Информация об особенностях покупки товара
+        //
+        ob_start();
+        
+        /** @todo инфо о скидке */
+        
+        if ($firstOffer->isByRequest()) { ?>
+            <div class="b-common-item__info-wrap">
+                <span class="b-common-item__text">Только под заказ</span>
+            </div>
+        <?php }
+        
+        /** @todo инфо о доставке/самовывозе */
+        $addInfo = ob_get_clean();
+        if (!empty($addInfo)) {
+            echo '<div class="b-common-item__additional-information">' . $addInfo . '</div>';
+        }
+        ?>
+    </div>
 </div>
