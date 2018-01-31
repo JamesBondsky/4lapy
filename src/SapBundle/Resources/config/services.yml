@@ -29,6 +29,7 @@ services:
     # todo: remove after development!
     FourPaws\SapBundle\Source\SourceRegistry:
         public: true
+        lazy: true
 
     # Получить репозиторий напрямую нельзя
     FourPaws\SapBundle\Repository\ReferenceRepository:
