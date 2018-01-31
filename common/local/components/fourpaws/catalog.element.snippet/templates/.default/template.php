@@ -171,8 +171,8 @@ if (!$currentOffer) {
         ob_start();
         
         /** @todo инфо о скидке */
-        
-        if ($firstOffer->isByRequest()) { ?>
+
+        if ($currentOffer->isByRequest()) { ?>
             <div class="b-common-item__info-wrap">
                 <span class="b-common-item__text">Только под заказ</span>
             </div>
