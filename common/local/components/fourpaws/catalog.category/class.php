@@ -50,11 +50,9 @@ class CatalogCategory extends CBitrixComponent
             Tools::process404('', true, true, true);
         }
 
-        $title = $category->getName();
-        if ($category->getParent() && $category->getParent()->getSuffix()) {
-            $title .= ' ' . $category->getParent()->getSuffix();
+        if ($this->arParams['SET_TITLE'] === 'Y') {
+            $APPLICATION->SetTitle($category->getCanonicalName());
         }
-        $APPLICATION->SetTitle($title);
 
         $this->arResult['CATEGORY'] = $category;
     }

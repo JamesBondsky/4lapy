@@ -9,12 +9,14 @@ use FourPaws\External\Manzana\Model\Client;
 use FourPaws\Location\Exception\CityNotFoundException;
 use FourPaws\Location\LocationService;
 use FourPaws\UserBundle\Entity\User;
+use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidCredentialException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
+use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Repository\UserRepository;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -156,21 +158,27 @@ class UserService implements
     /**
      * @param User $user
      *
+     * @throws ValidationException
+     * @throws BitrixRuntimeException
      * @return bool
-     * @throws \FourPaws\UserBundle\Exception\ValidationException
-     * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
      */
     public function register(User $user): bool
     {
         return $this->userRepository->create($user);
     }
-
+    
     /**
      * @param string $code
      * @param string $name
+     * @param string $parentName
      *
-     * @return bool|array
+     * @throws ValidationException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
      * @throws CityNotFoundException
+     * @throws NotAuthorizedException
+     * @throws BitrixRuntimeException
+     * @return array|bool
      */
     public function setSelectedCity(string $code = '', string $name = '', string $parentName = '')
     {
@@ -178,6 +186,7 @@ class UserService implements
         if ($code) {
             $city = $this->locationService->findLocationCityByCode($code);
         } else {
+            /** @noinspection PassingByReferenceCorrectnessInspection */
             $city = reset($this->locationService->findLocationCity($name, $parentName, 1, true));
         }
 
@@ -195,8 +204,11 @@ class UserService implements
 
         return $city ?: false;
     }
-
+    
     /**
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws NotAuthorizedException
      * @return array
      */
     public function getSelectedCity(): array
@@ -230,13 +242,11 @@ class UserService implements
 
     /**
      * @param Client $client
-     * @param User|null $user
+     * @param null|User $user
      *
      * @throws InvalidIdentifierException
      * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
-     * @throws ConstraintDefinitionException
-     * @throws NotAuthorizedException
      * @throws ServiceCircularReferenceException
      */
     public function setClientPersonalDataByCurUser(&$client, User $user = null)
@@ -254,5 +264,24 @@ class UserService implements
         $client->email              = $user->getEmail();
         $client->plLogin            = $user->getLogin();
         $client->plRegistrationDate = $user->getManzanaDateRegister();
+    }
+    
+    /**
+     * @param int $id
+     *
+     * @throws InvalidIdentifierException
+     * @throws NotAuthorizedException
+     * @return array
+     */
+    public function getUserGroups(int $id = 0) : array
+    {
+        if ($id === 0) {
+            $id = $this->getCurrentUserId();
+        }
+        if ($id > 0) {
+            return $this->userRepository->getUserGroupsIds($id);
+        }
+        
+        return [];
     }
 }

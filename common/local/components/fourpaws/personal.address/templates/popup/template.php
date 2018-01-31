@@ -11,7 +11,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         <header class="b-registration__header">
             <h1 class="b-title b-title--h1 b-title--registration">Новый адрес доставки</h1>
         </header>
-        <form class="b-registration__form js-form-validation js-delivery-address-query" method="post">
+        <form class="b-registration__form js-form-validation js-delivery-address-query"
+              method="post"
+              data-url="">
             <input class="js-data-id js-no-valid" name="ID" value="" type="hidden">
             <div class="b-input-line b-input-line--popup-authorization js-name js-small-input">
                 <div class="b-input-line__label-wrapper">
@@ -34,8 +36,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                     <label class="b-input-line__label" for="city-adress">Город</label>
                     <span class="b-input-line__require">(обязательно)</span>
                 </div>
-                <div class="b-input b-input--registration-form b-kek">
-                    <input class="b-input__input-field b-input__input-field--registration-form b-kek"
+                <div class="b-input b-input--registration-form">
+                    <input class="b-input__input-field b-input__input-field--registration-form"
                            type="text"
                            id="city-adress"
                            placeholder=""
@@ -50,8 +52,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                     <label class="b-input-line__label" for="street-adress">Улица</label>
                     <span class="b-input-line__require">(обязательно)</span>
                 </div>
-                <div class="b-input b-input--registration-form b-kek">
-                    <input class="b-input__input-field b-input__input-field--registration-form b-kek"
+                <div class="b-input b-input--registration-form">
+                    <input class="b-input__input-field b-input__input-field--registration-form"
                            type="text"
                            id="street-adress"
                            placeholder=""
@@ -64,8 +66,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             <div class="b-registration__wrapper-input">
                 <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-add-adress">
                     <div class="b-input-line__label-wrapper">
-                        <label class="b-input-line__label"
-                               for="home-adress">Дом</label><span class="b-input-line__require">(обязательно)</span>
+                        <label class="b-input-line__label" for="home-adress">Дом</label>
+                        <span class="b-input-line__require">(обязательно)</span>
                     </div>
                     <div class="b-input b-input--registration-form">
                         <input class="b-input__input-field b-input__input-field--registration-form js-home js-small-input"
@@ -112,8 +114,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                                id="floor-adress"
                                type="text"
                                name="UF_FLOOR" />
-                        <div class="b-error"><span class="js-message"></span>
-                        </div>
+                        <div class="b-error"><span class="js-message"></span></div>
                     </div>
                 </div>
                 <div class="b-input-line b-input-line--popup-authorization b-input-line--popup-add-adress">

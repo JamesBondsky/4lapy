@@ -1,0 +1,22 @@
+imports:
+  - { resource: parameters_test.yml }
+  - { resource: config_test.yml }
+  - { resource: services_test.yml }
+
+framework:
+    test: ~
+    router:
+        resource: '%kernel.project_dir%/app/config/routes/routes_dev.yml'
+        strict_requirements: true
+    profiler: { only_exceptions: false }
+
+web_profiler:
+    toolbar: true
+    intercept_redirects: false
+
+services:
+    FourPaws\MobileApiBundle\Services\Security\TokenGeneratorInterface:
+        class: FourPaws\MobileApiBundle\Services\Security\FakeTokenGenerator
+
+    FourPaws\MobileApiBundle\Services\CaptchaServiceInterface:
+        class: FourPaws\MobileApiBundle\Services\FakeCaptchaService

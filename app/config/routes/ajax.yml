@@ -10,6 +10,11 @@ sale:
     type: annotation
     prefix: '/sale'
 
+catalog:
+    resource: "@FourPawsCatalogBundle/AjaxController"
+    type: annotation
+    prefix: '/catalog'
+
 delivery:
     resource: '@FourPawsDeliveryBundle/AjaxController'
     type: annotation
@@ -24,6 +29,11 @@ personal:
     resource: '@FourPawsPersonalBundle/AjaxController'
     type: annotation
     prefix: '/personal'
+
+food.selection:
+    resource: '@FourPawsFoodSelectionBundle/AjaxController'
+    type: annotation
+    prefix: '/food_selection'
 
 location.city.autocomplete:
   path: /location/city/autocomplete
@@ -44,12 +54,12 @@ autosort.property.hint:
 
 comments.add:
   path: /comments/add/
-  defaults: { _controller: '\FourPaws\Comments\AjaxController\CommentsController::addAction' }
+  defaults: { _controller: '\FourPaws\AppBundle\AjaxController\CommentsController::addAction' }
   methods: [POST]
 
 comments.next:
   path: /comments/next/
-  defaults: { _controller: '\FourPaws\Comments\AjaxController\CommentsController::nextAction' }
+  defaults: { _controller: '\FourPaws\AppBundle\AjaxController\CommentsController::nextAction' }
   methods: [GET]
 
 form.feedback:

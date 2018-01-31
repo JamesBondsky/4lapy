@@ -59,8 +59,7 @@ class FourPawsBreadCrumbs extends \CBitrixComponent
         $skipId = null;
         if ($this->arParams['IBLOCK_ELEMENT']) {
             $iblockId = $iblockElement->getIblockId();
-            $sectionIds = $iblockElement->getSectionsIdList();
-            $iblockSectionId = reset($sectionIds);
+            $iblockSectionId = $iblockElement->getIblockSectionId();
         } elseif ($this->arParams['IBLOCK_SECTION']) {
             $iblockId = $iblockSection->getIblockId();
             $iblockSectionId = $iblockSection->getId();

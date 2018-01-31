@@ -24,6 +24,7 @@ node_modules/
 /web/static
 /web/local
 /web/upload
+/web/bundles
 
 ### Symfony Assets install Path
 /web/bundles

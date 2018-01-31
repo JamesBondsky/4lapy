@@ -19,15 +19,15 @@ class PropertyHelper
     /**
      * @var array Свойства каталога.
      */
-    protected $catalogProperties;
+    private $catalogProperties;
 
     /**
-     * @return int
      * @throws RuntimeException
+     * @return int
      */
     public function getUfPropCondIdForProducts()
     {
-        if (is_null($this->ufPropCondId)) {
+        if (null === $this->ufPropCondId) {
             $fieldName = 'UF_PROP_COND';
             $ufPropCond = CUserTypeEntity::GetList(
                 [],
@@ -104,7 +104,7 @@ class PropertyHelper
      */
     private function getCatalogProperties()
     {
-        if (is_null($this->catalogProperties)) {
+        if (null === $this->catalogProperties) {
             $dbPropertyList = PropertyTable::query()->setSelect(['*'])
                                            ->setFilter(
                                                [

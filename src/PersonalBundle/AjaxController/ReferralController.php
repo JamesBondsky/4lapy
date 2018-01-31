@@ -9,12 +9,10 @@ namespace FourPaws\PersonalBundle\AjaxController;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\External\Manzana\Model\Card;
 use FourPaws\PersonalBundle\Service\ReferralService;
-use FourPaws\UserBundle\Exception\BitrixRuntimeException;
-use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -40,7 +38,6 @@ class ReferralController extends Controller
      * @Route("/add/", methods={"POST"})
      * @param Request $request
      *
-     * @throws ServiceNotFoundException
      * @return JsonResponse
      */
     public function addAction(Request $request) : JsonResponse
@@ -52,16 +49,19 @@ class ReferralController extends Controller
                 ['errors' => ['emptyData' => 'Не указаны данные для добавления']]
             );
         }
+        if(!empty($data['UF_CARD'])){
+            $data['UF_CARD'] = preg_replace("/\D/", '', $data['UF_CARD']);
+        }
+        $data['UF_MODERATED'] = 'Y';
         try {
             if ($this->referralService->add($data)) {
                 return JsonSuccessResponse::create(
-                    '',
+                    'Реферал добавлен, ожидайте модерации',
                     200,
                     [],
                     ['reload' => true]
                 );
             }
-        } catch (BitrixRuntimeException $e) {
         } catch (\Exception $e) {
         }
         
@@ -75,12 +75,14 @@ class ReferralController extends Controller
      * @Route("/get_user_info/", methods={"POST"})
      * @param Request $request
      *
-     * @throws ServiceNotFoundException
      * @return JsonResponse
      */
     public function getUserInfoAction(Request $request) : JsonResponse
     {
         $card = $request->get('card');
+        if(!empty($card)){
+            $card = preg_replace("/\D/", '', $card);
+        }
         if (empty($card)) {
             return JsonErrorResponse::createWithData(
                 'Не указан код карты',
@@ -88,17 +90,21 @@ class ReferralController extends Controller
             );
         }
         try {
-            if ($this->referralService->findBy($card)) {
-                return JsonSuccessResponse::create(
-                    '',
-                    200,
-                    [],
-                    ['reload' => true]
+            /** @var Card $currentCard */
+            $currentCard = $this->referralService->manzanaService->searchCardByNumber($card);
+                $cardInfo    = [
+                    'last_name'=>$currentCard->lastName,
+                    'name'=>$currentCard->firstName,
+                    'second_name'=>$currentCard->secondName,
+                    'phone'=>$currentCard->phone,
+                    'email'=>$currentCard->email
+                ];
+                return JsonSuccessResponse::createWithData(
+                    'Информация о карте получена',
+                    ['card'=>$cardInfo]
                 );
-            }
-        } catch (BitrixRuntimeException $e) {
-        } catch (ConstraintDefinitionException $e) {
         } catch (\Exception $e) {
+            echo $e->getMessage();
         }
         
         return JsonErrorResponse::createWithData(

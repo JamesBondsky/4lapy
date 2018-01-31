@@ -129,7 +129,7 @@ class DeliveryService
         $result = [];
 
         foreach ($availableServices as $service) {
-            if ($codes && !in_array($service->getCode(), $codes)) {
+            if ($codes && !\in_array($service->getCode(), $codes)) {
                 continue;
             }
 
@@ -148,11 +148,11 @@ class DeliveryService
 
             $calculationResult = $shipment->calculateDelivery();
             if ($calculationResult->isSuccess()) {
-                if (in_array(
+                if (\in_array(
                     $service->getCode(),
                     [
-                        DeliveryService::DPD_DELIVERY_CODE,
-                        DeliveryService::DPD_PICKUP_CODE,
+                        self::DPD_DELIVERY_CODE,
+                        self::DPD_PICKUP_CODE,
                     ],
                     true
                 )) {
@@ -270,7 +270,7 @@ class DeliveryService
      */
     public function getAvailableZones(int $deliveryId): array
     {
-        $allZones = $this->getAllZones(true);
+        $allZones = $this->getAllZones();
 
         $getZones = function () use ($allZones, $deliveryId) {
             $result = [];
@@ -305,7 +305,7 @@ class DeliveryService
                     ]
                 );
 
-                while ($location = $locations->Fetch()) {
+                while ($location = $locations->fetch()) {
                     // сделано, чтобы отдельные местоположения были впереди групп,
                     // т.к. группы могут их включать
                     $result = [

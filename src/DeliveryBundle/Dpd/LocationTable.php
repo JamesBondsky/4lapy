@@ -13,9 +13,10 @@ if (!Loader::includeModule('ipol.dpd')) {
 }
 
 use Bitrix\Sale\Location\LocationTable as BitrixLocationTable;
+use Ipolh\DPD\DB\Location\Table;
 use WebArch\BitrixCache\BitrixCache;
 
-class LocationTable extends \Ipolh\DPD\DB\Location\Table
+class LocationTable extends Table
 {
     /**
      * Возвращает запись по местоположению битрикса

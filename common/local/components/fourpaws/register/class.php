@@ -18,17 +18,20 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
-use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
+use FourPaws\AppBundle\Serialization\ArrayOrFalseHandler;
+use FourPaws\AppBundle\Serialization\BitrixBooleanHandler;
+use FourPaws\AppBundle\Serialization\BitrixDateHandler;
+use FourPaws\AppBundle\Serialization\BitrixDateTimeHandler;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Exception\SmsSendErrorException;
-use FourPaws\External\Manzana\Exception\ContactUpdateException;
+use FourPaws\External\Manzana\Exception\ManzanaException;
 use FourPaws\External\Manzana\Model\Client;
-use FourPaws\External\Manzana\Model\Clients;
 use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Location\Model\City;
+use FourPaws\ReCaptcha\ReCaptchaService;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -39,11 +42,17 @@ use FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Exception\ValidationException;
+use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\ConfirmCodeInterface;
+use FourPaws\UserBundle\Service\ConfirmCodeService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
 use GuzzleHttp\Exception\GuzzleException;
+use JMS\Serializer\DeserializationContext;
+use JMS\Serializer\Exception\RuntimeException;
+use JMS\Serializer\Handler\HandlerRegistry;
+use JMS\Serializer\Serializer;
 use JMS\Serializer\SerializerBuilder;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -69,11 +78,15 @@ class FourPawsRegisterComponent extends \CBitrixComponent
      */
     private $userRegistrationService;
     
+    /** @var Serializer */
+    private $serializer;
+    
     /**
      * FourPawsAuthFormComponent constructor.
      *
      * @param null|\CBitrixComponent $component
      *
+     * @throws RuntimeException
      * @throws ServiceNotFoundException
      * @throws SystemException
      * @throws \RuntimeException
@@ -93,6 +106,14 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         $this->currentUserProvider      = $container->get(CurrentUserProviderInterface::class);
         $this->userAuthorizationService = $container->get(UserAuthorizationInterface::class);
         $this->userRegistrationService  = $container->get(UserRegistrationProviderInterface::class);
+        $this->serializer               = SerializerBuilder::create()->configureHandlers(
+            function (HandlerRegistry $registry) {
+                $registry->registerSubscribingHandler(new BitrixDateHandler());
+                $registry->registerSubscribingHandler(new BitrixDateTimeHandler());
+                $registry->registerSubscribingHandler(new BitrixBooleanHandler());
+                $registry->registerSubscribingHandler(new ArrayOrFalseHandler());
+            }
+        )->build();
     }
     
     /** {@inheritdoc} */
@@ -164,14 +185,13 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     /**
      * @param string $phone
      *
-     * @throws WrongPhoneNumberException
      * @return JsonResponse
      */
     public function ajaxResendSms($phone) : JsonResponse
     {
-        if (PhoneHelper::isPhone($phone)) {
+        try {
             $phone = PhoneHelper::normalizePhone($phone);
-        } else {
+        } catch (WrongPhoneNumberException $e) {
             return JsonErrorResponse::createWithData(
                 'Введен некорректный номер телефона',
                 ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
@@ -179,7 +199,9 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         }
         
         try {
-            $res = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::sendConfirmSms($phone);
+            /** @var ConfirmCodeService $confirmService */
+            $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+            $res            = $confirmService::sendConfirmSms($phone);
             if (!$res) {
                 return JsonErrorResponse::createWithData(
                     'Ошибка отправки смс, попробуйте позднее',
@@ -214,26 +236,56 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     /**
      * @param array $data
      *
+     * @throws ValidationException
      * @throws InvalidIdentifierException
-     * @throws ConstraintDefinitionException
      * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
      * @throws \RuntimeException
      * @return JsonResponse
-     * @throws ContactUpdateException
      */
     public function ajaxRegister($data) : JsonResponse
     {
         if (!empty($data['PERSONAL_PHONE'])) {
+            try {
+                $data['PERSONAL_PHONE'] = PhoneHelper::normalizePhone($data['PERSONAL_PHONE']);
+            } catch (WrongPhoneNumberException $e) {
+                return JsonErrorResponse::createWithData(
+                    'Некорректный номер телефона',
+                    ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
+                );
+            }
             $data['LOGIN'] = $data['PERSONAL_PHONE'];
         } elseif (!empty($data['EMAIL'])) {
             $data['LOGIN'] = $data['EMAIL'];
         }
         
+        /** @var UserRepository $userRepository */
+        $userRepository = $this->currentUserProvider->getUserRepository();
+        $haveUsers      = $userRepository->havePhoneAndEmailByUsers(
+            [
+                'PERSONAL_PHONE' => $data['PERSONAL_PHONE'],
+                'EMAIL'          => $data['EMAIL'],
+            ]
+        );
+        if ($haveUsers['email']) {
+            return JsonErrorResponse::createWithData(
+                'Такой email уже существует',
+                ['errors' => ['haveEmail' => 'Такой email уже существует']]
+            );
+        }
+        if ($haveUsers['phone']) {
+            return JsonErrorResponse::createWithData(
+                'Такой телефон уже существует',
+                ['errors' => ['havePhone' => 'Такой телефон уже существует']]
+            );
+        }
+        
         $data['UF_PHONE_CONFIRMED'] = 'Y';
         
-        $userEntity = SerializerBuilder::create()->build()->fromArray($data, User::class);
+        /** @var User $userEntity */
+        $userEntity =
+            $this->serializer->fromArray($data, User::class, DeserializationContext::create()->setGroups('create'));
         try {
             $res = $this->userRegistrationService->register($userEntity);
             if (!$res) {
@@ -242,6 +294,9 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                     ['errors' => ['registerError' => 'При регистрации произошла ошибка']]
                 );
             }
+            
+            /** добавляем в зарегистрирвоанных пользователей */
+            \CUser::SetUserGroup($userEntity->getId(), [6]);
         } catch (BitrixRuntimeException $e) {
             return JsonErrorResponse::createWithData(
                 'При регистрации произошла ошибка - ' . $e->getMessage(),
@@ -257,23 +312,26 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
         $client         = null;
         try {
-            $contactId         = $manzanaService->getContactIdByCurUser();
+            $contactId         = $manzanaService->getContactIdByPhone($userEntity->getNormalizePersonalPhone());
             $client            = new Client();
             $client->contactId = $contactId;
-        } catch (ManzanaServiceContactSearchMoreOneException $e) {
         } catch (ManzanaServiceContactSearchNullException $e) {
             $client = new Client();
         } catch (ManzanaServiceException $e) {
         } catch (NotAuthorizedException $e) {
         }
         if ($client instanceof Client) {
-            $this->currentUserProvider->setClientPersonalDataByCurUser($client);
             try {
+                $this->currentUserProvider->setClientPersonalDataByCurUser($client);
                 $manzanaService->updateContact($client);
+            } catch (NotAuthorizedException $e) {
             } catch (ManzanaServiceException $e) {
+            } catch (ManzanaException $e) {
             }
         }
         
+        /** @noinspection PhpUnusedLocalVariableInspection */
+        $name = $userEntity->getName();
         ob_start();
         /** @noinspection PhpIncludeInspection */
         include_once App::getDocumentRoot()
@@ -291,7 +349,6 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     /**
      * @param Request $request
      *
-     * @throws ContactUpdateException
      * @throws ValidationException
      * @throws InvalidIdentifierException
      * @throws ServiceNotFoundException
@@ -307,7 +364,17 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         $phone       = $request->get('phone', '');
         $confirmCode = $request->get('confirmCode', '');
         try {
-            $res = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::checkConfirmSms(
+            $phone = PhoneHelper::normalizePhone($phone);
+        } catch (WrongPhoneNumberException $e) {
+            return JsonErrorResponse::createWithData(
+                $e->getMessage(),
+                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
+            );
+        }
+        try {
+            /** @var ConfirmCodeService $confirmService */
+            $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+            $res            = $confirmService::checkConfirmSms(
                 $phone,
                 $confirmCode
             );
@@ -335,13 +402,10 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         }
         
         $data = [
-            'ID'                 => $this->currentUserProvider->getCurrentUserId(),
             'UF_PHONE_CONFIRMED' => 'Y',
             'PERSONAL_PHONE'     => $phone,
         ];
-        if ($this->currentUserProvider->getUserRepository()->update(
-            SerializerBuilder::create()->build()->fromArray($data, User::class)
-        )) {
+        if ($this->currentUserProvider->getUserRepository()->updateData($this->currentUserProvider->getCurrentUserId(), $data)) {
             /** @var ManzanaService $manzanaService */
             $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
             $client         = null;
@@ -349,17 +413,18 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 $contactId         = $manzanaService->getContactIdByCurUser();
                 $client            = new Client();
                 $client->contactId = $contactId;
-            } catch (ManzanaServiceContactSearchMoreOneException $e) {
             } catch (ManzanaServiceContactSearchNullException $e) {
                 $client = new Client();
             } catch (ManzanaServiceException $e) {
             } catch (NotAuthorizedException $e) {
             }
             if ($client instanceof Client) {
-                $this->currentUserProvider->setClientPersonalDataByCurUser($client);
                 try {
+                    $this->currentUserProvider->setClientPersonalDataByCurUser($client);
                     $manzanaService->updateContact($client);
-                } catch (ManzanaServiceException $e) {}
+                } catch (ManzanaServiceException $e) {
+                } catch (ManzanaException $e) {
+                }
             }
         }
         
@@ -375,7 +440,6 @@ class FourPawsRegisterComponent extends \CBitrixComponent
      * @throws ServiceNotFoundException
      * @throws \Exception
      * @throws ApplicationCreateException
-     * @throws WrongPhoneNumberException
      * @throws ServiceCircularReferenceException
      * @return JsonResponse
      */
@@ -383,23 +447,23 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     {
         $step  = $request->get('step', '');
         $phone = $request->get('phone', '');
+        if (!empty($phone)) {
+            try {
+                $phone = PhoneHelper::normalizePhone($phone);
+            } catch (WrongPhoneNumberException $e) {
+                return JsonErrorResponse::createWithData(
+                    $e->getMessage(),
+                    ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
+                );
+            }
+        }
         $mess  = '';
         $title = 'Регистрация';
         switch ($step) {
-            case 'step1':
-            case 'addPhone':
-                break;
             case 'step2':
                 $mess = $this->ajaxGetStep2($request->get('confirmCode', ''), $phone);
                 if ($mess instanceof JsonResponse) {
                     return $mess;
-                }
-                break;
-            case 'authByPhone':
-                /** @noinspection CallableParameterUseCaseInTypeContextInspection */
-                $phone = $this->ajaxGetAuthByPhone($phone);
-                if ($phone instanceof JsonResponse) {
-                    return $phone;
                 }
                 break;
             case 'sendSmsCode':
@@ -420,6 +484,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 }
                 break;
         }
+        $phone = PhoneHelper::formatPhone($phone, '+7 (%s%s%s) %s%s%s-%s%s-%s%s');
         ob_start(); ?>
         <header class="b-registration__header">
             <h1 class="b-title b-title--h1 b-title--registration"><?= $title ?></h1>
@@ -455,16 +520,21 @@ class FourPawsRegisterComponent extends \CBitrixComponent
      */
     private function ajaxGetStep2($confirmCode, $phone)
     {
-        $request   = Application::getInstance()->getContext()->getRequest();
-        $recaptcha = (string)$request->get('g-recaptcha-response');
-        if (!empty($recaptcha) && $request->offsetExists('g-recaptcha-response')
-            && !App::getInstance()->getContainer()->get('recaptcha.service')->checkCaptcha($recaptcha)) {
-            return JsonErrorResponse::create(
-                'Проверка капчи не пройдена'
-            );
+        $request = Application::getInstance()->getContext()->getRequest();
+        if ($request->offsetExists('g-recaptcha-response')) {
+            $recaptcha = (string)$request->get('g-recaptcha-response');
+            /** @var ReCaptchaService $recaptchaService */
+            $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
+            if (!$recaptchaService->checkCaptcha($recaptcha)) {
+                return JsonErrorResponse::create(
+                    'Проверка капчи не пройдена'
+                );
+            }
         }
         try {
-            $res = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::checkConfirmSms(
+            /** @var ConfirmCodeService $confirmService */
+            $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+            $res            = $confirmService::checkConfirmSms(
                 $phone,
                 (string)$confirmCode
             );
@@ -487,23 +557,16 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         } catch (NotFoundConfirmedCodeException $e) {
             return JsonErrorResponse::createWithData(
                 $e->getMessage(),
-                ['errors' => ['expiredConfirmCode' => $e->getMessage()]]
+                ['errors' => ['notFoundConfirmCode' => $e->getMessage()]]
             );
-        } catch (Exception $e) {
         }
         $mess = 'Смс прошло проверку';
         
         /** @var ManzanaService $manzanaService */
         $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
         try {
-            $manzanaData = $manzanaService->getUserDataByPhone($phone);
-            /** @var Clients $clients */
-            $clients = $manzanaData->clients;
-            if (\is_array($clients) && \count($clients) === 1) {
-                /** @noinspection PhpUnusedLocalVariableInspection */
-                /** @var Client $manzanaItem */
-                $manzanaItem = current($clients);
-            }
+            /** @noinspection PhpUnusedLocalVariableInspection */
+            $manzanaItem = $manzanaService->getContactByPhone($phone);
         } catch (ManzanaServiceException $e) {
         }
         
@@ -513,42 +576,13 @@ class FourPawsRegisterComponent extends \CBitrixComponent
     /**
      * @param string $phone
      *
-     * @throws WrongPhoneNumberException
-     * @return JsonResponse|string
-     */
-    private function ajaxGetAuthByPhone($phone)
-    {
-        if (PhoneHelper::isPhone($phone)) {
-            $phone = PhoneHelper::normalizePhone($phone);
-        } else {
-            return JsonErrorResponse::createWithData(
-                'Введен некорректный номер телефона',
-                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
-            );
-        }
-        
-        return $phone;
-    }
-    
-    /**
-     * @param string $phone
-     *
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
-     * @throws WrongPhoneNumberException
      * @return array|JsonResponse
      */
     private function ajaxGetSendSmsCode($phone)
     {
-        if (PhoneHelper::isPhone($phone)) {
-            $phone = PhoneHelper::normalizePhone($phone);
-        } else {
-            return JsonErrorResponse::createWithData(
-                'Введен некорректный номер телефона',
-                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
-            );
-        }
         $mess = '';
         $step = '';
         
@@ -566,6 +600,11 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 ]
             );
         } catch (UsernameNotFoundException $e) {
+        } catch (WrongPhoneNumberException $e) {
+            return JsonErrorResponse::createWithData(
+                'Некорректный номер телефона',
+                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
+            );
         }
         
         if ($id > 0) {
@@ -574,7 +613,9 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             /** @noinspection PhpUnusedLocalVariableInspection */
             
             try {
-                $res = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class)::sendConfirmSms($phone);
+                /** @var ConfirmCodeService $confirmService */
+                $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+                $res            = $confirmService::sendConfirmSms($phone);
                 if ($res) {
                     $mess = 'Смс успешно отправлено';
                 } else {

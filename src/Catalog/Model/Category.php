@@ -105,7 +105,7 @@ class Category extends IblockSection implements FilterInterface
                     'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS),
                     'ID'        => 0,
                     'CODE'      => '',
-                    'NAME'      => 'Поиск товаров',
+                    'NAME'      => 'Результаты поиска',
                 ]
             )
         );
@@ -369,6 +369,15 @@ class Category extends IblockSection implements FilterInterface
         }
 
         return new Terms($this->getRuleCode(), $sectionIdList);
+    }
+
+    public function getCanonicalName()
+    {
+        $suffix = '';
+        if ($this->getParent()) {
+            $suffix = $this->getParent()->getSuffix();
+        }
+        return $this->getDisplayName() ?: trim(implode(' ', [$this->getName(), $suffix]));
     }
 
     /**

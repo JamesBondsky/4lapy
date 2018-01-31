@@ -64,7 +64,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                     </div>
                 </div>
             </div>
-            <div class="b-input-line b-input-line--popup-authorization b-input-line--referal js-date">
+            <div class="b-input-line b-input-line--popup-authorization b-input-line--referal js-date js-date-valid">
                 <div class="b-input-line__label-wrapper">
                     <label class="b-input-line__label" for="data-date">Дата рождения</label>
                 </div>
@@ -75,7 +75,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                            placeholder=""
                            name="PERSONAL_BIRTHDAY"
                            data-text="3"
-                           value="<?= $arResult['CUR_USER']['BIRTHDAY'] ?>" />
+                           value="<?= $arResult['CUR_USER']['BIRTHDAY_POPUP'] ?>" />
                     <div class="b-error"><span class="js-message"></span>
                     </div>
                 </div>

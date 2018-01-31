@@ -7,8 +7,8 @@ class WordHelper
     /**
      * Возвращает нужную форму существительного, стоящего после числительного
      *
-     * @param int $number числительное
-     * @param array $forms формы слова для 1, 2, 5. Напр. ['дверь', 'двери', 'дверей']
+     * @param int   $number числительное
+     * @param array $forms  формы слова для 1, 2, 5. Напр. ['дверь', 'двери', 'дверей']
      *
      * @return mixed
      */
@@ -18,5 +18,22 @@ class WordHelper
         $key = ($number % 100 > 4 && $number % 100 < 20) ? 2 : $ar[min($number % 10, 5)];
 
         return $forms[$key];
+    }
+
+    public static function showWeight(float $weight)
+    {
+        $parts = [];
+
+        $kg = floor($weight / 1000);
+        if ($kg) {
+            $parts[] = $kg . ' кг';
+        }
+
+        $g = $weight % 1000;
+        if ($g) {
+            $parts[] = $g . ' г';
+        }
+
+        return implode(' ', $parts);
     }
 }

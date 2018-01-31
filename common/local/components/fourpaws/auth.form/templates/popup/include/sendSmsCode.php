@@ -2,23 +2,20 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
+
+use FourPaws\App\Application as App;
+use FourPaws\ReCaptcha\ReCaptchaService;
+
 /** @var string $phone */ ?>
-<div class="b-registration__content b-registration__content--moiety b-registration__content--step">
-    <div class="b-step-form b-step-form--add-number">Шаг <span>1</span> из <span>2</span>
+<div class="b-registration__content b-registration__content--moiety b-registration__content--step"
+     style="padding: 0!important; border: none !important; width:100% !important;">
+    <div class="b-registration__your-number" id="js-resend"
+         data-url="/ajax/user/auth/login/"
+         data-method="post"
+         data-phone="<?= $phone ?>"
+         data-action="resendSms">Ваш номер <?= $phone ?>
     </div>
-    <div class="b-registration__your-number">Ваш номер <span id="js-resend"
-                                                             data-url="/ajax/user/auth/login/"
-                                                             data-phone="<?= $phone ?>"
-                                                             data-action="resendSms"><?= $phone ?></span>
-    </div>
-    <a class="b-link-gray b-link-gray--add-number js-else-phone"
-       href="javascript:void(0);"
-       title="Сменить номер"
-       data-url="/ajax/user/auth/login/"
-       data-action="get"
-       data-step="addPhone"
-       data-phone="<?= $phone ?>">Сменить номер</a>
-    <form class="b-registration__form js-form-validation js-registration-form"
+    <form class="b-registration__form js-form-validation js-registration-form js-ajax-form"
           id="reg-step3-form"
           data-url="/ajax/user/auth/login/"
           method="post">
@@ -39,20 +36,17 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             </div>
             <a class="b-link-gray"
                href="javascript:void(0);"
-               data-url="/ajax/user/auth/login/"
+               data-url="/ajax/user/auth/register/"
+               data-method="post"
                data-phone="<?= $phone ?>"
                data-action="resendSms"
                title="Отправить снова">Отправить снова</a>
         </div>
-        <div class="b-registration__captcha" data-sitekey=""></div>
+        <?php /** @var ReCaptchaService $recaptchaService */
+        /** @noinspection PhpUnhandledExceptionInspection */
+        $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
+        echo $recaptchaService->getCaptcha(' b-registration__captcha') ?>
+        <div><span class="b-registration__auth-error"></span></div>
         <button class="b-button b-button--social b-button--full-width">Подтвердить</button>
     </form>
 </div>
-<section class="b-registration__additional-info b-registration__additional-info--step">
-    <h3 class="b-registration__title-advantage">Зачем это нужно?</h3>
-    <ul class="b-social-advantage">
-        <li class="b-social-advantage__item">Для оперативной связи по поводу доставки</li>
-        <li class="b-social-advantage__item">Для привязки бонусной карты</li>
-        <li class="b-social-advantage__item">Телефон можно использовать как логин при входе</li>
-    </ul>
-</section>

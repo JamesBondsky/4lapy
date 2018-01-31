@@ -4,6 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use FourPaws\App\Application as App;
+use FourPaws\ReCaptcha\ReCaptchaService;
 
 /** @var string $phone
  * @var string $newAction
@@ -11,16 +12,17 @@ use FourPaws\App\Application as App;
 <div class="b-registration__content b-registration__content--moiety b-registration__content--step">
     <div class="b-step-form b-step-form--add-number">Шаг <span>1</span> из <span>2</span>
     </div>
-    <div class="b-registration__your-number">Ваш номер <span id="js-resend"
-                                                             data-url="/ajax/user/auth/register/"
-                                                             data-phone="<?= $phone ?> data-action=resendSms"><?= $phone ?></span>
+    <div class="b-registration__your-number" id="js-resend"
+         data-url="/ajax/user/auth/register/"
+         data-phone="<?= $phone ?>"
+         data-action="resendSms">Ваш номер <?= $phone ?>
     </div>
     <a class="b-link-gray b-link-gray--add-number js-else-phone"
        href="javascript:void(0);"
        title="Сменить номер"
        data-url="/ajax/user/auth/register/"
        data-action="get"
-       data-step="step1"
+       data-step="<?=!empty($newAction) ? 'addPhone' : 'step1'?>"
        data-phone="<?= $phone ?>">Сменить номер</a>
     <form class="b-registration__form js-form-validation js-registration-form"
           id="reg-step3-form"
@@ -29,7 +31,7 @@ use FourPaws\App\Application as App;
         <input type="hidden" name="action" value="<?= !empty($newAction) ? $newAction : 'get' ?>">
         <input type="hidden" name="step" value="step2">
         <input type="hidden" name="phone" value="<?= $phone ?>">
-        <div class="b-input-line b-input-line--add-number js-phone3-resend">
+        <div class="b-input-line b-input-line--add-number js-phone3-resend js-resend">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="sms-code-3">SMS-код</label>
             </div>
@@ -49,7 +51,10 @@ use FourPaws\App\Application as App;
                data-action="resendSms"
                title="Отправить снова">Отправить снова</a>
         </div>
-        <?= App::getInstance()->getContainer()->get('recaptcha.service')->getCaptcha(' b-registration__captcha'); ?>
+        <?php /** @var ReCaptchaService $recaptchaService */
+        /** @noinspection PhpUnhandledExceptionInspection */
+        $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
+        echo $recaptchaService->getCaptcha(' b-registration__captcha') ?>
         <button class="b-button b-button--social b-button--full-width">Подтвердить</button>
     </form>
 </div>

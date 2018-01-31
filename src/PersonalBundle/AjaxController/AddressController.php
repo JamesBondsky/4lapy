@@ -10,11 +10,8 @@ use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\PersonalBundle\Service\AddressService;
-use FourPaws\UserBundle\Exception\BitrixRuntimeException;
-use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -40,7 +37,6 @@ class AddressController extends Controller
      * @Route("/add/", methods={"POST"})
      * @param Request $request
      *
-     * @throws ServiceNotFoundException
      * @return JsonResponse
      */
     public function addAction(Request $request) : JsonResponse
@@ -55,14 +51,17 @@ class AddressController extends Controller
         try {
             if ($this->addressService->add($data)) {
                 return JsonSuccessResponse::create(
-                    '',
+                    'Адресс доставки добавлен',
                     200,
                     [],
                     ['reload' => true]
                 );
             }
-        } catch (BitrixRuntimeException $e) {
         } catch (\Exception $e) {
+            return JsonErrorResponse::createWithData(
+                $e->getMessage(),
+                ['errors' => ['systemError' => $e->getMessage()]]
+            );
         }
         
         return JsonErrorResponse::createWithData(
@@ -75,7 +74,6 @@ class AddressController extends Controller
      * @Route("/update/", methods={"POST"})
      * @param Request $request
      *
-     * @throws ServiceNotFoundException
      * @return JsonResponse
      */
     public function updateAction(Request $request) : JsonResponse
@@ -96,14 +94,12 @@ class AddressController extends Controller
         try {
             if ($this->addressService->update($data)) {
                 return JsonSuccessResponse::create(
-                    '',
+                    'Адресс доставки обновлен',
                     200,
                     [],
                     ['reload' => true]
                 );
             }
-        } catch (BitrixRuntimeException $e) {
-        } catch (ConstraintDefinitionException $e) {
         } catch (\Exception $e) {
         }
         
@@ -117,7 +113,6 @@ class AddressController extends Controller
      * @Route("/delete/", methods={"GET"})
      * @param Request $request
      *
-     * @throws ServiceNotFoundException
      * @return JsonResponse
      */
     public function deleteAction(Request $request) : JsonResponse
@@ -132,14 +127,12 @@ class AddressController extends Controller
         try {
             if ($this->addressService->delete($delId)) {
                 return JsonSuccessResponse::create(
-                    '',
+                    'Адрес доставки удален',
                     200,
                     [],
                     ['reload' => true]
                 );
             }
-        } catch (BitrixRuntimeException $e) {
-        } catch (ConstraintDefinitionException $e) {
         } catch (\Exception $e) {
         }
         

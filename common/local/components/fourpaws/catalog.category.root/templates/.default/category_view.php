@@ -1,18 +1,19 @@
 <?php
 /**
  * @var CBitrixComponentTemplate $this
- * @var array $arParams
- * @var array $arResult
- * @var Category $category
- * @var Category $childCategory
- * @var Category[] $childCategories
- * @var Category $childChildCategory
+ * @var array                    $arParams
+ * @var array                    $arResult
+ * @var Category                 $category
+ * @var Category                 $childCategory
+ * @var Category[]               $childCategories
+ * @var Category                 $childChildCategory
  */
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+use FourPaws\App\Templates\MediaEnum;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\Catalog\Model\Category;
@@ -30,17 +31,17 @@ foreach (array_values($childCategories) as $index => $childCategory) {
         </div>
         <div class="b-common-section__content b-common-section__content--catalog js-catalog-main">
             <?php foreach ($childCategory->getChild() as $childChildCategory) {
-                /* @todo ссылка на картинку-заглушку  */
-                $src = '/empty';
-                if ($childChildCategory->getPictureId()) {
-                    try {
-                        $picture = ResizeImageDecorator::createFromPrimary($childChildCategory->getPictureId())
-                                                       ->setResizeWidth(180)
-                                                       ->setResizeHeight(180);
-                        $src = $picture->getSrc();
-                    } catch (FileNotFoundException $e) {
-                    }
-                } ?>
+        $src = MediaEnum::NO_IMAGE_WEB_PATH;
+        if ($childChildCategory->getPictureId()) {
+            try {
+                $picture =
+                            ResizeImageDecorator::createFromPrimary($childChildCategory->getPictureId())
+                                                ->setResizeWidth(180)
+                                                ->setResizeHeight(180);
+                $src     = $picture->getSrc();
+            } catch (FileNotFoundException $e) {
+            }
+        } ?>
                 <div class="b-common-item b-common-item--catalog js-product-item">
                     <a class="b-common-item__link" href="<?= $childChildCategory->getSectionPageUrl() ?>"
                        title="<?= $childChildCategory->getName() ?>">
@@ -48,7 +49,7 @@ foreach (array_values($childCategories) as $index => $childCategory) {
                                     <img class="b-common-item__image b-common-item__image--catalog js-weight-img"
                                          src="<?= $src ?>"
                                          alt="<?= $childChildCategory->getName() ?>"
-                                         title="<?= $childChildCategory->getName() ?>"/>
+                                         title="<?= $childChildCategory->getName() ?>" />
                         </span>
                         <span class="b-common-item__description-wrap b-common-item__description-wrap--catalog">
                             <span class="b-clipped-text b-clipped-text--catalog">
@@ -57,7 +58,8 @@ foreach (array_values($childCategories) as $index => $childCategory) {
                         </span>
                     </a>
                 </div>
-            <?php } ?>
+            <?php
+    } ?>
         </div>
     </section>
     <?php

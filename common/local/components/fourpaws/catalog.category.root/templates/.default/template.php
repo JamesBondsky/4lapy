@@ -13,9 +13,9 @@
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use FourPaws\App\Templates\ViewsEnum;
 use FourPaws\Catalog\Model\Category;
-use FourPaws\Enum\IblockType;
-use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\BannerSectionCode;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -23,43 +23,43 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 $category = $arResult['CATEGORY'];
 
-/**
- * Удаляем категории без детей
- * @todo Что делать с такими категориями?
- */
-$categoriesWithChildren = $category->getChild()->filter(
-    function (Category $category) {
-        return $category->getChild()->count() > 0;
-    }
-);
+$categoriesWithChildren = $category
+    ->getChild()
+    ->filter(function (Category $category) {
+        return $category->getChild()->count();
+    });
 
 ?>
 <?php $this->setViewTarget(ViewsEnum::CATALOG_CATEGORY_ROOT_LEFT_BLOCK) ?>
     <aside class="b-filter b-filter--accordion">
         <div class="b-filter__wrapper">
             <?php /** @var Category $cat */ ?>
-            <?php foreach ($categoriesWithChildren as $cat) { ?>
+            <?php foreach ($categoriesWithChildren as $cat) {
+    ?>
                 <div class="b-accordion b-accordion--filter">
                     <a class="b-accordion__header b-accordion__header--filter js-toggle-accordion"
                        href="javascript:void(0);"
-                       title="<?= $cat->getName() ?>">
-                        <?= $cat->getName() ?>
+                       title="<?= $cat->getCanonicalName() ?>">
+                        <?= $cat->getCanonicalName() ?>
                     </a>
                     <div class="b-accordion__block js-dropdown-block">
                         <ul class="b-filter-link-list">
-                            <?php foreach ($cat->getChild() as $child) { ?>
+                            <?php foreach ($cat->getChild() as $child) {
+        ?>
                                 <li class="b-filter-link-list__item">
                                     <a class="b-filter-link-list__link"
                                        href="<?= $child->getSectionPageUrl() ?>"
-                                       title="<?= $child->getName() ?>">
-                                        <?= $child->getName() ?>
+                                       title="<?= $child->getCanonicalName() ?>">
+                                        <?= $child->getCanonicalName() ?>
                                     </a>
                                 </li>
-                            <?php } ?>
+                            <?php
+    } ?>
                         </ul>
                     </div>
                 </div>
-            <?php } ?>
+            <?php
+} ?>
         </div>
     </aside>
 <?php $this->EndViewTarget() ?>

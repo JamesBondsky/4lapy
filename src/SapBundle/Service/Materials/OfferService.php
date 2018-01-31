@@ -3,9 +3,13 @@
 namespace FourPaws\SapBundle\Service\Materials;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
-use Bitrix\Main\Application;
+use Bitrix\Main\Entity\AddResult;
+use Bitrix\Main\Entity\UpdateResult;
+use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\Catalog\Model\Offer;
+use FourPaws\SapBundle\Dto\In\Offers\BarCode;
 use FourPaws\SapBundle\Dto\In\Offers\Material;
+use FourPaws\SapBundle\Enum\SapOfferProperty;
 use FourPaws\SapBundle\Repository\OfferRepository;
 use FourPaws\SapBundle\Service\ReferenceService;
 use Psr\Log\LoggerAwareInterface;
@@ -20,50 +24,189 @@ class OfferService implements LoggerAwareInterface
     private $referenceService;
 
     /**
-     * @var \CIBlockElement
-     */
-    private $iblockElement;
-
-    /**
-     * @var \Bitrix\Main\DB\Connection
-     */
-    private $connect;
-    /**
      * @var OfferRepository
      */
     private $offerRepository;
 
-    public function __construct(OfferRepository $offerRepository, ReferenceService $referenceService)
+    public function __construct(ReferenceService $referenceService, OfferRepository $offerRepository)
     {
         $this->referenceService = $referenceService;
-        $this->iblockElement = new \CIBlockElement();
-        $this->connect = Application::getConnection();
         $this->offerRepository = $offerRepository;
     }
-
 
     /**
      * @param Material $material
      *
-     * @return bool
+     * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
+     * @throws \FourPaws\SapBundle\Exception\NotFoundBasicUomException
+     * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
+     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
+     * @throws \FourPaws\SapBundle\Exception\LogicException
+     * @throws \FourPaws\SapBundle\Exception\RuntimeException
+     * @return Offer
      */
-    public function createFromMaterial(Material $material)
+    public function processMaterial(Material $material): Offer
     {
-        $currentOffer = $this->offerRepository->findByXmlId($material->getOfferXmlId());
-        /**
-         * Дективируем не выгружаемые офферы
-         */
-        if ($currentOffer && $currentOffer->isActive() && $material->isNotUploadToIm()) {
-            return $this->offerRepository->setActive($currentOffer->getId(), false);
-        }
+        $offer = $this->findByMaterial($material) ?: new Offer();
+        $this->fillFromMaterial($offer, $material);
 
-
+        return $offer;
     }
 
-    protected function performDeactivate(Material $material, Offer $offer = null)
+    /**
+     * @param Offer $offer
+     *
+     * @return AddResult
+     */
+    public function create(Offer $offer): AddResult
     {
-        if ($offer && $offer->isActive() && $material->isNotUploadToIm()) {
-            return $this->offerRepository->setActive($offer->getId(), false);
+        return $this->offerRepository->create($offer);
+    }
+
+    /**
+     * @param Offer $offer
+     *
+     * @return UpdateResult
+     */
+    public function update(Offer $offer): UpdateResult
+    {
+        return $this->offerRepository->update($offer);
+    }
+
+    /**
+     * @param string $xmlId
+     *
+     * @throws \RuntimeException
+     * @return bool
+     */
+    public function deativate(string $xmlId)
+    {
+        if ($id = $this->offerRepository->findIdByXmlId($xmlId)) {
+            $result = $this->offerRepository->setActive($id, false);
+            if ($result) {
+                $this->log()->debug(sprintf('Деактивирован оффер %s [%s]', $id, $xmlId));
+            }
+            return $result;
         }
+        return true;
+    }
+
+    /**
+     * @param Material $material
+     *
+     * @return null|IblockElement|Offer
+     */
+    protected function findByMaterial(Material $material)
+    {
+        return $this->offerRepository->findByXmlId($material->getOfferXmlId());
+    }
+
+    /**
+     * @param Offer    $offer
+     * @param Material $material
+     *
+     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
+     * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
+     * @throws \FourPaws\SapBundle\Exception\LogicException
+     * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
+     * @throws \FourPaws\SapBundle\Exception\NotFoundBasicUomException
+     * @return void
+     */
+    protected function fillFromMaterial(Offer $offer, Material $material)
+    {
+        $this->fillFields($offer, $material);
+        $this->fillProperties($offer, $material);
+    }
+
+    /**
+     * @param Offer    $offer
+     * @param Material $material
+     */
+    protected function fillFields(Offer $offer, Material $material)
+    {
+        $offer
+            ->withActive(!$material->isNotUploadToIm())
+            ->withName($material->getOfferName())
+            ->withXmlId($material->getOfferXmlId());
+    }
+
+    /**
+     * @param Offer    $offer
+     * @param Material $material
+     *
+     * @throws \RuntimeException
+     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
+     * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
+     * @throws \FourPaws\SapBundle\Exception\LogicException
+     * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
+     * @throws \FourPaws\SapBundle\Exception\NotFoundBasicUomException
+     */
+    protected function fillProperties(Offer $offer, Material $material)
+    {
+        /**
+         * @todo На данный момент нет описания полей по SAP
+         * $offer->withFlavourCombination();
+         * $offer->withColourCombination();
+         */
+        $offer->withMultiplicity($material->getCountInPack());
+        $this->fillReferenceProperties($offer, $material);
+        $this->fillBarCodes($offer, $material);
+        $this->fillVolume($offer, $material);
+    }
+
+    /**
+     * @param Offer    $offer
+     * @param Material $material
+     *
+     * @throws \FourPaws\SapBundle\Exception\NotFoundBasicUomException
+     */
+    protected function fillVolume(Offer $offer, Material $material)
+    {
+        $offer->withVolume($material->getBasicUnitOfMeasure()->getVolume());
+    }
+
+
+    /**
+     * @param Offer    $offer
+     * @param Material $material
+     *
+     * @throws \RuntimeException
+     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
+     * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
+     * @throws \FourPaws\SapBundle\Exception\LogicException
+     * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
+     */
+    protected function fillReferenceProperties(Offer $offer, Material $material)
+    {
+        $offer
+            ->withColourXmlId($this->referenceService->getPropertyBitrixValue(SapOfferProperty::COLOUR, $material))
+            ->withKindOfPackingXmlId($this->referenceService->getPropertyBitrixValue(
+                SapOfferProperty::KIND_OF_PACKING,
+                $material
+            ))
+            ->withClothingSizeXmlId($this->referenceService->getPropertyBitrixValue(
+                SapOfferProperty::CLOTHING_SIZE,
+                $material
+            ))
+            ->withVolumeReferenceXmlId($this->referenceService->getPropertyBitrixValue(
+                SapOfferProperty::VOLUME,
+                $material
+            ))
+            ->withSeasonYearXmlId($this->referenceService->getPropertyBitrixValue(
+                SapOfferProperty::SEASON_YEAR,
+                $material
+            ));
+    }
+
+    /**
+     * @param Offer    $offer
+     * @param Material $material
+     */
+    protected function fillBarCodes(Offer $offer, Material $material)
+    {
+        $barcodes = $material->getAllBarcodes()->map(function (BarCode $barCode) {
+            return $barCode->getValue();
+        })->toArray();
+        $offer->withBarcodes($barcodes);
     }
 }

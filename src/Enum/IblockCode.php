@@ -21,4 +21,6 @@ class IblockCode
     const PRODUCTS  = 'products';
     
     const SHARES    = 'shares';
+    
+    const FOOD_SELECTION    = 'food_selection';
 }

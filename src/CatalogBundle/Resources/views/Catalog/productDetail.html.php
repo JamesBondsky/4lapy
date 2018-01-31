@@ -5,10 +5,10 @@
  */
 
 use FourPaws\App\Templates\ViewsEnum;
-use FourPaws\CatalogBundle\Dto\ProductDetailRequest;
-use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Catalog\Model\Product;
+use FourPaws\CatalogBundle\Dto\ProductDetailRequest;
+use FourPaws\Decorators\SvgDecorator;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\HighloadHelper;
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
@@ -21,9 +21,11 @@ $product = $APPLICATION->IncludeComponent(
     '',
     [
         'CODE'      => $productDetailRequest->getProductSlug(),
+        'OFFER_ID'  => $productDetailRequest->getOfferId(),
         'SET_TITLE' => 'Y',
     ],
-    $component
+    false,
+    ['HIDE_ICONS' => 'Y']
 );
 ?>
     <div class="b-product-card">
@@ -35,34 +37,31 @@ $product = $APPLICATION->IncludeComponent(
                 [
                     'IBLOCK_ELEMENT' => $product,
                 ],
-                $component
+                false,
+                ['HIDE_ICONS' => 'Y']
             );
             ?>
             <div class="b-product-card__top">
                 <div class="b-product-card__title-product">
-                    <?php
-                    $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_DETAIL_TITLE_VIEW);
-                    ?>
+                    <?php $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_DETAIL_TITLE_VIEW); ?>
                     <div class="b-common-item b-common-item--card">
                         <div class="b-common-item__rank b-common-item__rank--card">
-                            <?php
-                            $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_RATING_STARS_VIEW);
-                            /**
-                             * @todo implement Акции и Шильдики
-                             */
-                            ?>
+                            <?php $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_RATING_STARS_VIEW); ?>
                             <div class="b-common-item__rank-wrapper">
-                                <span class="b-common-item__rank-text b-common-item__rank-text--green b-common-item__rank-text--card">Новинка</span>
-                                <span class="b-common-item__rank-text b-common-item__rank-text--red">4+1 в подарок при покупке</span>
+                                <?php
+                                /** @todo implement Акции и Шильдики
+                                 * <span class="b-common-item__rank-text b-common-item__rank-text--green
+                                 * b-common-item__rank-text--card">Новинка</span>
+                                 * <span class="b-common-item__rank-text b-common-item__rank-text--red">4+1 в подарок
+                                 * при покупке</span>
+                                 */ ?>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="b-product-card__product">
                     <div class="b-product-card__permutation-weight js-weight-tablet"></div>
-                    <?php
-                    $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_DETAIL_SLIDER_VIEW);
-                    ?>
+                    <?php $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_DETAIL_SLIDER_VIEW); ?>
 
                     <div class="b-product-card__info-product js-weight-here">
                         <?php
@@ -86,24 +85,23 @@ $product = $APPLICATION->IncludeComponent(
                             <?php
                             $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB_HEADER);
 
-                            /**
-                             * @todo Состава пока нет
-                             */
-                            //<li class="b-tab-title__item js-tab-item">
-                            //    <a class="b-tab-title__link js-tab-link"
-                            //    href="javascript:void(0);" title="Состав"
-                            //    data-tab="composition"><span
-                            //    class="b-tab-title__text">Состав</span></a>
-                            //</li>
-                            /**
-                             * @todo Рекоммендация по питанию пока нет
-                             */
-                            /*<li class="b-tab-title__item js-tab-item">
-                                <a class="b-tab-title__link js-tab-link"
-                                   href="javascript:void(0);" title="Рекомендации по питанию"
-                                   data-tab="recommendations"><span class="b-tab-title__text">Рекомендации по питанию</span></a>
-                            </li>*/
+                            if ($product->getComposition()->getText()) { ?>
+                                <li class="b-tab-title__item js-tab-item">
+                                    <a class="b-tab-title__link js-tab-link"
+                                       href="javascript:void(0);" title="Состав"
+                                       data-tab="composition"><span
+                                                class="b-tab-title__text">Состав</span></a>
+                                </li>
+                            <?php }
 
+                            if ($product->getNormsOfUse()->getText()) { ?>
+                                <li class="b-tab-title__item js-tab-item">
+                                    <a class="b-tab-title__link js-tab-link"
+                                       href="javascript:void(0);" title="Рекомендации по питанию"
+                                       data-tab="recommendations"><span class="b-tab-title__text">Рекомендации по питанию</span></a>
+                                </li>
+                            <?php }
+                            
                             $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_RATING_TAB_HEADER_VIEW);
                             $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_DETAIL_DELIVERY_PAYMENT_TAB_HEADER);
                             ?>
@@ -125,21 +123,18 @@ $product = $APPLICATION->IncludeComponent(
                         <?php
                         $APPLICATION->ShowViewContent(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB);
 
-                        /**
-                         * @todo Состава пока нет
-                         */
-                        /*<div class="b-tab-content__container js-tab-content" data-tab-content="composition">
-                            <div>2</div>
-                        </div>*/
+                        if ($product->getComposition()->getText()) { ?>
+                            <div class="b-tab-content__container js-tab-content" data-tab-content="composition">
+                                <div><?= $product->getComposition()->getText() ?></div>
+                            </div>
+                        <?php }
 
-                        /**
-                         * @todo Рекомендация по питанию пока нет
-                         */
-                        /*
-                         <div class="b-tab-content__container js-tab-content" data-tab-content="recommendations">
-                            <div>3</div>
-                        </div>
-                        */
+                        if ($product->getNormsOfUse()->getText()) { ?>
+                            <div class="b-tab-content__container js-tab-content" data-tab-content="recommendations">
+                                <div><?= $product->getNormsOfUse()->getText() ?>></div>
+                            </div>
+                        <?php }
+
                         /** @noinspection PhpUnhandledExceptionInspection */
                         $APPLICATION->IncludeComponent(
                             'fourpaws:comments',
@@ -152,7 +147,7 @@ $product = $APPLICATION->IncludeComponent(
                                 'ACTIVE_DATE_FORMAT' => 'd j Y',
                                 'TYPE'               => 'catalog',
                             ],
-                            $component,
+                            false,
                             ['HIDE_ICONS' => 'Y']
                         );
                         ?>
@@ -173,8 +168,7 @@ $product = $APPLICATION->IncludeComponent(
                                             class="b-icon b-icon--map"><?= new SvgDecorator(
                                             'icon-map', 22, 20
                                         ) ?></span></a>
-                                <ul
-                                        class="b-availability-tab-list">
+                                <ul class="b-availability-tab-list">
                                     <li class="b-availability-tab-list__item active"><a
                                                 class="b-availability-tab-list__link js-product-list"
                                                 href="javascript:void(0)" aria-controls="shipping-list" title="Списком">Списком</a>
@@ -1083,6 +1077,38 @@ $product = $APPLICATION->IncludeComponent(
         </div>
     </div>
 <?php
+
+/**
+ * Преимущества
+ */
+$APPLICATION->IncludeComponent(
+    'bitrix:main.include',
+    '',
+    [
+        'AREA_FILE_SHOW' => 'file',
+        'PATH' => '/local/include/blocks/advantages.php',
+        'EDIT_TEMPLATE' => '',
+    ],
+    null,
+    [
+        'HIDE_ICONS' => 'N'
+    ]
+);
+
+/**
+ * Похожие товары
+ */
+$APPLICATION->IncludeFile(
+    'blocks/components/similar_products.php',
+    [
+        'PRODUCT_ID' => $product->getId(),
+    ],
+    [
+        'SHOW_BORDER' => false,
+        'NAME' => 'Блок похожих товаров',
+        'MODE' => 'php',
+    ]
+);
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/footer.php';
 die();

@@ -1,74 +1,34 @@
-<?
-$aMenuLinks = Array(
-    Array(
-        "Кошки",
-        "#",
-        Array(),
-        Array(),
-        ""
-    ),
-    Array(
-        "Собаки",
-        "#",
-        Array(),
-        Array(),
-        ""
-    ),
-    Array(
-        "Грызуны и хорьки",
-        "#",
-        Array(),
-        Array(),
-        ""
-    ),
-    Array(
-        "Птицы",
-        "#",
-        Array(),
-        Array(),
-        ""
-    ),
-    Array(
-        "Рыбы",
-        "#",
-        Array(),
-        Array(),
-        ""
-    ),
-    Array(
-        "Рептилии",
-        "#",
-        Array(),
-        Array(),
-        ""
-    ),
-    Array(
-        "Ветеринарная аптека",
-        "#",
-        Array(),
-        Array(),
-        ""
-    ),
-    Array(
-        "Котята",
-        "#",
-        Array(),
-        Array(),
-        ""
-    ),
-    Array(
-        "Щенки",
-        "#",
-        Array(),
-        Array(),
-        ""
-    ),
-    Array(
-        "От блох и клещей",
-        "#",
-        Array(),
-        Array(),
-        ""
-    ),
-);
-?>
+<?php
+
+use FourPaws\Catalog\Model\Category;
+use FourPaws\Catalog\Query\CategoryQuery;
+
+$aMenuLinks = [];
+$sections   = (new CategoryQuery())->withFilterParameter('DEPTH_LEVEL', 1)->exec();
+/** @var Category $section */
+foreach ($sections as $section) {
+    $aMenuLinks[] = [
+        $section->getName(),
+        $section->getSectionPageUrl(),
+        [],
+        [],
+        '',
+    ];
+}
+
+$aMenuLinks = array_merge($aMenuLinks, [
+    [
+        'Котята',
+        '/catalog/koshki/zaveli-kotenka22/',
+        [],
+        [],
+        '',
+    ],
+    [
+        'Щенки',
+        '/catalog/sobaki/zaveli-shchenka33/',
+        [],
+        [],
+        '',
+    ],
+]);

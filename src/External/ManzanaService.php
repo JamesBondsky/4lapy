@@ -17,6 +17,10 @@ use FourPaws\External\Manzana\Model\Card;
 use FourPaws\External\Manzana\Model\CardByContractCards;
 use FourPaws\External\Manzana\Model\Cards;
 use FourPaws\External\Manzana\Model\CardsByContractCards;
+use FourPaws\External\Manzana\Model\Cheque;
+use FourPaws\External\Manzana\Model\ChequeItem;
+use FourPaws\External\Manzana\Model\ChequeItems;
+use FourPaws\External\Manzana\Model\Cheques;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\Manzana\Model\Clients;
 use FourPaws\External\Manzana\Model\Contact;
@@ -87,7 +91,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      *
      * @return string
      *
-     * @throws ManzanaServiceException
+     * @throws ExecuteException
      */
     public function sendPhone(string $phone) : string
     {
@@ -109,7 +113,6 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      *
      * @return string
      *
-     * @throws AuthenticationException
      * @throws ExecuteException
      */
     protected function execute(string $contract, array $parameters = []) : string
@@ -130,6 +133,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
             unset($this->sessionId);
             
             try {
+                /** @noinspection PhpUndefinedFieldInspection */
                 $detail = $e->detail->details->description;
             } catch (\Throwable $e) {
                 $detail = 'none';
@@ -141,7 +145,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
                     $contract,
                     $e->getMessage(),
                     $detail,
-                    var_export($parameters)
+                    var_export($parameters, true)
                 )
             );
             
@@ -204,6 +208,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     public function updateContact(Client $contact) : Client
     {
+        /** @noinspection PhpUndefinedMethodInspection */
         $bag = new ParameterBag($this->serializer->toArray($contact));
         
         try {
@@ -261,6 +266,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     public function getContactByPhone(string $phone) : Client
     {
         /** @var Clients $currentClient */
+        /** @noinspection PhpUndefinedMethodInspection */
         $clients      = $this->getUserDataByPhone($phone)->clients->toArray();
         $countClients = \count($clients);
         if ($countClients === 1) {
@@ -303,7 +309,8 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         } catch (\Exception $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
         }
-        
+    
+        /** @noinspection PhpIncompatibleReturnTypeInspection */
         return $clients;
     }
     
@@ -371,11 +378,12 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      * @param ReferralParams $referralParams
      *
      * @return string
+     * @throws ManzanaServiceException
      */
     public function addReferralByBonusCard(ReferralParams $referralParams) : string
     {
-        $result = '';
-        $bag    = new ParameterBag($this->serializer->toArray($referralParams));
+        /** @noinspection PhpUndefinedMethodInspection */
+        $bag = new ParameterBag($this->serializer->toArray($referralParams));
         
         try {
             $rawResult = $this->execute(self::CONTRACT_CARD_ATTACH, $bag->getParameters());
@@ -384,23 +392,15 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
             if (!$result->isError()) {
                 $result = $result->getContactId();
             }
-        } catch (AuthenticationException $e) {
         } catch (\Exception $e) {
             try {
+                /** @noinspection PhpUndefinedFieldInspection */
                 $detail = $e->detail->details->description;
             } catch (\Throwable $e) {
                 $detail = 'none';
             }
-            switch ($detail) {
-                case 'Card is completed':
-                    break;
-                case 'Card is blocked':
-                    break;
-                case 'Card is closed':
-                    break;
-                case 'Card belongs to other referrer':
-                    break;
-            }
+            
+            throw new ManzanaServiceException($detail);
         }
         
         return $result;
@@ -447,6 +447,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
                 $result = $this->execute(self::CONTRACT_CONTACT_REFERRAL_CARDS, $bag->getParameters());
                 /** @var Referrals $res */
                 $res       = $this->serializer->deserialize($result, Referrals::class, 'xml');
+                /** @noinspection PhpUndefinedMethodInspection */
                 $referrals = $res->referrals->toArray();
             } catch (\Exception $e) {
                 throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
@@ -513,6 +514,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         
         try {
             $result = $this->execute(self::CONTRACT_CARD_VALIDATE, $bag->getParameters());
+            /** @noinspection PhpUndefinedFieldInspection */
             $result = $result->cardid->__toString() !== '';
         } catch (\Throwable $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
@@ -541,7 +543,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         
         try {
             $result = $this->execute(self::CONTRACT_SEARCH_CARD_BY_NUMBER, $bag->getParameters());
-            $card = $this->serializer->deserialize($result, Cards::class, 'xml')->cards[0];
+            $card   = $this->serializer->deserialize($result, Cards::class, 'xml')->cards[0];
         } catch (\Exception $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
         }
@@ -622,8 +624,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
                 $result = $this->execute(self::CONTRACT_CARDS, $bag->getParameters());
                 /** @var CardsByContractCards $cards */
                 $this->cards[$contactId] =
-                $cards =
-                    $this->serializer->deserialize($result, CardsByContractCards::class, 'xml')->cards->toArray();
+                $cards = $this->serializer->deserialize($result, CardsByContractCards::class, 'xml')->cards->toArray();
             } catch (\Exception $e) {
                 throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
             }
@@ -636,4 +637,51 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     {
     
     }
+    
+    /**
+     * @param string $contactId
+     *
+     * @return Cheque[]
+     * @throws ManzanaServiceException
+     */
+    public function getCheques(string $contactId) : array
+    {
+        $bag = new ParameterBag(['contact_id' => $contactId]);
+        try {
+            $result = $this->execute(self::CONTRACT_CONTACT_CHEQUES, $bag->getParameters());
+            /** @var Cheques $resCheques */
+            $resCheques = $this->serializer->deserialize($result, Cheques::class, 'xml');
+            /** @var Cheque[] $cheques*/
+            $cheques = $resCheques->cheques->toArray();
+        } catch (\Exception $e) {
+            throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
+        }
+        
+        return $cheques;
+        
+    }
+    
+    /**
+     * @param string $chequeId
+     *
+     * @return ChequeItem[]
+     * @throws ManzanaServiceException
+     */
+    public function getItemsBuCheque(string $chequeId) : array
+    {
+        
+        $bag = new ParameterBag(['cheque_id' => $chequeId]);
+        try {
+            $result = $this->execute(self::CONTRACT_CHEQUE_ITEMS, $bag->getParameters());
+            /** @var ChequeItems $resChequeItems */
+            $resChequeItems = $this->serializer->deserialize($result, ChequeItems::class, 'xml');
+            /** @var ChequeItem[] $chequeItems */
+            $chequeItems = $resChequeItems->chequeItems->toArray();
+        } catch (\Exception $e) {
+            throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
+        }
+        
+        return $chequeItems;
+    }
+    
 }

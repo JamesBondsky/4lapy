@@ -10,11 +10,8 @@ use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\PersonalBundle\Service\PetService;
-use FourPaws\UserBundle\Exception\BitrixRuntimeException;
-use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -40,7 +37,6 @@ class PetController extends Controller
      * @Route("/add/", methods={"POST"})
      * @param Request $request
      *
-     * @throws ServiceNotFoundException
      * @return JsonResponse
      */
     public function addAction(Request $request) : JsonResponse
@@ -52,17 +48,21 @@ class PetController extends Controller
                 ['errors' => ['emptyData' => 'Не указаны данные для добавления']]
             );
         }
+    
+        if(!empty($_FILES['UF_PHOTO'])){
+            $data['UF_PHOTO'] = 1;
+            $data['UF_PHOTO_TMP'] = $_FILES['UF_PHOTO'];
+        }
         
         try {
             if ($this->petService->add($data)) {
                 return JsonSuccessResponse::create(
-                    '',
+                    'Информация о питомце успешно добавлена',
                     200,
                     [],
                     ['reload' => true]
                 );
             }
-        } catch (BitrixRuntimeException $e) {
         } catch (\Exception $e) {
         }
         
@@ -76,7 +76,6 @@ class PetController extends Controller
      * @Route("/update/", methods={"POST"})
      * @param Request $request
      *
-     * @throws ServiceNotFoundException
      * @return JsonResponse
      */
     public function updateAction(Request $request) : JsonResponse
@@ -94,18 +93,21 @@ class PetController extends Controller
                 ['errors' => ['emptyIdError' => 'Не указан элемент для обновления']]
             );
         }
+    
+        if(!empty($_FILES['UF_PHOTO'])){
+            $data['UF_PHOTO'] = 1;
+            $data['UF_PHOTO_TMP'] = $_FILES['UF_PHOTO'];
+        }
         
         try {
             if ($this->petService->update($data)) {
                 return JsonSuccessResponse::create(
-                    '',
+                    'Информация о питомце успешно обновлена',
                     200,
                     [],
                     ['reload' => true]
                 );
             }
-        } catch (BitrixRuntimeException $e) {
-        } catch (ConstraintDefinitionException $e) {
         } catch (\Exception $e) {
         }
         
@@ -119,7 +121,6 @@ class PetController extends Controller
      * @Route("/delete/", methods={"GET"})
      * @param Request $request
      *
-     * @throws ServiceNotFoundException
      * @return JsonResponse
      */
     public function deleteAction(Request $request) : JsonResponse
@@ -135,14 +136,12 @@ class PetController extends Controller
         try {
             if ($this->petService->delete($delId)) {
                 return JsonSuccessResponse::create(
-                    '',
+                    'Информация о питомце удалена',
                     200,
                     [],
                     ['reload' => true]
                 );
             }
-        } catch (BitrixRuntimeException $e) {
-        } catch (ConstraintDefinitionException $e) {
         } catch (\Exception $e) {
         }
         

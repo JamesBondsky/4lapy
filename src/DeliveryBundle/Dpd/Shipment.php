@@ -2,7 +2,9 @@
 
 namespace FourPaws\DeliveryBundle\Dpd;
 
+use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Loader;
+use Ipolh\DPD\DB\Terminal\Table;
 use WebArch\BitrixCache\BitrixCache;
 
 if (!Loader::includeModule('ipol.dpd')) {
@@ -15,6 +17,10 @@ if (!Loader::includeModule('ipol.dpd')) {
 
 class Shipment extends \Ipolh\DPD\Shipment
 {
+    protected $locationTo;
+
+    protected $locationFrom;
+
     /**
      * Устанавливает местоположение отправителя
      *
@@ -24,7 +30,7 @@ class Shipment extends \Ipolh\DPD\Shipment
      */
     public function setSender($locationId)
     {
-        $this->locationFrom = is_array($locationId)
+        $this->locationFrom = \is_array($locationId)
             ? $locationId
             : LocationTable::getByLocationId($locationId);
 
@@ -38,7 +44,7 @@ class Shipment extends \Ipolh\DPD\Shipment
      */
     public function setReceiver($locationCode)
     {
-        $this->locationTo = is_array($locationCode)
+        $this->locationTo = \is_array($locationCode)
             ? $locationCode
             : LocationTable::getByLocationCode($locationCode);
 
@@ -56,10 +62,10 @@ class Shipment extends \Ipolh\DPD\Shipment
             return false;
         }
 
-        $isPaymentOnDelivery = is_null($isPaymentOnDelivery) ? $this->isPaymentOnDelivery() : $isPaymentOnDelivery;
+        $isPaymentOnDelivery = null === $isPaymentOnDelivery ? $this->isPaymentOnDelivery() : $isPaymentOnDelivery;
         $locationId = $this->locationTo['ID'];
         $getPickupPointsCount = function () use ($isPaymentOnDelivery, $locationId) {
-            return \Ipolh\DPD\DB\Terminal\Table::getList(
+            return Table::getList(
                 [
                     'select' => ['CNT'],
 
@@ -76,7 +82,7 @@ class Shipment extends \Ipolh\DPD\Shipment
                     ),
 
                     'runtime' => [
-                        new \Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(*)'),
+                        new ExpressionField('CNT', 'COUNT(*)'),
                     ],
                 ]
             )->fetch();

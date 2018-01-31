@@ -215,6 +215,9 @@ class FormService
         }
     }
     
+    /**
+     * @param $sid
+     */
     public function deleteForm($sid)
     {
         $by    = 'ID';
@@ -223,5 +226,90 @@ class FormService
         while ($item = $res->Fetch()) {
             \CForm::Delete($item['ID']);
         }
+    }
+    
+    /**
+     * @param int   $formId
+     * @param array $requiredFields
+     *
+     * @return array
+     */
+    public function getRealNamesFields(int $formId, array $requiredFields) : array
+    {
+        $items         = $this->getQuestions(
+            [
+                'formId' => $formId,
+                'filter' => ['SID' => $requiredFields],
+            ]
+        );
+        $originalNames = [];
+        if (!empty($items)) {
+            foreach ($items as $item) {
+                if (\in_array($item['SID'], $requiredFields, true)) {
+                    switch ($item['FIELD_TYPE']) {
+                        case 'radio':
+                        case 'dropdown':
+                            $postfix = $item['SID'];
+                            break;
+                        case 'checkbox':
+                        case 'multiselect':
+                            $postfix = $item['SID'] . '[]';
+                            break;
+                        default:
+                            $postfix = $item['ANSWER_ID'];
+                    }
+                    $originalNames[$item['SID']] = 'form_' . $item['FIELD_TYPE'] . '_' . $postfix;
+                }
+            }
+        }
+        
+        return $originalNames;
+    }
+    
+    /**
+     * @param array $params
+     *
+     * @return array
+     */
+    public function getQuestions(array $params) : array
+    {
+        if ((int)$params['formId'] === 0) {
+            return [];
+        }
+        $formId = $params['formId'];
+        $by     = 's_id';
+        $order  = 'asc';
+        if (!empty($params['order'])) {
+            $by    = key($params['order']);
+            $order = $params['order'][$by];
+        }
+        $filter = [];
+        if (!empty($params['filter'])) {
+            $filter = $params['filter'];
+        }
+        $type = 'ALL';
+        if (!empty($params['type'])) {
+            $filter = $params['type'];
+        }
+        $obFormField = new \CFormField();
+        $res         = $obFormField->GetList($formId, $type, $by, $order, $filter);
+        $items       = [];
+        $obAnswer    = new \CFormAnswer();
+        while ($item = $res->Fetch()) {
+            $resAnswer = $obAnswer->GetList($item['ID'], $by, $order, ['ACTIVE' => 'Y']);
+            while ($itemAnswer = $resAnswer->Fetch()) {
+                foreach ($itemAnswer as $key => $val) {
+                    if ($key === 'ID') {
+                        $item['ANSWER_ID'] = $val;
+                    }
+                    if (!empty($val) && empty($item[$key])) {
+                        $item[$key] = $val;
+                    }
+                }
+            }
+            $items[] = $item;
+        }
+        
+        return $items;
     }
 }

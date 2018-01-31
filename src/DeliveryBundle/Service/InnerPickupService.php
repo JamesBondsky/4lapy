@@ -86,7 +86,7 @@ class InnerPickupService extends DeliveryServiceHandlerBase
             $offerData[$offerId] = $quantity;
         }
 
-        if ($basketCollection->isEmpty() || empty($offerData)) {
+        if (empty($offerData) || $basketCollection->isEmpty()) {
             $result->setPeriodFrom(1);
             $result->setPeriodType(CalculationResult::PERIOD_TYPE_HOUR);
 
@@ -158,7 +158,7 @@ class InnerPickupService extends DeliveryServiceHandlerBase
 
         // находим магазины, в которых есть все товары в нужном кол-ве
         if ($getFromShop) {
-            if (count($offerData) == 1) {
+            if (\count($offerData) == 1) {
                 $availableShopIds = reset($availableIn);
             } else {
                 $availableShopIds = array_intersect(...$availableIn);
@@ -171,7 +171,7 @@ class InnerPickupService extends DeliveryServiceHandlerBase
                     [
                         'AVAILABLE_IN' => $shops->filter(
                             function (Store $shop) use ($availableShopIds) {
-                                return in_array($shop->getId(), $availableShopIds);
+                                return \in_array($shop->getId(), $availableShopIds);
                             }
                         ),
                     ]

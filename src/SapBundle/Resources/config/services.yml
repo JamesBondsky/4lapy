@@ -23,13 +23,28 @@ services:
     FourPaws\SapBundle\Consumer\ConsumerRegistry:
         public: true
 
+    FourPaws\SapBundle\Pipeline\PipelineRegistry:
+        public: true
+
     # todo: remove after development!
     FourPaws\SapBundle\Source\SourceRegistry:
         public: true
-
-    FourPaws\SapBundle\ReferenceDirectory\SapReferenceStorage:
-        public: true
+        lazy: true
 
     # Получить репозиторий напрямую нельзя
     FourPaws\SapBundle\Repository\ReferenceRepository:
         abstract: true
+
+    # Необходимо для битровых событий
+    # todo переписать на symfony-style
+    FourPaws\SapBundle\ReferenceDirectory\SapReferenceStorage:
+        public: true
+
+    # Необходимо для битровых событий
+    # todo переписать на symfony-style
+    FourPaws\SapBundle\Subscriber\BitrixEvents:
+        public: true
+
+    # todo как автовайрить?..
+    FourPaws\SapBundle\Service\SapService:
+        public: true

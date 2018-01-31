@@ -130,6 +130,37 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                 ?>
             </section>
         </main><?php
+
+        /**
+         * Выгодная покупка
+         */
+        $productsIds = [];
+        foreach ($orderableBasket as $basketItem) {
+            $pId = intval($basketItem->getProductId());
+            $productInfo = \CCatalogSKU::GetProductInfo($pId);
+            if ($productInfo) {
+                $pId = intval($productInfo['ID']);
+            }
+            if ($pId > 0) {
+                $productsIds[] = $pId;
+            }
+        }
+        if ($productsIds) {
+            $APPLICATION->IncludeFile(
+                'blocks/components/followup_products.php',
+                [
+                    'WRAP_CONTAINER_BLOCK' => 'N',
+                    'SHOW_TOP_LINE' => 'Y',
+                    'POSTCROSS_IDS' => array_unique($productsIds),
+                ],
+                [
+                    'SHOW_BORDER' => false,
+                    'NAME' => 'Блок выгодной покупки',
+                    'MODE' => 'php',
+                ]
+            );
+        }
+
         /**
          * Просмотренные товары
          */
