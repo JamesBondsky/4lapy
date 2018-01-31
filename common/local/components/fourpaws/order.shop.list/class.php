@@ -85,22 +85,6 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
             throw new \RuntimeException('Offers not found');
         }
 
-        $shops = $stockResult->getStores();
-
-        $resultByShop = [];
-        $shopsPartial = [];
-        $shopsFull = [];
-
-        /** @var Store $shop */
-        foreach ($shops as $shop) {
-            $resultByShop[$shop->getXmlId()] = $this->getStoreData($pickupDelivery, $stockResult, $shop);
-            if ($resultByShop[$shop->getXmlId()]['DELAYED_AMOUNT'] > 0) {
-                $shopsPartial[] = $shop;
-            } else {
-                $shopsFull[] = $shop;
-            }
-        }
-
         /** @var \Symfony\Bundle\FrameworkBundle\Routing\Router $router */
         $router = Application::getInstance()->getContainer()->get('router');
         /** @var Symfony\Component\Routing\RouteCollection $routeCollection */
@@ -109,12 +93,6 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
             $storeListUrlRoute = $routeCollection->get('fourpaws_sale_ajax_order_storesearch');
         }
         $this->arResult['STORE_LIST_URL'] = $storeListUrlRoute ? $storeListUrlRoute->getPath() : '';
-        $this->arResult['SHOPS'] = $shops;
-        $this->arResult['SHOPS_PARTIAL'] = $shopsPartial;
-        $this->arResult['SHOPS_FULL'] = $shopsFull;
-        $this->arResult['BASKET'] = $basket;
-        $this->arResult['STOCK_RESULT_BY_SHOP'] = $resultByShop;
-        $this->arResult['OFFERS'] = $offers;
     }
 
     /**
@@ -139,10 +117,46 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
             $avgGpsN = 0;
             $avgGpsS = 0;
 
+            /**
+             * 1) По убыванию % от суммы товаров заказа в наличии в магазине или на складе
+             * 2) По возрастанию даты готовности заказа к выдаче
+             * 3) По адресу магазина в алфавитном порядке
+             */
+            $resultByStore = [];
+
             /** @var Store $store */
             foreach ($stores as $store) {
-                $resultByStore = $this->getStoreData($pickupDelivery, $stockResult, $store);
+                $resultByStore[$store->getXmlId()] = $this->getStoreData($pickupDelivery, $stockResult, $store);
+            }
 
+            $sortFunc = function ($shop1, $shop2) use ($resultByStore) {
+                /** @var Store $shop1 */
+                /** @var Store $shop2 */
+                $shopData1 = $resultByStore[$shop1->getXmlId()];
+                $shopData2 = $resultByStore[$shop2->getXmlId()];
+
+                if ($shopData1['AVAILABLE_AMOUNT'] != $shopData2['AVAILABLE_AMOUNT']) {
+                    return ($shopData1['AVAILABLE_AMOUNT'] > $shopData2['AVAILABLE_AMOUNT']) ? -1 : 1;
+                }
+
+                /** @var StockResultCollection $stockResult1 */
+                $stockResult1 = $shopData1['STOCK_RESULT'];
+                /** @var StockResultCollection $stockResult2 */
+                $stockResult2 = $shopData2['STOCK_RESULT'];
+                $deliveryDate1 = $stockResult1->getDeliveryDate();
+                $deliveryDate2 = $stockResult2->getDeliveryDate();
+
+                if ($deliveryDate1 != $deliveryDate2) {
+                    return ($shopData1['AVAILABLE_AMOUNT'] > $shopData2['AVAILABLE_AMOUNT']) ? 1 : -1;
+                }
+
+                return $shop1->getAddress() > $shop2->getAddress() ? 1 : -1;
+            };
+
+            uasort($stores, $sortFunc);
+
+            /** @var Store $store */
+            foreach ($stores as $store) {
                 $metro = $store->getMetro();
 
                 $services = [];
@@ -159,11 +173,11 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                     ? 'м. ' . $metroList[$metro]['UF_NAME'] . ', ' . $store->getAddress()
                     : $store->getAddress();
 
-                $stockResultByStore = $resultByStore['STOCK_RESULT'];
+                $stockResultByStore = $resultByStore[$store->getXmlId()]['STOCK_RESULT'];
                 $delayed = $stockResultByStore->getDelayed();
 
                 /** @var StockResultCollection $stockResultByStore */
-                $stockResultByStore = $resultByStore['STOCK_RESULT'];
+                $stockResultByStore = $resultByStore[$store->getXmlId()]['STOCK_RESULT'];
                 $available = $stockResultByStore->getAvailable();
                 $delayed = $stockResultByStore->getDelayed();
 
@@ -203,13 +217,13 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                     'phone'           => $store->getPhone(),
                     'schedule'        => $store->getSchedule(),
                     'pickup'          => DeliveryTimeHelper::showTime(
-                        $resultByStore['PARTIAL_RESULT'],
+                        $resultByStore[$store->getXmlId()]['PARTIAL_RESULT'],
                         $delayed->isEmpty() ? $stockResultByStore->getDeliveryDate() : $delayed->getDeliveryDate(),
                         true,
                         false
                     ),
                     'pickup_full'     => DeliveryTimeHelper::showTime(
-                        $resultByStore['FULL_RESULT'],
+                        $resultByStore[$store->getXmlId()]['FULL_RESULT'],
                         $stockResultByStore->getDeliveryDate(),
                         true,
                         false
