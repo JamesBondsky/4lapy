@@ -15,13 +15,13 @@ class StockCollection extends BaseCollection
      */
     public function filterByStores(StoreCollection $stores): StockCollection
     {
-        return $this->filter(
-            function (Stock $stock) use ($stores) {
-                $ids = [];
-                foreach ($stores as $store) {
-                    $ids[] = $store->getId();
-                }
+        $ids = [];
+        foreach ($stores as $store) {
+            $ids[] = $store->getId();
+        }
 
+        return $this->filter(
+            function (Stock $stock) use ($ids) {
                 return in_array($stock->getStoreId(), $ids);
             }
         );
@@ -39,5 +39,19 @@ class StockCollection extends BaseCollection
                 return $stock->getProductId() == $offerId;
             }
         );
+    }
+
+    /**
+     * @return int
+     */
+    public function getTotalAmount(): int
+    {
+        $amount = 0;
+        /** @var Stock $item */
+        foreach ($this->getIterator() as $item) {
+            $amount += $item->getAmount();
+        }
+
+        return $amount;
     }
 }
