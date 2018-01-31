@@ -46,8 +46,6 @@ if ($currentOffer->getClothingSize()) {
 
 $this->setFrameMode(true);
 
-dump($currentOffer->getId());
-
 $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_TITLE_VIEW);
 ?>
     <a href="<?= $brand->getDetailPageUrl() ?>"
