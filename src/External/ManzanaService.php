@@ -17,6 +17,10 @@ use FourPaws\External\Manzana\Model\Card;
 use FourPaws\External\Manzana\Model\CardByContractCards;
 use FourPaws\External\Manzana\Model\Cards;
 use FourPaws\External\Manzana\Model\CardsByContractCards;
+use FourPaws\External\Manzana\Model\Cheque;
+use FourPaws\External\Manzana\Model\ChequeItem;
+use FourPaws\External\Manzana\Model\ChequeItems;
+use FourPaws\External\Manzana\Model\Cheques;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\Manzana\Model\Clients;
 use FourPaws\External\Manzana\Model\Contact;
@@ -633,4 +637,51 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     {
     
     }
+    
+    /**
+     * @param string $contactId
+     *
+     * @return Cheque[]
+     * @throws ManzanaServiceException
+     */
+    public function getCheques(string $contactId) : array
+    {
+        $bag = new ParameterBag(['contact_id' => $contactId]);
+        try {
+            $result = $this->execute(self::CONTRACT_CONTACT_CHEQUES, $bag->getParameters());
+            /** @var Cheques $resCheques */
+            $resCheques = $this->serializer->deserialize($result, Cheques::class, 'xml');
+            /** @var Cheque[] $cheques*/
+            $cheques = $resCheques->cheques->toArray();
+        } catch (\Exception $e) {
+            throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
+        }
+        
+        return $cheques;
+        
+    }
+    
+    /**
+     * @param string $chequeId
+     *
+     * @return ChequeItem[]
+     * @throws ManzanaServiceException
+     */
+    public function getItemsBuCheque(string $chequeId) : array
+    {
+        
+        $bag = new ParameterBag(['cheque_id' => $chequeId]);
+        try {
+            $result = $this->execute(self::CONTRACT_CHEQUE_ITEMS, $bag->getParameters());
+            /** @var ChequeItems $resChequeItems */
+            $resChequeItems = $this->serializer->deserialize($result, ChequeItems::class, 'xml');
+            /** @var ChequeItem[] $chequeItems */
+            $chequeItems = $resChequeItems->chequeItems->toArray();
+        } catch (\Exception $e) {
+            throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
+        }
+        
+        return $chequeItems;
+    }
+    
 }
