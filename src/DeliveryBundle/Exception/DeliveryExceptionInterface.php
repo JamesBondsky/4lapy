@@ -2,7 +2,7 @@
 
 namespace FourPaws\DeliveryBundle\Exception;
 
-class BaseException extends \Exception
+interface DeliveryExceptionInterface
 {
 
 }

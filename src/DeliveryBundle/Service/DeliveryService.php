@@ -14,6 +14,7 @@ use Bitrix\Sale\Order;
 use Bitrix\Sale\Shipment;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\DeliveryBundle\Exception\InvalidArgumentException;
 use FourPaws\Location\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Service\StoreService;
@@ -419,15 +420,19 @@ class DeliveryService
     /**
      * @param CalculationResult $delivery
      *
-     * @return StoreCollection
+     * @return StockResultCollection
      */
-    public function getStoresByDelivery(CalculationResult $delivery): StoreCollection
+    public function getStockResultByDelivery(CalculationResult $delivery): StockResultCollection
     {
         /** @var StockResultCollection $stockResult */
         $stockResult = $delivery->getData()['STOCK_RESULT'];
-        return $stockResult->getStores();
+        if (!$stockResult instanceof StockResultCollection) {
+            throw new InvalidArgumentException('Stock result not defined');
+        }
+
+        return $stockResult;
     }
-    
+
     /**
      * @return string
      */

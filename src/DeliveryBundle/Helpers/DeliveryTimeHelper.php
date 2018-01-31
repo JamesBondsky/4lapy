@@ -61,4 +61,20 @@ class DeliveryTimeHelper
 
         return mb_strtolower($result);
     }
+
+    /**
+     * @param CalculationResult $delivery
+     * @param \DateTime $deliveryDate
+     */
+    public static function updateDeliveryDate(CalculationResult $delivery, \DateTime $deliveryDate)
+    {
+        $date = new \DateTime();
+        if ($deliveryDate->format('z') !== $date->format('z')) {
+            $delivery->setPeriodType(CalculationResult::PERIOD_TYPE_DAY);
+            $delivery->setPeriodFrom($deliveryDate->format('z') - $date->format('z'));
+        } else {
+            $delivery->setPeriodType(CalculationResult::PERIOD_TYPE_HOUR);
+            $delivery->setPeriodFrom($deliveryDate->format('G') - $date->format('G'));
+        }
+    }
 }

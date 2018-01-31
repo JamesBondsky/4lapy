@@ -2,7 +2,7 @@
 
 namespace FourPaws\DeliveryBundle\Exception;
 
-class NotFoundException extends BaseException
+class NotFoundException extends \Exception implements DeliveryExceptionInterface
 {
 
 }

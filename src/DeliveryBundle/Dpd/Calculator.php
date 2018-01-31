@@ -7,6 +7,7 @@ use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\Loader;
 
+use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Service\DeliveryServiceHandlerBase;
 use FourPaws\Location\LocationService;

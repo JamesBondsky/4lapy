@@ -303,7 +303,7 @@ class OrderStorage
      * @Serializer\SerializedName("PARTIAL_GET")
      * @Serializer\Groups(groups={"read","update","delete"})
      */
-    protected $partialGet = false;
+    protected $partialGet = true;
 
     /**
      * @return int

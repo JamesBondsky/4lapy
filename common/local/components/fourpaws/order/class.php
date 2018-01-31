@@ -5,8 +5,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Iblock\Component\Tools;
-use FourPaws\App\Application;
 use Bitrix\Sale\Delivery\CalculationResult;
+use FourPaws\App\Application;
+use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\PersonalBundle\Service\AddressService;
@@ -36,9 +37,13 @@ class FourPawsOrderComponent extends \CBitrixComponent
     /** @var OrderService */
     protected $orderService;
 
+    /** @var DeliveryService */
+    protected $deliveryService;
+
     public function __construct($component = null)
     {
-        $this->orderService = \FourPaws\App\Application::getInstance()->getContainer()->get(OrderService::class);
+        $this->orderService = Application::getInstance()->getContainer()->get(OrderService::class);
+        $this->deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
         parent::__construct($component);
     }
 
@@ -160,6 +165,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $this->arResult['BASKET'] = $basket;
         $this->arResult['STORAGE'] = $storage;
         $this->arResult['URL'] = $ajaxUrl;
+        $this->arResult['STEP'] = $this->currentStep;
         $this->arResult['SELECTED_CITY'] = $selectedCity;
         $this->arResult['ADDRESSES'] = $addresses;
         $this->arResult['DELIVERIES'] = $deliveries;
@@ -168,18 +174,14 @@ class FourPawsOrderComponent extends \CBitrixComponent
     }
 
     /**
-     * @param array $deliveries
+     * @param CalculationResult[] $deliveries
      * @param OrderStorage $storage
      */
     protected function getPickupData(array $deliveries, OrderStorage $storage)
     {
-        /** @var DeliveryService $deliveryService */
-        $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
-        /** @var StoreService $storeService */
-        $storeService = Application::getInstance()->getContainer()->get('store.service');
         $pickup = null;
         foreach ($deliveries as $calculationResult) {
-            if ($deliveryService->isPickup($calculationResult)) {
+            if ($this->deliveryService->isPickup($calculationResult)) {
                 $pickup = $calculationResult;
             }
         }
@@ -190,11 +192,10 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
         $partialPickup = clone $pickup;
         /** @var StockResultCollection $stockResult */
-        $stockResult = $pickup->getData()['STOCK_RESULT'];
-
-        if ($deliveryService->isDpdPickup($pickup)) {
+        $stockResult = $this->deliveryService->getStockResultByDelivery($pickup);
+        if ($this->deliveryService->isDpdPickup($pickup)) {
             /* @todo получить терминалы DPD */
-            // $shops = $deliveryService->getDpdTerminals();
+            // $shops = $this->deliveryService->getDpdTerminals();
         } else {
             $selectedShopCode = $storage->getDeliveryPlaceCode();
             $shops = $stockResult->getStores();
@@ -219,19 +220,8 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $deliveryDate = $stockResult->getDeliveryDate();
             $partialDeliveryDate = $stockResult->getAvailable()->getDeliveryDate();
 
-            $updateDeliveryDate = function (CalculationResult $pickup, \DateTime $deliveryDate) {
-                $date = new \DateTime();
-                if ($deliveryDate->format('z') !== $date->format('z')) {
-                    $pickup->setPeriodType(CalculationResult::PERIOD_TYPE_DAY);
-                    $pickup->setPeriodFrom($deliveryDate->format('z') - $date->format('z'));
-                } else {
-                    $pickup->setPeriodType(CalculationResult::PERIOD_TYPE_HOUR);
-                    $pickup->setPeriodFrom($deliveryDate->format('G') - $date->format('G'));
-                }
-            };
-
-            $updateDeliveryDate($pickup, $deliveryDate);
-            $updateDeliveryDate($partialPickup, $partialDeliveryDate);
+            DeliveryTimeHelper::updateDeliveryDate($pickup, $deliveryDate);
+            DeliveryTimeHelper::updateDeliveryDate($partialPickup, $partialDeliveryDate);
         }
 
         $this->arResult['SELECTED_SHOP'] = $selectedShop;
