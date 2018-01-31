@@ -2,9 +2,9 @@
 
 namespace FourPaws\Tests\MobileApi\Functional;
 
-use FourPaws\MobileApiBundle\Repository\UserSessionRepository;
+use FourPaws\MobileApiBundle\Repository\ApiUserSessionRepository;
 use FourPaws\MobileApiBundle\Services\Security\FakeTokenGenerator;
-use FourPaws\MobileApiBundle\Tables\UserSessionTable;
+use FourPaws\MobileApiBundle\Tables\ApiUserSessionTable;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -44,8 +44,8 @@ class UserSessionWebTest extends WebTestCase
 
     protected function clearTestToken()
     {
-        $result = UserSessionTable::query()
-            ->addFilter(UserSessionRepository::FIELD_TOKEN, (new FakeTokenGenerator())->generate())
+        $result = ApiUserSessionTable::query()
+            ->addFilter(ApiUserSessionRepository::FIELD_TOKEN, (new FakeTokenGenerator())->generate())
             ->addSelect('ID')
             ->exec()
             ->fetch();
@@ -54,7 +54,7 @@ class UserSessionWebTest extends WebTestCase
          * @var array $result
          */
         if (\is_array($result) && $result['ID']) {
-            UserSessionTable::delete($result['ID']);
+            ApiUserSessionTable::delete($result['ID']);
         }
     }
 }

@@ -262,6 +262,11 @@ class Offer extends IblockElement
      */
     protected $resizeImages;
     
+    /**
+     * @var string
+     */
+    protected $link = '';
+    
     public function __construct(array $fields = [])
     {
         parent::__construct($fields);
@@ -861,7 +866,7 @@ class Offer extends IblockElement
     
     public function getBonuses()
     {
-        /* @@todo расчет бонусов */
+        /** @todo расчет бонусов */
         return 112;
     }
     
@@ -886,5 +891,33 @@ class Offer extends IblockElement
                 $this->withPrice($resultPrice['DISCOUNT_PRICE']);
             }
         }
+    }
+    
+    /**
+     * @return string
+     */
+    public function getLink() : string
+    {
+        if (!$this->link) {
+            $this->link = sprintf('%s?offer=%s', $this->getProduct()->getDetailPageUrl(), $this->getId());
+        }
+        
+        return $this->link;
+    }
+    
+    /**
+     * Optimization: internal current product set
+     *
+     * @throws \InvalidArgumentException
+     *
+     * @param Product $product
+     */
+    public function setProduct(Product $product)
+    {
+        if ($product->getId() !== $this->getCml2Link()) {
+            throw new \InvalidArgumentException('Wrong product set');
+        }
+        
+        $this->product = $product;
     }
 }

@@ -158,7 +158,9 @@ use FourPaws\External\Manzana\Model\Client;
         </div>
         <button class="b-button b-button--social b-button--full-width">Зарегистрироваться</button>
     </form>
-    <a class="b-registration__back" href="javascript:void(0);" title="Назад" data-action="get"
+    <a class="b-registration__back js-reg3-back" href="javascript:void(0);" title="Назад"
+       data-url="/ajax/user/auth/register/"
+       data-action="get"
        data-step="step1"
        data-phone="<?= $phone ?>">
         <span class="b-icon b-icon--back-long">

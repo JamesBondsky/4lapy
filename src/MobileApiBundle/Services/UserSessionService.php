@@ -2,14 +2,14 @@
 
 namespace FourPaws\MobileApiBundle\Services;
 
-use FourPaws\MobileApiBundle\Entity\Session;
+use FourPaws\MobileApiBundle\Entity\ApiUserSession;
 use FourPaws\MobileApiBundle\Exception\BitrixException;
 use FourPaws\MobileApiBundle\Exception\InvalidIdentifierException;
 use FourPaws\MobileApiBundle\Exception\SessionCreateException;
 use FourPaws\MobileApiBundle\Exception\TokenNotFoundException;
 use FourPaws\MobileApiBundle\Exception\ValidationException;
 use FourPaws\MobileApiBundle\Exception\WrongTransformerResultException;
-use FourPaws\MobileApiBundle\Repository\UserSessionRepository;
+use FourPaws\MobileApiBundle\Repository\ApiUserSessionRepository;
 use FourPaws\MobileApiBundle\Services\Security\SessionFactory;
 
 class UserSessionService
@@ -20,11 +20,11 @@ class UserSessionService
     private $sessionFactory;
 
     /**
-     * @var UserSessionRepository
+     * @var ApiUserSessionRepository
      */
     private $userSessionRepository;
 
-    public function __construct(UserSessionRepository $userSessionRepository, SessionFactory $sessionFactory)
+    public function __construct(ApiUserSessionRepository $userSessionRepository, SessionFactory $sessionFactory)
     {
         $this->sessionFactory = $sessionFactory;
         $this->userSessionRepository = $userSessionRepository;
@@ -36,9 +36,9 @@ class UserSessionService
      * @throws ValidationException
      * @throws BitrixException
      * @throws InvalidIdentifierException
-     * @return Session
+     * @return ApiUserSession
      */
-    public function create(): Session
+    public function create(): ApiUserSession
     {
         $session = $this->sessionFactory->create();
         if ($this->userSessionRepository->create($session)) {
@@ -70,7 +70,7 @@ class UserSessionService
      * @param string $token
      *
      * @throws InvalidIdentifierException
-     * @return null|Session
+     * @return null|ApiUserSession
      */
     public function findByToken(string $token)
     {
@@ -85,6 +85,6 @@ class UserSessionService
      */
     public function isExist(string $token): bool
     {
-        return $this->findByToken($token) instanceof Session;
+        return $this->findByToken($token) instanceof ApiUserSession;
     }
 }

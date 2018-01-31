@@ -5,7 +5,7 @@ namespace FourPaws\MobileApiBundle\Entity;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
-class Session
+class ApiUserSession
 {
     /**
      * @var int
@@ -15,7 +15,7 @@ class Session
      * @Assert\Type(type="int",groups={"update","delete"})
      * @Assert\GreaterThanOrEqual(value="1",groups={"update","delete"})
      */
-    protected $id;
+    protected $id = 0;
 
     /**
      * @var \DateTime
@@ -105,9 +105,10 @@ class Session
 
     /**
      * @param int $id
-     * @return Session
+     *
+     * @return ApiUserSession
      */
-    public function setId(int $id): Session
+    public function setId(int $id): ApiUserSession
     {
         $this->id = $id;
         return $this;
@@ -123,9 +124,10 @@ class Session
 
     /**
      * @param string $remoteAddress
-     * @return Session
+     *
+     * @return ApiUserSession
      */
-    public function setRemoteAddress(string $remoteAddress): Session
+    public function setRemoteAddress(string $remoteAddress): ApiUserSession
     {
         $this->remoteAddress = $remoteAddress;
         return $this;
@@ -141,9 +143,10 @@ class Session
 
     /**
      * @param mixed $httpClientIp
-     * @return Session
+     *
+     * @return ApiUserSession
      */
-    public function setHttpClientIp($httpClientIp): Session
+    public function setHttpClientIp($httpClientIp): ApiUserSession
     {
         $this->httpClientIp = $httpClientIp;
         return $this;
@@ -159,9 +162,10 @@ class Session
 
     /**
      * @param mixed $httpXForwardedFor
-     * @return Session
+     *
+     * @return ApiUserSession
      */
-    public function setHttpXForwardedFor($httpXForwardedFor): Session
+    public function setHttpXForwardedFor($httpXForwardedFor): ApiUserSession
     {
         $this->httpXForwardedFor = $httpXForwardedFor;
         return $this;
@@ -177,9 +181,10 @@ class Session
 
     /**
      * @param \DateTime $dateInsert
-     * @return Session
+     *
+     * @return ApiUserSession
      */
-    public function setDateInsert(\DateTime $dateInsert): Session
+    public function setDateInsert(\DateTime $dateInsert): ApiUserSession
     {
         $this->dateInsert = $dateInsert;
         return $this;
@@ -195,9 +200,10 @@ class Session
 
     /**
      * @param \DateTime $dateUpdate
-     * @return Session
+     *
+     * @return ApiUserSession
      */
-    public function setDateUpdate(\DateTime $dateUpdate): Session
+    public function setDateUpdate(\DateTime $dateUpdate): ApiUserSession
     {
         $this->dateUpdate = $dateUpdate;
         return $this;
@@ -213,9 +219,10 @@ class Session
 
     /**
      * @param null|int $userId
-     * @return Session
+     *
+     * @return ApiUserSession
      */
-    public function setUserId(int $userId): Session
+    public function setUserId(int $userId): ApiUserSession
     {
         $this->userId = $userId;
         return $this;
@@ -231,9 +238,10 @@ class Session
 
     /**
      * @param null|string $userAgent
-     * @return Session
+     *
+     * @return ApiUserSession
      */
-    public function setUserAgent(string $userAgent): Session
+    public function setUserAgent(string $userAgent): ApiUserSession
     {
         $this->userAgent = $userAgent;
         return $this;
@@ -249,9 +257,9 @@ class Session
 
     /**
      * @param int $fUserId
-     * @return Session
+     * @return ApiUserSession
      */
-    public function setFUserId(int $fUserId): Session
+    public function setFUserId(int $fUserId): ApiUserSession
     {
         $this->fUserId = $fUserId;
         return $this;
@@ -267,9 +275,9 @@ class Session
 
     /**
      * @param string $token
-     * @return Session
+     * @return ApiUserSession
      */
-    public function setToken(string $token): Session
+    public function setToken(string $token): ApiUserSession
     {
         $this->token = $token;
         return $this;

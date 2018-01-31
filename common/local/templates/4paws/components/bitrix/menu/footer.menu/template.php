@@ -19,7 +19,8 @@ $drawMenuLevel1 = function ($menu = [], $title = '') use ($oMenu) {
     foreach ($menu as $index => $item) {
         $outString .= '<div class="b-footer-nav__list">';
         $outString .= '<h4 class="b-footer-nav__header">';
-        $outString .= '<a href="' . $item['LINK'] . '"class="b-footer-nav__header-link" title="' . $item['TEXT'] . '">';
+        $outString .= '<a href="' . $item['LINK'] . '" class="b-footer-nav__header-link" title="' . $item['TEXT']
+                      . '">';
         $outString .= $item['TEXT'];
         $outString .= '</a>';
         $outString .= '</h4>';
