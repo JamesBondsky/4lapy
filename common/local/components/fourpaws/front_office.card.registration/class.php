@@ -119,12 +119,18 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
      */
     protected function prepareAction()
     {
+        $this->arResult['CAN_ACCESS'] = $this->checkPermissions() ? 'Y' : 'N';
+
         $action = 'initialLoad';
-        if ($this->request->get('action') === 'postForm')  {
-            if ($this->request->get('formName') === 'cardRegistration') {
-                $action = 'postForm';
+
+        if ($this->arResult['CAN_ACCESS'] === 'Y') {
+            if ($this->request->get('action') === 'postForm') {
+                if ($this->request->get('formName') === 'cardRegistration') {
+                    $action = 'postForm';
+                }
             }
         }
+
         return $action;
     }
 
@@ -134,6 +140,13 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
         if (is_callable(array($this, $action.'Action'))) {
             call_user_func(array($this, $action.'Action'));
         }
+    }
+
+    protected function checkPermissions()
+    {
+        $result = true;
+
+        return $result;
     }
 
     /**

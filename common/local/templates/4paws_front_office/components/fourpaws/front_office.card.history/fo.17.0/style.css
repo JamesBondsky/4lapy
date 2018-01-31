@@ -1,0 +1,52 @@
+.active-balance {
+    font-size: 18px;
+    font-weight: bold;
+    margin: 16px 0 32px 0;
+    padding: 0;
+}
+
+table.order-list {
+    width: 100%
+    padding: 0;
+    margin: 0;
+}
+
+table.order-list th,
+table.order-list td {
+    text-align: left;
+    margin: 0;
+    padding: 0 0 5px 0;
+}
+
+.order-list__i {
+    width: 190px !important;
+}
+
+.order-list__dropdown {
+    background-image: url('images/preloader-dog-small.gif');
+    background: url('images/lk/lk-order-list-min.png') no-repeat scroll 0 0 transparent;
+    color: #ef7204;
+    cursor: pointer;
+    display: block;
+    padding: 7px 0 7px 37px;
+    text-decoration: none;
+}
+
+.order-list__dropdown.preloader {
+    background-image: url('images/preloader-dog-small.gif');
+    background-position: 0 8px;
+}
+
+.order-list__dt {
+    font-size: 15px !important;
+    width: 90px !important;
+    padding-right: 20px !important;
+}
+
+.order-list__address {
+    font-size: 15px !important;
+}
+
+.order-list > thead th {
+    font-size: 14px !important;
+}

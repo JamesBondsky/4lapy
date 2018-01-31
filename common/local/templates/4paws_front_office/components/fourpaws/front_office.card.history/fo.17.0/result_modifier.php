@@ -11,15 +11,37 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var \CBitrixComponentTemplate $this
  */
 
-$arResult['WAS_POSTED'] = $arResult['ACTION'] !== 'initialLoad';
+$arParams['LAST_CHEQUES_CNT'] = isset($arParams['LAST_CHEQUES_CNT']) ? (int) $arParams['LAST_CHEQUES_CNT'] : 10;
+$arParams['USE_AJAX'] = isset($arParams['USE_AJAX']) && $arParams['USE_AJAX'] === 'N' ? 'N' : 'Y';
 
-$arParams['USE_AJAX'] = 'N';
-$arResult['USE_AJAX'] = isset($arParams['USE_AJAX']) && $arParams['USE_AJAX'] === 'N' ? 'N' : 'Y';
+$arResult['WAS_POSTED'] = $arResult['ACTION'] !== 'initialLoad' && !empty($arResult['FIELD_VALUES']) ? 'Y' : 'N';
+
+$arResult['USE_AJAX'] = $arParams['USE_AJAX'];
 $arResult['IS_AJAX_REQUEST'] = isset($arResult['FIELD_VALUES']['ajaxContext']) ? 'Y' : 'N';
 if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
     $signer = new \Bitrix\Main\Security\Sign\Signer();
-    $arResult['JS']['signedTemplate'] = $signer->sign($this->GetName(), 'front_office.card.registration');
-    $arResult['JS']['signedParams'] = $signer->sign(base64_encode(serialize($arResult['ORIGINAL_PARAMETERS'])), 'front_office.card.registration');
+    $arResult['JS']['signedTemplate'] = $signer->sign($this->GetName(), 'front_office.card.history');
+    $arResult['JS']['signedParams'] = $signer->sign(base64_encode(serialize($arResult['ORIGINAL_PARAMETERS'])), 'front_office.card.history');
+}
+
+// Запрашиваемое представление страницы
+$arResult['CURRENT_STAGE'] = 'initial';
+if ($arResult['WAS_POSTED'] === 'Y') {
+    $arResult['CURRENT_STAGE'] = 'history';
+}
+if ($arResult['IS_AJAX_REQUEST'] === 'Y') {
+    if (isset($arResult['FIELD_VALUES']['getChequeItems']) && $arResult['FIELD_VALUES']['getChequeItems'] === 'Y') {
+        $arResult['CURRENT_STAGE'] = 'cheque_details';
+    }
+}
+
+//
+// Метаданные полей формы
+//
+$arResult['STEP'] = 1;
+$arResult['POSTED_STEP'] = 0;
+if ($arResult['WAS_POSTED'] === 'Y') {
+    $arResult['POSTED_STEP'] = 1;
 }
 
 $firstStepFields = ['cardNumberForHistory'];
@@ -34,14 +56,7 @@ foreach ($printFields as $fieldName) {
         'READONLY' => false,
     ];
 }
-
-$arResult['STEP'] = 1;
-$arResult['POSTED_STEP'] = 0;
-if ($arResult['WAS_POSTED']) {
-    $arResult['POSTED_STEP'] = 1;
-}
-
-// заполним значениями результата отправки формы
+// заполнение выводимых полей формы значениями результата отправки формы
 foreach ($printFields as $fieldName) {
     if (isset($arResult['FIELD_VALUES'][$fieldName])) {
         if (is_scalar($arResult['FIELD_VALUES'][$fieldName])) {
@@ -49,7 +64,6 @@ foreach ($printFields as $fieldName) {
         }
     }
 }
-
 foreach ($printFields as $fieldName) {
     $readonly = false;
     if ($arResult['STEP'] > 1 && in_array($fieldName, $firstStepFields)) {
@@ -70,17 +84,25 @@ foreach ($printFields as $fieldName) {
     }
 }
 
-// данные по запрошенной карте
+//
+// Данные по запрошенной карте
+//
 $arResult['CURRENT_CARD'] = [];
-if (!empty($arResult['CARD_DATA']['CONTACT_CARDS'])) {
-    foreach ($arResult['CARD_DATA']['CONTACT_CARDS'] as $card) {
-        if ($card['IS_CURRENT'] === 'Y') {
+if (!empty($arResult['CONTACT_CARDS'])) {
+    foreach ($arResult['CONTACT_CARDS'] as $card) {
+        if ($card['NUMBER'] === $arResult['CARD_DATA']['NUMBER']) {
             $arResult['CURRENT_CARD'] = $card;
             break;
         }
     }
 }
 
-if ($arResult['CHEQUES']) {
-    $arResult['CHEQUES'] = array_reverse($arResult['CHEQUES'], false);
+//
+// Список последних n чеков по запрошенной карте
+//
+if (!empty($arResult['CHEQUES'])) {
+    $arResult['CHEQUES'] = array_reverse($arResult['CHEQUES'], true);
+    if ($arParams['LAST_CHEQUES_CNT'] > 0) {
+        $arResult['CHEQUES'] = array_slice($arResult['CHEQUES'], 0, $arParams['LAST_CHEQUES_CNT'], true);
+    }
 }

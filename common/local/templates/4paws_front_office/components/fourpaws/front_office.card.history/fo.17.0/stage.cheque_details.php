@@ -14,16 +14,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var string $componentPath
  */
 
-switch ($arResult['CURRENT_STAGE']) {
-    case 'initial':
-        include __DIR__.'/stage.initial.php';
-        break;
-
-    case 'history':
-        include __DIR__.'/stage.history.php';
-        break;
-
-    case 'cheque_details':
-        include __DIR__.'/stage.cheque_details.php';
-        break;
-}
+?><tr>
+    <td class="product-name">name</td>
+    <td class="product-quantity">quantity</td>
+    <td class="product-bonus">bonus</td>
+</tr><?php
