@@ -27,6 +27,7 @@ class ProductDetailRequestConverter implements ParamConverterInterface
         $variables = [
             'SECTION_CODE_PATH' => $request->get('path', ''),
             'ELEMENT_CODE'      => $request->get('slug', ''),
+            'OFFER_ID'          => $request->get('offer', 0),
         ];
 
         $result = \CIBlockFindTools::checkElement(
@@ -35,12 +36,14 @@ class ProductDetailRequestConverter implements ParamConverterInterface
         );
 
         if ($result) {
-            $productDetailRequest = (new ProductDetailRequest())
-                ->setProductSlug($variables['ELEMENT_CODE'])
-                ->setSectionSlug($variables['SECTION_CODE']);
+            $productDetailRequest = (new ProductDetailRequest())->setOfferId($variables['OFFER_ID'])
+                                                                ->setProductSlug($variables['ELEMENT_CODE'])
+                                                                ->setSectionSlug($variables['SECTION_CODE']);
             $request->attributes->set('productDetailRequest', $productDetailRequest);
+    
             return true;
         }
+    
         return false;
     }
 
