@@ -15,14 +15,14 @@ class StockCollection extends BaseCollection
      */
     public function filterByStores(StoreCollection $stores): StockCollection
     {
-        return $this->filter(
-            function (Stock $stock) use ($stores) {
-                $ids = [];
-                foreach ($stores as $store) {
-                    $ids[] = $store->getId();
-                }
+        $ids = [];
+        foreach ($stores as $store) {
+            $ids[] = $store->getId();
+        }
 
-                return in_array($stock->getStoreId(), $ids);
+        return $this->filter(
+            function (Stock $stock) use ($ids) {
+                return in_array($stock->getStoreId(), $ids, true);
             }
         );
     }

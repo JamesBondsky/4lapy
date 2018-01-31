@@ -376,26 +376,51 @@ class DeliveryService
         return \in_array($calculationResult->getData()['DELIVERY_CODE'], static::DELIVERY_CODES, true);
     }
 
+    /**
+     * @param CalculationResult $calculationResult
+     *
+     * @return bool
+     */
     public function isInnerPickup(CalculationResult $calculationResult): bool
     {
         return $calculationResult->getData()['DELIVERY_CODE'] === static::INNER_PICKUP_CODE;
     }
 
+    /**
+     * @param CalculationResult $calculationResult
+     *
+     * @return bool
+     */
     public function isDpdPickup(CalculationResult $calculationResult): bool
     {
         return $calculationResult->getData()['DELIVERY_CODE'] === static::DPD_PICKUP_CODE;
     }
 
+    /**
+     * @param CalculationResult $calculationResult
+     *
+     * @return bool
+     */
     public function isInnerDelivery(CalculationResult $calculationResult): bool
     {
         return $calculationResult->getData()['DELIVERY_CODE'] === static::INNER_DELIVERY_CODE;
     }
 
+    /**
+     * @param CalculationResult $calculationResult
+     *
+     * @return bool
+     */
     public function isDpdDelivery(CalculationResult $calculationResult): bool
     {
         return $calculationResult->getData()['DELIVERY_CODE'] === static::DPD_DELIVERY_CODE;
     }
 
+    /**
+     * @param CalculationResult $delivery
+     *
+     * @return StoreCollection
+     */
     public function getStoresByDelivery(CalculationResult $delivery): StoreCollection
     {
         /** @var StockResultCollection $stockResult */

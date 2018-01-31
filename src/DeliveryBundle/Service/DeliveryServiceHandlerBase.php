@@ -63,8 +63,8 @@ abstract class DeliveryServiceHandlerBase extends Base implements DeliveryServic
         $this->storeService = Application::getInstance()->getContainer()->get('store.service');
         $this->deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
         $this->userService = Application::getInstance()
-            ->getContainer()
-            ->get(UserCitySelectInterface::class);
+                                        ->getContainer()
+                                        ->get(UserCitySelectInterface::class);
         parent::__construct($initParams);
     }
 
@@ -143,8 +143,20 @@ abstract class DeliveryServiceHandlerBase extends Base implements DeliveryServic
             $stockResultCollection = new StockResultCollection();
         }
 
-        $date = new \DateTime();
-        $hour = (int)$date->format('H');
+        /**
+         * Рассчитывается дата доставки в соответствии с графиком работы магазинов/складов
+         */
+        $pickupDate = new \DateTime();
+        $hour = (int)$pickupDate->format('H');
+        $totalSchedule = $storesAvailable->getTotalSchedule();
+        if ($hour < $totalSchedule['from']) {
+            $pickupDate->setTime($totalSchedule['from'] + 1, 0, 0);
+        } elseif ($hour > $totalSchedule['to']) {
+            $pickupDate->modify('+1 day');
+            $pickupDate->setTime($totalSchedule['from'] + 1, 0, 0);
+        } else {
+            $pickupDate->modify('+1 hour');
+        }
 
         /** @var Offer $offer */
         foreach ($offers as $offer) {
@@ -166,16 +178,7 @@ abstract class DeliveryServiceHandlerBase extends Base implements DeliveryServic
                         ->setOffer($offer)
                         ->setStores($storesAvailable)
                         ->setPrice($basketItem->getPrice());
-            $totalSchedule = $storesAvailable->getTotalSchedule();
-            $pickupDate = clone($date);
-            if ($hour < $totalSchedule['from']) {
-                $pickupDate->setTime($totalSchedule['from'] + 1, 0, 0);
-            } elseif ($hour > $totalSchedule['to']) {
-                $pickupDate->modify('+1 day');
-                $pickupDate->setTime($totalSchedule['from'] + 1, 0, 0);
-            } else {
-                $pickupDate->modify('+1 hour');
-            }
+
             $stockResult->setDeliveryDate($pickupDate);
 
             if ($offer->isByRequest()) {
@@ -184,39 +187,41 @@ abstract class DeliveryServiceHandlerBase extends Base implements DeliveryServic
             }
 
             $stocks = $offer->getStocks();
-            $availableAmount = $stocks->filterByStores($storesAvailable)->getTotalAmount();
-            if ($availableAmount < $neededAmount) {
-                $stockResult->setAmount($availableAmount);
-                $neededAmount -= $availableAmount;
-            } else {
-                $neededAmount = 0;
+            if ($availableAmount = $stocks->filterByStores($storesAvailable)->getTotalAmount()) {
+                if ($availableAmount < $neededAmount) {
+                    $stockResult->setAmount($availableAmount);
+                    $neededAmount -= $availableAmount;
+                } else {
+                    $neededAmount = 0;
+                }
+                $stockResultCollection->add($stockResult);
             }
 
             /**
              * Товар в наличии не полностью. Часть будет отложена
              */
             if ($neededAmount) {
-                $delayedAmount = $stocks->filterByStores($storesDelay)->getTotalAmount();
-                if ($delayedAmount >= $neededAmount) {
-                    $delayedStockResult = (new StockResult())->setType(StockResult::TYPE_DELAYED)
-                                                             ->setAmount($neededAmount)
-                                                             ->setOffer($offer)
-                                                             ->setStores($storesAvailable)
-                                                             ->setPrice($basketItem->getPrice())
+                if ($delayedAmount = $stocks->filterByStores($storesDelay)->getTotalAmount()) {
+                    $delayedStockResult = clone $stockResult;
+                    $delayedStockResult->setType(StockResult::TYPE_DELAYED)
+                                       ->setAmount($delayedAmount >= $neededAmount ? $neededAmount : $delayedAmount)
+                                       ->setDelayStores($storesDelay)
                         /* @todo расчет по графику поставок */
-                                                             ->setDeliveryDate((new \DateTime())->modify('+10 days'));
+                                       ->setDeliveryDate((new \DateTime())->modify('+10 days'));
                     $stockResultCollection->add($delayedStockResult);
-                } else {
-                    /**
-                     * Товар не в наличии (в нужном кол-ве)
-                     */
-                    $stockResult->setType(StockResult::TYPE_UNAVAILABLE)
-                                ->setAmount($basketItem->getQuantity());
-                }
-            }
 
-            if ($stockResult->getAmount()) {
-                $stockResultCollection->add($stockResult);
+                    $neededAmount = ($delayedAmount >= $neededAmount) ? 0 : $neededAmount - $delayedAmount;
+                }
+
+                /**
+                 * Часть товара (или все количество) не в наличии
+                 */
+                if ($neededAmount) {
+                    $unavailableStockResult = clone $stockResult;
+                    $unavailableStockResult->setType(StockResult::TYPE_UNAVAILABLE)
+                                           ->setAmount($neededAmount);
+                    $stockResultCollection->add($unavailableStockResult);
+                }
             }
         }
 

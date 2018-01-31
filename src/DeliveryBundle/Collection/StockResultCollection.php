@@ -96,7 +96,7 @@ class StockResultCollection extends ArrayCollection
     /**
      * @return \DateTime
      */
-    public function getDeliveryDate()
+    public function getDeliveryDate(): \DateTime
     {
         $deliveryDate = new \DateTime();
 
@@ -114,7 +114,7 @@ class StockResultCollection extends ArrayCollection
      * @return StoreCollection
      * @throws NotFoundException
      */
-    public function getStores($skipUnavailable = true)
+    public function getStores($skipUnavailable = true): StoreCollection
     {
         $result = new StoreCollection();
         /** @var StockResult $item */
@@ -139,6 +139,11 @@ class StockResultCollection extends ArrayCollection
         return $result;
     }
 
+    /**
+     * @param bool $skipUnavailable
+     *
+     * @return ArrayCollection
+     */
     public function getOffers($skipUnavailable = true): ArrayCollection
     {
         $result = new ArrayCollection();
@@ -158,6 +163,8 @@ class StockResultCollection extends ArrayCollection
     }
 
     /**
+     * @param bool $skipUnavailable
+     *
      * @return float
      */
     public function getPrice($skipUnavailable = true): float

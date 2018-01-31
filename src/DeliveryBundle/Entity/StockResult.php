@@ -25,9 +25,18 @@ class StockResult
     protected $offer;
 
     /**
+     * Склады, откуда будет осуществляться доставка/самовывоз
+     *
      * @var StoreCollection
      */
     protected $stores;
+
+    /**
+     * Склады, откуда будет поставка на $stores
+     *
+     * @var StoreCollection
+     */
+    protected $delayStores;
 
     /**
      * @var float
@@ -164,6 +173,30 @@ class StockResult
     public function setPrice(float $price): StockResult
     {
         $this->price = $price;
+
+        return $this;
+    }
+
+    /**
+     * @return StoreCollection
+     */
+    public function getDelayStores(): StoreCollection
+    {
+        if (!$this->delayStores) {
+            $this->delayStores = new StoreCollection();
+        }
+
+        return $this->delayStores;
+    }
+
+    /**
+     * @param StoreCollection $delayStores
+     *
+     * @return StockResult
+     */
+    public function setDelayStores(StoreCollection $delayStores): StockResult
+    {
+        $this->delayStores = $delayStores;
 
         return $this;
     }
