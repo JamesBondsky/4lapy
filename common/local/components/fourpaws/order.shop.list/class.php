@@ -173,7 +173,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                     $partsDelayed[] = [
                         'name'     => $item->getOffer()->getName(),
                         'quantity' => $item->getAmount(),
-                        'price'    => $item->getPrice()
+                        'price'    => $item->getPrice(),
                     ];
                 }
 
@@ -183,33 +183,43 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                     $partsAvailable[] = [
                         'name'     => $item->getOffer()->getName(),
                         'quantity' => $item->getAmount(),
-                        'price'    => $item->getPrice()
+                        'price'    => $item->getPrice(),
                     ];
+                }
+
+                if ($available->isEmpty()) {
+                    $orderType = 'full';
+                } else {
+                    if ($delayed->isEmpty()) {
+                        $orderType = 'delay';
+                    } else {
+                        $orderType = 'parts';
+                    }
                 }
 
                 $result['items'][] = [
                     'id'              => $store->getXmlId(),
-                    'adress'         => $address,
+                    'adress'          => $address,
                     'phone'           => $store->getPhone(),
                     'schedule'        => $store->getSchedule(),
                     'pickup'          => DeliveryTimeHelper::showTime(
                         $resultByStore['PARTIAL_RESULT'],
-                        $delayed->getDeliveryDate(),
-                        false,
-                        true
+                        $delayed->isEmpty() ? $stockResultByStore->getDeliveryDate() : $delayed->getDeliveryDate(),
+                        true,
+                        false
                     ),
                     'pickup_full'     => DeliveryTimeHelper::showTime(
                         $resultByStore['FULL_RESULT'],
                         $stockResultByStore->getDeliveryDate(),
-                        false,
-                        true
+                        true,
+                        false
                     ),
                     'metroClass'      => !empty($metro) ? '--' . $metroList[$metro]['UF_CLASS'] : '',
-                    'order'           => $resultByStore['DELAYED_AMOUNT'] > 0 ? 'parts' : 'full',
+                    'order'           => $orderType,
                     'parts_available' => $partsAvailable,
                     'parts_delayed'   => $partsDelayed,
                     'services'        => $services,
-                    'price'           => $delayed->getPrice(),
+                    'price'           => $delayed->isEmpty() ? $stockResultByStore->getPrice() : $delayed->getPrice(),
                     'full_price'      => $stockResultByStore->getPrice(),
                     /* @todo поменять местами gps_s и gps_n */
                     'gps_n'           => $store->getLongitude(),
