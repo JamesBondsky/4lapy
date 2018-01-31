@@ -10,9 +10,13 @@
 /** @global \FourPaws\Components\BasketComponent $component */
 
 use FourPaws\Decorators\SvgDecorator;
+/** @var \Bitrix\Sale\Basket $basket */
+$basket = $arResult['BASKET'];
+$orderableBasket = $basket->getOrderableItems();
 
-/** @var \Bitrix\Sale\Basket $arResult ['BASKET'] */
-$orderableBasket = $arResult['BASKET']->getOrderableItems();
+/** @var \Bitrix\Sale\Order $order */
+$order = $basket->getOrder();
+
 if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
     echo '<div class="b-shopping-cart">';
 }
@@ -26,6 +30,7 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                 <?php
                 /** @var \Bitrix\Sale\BasketItem $basketItem */
                 foreach ($orderableBasket as $basketItem) {
+                    //dump($basketItem->getPropertyCollection()->getPropertyValues());
                     $image = $component->getImage($basketItem->getProductId());
                     ?>
                     <div class="b-item-shopping">
@@ -142,7 +147,7 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                 'MODE' => 'php',
             ]
         );
-    ?></div>
+        ?></div>
 <?php
 if (!isset($arParams['IS_AJAX']) || $arParams !== true) {
     echo '</div>';
