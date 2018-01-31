@@ -14,6 +14,7 @@ use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\HighloadHelper;
+use FourPaws\Helpers\WordHelper;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -22,20 +23,22 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 $product = $arResult['PRODUCT'];
 $offers  = $product->getOffers();
 
-/**
- * @todo hotfix. Вынести в компонент. Завязать текущий оффер на фильтр.
- */
-foreach ($offers as $offer) {
-    if ($offer->getImages()->count() >= 1 && $offer->getImages()->first() !== MediaEnum::NO_IMAGE_WEB_PATH) {
-        $currentOffer = $offer;
+if (!empty($arParams['CURRENT_OFFER']) && $arParams['CURRENT_OFFER'] instanceof Offer) {
+    $currentOffer = $arParams['CURRENT_OFFER'];
+} else {
+    /**
+     * @todo hotfix. Вынести в компонент. Завязать текущий оффер на фильтр.
+     */
+    foreach ($offers as $offer) {
+        if ($offer->getImages()->count() >= 1 && $offer->getImages()->first() !== MediaEnum::NO_IMAGE_WEB_PATH) {
+            $currentOffer = $offer;
+        }
     }
-}
-
-if (!$currentOffer) {
-    $currentOffer = $offers->first();
-}
-
-?>
+    
+    if (!$currentOffer) {
+        $currentOffer = $offers->first();
+    }
+} ?>
 
 <div class="b-common-item b-common-item--catalog-item js-product-item">
     <a class="b-common-item__image-wrap" href="<?= $product->getDetailPageUrl() ?>">
@@ -65,7 +68,7 @@ if (!$currentOffer) {
             ['HIDE_ICONS' => 'Y']
         ); ?>
         <div class="b-common-item__rank-wrapper">
-            &nbsp;
+            &nbsp
             <?php /**
              * @todo new; shares
              * <span class="b-common-item__rank-text b-common-item__rank-text--green">Новинка</span>
@@ -79,13 +82,16 @@ if (!$currentOffer) {
                 $mainCombinationType = 'SIZE';
             } else {
                 $mainCombinationType = 'VOLUME';
-            }
-            ?>
-            <?php if ($mainCombinationType === 'SIZE') { ?>
+            } ?>
+            <?php if ($mainCombinationType === 'SIZE') {
+                ?>
                 <div class="b-common-item__variant">Размеры</div>
-            <?php } else { ?>
+                <?php
+            } else {
+                ?>
                 <div class="b-common-item__variant">Варианты фасовки</div>
-            <?php } ?>
+                <?php
+            } ?>
             <div class="b-weight-container b-weight-container--list">
                 <a class="b-weight-container__link b-weight-container__link--mobile js-mobile-select"
                    href="javascript:void(0);"
@@ -104,13 +110,12 @@ if (!$currentOffer) {
                             if ($offer->getVolumeReference()) {
                                 $value = $offer->getVolumeReference()->getName();
                             } elseif ($weight = $offer->getCatalogProduct()->getWeight()) {
-                                $value = \FourPaws\Helpers\WordHelper::showWeight($weight);
+                                $value = WordHelper::showWeight($weight);
                             }
                         }
                         if (!$value) {
                             continue;
-                        }
-                        ?>
+                        } ?>
                         <li class="b-weight-container__item">
                             <a href="javascript:void(0)"
                                class="b-weight-container__link js-price<?= $currentOffer->getId() === $offer->getId(
@@ -128,14 +133,17 @@ if (!$currentOffer) {
                     </div>
                 </div>
             </div>
-        <?php } ?>
+            <?php
+        } ?>
         <div class="b-common-item__moreinfo">
             <?php if ($currentOffer->getMultiplicity() > 1) { ?>
                 <div class="b-common-item__packing">
                     Упаковка <strong><?= $currentOffer->getMultiplicity() ?>шт.</strong>
                 </div>
-            <?php } ?>
-            <?php if ($product->getCountry()) { ?>
+                <?php
+            } ?>
+            <?php if ($product->getCountry()) {
+                ?>
                 <div class="b-common-item__country">
                     Страна производства <strong><?= $product->getCountry()->getName() ?></strong>
                 </div>
@@ -144,7 +152,8 @@ if (!$currentOffer) {
                 <div class="b-common-item__order">
                     Только под заказ
                 </div>
-            <?php } ?>
+                <?php
+            } ?>
             <?php /* @todo инфо о доставке/самовывозе */ ?>
             <div class="b-common-item__pickup">
                 Самовывоз
@@ -171,7 +180,7 @@ if (!$currentOffer) {
         ob_start();
         
         /** @todo инфо о скидке */
-
+        
         if ($currentOffer->isByRequest()) { ?>
             <div class="b-common-item__info-wrap">
                 <span class="b-common-item__text">Только под заказ</span>
