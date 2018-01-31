@@ -17,10 +17,10 @@ use FourPaws\External\Manzana\Model\Card;
 use FourPaws\External\Manzana\Model\CardByContractCards;
 use FourPaws\External\Manzana\Model\Cards;
 use FourPaws\External\Manzana\Model\CardsByContractCards;
-use FourPaws\External\Manzana\Model\ChequeByContractCheques;
-use FourPaws\External\Manzana\Model\ChequeByContractContactCheques;
-use FourPaws\External\Manzana\Model\ChequesByContractCheques;
-use FourPaws\External\Manzana\Model\ChequesByContractContactCheques;
+use FourPaws\External\Manzana\Model\Cheque;
+use FourPaws\External\Manzana\Model\ChequeItem;
+use FourPaws\External\Manzana\Model\ChequeItems;
+use FourPaws\External\Manzana\Model\Cheques;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\Manzana\Model\Clients;
 use FourPaws\External\Manzana\Model\Contact;
@@ -29,7 +29,6 @@ use FourPaws\External\Manzana\Model\ParameterBag;
 use FourPaws\External\Manzana\Model\ReferralParams;
 use FourPaws\External\Manzana\Model\Referrals;
 use FourPaws\External\Manzana\Model\ResultXmlFactory;
-use FourPaws\External\Manzana\Model\CardValidateResult;
 use FourPaws\External\Traits\ManzanaServiceTrait;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -76,8 +75,6 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     const CONTRACT_CHEQUE_ITEMS           = 'cheque_items';
     
     const CONTRACT_SEARCH_CARD_BY_NUMBER  = 'search_cards_by_number';
-
-    const CONTRACT_CHEQUES = 'cheques';
 
     protected $sessionId;
     
@@ -497,7 +494,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     {
         return (string)$this->getContactByPhone($phone)->contactId;
     }
-
+    
     /**
      * Передача номера бонусной карты для проверки валидности
      * Контракт в ML: card_validate
@@ -513,38 +510,19 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     public function validateCardByNumber(string $cardNumber) : bool
     {
-        $cardValidateResult = $this->validateCardByNumberRaw($cardNumber);
-        //$result = $cardValidateResult->cardId !== '';
-        $result = $cardValidateResult->isValid ? true : false;
-
-        return $result;
-    }
-
-    /**
-     * Проверка валидности карты и получение ее ID
-     * Контракт в ML: card_validate
-     *
-     * - форма замены бонусной карты
-     * - регистрация бонусной карты сотрудником магазина в ЛК магазина
-     *
-     * @param string $cardNumber
-     * @return CardValidateResult
-     * @throws ManzanaServiceException
-     */
-    public function validateCardByNumberRaw(string $cardNumber) : CardValidateResult
-    {
-        $cardValidateResult = null;
         $bag = new ParameterBag(['cardnumber' => $cardNumber]);
+        
         try {
             $result = $this->execute(self::CONTRACT_CARD_VALIDATE, $bag->getParameters());
-            $cardValidateResult = $this->serializer->deserialize($result, CardValidateResult::class, 'xml');
+            /** @noinspection PhpUndefinedFieldInspection */
+            $result = $result->cardid->__toString() !== '';
         } catch (\Throwable $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
         }
-
-        return $cardValidateResult;
+        
+        return $result;
     }
-
+    
     /**
      * Получение данных о держателе бонусной карты
      *
@@ -659,44 +637,51 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     {
     
     }
-
+    
     /**
-     * @param $cardId
+     * @param string $contactId
      *
-     * @return ChequeByContractCheques[]|array
+     * @return Cheque[]
      * @throws ManzanaServiceException
      */
-    public function getChequesByCardId(string $cardId) : array
+    public function getCheques(string $contactId) : array
     {
-        $cheques = [];
-        $bag = new ParameterBag(['card_id' => $cardId]);
-        try {
-            $result = $this->execute(self::CONTRACT_CHEQUES, $bag->getParameters());
-            $cheques = $this->serializer->deserialize($result, ChequesByContractCheques::class, 'xml')->cheques->toArray();
-        } catch (\Exception $e) {
-            throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
-        }
-
-        return $cheques;
-    }
-
-    /**
-     * @param $contactId
-     *
-     * @return ChequeByContractContactCheques[]|array
-     * @throws ManzanaServiceException
-     */
-    public function getChequesByContactId($contactId) : array
-    {
-        $cheques = [];
         $bag = new ParameterBag(['contact_id' => $contactId]);
         try {
             $result = $this->execute(self::CONTRACT_CONTACT_CHEQUES, $bag->getParameters());
-            $cheques = $this->serializer->deserialize($result, ChequesByContractContactCheques::class, 'xml')->cheques->toArray();
+            /** @var Cheques $resCheques */
+            $resCheques = $this->serializer->deserialize($result, Cheques::class, 'xml');
+            /** @var Cheque[] $cheques*/
+            $cheques = $resCheques->cheques->toArray();
         } catch (\Exception $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
         }
-
+        
         return $cheques;
+        
     }
+
+    /**
+     * @param string $chequeId
+     *
+     * @return ChequeItem[]
+     * @throws ManzanaServiceException
+     */
+    public function getItemsBuCheque(string $chequeId) : array
+    {
+        
+        $bag = new ParameterBag(['cheque_id' => $chequeId]);
+        try {
+            $result = $this->execute(self::CONTRACT_CHEQUE_ITEMS, $bag->getParameters());
+            /** @var ChequeItems $resChequeItems */
+            $resChequeItems = $this->serializer->deserialize($result, ChequeItems::class, 'xml');
+            /** @var ChequeItem[] $chequeItems */
+            $chequeItems = $resChequeItems->chequeItems->toArray();
+        } catch (\Exception $e) {
+            throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
+        }
+        
+        return $chequeItems;
+    }
+    
 }

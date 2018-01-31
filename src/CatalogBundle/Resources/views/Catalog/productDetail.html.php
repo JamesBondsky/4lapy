@@ -21,9 +21,11 @@ $product = $APPLICATION->IncludeComponent(
     '',
     [
         'CODE'      => $productDetailRequest->getProductSlug(),
+        'OFFER_ID'  => $productDetailRequest->getOfferId(),
         'SET_TITLE' => 'Y',
     ],
-    $component
+    false,
+    ['HIDE_ICONS' => 'Y']
 );
 ?>
     <div class="b-product-card">
@@ -35,7 +37,8 @@ $product = $APPLICATION->IncludeComponent(
                 [
                     'IBLOCK_ELEMENT' => $product,
                 ],
-                $component
+                false,
+                ['HIDE_ICONS' => 'Y']
             );
             ?>
             <div class="b-product-card__top">
@@ -144,7 +147,7 @@ $product = $APPLICATION->IncludeComponent(
                                 'ACTIVE_DATE_FORMAT' => 'd j Y',
                                 'TYPE'               => 'catalog',
                             ],
-                            $component,
+                            false,
                             ['HIDE_ICONS' => 'Y']
                         );
                         ?>
@@ -165,8 +168,7 @@ $product = $APPLICATION->IncludeComponent(
                                             class="b-icon b-icon--map"><?= new SvgDecorator(
                                             'icon-map', 22, 20
                                         ) ?></span></a>
-                                <ul
-                                        class="b-availability-tab-list">
+                                <ul class="b-availability-tab-list">
                                     <li class="b-availability-tab-list__item active"><a
                                                 class="b-availability-tab-list__link js-product-list"
                                                 href="javascript:void(0)" aria-controls="shipping-list" title="Списком">Списком</a>

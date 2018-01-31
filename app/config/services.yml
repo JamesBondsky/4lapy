@@ -105,6 +105,11 @@ services:
       tags:
           - { name: jms_serializer.subscribing_handler }
 
+  jms_serializer.manzana_date_time_short_handler:
+      class: FourPaws\AppBundle\Serialization\ManzanaDateTimeImmutableFullShortHandler
+      tags:
+          - { name: jms_serializer.subscribing_handler }
+
   recaptcha.guzzle:
       class: GuzzleHttp\Client
       arguments:

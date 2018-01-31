@@ -35,7 +35,7 @@ $locationService = Application::getInstance()->getContainer()->get('location.ser
 $product      = $arResult['PRODUCT'];
 $offers       = $product->getOffers();
 $brand        = $product->getBrand();
-$currentOffer = $product->getOffers()->first();
+$currentOffer = $arResult['CURRENT_OFFER'];
 
 $mainCombinationType = '';
 if ($currentOffer->getClothingSize()) {
@@ -139,8 +139,12 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
             <?php } ?>
             <div class="b-weight-container b-weight-container--product">
                 <ul class="b-weight-container__list b-weight-container__list--product">
-                    <?php foreach ($offers as $offer) { ?>
-                        <?php
+                    <?php
+                    $isCurrentOffer = false;
+    
+                    foreach ($offers as $offer) {
+                        $isCurrentOffer = !$isCurrentOffer && $currentOffer->getId() === $offer->getId();
+                        
                         $value = null;
                         if ($mainCombinationType === 'SIZE') {
                             if ($offer->getClothingSize()) {
@@ -158,10 +162,9 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
                             continue;
                         }
                         ?>
-                        <li class="b-weight-container__item b-weight-container__item--product">
-                            <a class="b-weight-container__link b-weight-container__link--product js-price-product<?= ($currentOffer->getId()
-                                                                                                                      === $offer->getId()) ? ' active-link' : '' ?>"
-                               href="javascript:void(0);"
+                        <li class="b-weight-container__item b-weight-container__item--product<?= $isCurrentOffer ? ' active' : '' ?>">
+                            <a class="b-weight-container__link b-weight-container__link--product js-price-product<?= $isCurrentOffer ? ' active-link' : '' ?>"
+                               href="<?= $offer->getLink() ?>"
                                data-weight=" <?= $value ?>"
                                data-price="<?= $offer->getPrice() ?>"
                                data-image="<?= $mainImageIndex[$offer->getId()] ?>"
