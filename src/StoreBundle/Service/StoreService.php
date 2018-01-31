@@ -279,31 +279,38 @@ class StoreService
      *
      * @param Collection      $offers
      * @param StoreCollection $stores
+     */
+    public function getStocks(Collection $offers, StoreCollection $stores)
+    {
+        foreach ($offers as $offer) {
+            $offer->withStocks(
+                $this->getStocksByOffer($offer)
+                     ->filterByStores($stores)
+            );
+        }
+    }
+
+    /**
+     * @param Offer $offer
      *
      * @return StockCollection
      */
-    public function getStocks(Collection $offers, StoreCollection $stores) : StockCollection
+    public function getStocksByOffer(Offer $offer): StockCollection
     {
-        if ($offers->isEmpty()) {
-            return new StockCollection();
-        }
+        $getStocks = function () use ($offer) {
+            return $this->stockRepository->findBy(
+                [
+                    'PRODUCT_ID' => $offer->getId(),
+                ]
+            );
+        };
 
-        $storeIds = [];
-        foreach ($stores as $store) {
-            $storeIds[] = $store->getId();
-        }
+        $data = (new BitrixCache())
+            ->withId(__METHOD__ . '__' . $offer->getId())
+            ->withTag('catalog:stocks')
+            ->withTag('catalog:stocks:' . $offer->getId())
+            ->resultOf($getStocks);
 
-        $offerIds = [];
-        /** @var Offer $offer */
-        foreach ($offers as $offer) {
-            $offerIds[] = $offer->getId();
-        }
-
-        return $this->stockRepository->findBy(
-            [
-                'PRODUCT_ID' => $offerIds,
-                'STORE_ID'   => $storeIds,
-            ]
-        );
+        return $data['result'];
     }
 }

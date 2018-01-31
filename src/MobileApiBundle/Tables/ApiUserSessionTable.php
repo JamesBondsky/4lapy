@@ -7,10 +7,11 @@ use Bitrix\Main\Entity\DatetimeField;
 use Bitrix\Main\Entity\Event;
 use Bitrix\Main\Entity\EventResult;
 use Bitrix\Main\Entity\IntegerField;
+use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Entity\StringField;
 use Bitrix\Main\Type\DateTime;
 
-class UserSessionTable extends DataManager
+class ApiUserSessionTable extends DataManager
 {
     /**
      * @return string
@@ -23,6 +24,7 @@ class UserSessionTable extends DataManager
     /**
      * @throws \Bitrix\Main\ObjectException
      * @return array
+     * @throws \Bitrix\Main\ArgumentException
      */
     public static function getMap(): array
     {
@@ -51,9 +53,6 @@ class UserSessionTable extends DataManager
             'HTTP_X_FORWARDED_FOR' => new StringField('HTTP_X_FORWARDED_FOR', [
                 'default_value' => $_SERVER['HTTP_X_FORWARDED_FOR'],
             ]),
-            'USER_ID'              => new IntegerField('USER_ID', [
-                'default_value' => null,
-            ]),
             'FUSER_ID'             => new IntegerField('FUSER_ID', [
                 'default_value' => null,
             ]),
@@ -62,11 +61,24 @@ class UserSessionTable extends DataManager
                 'unique'        => true,
                 'default_value' => md5(random_bytes(32)),
             ]),
+            new ReferenceField(
+                'FUSER',
+                'Bitrix\Sale\Internals\Fuser',
+                ['=this.FUSER_ID' => 'ref.ID'],
+                ['join_type' => 'INNER']
+            ),
+            new ReferenceField(
+                'USER',
+                'Bitrix\Main\User',
+                ['=ref.ID' => 'this.FUSER.USER_ID']
+            ),
+
         ];
     }
 
     /**
      * @param Event $event
+     *
      * @throws \Bitrix\Main\ObjectException
      * @return EventResult
      */
@@ -78,8 +90,21 @@ class UserSessionTable extends DataManager
     }
 
     /**
+     * @param Event $event
+     *
+     * @return EventResult
+     */
+    public static function onBeforeAdd(Event $event): EventResult
+    {
+        $result = new EventResult();
+        static::uniqueToken($event, $result);
+        return $result;
+    }
+
+    /**
      * @param Event       $event
      * @param EventResult $result
+     *
      * @throws \Bitrix\Main\ObjectException
      */
     protected static function dateUpdate(Event $event, EventResult $result)
@@ -89,17 +114,6 @@ class UserSessionTable extends DataManager
         if (!isset($data['DATE_UPDATE'])) {
             $result->modifyFields(['DATE_UPDATE' => new DateTime()]);
         }
-    }
-
-    /**
-     * @param Event $event
-     * @return EventResult
-     */
-    public static function onBeforeAdd(Event $event): EventResult
-    {
-        $result = new EventResult();
-        static::uniqueToken($event, $result);
-        return $result;
     }
 
     /**

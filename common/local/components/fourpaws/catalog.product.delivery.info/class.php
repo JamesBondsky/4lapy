@@ -69,7 +69,10 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
                 );
 
                 if (!$this->arParams['STOCKS']) {
-                    $stocks = $this->storeService->getStocks(new ArrayCollection($this->arParams['OFFER']), $stores);
+                    /** @var Offer $offer */
+                    $offer = $this->arParams['OFFER'];
+                    $this->storeService->getStocks(new ArrayCollection([$offer]), $stores);
+                    $this->arParams['STOCKS'] = $offer->getStocks();
                 }
                 $this->arResult['CURRENT']['PICKUP']['SHOP_COUNT'] = $this->getShopCount(
                     $this->arResult['CURRENT']['LOCATION']['CODE']
@@ -113,8 +116,12 @@ class FourPawsCatalogProductDeliveryInfoComponent extends FourPawsCityDeliveryIn
             $locationCode,
             StoreService::TYPE_SHOP
         );
-        $stocks = $this->storeService->getStocks(new ArrayCollection($this->arParams['OFFER']->getId()), $stores);
 
-        return count($stocks);
+        /** @var Offer $offer */
+        $offer = $this->arParams['OFFER'];
+
+        $this->storeService->getStocks(new ArrayCollection([$offer]), $stores);
+
+        return $offer->getStocks()->count();
     }
 }

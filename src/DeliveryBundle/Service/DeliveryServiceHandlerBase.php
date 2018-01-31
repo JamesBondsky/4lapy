@@ -118,7 +118,7 @@ abstract class DeliveryServiceHandlerBase extends Base implements DeliveryServic
             return false;
         }
 
-        $offers->loadStocks($stores);
+        $storeService->getStocks($offers, $stores);
 
         return $offers;
     }

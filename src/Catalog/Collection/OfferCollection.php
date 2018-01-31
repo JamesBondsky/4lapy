@@ -20,21 +20,4 @@ class OfferCollection extends IblockElementCollection
             yield new Offer($fields);
         }
     }
-
-    /**
-     * @param StoreCollection $stores
-     */
-    public function loadStocks(StoreCollection $stores): StockCollection
-    {
-        /** @var StoreService $storeService */
-        $storeService = Application::getInstance()->getContainer()->get('store.service');
-        $stocks = $storeService->getStocks($this->collection, $stores);
-        
-        /** @var Offer $offer */
-        foreach ($this->collection as $offer) {
-            $offer->withStocks($stocks->filterByOfferId($offer->getId()));
-        }
-        
-        return $stocks;
-    }
 }

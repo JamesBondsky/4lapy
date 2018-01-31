@@ -20,8 +20,10 @@ use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Entity\Stock;
-use JMS\Serializer\Annotation\Accessor;
+use FourPaws\Location\LocationService;
+use FourPaws\StoreBundle\Service\StoreService;
 use JMS\Serializer\Annotation as Serializer;
+use JMS\Serializer\Annotation\Accessor;
 use JMS\Serializer\Annotation\Groups;
 use JMS\Serializer\Annotation\Type;
 use RuntimeException;
@@ -263,6 +265,11 @@ class Offer extends IblockElement
      * @var Collection|Image[]
      */
     protected $resizeImages;
+    
+    /**
+     * @var string
+     */
+    protected $link = '';
 
     /**
      * @var StockCollection
@@ -868,32 +875,8 @@ class Offer extends IblockElement
     
     public function getBonuses()
     {
-        /* @@todo расчет бонусов */
+        /** @todo расчет бонусов */
         return 112;
-    }
-
-    /**
-     * @param StockCollection $stocks
-     *
-     * @return Offer
-     */
-    public function withStocks(StockCollection $stocks): Offer
-    {
-        $this->stocks = $stocks;
-
-        return $this;
-    }
-
-    /**
-     * @return StockCollection
-     */
-    public function getStocks(): StockCollection
-    {
-        if (!$this->stocks) {
-            $this->stocks = new StockCollection();
-        }
-
-        return $this->stocks;
     }
 
     protected function checkOptimalPrice()
@@ -917,5 +900,72 @@ class Offer extends IblockElement
                 $this->withPrice($resultPrice['DISCOUNT_PRICE']);
             }
         }
+    }
+    
+    /**
+     * @return string
+     */
+    public function getLink() : string
+    {
+        if (!$this->link) {
+            $this->link = sprintf('%s?offer=%s', $this->getProduct()->getDetailPageUrl(), $this->getId());
+        }
+        
+        return $this->link;
+    }
+    
+    /**
+     * Optimization: internal current product set
+     *
+     * @throws \InvalidArgumentException
+     *
+     * @param Product $product
+     */
+    public function setProduct(Product $product)
+    {
+        if ($product->getId() !== $this->getCml2Link()) {
+            throw new \InvalidArgumentException('Wrong product set');
+        }
+        
+        $this->product = $product;
+    }
+
+    /**
+     * @return StockCollection
+     */
+    public function getStocks(): StockCollection
+    {
+        if (!$this->stocks) {
+            /** @var StoreService $storeService */
+            $storeService = Application::getInstance()->getContainer()->get('store.service');
+            $allStocks = $storeService->getStocksByOffer($this);
+            $stores = $storeService->getByCurrentLocation();
+            if ($stores->isEmpty()) {
+                $stores = $storeService->getByLocation(LocationService::LOCATION_CODE_MOSCOW, StoreService::TYPE_STORE);
+            }
+            $this->withStocks($allStocks->filterByStores($stores));
+        }
+
+        return $this->stocks;
+    }
+
+    /**
+     * @param StockCollection $stocks
+     *
+     * @return Offer
+     */
+    public function withStocks(StockCollection $stocks): Offer
+    {
+        $this->stocks = $stocks;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getQuantity(): int
+    {
+        return $this->getStocks()->getTotalAmount();
     }
 }
