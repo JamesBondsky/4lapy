@@ -18,6 +18,9 @@ use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\BitrixOrm\Query\CatalogProductQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\Location\LocationService;
+use FourPaws\StoreBundle\Collection\StockCollection;
+use FourPaws\StoreBundle\Service\StoreService;
 use JMS\Serializer\Annotation as Serializer;
 use JMS\Serializer\Annotation\Accessor;
 use JMS\Serializer\Annotation\Groups;
@@ -266,6 +269,11 @@ class Offer extends IblockElement
      * @var string
      */
     protected $link = '';
+
+    /**
+     * @var StockCollection
+     */
+    protected $stocks;
     
     public function __construct(array $fields = [])
     {
@@ -919,5 +927,44 @@ class Offer extends IblockElement
         }
         
         $this->product = $product;
+    }
+
+    /**
+     * @return StockCollection
+     */
+    public function getStocks(): StockCollection
+    {
+        if (!$this->stocks) {
+            /** @var StoreService $storeService */
+            $storeService = Application::getInstance()->getContainer()->get('store.service');
+            $allStocks = $storeService->getStocksByOffer($this);
+            $stores = $storeService->getByCurrentLocation();
+            if ($stores->isEmpty()) {
+                $stores = $storeService->getByLocation(LocationService::LOCATION_CODE_MOSCOW, StoreService::TYPE_STORE);
+            }
+            $this->withStocks($allStocks->filterByStores($stores));
+        }
+
+        return $this->stocks;
+    }
+
+    /**
+     * @param StockCollection $stocks
+     *
+     * @return Offer
+     */
+    public function withStocks(StockCollection $stocks): Offer
+    {
+        $this->stocks = $stocks;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getQuantity(): int
+    {
+        return $this->getStocks()->getTotalAmount();
     }
 }
