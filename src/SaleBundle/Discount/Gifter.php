@@ -88,7 +88,7 @@ class Gifter extends \CGlobalCondCtrlAtoms
     /**
      *
      *
-     * @return array|void
+     * @return array
      */
     public static function GetControlShow($params)
     {
@@ -102,7 +102,7 @@ class Gifter extends \CGlobalCondCtrlAtoms
      *
      * @param string|bool $strControlID
      *
-     * @return array|bool|mixed
+     * @return array|bool
      */
     public static function GetControls($strControlID = false)
     {

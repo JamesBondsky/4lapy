@@ -31,7 +31,7 @@ class Cleaner
             $order = $event->getParameter('ENTITY');
             if($order instanceof Order) {
                 // do things
-                dump('ok');
+                // dump('ok');
             }
         }
 

@@ -10,6 +10,7 @@
 /** @global \FourPaws\Components\BasketComponent $component */
 
 use FourPaws\Decorators\SvgDecorator;
+
 /** @var \Bitrix\Sale\Basket $basket */
 $basket = $arResult['BASKET'];
 $orderableBasket = $basket->getOrderableItems();
@@ -48,7 +49,7 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                         </span>
                             <div class="b-common-item__info-center-block b-common-item__info-center-block--shopping-cart b-common-item__info-center-block--shopping">
                                 <a class="b-common-item__description-wrap b-common-item__description-wrap--shopping"
-                                   href="javascript:void(0);" title="">
+                                   href="<?= $basketItem->getField('DETAIL_PAGE_URL'); ?>" title="">
                                     <span class="b-clipped-text b-clipped-text--shopping-cart">
                                         <span>
                                             <!--
@@ -104,13 +105,13 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                                 </select>
                             </div>
                             <div class="b-price">
-                                <span class="b-price__current"><?= $basketItem->getPrice() ?>  </span>
+                                <span class="b-price__current"><?= $basketItem->getPrice() * $basketItem->getQuantity() ?>  </span>
                                 <span class="b-ruble">₽</span>
                                 <?php
                                 if ($basketItem->getDiscountPrice() > 0) {
                                     ?>
                                     <span class="b-old-price b-old-price--crossed-out">
-                                        <span class="b-old-price__old"><?= $basketItem->getBasePrice() ?>  </span>
+                                        <span class="b-old-price__old"><?= $basketItem->getBasePrice() * $basketItem->getQuantity() ?>  </span>
                                         <span class="b-ruble b-ruble--old-weight-price">₽</span>
                                     </span>
                                     <?php
@@ -136,10 +137,10 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
          */
         $productsIds = [];
         foreach ($orderableBasket as $basketItem) {
-            $pId = intval($basketItem->getProductId());
-            $productInfo = \CCatalogSKU::GetProductInfo($pId);
+            $pId = (int) $basketItem->getProductId();
+            $productInfo = CCatalogSku::GetProductInfo($pId);
             if ($productInfo) {
-                $pId = intval($productInfo['ID']);
+                $pId = (int) $productInfo['ID'];
             }
             if ($pId > 0) {
                 $productsIds[] = $pId;
