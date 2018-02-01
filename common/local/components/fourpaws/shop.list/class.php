@@ -14,6 +14,9 @@ use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Model\CropImageDecorator;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
+use FourPaws\Catalog\Model\Offer;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -33,6 +36,9 @@ class FourPawsShopListComponent extends CBitrixComponent
     
     /** @var UserService $userService */
     private $userService;
+    
+    /** @var Offer[] $offers */
+    private $offers;
     
     /**
      * FourPawsShopListComponent constructor.
@@ -102,18 +108,39 @@ class FourPawsShopListComponent extends CBitrixComponent
      */
     public function getStores(array $filter = [], array $order = [], $returnActiveServices = false) : array
     {
-        $result          = [];
         $storeRepository = $this->storeService->getRepository();
         $filter          = array_merge($filter, $this->storeService->getTypeFilter($this->storeService::TYPE_SHOP));
+        
+        /** @var StoreCollection $storeCollection */
         $storeCollection = $storeRepository->findBy($filter, $order);
-        $stores          = $storeCollection->toArray();
-        if (!empty($stores)) {
-            list($servicesList, $metroList) = $this->getFullStoreInfo($stores);
+        
+        return $this->getFormatedStoreByCollection($storeCollection, $returnActiveServices);
+    }
+    
+    /**
+     * @param StoreCollection $storeCollection
+     * @param bool            $returnActiveServices
+     *
+     * @return array
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws \Exception
+     * @throws FileNotFoundException
+     */
+    public function getFormatedStoreByCollection(
+        StoreCollection $storeCollection,
+        $returnActiveServices = false
+    ) : array
+    {
+        $result = [];
+        if (!$storeCollection->isEmpty()) {
+            list($servicesList, $metroList) = $this->getFullStoreInfo($storeCollection);
             
             /** @var Store $store */
             $avgGpsN = 0;
             $avgGpsS = 0;
-            foreach ($stores as $store) {
+            foreach ($storeCollection as $store) {
                 $metro   = $store->getMetro();
                 $address = $store->getAddress();
                 
@@ -139,7 +166,7 @@ class FourPawsShopListComponent extends CBitrixComponent
                 if ($gpsS > 0) {
                     $avgGpsS += $gpsS;
                 }
-                $result['items'][] = [
+                $item = [
                     'addr'       => $address,
                     'adress'     => $store->getDescription(),
                     'phone'      => $store->getPhone(),
@@ -153,8 +180,33 @@ class FourPawsShopListComponent extends CBitrixComponent
                     'gps_n'      => $gpsS,
                     //revert $gpsN
                 ];
+                if ($store->getOfferId() > 0) {
+                    $item['amount'] = $store->getOfferAmount() > 5 ? 'много' : 'мало';
+                    
+                    if ($store->getOfferAmount() > 0) {
+                        $pickup = $this->getActiveAmoutPickupText($store->getSchedule());
+                    } else {
+                        /** @var DeliveryService $deliveryService */
+                        $deliveryService = App::getInstance()->getContainer()->get('delivery.service');
+                        /** @var \Bitrix\Sale\Delivery\CalculationResult[] $calculationResult */
+                        $calculationResult        =
+                            $deliveryService->getByProduct(
+                                $this->getOfferById($store->getOfferId()),
+                                null,
+                                [$store->getId()]
+                            );
+                        $currentCalculationResult = current($calculationResult);
+                        echo '<pre>', var_dump($currentCalculationResult), '</pre>';
+                        $currentCalculationResult->getPeriodType();
+                        $currentCalculationResult->getPeriodFrom();
+                        $pickup = 'сегодня, с 16:00';
+                    }
+                    
+                    $item['pickup'] = $pickup;
+                }
+                $result['items'][] = $item;
             }
-            $countStores         = count($stores);
+            $countStores         = $storeCollection->count();
             $result['avg_gps_s'] = $avgGpsN / $countStores; //revert $avgGpsS
             $result['avg_gps_n'] = $avgGpsS / $countStores; //revert $avgGpsN
             if ($returnActiveServices) {
@@ -167,12 +219,12 @@ class FourPawsShopListComponent extends CBitrixComponent
     
     /**
      *
-     * @param array $stores
+     * @param StoreCollection $stores
      *
      * @throws \Exception
      * @return array
      */
-    public function getFullStoreInfo(array $stores) : array
+    public function getFullStoreInfo(StoreCollection $stores) : array
     {
         $servicesIds = [];
         $metroIds    = [];
@@ -199,6 +251,84 @@ class FourPawsShopListComponent extends CBitrixComponent
             $services,
             $metro,
         ];
+    }
+    
+    protected function getActiveAmoutPickupText(string $schedule)
+    {
+        $explode = explode('-', $schedule);
+        
+        $beginExplode = explode('-', $explode[0]);
+        $beginHouse   = (int)trim($beginExplode[0]);
+        $beginMinutes = (int)trim($beginExplode[1]);
+        
+        $endExplode = explode('-', $explode[1]);
+        $endHouse   = (int)trim($endExplode[0]);
+        $endMinutes = (int)trim($endExplode[1]);
+        
+        $curHouse   = date('H');
+        $curMinutes = date('i');
+        
+        $nextHouse = $curHouse + 1;
+        $nextDay   = false;
+        
+        if ($nextHouse > $endHouse) {
+            $nextDay = true;
+        } elseif ($nextHouse === $endHouse) {
+            if ($endMinutes > $curMinutes) {
+                $nextDay = true;
+            }
+        }
+        
+        if ($nextDay) {
+            /** @todo Нужно ли накинуть час от открытия? */
+            $pickup = 'завтра, с ' . $beginHouse . ':' . $beginMinutes;
+        } else {
+            $pickup = 'сегодня, с ' . $nextHouse . ':' . $curMinutes;
+        }
+        
+        return $pickup;
+    }
+    
+    protected function getNotAmountPickupText($store)
+    {
+        /** @var DeliveryService $deliveryService */
+        $deliveryService = App::getInstance()->getContainer()->get('delivery.service');
+        /** @var \Bitrix\Sale\Delivery\CalculationResult[] $calculationResult */
+        $calculationResult        =
+            $deliveryService->getByProduct(
+                $this->getOfferById($store->getOfferId()),
+                null,
+                [$store->getId()]
+            );
+        $currentCalculationResult = current($calculationResult);
+        echo '<pre>', var_dump($currentCalculationResult), '</pre>';
+        $dateFrom = new DateTime('now', new DateTimeZone('Europe/Moscow'));
+        $dateFrom->add($this->getTimeInterval($currentCalculationResult->getPeriodFrom(), $currentCalculationResult->getPeriodType()));
+        $pickup = \FourPaws\Helpers\DateHelper::replaceRuMonth($dateFrom->format(''), \FourPaws\Helpers\DateHelper::);
+        
+        return $pickup;
+    }
+    
+    protected function getOfferById(int $offerId)
+    {
+        if (!isset($this->offers[$offerId])) {
+            $offerQuery = new \FourPaws\Catalog\Query\OfferQuery();
+            $offerQuery->withFilter(['ID' => $offerId]);
+            $this->offers[$offerId] = $offerQuery->exec()->first();
+        }
+        
+        return $this->offers[$offerId];
+    }
+    
+    /**
+     * @param int $offerId
+     *
+     * @return StoreCollection
+     * @throws \Exception
+     */
+    public function getActiveStoresByProduct(int $offerId) : StoreCollection
+    {
+        return $this->storeService->getAvailableProductStoresCurrentLocation($offerId);
     }
     
     /**
