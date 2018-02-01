@@ -48,7 +48,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                     <label class="b-input-line__label" for="first-name">Имя</label>
                 </div>
                 <div class="b-input b-input--registration-form b-kek">
-                    <input class="b-input__input-field b-input__input-field--registration-form js-no-valid"
+                    <input class="b-input__input-field b-input__input-field--registration-form js-small-input"
                            type="text"
                            id="first-name"
                            placeholder=""
