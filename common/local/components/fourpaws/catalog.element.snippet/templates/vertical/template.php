@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Main\Localization\Loc;
+use FourPaws\App\Templates\MediaEnum;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
@@ -10,23 +11,39 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 /**
- * @global CMain $APPLICATION
- * @var array $arParams
- * @var array $arResult
- * @var CatalogSectionComponent $component
+ * @global CMain                 $APPLICATION
+ * @var array                    $arParams
+ * @var array                    $arResult
+ * @var CatalogSectionComponent  $component
  * @var CBitrixComponentTemplate $this
- * @var string $templateName
- * @var string $componentPath
+ * @var string                   $templateName
+ * @var string                   $componentPath
  *
- * @var Product $product
- * @var OfferCollection $offers
- * @var Offer $offer
- * @var Offer $firstOffer
+ * @var Product                  $product
+ * @var OfferCollection          $offers
+ * @var Offer                    $offer
+ * @var Offer                    $currentOffer
  */
 
 $product = $arResult['PRODUCT'];
-$offers = $product->getOffers();
-$firstOffer = $offers->first();
+$offers  = $product->getOffers();
+
+if (!empty($arParams['CURRENT_OFFER']) && $arParams['CURRENT_OFFER'] instanceof Offer) {
+    $currentOffer = $arParams['CURRENT_OFFER'];
+} else {
+    /**
+     * @todo hotfix. Вынести в компонент. Завязать текущий оффер на фильтр.
+     */
+    foreach ($offers as $offer) {
+        if ($offer->getImages()->count() >= 1 && $offer->getImages()->first() !== MediaEnum::NO_IMAGE_WEB_PATH) {
+            $currentOffer = $offer;
+        }
+    }
+    
+    if (!$currentOffer) {
+        $currentOffer = $offers->first();
+    }
+}
 
 $arParams['ITEM_ATTR_ID'] = isset($arParams['ITEM_ATTR_ID']) ? trim($arParams['ITEM_ATTR_ID']) : '';
 if (!strlen($arParams['ITEM_ATTR_ID'])) {
@@ -143,7 +160,7 @@ if (!strlen($arParams['ITEM_ATTR_ID'])) {
                         echo new SvgDecorator('icon-cart', 16, 16);
                         ?></span>
                 </span>
-                <span class="b-common-item__price js-price-block"><?=$firstOffer->getPrice()?></span>
+                <span class="b-common-item__price js-price-block"><?= $currentOffer->getPrice() ?></span>
                 <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
             </span>
             </a><?php
