@@ -113,7 +113,11 @@ body {
 select {
 	border: none;
 }
-.ajaxButton, .form-page__btn, input, button, .btn {
+.ajaxButton, 
+.form-page__btn, 
+input,
+button, 
+.btn {
 	display: inline-block;
 	padding: 0 25px;
 	height: 50px;
@@ -164,7 +168,9 @@ input[disabled="disabled"]:active {
 	top: 0;
 }
 
-input, select, textarea {
+input,
+select, 
+textarea {
 	display: block;
 	box-sizing: border-box;
 	width: 100%;
@@ -179,6 +185,31 @@ input, select, textarea {
 	cursor: text;
 	line-height: 50px;
 }
+
+input[type="checkbox"] {
+	height: auto;
+	width: auto;
+	line-height: 22px;
+	display: inline-block;
+}
+
+input[type="submit"] {
+	display: inline-block;
+	padding: 0 25px;
+	width: auto;
+	height: 50px;
+	cursor: pointer;
+	border: none;
+	text-transform: uppercase;
+	text-decoration: none;
+	text-align: center;
+	font: bold 17px 'Rotonda Bold', Helvetica, Arial, sans-serif;
+	line-height: 50px;
+	color: #fff;
+	background-color: #ff6e03;
+}
+
+
 .field-revert,
 .field-revert,
 .field-revert {
@@ -444,3 +475,8 @@ input, select, textarea {
 		color: #fff;
 		z-index: 2;
 	}
+
+.errortext {
+	color: red;
+	margin: 16px 0;
+}

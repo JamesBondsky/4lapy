@@ -14,12 +14,21 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var string $componentPath
  */
 
-echo '<div id="refreshingBlockContainer">';
+if ($arResult['CAN_ACCESS'] !== 'Y') {
+    ShowError('При обработке запроса произошла ошибка: отказано в доступе');
+    return;
+}
+
+if ($arResult['IS_AJAX_REQUEST'] !== 'Y') {
+    echo '<div id="refreshingBlockContainer">';
+}
 
 // форма
 include __DIR__.'/inc.form.php';
 
-echo '</div>';
+if ($arResult['IS_AJAX_REQUEST'] !== 'Y') {
+    echo '</div>';
+}
 
 if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
     ?>
@@ -106,6 +115,15 @@ if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
                                             toggleOrderList(actionElement);
                                         }
                                         actionElement.removeClass('preloader');
+                                    },
+                                    callbackError: function(jqXHR, textStatus, component) {
+                                        if (jqXHR.status == 403) {
+                                            alert('Отказано в доступе');
+                                        } else if (jqXHR.status == 401) {
+                                            alert('Пожалуйста, авторизуйтесь');
+                                        } else {
+                                            alert('Request error: '+jqXHR.status+' '+jqXHR.statusText);
+                                        }
                                     }
                                 }
                             );

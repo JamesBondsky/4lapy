@@ -14,6 +14,16 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var string $componentPath
  */
 
+if ($arResult['CAN_ACCESS'] !== 'Y') {
+    // т.к. результат вставляется в тело таблицы, то об ошибке сообщаем через статус
+    if ($arResult['IS_AUTHORIZED'] === 'Y') {
+        \Bitrix\Main\Application::getInstance()->getContext()->getResponse()->setStatus('403 Forbidden');
+    } else {
+        \Bitrix\Main\Application::getInstance()->getContext()->getResponse()->setStatus('401 Unauthorized');
+    }
+    return;
+}
+
 if ($arResult['CHEQUE_ITEMS']) {
     foreach ($arResult['CHEQUE_ITEMS'] as $item) {
         ?><tr>

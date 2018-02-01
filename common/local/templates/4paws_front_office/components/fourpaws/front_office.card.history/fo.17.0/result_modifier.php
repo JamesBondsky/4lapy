@@ -29,8 +29,8 @@ $arResult['CURRENT_STAGE'] = 'initial';
 if ($arResult['WAS_POSTED'] === 'Y') {
     $arResult['CURRENT_STAGE'] = 'history';
 }
-if ($arResult['IS_AJAX_REQUEST'] === 'Y') {
-    if (isset($arResult['FIELD_VALUES']['getChequeItems']) && $arResult['FIELD_VALUES']['getChequeItems'] === 'Y') {
+if ($arResult['IS_AJAX_REQUEST'] === 'Y' && isset($arResult['FIELD_VALUES']['getChequeItems'])) {
+    if ($arResult['FIELD_VALUES']['getChequeItems'] === 'Y') {
         $arResult['CURRENT_STAGE'] = 'cheque_details';
     }
 }

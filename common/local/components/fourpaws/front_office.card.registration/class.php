@@ -1,9 +1,12 @@
 <?php
 
+use Adv\Bitrixtools\Tools\Main\UserGroupUtils;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
+use Bitrix\Main\UserUtils;
 use FourPaws\App\Application;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
+use FourPaws\External\Manzana\Exception\CardNotFoundException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
 use FourPaws\External\SmsService;
@@ -34,7 +37,10 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
     const EXTERNAL_GENDER_CODE_F = 2;
     const BITRIX_GENDER_CODE_M = 'M';
     const BITRIX_GENDER_CODE_F = 'F';
+    /** код группы пользователей, имеющих доступ к компоненту, если ничего не задано в параметрах подключения */
+    const DEFAULT_USER_GROUP_CODE = 'FRONT_OFFICE_USERS';
 
+    /** @var string $action */
     private $action = '';
     /** @var ManzanaService $manzanaService */
     private $manzanaService;
@@ -46,6 +52,8 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
     protected $connection;
     /** @var bool $isTransactionStarted */
     private $isTransactionStarted;
+    /** @var string $canAccess */
+    protected $canAccess = '';
 
     public function __construct($component = null)
     {
@@ -69,6 +77,22 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
         }
 
         $this->arResult['ORIGINAL_PARAMETERS'] = $params;
+
+        $params['USER_ID'] = isset($params['USER_ID']) ? (int)$params['USER_ID'] : 0;
+        if ($params['USER_ID'] <= 0) {
+            $params['USER_ID'] = $GLOBALS['USER']->getId();
+        }
+
+        // группы пользователей, имеющих доступ к функционалу
+        $params['USER_GROUPS'] = isset($params['USER_GROUPS']) && is_array($params['USER_GROUPS']) ? $params['USER_GROUPS'] : [];
+        if (empty($params['USER_GROUPS'])) {
+            try {
+                $defaultGroupId = UserGroupUtils::getGroupIdByCode(static::DEFAULT_USER_GROUP_CODE);
+                if ($defaultGroupId) {
+                    $params['USER_GROUPS'][] = $defaultGroupId;
+                }
+            } catch (\Exception $exception) {}
+        }
 
         $params['CACHE_TYPE'] = isset($params['CACHE_TYPE']) ? $params['CACHE_TYPE'] : 'A';
         $params['CACHE_TIME'] = isset($params['CACHE_TIME']) ? $params['CACHE_TIME'] : 3600;
@@ -150,6 +174,30 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
     }
 
     /**
+     * @return bool
+     */
+    protected function canAccess()
+    {
+        if ($this->canAccess === '') {
+            $this->canAccess = 'N';
+            if ($GLOBALS['USER']->isAdmin()) {
+                $this->canAccess = 'Y';
+            } else {
+                if ($this->arParams['USER_ID'] != $GLOBALS['USER']->getId()) {
+                    $userGroups = UserUtils::getGroupIds($this->arParams['USER_ID']);
+                } else {
+                    $userGroups = $GLOBALS['USER']->getUserGroupArray();
+                }
+                if (array_intersect($this->arParams['USER_GROUPS'], $userGroups)) {
+                    $this->canAccess = 'Y';
+                }
+            }
+        }
+
+        return $this->canAccess === 'Y';
+    }
+
+    /**
      * @return ManzanaService
      */
     protected function getManzanaService()
@@ -215,14 +263,18 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
         return $this->serializer;
     }
 
-
-    public function cleanPhoneNumberValue($phone)
+    /**
+     * @param string $phone
+     * @return string
+     */
+    public function cleanPhoneNumberValue(string $phone)
     {
         try {
             $phone = PhoneHelper::normalizePhone($phone);
         } catch (\Exception $exception) {
             $phone = '';
         }
+
         return $phone;
     }
 
@@ -240,6 +292,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
                 '<>/?;:[]{}|~!@#$%^&*()-_+=',
             ]
         );
+
         return $password;
     }
 
@@ -247,16 +300,17 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
      * @param string $externalGenderCode
      * @return string
      */
-    public function getBitrixGenderByExternalGender($externalGenderCode)
+    public function getBitrixGenderByExternalGender(string $externalGenderCode)
     {
+        $result = '';
         $externalGenderCode = intval($externalGenderCode);
         if ($externalGenderCode === static::EXTERNAL_GENDER_CODE_M) {
-            return static::BITRIX_GENDER_CODE_M;
+            $result = static::BITRIX_GENDER_CODE_M;
         } elseif ($externalGenderCode === static::EXTERNAL_GENDER_CODE_F) {
-            return static::BITRIX_GENDER_CODE_F;
+            $result = static::BITRIX_GENDER_CODE_F;
         }
 
-        return '';
+        return $result;
     }
 
     protected function initialLoadAction()
@@ -268,21 +322,23 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
     {
         $this->initPostFields();
 
-        $this->processCardNumber();
-        $this->processPersonalData();
-        $this->processPhoneNumber();
-        $this->processEmail();
+        if ($this->canAccess()) {
+            $this->processCardNumber();
+            $this->processPersonalData();
+            $this->processPhoneNumber();
+            $this->processEmail();
 
-        if (empty($this->arResult['ERROR']['FIELD'])) {
-            if ($this->trimValue($this->getFormFieldValue('doCardRegistration')) === 'Y') {
-                $registrationResult = $this->doCardRegistration();
+            if (empty($this->arResult['ERROR']['FIELD'])) {
+                if ($this->trimValue($this->getFormFieldValue('doCardRegistration')) === 'Y') {
+                    $registrationResult = $this->doCardRegistration();
 
-                if ($registrationResult->isSuccess()) {
-                    $this->arResult['REGISTRATION_STATUS'] = 'SUCCESS';
-                } else {
-                    $this->arResult['REGISTRATION_STATUS'] = 'ERROR';
-                    foreach ($registrationResult->getErrors() as $error) {
-                        $this->arResult['ERROR']['REGISTRATION'][$error->getCode()] = $error->getMessage();
+                    if ($registrationResult->isSuccess()) {
+                        $this->arResult['REGISTRATION_STATUS'] = 'SUCCESS';
+                    } else {
+                        $this->arResult['REGISTRATION_STATUS'] = 'ERROR';
+                        foreach ($registrationResult->getErrors() as $error) {
+                            $this->arResult['ERROR']['REGISTRATION'][$error->getCode()] = $error->getMessage();
+                        }
                     }
                 }
             }
@@ -293,6 +349,8 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
 
     protected function loadData()
     {
+        $this->arResult['IS_AUTHORIZED'] = $GLOBALS['USER']->isAuthorized() ? 'Y' : 'N';
+        $this->arResult['CAN_ACCESS'] = $this->canAccess() ? 'Y' : 'N';
         $this->arResult['ACTION'] = $this->getAction();
         $this->includeComponentTemplate();
     }
@@ -306,9 +364,11 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
     protected function processCardNumber()
     {
         $fieldName = 'cardNumber';
-        $value = $this->trimValue($this->getFormFieldValue($fieldName));
-        if ($value === '') {
-            $this->setFieldError($fieldName, 'Undefined card number', 'empty');
+        $cardNumber = $this->trimValue($this->getFormFieldValue($fieldName));
+        if ($cardNumber === '') {
+            $this->setFieldError($fieldName, 'Номер карты не задан', 'empty');
+        } elseif (strlen($cardNumber) != 13) {
+            $this->setFieldError($fieldName, 'Неверный номер карты', 'incorrect_value');
         } else {
             $continue = true;
             // Заказчик уточнил, что проверку надо делать в Манзане.
@@ -319,55 +379,44 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
             }
             */
             if ($continue) {
-                try {
-                    /** @var FourPaws\External\Manzana\Model\CardValidateResult $validateResult */
-                    $validateResult = $this->getManzanaService()->validateCardByNumberRaw($value);
-                    // 0 - ok; 1 - карта не существует; 2 - карта принадлежит другому юзеру
-                    $validationResultCode = intval($validateResult->validationResultCode);
-                    if ($validationResultCode === 1) {
-                        $this->setFieldError($fieldName, 'Not found', 'not_found');
-                    } elseif ($validationResultCode === 2) {
-                        /** @var FourPaws\External\Manzana\Model\Card $card */
-                        $card = $this->getManzanaService()->searchCardByNumber($value);
-                        if ($card) {
-                            // Эта проверка была в старой реализации
-// !!!
-// Непонятно, какое отношение код семейного положения определяет активность карты...
-// !!!
-                            if ($card->familyStatusCode === 2) {
-                                $this->setFieldError($fieldName, 'Card activated', 'activated');
-                            }
-                            // Эта проверка была в старой реализации
-                            // Если HasChildrenCode=200000, анкета считается актуальной
-// !!!
-// Аналогично familyStatusCode, непонятно какая связь между кодом наличия детей и следующими флагами
-// !!!
-                            if ($card->hashChildrenCode === 200000) {
-                                $this->arResult['CARD_DATA']['IS_ACTUAL_PROFILE'] = 'Y';
+                $validateResult = $this->validateCardByNumber($cardNumber);
+                $validateResultData = $validateResult->getData();
+                if (!$validateResult->isSuccess()) {
+                    $this->setFieldError($fieldName, $validateResult->getErrors(), 'runtime');
+                } elseif (empty($validateResultData['validate'])) {
+                    $this->setFieldError($fieldName, 'Карта не найдена', 'not_found');
+                }
+
+                if ($validateResultData['validate']) {
+                    if ($validateResultData['validate']['_IS_CARD_OWNED_'] === 'Y') {
+                        $searchCardResult = $this->searchCardByNumber($cardNumber);
+                        $searchCardResultData = $searchCardResult->getData();
+                        if (!$searchCardResult->isSuccess()) {
+                            $this->setFieldError($fieldName, $searchCardResult->getErrors(), 'runtime');
+                        } elseif (empty($searchCardResultData['card'])) {
+                            $this->setFieldError($fieldName, 'Карта не найдена', 'not_found');
+                        } else {
+                            if ($searchCardResultData['card']['_IS_ACTIVATED_'] === 'Y') {
+                                $this->setFieldError($fieldName, 'Карта уже активирована', 'activated');
                             } else {
-                                $this->arResult['CARD_DATA']['IS_ACTUAL_PROFILE'] = 'N';
-                                //$this->arResult['CARD_DATA']['IS_ACTUAL_PHONE'] = 'N';
-                                //$this->arResult['CARD_DATA']['IS_ACTUAL_EMAIL'] = 'N';
+                                $this->arResult['CARD_DATA']['IS_ACTUAL_PROFILE'] = $searchCardResultData['card']['_IS_ACTUAL_PROFILE_'];
+                                $this->arResult['CARD_DATA']['IS_BONUS_CARD'] = $searchCardResultData['card']['_IS_BONUS_CARD_'];
+                                $this->arResult['CARD_DATA']['USER'] = [
+                                    'CONTACT_ID' => $searchCardResultData['card']['CONTACT_ID'],
+                                    'LAST_NAME' => $searchCardResultData['card']['LAST_NAME'],
+                                    'FIRST_NAME' => $searchCardResultData['card']['FIRST_NAME'],
+                                    'SECOND_NAME' => $searchCardResultData['card']['SECOND_NAME'],
+                                    'BIRTHDAY' => $searchCardResultData['card']['BIRTHDAY'],
+                                    'PHONE' => $searchCardResultData['card']['PHONE'],
+                                    '_PHONE_NORMALIZED_' => $searchCardResultData['card']['_PHONE_NORMALIZED_'],
+                                    'EMAIL' => $searchCardResultData['card']['EMAIL'],
+                                    'GENDER_CODE' => $searchCardResultData['card']['GENDER_CODE'],
+                                ];
                             }
-                            // товарищи из манзаны гарантируют: ненулевой pl_debet <=> карта бонусная
-                            $this->arResult['CARD_DATA']['IS_BONUS_CARD'] = doubleval($card->plDebet) > 0 ? 'Y' : 'N';
-
-                            $this->arResult['CARD_DATA']['USER'] = [
-                                'CONTACT_ID' => htmlspecialcharsbx(trim($card->contactId)),
-                                'LAST_NAME' => htmlspecialcharsbx(trim($card->lastName)),
-                                'FIRST_NAME' => htmlspecialcharsbx(trim($card->firstName)),
-                                'SECOND_NAME' => htmlspecialcharsbx(trim($card->secondName)),
-                                'BIRTHDAY' => $card->birthDate ? $card->birthDate->format('d.m.Y') : '',
-                                'PHONE' => $this->cleanPhoneNumberValue(trim($card->phone)),
-                                'EMAIL' => htmlspecialcharsbx(trim($card->email)),
-                                'GENDER_CODE' => intval($card->genderCode),
-                            ];
                         }
+                    } elseif ($validateResultData['validate']['_IS_CARD_NOT_EXISTS_'] === 'Y') {
+                        $this->setFieldError($fieldName, 'Not found', 'not_found');
                     }
-                } catch (\Exception $exception) {
-                    $this->setFieldError($fieldName, $exception->getMessage(), 'exception');
-
-                    $this->log()->error(sprintf('%s exception: %s', __FUNCTION__, $exception->getMessage()));
                 }
             }
         }
@@ -383,10 +432,10 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
         foreach ($tmpList as $fieldName) {
             $value = $this->trimValue($this->getFormFieldValue($fieldName));
             if ($value === '') {
-                $this->setFieldError($fieldName, 'Undefined', 'empty');
+                $this->setFieldError($fieldName, 'Значение не задано', 'empty');
             } else {
                 if (strlen($value) < 3 || preg_match('/[^а-яА-ЯёЁ\-\s]/u', $value)) {
-                    $this->setFieldError($fieldName, 'Not valid', 'not_valid');
+                    $this->setFieldError($fieldName, 'Значение задано некорректно', 'not_valid');
                 }
             }
         }
@@ -394,13 +443,13 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
         $fieldName = 'birthDay';
         $value = $this->trimValue($this->getFormFieldValue($fieldName));
         if ($value === '') {
-            $this->setFieldError($fieldName, 'Undefined', 'empty');
+            $this->setFieldError($fieldName, 'Значение не задано', 'empty');
         } else {
             if(!preg_match('/^\d{2}\.\d{2}\.\d{4}$/', $value)) {
-                $this->setFieldError($fieldName, 'Not valid', 'not_valid');
+                $this->setFieldError($fieldName, 'Значение задано некорректно', 'not_valid');
             } else {
                 if (!$GLOBALS['DB']->IsDate($value, 'DD.MM.YYYY')) {
-                    $this->setFieldError($fieldName, 'Not valid', 'not_valid');
+                    $this->setFieldError($fieldName, 'Значение задано некорректно', 'not_valid');
                 }
             }
         }
@@ -408,10 +457,10 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
         $fieldName = 'genderCode';
         $value = $this->trimValue($this->getFormFieldValue($fieldName));
         if ($value === '') {
-            $this->setFieldError($fieldName, 'Undefined', 'empty');
+            $this->setFieldError($fieldName, 'Значение не задано', 'empty');
         } else {
             if($value != static::EXTERNAL_GENDER_CODE_M && $value != static::EXTERNAL_GENDER_CODE_F) {
-                $this->setFieldError($fieldName, 'Not valid', 'not_valid');
+                $this->setFieldError($fieldName, 'Значение задано некорректно', 'not_valid');
             }
         }
     }
@@ -421,7 +470,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
         $fieldName = 'phone';
         $value = $this->trimValue($this->getFormFieldValue($fieldName));
         if ($value === '') {
-            $this->setFieldError($fieldName, 'Undefined phone number', 'empty');
+            $this->setFieldError($fieldName, 'Не задан номер телефона', 'empty');
         } else {
             $phone = $this->cleanPhoneNumberValue($value);
             if ($phone !== '') {
@@ -431,7 +480,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
                 //    $this->setFieldError($fieldName, 'Already registered phone number', 'already_registered');
                 //}
             } else {
-                $this->setFieldError($fieldName, 'Not valid', 'not_valid');
+                $this->setFieldError($fieldName, 'Номер телефона задан некорректно', 'not_valid');
             }
         }
     }
@@ -442,13 +491,140 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
         $value = $this->trimValue($this->getFormFieldValue($fieldName));
         if ($value !== '') {
             if (!check_email($value)) {
-                $this->setFieldError($fieldName, 'Not valid', 'not_valid');
+                $this->setFieldError($fieldName, 'E-mail задан некорректно', 'not_valid');
             } else {
                 if ($this->searchUserByEmail($value)) {
-                    $this->setFieldError($fieldName, 'Already registered e-mail', 'already_registered');
+                    $this->setFieldError($fieldName, 'Пользователь с заданным e-mail уже зарегистрирован', 'already_registered');
                 }
             }
         }
+    }
+
+    /**
+     * @param string $cardNumber
+     * @return Result
+     */
+    public function validateCardByNumber(string $cardNumber)
+    {
+        $result = new Result();
+
+        if ($cardNumber === '') {
+            $result->addError(
+                new Error('Не задан номер карты', 'emptyCardNumber')
+            );
+        }
+
+        $validateRaw = null;
+        if ($result->isSuccess()) {
+            try {
+                /** @var FourPaws\External\Manzana\Model\CardValidateResult $validateRaw */
+                $validateRaw = $this->getManzanaService()->validateCardByNumberRaw($cardNumber);
+            } catch (\Exception $exception) {
+                $result->addError(
+                    new Error($exception->getMessage(), 'validateCardByNumberRawException')
+                );
+
+                $this->log()->error(sprintf('%s exception: %s', __FUNCTION__, $exception->getMessage()));
+            }
+        }
+
+        $validate = [];
+        if ($validateRaw) {
+            $validate['CARD_ID'] = trim($validateRaw->cardId);
+            $validate['IS_VALID'] = trim($validateRaw->isValid);
+            $validate['FIRST_NAME'] = trim($validateRaw->firstName);
+            $validate['VALIDATION_RESULT'] = trim($validateRaw->validationResult);
+            // 0 - ok; 1 - карта не существует; 2 - карта принадлежит другому клиенту
+            $validate['VALIDATION_RESULT_CODE'] = (int) $validateRaw->validationResultCode;
+            $validate['_IS_CARD_OWNED_'] = $validateRaw->isCardOwned() ? 'Y' : 'N';
+            $validate['_IS_CARD_NOT_EXISTS_'] = $validateRaw->isCardNotExists() ? 'Y' : 'N';
+        }
+
+        $result->setData(
+            [
+                'validate' => $validate,
+                'validateRaw' => $validateRaw,
+            ]
+        );
+
+        return $result;
+    }
+
+    /**
+     * @param string $cardNumber
+     * @return Result
+     */
+    public function searchCardByNumber(string $cardNumber)
+    {
+        $result = new Result();
+
+        if ($cardNumber === '') {
+            $result->addError(
+                new Error('Не задан номер карты', 'emptyCardNumber')
+            );
+        }
+
+        $cardRaw = null;
+        if ($result->isSuccess()) {
+            try {
+                /** @var FourPaws\External\Manzana\Model\Card $cardRaw */
+                $cardRaw = $this->getManzanaService()->searchCardByNumber($cardNumber);
+            } catch (CardNotFoundException $exception) {
+                $result->addError(
+                    new Error('Карта не найдена', 'not_found')
+                );
+            } catch (\Exception $exception) {
+                $result->addError(
+                    new Error($exception->getMessage(), 'searchCardByNumberException')
+                );
+
+                $this->log()->error(sprintf('%s exception: %s', __FUNCTION__, $exception->getMessage()));
+            }
+        }
+
+        $card = [];
+        if ($cardRaw) {
+            $card['CONTACT_ID'] = trim($cardRaw->contactId);
+            $card['FIRST_NAME'] = trim($cardRaw->firstName);
+            $card['SECOND_NAME'] = trim($cardRaw->secondName);
+            $card['LAST_NAME'] = trim($cardRaw->lastName);
+            $card['BIRTHDAY'] = $cardRaw->birthDate;
+            $card['PHONE'] = trim($cardRaw->phone);
+            $card['_PHONE_NORMALIZED_'] = $this->cleanPhoneNumberValue($cardRaw->phone);
+            $card['EMAIL'] = trim($cardRaw->email);
+            $card['GENDER_CODE'] = (int)$cardRaw->genderCode;
+            $card['FAMILY_STATUS_CODE'] = (int)$cardRaw->familyStatusCode;
+            $card['HAS_CHILDREN_CODE'] = (int)$cardRaw->hashChildrenCode;
+            $card['DEBET'] = (double)$cardRaw->plDebet;
+            // товарищи из манзаны гарантируют: ненулевой pl_debet <=> карта бонусная
+            $card['_IS_BONUS_CARD_'] = $card['DEBET'] > 0 ? 'Y' : 'N';
+            $card['_IS_ACTIVATED_'] = 'N';
+            $card['_IS_ACTUAL_PROFILE_'] = 'N';
+
+// !!!
+// Эта проверка была в старой реализации
+// Непонятно, какое отношение код семейного положения и наличие детей имеют к признаку активированности карты...
+// !!!
+            if ($card['HAS_CHILDREN_CODE'] === 200000 && $card['FAMILY_STATUS_CODE'] === 2) {
+                $card['_IS_ACTIVATED_'] = 'Y';
+            }
+// !!!
+// Эта проверка была в старой реализации
+// Аналогично, непонятно какая связь между кодом наличия детей и флагом актуальности профиля
+// !!!
+            if ($card['HAS_CHILDREN_CODE'] === 200000) {
+                $card['_IS_ACTUAL_PROFILE_'] = 'Y';
+            }
+        }
+
+        $result->setData(
+            [
+                'card' => $card,
+                'cardRaw' => $cardRaw,
+            ]
+        );
+
+        return $result;
     }
 
     /**
@@ -574,10 +750,12 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
                     // для sms нужно от createResult брать объект юзера, т.к. в нем хранится пароль
                     $userSms = clone $createResultData['user'];
                     // для Манзаны берем карточку из базы (нужны все поля)
-                    $userManzana = $this->searchUserById($createResultData['user']->getId());
+                    /** @var User $createdUser */
+                    $createdUser = $createResultData['user'];
+                    $userManzana = $this->searchUserById($createdUser->getId());
                     if (!$userManzana) {
                         $result->addError(
-                            new Error('Не найден пользователь по id: '.$createResultData['user']->getId(), 'doCardRegistrationUserNotFound')
+                            new Error('Не найден пользователь по id: '.$createdUser->getId(), 'doCardRegistrationUserNotFound')
                         );
                         // не будем слать sms
                         $userSms = null;
@@ -881,17 +1059,18 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
                     if ($contactId !== '') {
                         $manzanaClient->contactId = $contactId;
                     }
-                    // В старой реализации передавалось это поле с таким значением
+
 // !!!
+// В старой реализации передавалось это поле с таким значением
 // Непонятно с какой целью устанавливается признак наличия детей
 // !!!
                     $manzanaClient->hashChildrenCode = 200000;
-                    // !!!
-                    // Также в старой реализации передавались поля:
-                    // ff_shopofactivation = UpdatedByСassa,
-                    // ff_shopregistration = символьный код магазина (связь UF_SHOP),
-                    // но в объекте Client этих полей нет
-                    // !!!
+// !!!
+// Также в старой реализации передавались поля:
+// ff_shopofactivation = UpdatedByСassa,
+// ff_shopregistration = символьный код магазина (связь UF_SHOP),
+// но в объекте Client этих полей нет
+// !!!
 
                     $manzanaService->updateContact($manzanaClient);
                 } catch (\Exception $exception) {
@@ -1137,9 +1316,51 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
         return is_scalar($value) ? trim($value) : '';
     }
 
-    protected function setFieldError($fieldName, $errorMsg, $errCode = '')
+    /**
+     * @param array|string $errorMsg
+     * @return string
+     */
+    protected function prepareErrorMsg($errorMsg)
     {
+        // стоит ли здесь делать htmlspecialcharsbx(), вот в чем вопрос...
+        $result = '';
+        if (is_array($errorMsg)) {
+            $result = [];
+            foreach ($errorMsg as $item) {
+                if ($item instanceof Error) {
+                    $result[] = '['.$item->getCode().'] '.$item->getMessage();
+                } elseif (is_scalar($item)) {
+                    $result[] = $item;
+                }
+            }
+            $result = implode('<br>', $result);
+        } elseif (is_scalar($errorMsg)) {
+            $result = $errorMsg;
+        }
+        return $result;
+    }
+
+    /**
+     * @param string $fieldName
+     * @param array|string $errorMsg
+     * @param string $errCode
+     */
+    protected function setFieldError(string $fieldName, $errorMsg, string $errCode = '')
+    {
+        $errorMsg = $this->prepareErrorMsg($errorMsg);
         $this->arResult['ERROR']['FIELD'][$fieldName] = new Error($errorMsg, $errCode);
+        //$this->log()->debug(sprintf('$fieldName: %s; $errorMsg: %s; $errCode: %s', $fieldName, $errorMsg, $errCode));
+    }
+
+    /**
+     * @param string $errName
+     * @param array|string $errorMsg
+     * @param string $errCode
+     */
+    protected function setExecError(string $errName, $errorMsg, $errCode = '')
+    {
+        $errorMsg = $this->prepareErrorMsg($errorMsg);
+        $this->arResult['ERROR']['EXEC'][$errName] = new Error($errorMsg, $errCode);
         //$this->log()->debug(sprintf('$fieldName: %s; $errorMsg: %s; $errCode: %s', $fieldName, $errorMsg, $errCode));
     }
 

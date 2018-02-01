@@ -41,13 +41,18 @@ foreach ($printFields as $fieldName) {
 
 // если номер карты прошел проверку, то по умолчанию заполним данными этой карты
 if (!empty($arResult['CARD_DATA']['USER'])) {
-    $arResult['PRINT_FIELDS']['lastName']['VALUE'] = $arResult['CARD_DATA']['USER']['LAST_NAME'];
-    $arResult['PRINT_FIELDS']['firstName']['VALUE'] = $arResult['CARD_DATA']['USER']['FIRST_NAME'];
-    $arResult['PRINT_FIELDS']['secondName']['VALUE'] = $arResult['CARD_DATA']['USER']['SECOND_NAME'];
-    $arResult['PRINT_FIELDS']['birthDay']['VALUE'] = $arResult['CARD_DATA']['USER']['BIRTHDAY'];
-    $arResult['PRINT_FIELDS']['genderCode']['VALUE'] = $arResult['CARD_DATA']['USER']['GENDER_CODE'];
-    $arResult['PRINT_FIELDS']['phone']['VALUE'] = $arResult['CARD_DATA']['USER']['PHONE'];
-    $arResult['PRINT_FIELDS']['email']['VALUE'] = $arResult['CARD_DATA']['USER']['EMAIL'];
+    $arResult['PRINT_FIELDS']['lastName']['VALUE'] = htmlspecialcharsbx($arResult['CARD_DATA']['USER']['LAST_NAME']);
+    $arResult['PRINT_FIELDS']['firstName']['VALUE'] = htmlspecialcharsbx($arResult['CARD_DATA']['USER']['FIRST_NAME']);
+    $arResult['PRINT_FIELDS']['secondName']['VALUE'] = htmlspecialcharsbx($arResult['CARD_DATA']['USER']['SECOND_NAME']);
+    $arResult['PRINT_FIELDS']['birthDay']['VALUE'] = '';
+    if (is_object($arResult['CARD_DATA']['USER']['BIRTHDAY'])) {
+        /** @var \DateTimeImmutable $date */
+        $date = $arResult['CARD_DATA']['USER']['BIRTHDAY'];
+        $arResult['PRINT_FIELDS']['birthDay']['VALUE'] = $date->format('d.m.Y');
+    }
+    $arResult['PRINT_FIELDS']['genderCode']['VALUE'] = htmlspecialcharsbx($arResult['CARD_DATA']['USER']['GENDER_CODE']);
+    $arResult['PRINT_FIELDS']['phone']['VALUE'] = htmlspecialcharsbx($arResult['CARD_DATA']['USER']['_PHONE_NORMALIZED_']);
+    $arResult['PRINT_FIELDS']['email']['VALUE'] = htmlspecialcharsbx($arResult['CARD_DATA']['USER']['EMAIL']);
 }
 
 // заполним значениями результата отправки формы

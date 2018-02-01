@@ -540,6 +540,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         $bag = new ParameterBag(['cardnumber' => $cardNumber]);
         try {
             $result = $this->execute(self::CONTRACT_CARD_VALIDATE, $bag->getParameters());
+            /** @var CardValidateResult $cardValidateResult */
             $cardValidateResult = $this->serializer->deserialize($result, CardValidateResult::class, 'xml');
         } catch (\Throwable $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);

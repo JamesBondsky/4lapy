@@ -18,7 +18,7 @@
             var requestUrl = requestParams.requestUrl || this.componentPath + '/ajax.php' + (document.location.href.indexOf('clear_cache=Y') !== -1 ? '?clear_cache=Y' : '');
             var requestType = requestParams.type || 'POST';
             var requestDataType = requestParams.dataType || 'html';
-            var callbackError = requestParams.callbackError || function(jqXHR, textStatus, component) {alert('Request error: '+textStatus);};
+            var callbackError = requestParams.callbackError || function(jqXHR, textStatus, component) {alert('Request error: '+jqXHR.status+' '+jqXHR.statusText);};
             var callbackComplete = requestParams.callbackComplete || function(jqXHR, textStatus, component) {};
             var this_ = this;
 

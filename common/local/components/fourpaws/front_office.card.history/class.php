@@ -1,7 +1,9 @@
 <?php
 
+use Adv\Bitrixtools\Tools\Main\UserGroupUtils;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
+use Bitrix\Main\UserUtils;
 use FourPaws\App\Application;
 use FourPaws\External\Manzana\Exception\CardNotFoundException;
 use FourPaws\External\ManzanaService;
@@ -15,9 +17,15 @@ class FourPawsFrontOfficeCardHistoryComponent extends \CBitrixComponent
 {
     use LazyLoggerAwareTrait;
 
+    /** код группы пользователей, имеющих доступ к компоненту, если ничего не задано в параметрах подключения */
+    const DEFAULT_USER_GROUP_CODE = 'FRONT_OFFICE_USERS';
+
+    /** @var string $action */
     private $action = '';
     /** @var ManzanaService $manzanaService */
     private $manzanaService;
+    /** @var string $canAccess */
+    protected $canAccess = '';
 
     public function __construct($component = null)
     {
@@ -40,6 +48,22 @@ class FourPawsFrontOfficeCardHistoryComponent extends \CBitrixComponent
         }
 
         $this->arResult['ORIGINAL_PARAMETERS'] = $params;
+
+        $params['USER_ID'] = isset($params['USER_ID']) ? (int)$params['USER_ID'] : 0;
+        if ($params['USER_ID'] <= 0) {
+            $params['USER_ID'] = $GLOBALS['USER']->getId();
+        }
+
+        // группы пользователей, имеющих доступ к функционалу
+        $params['USER_GROUPS'] = isset($params['USER_GROUPS']) && is_array($params['USER_GROUPS']) ? $params['USER_GROUPS'] : [];
+        if (empty($params['USER_GROUPS'])) {
+            try {
+                $defaultGroupId = UserGroupUtils::getGroupIdByCode(static::DEFAULT_USER_GROUP_CODE);
+                if ($defaultGroupId) {
+                    $params['USER_GROUPS'][] = $defaultGroupId;
+                }
+            } catch (\Exception $exception) {}
+        }
 
         $params['CACHE_TYPE'] = isset($params['CACHE_TYPE']) ? $params['CACHE_TYPE'] : 'A';
         $params['CACHE_TIME'] = isset($params['CACHE_TIME']) ? $params['CACHE_TIME'] : 3600;
@@ -78,19 +102,50 @@ class FourPawsFrontOfficeCardHistoryComponent extends \CBitrixComponent
     }
 
     /**
+     * @return bool
+     */
+    protected function canAccess()
+    {
+        if ($this->canAccess === '') {
+            $this->canAccess = 'N';
+            if ($GLOBALS['USER']->isAdmin()) {
+                $this->canAccess = 'Y';
+            } else {
+                if ($this->arParams['USER_ID'] != $GLOBALS['USER']->getId()) {
+                    $userGroups = UserUtils::getGroupIds($this->arParams['USER_ID']);
+                } else {
+                    $userGroups = $GLOBALS['USER']->getUserGroupArray();
+                }
+                if (array_intersect($this->arParams['USER_GROUPS'], $userGroups)) {
+                    $this->canAccess = 'Y';
+                }
+            }
+        }
+
+        return $this->canAccess === 'Y';
+    }
+
+    /**
+     * @return ManzanaService
+     */
+    protected function getManzanaService()
+    {
+        if (!$this->manzanaService) {
+            $this->manzanaService = Application::getInstance()->getContainer()->get('manzana.service');
+        }
+        return $this->manzanaService;
+    }
+
+    /**
      * @return string
      */
     protected function prepareAction()
     {
-        $this->arResult['CAN_ACCESS'] = $this->checkPermissions() ? 'Y' : 'N';
-
         $action = 'initialLoad';
 
-        if ($this->arResult['CAN_ACCESS'] === 'Y') {
-            if ($this->request->get('action') === 'postForm')  {
-                if ($this->request->get('formName') === 'cardHistory') {
-                    $action = 'postForm';
-                }
+        if ($this->request->get('action') === 'postForm')  {
+            if ($this->request->get('formName') === 'cardHistory') {
+                $action = 'postForm';
             }
         }
 
@@ -105,24 +160,6 @@ class FourPawsFrontOfficeCardHistoryComponent extends \CBitrixComponent
         }
     }
 
-    /**
-     * @return ManzanaService
-     */
-    protected function getManzanaService()
-    {
-        if (!$this->manzanaService) {
-            $this->manzanaService = Application::getInstance()->getContainer()->get('manzana.service');
-        }
-        return $this->manzanaService;
-    }
-
-    protected function checkPermissions()
-    {
-        $result = true;
-
-        return $result;
-    }
-
     protected function initialLoadAction()
     {
         $this->loadData();
@@ -132,22 +169,26 @@ class FourPawsFrontOfficeCardHistoryComponent extends \CBitrixComponent
     {
         $this->initPostFields();
 
-        $this->processCardNumber();
+        if ($this->canAccess()) {
+            $this->processCardNumber();
 
-        // список карт по id контакта
-        $this->obtainContactCards();
+            // список карт по id контакта
+            $this->obtainContactCards();
 
-        // список чеков по id контакта или id карты
-        $this->obtainCheques();
+            // список чеков по id контакта или id карты
+            $this->obtainCheques();
 
-        // детализация чека по id
-        $this->obtainChequeItems();
+            // детализация чека по id
+            $this->obtainChequeItems();
+        }
 
         $this->loadData();
     }
 
     protected function loadData()
     {
+        $this->arResult['IS_AUTHORIZED'] = $GLOBALS['USER']->isAuthorized() ? 'Y' : 'N';
+        $this->arResult['CAN_ACCESS'] = $this->canAccess() ? 'Y' : 'N';
         $this->arResult['ACTION'] = $this->getAction();
         $this->includeComponentTemplate();
     }
@@ -176,7 +217,7 @@ class FourPawsFrontOfficeCardHistoryComponent extends \CBitrixComponent
             }
 
             if ($validateResultData['validate']) {
-                if ($validateResultData['validate']['IS_CARD_OWNED'] === 'Y') {
+                if ($validateResultData['validate']['_IS_CARD_OWNED_'] === 'Y') {
                     $searchCardResult = $this->searchCardByNumber($cardNumber);
                     $searchCardResultData = $searchCardResult->getData();
                     if (!$searchCardResult->isSuccess()) {
@@ -188,7 +229,7 @@ class FourPawsFrontOfficeCardHistoryComponent extends \CBitrixComponent
                         $this->arResult['CARD_DATA']['NUMBER'] = $cardNumber;
                         $this->arResult['CARD_DATA']['CARD_ID'] = $validateResultData['validate']['CARD_ID'];
                     }
-                } elseif ($validateResultData['validate']['IS_CARD_NOT_EXISTS'] === 'Y') {
+                } elseif ($validateResultData['validate']['_IS_CARD_NOT_EXISTS_'] === 'Y') {
                     $this->setFieldError($fieldName, 'Not found', 'not_found');
                 } else {
                     $this->setFieldError($fieldName, 'Wrong status', 'wrong_status');
@@ -294,9 +335,9 @@ class FourPawsFrontOfficeCardHistoryComponent extends \CBitrixComponent
             $validate['FIRST_NAME'] = trim($validateRaw->firstName);
             $validate['VALIDATION_RESULT'] = trim($validateRaw->validationResult);
             // 0 - ok; 1 - карта не существует; 2 - карта принадлежит другому клиенту
-            $validate['VALIDATION_RESULT_CODE'] = (int) $validateRaw->validationResultCode;
-            $validate['IS_CARD_OWNED'] = $validateRaw->isCardOwned() ? 'Y' : 'N';
-            $validate['IS_CARD_NOT_EXISTS'] = $validateRaw->isCardNotExists() ? 'Y' : 'N';
+            $validate['VALIDATION_RESULT_CODE'] = (int)$validateRaw->validationResultCode;
+            $validate['_IS_CARD_OWNED_'] = $validateRaw->isCardOwned() ? 'Y' : 'N';
+            $validate['_IS_CARD_NOT_EXISTS_'] = $validateRaw->isCardNotExists() ? 'Y' : 'N';
         }
 
         $result->setData(
@@ -409,12 +450,12 @@ class FourPawsFrontOfficeCardHistoryComponent extends \CBitrixComponent
                 'CREDIT' => (double) $cardsItem->credit,
                 // Потрачено баллов (pl_debet)
                 'DEBET' => (double) $cardsItem->debit,
-                'IS_BONUS_CARD' => 'N',
+                '_IS_BONUS_CARD_' => 'N',
             ];
             // исправляем тип карты
             // товарищи из манзаны гарантируют: ненулевой pl_debet означает, что карта бонусная
-            if ((double) $cardsItem->debit > 0) {
-                $cards[$cardId]['IS_BONUS_CARD'] = 'Y';
+            if ((double)$cardsItem->debit > 0) {
+                $cards[$cardId]['_IS_BONUS_CARD_'] = 'Y';
             }
         }
 

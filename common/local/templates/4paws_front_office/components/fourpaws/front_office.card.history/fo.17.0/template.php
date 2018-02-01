@@ -21,12 +21,12 @@ switch ($arResult['CURRENT_STAGE']) {
         break;
 
     case 'history':
-        // запрос истории по карте
+        // запрос истории по карте (ajax)
         include __DIR__.'/stage.history.php';
         break;
 
     case 'cheque_details':
-        // запрос детализации чека
+        // запрос детализации чека (ajax)
         include __DIR__.'/stage.cheque_details.php';
         break;
 

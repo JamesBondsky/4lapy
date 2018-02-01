@@ -14,6 +14,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var string $componentPath
  */
 
+if ($arResult['CAN_ACCESS'] !== 'Y') {
+    ShowError('При обработке запроса произошла ошибка: отказано в доступе');
+    return;
+}
+
 // форма
 include __DIR__.'/inc.form.php';
 
@@ -46,7 +51,7 @@ if (!empty($arResult['CHEQUES'])) {
 
 // История покупок
 if (!empty($arResult['CHEQUES'])) {
-    $isBonusCard = $arResult['CURRENT_CARD'] && $arResult['CURRENT_CARD']['IS_BONUS_CARD'] === 'Y';
+    $isBonusCard = $arResult['CURRENT_CARD'] && $arResult['CURRENT_CARD']['_IS_BONUS_CARD_'] === 'Y';
     if ($arParams['LAST_CHEQUES_CNT']) {
         echo '<div class="order-list-title">Последние покупки по карте</div>';
     }

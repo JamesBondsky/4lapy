@@ -14,6 +14,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var string $componentPath
  */
 
+if ($arResult['CAN_ACCESS'] !== 'Y') {
+    ShowError('При обработке запроса произошла ошибка: отказано в доступе');
+    return;
+}
+
 $showForm = true;
 
 $errBlock = '<div class="form-page__message b-icon"><i class="icon icon-warning"></i><span class="text-h4 text-icon">%s</span></div>';
@@ -52,19 +57,24 @@ if ($showForm) {
                 /** @var Bitrix\Main\Error $error */
                 $error = $fieldMeta['ERROR'];
                 if ($error) {
-                    $errMess = 'Неизвестная ошибка';
                     switch ($error->getCode()) {
-                        case 'exception':
-                            $errMess = $error->getMessage();
-                            break;
                         case 'empty':
                             $errMess = 'Пожалуйста, укажите номер карты';
                             break;
                         case 'not_found':
                             $errMess = 'Карта не найдена или невалидна';
                             break;
+                        case 'incorrect_value':
+                            $errMess = 'Некорректный номер карты';
+                            break;
+                        case 'runtime':
+                            $errMess = $error->getMessage();
+                            break;
                         case 'activated':
                             $errMess = 'Карта уже активирована';
+                            break;
+                        default:
+                            $errMess = '['.$error->getCode().'] '.$error->getMessage();
                             break;
                     }
                 }
@@ -72,9 +82,7 @@ if ($showForm) {
                 <div class="form-page__field-wrap">
                     <label for="<?=$fieldName?>" class="form-page__label">Номер вашей карты</label>
                     <input id="<?=$fieldName?>" name="<?=$fieldName?>" value="<?=$value?>"<?=$attr?> class="form-page__field mb-l" type="text"><?
-                    if ($errMess) {
-                        echo sprintf($errBlock, $errMess);
-                    }
+                    echo $errMess ? sprintf($errBlock, $errMess) : '';
                 ?></div><?php
             }
 
@@ -109,9 +117,7 @@ if ($showForm) {
                 ?><div class="form-page__field-wrap">
                     <label for="<?=$fieldName?>" class="form-page__label">Фамилия</label>
                     <input id="<?=$fieldName?>" name="<?=$fieldName?>" value="<?=$value?>"<?=$attr?> class="form-page__field mb-l" type="text"><?php
-                    if ($errMess) {
-                        echo sprintf($errBlock, $errMess);
-                    }
+                    echo $errMess ? sprintf($errBlock, $errMess) : '';
                 ?></div><?php
 
                 // Поле: Имя
@@ -141,9 +147,7 @@ if ($showForm) {
                 ?><div class="form-page__field-wrap">
                     <label for="<?=$fieldName?>" class="form-page__label">Имя</label>
                     <input id="<?=$fieldName?>" name="<?=$fieldName?>" value="<?=$value?>"<?=$attr?> class="form-page__field mb-l" type="text"><?php
-                    if ($errMess) {
-                        echo sprintf($errBlock, $errMess);
-                    }
+                    echo $errMess ? sprintf($errBlock, $errMess) : '';
                 ?></div><?php
 
                 // Поле: Отчество
@@ -173,9 +177,7 @@ if ($showForm) {
                 ?><div class="form-page__field-wrap">
                     <label for="<?=$fieldName?>" class="form-page__label">Отчество</label>
                     <input id="<?=$fieldName?>" name="<?=$fieldName?>" value="<?=$value?>"<?=$attr?> class="form-page__field mb-l" type="text"><?php
-                    if ($errMess) {
-                        echo sprintf($errBlock, $errMess);
-                    }
+                    echo $errMess ? sprintf($errBlock, $errMess) : '';
                 ?></div><?php
 
                 // Поле: Укажите свой пол
@@ -206,9 +208,7 @@ if ($showForm) {
                         <option<?=($value == $male ? ' selected="selected"' : '')?> value="<?=$male?>">Мужской</option>
                         <option<?=($value == $female ? ' selected="selected"' : '')?> value="<?=$female?>">Женский</option>
                     </select><?php
-                    if ($errMess) {
-                        echo sprintf($errBlock, $errMess);
-                    }
+                    echo $errMess ? sprintf($errBlock, $errMess) : '';
                 ?></div><?php
 
                 // Поле: Дата вашего рождения дд.мм.гггг
@@ -239,9 +239,7 @@ if ($showForm) {
                 ?><div class="form-page__field-wrap">
                     <label for="<?=$fieldName?>" class="form-page__label">Дата вашего рождения дд.мм.гггг</label>
                     <input id="<?=$fieldName?>" name="<?=$fieldName?>" value="<?=$value?>"<?=$attr?> class="form-page__field mb-l" type="text"><?php
-                    if ($errMess) {
-                        echo sprintf($errBlock, $errMess);
-                    }
+                    echo $errMess ? sprintf($errBlock, $errMess) : '';
                 ?></div><?php
             }
 
@@ -325,16 +323,14 @@ if ($showForm) {
                 ?><div class="form-page__field-wrap">
                     <label for="<?=$fieldName?>" class="form-page__label">Ваш email (поле необязательно для заполнения)</label>
                     <input id="<?=$fieldName?>" name="<?=$fieldName?>" value="<?=$value?>"<?=$attr?> class="form-page__field mb-l" type="text"><?php
-                    if ($errMess) {
-                        echo sprintf($errBlock, $errMess);
-                    }
+                    echo $errMess ? sprintf($errBlock, $errMess) : '';
                 ?></div><?php
 
                 // сообщаем компоненту, что карту можно регистрировать в случае успешных проверок
                 ?><input type="hidden" name="doCardRegistration" value="Y"><?
             }
 
-            // вывод ошибок регистрации карты, если есть
+            // вывод ошибок регистрации карты
             if (isset($arResult['REGISTRATION_STATUS']) && $arResult['REGISTRATION_STATUS'] === 'ERROR') {
                 $errMessages = [];
                 foreach ($arResult['ERROR']['REGISTRATION'] as $errCode => $errMsg) {

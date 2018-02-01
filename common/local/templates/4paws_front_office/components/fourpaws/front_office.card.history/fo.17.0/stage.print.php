@@ -15,6 +15,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var string $templateFolder
  */
 
+if ($arResult['CAN_ACCESS'] !== 'Y') {
+    ShowError('При обработке запроса произошла ошибка: отказано в доступе');
+    return;
+}
+
 // логотип, выводимый при печати
 echo '<div class="print-ver-logo"><img src="'.$templateFolder.'/images/header_img.png" alt=""></div>';
 
