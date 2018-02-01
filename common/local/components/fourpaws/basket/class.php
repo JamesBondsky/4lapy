@@ -11,16 +11,12 @@ declare(strict_types=1);
 namespace FourPaws\Components;
 
 use Bitrix\Sale\Basket;
-use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Order;
 use CBitrixComponent;
-use Doctrine\Common\Collections\Collection;
 use FourPaws\App\Application;
 use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\Catalog\Collection\OfferCollection;
-use FourPaws\Catalog\Model\Offer;
-use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Service\BasketService;
 
@@ -37,6 +33,7 @@ class BasketComponent extends \CBitrixComponent
     private $images;
     /** @var OfferCollection */
     private $offerCollection;
+
     /**
      * BasketComponent constructor.
      *
@@ -56,28 +53,29 @@ class BasketComponent extends \CBitrixComponent
     /** @noinspection PhpMissingParentCallCommonInspection */
     /**
      *
-     *
-     * @param Basket|null $basket
-     *
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
      * @throws \Bitrix\Main\NotSupportedException
      * @throws \Bitrix\Main\ObjectNotFoundException
      *
-     * @return mixed|void
+     * @return void
      */
-    public function executeComponent(Basket $basket = null)
+    public function executeComponent()
     {
-        if (null === $basket) {
+        /** @var Basket $basket */
+        $basket = $this->arParams['BASKET'];
+        if (null === $basket || !\is_object($basket) || !($basket instanceof Basket)) {
             $basket = $this->basketService->getBasket();
         }
         // привязывать к заказу нужно для расчета скидок
-        $order = Order::create(SITE_ID);
-        $order->setBasket($basket);
+        if (null === $order = $basket->getOrder()) {
+            $order = Order::create(SITE_ID);
+            $order->setBasket($basket);
+        }
         $this->arResult['BASKET'] = $basket;
         $this->arResult['POSSIBLE_GIFT_GROUPS'] = Gift::getPossibleGiftGroups($order);
         $this->arResult['POSSIBLE_GIFTS'] = Gift::getPossibleGifts($order);
-        $this->loadOfferCollection();
+        $this->offerCollection = $this->basketService->getOfferCollection();
         $this->loadImages();
         $this->includeComponentTemplate($this->getPage());
     }
@@ -85,7 +83,7 @@ class BasketComponent extends \CBitrixComponent
     private function loadImages()
     {
         foreach ($this->offerCollection as $item) {
-            if(isset($this->images[$item->getId()])) {
+            if (isset($this->images[$item->getId()])) {
                 continue;
             }
             /**
@@ -95,23 +93,6 @@ class BasketComponent extends \CBitrixComponent
             $images = $item->getResizeImages(110, 110);
             $this->images[$item->getId()] = $images->first();
         }
-    }
-
-    private function loadOfferCollection() {
-        $ids = [];
-        /** @var Basket $basket */
-        $basket = $this->arResult['BASKET'];
-        /** @var BasketItem $basketItem */
-        foreach ($basket->getBasketItems() as $basketItem) {
-            $ids[] = $basketItem->getProductId();
-        }
-        $ids += $this->arResult['POSSIBLE_GIFTS'];
-        $ids = array_flip(array_flip(array_filter($ids)));
-
-        if (empty($ids)) {
-            return;
-        }
-        $this->offerCollection = (new OfferQuery())->withFilterParameter('ID', $ids)->exec();
     }
 
     /**
