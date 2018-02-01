@@ -3,12 +3,12 @@
 namespace FourPaws\MobileApiBundle\ParamConverter\Catalog;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
-use FourPaws\MobileApiBundle\Dto\Request\CategoriesRequest;
+use FourPaws\MobileApiBundle\Dto\Request\CategoryRequest;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Sensio\Bundle\FrameworkExtraBundle\Request\ParamConverter\ParamConverterInterface;
 use Symfony\Component\HttpFoundation\Request;
 
-class CategoriesRequestConverter implements ParamConverterInterface
+class CategoryRequestConverter implements ParamConverterInterface
 {
     /**
      * Stores the object in the request.
@@ -22,8 +22,8 @@ class CategoriesRequestConverter implements ParamConverterInterface
     public function apply(Request $request, ParamConverter $configuration)
     {
         if ($request->get('id')) {
-            $categoriesRequest = (new CategoriesRequest())->setId($request->get('id'));
-            $request->attributes->set('CategoriesRequest', $categoriesRequest);
+            $CategoryRequest = (new CategoryRequest())->setId($request->get('id'));
+            $request->attributes->set('CategoryRequest', $CategoryRequest);
             return true;
         }
 
@@ -39,7 +39,7 @@ class CategoriesRequestConverter implements ParamConverterInterface
      */
     public function supports(ParamConverter $configuration): bool
     {
-        return $configuration->getClass() === CategoriesRequest::class;
+        return $configuration->getClass() === CategoryRequest::class;
     }
 }
 

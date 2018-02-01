@@ -14,7 +14,7 @@ use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\MobileApiBundle\Dto\Error;
 use FourPaws\MobileApiBundle\Dto\Object\CatalogCategory;
-use FourPaws\MobileApiBundle\Dto\Request\CategoriesRequest;
+use FourPaws\MobileApiBundle\Dto\Request\CategoryRequest;
 use FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\MobileApiBundle\Dto\Response\CategoriesResponse;
 use WebArch\BitrixCache\BitrixCache;
@@ -24,18 +24,18 @@ class CategoryController extends FOSRestController
 {
     /**
      * @Rest\Get(path="/categories")
-     * @param CategoriesRequest $CategoriesRequest
+     * @param CategoryRequest $CategoryRequest
      *
-     * @see CategoriesRequest
+     * @see CategoryRequest
      * @see CategoriesResponse
      * @throws FileNotFoundException
      */
-    public function getCategoryAction(CategoriesRequest $CategoriesRequest)
+    public function getCategoryAction(CategoryRequest $CategoryRequest)
     {
         /**
          * Parent sections id
          */
-        $parentId = $CategoriesRequest->getId() ?: false;
+        $parentId = $CategoryRequest->getId() ?: false;
 
         // Cache code
         $getCategoryCode = function () use ($parentId) {
