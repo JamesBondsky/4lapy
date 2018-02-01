@@ -62,14 +62,16 @@ class BasketViewService
      *
      * @return string
      */
-    public function getBasketHtml(): string
+    public function getBasketHtml(bool $isAjax = false): string
     {
         global $APPLICATION;
         ob_start();
         $APPLICATION->IncludeComponent(
             'fourpaws:basket',
             '',
-            [],
+            [
+                'IS_AJAX' => $isAjax
+            ],
             false,
             ['HIDE_ICONS' => 'Y']
         );
