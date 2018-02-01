@@ -191,6 +191,7 @@ class DeliveryService
                             $calculationResult->getData(),
                             [
                                 'INTERVALS' => $_SESSION['DPD_DATA'][$service->getCode()]['INTERVALS'],
+                                'STOCK_RESULT' => $_SESSION['DPD_DATA'][$service->getCode()]['STOCK_RESULT']
                             ]
                         )
                     );

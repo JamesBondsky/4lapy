@@ -194,29 +194,30 @@ class FourPawsOrderComponent extends \CBitrixComponent
         /** @var StockResultCollection $stockResult */
         $stockResult = $this->deliveryService->getStockResultByDelivery($pickup);
         if ($this->deliveryService->isDpdPickup($pickup)) {
-            /* @todo получить терминалы DPD */
-            // $shops = $this->deliveryService->getDpdTerminals();
+            $selectedShopCode = $storage->getDpdTerminalCode();
         } else {
             $selectedShopCode = $storage->getDeliveryPlaceCode();
-            $shops = $stockResult->getStores();
+        }
+        $shops = $stockResult->getStores();
 
-            $selectedShop = null;
-            if (!$selectedShopCode || !isset($shops[$selectedShopCode])) {
-                /** @var Store $shop */
-                foreach ($shops as $shop) {
-                    if ($stockResult->filterByStore($shop)->getDelayed()->isEmpty()) {
-                        $selectedShop = $shop;
-                        break;
-                    }
+        $selectedShop = null;
+        if (!$selectedShopCode || !isset($shops[$selectedShopCode])) {
+            /** @var Store $shop */
+            foreach ($shops as $shop) {
+                if ($stockResult->filterByStore($shop)->getDelayed()->isEmpty()) {
+                    $selectedShop = $shop;
+                    break;
                 }
-
-                if (!$selectedShop) {
-                    $selectedShop = $shops->first();
-                }
-            } else {
-                $selectedShop = $shops[$selectedShopCode];
             }
 
+            if (!$selectedShop) {
+                $selectedShop = $shops->first();
+            }
+        } else {
+            $selectedShop = $shops[$selectedShopCode];
+        }
+
+        if ($this->deliveryService->isInnerPickup($pickup)) {
             $deliveryDate = $stockResult->getDeliveryDate();
             $partialDeliveryDate = $stockResult->getAvailable()->getDeliveryDate();
 

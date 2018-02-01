@@ -155,6 +155,11 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
 
             uasort($stores, $sortFunc);
 
+            /**
+             * для самовывоза из DPD показываем то, что вернула доставка
+             * для самовывоза из магазина - с учетом времени работы магазина
+             */
+            $modifyDate = $this->deliveryService->isInnerPickup($pickupDelivery);
             /** @var Store $store */
             foreach ($stores as $store) {
                 $metro = $store->getMetro();
@@ -165,9 +170,6 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                         $services[] = $service['UF_NAME'];
                     }
                 }
-
-                $avgGpsN += $store->getLongitude();
-                $avgGpsS += $store->getLatitude();
 
                 $address = !empty($metro)
                     ? 'м. ' . $metroList[$metro]['UF_NAME'] . ', ' . $store->getAddress()
@@ -203,16 +205,19 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                     ];
                 }
 
-                if ($available->isEmpty()) {
+                if ($delayed->isEmpty()) {
                     $orderType = 'full';
                 } else {
-                    if ($delayed->isEmpty()) {
+                    if ($available->isEmpty()) {
                         $orderType = 'delay';
                     } else {
                         $orderType = 'parts';
                     }
                 }
 
+                $delayedDate = $delayed->isEmpty()
+                    ? $stockResultByStore->getDeliveryDate()
+                    : $delayed->getDeliveryDate();
                 $result['items'][] = [
                     'id'              => $store->getXmlId(),
                     'adress'          => $address,
@@ -220,13 +225,13 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                     'schedule'        => $store->getSchedule(),
                     'pickup'          => DeliveryTimeHelper::showTime(
                         $resultByStore[$store->getXmlId()]['PARTIAL_RESULT'],
-                        $delayed->isEmpty() ? $stockResultByStore->getDeliveryDate() : $delayed->getDeliveryDate(),
+                        $modifyDate ? $delayedDate : null,
                         true,
                         false
                     ),
                     'pickup_full'     => DeliveryTimeHelper::showTime(
                         $resultByStore[$store->getXmlId()]['FULL_RESULT'],
-                        $stockResultByStore->getDeliveryDate(),
+                        $modifyDate ? $stockResultByStore->getDeliveryDate() : null,
                         true,
                         false
                     ),
@@ -245,9 +250,9 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                 $avgGpsS += $store->getLatitude();
             }
             $countStores = count($stores);
-            /* @todo поменять местами gps_s и gps_n */
-            $result['avg_gps_s'] = $avgGpsN / $countStores;
-            $result['avg_gps_n'] = $avgGpsS / $countStores;
+
+            $result['avg_gps_n'] = $avgGpsN / $countStores;
+            $result['avg_gps_s'] = $avgGpsS / $countStores;
             if ($returnActiveServices) {
                 $result['services'] = $servicesList;
             }
@@ -271,6 +276,13 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
         }
         if (!empty($idFilter)) {
             $defaultFilter['ID'] = $idFilter;
+        }
+
+        if (!$pickupDelivery = $this->getPickupDelivery()) {
+            return [];
+        }
+        if ($this->deliveryService->isDpdPickup($pickupDelivery)) {
+            return $this->deliveryService->getStockResultByDelivery($pickupDelivery)->getStores()->toArray();
         }
 
         return parent::getStoreList(array_merge($filter, $defaultFilter), $order);

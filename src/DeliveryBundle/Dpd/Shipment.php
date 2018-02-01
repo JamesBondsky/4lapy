@@ -71,14 +71,21 @@ class Shipment extends \Ipolh\DPD\Shipment
     {
         $locationId = $this->locationTo['ID'];
         $getTerminals = function () use ($locationId) {
-            return Table::getList(
+            $terminals = Table::getList(
                 [
                     'select' => ['*'],
                     'filter' => [
                         'LOCATION_ID' => $locationId,
                     ],
                 ]
-            )->fetch();
+            );
+
+            $result = [];
+            while ($terminal = $terminals->fetch()) {
+                $result[] = $terminal;
+            }
+
+            return $result;
         };
 
         $terminals = (new BitrixCache())
@@ -96,5 +103,13 @@ class Shipment extends \Ipolh\DPD\Shipment
         }
 
         return $terminals;
+    }
+
+    public function isPaymentOnDelivery()
+    {
+        /**
+         * У пунктов самовывоза DPD должна быть возможность оплаты на месте
+         */
+        return true;
     }
 }
