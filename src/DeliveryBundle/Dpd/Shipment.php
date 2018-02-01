@@ -64,36 +64,37 @@ class Shipment extends \Ipolh\DPD\Shipment
             return false;
         }
 
-        $isPaymentOnDelivery = null === $isPaymentOnDelivery ? $this->isPaymentOnDelivery() : $isPaymentOnDelivery;
+        return count($this->getDpdTerminals($isPaymentOnDelivery)) > 0;
+    }
+
+    public function getDpdTerminals($isPaymentOnDelivery = null)
+    {
         $locationId = $this->locationTo['ID'];
-        $getPickupPointsCount = function () use ($isPaymentOnDelivery, $locationId) {
+        $getTerminals = function () use ($locationId) {
             return Table::getList(
                 [
-                    'select' => ['CNT'],
-
-                    'filter' => array_filter(
-                        array_merge(
-                            [
-                                'LOCATION_ID' => $locationId,
-                            ],
-
-                            $isPaymentOnDelivery
-                                ? ['NPP_AVAILABLE' => 'Y', '>=NPP_AMOUNT' => $this->getPrice()]
-                                : []
-                        )
-                    ),
-
-                    'runtime' => [
-                        new ExpressionField('CNT', 'COUNT(*)'),
+                    'select' => ['*'],
+                    'filter' => [
+                        'LOCATION_ID' => $locationId,
                     ],
                 ]
             )->fetch();
         };
 
-        $result = (new BitrixCache())
+        $terminals = (new BitrixCache())
             ->withId(__METHOD__ . $locationId)
-            ->resultOf($getPickupPointsCount);
+            ->resultOf($getTerminals);
+        $orderPrice = $this->getPrice();
+        $isPaymentOnDelivery = null === $isPaymentOnDelivery ? $this->isPaymentOnDelivery() : $isPaymentOnDelivery;
+        if ($isPaymentOnDelivery) {
+            $terminals = array_filter(
+                $terminals,
+                function ($item) use ($orderPrice) {
+                    return ($item['NPP_AVAILABLE'] === 'Y') && ($item['NPP_AMOUNT'] >= $orderPrice);
+                }
+            );
+        }
 
-        return $result['CNT'] > 0;
+        return $terminals;
     }
 }
