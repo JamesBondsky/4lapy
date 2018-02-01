@@ -62,23 +62,23 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_SLIDER_VIEW);
             <div class="b-product-slider__list b-product-slider__list--main js-product-slider-for">
                 <?php
                 $mainImageIndex = [];
-                $allCount       = 0;
+                $iterator       = 0;
                 /** @var Offer $offer */
                 foreach ($product->getOffers() as $offer) {
                     if (!$offer->getImagesIds()) {
                         continue;
                     }
     
-                    $images = $offer->getResizeImages(480, 480);
+                    $images         = $offer->getResizeImages(480, 480);
+                    $originalImages = $offer->getImages();
+
                     foreach ($images as $id => $image) {
                         /**
                          * @var ResizeImageDecorator $image
                          */
                         if ($id === 0) {
-                            $mainImageIndex[$offer->getId()] = $allCount;
-                        }
-    
-                        $allCount++; ?>
+                            $mainImageIndex[$offer->getId()] = $iterator;
+                        } ?>
                         <div class="b-product-slider__item b-product-slider__item--big">
                             <div class="b-product-slider__wrapper b-product-slider__wrapper--big">
                                 <a class="b-product-slider__link js-fancybox"
@@ -86,16 +86,17 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_SLIDER_VIEW);
                                    href="<?= $image ?>"
                                    data-toolbar="false"
                                    data-small-btn="true">
-                                    <img class="b-product-slider__photo-img b-product-slider__photo-img--big js-image-wrapper js-zoom"
+                                    <img class="b-product-slider__photo-img b-product-slider__photo-img--big js-image-wrapper<?= $iterator ? '' : ' js-zoom' ?>"
                                          src="<?= $image ?>"
                                          alt="<?= $offer->getName() . ($id ? ' ' . $id : '') ?>"
                                          title="<?= $offer->getName() . ($id ? ' ' . $id : '') ?>"
-                                         data-zoom-image="<?= $image ?>"
+                                         data-zoom-image="<?= $originalImages->get($id) ?>"
                                          role="presentation" />
                                 </a>
                             </div>
                         </div>
-                    <?php }
+                        <?php $iterator++;
+                    }
                 } ?>
             </div>
             <div class="b-product-slider__list b-product-slider__list--nav js-product-slider-nav">
@@ -141,7 +142,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
                 <ul class="b-weight-container__list b-weight-container__list--product">
                     <?php
                     $isCurrentOffer = false;
-    
+
                     foreach ($offers as $offer) {
                         $isCurrentOffer = !$isCurrentOffer && $currentOffer->getId() === $offer->getId();
                         

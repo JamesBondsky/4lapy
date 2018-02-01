@@ -11,12 +11,17 @@
 
 use FourPaws\Decorators\SvgDecorator;
 
-/** @var \Bitrix\Sale\Basket $arResult ['BASKET'] */
-$orderableBasket = $arResult['BASKET']->getOrderableItems();
+/** @var \Bitrix\Sale\Basket $basket */
+$basket = $arResult['BASKET'];
+$orderableBasket = $basket->getOrderableItems();
 
+/** @var \Bitrix\Sale\Order $order */
+$order = $basket->getOrder();
+
+if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
+    echo '<div class="b-shopping-cart">';
+}
 ?>
-
-<div class="b-shopping-cart">
     <div class="b-container">
         <h1 class="b-title b-title--h1 b-title--shopping-cart">Корзина</h1>
         <main class="b-shopping-cart__main" role="main">
@@ -26,6 +31,7 @@ $orderableBasket = $arResult['BASKET']->getOrderableItems();
                 <?php
                 /** @var \Bitrix\Sale\BasketItem $basketItem */
                 foreach ($orderableBasket as $basketItem) {
+                    //dump($basketItem->getPropertyCollection()->getPropertyValues());
                     $image = $component->getImage($basketItem->getProductId());
                     ?>
                     <div class="b-item-shopping">
@@ -43,7 +49,7 @@ $orderableBasket = $arResult['BASKET']->getOrderableItems();
                         </span>
                             <div class="b-common-item__info-center-block b-common-item__info-center-block--shopping-cart b-common-item__info-center-block--shopping">
                                 <a class="b-common-item__description-wrap b-common-item__description-wrap--shopping"
-                                   href="javascript:void(0);" title="">
+                                   href="<?= $basketItem->getField('DETAIL_PAGE_URL'); ?>" title="">
                                     <span class="b-clipped-text b-clipped-text--shopping-cart">
                                         <span>
                                             <!--
@@ -99,13 +105,13 @@ $orderableBasket = $arResult['BASKET']->getOrderableItems();
                                 </select>
                             </div>
                             <div class="b-price">
-                                <span class="b-price__current"><?= $basketItem->getPrice() ?>  </span>
+                                <span class="b-price__current"><?= $basketItem->getPrice() * $basketItem->getQuantity() ?>  </span>
                                 <span class="b-ruble">₽</span>
                                 <?php
                                 if ($basketItem->getDiscountPrice() > 0) {
                                     ?>
                                     <span class="b-old-price b-old-price--crossed-out">
-                                        <span class="b-old-price__old"><?= $basketItem->getBasePrice() ?>  </span>
+                                        <span class="b-old-price__old"><?= $basketItem->getBasePrice() * $basketItem->getQuantity() ?>  </span>
                                         <span class="b-ruble b-ruble--old-weight-price">₽</span>
                                     </span>
                                     <?php
@@ -131,10 +137,10 @@ $orderableBasket = $arResult['BASKET']->getOrderableItems();
          */
         $productsIds = [];
         foreach ($orderableBasket as $basketItem) {
-            $pId = intval($basketItem->getProductId());
-            $productInfo = \CCatalogSKU::GetProductInfo($pId);
+            $pId = (int) $basketItem->getProductId();
+            $productInfo = CCatalogSku::GetProductInfo($pId);
             if ($productInfo) {
-                $pId = intval($productInfo['ID']);
+                $pId = (int) $productInfo['ID'];
             }
             if ($pId > 0) {
                 $productsIds[] = $pId;
@@ -173,5 +179,8 @@ $orderableBasket = $arResult['BASKET']->getOrderableItems();
                 'MODE' => 'php',
             ]
         );
-    ?></div>
-</div>
+        ?></div>
+<?php
+if (!isset($arParams['IS_AJAX']) || $arParams !== true) {
+    echo '</div>';
+}
