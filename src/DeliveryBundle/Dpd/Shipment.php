@@ -24,15 +24,15 @@ class Shipment extends \Ipolh\DPD\Shipment
     /**
      * Устанавливает местоположение отправителя
      *
-     * @param mixed $locationId ID местоположения
+     * @param array|string $locationCode код местоположения
      *
-     * @return self
+     * @return $this
      */
-    public function setSender($locationId)
+    public function setSender($locationCode)
     {
-        $this->locationFrom = \is_array($locationId)
-            ? $locationId
-            : LocationTable::getByLocationId($locationId);
+        $this->locationFrom = \is_array($locationCode)
+            ? $locationCode
+            : LocationTable::getByLocationCode($locationCode);
 
         return $this;
     }
@@ -40,7 +40,9 @@ class Shipment extends \Ipolh\DPD\Shipment
     /**
      * Устанавливает местоположение получателя
      *
-     * @param mixed $locationId код местоположения
+     * @param array|string $locationCode код местоположения
+     *
+     * @return $this
      */
     public function setReceiver($locationCode)
     {

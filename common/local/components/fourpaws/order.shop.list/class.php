@@ -117,11 +117,6 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
             $avgGpsN = 0;
             $avgGpsS = 0;
 
-            /**
-             * 1) По убыванию % от суммы товаров заказа в наличии в магазине или на складе
-             * 2) По возрастанию даты готовности заказа к выдаче
-             * 3) По адресу магазина в алфавитном порядке
-             */
             $resultByStore = [];
 
             /** @var Store $store */
@@ -129,6 +124,11 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                 $resultByStore[$store->getXmlId()] = $this->getStoreData($pickupDelivery, $stockResult, $store);
             }
 
+            /**
+             * 1) По убыванию % от суммы товаров заказа в наличии в магазине или на складе
+             * 2) По возрастанию даты готовности заказа к выдаче
+             * 3) По адресу магазина в алфавитном порядке
+             */
             $sortFunc = function ($shop1, $shop2) use ($resultByStore) {
                 /** @var Store $shop1 */
                 /** @var Store $shop2 */
@@ -188,6 +188,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                         'name'     => $item->getOffer()->getName(),
                         'quantity' => $item->getAmount(),
                         'price'    => $item->getPrice(),
+                        'weight'   => $item->getOffer()->getCatalogProduct()->getWeight(),
                     ];
                 }
 
@@ -198,6 +199,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                         'name'     => $item->getOffer()->getName(),
                         'quantity' => $item->getAmount(),
                         'price'    => $item->getPrice(),
+                        'weight'   => $item->getOffer()->getCatalogProduct()->getWeight(),
                     ];
                 }
 

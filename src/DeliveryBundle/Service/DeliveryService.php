@@ -9,12 +9,14 @@ use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Delivery\DeliveryLocationTable;
 use Bitrix\Sale\Delivery\Services\Manager;
+use Bitrix\Sale\Delivery\Services\Table as DeliveryServiceTable;
 use Bitrix\Sale\Location\LocationTable;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Shipment;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Exception\InvalidArgumentException;
+use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\Location\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Service\StoreService;
@@ -415,6 +417,22 @@ class DeliveryService
     public function isDpdDelivery(CalculationResult $calculationResult): bool
     {
         return $calculationResult->getData()['DELIVERY_CODE'] === static::DPD_DELIVERY_CODE;
+    }
+
+    /**
+     * @param string $code
+     *
+     * @return int
+     * @throws NotFoundException
+     */
+    public function getDeliveryIdByCode(string $code): int
+    {
+        $delivery = DeliveryServiceTable::getList(['filter' => ['CODE' => $code]])->fetch();
+        if (!$delivery) {
+            throw new NotFoundException('Delivery service not found');
+        }
+
+        return (int)$delivery['ID'];
     }
 
     /**

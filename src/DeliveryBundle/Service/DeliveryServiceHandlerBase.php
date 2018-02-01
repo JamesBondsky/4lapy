@@ -147,15 +147,17 @@ abstract class DeliveryServiceHandlerBase extends Base implements DeliveryServic
          * Рассчитывается дата доставки в соответствии с графиком работы магазинов/складов
          */
         $pickupDate = new \DateTime();
-        $hour = (int)$pickupDate->format('H');
-        $totalSchedule = $storesAvailable->getTotalSchedule();
-        if ($hour < $totalSchedule['from']) {
-            $pickupDate->setTime($totalSchedule['from'] + 1, 0, 0);
-        } elseif ($hour > $totalSchedule['to']) {
-            $pickupDate->modify('+1 day');
-            $pickupDate->setTime($totalSchedule['from'] + 1, 0, 0);
-        } else {
-            $pickupDate->modify('+1 hour');
+        if (!$storesAvailable->isEmpty()) {
+            $hour = (int)$pickupDate->format('H');
+            $totalSchedule = $storesAvailable->getTotalSchedule();
+            if ($hour < $totalSchedule['from']) {
+                $pickupDate->setTime($totalSchedule['from'] + 1, 0, 0);
+            } elseif ($hour > $totalSchedule['to']) {
+                $pickupDate->modify('+1 day');
+                $pickupDate->setTime($totalSchedule['from'] + 1, 0, 0);
+            } else {
+                $pickupDate->modify('+1 hour');
+            }
         }
 
         /** @var Offer $offer */
@@ -181,8 +183,13 @@ abstract class DeliveryServiceHandlerBase extends Base implements DeliveryServic
 
             $stockResult->setDeliveryDate($pickupDate);
 
+            /**
+             * Если товар под заказ, то рассчитывается дата поставки на склад по графику
+             */
             if ($offer->isByRequest()) {
-                $stockResult->setType(StockResult::TYPE_DELAYED);
+                $stockResult->setType(StockResult::TYPE_DELAYED)
+                    /* @todo расчет по графику поставок */
+                            ->setDeliveryDate((new \DateTime())->modify('+10 days'));
                 continue;
             }
 
