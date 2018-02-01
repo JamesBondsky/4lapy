@@ -15,6 +15,8 @@ use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use Bitrix\Sale\Delivery\CalculationResult;
 
+$storage = $arResult['STORAGE'];
+
 function showInterval($interval)
 {
     $from = str_pad($interval['FROM'], 2, 0, STR_PAD_LEFT) . ':00';

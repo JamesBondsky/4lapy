@@ -3,10 +3,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
-use Bitrix\Main\Grid\Declension;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
-use FourPaws\StoreBundle\Entity\Store;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 
 /**
  * @var array $arResult
@@ -49,34 +48,36 @@ use FourPaws\StoreBundle\Entity\Store;
                                title="На карте">На карте</a>
                         </li>
                     </ul>
-                    <div class="b-stores-sort b-stores-sort--order b-stores-sort--balloon">
-                        <div class="b-stores-sort__checkbox-block b-stores-sort__checkbox-block--balloon">
-                            <div class="b-checkbox b-checkbox--stores b-checkbox--order">
-                                <input class="b-checkbox__input"
-                                       type="checkbox"
-                                       name="stores-sort-time"
-                                       id="stores-sort-1"/>
-                                <label class="b-checkbox__name b-checkbox__name--stores b-checkbox__name--order"
-                                       for="stores-sort-1">
+                    <?php if ($arResult['DELIVERY_CODE'] === DeliveryService::INNER_PICKUP_CODE) { ?>
+                        <div class="b-stores-sort b-stores-sort--order b-stores-sort--balloon">
+                            <div class="b-stores-sort__checkbox-block b-stores-sort__checkbox-block--balloon">
+                                <div class="b-checkbox b-checkbox--stores b-checkbox--order">
+                                    <input class="b-checkbox__input"
+                                           type="checkbox"
+                                           name="stores-sort-time"
+                                           id="stores-sort-1"/>
+                                    <label class="b-checkbox__name b-checkbox__name--stores b-checkbox__name--order"
+                                           for="stores-sort-1">
                                     <span class="b-checkbox__text">работают
                                         <span class="b-checkbox__text-desktop">круглосуточно</span>
                                         <span class="b-checkbox__text-mobile">24 часа</span>
                                     </span>
-                                </label>
-                            </div>
-                            <div class="b-checkbox b-checkbox--stores b-checkbox--order">
-                                <input class="b-checkbox__input"
-                                       type="checkbox"
-                                       name="stores-sort-avlbl"
-                                       id="stores-sort-2"
-                                       value="в наличии сегодня"/>
-                                <label class="b-checkbox__name b-checkbox__name--stores b-checkbox__name--order"
-                                       for="stores-sort-2">
-                                    <span class="b-checkbox__text">в наличии сегодня</span>
-                                </label>
+                                    </label>
+                                </div>
+                                <div class="b-checkbox b-checkbox--stores b-checkbox--order">
+                                    <input class="b-checkbox__input"
+                                           type="checkbox"
+                                           name="stores-sort-avlbl"
+                                           id="stores-sort-2"
+                                           value="в наличии сегодня"/>
+                                    <label class="b-checkbox__name b-checkbox__name--stores b-checkbox__name--order"
+                                           for="stores-sort-2">
+                                        <span class="b-checkbox__text">в наличии сегодня</span>
+                                    </label>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    <?php } ?>
                     <div class="b-form-inline b-form-inline--order-search">
                         <form class="b-form-inline__form">
                             <div class="b-input b-input--stores-search b-input--order-search">

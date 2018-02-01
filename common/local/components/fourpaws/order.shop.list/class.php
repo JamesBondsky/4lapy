@@ -92,6 +92,8 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
         if ($routeCollection = $router->getRouteCollection()) {
             $storeListUrlRoute = $routeCollection->get('fourpaws_sale_ajax_order_storesearch');
         }
+        $this->arResult['DELIVERY'] = $pickupDelivery;
+        $this->arResult['DELIVERY_CODE'] = $pickupDelivery->getData()['DELIVERY_CODE'];
         $this->arResult['STORE_LIST_URL'] = $storeListUrlRoute ? $storeListUrlRoute->getPath() : '';
     }
 

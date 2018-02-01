@@ -31,14 +31,16 @@ $basket = $arResult['BASKET'];
 /** @var OrderStorage $storage */
 $storage = $arResult['STORAGE'];
 
-$selectedShop = $arResult['SELECTED_SHOP'];
+/** @var DeliveryService $deliveryService */
+$deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
 
-$showDelayed = ($arResult['STEP'] === OrderService::DELIVERY_STEP) && $storage->isPartialGet(
-    ) && ($selectedShop instanceof Store) && $selectedDelivery;
+$selectedShop = $arResult['SELECTED_SHOP'];
+$showDelayed = ($arResult['STEP'] === OrderService::DELIVERY_STEP)
+    && $storage->isPartialGet()
+    && ($selectedShop instanceof Store)
+    && $deliveryService->isPickup($selectedDelivery);
 
 if ($showDelayed) {
-    /** @var DeliveryService $deliveryService */
-    $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
     $stockResult = $deliveryService->getStockResultByDelivery($selectedDelivery)->filterByStore($selectedShop);
 
     $available = $stockResult->getAvailable();

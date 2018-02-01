@@ -157,6 +157,38 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 $addresses = $addressService->getAddressesByUser($storage->getUserId(), $selectedCity['CODE']);
             }
 
+            $delivery = null;
+            $pickup = null;
+            $selectedDelivery = null;
+            $selectedDeliveryId = $storage->getDeliveryId();
+            foreach ($deliveries as $calculationResult) {
+                $deliveryId = $calculationResult->getData()['DELIVERY_ID'];
+                if (!$selectedDeliveryId) {
+                    $selectedDeliveryId = $deliveryId;
+                }
+
+                if ($selectedDeliveryId === (int)$deliveryId) {
+                    $selectedDelivery = $calculationResult;
+                }
+
+                $deliveryCode = $calculationResult->getData()['DELIVERY_CODE'];
+                if (in_array($deliveryCode, DeliveryService::DELIVERY_CODES)) {
+                    $delivery = $calculationResult;
+                } elseif (in_array($deliveryCode, DeliveryService::PICKUP_CODES)) {
+                    $pickup = $calculationResult;
+                }
+            }
+
+            if (!$selectedDelivery) {
+                $selectedDelivery = reset($deliveries);
+                $selectedDeliveryId = (int)$selectedDelivery->getData()['DELIVERY_ID'];
+            }
+
+            $this->arResult['PICKUP'] = $pickup;
+            $this->arResult['DELIVERY'] = $delivery;
+            $this->arResult['SELECTED_DELIVERY'] = $selectedDelivery;
+            $this->arResult['SELECTED_DELIVERY_ID'] = $selectedDeliveryId;
+
             $this->getPickupData($deliveries, $storage);
         }
 
@@ -168,7 +200,6 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $this->arResult['STEP'] = $this->currentStep;
         $this->arResult['SELECTED_CITY'] = $selectedCity;
         $this->arResult['ADDRESSES'] = $addresses;
-        $this->arResult['DELIVERIES'] = $deliveries;
 
         return $this;
     }

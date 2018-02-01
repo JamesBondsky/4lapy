@@ -3,8 +3,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
-use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\Location\LocationService;
 use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
@@ -15,39 +13,13 @@ use Bitrix\Sale\Delivery\CalculationResult;
  * @var array $arResult
  */
 
-/** @var OrderStorage $storage */
-$storage = $arResult['STORAGE'];
-
-/** @var CalculationResult[] $deliveries */
-$deliveries = $arResult['DELIVERIES'];
-
-$delivery = null;
-$pickup = null;
-$selectedDelivery = null;
-$selectedDeliveryId = $storage->getDeliveryId();
-foreach ($deliveries as $calculationResult) {
-    $deliveryId = $calculationResult->getData()['DELIVERY_ID'];
-    if (!$selectedDeliveryId) {
-        $selectedDeliveryId = $deliveryId;
-    }
-
-    if ($selectedDeliveryId === (int)$deliveryId) {
-        $selectedDelivery = $calculationResult;
-    }
-
-    $deliveryCode = $calculationResult->getData()['DELIVERY_CODE'];
-    if (in_array($deliveryCode, DeliveryService::DELIVERY_CODES)) {
-        $delivery = $calculationResult;
-    } elseif (in_array($deliveryCode, DeliveryService::PICKUP_CODES)) {
-        $pickup = $calculationResult;
-    }
-}
-
-if (!$selectedDelivery) {
-    $selectedDelivery = reset($deliveries);
-    $selectedDeliveryId = (int)$selectedDelivery->getData()['DELIVERY_ID'];
-}
-
+/** @var CalculationResult $delivery */
+$delivery = $arResult['DELIVERY'];
+/** @var CalculationResult $pickup */
+$pickup = $arResult['PICKUP'];
+/** @var CalculationResult $selectedDelivery */
+$selectedDelivery = $arResult['SELECTED_DELIVERY'];
+$selectedDeliveryId = $arResult['SELECTED_DELIVERY_ID'];
 ?>
 <div class="b-container">
     <h1 class="b-title b-title--h1 b-title--order">
@@ -101,8 +73,10 @@ if (!$selectedDelivery) {
                                 <label class="b-choice-recovery__label b-choice-recovery__label--left b-choice-recovery__label--order-step"
                                        for="order-delivery-address">
                                     <span class="b-choice-recovery__main-text">
-                                        <span class="b-choice-recovery__second"><?= $delivery->getData(
-                                            )['DELIVERY_NAME'] ?></span>
+                                        <span class="b-choice-recovery__main-text">
+                                            <span class="b-choice-recovery__first">Доставка</span>
+                                            <span class="b-choice-recovery__second">курьером</span>
+                                        </span>
                                     </span>
                                     <span class="b-choice-recovery__addition-text">
                                         <?= DeliveryTimeHelper::showTime($delivery) ?>
@@ -120,8 +94,7 @@ if (!$selectedDelivery) {
                                 <label class="b-choice-recovery__label b-choice-recovery__label--right b-choice-recovery__label--order-step js-open-popup"
                                        for="order-delivery-pick-up"
                                        data-popup-id="popup-order-stores">
-                                    <span class="b-choice-recovery__main-text"><?= $pickup->getData(
-                                        )['DELIVERY_NAME'] ?></span>
+                                    <span class="b-choice-recovery__main-text">Самовывоз</span>
                                     <span class="b-choice-recovery__addition-text">
                                         <?= DeliveryTimeHelper::showTime($pickup) ?>
                                     </span>
