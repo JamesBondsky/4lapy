@@ -34,6 +34,11 @@ if ($arResult['IS_AJAX_REQUEST'] === 'Y') {
         $arResult['CURRENT_STAGE'] = 'cheque_details';
     }
 }
+if ($arResult['WAS_POSTED'] === 'Y' && isset($arResult['FIELD_VALUES']['print'])) {
+    if ($arResult['FIELD_VALUES']['print'] === 'Y') {
+        $arResult['CURRENT_STAGE'] = 'print';
+    }
+}
 
 //
 // Метаданные полей формы
@@ -102,7 +107,33 @@ if (!empty($arResult['CONTACT_CARDS'])) {
 //
 if (!empty($arResult['CHEQUES'])) {
     $arResult['CHEQUES'] = array_reverse($arResult['CHEQUES'], true);
-    if ($arParams['LAST_CHEQUES_CNT'] > 0) {
+    if ($arResult['CURRENT_STAGE'] === 'print') {
+        // для печатной версии расставим флаги текущий/предыдущий месяц, текущая/предыдущая неделя
+        $curDate = new \DateTime();
+        $prevWeekDate = new \DateTime('-1 week');
+        $prevMonthDate = new \DateTime('-1 month');
+        $curMonth = $curDate->format('n');
+        $curYear = $curDate->format('Y');
+        $curWeek = $curDate->format('W');
+        $prevWeek = $prevWeekDate->format('W');
+        $prevWeekYear = $prevWeekDate->format('Y');
+        $prevMonth = $prevWeekDate->format('n');
+        $prevMonthYear = $prevWeekDate->format('Y');
+        foreach ($arResult['CHEQUES'] as &$cheque) {
+            /** @var \DateTimeImmutable $chequeDate */
+            $chequeDate = $cheque['DATE'];
+            $chequeYear = $chequeDate->format('Y');
+            $chequeMonth = $chequeDate->format('n');
+            $chequeWeek = $chequeDate->format('W');
+            $cheque['IS_CUR_MONTH'] = $chequeYear == $curYear && $chequeMonth == $curMonth ? 'Y' : 'N';
+            $cheque['IS_CUR_WEEK'] = $chequeYear == $curYear && $chequeWeek == $curWeek ? 'Y' : 'N';
+            $cheque['IS_PREV_WEEK'] = $chequeYear == $prevWeekYear && $chequeWeek == $prevWeek ? 'Y' : 'N';
+            $cheque['IS_PREV_MONTH'] = $chequeYear == $prevMonthYear && $chequeWeek == $prevMonth ? 'Y' : 'N';
+        }
+        unset($cheque);
+    } elseif ($arParams['LAST_CHEQUES_CNT'] > 0) {
         $arResult['CHEQUES'] = array_slice($arResult['CHEQUES'], 0, $arParams['LAST_CHEQUES_CNT'], true);
     }
 }
+
+$this->getComponent()->arParams = $arParams;

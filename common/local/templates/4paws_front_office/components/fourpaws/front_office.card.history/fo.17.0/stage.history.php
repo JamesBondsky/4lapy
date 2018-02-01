@@ -22,47 +22,81 @@ if (!empty($arResult['CURRENT_CARD'])) {
     echo '<div class="active-balance">Активный баланс: '.htmlspecialcharsbx($arResult['CURRENT_CARD']['BALANCE']).'&nbsp;баллов</div>';
 }
 
+// Кнопка для запроса полной версии о списании/начислении бонусов
+if (!empty($arResult['CHEQUES'])) {
+    ?>
+    <div class="print-version-request-form">
+        <form method="post" action="" target="_blank">
+            <input type="hidden" name="formName" value="cardHistory">
+            <input type="hidden" name="action" value="postForm">
+            <input type="hidden" name="getContactCards" value="Y">
+            <input type="hidden" name="getContactCheques" value="Y">
+            <input type="hidden" name="print" value="Y">
+            <input type="hidden" name="sessid" value="<?=bitrix_sessid()?>">
+            <input type="hidden" name="cardNumberForHistory" value="<?=$arResult['PRINT_FIELDS']['cardNumberForHistory']['VALUE']?>">
+            <div class="submit-button-wrap">
+                <button class="b-button b-button_large" type="submit" value="Распечатать">
+                    Полная версия для печати
+                </button>
+            </div>
+        </form>
+    </div>
+    <?php
+}
+
 // История покупок
 if (!empty($arResult['CHEQUES'])) {
     $isBonusCard = $arResult['CURRENT_CARD'] && $arResult['CURRENT_CARD']['IS_BONUS_CARD'] === 'Y';
+    if ($arParams['LAST_CHEQUES_CNT']) {
+        echo '<div class="order-list-title">Последние покупки по карте</div>';
+    }
+
+    echo '<div class="lk-container">';
+    echo '<div class="tab-order-history">';
+
     ?>
     <table class="order-list">
-		<thead>
-			<tr>
-				<th>Детали</th>
-				<th>Дата покупки</th>
-				<th class="pl10">Адрес магазина</th>
-			</tr>
-		</thead>
-		<tbody>
+        <thead>
+            <tr>
+                <th>Детали</th>
+                <th>Дата покупки</th>
+                <th>Адрес магазина</th>
+            </tr>
+        </thead>
+        <tbody>
         <?php
+            $rowClass = 'even';
             foreach ($arResult['CHEQUES'] as $cheque) {
+                /** @var \DateTimeImmutable $chequeDate */
+                $chequeDate = $cheque['DATE'];
+                $rowClass = $rowClass === 'even' ? 'odd' : 'even';
                 ?>
-                <tr>
+                <tr class="order-list__head <?=$rowClass?>">
                     <td class="order-list__i">
                         <span class="order-list__dropdown uppercase" data-id="<?=htmlspecialcharsbx($cheque['CHEQUE_ID'])?>">
                             <span>Детали покупки</span>
                         </span>
                     </td>
-                    <td class="order-id order-list__dt"><?=$cheque['DATE']->format('d.m.Y H:i:s')?></td>
+                    <td class="order-id order-list__dt"><?=$chequeDate->format('d.m.Y H:i:s')?></td>
                     <td class="order-id order-list__address"><?=htmlspecialcharsbx($cheque['BUSINESS_UNIT_NAME'])?></td>
                 </tr>
 
-                <tr>
+                <tr class="order-list__details <?=$rowClass?>">
                     <td colspan="3" class="order-detail-td">
                         <div data-id="<?=htmlspecialcharsbx($cheque['CHEQUE_ID'])?>" class="order-detail" style="display: none;">
                             <table>
                                 <thead>
                                     <tr>
+                                        <th class="product-art">Артикул</th>
                                         <th class="product-name">Наименование</th>
-                                        <th>Кол-во</th>
-                                        <th>Начислено бонусов</th>
+                                        <th class="product-quantity">Кол-во</th>
+                                        <th class="product-bonus">Начислено бонусов</th>
                                     </tr>
                                 </thead>
                                 <tbody><!-- cheque details (ajax result) --></tbody>
                                 <tfoot>
                                     <tr>
-                                        <td colspan="3" class="order-detail__summ">
+                                        <td colspan="4" class="order-detail__summ">
                                             <?php
                                             if ($isBonusCard) {
                                                 echo '<ul>';
@@ -72,7 +106,7 @@ if (!empty($arResult['CHEQUES'])) {
                                                 echo '<span class="info-count">';
                                                 echo sprintf('%0.2f', $cheque['SUM_DISCOUNTED'] - $cheque['PAID_BY_BONUS']);
                                                 echo '</span>';
-                                                echo 'руб.';
+                                                echo '&nbsp;руб.';
                                                 echo '</li>';
 
                                                 echo '<li>';
@@ -96,7 +130,7 @@ if (!empty($arResult['CHEQUES'])) {
                                                 echo '<span class="fz24">';
                                                 echo sprintf('%0.2f', $cheque['SUM']);
                                                 echo '</span>';
-                                                echo 'руб.';
+                                                echo '&nbsp;руб.';
                                                 echo '</div>';
 
                                                 echo '<div>';
@@ -104,7 +138,7 @@ if (!empty($arResult['CHEQUES'])) {
                                                 echo '<span class="fz34">';
                                                 echo sprintf('%0.2f', $cheque['SUM_DISCOUNTED']);
                                                 echo '</span>';
-                                                echo 'руб.';
+                                                echo '&nbsp;руб.';
                                                 echo '</div>';
                                             }
                                             ?>
@@ -121,4 +155,7 @@ if (!empty($arResult['CHEQUES'])) {
         </tbody>
     </table>
     <?php
+
+    echo '</div>';
+    echo '</div>';
 }

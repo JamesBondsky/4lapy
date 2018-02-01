@@ -3,9 +3,6 @@
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
 use FourPaws\App\Application;
-//use FourPaws\External\Manzana\Model\Cheque;
-//use FourPaws\External\Manzana\Model\ChequePayment;
-//use FourPaws\External\Manzana\Model\ChequesByContractContactCheques;
 use FourPaws\External\Manzana\Exception\CardNotFoundException;
 use FourPaws\External\ManzanaService;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
@@ -108,13 +105,6 @@ class FourPawsFrontOfficeCardHistoryComponent extends \CBitrixComponent
         }
     }
 
-    protected function checkPermissions()
-    {
-        $result = true;
-
-        return $result;
-    }
-
     /**
      * @return ManzanaService
      */
@@ -124,6 +114,13 @@ class FourPawsFrontOfficeCardHistoryComponent extends \CBitrixComponent
             $this->manzanaService = Application::getInstance()->getContainer()->get('manzana.service');
         }
         return $this->manzanaService;
+    }
+
+    protected function checkPermissions()
+    {
+        $result = true;
+
+        return $result;
     }
 
     protected function initialLoadAction()
@@ -137,47 +134,14 @@ class FourPawsFrontOfficeCardHistoryComponent extends \CBitrixComponent
 
         $this->processCardNumber();
 
-        if (!$this->isErrors()) {
-            // получение списка карт по id контакта
-            $cardsResult = null;
-            if ($this->getFormFieldValue('getContactCards') === 'Y') {
-                $cardsResult = $this->getCardsByContactId($this->arResult['CARD_DATA']['CONTACT_ID']);
-            }
-            if ($cardsResult) {
-                $this->arResult['CONTACT_CARDS'] = $cardsResult->getData()['cards'];
-                if (!$cardsResult->isSuccess()) {
-                    $this->setExecError('getContactCards', $cardsResult->getErrors(), 'runtime');
-                }
-            }
+        // список карт по id контакта
+        $this->obtainContactCards();
 
-            // получение списка чеков по id контакта или id карты
-            $chequesResult = null;
-            if ($this->getFormFieldValue('getContactCheques') === 'Y') {
-                $chequesResult = $this->getChequesByContactId($this->arResult['CARD_DATA']['CONTACT_ID']);
-            } elseif ($this->getFormFieldValue('getCardCheques') === 'Y') {
-                $chequesResult = $this->getChequesByCardId($this->arResult['CARD_DATA']['CARD_ID']);
-            }
-            if ($chequesResult) {
-                $this->arResult['CHEQUES'] = $chequesResult->getData()['cheques'];
-                if (!$chequesResult->isSuccess()) {
-                    $this->setExecError('getCheques', $chequesResult->getErrors(), 'runtime');
-                }
-            }
+        // список чеков по id контакта или id карты
+        $this->obtainCheques();
 
-            // получение детализации чека по его id
-            $chequeItemsResult = null;
-            if ($this->getFormFieldValue('getChequeItems') === 'Y') {
-                $chequeId = (int) $this->getFormFieldValue('chequeId');
-                // to do
-            }
-            if ($chequeItemsResult) {
-                $this->arResult['CHEQUE_ITEMS'] = $chequeItemsResult->getData()['items'];
-                if (!$cardsResult->isSuccess()) {
-                    $this->setExecError('getContactCards', $cardsResult->getErrors(), 'runtime');
-                }
-            }
-
-        }
+        // детализация чека по id
+        $this->obtainChequeItems();
 
         $this->loadData();
     }
@@ -212,8 +176,7 @@ class FourPawsFrontOfficeCardHistoryComponent extends \CBitrixComponent
             }
 
             if ($validateResultData['validate']) {
-                // 0 - ok; 1 - карта не существует; 2 - карта принадлежит другому юзеру
-                if ($validateResultData['validate']['VALIDATION_RESULT_CODE'] === 2) {
+                if ($validateResultData['validate']['IS_CARD_OWNED'] === 'Y') {
                     $searchCardResult = $this->searchCardByNumber($cardNumber);
                     $searchCardResultData = $searchCardResult->getData();
                     if (!$searchCardResult->isSuccess()) {
@@ -221,11 +184,11 @@ class FourPawsFrontOfficeCardHistoryComponent extends \CBitrixComponent
                     } elseif (empty($searchCardResultData['card'])) {
                         $this->setFieldError($fieldName, 'Карта не найдена', 'not_found');
                     } else {
+                        $this->arResult['CARD_DATA'] = $searchCardResultData['card'];
                         $this->arResult['CARD_DATA']['NUMBER'] = $cardNumber;
                         $this->arResult['CARD_DATA']['CARD_ID'] = $validateResultData['validate']['CARD_ID'];
-                        $this->arResult['CARD_DATA']['CONTACT_ID'] = $searchCardResultData['card']['CONTACT_ID'];
                     }
-                } elseif ($validateResultData['validate']['VALIDATION_RESULT_CODE'] === 1) {
+                } elseif ($validateResultData['validate']['IS_CARD_NOT_EXISTS'] === 'Y') {
                     $this->setFieldError($fieldName, 'Not found', 'not_found');
                 } else {
                     $this->setFieldError($fieldName, 'Wrong status', 'wrong_status');
@@ -234,6 +197,72 @@ class FourPawsFrontOfficeCardHistoryComponent extends \CBitrixComponent
         }
     }
 
+    /**
+     * Заполнение arResult списком карт по контакту переданной карты
+     */
+    protected function obtainContactCards()
+    {
+        if (empty($this->arResult['CARD_DATA'])) {
+            return;
+        }
+
+        $cardsResult = null;
+        if ($this->getFormFieldValue('getContactCards') === 'Y') {
+            $cardsResult = $this->getCardsByContactId($this->arResult['CARD_DATA']['CONTACT_ID']);
+        }
+        if ($cardsResult) {
+            $this->arResult['CONTACT_CARDS'] = $cardsResult->getData()['cards'];
+            if (!$cardsResult->isSuccess()) {
+                $this->setExecError('getContactCards', $cardsResult->getErrors(), 'runtime');
+            }
+        }
+    }
+
+    /**
+     * Заполнение arResult списком чеков по переданной карте
+     */
+    protected function obtainCheques()
+    {
+        if (empty($this->arResult['CARD_DATA'])) {
+            return;
+        }
+
+        $chequesResult = null;
+        if ($this->getFormFieldValue('getContactCheques') === 'Y') {
+            $chequesResult = $this->getChequesByContactId($this->arResult['CARD_DATA']['CONTACT_ID']);
+        } elseif ($this->getFormFieldValue('getCardCheques') === 'Y') {
+            $chequesResult = $this->getChequesByCardId($this->arResult['CARD_DATA']['CARD_ID']);
+        }
+        if ($chequesResult) {
+            $this->arResult['CHEQUES'] = $chequesResult->getData()['cheques'];
+            if (!$chequesResult->isSuccess()) {
+                $this->setExecError('getCheques', $chequesResult->getErrors(), 'runtime');
+            }
+        }
+    }
+
+    /**
+     * Заполнение arResult данными детализации чека по переданному идентификатору
+     */
+    protected function obtainChequeItems()
+    {
+        $chequeItemsResult = null;
+        if ($this->getFormFieldValue('getChequeItems') === 'Y') {
+            $chequeId = trim($this->getFormFieldValue('chequeId'));
+            $chequeItemsResult = $this->getChequeItems($chequeId);
+        }
+        if ($chequeItemsResult) {
+            $this->arResult['CHEQUE_ITEMS'] = $chequeItemsResult->getData()['chequeItems'];
+            if (!$chequeItemsResult->isSuccess()) {
+                $this->setExecError('getChequeItems', $chequeItemsResult->getErrors(), 'runtime');
+            }
+        }
+    }
+
+    /**
+     * @param string $cardNumber
+     * @return Result
+     */
     public function validateCardByNumber(string $cardNumber)
     {
         $result = new Result();
@@ -264,8 +293,10 @@ class FourPawsFrontOfficeCardHistoryComponent extends \CBitrixComponent
             $validate['IS_VALID'] = trim($validateRaw->isValid);
             $validate['FIRST_NAME'] = trim($validateRaw->firstName);
             $validate['VALIDATION_RESULT'] = trim($validateRaw->validationResult);
-            // 0 - ok; 1 - карта не существует; 2 - карта принадлежит другому юзеру
+            // 0 - ok; 1 - карта не существует; 2 - карта принадлежит другому клиенту
             $validate['VALIDATION_RESULT_CODE'] = (int) $validateRaw->validationResultCode;
+            $validate['IS_CARD_OWNED'] = $validateRaw->isCardOwned() ? 'Y' : 'N';
+            $validate['IS_CARD_NOT_EXISTS'] = $validateRaw->isCardNotExists() ? 'Y' : 'N';
         }
 
         $result->setData(
@@ -278,6 +309,10 @@ class FourPawsFrontOfficeCardHistoryComponent extends \CBitrixComponent
         return $result;
     }
 
+    /**
+     * @param string $cardNumber
+     * @return Result
+     */
     public function searchCardByNumber(string $cardNumber)
     {
         $result = new Result();
@@ -309,6 +344,12 @@ class FourPawsFrontOfficeCardHistoryComponent extends \CBitrixComponent
         $card = [];
         if ($cardRaw) {
             $card['CONTACT_ID'] = trim($cardRaw->contactId);
+            $card['FIRST_NAME'] = trim($cardRaw->firstName);
+            $card['SECOND_NAME'] = trim($cardRaw->secondName);
+            $card['LAST_NAME'] = trim($cardRaw->lastName);
+            $card['BIRTHDAY'] = $cardRaw->birthDate;
+            $card['PHONE'] = trim($cardRaw->phone);
+            $card['EMAIL'] = trim($cardRaw->email);
         }
 
         $result->setData(
@@ -321,6 +362,10 @@ class FourPawsFrontOfficeCardHistoryComponent extends \CBitrixComponent
         return $result;
     }
 
+    /**
+     * @param string $contactId
+     * @return Result
+     */
     public function getCardsByContactId(string $contactId)
     {
         $result = new Result();
@@ -383,6 +428,10 @@ class FourPawsFrontOfficeCardHistoryComponent extends \CBitrixComponent
         return $result;
     }
 
+    /**
+     * @param string $contactId
+     * @return Result
+     */
     public function getChequesByContactId(string $contactId)
     {
         $result = new Result();
@@ -409,12 +458,12 @@ class FourPawsFrontOfficeCardHistoryComponent extends \CBitrixComponent
         $cheques = [];
         if ($chequesRaw) {
             foreach ($chequesRaw as $cheque) {
-                if ($cheque->hasItems === 2) {
+                if ($cheque->hasItemsBool()) {
                     $cheques[] = [
                         'CHEQUE_ID' => trim($cheque->chequeId),
                         'NUMBER' => trim($cheque->chequeNumber),
                         'DATE' => $cheque->date,
-                        'BUSINESS_UNIT_NAME' => trim($cheque->businessUnitName),
+                        'BUSINESS_UNIT_NAME' => trim($cheque->businessUnit),
                         'SUM_DISCOUNTED' => $cheque->sumDiscounted,
                         'PAID_BY_BONUS' => $cheque->paidByBonus,
                         'BONUS' => $cheque->bonus,
@@ -434,6 +483,10 @@ class FourPawsFrontOfficeCardHistoryComponent extends \CBitrixComponent
         return $result;
     }
 
+    /**
+     * @param string $cardId
+     * @return Result
+     */
     public function getChequesByCardId(string $cardId)
     {
         $result = new Result();
@@ -460,7 +513,7 @@ class FourPawsFrontOfficeCardHistoryComponent extends \CBitrixComponent
         $cheques = [];
         if ($chequesRaw) {
             foreach ($chequesRaw as $cheque) {
-                if ($cheque->hasItems === 2) {
+                if ($cheque->hasItemsBool()) {
                     $cheques[] = [
                         'CHEQUE_ID' => trim($cheque->chequeId),
                         'NUMBER' => trim($cheque->chequeNumber),
@@ -485,12 +538,76 @@ class FourPawsFrontOfficeCardHistoryComponent extends \CBitrixComponent
         return $result;
     }
 
+    /**
+     * @param string $chequeId
+     * @return Result
+     */
+    public function getChequeItems(string $chequeId)
+    {
+        $result = new Result();
+
+        if ($chequeId === '') {
+            $result->addError(
+                new Error('Не задан id чека', 'emptyСhequeId')
+            );
+        }
+
+        $chequeItemsRaw = [];
+        if ($result->isSuccess()) {
+            try {
+                $chequeItemsRaw = $this->getManzanaService()->getItemsByCheque($chequeId);
+            } catch (\Exception $exception) {
+                $result->addError(
+                    new Error($exception->getMessage(), 'getItemsByChequeException')
+                );
+
+                $this->log()->error(sprintf('%s exception: %s', __FUNCTION__, $exception->getMessage()));
+            }
+        }
+
+        $chequeItems = [];
+        if ($chequeItemsRaw) {
+            foreach ($chequeItemsRaw as $chequeItem) {
+                $chequeItems[] = [
+                    'CHEQUE_ID' => trim($chequeItem->chequeId),
+                    'ARTICLE_NAME' => trim($chequeItem->name),
+                    'ARTICLE_NUMBER' => trim($chequeItem->number),
+                    'QUANTITY' => (double)$chequeItem->quantity,
+                    'PRICE' => (double)$chequeItem->price,
+                    'DISCOUNT' => (double)$chequeItem->discount,
+                    'SUM' => (double)$chequeItem->sum,
+                    'SUM_DISCOUNTED' => (double)$chequeItem->sumDiscounted,
+                    'URL' => trim($chequeItem->url),
+                    'BONUS' => (double)$chequeItem->bonus,
+                ];
+            }
+        }
+
+        $result->setData(
+            [
+                'chequeItems' => $chequeItems,
+                'chequeItemsRaw' => $chequeItemsRaw,
+            ]
+        );
+
+        return $result;
+    }
+
+    /**
+     * @param $fieldName
+     * @param bool $getSafeValue
+     * @return mixed
+     */
     protected function getFormFieldValue($fieldName, $getSafeValue = false)
     {
         $key = $getSafeValue ? 'FIELD_VALUES' : '~FIELD_VALUES';
         return isset($this->arResult[$key][$fieldName]) ? $this->arResult[$key][$fieldName] : null;
     }
 
+    /**
+     * @param $value
+     * @return string
+     */
     protected function trimValue($value)
     {
         if (is_null($value)) {
@@ -499,6 +616,10 @@ class FourPawsFrontOfficeCardHistoryComponent extends \CBitrixComponent
         return is_scalar($value) ? trim($value) : '';
     }
 
+    /**
+     * @param array|string $errorMsg
+     * @return string
+     */
     protected function prepareErrorMsg($errorMsg)
     {
         // стоит ли здесь делать htmlspecialcharsbx(), вот в чем вопрос...
@@ -519,20 +640,33 @@ class FourPawsFrontOfficeCardHistoryComponent extends \CBitrixComponent
         return $result;
     }
 
-    protected function setFieldError($fieldName, $errorMsg, $errCode = '')
+    /**
+     * @param string $fieldName
+     * @param array|string $errorMsg
+     * @param string $errCode
+     */
+    protected function setFieldError(string $fieldName, $errorMsg, string $errCode = '')
     {
         $errorMsg = $this->prepareErrorMsg($errorMsg);
         $this->arResult['ERROR']['FIELD'][$fieldName] = new Error($errorMsg, $errCode);
         //$this->log()->debug(sprintf('$fieldName: %s; $errorMsg: %s; $errCode: %s', $fieldName, $errorMsg, $errCode));
     }
 
-    protected function setExecError($errName, $errorMsg, $errCode = '')
+    /**
+     * @param string $errName
+     * @param array|string $errorMsg
+     * @param string $errCode
+     */
+    protected function setExecError(string $errName, $errorMsg, $errCode = '')
     {
         $errorMsg = $this->prepareErrorMsg($errorMsg);
         $this->arResult['ERROR']['EXEC'][$errName] = new Error($errorMsg, $errCode);
         //$this->log()->debug(sprintf('$fieldName: %s; $errorMsg: %s; $errCode: %s', $fieldName, $errorMsg, $errCode));
     }
 
+    /**
+     * @return bool
+     */
     protected function isErrors()
     {
         return !empty($this->arResult['ERROR']);

@@ -42,6 +42,8 @@ class CardValidateResult
     public $firstName;
     
     /**
+     * 0 - ok; 1 - карта не существует; 2 - карта принадлежит другому клиенту
+     *
      * @XmlElement(cdata=false)
      * @Type("string")
      * @SerializedName("validationresultcode")
@@ -54,4 +56,20 @@ class CardValidateResult
      * @SerializedName("cardid")
      */
     public $cardId;
+
+    /**
+     * @return bool
+     */
+    public function isCardNotExists()
+    {
+        return (int)$this->validationResultCode === 1;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isCardOwned()
+    {
+        return (int)$this->validationResultCode === 2;
+    }
 }

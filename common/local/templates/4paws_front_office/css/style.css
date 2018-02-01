@@ -1,3 +1,27 @@
+@media print {
+	body {
+		background-color: white !important;
+		max-width: 100% !important;
+		margin: 0 !importnat;
+	}
+
+	#page {
+		width: 100% !important;
+		background-color: white !important;
+		margin: 0 !importnat;
+	}
+
+	.container {
+		width: 100% !important;
+		margin: 0 !importnat;
+	}
+
+	.noprint {
+		display: none;
+	}
+}
+
+
 @font-face {
 	font-family: 'Rotonda Bold';
 	src: url('f/rotonda-bold.eot');

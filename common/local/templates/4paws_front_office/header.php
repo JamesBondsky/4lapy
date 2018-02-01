@@ -16,7 +16,7 @@ use Bitrix\Main\Page\Asset;
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <link type="image/x-icon" href="<?=SITE_DIR.'favicon.ico'?>" rel="icon">
-        <!--[if lt IE 9]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js" type="text/javascript"></script><![endif]-->
+        <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js" type="text/javascript"></script><![endif]-->
         <title><?php
             $APPLICATION->ShowTitle();
         ?></title><?php
@@ -27,7 +27,11 @@ use Bitrix\Main\Page\Asset;
         Asset::getInstance()->addJs('/local/templates/4paws_front_office/js/script.js');
     ?></head>
     <body><?php
+
+        echo '<div id="panel" class="noprint">';
         $APPLICATION->ShowPanel();
+        echo '</div>';
+
         ?><div id="page">
             <header id="header">
                 <div class="container">

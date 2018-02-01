@@ -8,7 +8,7 @@ if (empty($arResult)) {
     return;
 }
 
-echo '<div>';
+echo '<div class="top-nav">';
 foreach ($arResult as $item) {
     $class = 'btn inline-block menu-item';
     if ($item['SELECTED']) {

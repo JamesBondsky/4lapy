@@ -1,25 +1,89 @@
+@media print {
+    .top-nav {
+        display: none !important;
+    }
+
+    #header {
+        display: none !important;
+    }
+
+    ul.cheques-list-print-switch > li span {
+        border-color: black !important;
+        color: black !important;
+    }
+
+    ul.cheques-list-print-switch > li.selected span {
+        font-weight: bold;
+    }
+
+    .cheques-list-print th,
+    .cheques-list-print td {
+        border-color: black !important;
+    }
+
+    .print-ver-logo {
+        display: block !important;
+    }
+}
+
 .active-balance {
     font-size: 18px;
     font-weight: bold;
-    margin: 16px 0 32px 0;
+    margin: 16px 0;
     padding: 0;
+}
+
+.print-version-request-form {
+    margin: 0 0 32px 0;
+}
+
+.order-list-title {
+    font-weight: bold;
+    font-size: 18px;
+    margin: 16px 0 8px 0;
+}
+
+.tab-order-history {
+    margin: 0 0 32px 0;
 }
 
 table.order-list {
-    width: 100%
+    width: 100%;
     padding: 0;
     margin: 0;
 }
 
-table.order-list th,
-table.order-list td {
+table.order-list > thead th,
+table.order-list > tbody td {
     text-align: left;
     margin: 0;
-    padding: 0 0 5px 0;
+    padding: 5px;
+}
+
+table.order-list > thead th {
+    font-size: 16px;
+    font-weight: bold;
+    border-bottom: solid 2px #ED953E;
+    background-color: #F9EA8C;
+    color: #000;
+}
+
+table.order-list .order-list__head.even,
+table.order-list .order-list__details.even {
+    background-color: #F9EA8C;
+}
+
+table.order-list .order-detail-td {
+    padding: 0;
+}
+
+table.order-list .order-detail-td .order-detail {
+    margin: 16px;
 }
 
 .order-list__i {
     width: 190px !important;
+    vertical-align: middle;
 }
 
 .order-list__dropdown {
@@ -30,6 +94,7 @@ table.order-list td {
     display: block;
     padding: 7px 0 7px 37px;
     text-decoration: none;
+    line-height: 17px;
 }
 
 .order-list__dropdown.preloader {
@@ -47,6 +112,115 @@ table.order-list td {
     font-size: 15px !important;
 }
 
-.order-list > thead th {
+.order-detail > table {
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    font-size: 14px;
+}
+
+.order-detail > table td,
+.order-detail > table th {
+    padding: 5px;
+    text-align: left;
+    font-weight: normal;
+    border-bottom: solid 1px #ED953E;
+}
+
+.order-detail > table th {
+    vertical-align: top;
+    font-size: 12px;
+    color: #000000;
+    font-weight: bold;
+}
+
+.order-detail > table td.product-art {
+    width: 50px;
+}
+
+.order-detail > table td.product-name {
+}
+
+.order-detail > table th.product-quantity,
+.order-detail > table td.product-quantity {
+    width: 50px;
+    text-align: center;
+}
+
+.order-detail > table th.product-bonus,
+.order-detail > table td.product-bonus {
+    width: 110px;
+    padding-right: 0;
+    text-align: center;
+}
+
+.order-detail > table td.order-detail__summ {
+    border: none;
+    font-weight: bold;
+    text-align: right;
+    font-size: 16px;
+}
+
+.cheques-list-print-title {
+    font-weight: bold;
+    font-size: 18px;
+    margin: 16px 0 8px 0;
+}
+
+.cheques-list-print {
+    width: 100%;
+    padding: 0;
+    margin: 0;
+}
+
+.cheques-list-print > thead th,
+.cheques-list-print > tbody td {
+    text-align: left;
+    margin: 0;
+    padding: 5px 10px 5px 0;
+    border-bottom: solid 1px #ED953E;
+}
+
+.cheques-list-print ._hidden {
+    display: none;
+}
+
+.cheques-list-print > thead th {
     font-size: 14px !important;
+}
+
+.cheques-list-print .cheques-list-print__date {
+    width: 33%;
+}
+
+.cheques-list-print .cheques-list-print__debit {
+    width: 33%;
+}
+
+ul.cheques-list-print-switch {
+    list-style: none;
+    margin: 15px 0;
+    padding: 0;
+    clear: both;
+}
+
+ul.cheques-list-print-switch > li {
+    float: left;
+    margin: 0 15px 15px 0;
+    padding: 0;
+}
+
+ul.cheques-list-print-switch > li span {
+    cursor: pointer;
+    border-bottom: dashed 1px #ED953E;
+}
+
+ul.cheques-list-print-switch > li.selected span {
+    cursor: default;
+    border-bottom: none;
+    color: #ff6e03;
+}
+
+.print-ver-logo {
+    display: none;
 }
