@@ -103,6 +103,7 @@ class FourPawsShopListComponent extends CBitrixComponent
     /**
      * @param array $filter
      * @param array $order
+     * @param bool $returnActiveServices
      *
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException

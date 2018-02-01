@@ -6,6 +6,7 @@
 
 namespace FourPaws\StoreBundle\AjaxController;
 
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
@@ -28,6 +29,8 @@ class StoreListController extends Controller
      * @Route("/order/", methods={"GET"})
      * @param Request $request
      *
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
      * @throws ServiceNotFoundException
      * @throws FileNotFoundException
      * @throws \Exception
@@ -52,6 +55,8 @@ class StoreListController extends Controller
      * @Route("/checkboxFilter/", methods={"GET"})
      * @param Request $request
      *
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
      * @throws ServiceNotFoundException
      * @throws \Exception
      * @throws FileNotFoundException
@@ -76,6 +81,8 @@ class StoreListController extends Controller
      * @Route("/search/", methods={"GET"})
      * @param Request $request
      *
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
      * @throws ServiceNotFoundException
      * @throws \Exception
      * @throws FileNotFoundException
@@ -100,6 +107,8 @@ class StoreListController extends Controller
      * @Route("/chooseCity/", methods={"GET"})
      * @param Request $request
      *
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
      * @throws ServiceNotFoundException
      * @throws \Exception
      * @throws FileNotFoundException
@@ -125,6 +134,7 @@ class StoreListController extends Controller
      * @Route("/getByItem/", methods={"GET"})
      * @param Request $request
      *
+     * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
      * @throws ServiceNotFoundException
      * @throws \Exception

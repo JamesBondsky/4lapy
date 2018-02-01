@@ -154,8 +154,6 @@ class StoreRepository extends BaseRepository
             ]
         );
         
-        echo $query->getQuery();
-        die();
         $stores = $query->exec();
         
         $result = [];
