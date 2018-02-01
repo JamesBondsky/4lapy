@@ -69,7 +69,9 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_SLIDER_VIEW);
                         continue;
                     }
     
-                    $images = $offer->getResizeImages(480, 480);
+                    $images         = $offer->getResizeImages(480, 480);
+                    $originalImages = $offer->getImages();
+
                     foreach ($images as $id => $image) {
                         /**
                          * @var ResizeImageDecorator $image
@@ -88,7 +90,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_SLIDER_VIEW);
                                          src="<?= $image ?>"
                                          alt="<?= $offer->getName() . ($id ? ' ' . $id : '') ?>"
                                          title="<?= $offer->getName() . ($id ? ' ' . $id : '') ?>"
-                                         data-zoom-image="<?= $image ?>"
+                                         data-zoom-image="<?= $originalImages->get($id) ?>"
                                          role="presentation" />
                                 </a>
                             </div>
