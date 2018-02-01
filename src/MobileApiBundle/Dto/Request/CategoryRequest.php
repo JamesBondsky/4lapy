@@ -4,13 +4,14 @@ namespace FourPaws\MobileApiBundle\Dto\Request;
 
 use JMS\Serializer\Annotation as Serializer;
 
-class CategoriesRequest
+class CategoryRequest
 {
     /**
      * Идентификатор родительской категории.
      * Если пусто, то происходит выгрузка от корневой категории
      * @Serializer\Type("string")
      * @Serializer\SerializedName("id")
+     *
      * @var string
      */
     protected $id = '';
@@ -26,9 +27,9 @@ class CategoriesRequest
     /**
      * @param string $id
      *
-     * @return CategoriesRequest
+     * @return CategoryRequest
      */
-    public function setId(string $id): CategoriesRequest
+    public function setId(string $id): CategoryRequest
     {
         $this->id = $id;
         return $this;
