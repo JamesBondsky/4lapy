@@ -11,6 +11,7 @@ class CategoriesRequest
      * Если пусто, то происходит выгрузка от корневой категории
      * @Serializer\Type("string")
      * @Serializer\SerializedName("id")
+     *
      * @var string
      */
     protected $id = '';

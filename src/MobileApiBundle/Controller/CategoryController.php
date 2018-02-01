@@ -2,12 +2,16 @@
 
 namespace FourPaws\MobileApiBundle\Controller;
 
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
+use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\Decorators\FullHrefDecorator;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use FourPaws\MobileApiBundle\Dto\Error;
 use FourPaws\MobileApiBundle\Dto\Object\CatalogCategory;
 use FourPaws\MobileApiBundle\Dto\Request\CategoriesRequest;
@@ -15,18 +19,23 @@ use FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\MobileApiBundle\Dto\Response\CategoriesResponse;
 use WebArch\BitrixCache\BitrixCache;
 
+
 class CategoryController extends FOSRestController
 {
     /**
      * @Rest\Get(path="/categories")
+     * @param CategoriesRequest $CategoriesRequest
+     *
      * @see CategoriesRequest
      * @see CategoriesResponse
-     * @throws \FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException
+     * @throws FileNotFoundException
      */
-    public function getCategoryAction()
+    public function getCategoryAction(CategoriesRequest $CategoriesRequest)
     {
-        // Demo data
-        $parentId = null ?: false;
+        /**
+         * Parent sections id
+         */
+        $parentId = $CategoriesRequest->getId() ?: false;
 
         // Cache code
         $getCategoryCode = function () use ($parentId) {
@@ -53,6 +62,7 @@ class CategoryController extends FOSRestController
         // Use cache
         $response = (new BitrixCache())
             ->withId(__METHOD__ . $parentId)
+            ->withIblockTag(IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS))
             ->resultOf($getCategoryCode);
 
         // Set view
@@ -65,7 +75,7 @@ class CategoryController extends FOSRestController
      * @param Category $categoryItem
      *
      * @return CatalogCategory
-     * @throws \FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException
+     * @throws FileNotFoundException
      */
     private function toApiFormat(Category $categoryItem): CatalogCategory
     {
@@ -94,7 +104,7 @@ class CategoryController extends FOSRestController
      * @param Category $categoryItem
      *
      * @return array
-     * @throws \FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException
+     * @throws FileNotFoundException
      */
     private function createTree(Category $categoryItem): array
     {
