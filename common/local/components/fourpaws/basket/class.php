@@ -18,8 +18,10 @@ use Doctrine\Common\Collections\Collection;
 use FourPaws\App\Application;
 use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
+use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Service\BasketService;
 
 /** @noinspection AutoloadingIssuesInspection */
@@ -33,7 +35,8 @@ class BasketComponent extends \CBitrixComponent
     private $basketService;
     /** @var array $images */
     private $images;
-
+    /** @var OfferCollection */
+    private $offerCollection;
     /**
      * BasketComponent constructor.
      *
@@ -72,31 +75,16 @@ class BasketComponent extends \CBitrixComponent
         $order = Order::create(SITE_ID);
         $order->setBasket($basket);
         $this->arResult['BASKET'] = $basket;
+        $this->arResult['POSSIBLE_GIFT_GROUPS'] = Gift::getPossibleGiftGroups($order);
+        $this->arResult['POSSIBLE_GIFTS'] = Gift::getPossibleGifts($order);
+        $this->loadOfferCollection();
         $this->loadImages();
         $this->includeComponentTemplate($this->getPage());
     }
 
     private function loadImages()
     {
-        $ids = [];
-        /** @var Basket $basket */
-        $basket = $this->arResult['BASKET'];
-        /** @var BasketItem $basketItem */
-        foreach ($basket->getBasketItems() as $basketItem) {
-            $ids[] = $basketItem->getProductId();
-        }
-        $ids = array_flip(array_flip(array_filter($ids)));
-
-        if (empty($ids)) {
-            return;
-        }
-
-        /**
-         * @var Offer[]|Collection $collection
-         */
-        $collection = (new OfferQuery())->withFilterParameter('ID', $ids)->exec();
-
-        foreach ($collection as $item) {
+        foreach ($this->offerCollection as $item) {
             if(isset($this->images[$item->getId()])) {
                 continue;
             }
@@ -107,7 +95,23 @@ class BasketComponent extends \CBitrixComponent
             $images = $item->getResizeImages(110, 110);
             $this->images[$item->getId()] = $images->first();
         }
+    }
 
+    private function loadOfferCollection() {
+        $ids = [];
+        /** @var Basket $basket */
+        $basket = $this->arResult['BASKET'];
+        /** @var BasketItem $basketItem */
+        foreach ($basket->getBasketItems() as $basketItem) {
+            $ids[] = $basketItem->getProductId();
+        }
+        $ids += $this->arResult['POSSIBLE_GIFTS'];
+        $ids = array_flip(array_flip(array_filter($ids)));
+
+        if (empty($ids)) {
+            return;
+        }
+        $this->offerCollection = (new OfferQuery())->withFilterParameter('ID', $ids)->exec();
     }
 
     /**
@@ -119,7 +123,7 @@ class BasketComponent extends \CBitrixComponent
      */
     public function getImage($offerId)
     {
-        return $this->images[$offerId];
+        return $this->images[$offerId] ?? null;
     }
 
     /**
