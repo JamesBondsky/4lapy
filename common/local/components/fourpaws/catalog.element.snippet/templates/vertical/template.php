@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Main\Localization\Loc;
+use FourPaws\App\Templates\MediaEnum;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
@@ -21,16 +22,32 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var Product                  $product
  * @var OfferCollection          $offers
  * @var Offer                    $offer
- * @var Offer                    $firstOffer
+ * @var Offer                    $currentOffer
  */
 
-$product    = $arResult['PRODUCT'];
-$offers     = $product->getOffers();
-$firstOffer = $offers->first();
+$product = $arResult['PRODUCT'];
+$offers  = $product->getOffers();
+
+if (!empty($arParams['CURRENT_OFFER']) && $arParams['CURRENT_OFFER'] instanceof Offer) {
+    $currentOffer = $arParams['CURRENT_OFFER'];
+} else {
+    /**
+     * @todo hotfix. Вынести в компонент. Завязать текущий оффер на фильтр.
+     */
+    foreach ($offers as $offer) {
+        if ($offer->getImages()->count() >= 1 && $offer->getImages()->first() !== MediaEnum::NO_IMAGE_WEB_PATH) {
+            $currentOffer = $offer;
+        }
+    }
+    
+    if (!$currentOffer) {
+        $currentOffer = $offers->first();
+    }
+}
 
 $arParams['ITEM_ATTR_ID'] = isset($arParams['ITEM_ATTR_ID']) ? trim($arParams['ITEM_ATTR_ID']) : '';
 if (!strlen($arParams['ITEM_ATTR_ID'])) {
-    $arParams['ITEM_ATTR_ID'] = $this->GetEditAreaId($product->getId() . '_' . md5($this->randString()));
+    $arParams['ITEM_ATTR_ID'] = $this->GetEditAreaId($product->getId().'_'.md5($this->randString()));
 }
 
 ?>
@@ -39,10 +56,10 @@ if (!strlen($arParams['ITEM_ATTR_ID'])) {
         /** @todo шильдики акций */
         
         ?><span class="b-common-item__image-wrap"><?php
-            if ($firstOffer->getImagesIds()) {
+            if ($currentOffer->getImagesIds()) {
                 ?><img class="b-common-item__image js-weight-img"
-                       src="<?= $firstOffer->getResizeImages(240, 240)->first() ?>"
-                       alt="<?= $firstOffer->getName() ?>"
+                       src="<?= $currentOffer->getResizeImages(240, 240)->first() ?>"
+                       alt="<?= $currentOffer->getName() ?>"
                        title=""><?php
             }
             ?></span>
@@ -52,7 +69,7 @@ if (!strlen($arParams['ITEM_ATTR_ID'])) {
                 <span><?php
                     echo '<strong>' . $product->getBrand()->getName() . '</strong>';
                     echo ' ';
-                    echo $firstOffer->getName();
+                    echo $currentOffer->getName();
                     ?></span>
             </span>
             </a><?php
@@ -65,9 +82,9 @@ if (!strlen($arParams['ITEM_ATTR_ID'])) {
             if ($offers->count() > 1 || $isWeightCapacityPacking) {
                 $isOffersPrinted     = false;
                 $mainCombinationType = '';
-                if ($firstOffer->getClothingSize()) {
+                if ($currentOffer->getClothingSize()) {
                     $mainCombinationType = 'SIZE';
-                } elseif ($firstOffer->getVolumeReference()) {
+                } elseif ($currentOffer->getVolumeReference()) {
                     $mainCombinationType = 'VOLUME';
                 } elseif ($isWeightCapacityPacking) {
                     $mainCombinationType = 'WEIGHT';
@@ -114,7 +131,7 @@ if (!strlen($arParams['ITEM_ATTR_ID'])) {
                         $addAttr         .= ' data-offerid="' . $offer->getId() . '"';
                         $addAttr         .= ' data-image="' . $offer->getResizeImages(240, 240)->first() . '"';
                         $addAttr         .= ' data-name="' . $offer->getName() . '"';
-                        $addClass        = $firstOffer->getId() === $offer->getId() ? ' active-link' : '';
+                        $addClass        = $currentOffer->getId() === $offer->getId() ? ' active-link' : '';
                         ?>
                         <li class="b-weight-container__item">
                         <a<?= $addAttr ?> href="javascript:void(0)"
@@ -136,14 +153,14 @@ if (!strlen($arParams['ITEM_ATTR_ID'])) {
             ?><a class="b-common-item__add-to-cart js-basket-add track-recommendation"
                  href="javascript:void(0);"
                  data-url="/ajax/sale/basket/add/"
-                 data-offerid="<?= $firstOffer->getId() ?>">
+                 data-offerid="<?= $currentOffer->getId() ?>">
             <span class="b-common-item__wrapper-link">
                 <span class="b-cart">
                     <span class="b-icon b-icon--cart"><?php
                         echo new SvgDecorator('icon-cart', 16, 16);
                         ?></span>
                 </span>
-                <span class="b-common-item__price js-price-block"><?= $firstOffer->getPrice() ?></span>
+                <span class="b-common-item__price js-price-block"><?= $currentOffer->getPrice() ?></span>
                 <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
             </span>
             </a><?php
@@ -155,7 +172,7 @@ if (!strlen($arParams['ITEM_ATTR_ID'])) {
             
             /** @todo инфо о скидке */
             
-            if ($firstOffer->isByRequest()) {
+            if ($currentOffer->isByRequest()) {
                 ?>
                 <div class="b-common-item__info-wrap">
                 <span class="b-common-item__text"><?= Loc::getMessage(
@@ -184,19 +201,19 @@ if (!strlen($arParams['ITEM_ATTR_ID'])) {
 // Поскольку на данный момент выполнение js имеет смысл только для фиксации действий с рекомендованными товарами,
 // то проверяем наличие переданного id рекомендации, иначе не нагружаем впустую браузеры
 //
-if (isset($arParams['BIG_DATA']['RCM_ID']) && strlen($arParams['BIG_DATA']['RCM_ID'])) {
+if (isset($arParams['BIG_DATA']['RCM_ID']) && !empty($arParams['BIG_DATA']['RCM_ID'])) {
     $jsProduct   = [
         'ID'     => $product->getId(),
-        'RCM_ID' => isset($arParams['BIG_DATA']['RCM_ID']) ? $arParams['BIG_DATA']['RCM_ID'] : '',
+        'RCM_ID' => $arParams['BIG_DATA']['RCM_ID'] ?? '',
     ];
     $jsSelectors = [
-        'item'                => '#' . $arParams['ITEM_ATTR_ID'],
-        'trackRecommendation' => '#' . $arParams['ITEM_ATTR_ID'] . ' .track-recommendation',
+        'item' => '#'.$arParams['ITEM_ATTR_ID'],
+        'trackRecommendation' => '#'.$arParams['ITEM_ATTR_ID'].' .track-recommendation',
     ];
     $jsParams    = [
-        'cookiePrefix' => isset($arParams['BIG_DATA']['cookiePrefix']) ? $arParams['BIG_DATA']['cookiePrefix'] : '',
-        'cookieDomain' => isset($arParams['BIG_DATA']['cookieDomain']) ? $arParams['BIG_DATA']['cookieDomain'] : '',
-        'serverTime'   => isset($arParams['BIG_DATA']['serverTime']) ? $arParams['BIG_DATA']['serverTime'] : 0,
+        'cookiePrefix' => $arParams['BIG_DATA']['cookiePrefix'] ?? '',
+        'cookieDomain' => $arParams['BIG_DATA']['cookieDomain'] ?? '',
+        'serverTime'   => $arParams['BIG_DATA']['serverTime'] ?? 0,
         'product'      => $jsProduct,
         'selectors'    => $jsSelectors,
     ];
@@ -204,5 +221,5 @@ if (isset($arParams['BIG_DATA']['RCM_ID']) && strlen($arParams['BIG_DATA']['RCM_
     ?>
     <script type="text/javascript">
         new FourPawsCatalogElementSnippet(<?=\CUtil::PhpToJSObject($jsParams)?>);
-    </script><?php
-}
+    </script>
+<?php }
