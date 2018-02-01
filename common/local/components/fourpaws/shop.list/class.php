@@ -10,12 +10,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\SystemException;
+use Bitrix\Sale\Delivery\CalculationResult;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Model\CropImageDecorator;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
 use FourPaws\Catalog\Model\Offer;
+use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\Helpers\DateHelper;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Service\StoreService;
@@ -101,6 +104,8 @@ class FourPawsShopListComponent extends CBitrixComponent
      * @param array $filter
      * @param array $order
      *
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
      * @throws FileNotFoundException
      * @throws ServiceNotFoundException
      * @throws \Exception
@@ -122,7 +127,7 @@ class FourPawsShopListComponent extends CBitrixComponent
      * @param bool            $returnActiveServices
      *
      * @return array
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ApplicationCreateException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws \Exception
@@ -186,20 +191,7 @@ class FourPawsShopListComponent extends CBitrixComponent
                     if ($store->getOfferAmount() > 0) {
                         $pickup = $this->getActiveAmoutPickupText($store->getSchedule());
                     } else {
-                        /** @var DeliveryService $deliveryService */
-                        $deliveryService = App::getInstance()->getContainer()->get('delivery.service');
-                        /** @var \Bitrix\Sale\Delivery\CalculationResult[] $calculationResult */
-                        $calculationResult        =
-                            $deliveryService->getByProduct(
-                                $this->getOfferById($store->getOfferId()),
-                                null,
-                                [$store->getId()]
-                            );
-                        $currentCalculationResult = current($calculationResult);
-                        echo '<pre>', var_dump($currentCalculationResult), '</pre>';
-                        $currentCalculationResult->getPeriodType();
-                        $currentCalculationResult->getPeriodFrom();
-                        $pickup = 'сегодня, с 16:00';
+                        $pickup = $this->getNotAmountPickupText($store);
                     }
                     
                     $item['pickup'] = $pickup;
@@ -253,7 +245,12 @@ class FourPawsShopListComponent extends CBitrixComponent
         ];
     }
     
-    protected function getActiveAmoutPickupText(string $schedule)
+    /**
+     * @param string $schedule
+     *
+     * @return string
+     */
+    protected function getActiveAmoutPickupText(string $schedule) : string
     {
         $explode = explode('-', $schedule);
         
@@ -289,11 +286,20 @@ class FourPawsShopListComponent extends CBitrixComponent
         return $pickup;
     }
     
-    protected function getNotAmountPickupText($store)
+    /**
+     * @param Store $store
+     *
+     * @return string
+     * @throws ServiceNotFoundException
+     * @throws \Exception
+     * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
+     */
+    protected function getNotAmountPickupText(Store $store) : string
     {
         /** @var DeliveryService $deliveryService */
         $deliveryService = App::getInstance()->getContainer()->get('delivery.service');
-        /** @var \Bitrix\Sale\Delivery\CalculationResult[] $calculationResult */
+        /** @var CalculationResult[] $calculationResult */
         $calculationResult        =
             $deliveryService->getByProduct(
                 $this->getOfferById($store->getOfferId()),
@@ -301,23 +307,130 @@ class FourPawsShopListComponent extends CBitrixComponent
                 [$store->getId()]
             );
         $currentCalculationResult = current($calculationResult);
-        echo '<pre>', var_dump($currentCalculationResult), '</pre>';
-        $dateFrom = new DateTime('now', new DateTimeZone('Europe/Moscow'));
-        $dateFrom->add($this->getTimeInterval($currentCalculationResult->getPeriodFrom(), $currentCalculationResult->getPeriodType()));
-        $pickup = \FourPaws\Helpers\DateHelper::replaceRuMonth($dateFrom->format(''), \FourPaws\Helpers\DateHelper::);
+        $dateFrom                 = new DateTime('now', new DateTimeZone('Europe/Moscow'));
+        $dateFrom->add(
+            $this->getTimeInterval(
+                $currentCalculationResult->getPeriodFrom(),
+                $currentCalculationResult->getPeriodType()
+            )
+        );
         
-        return $pickup;
+        return $this->getFormatedDateTime($dateFrom, $store->getSchedule());
     }
     
-    protected function getOfferById(int $offerId)
+    /**
+     * @param int $offerId
+     *
+     * @return Offer
+     */
+    protected function getOfferById(int $offerId) : Offer
     {
         if (!isset($this->offers[$offerId])) {
-            $offerQuery = new \FourPaws\Catalog\Query\OfferQuery();
+            $offerQuery = new OfferQuery();
             $offerQuery->withFilter(['ID' => $offerId]);
             $this->offers[$offerId] = $offerQuery->exec()->first();
         }
         
         return $this->offers[$offerId];
+    }
+    
+    /**
+     * @param int    $period
+     * @param string $type
+     *
+     * @return DateInterval
+     * @throws \Exception
+     */
+    public function getTimeInterval(int $period, string $type) : \DateInterval
+    {
+        $interval = 'P';
+        
+        if ($type === 'H' || $type === 'MIN') {
+            $interval .= 'T';
+        }
+        
+        $interval .= $period;
+        
+        if ($type === 'MIN') {
+            $type = 'M';
+        }
+        
+        $interval .= $type;
+        
+        return new DateInterval($interval);
+    }
+    
+    /**
+     * @param \DateTime $dateFrom
+     * @param string    $schedule
+     *
+     * @return string
+     * @throws \Exception
+     */
+    protected function getFormatedDateTime(DateTime $dateFrom, string $schedule) : string
+    {
+        list($formatedTime, $dateFrom) = $this->getFormatedTime($dateFrom, $schedule);
+        $newDate = (int)$dateFrom->format('d');
+        $curDay  = (int)date('d');
+        if ($newDate === $curDay) {
+            $date = 'сегодня';
+        } elseif ($newDate === $curDay + 1) {
+            $date = 'завтра';
+        } else {
+            $date =
+                DateHelper::replaceRuMonth($dateFrom->format('d #m#'), DateHelper::SHORT_GENITIVE) . ' '
+                . DateHelper::replaceRuDayOfWeek($dateFrom->format('#N#'), DateHelper::SHORT_NOMINATIVE);
+        }
+        
+        return $date . ' с ' . $formatedTime;
+    }
+    
+    /**
+     * @param \DateTime $dateFrom
+     * @param string    $schedule
+     *
+     * @return array
+     * @throws \Exception
+     */
+    protected function getFormatedTime(DateTime $dateFrom, string $schedule) : array
+    {
+        $explode = explode('-', $schedule);
+        
+        $shopOpenTime        = trim($explode[0]);
+        $explodeShopOpenTime = explode(':', $shopOpenTime);
+        $shopOpenTimeHour    = (int)$explodeShopOpenTime[0];
+        $shopOpenTimeMinutes = (int)$explodeShopOpenTime[1];
+        
+        $shopCloseTime        = trim($explode[1]);
+        $explodeShopCloseTime = explode(':', $shopCloseTime);
+        $shopCloseTimeHour    = (int)$explodeShopCloseTime[0];
+        $shopCloseTimeMinutes = (int)$explodeShopCloseTime[1];
+        
+        $newHours   = (int)$dateFrom->format('H');
+        $newMinutes = (int)$dateFrom->format('i');
+        $begin      = $newHours . ':' . $newMinutes;
+        if ($newHours < $shopOpenTimeHour
+            || ($newHours === $shopOpenTimeHour
+                && ($newMinutes > 0 && $shopOpenTimeMinutes > 0
+                    && $newMinutes < $shopOpenTimeMinutes)
+            )
+        ) {
+            $begin = $shopOpenTime;
+        }
+        if ($newHours > $shopCloseTimeHour
+            || ($newHours === $shopCloseTimeHour
+                && ($newMinutes > 0 && $shopCloseTimeMinutes > 0
+                    && $newMinutes < $shopCloseTimeMinutes)
+            )
+        ) {
+            $begin = $shopOpenTime;
+            $dateFrom->add(new \DateInterval('P1D'));
+        }
+        
+        return [
+            $begin,
+            $dateFrom,
+        ];
     }
     
     /**

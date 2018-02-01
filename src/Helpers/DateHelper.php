@@ -19,10 +19,10 @@ class DateHelper
     /** родительный падеж */
     const GENITIVE = 'Genitive';
     
-    /** именительный падеж */
+    /** именительный падеж короткий*/
     const SHORT_NOMINATIVE = 'ShortNominative';
     
-    /** родительный падеж */
+    /** родительный падеж короткий */
     const SHORT_GENITIVE = 'ShortGenitive';
     
     /**Месяца в родительном падеже*/
@@ -89,6 +89,28 @@ class DateHelper
         '#12#' => 'дек',
     ];
     
+    /**дни недели в именительном падеже*/
+    private static $dayOfWeekNominative = [
+        '#1#' => 'Понедельник',
+        '#2#' => 'Вторник',
+        '#3#' => 'Среда',
+        '#4#' => 'Четверг',
+        '#5#' => 'Пятница',
+        '#6#' => 'Суббота',
+        '#7#' => 'Воскресенье',
+    ];
+    
+    /**краткие дни недели*/
+    private static $dayOfWeekShortNominative = [
+        '#1#' => 'пн',
+        '#2#' => 'вт',
+        '#3#' => 'ср',
+        '#4#' => 'чт',
+        '#5#' => 'пт',
+        '#6#' => 'сб',
+        '#7#' => 'вс',
+    ];
+    
     /**
      * @param string $date
      *
@@ -98,16 +120,45 @@ class DateHelper
      */
     public static function replaceRuMonth(string $date, string $case = 'Nominative') : string
     {
-        preg_match('|#\d{1,2}#|', $date, $matches);
-        if (!empty($matches[0])) {
-            $months = [];
-            if (!empty($case)) {
-                $months = static::${'month' . $case};
+        return static::replaceStringByArray(
+            [
+                'date'    => $date,
+                'case'    => $case,
+                'type'    => 'month',
+                'pattern' => '|#\d{1,2}#|',
+            ]
+        );
+    }
+    
+    private static function replaceStringByArray(array $params)
+    {
+        preg_match($params['pattern'], $params['date'], $matches);
+        if (!empty($matches[0]) && !empty($params['case'])) {
+            $items = static::${$params['type'] . $params['case']};
+            if (!empty($items)) {
+                return str_replace($matches[0], $items[$matches[0]], $params['date']);
             }
-            
-            return str_replace($matches[0], $months[$matches[0]], $date);
         }
         
-        return $date;
+        return $params['date'];
+    }
+    
+    /**
+     * @param string $date
+     *
+     * @param string $case
+     *
+     * @return string
+     */
+    public static function replaceRuDayOfWeek(string $date, string $case = 'Nominative') : string
+    {
+        return static::replaceStringByArray(
+            [
+                'date'    => $date,
+                'case'    => $case,
+                'type'    => 'dayOfWeek',
+                'pattern' => '|#\d{1}#|',
+            ]
+        );
     }
 }
