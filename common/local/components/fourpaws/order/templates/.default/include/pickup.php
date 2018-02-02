@@ -108,9 +108,7 @@ $partialGet = $canGetPartial && $storage->isPartialGet();
                                 <div class="b-order-list__text-backed">
                                     <?= DeliveryTimeHelper::showTime(
                                         $partialPickup,
-                                        $available->getDeliveryDate(),
-                                        false,
-                                        false
+                                        $available->getDeliveryDate()
                                     ) ?>
                                 </div>
                             </div>
@@ -162,7 +160,7 @@ $partialGet = $canGetPartial && $storage->isPartialGet();
             </ul>
         </div>
         <div class="b-radio__addition-text">
-            <p><?= DeliveryTimeHelper::showTime($pickup, $stockResultByShop->getDeliveryDate(), false, false) ?></p>
+            <p><?= DeliveryTimeHelper::showTime($pickup, $stockResultByShop->getDeliveryDate()) ?></p>
         </div>
     </div>
 </div>

@@ -88,7 +88,7 @@ class DeliveryService
      * @param string $locationCode
      * @param array $codes коды доставок для расчета
      *
-     * @return array
+     * @return CalculationResult[]
      */
     public function getByProduct(Offer $offer, string $locationCode = '', array $codes = []): array
     {
@@ -100,7 +100,6 @@ class DeliveryService
         $basket->addItem($basketItem);
 
         return $this->getByBasket($basket, $locationCode, $codes);
-
     }
 
     /**
@@ -190,8 +189,8 @@ class DeliveryService
                         array_merge(
                             $calculationResult->getData(),
                             [
-                                'INTERVALS' => $_SESSION['DPD_DATA'][$service->getCode()]['INTERVALS'],
-                                'STOCK_RESULT' => $_SESSION['DPD_DATA'][$service->getCode()]['STOCK_RESULT']
+                                'INTERVALS'    => $_SESSION['DPD_DATA'][$service->getCode()]['INTERVALS'],
+                                'STOCK_RESULT' => $_SESSION['DPD_DATA'][$service->getCode()]['STOCK_RESULT'],
                             ]
                         )
                     );

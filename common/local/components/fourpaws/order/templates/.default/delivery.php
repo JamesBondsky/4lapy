@@ -83,7 +83,7 @@ $selectedDeliveryId = $arResult['SELECTED_DELIVERY_ID'];
                                         <?= DeliveryTimeHelper::showTime($delivery) ?>
                                     </span>
                                     <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile">
-                                        <?= DeliveryTimeHelper::showTime($delivery, null, true) ?>
+                                        <?= DeliveryTimeHelper::showTime($delivery, null, ['SHORT' => true]) ?>
                                 </label>
                             <?php } ?>
                             <?php if ($pickup) { ?>
@@ -97,10 +97,10 @@ $selectedDeliveryId = $arResult['SELECTED_DELIVERY_ID'];
                                        data-popup-id="popup-order-stores">
                                     <span class="b-choice-recovery__main-text">Самовывоз</span>
                                     <span class="b-choice-recovery__addition-text">
-                                        <?= DeliveryTimeHelper::showTime($pickup) ?>
+                                        <?= DeliveryTimeHelper::showTime($pickup, null) ?>
                                     </span>
                                     <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile">
-                                        <?= DeliveryTimeHelper::showTime($pickup, null, true) ?>
+                                        <?= DeliveryTimeHelper::showTime($pickup, null, ['SHORT' => true]) ?>
                                     </span>
                                 </label>
                             <?php } ?>

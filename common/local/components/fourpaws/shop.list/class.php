@@ -11,6 +11,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\Delivery\CalculationResult;
+use FourPaws\DeliveryBundle\Entity\StockResult;
+use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Model\CropImageDecorator;
@@ -18,7 +21,6 @@ use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\Helpers\DateHelper;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Service\StoreService;
@@ -37,11 +39,17 @@ class FourPawsShopListComponent extends CBitrixComponent
     /** @var StoreService $storeService */
     protected $storeService;
 
+    /** @var DeliveryService $deliveryService */
+    protected $deliveryService;
+
     /** @var UserService $userService */
     private $userService;
 
     /** @var Offer[] $offers */
     private $offers;
+
+    /** @var  CalculationResult */
+    protected $pickupDelivery;
 
     /**
      * FourPawsShopListComponent constructor.
@@ -61,6 +69,7 @@ class FourPawsShopListComponent extends CBitrixComponent
 
             $this->storeService = $container->get('store.service');
             $this->userService = $container->get(UserCitySelectInterface::class);
+            $this->deliveryService = $container->get('delivery.service');
         } catch (ApplicationCreateException $e) {
             $logger = LoggerFactory::create('component');
             $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
@@ -138,6 +147,11 @@ class FourPawsShopListComponent extends CBitrixComponent
         if (!$storeCollection->isEmpty()) {
             list($servicesList, $metroList) = $this->getFullStoreInfo($storeCollection);
 
+            $stockResult = null;
+            if ($this->pickupDelivery) {
+                $stockResult = $this->getStockResult($this->pickupDelivery);
+            }
+
             /** @var Store $store */
             $avgGpsN = 0;
             $avgGpsS = 0;
@@ -167,7 +181,9 @@ class FourPawsShopListComponent extends CBitrixComponent
                 if ($gpsS > 0) {
                     $avgGpsS += $gpsS;
                 }
+
                 $item = [
+                    'id'         => $store->getXmlId(),
                     'addr'       => $address,
                     'adress'     => $store->getDescription(),
                     'phone'      => $store->getPhone(),
@@ -181,16 +197,26 @@ class FourPawsShopListComponent extends CBitrixComponent
                     'gps_n'      => $gpsS,
                     //revert $gpsN
                 ];
-                if ($store->getOfferId() > 0) {
-                    $item['amount'] = $store->getOfferAmount() > 5 ? 'много' : 'мало';
 
-                    if ($store->getOfferAmount() > 0) {
-                        $pickup = $this->getActiveAmoutPickupText($store->getSchedule());
-                    } else {
-                        $pickup = $this->getNotAmountPickupText($store);
-                    }
+                if ($stockResult) {
+                    /** @var StockResult $stockResultByStore */
+                    $stockResultByStore = $stockResult->filterByStore($store)->first();
+                    $amount = $stockResultByStore->getOffer()->getStocks()->filterByStore($store)->getTotalAmount();
+                    $item['amount'] = $amount > 5 ? 'много' : 'мало';
+                    $item['pickup'] = DeliveryTimeHelper::showTime(
+                        $this->pickupDelivery,
+                        $stockResultByStore->getDeliveryDate(),
+                        [
+                            'HOUR_FORMAT' => 'сегодня, с H:00',
+                            'DAY_FORMAT'  => function (\DateTime $date) {
+                                $current = new \DateTime();
 
-                    $item['pickup'] = $pickup;
+                                return ($date->format('z') - $current->format('z')) == 1
+                                    ? 'завтра, с H:00'
+                                    : 'j M (D) с H:00';
+                            },
+                        ]
+                    );
                 }
                 $result['items'][] = $item;
             }
@@ -204,11 +230,15 @@ class FourPawsShopListComponent extends CBitrixComponent
 
         return $result;
     }
-    
+
     public function getActiveStoresByProduct(int $offerId): StoreCollection
     {
-        $offer = (new OfferQuery())->withFilterParameter('ID', $offerId)->exec()->first();
-        return $this->storeService->getAvailableProductStores($offer);
+        $this->getOfferById($offerId);
+        if (!$pickupDelivery = $this->getPickupDelivery()) {
+            return new StoreCollection();
+        }
+
+        return $this->getStockResult($pickupDelivery)->getStores();
     }
 
     /**
@@ -328,12 +358,30 @@ class FourPawsShopListComponent extends CBitrixComponent
         $this->arResult['METRO'] = $this->storeService->getMetroInfo();
     }
 
-    protected function getStoreList(array $filter, array $order): array
+    /**
+     * @return CalculationResult|null
+     */
+    protected function getPickupDelivery()
     {
-        $storeRepository = $this->storeService->getRepository();
-        $filter = array_merge($filter, $this->storeService->getTypeFilter($this->storeService::TYPE_SHOP));
-        $storeCollection = $storeRepository->findBy($filter, $order);
+        if (!$this->pickupDelivery) {
+            $deliveries = $this->deliveryService->getByProduct(reset($this->offers));
 
-        return $storeCollection->toArray();
+            foreach ($deliveries as $delivery) {
+                if ($this->deliveryService->isInnerPickup($delivery)) {
+                    $this->pickupDelivery = $delivery;
+                    break;
+                }
+            }
+        }
+
+        return $this->pickupDelivery;
+    }
+
+    /**
+     * @return bool|StockResultCollection
+     */
+    protected function getStockResult(CalculationResult $delivery)
+    {
+        return $this->deliveryService->getStockResultByDelivery($delivery);
     }
 }

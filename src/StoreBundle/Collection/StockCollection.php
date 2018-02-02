@@ -3,6 +3,7 @@
 namespace FourPaws\StoreBundle\Collection;
 
 use FourPaws\StoreBundle\Entity\Stock;
+use FourPaws\StoreBundle\Entity\Store;
 
 class StockCollection extends BaseCollection
 {
@@ -23,6 +24,20 @@ class StockCollection extends BaseCollection
         return $this->filter(
             function (Stock $stock) use ($ids) {
                 return in_array($stock->getStoreId(), $ids, true);
+            }
+        );
+    }
+
+    /**
+     * @param Store $store
+     *
+     * @return StockCollection
+     */
+    public function filterByStore(Store $store): StockCollection
+    {
+        return $this->filter(
+            function (Stock $stock) use ($store) {
+                return $stock->getStoreId() === $store->getId();
             }
         );
     }

@@ -319,47 +319,4 @@ class StoreService
 
         return $data['result'];
     }
-
-    /**
-     * @param int $offerId
-     * @param string $location
-     *
-     * @return StoreCollection
-     * @throws \Exception
-     */
-    public function getAvailableProductStores(Offer $offer, string $location = ''): StoreCollection
-    {
-        if (empty($location)) {
-            $location = $this->locationService->getCurrentLocation();
-        }
-
-        $getAvailableProductStoresCurrentLocation = function () use ($offer, $location) {
-            /** @var DeliveryService $deliveryService */
-            $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
-            $deliveries = $deliveryService->getByProduct($offer, $location);
-            $pickupDelivery = null;
-            foreach ($deliveries as $delivery) {
-                if ($deliveryService->isInnerPickup($delivery)) {
-                    $pickupDelivery = $delivery;
-                }
-            }
-            
-            if (!$pickupDelivery) {
-                return new StoreCollection();
-            }
-            
-            $stockResult = $deliveryService->getStockResultByDelivery($pickupDelivery);
-            return $stockResult->getStores();
-        };
-
-        $data = (new BitrixCache())
-            ->withId(__METHOD__ . '__' . $offer->getId() . '_' . $location)
-            ->withTag('catalog:stocks:' . $offer->getId())
-            ->withTag('catalog:shops.available')
-            ->withTag('catalog:shops.available:' . $offer->getId() . '_' . $location)
-            ->resultOf($getAvailableProductStoresCurrentLocation);
-
-        return $data['result'];
-
-    }
 }
