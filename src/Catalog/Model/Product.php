@@ -1880,6 +1880,17 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 
         return $this->offers;
     }
+    
+    /**
+     * @param ArrayCollection|array $offers
+     */
+    public function setOffers($offers)
+    {
+        if(!($offers instanceof ArrayCollection) && \is_array($offers)){
+            $offers = new ArrayCollection($offers);
+        }
+        $this->offers = $offers;
+    }
 
     /**
      * @return string

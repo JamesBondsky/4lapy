@@ -2,6 +2,8 @@
 
 namespace FourPaws\Catalog\Model;
 
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\SystemException;
 use CCatalogDiscountSave;
 use CCatalogProduct;
 use DateTimeImmutable;
@@ -20,6 +22,7 @@ use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Location\LocationService;
 use FourPaws\StoreBundle\Collection\StockCollection;
+use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Service\StoreService;
 use JMS\Serializer\Annotation as Serializer;
 use JMS\Serializer\Annotation\Accessor;
@@ -27,6 +30,7 @@ use JMS\Serializer\Annotation\Groups;
 use JMS\Serializer\Annotation\Type;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 class Offer extends IblockElement
 {
@@ -269,42 +273,26 @@ class Offer extends IblockElement
      * @var string
      */
     protected $link = '';
-
+    
     /**
      * @var StockCollection
      */
     protected $stocks;
     
+    /** @var \FourPaws\StoreBundle\Collection\StoreCollection */
+    private $stores;
+    
     public function __construct(array $fields = [])
     {
         parent::__construct($fields);
-    
+        
         if (isset($fields['CATALOG_PRICE_2'])) {
             $this->price = (float)$fields['CATALOG_PRICE_2'];
         }
-    
+        
         if (isset($fields['CATALOG_CURRENCY_2'])) {
             $this->currency = (string)$fields['CATALOG_CURRENCY_2'];
         }
-    }
-    
-    /**
-     * @throws \InvalidArgumentException
-     * @return Collection|Image[]
-     */
-    public function getImages() : Collection
-    {
-        if ($this->images instanceof Collection) {
-            return $this->images;
-        }
-    
-        $this->images = ImageCollection::createFromIds($this->getImagesIds());
-    
-        if ($this->images->count() < 1) {
-            $this->images = ImageCollection::createNoImageCollection();
-        }
-        
-        return $this->images;
     }
     
     /**
@@ -316,7 +304,7 @@ class Offer extends IblockElement
     {
         $this->images       = $images;
         $this->resizeImages = null;
-    
+        
         return $this;
     }
     
@@ -330,27 +318,60 @@ class Offer extends IblockElement
     {
         if ($this->resizeImages instanceof Collection) {
             if ($width) {
-                $this->resizeImages->forAll(function ($key, ResizeImageDecorator $image) use ($width) {
-                    $image->setResizeWidth($width);
-    
-                    return true;
-                });
+                $this->resizeImages->forAll(
+                    function ($key, ResizeImageDecorator $image) use ($width) {
+                        $image->setResizeWidth($width);
+                        
+                        return true;
+                    }
+                );
             }
-    
+            
             if ($height) {
-                $this->resizeImages->forAll(function ($key, ResizeImageDecorator $image) use ($height) {
-                    $image->setResizeHeight($height);
-    
-                    return true;
-                });
+                $this->resizeImages->forAll(
+                    function ($key, ResizeImageDecorator $image) use ($height) {
+                        $image->setResizeHeight($height);
+                        
+                        return true;
+                    }
+                );
             }
-    
+            
             return $this->resizeImages;
         }
-    
+        
         $this->resizeImages = ResizeImageCollection::createFromImageCollection($this->getImages(), $width, $height);
-    
+        
         return $this->resizeImages;
+    }
+    
+    /**
+     * @throws \InvalidArgumentException
+     * @return Collection|Image[]
+     */
+    public function getImages() : Collection
+    {
+        if ($this->images instanceof Collection) {
+            return $this->images;
+        }
+        
+        $this->images = ImageCollection::createFromIds($this->getImagesIds());
+        
+        if ($this->images->count() < 1) {
+            $this->images = ImageCollection::createNoImageCollection();
+        }
+        
+        return $this->images;
+    }
+    
+    /**
+     * @return array
+     */
+    public function getImagesIds() : array
+    {
+        $this->PROPERTY_IMG = \is_array($this->PROPERTY_IMG) ? $this->PROPERTY_IMG : [];
+        
+        return $this->PROPERTY_IMG;
     }
     
     /**
@@ -361,32 +382,8 @@ class Offer extends IblockElement
     public function withResizeImages(Collection $resizeImages)
     {
         $this->resizeImages = $resizeImages;
-    
+        
         return $this;
-    }
-    
-    /**
-     * @return Product
-     */
-    public function getProduct() : Product
-    {
-        if (null === $this->product) {
-            $this->product = (new ProductQuery())->withFilter(['=ID' => $this->getCml2Link()])->exec()->current();
-            
-            if (!($this->product instanceof Product)) {
-                $this->product = new Product();
-            }
-        }
-    
-        return $this->product;
-    }
-    
-    /**
-     * @return int
-     */
-    public function getCml2Link() : int
-    {
-        return (int)$this->PROPERTY_CML2_LINK;
     }
     
     /**
@@ -411,10 +408,12 @@ class Offer extends IblockElement
     public function getColor()
     {
         if ((null === $this->colour) && $this->PROPERTY_COLOUR) {
-            $this->colour = ReferenceUtils::getReference(Application::getHlBlockDataManager('bx.hlblock.colour'),
-                                                         $this->PROPERTY_COLOUR);
+            $this->colour = ReferenceUtils::getReference(
+                Application::getHlBlockDataManager('bx.hlblock.colour'),
+                $this->PROPERTY_COLOUR
+            );
         }
-    
+        
         return $this->colour;
     }
     
@@ -449,10 +448,12 @@ class Offer extends IblockElement
     {
         if ((null === $this->volumeReference) && $this->PROPERTY_VOLUME_REFERENCE) {
             $this->volumeReference =
-                ReferenceUtils::getReference(Application::getHlBlockDataManager('bx.hlblock.volume'),
-                                             $this->PROPERTY_VOLUME_REFERENCE);
+                ReferenceUtils::getReference(
+                    Application::getHlBlockDataManager('bx.hlblock.volume'),
+                    $this->PROPERTY_VOLUME_REFERENCE
+                );
         }
-    
+        
         return $this->volumeReference;
     }
     
@@ -488,7 +489,7 @@ class Offer extends IblockElement
     public function withVolume(float $volume)
     {
         $this->PROPERTY_VOLUME = $volume;
-    
+        
         return $this;
     }
     
@@ -502,10 +503,12 @@ class Offer extends IblockElement
     {
         if ((null === $this->clothingSize) && $this->PROPERTY_CLOTHING_SIZE) {
             $this->clothingSize =
-                ReferenceUtils::getReference(Application::getHlBlockDataManager('bx.hlblock.clothingsize'),
-                                             $this->PROPERTY_CLOTHING_SIZE);
+                ReferenceUtils::getReference(
+                    Application::getHlBlockDataManager('bx.hlblock.clothingsize'),
+                    $this->PROPERTY_CLOTHING_SIZE
+                );
         }
-    
+        
         return $this->clothingSize;
     }
     
@@ -528,7 +531,7 @@ class Offer extends IblockElement
     public function getBarcodes() : array
     {
         $this->PROPERTY_BARCODE = \is_array($this->PROPERTY_BARCODE) ? $this->PROPERTY_BARCODE : [];
-    
+        
         return $this->PROPERTY_BARCODE;
     }
     
@@ -539,12 +542,14 @@ class Offer extends IblockElement
      */
     public function withBarcodes(array $barcodes)
     {
-        $barcodes               = array_filter($barcodes,
+        $barcodes               = array_filter(
+            $barcodes,
             function ($value) {
                 return $value && \is_string($value);
-            });
+            }
+        );
         $this->PROPERTY_BARCODE = $barcodes;
-    
+        
         return $this;
     }
     
@@ -558,10 +563,12 @@ class Offer extends IblockElement
     {
         if ((null === $this->kindOfPacking) && $this->PROPERTY_KIND_OF_PACKING) {
             $this->kindOfPacking =
-                ReferenceUtils::getReference(Application::getHlBlockDataManager('bx.hlblock.packagetype'),
-                                             $this->getKindOfPackingXmlId());
+                ReferenceUtils::getReference(
+                    Application::getHlBlockDataManager('bx.hlblock.packagetype'),
+                    $this->getKindOfPackingXmlId()
+                );
         }
-    
+        
         return $this->kindOfPacking;
     }
     
@@ -582,7 +589,7 @@ class Offer extends IblockElement
     {
         $this->kindOfPacking            = null;
         $this->PROPERTY_KIND_OF_PACKING = $xmlId;
-    
+        
         return $this;
     }
     
@@ -595,10 +602,12 @@ class Offer extends IblockElement
     public function getSeasonYear()
     {
         if ((null === $this->seasonYear) && $this->PROPERTY_SEASON_YEAR) {
-            $this->seasonYear = ReferenceUtils::getReference(Application::getHlBlockDataManager('bx.hlblock.year'),
-                                                             $this->getSeasonYearXmlId());
+            $this->seasonYear = ReferenceUtils::getReference(
+                Application::getHlBlockDataManager('bx.hlblock.year'),
+                $this->getSeasonYearXmlId()
+            );
         }
-    
+        
         return $this->seasonYear;
     }
     
@@ -619,7 +628,7 @@ class Offer extends IblockElement
     {
         $this->seasonYear           = null;
         $this->PROPERTY_SEASON_YEAR = $xmlId;
-    
+        
         return $this;
     }
     
@@ -639,7 +648,7 @@ class Offer extends IblockElement
     public function withMultiplicity(int $multiplicity)
     {
         $this->PROPERTY_MULTIPLICITY = $multiplicity;
-    
+        
         return $this;
     }
     
@@ -655,10 +664,12 @@ class Offer extends IblockElement
     {
         if ((null === $this->rewardType) && $this->PROPERTY_REWARD_TYPE) {
             $this->rewardType =
-                ReferenceUtils::getReference(Application::getHlBlockDataManager('bx.hlblock.rewardtype'),
-                                             $this->getRewardTypeXmlId());
+                ReferenceUtils::getReference(
+                    Application::getHlBlockDataManager('bx.hlblock.rewardtype'),
+                    $this->getRewardTypeXmlId()
+                );
         }
-    
+        
         return $this->rewardType;
     }
     
@@ -679,7 +690,7 @@ class Offer extends IblockElement
     {
         $this->rewardType           = null;
         $this->PROPERTY_REWARD_TYPE = $xmlId;
-    
+        
         return $this;
     }
     
@@ -694,7 +705,7 @@ class Offer extends IblockElement
     public function withColourCombination(string $colourCombination)
     {
         $this->PROPERTY_COLOUR_COMBINATION = $colourCombination;
-    
+        
         return $this;
     }
     
@@ -709,7 +720,7 @@ class Offer extends IblockElement
     public function withFlavourCombination(string $flavourCombination)
     {
         $this->PROPERTY_FLAVOUR_COMBINATION = $flavourCombination;
-    
+        
         return $this;
     }
     
@@ -729,7 +740,7 @@ class Offer extends IblockElement
     public function withOldUrl(string $oldUrl)
     {
         $this->PROPERTY_OLD_URL = $oldUrl;
-    
+        
         return $this;
     }
     
@@ -744,7 +755,7 @@ class Offer extends IblockElement
     public function withByRequest(bool $byRequest)
     {
         $this->PROPERTY_BY_REQUEST = $byRequest;
-    
+        
         return $this;
     }
     
@@ -762,120 +773,8 @@ class Offer extends IblockElement
     public function getPrice() : float
     {
         $this->checkOptimalPrice();
-    
+        
         return $this->price;
-    }
-    
-    /**
-     * @param float $price
-     *
-     * @return static
-     */
-    public function withPrice(float $price)
-    {
-        $this->price = $price;
-    
-        return $this;
-    }
-    
-    /**
-     * @param float $oldPrice
-     *
-     * @return $this
-     */
-    public function withOldPrice(float $oldPrice)
-    {
-        $this->oldPrice = $oldPrice;
-    
-        return $this;
-    }
-    
-    /**
-     * @return array
-     */
-    public function getImagesIds() : array
-    {
-        $this->PROPERTY_IMG = \is_array($this->PROPERTY_IMG) ? $this->PROPERTY_IMG : [];
-    
-        return $this->PROPERTY_IMG;
-    }
-    
-    public function withImagesIds(array $ids)
-    {
-        $this->PROPERTY_IMG = $ids;
-    
-        return $this;
-    }
-    
-    /**
-     * @return CatalogProduct
-     */
-    public function getCatalogProduct() : CatalogProduct
-    {
-        if (null === $this->catalogProduct) {
-            $catalogProduct = (new CatalogProductQuery())->withFilter(['ID' => $this->getId()])->exec()->current();
-            $this->withCatalogProduct($catalogProduct);
-        }
-    
-        return $this->catalogProduct;
-    }
-    
-    /**
-     * @param CatalogProduct $catalogProduct
-     *
-     * @return Offer
-     */
-    public function withCatalogProduct(CatalogProduct $catalogProduct) : Offer
-    {
-        $this->catalogProduct = $catalogProduct;
-    
-        return $this;
-    }
-    
-    /**
-     * @return float
-     */
-    public function getOldPrice() : float
-    {
-        $this->checkOptimalPrice();
-    
-        return $this->oldPrice;
-    }
-    
-    /**
-     * @return string
-     */
-    public function getCurrency() : string
-    {
-        return $this->currency;
-    }
-    
-    /**
-     * @return int
-     */
-    public function getDiscount() : int
-    {
-        $this->checkOptimalPrice();
-    
-        return $this->discount;
-    }
-    
-    /**
-     * @param int $discount
-     *
-     * @return static
-     */
-    public function withDiscount(int $discount)
-    {
-        $this->discount = $discount;
-    
-        return $this;
-    }
-    
-    public function getBonuses()
-    {
-        /** @todo расчет бонусов */
-        return 112;
     }
     
     protected function checkOptimalPrice()
@@ -883,7 +782,7 @@ class Offer extends IblockElement
         CCatalogDiscountSave::Disable();
         $optimalPrice = CCatalogProduct::GetOptimalPrice($this->getId());
         CCatalogDiscountSave::Enable();
-    
+        
         if (\is_array($optimalPrice)) {
             /**
              * @var array $optimalPrice
@@ -902,6 +801,108 @@ class Offer extends IblockElement
     }
     
     /**
+     * @param int $discount
+     *
+     * @return static
+     */
+    public function withDiscount(int $discount)
+    {
+        $this->discount = $discount;
+        
+        return $this;
+    }
+    
+    /**
+     * @param float $oldPrice
+     *
+     * @return $this
+     */
+    public function withOldPrice(float $oldPrice)
+    {
+        $this->oldPrice = $oldPrice;
+        
+        return $this;
+    }
+    
+    /**
+     * @param float $price
+     *
+     * @return static
+     */
+    public function withPrice(float $price)
+    {
+        $this->price = $price;
+        
+        return $this;
+    }
+    
+    public function withImagesIds(array $ids)
+    {
+        $this->PROPERTY_IMG = $ids;
+        
+        return $this;
+    }
+    
+    /**
+     * @return CatalogProduct
+     */
+    public function getCatalogProduct() : CatalogProduct
+    {
+        if (null === $this->catalogProduct) {
+            $catalogProduct = (new CatalogProductQuery())->withFilter(['ID' => $this->getId()])->exec()->current();
+            $this->withCatalogProduct($catalogProduct);
+        }
+        
+        return $this->catalogProduct;
+    }
+    
+    /**
+     * @param CatalogProduct $catalogProduct
+     *
+     * @return Offer
+     */
+    public function withCatalogProduct(CatalogProduct $catalogProduct) : Offer
+    {
+        $this->catalogProduct = $catalogProduct;
+        
+        return $this;
+    }
+    
+    /**
+     * @return float
+     */
+    public function getOldPrice() : float
+    {
+        $this->checkOptimalPrice();
+        
+        return $this->oldPrice;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getCurrency() : string
+    {
+        return $this->currency;
+    }
+    
+    /**
+     * @return int
+     */
+    public function getDiscount() : int
+    {
+        $this->checkOptimalPrice();
+        
+        return $this->discount;
+    }
+    
+    public function getBonuses()
+    {
+        /** @todo расчет бонусов */
+        return 112;
+    }
+    
+    /**
      * @return string
      */
     public function getLink() : string
@@ -911,6 +912,22 @@ class Offer extends IblockElement
         }
         
         return $this->link;
+    }
+    
+    /**
+     * @return Product
+     */
+    public function getProduct() : Product
+    {
+        if (null === $this->product) {
+            $this->product = (new ProductQuery())->withFilter(['=ID' => $this->getCml2Link()])->exec()->current();
+            
+            if (!($this->product instanceof Product)) {
+                $this->product = new Product();
+            }
+        }
+        
+        return $this->product;
     }
     
     /**
@@ -928,43 +945,76 @@ class Offer extends IblockElement
         
         $this->product = $product;
     }
-
+    
+    /**
+     * @return int
+     */
+    public function getCml2Link() : int
+    {
+        return (int)$this->PROPERTY_CML2_LINK;
+    }
+    
+    /**
+     * @return StoreCollection
+     * @throws ServiceNotFoundException
+     * @throws \Exception
+     * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
+     */
+    public function getAvailableStores() : StoreCollection
+    {
+        if (!$this->stores) {
+            $storeService = Application::getInstance()->getContainer()->get('store.service');
+            $this->stores = $storeService->getAvailableProductStoresCurrentLocation($this->getId());
+        }
+        
+        return $this->stores;
+    }
+    
+    /**
+     * @return int
+     * @throws ServiceNotFoundException
+     * @throws \Exception
+     * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
+     */
+    public function getQuantity() : int
+    {
+        return $this->getStocks()->getTotalAmount();
+    }
+    
     /**
      * @return StockCollection
+     * @throws ServiceNotFoundException
+     * @throws \Exception
+     * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
      */
-    public function getStocks(): StockCollection
+    public function getStocks() : StockCollection
     {
         if (!$this->stocks) {
             /** @var StoreService $storeService */
             $storeService = Application::getInstance()->getContainer()->get('store.service');
-            $allStocks = $storeService->getStocksByOffer($this);
-            $stores = $storeService->getByCurrentLocation();
+            $allStocks    = $storeService->getStocksByOffer($this);
+            $stores       = $storeService->getByCurrentLocation();
             if ($stores->isEmpty()) {
                 $stores = $storeService->getByLocation(LocationService::LOCATION_CODE_MOSCOW, StoreService::TYPE_STORE);
             }
             $this->withStocks($allStocks->filterByStores($stores));
         }
-
+        
         return $this->stocks;
     }
-
+    
     /**
      * @param StockCollection $stocks
      *
      * @return Offer
      */
-    public function withStocks(StockCollection $stocks): Offer
+    public function withStocks(StockCollection $stocks) : Offer
     {
         $this->stocks = $stocks;
-
+        
         return $this;
-    }
-
-    /**
-     * @return int
-     */
-    public function getQuantity(): int
-    {
-        return $this->getStocks()->getTotalAmount();
     }
 }
