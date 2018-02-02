@@ -40,7 +40,7 @@ $aMenuLinks = [
         '/personal/referral/',
         [],
         ['icon' => 'icon-menu-referal'],
-        "\\in_array(30, $USER->GetUserGroupArray())",
+        "\$USER->IsAuthorized() && \\in_array(30, \$USER->GetUserGroupArray())",
     ],
     [
         'Профиль',
