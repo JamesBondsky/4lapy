@@ -11,6 +11,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Application;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Web\Uri;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
@@ -35,6 +36,10 @@ use Symfony\Component\HttpFoundation\Request;
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
 {
+    const BASKET_BACK_URL = '/cart/';
+    
+    const PERSONAL_URL    = '/personal/';
+    
     /**
      * @var CurrentUserProviderInterface
      */
@@ -73,18 +78,18 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
     {
         try {
             if ($this->authService->isAuthorized()) {
-                LocalRedirect('/personal/');
+                LocalRedirect(static::PERSONAL_URL);
             }
             $this->arResult['STEP'] = 'begin';
             
             /** авторизация и показ сообщения об успешной смене */
             $request     = Application::getInstance()->getContext()->getRequest();
             $confirmAuth = $request->get('confirm_auth');
+            $backUrl = $request->get('backurl');
             if (!empty($confirmAuth)) {
                 /** @var ConfirmCodeService $confirmService */
                 $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
                 if ($confirmService::getGeneratedCode() === $confirmAuth) {
-                    $backUrl = $request->get('backurl');
                     $this->authService->authorize($request->get('user_id'));
                     if (!empty($backUrl)) {
                         LocalRedirect($backUrl);
@@ -94,10 +99,23 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                 }
             }
             
-            /** @todo перешли по ссылке из письма для восстановления пароля */
+            /** @todo верификаци по ссылке из email */
             if (1 === 2) {
-                $this->arResult['EMAIL'] = 'email';
-                $this->arResult['STEP']  = 'createNewPassword';
+                if($backUrl === static::BASKET_BACK_URL){
+                    $confirmAuth = $request->get('confirm_auth');
+                    if (!empty($confirmAuth) && !empty($backUrl)) {
+                        /** @var ConfirmCodeService $confirmService */
+                        $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+                        if ($confirmService::getGeneratedCode() === $confirmAuth) {
+                            $this->authService->authorize($request->get('user_id'));
+                            LocalRedirect($backUrl);
+                        }
+                    }
+                }
+                else {
+                    $this->arResult['EMAIL'] = 'email';
+                    $this->arResult['STEP']  = 'createNewPassword';
+                }
             }
             
             $this->includeComponentTemplate();
@@ -185,14 +203,21 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
             $confirmService::setGeneratedCode('user_' . $userId);
             
             $backUrl = $request->get('backurl', '');
+            $uri     = new Uri(static::PERSONAL_URL . 'forgot-password/');
+            $uri->addParams(
+                [
+                    'confirm_auth' => $confirmService::getGeneratedCode(),
+                    'user_id'      => $userId,
+                    'backurl'      => $backUrl,
+                ]
+            );
             
             return JsonSuccessResponse::create(
                 'Пароль успешно изменен',
                 200,
                 [],
                 [
-                    'redirect' => '/personal/forgot-password?confirm_auth=' . $confirmService::getGeneratedCode()
-                                  . '&user_id=' . $userId . '&backurl=' . $backUrl,
+                    'redirect' => $uri->getUri(),
                 ]
             );
         } catch (BitrixRuntimeException $e) {
@@ -325,6 +350,8 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
         switch ($step) {
             case 'createNewPassword':
                 $title = 'Создание нового пароля';
+                /** @noinspection PhpUnusedLocalVariableInspection */
+                $login = !empty($phone) ? $phone : $email;
                 if (!empty($phone)) {
                     try {
                         /** @var ConfirmCodeService $confirmService */
@@ -338,6 +365,10 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                                 'Код подтверждения не соответствует',
                                 ['errors' => ['wrongConfirmCode' => 'Код подтверждения не соответствует']]
                             );
+                        }
+                        
+                        if ($backUrl === static::BASKET_BACK_URL) {
+                            return $this->redirectByBasket($backUrl, $login);
                         }
                     } catch (ExpiredConfirmCodeException $e) {
                         return JsonErrorResponse::createWithData(
@@ -355,10 +386,13 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                             ['errors' => ['notFoundConfirmCode' => $e->getMessage()]]
                         );
                     }
+                } elseif (!empty($email)) {
+                    /** @todo верификация по ссылке из письма */
+                    if ($backUrl === static::BASKET_BACK_URL) {
+                        return $this->redirectByBasket($backUrl, $login);
+                    }
                 }
                 
-                /** @noinspection PhpUnusedLocalVariableInspection */
-                $login = !empty($phone) ? $phone : $email;
                 break;
         }
         $phone = PhoneHelper::formatPhone($phone, '+7 (%s%s%s) %s%s%s-%s%s-%s%s');
@@ -458,5 +492,64 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
         
         /** @todo отправка сообщения для верификации по email через expertSender */
         return true;
+    }
+    
+    /**
+     * @param string $backUrl
+     * @param string $login
+     *
+     * @return JsonResponse
+     * @throws \Exception
+     * @throws ServiceNotFoundException
+     * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
+     */
+    private function redirectByBasket(string $backUrl, string $login) : JsonResponse
+    {
+        /** @var ConfirmCodeService $confirmService */
+        $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+        
+        try {
+            $userId = $this->currentUserProvider->getUserRepository()->findIdentifierByRawLogin($login);
+        } catch (WrongPhoneNumberException $e) {
+            return JsonErrorResponse::createWithData(
+                'Некорректный номер телефона',
+                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
+            );
+        } catch (TooManyUserFoundException $e) {
+            return JsonErrorResponse::createWithData(
+                'Найдено больше одного пользователя с данным логином ' . $login,
+                ['errors' => ['moreOneUser' => 'Найдено больше одного пользователя с данным логином ' . $login]]
+            );
+        } catch (UsernameNotFoundException $e) {
+            return JsonErrorResponse::createWithData(
+                'Не найдено пользователей с данным логином ' . $login,
+                ['errors' => ['noUser' => 'Не найдено пользователей с данным логином ' . $login]]
+            );
+        }
+        $confirmService::setGeneratedCode('user_' . $userId);
+        try {
+            $generatedCode = $confirmService::getGeneratedCode();
+        } catch (Exception $e) {
+            $generatedCode = '';
+        }
+        
+        $uri = new Uri(static::PERSONAL_URL . 'forgot-password/');
+        $uri->addParams(
+            [
+                'confirm_auth' => $generatedCode,
+                'user_id'      => $userId,
+                'backurl'      => $backUrl,
+            ]
+        );
+        
+        return JsonSuccessResponse::create(
+            'Пароль успешно изменен',
+            200,
+            [],
+            [
+                'redirect' => $uri->getUri(),
+            ]
+        );
     }
 }
