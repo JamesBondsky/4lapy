@@ -7,8 +7,14 @@
 namespace FourPaws\StoreBundle\Service;
 
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
+use Doctrine\Common\Collections\Collection;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\SystemException;
+use FourPaws\App\Application;
 use FourPaws\Catalog\Model\Offer;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Location\LocationService;
+use FourPaws\StoreBundle\Collection\BaseCollection;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Base as BaseEntity;
@@ -25,32 +31,32 @@ class StoreService
      * Все склады
      */
     const TYPE_ALL = 'TYPE_ALL';
-    
+
     /**
      * Склады, не являющиеся магазинами
      */
     const TYPE_STORE = 'TYPE_STORE';
-    
+
     /**
      * Склады, являющиеся магазинами
      */
     const TYPE_SHOP = 'TYPE_SHOP';
-    
+
     /**
      * @var LocationService
      */
     protected $locationService;
-    
+
     /**
      * @var StoreRepository
      */
     protected $storeRepository;
-    
+
     /**
      * @var StockRepository
      */
     protected $stockRepository;
-    
+
     public function __construct(
         LocationService $locationService,
         StoreRepository $storeRespository,
@@ -60,7 +66,7 @@ class StoreService
         $this->storeRepository = $storeRespository;
         $this->stockRepository = $stockRepository;
     }
-    
+
     /**
      * Получить склад по ID
      *
@@ -77,14 +83,14 @@ class StoreService
             $store = $this->storeRepository->find($id);
         } catch (BaseException $e) {
         }
-        
+
         if (!$store) {
             throw new NotFoundException('Склад с ID=' . $id . ' не найден');
         }
-        
+
         return $store;
     }
-    
+
     /**
      * Получить склад по XML_ID
      *
@@ -94,7 +100,7 @@ class StoreService
      * @throws \Exception
      * @return Store
      */
-    public function getByXmlId($xmlId) : Store
+    public function getByXmlId($xmlId): Store
     {
         $store = false;
         try {
@@ -107,14 +113,14 @@ class StoreService
             )->first();
         } catch (BaseException $e) {
         }
-        
+
         if (!$store) {
             throw new NotFoundException('Склад с XML_ID=' . $xmlId . ' не найден');
         }
-        
+
         return $store;
     }
-    
+
     /**
      * Получить склады в текущем местоположении
      *
@@ -123,13 +129,13 @@ class StoreService
      * @throws \Exception
      * @return StoreCollection
      */
-    public function getByCurrentLocation($type = self::TYPE_ALL) : StoreCollection
+    public function getByCurrentLocation($type = self::TYPE_ALL): StoreCollection
     {
         $location = $this->locationService->getCurrentLocation();
-        
+
         return $this->getByLocation($location, $type);
     }
-    
+
     /**
      * Получить склады, привязанные к указанному местоположению
      *
@@ -139,31 +145,31 @@ class StoreService
      * @throws \Exception
      * @return StoreCollection
      */
-    public function getByLocation(string $locationCode, string $type = self::TYPE_ALL) : StoreCollection
+    public function getByLocation(string $locationCode, string $type = self::TYPE_ALL): StoreCollection
     {
         $typeFilter = $this->getTypeFilter($type);
-        $getStores  = function () use ($locationCode, $typeFilter) {
+        $getStores = function () use ($locationCode, $typeFilter) {
             $filter = array_merge(
                 ['UF_LOCATION' => $locationCode],
                 $typeFilter
             );
-            
+
             $storeCollection = $this->storeRepository->findBy($filter);
-            
+
             return ['result' => $storeCollection];
         };
-        
+
         $result = (new BitrixCache())->withId(__METHOD__ . $locationCode . $type)->resultOf($getStores);
-        
+
         return $result['result'];
     }
-    
+
     /**
      * @param $type
      *
      * @return array
      */
-    public function getTypeFilter($type) : array
+    public function getTypeFilter($type): array
     {
         switch ($type) {
             case self::TYPE_SHOP:
@@ -171,10 +177,10 @@ class StoreService
             case self::TYPE_STORE:
                 return ['UF_IS_SHOP' => 0];
         }
-        
+
         return [];
     }
-    
+
     /**
      * Получить склады по массиву XML_ID
      *
@@ -183,11 +189,11 @@ class StoreService
      * @throws \Exception
      * @return StoreCollection
      */
-    public function getMultipleByXmlId(array $codes) : StoreCollection
+    public function getMultipleByXmlId(array $codes): StoreCollection
     {
         return $this->storeRepository->findBy(['XML_ID' => $codes]);
     }
-    
+
     /**
      * @param array $filter
      *
@@ -196,12 +202,12 @@ class StoreService
      * @throws \Exception
      * @return array
      */
-    public function getMetroInfo(array $filter = [], array $select = ['*']) : array
+    public function getMetroInfo(array $filter = [], array $select = ['*']): array
     {
         $highloadStation = HLBlockFactory::createTableObject('MetroStations');
-        $branchIds       = [];
-        $result          = [];
-        $query           = $highloadStation::query();
+        $branchIds = [];
+        $result = [];
+        $query = $highloadStation::query();
         if (!empty($filter)) {
             $query->setFilter($filter);
         }
@@ -212,10 +218,10 @@ class StoreService
                 $branchIds[$item['ID']] = $item['UF_BRANCH'];
             }
         }
-        
+
         if (\is_array($branchIds) && !empty($branchIds)) {
-            $highloadBranch   = HLBlockFactory::createTableObject('MetroWays');
-            $res              = $highloadBranch::query()->setFilter(['ID' => $branchIds])->exec();
+            $highloadBranch = HLBlockFactory::createTableObject('MetroWays');
+            $res = $highloadBranch::query()->setFilter(['ID' => $branchIds])->setSelect(['*'])->exec();
             $reverseBranchIds = [];
             foreach ($branchIds as $id => $branch) {
                 $reverseBranchIds[$branch][] = $id;
@@ -223,24 +229,24 @@ class StoreService
             while ($item = $res->fetch()) {
                 if (\is_array($reverseBranchIds[$item['ID']]) && !empty($reverseBranchIds[$item['ID']])) {
                     foreach ($reverseBranchIds[$item['ID']] as $id) {
-                        $item['CLASS']         = $item['UF_CLASS'] ?? '';
+                        $item['CLASS'] = $item['UF_CLASS'] ?? '';
                         $result[$id]['BRANCH'] = $item;
                     }
                 }
             }
         }
-        
+
         return $result;
     }
-    
+
     /**
      * @return LocationService
      */
-    public function getLocationService() : LocationService
+    public function getLocationService(): LocationService
     {
         return $this->locationService;
     }
-    
+
     /**
      * @param array $filter
      * @param array $select
@@ -248,12 +254,12 @@ class StoreService
      * @throws \Exception
      * @return array
      */
-    public function getServicesInfo(array $filter = [], array $select = ['*']) : array
+    public function getServicesInfo(array $filter = [], array $select = ['*']): array
     {
         $highloadServices = HLBlockFactory::createTableObject('StoreServices');
-        
+
         $result = [];
-        $query  = $highloadServices::query();
+        $query = $highloadServices::query();
         if (!empty($filter)) {
             $query->setFilter($filter);
         }
@@ -261,45 +267,39 @@ class StoreService
         while ($item = $res->fetch()) {
             $result[$item['ID']] = $item;
         }
-        
+
         return $result;
     }
-    
+
     /**
      * @return StoreRepository
      */
-    public function getRepository() : StoreRepository
+    public function getRepository(): StoreRepository
     {
         return $this->storeRepository;
     }
-    
+
     /**
      * Получить наличие офферов на указанных складах
      *
-     * @param int[]           $offerIds
+     * @param Collection $offers
      * @param StoreCollection $stores
-     *
-     * @return StockCollection
      */
-    public function getStocks(array $offerIds, StoreCollection $stores) : StockCollection
+    public function getStocks(Collection $offers, StoreCollection $stores)
     {
-        $storeIds = [];
-        foreach ($stores as $store) {
-            $storeIds[] = $store->getId();
+        foreach ($offers as $offer) {
+            $offer->withStocks(
+                $this->getStocksByOffer($offer)
+                     ->filterByStores($stores)
+            );
         }
-        
-        return $this->stockRepository->findBy(
-            [
-                'PRODUCT_ID' => $offerIds,
-                'STORE_ID'   => $storeIds,
-            ]
-        );
     }
 
     /**
      * @param Offer $offer
      *
      * @return StockCollection
+     * @throws \Exception
      */
     public function getStocksByOffer(Offer $offer): StockCollection
     {

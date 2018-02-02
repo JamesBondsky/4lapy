@@ -30,7 +30,7 @@ class ChangePetHl20180121002702 extends SprintMigrationBase
             $fieldNameId = $obUserField::GetList(
                 [],
                 [
-                    'FIELD_NAME' => 'UF_TYPE',
+                    'FIELD_NAME' => 'UF_NAME',
                     'ENTITY_ID'  => 'HLBLOCK_' . $hlForWhoId,
                 ]
             )->Fetch()['ID'];
@@ -49,7 +49,7 @@ class ChangePetHl20180121002702 extends SprintMigrationBase
                 [],
                 [
                     'FIELD_NAME' => 'UF_GENDER',
-                    'ENTITY_ID'  => 'HLBLOCK_' . $hlForWhoId,
+                    'ENTITY_ID'  => 'HLBLOCK_' . $hlPetId,
                 ]
             )->Fetch()['ID'];
             

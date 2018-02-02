@@ -127,7 +127,7 @@ class Store extends Base
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
     protected $schedule = '';
-    
+
     /**
      * @var string
      * @Serializer\Type("string")
@@ -785,20 +785,36 @@ class Store extends Base
 
         return $this;
     }
-    
+
     /**
      * @return string
      */
-    public function getPhone() : string
+    public function getPhone(): string
     {
         return $this->phone ?? '';
     }
-    
+
     /**
      * @param string $phone
      */
     public function setPhone(string $phone)
     {
         $this->phone = $phone;
+    }
+
+    /**
+     * @return array
+     */
+    public function getFormattedSchedule(): array
+    {
+        preg_match('~(\d+):00 - (\d+):00~', $this->getSchedule(), $matches);
+        if (!empty($matches)) {
+            return [
+                'from' => (int)$matches[1],
+                'to'   => (int)$matches[2],
+            ];
+        }
+
+        return [];
     }
 }

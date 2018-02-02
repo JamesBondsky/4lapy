@@ -41,4 +41,28 @@ class StoreCollection extends BaseCollection
             }
         );
     }
+
+    /**
+     * @return array
+     */
+    public function getTotalSchedule(): array
+    {
+        /** @var Store $item */
+        $from = null;
+        $to = null;
+        foreach ($this->getIterator() as $item) {
+            $formattedSchedule = $item->getFormattedSchedule();
+            if ((null === $from) || ($formattedSchedule['from'] < $from)) {
+                $from = $formattedSchedule['from'];
+            }
+            if ((null === $to) || ($formattedSchedule['to'] > $to)) {
+                $to = $formattedSchedule['to'];
+            }
+        }
+
+        return [
+            'from' => $from,
+            'to'   => $to,
+        ];
+    }
 }

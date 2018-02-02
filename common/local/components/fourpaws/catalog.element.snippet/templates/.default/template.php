@@ -41,7 +41,7 @@ if (!empty($arParams['CURRENT_OFFER']) && $arParams['CURRENT_OFFER'] instanceof 
 } ?>
 
 <div class="b-common-item b-common-item--catalog-item js-product-item">
-    <?php if ($offer->getImages()->count() > 0) { ?>
+    <?php if ($currentOffer->getImages()->count() > 0) { ?>
         <a class="b-common-item__image-wrap" href="<?= $product->getDetailPageUrl() ?>">
             <img class="b-common-item__image js-weight-img"
                  src="<?= $currentOffer->getResizeImages(240, 240)->first() ?>"
@@ -140,9 +140,10 @@ if (!empty($arParams['CURRENT_OFFER']) && $arParams['CURRENT_OFFER'] instanceof 
                     } ?>
                 </ul>
                 <div class="b-weight-container__dropdown-list__wrapper<?= $offers->count() > 3 ? ' _active' : '' ?>">
-                    <p class="js-show-weight">Еще <?= $offers->count() - 3 ?></p>
-                    <div class="b-weight-container__dropdown-list">
-                    </div>
+                    <?if($offers->count() > 3){?>
+                        <p class="js-show-weight">Еще <?= $offers->count() - 3 ?></p>
+                    <?}?>
+                    <div class="b-weight-container__dropdown-list"></div>
                 </div>
             </div>
             <?php
