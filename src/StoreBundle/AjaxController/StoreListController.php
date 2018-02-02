@@ -145,7 +145,7 @@ class StoreListController extends Controller
     {
         $offerId = $request->get('offer', 0);
         
-        if($offerId > 0) {
+        if((int)$offerId > 0) {
             \CBitrixComponent::includeComponentClass('fourpaws:shop.list');
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             $shopListClass = new \FourPawsShopListComponent();

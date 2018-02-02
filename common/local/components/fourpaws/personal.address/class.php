@@ -79,7 +79,7 @@ class FourPawsPersonalCabinetAddressComponent extends CBitrixComponent
         $this->setFrameMode(true);
         
         if ($this->startResultCache()) {
-            $this->arResult['ITEMS'] = $this->addressService->getCurUserAddresses();
+            $this->arResult['ITEMS'] = $this->addressService->getAddressesByUser();
             $this->includeComponentTemplate();
         }
         
