@@ -16,9 +16,15 @@ class OrderDeliveryValidator extends ConstraintValidator
      */
     protected $orderService;
 
-    public function __construct(OrderService $orderService)
+    /**
+     * @var DeliveryService
+     */
+    protected $deliveryService;
+
+    public function __construct(OrderService $orderService, DeliveryService $deliveryService)
     {
         $this->orderService = $orderService;
+        $this->deliveryService = $deliveryService;
     }
 
     /**
@@ -30,9 +36,6 @@ class OrderDeliveryValidator extends ConstraintValidator
         if (!$entity instanceof OrderStorage || !$constraint instanceof OrderDelivery) {
             return;
         }
-
-        /** @var DeliveryService $deliveryService */
-        $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
 
         /**
          * Проверка, что выбрана доставка
@@ -64,7 +67,7 @@ class OrderDeliveryValidator extends ConstraintValidator
          * Если выбрана курьерская доставка, проверим, что выбрана дата доставки и интервал
          * Если выбран самовывоз, проверим, что выбран магазин или терминал DPD
          */
-        if ($deliveryService->isDelivery($delivery)) {
+        if ($this->deliveryService->isDelivery($delivery)) {
             /*
              * это число в общем случае должно быть от 1
              * до разницы между минимальной и максимальной датами доставки включительно
@@ -81,9 +84,9 @@ class OrderDeliveryValidator extends ConstraintValidator
                     $this->context->addViolation($constraint->deliveryIntervalMessage);
                 }
             }
-        } elseif ($deliveryService->isInnerPickup($delivery)) {
+        } elseif ($this->deliveryService->isInnerPickup($delivery)) {
             /* @todo проверка магазина */
-        } elseif ($deliveryService->isDpdPickup($delivery)) {
+        } elseif ($this->deliveryService->isDpdPickup($delivery)) {
             /* @todo проверка терминала */
         }
     }
