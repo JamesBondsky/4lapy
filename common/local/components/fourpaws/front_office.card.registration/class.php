@@ -399,7 +399,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
                             if ($searchCardResultData['card']['_IS_ACTIVATED_'] === 'Y') {
                                 $this->setFieldError($fieldName, 'Карта уже активирована', 'activated');
                             } else {
-                                $this->arResult['CARD_DATA']['IS_ACTUAL_PROFILE'] = $searchCardResultData['card']['_IS_ACTUAL_PROFILE_'];
+                                $this->arResult['CARD_DATA']['IS_ACTUAL_CONTACT'] = $searchCardResultData['card']['_IS_ACTUAL_CONTACT_'];
                                 $this->arResult['CARD_DATA']['IS_BONUS_CARD'] = $searchCardResultData['card']['_IS_BONUS_CARD_'];
                                 $this->arResult['CARD_DATA']['USER'] = [
                                     'CONTACT_ID' => $searchCardResultData['card']['CONTACT_ID'],
@@ -408,9 +408,9 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
                                     'SECOND_NAME' => $searchCardResultData['card']['SECOND_NAME'],
                                     'BIRTHDAY' => $searchCardResultData['card']['BIRTHDAY'],
                                     'PHONE' => $searchCardResultData['card']['PHONE'],
-                                    '_PHONE_NORMALIZED_' => $searchCardResultData['card']['_PHONE_NORMALIZED_'],
                                     'EMAIL' => $searchCardResultData['card']['EMAIL'],
                                     'GENDER_CODE' => $searchCardResultData['card']['GENDER_CODE'],
+                                    '_PHONE_NORMALIZED_' => $this->cleanPhoneNumberValue($searchCardResultData['card']['PHONE']),
                                 ];
                             }
                         }
@@ -535,7 +535,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
             $validate['FIRST_NAME'] = trim($validateRaw->firstName);
             $validate['VALIDATION_RESULT'] = trim($validateRaw->validationResult);
             // 0 - ok; 1 - карта не существует; 2 - карта принадлежит другому клиенту
-            $validate['VALIDATION_RESULT_CODE'] = (int) $validateRaw->validationResultCode;
+            $validate['VALIDATION_RESULT_CODE'] = (int)$validateRaw->validationResultCode;
             $validate['_IS_CARD_OWNED_'] = $validateRaw->isCardOwned() ? 'Y' : 'N';
             $validate['_IS_CARD_NOT_EXISTS_'] = $validateRaw->isCardNotExists() ? 'Y' : 'N';
         }
@@ -590,31 +590,15 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
             $card['LAST_NAME'] = trim($cardRaw->lastName);
             $card['BIRTHDAY'] = $cardRaw->birthDate;
             $card['PHONE'] = trim($cardRaw->phone);
-            $card['_PHONE_NORMALIZED_'] = $this->cleanPhoneNumberValue($cardRaw->phone);
             $card['EMAIL'] = trim($cardRaw->email);
             $card['GENDER_CODE'] = (int)$cardRaw->genderCode;
             $card['FAMILY_STATUS_CODE'] = (int)$cardRaw->familyStatusCode;
             $card['HAS_CHILDREN_CODE'] = (int)$cardRaw->hashChildrenCode;
             $card['DEBET'] = (double)$cardRaw->plDebet;
-            // товарищи из манзаны гарантируют: ненулевой pl_debet <=> карта бонусная
-            $card['_IS_BONUS_CARD_'] = $card['DEBET'] > 0 ? 'Y' : 'N';
-            $card['_IS_ACTIVATED_'] = 'N';
-            $card['_IS_ACTUAL_PROFILE_'] = 'N';
-
-// !!!
-// Эта проверка была в старой реализации
-// Непонятно, какое отношение код семейного положения и наличие детей имеют к признаку активированности карты...
-// !!!
-            if ($card['HAS_CHILDREN_CODE'] === 200000 && $card['FAMILY_STATUS_CODE'] === 2) {
-                $card['_IS_ACTIVATED_'] = 'Y';
-            }
-// !!!
-// Эта проверка была в старой реализации
-// Аналогично, непонятно какая связь между кодом наличия детей и флагом актуальности профиля
-// !!!
-            if ($card['HAS_CHILDREN_CODE'] === 200000) {
-                $card['_IS_ACTUAL_PROFILE_'] = 'Y';
-            }
+            $card['_IS_BONUS_CARD_'] = $cardRaw->isBonusCard() ? 'Y' : 'N';
+            $card['_IS_ACTUAL_CONTACT_'] = $cardRaw->isActualContact() ? 'Y' : 'N';
+            $card['_IS_LOAYALTY_PROGRAM_CONTACT_'] = $cardRaw->isLoyaltyProgramContact() ? 'Y' : 'N';
+            $card['_IS_ACTIVATED_'] = $card['_IS_ACTUAL_CONTACT_'] === 'Y' && $card['_IS_LOAYALTY_PROGRAM_CONTACT_'] ? 'Y' : 'N';
         }
 
         $result->setData(
@@ -1059,12 +1043,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
                     if ($contactId !== '') {
                         $manzanaClient->contactId = $contactId;
                     }
-
-// !!!
-// В старой реализации передавалось это поле с таким значением
-// Непонятно с какой целью устанавливается признак наличия детей
-// !!!
-                    $manzanaClient->hashChildrenCode = 200000;
+                    $manzanaClient->setActualContact(true);
 // !!!
 // Также в старой реализации передавались поля:
 // ff_shopofactivation = UpdatedByСassa,

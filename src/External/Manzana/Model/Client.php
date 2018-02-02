@@ -63,6 +63,9 @@ class Client
     public $genderCode;
     
     /**
+     * Поле familystatuscode отвечает за участие контакта в бонусной программе
+     * 2 - контакт участвует в бонусной программе
+     *
      * @XmlElement(cdata=false)
      * @Type("string")
      * @SerializedName("familystatuscode")
@@ -403,6 +406,9 @@ class Client
     public $ffOthers;
     
     /**
+     * Поле haschildrencode отвечает за актуальность контакта
+     * 200000 - контакт актуален
+     *
      * @XmlElement(cdata=false)
      * @Type("string")
      * @SerializedName("HasChildrenCode")
@@ -415,4 +421,14 @@ class Client
      * @SerializedName("Card")
      */
     public $cards;
+
+    public function setActualContact(bool $state = true)
+    {
+        $this->hasChildrenCode = $state ? 200000 : 1;
+    }
+
+    public function setLoyaltyProgramContact(bool $state = true)
+    {
+        $this->familyStatusCode = $state ? 2 : 1;
+    }
 }
