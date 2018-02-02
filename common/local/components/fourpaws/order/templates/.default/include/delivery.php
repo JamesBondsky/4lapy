@@ -206,7 +206,7 @@ if ($storage->getAddressId()) {
         <span class="b-input-line__label">Желаемая дата доставки</span>
     </div>
     <div class="b-select b-select--recall b-select--feedback-page">
-        <select class="b-select__block b-select__block--recall b-select__block--feedback-page"
+        <select class="b-select__block b-select__block--recall b-select__block--feedback-page js-select-recovery"
                 name="deliveryDate">
             <option value="" disabled="disabled" selected="selected">выберите
             </option>
@@ -232,7 +232,7 @@ if ($storage->getAddressId()) {
             <span class="b-input-line__label">интервал</span>
         </div>
         <div class="b-select b-select--recall b-select--feedback-page b-select--interval">
-            <select class="b-select__block b-select__block--recall b-select__block--feedback-page b-select__block--interval"
+            <select class="b-select__block b-select__block--recall b-select__block--feedback-page b-select__block--interval js-select-recovery"
                     name="deliveryInterval">
                 <option value="" disabled="disabled" selected="selected">
                     выберите
@@ -248,7 +248,7 @@ if ($storage->getAddressId()) {
         </div>
     </div>
 <?php } ?>
-<div class="b-input-line b-input-line--textarea b-input-line--address-textarea">
+<div class="b-input-line b-input-line--textarea b-input-line--address-textarea js-no-valid">
     <div class="b-input-line__label-wrapper">
         <label class="b-input-line__label" for="order-comment">
             Комментарий к заказу
