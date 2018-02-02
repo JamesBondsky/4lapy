@@ -7,6 +7,7 @@ use Bitrix\Catalog\Product\CatalogProvider;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Compatible\DiscountCompatibility;
+use Bitrix\Sale\Order;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\SaleBundle\Discount\Gift;
@@ -111,7 +112,7 @@ class BasketService
         }
         $basketItem = $this->getBasket()->getItemById($basketId);
         if (null === $basketItem) {
-            throw new NotFoundException('BasketItem');
+            throw new NotFoundException('Не найден элемент корзины');
         }
         $result = $basketItem->delete();
         if (!$result->isSuccess()) {
@@ -153,6 +154,47 @@ class BasketService
         }
         $this->getBasket()->save();
         return true;
+    }
+
+
+    /**
+     *
+     *
+     * @param int|null $discountId
+     *
+     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
+     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
+     * @throws \RuntimeException
+     * @throws \Bitrix\Main\NotSupportedException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     *
+     * @return array
+     */
+    public function getGiftGroupOfferCollection(int $discountId = null): array
+    {
+        if (!$discountId || $discountId < 0) {
+            throw new InvalidArgumentException('Отсутствует идентификатор скидки');
+        }
+        $basket = $this->getBasket();
+        if (null === $order = $basket->getOrder()) {
+            $order = Order::create(SITE_ID);
+            $order->setBasket($basket);
+        }
+        if ($giftGroups = Gift::getPossibleGiftGroups($order, $discountId)) {
+            if(\count($giftGroups[$discountId]) === 1) {
+                $giftGroup = current($giftGroups[$discountId]);
+            } else {
+                throw new \RuntimeException('todo');
+            }
+        } else {
+            throw new NotFoundException('Товары по акции не найдены');
+        }
+        $giftIds = $giftGroup['list'];
+        if (!\is_array($giftIds) || !($giftIds = array_flip(array_flip(array_filter($giftIds))))) {
+            throw new NotFoundException('Товары по акции не найдены');
+        }
+        $giftGroup['list'] = (new OfferQuery())->withFilterParameter('ID', $giftIds)->exec();
+        return $giftGroup;
     }
 
     /**

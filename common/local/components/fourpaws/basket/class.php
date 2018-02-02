@@ -86,10 +86,7 @@ class BasketComponent extends \CBitrixComponent
             if (isset($this->images[$item->getId()])) {
                 continue;
             }
-            /**
-             * @var ResizeImageCollection $images
-             * @var ResizeImageDecorator $image
-             */
+            /** @var ResizeImageCollection $images */
             $images = $item->getResizeImages(110, 110);
             $this->images[$item->getId()] = $images->first();
         }

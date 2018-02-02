@@ -14,6 +14,7 @@ use Bitrix\Sale\Discount\Actions;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\OrderDiscountManager;
 
+
 /**
  * Class Gift
  * @package FourPaws\SaleBundle\Discount
@@ -222,16 +223,22 @@ class Gift extends \CSaleActionGiftCtrlGroup
      *
      *
      * @param Order|null $order
+     * @param int|null $discountId
      *
      * @return array
      */
-    public static function getPossibleGiftGroups(Order $order = null): array
+    public static function getPossibleGiftGroups(Order $order = null, int $discountId = null): array
     {
         $result = [];
         if ($order instanceof Order) {
             /** @var \Bitrix\Sale\Discount $discount */
             $discount = $order->getDiscount();
             $result = self::parseApplyResult($discount->getApplyResult(true));
+            if($discountId && isset($result[$discountId])) {
+                $result = [$discountId => $result[$discountId]];
+            } elseif($discountId) {
+                $result = [];
+            }
         }
         return $result;
     }
@@ -240,17 +247,18 @@ class Gift extends \CSaleActionGiftCtrlGroup
      *
      *
      * @param Order|null $order
+     * @param int|null $discountId
      *
      * @return array
      */
-    public static function getPossibleGifts(Order $order = null): array
+    public static function getPossibleGifts(Order $order = null, int $discountId = null): array
     {
         $ids = [];
-        if ($giftGroups = self::getPossibleGiftGroups($order)) {
+        if ($giftGroups = self::getPossibleGiftGroups($order, $discountId)) {
             foreach ($giftGroups as $group) {
                 if (\is_array($group)) {
                     foreach ($group as $elem) {
-                        if ($elem['list']) {
+                        if ($elem['list'] && \is_array($elem['list']) && ((!$discountId) xor $elem['discountId'] === $discountId)) {
                             $ids += $elem['list'];
                         }
                     }
