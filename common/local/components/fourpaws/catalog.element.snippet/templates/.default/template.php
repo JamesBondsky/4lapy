@@ -140,9 +140,10 @@ if (!empty($arParams['CURRENT_OFFER']) && $arParams['CURRENT_OFFER'] instanceof 
                     } ?>
                 </ul>
                 <div class="b-weight-container__dropdown-list__wrapper<?= $offers->count() > 3 ? ' _active' : '' ?>">
-                    <p class="js-show-weight">Еще <?= $offers->count() - 3 ?></p>
-                    <div class="b-weight-container__dropdown-list">
-                    </div>
+                    <?if($offers->count() > 3){?>
+                        <p class="js-show-weight">Еще <?= $offers->count() - 3 ?></p>
+                    <?}?>
+                    <div class="b-weight-container__dropdown-list"></div>
                 </div>
             </div>
             <?php

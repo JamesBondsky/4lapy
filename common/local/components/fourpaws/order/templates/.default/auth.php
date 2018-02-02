@@ -13,6 +13,7 @@ use FourPaws\ReCaptcha\ReCaptchaService;
 /**
  * @var array $arParams
  * @var array $arResult
+ * @var CMain $APPLICATION
  */
 
 /** @var OrderStorage $storage */
@@ -39,7 +40,8 @@ $currentCommWay = $communicationWays[$storage->getCommunicationWay()];
 
 ?>
 <div class="b-container">
-    <h1 class="b-title b-title--h1 b-title--order">Оформление заказа
+    <h1 class="b-title b-title--h1 b-title--order">
+        <?php $APPLICATION->ShowTitle() ?>
     </h1>
     <div class="b-order js-order-whole-block">
         <div class="b-tab-list">

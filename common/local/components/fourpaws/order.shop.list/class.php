@@ -12,12 +12,13 @@ use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\StoreBundle\Entity\Store;
+use FourPaws\StoreBundle\Collection\StoreCollection;
+use FourPaws\StoreBundle\Service\StoreService;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\CalculationResult;
 
 CBitrixComponent::includeComponentClass('fourpaws:shop.list');
 
-/** @noinspection AutoloadingIssuesInspection */
 class FourPawsOrderShopListComponent extends FourPawsShopListComponent
 {
     /**
@@ -30,13 +31,30 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
      */
     protected $deliveryService;
 
+    /**
+     * @var StoreService
+     */
+    protected $storeService;
+    
+    /**
+     * FourPawsOrderShopListComponent constructor.
+     *
+     * @param null $component
+     */
     public function __construct($component = null)
     {
-        $this->orderService = Application::getInstance()->getContainer()->get(OrderService::class);
-        $this->deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
         parent::__construct($component);
+        $serviceContainer = Application::getInstance()->getContainer();
+        $this->orderService = $serviceContainer->get(OrderService::class);
+        $this->deliveryService = $serviceContainer->get('delivery.service');
+        $this->storeService = $serviceContainer->get('store.service');
     }
 
+    /**
+     * @param $params
+     *
+     * @return mixed
+     */
     public function onPrepareComponentParams($params)
     {
         $params['CACHE_TYPE'] = 'N';
@@ -49,8 +67,6 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
      */
     protected function prepareResult()
     {
-        parent::prepareResult();
-
         $serviceContainer = Application::getInstance()->getContainer();
 
         /** @var BasketService $basketService */
@@ -112,7 +128,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
         }
 
         $stores = $this->getStoreList($filter, $order);
-        if (!empty($stores)) {
+        if ($stores->isEmpty()) {
             $stockResult = $this->getStockResult();
             list($servicesList, $metroList) = $this->getFullStoreInfo($stores);
 
@@ -177,16 +193,13 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                     ? 'м. ' . $metroList[$metro]['UF_NAME'] . ', ' . $store->getAddress()
                     : $store->getAddress();
 
-                $stockResultByStore = $resultByStore[$store->getXmlId()]['STOCK_RESULT'];
-                $delayed = $stockResultByStore->getDelayed();
-
                 /** @var StockResultCollection $stockResultByStore */
                 $stockResultByStore = $resultByStore[$store->getXmlId()]['STOCK_RESULT'];
                 $available = $stockResultByStore->getAvailable();
                 $delayed = $stockResultByStore->getDelayed();
 
                 $partsDelayed = [];
-                /** @var \FourPaws\DeliveryBundle\Entity\StockResult $item */
+                /** @var StockResult $item */
                 foreach ($delayed as $item) {
                     $partsDelayed[] = [
                         'name'     => $item->getOffer()->getName(),
@@ -197,7 +210,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                 }
 
                 $partsAvailable = [];
-                /** @var \FourPaws\DeliveryBundle\Entity\StockResult $item */
+                /** @var StockResult $item */
                 foreach ($available as $item) {
                     $partsAvailable[] = [
                         'name'     => $item->getOffer()->getName(),
@@ -263,11 +276,53 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
         return $result;
     }
 
-    protected function getStoreList(array $filter, array $order): array
+    /**
+     *
+     * @param StoreCollection $stores
+     *
+     * @throws \Exception
+     * @return array
+     */
+    public function getFullStoreInfo(StoreCollection $stores): array
+    {
+        $servicesIds = [];
+        $metroIds = [];
+        /** @var Store $store */
+        foreach ($stores as $store) {
+            /** @noinspection SlowArrayOperationsInLoopInspection */
+            $servicesIds = array_merge($servicesIds, $store->getServices());
+            $metro = $store->getMetro();
+            if ($metro > 0) {
+                $metroIds[] = $metro;
+            }
+        }
+        $services = [];
+        if (!empty($servicesIds)) {
+            $services = $this->storeService->getServicesInfo(['ID' => array_unique($servicesIds)]);
+        }
+
+        $metro = [];
+        if (!empty($metroIds)) {
+            $metro = $this->storeService->getMetroInfo(['ID' => array_unique($metroIds)]);
+        }
+
+        return [
+            $services,
+            $metro,
+        ];
+    }
+
+    /**
+     * @param array $filter
+     * @param array $order
+     *
+     * @return StoreCollection
+     */
+    protected function getStoreList(array $filter, array $order): StoreCollection
     {
         /** @var StockResultCollection $stockResult */
         if (!$stockResult = $this->getStockResult()) {
-            return [];
+            return new StoreCollection();
         }
 
         $defaultFilter = [];
@@ -281,13 +336,15 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
         }
 
         if (!$pickupDelivery = $this->getPickupDelivery()) {
-            return [];
+            return new StoreCollection();
         }
         if ($this->deliveryService->isDpdPickup($pickupDelivery)) {
             return $this->deliveryService->getStockResultByDelivery($pickupDelivery)->getStores()->toArray();
         }
 
-        return parent::getStoreList(array_merge($filter, $defaultFilter), $order);
+        $storeRepository = $this->storeService->getRepository();
+
+        return $storeRepository->findBy(array_merge($filter, $defaultFilter), $order);
     }
 
     /**
@@ -351,4 +408,6 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
 
         return $result;
     }
+    
+    
 }

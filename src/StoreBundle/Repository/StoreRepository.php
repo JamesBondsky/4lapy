@@ -3,43 +3,24 @@
 namespace FourPaws\StoreBundle\Repository;
 
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
+use Bitrix\Catalog\StoreProductTable;
 use Bitrix\Catalog\StoreTable;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Entity\Query\Join;
 use Bitrix\Main\Entity\ReferenceField;
+use Bitrix\Main\SystemException;
 use Bitrix\Sale\Location\LocationTable;
+use FourPaws\BitrixOrm\Utils\EntityConstructor;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use JMS\Serializer\DeserializationContext;
 
 class StoreRepository extends BaseRepository
 {
-    protected function getDataClass(): string
-    {
-        return StoreTable::class;
-    }
-
-    protected function getCollectionClass(): string
-    {
-        return StoreCollection::class;
-    }
-
-    protected function getEntityClass(): string
-    {
-        return Store::class;
-    }
-
-    protected function getDefaultFilter(): array
-    {
-        return ['ACTIVE' => 'Y'];
-    }
-
-    protected function getDefaultOrder(): array
-    {
-        return ['SORT' => 'ASC', 'ID' => 'ASC'];
-    }
-    
+    /** @noinspection MoreThanThreeArgumentsInspection */
     /**
-     * @param array    $criteria
-     * @param array    $orderBy
+     * @param array $criteria
+     * @param array $orderBy
      * @param null|int $limit
      * @param null|int $offset
      *
@@ -51,14 +32,13 @@ class StoreRepository extends BaseRepository
         array $orderBy = [],
         int $limit = null,
         int $offset = null
-    ) : StoreCollection
-    {
+    ): StoreCollection {
         if (empty($orderBy)) {
             $orderBy = $this->getDefaultOrder();
         }
-        
+
         $criteria = array_merge($this->getDefaultFilter(), $criteria);
-        
+
         $query = StoreTable::query();
         $query->setSelect(
             [
@@ -86,12 +66,12 @@ class StoreRepository extends BaseRepository
             );
         }
         $stores = $query->exec();
-        
+
         $result = [];
         while ($store = $stores->fetch()) {
             $result[$store['ID']] = $store;
         }
-        
+
         /**
          * todo change group name to constant
          */
@@ -102,5 +82,33 @@ class StoreRepository extends BaseRepository
                 DeserializationContext::create()->setGroups(['read'])
             )
         );
+    }
+
+    protected function getDefaultOrder(): array
+    {
+        return [
+            'SORT' => 'ASC',
+            'ID'   => 'ASC',
+        ];
+    }
+
+    protected function getDefaultFilter(): array
+    {
+        return ['ACTIVE' => 'Y'];
+    }
+
+    protected function getDataClass(): string
+    {
+        return StoreTable::class;
+    }
+
+    protected function getCollectionClass(): string
+    {
+        return StoreCollection::class;
+    }
+
+    protected function getEntityClass(): string
+    {
+        return Store::class;
     }
 }

@@ -11,6 +11,7 @@ use Bitrix\Sale\Delivery\CalculationResult;
 /**
  * @var array $arParams
  * @var array $arResult
+ * @var CMain $APPLICATION
  */
 
 /** @var CalculationResult $delivery */
@@ -23,14 +24,14 @@ $selectedDeliveryId = $arResult['SELECTED_DELIVERY_ID'];
 ?>
 <div class="b-container">
     <h1 class="b-title b-title--h1 b-title--order">
-        Оформление заказа
+        <?php $APPLICATION->ShowTitle() ?>
     </h1>
     <div class="b-order js-order-whole-block">
         <div class="b-tab-list">
             <ul class="b-tab-list__list js-scroll-order">
                 <li class="b-tab-list__item completed">
                     <a class="b-tab-list__link"
-                       href="<?= $arParams['SEF_FOLDER'] ?>"
+                       href="<?= $arParams['URL']['AUTH'] ?>"
                        title="">
                         <span class="b-tab-list__step">Шаг </span>1. Контактные данные
                     </a>

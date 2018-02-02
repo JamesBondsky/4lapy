@@ -10,10 +10,16 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\SystemException;
+use Bitrix\Sale\Delivery\CalculationResult;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Model\CropImageDecorator;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
+use FourPaws\Catalog\Model\Offer;
+use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\Helpers\DateHelper;
+use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -32,7 +38,10 @@ class FourPawsShopListComponent extends CBitrixComponent
     protected $storeService;
 
     /** @var UserService $userService */
-    protected $userService;
+    private $userService;
+
+    /** @var Offer[] $offers */
+    private $offers;
 
     /**
      * FourPawsShopListComponent constructor.
@@ -90,7 +99,10 @@ class FourPawsShopListComponent extends CBitrixComponent
     /**
      * @param array $filter
      * @param array $order
+     * @param bool $returnActiveServices
      *
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
      * @throws FileNotFoundException
      * @throws ServiceNotFoundException
      * @throws \Exception
@@ -98,16 +110,38 @@ class FourPawsShopListComponent extends CBitrixComponent
      */
     public function getStores(array $filter = [], array $order = [], $returnActiveServices = false): array
     {
-        $result = [];
-        $stores = $this->getStoreList($filter, $order);
+        $storeRepository = $this->storeService->getRepository();
+        $filter = array_merge($filter, $this->storeService->getTypeFilter($this->storeService::TYPE_SHOP));
 
-        if (!empty($stores)) {
-            list($servicesList, $metroList) = $this->getFullStoreInfo($stores);
+        /** @var StoreCollection $storeCollection */
+        $storeCollection = $storeRepository->findBy($filter, $order);
+
+        return $this->getFormatedStoreByCollection($storeCollection, $returnActiveServices);
+    }
+
+    /**
+     * @param StoreCollection $storeCollection
+     * @param bool $returnActiveServices
+     *
+     * @return array
+     * @throws ApplicationCreateException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws \Exception
+     * @throws FileNotFoundException
+     */
+    public function getFormatedStoreByCollection(
+        StoreCollection $storeCollection,
+        $returnActiveServices = false
+    ): array {
+        $result = [];
+        if (!$storeCollection->isEmpty()) {
+            list($servicesList, $metroList) = $this->getFullStoreInfo($storeCollection);
 
             /** @var Store $store */
             $avgGpsN = 0;
             $avgGpsS = 0;
-            foreach ($stores as $store) {
+            foreach ($storeCollection as $store) {
                 $metro = $store->getMetro();
                 $address = $store->getAddress();
 
@@ -133,8 +167,7 @@ class FourPawsShopListComponent extends CBitrixComponent
                 if ($gpsS > 0) {
                     $avgGpsS += $gpsS;
                 }
-                $result['items'][] = [
-                    'id'         => $store->getXmlId(),
+                $item = [
                     'addr'       => $address,
                     'adress'     => $store->getDescription(),
                     'phone'      => $store->getPhone(),
@@ -148,8 +181,20 @@ class FourPawsShopListComponent extends CBitrixComponent
                     'gps_n'      => $gpsS,
                     //revert $gpsN
                 ];
+                if ($store->getOfferId() > 0) {
+                    $item['amount'] = $store->getOfferAmount() > 5 ? 'много' : 'мало';
+
+                    if ($store->getOfferAmount() > 0) {
+                        $pickup = $this->getActiveAmoutPickupText($store->getSchedule());
+                    } else {
+                        $pickup = $this->getNotAmountPickupText($store);
+                    }
+
+                    $item['pickup'] = $pickup;
+                }
+                $result['items'][] = $item;
             }
-            $countStores = count($stores);
+            $countStores = $storeCollection->count();
             $result['avg_gps_s'] = $avgGpsN / $countStores; //revert $avgGpsS
             $result['avg_gps_n'] = $avgGpsS / $countStores; //revert $avgGpsN
             if ($returnActiveServices) {
@@ -159,15 +204,21 @@ class FourPawsShopListComponent extends CBitrixComponent
 
         return $result;
     }
+    
+    public function getActiveStoresByProduct(int $offerId): StoreCollection
+    {
+        $offer = (new OfferQuery())->withFilterParameter('ID', $offerId)->exec()->first();
+        return $this->storeService->getAvailableProductStores($offer);
+    }
 
     /**
      *
-     * @param array $stores
+     * @param StoreCollection $stores
      *
      * @throws \Exception
      * @return array
      */
-    public function getFullStoreInfo(array $stores): array
+    public function getFullStoreInfo(StoreCollection $stores): array
     {
         $servicesIds = [];
         $metroIds = [];
@@ -194,6 +245,22 @@ class FourPawsShopListComponent extends CBitrixComponent
             $services,
             $metro,
         ];
+    }
+
+    /**
+     * @param int $offerId
+     *
+     * @return Offer
+     */
+    protected function getOfferById(int $offerId): Offer
+    {
+        if (!isset($this->offers[$offerId])) {
+            $offerQuery = new OfferQuery();
+            $offerQuery->withFilter(['ID' => $offerId]);
+            $this->offers[$offerId] = $offerQuery->exec()->first();
+        }
+
+        return $this->offers[$offerId];
     }
 
     /**
@@ -266,6 +333,7 @@ class FourPawsShopListComponent extends CBitrixComponent
         $storeRepository = $this->storeService->getRepository();
         $filter = array_merge($filter, $this->storeService->getTypeFilter($this->storeService::TYPE_SHOP));
         $storeCollection = $storeRepository->findBy($filter, $order);
+
         return $storeCollection->toArray();
     }
 }

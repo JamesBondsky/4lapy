@@ -6,11 +6,14 @@
 
 namespace FourPaws\StoreBundle\AjaxController;
 
+use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -26,6 +29,8 @@ class StoreListController extends Controller
      * @Route("/order/", methods={"GET"})
      * @param Request $request
      *
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
      * @throws ServiceNotFoundException
      * @throws FileNotFoundException
      * @throws \Exception
@@ -50,6 +55,8 @@ class StoreListController extends Controller
      * @Route("/checkboxFilter/", methods={"GET"})
      * @param Request $request
      *
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
      * @throws ServiceNotFoundException
      * @throws \Exception
      * @throws FileNotFoundException
@@ -74,6 +81,8 @@ class StoreListController extends Controller
      * @Route("/search/", methods={"GET"})
      * @param Request $request
      *
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
      * @throws ServiceNotFoundException
      * @throws \Exception
      * @throws FileNotFoundException
@@ -98,6 +107,8 @@ class StoreListController extends Controller
      * @Route("/chooseCity/", methods={"GET"})
      * @param Request $request
      *
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
      * @throws ServiceNotFoundException
      * @throws \Exception
      * @throws FileNotFoundException
@@ -117,5 +128,32 @@ class StoreListController extends Controller
                 true
             )
         );
+    }
+    
+    /**
+     * @Route("/getByItem/", methods={"GET"})
+     * @param Request $request
+     *
+     * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
+     * @throws \Exception
+     * @throws FileNotFoundException
+     * @return JsonResponse
+     */
+    public function getByItemAction(Request $request) : JsonResponse
+    {
+        $offerId = $request->get('offer', 0);
+        
+        if((int)$offerId > 0) {
+            \CBitrixComponent::includeComponentClass('fourpaws:shop.list');
+            /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+            $shopListClass = new \FourPawsShopListComponent();
+            return JsonSuccessResponse::createWithData(
+                'Подгрузка успешна',
+                $shopListClass->getFormatedStoreByCollection($shopListClass->getActiveStoresByProduct($offerId))
+            );
+        }
+        return JsonErrorResponse::create('Не указан id торгового предложения');
     }
 }

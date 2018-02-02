@@ -124,6 +124,12 @@ class FourPawsOrderComponent extends \CBitrixComponent
             }
         }
 
+        $url = [
+            'AUTH' => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderService::AUTH_STEP],
+            'DELIVERY' => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderService::DELIVERY_STEP],
+            'PAYMENT' => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderService::PAYMENT_STEP],
+        ];
+        
         /** @var \Symfony\Bundle\FrameworkBundle\Routing\Router $router */
         $router = Application::getInstance()->getContainer()->get('router');
         /** @var Symfony\Component\Routing\RouteCollection $routeCollection */
@@ -133,19 +139,17 @@ class FourPawsOrderComponent extends \CBitrixComponent
             'DELIVERY_VALIDATION' => 'fourpaws_sale_ajax_order_validatedelivery',
             'PAYMENT_VALIDATION'  => 'fourpaws_sale_ajax_order_validatepayment',
         ];
-        $ajaxUrl = [];
         foreach ($routes as $key => $name) {
             if (!$route = $routeCollection->get($name)) {
                 continue;
             }
-            $ajaxUrl[$key] = $route->getPath();
+            $url[$key] = $route->getPath();
         }
 
         /** @var UserCitySelectInterface $userCityService */
         $userCityService = Application::getInstance()->getContainer()->get(UserCitySelectInterface::class);
         $selectedCity = $userCityService->getSelectedCity();
 
-        $deliveries = [];
         $addresses = [];
 
         if ($this->currentStep === OrderService::DELIVERY_STEP) {
@@ -196,7 +200,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $this->arResult['METRO'] = $storeService->getMetroInfo();
         $this->arResult['BASKET'] = $basket;
         $this->arResult['STORAGE'] = $storage;
-        $this->arResult['URL'] = $ajaxUrl;
+        $this->arResult['URL'] = $url;
         $this->arResult['STEP'] = $this->currentStep;
         $this->arResult['SELECTED_CITY'] = $selectedCity;
         $this->arResult['ADDRESSES'] = $addresses;

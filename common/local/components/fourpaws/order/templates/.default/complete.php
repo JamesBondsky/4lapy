@@ -4,14 +4,17 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 ?>
 <div class="b-container">
-    <h1 class="b-title b-title--h1 b-title--order">Спасибо!
+    <h1 class="b-title b-title--h1 b-title--order">
+        Спасибо!
     </h1>
     <div class="b-order">
-        <div class="b-order__text-block b-order__text-block--top-line b-order__text-block--light js"><span class="b-icon b-icon--clock">
+        <div class="b-order__text-block b-order__text-block--top-line b-order__text-block--light js">
+            <span class="b-icon b-icon--clock">
               <svg class="b-icon__svg" viewBox="0 0 16 16 " width="16px" height="16px">
                 <use class="b-icon__use" xlink:href="icons.svg#icon-clock">
                 </use>
-              </svg></span>Идёт подсчёт балов ...
+              </svg>
+            </span>Идёт подсчёт баллов ...
         </div>
         <div class="b-order__text-block b-order__text-block--top-line js">
             <p>Вы получили 230 бонусных баллов. Узнать, <a class="b-link b-link--inherit b-link--orange"
