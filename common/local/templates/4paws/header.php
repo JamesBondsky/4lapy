@@ -37,7 +37,7 @@ $markup = PawsApplication::markup();
 <div class="b-page-wrapper <?= $template->getWrapperClass() ?> js-this-scroll">
     <header class="b-header <?= $template->getHeaderClass() ?> js-header">
         <div class="b-container">
-            <?php if ($template->isShortHeaderFooter()) { ?>
+            <?php if ($template->hasShortHeaderFooter()) { ?>
                 <div class="b-header__info b-header__info--short-header">
                     <a class="b-logo"
                        href="/"

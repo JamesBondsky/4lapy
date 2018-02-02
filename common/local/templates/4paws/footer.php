@@ -38,7 +38,7 @@ if ($template->hasMainWrapper()) {
 } ?>
 </main>
 <footer class="b-footer <?= $template->getFooterClass() ?>">
-    <?php if (!$template->isShortHeaderFooter()) { ?>
+    <?php if (!$template->hasShortHeaderFooter()) { ?>
         <div class="b-footer__communication">
             <div class="b-container">
                 <div class="b-footer__inner">
@@ -52,7 +52,7 @@ if ($template->hasMainWrapper()) {
     <?php } ?>
     <div class="b-footer__nav">
         <div class="b-container">
-            <?php if (!$template->isShortHeaderFooter()) { ?>
+            <?php if (!$template->hasShortHeaderFooter()) { ?>
                 <div class="b-footer__line">
                     <div class="b-footer__column js-here-permutantion">
                         <?php $APPLICATION->IncludeComponent(

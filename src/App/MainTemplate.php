@@ -28,7 +28,7 @@ class MainTemplate extends TemplateAbstract
      */
     public function getWrapperClass(): string
     {
-        return $this->isOrderPage() ? 'b-page-wrapper--order' : '';
+        return $this->isOrderPage() ? ' b-page-wrapper--order ' : '';
     }
 
     /**
@@ -36,7 +36,7 @@ class MainTemplate extends TemplateAbstract
      */
     public function getHeaderClass(): string
     {
-        return $this->isShortHeaderFooter() ? 'b-header--short' : '';
+        return $this->hasShortHeaderFooter() ? ' b-header--short ' : '';
     }
 
     /**
@@ -44,7 +44,7 @@ class MainTemplate extends TemplateAbstract
      */
     public function getFooterClass(): string
     {
-        return $this->isShortHeaderFooter() ? 'b-footer--short' : '';
+        return $this->hasShortHeaderFooter() ? ' b-footer--short ' : '';
     }
 
     /**
@@ -91,7 +91,7 @@ class MainTemplate extends TemplateAbstract
     /**
      * @return bool
      */
-    public function isShortHeaderFooter(): bool
+    public function hasShortHeaderFooter(): bool
     {
         return $this->isOrderPage();
     }
