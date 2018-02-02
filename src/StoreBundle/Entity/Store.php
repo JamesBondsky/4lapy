@@ -245,6 +245,24 @@ class Store extends Base
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
     protected $isBase = false;
+    
+    /**
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SkipWhenEmpty()
+     * @Serializer\SerializedName("OFFER_AMOUNT")
+     * @Serializer\Groups(groups={"read"})
+     */
+    protected $offerAmount = 0;
+    
+    /**
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SkipWhenEmpty()
+     * @Serializer\SerializedName("OFFER_ID")
+     * @Serializer\Groups(groups={"read"})
+     */
+    protected $offerId = 0;
 
     /**
      * @return int
@@ -800,5 +818,37 @@ class Store extends Base
     public function setPhone(string $phone)
     {
         $this->phone = $phone;
+    }
+    
+    /**
+     * @return int
+     */
+    public function getOfferAmount() : int
+    {
+        return $this->offerAmount;
+    }
+    
+    /**
+     * @param int $offerAmount
+     */
+    public function setOfferAmount(int $offerAmount)
+    {
+        $this->offerAmount = $offerAmount;
+    }
+    
+    /**
+     * @return int
+     */
+    public function getOfferId() : int
+    {
+        return $this->offerId;
+    }
+    
+    /**
+     * @param int $offerId
+     */
+    public function setOfferId(int $offerId)
+    {
+        $this->offerId = $offerId;
     }
 }

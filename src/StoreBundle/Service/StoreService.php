@@ -7,8 +7,11 @@
 namespace FourPaws\StoreBundle\Service;
 
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\SystemException;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Location\LocationService;
+use FourPaws\StoreBundle\Collection\BaseCollection;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Base as BaseEntity;
@@ -55,7 +58,8 @@ class StoreService
         LocationService $locationService,
         StoreRepository $storeRespository,
         StockRepository $stockRepository
-    ) {
+    )
+    {
         $this->locationService = $locationService;
         $this->storeRepository = $storeRespository;
         $this->stockRepository = $stockRepository;
@@ -279,9 +283,9 @@ class StoreService
      * @param int[]           $offerIds
      * @param StoreCollection $stores
      *
-     * @return StockCollection
+     * @return BaseCollection|StockCollection
      */
-    public function getStocks(array $offerIds, StoreCollection $stores) : StockCollection
+    public function getStocks(array $offerIds, StoreCollection $stores)
     {
         $storeIds = [];
         foreach ($stores as $store) {
@@ -295,13 +299,14 @@ class StoreService
             ]
         );
     }
-
+    
     /**
      * @param Offer $offer
      *
      * @return StockCollection
+     * @throws \Exception
      */
-    public function getStocksByOffer(Offer $offer): StockCollection
+    public function getStocksByOffer(Offer $offer) : StockCollection
     {
         $getStocks = function () use ($offer) {
             return $this->stockRepository->findBy(
@@ -310,13 +315,42 @@ class StoreService
                 ]
             );
         };
-
+        
         $data = (new BitrixCache())
             ->withId(__METHOD__ . '__' . $offer->getId())
             ->withTag('catalog:stocks')
             ->withTag('catalog:stocks:' . $offer->getId())
             ->resultOf($getStocks);
-
+        
         return $data['result'];
+    }
+    
+    /**
+     * @param int    $offerId
+     *
+     * @param string $location
+     *
+     * @return StoreCollection
+     * @throws \Exception
+     */
+    public function getAvailableProductStoresCurrentLocation(int $offerId, string $location = '') : StoreCollection
+    {
+        if (empty($location)) {
+            $location = $this->locationService->getCurrentLocation();
+        }
+    
+        $getAvailableProductStoresCurrentLocation = function () use ($offerId, $location) {
+            return $this->storeRepository->getAvailableProductStoresCurrentLocation($offerId, $location);
+        };
+    
+    
+        $data = (new BitrixCache())
+            ->withId(__METHOD__ . '__' . $offerId . '_' . $location)
+            ->withTag('catalog:shops.available')
+            ->withTag('catalog:shops.available:' . $offerId . '_' . $location)
+            ->resultOf($getAvailableProductStoresCurrentLocation);
+        
+        return $data['result'];
+        
     }
 }
