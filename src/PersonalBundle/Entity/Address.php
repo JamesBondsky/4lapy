@@ -192,15 +192,15 @@ class Address extends BaseEntity
     {
         $housing = '';
         if (!empty($this->getHousing())) {
-            $housing .= ', корпус' . $this->getHousing();
+            $housing .= ', корпус ' . $this->getHousing();
         }
         $entrance = '';
         if (!empty($this->getEntrance())) {
-            $entrance .= ', подъезд' . $this->getEntrance();
+            $entrance .= ', подъезд ' . $this->getEntrance();
         }
         $floor = '';
         if (!empty($this->getFloor())) {
-            $floor .= ', этаж' . $this->getFloor();
+            $floor .= ', этаж ' . $this->getFloor();
         }
         $flat = '';
         if (!empty($this->getFlat())) {
@@ -208,9 +208,9 @@ class Address extends BaseEntity
         }
         $intercomCode = '';
         if (!empty($this->getIntercomCode())) {
-            $intercomCode .= ', код домофона' . $this->getIntercomCode();
+            $intercomCode .= ', код домофона ' . $this->getIntercomCode();
         }
-        $house = ',д. ' . $this->getHouse();
+        $house = ', д. ' . $this->getHouse();
         
         $res =
             $this->getStreet() . ' ул.' . $house . $housing . $entrance . $floor . $flat . $intercomCode . ' '

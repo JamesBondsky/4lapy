@@ -1,0 +1,102 @@
+<?php
+
+namespace FourPaws\SaleBundle\Repository\OrderStorage;
+
+use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use FourPaws\UserBundle\Service\UserCitySelectInterface;
+use JMS\Serializer\ArrayTransformerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\Validator\ConstraintViolationListInterface;
+
+abstract class StorageBaseRepository implements StorageRepositoryInterface
+{
+    /**
+     * @var ValidatorInterface
+     */
+    protected $validator;
+
+    /**
+     * @var ArrayTransformerInterface
+     */
+    protected $arrayTransformer;
+
+    /**
+     * @var CurrentUserProviderInterface
+     */
+    protected $currentUserProvider;
+
+    /**
+     * @var UserCitySelectInterface
+     */
+    protected $userCitySelect;
+
+    public function __construct(
+        ArrayTransformerInterface $arrayTransformer,
+        ValidatorInterface $validator,
+        CurrentUserProviderInterface $currentUserProviderInterface,
+        UserCitySelectInterface $userCitySelect
+    ) {
+        $this->arrayTransformer = $arrayTransformer;
+        $this->validator = $validator;
+        $this->currentUserProvider = $currentUserProviderInterface;
+        $this->userCitySelect = $userCitySelect;
+    }
+
+    /**
+     * @param array $data
+     *
+     * @return array
+     */
+    protected function setInitialValues(array $data): array
+    {
+        $data['FUSER_ID'] = $this->currentUserProvider->getCurrentFUserId();
+        if (!$data['PROPERTY_COM_WAY']) {
+            $data['PROPERTY_COM_WAY'] = OrderService::COMMUNICATION_SMS;
+        }
+
+        try {
+            $user = $this->currentUserProvider->getCurrentUser();
+            $data['USER_ID'] = $user->getId();
+
+            /**
+             * Если пользователь не задал контактные данные вручную,
+             * заполняем их из его профиля
+             */
+            if (!$data['PROPERTY_NAME']) {
+                $data['PROPERTY_NAME'] = $user->getName();
+            }
+            if (!$data['PROPERTY_PHONE']) {
+                $data['PROPERTY_PHONE'] = $user->getPersonalPhone();
+            }
+            if (!$data['PROPERTY_EMAIL']) {
+                $data['PROPERTY_EMAIL'] = $user->getEmail();
+            }
+
+            /**
+             * Не показываем капчу авторизованному пользователю
+             */
+            $data['CAPTCHA_FILLED'] = true;
+        } catch (NotAuthorizedException $e) {
+        }
+
+        $selectedCity = $this->userCitySelect->getSelectedCity();
+        $data['PROPERTY_CITY'] = $selectedCity['NAME'];
+        $data['PROPERTY_CITY_CODE'] = $selectedCity['CODE'];
+
+        return $data;
+    }
+
+    /**
+     * @param OrderStorage $storage
+     * @param string $step
+     *
+     * @return ConstraintViolationListInterface
+     */
+    public function validate(OrderStorage $storage, string $step): ConstraintViolationListInterface
+    {
+        return $this->validator->validate($storage, null, [$step]);
+    }
+}

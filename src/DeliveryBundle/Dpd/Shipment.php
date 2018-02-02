@@ -24,15 +24,15 @@ class Shipment extends \Ipolh\DPD\Shipment
     /**
      * Устанавливает местоположение отправителя
      *
-     * @param mixed $locationId ID местоположения
+     * @param array|string $locationCode код местоположения
      *
-     * @return self
+     * @return $this
      */
-    public function setSender($locationId)
+    public function setSender($locationCode)
     {
-        $this->locationFrom = \is_array($locationId)
-            ? $locationId
-            : LocationTable::getByLocationId($locationId);
+        $this->locationFrom = \is_array($locationCode)
+            ? $locationCode
+            : LocationTable::getByLocationCode($locationCode);
 
         return $this;
     }
@@ -40,7 +40,9 @@ class Shipment extends \Ipolh\DPD\Shipment
     /**
      * Устанавливает местоположение получателя
      *
-     * @param mixed $locationId код местоположения
+     * @param array|string $locationCode код местоположения
+     *
+     * @return $this
      */
     public function setReceiver($locationCode)
     {
@@ -62,36 +64,52 @@ class Shipment extends \Ipolh\DPD\Shipment
             return false;
         }
 
-        $isPaymentOnDelivery = null === $isPaymentOnDelivery ? $this->isPaymentOnDelivery() : $isPaymentOnDelivery;
+        return count($this->getDpdTerminals($isPaymentOnDelivery)) > 0;
+    }
+
+    public function getDpdTerminals($isPaymentOnDelivery = null)
+    {
         $locationId = $this->locationTo['ID'];
-        $getPickupPointsCount = function () use ($isPaymentOnDelivery, $locationId) {
-            return Table::getList(
+        $getTerminals = function () use ($locationId) {
+            $terminals = Table::getList(
                 [
-                    'select' => ['CNT'],
-
-                    'filter' => array_filter(
-                        array_merge(
-                            [
-                                'LOCATION_ID' => $locationId,
-                            ],
-
-                            $isPaymentOnDelivery
-                                ? ['NPP_AVAILABLE' => 'Y', '>=NPP_AMOUNT' => $this->getPrice()]
-                                : []
-                        )
-                    ),
-
-                    'runtime' => [
-                        new ExpressionField('CNT', 'COUNT(*)'),
+                    'select' => ['*'],
+                    'filter' => [
+                        'LOCATION_ID' => $locationId,
                     ],
                 ]
-            )->fetch();
+            );
+
+            $result = [];
+            while ($terminal = $terminals->fetch()) {
+                $result[] = $terminal;
+            }
+
+            return $result;
         };
 
-        $result = (new BitrixCache())
+        $terminals = (new BitrixCache())
             ->withId(__METHOD__ . $locationId)
-            ->resultOf($getPickupPointsCount);
+            ->resultOf($getTerminals);
+        $orderPrice = $this->getPrice();
+        $isPaymentOnDelivery = null === $isPaymentOnDelivery ? $this->isPaymentOnDelivery() : $isPaymentOnDelivery;
+        if ($isPaymentOnDelivery) {
+            $terminals = array_filter(
+                $terminals,
+                function ($item) use ($orderPrice) {
+                    return ($item['NPP_AVAILABLE'] === 'Y') && ($item['NPP_AMOUNT'] >= $orderPrice);
+                }
+            );
+        }
 
-        return $result['CNT'] > 0;
+        return $terminals;
+    }
+
+    public function isPaymentOnDelivery()
+    {
+        /**
+         * У пунктов самовывоза DPD должна быть возможность оплаты на месте
+         */
+        return true;
     }
 }
