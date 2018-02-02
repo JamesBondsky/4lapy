@@ -165,8 +165,8 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                 $deliveryDate1 = $stockResult1->getDeliveryDate();
                 $deliveryDate2 = $stockResult2->getDeliveryDate();
 
-                if ($deliveryDate1 != $deliveryDate2) {
-                    return ($shopData1['AVAILABLE_AMOUNT'] > $shopData2['AVAILABLE_AMOUNT']) ? 1 : -1;
+                if ($deliveryDate1->getTimestamp() != $deliveryDate2->getTimestamp()) {
+                    return ($deliveryDate1->getTimestamp() > $deliveryDate2->getTimestamp()) ? 1 : -1;
                 }
 
                 return $shop1->getAddress() > $shop2->getAddress() ? 1 : -1;
