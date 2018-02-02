@@ -414,6 +414,9 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             }
             if ($client instanceof Client) {
                 try {
+                    /**
+                     * @todo refactor it
+                     */
                     $manzanaService->updateContact($client);
                 } catch (ManzanaServiceException $e) {
                 } catch (ManzanaException $e) {
@@ -463,8 +466,9 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         </header>
         <?php
         /** @noinspection PhpIncludeInspection */
-        include_once App::getDocumentRoot() . '/local/components/fourpaws/auth.form/templates/popup/include/' . $step
-                     . '.php';
+        include_once sprintf('%s/local/components/fourpaws/auth.form/templates/popup/include/%s.php',
+                             App::getDocumentRoot(),
+                             $step);
         $html = ob_get_clean();
         
         return JsonSuccessResponse::createWithData(

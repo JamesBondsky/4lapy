@@ -323,6 +323,9 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         if ($client instanceof Client) {
             try {
                 $this->currentUserProvider->setClientPersonalDataByCurUser($client);
+                /**
+                 * @todo refactor it
+                 */
                 $manzanaService->updateContact($client);
             } catch (NotAuthorizedException $e) {
             } catch (ManzanaServiceException $e) {
@@ -421,6 +424,9 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             if ($client instanceof Client) {
                 try {
                     $this->currentUserProvider->setClientPersonalDataByCurUser($client);
+                    /**
+                     * @todo refactor it
+                     */
                     $manzanaService->updateContact($client);
                 } catch (ManzanaServiceException $e) {
                 } catch (ManzanaException $e) {

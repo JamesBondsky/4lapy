@@ -27,7 +27,6 @@ use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
-use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
@@ -214,6 +213,9 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                 }
                 if ($client instanceof Client) {
                     try {
+                        /**
+                         * @todo refactor it
+                         */
                         $manzanaService->updateContact($client);
                     } catch (ManzanaServiceException $e) {
                     } catch (ManzanaException $e) {

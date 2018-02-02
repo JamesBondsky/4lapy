@@ -407,14 +407,6 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     }
     
     /**
-     * Получение информации о реферале по Contact_ID
-     */
-    public function getReferralByContactId()
-    {
-    
-    }
-    
-    /**
      * Получение данных о рефералах заводчика
      *
      * - переход в раздел «Реферальная программа» в ЛК покупателя
@@ -633,11 +625,6 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         return $cards;
     }
     
-    protected function clientSearch(array $data)
-    {
-    
-    }
-    
     /**
      * @param string $contactId
      *
@@ -651,12 +638,12 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
             $result = $this->execute(self::CONTRACT_CONTACT_CHEQUES, $bag->getParameters());
             /** @var Cheques $resCheques */
             $resCheques = $this->serializer->deserialize($result, Cheques::class, 'xml');
-            /** @var Cheque[] $cheques*/
+            /** @var Cheque[] $cheques */
             $cheques = $resCheques->cheques->toArray();
         } catch (\Exception $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
         }
-        
+    
         return $cheques;
         
     }
@@ -683,5 +670,26 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         
         return $chequeItems;
     }
+    
+    /**
+     * Обновление/создание контакта. Очередь в rabbit.
+     *
+     * @param Client $contact
+     *
+     * @throws ManzanaServiceException
+     */
+    public function updateContactAsync(Client $contact)
+    {
+        /**
+         * @todo do it better
+         */
+        try {
+            $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.manzana_update');
+            $producer->publish($contact);
+        } catch (\Exception $e) {
+            throw new ManzanaServiceException(sprintf('Update error: %s', $e->getMessage()));
+        }
+    }
+    
     
 }

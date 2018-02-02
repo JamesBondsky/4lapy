@@ -6,7 +6,6 @@
 
 namespace FourPaws\PersonalBundle\Service;
 
-use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
@@ -39,19 +38,29 @@ class PetService
     /** @var CurrentUserProviderInterface $currentUser */
     private $currentUser;
     
+    /** @var ManzanaService $currentUser */
+    private $manzanaService;
+    
     /**
      * PetService constructor.
      *
-     * @param PetRepository $petRepository
+     * @param PetRepository                $petRepository
+     * @param CurrentUserProviderInterface $currentUserProvider
+     * @param ManzanaService               $manzanaService
      *
      * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
      */
-    public function __construct(PetRepository $petRepository)
+    public function __construct(
+        PetRepository $petRepository,
+        CurrentUserProviderInterface $currentUserProvider,
+        ManzanaService $manzanaService
+    )
     {
-        $this->petRepository = $petRepository;
-        $this->currentUser   = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
+        $this->petRepository  = $petRepository;
+        $this->currentUser    = $currentUserProvider;
+        $this->manzanaService = $manzanaService;
     }
     
     /**
@@ -74,7 +83,7 @@ class PetService
             $data['UF_USER_ID'] = $this->currentUser->getCurrentUserId();
         }
         $this->petRepository->setEntityFromData($data, Pet::class);
-        if(!empty($data['UF_PHOTO_TMP'])) {
+        if (!empty($data['UF_PHOTO_TMP'])) {
             $this->petRepository->addFileList(['UF_PHOTO' => $data['UF_PHOTO_TMP']]);
         }
         $res = $this->petRepository->create();
@@ -96,8 +105,8 @@ class PetService
      */
     protected function updateManzanaPets()
     {
-        $container = App::getInstance()->getContainer();
         $types     = [];
+
         try {
             $pets = $this->getCurUserPets();
             if (\is_array($pets) && !empty($pets)) {
@@ -106,12 +115,10 @@ class PetService
                     $types[] = $pet->getCodeType();
                 }
             }
-            /** @var ManzanaService $manzanaService */
-            $manzanaService = $container->get('manzana.service');
             
             $client = null;
             try {
-                $contactId         = $manzanaService->getContactIdByCurUser();
+                $contactId         = $this->manzanaService;
                 $client            = new Client();
                 $client->contactId = $contactId;
             } catch (ManzanaServiceContactSearchNullException $e) {
@@ -126,6 +133,9 @@ class PetService
             if ($client instanceof Client) {
                 $this->setClientPets($client, $types);
                 try {
+                    /**
+                     * @todo refactor it
+                     */
                     $manzanaService->updateContact($client);
                 } catch (ManzanaServiceException $e) {
                 } catch (ContactUpdateException $e) {
@@ -199,7 +209,7 @@ class PetService
     public function update(array $data) : bool
     {
         $this->petRepository->setEntityFromData($data, Pet::class);
-        if(!empty($data['UF_PHOTO_TMP'])) {
+        if (!empty($data['UF_PHOTO_TMP'])) {
             $this->petRepository->addFileList(['UF_PHOTO' => $data['UF_PHOTO_TMP']]);
         }
         $res = $this->petRepository->update();

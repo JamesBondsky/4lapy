@@ -158,6 +158,9 @@ class AddressService
         }
         if ($client instanceof Client) {
             $this->setClientAddress($client, $address);
+            /**
+             * @todo refactor it
+             */
             try {
                 $manzanaService->updateContact($client);
             } catch (ManzanaServiceException $e) {

@@ -12,7 +12,6 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
-use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Exception\ManzanaException;
@@ -240,6 +239,9 @@ class ProfileController extends Controller
                 } catch (NotAuthorizedException $e) {
                 }
                 try {
+                    /**
+                     * @todo refactor it
+                     */
                     $manzanaService->updateContact($client);
                 } catch (ManzanaServiceException $e) {
                 } catch (ManzanaException $e) {
