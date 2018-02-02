@@ -153,17 +153,17 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
                 ]
             )
         )) {
-            $vars     = $cache->getVars(); // достаем переменные из кеша
-            $this->sortItems = $vars['sortItems'];
-            $this->itemIds = $vars['itemIds'];
-            $offerIds = $vars['offerIds'];
+            $vars              = $cache->getVars(); // достаем переменные из кеша
+            $this->sortItems   = $vars['sortItems'];
+            $this->itemIds     = $vars['itemIds'];
+            $offerIds          = $vars['offerIds'];
             $this->allProducts = $vars['allProducts'];
         } elseif ($cache->startDataCache()) {
             //получение данных из манзаны
-            list($xmlIds, $countValues, $allItems) = $this->getXmlIdsByManzana();
+            list($xmlIds, $allItems) = $this->getXmlIdsByManzana();
             //получение товаров с сайта по XML_ID
             if (!empty($xmlIds)) {
-                $offerIds = $this->getOffersByXmlIds($xmlIds, $countValues);
+                $offerIds = $this->getOffersByXmlIds($xmlIds);
             }
             
             $countOffers = count($offerIds);
@@ -171,19 +171,25 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
                 //устанавливаем кастрированные объекты по товарам из манзаны
                 if (\is_array($allItems) && !empty($allItems)) {
                     foreach ($allItems as $item) {
-                        $this->sortItems['manzana_' . $item['XML_ID']] = ['PRICE' => (float)$item['PRICE']];
-                        
-                        $product = new Product();
-                        $product->withActive(true);
-                        $product->withName($item['NAME']);
-                        $product->withXmlId($item['XML_ID']);
-                        $this->allProducts['manzana_' . $item['XML_ID']] = $product;
-                        
-                        $offer = new Offer();
-                        $offer->setProduct($product);
-                        $offer->withPrice((float)$item['PRICE']);
-                        $offer->withXmlId($item['XML_ID']);
-                        $this->arResult['OFFERS']['manzana_' . $item['XML_ID']] = $offer;
+                        if (!array_key_exists($item['XML_ID'], $offerIds)) {
+                            $this->sortItems['manzana_' . $item['XML_ID']] = ['PRICE' => (float)$item['PRICE']];
+                            
+                            $product = new Product();
+                            $product->withId(0);
+                            $product->withActive(true);
+                            $product->withName($item['NAME']);
+                            $product->withXmlId($item['XML_ID']);
+                            $this->allProducts['manzana_' . $item['XML_ID']] = $product;
+                            
+                            $offer = new Offer();
+                            $offer->withId(0);
+                            $offer->setProduct($product);
+                            $offer->withPrice((float)$item['PRICE']);
+                            $offer->withXmlId($item['XML_ID']);
+                            $this->arResult['OFFERS']['manzana_' . $item['XML_ID']] = $offer;
+                            
+                            $product->setOffers([$offer]);
+                        }
                     }
                 }
                 //делаем добор если товаров из манзаны не хватает
@@ -198,13 +204,12 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
                 }
             }
             
-            
             $cache->endDataCache(
                 [
-                    'sortItems' => $this->sortItems,
+                    'sortItems'   => $this->sortItems,
                     'allProducts' => $this->allProducts,
-                    'itemIds' => $this->itemIds,
-                    'offerIds' => $offerIds,
+                    'itemIds'     => $this->itemIds,
+                    'offerIds'    => $offerIds,
                 ]
             ); // записываем в кеш
         }
@@ -253,13 +258,13 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
     }
     
     /**
-     * @return array
      * @throws ServiceNotFoundException
      * @throws InvalidIdentifierException
      * @throws ApplicationCreateException
      * @throws ConstraintDefinitionException
      * @throws NotAuthorizedException
      * @throws ServiceCircularReferenceException
+     * @return array
      */
     private function getXmlIdsByManzana() : array
     {
@@ -270,8 +275,7 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
         $user = $this->curUserProvider->getUserRepository()->find($this->arParams['USER_ID']);
         if ($user !== null && !empty($user->getPersonalPhone())) {
             try {
-                //$manzanaContactId = $this->manzanaService->getContactIdByCurUser($user);
-                $manzanaContactId = '522AF888-D711-E511-BC7A-001DD8B72ABC';
+                $manzanaContactId = $this->manzanaService->getContactIdByCurUser($user);
                 if (!empty($manzanaContactId)) {
                     $cheques = $this->manzanaService->getCheques($manzanaContactId);
                     if (!empty($cheques)) {
@@ -295,7 +299,6 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
                                                 ];
                                         }
                                     }
-                                    
                                 }
                             } catch (ManzanaServiceException $e) {
                             }
@@ -308,7 +311,6 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
                                 }
                             }
                         }
-                        
                     }
                 }
             } catch (ManzanaServiceException $e) {
@@ -319,6 +321,7 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
         $countValues = array_count_values($allXmlId);
         //сортирповка по убыванию
         arsort($countValues, SORT_NUMERIC);
+        
         //получаем количество элементов по ограничению
         if (count($countValues) > $this->arParams['COUNT_ITEMS']) {
             $chunkItems  = array_chunk($countValues, $this->arParams['COUNT_ITEMS'], true);
@@ -337,7 +340,6 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
         
         return [
             $xmlIds,
-            $countValues,
             $allItems,
         ];
     }
@@ -345,17 +347,16 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
     /**
      * @param array $xmlIds
      *
-     * @param array $countValues
-     *
      * @return array
      */
-    private function getOffersByXmlIds(array $xmlIds, array $countValues) : array
+    private function getOffersByXmlIds(array $xmlIds) : array
     {
         $offerIds        = [];
         $query           = new OfferQuery();
         $offerCollection = $query->withSelect(
             [
                 'ID',
+                'XML_ID',
                 'PRICE',
             ]
         )->withFilter(
@@ -365,7 +366,7 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
         )->exec();
         /** @var Offer $offer */
         foreach ($offerCollection as $offer) {
-            $offerIds[]                       = $offer->getId();
+            $offerIds[$offer->getXmlId()]     = $offer->getId();
             $this->sortItems[$offer->getId()] = ['PRICE' => $offer->getPrice()];
         }
         
