@@ -201,6 +201,15 @@ class User implements UserInterface
     protected $phoneConfirmed = false;
 
     /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("UF_SHOP")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $shopCode = '';
+
+    /**
      * @var null|DateTime
      * @Serializer\Type("bitrix_date_time")
      * @Serializer\SerializedName("DATE_REGISTER")
@@ -934,5 +943,25 @@ class User implements UserInterface
     public function isFastOrderUser() : bool
     {
         return (strpos($this->getEmail(), '@fastorder.ru') !== false);
+    }
+
+    /**
+     * @return string
+     */
+    public function getShopCode() : string
+    {
+        return $this->shopCode ?? '';
+    }
+
+    /**
+     * @param string $shopCode
+     *
+     * @return User
+     */
+    public function setShopCode(string $shopCode) : User
+    {
+        $this->shopCode = $shopCode;
+
+        return $this;
     }
 }

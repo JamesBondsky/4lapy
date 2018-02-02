@@ -266,6 +266,12 @@ class UserService implements
         $client->email              = $user->getEmail();
         $client->plLogin            = $user->getLogin();
         $client->plRegistrationDate = $user->getManzanaDateRegister();
+        if ($user->isEmailConfirmed() && $user->isPhoneConfirmed()) {
+            // если e-mail и телефон подтверждены - отмечаем, что анкета актуальна и делаем карту бонусной
+            // - так делалось по умолчанию на старом сайте
+            $client->setActualContact(true);
+            $client->setLoyaltyProgramContact(true);
+        }
     }
     
     /**

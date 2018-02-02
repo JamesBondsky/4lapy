@@ -201,12 +201,25 @@ class Client
     public $preferredContactMethodCode;
     
     /**
+     * см. hasChildrenCode
+     * (ML зачем-то возвращает два элемента: haschildrencode и HasChildrenCode)
+     *
      * @XmlElement(cdata=false)
      * @Type("string")
      * @SerializedName("haschildrencode")
      */
     public $hashChildrenCode;
-    
+
+    /**
+     * Поле haschildrencode отвечает за актуальность контакта
+     * 200000 - контакт актуален
+     *
+     * @XmlElement(cdata=false)
+     * @Type("string")
+     * @SerializedName("HasChildrenCode")
+     */
+    public $hasChildrenCode;
+
     /**
      * @Type("int")
      * @SerializedName("pl_businessbranch")
@@ -406,15 +419,28 @@ class Client
     public $ffOthers;
     
     /**
-     * Поле haschildrencode отвечает за актуальность контакта
-     * 200000 - контакт актуален
+     * Код места активации карты
+     *   UpdatedByСlient - ЛК покупателя (привязка карты в личном кабинете)
+     *   Ishop - Страница регистрации карты
+     *   UpdatedByСassa - ЛК магазина (касса)
+     *   UpdatedByTab - ЛК магазина (планшет)
+     *   UpdatedByanketa - ЛК магазина (ПК управляющего)
      *
-     * @XmlElement(cdata=false)
      * @Type("string")
-     * @SerializedName("HasChildrenCode")
+     * @SerializedName("ff_shopofactivation")
      */
-    public $hasChildrenCode;
-    
+    public $shopOfActivation;
+
+    /**
+     * Код места регистрации карты
+     *   Ishop - Страница регистрации карты, ЛК покупателя (привязка карты в личном кабинете)
+     *   Код магазина – RXXX - ЛК магазина
+     *
+     * @Type("string")
+     * @SerializedName("ff_shopregistration")
+     */
+    public $shopRegistration;
+
     /**
      * @Type("ArrayCollection<FourPaws\External\Manzana\Model\Card>")
      * @XmlList(entry="Card", inline=true)
@@ -422,13 +448,27 @@ class Client
      */
     public $cards;
 
-    public function setActualContact(bool $state = true)
+    /**
+     * @param bool $isActualContact
+     * @return Client
+     */
+    public function setActualContact(bool $isActualContact = true) : Client
     {
-        $this->hasChildrenCode = $state ? 200000 : 1;
+        $this->hasChildrenCode = $isActualContact ? 200000 : 1;
+        // для совместимости
+        $this->hashChildrenCode = $this->hasChildrenCode;
+
+        return $this;
     }
 
-    public function setLoyaltyProgramContact(bool $state = true)
+    /**
+     * @param bool $isLoyaltyProgramContact
+     * @return Client
+     */
+    public function setLoyaltyProgramContact(bool $isLoyaltyProgramContact = true) : Client
     {
-        $this->familyStatusCode = $state ? 2 : 1;
+        $this->familyStatusCode = $isLoyaltyProgramContact ? 2 : 1;
+
+        return $this;
     }
 }

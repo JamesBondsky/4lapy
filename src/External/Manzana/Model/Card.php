@@ -273,7 +273,7 @@ class Card
     /**
      * @return bool
      */
-    public function isActualContact()
+    public function isActualContact() : bool
     {
         return (int)$this->hashChildrenCode === 200000;
     }
@@ -281,7 +281,7 @@ class Card
     /**
      * @return bool
      */
-    public function isLoyaltyProgramContact()
+    public function isLoyaltyProgramContact() : bool
     {
         return (int)$this->familyStatusCode === 2;
     }
@@ -289,7 +289,7 @@ class Card
     /**
      * @return bool
      */
-    public function isBonusCard()
+    public function isBonusCard() : bool
     {
         // товарищи из манзаны гарантируют: ненулевой pl_debet <=> карта бонусная
         return (double)$this->plDebet > 0;

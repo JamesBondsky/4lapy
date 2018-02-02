@@ -51,7 +51,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
     /** @var \Bitrix\Main\DB\Connection $connection */
     protected $connection;
     /** @var bool $isTransactionStarted */
-    private $isTransactionStarted;
+    private $isTransactionStarted = false;
     /** @var string $canAccess */
     protected $canAccess = '';
 
@@ -94,8 +94,8 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
             } catch (\Exception $exception) {}
         }
 
-        $params['CACHE_TYPE'] = isset($params['CACHE_TYPE']) ? $params['CACHE_TYPE'] : 'A';
-        $params['CACHE_TIME'] = isset($params['CACHE_TIME']) ? $params['CACHE_TIME'] : 3600;
+        $params['CACHE_TYPE'] = $params['CACHE_TYPE'] ?? 'A';
+        $params['CACHE_TIME'] = $params['CACHE_TIME'] ?? 3600;
 
         $params['SEND_USER_REGISTRATION_SMS'] = isset($params['SEND_USER_REGISTRATION_SMS']) && $params['SEND_USER_REGISTRATION_SMS'] === 'N' ? 'N' : 'Y';
         $params['REGISTRATION_SMS_TEXT'] = $params['REGISTRATION_SMS_TEXT'] ?? '';
@@ -104,6 +104,8 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
             Теперь Вам доступны все возможности личного кабинета! Номер вашего телефона является логином, пароль для доступа #PASSWORD#. 
             Для авторизации перейдите по ссылке http://4lapy.ru/personal/.';
         }
+
+        $params['SHOP_OF_ACTIVATION'] = isset($params['SHOP_OF_ACTIVATION']) ? trim($params['SHOP_OF_ACTIVATION']) : 'UpdatedByСassa';
 
         $params = parent::onPrepareComponentParams($params);
 
@@ -143,15 +145,11 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
      */
     protected function prepareAction()
     {
-        $this->arResult['CAN_ACCESS'] = $this->checkPermissions() ? 'Y' : 'N';
-
         $action = 'initialLoad';
 
-        if ($this->arResult['CAN_ACCESS'] === 'Y') {
-            if ($this->request->get('action') === 'postForm') {
-                if ($this->request->get('formName') === 'cardRegistration') {
-                    $action = 'postForm';
-                }
+        if ($this->request->get('action') === 'postForm') {
+            if ($this->request->get('formName') === 'cardRegistration') {
+                $action = 'postForm';
             }
         }
 
@@ -164,13 +162,6 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
         if (is_callable(array($this, $action.'Action'))) {
             call_user_func(array($this, $action.'Action'));
         }
-    }
-
-    protected function checkPermissions()
-    {
-        $result = true;
-
-        return $result;
     }
 
     /**
@@ -388,6 +379,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
                 }
 
                 if ($validateResultData['validate']) {
+                    // validationResultCode == 2
                     if ($validateResultData['validate']['_IS_CARD_OWNED_'] === 'Y') {
                         $searchCardResult = $this->searchCardByNumber($cardNumber);
                         $searchCardResultData = $searchCardResult->getData();
@@ -536,6 +528,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
             $validate['VALIDATION_RESULT'] = trim($validateRaw->validationResult);
             // 0 - ok; 1 - карта не существует; 2 - карта принадлежит другому клиенту
             $validate['VALIDATION_RESULT_CODE'] = (int)$validateRaw->validationResultCode;
+            // validationResultCode == 2
             $validate['_IS_CARD_OWNED_'] = $validateRaw->isCardOwned() ? 'Y' : 'N';
             $validate['_IS_CARD_NOT_EXISTS_'] = $validateRaw->isCardNotExists() ? 'Y' : 'N';
         }
@@ -1004,6 +997,38 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
     }
 
     /**
+     * @return string
+     */
+    protected function getShopOfActivation()
+    {
+        return $this->arParams['SHOP_OF_ACTIVATION'];
+    }
+
+    /**
+     * @return string
+     */
+    protected function getShopRegistration()
+    {
+        $currentUser = $this->searchUserById($this->arParams['USER_ID']);
+        return $currentUser ? $currentUser->getShopCode() : '';
+    }
+
+
+    /**
+     * Следует ли устанавливать флаг актуальности контакта
+     *
+     * @return bool
+     */
+    private function shouldSetActualContact()
+    {
+        // Если карта регистрируется через
+        // ЛК магазина (касса) или ЛК магазина (планшет),
+        // то автоматически устанавливаем флаг актуальности контакта.
+        // Возможно, в будущем по каким-то другим условиям нужно будет определять
+        return in_array($this->getShopOfActivation(), ['UpdatedByTab', 'UpdatedByСassa']);
+    }
+
+    /**
      * @param User $user
      * @return Result
      */
@@ -1043,14 +1068,20 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
                     if ($contactId !== '') {
                         $manzanaClient->contactId = $contactId;
                     }
-                    $manzanaClient->setActualContact(true);
-// !!!
-// Также в старой реализации передавались поля:
-// ff_shopofactivation = UpdatedByСassa,
-// ff_shopregistration = символьный код магазина (связь UF_SHOP),
-// но в объекте Client этих полей нет
-// !!!
-
+                    // Код места активации карты
+                    $val = $this->getShopOfActivation();
+                    if ($val !== '') {
+                        $manzanaClient->shopOfActivation = $val;
+                    }
+                    // Код места регистрации карты (от юзера, заданного в праметрах компонента определяется)
+                    $val = $this->getShopRegistration();
+                    if ($val !== '') {
+                        $manzanaClient->shopRegistration = $val;
+                    }
+                    // автоматическая установка флага актуальности контакта
+                    if ($this->shouldSetActualContact()) {
+                        $manzanaClient->setActualContact(true);
+                    }
                     $manzanaService->updateContact($manzanaClient);
                 } catch (\Exception $exception) {
                     $result->addError(
