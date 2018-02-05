@@ -190,7 +190,6 @@ class ElementPropertyConditionUserType extends CUserTypeString
 
 
         $currentValue = self::normalizeValue($arHtmlControl['VALUE']);
-        dump($currentValue);
         $propertyId = $currentValue[self::VALUE_PROP_ID];
         $propertyValue = $currentValue[self::VALUE_PROP_VALUE];
 
