@@ -28,8 +28,8 @@ class User implements UserInterface
      * @var int
      * @Serializer\Type("integer")
      * @Serializer\SerializedName("ID")
-     * @Serializer\Groups(groups={"read","update","delete"})
-     * @Assert\NotBlank(groups={"read","update","delete"})
+     * @Serializer\Groups(groups={"read","delete"})
+     * @Assert\NotBlank(groups={"read","delete"})
      * @Assert\GreaterThanOrEqual(value="1",groups={"read","update","delete"})
      */
     protected $id = 0;
@@ -75,7 +75,7 @@ class User implements UserInterface
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("PASSWORD")
-     * @Serializer\Groups(groups={"create","update"})
+     * @Serializer\Groups(groups={"create"})
      * @Serializer\SkipWhenEmpty()
      * @Assert\NotBlank(groups={"create"})
      */
@@ -142,7 +142,7 @@ class User implements UserInterface
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("CHECKWORD")
-     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\Groups(groups={"create","read"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $checkWord = '';

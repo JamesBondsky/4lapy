@@ -140,7 +140,7 @@ class CardByContractCards
     /**
      * @var \DateTimeImmutable
      * @XmlElement(cdata=false)
-     * @Type("DateTimeImmutable<'Y-m-d\TH:i:s'>")
+     * @Type("manzana_date_time_short")
      * @SerializedName("pl_expirydate")
      */
     public $expireDate;
@@ -161,7 +161,7 @@ class CardByContractCards
     
     /**
      * @XmlElement(cdata=false)
-     * @Type("DateTimeImmutable<'Y-m-d\TH:i:s.u'>")
+     * @Type("manzana_date_time_short")
      * @SerializedName("pl_effectdate")
      */
     public $effectDate;
@@ -224,5 +224,13 @@ class CardByContractCards
     public function getExpireDate() : \DateTimeImmutable
     {
         return $this->expireDate;
+    }
+    
+    /**
+     * @return bool
+     */
+    public function isActive() : bool
+    {
+        return $this->status === 2;
     }
 }
