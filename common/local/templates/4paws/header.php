@@ -116,9 +116,12 @@ $markup = PawsApplication::markup();
                             'CACHE_TIME'           => 3600,
                             'CACHE_TYPE'           => 'A',
                             'MAX_DEPTH_LEVEL'      => '4',
-                            'TEMPLATE_NO_CACHE'    => 'N',
                             // N - шаблон кэшируется
+                            'TEMPLATE_NO_CACHE'    => 'N',
+                            // количество популярных брендов в пункте меню "Товары по питомцу"
                             'BRANDS_POPULAR_LIMIT' => '6',
+                            // количество популярных брендов в пункте меню "По бренду"
+                            'BRANDS_MENU_POPULAR_LIMIT' => '8',
                         ],
                         null,
                         [
