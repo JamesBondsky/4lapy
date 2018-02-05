@@ -77,12 +77,11 @@ class LocationTable extends Table
             );
 
             $ret->addReplacedAliases(['LOCATION_ID' => 'ID']);
-
-            return $ret->fetch();
+            return ['result' => $ret->fetch()];
         };
 
         return (new BitrixCache())
             ->withId(__METHOD__ . $locationCode)
-            ->resultOf($getDpdLocation);
+            ->resultOf($getDpdLocation)['result'];
     }
 }

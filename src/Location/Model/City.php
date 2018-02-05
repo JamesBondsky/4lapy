@@ -6,6 +6,7 @@ use Bitrix\Main\Entity\DataManager;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Model\HlbItemBase;
+use FourPaws\BitrixOrm\Model\Interfaces\ActiveReadModelInterface;
 use FourPaws\Location\Exception\CityNotFoundException;
 use FourPaws\Location\Query\CityQuery;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -18,7 +19,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  *
  * @package FourPaws\BitrixOrm\Model
  */
-class City extends HlbItemBase
+class City extends HlbItemBase implements ActiveReadModelInterface
 {
     protected $UF_LOCATION = [];
 

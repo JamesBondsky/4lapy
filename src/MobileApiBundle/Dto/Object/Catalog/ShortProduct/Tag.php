@@ -1,17 +1,36 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct;
 
+use JMS\Serializer\Annotation as Serializer;
+
+/**
+ * Class Tag
+ *
+ * @package FourPaws\MobileApiBundle\Dto\Object\Catalog\ShortProduct
+ *
+ * ОбъектКаталога.КраткийТовар.Тег
+ */
 class Tag
 {
     /**
      * Идентификатор тега
      * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("id")
      */
     protected $id;
 
     /**
-     * Полный путь до изображения – графического представления тега
+     * Полный путь до изображения
+     * графического представления тега
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("img")
+     *
      * @var string
      */
     protected $img;

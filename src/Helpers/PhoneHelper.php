@@ -7,7 +7,7 @@ use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 class PhoneHelper
 {
     const FORMAT_DEFAULT = '+7 %s%s%s %s%s%s-%s%s-%s%s';
-    
+
     const FORMAT_URL     = '8%s%s%s%s%s%s%s%s%s%s';
     
     /**
@@ -62,7 +62,7 @@ class PhoneHelper
     {
         try {
             $normalized = self::normalizePhone($phone);
-            
+
             return vsprintf($format, str_split($normalized));
         } catch (WrongPhoneNumberException $e) {
             return $phone;

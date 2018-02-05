@@ -79,7 +79,7 @@ class IndexerReindex extends Command
         if ($force) {
             $output->writeln('FORCE MODE: Catalog index will be destroyed and created again!');
         }
-        $noFilter = $input->getOption(self::OPT_FORCE) ?: false;
+        $noFilter = $input->getOption(self::OPT_NO_FILTER) ?: false;
 
         if ($this->searchService->getIndexHelper()->createCatalogIndex($force)) {
             $output->writeln(

@@ -2,8 +2,12 @@
 
 namespace FourPaws\Catalog\Collection;
 
+use FourPaws\App\Application;
 use FourPaws\BitrixOrm\Collection\IblockElementCollection;
 use FourPaws\Catalog\Model\Offer;
+use FourPaws\StoreBundle\Collection\StockCollection;
+use FourPaws\StoreBundle\Collection\StoreCollection;
+use FourPaws\StoreBundle\Service\StoreService;
 
 class OfferCollection extends IblockElementCollection
 {
@@ -16,5 +20,4 @@ class OfferCollection extends IblockElementCollection
             yield new Offer($fields);
         }
     }
-
 }
