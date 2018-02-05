@@ -66,7 +66,6 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
-     * @throws NotAuthorizedException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws LoaderException
@@ -82,8 +81,14 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
         $this->setFrameMode(true);
         
         if ($this->startResultCache()) {
-            $this->arResult['BONUS'] = $this->bonusService->getCurUserBonusInfo();
-            
+            try {
+                $this->arResult['BONUS'] = $this->bonusService->getCurUserBonusInfo();
+            } catch (NotAuthorizedException $e) {
+                /** запрашиваем авторизацию */
+                \define('NEED_AUTH', true);
+                return null;
+            }
+    
             $this->includeComponentTemplate();
         }
         

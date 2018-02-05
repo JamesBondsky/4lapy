@@ -13,6 +13,7 @@ use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\PersonalBundle\Service\BonusService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -59,16 +60,23 @@ class BonusController extends Controller
                 ['errors' => ['emptyData' => 'Не указан номер карты']]
             );
         }
-        
-        if ($this->bonusService->activateBonusCard($card)) {
-            return JsonSuccessResponse::create(
-                'Карта привязана',
-                200,
-                [],
-                ['reload' => true]
+    
+        try {
+            if ($this->bonusService->activateBonusCard($card)) {
+                return JsonSuccessResponse::create(
+                    'Карта привязана',
+                    200,
+                    [],
+                    ['reload' => true]
+                );
+            }
+        } catch (NotAuthorizedException $e) {
+            return JsonErrorResponse::createWithData(
+                'Необходимо авторизоваться',
+                ['errors' => ['notAuthorized' => 'Не указан номер карты']]
             );
         }
-        
+    
         return JsonErrorResponse::createWithData(
             'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
             ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]

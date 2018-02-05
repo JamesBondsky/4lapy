@@ -6,11 +6,13 @@
 
 namespace FourPaws\PersonalBundle\Service;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
+use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
-use FourPaws\External\Manzana\Exception\ContactNotFoundException;
-use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\External\Manzana\Exception\ManzanaException;
 use FourPaws\External\Manzana\Model\CardByContractCards;
 use FourPaws\External\Manzana\Model\Client;
@@ -21,6 +23,9 @@ use FourPaws\PersonalBundle\Entity\UserBonus;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use FourPaws\UserBundle\Service\UserService;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -37,20 +42,31 @@ class BonusService
      */
     public $manzanaService;
     
+    /** @var LoggerInterface */
+    private $logger;
+    
     /**
      * ReferralService constructor.
      *
      * @param ManzanaService $manzanaService
      *
+     * @throws \RuntimeException
      * @throws ServiceNotFoundException
      */
     public function __construct(ManzanaService $manzanaService)
     {
         $this->manzanaService = $manzanaService;
+        $this->logger         = LoggerFactory::create('manzana');
     }
     
     /**
-     * @return \FourPaws\PersonalBundle\Entity\UserBonus
+     * @return UserBonus
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws ApplicationCreateException
+     * @throws NotAuthorizedException
      */
     public function getCurUserBonusInfo() : UserBonus
     {
@@ -58,15 +74,7 @@ class BonusService
         $bonus->setEmpty(true);
         try {
             /** @var Contact $contact */
-            //$contact = $this->manzanaService->getContactByCurUser();
-            //$manzanaContactId = '522AF888-D711-E511-BC7A-001DD8B72ABC';
-            //$phone            = '79067403662';
-            //$manzanaContactId = 'FDCCE07B-6B26-4A61-82BF-260D91D144C1';
-            $phone = '79852022811';
-            //$manzanaContactId = 'C54779A4-F538-4C8F-AE73-9F84782FEF4C';
-            //$phone = '79104839344';
-            //$contact = $this->manzanaService->getContactByContactId($manzanaContactId);
-            $contact = $this->manzanaService->getContactByPhone($phone);
+            $contact = $this->manzanaService->getContactByCurUser();
             
             if ($contact->isLoyaltyProgramContact()) {
                 /** @var ArrayCollection $cards */
@@ -105,8 +113,18 @@ class BonusService
                     }
                 }
             }
-        } catch (ManzanaServiceException $e) {
-        } catch (ContactNotFoundException $e) {
+        } catch (ManzanaServiceContactSearchMoreOneException $e) {
+            /** @var UserService $userService */
+            $userService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
+            $phone       = $userService->getCurrentUser()->getPersonalPhone();
+            $this->logger->info('Найдено больше одного пользователя в манзане по телефону ' . $phone);
+        } catch (ManzanaServiceContactSearchNullException $e) {
+            /** @var UserService $userService */
+            $userService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
+            $phone       = $userService->getCurrentUser()->getPersonalPhone();
+            $this->logger->info('Не найдено пользователей в манзане по телефону ' . $phone);
+        } /** сбрасываем исключения связанные с ошибкой сервиса и возвращаем пустой объект */
+        catch (ManzanaServiceException $e) {
         }
         
         return $bonus;
@@ -121,20 +139,36 @@ class BonusService
      * @throws ApplicationCreateException
      * @throws ConstraintDefinitionException
      * @throws ServiceCircularReferenceException
+     * @throws NotAuthorizedException
      */
     public function activateBonusCard(string $bonusCard) : bool
     {
-        $contact = new Client();
+        $contact             = new Client();
         $contact->cardnumber = $bonusCard;
         try {
             $contact->contactId = $this->manzanaService->getContactByCurUser();
             $this->manzanaService->updateContact($contact);
+            
             return true;
-        } catch (ManzanaServiceException $e) {
+            /** сбрасываем исключения связанные с маназной если не найден пользователь или ошибка сервиса и возвращаем пустой объект */
+        } catch (ManzanaServiceContactSearchMoreOneException $e) {
+            /** @var UserService $userService */
+            $userService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
+            $this->logger->info(
+                'Найдено больше одного пользователя в манзане по телефону ' . $userService->getCurrentUser()
+                                                                                          ->getPersonalPhone()
+            );
+        } catch (ManzanaServiceContactSearchNullException $e) {
+            /** @var UserService $userService */
+            $userService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
+            $this->logger->info(
+                'Не найдено пользователей в манзане по телефону ' . $userService->getCurrentUser()->getPersonalPhone()
+            );
+        } /** глушим остальные ошибки по манзане и обрабытываем в контроллере - финальный return */
+        catch (ManzanaServiceException $e) {
         } catch (ManzanaException $e) {
-        } catch (NotAuthorizedException $e) {
         }
-    
+        
         return false;
     }
 }
