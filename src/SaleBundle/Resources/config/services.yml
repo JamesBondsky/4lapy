@@ -21,3 +21,9 @@ services:
 
     FourPaws\SaleBundle\Service\BasketViewService:
         public: true
+
+    FourPaws\SaleBundle\Service\OrderService:
+        class: FourPaws\SaleBundle\Service\OrderService
+        public: true
+        calls:
+          - [setContainer, ['@service_container']]

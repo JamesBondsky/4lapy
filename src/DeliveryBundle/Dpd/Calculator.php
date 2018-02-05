@@ -7,10 +7,17 @@ use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\Loader;
 
+use FourPaws\App\Application;
+use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\DeliveryBundle\Entity\StockResult;
+use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Service\DeliveryServiceHandlerBase;
 use FourPaws\Location\LocationService;
-use Ipolh\DPD\Delivery\DPD;
+use FourPaws\SaleBundle\Service\BasketService;
+use FourPaws\StoreBundle\Collection\StoreCollection;
+use FourPaws\StoreBundle\Entity\Store;
+use FourPaws\StoreBundle\Service\StoreService;
 
 if (!Loader::includeModule('ipol.dpd')) {
     class Calculator
@@ -19,6 +26,8 @@ if (!Loader::includeModule('ipol.dpd')) {
 
     return;
 }
+
+use Ipolh\DPD\Delivery\DPD;
 
 class Calculator extends DPD
 {
@@ -29,35 +38,122 @@ class Calculator extends DPD
 
     public function Calculate($profile, $arConfig, $arOrder, $STEP, $TEMP = false)
     {
-        $result = parent::Calculate($profile, $arConfig, $arOrder, $STEP, $TEMP);
+        $serviceContainer = Application::getInstance()->getContainer();
+        /** @var BasketService $basketService */
+        $basketService = $serviceContainer->get(BasketService::class);
+        /** @var StoreService $storeService */
+        $storeService = $serviceContainer->get('store.service');
+        /** @var DeliveryService $deliveryService */
+        $deliveryService = $serviceContainer->get('delivery.service');
 
-        $profile = $profile === 'PICKUP' ? DeliveryService::DPD_PICKUP_CODE : DeliveryService::DPD_DELIVERY_CODE;
+        $profileCode = $profile === 'PICKUP' ? DeliveryService::DPD_PICKUP_CODE : DeliveryService::DPD_DELIVERY_CODE;
+
+        try {
+            $deliveryId = $deliveryService->getDeliveryIdByCode($profileCode);
+        } catch (NotFoundException $e) {
+            $result = [
+                'RESULT' => 'ERROR',
+                'TEXT'   => 'Доставка не найдена',
+            ];
+
+            return $result;
+        }
+
+        /**
+         * Если есть склады в данном местоположении, то доставка производится с них,
+         * иначе - со складов Мск
+         */
+        $arOrder['LOCATION_FROM'] = $arOrder['LOCATION_TO'];
+        $storesAvailable = $storeService->getByLocation($arOrder['LOCATION_TO'], StoreService::TYPE_STORE);
+        if ($storesAvailable->isEmpty()) {
+            $arOrder['LOCATION_FROM'] = LocationService::LOCATION_CODE_MOSCOW;
+            $storesAvailable = $storeService->getByLocation(
+                LocationService::LOCATION_CODE_MOSCOW,
+                StoreService::TYPE_STORE
+            );
+        }
+        $storesDelay = new StoreCollection();
+
+        $result = parent::Calculate($profile, $arConfig, $arOrder, $STEP, $TEMP);
+        if ($result['RESULT'] === 'ERROR') {
+            return $result;
+        }
 
         if (!empty($arOrder['ITEMS'])) {
-            $offerData = [];
-            foreach ($arOrder['ITEMS'] as $item) {
-                if (!$item['PRODUCT_ID'] || !$item['QUANTITY']) {
-                    continue;
+            $basket = $basketService->getBasket()->getOrderableItems();
+            if ($offers = DeliveryServiceHandlerBase::getOffers(
+                $arOrder['LOCATION_FROM'],
+                $basket
+            )) {
+                $stockResult = DeliveryServiceHandlerBase::getStocks($basket, $offers, $storesAvailable, $storesDelay);
+                if (!$stockResult->getUnavailable()->isEmpty()) {
+                    $result = [
+                        'RESULT' => 'ERROR',
+                        'TEXT'   => 'Присутствуют товары не в наличии',
+                    ];
+
+                    return $result;
                 }
-                $offerData[$item['PRODUCT_ID']] = $item['QUANTITY'];
+
+                /**
+                 * Если есть отложенные товары, то добавляем к дате доставки DPD
+                 * срок поставки на склад по графику
+                 */
+                if (!$stockResult->getDelayed()->isEmpty()) {
+                    $result['DPD_TARIFF']['DAYS'] += $stockResult->getDeliveryDate()->diff(new \DateTime())->days;
+                }
+                /**
+                 * Получаем пункты самовывоза DPD
+                 */
+                if ($profileCode === DeliveryService::DPD_PICKUP_CODE) {
+                    $shipment = self::$shipment;
+                    if ($shipment instanceof Shipment) {
+                        $terminals = $shipment->getDpdTerminals();
+                        $stores = new StoreCollection();
+                        foreach ($terminals as $terminal) {
+                            $store = new Store();
+                            $store->setTitle($terminal['NAME'])
+                                  ->setLocation($arOrder['LOCATION_TO'])
+                                  ->setAddress($terminal['ADDRESS_SHORT'])
+                                  ->setCode($terminal['CODE'])
+                                  ->setXmlId($terminal['CODE'])
+                                  ->setLatitude($terminal['LATITUDE'])
+                                  ->setLongitude($terminal['LONGITUDE'])
+                                  ->setLocationId($terminal['LOCATION_ID'])
+                                  ->setSchedule($terminal['SCHEDULE_SELF_DELIVERY'])
+                                  ->setDescription($terminal['ADDRESS_DESCR']);
+                            $stores->add($store);
+                        }
+                        /** @var StockResult $item */
+                        foreach ($stockResult as $item) {
+                            $item->setStores($stores);
+                        }
+                    }
+                }
             }
-            $stockData = DeliveryServiceHandlerBase::getStocks(LocationService::LOCATION_CODE_MOSCOW, $offerData);
-            /* @todo проверка остатков для DPD */
         }
 
         $interval = explode('-', Option::get(IPOLH_DPD_MODULE, 'DELIVERY_TIME_PERIOD'));
-        if ($profile == DeliveryService::DPD_DELIVERY_CODE) {
+        /* по ТЗ - дата доставки DPD для зоны 4 рассчитывается как "то, что вернуло DPD" + 1 день */
+        if ($profileCode == DeliveryService::DPD_DELIVERY_CODE &&
+            $deliveryService->getDeliveryZoneCodeByLocation(
+                $arOrder['LOCATION_TO'],
+                $deliveryId
+            ) === DeliveryService::ZONE_4
+        ) {
             $result['DPD_TARIFF']['DAYS']++;
         }
 
-        $_SESSION['DPD_DATA'][$profile] = [
-            'INTERVALS' => [
+        $_SESSION['DPD_DATA'][$profileCode] = [
+            'INTERVALS'    => [
                 [
                     'FROM' => $interval[0],
                     'TO'   => $interval[1],
                 ],
             ],
-            'DAYS'      => $result['DPD_TARIFF']['DAYS'],
+            'DAYS_FROM'    => $result['DPD_TARIFF']['DAYS'],
+            'DAYS_TO'      => $result['DPD_TARIFF']['DAYS'] + 10,
+            'STOCK_RESULT' => $stockResult ?? new StockResultCollection(),
         ];
 
         $result['VALUE'] = floor($result['VALUE']);
@@ -76,7 +172,7 @@ class Calculator extends DPD
         if (!self::$shipment || $arOrder) {
             self::$shipment = new Shipment();
             self::$shipment
-                ->setSender(Utils::getSaleLocationId())
+                ->setSender($arOrder['LOCATION_FROM'])
                 ->setReceiver($arOrder['LOCATION_TO'])
                 ->setItems($arOrder['ITEMS'], $arOrder['PRICE'], $defaultDimensions);
         }
@@ -86,6 +182,17 @@ class Calculator extends DPD
 
     public function Compability($arOrder, $arConfig)
     {
+        /** @var StoreService $storeService */
+        $storeService = Application::getInstance()->getContainer()->get('store.service');
+        /**
+         * Если есть склады в данном местоположении, то доставка производится с них,
+         * иначе - со складов Мск
+         */
+        $arOrder['LOCATION_FROM'] = $arOrder['LOCATION_TO'];
+        $stores = $storeService->getByLocation($arOrder['LOCATION_TO'], StoreService::TYPE_STORE);
+        if ($stores->isEmpty()) {
+            $arOrder['LOCATION_FROM'] = LocationService::LOCATION_CODE_MOSCOW;
+        }
         $shipment = self::makeShipment($arOrder);
 
         if ($shipment->isPossibileSelfDelivery()) {
