@@ -50,7 +50,7 @@ class Client
     public $lastName;
     
     /**
-     * @Type("DateTimeImmutable<'Y-m-d\TH:i:s'>")
+     * @Type("manzana_date_time_short")
      * @SerializedName("birthdate")
      */
     public $birthDate;
@@ -63,8 +63,11 @@ class Client
     public $genderCode;
     
     /**
+     * Поле familystatuscode отвечает за участие контакта в бонусной программе
+     * 2 - контакт участвует в бонусной программе
+     *
      * @XmlElement(cdata=false)
-     * @Type("string")
+     * @Type("int")
      * @SerializedName("familystatuscode")
      */
     public $familyStatusCode;
@@ -198,11 +201,24 @@ class Client
     public $preferredContactMethodCode;
     
     /**
+     * см. hasChildrenCode
+     * (ML зачем-то возвращает два элемента: haschildrencode и HasChildrenCode)
+     *
      * @XmlElement(cdata=false)
-     * @Type("string")
+     * @Type("int")
      * @SerializedName("haschildrencode")
      */
     public $hashChildrenCode;
+    
+    /**
+     * Поле haschildrencode отвечает за актуальность контакта
+     * 200000 - контакт актуален
+     *
+     * @XmlElement(cdata=false)
+     * @Type("int")
+     * @SerializedName("HasChildrenCode")
+     */
+    public $hasChildrenCode;
     
     /**
      * @Type("int")
@@ -225,7 +241,7 @@ class Client
     public $plShopsName;
     
     /**
-     * @Type("DateTimeImmutable<'Y-m-d\TH:i:s'>")
+     * @Type("manzana_date_time_short")
      * @SerializedName("pl_registration_date")
      */
     public $plRegistrationDate;
@@ -245,19 +261,19 @@ class Client
     public $plAddress1Line1StreetTypeName;
     
     /**
-     * @Type("array<float>")
+     * @Type("float")
      * @SerializedName("pl_debet")
      */
     public $plDebet;
     
     /**
-     * @Type("array<float>")
+     * @Type("float")
      * @SerializedName("pl_credit")
      */
     public $plCredit;
     
     /**
-     * @Type("array<float>")
+     * @Type("float")
      * @SerializedName("pl_balance")
      */
     public $plBalance;
@@ -320,7 +336,7 @@ class Client
     public $spousesName;
     
     /**
-     * @Type("DateTimeImmutable<'Y-m-d\TH:i:s'>")
+     * @Type("manzana_date_time_short")
      * @SerializedName("Anniversary")
      */
     public $anniversary;
@@ -338,6 +354,13 @@ class Client
      * @SerializedName("OwnerIdName")
      */
     public $ownerIdName;
+    
+    /**
+     * @XmlElement(cdata=false)
+     * @Type("string")
+     * @SerializedName("cardnumber")
+     */
+    public $cardnumber;
     
     /**
      * @XmlElement(cdata=false)
@@ -403,11 +426,27 @@ class Client
     public $ffOthers;
     
     /**
-     * @XmlElement(cdata=false)
+     * Код места активации карты
+     *   UpdatedByСlient - ЛК покупателя (привязка карты в личном кабинете)
+     *   Ishop - Страница регистрации карты
+     *   UpdatedByСassa - ЛК магазина (касса)
+     *   UpdatedByTab - ЛК магазина (планшет)
+     *   UpdatedByanketa - ЛК магазина (ПК управляющего)
+     *
      * @Type("string")
-     * @SerializedName("HasChildrenCode")
+     * @SerializedName("ff_shopofactivation")
      */
-    public $hasChildrenCode;
+    public $shopOfActivation;
+    
+    /**
+     * Код места регистрации карты
+     *   Ishop - Страница регистрации карты, ЛК покупателя (привязка карты в личном кабинете)
+     *   Код магазина – RXXX - ЛК магазина
+     *
+     * @Type("string")
+     * @SerializedName("ff_shopregistration")
+     */
+    public $shopRegistration;
     
     /**
      * @Type("ArrayCollection<FourPaws\External\Manzana\Model\Card>")
@@ -415,4 +454,46 @@ class Client
      * @SerializedName("Card")
      */
     public $cards;
+    
+    /**
+     * @return bool
+     */
+    public function isActualContact() : bool
+    {
+        return $this->hasChildrenCode === 200000;
+    }
+    
+    /**
+     * @return bool
+     */
+    public function isLoyaltyProgramContact() : bool
+    {
+        return $this->familyStatusCode === 2;
+    }
+    
+    /**
+     * @param bool $isActualContact
+     *
+     * @return Client
+     */
+    public function setActualContact(bool $isActualContact = true) : Client
+    {
+        $this->hasChildrenCode = $isActualContact ? 200000 : 1;
+        // для совместимости
+        $this->hashChildrenCode = $this->hasChildrenCode;
+        
+        return $this;
+    }
+    
+    /**
+     * @param bool $isLoyaltyProgramContact
+     *
+     * @return Client
+     */
+    public function setLoyaltyProgramContact(bool $isLoyaltyProgramContact = true) : Client
+    {
+        $this->familyStatusCode = $isLoyaltyProgramContact ? 2 : 1;
+        
+        return $this;
+    }
 }
