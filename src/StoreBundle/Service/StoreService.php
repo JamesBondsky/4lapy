@@ -161,7 +161,18 @@ class StoreService
 
         $result = (new BitrixCache())->withId(__METHOD__ . $locationCode . $type)->resultOf($getStores);
 
-        return $result['result'];
+        /** @var StoreCollection $stores */
+        $stores = $result['result'];
+
+        /**
+         * Если не нашлось ничего с типом "склад" для данного местоположения, то добавляем склады для Москвы
+         */
+        if ($stores->getStores()->isEmpty() && $locationCode !== LocationService::LOCATION_CODE_MOSCOW) {
+            $moscowStores = $this->getByLocation(LocationService::LOCATION_CODE_MOSCOW, self::TYPE_STORE);
+            $stores = new StoreCollection(array_merge($stores->toArray(), $moscowStores->toArray()));
+        }
+
+        return $stores;
     }
 
     /**
