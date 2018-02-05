@@ -28,28 +28,6 @@ class Gifter extends \CGlobalCondCtrlAtoms
         return [];
     }
 
-//    /**
-//     *
-//     * @param $condition
-//     *
-//     * @return array|bool|mixed|string
-//     */
-//    public static function Parse($condition)
-//    {
-//        if (!isset($condition['controlId'])) {
-//            return false;
-//        }
-//        $atoms = static::GetAtomsEx($condition['controlId'], true);
-//        if (empty($atoms)) {
-//            return false;
-//        }
-//        $control = [
-//            'ID' => $condition['controlId'],
-//            'ATOMS' => $atoms
-//        ];
-//        unset($atoms);
-//        return static::CheckAtoms($condition, $condition, $control, false);
-//    }
 
     /**
      *
