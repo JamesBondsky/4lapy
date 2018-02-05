@@ -92,7 +92,6 @@ class InnerDeliveryService extends DeliveryServiceHandlerBase
 
             if (!empty($this->config['FREE_FROM'][$deliveryZone])) {
                 $data['FREE_FROM'] = $this->config['FREE_FROM'][$deliveryZone];
-                $order = $shipment->getParentOrder();
                 if ($basket->getPrice() >= $this->config['FREE_FROM'][$deliveryZone]) {
                     $result->setDeliveryPrice(0);
                 }
@@ -113,6 +112,7 @@ class InnerDeliveryService extends DeliveryServiceHandlerBase
             } else {
                 $result->setPeriodFrom(1);
             }
+            $result->setData($data);
 
             return $result;
         }
