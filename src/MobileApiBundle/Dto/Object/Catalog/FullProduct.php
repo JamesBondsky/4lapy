@@ -33,6 +33,7 @@ class FullProduct extends ShortProduct
      * @Serializer\SerializedName("picture_list")
      */
     protected $pictureList = [];
+
     /**
      * @var array|string[]
      * @Serializer\Type("array<string>")
