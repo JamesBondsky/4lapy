@@ -2,7 +2,6 @@
 
 namespace FourPaws\Search\Helper;
 
-use Adv\Bitrixtools\Tools\EnvType;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Elastica\Client;
 use Elastica\Document;
@@ -11,6 +10,7 @@ use Elastica\Index;
 use Elastica\Query;
 use Elastica\Search;
 use Exception;
+use FourPaws\App\Env;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Search\Enum\DocumentType;
@@ -608,8 +608,8 @@ class IndexHelper implements LoggerAwareInterface
     private function getIndexName(string $indexName): string
     {
         $prefix = '';
-        if (EnvType::isDev()) {
-            $prefix = EnvType::DEV . '-';
+        if (!Env::isProd()) {
+            $prefix = Env::getServerType() . '-';
         }
 
         return $prefix . $indexName;
