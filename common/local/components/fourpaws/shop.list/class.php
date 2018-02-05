@@ -148,8 +148,15 @@ class FourPawsShopListComponent extends CBitrixComponent
             list($servicesList, $metroList) = $this->getFullStoreInfo($storeCollection);
 
             $stockResult = null;
+            $storeAmount = 0;
             if ($this->pickupDelivery) {
                 $stockResult = $this->getStockResult($this->pickupDelivery);
+                $storeAmount = reset($this->offers)->getStocks()
+                                                   ->filterByStores(
+                                                       $this->storeService->getByCurrentLocation(
+                                                           StoreService::TYPE_STORE
+                                                       )
+                                                   )->getTotalAmount();
             }
 
             /** @var Store $store */
@@ -201,20 +208,17 @@ class FourPawsShopListComponent extends CBitrixComponent
                 if ($stockResult) {
                     /** @var StockResult $stockResultByStore */
                     $stockResultByStore = $stockResult->filterByStore($store)->first();
-                    $amount = $stockResultByStore->getOffer()->getStocks()->filterByStore($store)->getTotalAmount();
+                    $amount = $storeAmount + $stockResultByStore->getOffer()
+                                                                ->getStocks()
+                                                                ->filterByStore($store)
+                                                                ->getTotalAmount();
                     $item['amount'] = $amount > 5 ? 'много' : 'мало';
                     $item['pickup'] = DeliveryTimeHelper::showTime(
                         $this->pickupDelivery,
                         $stockResultByStore->getDeliveryDate(),
                         [
-                            'HOUR_FORMAT' => 'сегодня, с H:00',
-                            'DAY_FORMAT'  => function (\DateTime $date) {
-                                $current = new \DateTime();
-
-                                return ($date->format('z') - $current->format('z')) == 1
-                                    ? 'завтра, с H:00'
-                                    : 'j M (D) с H:00';
-                            },
+                            'SHOW_TIME' => true,
+                            'SHORT'     => true,
                         ]
                     );
                 }
