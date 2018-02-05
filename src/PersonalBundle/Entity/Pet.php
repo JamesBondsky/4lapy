@@ -276,41 +276,54 @@ class Pet extends BaseEntity
         return $this;
     }
     
-    public function getYearsString()
+    public function getAgeString()
     {
-        $years = $this->getYears();
+        list($years, $months) = $this->getAge();
         if ($years === 0) {
             return '';
         }
         
-        $ost         = $years - floor($years);
-        $yearsByWord = (int)$ost > 0 ? $ost : $years;
-        
-        return $years . ' ' . WordHelper::declension(
-                $yearsByWord,
+        $return = $years . ' ' . WordHelper::declension(
+                $years,
                 [
                     'год',
                     'года',
                     'лет',
                 ]
             );
+        if ($months > 0) {
+            $return .= ' ' . $months . ' ' . WordHelper::declension(
+                    $months,
+                    [
+                        'месяц',
+                        'месяца',
+                        'месяцев',
+                    ]
+                );
+        }
+        
+        return $return;
     }
     
     /**
-     * @return float
+     * @return array
      */
-    public function getYears() : float
+    public function getAge() : array
     {
         $birthday = $this->getBirthday();
         if (!($birthday instanceof Date)) {
-            return 0;
+            return [
+                0,
+                0,
+            ];
         }
         $date     = new \DateTime($this->getBirthday()->format('Y-m-d'));
         $interval = $date->diff(new \DateTime(date('Y-m-d')));
         
-        $years = (float)$interval->format('%Y') + ((float)$interval->format('%m') / 12);
-        
-        return floor($years * 10) / 10;
+        return [
+            (int)$interval->format('%Y'),
+            (int)$interval->format('%m'),
+        ];
     }
     
     /**
