@@ -222,9 +222,23 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
         $result = new Result();
 
         $resultData = [];
-        // !!!
-        // Непонятно как следует обрабатывать значение $stockItem->getStockType()
-        // !!!
+
+        // Если LIFNR = склад и ATTRB = VEND
+        // система должна логировать ошибку и не обрабатывать эту строку
+        if ($result->isSuccess()) {
+            if ($stockItem->isStorePlantCode() && strtoupper($stockItem->getStockType()) === 'VEND') {
+                $result->addError(new Error('Задан некорректный тип запаса (LIFNR = склад и ATTRB = VEND)', 501));
+            }
+        }
+
+        // Если LIFNR = поставщик и ATTRB = FREE
+        // система должна логировать ошибку и не обрабатывать эту строку
+        if ($result->isSuccess()) {
+            if ($stockItem->isSupplierPlantCode() && strtoupper($stockItem->getStockType()) === 'FREE') {
+                $result->addError(new Error('Задан некорректный тип запаса (LIFNR = поставщик и ATTRB = FREE)', 502));
+            }
+        }
+
         $offerElementDataResult = null;
         if ($result->isSuccess()) {
             $offerElementDataResult = $this->getOfferElementDataByXmlId($stockItem->getOfferXmlId());
