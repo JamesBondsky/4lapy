@@ -58,7 +58,7 @@ abstract class TemplateAbstract
         
         $uri        = $this->getUri();
         $this->path = $uri->getPath();
-        $this->dir = $context->getRequest()->getRequestedPageDirectory();
+        $this->dir  = $context->getRequest()->getRequestedPageDirectory();
     }
     
     /**
@@ -71,6 +71,14 @@ abstract class TemplateAbstract
     public function isPage(string $page) : bool
     {
         return $this->path === $page;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getPath() : string
+    {
+        return $this->path;
     }
     
     /**
