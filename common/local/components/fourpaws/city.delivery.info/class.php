@@ -43,10 +43,6 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
     /** {@inheritdoc} */
     public function onPrepareComponentParams($params): array
     {
-        if (!isset($params['CACHE_TIME'])) {
-            $params['CACHE_TIME'] = 36000000;
-        }
-
         if (empty($params['LOCATION_CODE'])) {
             $params['LOCATION_CODE'] = $this->userCitySelect->getSelectedCity()['CODE'];
         }
@@ -62,20 +58,16 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
     public function executeComponent()
     {
         try {
-            if ($this->startResultCache()) {
-                $this->prepareResult();
+            parent::executeComponent();
+            $this->prepareResult();
 
-                $this->includeComponentTemplate();
-                $this->endResultCache();
-            }
+            $this->includeComponentTemplate();
         } catch (\Exception $e) {
             try {
                 $logger = LoggerFactory::create('component');
                 $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
             } catch (\RuntimeException $e) {
             }
-
-            $this->abortResultCache();
         }
     }
 
@@ -208,11 +200,11 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
         if (empty($deliveries)) {
             return null;
         }
-        $deliveryCodes = DeliveryService::DELIVERY_CODES;
+
         $filtered = array_filter(
             $deliveries,
-            function (CalculationResult $delivery) use ($deliveryCodes) {
-                return in_array($delivery->getData()['DELIVERY_CODE'], $deliveryCodes);
+            function (CalculationResult $delivery) {
+                return $this->deliveryService->isDelivery($delivery);
             }
         );
 
@@ -229,11 +221,11 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
         if (empty($deliveries)) {
             return null;
         }
-        $pickupCodes = DeliveryService::PICKUP_CODES;
+
         $filtered = array_filter(
             $deliveries,
-            function (CalculationResult $delivery) use ($pickupCodes) {
-                return in_array($delivery->getData()['DELIVERY_CODE'], $pickupCodes);
+            function (CalculationResult $delivery) {
+                return $this->deliveryService->isPickup($delivery);
             }
         );
 
