@@ -175,7 +175,7 @@ foreach ($arResult['MENU_TREE'] as $arFirstLevelItem) {
                     'bitrix:news.list',
                     'fp.17.0.brands',
                     array(
-                        'BRANDS_POPULAR_LIMIT' => $arParams['BRANDS_POPULAR_LIMIT'],
+                        'BRANDS_POPULAR_LIMIT' => $arParams['BRANDS_MENU_POPULAR_LIMIT'] ?? 8,
 
                         'IBLOCK_TYPE' => \FourPaws\Enum\IblockType::CATALOG,
                         'IBLOCK_ID' => \FourPaws\Enum\IblockCode::BRANDS,
