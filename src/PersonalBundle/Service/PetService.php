@@ -77,6 +77,9 @@ class PetService
         if(!empty($data['UF_PHOTO_TMP'])) {
             $this->petRepository->addFileList(['UF_PHOTO' => $data['UF_PHOTO_TMP']]);
         }
+        else{
+            unset($data['UF_PHOTO']);
+        }
         $res = $this->petRepository->create();
         if ($res) {
             $this->updateManzanaPets();
@@ -201,6 +204,9 @@ class PetService
         $this->petRepository->setEntityFromData($data, Pet::class);
         if(!empty($data['UF_PHOTO_TMP'])) {
             $this->petRepository->addFileList(['UF_PHOTO' => $data['UF_PHOTO_TMP']]);
+        }
+        else{
+            unset($data['UF_PHOTO']);
         }
         $res = $this->petRepository->update();
         if ($res) {

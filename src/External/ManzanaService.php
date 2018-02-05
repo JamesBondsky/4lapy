@@ -235,8 +235,6 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     }
 
     /**
-     * Возвращает id, -1 если найдено больше 1 записи и 0 если не найдено записей
-     *
      * @param User|null $user
      *
      * @return Client
@@ -452,7 +450,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
             try {
                 $result = $this->execute(self::CONTRACT_CONTACT_REFERRAL_CARDS, $bag->getParameters());
                 /** @var Referrals $res */
-                $res       = $this->serializer->deserialize($result, Referrals::class, 'xml');
+                $res = $this->serializer->deserialize($result, Referrals::class, 'xml');
                 /** @noinspection PhpUndefinedMethodInspection */
                 $referrals = $res->referrals->toArray();
             } catch (\Exception $e) {
@@ -659,11 +657,6 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         return $cards;
     }
 
-    protected function clientSearch(array $data)
-    {
-
-    }
-
     /**
      * @param string $contactId
      *
@@ -677,7 +670,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
             $result = $this->execute(self::CONTRACT_CONTACT_CHEQUES, $bag->getParameters());
             /** @var Cheques $resCheques */
             $resCheques = $this->serializer->deserialize($result, Cheques::class, 'xml');
-            /** @var Cheque[] $cheques*/
+            /** @var Cheque[] $cheques */
             $cheques = $resCheques->cheques->toArray();
         } catch (\Exception $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
@@ -744,5 +737,10 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     public function getItemsBuCheque(string $chequeId) : array
     {
         return $this->getItemsByCheque($chequeId);
+    }
+
+    protected function clientSearch(array $data)
+    {
+
     }
 }

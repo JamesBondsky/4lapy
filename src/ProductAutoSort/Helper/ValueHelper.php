@@ -137,7 +137,7 @@ class ValueHelper implements LoggerAwareInterface
              * Создать отдельные значения
              */
             foreach ($valueList as $serializedValue) {
-                $value = unserialize($serializedValue, false);
+                $value = unserialize($serializedValue, ['allowed_classes' => false]);
                 if (!\is_array($value)) {
                     continue;
                 }
