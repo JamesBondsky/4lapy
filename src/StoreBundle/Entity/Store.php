@@ -671,7 +671,7 @@ class Store extends Base
      */
     public function isShop(): bool
     {
-        return $this->isShop;
+        return (bool)$this->isShop;
     }
 
     /**

@@ -998,9 +998,6 @@ class Offer extends IblockElement
             $storeService = Application::getInstance()->getContainer()->get('store.service');
             $allStocks = $storeService->getStocksByOffer($this);
             $stores = $storeService->getByCurrentLocation();
-            if ($stores->isEmpty()) {
-                $stores = $storeService->getByLocation(LocationService::LOCATION_CODE_MOSCOW, StoreService::TYPE_STORE);
-            }
             $this->withStocks($allStocks->filterByStores($stores));
         }
 
