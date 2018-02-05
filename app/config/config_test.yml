@@ -1,6 +1,6 @@
 imports:
   - { resource: parameters_test.yml }
-  - { resource: config_test.yml }
+  - { resource: config_dev.yml }
   - { resource: services_test.yml }
 
 framework:
