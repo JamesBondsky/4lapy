@@ -23,8 +23,8 @@ class ApiUserSessionTable extends DataManager
 
     /**
      * @throws \Bitrix\Main\ObjectException
-     * @return array
      * @throws \Bitrix\Main\ArgumentException
+     * @return array
      */
     public static function getMap(): array
     {
@@ -79,19 +79,6 @@ class ApiUserSessionTable extends DataManager
     /**
      * @param Event $event
      *
-     * @throws \Bitrix\Main\ObjectException
-     * @return EventResult
-     */
-    public static function onBeforeUpdate(Event $event): EventResult
-    {
-        $result = new EventResult();
-        static::dateUpdate($event, $result);
-        return $result;
-    }
-
-    /**
-     * @param Event $event
-     *
      * @return EventResult
      */
     public static function onBeforeAdd(Event $event): EventResult
@@ -104,34 +91,20 @@ class ApiUserSessionTable extends DataManager
     /**
      * @param Event       $event
      * @param EventResult $result
-     *
-     * @throws \Bitrix\Main\ObjectException
-     */
-    protected static function dateUpdate(Event $event, EventResult $result)
-    {
-        $data = $event->getParameter('fields');
-
-        if (!isset($data['DATE_UPDATE'])) {
-            $result->modifyFields(['DATE_UPDATE' => new DateTime()]);
-        }
-    }
-
-    /**
-     * @param Event       $event
-     * @param EventResult $result
      */
     protected static function uniqueToken(Event $event, EventResult $result)
     {
         $data = $event->getParameter('fields');
 
         $token = $data['TOKEN'] ?? md5(random_bytes(32));
-
         do {
             $count = static::query()
-                ->addFilter('TOKEN', $token)
+                ->addFilter('=TOKEN', $token)
                 ->exec()
                 ->getSelectedRowsCount();
-            $token = md5(random_bytes(32));
+            if ($count > 0) {
+                $token = md5(random_bytes(32));
+            }
         } while ($count);
         $result->modifyFields(['TOKEN' => $token]);
     }
