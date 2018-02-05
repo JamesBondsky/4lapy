@@ -11,12 +11,14 @@ declare(strict_types=1);
 namespace FourPaws\Components;
 
 use Bitrix\Sale\Basket;
+use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Order;
 use CBitrixComponent;
 use FourPaws\App\Application;
 use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\Catalog\Collection\OfferCollection;
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Service\BasketService;
 
@@ -76,6 +78,7 @@ class BasketComponent extends \CBitrixComponent
         $this->arResult['POSSIBLE_GIFT_GROUPS'] = Gift::getPossibleGiftGroups($order);
         $this->arResult['POSSIBLE_GIFTS'] = Gift::getPossibleGifts($order);
         $this->offerCollection = $this->basketService->getOfferCollection();
+        $this->calcTemplateFields();
         $this->loadImages();
         $this->includeComponentTemplate($this->getPage());
     }
@@ -90,6 +93,18 @@ class BasketComponent extends \CBitrixComponent
             $images = $item->getResizeImages(110, 110);
             $this->images[$item->getId()] = $images->first();
         }
+    }
+
+    private function calcTemplateFields() {
+        $weight = 0;
+        $quantity = 0;
+        /** @var BasketItem $basketItem */
+        foreach($this->arResult['BASKET']->getOrderableItems() as $basketItem) {
+            $weight+= (float)$basketItem->getWeight();
+            $quantity+= (int)$basketItem->getQuantity();
+        }
+        $this->arResult['BASKET_WEIGHT'] = number_format($weight/1000,  2);
+        $this->arResult['TOTAL_QUANTITY'] = $quantity;
     }
 
     /**

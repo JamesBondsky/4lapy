@@ -6,11 +6,18 @@
  * @author      Makeev Ilya
  * @copyright   ADV/web-engineering co.
  */
-echo 1488;
 if ($arResult['CURRENT']['DELIVERY']['FREE_FROM']) {
-    ?>
-    <p class="b-information-order__additional-info">
-        До бесплатной доставки осталось <?= $arResult['CURRENT']['DELIVERY']['FREE_FROM'] ?> ₽
-    </p>
-<?php
+    $diff = (float)$arResult['CURRENT']['DELIVERY']['FREE_FROM'] - (float)$arParams['BASKET_PRICE'];
+    if ($diff > 0.01) {
+        ?>
+        <p class="b-information-order__additional-info">
+            До бесплатной доставки осталось <?= number_format($diff, 2, '.', ' '); ?> ₽
+        </p>
+        <?php
+    } else {
+        ?>
+        <p class="b-information-order__additional-info">
+            Бесплатная доставка
+        </p>
+    <?php }
 }
