@@ -20,7 +20,7 @@ switch ($arResult['CURRENT_STAGE']) {
         include __DIR__.'/stage.initial.php';
         break;
 
-    case 'history':
+    case 'user_list':
         // запрос истории по карте (ajax)
         include __DIR__.'/stage.user_list.php';
         break;

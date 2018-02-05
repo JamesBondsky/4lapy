@@ -7,6 +7,7 @@ use Bitrix\Main\UserUtils;
 use FourPaws\App\Application;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\UserService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -21,6 +22,7 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
 
     /** код группы пользователей, имеющих доступ к компоненту, если ничего не задано в параметрах подключения */
     const DEFAULT_USER_GROUP_CODE = 'FRONT_OFFICE_USERS';
+    const BX_ADMIN_GROUP_ID = 1;
 
     /** @var string $action */
     private $action = '';
@@ -28,6 +30,14 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
     private $userCurrentUserService;
     /** @var string $canAccess */
     protected $canAccess = '';
+    /** @var array $userGroups */
+    private $userGroups;
+    /** @var array $userOperations */
+    private $userOperations;
+    /** @var array $userSubordinateGroups */
+    private $userSubordinateGroups;
+    /** @var bool $isUserAdmin */
+    private $isUserAdmin;
 
     public function __construct($component = null)
     {
@@ -104,22 +114,124 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
     }
 
     /**
+     * @return array
+     */
+    protected function getUserGroups()
+    {
+        if (!isset($this->userGroups)) {
+            $this->userGroups = $this->getUserService()->getUserGroups($this->arParams['USER_ID']);
+            // группа "все пользователи"
+            $this->userGroups[] = 2;
+            $this->userGroups = array_unique($this->userGroups);
+        }
+
+        return $this->userGroups;
+    }
+
+    /**
+     * @return bool
+     */
+    protected function isUserAdmin()
+    {
+        if (!isset($this->isUserAdmin)) {
+            $this->isUserAdmin = in_array(static::BX_ADMIN_GROUP_ID, $this->getUserGroups());
+        }
+$this->isUserAdmin = false;
+        return $this->isUserAdmin;
+    }
+
+    /**
+     * @return array
+     */
+    protected function getUserOperations()
+    {
+        if (!isset($this->userOperations)) {
+            $userGroups = $this->getUserGroups();
+            $this->userOperations = $userGroups ? array_keys($GLOBALS['USER']->GetAllOperations($userGroups)) : [];
+        }
+
+        return $this->userOperations;
+    }
+
+    /**
+     * @param string $operationName
+     * @return bool
+     */
+    protected function canUserDoOperation(string $operationName)
+    {
+        $result = false;
+        if ($this->isUserAdmin()) {
+            $result = true;
+        }
+        if (!$result) {
+            $result = in_array($operationName, $this->getUserOperations());
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return array
+     */
+    protected function getUserSubordinateGroups()
+    {
+        if (!isset($this->userSubordinateGroups)) {
+            $this->userSubordinateGroups = [];
+            $userOperations = $this->getUserOperations();
+            if (!in_array('edit_all_users', $userOperations) && !in_array('view_all_users', $userOperations)) {
+                $userGroups = $this->getUserGroups();
+                if ($userGroups) {
+                    $this->userSubordinateGroups = \CGroup::GetSubordinateGroups($userGroups);
+                }
+            }
+        }
+
+        return $this->userSubordinateGroups;
+    }
+
+    /**
+     * @return UserService
+     */
+    public function getUserService()
+    {
+        if (!$this->userCurrentUserService) {
+            $this->userCurrentUserService = Application::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
+        }
+        return $this->userCurrentUserService;
+    }
+
+    /**
+     * @return UserRepository
+     */
+    public function getUserRepository()
+    {
+        return $this->getUserService()->getUserRepository();
+    }
+
+    /**
      * @return bool
      */
     protected function canAccess()
     {
         if ($this->canAccess === '') {
             $this->canAccess = 'N';
-            if ($GLOBALS['USER']->isAdmin()) {
+            if ($this->isUserAdmin()) {
                 $this->canAccess = 'Y';
             } else {
-                if ($this->arParams['USER_ID'] != $GLOBALS['USER']->getId()) {
-                    $userGroups = UserUtils::getGroupIds($this->arParams['USER_ID']);
-                } else {
-                    $userGroups = $GLOBALS['USER']->getUserGroupArray();
-                }
-                if (array_intersect($this->arParams['USER_GROUPS'], $userGroups)) {
-                    $this->canAccess = 'Y';
+                $userGroups = $this->getUserGroups();
+                $canAccessGroups = array_merge($this->arParams['USER_GROUPS'], [static::BX_ADMIN_GROUP_ID]);
+                if (array_intersect($canAccessGroups, $userGroups)) {
+                    // т.к. данный компонент связан с просмотром юзеров, то дополнительно проверяем операции уровней доступа
+                    $canAccessOperations = [
+                        'view_subordinate_users', 'view_all_users',
+                        'edit_subordinate_users',
+                    ];
+                    foreach ($canAccessOperations as $operationName) {
+                        if ($this->canUserDoOperation($operationName)) {
+                            $this->canAccess = 'Y';
+                            break;
+                        }
+                    }
                 }
             }
         }
@@ -151,23 +263,30 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
         }
     }
 
-    /**
-     * @return UserService
-     */
-    public function getUserService()
+    protected function initialLoadAction()
     {
-        if (!$this->userCurrentUserService) {
-            $this->userCurrentUserService = Application::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
-        }
-        return $this->userCurrentUserService;
+        $this->loadData();
+$this->getFilterByFormFields();
     }
 
-    /**
-     * @return UserRepository
-     */
-    public function getUserRepository()
+    protected function postFormAction()
     {
-        return $this->getUserService()->getUserRepository();
+        $this->initPostFields();
+
+        if ($this->canAccess()) {
+            $this->processSearchFormFields();
+            $this->obtainUsersList();
+        }
+
+        $this->loadData();
+    }
+
+    protected function loadData()
+    {
+        $this->arResult['IS_AUTHORIZED'] = $GLOBALS['USER']->isAuthorized() ? 'Y' : 'N';
+        $this->arResult['CAN_ACCESS'] = $this->canAccess() ? 'Y' : 'N';
+        $this->arResult['ACTION'] = $this->getAction();
+        $this->includeComponentTemplate();
     }
 
     /**
@@ -185,43 +304,8 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
         return $phone;
     }
 
-    protected function initialLoadAction()
-    {
-        $this->loadData();
-    }
-
-    protected function postFormAction()
-    {
-        $this->initPostFields();
-
-        if ($this->canAccess()) {
-            $this->processSearchFormFields();
-        }
-
-        $this->loadData();
-    }
-
     protected function processSearchFormFields()
     {
-        $fieldsList = [
-            'cardNumber', 'phone',
-            'firstName', 'secondName', 'lastName',
-            'birthDay'
-        ];
-
-        $isEmptyForm = true;
-        foreach ($fieldsList as $fieldName) {
-            $value = $this->trimValue($this->getFormFieldValue($fieldName));
-            if ($value !== '') {
-                $isEmptyForm = true;
-                break;
-            }
-        }
-        if ($isEmptyForm) {
-            $this->setExecError('emptyForm', 'Не указаны данные для поиска', 'emptyForm');
-            return;
-        }
-
         $fieldName = 'cardNumber';
         $cardNumber = $this->trimValue($this->getFormFieldValue($fieldName));
         if ($cardNumber !== '' && strlen($cardNumber) != 13) {
@@ -250,12 +334,160 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
         }
     }
 
-    protected function loadData()
+    /**
+     * Заполнение arResult списком пользователей по поисковому запросу
+     */
+    protected function obtainUsersList()
     {
-        $this->arResult['IS_AUTHORIZED'] = $GLOBALS['USER']->isAuthorized() ? 'Y' : 'N';
-        $this->arResult['CAN_ACCESS'] = $this->canAccess() ? 'Y' : 'N';
-        $this->arResult['ACTION'] = $this->getAction();
-        $this->includeComponentTemplate();
+        $searchResult = null;
+        if (empty($this->arResult['ERROR']['FIELD']) && $this->getFormFieldValue('getUsersList') === 'Y') {
+            $searchResult = $this->getUsersByFormFields();
+        }
+        if ($searchResult) {
+            $this->arResult['USERS_LIST'] = $searchResult->getData()['list'];
+            if (!$searchResult->isSuccess()) {
+                foreach ($searchResult->getErrors() as $error) {
+                    $this->setExecError($error->getCode(), $error->getMessage());
+                }
+            }
+        }
+    }
+
+    /**
+     * @return array
+     */
+    protected function getFilterByFormFields()
+    {
+        $filter = [];
+        $fieldsList = [
+            'cardNumber', 'phone',
+            'firstName', 'secondName', 'lastName',
+            'birthDay'
+        ];
+        foreach ($fieldsList as $fieldName) {
+            $value = $this->trimValue($this->getFormFieldValue($fieldName));
+            if ($value !== '') {
+                switch ($fieldName) {
+                    case 'cardNumber':
+                        // номер карты
+                        $filter['=UF_DISCOUNT_CARD'] = $value;
+                        break;
+                    case 'phone':
+                        // телефон
+                        $filter['=PERSONAL_PHONE'] = $value;
+                        break;
+                    case 'firstName':
+                        // имя
+                        $filter['=NAME'] = $value;
+                        break;
+                    case 'secondName':
+                        // отчество
+                        $filter['=SECOND_NAME'] = $value;
+                        break;
+                    case 'lastName':
+                        // фамилия
+                        $filter['=LAST_NAME'] = $value;
+                        break;
+                    case 'birthDay':
+                        // дата рождения
+                        $filter['=PERSONAL_BIRTHDAY'] = $value;
+                        break;
+                }
+            }
+        }
+
+        if (empty($filter)) {
+            $filter['=ACTIVE'] = 'Y';
+            $filter['!=ID'] = $this->arParams['USER_ID'];
+            if (!$this->canUserDoOperation('edit_all_users') && !$this->canUserDoOperation('view_all_users')) {
+                $userSubordinateGroups = $this->getUserSubordinateGroups();
+//                $arSqlSearch[] = "NOT EXISTS(SELECT 'x' FROM b_user_group UGS WHERE UGS.USER_ID=U.ID AND UGS.GROUP_ID NOT IN (".$userSubordinateGroups.")))";
+
+            }
+        }
+
+        return $filter;
+    }
+
+    /**
+     * @return Result
+     */
+    protected function getUsersByFormFields()
+    {
+        $result = new Result();
+
+        $filter = $this->getFilterByFormFields();
+        if (empty($filter)) {
+            $result->addError(
+                new Error('Не заданы параметры поиска', 'emptySearchParams')
+            );
+        }
+
+        $usersListRaw = [];
+        //$usersList = [];
+        if ($result->isSuccess()) {
+            try {
+                $usersListRaw = $this->getUserListByParams(
+                    [
+                        'filter' => $filter,
+                        'order' => [
+                            'LAST_NAME' => 'asc',
+                            'NAME' => 'asc',
+                            'SECOND_NAME' => 'asc',
+                            'UF_DISCOUNT_CARD' => 'asc',
+                            'ID' => 'asc',
+                        ]
+                    ]
+                );
+                /*
+                foreach ($usersListRaw as $user) {
+                    $usersList[] = [
+                        'ID' => $user->getId(),
+                        'NAME' => $user->getName(),
+                        'LAST_NAME' => $user->getLastName(),
+                        'SECOND_NAME' => $user->getSecondName(),
+                        'FULL_NAME' => $user->getFullName(),
+                        'PERSONAL_PHONE' => $user->getNormalizePersonalPhone(),
+                        'EMAIL' => $user->getEmail(),
+                        'DISCOUNT_CARD_NUMBER' => $user->getDiscountCardNumber(),
+                    ];
+                }
+                */
+            } catch (\Exception $exception) {
+                $result->addError(
+                    new Error($exception->getMessage(), 'getUserListByParamsException')
+                );
+
+                $this->log()->error(sprintf('%s exception: %s', __FUNCTION__, $exception->getMessage()));
+            }
+        }
+
+        $result->setData(
+            [
+                //'list' => $usersList,
+                'list_raw' => $usersListRaw,
+            ]
+        );
+
+        return $result;
+    }
+
+
+    /**
+     * @param array $params
+     * @return array|User[]
+     */
+    protected function getUserListByParams($params)
+    {
+        $filter = isset($params['filter']) ? $params['filter'] : [];
+
+        $users = $this->getUserRepository()->findBy(
+            $filter,
+            (isset($params['order']) ? $params['order'] : []),
+            (isset($params['limit']) ? $params['limit'] : null)
+        );
+
+        return $users;
     }
 
     protected function initPostFields()

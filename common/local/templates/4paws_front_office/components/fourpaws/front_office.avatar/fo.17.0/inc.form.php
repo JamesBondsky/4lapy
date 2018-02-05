@@ -44,6 +44,7 @@ if ($showForm) {
                         $errMess = 'Пожалуйста, укажите номер карты';
                         break;
                     case 'not_valid':
+                    case 'incorrect_value':
                         $errMess = 'Номер карты задан в неверном формате';
                         break;
                     case 'runtime':
@@ -73,9 +74,6 @@ if ($showForm) {
             /** @var Bitrix\Main\Error $error */
             $error = $fieldMeta['ERROR'];
             if ($error) {
-                $errMess = 'Неизвестная ошибка';
-                /** @var Bitrix\Main\Error $error */
-                $error = $arResult['ERROR']['FIELD'][$fieldName];
                 switch ($error->getCode()) {
                     case 'empty':
                         $errMess = 'Пожалуйста, укажите номер телефона';
@@ -242,7 +240,7 @@ if ($showForm) {
             if (!empty($arResult['ERROR']['EXEC'])) {
                 $errMessages = [];
                 foreach ($arResult['ERROR']['EXEC'] as $errName => $errMsg) {
-                    $errMessages[] = $errName ? '['.$errName.'] '.$errMsg : $errMsg;
+                    $errMessages[] = $errName && !in_array($errName, ['emptySearchParams']) ? '['.$errName.'] '.$errMsg : $errMsg;
                 }
                 echo '<div class="form-page__field-wrap">';
                 echo sprintf($errBlock, 'Ошибки запроса данных:<br>'.implode('<br>', $errMessages));
