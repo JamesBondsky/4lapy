@@ -2,10 +2,10 @@
 
 namespace FourPaws\Helpers;
 
-use Adv\Bitrixtools\Tools\EnvType;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\UserGroupTable;
+use FourPaws\App\Env;
 
 class MailHelper
 {
@@ -16,7 +16,7 @@ class MailHelper
      */
     public static function isMailForbidden(string $email) : bool
     {
-        return !(EnvType::isProd() || self::isUserAdminByEmail($email));
+        return !(Env::isProd() || self::isUserAdminByEmail($email));
     }
     
     /**

@@ -130,4 +130,28 @@ class StockItem
         $this->stockValue = $stockValue;
         return $this;
     }
+
+    /**
+     * Является ли plantCode (LIFNR) кодом склада
+     *
+     * @return bool
+     */
+    public function isStorePlantCode() : bool
+    {
+        // Формат кода склада: DCХХ
+        return stripos($this->getPlantCode(), 'DC') === 0;
+    }
+
+    /**
+     * Является ли plantCode (LIFNR) кодом поставщика
+     *
+     * @return bool
+     */
+    public function isSupplierPlantCode() : bool
+    {
+        // Формат кода поставщика: 9-значный цифровой код
+        // (нет уверенности, что именно 9 знаков будет приходить,
+        // поэтому просто делаю проверку, что в строке нет ничего кроме цифр)
+        return !preg_match('#[^0-9]#', $this->getPlantCode());
+    }
 }
