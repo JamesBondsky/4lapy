@@ -8,7 +8,6 @@ use FourPaws\MobileApiBundle\Exception\InvalidIdentifierException as MobileInval
 use FourPaws\MobileApiBundle\Repository\ApiUserSessionRepository;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
-use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Security\BitrixUserProviderInterface;
 use Symfony\Component\Security\Core\Authentication\Provider\AuthenticationProviderInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
@@ -28,15 +27,15 @@ class ApiTokenProvider implements AuthenticationProviderInterface
     private $cUser;
 
     /**
-     * @var UserRepository
+     * @var BitrixUserProviderInterface
      */
-    private $userRepository;
+    private $bitrixUserProvider;
 
-    public function __construct(BitrixUserProviderInterface $userRepository, ApiUserSessionRepository $sessionRepository)
+    public function __construct(BitrixUserProviderInterface $bitrixUserProvider, ApiUserSessionRepository $sessionRepository)
     {
         $this->sessionRepository = $sessionRepository;
         $this->cUser = new \CUser();
-        $this->userRepository = $userRepository;
+        $this->bitrixUserProvider = $bitrixUserProvider;
     }
 
     /**
@@ -61,7 +60,7 @@ class ApiTokenProvider implements AuthenticationProviderInterface
             $user = null;
             if ($session->getUserId()) {
                 try {
-                    $user = $this->userRepository->find($session->getUserId());
+                    $user = $this->bitrixUserProvider->loadUserById($session->getUserId());
                     $user->getRolesCollection()->add(new Role('ROLE_API'));
                 } catch (InvalidIdentifierException $exception) {
                 } catch (ConstraintDefinitionException $exception) {
