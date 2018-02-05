@@ -22,7 +22,7 @@ $markup = PawsApplication::markup();
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="google" content="notranslate">
     <meta name="format-detection" content="telephone=no">
-    
+
     <script src="/static/build/js/jquery/jquery.min.js"></script>
     <script data-skip-moving="true">window.js_static = '/static/build/'</script>
     <?php $APPLICATION->ShowHead(); ?>
@@ -99,24 +99,29 @@ $markup = PawsApplication::markup();
                      * Основное меню.
                      * dropdown передается через header_dropdown_menu
                      */
-                    $APPLICATION->IncludeComponent('fourpaws:iblock.main.menu',
-                                                   'fp.17.0.top',
-                                                   [
-                                                       'MENU_IBLOCK_TYPE'     => IblockType::MENU,
-                                                       'MENU_IBLOCK_CODE'     => IblockCode::MAIN_MENU,
-                                                       'PRODUCTS_IBLOCK_TYPE' => IblockType::CATALOG,
-                                                       'PRODUCTS_IBLOCK_CODE' => IblockCode::PRODUCTS,
-                                                       'CACHE_TIME'           => 3600,
-                                                       'CACHE_TYPE'           => 'A',
-                                                       'MAX_DEPTH_LEVEL'      => '4',
-                                                       'TEMPLATE_NO_CACHE'    => 'N',
-                                                       // N - шаблон кэшируется
-                                                       'BRANDS_POPULAR_LIMIT' => '6',
-                                                   ],
-                                                   null,
-                                                   [
-                                                       'HIDE_ICONS' => 'Y',
-                                                   ]);
+                    $APPLICATION->IncludeComponent(
+                        'fourpaws:iblock.main.menu',
+                        'fp.17.0.top',
+                        [
+                            'MENU_IBLOCK_TYPE'     => IblockType::MENU,
+                            'MENU_IBLOCK_CODE'     => IblockCode::MAIN_MENU,
+                            'PRODUCTS_IBLOCK_TYPE' => IblockType::CATALOG,
+                            'PRODUCTS_IBLOCK_CODE' => IblockCode::PRODUCTS,
+                            'CACHE_TIME'           => 3600,
+                            'CACHE_TYPE'           => 'A',
+                            'MAX_DEPTH_LEVEL'      => '4',
+                            // N - шаблон кэшируется
+                            'TEMPLATE_NO_CACHE'    => 'N',
+                            // количество популярных брендов в пункте меню "Товары по питомцу"
+                            'BRANDS_POPULAR_LIMIT' => '6',
+                            // количество популярных брендов в пункте меню "По бренду"
+                            'BRANDS_MENU_POPULAR_LIMIT' => '8',
+                        ],
+                        null,
+                        [
+                            'HIDE_ICONS' => 'Y'
+                        ]
+                    );
                     ?>
                     <?php $APPLICATION->IncludeComponent('fourpaws:city.selector',
                                                          '',

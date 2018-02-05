@@ -18,7 +18,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         if (\is_array($arResult['ITEMS']) && !empty($arResult['ITEMS'])) {
             foreach ($arResult['ITEMS'] as $pet) {?>
                 <div class="b-account-border-block b-account-border-block--pet js-parent-cont js-parent-cont--pet"
-                     data-image="<?= $pet->getResizeImgPath() ?>"
+                     data-image="<?= $pet->getResizePopupImgPath() ?>"
                      data-name-pet="<?= $pet->getName() ?>"
                      data-type="<?= $pet->getType() ?>"
                      data-breed="<?= $pet->getBreed() ?>"
@@ -40,7 +40,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                             </div>
                             <p class="b-account-border-block__pet"><?= $pet->getBreed() ?></p>
                             <p class="b-account-border-block__pet"><?= $pet->getStringGender() ?></p>
-                            <p class="b-account-border-block__pet"><?= $pet->getYearsString() ?></p>
+                            <p class="b-account-border-block__pet"><?= $pet->getAgeString() ?></p>
                             ;
                         </div>
                     </div>

@@ -63,7 +63,7 @@ class Card
     public $genderCode;
     
     /**
-     * @Type("DateTimeImmutable<'Y-m-d\TH:i:s'>")
+     * @Type("manzana_date_time_short")
      * @SerializedName("BirthDate")
      */
     public $birthDate;
@@ -153,7 +153,7 @@ class Card
     public $plAddressFlat;
     
     /**
-     * @Type("DateTimeImmutable<'Y-m-d\TH:i:s'>")
+     * @Type("manzana_date_time_short")
      * @SerializedName("pl_registration_date")
      */
     public $plRegistrationDate;

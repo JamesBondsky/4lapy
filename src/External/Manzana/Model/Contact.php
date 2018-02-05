@@ -61,8 +61,11 @@ class Contact
     public $genderCode;
     
     /**
+     * Поле familystatuscode отвечает за участие контакта в бонусной программе
+     * 2 - контакт участвует в бонусной программе
+     *
      * @XmlElement(cdata=false)
-     * @Type("string")
+     * @Type("int")
      * @SerializedName("FamilyStatusCode")
      */
     public $familyStatusCode;
@@ -196,11 +199,24 @@ class Contact
     public $preferredContactMethodCode;
     
     /**
+     * см. hasChildrenCode
+     * (ML зачем-то возвращает два элемента: haschildrencode и HasChildrenCode)
+     *
      * @XmlElement(cdata=false)
-     * @Type("string")
+     * @Type("int")
      * @SerializedName("haschildrencode")
      */
     public $hashChildrenCode;
+    
+    /**
+     * Поле haschildrencode отвечает за актуальность контакта
+     * 200000 - контакт актуален
+     *
+     * @XmlElement(cdata=false)
+     * @Type("int")
+     * @SerializedName("HasChildrenCode")
+     */
+    public $hasChildrenCode;
     
     /**
      * @Type("int")
@@ -223,7 +239,7 @@ class Contact
     public $plShopsName;
     
     /**
-     * @Type("DateTimeImmutable<'Y-m-d\TH:i:s.u'>")
+     * @Type("manzana_date_time_short")
      * @SerializedName("pl_registration_date")
      */
     public $plRegistrationDate;
@@ -243,19 +259,19 @@ class Contact
     public $plAddress1Line1StreetTypeName;
     
     /**
-     * @Type("array<float>")
+     * @Type("float")
      * @SerializedName("pl_debet")
      */
     public $plDebet;
     
     /**
-     * @Type("array<float>")
+     * @Type("float")
      * @SerializedName("pl_credit")
      */
     public $plCredit;
     
     /**
-     * @Type("array<float>")
+     * @Type("float")
      * @SerializedName("pl_balance")
      */
     public $plBalance;
@@ -283,6 +299,12 @@ class Contact
      * @SerializedName("pl_discountsumm")
      */
     public $plDiscountSumm;
+    
+    /**
+     * @Type("float")
+     * @SerializedName("pl_discount")
+     */
+    public $plDiscount;
     
     /**
      * @Type("int")
@@ -318,7 +340,7 @@ class Contact
     public $spousesName;
     
     /**
-     * @Type("DateTimeImmutable<'Y-m-d\TH:i:s'>")
+     * @Type("manzana_date_time_short")
      * @SerializedName("Anniversary")
      */
     public $anniversary;
@@ -401,16 +423,51 @@ class Contact
     public $ffOthers;
     
     /**
-     * @XmlElement(cdata=false)
-     * @Type("string")
-     * @SerializedName("HasChildrenCode")
-     */
-    public $hasChildrenCode;
-    
-    /**
      * @Type("ArrayCollection<FourPaws\External\Manzana\Model\Card>")
      * @XmlList(entry="Card", inline=true)
      * @SerializedName("Card")
      */
     public $cards;
+    
+    /**
+     * @return bool
+     */
+    public function isActualContact() : bool
+    {
+        return $this->hasChildrenCode === 200000;
+    }
+    
+    /**
+     * @return bool
+     */
+    public function isLoyaltyProgramContact() : bool
+    {
+        return $this->familyStatusCode === 2;
+    }
+    
+    /**
+     * @param bool $isActualContact
+     *
+     * @return Contact
+     */
+    public function setActualContact(bool $isActualContact = true) : Contact
+    {
+        $this->hasChildrenCode = $isActualContact ? 200000 : 1;
+        // для совместимости
+        $this->hashChildrenCode = $this->hasChildrenCode;
+        
+        return $this;
+    }
+    
+    /**
+     * @param bool $isLoyaltyProgramContact
+     *
+     * @return Contact
+     */
+    public function setLoyaltyProgramContact(bool $isLoyaltyProgramContact = true) : Contact
+    {
+        $this->familyStatusCode = $isLoyaltyProgramContact ? 2 : 1;
+        
+        return $this;
+    }
 }
