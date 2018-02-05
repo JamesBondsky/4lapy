@@ -183,6 +183,22 @@ class Pet extends BaseEntity
     /**
      * @return string
      */
+    public function getResizePopupImgPath() : string
+    {
+        $photo = $this->getPhoto();
+        if ($photo > 0) {
+            try {
+                return CropImageDecorator::createFromPrimary($photo)->setCropWidth(180)->setCropHeight(180)->getSrc();
+            } catch (FileNotFoundException $e) {
+            }
+        }
+        
+        return '';
+    }
+    
+    /**
+     * @return string
+     */
     public function getStringType() : string
     {
         if (empty($this->stringType) && $this->getType() > 0) {
