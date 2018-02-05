@@ -19,12 +19,55 @@ $orderableBasket = $basket->getOrderableItems();
 $order = $basket->getOrder();
 
 if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
-    echo '<div class="b-shopping-cart">';
+    ?>
+    <div class="b-shopping-cart">
+    <div class="b-preloader">
+        <div class="b-preloader__spinner"><img class="b-preloader__image" src="images/inhtml/spinner.svg" alt="spinner" title=""/>
+        </div>
+    </div>
+    <?php
 }
 ?>
-    <div class="b-container">
+    <div class="b-container js-cart-wrapper">
         <h1 class="b-title b-title--h1 b-title--shopping-cart">Корзина</h1>
         <main class="b-shopping-cart__main" role="main">
+            <?php
+            if ($arResult['POSSIBLE_GIFT_GROUPS']) {
+
+                ?>
+                <section class="b-stock b-stock--shopping-cart">
+                    <h3 class="b-title b-title--h2-cart">Подарки к заказу
+                    </h3>
+                    <?php
+                    foreach ($arResult['POSSIBLE_GIFT_GROUPS'] as $group) {
+                        $group = current($group);
+                        ?>
+                        <div class="b-gift-order">
+                            <div class="b-gift-order__info">
+                        <span class="b-gift-order__text">
+                            Мы решили подарить вам подарок на весь заказ за красивые глаза
+                        </span>
+                                <a
+                                        class="b-link-gift js-open-popup js-presents-order-open"
+                                        href="javascript:void(0);"
+                                        data-url="/ajax/sale/basket/gift/get/"
+                                        data-url-gift="json/presents-order-add.json"
+                                        data-discount-id="<?= $group['discountId']; ?>" title=""
+                                        data-popup-id="popup-choose-gift">
+                                    <span class="b-link-gift__text">Выбрать подарок</span>
+                                    <span class="b-icon b-icon--gift">
+                                <?= new SvgDecorator('icon-gift', 18, 18); ?>
+                            </span>
+                                </a>
+                            </div>
+                        </div>
+                        <?php
+                    }
+                    ?>
+                </section>
+                <?php
+            }
+            ?>
             <section class="b-stock b-stock--shopping-cart b-stock--shopping-product">
                 <h3 class="b-title b-title--h2-cart b-title--shopping-product">Ваш заказ
                 </h3>
@@ -137,10 +180,10 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
          */
         $productsIds = [];
         foreach ($orderableBasket as $basketItem) {
-            $pId = (int) $basketItem->getProductId();
+            $pId = (int)$basketItem->getProductId();
             $productInfo = CCatalogSku::GetProductInfo($pId);
             if ($productInfo) {
-                $pId = (int) $productInfo['ID'];
+                $pId = (int)$productInfo['ID'];
             }
             if ($pId > 0) {
                 $productsIds[] = $pId;
