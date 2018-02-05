@@ -39,5 +39,12 @@ $aMenuLinks = Array(
 		""
 	),
 	*/
+    Array(
+        "Аватар",
+        "avatar/",
+        Array(),
+        Array(),
+        ""
+    ),
 );
 ?>
