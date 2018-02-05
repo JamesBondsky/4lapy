@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Service\Materials;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
@@ -92,22 +96,6 @@ class ProductService
     }
 
     /**
-     * @param Product  $product
-     * @param Material $material
-     *
-     * @throws \RuntimeException
-     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
-     * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
-     * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
-     * @throws \FourPaws\SapBundle\Exception\LogicException
-     */
-    protected function fillProduct(Product $product, Material $material)
-    {
-        $this->fillFields($product, $material);
-        $this->fillProperties($product, $material);
-    }
-
-    /**
      * @param string $combination
      *
      * @return null|Product
@@ -133,8 +121,8 @@ class ProductService
     {
         $dbResult = \CIBlockElement::GetList([], [
             '!PROPERTY_CML2_LINK' => false,
-            'IBLOCK_ID'           => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
-            'XML_ID'              => $xmlId,
+            'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
+            'XML_ID' => $xmlId,
         ], false, false, ['PROPERTY_CML2_LINK']);
         $data = $dbResult->Fetch();
         $id = $data['PROPERTY_CML2_LINK_VALUE'] ?? 0;
@@ -145,11 +133,30 @@ class ProductService
     }
 
     /**
-     * @param Product  $product
+     * @param Product $product
+     * @param Material $material
+     *
+     * @throws \RuntimeException
+     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
+     * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
+     * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
+     * @throws \FourPaws\SapBundle\Exception\LogicException
+     */
+    protected function fillProduct(Product $product, Material $material)
+    {
+        $this->fillFields($product, $material);
+        $this->fillProperties($product, $material);
+    }
+
+    /**
+     * @param Product $product
      * @param Material $material
      */
     protected function fillFields(Product $product, Material $material)
     {
+        if ($material->getProductName()) {
+            $product->withName($material->getProductName());
+        }
         if (!$product->getName()) {
             $product->withName($material->getProductName() ?: $material->getOfferName());
         }
@@ -165,7 +172,7 @@ class ProductService
     }
 
     /**
-     * @param Product  $product
+     * @param Product $product
      * @param Material $material
      *
      * @throws \RuntimeException
@@ -215,7 +222,7 @@ class ProductService
     }
 
     /**
-     * @param Product  $product
+     * @param Product $product
      * @param Material $material
      *
      * @throws \RuntimeException
@@ -317,7 +324,7 @@ class ProductService
     }
 
     /**
-     * @param Product  $product
+     * @param Product $product
      * @param Material $material
      *
      * @throws \RuntimeException

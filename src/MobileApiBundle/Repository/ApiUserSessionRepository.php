@@ -76,7 +76,8 @@ class ApiUserSessionRepository implements ApiUserSessionRepositoryInterface
     public function findBy(array $criteria = [], array $orderBy = [], int $limit = null, int $offset = null): array
     {
         $query = ApiUserSessionTable::query()
-            ->addSelect('*');
+            ->addSelect('*')
+            ->addSelect('USER.ID', 'USER_ID');
         if ($criteria) {
             $query->setFilter($criteria);
         }
@@ -131,6 +132,7 @@ class ApiUserSessionRepository implements ApiUserSessionRepositoryInterface
         }
         if ($result->isSuccess()) {
             $session->setId($result->getId());
+            $session->setToken($result->getData()['TOKEN']);
         }
         return $result->isSuccess();
     }

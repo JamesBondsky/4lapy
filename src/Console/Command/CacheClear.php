@@ -2,6 +2,7 @@
 
 namespace FourPaws\Console\Command;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Data\Cache;
 use Bitrix\Main\Data\StaticHtmlCache;
 use CBitrixComponent;
@@ -72,6 +73,7 @@ class CacheClear extends Command implements LoggerAwareInterface
         }
 
         $this->fileCacheClean($cacheType, $cacheEngine, $cachePath);
+        Application::getInstance()->getManagedCache()->cleanAll();
         if (!$cachePath) {
             switch ($cacheType) {
                 case 'menu':
