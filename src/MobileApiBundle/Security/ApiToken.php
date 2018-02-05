@@ -11,12 +11,12 @@ class ApiToken extends AbstractToken
     const UNAUTHORIZED_USER = 'Анонимный пользователь';
 
     /**
-     * @var ApiUserSession
+     * @var null|ApiUserSession
      */
     private $apiUserSession;
 
 
-    public function __construct(array $roles = [], ApiUserSession $session, User $user = null)
+    public function __construct(array $roles = [], ApiUserSession $session = null, User $user = null)
     {
         parent::__construct($roles);
         $this->setApiUserSession($session);
@@ -25,7 +25,7 @@ class ApiToken extends AbstractToken
     }
 
     /**
-     * @return ApiUserSession
+     * @return null|ApiUserSession
      */
     public function getApiUserSession(): ApiUserSession
     {
@@ -37,7 +37,7 @@ class ApiToken extends AbstractToken
      *
      * @return ApiToken
      */
-    public function setApiUserSession(ApiUserSession $apiUserSession): ApiToken
+    public function setApiUserSession(ApiUserSession $apiUserSession = null): ApiToken
     {
         $this->apiUserSession = $apiUserSession;
         return $this;
@@ -47,10 +47,10 @@ class ApiToken extends AbstractToken
     /**
      * Returns the user credentials.
      *
-     * @return mixed The user credentials
+     * @return string The user credentials
      */
     public function getCredentials()
     {
-        return $this->getApiUserSession()->getToken();
+        return $this->getApiUserSession() ? $this->getApiUserSession()->getToken() : '';
     }
 }
