@@ -63,10 +63,10 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
     {
         try {
             if ($this->startResultCache()) {
-                parent::executeComponent();
                 $this->prepareResult();
 
                 $this->includeComponentTemplate();
+                $this->endResultCache();
             }
         } catch (\Exception $e) {
             try {
@@ -74,6 +74,8 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
                 $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
             } catch (\RuntimeException $e) {
             }
+
+            $this->abortResultCache();
         }
     }
 

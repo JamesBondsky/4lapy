@@ -22,7 +22,8 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
     ?>
     <div class="b-shopping-cart">
     <div class="b-preloader">
-        <div class="b-preloader__spinner"><img class="b-preloader__image" src="images/inhtml/spinner.svg" alt="spinner" title=""/>
+        <div class="b-preloader__spinner"><img class="b-preloader__image" src="images/inhtml/spinner.svg" alt="spinner"
+                                               title=""/>
         </div>
     </div>
     <?php
@@ -173,7 +174,83 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                 }
                 ?>
             </section>
-        </main><?php
+        </main>
+
+        <aside class="b-shopping-cart__aside">
+            <div class="b-information-order">
+                <div class="b-information-order__client">
+                    <!-- <span class="b-information-order__pay-points">
+                        <span class="b-information-order__name">Константин, </span>
+                        вы можете оплатить этот заказ баллами (до 299).
+                    </span> -->
+                    <?php
+                    $APPLICATION->IncludeComponent(
+                        'fourpaws:city.selector',
+                        'basket.summary',
+                        [],
+                        $this,
+                        ['HIDE_ICONS' => 'Y']
+                    );
+                    ?>
+
+                    <p class="b-information-order__additional-info">
+                        От города доставки зависит наличие товаров и параметры доставки.
+                    </p>
+                    <?php
+                    $APPLICATION->IncludeComponent(
+                        'fourpaws:city.delivery.info',
+                        'basket.summary',
+                        [],
+                        false,
+                        ['HIDE_ICONS' => 'Y']
+                    );
+                    ?>
+
+                </div>
+                <div class="b-information-order__order-wrapper">
+                    <div class="b-information-order__order">
+                        <div class="b-information-order__order-price">9 товаров (24 кг)
+                        </div>
+                        <div class="b-price b-price--information-order"><span
+                                    class="b-price__current">25 650  </span><span class="b-ruble">₽</span>
+                        </div>
+                    </div>
+                    <div class="b-information-order__order">
+                        <div class="b-information-order__order-price">Общая скидка
+                        </div>
+                        <div class="b-price b-price--information-order"><span
+                                    class="b-price__current">- 500  </span><span class="b-ruble">₽</span>
+                        </div>
+                    </div>
+                    <form class="b-information-order__form-promo js-form-validation">
+                        <div class="b-input b-input--form-promo"><input
+                                    class="b-input__input-field b-input__input-field--form-promo" type="text"
+                                    id="promocode-delivery" placeholder="Промо-код" name="text" data-url=""/>
+                            <div class="b-error"><span class="js-message"></span>
+                            </div>
+                        </div>
+                        <button class="b-button b-button--form-promo">Применить
+                        </button>
+                    </form>
+                    <div class="b-information-order__order b-information-order__order--total">
+                        <div class="b-information-order__order-price">Итого без учета доставки
+                        </div>
+                        <div class="b-price b-price--information-order b-price--total-price"><span
+                                    class="b-price__current">25 150  </span><span class="b-ruble">₽</span>
+                        </div>
+                    </div>
+                    <a class="b-button b-button--start-order" href="javascript:void(0);" title="Начать оформление">Начать
+                        оформление</a>
+                    <div class="b-information-order__one-click"><a
+                                class="b-link b-link--one-click js-open-popup js-open-popup--one-click js-open-popup"
+                                href="javascript:void(0)" title="Купить в 1 клик" data-popup-id="buy-one-click"><span
+                                    class="b-link__text b-link__text--one-click js-open-popup">Купить в 1 клик</span></a>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <?php
 
         /**
          * Выгодная покупка
