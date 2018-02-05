@@ -39,7 +39,7 @@ class ApiUserSession
      * @var null|int
      * @Serializer\SerializedName("USER_ID")
      * @Serializer\Type("int")
-     * @Serializer\Groups(groups={"read","update","create"})
+     * @Serializer\Groups(groups={"read"})
      */
     protected $userId;
 

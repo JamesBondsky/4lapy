@@ -4,6 +4,7 @@ namespace FourPaws\MobileApiBundle\Services\Security;
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
+use Bitrix\Sale\Fuser;
 use FourPaws\MobileApiBundle\Entity\ApiUserSession;
 use FourPaws\MobileApiBundle\Exception\BitrixException;
 use FourPaws\MobileApiBundle\Exception\InvalidIdentifierException;
@@ -15,6 +16,7 @@ class SessionFactory
      * @var TokenGeneratorInterface
      */
     private $tokenGenerator;
+
     /**
      * @var CurrentUserProviderInterface
      */
@@ -72,7 +74,7 @@ class SessionFactory
      */
     protected function getBasketUserId(): int
     {
-        if ($basketId = \CSaleBasket::GetBasketUserID()) {
+        if ($basketId = Fuser::getId()) {
             return $basketId;
         }
         throw new InvalidIdentifierException('Cant create basket user id');

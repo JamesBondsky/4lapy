@@ -2,3 +2,7 @@
 
 imports:
   - { resource: services.yml }
+
+services:
+  FourPaws\MobileApiBundle\Security\SignCheckerInterface:
+    class: FourPaws\MobileApiBundle\Security\FakeSignChecker
