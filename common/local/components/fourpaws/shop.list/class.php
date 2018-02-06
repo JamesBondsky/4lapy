@@ -19,6 +19,7 @@ use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\StockResult;
+use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
@@ -157,12 +158,12 @@ class FourPawsShopListComponent extends CBitrixComponent
     /**
      * @param array $params
      *
-     * @return array
      * @throws ApplicationCreateException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws \Exception
      * @throws FileNotFoundException
+     * @return array
      */
     public function getFormatedStoreByCollection(
         array $params
@@ -280,7 +281,21 @@ class FourPawsShopListComponent extends CBitrixComponent
         
         return $result;
     }
-    
+
+    public function getActiveStoresByProduct(int $offerId): StoreCollection
+    {
+        $this->getOfferById($offerId);
+        if (!$pickupDelivery = $this->getPickupDelivery()) {
+            return new StoreCollection();
+        }
+
+        try {
+            return $this->getStockResult($pickupDelivery)->getStores();
+        } catch (NotFoundException $e) {
+            return new StoreCollection();
+        }
+    }
+
     /**
      *
      * @param StoreCollection $stores
@@ -323,16 +338,6 @@ class FourPawsShopListComponent extends CBitrixComponent
     protected function getStockResult(CalculationResult $delivery)
     {
         return $this->deliveryService->getStockResultByDelivery($delivery);
-    }
-    
-    public function getActiveStoresByProduct(int $offerId) : StoreCollection
-    {
-        $this->getOfferById($offerId);
-        if (!$pickupDelivery = $this->getPickupDelivery()) {
-            return new StoreCollection();
-        }
-        
-        return $this->getStockResult($pickupDelivery)->getStores();
     }
     
     /**

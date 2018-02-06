@@ -11,6 +11,7 @@ use FourPaws\MobileApiBundle\Dto\Request\PostRequest;
 use FourPaws\MobileApiBundle\Dto\Request\SimpleUnserializeRequest;
 use FourPaws\MobileApiBundle\Exception\SystemException;
 use FourPaws\MobileApiBundle\Exception\ValidationException;
+use FourPaws\MobileApiBundle\Services\ErrorsFormatterService;
 use JMS\Serializer\ArrayTransformerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Sensio\Bundle\FrameworkExtraBundle\Request\ParamConverter\ParamConverterInterface;
@@ -19,7 +20,8 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class SimpleUnserializeRequestConverter implements ParamConverterInterface
 {
-    const VALIDATION_ATTRIBUTE = 'validationErrors';
+    const SYMFONY_ERRORS = 'symfonyErrors';
+    const API_ERRORS = 'apiErrors';
 
     /**
      * @var ArrayTransformerInterface
@@ -31,10 +33,19 @@ class SimpleUnserializeRequestConverter implements ParamConverterInterface
      */
     private $validator;
 
-    public function __construct(ArrayTransformerInterface $arrayTransformer, ValidatorInterface $validator)
-    {
+    /**
+     * @var ErrorsFormatterService
+     */
+    private $errorsFormatterService;
+
+    public function __construct(
+        ArrayTransformerInterface $arrayTransformer,
+        ValidatorInterface $validator,
+        ErrorsFormatterService $errorsFormatterService
+    ) {
         $this->arrayTransformer = $arrayTransformer;
         $this->validator = $validator;
+        $this->errorsFormatterService = $errorsFormatterService;
     }
 
     /**
@@ -74,8 +85,17 @@ class SimpleUnserializeRequestConverter implements ParamConverterInterface
                 throw new ValidationException('Cant converte request to object');
             }
         }
+        if (!$request->attributes->has(static::API_ERRORS)) {
+            $request->attributes->set(
+                static::API_ERRORS,
+                $this->errorsFormatterService->covertList($validationResult)
+            );
+        }
 
-        $request->attributes->set(static::VALIDATION_ATTRIBUTE, $validationResult);
+        if (!$request->attributes->has(static::SYMFONY_ERRORS)) {
+            $request->attributes->set(static::SYMFONY_ERRORS, $validationResult);
+        }
+
         $request->attributes->set($configuration->getName(), $object);
 
         return true;
@@ -88,7 +108,7 @@ class SimpleUnserializeRequestConverter implements ParamConverterInterface
      *
      * @return bool True if the object is supported, else false
      */
-    public function supports(ParamConverter $configuration)
+    public function supports(ParamConverter $configuration): bool
     {
         return
             $configuration->getClass()
