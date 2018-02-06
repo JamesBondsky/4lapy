@@ -117,9 +117,7 @@ class FourPawsShopListComponent extends CBitrixComponent
     }
     
     /**
-     * @param array $filter
-     * @param array $order
-     * @param bool  $returnActiveServices
+     * @param array $params
      *
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
@@ -128,20 +126,36 @@ class FourPawsShopListComponent extends CBitrixComponent
      * @throws \Exception
      * @return array
      */
-    public function getStores(array $filter = [], array $order = [], $returnActiveServices = false) : array
+    public function getStores(array $params = []) : array
     {
-        $storeRepository = $this->storeService->getRepository();
-        $filter          = array_merge($filter, $this->storeService->getTypeFilter($this->storeService::TYPE_SHOP));
+        $storeRepository  = $this->storeService->getRepository();
+        $params['filter'] =
+            array_merge((array)$params['filter'], $this->storeService->getTypeFilter($this->storeService::TYPE_SHOP));
         
         /** @var StoreCollection $storeCollection */
-        $storeCollection = $storeRepository->findBy($filter, $order);
+        $storeCollection = $storeRepository->findBy($params['filter'], $params['order']);
+        if (!isset($params['returnActiveServices']) || !is_bool($params['returnActiveServices'])) {
+            $params['returnActiveServices'] = false;
+        }
+        if (!isset($params['returnSort']) || !is_bool($params['returnSort'])) {
+            $params['returnSort'] = false;
+        }
+        if (!isset($params['sortVal'])) {
+            $params['sortVal'] = '';
+        }
         
-        return $this->getFormatedStoreByCollection($storeCollection, $returnActiveServices);
+        return $this->getFormatedStoreByCollection(
+            [
+                'storeCollection'      => $storeCollection,
+                'returnActiveServices' => $params['returnActiveServices'],
+                'returnSort'           => $params['returnSort'],
+                'sortVal'              => $params['sortVal'],
+            ]
+        );
     }
     
     /**
-     * @param StoreCollection $storeCollection
-     * @param bool            $returnActiveServices
+     * @param array $params
      *
      * @return array
      * @throws ApplicationCreateException
@@ -151,11 +165,12 @@ class FourPawsShopListComponent extends CBitrixComponent
      * @throws FileNotFoundException
      */
     public function getFormatedStoreByCollection(
-        StoreCollection $storeCollection,
-        $returnActiveServices = false
+        array $params
     ) : array
     {
         $result = [];
+        /** @var StoreCollection $storeCollection */
+        $storeCollection = $params['storeCollection'];
         if (!$storeCollection->isEmpty()) {
             list($servicesList, $metroList) = $this->getFullStoreInfo($storeCollection);
             
@@ -172,10 +187,16 @@ class FourPawsShopListComponent extends CBitrixComponent
             }
             
             /** @var Store $store */
-            $avgGpsN   = 0;
-            $avgGpsS   = 0;
-            $sortHtml  = '<option value="" disabled="disabled" selected="selected">выберите</option>
-                      <option value="sort-0">по адресу</option>';
+            $avgGpsN = 0;
+            $avgGpsS = 0;
+    
+            $sortHtml='';
+            if($params['returnSort']) {
+                $sortHtml = '<option value="" disabled="disabled">выберите</option>';
+                $sortHtml .= '<option value="address" ' . ($params['sortVal']
+                                                           === 'address' ? ' selected="selected" ' : '')
+                             . '>по адресу</option>';
+            }
             $haveMetro = false;
             foreach ($storeCollection as $store) {
                 $metro   = $store->getMetro();
@@ -243,14 +264,16 @@ class FourPawsShopListComponent extends CBitrixComponent
                 }
                 $result['items'][] = $item;
             }
-            if ($haveMetro) {
-                $sortHtml .= '<option value="sort-1">по метро</option>';
+            if($haveMetro && $params['returnSort']) {
+                $sortHtml .= '<option value="metro" ' . ($params['sortVal']
+                                                         === 'metro' ? ' selected="selected" ' : '')
+                             . '>по метро</option>';
             }
             $countStores         = $storeCollection->count();
             $result['avg_gps_s'] = $avgGpsN / $countStores; //revert $avgGpsS
             $result['avg_gps_n'] = $avgGpsS / $countStores; //revert $avgGpsN
             $result['sortHtml']  = $sortHtml;
-            if ($returnActiveServices) {
+            if ($params['returnActiveServices']) {
                 $result['services'] = $servicesList;
             }
         }
