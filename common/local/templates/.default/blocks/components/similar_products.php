@@ -15,8 +15,9 @@ $APPLICATION->IncludeComponent(
     'fourpaws:catalog.products.recommendations',
     'fp.17.0.similar',
     [
-        'DEFERRED_LOAD' => 'N',// Y - отложенная загрузка
-
+        'DEFERRED_LOAD' => 'Y',
+        // Y - отложенная загрузка
+    
         'RCM_TYPE' => 'similar',
         'RCM_PROD_ID' => isset($arParams['PRODUCT_ID']) ? $arParams['PRODUCT_ID'] : 0,
         'USE_BIG_DATA' => 'Y',
