@@ -37,3 +37,10 @@ Thumbs.db
 Desktop.ini
 .idea
 .DS_Store
+
+#content
+/web/include/*
+!/web/include/static/
+!/web/include/.gitkeep
+/web/include/static/*
+!/web/include/static/.gitkeep

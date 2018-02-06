@@ -54,6 +54,19 @@ foreach ($arResult['ITEMS'] as &$item) {
         $image->setCropWidth(768)->setCropHeight(250);
         $item['TABLET_PICTURE'] = $image;
     }
+    
+    //фон
+    $image = null;
+    if (!empty($item['DISPLAY_PROPERTIES']['BACKGROUND']['FILE_VALUE']) && is_array($item['DISPLAY_PROPERTIES']['BACKGROUND']['FILE_VALUE'])) {
+        $image = new CropImageDecorator($item['DISPLAY_PROPERTIES']['BACKGROUND']['FILE_VALUE']);
+    } elseif (is_numeric($item['DISPLAY_PROPERTIES']['BACKGROUND']['VALUE']) && (int)$item['DISPLAY_PROPERTIES']['BACKGROUND']['VALUE'] > 0) {
+        /** @noinspection PhpUnhandledExceptionInspection */
+        $image = CropImageDecorator::createFromPrimary($item['DISPLAY_PROPERTIES']['BACKGROUND']['VALUE']);
+    }
+    if ($image instanceof CropImageDecorator) {
+        $image->setCropHeight(300);
+        $item['BACKGROUND'] = $image;
+    }
 }
 
 unset($item);

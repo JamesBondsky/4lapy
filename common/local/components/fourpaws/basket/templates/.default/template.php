@@ -246,8 +246,8 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                                     class="b-price__current"><?= number_format($basket->getPrice(), 2, '.', ' '); ?></span><span class="b-ruble">₽</span>
                         </div>
                     </div>
-                    <a class="b-button b-button--start-order" href="javascript:void(0);" title="Начать оформление">Начать
-                        оформление</a>
+                    <a class="b-button b-button--start-order" href="/sale/order/" title="Начать оформление">Начать
+                                                                                                            оформление</a>
                     <div class="b-information-order__one-click"><a
                                 class="b-link b-link--one-click js-open-popup js-open-popup--one-click js-open-popup"
                                 href="javascript:void(0)" title="Купить в 1 клик" data-popup-id="buy-one-click"><span

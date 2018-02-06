@@ -38,6 +38,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                             <div class="b-account-border-block__title b-account-border-block__title--pet">
                                 <?= $pet->getName() ?>
                             </div>
+                            <p class="b-account-border-block__pet"><?= $pet->getStringType() ?></p>
                             <p class="b-account-border-block__pet"><?= $pet->getBreed() ?></p>
                             <p class="b-account-border-block__pet"><?= $pet->getStringGender() ?></p>
                             <p class="b-account-border-block__pet"><?= $pet->getAgeString() ?></p>

@@ -164,7 +164,7 @@ class BasketController extends Controller
                 $e->getMessage(),
                 200,
                 [],
-                ['reload' => true]
+                ['reload' => false]
             );
         }
         return $response;

@@ -8,13 +8,8 @@ namespace FourPaws\StoreBundle\Service;
 
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Doctrine\Common\Collections\Collection;
-use Bitrix\Main\ArgumentException;
-use Bitrix\Main\SystemException;
-use FourPaws\App\Application;
 use FourPaws\Catalog\Model\Offer;
-use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Location\LocationService;
-use FourPaws\StoreBundle\Collection\BaseCollection;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Base as BaseEntity;
@@ -161,7 +156,21 @@ class StoreService
 
         $result = (new BitrixCache())->withId(__METHOD__ . $locationCode . $type)->resultOf($getStores);
 
-        return $result['result'];
+        /** @var StoreCollection $stores */
+        $stores = $result['result'];
+
+        /**
+         * Если не нашлось ничего с типом "склад" для данного местоположения, то добавляем склады для Москвы
+         */
+        if (in_array($type, [self::TYPE_STORE, self::TYPE_ALL], true) &&
+            $stores->getStores()->isEmpty() &&
+            $locationCode !== LocationService::LOCATION_CODE_MOSCOW
+        ) {
+            $moscowStores = $this->getByLocation(LocationService::LOCATION_CODE_MOSCOW, self::TYPE_STORE);
+            $stores = new StoreCollection(array_merge($stores->toArray(), $moscowStores->toArray()));
+        }
+
+        return $stores;
     }
 
     /**
@@ -298,8 +307,8 @@ class StoreService
     /**
      * @param Offer $offer
      *
-     * @return StockCollection
      * @throws \Exception
+     * @return StockCollection
      */
     public function getStocksByOffer(Offer $offer): StockCollection
     {

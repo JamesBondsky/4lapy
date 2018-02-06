@@ -1,9 +1,11 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\Catalog\Model;
 
-use Bitrix\Main\ArgumentException;
-use Bitrix\Main\SystemException;
 use CCatalogDiscountSave;
 use CCatalogProduct;
 use DateTimeImmutable;
@@ -21,12 +23,9 @@ use FourPaws\BitrixOrm\Query\CatalogProductQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\StoreBundle\Collection\StockCollection;
-use FourPaws\StoreBundle\Entity\Stock;
-use FourPaws\Location\LocationService;
-use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Service\StoreService;
-use JMS\Serializer\Annotation as Serializer;
 use JMS\Serializer\Annotation\Accessor;
+use JMS\Serializer\Annotation as Serializer;
 use JMS\Serializer\Annotation\Groups;
 use JMS\Serializer\Annotation\Type;
 use RuntimeException;
@@ -279,9 +278,6 @@ class Offer extends IblockElement
      * @var StockCollection
      */
     protected $stocks;
-
-    /** @var \FourPaws\StoreBundle\Collection\StoreCollection */
-    private $stores;
 
     public function __construct(array $fields = [])
     {
@@ -934,9 +930,9 @@ class Offer extends IblockElement
     /**
      * Optimization: internal current product set
      *
-     * @throws \InvalidArgumentException
      *
      * @param Product $product
+     * @throws \InvalidArgumentException
      */
     public function setProduct(Product $product)
     {
@@ -956,28 +952,11 @@ class Offer extends IblockElement
     }
 
     /**
-     * @return StoreCollection
      * @throws ServiceNotFoundException
      * @throws \Exception
      * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
-     */
-    public function getAvailableStores(): StoreCollection
-    {
-        if (!$this->stores) {
-            $storeService = Application::getInstance()->getContainer()->get('store.service');
-            $this->stores = $storeService->getAvailableProductStoresCurrentLocation($this->getId());
-        }
-
-        return $this->stores;
-    }
-
-    /**
      * @return int
-     * @throws ServiceNotFoundException
-     * @throws \Exception
-     * @throws ApplicationCreateException
-     * @throws ServiceCircularReferenceException
      */
     public function getQuantity(): int
     {
@@ -985,11 +964,11 @@ class Offer extends IblockElement
     }
 
     /**
-     * @return StockCollection
      * @throws ServiceNotFoundException
      * @throws \Exception
      * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
+     * @return StockCollection
      */
     public function getStocks(): StockCollection
     {
@@ -998,9 +977,6 @@ class Offer extends IblockElement
             $storeService = Application::getInstance()->getContainer()->get('store.service');
             $allStocks = $storeService->getStocksByOffer($this);
             $stores = $storeService->getByCurrentLocation();
-            if ($stores->isEmpty()) {
-                $stores = $storeService->getByLocation(LocationService::LOCATION_CODE_MOSCOW, StoreService::TYPE_STORE);
-            }
             $this->withStocks($allStocks->filterByStores($stores));
         }
 
