@@ -218,6 +218,9 @@ $markup = PawsApplication::markup();
 }
 
 if ($template->hasContent()) {
+    Asset::getInstance()->addCss('/include/static/style.css');
+    Asset::getInstance()->addJs('/include/static/scripts.js');
+
     $APPLICATION->IncludeComponent('bitrix:main.include',
                                    '',
                                    [
