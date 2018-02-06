@@ -15,6 +15,7 @@ use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\SaleBundle\Exception\BaseExceptionInterface;
+use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\BasketViewService;
@@ -106,7 +107,8 @@ class BasketController extends Controller
         try {
             $this->basketService->deleteOfferFromBasket($basketId);
             $data = [
-                'basket' => $this->basketViewService->getBasketHtml()
+                'basket'     => $this->basketViewService->getBasketHtml(),
+                'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
             ];
             $response = JsonSuccessResponse::createWithData(
                 '',
@@ -144,14 +146,29 @@ class BasketController extends Controller
      */
     public function updateAction(Request $request)
     {
-        $basketId = (int)$request->get('basketId', 0);
-        $quantity = (int)$request->get('quantity', 1);
+        $items = $request->get('items', []);
 
         try {
-            $this->basketService->updateBasketQuantity($basketId, $quantity);
+            if (!\is_array($items)) {
+                throw new InvalidArgumentException('Wrong basket parameters');
+            }
+    
+            foreach ($items as $item) {
+                if (!$item['basketId'] || !$item['quantity']) {
+                    /**
+                     * @todo ParamConverter
+                     */
+                    continue;
+                }
+        
+                $this->basketService->updateBasketQuantity((int)$item['basketId'], (int)$item['quantity']);
+            }
+            
             $data = [
-                'basket' => $this->basketViewService->getBasketHtml()
+                'basket'     => $this->basketViewService->getBasketHtml(),
+                'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
             ];
+    
             $response = JsonSuccessResponse::createWithData(
                 '',
                 $data,
