@@ -28,6 +28,10 @@ services:
         class: FourPaws\AppBundle\Callback\CallbackService
         arguments: ['%callback%']
 
+    FourPaws\AppBundle\Serialization\:
+        resource: '../../Serialization/*'
+        tags: ['jms_serializer.subscribing_handler']
+
 #    FourPaws\AppBundle\Controller\:
 #        resource: '../../Controller'
 #        public: true
