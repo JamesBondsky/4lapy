@@ -34,7 +34,6 @@ class Gift extends \CSaleActionGiftCtrlGroup
             'CondBsktAmtBaseGroup'
         ];
         $controlDescr['SORT'] = 300;
-        dump($controlDescr);
         return $controlDescr;
     }
 
