@@ -171,7 +171,7 @@ class ElementPropertyConditionUserType extends CUserTypeString
         $realValue = self::getDefaultValue();
 
         if (null !== $rawValue && $rawValue != '') {
-            $value = unserialize(html_entity_decode($rawValue), false);
+            $value = unserialize(html_entity_decode($rawValue), ['allowed_classes' => false]);
             if (\is_array($value)) {
                 $realValue = array_merge($realValue, $value);
             }
@@ -187,6 +187,7 @@ class ElementPropertyConditionUserType extends CUserTypeString
     {
         $productsIblockId = self::getIblockId($arUserField);
         $offersIblockId = self::getOffersIblockId($productsIblockId);
+
 
         $currentValue = self::normalizeValue($arHtmlControl['VALUE']);
         $propertyId = $currentValue[self::VALUE_PROP_ID];
