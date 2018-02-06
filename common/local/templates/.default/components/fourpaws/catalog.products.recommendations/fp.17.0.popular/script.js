@@ -4,12 +4,13 @@
     }
 
     window.FourPawsCatalogProductsRecommendationsComponent = function(params) {
-        this.siteId = params.siteId || '';
-        this.ajaxId = params.ajaxId || '';
-        this.template = params.template || '';
-        this.componentPath = params.componentPath || '';
-        this.parameters = params.parameters || '';
+        this.siteId            = params.siteId || '';
+        this.ajaxId            = params.ajaxId || '';
+        this.template          = params.template || '';
+        this.componentPath     = params.componentPath || '';
+        this.parameters        = params.parameters || '';
         this.containerSelector = params.containerSelector || '';
+        this.sliderSelector    = params.sliderSelector || '';
 
         this.bigData = params.bigData || {enabled: false};
 
@@ -91,6 +92,7 @@
                                         if (result.HTML) {
                                             if (this.containerSelector) {
                                                 jQuery(this.containerSelector).replaceWith(result.HTML);
+                                                window._global.initPopularProductSlider(this.sliderSelector);
                                             }
                                         }
                                     },
@@ -100,6 +102,7 @@
                         } else if (result.HTML) {
                             if (this.containerSelector) {
                                 jQuery(this.containerSelector).replaceWith(result.HTML);
+                                window._global.initPopularProductSlider(this.sliderSelector);
                             }
                         }
                     },
