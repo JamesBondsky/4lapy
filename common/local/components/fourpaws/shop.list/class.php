@@ -11,15 +11,16 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\Delivery\CalculationResult;
-use FourPaws\DeliveryBundle\Entity\StockResult;
-use FourPaws\DeliveryBundle\Collection\StockResultCollection;
-use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Model\CropImageDecorator;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\DeliveryBundle\Entity\StockResult;
+use FourPaws\DeliveryBundle\Exception\NotFoundException;
+use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
@@ -132,12 +133,12 @@ class FourPawsShopListComponent extends CBitrixComponent
      * @param StoreCollection $storeCollection
      * @param bool $returnActiveServices
      *
-     * @return array
      * @throws ApplicationCreateException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws \Exception
      * @throws FileNotFoundException
+     * @return array
      */
     public function getFormatedStoreByCollection(
         StoreCollection $storeCollection,
@@ -242,7 +243,11 @@ class FourPawsShopListComponent extends CBitrixComponent
             return new StoreCollection();
         }
 
-        return $this->getStockResult($pickupDelivery)->getStores();
+        try {
+            return $this->getStockResult($pickupDelivery)->getStores();
+        } catch (NotFoundException $e) {
+            return new StoreCollection();
+        }
     }
 
     /**
@@ -363,7 +368,7 @@ class FourPawsShopListComponent extends CBitrixComponent
     }
 
     /**
-     * @return CalculationResult|null
+     * @return null|CalculationResult
      */
     protected function getPickupDelivery()
     {
