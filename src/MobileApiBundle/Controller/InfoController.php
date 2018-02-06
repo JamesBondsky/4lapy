@@ -1,15 +1,22 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\MobileApiBundle\Controller;
 
+use Doctrine\Common\Collections\Collection;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
+use FourPaws\MobileApiBundle\Dto\Error;
+use FourPaws\MobileApiBundle\Dto\Request\InfoRequest;
 use FourPaws\MobileApiBundle\Dto\Response;
 
 class InfoController extends FOSRestController
 {
     /**
-     * @Rest\Get("/social")
+     * @Rest\Get("/social/")
      */
     public function getSocialsAction()
     {
@@ -40,6 +47,24 @@ class InfoController extends FOSRestController
                     'android' => '',
                 ],
         ]);
+        return $this->view($response);
+    }
+
+    /**
+     * Получить статичные разделы
+     *
+     * @Rest\Get("/info/")
+     *
+     * @param InfoRequest        $infoRequest
+     * @param Collection|Error[] $apiErrors
+     *
+     * @return \FOS\RestBundle\View\View
+     */
+    public function getInfoAction(InfoRequest $infoRequest, Collection $apiErrors)
+    {
+        $response = new Response();
+        $response->setErrors($apiErrors);
+
         return $this->view($response);
     }
 }
