@@ -69,9 +69,8 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                 <?php
             }
             ?>
-            <section class="b-stock b-stock--shopping-cart b-stock--shopping-product">
-                <h3 class="b-title b-title--h2-cart b-title--shopping-product">Ваш заказ
-                </h3>
+            <section class="b-stock b-stock--shopping-cart b-stock--shopping-product js-section-remove-stock">
+                <h3 class="b-title b-title--h2-cart b-title--shopping-product">Ваш заказ</h3>
                 <?php
                 /** @var \Bitrix\Sale\BasketItem $basketItem */
                 foreach ($orderableBasket as $basketItem) {
@@ -128,7 +127,8 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                                         title=""
                                         class="b-plus-minus__count js-plus-minus-count"
                                         value="<?= $basketItem->getQuantity() ?>"
-                                        data-basketid="<?= $basketItem->getId(); ?>" type="text"/><a
+                                        data-basketid="<?= $basketItem->getId(); ?>" type="text" />
+                                <a
                                         class="b-plus-minus__plus js-plus" data-url="/ajax/sale/basket/update/"
                                         href="javascript:void(0);"></a>
                             </div>
