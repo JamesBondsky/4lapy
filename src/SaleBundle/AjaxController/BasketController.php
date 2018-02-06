@@ -6,9 +6,14 @@ declare(strict_types=1);
 
 namespace FourPaws\SaleBundle\AjaxController;
 
+use Bitrix\Main\Grid\Declension;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
+use FourPaws\Catalog\Collection\OfferCollection;
+use FourPaws\Catalog\Model\Offer;
+use FourPaws\Catalog\Model\Product;
 use FourPaws\SaleBundle\Exception\BaseExceptionInterface;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Service\BasketService;
@@ -48,7 +53,6 @@ class BasketController extends Controller
      *
      * @param \Symfony\Component\HttpFoundation\Request $request
      *
-     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
      * @throws \Bitrix\Main\ArgumentNullException
      * @throws \RuntimeException
      *
@@ -112,7 +116,7 @@ class BasketController extends Controller
             );
         } catch (NotFoundException $e) {
             $response = JsonErrorResponse::create(
-                $e->getMessage() . ' is not found.',
+                $e->getMessage(),
                 200,
                 [],
                 ['reload' => true]
@@ -163,6 +167,74 @@ class BasketController extends Controller
                 ['reload' => true]
             );
         }
+        return $response;
+    }
+
+    /**
+     * @Route("/gift/get/", methods={"GET", "POST"})
+     *
+     * @param Request $request
+     *
+     * @throws \RuntimeException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws \Bitrix\Main\NotSupportedException
+     *
+     * @return JsonErrorResponse|JsonResponse
+     */
+    public function getGiftListAction(Request $request)
+    {
+        $discountId = (int)$request->get('discountId', 0);
+        $response = null;
+        try {
+            $giftGroup = $this->basketService->getGiftGroupOfferCollection($discountId);
+        } catch (BaseExceptionInterface $e) {
+            $response = JsonErrorResponse::create(
+                $e->getMessage(),
+                200,
+                [],
+                ['reload' => true]
+            );
+        }
+        if (null === $response) {
+            $items = [];
+            /** @var OfferCollection $offerCollection */
+            /** @noinspection PhpUndefinedVariableInspection */
+            $offerCollection = $giftGroup['list'];
+            /** @var Offer $offer */
+            foreach ($offerCollection as $offer) {
+                /** @var ResizeImageCollection $images */
+                $images = $offer->getResizeImages(110, 110);
+                if (null !== $image = $images->first()) {
+                    $image = (string)$image;
+                } else {
+                    $image = '';
+                }
+                /** @var Product $product */
+                $product = $offer->getProduct();
+                $name = '<strong>' . $product->getBrandName() . '</strong>' . lcfirst(trim($product->getName()));
+                $items[] = [
+                    'id' => $offer->getId(),
+                    'actionId' => $discountId,
+                    'image' => $image,
+                    'name' => $name,
+                    'additional' => '', // todo ###
+                ];
+
+            }
+            $giftDeclension = new Declension('подарок', 'подарка', 'подарков');
+            $data = [
+                'count' => $giftGroup['count'],
+                'title' => 'Выберете ' . $giftGroup['count'] . ' ' . $giftDeclension->get($giftGroup['count']),
+                'items' => $items
+            ];
+            $response = JsonSuccessResponse::createWithData(
+                '',
+                $data,
+                200,
+                ['reload' => false]
+            );
+        }
+
         return $response;
     }
 }
