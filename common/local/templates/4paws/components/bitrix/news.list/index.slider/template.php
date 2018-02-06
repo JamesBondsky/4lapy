@@ -19,32 +19,43 @@
  * @global CDatabase              $DB
  */
 
+if (!\is_array($arResult['ITEMS']) || empty($arResult['ITEMS'])) {
+    return;
+}
 ?>
 <div class="b-main-slider js-main-slider">
     <?php foreach ($arResult['ITEMS'] as $item) { ?>
-        <div class="b-main-item js-image-wrapper">
-            <a class="b-main-item__link-main" href="<?= $item['PROPERTIES']['LINK']['VALUE'] ?>" title="<?= $item['NAME'] ?>"><?php
+        <div class="b-main-item b-main-item--background js-image-wrapper"
+            <?= !empty($item['BACKGROUND']) ? ' style=\'background: url("'
+                                              . $item['BACKGROUND']
+                                              . '")\'' : '' ?>>
+            <a class="b-main-item__link-main"
+               href="<?= $item['PROPERTIES']['LINK']['VALUE'] ?>"
+               title="<?= $item['NAME'] ?>"><?php
                 if (!empty($item['DESKTOP_PICTURE'])) {
-                    ?><img class="b-main-item__slider-background b-main-item__slider-background--desktop js-image-wrapper"
-                           src="<?= $item['DESKTOP_PICTURE'] ?>"
-                           alt="<?= $item['NAME'] ?>"
-                           role="presentation"><?php
+                    ?>
+                    <img class="b-main-item__slider-background b-main-item__slider-background--desktop js-image-wrapper"
+                         src="<?= $item['DESKTOP_PICTURE'] ?>"
+                         alt="<?= $item['NAME'] ?>"
+                         role="presentation"><?php
                 }
-
+                
                 if (!empty($item['TABLET_PICTURE'])) {
-                    ?><img class="b-main-item__slider-background b-main-item__slider-background--tablet js-image-wrapper"
-                           src="<?= $item['TABLET_PICTURE'] ?>"
-                           alt="<?= $item['NAME'] ?>"
-                           role="presentation"><?php
+                    ?>
+                    <img class="b-main-item__slider-background b-main-item__slider-background--tablet js-image-wrapper"
+                         src="<?= $item['TABLET_PICTURE'] ?>"
+                         alt="<?= $item['NAME'] ?>"
+                         role="presentation"><?php
                 }
-
+                
                 if (!empty($item['MOBILE_PICTURE'])) {
-                    ?><img class="b-main-item__slider-background b-main-item__slider-background--mobile js-image-wrapper"
-                           src="<?= $item['MOBILE_PICTURE'] ?>"
-                           alt="<?= $item['NAME'] ?>"
-                           role="presentation"><?php
+                    ?>
+                    <img class="b-main-item__slider-background b-main-item__slider-background--mobile js-image-wrapper"
+                         src="<?= $item['MOBILE_PICTURE'] ?>"
+                         alt="<?= $item['NAME'] ?>"
+                         role="presentation"><?php
                 }
-            ?></a>
+                ?></a>
         </div>
     <?php } ?>
 </div>
