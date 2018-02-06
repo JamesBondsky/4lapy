@@ -45,8 +45,10 @@ class StoreListController extends Controller
         return JsonSuccessResponse::createWithData(
             'Подгрузка успешна',
             $shopListClass->getStores(
-                $shopListClass->getFilterByRequest($request),
-                $shopListClass->getOrderByRequest($request)
+                [
+                    'filter' => $shopListClass->getFilterByRequest($request),
+                    'order'  => $shopListClass->getOrderByRequest($request),
+                ]
             )
         );
     }
@@ -71,8 +73,10 @@ class StoreListController extends Controller
         return JsonSuccessResponse::createWithData(
             'Подгрузка успешна',
             $shopListClass->getStores(
-                $shopListClass->getFilterByRequest($request),
-                $shopListClass->getOrderByRequest($request)
+                [
+                    'filter' => $shopListClass->getFilterByRequest($request),
+                    'order'  => $shopListClass->getOrderByRequest($request),
+                ]
             )
         );
     }
@@ -97,8 +101,10 @@ class StoreListController extends Controller
         return JsonSuccessResponse::createWithData(
             'Подгрузка успешна',
             $shopListClass->getStores(
-                $shopListClass->getFilterByRequest($request),
-                $shopListClass->getOrderByRequest($request)
+                [
+                    'filter' => $shopListClass->getFilterByRequest($request),
+                    'order'  => $shopListClass->getOrderByRequest($request),
+                ]
             )
         );
     }
@@ -123,9 +129,13 @@ class StoreListController extends Controller
         return JsonSuccessResponse::createWithData(
             'Подгрузка успешна',
             $shopListClass->getStores(
-                $shopListClass->getFilterByRequest($request),
-                $shopListClass->getOrderByRequest($request),
-                true
+                [
+                    'filter'               => $shopListClass->getFilterByRequest($request),
+                    'order'                => $shopListClass->getOrderByRequest($request),
+                    'returnActiveServices' => true,
+                    'returnSort'           => true,
+                    'sortVal'              => $request->get('sort'),
+                ]
             )
         );
     }
@@ -145,15 +155,19 @@ class StoreListController extends Controller
     {
         $offerId = $request->get('offer', 0);
         
-        if((int)$offerId > 0) {
+        if ((int)$offerId > 0) {
             \CBitrixComponent::includeComponentClass('fourpaws:shop.list');
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             $shopListClass = new \FourPawsShopListComponent();
+            
             return JsonSuccessResponse::createWithData(
                 'Подгрузка успешна',
-                $shopListClass->getFormatedStoreByCollection($shopListClass->getActiveStoresByProduct($offerId))
+                $shopListClass->getFormatedStoreByCollection(
+                    ['storeCollection' => $shopListClass->getActiveStoresByProduct($offerId)]
+                )
             );
         }
+        
         return JsonErrorResponse::create('Не указан id торгового предложения');
     }
 }
