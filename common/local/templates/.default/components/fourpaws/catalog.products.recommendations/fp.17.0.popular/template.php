@@ -25,13 +25,14 @@ if ($arResult['RESULT_TYPE'] === 'INITIAL' && $arParams['DEFERRED_LOAD'] === 'Y'
 
     ?><script type="text/javascript">
         new FourPawsCatalogProductsRecommendationsComponent({
-            siteId: '<?=\CUtil::JSEscape(SITE_ID)?>',
-            componentPath: '<?=\CUtil::JSEscape($componentPath)?>',
+            siteId:                                                                '<?=\CUtil::JSEscape(SITE_ID)?>',
+            componentPath:                                                         '<?=\CUtil::JSEscape($componentPath)?>',
             bigData: <?=\CUtil::PhpToJSObject($arResult['BIG_DATA_SETTINGS'])?>,
-            template: '<?=\CUtil::JSEscape($signedTemplate)?>',
-            ajaxId: '<?=\CUtil::JSEscape($arParams['AJAX_ID'])?>',
-            parameters: '<?=\CUtil::JSEscape($signedParams)?>',
-            containerSelector: '#popular_products_cont'
+            template:                                                              '<?=\CUtil::JSEscape($signedTemplate)?>',
+            ajaxId:                                                                '<?=\CUtil::JSEscape($arParams['AJAX_ID'])?>',
+            parameters:                                                            '<?=\CUtil::JSEscape($signedParams)?>',
+                                                                containerSelector: '#popular_products_cont',
+                                                                sliderSelector:    '.js-popular-product'
         });
     </script><?php
 

@@ -16,8 +16,6 @@ $APPLICATION->IncludeComponent(
     'fp.17.0.popular',
     [
         'DEFERRED_LOAD' => 'Y',
-        // Y - отложенная загрузка
-    
         'RCM_TYPE' => 'personal',
         'USE_BIG_DATA' => 'Y',
         'USE_BESTSELLERS' => 'Y',

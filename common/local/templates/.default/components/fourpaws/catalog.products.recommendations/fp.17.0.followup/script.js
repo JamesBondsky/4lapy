@@ -4,14 +4,14 @@
     }
 
     window.FourPawsCatalogProductsRecommendationsComponent = function(params) {
-        this.siteId = params.siteId || '';
-        this.ajaxId = params.ajaxId || '';
-        this.template = params.template || '';
-        this.componentPath = params.componentPath || '';
-        this.parameters = params.parameters || '';
+        this.siteId            = params.siteId || '';
+        this.ajaxId            = params.ajaxId || '';
+        this.template          = params.template || '';
+        this.componentPath     = params.componentPath || '';
+        this.parameters        = params.parameters || '';
         this.containerSelector = params.containerSelector || '';
-
-        this.bigData = params.bigData || {enabled: false};
+        this.sliderSelector    = params.sliderSelector || '';
+        this.bigData           = params.bigData || {enabled: false};
 
         if (this.bigData.enabled) {
             // эти переменные используются в FourPawsCatalogElementSnippet
@@ -82,6 +82,7 @@
                         if (!result) {
                             return;
                         }
+    
                         if (result.JS) {
                             BX.ajax.processScripts(
                                 BX.processHTML(result.JS).SCRIPT,
@@ -91,6 +92,7 @@
                                         if (result.HTML) {
                                             if (this.containerSelector) {
                                                 jQuery(this.containerSelector).replaceWith(result.HTML);
+                                                window._global.initPopularProductSlider(this.sliderSelector);
                                             }
                                         }
                                     },
@@ -100,6 +102,7 @@
                         } else if (result.HTML) {
                             if (this.containerSelector) {
                                 jQuery(this.containerSelector).replaceWith(result.HTML);
+                                window._global.initPopularProductSlider(this.sliderSelector);
                             }
                         }
                     },
