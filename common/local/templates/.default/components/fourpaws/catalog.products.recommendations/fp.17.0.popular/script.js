@@ -90,12 +90,6 @@
                                 BX.delegate(
                                     function () {
                                         if (result.HTML) {
-                                            console.info([
-                                                             'processScripts...',
-                                                             result,
-                                                             this.sliderSelector,
-                                                             this.containerSelector
-                                                         ]);
                                             if (this.containerSelector) {
                                                 jQuery(this.containerSelector).replaceWith(result.HTML);
                                                 window._global.initPopularProductSlider(this.sliderSelector);
