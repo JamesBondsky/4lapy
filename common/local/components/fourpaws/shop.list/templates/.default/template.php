@@ -82,7 +82,6 @@ $frame = $this->createFrame(); ?>
                         <select class="b-select__block b-select__block--stores"
                                 name="sort"
                                 data-url="/ajax/store/list/order/" title="Сортировать">
-                            <option value="city">по городу</option>
                             <option value="address">по адресу</option>
                             <option value="metro"<?= (!isset($arResult['METRO'])
                                                       || empty($arResult['METRO'])) ? ' style="display:none"' : '' ?>>по метро</option>
