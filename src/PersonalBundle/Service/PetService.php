@@ -7,9 +7,7 @@
 namespace FourPaws\PersonalBundle\Service;
 
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
-use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
 use FourPaws\PersonalBundle\Entity\Pet;
@@ -108,6 +106,7 @@ class PetService
      */
     protected function updateManzanaPets()
     {
+        $container = App::getInstance()->getContainer();
         $types     = [];
 
         try {
@@ -121,28 +120,20 @@ class PetService
             
             $client = null;
             try {
-                $contactId         = $this->manzanaService;
+                /** @var ManzanaService $manzanaService */
+                $manzanaService = $container->get('manzana.service');
+    
+                $contactId         = $manzanaService->getContactIdByCurUser();
                 $client            = new Client();
                 $client->contactId = $contactId;
-            } catch (ManzanaServiceContactSearchNullException $e) {
-                $client = new Client();
-                try {
-                    $this->currentUser->setClientPersonalDataByCurUser($client);
-                } catch (NotAuthorizedException $e) {
-                }
             } catch (ManzanaServiceException $e) {
-            } catch (NotAuthorizedException $e) {
+                $client = new Client();
+                $this->currentUser->setClientPersonalDataByCurUser($client);
             }
+    
             if ($client instanceof Client) {
                 $this->setClientPets($client, $types);
-                try {
-                    /**
-                     * @todo refactor it
-                     */
-                    $manzanaService->updateContact($client);
-                } catch (ManzanaServiceException $e) {
-                } catch (ContactUpdateException $e) {
-                }
+                $manzanaService->updateContactAsync($client);
             }
         } catch (NotAuthorizedException $e) {
         }
