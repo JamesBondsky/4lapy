@@ -171,7 +171,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         $arguments = [
             'login'    => $this->parameters['login'],
             'password' => $this->parameters['password'],
-            'ip'       => $_SERVER['HTTP_X_FORWARDED_FOR'] ?: $_SERVER['REMOTE_ADDR'],
+            'ip'       => ($_SERVER['HTTP_X_FORWARDED_FOR'] ?: $_SERVER['REMOTE_ADDR']) ?? '127.0.0.1',
         ];
         
         try {
@@ -674,21 +674,10 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      * Обновление/создание контакта. Очередь в rabbit.
      *
      * @param Client $contact
-     *
-     * @throws ManzanaServiceException
      */
     public function updateContactAsync(Client $contact)
     {
-        /**
-         * @todo do it better
-         */
-        try {
-            $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.manzana_update');
-            $producer->publish($contact);
-        } catch (\Exception $e) {
-            throw new ManzanaServiceException(sprintf('Update error: %s', $e->getMessage()));
-        }
+        $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.manzana_update_producer');
+        $producer->publish($this->serializer->serialize($contact, 'json'));
     }
-    
-    
 }

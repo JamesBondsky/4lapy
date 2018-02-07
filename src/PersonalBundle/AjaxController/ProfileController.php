@@ -12,9 +12,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
-use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
-use FourPaws\External\Manzana\Exception\ManzanaException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\DateHelper;
@@ -23,7 +21,6 @@ use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\EmptyDateException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
-use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -228,24 +225,13 @@ class ProfileController extends Controller
                 $contactId         = $manzanaService->getContactIdByCurUser();
                 $client            = new Client();
                 $client->contactId = $contactId;
-            } catch (ManzanaServiceContactSearchNullException $e) {
-                $client = new Client();
             } catch (ManzanaServiceException $e) {
-            } catch (NotAuthorizedException $e) {
+                $client = new Client();
             }
+    
             if ($client instanceof Client) {
-                try {
-                    $this->currentUserProvider->setClientPersonalDataByCurUser($client, $user);
-                } catch (NotAuthorizedException $e) {
-                }
-                try {
-                    /**
-                     * @todo refactor it
-                     */
-                    $manzanaService->updateContact($client);
-                } catch (ManzanaServiceException $e) {
-                } catch (ManzanaException $e) {
-                }
+                $this->currentUserProvider->setClientPersonalDataByCurUser($client, $user);
+                $manzanaService->updateContactAsync($client);
             }
             
             try {
