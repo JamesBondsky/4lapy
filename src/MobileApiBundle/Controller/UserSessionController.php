@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\MobileApiBundle\Controller;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
@@ -34,7 +38,7 @@ class UserSessionController extends FOSRestController
      *         )
      *     )
      * )
-     * @Rest\Get(path="/start", name="start")
+     * @Rest\Get(path="/start/", name="start")
      */
     public function startAction()
     {
