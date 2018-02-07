@@ -4,8 +4,8 @@ namespace FourPaws\External\SmsTraffic;
 
 use Exception;
 use FourPaws\External\SmsTraffic\Exception\ParsingException;
-use FourPaws\External\SmsTraffic\Exception\SmsSendErrorException;
 use FourPaws\External\SmsTraffic\Exception\SendingException;
+use FourPaws\External\SmsTraffic\Exception\SmsSendErrorException;
 use FourPaws\External\SmsTraffic\Exception\TransportException;
 use FourPaws\External\SmsTraffic\Sms\AbstractSms;
 use FourPaws\External\SmsTraffic\Transport\GuzzleHttpTransport;
@@ -21,7 +21,7 @@ class Client
     /**
      * API Url by default
      */
-    const DEFAULT_API_URL = 'http://sds.intervale.ru/smartdelivery-in/multi.php';
+    const DEFAULT_API_URL = 'http://sds.smstraffic.ru/smartdelivery-in/multi.php';
     
     /**
      * Reserved API Url

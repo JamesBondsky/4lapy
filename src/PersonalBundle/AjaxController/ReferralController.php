@@ -42,7 +42,7 @@ class ReferralController extends Controller
      */
     public function addAction(Request $request) : JsonResponse
     {
-        $data = $request->request->getIterator()->getArrayCopy();
+        $data = $request->request->all();
         if (empty($data)) {
             return JsonErrorResponse::createWithData(
                 'Не указаны данные для добавления',
