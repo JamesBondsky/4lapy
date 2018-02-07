@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\UserBundle\Service;
 
 use Bitrix\Sale\Fuser;
@@ -131,15 +135,6 @@ class UserService implements
     public function getCurrentFUserId(): int
     {
         return (int)Fuser::getId();
-    }
-
-
-    /**
-     * @return int
-     */
-    public function getAnonymousUserId(): int
-    {
-        return \CSaleUser::GetAnonymousUserID();
     }
 
     /**

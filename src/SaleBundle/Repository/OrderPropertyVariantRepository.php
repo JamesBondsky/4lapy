@@ -1,13 +1,15 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SaleBundle\Repository;
 
-use Bitrix\Main\Entity\ReferenceField;
-use Bitrix\Sale\Internals\OrderPropsTable;
 use Bitrix\Sale\Internals\OrderPropsVariantTable;
-use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\SaleBundle\Collection\OrderPropertyVariantCollection;
+use FourPaws\SaleBundle\Entity\OrderProperty;
 use FourPaws\SaleBundle\Entity\OrderPropertyVariant;
-use FourPaws\SaleBundle\Exception\NotFoundException;
 use JMS\Serializer\ArrayTransformerInterface;
 use JMS\Serializer\DeserializationContext;
 
@@ -24,45 +26,36 @@ class OrderPropertyVariantRepository
     }
 
     /**
-     * @param string $propertyCode
-     * @param array $additionalFilter
+     * @param OrderProperty $propertyCode
      *
-     * @return ArrayCollection
+     * @return OrderPropertyVariantCollection
      */
-    public function getAvailableVariants(string $propertyCode, array $additionalFilter = []): ArrayCollection
+    public function findByProperty(OrderProperty $property): OrderPropertyVariantCollection
     {
-        $filter = [
-            'PROPERTY.CODE' => $propertyCode,
-        ];
-
-        if (!empty($additionalFilter)) {
-            $filter = array_merge($filter, $additionalFilter);
+        $variants = $this->findBy(['ORDER_PROPS_ID' => $property->getId()]);
+        /** @var OrderPropertyVariant $variant */
+        foreach ($variants->getIterator() as $variant) {
+            $variant->setProperty($property);
         }
 
-        $result = new ArrayCollection();
+        return $variants;
+    }
 
+    /**
+     * @param array $filter
+     *
+     * @return OrderPropertyVariantCollection
+     */
+    public function findBy(array $filter = []): OrderPropertyVariantCollection
+    {
         $variants = OrderPropsVariantTable::getList(
             [
-                'filter'  => $filter,
-                'runtime' => [
-                    new ReferenceField(
-                        'PROPERTY',
-                        OrderPropsTable::class,
-                        ['=this.ORDER_PROPS_ID' => 'ref.ID'],
-                        ['join_type' => 'LEFT']
-                    ),
-                ],
-                'select'  => [
-                    'ID',
-                    'NAME',
-                    'ORDER_PROPS_ID',
-                    'VALUE',
-                    'SORT',
-                    'PROPERTY.CODE',
-                ],
+                'select' => ['*'],
+                'filter' => $filter,
             ]
         );
 
+        $result = new OrderPropertyVariantCollection();
         while ($variant = $variants->fetch()) {
             /** @var OrderPropertyVariant $entity */
             $entity = $this->arrayTransformer->fromArray(

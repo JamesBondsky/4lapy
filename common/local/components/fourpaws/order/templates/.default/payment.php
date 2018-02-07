@@ -3,11 +3,34 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+use Bitrix\Sale\BasketBase;
+use Bitrix\Sale\Delivery\CalculationResult;
+use Bitrix\Sale\PaySystem\Manager as PaySystemManager;
+use FourPaws\App\Application;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\Helpers\CurrencyHelper;
+use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Service\OrderService;
+
 /**
  * @var array $arResult
  * @var array $arParams
  * @var CMain $APPLICATION
  */
+
+/** @var DeliveryService $deliveryService */
+$deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+/** @var OrderStorage $storage */
+$storage = $arResult['STORAGE'];
+
+/** @var CalculationResult $selectedDelivery */
+$selectedDelivery = $arResult['SELECTED_DELIVERY'];
+
+/** @var BasketBase $basket */
+$basket = $arResult['BASKET'];
+
+$isInnerDelivery = $deliveryService->isInnerDelivery($selectedDelivery) ||
+    $deliveryService->isInnerPickup($selectedDelivery);
 
 ?>
 <div class="b-container">
@@ -50,33 +73,36 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                             Как вы будете оплачивать
                         </h2>
                     </header>
-                    <form class="b-order-contacts__form b-order-contacts__form--points-top js-form-validation">
-                        <div class="b-choice-recovery b-choice-recovery--flex">
-                            <input class="b-choice-recovery__input"
-                                   id="order-delivery-address"
-                                   type="radio"
-                                   name="order-delivery"
-                                   checked="checked"/>
-                            <label class="b-choice-recovery__label b-choice-recovery__label--left b-choice-recovery__label--order-step b-choice-recovery__label--radio-mobile"
-                                   for="order-delivery-address">
-                                <span class="b-choice-recovery__main-text">Онлайн оплата</span>
-                            </label>
-                            <input class="b-choice-recovery__input"
-                                   id="order-delivery-pick-up"
-                                   type="radio"
-                                   name="order-delivery"/>
-                            <label class="b-choice-recovery__label b-choice-recovery__label--right b-choice-recovery__label--order-step b-choice-recovery__label--radio-mobile"
-                                   for="order-delivery-pick-up"
-                                   data-popup-id="popup-order-stores">
-                                <span class="b-choice-recovery__main-text">Наличными или картой</span>
-                                <span class="b-choice-recovery__main-text">при&nbsp;получении</span>
-                            </label>
-                        </div>
-                    </form>
-                    <form class="b-order-contacts__form b-order-contacts__form--points js-form-validation"
+                    <form class="b-order-contacts__form b-order-contacts__form--points-top js-form-validation"
                           action="/"
-                          data-url="/json/order-step-3.json"
+                          method="post"
+                          data-url="<?= $arResult['URL']['PAYMENT_VALIDATION'] ?>"
                           id="order-step">
+                        <div class="b-choice-recovery b-choice-recovery--flex">
+                            <?php foreach ($arResult['PAYMENTS'] as $payment) {
+    ?>
+                                <?php
+                                if ((int)PaySystemManager::getInnerPaySystemId() === (int)$payment['ID']) {
+                                    continue;
+                                }
+    if ($isInnerDelivery && $payment['CODE'] === OrderService::PAYMENT_CASH) {
+        $displayName = 'Наличными или картой при получении';
+    } else {
+        $displayName = $payment['NAME'];
+    } ?>
+                                <input class="b-choice-recovery__input"
+                                       id="order-payment-<?= $payment['ID'] ?>"
+                                       type="radio"
+                                       name="paymentId"
+                                       value="<?= $payment['ID'] ?>"
+                                    <?= (int)$payment['ID'] === $storage->getPaymentId() ? 'checked="checked"' : '' ?>/>
+                                <label class="b-choice-recovery__label b-choice-recovery__label--left b-choice-recovery__label--order-step b-choice-recovery__label--radio-mobile"
+                                       for="order-payment-<?= $payment['ID'] ?>">
+                                    <span class="b-choice-recovery__main-text"><?= $displayName ?></span>
+                                </label>
+                            <?php
+} ?>
+                        </div>
                         <label class="b-order-contacts__label" for="point-pay">
                             <b>Оплатить часть заказа бонусными баллами </b>(до 299)
                         </label>
@@ -87,7 +113,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                             <div class="b-error">
                                 <span class="js-message"></span>
                             </div>
-                            <a class="b-input__close-points js-pointspay-close" href="javascript:void(0)" title=""></a>
+                            <a class="b-input__close-points js-pointspay-close"
+                               href="javascript:void(0)"
+                               title=""></a>
                         </div>
                         <button class="b-button b-button--order-line js-pointspay-button">Подтвердить
                         </button>
@@ -107,7 +135,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                                 </div>
                             </div>
                             <div class="b-order-list__order-value b-order-list__order-value--order-step-3">
-                                4 703 ₽
+                                <?= mb_strtolower(CurrencyHelper::formatPrice($basket->getPrice())) ?>
                             </div>
                         </li>
                         <li class="b-order-list__item b-order-list__item--cost b-order-list__item--order-step-3">
@@ -119,9 +147,25 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                                 </div>
                             </div>
                             <div class="b-order-list__order-value b-order-list__order-value--order-step-3">
-                                350 ₽
+                                <?= mb_strtolower(CurrencyHelper::formatPrice($selectedDelivery->getPrice())) ?>
                             </div>
                         </li>
+                        <?php if ($storage->getBonusSum()) {
+        ?>
+                            <li class="b-order-list__item b-order-list__item--cost b-order-list__item--order-step-3">
+                                <div class="b-order-list__order-text b-order-list__order-text--order-step-3">
+                                    <div class="b-order-list__clipped-text">
+                                        <div class="b-order-list__text-backed">
+                                            Оплачено баллами
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="b-order-list__order-value b-order-list__order-value--order-step-3">
+                                    <?= mb_strtolower(CurrencyHelper::formatPrice($storage->getBonusSum())) ?>
+                                </div>
+                            </li>
+                        <?php
+    } ?>
                         <li class="b-order-list__item b-order-list__item--cost b-order-list__item--order-step-3">
                             <div class="b-order-list__order-text b-order-list__order-text--order-step-3">
                                 <div class="b-order-list__clipped-text">
@@ -131,7 +175,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                                 </div>
                             </div>
                             <div class="b-order-list__order-value b-order-list__order-value--order-step-3">
-                                5 053 ₽
+                                <?= mb_strtolower(
+                                    CurrencyHelper::formatPrice(
+                                        $basket->getPrice() + $selectedDelivery->getPrice() - $storage->getBonusSum()
+                                    )
+                                ) ?>
                             </div>
                         </li>
                     </ul>

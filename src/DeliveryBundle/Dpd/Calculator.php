@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\DeliveryBundle\Dpd;
 
 use Bitrix\Main\Config\Option;
@@ -59,19 +63,8 @@ class Calculator extends DPD
             return $result;
         }
 
-        /**
-         * Если есть склады в данном местоположении, то доставка производится с них,
-         * иначе - со складов Мск
-         */
         $arOrder['LOCATION_FROM'] = $arOrder['LOCATION_TO'];
         $storesAvailable = $storeService->getByLocation($arOrder['LOCATION_TO'], StoreService::TYPE_STORE);
-        if ($storesAvailable->isEmpty()) {
-            $arOrder['LOCATION_FROM'] = LocationService::LOCATION_CODE_MOSCOW;
-            $storesAvailable = $storeService->getByLocation(
-                LocationService::LOCATION_CODE_MOSCOW,
-                StoreService::TYPE_STORE
-            );
-        }
         $storesDelay = new StoreCollection();
 
         $result = parent::Calculate($profile, $arConfig, $arOrder, $STEP, $TEMP);

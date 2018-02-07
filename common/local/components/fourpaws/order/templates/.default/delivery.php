@@ -144,7 +144,7 @@ $selectedDeliveryId = $arResult['SELECTED_DELIVERY_ID'];
                     <div class="b-order-list__order-text b-order-list__order-text--order-step-two">
                         <div class="b-order-list__clipped-text">
                             <div class="b-order-list__text-backed">
-                                <?= $selectedDelivery->getData()['DELIVERY_NAME'] ?>
+                                Доставка
                             </div>
                         </div>
                     </div>

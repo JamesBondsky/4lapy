@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\DeliveryBundle\Service;
 
 use Bitrix\Currency\CurrencyManager;
@@ -18,9 +22,7 @@ use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Exception\InvalidArgumentException;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\Location\LocationService;
-use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Service\StoreService;
-use FourPaws\UserBundle\Service\UserService;
 use WebArch\BitrixCache\BitrixCache;
 
 class DeliveryService
@@ -65,19 +67,19 @@ class DeliveryService
     protected $locationService;
 
     /**
-     * @var UserService $userService
-     */
-    protected $userService;
-
-    /**
      * @var StoreService
      */
     protected $storeService;
 
-    public function __construct(LocationService $locationService, UserService $userService, StoreService $storeService)
+    /**
+     * DeliveryService constructor.
+     *
+     * @param LocationService $locationService
+     * @param StoreService $storeService
+     */
+    public function __construct(LocationService $locationService, StoreService $storeService)
     {
         $this->locationService = $locationService;
-        $this->userService = $userService;
         $this->storeService = $storeService;
     }
 
@@ -438,8 +440,8 @@ class DeliveryService
     /**
      * @param string $code
      *
-     * @return int
      * @throws NotFoundException
+     * @return int
      */
     public function getDeliveryIdByCode(string $code): int
     {
@@ -479,7 +481,7 @@ class DeliveryService
     {
         $order = Order::create(
             SITE_ID,
-            $this->userService->getAnonymousUserId(),
+            null,
             CurrencyManager::getBaseCurrency()
         );
 
