@@ -24,7 +24,8 @@ use Bitrix\Main\Page\Asset;
 
         Asset::getInstance()->addCss('/local/templates/4paws_front_office/css/style.css');
         Asset::getInstance()->addJs('/local/templates/4paws_front_office/js/jquery.js');
-        Asset::getInstance()->addJs('/local/templates/4paws_front_office/js/script.js');
+        // не используется больше
+        //Asset::getInstance()->addJs('/local/templates/4paws_front_office/js/script.js');
     ?></head>
     <body><?php
 

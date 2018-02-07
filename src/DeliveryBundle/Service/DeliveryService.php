@@ -128,17 +128,33 @@ class DeliveryService
      * @param string $locationCode
      * @param array $codes коды доставок для расчета
      *
-     * @return array
+     * @return CalculationResult[]
      */
-    public function getByLocation(string $locationCode = null, array $codes = []): array
+    public function getByLocation(string $locationCode, array $codes = []): array
     {
-        if (!$locationCode) {
-            $locationCode = $this->getCurrentLocation();
+        $getDeliveries = function () use ($locationCode) {
+            $shipment = $this->generateShipment($locationCode);
+
+            return ['result' => $this->calculateDeliveries($shipment)];
+        };
+
+        $result = (new BitrixCache())
+            ->withId(__METHOD__ . $locationCode)
+            ->resultOf($getDeliveries);
+
+        $deliveries = $result['result'];
+        if (!empty($codes)) {
+            /**
+             * @var CalculationResult $delivery
+             */
+            foreach ($deliveries as $i => $delivery) {
+                if (!in_array($delivery->getData()['DELIVERY_CODE'], $codes, true)) {
+                    unset($deliveries[$i]);
+                }
+            }
         }
 
-        $shipment = $this->generateShipment($locationCode);
-
-        return $this->calculateDeliveries($shipment, $codes);
+        return $deliveries;
     }
 
     /**

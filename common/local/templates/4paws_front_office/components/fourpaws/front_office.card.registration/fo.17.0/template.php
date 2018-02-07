@@ -78,12 +78,14 @@ if ($showForm) {
                             break;
                     }
                 }
-                ?><p class="text-h3 mb-l">Введите штрих-код Вашей карты:</p>
+                ?>
+                <p class="text-h3 mb-l">Введите штрих-код Вашей карты:</p>
                 <div class="form-page__field-wrap">
                     <label for="<?=$fieldName?>" class="form-page__label">Номер вашей карты</label>
-                    <input id="<?=$fieldName?>" name="<?=$fieldName?>" value="<?=$value?>"<?=$attr?> class="form-page__field mb-l" type="text"><?
-                    echo $errMess ? sprintf($errBlock, $errMess) : '';
-                ?></div><?php
+                    <input id="<?=$fieldName?>" name="<?=$fieldName?>" value="<?=$value?>"<?=$attr?> class="form-page__field mb-l" type="text">
+                    <?=($errMess ? sprintf($errBlock, $errMess) : '')?>
+                </div>
+                <?php
             }
 
 
@@ -99,9 +101,6 @@ if ($showForm) {
                 /** @var Bitrix\Main\Error $error */
                 $error = $fieldMeta['ERROR'];
                 if ($error) {
-                    $errMess = 'Неизвестная ошибка';
-                    /** @var Bitrix\Main\Error $error */
-                    $error = $arResult['ERROR']['FIELD'][$fieldName];
                     switch ($error->getCode()) {
                         case 'exception':
                             $errMess = $error->getMessage();
@@ -112,13 +111,18 @@ if ($showForm) {
                         case 'not_valid':
                             $errMess = 'Введите корректные данные';
                             break;
+                        default:
+                            $errMess = '['.$error->getCode().'] '.$error->getMessage();
+                            break;
                     }
                 }
-                ?><div class="form-page__field-wrap">
+                ?>
+                <div class="form-page__field-wrap">
                     <label for="<?=$fieldName?>" class="form-page__label">Фамилия</label>
-                    <input id="<?=$fieldName?>" name="<?=$fieldName?>" value="<?=$value?>"<?=$attr?> class="form-page__field mb-l" type="text"><?php
-                    echo $errMess ? sprintf($errBlock, $errMess) : '';
-                ?></div><?php
+                    <input id="<?=$fieldName?>" name="<?=$fieldName?>" value="<?=$value?>"<?=$attr?> class="form-page__field mb-l" type="text">
+                    <?=($errMess ? sprintf($errBlock, $errMess) : '')?>
+                </div>
+                <?php
 
                 // Поле: Имя
                 $fieldName = 'firstName';
@@ -131,7 +135,6 @@ if ($showForm) {
                 /** @var Bitrix\Main\Error $error */
                 $error = $fieldMeta['ERROR'];
                 if ($error) {
-                    $errMess = 'Неизвестная ошибка';
                     switch ($error->getCode()) {
                         case 'exception':
                             $errMess = $error->getMessage();
@@ -142,13 +145,18 @@ if ($showForm) {
                         case 'not_valid':
                             $errMess = 'Введите корректные данные';
                             break;
+                        default:
+                            $errMess = '['.$error->getCode().'] '.$error->getMessage();
+                            break;
                     }
                 }
-                ?><div class="form-page__field-wrap">
+                ?>
+                <div class="form-page__field-wrap">
                     <label for="<?=$fieldName?>" class="form-page__label">Имя</label>
-                    <input id="<?=$fieldName?>" name="<?=$fieldName?>" value="<?=$value?>"<?=$attr?> class="form-page__field mb-l" type="text"><?php
-                    echo $errMess ? sprintf($errBlock, $errMess) : '';
-                ?></div><?php
+                    <input id="<?=$fieldName?>" name="<?=$fieldName?>" value="<?=$value?>"<?=$attr?> class="form-page__field mb-l" type="text">
+                    <?=($errMess ? sprintf($errBlock, $errMess) : '')?>
+                </div>
+                <?php
 
                 // Поле: Отчество
                 $fieldName = 'secondName';
@@ -161,7 +169,6 @@ if ($showForm) {
                 /** @var Bitrix\Main\Error $error */
                 $error = $fieldMeta['ERROR'];
                 if ($error) {
-                    $errMess = 'Неизвестная ошибка';
                     switch ($error->getCode()) {
                         case 'exception':
                             $errMess = $error->getMessage();
@@ -172,13 +179,18 @@ if ($showForm) {
                         case 'not_valid':
                             $errMess = 'Введите корректные данные';
                             break;
+                        default:
+                            $errMess = '['.$error->getCode().'] '.$error->getMessage();
+                            break;
                     }
                 }
-                ?><div class="form-page__field-wrap">
+                ?>
+                <div class="form-page__field-wrap">
                     <label for="<?=$fieldName?>" class="form-page__label">Отчество</label>
-                    <input id="<?=$fieldName?>" name="<?=$fieldName?>" value="<?=$value?>"<?=$attr?> class="form-page__field mb-l" type="text"><?php
-                    echo $errMess ? sprintf($errBlock, $errMess) : '';
-                ?></div><?php
+                    <input id="<?=$fieldName?>" name="<?=$fieldName?>" value="<?=$value?>"<?=$attr?> class="form-page__field mb-l" type="text">
+                    <?=($errMess ? sprintf($errBlock, $errMess) : '')?>
+                </div>
+                <?php
 
                 // Поле: Укажите свой пол
                 $fieldName = 'genderCode';
@@ -189,7 +201,6 @@ if ($showForm) {
                 /** @var Bitrix\Main\Error $error */
                 $error = $fieldMeta['ERROR'];
                 if ($error) {
-                    $errMess = 'Неизвестная ошибка';
                     switch ($error->getCode()) {
                         case 'exception':
                             $errMess = $error->getMessage();
@@ -198,18 +209,23 @@ if ($showForm) {
                         case 'not_valid':
                             $errMess = 'Укажите свой пол';
                             break;
+                        default:
+                            $errMess = '['.$error->getCode().'] '.$error->getMessage();
+                            break;
                     }
                 }
                 $male = $component::EXTERNAL_GENDER_CODE_M;
                 $female = $component::EXTERNAL_GENDER_CODE_F;
-                ?><div class="form-page__field-wrap">
+                ?>
+                <div class="form-page__field-wrap">
                     <select name="<?=$fieldName?>">
                         <option value="">Укажите свой пол</option>
                         <option<?=($value == $male ? ' selected="selected"' : '')?> value="<?=$male?>">Мужской</option>
                         <option<?=($value == $female ? ' selected="selected"' : '')?> value="<?=$female?>">Женский</option>
-                    </select><?php
-                    echo $errMess ? sprintf($errBlock, $errMess) : '';
-                ?></div><?php
+                    </select>
+                    <?=($errMess ? sprintf($errBlock, $errMess) : '')?>
+                </div>
+                <?php
 
                 // Поле: Дата вашего рождения дд.мм.гггг
                 $fieldName = 'birthDay';
@@ -222,7 +238,6 @@ if ($showForm) {
                 /** @var Bitrix\Main\Error $error */
                 $error = $fieldMeta['ERROR'];
                 if ($error) {
-                    $errMess = 'Неизвестная ошибка';
                     switch ($error->getCode()) {
                         case 'exception':
                             $errMess = $error->getMessage();
@@ -233,14 +248,19 @@ if ($showForm) {
                         case 'not_valid':
                             $errMess = 'Дата указана в неверном формате';
                             break;
+                        default:
+                            $errMess = '['.$error->getCode().'] '.$error->getMessage();
+                            break;
                     }
                 }
 
-                ?><div class="form-page__field-wrap">
+                ?>
+                <div class="form-page__field-wrap">
                     <label for="<?=$fieldName?>" class="form-page__label">Дата вашего рождения дд.мм.гггг</label>
-                    <input id="<?=$fieldName?>" name="<?=$fieldName?>" value="<?=$value?>"<?=$attr?> class="form-page__field mb-l" type="text"><?php
-                    echo $errMess ? sprintf($errBlock, $errMess) : '';
-                ?></div><?php
+                    <input id="<?=$fieldName?>" name="<?=$fieldName?>" value="<?=$value?>"<?=$attr?> class="form-page__field mb-l" type="text">
+                    <?=($errMess ? sprintf($errBlock, $errMess) : '')?>
+                </div>
+                <?php
             }
 
 
@@ -256,9 +276,6 @@ if ($showForm) {
                 /** @var Bitrix\Main\Error $error */
                 $error = $fieldMeta['ERROR'];
                 if ($error) {
-                    $errMess = 'Неизвестная ошибка';
-                    /** @var Bitrix\Main\Error $error */
-                    $error = $arResult['ERROR']['FIELD'][$fieldName];
                     switch ($error->getCode()) {
                         case 'exception':
                             $errMess = $error->getMessage();
@@ -272,11 +289,16 @@ if ($showForm) {
                         case 'already_registered':
                             $errMess = 'Телефон уже зарегистрирован. Обратитесь на горячую линию';
                             break;
+                        default:
+                            $errMess = '['.$error->getCode().'] '.$error->getMessage();
+                            break;
                     }
                 }
-                ?><div class="form-page__field-wrap">
+                ?>
+                <div class="form-page__field-wrap">
                     <label for="<?=$fieldName?>" class="form-page__label">Мобильный телефон (10 знаков без 7 или 8 в формате 9ХХХХХХХХХ)</label>
-                    <input id="<?=$fieldName?>" name="<?=$fieldName?>" value="<?=$value?>"<?=$attr?> class="form-page__field mb-l" type="text"><?php
+                    <input id="<?=$fieldName?>" name="<?=$fieldName?>" value="<?=$value?>"<?=$attr?> class="form-page__field mb-l" type="text">
+                    <?php
                     if ($errMess) {
                         echo sprintf($errBlock, $errMess);
                         /*
@@ -289,7 +311,9 @@ if ($showForm) {
                         }
                         */
                     }
-                ?></div><?php
+                    ?>
+                </div>
+                <?php
             }
 
 
@@ -306,8 +330,6 @@ if ($showForm) {
                 $error = $fieldMeta['ERROR'];
                 if ($error) {
                     $errMess = 'Неизвестная ошибка';
-                    /** @var Bitrix\Main\Error $error */
-                    $error = $arResult['ERROR']['FIELD'][$fieldName];
                     switch ($error->getCode()) {
                         case 'exception':
                             $errMess = $error->getMessage();
@@ -320,11 +342,12 @@ if ($showForm) {
                             break;
                     }
                 }
-                ?><div class="form-page__field-wrap">
+                ?>
+                <div class="form-page__field-wrap">
                     <label for="<?=$fieldName?>" class="form-page__label">Ваш email (поле необязательно для заполнения)</label>
-                    <input id="<?=$fieldName?>" name="<?=$fieldName?>" value="<?=$value?>"<?=$attr?> class="form-page__field mb-l" type="text"><?php
-                    echo $errMess ? sprintf($errBlock, $errMess) : '';
-                ?></div><?php
+                    <input id="<?=$fieldName?>" name="<?=$fieldName?>" value="<?=$value?>"<?=$attr?> class="form-page__field mb-l" type="text">
+                    <?=($errMess ? sprintf($errBlock, $errMess) : '')?>
+                </div><?php
 
                 // сообщаем компоненту, что карту можно регистрировать в случае успешных проверок
                 ?><input type="hidden" name="doCardRegistration" value="Y"><?
@@ -356,6 +379,18 @@ if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
     ?><script data-name="front_office_card_registration" type="text/javascript">
         $(document).ready(
             function() {
+                $('#page').on(
+                    'change',
+                    '#email',
+                    function (ev) {
+                        var p = /^[-\w.]+@([A-z0-9][-A-z0-9]+\.)+[A-z]{2,4}$/;
+                        if (this.value != '' && !p.test(this.value)) {
+                            ev.preventDefault();
+                            alert('В поле Email введены недопустимые символы!');
+                        }
+                    }
+                );
+
                 $('body').on(
                     'click',
                     '#ajaxSubmitButton',

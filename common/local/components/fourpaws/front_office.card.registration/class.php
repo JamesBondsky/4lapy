@@ -39,6 +39,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
     const BITRIX_GENDER_CODE_F = 'F';
     /** код группы пользователей, имеющих доступ к компоненту, если ничего не задано в параметрах подключения */
     const DEFAULT_USER_GROUP_CODE = 'FRONT_OFFICE_USERS';
+    const BX_ADMIN_GROUP_ID = 1;
 
     /** @var string $action */
     private $action = '';
@@ -171,15 +172,17 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
     {
         if ($this->canAccess === '') {
             $this->canAccess = 'N';
-            if ($GLOBALS['USER']->isAdmin()) {
+            $isCurUser = $this->arParams['USER_ID'] === $GLOBALS['USER']->getId();
+            if ($isCurUser && $GLOBALS['USER']->isAdmin()) {
                 $this->canAccess = 'Y';
             } else {
-                if ($this->arParams['USER_ID'] != $GLOBALS['USER']->getId()) {
+                if (!$isCurUser) {
                     $userGroups = UserUtils::getGroupIds($this->arParams['USER_ID']);
                 } else {
                     $userGroups = $GLOBALS['USER']->getUserGroupArray();
                 }
-                if (array_intersect($this->arParams['USER_GROUPS'], $userGroups)) {
+                $canAccessGroups = array_merge($this->arParams['USER_GROUPS'], [static::BX_ADMIN_GROUP_ID]);
+                if (array_intersect($canAccessGroups, $userGroups)) {
                     $this->canAccess = 'Y';
                 }
             }

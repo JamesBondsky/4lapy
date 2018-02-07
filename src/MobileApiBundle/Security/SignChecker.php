@@ -3,27 +3,21 @@
 namespace FourPaws\MobileApiBundle\Security;
 
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Event\GetResponseEvent;
-use Symfony\Component\Security\Http\Firewall\ListenerInterface;
 
-class SignListener implements ListenerInterface
+class SignChecker implements SignCheckerInterface
 {
     const DEFAULT_SALT = 'ABCDEF00G';
     const SIGN_FIELD = 'sign';
 
-    private $salt = SignListener::DEFAULT_SALT;
+    private $salt = SignChecker::DEFAULT_SALT;
 
     public function setSalt(string $salt)
     {
         $this->salt = $salt;
     }
 
-    public function handle(GetResponseEvent $event)
+    public function handle(Request $request): bool
     {
-        $request = $event->getRequest();
-
-
         switch ($request->getMethod()) {
             case Request::METHOD_GET:
             case Request::METHOD_DELETE:
@@ -37,15 +31,16 @@ class SignListener implements ListenerInterface
         $paramBag->remove(static::SIGN_FIELD);
         $params = $paramBag->all();
 
-        if ($this->checkSign($sign, $params)) {
-            return;
-        }
-
-        $response = new Response();
-        $response->setStatusCode(Response::HTTP_FORBIDDEN);
-        $event->setResponse($response);
+        return $this->checkSign($sign, $params);
     }
 
+    public function checkSign(string $sign, array $params = []): bool
+    {
+        $arMd5 = $this->md5ValueRecursive($params);
+        sort($arMd5);
+
+        return $sign === md5($this->salt . implode('', $arMd5));
+    }
 
     protected function md5ValueRecursive($data)
     {
@@ -60,13 +55,5 @@ class SignListener implements ListenerInterface
         }
 
         return $arResult;
-    }
-
-    protected function checkSign(string $sign, array $params = [])
-    {
-        $arMd5 = $this->md5ValueRecursive($params);
-        sort($arMd5);
-
-        return $sign === md5($this->salt . implode('', $arMd5));
     }
 }
