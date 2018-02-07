@@ -229,8 +229,6 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     }
     
     /**
-     * Возвращает id, -1 если найдено больше 1 записи и 0 если не найдено записей
-     *
      * @param User|null $user
      *
      * @return Client
