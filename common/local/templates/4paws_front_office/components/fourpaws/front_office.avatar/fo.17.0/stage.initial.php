@@ -90,31 +90,55 @@ if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
                 // запрос авторизации от имени пользователя
                 $(avatarComponent.containerSelector).on(
                     'click',
-                    '.user-list__auth',
+                    '._action-auth',
                     function(event) {
                         event.preventDefault();
 
                         var actionElement = $(this);
                         var userId = actionElement.data('id');
                         actionElement.addClass('preloader');
-                        var submitForm = actionElement.closest('form');
-                        $('#ajaxSubmitButton').attr('disabled', true);
+
+
+                        var actionContainer = actionElement.closest('.user-list');
+                        if (actionContainer.hasClass('loading')) {
+                            return;
+                        }
+
+                        var submitButton = $('#ajaxSubmitButton');
+                        var submitForm = submitButton.closest('form');
+                        submitButton.attr('disabled', true);
                         submitForm.find('.form-page__submit-wrap').addClass('loading');
+
                         var sendRequest = true;
                         if (sendRequest) {
+                            actionContainer.addClass('loading');
                             avatarComponent.sendRequest(
                                 {
                                     formName: 'avatar',
-                                    action: 'postForm',
-                                    sessid: cardHistoryComponent.sessid,
-                                    userAuth: 'Y',
+                                    action: 'userAuth',
+                                    sessid: avatarComponent.sessid,
                                     userId: userId
                                 },
                                 {
+                                    dataType: 'json',
                                     callbackComplete: function(jqXHR, textStatus, component) {
                                         if (textStatus == 'success') {
+                                            var result = $.parseJSON(jqXHR.responseText);
+                                            if (result.message !== '') {
+                                                alert(result.message);
+                                            }
+                                            if (result.success === 'Y') {
+                                                if (result.redirectUrl) {
+                                                    window.location.href = result.redirectUrl;
+                                                }
+                                            }
+                                        } else {
+                                            alert('Не удалось распознать ответ сервера');
                                         }
                                         actionElement.removeClass('preloader');
+                                        actionContainer.removeClass('loading');
+                                        submitButton.attr('disabled', false);
+                                        submitForm.find('.form-page__submit-wrap').removeClass('loading');
                                     },
                                     callbackError: function(jqXHR, textStatus, component) {
                                         if (jqXHR.status == 403) {

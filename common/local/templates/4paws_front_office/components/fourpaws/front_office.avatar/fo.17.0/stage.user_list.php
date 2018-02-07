@@ -22,105 +22,42 @@ if ($arResult['CAN_ACCESS'] !== 'Y') {
 // форма
 include __DIR__.'/inc.form.php';
 
-// История покупок
-if (!empty($arResult['USERS'])) {
-
-    echo '<div class="lk-container">';
-    echo '<div class="tab-users-list">';
-
+// Список пользователей
+echo '<div class="lk-container">';
+echo '<div class="tab-user-list">';
+if (!empty($arResult['USERS_LIST'])) {
     ?>
-    <table class="users-list">
+    <table class="user-list">
         <thead>
             <tr>
-                <th>Детали</th>
-                <th>Дата покупки</th>
-                <th>Адрес магазина</th>
+                <th class="user-list__full-name">Ф.И.О.</th>
+                <th class="user-list__phone">Телефон</th>
+                <th class="user-list__card-number">Номер карты</th>
+                <th class="user-list__bd">Род.</th>
+                <th class="user-list__auth">Действие</th>
             </tr>
         </thead>
         <tbody>
         <?php
             $rowClass = 'even';
-            foreach ($arResult['CHEQUES'] as $cheque) {
-                /** @var \DateTimeImmutable $chequeDate */
-                $chequeDate = $cheque['DATE'];
+            foreach ($arResult['USERS_LIST'] as $user) {
                 $rowClass = $rowClass === 'even' ? 'odd' : 'even';
                 ?>
-                <tr class="order-list__head <?=$rowClass?>">
-                    <td class="order-list__i">
-                        <span class="order-list__dropdown uppercase" data-id="<?=htmlspecialcharsbx($cheque['CHEQUE_ID'])?>">
-                            <span>Детали покупки</span>
-                        </span>
+                <tr class="user-list__item-row <?=$rowClass?>">
+                    <td class="user-list__full-name">
+                        <div class="cell-value"><?=($user['_FULL_NAME_'] ? htmlspecialcharsbx($user['_FULL_NAME_']) : '-')?></div>
                     </td>
-                    <td class="order-id order-list__dt"><?=$chequeDate->format('d.m.Y H:i:s')?></td>
-                    <td class="order-id order-list__address"><?=htmlspecialcharsbx($cheque['BUSINESS_UNIT_NAME'])?></td>
-                </tr>
-
-                <tr class="order-list__details <?=$rowClass?>">
-                    <td colspan="3" class="order-detail-td">
-                        <div data-id="<?=htmlspecialcharsbx($cheque['CHEQUE_ID'])?>" class="order-detail" style="display: none;">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th class="product-art">Артикул</th>
-                                        <th class="product-name">Наименование</th>
-                                        <th class="product-quantity">Кол-во</th>
-                                        <th class="product-bonus">Начислено бонусов</th>
-                                    </tr>
-                                </thead>
-                                <tbody><!-- cheque details (ajax result) --></tbody>
-                                <tfoot>
-                                    <tr>
-                                        <td colspan="4" class="order-detail__summ">
-                                            <?php
-                                            if ($isBonusCard) {
-                                                echo '<ul>';
-
-                                                echo '<li>';
-                                                echo 'Итого: ';
-                                                echo '<span class="info-count">';
-                                                echo sprintf('%0.2f', $cheque['SUM_DISCOUNTED'] - $cheque['PAID_BY_BONUS']);
-                                                echo '</span>';
-                                                echo '&nbsp;руб.';
-                                                echo '</li>';
-
-                                                echo '<li>';
-                                                echo 'Оплачено бонусами: ';
-                                                echo '<span class="info-count">';
-                                                echo round($cheque['PAID_BY_BONUS'], 2);
-                                                echo '</span>';
-                                                echo '</li>';
-
-                                                echo '<li>';
-                                                echo 'Начислено бонусов за покупку: ';
-                                                echo '<span class="info-count">';
-                                                echo round($cheque['BONUS'], 2);
-                                                echo '</span>';
-                                                echo '</li>';
-
-                                                echo '</ul>';
-                                            } else {
-                                                echo '<div>';
-                                                echo 'Итого: ';
-                                                echo '<span class="fz24">';
-                                                echo sprintf('%0.2f', $cheque['SUM']);
-                                                echo '</span>';
-                                                echo '&nbsp;руб.';
-                                                echo '</div>';
-
-                                                echo '<div>';
-                                                echo 'Итого со скидкой: ';
-                                                echo '<span class="fz34">';
-                                                echo sprintf('%0.2f', $cheque['SUM_DISCOUNTED']);
-                                                echo '</span>';
-                                                echo '&nbsp;руб.';
-                                                echo '</div>';
-                                            }
-                                            ?>
-                                        </td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
+                    <td class="user-list__phone">
+                        <div class="cell-value"><?=($user['_PERSONAL_PHONE_NORMALIZED_'] ? htmlspecialcharsbx($user['_PERSONAL_PHONE_NORMALIZED_']) : '-')?></div>
+                    </td>
+                    <td class="user-list__card-number">
+                        <div class="cell-value"><?=($user['UF_DISCOUNT_CARD'] ? htmlspecialcharsbx($user['UF_DISCOUNT_CARD']) : '-')?></div>
+                    </td>
+                    <td class="user-list__bd">
+                        <div class="cell-value"><?=($user['PERSONAL_BIRTHDAY'] ? htmlspecialcharsbx($user['PERSONAL_BIRTHDAY']) : '-')?></div>
+                    </td>
+                    <td class="user-list__auth">
+                        <div class="cell-value"><span class="_action-auth" data-id="<?=$user['ID']?>">авторизоваться</span></div>
                     </td>
                 </tr>
                 <?php
@@ -129,7 +66,8 @@ if (!empty($arResult['USERS'])) {
         </tbody>
     </table>
     <?php
-
-    echo '</div>';
-    echo '</div>';
+} elseif (empty($arResult['ERROR'])) {
+    echo '<p>По запросу ничего не найдено</p>';
 }
+echo '</div>';
+echo '</div>';

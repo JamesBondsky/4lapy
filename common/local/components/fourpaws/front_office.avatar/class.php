@@ -3,11 +3,9 @@
 use Adv\Bitrixtools\Tools\Main\UserGroupUtils;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
-use Bitrix\Main\UserUtils;
 use FourPaws\App\Application;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use FourPaws\Helpers\PhoneHelper;
-use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\UserService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -63,7 +61,7 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
 
         $params['USER_ID'] = isset($params['USER_ID']) ? (int)$params['USER_ID'] : 0;
         if ($params['USER_ID'] <= 0) {
-            $params['USER_ID'] = $GLOBALS['USER']->getId();
+            $params['USER_ID'] = (int)$GLOBALS['USER']->getId();
         }
 
         // группы пользователей, имеющих доступ к функционалу
@@ -119,7 +117,10 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
     protected function getUserGroups()
     {
         if (!isset($this->userGroups)) {
-            $this->userGroups = $this->getUserService()->getUserGroups($this->arParams['USER_ID']);
+            $this->userGroups = [];
+            try {
+                $this->userGroups = $this->getUserService()->getUserGroups($this->arParams['USER_ID']);
+            } catch (\Exception $exception) {}
             // группа "все пользователи"
             $this->userGroups[] = 2;
             $this->userGroups = array_unique($this->userGroups);
@@ -136,7 +137,7 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
         if (!isset($this->isUserAdmin)) {
             $this->isUserAdmin = in_array(static::BX_ADMIN_GROUP_ID, $this->getUserGroups());
         }
-$this->isUserAdmin = false;
+
         return $this->isUserAdmin;
     }
 
@@ -246,9 +247,11 @@ $this->isUserAdmin = false;
     {
         $action = 'initialLoad';
 
-        if ($this->request->get('action') === 'postForm')  {
-            if ($this->request->get('formName') === 'avatar') {
+        if ($this->request->get('formName') === 'avatar') {
+            if ($this->request->get('action') === 'postForm') {
                 $action = 'postForm';
+            } elseif ($this->request->get('action') === 'userAuth') {
+                $action = 'userAuth';
             }
         }
 
@@ -266,7 +269,6 @@ $this->isUserAdmin = false;
     protected function initialLoadAction()
     {
         $this->loadData();
-$this->getFilterByFormFields();
     }
 
     protected function postFormAction()
@@ -276,6 +278,38 @@ $this->getFilterByFormFields();
         if ($this->canAccess()) {
             $this->processSearchFormFields();
             $this->obtainUsersList();
+        }
+
+        $this->loadData();
+    }
+
+    protected function userAuthAction()
+    {
+        $this->initPostFields();
+
+        if ($this->canAccess()) {
+            $this->arResult['AUTH_ACTION_SUCCESS'] = 'N';
+            $fieldsList = [
+                'userId',
+            ];
+            $filter = $this->getFilterByFormFields($fieldsList);
+            if (!empty($filter)) {
+                $usersList = $this->getUserListByFilter($filter);
+                if ($usersList) {
+                    $user = reset($usersList);
+                    // запомнить id юзера
+                    $authResult = $this->getUserService()->authorize($user['ID']);
+                    if ($authResult) {
+                        $this->arResult['AUTH_ACTION_SUCCESS'] = 'Y';
+                    } else {
+                        $this->setExecError('authFailed', 'Не удалось авторизоваться под указанным пользователем', 'authFailed');
+                    }
+                } else {
+                    $this->setExecError('canNotLogin', 'Невозможно авторизоваться под указанным пользователем', 'canNotLogin');
+                }
+            } else {
+                $this->setExecError('emptyUserId', 'Не задан идентификатор пользователя', 'emptyUserId');
+            }
         }
 
         $this->loadData();
@@ -354,16 +388,13 @@ $this->getFilterByFormFields();
     }
 
     /**
+     * @param array $fieldsList
      * @return array
      */
-    protected function getFilterByFormFields()
+    protected function getFilterByFormFields(array $fieldsList)
     {
         $filter = [];
-        $fieldsList = [
-            'cardNumber', 'phone',
-            'firstName', 'secondName', 'lastName',
-            'birthDay'
-        ];
+        //$filterByName = [];
         foreach ($fieldsList as $fieldName) {
             $value = $this->trimValue($this->getFormFieldValue($fieldName));
             if ($value !== '') {
@@ -374,35 +405,51 @@ $this->getFilterByFormFields();
                         break;
                     case 'phone':
                         // телефон
-                        $filter['=PERSONAL_PHONE'] = $value;
+                        $filter['PERSONAL_PHONE'] = $value;
+                        $filter['PERSONAL_PHONE_EXACT_MATCH'] = 'Y';
                         break;
                     case 'firstName':
                         // имя
-                        $filter['=NAME'] = $value;
+                        $filter['NAME'] = $value;
+                        //$filterByName[0] = $value;
                         break;
                     case 'secondName':
                         // отчество
-                        $filter['=SECOND_NAME'] = $value;
+                        $filter['SECOND_NAME'] = $value;
+                        $filter['SECOND_NAME_EXACT_MATCH'] = 'Y';
+                        //$filterByName[1] = $value;
                         break;
                     case 'lastName':
                         // фамилия
-                        $filter['=LAST_NAME'] = $value;
+                        $filter['LAST_NAME'] = $value;
+                        $filter['LAST_NAME_EXACT_MATCH'] = 'Y';
+                        //$filterByName[2] = $value;
                         break;
                     case 'birthDay':
                         // дата рождения
-                        $filter['=PERSONAL_BIRTHDAY'] = $value;
+                        $filter['PERSONAL_BIRTHDATE_1'] = $value;
+                        $filter['PERSONAL_BIRTHDATE_2'] = $value;
+                        break;
+                    case 'userId':
+                        // id пользователя
+                        $filter['ID_EQUAL_EXACT'] = (int)$value;
                         break;
                 }
             }
         }
+        //if ($filterByName) {
+        //    $filter['NAME'] = implode(' & ', $filterByName);
+        //}
 
-        if (empty($filter)) {
-            $filter['=ACTIVE'] = 'Y';
-            $filter['!=ID'] = $this->arParams['USER_ID'];
+        if ($filter) {
+            $filter['ACTIVE'] = 'Y';
+            $filter['!ID'] = $this->arParams['USER_ID'];
+
             if (!$this->canUserDoOperation('edit_all_users') && !$this->canUserDoOperation('view_all_users')) {
-                $userSubordinateGroups = $this->getUserSubordinateGroups();
-//                $arSqlSearch[] = "NOT EXISTS(SELECT 'x' FROM b_user_group UGS WHERE UGS.USER_ID=U.ID AND UGS.GROUP_ID NOT IN (".$userSubordinateGroups.")))";
-
+                $filter['CHECK_SUBORDINATE'] = $this->getUserSubordinateGroups();
+            }
+            if (!$this->canUserDoOperation('edit_php')) {
+                $filter['NOT_ADMIN'] = true;
             }
         }
 
@@ -416,78 +463,64 @@ $this->getFilterByFormFields();
     {
         $result = new Result();
 
-        $filter = $this->getFilterByFormFields();
+        $fieldsList = [
+            'cardNumber', 'phone',
+            'firstName', 'secondName', 'lastName',
+            'birthDay'
+        ];
+        $filter = $this->getFilterByFormFields($fieldsList);
         if (empty($filter)) {
             $result->addError(
                 new Error('Не заданы параметры поиска', 'emptySearchParams')
             );
         }
-
-        $usersListRaw = [];
-        //$usersList = [];
+        $usersList = [];
         if ($result->isSuccess()) {
-            try {
-                $usersListRaw = $this->getUserListByParams(
-                    [
-                        'filter' => $filter,
-                        'order' => [
-                            'LAST_NAME' => 'asc',
-                            'NAME' => 'asc',
-                            'SECOND_NAME' => 'asc',
-                            'UF_DISCOUNT_CARD' => 'asc',
-                            'ID' => 'asc',
-                        ]
-                    ]
-                );
-                /*
-                foreach ($usersListRaw as $user) {
-                    $usersList[] = [
-                        'ID' => $user->getId(),
-                        'NAME' => $user->getName(),
-                        'LAST_NAME' => $user->getLastName(),
-                        'SECOND_NAME' => $user->getSecondName(),
-                        'FULL_NAME' => $user->getFullName(),
-                        'PERSONAL_PHONE' => $user->getNormalizePersonalPhone(),
-                        'EMAIL' => $user->getEmail(),
-                        'DISCOUNT_CARD_NUMBER' => $user->getDiscountCardNumber(),
-                    ];
-                }
-                */
-            } catch (\Exception $exception) {
-                $result->addError(
-                    new Error($exception->getMessage(), 'getUserListByParamsException')
-                );
-
-                $this->log()->error(sprintf('%s exception: %s', __FUNCTION__, $exception->getMessage()));
-            }
+            $usersList = $this->getUserListByFilter($filter);
         }
 
         $result->setData(
             [
-                //'list' => $usersList,
-                'list_raw' => $usersListRaw,
+                'list' => $usersList,
             ]
         );
 
         return $result;
     }
 
-
     /**
-     * @param array $params
-     * @return array|User[]
+     * @param array $filter
+     * @return array
      */
-    protected function getUserListByParams($params)
+    protected function getUserListByFilter($filter)
     {
-        $filter = isset($params['filter']) ? $params['filter'] : [];
-
-        $users = $this->getUserRepository()->findBy(
+        $usersList = [];
+        $itemsIterator = \CUser::GetList(
+            $by = [
+                'FULL_NAME' => 'asc',
+                'UF_DISCOUNT_CARD' => 'asc',
+                'ID' => 'asc',
+            ],
+            $order = null,
             $filter,
-            (isset($params['order']) ? $params['order'] : []),
-            (isset($params['limit']) ? $params['limit'] : null)
+            [
+                'SELECT' => [
+                    'UF_DISCOUNT_CARD',
+                ],
+                'FIELDS' => [
+                    'ID', 'NAME', 'LAST_NAME', 'SECOND_NAME',
+                    'EMAIL', 'LOGIN',
+                    'PERSONAL_PHONE', 'PERSONAL_BIRTHDAY',
+                ]
+            ]
         );
+        while ($item = $itemsIterator->fetch()) {
+            $item['_PERSONAL_PHONE_NORMALIZED_'] = $this->cleanPhoneNumberValue($item['PERSONAL_PHONE'] ?? '');
+            $item['_FULL_NAME_'] = trim($item['LAST_NAME'].' '.$item['NAME'].' '.$item['SECOND_NAME']);
+            $usersList[] = $item;
+        }
 
-        return $users;
+        return $usersList;
     }
 
     protected function initPostFields()
@@ -516,6 +549,7 @@ $this->getFilterByFormFields();
         if (is_null($value)) {
             return '';
         }
+
         return is_scalar($value) ? trim($value) : '';
     }
 
@@ -540,6 +574,7 @@ $this->getFilterByFormFields();
         } elseif (is_scalar($errorMsg)) {
             $result = $errorMsg;
         }
+
         return $result;
     }
 
@@ -585,6 +620,7 @@ $this->getFilterByFormFields();
                 $value
             );
         }
+
         return $value;
     }
 }

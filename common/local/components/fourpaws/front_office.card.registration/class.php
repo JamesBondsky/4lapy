@@ -81,7 +81,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
 
         $params['USER_ID'] = isset($params['USER_ID']) ? (int)$params['USER_ID'] : 0;
         if ($params['USER_ID'] <= 0) {
-            $params['USER_ID'] = $GLOBALS['USER']->getId();
+            $params['USER_ID'] = (int)$GLOBALS['USER']->getId();
         }
 
         // группы пользователей, имеющих доступ к функционалу

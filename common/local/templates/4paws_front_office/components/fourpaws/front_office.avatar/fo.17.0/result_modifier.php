@@ -27,6 +27,9 @@ if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
 $arResult['CURRENT_STAGE'] = 'initial';
 if ($arResult['WAS_POSTED'] === 'Y') {
     $arResult['CURRENT_STAGE'] = 'user_list';
+    if ($arResult['FIELD_VALUES']['action'] === 'userAuth') {
+        $arResult['CURRENT_STAGE'] = 'user_auth';
+    }
 }
 
 //
