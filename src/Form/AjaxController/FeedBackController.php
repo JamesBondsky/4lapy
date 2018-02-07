@@ -38,7 +38,7 @@ class FeedBackController extends Controller
      */
     public function addAction(Request $request) : JsonResponse
     {
-        $data = $request->request->getIterator()->getArrayCopy();
+        $data = $request->request->all();
         
         try {
             /** @var FormService $formService */
@@ -51,17 +51,14 @@ class FeedBackController extends Controller
                 'theme',
                 'message',
             ];
-            $formatedFields = $formService->getRealNamesFields(
-                (int)$data['WEB_FORM_ID'],
-                $requiredFields
-            );
-            if (!$formService->checkRequiredFields($data, $formatedFields)) {
+            $formatedFields = $formService->getRealNamesFields((int)$data['WEB_FORM_ID']);
+            if (!$formService->checkRequiredFields($data, array_intersect_key($formatedFields, array_flip($requiredFields)))) {
                 return JsonErrorResponse::createWithData(
                     'Не заполнены все обязательные поля',
                     ['errors' => ['emptyData' => 'Не заполнены все обязательные поля']]
                 );
             }
-            
+
             if (!$formService->validEmail($data[$formatedFields['email']])) {
                 return JsonErrorResponse::createWithData(
                     'Некорректно заполнен эл. адрес',
@@ -87,13 +84,21 @@ class FeedBackController extends Controller
                 'docx',
             ];
             try {
-                $fileId = $formService->saveFile($fileCode, $fileSizeMb, $valid_types);
-                if ($fileId > 0) {
-                    $data[$fileCode] = $fileId;
+                $file = $formService->saveFile($fileCode, $fileSizeMb, $valid_types);
+                if (!empty($file)) {
+                    $data[$fileCode] = $file;
                 }
             } catch (FileSaveException $e) {
             } catch (FileSizeException $e) {
+                return JsonErrorResponse::createWithData(
+                    'Превышен максимально допустимый размер файла в 2Мб',
+                    ['errors' => ['wrongPhone' => 'Превышен максимально допустимый размер файла в 2Мб']]
+                );
             } catch (FileTypeException $e) {
+                return JsonErrorResponse::createWithData(
+                    'Неверный формат файла, допусимые форматы '.implode(', ', $valid_types),
+                    ['errors' => ['wrongPhone' => 'Неверный формат файла, допусимые форматы '.implode(', ', $valid_types)]]
+                );
             }
             
             if ($request->request->has('g-recaptcha-response')) {
