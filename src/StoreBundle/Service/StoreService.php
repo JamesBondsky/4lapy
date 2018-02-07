@@ -8,13 +8,8 @@ namespace FourPaws\StoreBundle\Service;
 
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Doctrine\Common\Collections\Collection;
-use Bitrix\Main\ArgumentException;
-use Bitrix\Main\SystemException;
-use FourPaws\App\Application;
 use FourPaws\Catalog\Model\Offer;
-use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Location\LocationService;
-use FourPaws\StoreBundle\Collection\BaseCollection;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Base as BaseEntity;
@@ -167,7 +162,10 @@ class StoreService
         /**
          * Если не нашлось ничего с типом "склад" для данного местоположения, то добавляем склады для Москвы
          */
-        if ($stores->getStores()->isEmpty() && $locationCode !== LocationService::LOCATION_CODE_MOSCOW) {
+        if (in_array($type, [self::TYPE_STORE, self::TYPE_ALL], true) &&
+            $stores->getStores()->isEmpty() &&
+            $locationCode !== LocationService::LOCATION_CODE_MOSCOW
+        ) {
             $moscowStores = $this->getByLocation(LocationService::LOCATION_CODE_MOSCOW, self::TYPE_STORE);
             $stores = new StoreCollection(array_merge($stores->toArray(), $moscowStores->toArray()));
         }
@@ -225,14 +223,12 @@ class StoreService
         $res = $query->setSelect($select)->exec();
         while ($item = $res->fetch()) {
             $result[$item['ID']] = $item;
-            if (!\in_array($item['UF_BRANCH'], $branchIds, true)) {
-                $branchIds[$item['ID']] = $item['UF_BRANCH'];
-            }
+            $branchIds[$item['ID']] = $item['UF_BRANCH'];
         }
 
         if (\is_array($branchIds) && !empty($branchIds)) {
             $highloadBranch = HLBlockFactory::createTableObject('MetroWays');
-            $res = $highloadBranch::query()->setFilter(['ID' => $branchIds])->setSelect(['*'])->exec();
+            $res = $highloadBranch::query()->setFilter(['ID' => array_unique($branchIds)])->setSelect(['*'])->exec();
             $reverseBranchIds = [];
             foreach ($branchIds as $id => $branch) {
                 $reverseBranchIds[$branch][] = $id;
@@ -309,8 +305,8 @@ class StoreService
     /**
      * @param Offer $offer
      *
-     * @return StockCollection
      * @throws \Exception
+     * @return StockCollection
      */
     public function getStocksByOffer(Offer $offer): StockCollection
     {

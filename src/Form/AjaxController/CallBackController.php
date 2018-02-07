@@ -38,7 +38,7 @@ class CallBackController extends Controller
     public function addAction(Request $request) : JsonResponse
     {
         try {
-            $data      = $request->request->getIterator()->getArrayCopy();
+            $data      = $request->request->all();
             $container = App::getInstance()->getContainer();
             
             /** @var FormService $formService */
@@ -50,10 +50,9 @@ class CallBackController extends Controller
                 'time_call',
             ];
             $formatedFields = $formService->getRealNamesFields(
-                (int)$data['WEB_FORM_ID'],
-                $requiredFields
+                (int)$data['WEB_FORM_ID']
             );
-            if (!$formService->checkRequiredFields($data, $formatedFields)) {
+            if (!$formService->checkRequiredFields($data, array_intersect_key($formatedFields, array_flip($requiredFields)))) {
                 return JsonErrorResponse::createWithData(
                     'Не заполнены все обязательные поля',
                     ['errors' => ['emptyData' => 'Не заполнены все обязательные поля']]

@@ -24,7 +24,10 @@ $markup = PawsApplication::markup();
     <meta name="format-detection" content="telephone=no">
 
     <script src="/static/build/js/jquery/jquery.min.js"></script>
-    <script data-skip-moving="true">window.js_static = '/static/build/'</script>
+    <script data-skip-moving="true">
+        window.js_static = '/static/build/';
+        window._global   = {};
+    </script>
     <?php $APPLICATION->ShowHead(); ?>
     <title><?php $APPLICATION->ShowTitle() ?></title>
     <?php
@@ -215,6 +218,9 @@ $markup = PawsApplication::markup();
 }
 
 if ($template->hasContent()) {
+    Asset::getInstance()->addCss('/include/static/style.css');
+    Asset::getInstance()->addJs('/include/static/scripts.js');
+
     $APPLICATION->IncludeComponent('bitrix:main.include',
                                    '',
                                    [

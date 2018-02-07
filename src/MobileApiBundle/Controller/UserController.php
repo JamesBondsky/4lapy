@@ -1,38 +1,20 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\MobileApiBundle\Controller;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
-use FourPaws\MobileApiBundle\Dto\Error;
-use FourPaws\MobileApiBundle\Dto\Request\UserLoginRequest;
-use FourPaws\MobileApiBundle\Exception\AlreadyAuthorizedException;
-use FourPaws\MobileApiBundle\Exception\InvalidCredentialException;
-use FourPaws\MobileApiBundle\Exception\LogicException;
-use FourPaws\MobileApiBundle\Exception\SystemException;
-use FourPaws\MobileApiBundle\Services\Api\UserService;
-use FourPaws\MobileApiBundle\Services\ApiRequestProcessor;
+use FourPaws\MobileApiBundle\Dto\Response as ApiResponse;
 use Swagger\Annotations\Parameter;
 use Swagger\Annotations\Response;
 use Symfony\Component\HttpFoundation\Request;
 
 class UserController extends FOSRestController
 {
-    /**
-     * @var ApiRequestProcessor
-     */
-    private $apiRequestProcessor;
-    /**
-     * @var UserService
-     */
-    private $userService;
-
-    public function __construct(ApiRequestProcessor $apiRequestProcessor, UserService $userService)
-    {
-        $this->apiRequestProcessor = $apiRequestProcessor;
-        $this->userService = $userService;
-    }
-
     /**
      * @Rest\Post(path="/user_login", name="user_login")
      * @Parameter(
@@ -48,41 +30,10 @@ class UserController extends FOSRestController
      * @Rest\View()
      * @param Request $request
      *
-     * @return \FourPaws\MobileApiBundle\Dto\Response
+     * @return ApiResponse
      */
-    public function loginAction(Request $request)
+    public function loginAction(Request $request): ApiResponse
     {
-        $result = new \FourPaws\MobileApiBundle\Dto\Response();
-        /**
-         * @var UserLoginRequest $userLoginRequest
-         */
-        $userLoginRequest = $this->apiRequestProcessor->convert($request->request->all(), UserLoginRequest::class);
-        $validateResult = $this->apiRequestProcessor->validate($userLoginRequest);
-        if ($validateResult->count() === 0) {
-            try {
-
-//            $this->userService->loginOrRegister($userLoginRequest);
-                $result->setData($this->userService->loginOrRegister($userLoginRequest));
-                return $result;
-            } catch (InvalidCredentialException $exception) {
-                $result->addError(new Error(1, 'Не верные данные для авторизации'));
-            } catch (AlreadyAuthorizedException $exception) {
-                $result->addError(new Error(2, 'Вы уже авторизованы'));
-            } catch (SystemException $exception) {
-                $result->addError(new Error(3, 'Системная ошибка'));
-            } catch (LogicException $exception) {
-                $result->addError(new Error(4, 'Системная ошибка'));
-            }
-        } else {
-            $result->addError(new Error(5, 'Не корректные данные для авторизации'));
-        }
-
-
-        return $result;
-
-        /**
-         * todo add error result
-         */
     }
 
     /**

@@ -10,6 +10,8 @@ node_modules/
 !/web/robots.txt
 .php_cs.cache
 
+app/config/parameters.yml
+
 /var/*
 !/var/cache
 /var/cache/*
@@ -40,4 +42,7 @@ Desktop.ini
 
 #content
 /web/include/*
+!/web/include/static/
 !/web/include/.gitkeep
+/web/include/static/*
+!/web/include/static/.gitkeep

@@ -18,11 +18,9 @@ use FourPaws\External\Manzana\Model\CardByContractCards;
 use FourPaws\External\Manzana\Model\Cards;
 use FourPaws\External\Manzana\Model\CardsByContractCards;
 use FourPaws\External\Manzana\Model\Cheque;
-use FourPaws\External\Manzana\Model\Cheques;
-use FourPaws\External\Manzana\Model\ChequeByContractCheques;
-use FourPaws\External\Manzana\Model\ChequesByContractCheques;
 use FourPaws\External\Manzana\Model\ChequeItem;
 use FourPaws\External\Manzana\Model\ChequeItems;
+use FourPaws\External\Manzana\Model\Cheques;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\Manzana\Model\Clients;
 use FourPaws\External\Manzana\Model\Contact;
@@ -31,7 +29,6 @@ use FourPaws\External\Manzana\Model\ParameterBag;
 use FourPaws\External\Manzana\Model\ReferralParams;
 use FourPaws\External\Manzana\Model\Referrals;
 use FourPaws\External\Manzana\Model\ResultXmlFactory;
-use FourPaws\External\Manzana\Model\CardValidateResult;
 use FourPaws\External\Traits\ManzanaServiceTrait;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -42,7 +39,6 @@ use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
-
 /**
  * Class ManzanaService
  *
@@ -51,41 +47,39 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
 {
     use ManzanaServiceTrait;
-
+    
     const METHOD_AUTHENTICATE             = 'Authenticate';
-
+    
     const METHOD_EXECUTE                  = 'Execute';
-
+    
     const CONTRACT_ADVANCED_BALANCE       = 'advanced_balance';
-
+    
     const CONTRACT_CARD_ATTACH            = 'card_attach';
-
+    
     const CONTRACT_CARD_VALIDATE          = 'card_validate';
-
+    
     const CONTRACT_CARDS                  = 'cards';
-
+    
     const CONTRACT_CHANGE_CARD            = 'change_card';
-
+    
     const CONTRACT_CLIENT_SEARCH          = 'client_search';
-
+    
     const CONTRACT_CONTACT                = 'contact';
-
+    
     const CONTRACT_CONTACT_CHEQUES        = 'contact_cheques';
-
+    
     const CONTRACT_CONTACT_REFERRAL_CARDS = 'Contact_Referral_Cards';
-
+    
     const CONTRACT_CONTACT_UPDATE         = 'contact_update';
-
+    
     const CONTRACT_CHEQUE_ITEMS           = 'cheque_items';
-
+    
     const CONTRACT_SEARCH_CARD_BY_NUMBER  = 'search_cards_by_number';
-
-    const CONTRACT_CHEQUES = 'cheques';
-
+    
     protected $sessionId;
-
+    
     protected $cards = [];
-
+    
     /**
      * Отправка телефона
      *
@@ -107,12 +101,12 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
                 'mobilephone'      => $phone,
             ]
         );
-
+        
         $result = $this->execute(self::CONTRACT_SEARCH_CARD_BY_NUMBER, $bag->getParameters());
-
+        
         return $result;
     }
-
+    
     /**
      * @param string $contract
      * @param array  $parameters
@@ -125,26 +119,26 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     {
         try {
             $sessionId = $this->authenticate();
-
+            
             $arguments = [
                 'sessionId'    => $sessionId,
                 'contractName' => $contract,
                 'parameters'   => $parameters,
             ];
-
+            
             $result = $this->client->call(self::METHOD_EXECUTE, ['request_options' => $arguments]);
-
+            
             $result = $result->ExecuteResult->Value;
         } catch (\Exception $e) {
             unset($this->sessionId);
-
+            
             try {
                 /** @noinspection PhpUndefinedFieldInspection */
                 $detail = $e->detail->details->description;
             } catch (\Throwable $e) {
                 $detail = 'none';
             }
-
+            
             $this->logger->error(
                 sprintf(
                     'Manzana execute error with contract id %s: %s, detail: %s, parameters: %s',
@@ -154,15 +148,15 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
                     var_export($parameters, true)
                 )
             );
-
+            
             throw new ExecuteException(
                 sprintf('Execute error: %s, detail: %s', $e->getMessage(), $detail), $e->getCode(), $e
             );
         }
-
+        
         return $result;
     }
-
+    
     /**
      * @return string
      *
@@ -173,13 +167,13 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         if ($this->sessionId) {
             return $this->sessionId;
         }
-
+        
         $arguments = [
             'login'    => $this->parameters['login'],
             'password' => $this->parameters['password'],
-            'ip'       => $_SERVER['HTTP_X_FORWARDED_FOR'] ?: $_SERVER['REMOTE_ADDR'],
+            'ip'       => ($_SERVER['HTTP_X_FORWARDED_FOR'] ?: $_SERVER['REMOTE_ADDR']) ?? '127.0.0.1',
         ];
-
+        
         try {
             $this->sessionId = $this->client->call(
                 self::METHOD_AUTHENTICATE,
@@ -188,10 +182,10 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         } catch (\Exception $e) {
             throw new AuthenticationException(sprintf('Auth error: %s', $e->getMessage()), $e->getCode(), $e);
         }
-
+        
         return $this->sessionId;
     }
-
+    
     /**
      * Обновление/создание контакта
      *
@@ -216,11 +210,11 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     {
         /** @noinspection PhpUndefinedMethodInspection */
         $bag = new ParameterBag($this->serializer->toArray($contact));
-
+        
         try {
             $rawResult = $this->execute(self::CONTRACT_CONTACT_UPDATE, $bag->getParameters());
             $result    = ResultXmlFactory::getContactResultFromXml($this->serializer, $rawResult);
-
+            
             if ($result->isError()) {
                 throw new ContactUpdateException($result->getResult());
             }
@@ -230,10 +224,10 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         } catch (\Exception $e) {
             throw new ManzanaServiceException($e->getMessage());
         }
-
+        
         return $contact;
     }
-
+    
     /**
      * @param User|null $user
      *
@@ -253,12 +247,12 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         if (!($user instanceof User)) {
             $user = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class)->getCurrentUser();
         }
-
+        
         return $this->getContactByPhone(
             $user->getPersonalPhone()
         );
     }
-
+    
     /**
      * @param string $phone
      *
@@ -276,15 +270,15 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         if ($countClients === 1) {
             return current($clients);
         }
-
+        
         if ($countClients > 1) {
             $this->logger->critical('Найдено больше одного пользователя с телефоном ' . $phone);
             throw new ManzanaServiceContactSearchMoreOneException('Найдено больше одного пользователя');
         }
-
+        
         throw new ManzanaServiceContactSearchNullException('Пользователей не найдено');
     }
-
+    
     /**
      * Получение данных пользователя
      *
@@ -306,18 +300,18 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
                 'mobilephone'      => $phone,
             ]
         );
-
+        
         try {
             $result  = $this->execute(self::CONTRACT_CLIENT_SEARCH, $bag->getParameters());
             $clients = $this->serializer->deserialize($result, Clients::class, 'xml');
         } catch (\Exception $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
         }
-
+    
         /** @noinspection PhpIncompatibleReturnTypeInspection */
         return $clients;
     }
-
+    
     /**
      * Получение виртуальной бонусной карты
      *
@@ -326,9 +320,9 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     public function getCard()
     {
-
+    
     }
-
+    
     /**
      * Получение покупок и заказов пользователя из ML
      *
@@ -337,9 +331,9 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     public function getOrderList()
     {
-
+    
     }
-
+    
     /**
      * Получение детальной информации о заказе
      *
@@ -348,9 +342,9 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     public function getOrderDetail()
     {
-
+    
     }
-
+    
     /**
      * Получение данных о количестве активных бонусов и размере бонуса (% от стоимости товара, который возвращается
      * баллами на бонусную карту пользователя)
@@ -360,9 +354,9 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     public function getActiveBonus()
     {
-
+    
     }
-
+    
     /**
      * Получение данных о расширенном балансе бонусной карты пользователя
      *
@@ -371,9 +365,9 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     public function getAdvancedBalance()
     {
-
+    
     }
-
+    
     /**
      * Передача номера бонусной карты реферала для получения Contact_ID реферала
      *
@@ -388,10 +382,10 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     {
         /** @noinspection PhpUndefinedMethodInspection */
         $bag = new ParameterBag($this->serializer->toArray($referralParams));
-
+        
         try {
             $rawResult = $this->execute(self::CONTRACT_CARD_ATTACH, $bag->getParameters());
-
+            
             $result = ResultXmlFactory::getReferralCardAttachResultFromXml($this->serializer, $rawResult);
             if (!$result->isError()) {
                 $result = $result->getContactId();
@@ -403,21 +397,13 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
             } catch (\Throwable $e) {
                 $detail = 'none';
             }
-
+            
             throw new ManzanaServiceException($detail);
         }
-
+        
         return $result;
     }
-
-    /**
-     * Получение информации о реферале по Contact_ID
-     */
-    public function getReferralByContactId()
-    {
-
-    }
-
+    
     /**
      * Получение данных о рефералах заводчика
      *
@@ -446,7 +432,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
                     'contact_id' => $contact_id,
                 ]
             );
-
+            
             try {
                 $result = $this->execute(self::CONTRACT_CONTACT_REFERRAL_CARDS, $bag->getParameters());
                 /** @var Referrals $res */
@@ -457,10 +443,10 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
                 throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
             }
         }
-
+        
         return $referrals;
     }
-
+    
     /**
      * @param User|null $user
      *
@@ -480,12 +466,12 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         if (!($user instanceof User)) {
             $user = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class)->getCurrentUser();
         }
-
+        
         return $this->getContactIdByPhone(
             $user->getPersonalPhone()
         );
     }
-
+    
     /**
      * @param string $phone
      *
@@ -498,7 +484,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     {
         return (string)$this->getContactByPhone($phone)->contactId;
     }
-
+    
     /**
      * Передача номера бонусной карты для проверки валидности
      * Контракт в ML: card_validate
@@ -514,39 +500,19 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     public function validateCardByNumber(string $cardNumber) : bool
     {
-        $cardValidateResult = $this->validateCardByNumberRaw($cardNumber);
-        //$result = $cardValidateResult->cardId !== '';
-        $result = $cardValidateResult->isValid ? true : false;
-
-        return $result;
-    }
-
-    /**
-     * Проверка валидности карты и получение ее ID
-     * Контракт в ML: card_validate
-     *
-     * - форма замены бонусной карты
-     * - регистрация бонусной карты сотрудником магазина в ЛК магазина
-     *
-     * @param string $cardNumber
-     * @return CardValidateResult
-     * @throws ManzanaServiceException
-     */
-    public function validateCardByNumberRaw(string $cardNumber) : CardValidateResult
-    {
-        $cardValidateResult = null;
         $bag = new ParameterBag(['cardnumber' => $cardNumber]);
+        
         try {
             $result = $this->execute(self::CONTRACT_CARD_VALIDATE, $bag->getParameters());
-            /** @var CardValidateResult $cardValidateResult */
-            $cardValidateResult = $this->serializer->deserialize($result, CardValidateResult::class, 'xml');
+            /** @noinspection PhpUndefinedFieldInspection */
+            $result = $result->cardid->__toString() !== '';
         } catch (\Throwable $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
         }
-
-        return $cardValidateResult;
+        
+        return $result;
     }
-
+    
     /**
      * Получение данных о держателе бонусной карты
      *
@@ -564,21 +530,21 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     {
         $card = null;
         $bag  = new ParameterBag(['cardnumber' => $cardNumber]);
-
+        
         try {
             $result = $this->execute(self::CONTRACT_SEARCH_CARD_BY_NUMBER, $bag->getParameters());
             $card   = $this->serializer->deserialize($result, Cards::class, 'xml')->cards[0];
         } catch (\Exception $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
         }
-
+        
         if (!($card instanceof Card)) {
             throw new CardNotFoundException(sprintf('Карта %s не найдена', $cardNumber));
         }
-
+        
         return $card;
     }
-
+    
     /**
      * Получение контакта по Contact_ID
      *
@@ -593,22 +559,21 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     {
         $contact = null;
         $bag     = new ParameterBag(['contact_id' => $contactId]);
-
+        
         try {
-            $result = $this->execute(self::CONTRACT_CONTACT, $bag->getParameters());
-
+            $result  = $this->execute(self::CONTRACT_CONTACT, $bag->getParameters());
             $contact = $this->serializer->deserialize($result, Contacts::class, 'xml')->contacts[0];
         } catch (\Exception $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
         }
-
+        
         if (!($contact instanceof Contact)) {
             throw new ContactNotFoundException(sprintf('Контакт %s не найден', $contactId));
         }
-
+        
         return $contact;
     }
-
+    
     /**
      * @param $cardID
      * @param $contactId
@@ -626,12 +591,12 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
                     return $card;
                 }
             }
-
+            
         }
-
+        
         return null;
     }
-
+    
     /**
      * @param $contactId
      *
@@ -653,10 +618,10 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
                 throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
             }
         }
-
+        
         return $cards;
     }
-
+    
     /**
      * @param string $contactId
      *
@@ -675,48 +640,20 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         } catch (\Exception $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
         }
-
+        
         return $cheques;
+        
     }
-
-    /**
-     * @param string $cardId
-     *
-     * @return ChequeByContractCheques[]|array
-     * @throws ManzanaServiceException
-     */
-    public function getChequesByCardId(string $cardId) : array
-    {
-        $bag = new ParameterBag(['card_id' => $cardId]);
-        try {
-            $result = $this->execute(self::CONTRACT_CHEQUES, $bag->getParameters());
-            $cheques = $this->serializer->deserialize($result, ChequesByContractCheques::class, 'xml')->cheques->toArray();
-        } catch (\Exception $e) {
-            throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
-        }
-
-        return $cheques;
-    }
-
-    /**
-     * @param string $contactId
-     *
-     * @return Cheque[]|array
-     * @throws ManzanaServiceException
-     */
-    public function getChequesByContactId(string $contactId) : array
-    {
-        return $this->getCheques($contactId);
-    }
-
+    
     /**
      * @param string $chequeId
      *
      * @return ChequeItem[]
      * @throws ManzanaServiceException
      */
-    public function getItemsByCheque(string $chequeId) : array
+    public function getItemsBuCheque(string $chequeId) : array
     {
+        
         $bag = new ParameterBag(['cheque_id' => $chequeId]);
         try {
             $result = $this->execute(self::CONTRACT_CHEQUE_ITEMS, $bag->getParameters());
@@ -727,20 +664,18 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         } catch (\Exception $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
         }
-
+        
         return $chequeItems;
     }
-
+    
     /**
-     * Опечатка в имени метода
+     * Обновление/создание контакта. Очередь в rabbit.
+     *
+     * @param Client $contact
      */
-    public function getItemsBuCheque(string $chequeId) : array
+    public function updateContactAsync(Client $contact)
     {
-        return $this->getItemsByCheque($chequeId);
-    }
-
-    protected function clientSearch(array $data)
-    {
-
+        $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.manzana_update_producer');
+        $producer->publish($this->serializer->serialize($contact, 'json'));
     }
 }

@@ -18,6 +18,10 @@ services:
     factory: 'search.factory:createElasticaClient'
     arguments: ['%elastica.client_options%']
 
+  manzana.contact_consumer:
+    class: FourPaws\External\Manzana\Consumer\ManzanaContactConsumer
+    arguments: ['@jms_serializer', '@manzana.service']
+
   search.sync_consumer:
     class: FourPaws\Search\Consumer\CatalogSyncConsumer
     arguments: ['@jms_serializer', '@search.service']
@@ -84,31 +88,6 @@ services:
   jms_serialized_name_annotation_strategy:
     class: JMS\Serializer\Naming\SerializedNameAnnotationStrategy
     arguments: ['@jms_identical_property_naming_strategy']
-
-  jms_serializer.array_or_false_handler:
-      class: FourPaws\AppBundle\Serialization\ArrayOrFalseHandler
-      tags:
-          - { name: jms_serializer.subscribing_handler }
-
-  jms_serializer.bitrix_boolean_handler:
-      class: FourPaws\AppBundle\Serialization\BitrixBooleanHandler
-      tags:
-          - { name: jms_serializer.subscribing_handler }
-
-  jms_serializer.bitrix_date_handler:
-      class: FourPaws\AppBundle\Serialization\BitrixDateHandler
-      tags:
-          - { name: jms_serializer.subscribing_handler }
-
-  jms_serializer.bitrix_date_time_handler:
-      class: FourPaws\AppBundle\Serialization\BitrixDateTimeHandler
-      tags:
-          - { name: jms_serializer.subscribing_handler }
-
-  jms_serializer.manzana_date_time_short_handler:
-      class: FourPaws\AppBundle\Serialization\ManzanaDateTimeImmutableFullShortHandler
-      tags:
-          - { name: jms_serializer.subscribing_handler }
 
   recaptcha.guzzle:
       class: GuzzleHttp\Client

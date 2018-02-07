@@ -18,11 +18,8 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
-use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
-use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Exception\SmsSendErrorException;
-use FourPaws\External\Manzana\Exception\ManzanaException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
@@ -403,21 +400,17 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 $client            = new Client();
                 $client->contactId = $contactId;
                 $client->phone     = $phone;
-            } catch (ManzanaServiceContactSearchMoreOneException $e) {
-            } catch (ManzanaServiceContactSearchNullException $e) {
+            } catch (ManzanaServiceException $e) {
                 $client = new Client();
+    
                 try {
                     $this->currentUserProvider->setClientPersonalDataByCurUser($client);
                 } catch (NotAuthorizedException $e) {
                 }
-            } catch (ManzanaServiceException $e) {
             }
+    
             if ($client instanceof Client) {
-                try {
-                    $manzanaService->updateContact($client);
-                } catch (ManzanaServiceException $e) {
-                } catch (ManzanaException $e) {
-                }
+                $manzanaService->updateContactAsync($client);
             }
         }
         
@@ -463,8 +456,9 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         </header>
         <?php
         /** @noinspection PhpIncludeInspection */
-        include_once App::getDocumentRoot() . '/local/components/fourpaws/auth.form/templates/popup/include/' . $step
-                     . '.php';
+        include_once sprintf('%s/local/components/fourpaws/auth.form/templates/popup/include/%s.php',
+                             App::getDocumentRoot(),
+                             $step);
         $html = ob_get_clean();
         
         return JsonSuccessResponse::createWithData(

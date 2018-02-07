@@ -2,7 +2,9 @@
 
 namespace FourPaws\External\Manzana\Consumer;
 
-use FourPaws\External\Manzana\Model\Contact;
+use FourPaws\External\Exception\ManzanaServiceException;
+use FourPaws\External\Manzana\Exception\ContactUpdateException;
+use FourPaws\External\Manzana\Model\Client;
 use PhpAmqpLib\Message\AMQPMessage;
 
 /**
@@ -18,12 +20,18 @@ class ManzanaContactConsumer extends ManzanaConsumerBase
     public function execute(AMQPMessage $message) : bool
     {
         try {
-            $contact = $this->serializer->deserialize($message->getBody(), Contact::class, 'json');
+            $contact = $this->serializer->deserialize($message->getBody(), Client::class, 'json');
             $this->manzanaService->updateContact($contact);
-            
-            return true;
-        } catch (\Exception $e) {
+        } catch (ContactUpdateException $e) {
+            $this->log()->error(sprintf('contact update error: %s',
+                                        $e->getMessage()));
+        } catch (ManzanaServiceException $e) {
+            $this->log()->error(sprintf('Manzana error: %s',
+                                        $e->getMessage()));
+    
             return false;
         }
+    
+        return true;
     }
 }

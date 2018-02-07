@@ -20,7 +20,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         </div>
         <div class="b-have-pet__link-block js-permutation-link-pet-first">
             <a class="b-link b-link--have-pet"
-               href="javascript:void(0)"
+               href="/catalog/sobaki/zaveli-shchenka33/"
                title="Все для щенка">
                 <span class="b-link__text b-link__text--have-pet">Все для щенка</span>
             </a>
@@ -35,7 +35,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         </div>
         <div class="b-have-pet__link-block js-permutation-link-pet-second">
             <a class="b-link b-link--have-pet"
-               href="javascript:void(0)"
+               href="/catalog/koshki/zaveli-kotenka22/"
                title="Все для котёнка">
                 <span class="b-link__text b-link__text--have-pet">Все для котёнка</span>
             </a>

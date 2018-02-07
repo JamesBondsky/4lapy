@@ -13,7 +13,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
-
 $frame = $this->createFrame(); ?>
 <div class="b-stores__block">
     <h2 class="b-title b-title--stores">Ваш город</h2>
@@ -82,10 +81,11 @@ $frame = $this->createFrame(); ?>
                         <select class="b-select__block b-select__block--stores"
                                 name="sort"
                                 data-url="/ajax/store/list/order/" title="Сортировать">
-                            <option value="city">по городу</option>
+                            <option value="" disabled="disabled">выберите</option>
                             <option value="address">по адресу</option>
-                            <option value="metro"<?= (!isset($arResult['METRO'])
-                                                      || empty($arResult['METRO'])) ? ' style="display:none"' : '' ?>>по метро</option>
+                            <?php if (!empty($arResult['METRO'])) { ?>
+                                <option value="metro">по метро</option>
+                            <?php } ?>
                         </select>
                         <span class="b-select__arrow"></span>
                     </span>
