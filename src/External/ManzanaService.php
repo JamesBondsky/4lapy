@@ -171,7 +171,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         $arguments = [
             'login'    => $this->parameters['login'],
             'password' => $this->parameters['password'],
-            'ip'       => $_SERVER['HTTP_X_FORWARDED_FOR'] ?: $_SERVER['REMOTE_ADDR'],
+            'ip'       => ($_SERVER['HTTP_X_FORWARDED_FOR'] ?: $_SERVER['REMOTE_ADDR']) ?? '127.0.0.1',
         ];
         
         try {
@@ -307,7 +307,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         } catch (\Exception $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
         }
-        
+    
         /** @noinspection PhpIncompatibleReturnTypeInspection */
         return $clients;
     }
@@ -402,14 +402,6 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         }
         
         return $result;
-    }
-    
-    /**
-     * Получение информации о реферале по Contact_ID
-     */
-    public function getReferralByContactId()
-    {
-    
     }
     
     /**
@@ -676,9 +668,14 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         return $chequeItems;
     }
     
-    protected function clientSearch(array $data)
+    /**
+     * Обновление/создание контакта. Очередь в rabbit.
+     *
+     * @param Client $contact
+     */
+    public function updateContactAsync(Client $contact)
     {
-    
+        $producer = App::getInstance()->getContainer()->get('old_sound_rabbit_mq.manzana_update_producer');
+        $producer->publish($this->serializer->serialize($contact, 'json'));
     }
-    
 }

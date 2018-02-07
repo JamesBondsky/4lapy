@@ -103,7 +103,7 @@ class AuthController extends Controller
                 return $registerClass->ajaxResendSms($request->get('phone', ''));
                 break;
             case 'register':
-                return $registerClass->ajaxRegister($request->request->getIterator()->getArrayCopy());
+                return $registerClass->ajaxRegister($request->request->all());
                 break;
             case 'savePhone':
                 return $registerClass->ajaxSavePhone($request);

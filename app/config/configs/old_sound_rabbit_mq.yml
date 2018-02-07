@@ -23,7 +23,11 @@ old_sound_rabbit_mq:
 
       catalog_sync:
         connection: default
-        exchange_options: {name: "catalog_sync", type: "direct"}
+        exchange_options: { name: "catalog_sync", type: direct }
+
+      manzana_update:
+        connection: default
+        exchange_options: { name: "manzana_update", type: direct }
 
     consumers:
       callback_set:
@@ -34,6 +38,12 @@ old_sound_rabbit_mq:
 
       catalog_sync:
         connection: default
-        exchange_options: {name: "catalog_sync", type: "direct"}
+        exchange_options: {name: "catalog_sync", type: direct}
         queue_options: {name: "catalog_sync"}
         callback: search.sync_consumer
+
+      manzana_update:
+        connection: default
+        exchange_options: {name: "manzana_update", type: direct}
+        queue_options: {name: "manzana_update"}
+        callback: manzana.contact_consumer
