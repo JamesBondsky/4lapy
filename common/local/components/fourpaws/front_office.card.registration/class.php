@@ -1,15 +1,16 @@
 <?php
 
 use Adv\Bitrixtools\Tools\Main\UserGroupUtils;
+use Bitrix\Main\DB\Connection;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
-use Bitrix\Main\UserUtils;
 use FourPaws\App\Application;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Manzana\Exception\CardNotFoundException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
 use FourPaws\External\SmsService;
+use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\UserService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\Helpers\PhoneHelper;
@@ -49,12 +50,16 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
     private $userCurrentUserService;
     /** @var Serializer $serializer */
     protected $serializer;
-    /** @var \Bitrix\Main\DB\Connection $connection */
+    /** @var Connection $connection */
     protected $connection;
     /** @var bool $isTransactionStarted */
     private $isTransactionStarted = false;
     /** @var string $canAccess */
     protected $canAccess = '';
+    /** @var array $userGroups */
+    private $userGroups;
+    /** @var bool $isUserAdmin */
+    private $isUserAdmin;
 
     public function __construct($component = null)
     {
@@ -166,21 +171,49 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
     }
 
     /**
+     * @return array
+     */
+    protected function getUserGroups()
+    {
+        if (!isset($this->userGroups)) {
+            $this->userGroups = [];
+            try {
+                if ($this->arParams['USER_ID']) {
+                    $this->userGroups = $this->getUserService()->getUserGroups($this->arParams['USER_ID']);
+                }
+            } catch (\Exception $exception) {}
+            // группа "все пользователи"
+            $this->userGroups[] = 2;
+            $this->userGroups = array_unique($this->userGroups);
+        }
+
+        return $this->userGroups;
+    }
+
+    /**
+     * @return bool
+     */
+    protected function isUserAdmin()
+    {
+        if (!isset($this->isUserAdmin)) {
+            $this->isUserAdmin = in_array(static::BX_ADMIN_GROUP_ID, $this->getUserGroups());
+        }
+
+        return $this->isUserAdmin;
+    }
+
+    /**
      * @return bool
      */
     protected function canAccess()
     {
         if ($this->canAccess === '') {
             $this->canAccess = 'N';
-            $isCurUser = $this->arParams['USER_ID'] === $GLOBALS['USER']->getId();
-            if ($isCurUser && $GLOBALS['USER']->isAdmin()) {
+
+            if ($this->isUserAdmin()) {
                 $this->canAccess = 'Y';
             } else {
-                if (!$isCurUser) {
-                    $userGroups = UserUtils::getGroupIds($this->arParams['USER_ID']);
-                } else {
-                    $userGroups = $GLOBALS['USER']->getUserGroupArray();
-                }
+                $userGroups = $this->getUserGroups();
                 $canAccessGroups = array_merge($this->arParams['USER_GROUPS'], [static::BX_ADMIN_GROUP_ID]);
                 if (array_intersect($canAccessGroups, $userGroups)) {
                     $this->canAccess = 'Y';
@@ -202,6 +235,9 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
         return $this->manzanaService;
     }
 
+    /**
+     * @return UserService
+     */
     public function getUserService()
     {
         if (!$this->userCurrentUserService) {
@@ -210,6 +246,9 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
         return $this->userCurrentUserService;
     }
 
+    /**
+     * @return UserRepository
+     */
     public function getUserRepository()
     {
         return $this->getUserService()->getUserRepository();

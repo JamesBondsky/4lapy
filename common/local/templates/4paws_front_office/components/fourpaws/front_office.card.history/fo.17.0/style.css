@@ -27,9 +27,7 @@
 }
 
 .active-balance {
-    font-size: 18px;
-    font-weight: bold;
-    margin: 16px 0;
+    margin: 16px 0 8px 0;
     padding: 0;
 }
 
@@ -38,8 +36,6 @@
 }
 
 .order-list-title {
-    font-weight: bold;
-    font-size: 18px;
     margin: 16px 0 8px 0;
 }
 
@@ -61,16 +57,16 @@ table.order-list > tbody td {
 }
 
 table.order-list > thead th {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: bold;
-    border-bottom: solid 2px #ED953E;
-    background-color: #F9EA8C;
+    border-bottom: solid 2px #8da2b5;
+    background-color: #efefef;
     color: #000;
 }
 
 table.order-list .order-list__head.even,
 table.order-list .order-list__details.even {
-    background-color: #F9EA8C;
+    background-color: #efefef;
 }
 
 table.order-list .order-detail-td {
@@ -88,13 +84,16 @@ table.order-list .order-detail-td .order-detail {
 
 .order-list__dropdown {
     background-image: url('images/preloader-dog-small.gif');
-    background: url('images/lk/lk-order-list-min.png') no-repeat scroll 0 0 transparent;
-    color: #ef7204;
+    background: url('images/lk/lk-order-list-min-gr-down.png') no-repeat scroll 0 0 transparent;
     cursor: pointer;
     display: block;
     padding: 7px 0 7px 37px;
     text-decoration: none;
     line-height: 17px;
+}
+
+.order-list__dropdown.open {
+    background: url('images/lk/lk-order-list-min-gr-up.png') no-repeat scroll 0 0 transparent;
 }
 
 .order-list__dropdown.preloader {
@@ -106,10 +105,12 @@ table.order-list .order-detail-td .order-detail {
     font-size: 15px !important;
     width: 90px !important;
     padding-right: 20px !important;
+    vertical-align: middle;
 }
 
 .order-list__address {
     font-size: 15px !important;
+    vertical-align: middle;
 }
 
 .order-detail > table {
@@ -124,7 +125,7 @@ table.order-list .order-detail-td .order-detail {
     padding: 5px;
     text-align: left;
     font-weight: normal;
-    border-bottom: solid 1px #ED953E;
+    border-bottom: solid 1px #8da2b5;
 }
 
 .order-detail > table th {
@@ -162,8 +163,6 @@ table.order-list .order-detail-td .order-detail {
 }
 
 .cheques-list-print-title {
-    font-weight: bold;
-    font-size: 18px;
     margin: 16px 0 8px 0;
 }
 
@@ -178,7 +177,7 @@ table.order-list .order-detail-td .order-detail {
     text-align: left;
     margin: 0;
     padding: 5px 10px 5px 0;
-    border-bottom: solid 1px #ED953E;
+    border-bottom: solid 1px #8da2b5;
 }
 
 .cheques-list-print ._hidden {
@@ -212,13 +211,13 @@ ul.cheques-list-print-switch > li {
 
 ul.cheques-list-print-switch > li span {
     cursor: pointer;
-    border-bottom: dashed 1px #ED953E;
+    border-bottom: dashed 1px #8da2b5;
 }
 
 ul.cheques-list-print-switch > li.selected span {
     cursor: default;
     border-bottom: none;
-    color: #ff6e03;
+    color: #fe6927;
 }
 
 .print-ver-logo {

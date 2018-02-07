@@ -30,12 +30,12 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
     protected $canAccess = '';
     /** @var array $userGroups */
     private $userGroups;
+    /** @var bool $isUserAdmin */
+    private $isUserAdmin;
     /** @var array $userOperations */
     private $userOperations;
     /** @var array $userSubordinateGroups */
     private $userSubordinateGroups;
-    /** @var bool $isUserAdmin */
-    private $isUserAdmin;
 
     public function __construct($component = null)
     {
@@ -119,7 +119,9 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
         if (!isset($this->userGroups)) {
             $this->userGroups = [];
             try {
-                $this->userGroups = $this->getUserService()->getUserGroups($this->arParams['USER_ID']);
+                if ($this->arParams['USER_ID']) {
+                    $this->userGroups = $this->getUserService()->getUserGroups($this->arParams['USER_ID']);
+                }
             } catch (\Exception $exception) {}
             // группа "все пользователи"
             $this->userGroups[] = 2;
@@ -427,8 +429,8 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
                         break;
                     case 'birthDay':
                         // дата рождения
-                        $filter['PERSONAL_BIRTHDATE_1'] = $value;
-                        $filter['PERSONAL_BIRTHDATE_2'] = $value;
+                        $filter['PERSONAL_BIRTHDAY_1'] = $value;
+                        $filter['PERSONAL_BIRTHDAY_2'] = $value;
                         break;
                     case 'userId':
                         // id пользователя

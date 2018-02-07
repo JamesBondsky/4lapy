@@ -13,7 +13,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var string $templateName
  * @var string $componentPath
  */
-_log_array($arResult);
+
 switch ($arResult['CURRENT_STAGE']) {
     case 'initial':
         // стартовая страница

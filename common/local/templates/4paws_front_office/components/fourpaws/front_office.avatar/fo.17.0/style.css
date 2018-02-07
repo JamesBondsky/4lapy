@@ -19,13 +19,13 @@ table.user-list > tbody td {
 table.user-list > thead th {
     font-size: 16px;
     font-weight: bold;
-    border-bottom: solid 2px #ED953E;
-    background-color: #F9EA8C;
+    border-bottom: solid 2px #8da2b5;
+    background-color: #efefef;
     color: #000;
 }
 
 table.user-list .user-list__item-row.even {
-    background-color: #F9EA8C;
+    background-color: #efefef;
 }
 
 .user-list__full-name {
@@ -55,7 +55,7 @@ table.user-list .user-list__item-row.even {
 
 .user-list__auth ._action-auth {
     text-align: center;
-    border-bottom: dashed 1px #ef7b14;
+    border-bottom: dashed 1px #8da2b5;
     cursor: pointer;
 }
 

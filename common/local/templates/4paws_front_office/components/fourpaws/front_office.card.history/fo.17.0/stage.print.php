@@ -23,7 +23,7 @@ if ($arResult['CAN_ACCESS'] !== 'Y') {
 // логотип, выводимый при печати
 echo '<div class="print-ver-logo"><img src="'.$templateFolder.'/images/header_img.png" alt=""></div>';
 
-echo '<div class="cheques-list-print-title">Списание и начисление бонусов по карте: '.$arResult['PRINT_FIELDS']['cardNumberForHistory']['VALUE'].'</div>';
+echo '<div class="cheques-list-print-title text-h3">Списание и начисление бонусов по карте: '.$arResult['PRINT_FIELDS']['cardNumberForHistory']['VALUE'].'</div>';
 
 if (empty($arResult['CHEQUES'])) {
     echo '<p>Нет данных</p>';
@@ -71,7 +71,7 @@ if (empty($arResult['CHEQUES'])) {
 </table>
 
 <br><br>
-<button onclick="window.print();" class="b-button b-button_large noprint">Напечатать</button>
+<button onclick="window.print();" class="b-button form-page__btn noprint">Напечатать</button>
 
 <script data-name="front_office_card_history_print" type="text/javascript">
     $(document).ready(

@@ -24,7 +24,7 @@ include __DIR__.'/inc.form.php';
 
 // Баланс карты
 if (!empty($arResult['CURRENT_CARD'])) {
-    echo '<div class="active-balance">Активный баланс: '.htmlspecialcharsbx($arResult['CURRENT_CARD']['BALANCE']).'&nbsp;баллов</div>';
+    echo '<div class="active-balance text-h3">Активный баланс: '.htmlspecialcharsbx($arResult['CURRENT_CARD']['BALANCE']).'&nbsp;баллов</div>';
 }
 
 // Кнопка для запроса полной версии о списании/начислении бонусов
@@ -40,7 +40,7 @@ if (!empty($arResult['CHEQUES'])) {
             <input type="hidden" name="sessid" value="<?=bitrix_sessid()?>">
             <input type="hidden" name="cardNumberForHistory" value="<?=$arResult['PRINT_FIELDS']['cardNumberForHistory']['VALUE']?>">
             <div class="submit-button-wrap">
-                <button class="b-button b-button_large" type="submit" value="Распечатать">
+                <button class="b-button form-page__btn" type="submit" value="Распечатать">
                     Полная версия для печати
                 </button>
             </div>
@@ -53,7 +53,7 @@ if (!empty($arResult['CHEQUES'])) {
 if (!empty($arResult['CHEQUES'])) {
     $isBonusCard = $arResult['CURRENT_CARD'] && $arResult['CURRENT_CARD']['_IS_BONUS_CARD_'] === 'Y';
     if ($arParams['LAST_CHEQUES_CNT']) {
-        echo '<div class="order-list-title">Последние покупки по карте</div>';
+        echo '<div class="order-list-title text-h3">Последние покупки по карте</div>';
     }
 
     echo '<div class="lk-container">';
