@@ -83,6 +83,7 @@ class FeedBackController extends Controller
                 'doc',
                 'docx',
             ];
+
             try {
                 $file = $formService->saveFile($fileCode, $fileSizeMb, $valid_types);
                 if (!empty($file)) {
@@ -123,7 +124,6 @@ class FeedBackController extends Controller
                 ['errors' => ['updateSave' => 'Произошла ошибка при сохранении']]
             );
         } catch (\Exception $e) {
-            echo $e->getMessage();
         }
         
         return JsonErrorResponse::createWithData(
