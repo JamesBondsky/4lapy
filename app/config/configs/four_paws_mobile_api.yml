@@ -1,5 +1,9 @@
 four_paws_mobile_api:
   exceptions:
+    FourPaws\MobileApiBundle\Exception\MetroByNoneMetroCityException:
+      code: 44
+      message: 'Данные о станциях метро для этого города отсутствуют'
+      status_code: 200
 #    FourPaws\MobileApiBundle\Exception\ValidationException:
 #      code: 123
 #      message: 'we all gonna die'
