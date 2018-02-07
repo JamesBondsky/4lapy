@@ -183,7 +183,7 @@ class ProfileController extends Controller
     {
         /** @var UserRepository $userRepository */
         $userRepository = $this->currentUserProvider->getUserRepository();
-        $data           = $request->request->getIterator()->getArrayCopy();
+        $data           = $request->request->all();
         if (!empty($data['EMAIL'])) {
             if (filter_var($data['EMAIL'], FILTER_VALIDATE_EMAIL) === false) {
                 return JsonErrorResponse::createWithData(
