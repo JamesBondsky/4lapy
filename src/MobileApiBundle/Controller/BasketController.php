@@ -14,6 +14,7 @@ use FourPaws\MobileApiBundle\Dto\Response\PutUserCartResponse;
 use FourPaws\MobileApiBundle\Dto\Response\UserCartCalcResponse;
 use FourPaws\MobileApiBundle\Dto\Response\UserCartOrderResponse;
 use FourPaws\MobileApiBundle\Dto\Response\UserCartResponse;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 
 class BasketController extends FOSRestController
 {
@@ -33,6 +34,10 @@ class BasketController extends FOSRestController
      */
     public function userCartAction()
     {
+        global $USER;
+        $USER->Authorize(1);
+        print_r($this->get('security.token_storage')->getToken());
+        die();
     }
 
     /**

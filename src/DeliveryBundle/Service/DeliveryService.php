@@ -4,15 +4,21 @@ namespace FourPaws\DeliveryBundle\Service;
 
 use Bitrix\Currency\CurrencyManager;
 use Bitrix\Sale\Basket;
+use Bitrix\Sale\BasketBase;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Delivery\DeliveryLocationTable;
 use Bitrix\Sale\Delivery\Services\Manager;
+use Bitrix\Sale\Delivery\Services\Table as DeliveryServiceTable;
 use Bitrix\Sale\Location\LocationTable;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Shipment;
 use FourPaws\Catalog\Model\Offer;
+use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\DeliveryBundle\Exception\InvalidArgumentException;
+use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\Location\LocationService;
+use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Service\UserService;
 use WebArch\BitrixCache\BitrixCache;
@@ -82,15 +88,36 @@ class DeliveryService
      * @param string $locationCode
      * @param array $codes коды доставок для расчета
      *
+     * @return CalculationResult[]
+     */
+    public function getByProduct(Offer $offer, string $locationCode = '', array $codes = []): array
+    {
+        $basket = Basket::createFromRequest([]);
+        $basketItem = BasketItem::create($basket, 'sale', $offer->getId());
+        $basketItem->setFieldNoDemand('CAN_BUY', 'Y');
+        $basketItem->setFieldNoDemand('PRICE', $offer->getPrice());
+        $basketItem->setFieldNoDemand('QUANTITY', 1);
+        $basket->addItem($basketItem);
+
+        return $this->getByBasket($basket, $locationCode, $codes);
+    }
+
+    /**
+     * Получение доставок для корзины
+     *
+     * @param Basket $basket
+     * @param string $locationCode
+     * @param array $codes коды доставок для расчета
+     *
      * @return array
      */
-    public function getByProduct(Offer $offer, string $locationCode = null, array $codes = []): array
+    public function getByBasket(BasketBase $basket, string $locationCode = '', array $codes = []): array
     {
         if (!$locationCode) {
             $locationCode = $this->getCurrentLocation();
         }
 
-        $shipment = $this->generateShipment($locationCode, $offer);
+        $shipment = $this->generateShipment($locationCode, $basket);
 
         return $this->calculateDeliveries($shipment, $codes);
     }
@@ -101,17 +128,33 @@ class DeliveryService
      * @param string $locationCode
      * @param array $codes коды доставок для расчета
      *
-     * @return array
+     * @return CalculationResult[]
      */
-    public function getByLocation(string $locationCode = null, array $codes = []): array
+    public function getByLocation(string $locationCode, array $codes = []): array
     {
-        if (!$locationCode) {
-            $locationCode = $this->getCurrentLocation();
+        $getDeliveries = function () use ($locationCode) {
+            $shipment = $this->generateShipment($locationCode);
+
+            return ['result' => $this->calculateDeliveries($shipment)];
+        };
+
+        $result = (new BitrixCache())
+            ->withId(__METHOD__ . $locationCode)
+            ->resultOf($getDeliveries);
+
+        $deliveries = $result['result'];
+        if (!empty($codes)) {
+            /**
+             * @var CalculationResult $delivery
+             */
+            foreach ($deliveries as $i => $delivery) {
+                if (!in_array($delivery->getData()['DELIVERY_CODE'], $codes, true)) {
+                    unset($deliveries[$i]);
+                }
+            }
         }
 
-        $shipment = $this->generateShipment($locationCode);
-
-        return $this->calculateDeliveries($shipment, $codes);
+        return $deliveries;
     }
 
     /**
@@ -156,12 +199,14 @@ class DeliveryService
                     ],
                     true
                 )) {
-                    $calculationResult->setPeriodFrom($_SESSION['DPD_DATA'][$service->getCode()]['DAYS']);
+                    $calculationResult->setPeriodFrom($_SESSION['DPD_DATA'][$service->getCode()]['DAYS_FROM']);
+                    $calculationResult->setPeriodTo($_SESSION['DPD_DATA'][$service->getCode()]['DAYS_TO']);
                     $calculationResult->setData(
                         array_merge(
                             $calculationResult->getData(),
                             [
-                                'INTERVALS' => $_SESSION['DPD_DATA'][$service->getCode()]['INTERVALS'],
+                                'INTERVALS'    => $_SESSION['DPD_DATA'][$service->getCode()]['INTERVALS'],
+                                'STOCK_RESULT' => $_SESSION['DPD_DATA'][$service->getCode()]['STOCK_RESULT'],
                             ]
                         )
                     );
@@ -331,6 +376,98 @@ class DeliveryService
     }
 
     /**
+     * @param CalculationResult $calculationResult
+     *
+     * @return bool
+     */
+    public function isPickup(CalculationResult $calculationResult): bool
+    {
+        return \in_array($calculationResult->getData()['DELIVERY_CODE'], static::PICKUP_CODES, true);
+    }
+
+    /**
+     * @param CalculationResult $calculationResult
+     *
+     * @return bool
+     */
+    public function isDelivery(CalculationResult $calculationResult): bool
+    {
+        return \in_array($calculationResult->getData()['DELIVERY_CODE'], static::DELIVERY_CODES, true);
+    }
+
+    /**
+     * @param CalculationResult $calculationResult
+     *
+     * @return bool
+     */
+    public function isInnerPickup(CalculationResult $calculationResult): bool
+    {
+        return $calculationResult->getData()['DELIVERY_CODE'] === static::INNER_PICKUP_CODE;
+    }
+
+    /**
+     * @param CalculationResult $calculationResult
+     *
+     * @return bool
+     */
+    public function isDpdPickup(CalculationResult $calculationResult): bool
+    {
+        return $calculationResult->getData()['DELIVERY_CODE'] === static::DPD_PICKUP_CODE;
+    }
+
+    /**
+     * @param CalculationResult $calculationResult
+     *
+     * @return bool
+     */
+    public function isInnerDelivery(CalculationResult $calculationResult): bool
+    {
+        return $calculationResult->getData()['DELIVERY_CODE'] === static::INNER_DELIVERY_CODE;
+    }
+
+    /**
+     * @param CalculationResult $calculationResult
+     *
+     * @return bool
+     */
+    public function isDpdDelivery(CalculationResult $calculationResult): bool
+    {
+        return $calculationResult->getData()['DELIVERY_CODE'] === static::DPD_DELIVERY_CODE;
+    }
+
+    /**
+     * @param string $code
+     *
+     * @return int
+     * @throws NotFoundException
+     */
+    public function getDeliveryIdByCode(string $code): int
+    {
+        $delivery = DeliveryServiceTable::getList(['filter' => ['CODE' => $code]])->fetch();
+        if (!$delivery) {
+            throw new NotFoundException('Delivery service not found');
+        }
+
+        return (int)$delivery['ID'];
+    }
+
+    /**
+     * @param CalculationResult $delivery
+     *
+     * @return StockResultCollection
+     */
+    public function getStockResultByDelivery(CalculationResult $delivery): StockResultCollection
+    {
+        /** @var StockResultCollection $stockResult */
+        $stockResult = $delivery->getData()['STOCK_RESULT'];
+        if (!$stockResult instanceof StockResultCollection) {
+            throw new InvalidArgumentException('Stock result not defined');
+        }
+
+        return $stockResult;
+    }
+
+    /**
      * @return string
      */
     protected function getCurrentLocation()
@@ -338,7 +475,7 @@ class DeliveryService
         return $this->locationService->getCurrentLocation();
     }
 
-    protected function generateShipment(string $locationCode, Offer $offer = null): Shipment
+    protected function generateShipment(string $locationCode, BasketBase $basket = null): Shipment
     {
         $order = Order::create(
             SITE_ID,
@@ -346,14 +483,10 @@ class DeliveryService
             CurrencyManager::getBaseCurrency()
         );
 
-        $basket = Basket::createFromRequest([]);
-        if ($offer) {
-            $basketItem = BasketItem::create($basket, 'sale', $offer->getId());
-            $basketItem->setFieldNoDemand('CAN_BUY', 'Y');
-            $basketItem->setFieldNoDemand('PRICE', $offer->getPrice());
-            $basketItem->setFieldNoDemand('QUANTITY', 1);
-            $basket->addItem($basketItem);
+        if (!$basket) {
+            $basket = Basket::createFromRequest([]);
         }
+
         $order->setBasket($basket);
 
         $propertyCollection = $order->getPropertyCollection();

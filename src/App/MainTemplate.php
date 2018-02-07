@@ -24,6 +24,30 @@ class MainTemplate extends TemplateAbstract
     }
     
     /**
+     * @return string
+     */
+    public function getWrapperClass() : string
+    {
+        return $this->isOrderPage() ? ' b-page-wrapper--order ' : '';
+    }
+    
+    /**
+     * @return string
+     */
+    public function getHeaderClass() : string
+    {
+        return $this->hasShortHeaderFooter() ? ' b-header--short ' : '';
+    }
+    
+    /**
+     * @return string
+     */
+    public function getFooterClass() : string
+    {
+        return $this->hasShortHeaderFooter() ? ' b-footer--short ' : '';
+    }
+    
+    /**
      * @return bool
      */
     public function isIndex() : bool
@@ -52,7 +76,7 @@ class MainTemplate extends TemplateAbstract
          * It's bitrix way
          */
         global $USER;
-        
+    
         return \defined('NEED_AUTH') && NEED_AUTH === true && !$USER->IsAuthorized();
     }
     
@@ -67,6 +91,22 @@ class MainTemplate extends TemplateAbstract
     /**
      * @return bool
      */
+    public function hasShortHeaderFooter() : bool
+    {
+        return $this->isOrderPage();
+    }
+    
+    /**
+     * @return bool
+     */
+    public function isNews() : bool
+    {
+        return $this->isPartitionDir('/company/news');
+    }
+    
+    /**
+     * @return bool
+     */
     public function isListNews() : bool
     {
         return $this->isDir('/company/news');
@@ -75,9 +115,41 @@ class MainTemplate extends TemplateAbstract
     /**
      * @return bool
      */
+    public function isArticles() : bool
+    {
+        return $this->isPartitionDir('/services/articles');
+    }
+    
+    /**
+     * @return bool
+     */
     public function isListArticles() : bool
     {
         return $this->isDir('/services/articles');
+    }
+    
+    /**
+     * @return bool
+     */
+    public function isShares() : bool
+    {
+        return $this->isPartitionDir('/customer/shares');
+    }
+    
+    /**
+     * @return bool
+     */
+    public function isPublications() : bool
+    {
+        return $this->isShares() || $this->isNews() || $this->isArticles();
+    }
+    
+    /**
+     * @return bool
+     */
+    public function isCatalog() : bool
+    {
+        return $this->isPartitionDir('/catalog');
     }
     
     /**
@@ -242,11 +314,59 @@ class MainTemplate extends TemplateAbstract
     }
     
     /**
+     * @return bool
+     */
+    public function isOrderPage() : bool
+    {
+        return $this->isPartitionDir('/sale/order');
+    }
+    
+    /**
+     * @return bool
+     */
+    public function isOrderDeliveryPage() : bool
+    {
+        return $this->isDir('/sale/order/delivery');
+    }
+    
+    /**
      * Нет основного враппера
      *
      * @return bool
      */
-    public function hasMainWrapper() {
+    public function hasMainWrapper() : bool
+    {
         return !$this->isForbidden() && !$this->is404();
+    }
+    
+    /**
+     * @return bool
+     */
+    public function isFeedback() : bool
+    {
+        return $this->isPage('/company/feedback');
+    }
+    
+    /**
+     * @return bool
+     */
+    public function isPaymentAndDelivery() : bool
+    {
+        return $this->isPage('/customer/payment-and-delivery/');
+    }
+    
+    /**
+     * @return bool
+     */
+    public function hasContent() : bool
+    {
+        return !$this->isPersonal() && !$this->isIndex() && !$this->isOrderPage() && !$this->isPersonalDirectory()
+               && !$this->isShopList()
+               && !$this->isListShares()
+               && !$this->is404()
+               && !$this->isCatalog()
+               && !$this->isPublications()
+               && !$this->isPaymentAndDelivery()
+               && !$this->isFeedback();
     }
 }

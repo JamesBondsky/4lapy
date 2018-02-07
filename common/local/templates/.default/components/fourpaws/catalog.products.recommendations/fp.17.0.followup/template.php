@@ -27,13 +27,14 @@ if ($arResult['RESULT_TYPE'] === 'INITIAL' && $arParams['DEFERRED_LOAD'] === 'Y'
 
     ?><script type="text/javascript">
         new FourPawsCatalogProductsRecommendationsComponent({
-            siteId: '<?=\CUtil::JSEscape(SITE_ID)?>',
-            componentPath: '<?=\CUtil::JSEscape($componentPath)?>',
+            siteId:                                                                '<?=\CUtil::JSEscape(SITE_ID)?>',
+            componentPath:                                                         '<?=\CUtil::JSEscape($componentPath)?>',
             bigData: <?=\CUtil::PhpToJSObject($arResult['BIG_DATA_SETTINGS'])?>,
-            template: '<?=\CUtil::JSEscape($signedTemplate)?>',
-            ajaxId: '<?=\CUtil::JSEscape($arParams['AJAX_ID'])?>',
-            parameters: '<?=\CUtil::JSEscape($signedParams)?>',
-            containerSelector: '#followup_products_cont'
+            template:                                                              '<?=\CUtil::JSEscape($signedTemplate)?>',
+            ajaxId:                                                                '<?=\CUtil::JSEscape($arParams['AJAX_ID'])?>',
+            parameters:                                                            '<?=\CUtil::JSEscape($signedParams)?>',
+                                                                containerSelector: '#followup_products_cont',
+                                                                sliderSelector:    '.js-popular-product'
         });
     </script><?php
 
@@ -54,6 +55,7 @@ if ($arResult['RESULT_TYPE'] === 'RESULT') {
         if ($arParams['WRAP_CONTAINER_BLOCK'] === 'Y') {
             echo '<div class="b-container">';
         }
+    
         if ($arParams['SHOW_TOP_LINE'] === 'Y') {
             echo '<div class="b-line b-line--pet b-line--shopping-bargain"></div>';
         }
@@ -71,10 +73,10 @@ if ($arResult['RESULT_TYPE'] === 'RESULT') {
                         [
                             'PRODUCT' => $product,
                             'BIG_DATA' => [
-                                'RCM_ID' => isset($arResult['recommendationIdToProduct'][$productId]) ? $arResult['recommendationIdToProduct'][$productId] : '',
-                                'cookiePrefix' => isset($arResult['BIG_DATA_SETTINGS']['js']['cookiePrefix']) ? $arResult['BIG_DATA_SETTINGS']['js']['cookiePrefix'] : '',
-                                'cookieDomain' => isset($arResult['BIG_DATA_SETTINGS']['js']['cookieDomain']) ? $arResult['BIG_DATA_SETTINGS']['js']['cookieDomain'] : '',
-                                'serverTime' => isset($arResult['BIG_DATA_SETTINGS']['js']['serverTime']) ? $arResult['BIG_DATA_SETTINGS']['js']['serverTime'] : '',
+                                'RCM_ID'       => $arResult['recommendationIdToProduct'][$productId] ?? '',
+                                'cookiePrefix' => $arResult['BIG_DATA_SETTINGS']['js']['cookiePrefix'] ?? '',
+                                'cookieDomain' => $arResult['BIG_DATA_SETTINGS']['js']['cookieDomain'] ?? '',
+                                'serverTime'   => $arResult['BIG_DATA_SETTINGS']['js']['serverTime'] ?? '',
                             ],
                         ],
                         $component,

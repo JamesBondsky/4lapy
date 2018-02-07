@@ -194,7 +194,6 @@ class LocationService
             if (empty($query)) {
                 throw new CityNotFoundException('Город не найден');
             }
-            CBitrixComponent::includeComponentClass("bitrix:sale.location.selector.search");
 
             $filter = [
                 'NAME.LANGUAGE_ID' => LANGUAGE_ID,
@@ -351,6 +350,7 @@ class LocationService
         return [
             'NAME' => $city['NAME'],
             'CODE' => $city['CODE'],
+            'TYPE' => $city['TYPE'],
             'PATH' => $city['PATH'],
         ];
     }
@@ -491,11 +491,19 @@ class LocationService
      */
     protected function getTypeIdsByCodes(array $typeCodes): array
     {
-        $getTypeIds = function () use ($typeCodes) {
+        $typeIds = $this->getTypeIds();
+        return array_intersect_key($typeIds, array_flip($typeCodes));
+    }
+
+    /**
+     * @return array
+     */
+    protected function getTypeIds(): array
+    {
+        $getTypeIds = function () {
             $result = [];
             $types = TypeTable::getList(
                 [
-                    'filter' => ['CODE' => $typeCodes],
                     'select' => ['ID', 'CODE'],
                 ]
             );
@@ -508,7 +516,7 @@ class LocationService
         };
 
         return (new BitrixCache())
-            ->withId(__METHOD__ . json_encode($typeCodes))
+            ->withId(__METHOD__)
             ->resultOf($getTypeIds);
     }
 
@@ -533,6 +541,7 @@ class LocationService
                     'CODE',
                     'VALUE'   => 'ID',
                     'DISPLAY' => 'NAME.NAME',
+                    'TYPE_ID',
                 ],
                 'filter'      => $filter,
                 'additionals' => ['PATH'],
@@ -540,6 +549,8 @@ class LocationService
                 'PAGE'        => 0,
             ]
         );
+
+        $types = array_flip($this->getTypeIds());
         foreach ($data['ITEMS'] as $item) {
             $path = [];
             foreach ($item['PATH'] as $pathId) {
@@ -555,6 +566,7 @@ class LocationService
             $result[] = [
                 'CODE' => $item['CODE'],
                 'NAME' => $item['DISPLAY'],
+                'TYPE' => $types[$item['TYPE_ID']],
                 'PATH' => $path,
             ];
         }

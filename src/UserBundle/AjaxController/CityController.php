@@ -2,14 +2,13 @@
 
 namespace FourPaws\UserBundle\AjaxController;
 
-use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonErrorResponse;
+use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
-use FourPaws\Location\Exception\CityNotFoundException;
 use FourPaws\UserBundle\Service\UserService;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 
 /**
  * Class CityController
@@ -27,7 +26,7 @@ class CityController extends Controller
     }
 
     /**
-     * @Route("/set/", methods={"POST"})
+     * @Route("/set/", methods={"POST", "GET"})
      *
      * @param Request $request
      *
@@ -41,7 +40,7 @@ class CityController extends Controller
 
         try {
             $city = $this->userService->setSelectedCity($code, $name, $regionName);
-        } catch (CityNotFoundException $e) {
+        } catch (\Exception $e) {
             return JsonErrorResponse::create($e->getMessage());
         }
 
@@ -55,11 +54,11 @@ class CityController extends Controller
      *
      * @return JsonResponse
      */
-    public function getAction(): JsonResponse
+    public function getAction(Request $request) : JsonResponse
     {
         try {
             $city = $this->userService->getSelectedCity();
-        } catch (CityNotFoundException $e) {
+        } catch (\Exception $e) {
             return JsonErrorResponse::create($e->getMessage());
         }
 

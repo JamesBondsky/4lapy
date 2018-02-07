@@ -3,8 +3,11 @@
 namespace FourPaws\DeliveryBundle\Service;
 
 use Bitrix\Main\Error;
+use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Shipment;
+use FourPaws\StoreBundle\Collection\StoreCollection;
+use FourPaws\StoreBundle\Service\StoreService;
 
 class InnerDeliveryService extends DeliveryServiceHandlerBase
 {
@@ -30,8 +33,6 @@ class InnerDeliveryService extends DeliveryServiceHandlerBase
         if (!parent::isCompatible($shipment)) {
             return false;
         }
-
-        /** @todo проверка остатков товаров */
 
         return true;
     }
@@ -81,15 +82,17 @@ class InnerDeliveryService extends DeliveryServiceHandlerBase
             return $result;
         }
 
+        $basket = $shipment->getParentOrder()->getBasket()->getOrderableItems();
+
         $data = [];
         $deliveryZone = $this->deliveryService->getDeliveryZoneCode($shipment, false);
+        $deliveryLocation = $this->deliveryService->getDeliveryLocation($shipment);
         if ($this->config['PRICES'][$deliveryZone]) {
             $result->setDeliveryPrice($this->config['PRICES'][$deliveryZone]);
 
             if (!empty($this->config['FREE_FROM'][$deliveryZone])) {
                 $data['FREE_FROM'] = $this->config['FREE_FROM'][$deliveryZone];
-                $order = $shipment->getParentOrder();
-                if ($order->getBasket()->getPrice() >= $this->config['FREE_FROM'][$deliveryZone]) {
+                if ($basket->getPrice() >= $this->config['FREE_FROM'][$deliveryZone]) {
                     $result->setDeliveryPrice(0);
                 }
             }
@@ -97,15 +100,70 @@ class InnerDeliveryService extends DeliveryServiceHandlerBase
             $result->addError(new Error('Не задана стоимость доставки'));
         }
         $data['INTERVALS'] = $this->getIntervals($shipment);
+
+        $result->setPeriodType(CalculationResult::PERIOD_TYPE_DAY);
+        if (!$offers = static::getOffers($deliveryLocation, $basket)) {
+            /**
+             * Нужно для отображения списка доставок в хедере и на странице доставок
+             */
+
+            if ($this->canDeliverToday()) {
+                $result->setPeriodFrom(0);
+            } else {
+                $result->setPeriodFrom(1);
+            }
+            $result->setData($data);
+
+            return $result;
+        }
+
+        switch ($this->deliveryService->getDeliveryZoneCode($shipment)) {
+            case DeliveryService::ZONE_1:
+                /**
+                 * условие доставки в эту зону - наличие на складе
+                 */
+                $availableStores = $this->storeService->getByLocation($deliveryLocation, StoreService::TYPE_STORE);
+                $delayStores = new StoreCollection();
+                break;
+            case DeliveryService::ZONE_2:
+                /**
+                 * условие доставки в эту зону - наличие в базовом магазине
+                 * условие отложенной доставки в эту зону - наличие на складе
+                 */
+                $stores = $this->storeService->getByLocation($deliveryLocation, StoreService::TYPE_ALL);
+                $availableStores = $stores->getBaseShops();
+                $delayStores = $stores->getStores();
+                break;
+            default:
+                $result->addError(new Error('Доставка не работает для этой зоны'));
+
+                return $result;
+        }
+
+        $stockResult = static::getStocks($basket, $offers, $availableStores, $delayStores);
+        $data['STOCK_RESULT'] = $stockResult;
         $result->setData($data);
 
-        /* @todo учитывать наличие товара */
-        $result->setPeriodType(CalculationResult::PERIOD_TYPE_DAY);
-        if (date('H') < 14) {
-            $result->setPeriodFrom(0);
-        } else {
-            $result->setPeriodFrom(1);
+        if (!$stockResult->getUnavailable()->isEmpty()) {
+            $result->addError(new Error('Присутствуют товары не в наличии'));
+
+            return $result;
         }
+
+        if (!$stockResult->getDelayed()->isEmpty()) {
+            $result->setPeriodFrom($stockResult->getDeliveryDate()->diff(new \DateTime())->days);
+        } else {
+            if ($this->canDeliverToday()) {
+                $result->setPeriodFrom(0);
+            } else {
+                $result->setPeriodFrom(1);
+            }
+        }
+
+        /**
+         * Для выбора возможной даты доставки в оформлении заказа. По ТЗ +10 дней
+         */
+        $result->setPeriodTo($result->getPeriodFrom() + 10);
 
         return $result;
     }
@@ -143,5 +201,10 @@ class InnerDeliveryService extends DeliveryServiceHandlerBase
         }
 
         return $result;
+    }
+
+    protected function canDeliverToday()
+    {
+        return date('H') < 14;
     }
 }

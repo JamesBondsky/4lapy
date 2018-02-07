@@ -127,7 +127,7 @@ class Store extends Base
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
     protected $schedule = '';
-    
+
     /**
      * @var string
      * @Serializer\Type("string")
@@ -245,24 +245,6 @@ class Store extends Base
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
     protected $isBase = false;
-    
-    /**
-     * @var int
-     * @Serializer\Type("int")
-     * @Serializer\SkipWhenEmpty()
-     * @Serializer\SerializedName("OFFER_AMOUNT")
-     * @Serializer\Groups(groups={"read"})
-     */
-    protected $offerAmount = 0;
-    
-    /**
-     * @var int
-     * @Serializer\Type("int")
-     * @Serializer\SkipWhenEmpty()
-     * @Serializer\SerializedName("OFFER_ID")
-     * @Serializer\Groups(groups={"read"})
-     */
-    protected $offerId = 0;
 
     /**
      * @return int
@@ -689,7 +671,7 @@ class Store extends Base
      */
     public function isShop(): bool
     {
-        return $this->isShop;
+        return (bool)$this->isShop;
     }
 
     /**
@@ -803,15 +785,15 @@ class Store extends Base
 
         return $this;
     }
-    
+
     /**
      * @return string
      */
-    public function getPhone() : string
+    public function getPhone(): string
     {
         return $this->phone ?? '';
     }
-    
+
     /**
      * @param string $phone
      */
@@ -819,36 +801,20 @@ class Store extends Base
     {
         $this->phone = $phone;
     }
-    
+
     /**
-     * @return int
+     * @return array
      */
-    public function getOfferAmount() : int
+    public function getFormattedSchedule(): array
     {
-        return $this->offerAmount;
-    }
-    
-    /**
-     * @param int $offerAmount
-     */
-    public function setOfferAmount(int $offerAmount)
-    {
-        $this->offerAmount = $offerAmount;
-    }
-    
-    /**
-     * @return int
-     */
-    public function getOfferId() : int
-    {
-        return $this->offerId;
-    }
-    
-    /**
-     * @param int $offerId
-     */
-    public function setOfferId(int $offerId)
-    {
-        $this->offerId = $offerId;
+        preg_match('~(\d+):00 - (\d+):00~', $this->getSchedule(), $matches);
+        if (!empty($matches)) {
+            return [
+                'from' => (int)$matches[1],
+                'to'   => (int)$matches[2],
+            ];
+        }
+
+        return [];
     }
 }

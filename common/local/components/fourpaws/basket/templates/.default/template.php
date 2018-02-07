@@ -3,6 +3,7 @@
  * Created by PhpStorm.
  * Date: 29.12.2017
  * Time: 16:26
+ *
  * @author      Makeev Ilya
  * @copyright   ADV/web-engineering co.
  */
@@ -12,22 +13,65 @@
 use FourPaws\Decorators\SvgDecorator;
 
 /** @var \Bitrix\Sale\Basket $basket */
-$basket = $arResult['BASKET'];
+$basket          = $arResult['BASKET'];
 $orderableBasket = $basket->getOrderableItems();
 
 /** @var \Bitrix\Sale\Order $order */
 $order = $basket->getOrder();
 
 if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
-    echo '<div class="b-shopping-cart">';
+    ?>
+    <div class="b-shopping-cart">
+    <div class="b-preloader">
+        <div class="b-preloader__spinner"><img class="b-preloader__image" src="images/inhtml/spinner.svg" alt="spinner"
+                                               title="" />
+        </div>
+    </div>
+    <?php
 }
 ?>
-    <div class="b-container">
+    <div class="b-container js-cart-wrapper">
         <h1 class="b-title b-title--h1 b-title--shopping-cart">Корзина</h1>
         <main class="b-shopping-cart__main" role="main">
-            <section class="b-stock b-stock--shopping-cart b-stock--shopping-product">
-                <h3 class="b-title b-title--h2-cart b-title--shopping-product">Ваш заказ
-                </h3>
+            <?php
+            if ($arResult['POSSIBLE_GIFT_GROUPS']) {
+    
+                ?>
+                <section class="b-stock b-stock--shopping-cart">
+                    <h3 class="b-title b-title--h2-cart">Подарки к заказу
+                    </h3>
+                    <?php
+                    foreach ($arResult['POSSIBLE_GIFT_GROUPS'] as $group) {
+                        $group = current($group);
+                        ?>
+                        <div class="b-gift-order">
+                            <div class="b-gift-order__info">
+                        <span class="b-gift-order__text">
+                            Мы решили подарить вам подарок на весь заказ за красивые глаза
+                        </span>
+                                <a
+                                        class="b-link-gift js-open-popup js-presents-order-open"
+                                        href="javascript:void(0);"
+                                        data-url="/ajax/sale/basket/gift/get/"
+                                        data-url-gift="json/presents-order-add.json"
+                                        data-discount-id="<?= $group['discountId']; ?>" title=""
+                                        data-popup-id="popup-choose-gift">
+                                    <span class="b-link-gift__text">Выбрать подарок</span>
+                                    <span class="b-icon b-icon--gift">
+                                <?= new SvgDecorator('icon-gift', 18, 18); ?>
+                            </span>
+                                </a>
+                            </div>
+                        </div>
+                        <?php
+                    }
+                    ?>
+                </section>
+                <?php
+            }
+            ?>
+            <section class="b-stock b-stock--shopping-cart b-stock--shopping-product js-section-remove-stock">
+                <h3 class="b-title b-title--h2-cart b-title--shopping-product">Ваш заказ</h3>
                 <?php
                 /** @var \Bitrix\Sale\BasketItem $basketItem */
                 foreach ($orderableBasket as $basketItem) {
@@ -42,7 +86,7 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                                 ?>
                                 <img class="b-common-item__image b-common-item__image--shopping-cart"
                                      src="<?= $image; ?>"
-                                     alt="<?= $basketItem->getField('NAME') ?>" title=""/>
+                                     alt="<?= $basketItem->getField('NAME') ?>" title="" />
                                 <?php
                             }
                             ?>
@@ -80,13 +124,15 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                                 <a
                                         class="b-plus-minus__minus js-minus" data-url="/ajax/sale/basket/update/"
                                         href="javascript:void(0);"></a>
-                                <input
-                                        title=""
-                                        class="b-plus-minus__count js-plus-minus-count"
-                                        value="<?= $basketItem->getQuantity() ?>"
-                                        data-basketid="<?= $basketItem->getId(); ?>" type="text"/><a
-                                        class="b-plus-minus__plus js-plus" data-url="/ajax/sale/basket/update/"
-                                        href="javascript:void(0);"></a>
+                                <input title=""
+                                       class="b-plus-minus__count js-plus-minus-count"
+                                       value="<?= $basketItem->getQuantity() ?>"
+                                       data-one-price="<?= $basketItem->getPrice() ?>"
+                                       data-cont-max="1000<?
+                                       /** @todo Maximum quantity */ ?>"
+                                       data-basketid="<?= $basketItem->getId(); ?>" type="text" />
+                                <a class="b-plus-minus__plus js-plus" data-url="/ajax/sale/basket/update/"
+                                   href="javascript:void(0);"></a>
                             </div>
                             <div class="b-select b-select--shopping-cart">
                                 <select title="" class="b-select__block b-select__block--shopping-cart"
@@ -105,13 +151,15 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                                 </select>
                             </div>
                             <div class="b-price">
-                                <span class="b-price__current"><?= $basketItem->getPrice() * $basketItem->getQuantity() ?>  </span>
+                                <span class="b-price__current"><?= $basketItem->getPrice()
+                                                                   * $basketItem->getQuantity() ?>  </span>
                                 <span class="b-ruble">₽</span>
                                 <?php
                                 if ($basketItem->getDiscountPrice() > 0) {
                                     ?>
                                     <span class="b-old-price b-old-price--crossed-out">
-                                        <span class="b-old-price__old"><?= $basketItem->getBasePrice() * $basketItem->getQuantity() ?>  </span>
+                                        <span class="b-old-price__old"><?= $basketItem->getBasePrice()
+                                                                           * $basketItem->getQuantity() ?>  </span>
                                         <span class="b-ruble b-ruble--old-weight-price">₽</span>
                                     </span>
                                     <?php
@@ -130,55 +178,142 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                 }
                 ?>
             </section>
-        </main><?php
+        </main>
+    
+        <aside class="b-shopping-cart__aside">
+            <div class="b-information-order">
+                <div class="b-information-order__client">
+                    <!-- <span class="b-information-order__pay-points">
+                        <span class="b-information-order__name">Константин, </span>
+                        вы можете оплатить этот заказ баллами (до 299).
+                    </span> -->
+                    <?php
+                    $APPLICATION->IncludeComponent('fourpaws:city.selector',
+                                                   'basket.summary',
+                                                   [],
+                                                   $this,
+                                                   ['HIDE_ICONS' => 'Y']);
+                    ?>
+    
+                    <p class="b-information-order__additional-info">
+                        От города доставки зависит наличие товаров и параметры доставки.
+                    </p>
+                    <?php
+                    $APPLICATION->IncludeComponent('fourpaws:city.delivery.info',
+                                                   'basket.summary',
+                                                   ['BASKET_PRICE' => $basket->getPrice()],
+                                                   false,
+                                                   ['HIDE_ICONS' => 'Y']);
+                    ?>
 
+                </div>
+                <div class="b-information-order__order-wrapper">
+                    <div class="b-information-order__order">
+                        <div class="b-information-order__order-price"><?= $arResult['TOTAL_QUANTITY'] ?> товаров
+                                                                                                         (<?= $arResult['BASKET_WEIGHT'] ?>
+                                                                                                         кг)
+                        </div>
+                        <div class="b-price b-price--information-order"><span
+                                    class="b-price__current"><?= number_format($basket->getBasePrice(),
+                                                                               2,
+                                                                               '.',
+                                                                               ' '); ?></span><span class="b-ruble">₽</span>
+                        </div>
+                    </div>
+                    <?php
+                    if ($basket->getBasePrice() - $basket->getPrice() > 0.01) {
+                        ?>
+                        <div class="b-information-order__order">
+                            <div class="b-information-order__order-price">Общая скидка
+                            </div>
+                            <div class="b-price b-price--information-order"><span
+                                        class="b-price__current">- <?= number_format($basket->getBasePrice()
+                                                                                     - $basket->getPrice(),
+                                                                                     2,
+                                                                                     '.',
+                                                                                     ' '); ?>  </span><span
+                                        class="b-ruble">₽</span>
+                            </div>
+                        </div>
+                        <?php
+                    }
+                    ?>
+                    <!--                    <form class="b-information-order__form-promo js-form-validation">-->
+                    <!--                        <div class="b-input b-input--form-promo"><input-->
+                    <!--                                    class="b-input__input-field b-input__input-field--form-promo" type="text"-->
+                    <!--                                    id="promocode-delivery" placeholder="Промо-код" name="text" data-url=""/>-->
+                    <!--                            <div class="b-error"><span class="js-message"></span>-->
+                    <!--                            </div>-->
+                    <!--                        </div>-->
+                    <!--                        <button class="b-button b-button--form-promo">Применить-->
+                    <!--                        </button>-->
+                    <!--                    </form>-->
+                    <div class="b-information-order__order b-information-order__order--total">
+                        <div class="b-information-order__order-price">Итого без учета доставки
+                        </div>
+                        <div class="b-price b-price--information-order b-price--total-price"><span
+                                    class="b-price__current"><?= number_format($basket->getPrice(),
+                                                                               2,
+                                                                               '.',
+                                                                               ' '); ?></span><span class="b-ruble">₽</span>
+                        </div>
+                    </div>
+                    <a class="b-button b-button--start-order" href="/sale/order/" title="Начать оформление">Начать
+                                                                                                            оформление</a>
+                    <div class="b-information-order__one-click"><a
+                                class="b-link b-link--one-click js-open-popup js-open-popup--one-click js-open-popup"
+                                href="javascript:void(0)" title="Купить в 1 клик" data-popup-id="buy-one-click"><span
+                                    class="b-link__text b-link__text--one-click js-open-popup">Купить в 1 клик</span></a>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    
+        <?php
+    
         /**
          * Выгодная покупка
          */
         $productsIds = [];
         foreach ($orderableBasket as $basketItem) {
-            $pId = (int) $basketItem->getProductId();
+            $pId         = (int)$basketItem->getProductId();
             $productInfo = CCatalogSku::GetProductInfo($pId);
             if ($productInfo) {
-                $pId = (int) $productInfo['ID'];
+                $pId = (int)$productInfo['ID'];
             }
             if ($pId > 0) {
                 $productsIds[] = $pId;
             }
         }
         if ($productsIds) {
-            $APPLICATION->IncludeFile(
-                'blocks/components/followup_products.php',
-                [
-                    'WRAP_CONTAINER_BLOCK' => 'N',
-                    'SHOW_TOP_LINE' => 'Y',
-                    'POSTCROSS_IDS' => array_unique($productsIds),
-                ],
-                [
-                    'SHOW_BORDER' => false,
-                    'NAME' => 'Блок выгодной покупки',
-                    'MODE' => 'php',
-                ]
-            );
+            $APPLICATION->IncludeFile('blocks/components/followup_products.php',
+                                      [
+                                          'WRAP_CONTAINER_BLOCK' => 'N',
+                                          'SHOW_TOP_LINE'        => 'Y',
+                                          'POSTCROSS_IDS'        => array_unique($productsIds),
+                                      ],
+                                      [
+                                          'SHOW_BORDER' => false,
+                                          'NAME'        => 'Блок выгодной покупки',
+                                          'MODE'        => 'php',
+                                      ]);
         }
-
+    
         /**
          * Просмотренные товары
          */
-        $APPLICATION->IncludeFile(
-            'blocks/components/viewed_products.php',
-            [
-                'WRAP_CONTAINER_BLOCK' => 'N',
-                'WRAP_SECTION_BLOCK' => 'Y',
-                'SHOW_TOP_LINE' => 'Y',
-                'SHOW_BOTTOM_LINE' => 'N',
-            ],
-            [
-                'SHOW_BORDER' => false,
-                'NAME' => 'Блок просмотренных товаров',
-                'MODE' => 'php',
-            ]
-        );
+        $APPLICATION->IncludeFile('blocks/components/viewed_products.php',
+                                  [
+                                      'WRAP_CONTAINER_BLOCK' => 'N',
+                                      'WRAP_SECTION_BLOCK'   => 'Y',
+                                      'SHOW_TOP_LINE'        => 'Y',
+                                      'SHOW_BOTTOM_LINE'     => 'N',
+                                  ],
+                                  [
+                                      'SHOW_BORDER' => false,
+                                      'NAME'        => 'Блок просмотренных товаров',
+                                      'MODE'        => 'php',
+                                  ]);
         ?></div>
 <?php
 if (!isset($arParams['IS_AJAX']) || $arParams !== true) {

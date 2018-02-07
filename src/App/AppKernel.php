@@ -5,11 +5,10 @@ namespace FourPaws\App;
 use Circle\RestClientBundle\CircleRestClientBundle;
 use Cocur\Slugify\Bridge\Symfony\CocurSlugifyBundle;
 use FOS\RestBundle\FOSRestBundle;
-
-use FourPaws\FoodSelectionBundle\FourPawsFoodSelectionBundle;
 use FourPaws\AppBundle\FourPawsAppBundle;
 use FourPaws\CatalogBundle\FourPawsCatalogBundle;
 use FourPaws\DeliveryBundle\FourPawsDeliveryBundle;
+use FourPaws\FoodSelectionBundle\FourPawsFoodSelectionBundle;
 use FourPaws\MobileApiBundle\FourPawsMobileApiBundle;
 use FourPaws\PersonalBundle\FourPawsPersonalBundle;
 use FourPaws\SaleBundle\FourPawsSaleBundle;
@@ -135,6 +134,7 @@ class AppKernel extends Kernel
         if ($this->getEnvironment() === 'dev') {
             return '/tmp/sfcache/' . $this->getEnvironment();
         }
+    
         return $this->getRootDir() . static::CACHE_DIR . '/' . $this->getEnvironment();
     }
 

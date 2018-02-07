@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\MobileApiBundle\ParamConverter\Catalog;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
@@ -42,5 +46,3 @@ class CategoryRequestConverter implements ParamConverterInterface
         return $configuration->getClass() === CategoryRequest::class;
     }
 }
-
-?>

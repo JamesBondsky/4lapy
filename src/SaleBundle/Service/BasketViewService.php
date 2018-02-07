@@ -17,6 +17,21 @@ namespace FourPaws\SaleBundle\Service;
 class BasketViewService
 {
     /**
+     * @var BasketService
+     */
+    private $basketService;
+
+    /**
+     * BasketViewService constructor.
+     *
+     * @param BasketService $basketService
+     */
+    public function __construct(BasketService $basketService)
+    {
+        $this->basketService = $basketService;
+    }
+
+    /**
      * @param bool $isAjax
      *
      * @return string
@@ -60,6 +75,8 @@ class BasketViewService
     /**
      *
      *
+     * @param bool $isAjax
+     *
      * @return string
      */
     public function getBasketHtml(bool $isAjax = false): string
@@ -70,7 +87,8 @@ class BasketViewService
             'fourpaws:basket',
             '',
             [
-                'IS_AJAX' => $isAjax
+                'IS_AJAX' => $isAjax,
+                'BASKET' => $this->basketService->getBasket()
             ],
             false,
             ['HIDE_ICONS' => 'Y']

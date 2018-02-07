@@ -14,6 +14,7 @@ use FourPaws\External\Manzana\Exception\ManzanaException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
 use FourPaws\PersonalBundle\Entity\Address;
+use FourPaws\PersonalBundle\Exception\NotFoundException;
 use FourPaws\PersonalBundle\Repository\AddressRepository;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -35,10 +36,10 @@ class AddressService
      * @var AddressRepository
      */
     private $addressRepository;
-    
+
     /** @var CurrentUserProviderInterface $currentUser */
     private $currentUser;
-    
+
     /**
      * AddressService constructor.
      *
@@ -51,19 +52,29 @@ class AddressService
     public function __construct(AddressRepository $addressRepository)
     {
         $this->addressRepository = $addressRepository;
-        $this->currentUser       = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
+        $this->currentUser = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
     }
-    
+
     /**
-     * @throws ServiceNotFoundException
-     * @throws \Exception
-     * @throws ApplicationCreateException
-     * @throws ServiceCircularReferenceException
+     * @param int $userId
+     * @param string $locationCode
+     *
      * @return array
      */
-    public function getCurUserAddresses() : array
+    public function getAddressesByUser(int $userId = 0, string $locationCode = ''): array
     {
-        return $this->addressRepository->findByCurUser();
+        return $this->addressRepository->findByUser($userId, $locationCode);
+    }
+
+    /**
+     * @param int $id
+     *
+     * @return Address
+     * @throws NotFoundException
+     */
+    public function getById(int $id): Address
+    {
+        return $this->addressRepository->findById($id);
     }
     
     /**
@@ -80,7 +91,7 @@ class AddressService
      * @throws \Exception
      * @return bool
      */
-    public function add(array $data) : bool
+    public function add(array $data): bool
     {
         if (empty($data['UF_USER_ID'])) {
             $data['UF_USER_ID'] = $this->currentUser->getCurrentUserId();
@@ -88,7 +99,7 @@ class AddressService
         if ($data['UF_MAIN'] === 'Y') {
             $this->disableMainItem();
         }
-        
+
         /** @var Address $entity */
         $entity = $this->addressRepository->dataToEntity($data, Address::class);
         $entity->setCityLocationByEntity();
@@ -99,10 +110,10 @@ class AddressService
                 $this->updateManzanaAddress($this->addressRepository->dataToEntity($data, Address::class));
             }
         }
-        
+
         return $res;
     }
-    
+
     /**
      *
      */
@@ -126,7 +137,7 @@ class AddressService
         } catch (\Exception $e) {
         }
     }
-    
+
     /**
      * @param Address $address
      *
@@ -142,10 +153,10 @@ class AddressService
         $container = App::getInstance()->getContainer();
         /** @var ManzanaService $manzanaService */
         $manzanaService = $container->get('manzana.service');
-        $client         = null;
+        $client = null;
         try {
-            $contactId         = $manzanaService->getContactIdByCurUser();
-            $client            = new Client();
+            $contactId = $manzanaService->getContactIdByCurUser();
+            $client = new Client();
             $client->contactId = $contactId;
         } catch (ManzanaServiceContactSearchNullException $e) {
             $client = new Client();
@@ -168,22 +179,22 @@ class AddressService
             }
         }
     }
-    
+
     /**
-     * @param Client  $client
+     * @param Client $client
      * @param Address $address
      */
     public function setClientAddress(&$client, Address $address)
     {
         /** неоткуда взять область для обновления
          * $client->addressStateOrProvince = '';*/
-        $client->addressCity   = $address->getCity();//Город
-        $client->address       = $address->getStreet();//Улица
-        $client->addressLine2  = $address->getHouse();//Дом
-        $client->addressLine3  = $address->getHousing();//Корпус
+        $client->addressCity = $address->getCity();//Город
+        $client->address = $address->getStreet();//Улица
+        $client->addressLine2 = $address->getHouse();//Дом
+        $client->addressLine3 = $address->getHousing();//Корпус
         $client->plAddressFlat = $address->getFlat();//Квартира
     }
-    
+
     /**
      * @param array $data
      *
@@ -198,12 +209,12 @@ class AddressService
      * @throws ConstraintDefinitionException
      * @return bool
      */
-    public function update(array $data) : bool
+    public function update(array $data): bool
     {
         if ($data['UF_MAIN'] === 'Y') {
             $this->disableMainItem();
         }
-        
+
         /** @var Address $entity */
         $entity = $this->addressRepository->dataToEntity($data, Address::class);
         $entity->setCityLocationByEntity();
@@ -214,10 +225,10 @@ class AddressService
                 $this->updateManzanaAddress($this->addressRepository->dataToEntity($data, Address::class));
             }
         }
-        
+
         return $res;
     }
-    
+
     /**
      * @param int $id
      *
@@ -227,7 +238,7 @@ class AddressService
      * @throws ConstraintDefinitionException
      * @return bool
      */
-    public function delete(int $id) : bool
+    public function delete(int $id): bool
     {
         return $this->addressRepository->delete($id);
     }

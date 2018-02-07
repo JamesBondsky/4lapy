@@ -17,8 +17,11 @@ use FourPaws\BitrixOrm\Model\CropImageDecorator;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\DeliveryBundle\Entity\StockResult;
+use FourPaws\DeliveryBundle\Exception\NotFoundException;
+use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\Helpers\DateHelper;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Service\StoreService;
@@ -35,7 +38,13 @@ use Symfony\Component\HttpFoundation\Request;
 class FourPawsShopListComponent extends CBitrixComponent
 {
     /** @var StoreService $storeService */
-    private $storeService;
+    protected $storeService;
+    
+    /** @var DeliveryService $deliveryService */
+    protected $deliveryService;
+    
+    /** @var  CalculationResult */
+    protected $pickupDelivery;
     
     /** @var UserService $userService */
     private $userService;
@@ -59,8 +68,9 @@ class FourPawsShopListComponent extends CBitrixComponent
         try {
             $container = App::getInstance()->getContainer();
             
-            $this->storeService = $container->get('store.service');
-            $this->userService  = $container->get(UserCitySelectInterface::class);
+            $this->storeService    = $container->get('store.service');
+            $this->userService     = $container->get(UserCitySelectInterface::class);
+            $this->deliveryService = $container->get('delivery.service');
         } catch (ApplicationCreateException $e) {
             $logger = LoggerFactory::create('component');
             $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
@@ -88,11 +98,7 @@ class FourPawsShopListComponent extends CBitrixComponent
         
         $city = $this->userService->getSelectedCity();
         if ($this->startResultCache(false, ['location' => $city['CODE']])) {
-            $this->arResult['CITY']      = $city['NAME'];
-            $this->arResult['CITY_CODE'] = $city['CODE'];
-            
-            $this->arResult['SERVICES'] = $this->storeService->getServicesInfo();
-            $this->arResult['METRO']    = $this->storeService->getMetroInfo();
+            $this->prepareResult();
             
             $this->includeComponentTemplate();
         }
@@ -100,55 +106,106 @@ class FourPawsShopListComponent extends CBitrixComponent
         return true;
     }
     
-    /**
-     * @param array $filter
-     * @param array $order
-     * @param bool $returnActiveServices
-     *
-     * @throws ServiceCircularReferenceException
-     * @throws ApplicationCreateException
-     * @throws FileNotFoundException
-     * @throws ServiceNotFoundException
-     * @throws \Exception
-     * @return array
-     */
-    public function getStores(array $filter = [], array $order = [], $returnActiveServices = false) : array
+    protected function prepareResult()
     {
-        $storeRepository = $this->storeService->getRepository();
-        $filter          = array_merge($filter, $this->storeService->getTypeFilter($this->storeService::TYPE_SHOP));
+        $city = $this->userService->getSelectedCity();
         
-        /** @var StoreCollection $storeCollection */
-        $storeCollection = $storeRepository->findBy($filter, $order);
+        $this->arResult['CITY']      = $city['NAME'];
+        $this->arResult['CITY_CODE'] = $city['CODE'];
         
-        return $this->getFormatedStoreByCollection($storeCollection, $returnActiveServices);
+        $this->arResult['SERVICES'] = $this->storeService->getServicesInfo();
+        $this->arResult['METRO']    = $this->storeService->getMetroInfo();
     }
     
     /**
-     * @param StoreCollection $storeCollection
-     * @param bool            $returnActiveServices
+     * @param array $params
      *
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
+     * @throws FileNotFoundException
+     * @throws ServiceNotFoundException
+     * @throws \Exception
      * @return array
+     */
+    public function getStores(array $params = []) : array
+    {
+        $storeRepository  = $this->storeService->getRepository();
+        $params['filter'] =
+            array_merge((array)$params['filter'], $this->storeService->getTypeFilter($this->storeService::TYPE_SHOP));
+        
+        /** @var StoreCollection $storeCollection */
+        $storeCollection = $storeRepository->findBy($params['filter'], $params['order']);
+        if (!isset($params['returnActiveServices']) || !is_bool($params['returnActiveServices'])) {
+            $params['returnActiveServices'] = false;
+        }
+        if (!isset($params['returnSort']) || !is_bool($params['returnSort'])) {
+            $params['returnSort'] = false;
+        }
+        if (!isset($params['sortVal'])) {
+            $params['sortVal'] = '';
+        }
+        
+        return $this->getFormatedStoreByCollection(
+            [
+                'storeCollection'      => $storeCollection,
+                'returnActiveServices' => $params['returnActiveServices'],
+                'returnSort'           => $params['returnSort'],
+                'sortVal'              => $params['sortVal'],
+            ]
+        );
+    }
+    
+    /**
+     * @param array $params
+     *
      * @throws ApplicationCreateException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws \Exception
      * @throws FileNotFoundException
+     * @return array
      */
     public function getFormatedStoreByCollection(
-        StoreCollection $storeCollection,
-        $returnActiveServices = false
+        array $params
     ) : array
     {
         $result = [];
+        /** @var StoreCollection $storeCollection */
+        $storeCollection = $params['storeCollection'];
         if (!$storeCollection->isEmpty()) {
             list($servicesList, $metroList) = $this->getFullStoreInfo($storeCollection);
+            
+            $stockResult = null;
+            $storeAmount = 0;
+            if ($this->pickupDelivery) {
+                $stockResult = $this->getStockResult($this->pickupDelivery);
+                $storeAmount = reset($this->offers)->getStocks()
+                                                   ->filterByStores(
+                                                       $this->storeService->getByCurrentLocation(
+                                                           StoreService::TYPE_STORE
+                                                       )
+                                                   )->getTotalAmount();
+            }
             
             /** @var Store $store */
             $avgGpsN = 0;
             $avgGpsS = 0;
+    
+            $sortHtml='';
+            if($params['returnSort']) {
+                $sortHtml = '<option value="" disabled="disabled">выберите</option>';
+                $sortHtml .= '<option value="address" ' . ($params['sortVal']
+                                                           === 'address' ? ' selected="selected" ' : '')
+                             . '>по адресу</option>';
+            }
+            $haveMetro = false;
             foreach ($storeCollection as $store) {
                 $metro   = $store->getMetro();
                 $address = $store->getAddress();
+                
+                if (!empty($metro) && !$haveMetro) {
+                    $haveMetro = true;
+                }
                 
                 $image    = $store->getImageId();
                 $imageSrc = '';
@@ -172,44 +229,73 @@ class FourPawsShopListComponent extends CBitrixComponent
                 if ($gpsS > 0) {
                     $avgGpsS += $gpsS;
                 }
+                
                 $item = [
+                    'id'         => $store->getXmlId(),
                     'addr'       => $address,
                     'adress'     => $store->getDescription(),
                     'phone'      => $store->getPhone(),
                     'schedule'   => $store->getSchedule(),
                     'photo'      => $imageSrc,
                     'metro'      => !empty($metro) ? 'м. ' . $metroList[$metro]['UF_NAME'] : '',
-                    'metroClass' => !empty($metro) ? 'b-delivery-list__col--' . $metroList[$metro]['UF_CLASS'] : '',
+                    'metroClass' => !empty($metro) ? '--' . $metroList[$metro]['UF_CLASS'] : '',
                     'services'   => $services,
                     'gps_s'      => $gpsN,
                     //revert $gpsS
                     'gps_n'      => $gpsS,
                     //revert $gpsN
                 ];
-                if ($store->getOfferId() > 0) {
-                    $item['amount'] = $store->getOfferAmount() > 5 ? 'много' : 'мало';
-                    
-                    if ($store->getOfferAmount() > 0) {
-                        $pickup = $this->getActiveAmoutPickupText($store->getSchedule());
-                    } else {
-                        $pickup = $this->getNotAmountPickupText($store);
-                    }
-                    
-                    $item['pickup'] = $pickup;
+                
+                if ($stockResult) {
+                    /** @var StockResult $stockResultByStore */
+                    $stockResultByStore = $stockResult->filterByStore($store)->first();
+                    $amount             = $storeAmount + $stockResultByStore->getOffer()
+                                                                            ->getStocks()
+                                                                            ->filterByStore($store)
+                                                                            ->getTotalAmount();
+                    $item['amount']     = $amount > 5 ? 'много' : 'мало';
+                    $item['pickup']     = DeliveryTimeHelper::showTime(
+                        $this->pickupDelivery,
+                        $stockResultByStore->getDeliveryDate(),
+                        [
+                            'SHOW_TIME' => true,
+                            'SHORT'     => true,
+                        ]
+                    );
                 }
                 $result['items'][] = $item;
+            }
+            if($haveMetro && $params['returnSort']) {
+                $sortHtml .= '<option value="metro" ' . ($params['sortVal']
+                                                         === 'metro' ? ' selected="selected" ' : '')
+                             . '>по метро</option>';
             }
             $countStores         = $storeCollection->count();
             $result['avg_gps_s'] = $avgGpsN / $countStores; //revert $avgGpsS
             $result['avg_gps_n'] = $avgGpsS / $countStores; //revert $avgGpsN
-            if ($returnActiveServices) {
+            $result['sortHtml']  = $sortHtml;
+            if ($params['returnActiveServices']) {
                 $result['services'] = $servicesList;
             }
         }
         
         return $result;
     }
-    
+
+    public function getActiveStoresByProduct(int $offerId): StoreCollection
+    {
+        $this->getOfferById($offerId);
+        if (!$pickupDelivery = $this->getPickupDelivery()) {
+            return new StoreCollection();
+        }
+
+        try {
+            return $this->getStockResult($pickupDelivery)->getStores();
+        } catch (NotFoundException $e) {
+            return new StoreCollection();
+        }
+    }
+
     /**
      *
      * @param StoreCollection $stores
@@ -247,76 +333,11 @@ class FourPawsShopListComponent extends CBitrixComponent
     }
     
     /**
-     * @param string $schedule
-     *
-     * @return string
+     * @return bool|StockResultCollection
      */
-    protected function getActiveAmoutPickupText(string $schedule) : string
+    protected function getStockResult(CalculationResult $delivery)
     {
-        $explode = explode('-', $schedule);
-        
-        $beginExplode = explode('-', $explode[0]);
-        $beginHouse   = (int)trim($beginExplode[0]);
-        $beginMinutes = (int)trim($beginExplode[1]);
-        
-        $endExplode = explode('-', $explode[1]);
-        $endHouse   = (int)trim($endExplode[0]);
-        $endMinutes = (int)trim($endExplode[1]);
-        
-        $curHouse   = date('H');
-        $curMinutes = date('i');
-        
-        $nextHouse = $curHouse + 1;
-        $nextDay   = false;
-        
-        if ($nextHouse > $endHouse) {
-            $nextDay = true;
-        } elseif ($nextHouse === $endHouse) {
-            if ($endMinutes > $curMinutes) {
-                $nextDay = true;
-            }
-        }
-        
-        if ($nextDay) {
-            /** @todo Нужно ли накинуть час от открытия? */
-            $pickup = 'завтра, с ' . $beginHouse . ':' . $beginMinutes;
-        } else {
-            $pickup = 'сегодня, с ' . $nextHouse . ':' . $curMinutes;
-        }
-        
-        return $pickup;
-    }
-    
-    /**
-     * @param Store $store
-     *
-     * @return string
-     * @throws ServiceNotFoundException
-     * @throws \Exception
-     * @throws ApplicationCreateException
-     * @throws ServiceCircularReferenceException
-     */
-    protected function getNotAmountPickupText(Store $store) : string
-    {
-        /** @var DeliveryService $deliveryService */
-        $deliveryService = App::getInstance()->getContainer()->get('delivery.service');
-        /** @var CalculationResult[] $calculationResult */
-        $calculationResult        =
-            $deliveryService->getByProduct(
-                $this->getOfferById($store->getOfferId()),
-                null,
-                [$store->getId()]
-            );
-        $currentCalculationResult = current($calculationResult);
-        $dateFrom                 = new DateTime('now', new DateTimeZone('Europe/Moscow'));
-        $dateFrom->add(
-            $this->getTimeInterval(
-                $currentCalculationResult->getPeriodFrom(),
-                $currentCalculationResult->getPeriodType()
-            )
-        );
-        
-        return $this->getFormatedDateTime($dateFrom, $store->getSchedule());
+        return $this->deliveryService->getStockResultByDelivery($delivery);
     }
     
     /**
@@ -336,113 +357,22 @@ class FourPawsShopListComponent extends CBitrixComponent
     }
     
     /**
-     * @param int    $period
-     * @param string $type
-     *
-     * @return DateInterval
-     * @throws \Exception
+     * @return CalculationResult|null
      */
-    public function getTimeInterval(int $period, string $type) : \DateInterval
+    protected function getPickupDelivery()
     {
-        $interval = 'P';
-        
-        if ($type === 'H' || $type === 'MIN') {
-            $interval .= 'T';
+        if (!$this->pickupDelivery) {
+            $deliveries = $this->deliveryService->getByProduct(reset($this->offers));
+            
+            foreach ($deliveries as $delivery) {
+                if ($this->deliveryService->isInnerPickup($delivery)) {
+                    $this->pickupDelivery = $delivery;
+                    break;
+                }
+            }
         }
         
-        $interval .= $period;
-        
-        if ($type === 'MIN') {
-            $type = 'M';
-        }
-        
-        $interval .= $type;
-        
-        return new DateInterval($interval);
-    }
-    
-    /**
-     * @param \DateTime $dateFrom
-     * @param string    $schedule
-     *
-     * @return string
-     * @throws \Exception
-     */
-    protected function getFormatedDateTime(DateTime $dateFrom, string $schedule) : string
-    {
-        list($formatedTime, $dateFrom) = $this->getFormatedTime($dateFrom, $schedule);
-        $newDate = (int)$dateFrom->format('d');
-        $curDay  = (int)date('d');
-        if ($newDate === $curDay) {
-            $date = 'сегодня';
-        } elseif ($newDate === $curDay + 1) {
-            $date = 'завтра';
-        } else {
-            $date =
-                DateHelper::replaceRuMonth($dateFrom->format('d #m#'), DateHelper::SHORT_GENITIVE) . ' '
-                . DateHelper::replaceRuDayOfWeek($dateFrom->format('#N#'), DateHelper::SHORT_NOMINATIVE);
-        }
-        
-        return $date . ' с ' . $formatedTime;
-    }
-    
-    /**
-     * @param \DateTime $dateFrom
-     * @param string    $schedule
-     *
-     * @return array
-     * @throws \Exception
-     */
-    protected function getFormatedTime(DateTime $dateFrom, string $schedule) : array
-    {
-        $explode = explode('-', $schedule);
-        
-        $shopOpenTime        = trim($explode[0]);
-        $explodeShopOpenTime = explode(':', $shopOpenTime);
-        $shopOpenTimeHour    = (int)$explodeShopOpenTime[0];
-        $shopOpenTimeMinutes = (int)$explodeShopOpenTime[1];
-        
-        $shopCloseTime        = trim($explode[1]);
-        $explodeShopCloseTime = explode(':', $shopCloseTime);
-        $shopCloseTimeHour    = (int)$explodeShopCloseTime[0];
-        $shopCloseTimeMinutes = (int)$explodeShopCloseTime[1];
-        
-        $newHours   = (int)$dateFrom->format('H');
-        $newMinutes = (int)$dateFrom->format('i');
-        $begin      = $newHours . ':' . $newMinutes;
-        if ($newHours < $shopOpenTimeHour
-            || ($newHours === $shopOpenTimeHour
-                && ($newMinutes > 0 && $shopOpenTimeMinutes > 0
-                    && $newMinutes < $shopOpenTimeMinutes)
-            )
-        ) {
-            $begin = $shopOpenTime;
-        }
-        if ($newHours > $shopCloseTimeHour
-            || ($newHours === $shopCloseTimeHour
-                && ($newMinutes > 0 && $shopCloseTimeMinutes > 0
-                    && $newMinutes < $shopCloseTimeMinutes)
-            )
-        ) {
-            $begin = $shopOpenTime;
-            $dateFrom->add(new \DateInterval('P1D'));
-        }
-        
-        return [
-            $begin,
-            $dateFrom,
-        ];
-    }
-    
-    /**
-     * @param int $offerId
-     *
-     * @return StoreCollection
-     * @throws \Exception
-     */
-    public function getActiveStoresByProduct(int $offerId) : StoreCollection
-    {
-        return $this->storeService->getAvailableProductStoresCurrentLocation($offerId);
+        return $this->pickupDelivery;
     }
     
     /**

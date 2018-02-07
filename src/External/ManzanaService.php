@@ -438,7 +438,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
             try {
                 $result = $this->execute(self::CONTRACT_CONTACT_REFERRAL_CARDS, $bag->getParameters());
                 /** @var Referrals $res */
-                $res       = $this->serializer->deserialize($result, Referrals::class, 'xml');
+                $res = $this->serializer->deserialize($result, Referrals::class, 'xml');
                 /** @noinspection PhpUndefinedMethodInspection */
                 $referrals = $res->referrals->toArray();
             } catch (\Exception $e) {
@@ -563,8 +563,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         $bag     = new ParameterBag(['contact_id' => $contactId]);
         
         try {
-            $result = $this->execute(self::CONTRACT_CONTACT, $bag->getParameters());
-            
+            $result  = $this->execute(self::CONTRACT_CONTACT, $bag->getParameters());
             $contact = $this->serializer->deserialize($result, Contacts::class, 'xml')->contacts[0];
         } catch (\Exception $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
@@ -643,7 +642,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         } catch (\Exception $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
         }
-    
+        
         return $cheques;
         
     }

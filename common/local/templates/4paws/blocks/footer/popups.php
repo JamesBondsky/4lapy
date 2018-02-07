@@ -9,6 +9,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 /** @var MainTemplate $template */
+/** @var CMain $APPLICATION */
 /** @noinspection PhpUnhandledExceptionInspection */
 $template = MainTemplate::getInstance(Application::getInstance()->getContext()); ?>
 <div class="b-popup-wrapper js-popup-wrapper">
@@ -102,6 +103,9 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
                                        ['HIDE_ICONS' => 'Y']);
         $APPLICATION->IncludeComponent('fourpaws:personal.profile', 'popupChangePhone', [], $component,
                                        ['HIDE_ICONS' => 'Y']);
+    }
+    if ($template->isOrderDeliveryPage()) {
+        $APPLICATION->IncludeComponent('fourpaws:order.shop.list', 'popup', [], $component, ['HIDE_ICONS' => 'Y']);
     } ?>
     <?php include 'tmp_gifts_popup.php' ?>
     <?php include 'modal_popup.php' ?>
