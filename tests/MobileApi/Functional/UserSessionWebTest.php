@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\Tests\MobileApi\Functional;
 
 use FourPaws\MobileApiBundle\Repository\ApiUserSessionRepository;
@@ -20,7 +24,7 @@ class UserSessionWebTest extends WebTestCase
     public function testCreate()
     {
         $client = static::createClient();
-        $client->request(Request::METHOD_GET, '/mobile_app_v2/start');
+        $client->request(Request::METHOD_GET, '/mobile_app_v2/start/');
 
         $response = $client->getResponse();
         static::assertInstanceOf(Response::class, $response);
