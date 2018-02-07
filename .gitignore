@@ -40,4 +40,7 @@ Desktop.ini
 
 #content
 /web/include/*
+!/web/include/static/
 !/web/include/.gitkeep
+/web/include/static/*
+!/web/include/static/.gitkeep
