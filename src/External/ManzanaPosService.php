@@ -2,11 +2,15 @@
 
 namespace FourPaws\External;
 
+use Bitrix\Sale\BasketItem;
 use FourPaws\External\Interfaces\ManzanaServiceInterface;
+use FourPaws\External\Manzana\Dto\ChequePosition;
 use FourPaws\External\Manzana\Dto\SoftChequeRequest;
 use FourPaws\External\Manzana\Dto\SoftChequeResponse;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\Traits\ManzanaServiceTrait;
+use FourPaws\Helpers\ArithmeticHelper;
+use FourPaws\SaleBundle\Service\BasketService;
 use Psr\Log\LoggerAwareInterface;
 
 /**
@@ -27,13 +31,19 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
      *
      * @throws ExecuteException
      */
-    public function execute(SoftChequeRequest $chequeRequest) : SoftChequeResponse
+    protected function execute(SoftChequeRequest $chequeRequest) : SoftChequeResponse
     {
+        $requestId = $this->generateRequestId();
+        
         $chequeRequest->setBusinessUnit($this->parameters['business_unit'])
                       ->setOrganization($this->parameters['organization'])
                       ->setPos($this->parameters['pos'])
                       ->setDatetime(new \DateTimeImmutable())
-                      ->setRequestId($this->generateRequestId());
+                      ->setRequestId($requestId);
+        
+        $chequeRequest->getItems()->forAll(function (ChequePosition $item) use ($requestId) {
+            $item->setChequeId($requestId);
+        });
         
         try {
             $arguments = [
@@ -62,6 +72,53 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
         }
         
         return $result;
+    }
+    
+    /**
+     * @param BasketService $basketService
+     * @param string        $card
+     *
+     * @return SoftChequeRequest
+     */
+    public function buildRequestFromBasketService(BasketService $basketService, string $card) : SoftChequeRequest
+    {
+        $sum = $sumDiscounted = $discount = 0.0;
+        
+        $request = new SoftChequeRequest();
+        
+        $basket = $basketService->getBasket();
+        
+        $iterator = 0;
+        /** @var BasketItem $item */
+        foreach ($basket->getBasketItems() as $k => $item) {
+            $sum           += $item->getBasePrice() * $item->getQuantity();
+            $sumDiscounted += $item->getPrice() * $item->getQuantity();
+            
+            $xmlId = $item->getField('PRODUCT_XML_ID');
+            
+            if (strpos($xmlId, '#')) {
+                $xmlId = explode('#', $xmlId)[0];
+            }
+            
+            $chequePosition =
+                (new ChequePosition())->setChequeItemNumber($iterator++)
+                                      ->setSumm($item->getBasePrice() * $item->getQuantity())
+                                      ->setQuantity($item->getQuantity())
+                                      ->setPrice($item->getBasePrice())
+                                      ->setDiscount(ArithmeticHelper::getPercent($item->getPrice(),
+                                                                                 $item->getBasePrice()))
+                                      ->setSummDiscounted($item->getPrice() * $item->getQuantity())
+                                      ->setArticleId($xmlId)
+                                      ->setChequeItemId($item->getId());
+            $request->addItem($chequePosition);
+        }
+        
+        $request->setCardNumber($card)
+                ->setSumm($sum)
+                ->setSummDiscounted($sumDiscounted)
+                ->setDiscount(ArithmeticHelper::getPercent($sumDiscounted, $sum));
+        
+        return $request;
     }
     
     /**

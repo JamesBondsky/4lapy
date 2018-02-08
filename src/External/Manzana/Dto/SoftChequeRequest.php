@@ -2,6 +2,7 @@
 
 namespace FourPaws\External\Manzana\Dto;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 
@@ -251,6 +252,10 @@ class SoftChequeRequest
     
     public function addItem(ChequePosition $position)
     {
+        if (!$this->items) {
+            $this->items = new ArrayCollection();
+        }
+        
         $this->items->add($position);
     }
     
@@ -261,6 +266,10 @@ class SoftChequeRequest
     {
         /** @noinspection CallableParameterUseCaseInTypeContextInspection */
         $coupon = (new Coupon())->setNumber($coupon);
+        
+        if (!$this->coupons) {
+            $this->coupons = new ArrayCollection();
+        }
         
         $this->coupons->addCoupon($coupon);
     }
@@ -343,5 +352,13 @@ class SoftChequeRequest
     public function getCoupons() : Coupons
     {
         return $this->coupons;
+    }
+    
+    /**
+     * @return Collection|ChequePosition[]
+     */
+    public function getItems() : Collection
+    {
+        return $this->items;
     }
 }
