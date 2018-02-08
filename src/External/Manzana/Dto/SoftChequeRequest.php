@@ -249,6 +249,22 @@ class SoftChequeRequest
         return $this;
     }
     
+    public function addItem(ChequePosition $position)
+    {
+        $this->items->add($position);
+    }
+    
+    /**
+     * @param string $coupon
+     */
+    public function addCoupon(string $coupon)
+    {
+        /** @noinspection CallableParameterUseCaseInTypeContextInspection */
+        $coupon = (new Coupon())->setNumber($coupon);
+        
+        $this->coupons->addCoupon($coupon);
+    }
+    
     /**
      * @param Collection|ChequePosition[] $items
      *

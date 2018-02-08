@@ -2,6 +2,7 @@
 
 namespace FourPaws\External\Manzana\Dto;
 
+use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 
 /**
@@ -113,6 +114,14 @@ class SoftChequeResponse
      * @var float
      */
     protected $chargedBonus = '';
+    
+    /**
+     * @Serializer\XmlList(inline=true, entry="Item")
+     * @Serializer\Type("ArrayCollection<FourPaws\External\Manzana\Dto\ChequePosition>")
+     *
+     * @var Collection|ChequePosition[]
+     */
+    protected $items;
     
     /**
      * @return bool

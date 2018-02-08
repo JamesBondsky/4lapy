@@ -2,6 +2,7 @@
 
 namespace FourPaws\External\Manzana\Dto;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 
@@ -21,13 +22,29 @@ class Coupons
     protected $coupons;
     
     /**
-     * @param \Doctrine\Common\Collections\Collection|\FourPaws\External\Manzana\Dto\Coupon[] $coupons
+     * @param \FourPaws\External\Manzana\Dto\Coupon $coupon
      *
-     * @return Coupons
+     * @return $this
      */
-    public function setCoupons($coupons)
+    public function addCoupon(Coupon $coupon)
     {
-        $this->coupons = $coupons;
+        if (null === $this->coupons) {
+            $this->coupons = new ArrayCollection();
+        }
+        
+        $this->coupons->add($coupon);
+        
+        return $this;
+    }
+    
+    /**
+     * @param string $coupon
+     *
+     * @return $this
+     */
+    public function addCouponFromString(string $coupon)
+    {
+        $this->addCoupon((new Coupon())->setNumber($coupon));
         
         return $this;
     }

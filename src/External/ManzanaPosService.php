@@ -2,9 +2,7 @@
 
 namespace FourPaws\External;
 
-use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\External\Interfaces\ManzanaServiceInterface;
-use FourPaws\External\Manzana\Dto\Coupon;
 use FourPaws\External\Manzana\Dto\SoftChequeRequest;
 use FourPaws\External\Manzana\Dto\SoftChequeResponse;
 use FourPaws\External\Manzana\Exception\ExecuteException;
@@ -109,7 +107,7 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     public function processChequeWithCoupons(SoftChequeRequest $chequeRequest, string $coupon) : SoftChequeResponse
     {
-        $chequeRequest->getCoupons()->setCoupons(new ArrayCollection([(new Coupon())->setNumber($coupon)]));
+        $chequeRequest->getCoupons()->addCouponFromString($coupon);
         
         return $this->execute($chequeRequest);
     }
