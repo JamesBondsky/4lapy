@@ -24,7 +24,6 @@ if ($arResult['AUTH_ACTION_SUCCESS'] === 'Y') {
     $proto = \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->isHttps() ? 'https' : 'http';
     $jsonResult['redirectUrl'] = $proto.'://'.SITE_SERVER_NAME;
 } else {
-    // об ошибке сообщаем через статус
     if (!empty($arResult['ERROR']['EXEC']['authFailed'])) {
         $jsonResult['message'] = 'Невозможно авторизоваться под указанным пользователем';
     } elseif (!empty($arResult['ERROR']['EXEC']['canNotLogin'])) {
