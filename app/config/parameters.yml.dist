@@ -16,8 +16,6 @@ parameters:
 
   manzana.wdsl: '%env(MANZANA_HOST)%'
   manzana.pos.wdsl: '%env(MANZANA_HOST_POS)%'
-  manzana.guzzle.curl:
-    !php/const:CURLOPT_CONNECTTIMEOUT: 3
 
   migrator:
     token: c81789b482ecbe6976f496a9697d75de
@@ -36,7 +34,6 @@ parameters:
   manzana.guzzle.curl.timeout: 3
   recaptcha.guzzle.curl.timeout: 3
   callback.guzzle.curl.timeout: 3
-
 
   # See \Elastica\Client::$_config for more options
   elastica.client_options:
