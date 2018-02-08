@@ -299,8 +299,7 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
                 $usersList = $this->getUserListByFilter($filter);
                 if ($usersList) {
                     $user = reset($usersList);
-                    // запомнить id юзера
-                    $authResult = $this->getUserService()->authorize($user['ID']);
+                    $authResult = $this->getUserService()->avatarAuthorize($user['ID']);
                     if ($authResult) {
                         $this->arResult['AUTH_ACTION_SUCCESS'] = 'Y';
                     } else {

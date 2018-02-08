@@ -964,7 +964,15 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
 
         try {
             $createResult = $this->getUserRepository()->create($user);
-            if (!$createResult) {
+            if ($createResult) {
+                if ($user->getId()) {
+                    // привязка пользователя к группе "Зарегистрированные пользователи"
+                    $registeredUserGroupId = \CGroup::GetIDByCode('REGISTERED_USERS');
+                    if ($registeredUserGroupId) {
+                        \CUser::AppendUserGroup($user->getId(), [$registeredUserGroupId]);
+                    }
+                }
+            } else {
                 $result->addError(
                     new Error('Нераспознанная ошибка', 'createUserUnknownError')
                 );

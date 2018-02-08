@@ -44,7 +44,7 @@ use FourPaws\Decorators\SvgDecorator;
                 [
                     'COMPONENT_TEMPLATE'    => 'header.personal_menu',
                     'ROOT_MENU_TYPE'        => 'personal',
-                    'MENU_CACHE_TYPE'       => 'A',
+                    'MENU_CACHE_TYPE'       => 'N', // Нельзя кешировать это меню
                     'MENU_CACHE_TIME'       => '360000',
                     'MENU_CACHE_USE_GROUPS' => 'N',
                     'MENU_CACHE_GET_VARS'   => [],
