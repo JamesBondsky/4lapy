@@ -73,11 +73,11 @@ class OrderDeliveryValidator extends ConstraintValidator
          */
         if ($this->deliveryService->isDelivery($delivery)) {
             /*
-             * это число в общем случае должно быть от 1
-             * до разницы между минимальной и максимальной датами доставки включительно
+             * это число в общем случае должно быть от 0
+             * до разницы между минимальной и максимальной датами доставки
              */
             $dateIndex = $entity->getDeliveryDate();
-            if (($dateIndex < 1) || $dateIndex > ($delivery->getPeriodTo() - $delivery->getPeriodFrom())) {
+            if (($dateIndex < 0) || $dateIndex >= ($delivery->getPeriodTo() - $delivery->getPeriodFrom())) {
                 $this->context->addViolation($constraint->deliveryDateMessage);
             }
 
