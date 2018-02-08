@@ -16,6 +16,7 @@ class ChequePosition
     /**
      * Идентификатор позиции чека в кассовой системе
      *
+     * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("integer")
      * @Serializer\SerializedName("cheque_item_id")
      *
@@ -26,6 +27,7 @@ class ChequePosition
     /**
      * Идентификатор чека в кассовой системе
      *
+     * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("integer")
      * @Serializer\SerializedName("cheque_id")
      *
@@ -36,6 +38,7 @@ class ChequePosition
     /**
      * Номер позиции чека в чеке
      *
+     * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("integer")
      * @Serializer\SerializedName("cheque_item_number")
      *
@@ -46,6 +49,7 @@ class ChequePosition
     /**
      * Идентификатор товара
      *
+     * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("integer")
      * @Serializer\SerializedName("article_id")
      *
@@ -56,6 +60,7 @@ class ChequePosition
     /**
      * Цена единицы товара
      *
+     * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("float")
      * @Serializer\SerializedName("Price")
      *
@@ -66,6 +71,7 @@ class ChequePosition
     /**
      * Число единиц товара
      *
+     * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("integer")
      * @Serializer\SerializedName("quantity")
      *
@@ -76,6 +82,7 @@ class ChequePosition
     /**
      * Стоимость товара. Вычисляется как произведение цены за единицу на количество товара.
      *
+     * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("float")
      * @Serializer\SerializedName("Summ")
      *
@@ -86,6 +93,7 @@ class ChequePosition
     /**
      * Стоимость товара с учетом скидки
      *
+     * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("float")
      * @Serializer\SerializedName("summ_discounted")
      *
@@ -96,6 +104,7 @@ class ChequePosition
     /**
      * Скидка, %
      *
+     * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("string")
      * @Serializer\SerializedName("Discount")
      *

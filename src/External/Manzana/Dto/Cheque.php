@@ -16,6 +16,7 @@ class Cheque
     /**
      * Идентификатор чека в кассовой системе
      *
+     * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("integer")
      * @Serializer\SerializedName("cheque_id")
      *
@@ -26,6 +27,7 @@ class Cheque
     /**
      * Номер чека
      *
+     * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("string")
      * @Serializer\SerializedName("cheque_number")
      *
@@ -36,6 +38,7 @@ class Cheque
     /**
      * Номер карты
      *
+     * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("string")
      * @Serializer\SerializedName("card_number")
      *
@@ -47,6 +50,7 @@ class Cheque
      * Дата и время совершения операции
      * Дата не может быть больше текущей даты системы Manzana Loyalty
      *
+     * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("DateTime")
      * @Serializer\SerializedName("datetime")
      *
@@ -57,6 +61,7 @@ class Cheque
     /**
      * Код Партнера
      *
+     * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("string")
      * @Serializer\SerializedName("organization_id")
      *
@@ -67,6 +72,7 @@ class Cheque
     /**
      * Код Магазина
      *
+     * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("string")
      * @Serializer\SerializedName("businessunit_id")
      *
@@ -77,6 +83,7 @@ class Cheque
     /**
      * Код POS терминала
      *
+     * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("string")
      * @Serializer\SerializedName("pos_id")
      *
@@ -89,6 +96,7 @@ class Cheque
      * - 0 – позиций нет;
      * - 1 – позиции есть.
      *
+     * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("integer")
      * @Serializer\SerializedName("has_position")
      *
@@ -102,6 +110,7 @@ class Cheque
      * - 1 – покупка
      * - 2 – возврат
      *
+     * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("integer")
      * @Serializer\SerializedName("operation_type")
      *
@@ -112,6 +121,7 @@ class Cheque
     /**
      * Сумма чека.
      *
+     * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("float")
      * @Serializer\SerializedName("Summ")
      *
@@ -122,6 +132,7 @@ class Cheque
     /**
      * Сумма чека с учетом скидки
      *
+     * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("float")
      * @Serializer\SerializedName("SummDiscounted")
      *
@@ -132,6 +143,7 @@ class Cheque
     /**
      * Скидка, %
      *
+     * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("string")
      * @Serializer\SerializedName("Discount")
      *

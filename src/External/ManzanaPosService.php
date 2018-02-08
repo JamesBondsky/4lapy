@@ -2,8 +2,11 @@
 
 namespace FourPaws\External;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\External\Interfaces\ManzanaServiceInterface;
-use FourPaws\External\Manzana\Exception\AuthenticationException;
+use FourPaws\External\Manzana\Dto\Coupon;
+use FourPaws\External\Manzana\Dto\SoftChequeRequest;
+use FourPaws\External\Manzana\Dto\SoftChequeResponse;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\Traits\ManzanaServiceTrait;
 use Psr\Log\LoggerAwareInterface;
@@ -15,31 +18,40 @@ use Psr\Log\LoggerAwareInterface;
  */
 class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
 {
+    const METHOD_EXECUTE = 'ProcessRequestInfo';
+    
     use ManzanaServiceTrait;
     
     /**
-     * @param string $contract
-     * @param array  $parameters
+     * @param SoftChequeRequest $chequeRequest
      *
-     * @return string
+     * @return SoftChequeResponse
      *
-     * @throws AuthenticationException
      * @throws ExecuteException
      */
-    protected function execute(string $contract, array $parameters = []) : string
+    public function execute(SoftChequeRequest $chequeRequest) : SoftChequeResponse
     {
+        $chequeRequest->setBusinessUnit($this->parameters['business_unit'])
+                      ->setOrganization($this->parameters['organization'])
+                      ->setPos($this->parameters['pos'])
+                      ->setDatetime(new \DateTimeImmutable())
+                      ->setRequestId($this->generateRequestId());
+        
         try {
             $arguments = [
-                'contractName' => $contract,
-                'parameters'   => $parameters,
+                'request' => [
+                    'Requests' => [
+                        $chequeRequest::ROOT_NAME => $this->serializer->toArray($chequeRequest),
+                    ],
+                ],
+                'orgName' => $this->parameters['organization_name'],
             ];
             
-            $result = $this->client->call(self::METHOD_EXECUTE, ['request_options' => $arguments]);
+            $rawResult = $this->client->call(self::METHOD_EXECUTE, ['request_options' => $arguments]);
+            $rawResult = (array)$rawResult->ProcessRequestInfoResult->Responses->ChequeResponse;
             
-            $result = $result->ExecuteResult->Value;
+            $result = $this->serializer->fromArray($rawResult, SoftChequeResponse::class);
         } catch (\Exception $e) {
-            unset($this->sessionId);
-            
             try {
                 $detail = $e->detail->details->description;
             } catch (\Throwable $e) {
@@ -60,11 +72,16 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
      * Точки входа:
      *
      * - переход на шаг 3 оформления заказа
+     *
+     * @param SoftChequeRequest $chequeRequest
+     *
+     * @throws ExecuteException
+     *
+     * @return SoftChequeResponse
      */
-    public function processCheque()
+    public function processCheque(SoftChequeRequest $chequeRequest) : SoftChequeResponse
     {
-        
-        $this->execute('', []);
+        return $this->execute($chequeRequest);
     }
     
     /**
@@ -82,11 +99,19 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
      * - Подтверждение изменения выбранного населенного пункта
      * - Установка чекбокса «Забрать через час, за исключением»
      * - Подтверждение изменения выбранного населенного пункта
+     *
+     * @param SoftChequeRequest $chequeRequest
+     * @param string            $coupon
+     *
+     * @throws ExecuteException
+     *
+     * @return SoftChequeResponse
      */
-    public function processChequeWithCoupons()
+    public function processChequeWithCoupons(SoftChequeRequest $chequeRequest, string $coupon) : SoftChequeResponse
     {
+        $chequeRequest->getCoupons()->setCoupons(new ArrayCollection([(new Coupon())->setNumber($coupon)]));
         
-        $this->execute('', []);
+        return $this->execute($chequeRequest);
     }
     
     /**
@@ -106,9 +131,24 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
      * - Установка чекбокса «Забрать через час, за исключением»
      * - Подтверждение изменения выбранного населенного пункта
      *
+     * @param SoftChequeRequest $chequeRequest
+     *
+     * @throws ExecuteException
+     *
+     * @return SoftChequeResponse
      */
-    public function processChequeWithoutBonus()
+    public function processChequeWithoutBonus(SoftChequeRequest $chequeRequest) : SoftChequeResponse
     {
-        $this->execute('', []);
+        $chequeRequest->setPaidByBonus(0);
+        
+        return $this->execute($chequeRequest);
+    }
+    
+    /**
+     * @return int
+     */
+    protected function generateRequestId() : int
+    {
+        return (int)((microtime(true) * 1000) . random_int(1000, 9999));
     }
 }

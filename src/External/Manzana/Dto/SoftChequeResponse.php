@@ -2,7 +2,6 @@
 
 namespace FourPaws\External\Manzana\Dto;
 
-use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 
 /**
@@ -10,122 +9,71 @@ use JMS\Serializer\Annotation as Serializer;
  *
  * @package FourPaws\External\Manzana\Dto
  *
- * @Serializer\XmlRoot("ChequeRequest")
- * @Serializer\XmlNamespace(uri="http://loyalty.manzanagroup.ru/loyalty.xsd")
+ * @Serializer\XmlRoot("ChequeResponse")
  */
 class SoftChequeResponse
 {
     /**
-     * УИД торгового предложения
+     * Идентификатор транзакции
      *
-     * @Serializer\XmlAttribute()
-     * @Serializer\Type("string")
-     * @Serializer\SerializedName("ChequeType")
+     * @Serializer\XmlElement(cdata=false)
+     * @Serializer\Type("integer")
+     * @Serializer\SerializedName("TransactionID")
      *
      * @var string
      */
-    protected $chequeType = 'Soft';
+    protected $transactionId = 0;
     
     /**
      * Идентификатор запроса
      *
+     * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("string")
-     * @Serializer\SerializedName("RequestId")
+     * @Serializer\SerializedName("RequestID")
      *
      * @var string
      */
     protected $requestId = '';
     
     /**
-     * Дата и время совершения операции
-     * Дата не может быть больше текущей даты системы Manzana Loyalty
+     * Дата и время операции (в системе)
+     * Используется локальное время системы, обрабатывающей мягкий чек (московское).
      *
-     * @Serializer\Type("DateTimeImmutable")
-     * @Serializer\SerializedName("DateTime")
+     * @Serializer\XmlElement(cdata=false)
+     * @Serializer\Type("manzana_date_time_short")
+     * @Serializer\SerializedName("Proccessed")
      *
      * @var \DateTimeImmutable
      */
-    protected $datetime;
+    protected $proccessed;
     
     /**
-     * Код Партнера
+     * Код возврата
+     * В случае ошибки отличен от нуля. Т.е. значение поля равное «ноль» означает, что ошибки не произошло.
      *
+     * @Serializer\XmlElement(cdata=false)
+     * @Serializer\Type("integer")
+     * @Serializer\SerializedName("ReturnCode")
+     *
+     * @var int
+     */
+    protected $returnCode = 0;
+    
+    /**
+     * Текстовое описание ошибки
+     *
+     * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("string")
-     * @Serializer\SerializedName("Organization")
+     * @Serializer\SerializedName("Message")
      *
      * @var string
      */
-    protected $organization = '';
+    protected $message = '';
     
     /**
-     * Код Магазина
+     * Сумма без скидки по чеку, деньги
      *
-     * @Serializer\Type("string")
-     * @Serializer\SerializedName("BusinessUnit")
-     *
-     * @var string
-     */
-    protected $businessUnit = '';
-    
-    /**
-     * Код POS терминала
-     *
-     * @Serializer\Type("string")
-     * @Serializer\SerializedName("POS")
-     *
-     * @var string
-     */
-    protected $pos = '';
-    
-    /**
-     * Номер карты
-     *
-     * @Serializer\Type("string")
-     * @Serializer\SerializedName("CardNumber")
-     *
-     * @var string
-     */
-    protected $cardNumber = '';
-    
-    /**
-     * Номер чека
-     *
-     * @Serializer\Type("string")
-     * @Serializer\SerializedName("Number")
-     *
-     * @var string
-     */
-    protected $number = '';
-    
-    /**
-     * Тип операции
-     * Всегда значене sale для данного БП
-     *
-     * @Serializer\Type("string")
-     * @Serializer\SerializedName("OperationType")
-     *
-     * @var string
-     */
-    protected $operationType = 'sale';
-    
-    /**
-     * @Serializer\XmlList(inline=true, entry="Item")
-     * @Serializer\Type("ArrayCollection<FourPaws\External\Manzana\Dto\ChequePosition>")
-     *
-     * @var Collection|ChequePosition[]
-     */
-    protected $items;
-    
-    /**
-     * @Serializer\Type("FourPaws\External\Manzana\Dto\Coupons")
-     *
-     * @var Coupons
-     */
-    protected $coupons;
-    
-    /**
-     * Сумма.
-     *
+     * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("float")
      * @Serializer\SerializedName("Summ")
      *
@@ -134,33 +82,43 @@ class SoftChequeResponse
     protected $summ = 0;
     
     /**
-     * Скидка, %
+     * Скидка по чеку, %
      *
-     * @Serializer\Type("string")
+     * @Serializer\XmlElement(cdata=false)
+     * @Serializer\Type("float")
      * @Serializer\SerializedName("Discount")
      *
      * @var float
      */
-    protected $discount = 0;
+    protected $discount = '';
     
     /**
-     * Сумма с учетом скидки
+     * Сумма со скидкой по чеку, деньги
      *
+     * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("float")
      * @Serializer\SerializedName("SummDiscounted")
      *
      * @var float
      */
-    protected $summDiscounted = 0;
+    protected $summDiscounted = '';
     
     /**
-     * Оплачено бонусами
+     * Сумма начисленного бонуса
      *
+     * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("float")
-     * @Serializer\SerializedName("PaidByBonus")
+     * @Serializer\SerializedName("ChargedBonus")
      *
      * @var float
      */
-    protected $paidByBonus = 0;
+    protected $chargedBonus = '';
     
+    /**
+     * @return bool
+     */
+    public function isErrorResponse() : bool
+    {
+        return $this->returnCode !== 0;
+    }
 }

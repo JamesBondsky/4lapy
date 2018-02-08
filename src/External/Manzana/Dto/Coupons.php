@@ -19,4 +19,16 @@ class Coupons
      * @var Collection|Coupon[]
      */
     protected $coupons;
+    
+    /**
+     * @param \Doctrine\Common\Collections\Collection|\FourPaws\External\Manzana\Dto\Coupon[] $coupons
+     *
+     * @return Coupons
+     */
+    public function setCoupons($coupons)
+    {
+        $this->coupons = $coupons;
+        
+        return $this;
+    }
 }

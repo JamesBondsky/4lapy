@@ -9,8 +9,11 @@ parameters:
     password: '%env(MANZANA_PASSWORD)%'
     wdsl: '%env(MANZANA_HOST)%'
   manzana_pos:
-    pos: kuvi_pos
-    business_unit: kuvi_shop
+    pos: ishop2
+    business_unit: ishop
+    organization: 1
+    organization_name: fourfoots
+
   manzana.wdsl: '%env(MANZANA_HOST)%'
   manzana.pos.wdsl: '%env(MANZANA_HOST_POS)%'
   manzana.guzzle.curl:
