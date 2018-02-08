@@ -12,9 +12,21 @@ use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\MobileApiBundle\Dto\Error;
 use FourPaws\MobileApiBundle\Dto\Request\InfoRequest;
 use FourPaws\MobileApiBundle\Dto\Response;
+use FourPaws\MobileApiBundle\Enum\InfoEnum;
+use FourPaws\MobileApiBundle\Services\Api\InfoService;
 
 class InfoController extends FOSRestController
 {
+    /**
+     * @var InfoService
+     */
+    private $infoService;
+
+    public function __construct(InfoService $infoService)
+    {
+        $this->infoService = $infoService;
+    }
+
     /**
      * @Rest\Get("/social/")
      */
@@ -54,17 +66,36 @@ class InfoController extends FOSRestController
      * Получить статичные разделы
      *
      * @Rest\Get("/info/")
+     * @Rest\View()
      *
      * @param InfoRequest        $infoRequest
      * @param Collection|Error[] $apiErrors
      *
-     * @return \FOS\RestBundle\View\View
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @return Response
      */
-    public function getInfoAction(InfoRequest $infoRequest, Collection $apiErrors)
+    public function getInfoAction(InfoRequest $infoRequest, Collection $apiErrors): Response
     {
         $response = new Response();
         $response->setErrors($apiErrors);
+        if ($response->getErrors()->count()) {
+            return $response;
+        }
 
-        return $this->view($response);
+        switch ($infoRequest->getType()) {
+            case InfoEnum::NEWS:
+                $response->setData($this->infoService->getNews($infoRequest->getInfoId()));
+                break;
+            case InfoEnum::LETTERS:
+                $response->setData($this->infoService->getArticles($infoRequest->getInfoId()));
+                break;
+            case InfoEnum::ACTION:
+                $response->setData($this->infoService->getActions($infoRequest->getInfoId()));
+                break;
+            default:
+                $response->addError(new Error(100, 'Test'));
+        }
+
+        return $response;
     }
 }
