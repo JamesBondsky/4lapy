@@ -20,7 +20,6 @@ use FourPaws\DeliveryBundle\Service\DeliveryServiceHandlerBase;
 use FourPaws\Location\LocationService;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
-use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Service\StoreService;
 
 if (!Loader::includeModule('ipol.dpd')) {
@@ -102,24 +101,10 @@ class Calculator extends DPD
                     $shipment = self::$shipment;
                     if ($shipment instanceof Shipment) {
                         $terminals = $shipment->getDpdTerminals();
-                        $stores = new StoreCollection();
-                        foreach ($terminals as $terminal) {
-                            $store = new Store();
-                            $store->setTitle($terminal['NAME'])
-                                  ->setLocation($arOrder['LOCATION_TO'])
-                                  ->setAddress($terminal['ADDRESS_SHORT'])
-                                  ->setCode($terminal['CODE'])
-                                  ->setXmlId($terminal['CODE'])
-                                  ->setLatitude($terminal['LATITUDE'])
-                                  ->setLongitude($terminal['LONGITUDE'])
-                                  ->setLocationId($terminal['LOCATION_ID'])
-                                  ->setSchedule($terminal['SCHEDULE_SELF_DELIVERY'])
-                                  ->setDescription($terminal['ADDRESS_DESCR']);
-                            $stores->add($store);
-                        }
+
                         /** @var StockResult $item */
                         foreach ($stockResult as $item) {
-                            $item->setStores($stores);
+                            $item->setStores($terminals);
                         }
                     }
                 }
@@ -137,6 +122,7 @@ class Calculator extends DPD
             $result['DPD_TARIFF']['DAYS']++;
         }
 
+        /* @todo не хранить эти данные в сессии */
         $_SESSION['DPD_DATA'][$profileCode] = [
             'INTERVALS'    => [
                 [

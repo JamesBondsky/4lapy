@@ -334,6 +334,9 @@ class OrderService implements ContainerAwareInterface
          */
         if ($storage->getDeliveryId()) {
             $locationProp = $order->getPropertyCollection()->getDeliveryLocation();
+            if (!$locationProp) {
+                throw new OrderCreateException('Отсутствует свойство привязки к местоположению');
+            }
             $locationProp->setValue($selectedCity['CODE']);
 
             $shipmentCollection = $order->getShipmentCollection();
@@ -429,7 +432,7 @@ class OrderService implements ContainerAwareInterface
                         /**
                          * У доставок есть выбор даты доставки
                          */
-                        $date = clone ($deliveryDate);
+                        $date = clone $deliveryDate;
                         if ($this->deliveryService->isDelivery($selectedDelivery)) {
                             if (($days = $storage->getDeliveryDate() - 1) >= 0) {
                                 $date->modify('+' . $days . ' days');

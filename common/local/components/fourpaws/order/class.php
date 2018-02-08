@@ -336,9 +336,11 @@ class FourPawsOrderComponent extends \CBitrixComponent
             } catch (StoreNotFoundException $e) {
             }
         } elseif ($properties['DPD_TERMINAL_CODE']) {
-            /* @todo данные по терминалу DPD */
-            $result['ADDRESS'] = '';
-            $result['SCHEDULE'] = '';
+            $terminals = $this->deliveryService->getDpdTerminalsByLocation($properties['CITY_CODE']);
+            if ($terminal = $terminals[$properties['DPD_TERMINAL_CODE']]) {
+                $result['ADDRESS'] = $terminal->getAddress();
+                $result['SCHEDULE'] = $terminal->getSchedule();
+            }
         } else {
             $result['ADDRESS'] = [
                 $properties['CITY'],
