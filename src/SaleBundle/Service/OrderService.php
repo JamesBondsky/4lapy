@@ -676,6 +676,7 @@ class OrderService implements ContainerAwareInterface
         $paymentCollection = $this->getPayments($storage);
 
         $payments = [];
+        /** @var Payment $payment */
         foreach ($paymentCollection as $payment) {
             if ($payment->isInner()) {
                 continue;
@@ -685,10 +686,12 @@ class OrderService implements ContainerAwareInterface
         }
 
         if (!$withInner) {
+            $innerPaySystemId = (int)PaySystemManager::getInnerPaySystemId();
             /** @var Payment $payment */
             foreach ($payments as $id => $payment) {
-                if ((int)PaySystemManager::getInnerPaySystemId() === $id) {
+                if ($innerPaySystemId === $id) {
                     unset($payments[$id]);
+                    break;
                 }
             }
         }

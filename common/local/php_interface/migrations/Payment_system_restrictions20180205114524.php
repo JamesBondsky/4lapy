@@ -8,46 +8,45 @@ namespace Sprint\Migration;
 
 use Adv\Bitrixtools\Migration\SprintMigrationBase;
 use Bitrix\Sale\Internals\ServiceRestrictionTable;
-use Bitrix\Sale\Services\PaySystem\Restrictions\Delivery as DeliveryRestriction;
 use Bitrix\Sale\Services\PaySystem\Restrictions\Manager;
 use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\SaleBundle\Restrictions\PaymentByDeliveryRestriction;
 use FourPaws\SaleBundle\Service\OrderService;
 
 class Payment_system_restrictions20180205114524 extends SprintMigrationBase
 {
     protected $description = 'Задание ограничений платежным системам по службам доставки';
 
-    protected $payToDelivery = [
+    protected $restrictions = [
         OrderService::PAYMENT_CARD => [
-            DeliveryService::DPD_PICKUP_CODE,
-            DeliveryService::DPD_DELIVERY_CODE,
+            'CLASS_NAME' => '\\' . PaymentByDeliveryRestriction::class,
+            'PARAMS'     => [
+                DeliveryService::DPD_PICKUP_CODE     => 'Y',
+                DeliveryService::DPD_DELIVERY_CODE   => 'Y',
+                DeliveryService::INNER_DELIVERY_CODE => 'N',
+                DeliveryService::INNER_PICKUP_CODE   => 'N',
+            ],
         ],
     ];
 
     public function up()
     {
-        /** @var DeliveryService $deliveryService */
-        $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
         /** @var OrderService $orderService */
         $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
 
-        foreach ($this->payToDelivery as $paymentCode => $deliveryCodes) {
+        foreach ($this->restrictions as $paymentCode => $restriction) {
             $paymentId = $orderService->getPaymentIdByCode($paymentCode);
 
-            $deliveryIds = [];
-            foreach ($deliveryCodes as $deliveryCode) {
-                $deliveryIds[] = $deliveryService->getDeliveryIdByCode($deliveryCode);
-            }
+            $result = ServiceRestrictionTable::add(
+                [
+                    'SERVICE_ID'   => $paymentId,
+                    'SERVICE_TYPE' => Manager::SERVICE_TYPE_PAYMENT,
+                    'CLASS_NAME'   => $restriction['CLASS_NAME'],
+                    'PARAMS'       => $restriction['PARAMS'],
+                ]
+            );
 
-            $fields = [
-                'SERVICE_ID'   => $paymentId,
-                'SERVICE_TYPE' => Manager::SERVICE_TYPE_PAYMENT,
-                'SORT'         => 10,
-                'PARAMS'       => ['DELIVERY' => $deliveryIds],
-            ];
-
-            $result = DeliveryRestriction::save($fields);
             if (!$result->isSuccess()) {
                 $this->log()->error(
                     sprintf(
@@ -72,24 +71,19 @@ class Payment_system_restrictions20180205114524 extends SprintMigrationBase
     {
         /** @var OrderService $orderService */
         $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
-        foreach ($this->payToDelivery as $paymentCode => $deliveryCodes) {
+        foreach ($this->restrictions as $paymentCode => $deliveryCodes) {
             $paymentId = $orderService->getPaymentIdByCode($paymentCode);
 
             $restrictions = ServiceRestrictionTable::getList(
                 [
                     'filter' => [
-                        'SERVICE_ID'   => $paymentId,
-                        'SERVICE_TYPE' => Manager::SERVICE_TYPE_PAYMENT,
+                        'SERVICE_ID' => $paymentId,
                     ],
                 ]
             );
 
-            $class = '\\' . DeliveryRestriction::class;
             while ($restriction = $restrictions->fetch()) {
-                if ($restriction['CLASS_NAME'] !== $class) {
-                    continue;
-                }
-                $result = DeliveryRestriction::delete($restriction['ID'], $paymentId);
+                $result = ServiceRestrictionTable::delete($restriction['ID']);
                 if (!$result->isSuccess()) {
                     $this->log()->error(
                         sprintf(

@@ -85,6 +85,7 @@ $isInnerDelivery = $deliveryService->isInnerDelivery($selectedDelivery) ||
                                 if ((int)PaySystemManager::getInnerPaySystemId() === (int)$payment['ID']) {
                                     continue;
                                 }
+
     if ($isInnerDelivery && $payment['CODE'] === OrderService::PAYMENT_CASH) {
         $displayName = 'Наличными или картой при получении';
     } else {

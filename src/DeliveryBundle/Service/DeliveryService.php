@@ -449,12 +449,38 @@ class DeliveryService
      */
     public function getDeliveryIdByCode(string $code): int
     {
+        return (int)$this->getDeliveryByCode($code)['ID'];
+    }
+
+    /**
+     * @param string $code
+     *
+     * @throws NotFoundException
+     * @return array
+     */
+    public function getDeliveryByCode(string $code): array
+    {
         $delivery = DeliveryServiceTable::getList(['filter' => ['CODE' => $code]])->fetch();
         if (!$delivery) {
             throw new NotFoundException('Delivery service not found');
         }
 
-        return (int)$delivery['ID'];
+        return $delivery;
+    }
+
+    /**
+     * @param int $id
+     *
+     * @return string
+     */
+    public function getDeliveryCodeById(int $id): string
+    {
+        $delivery = DeliveryServiceTable::getList(['filter' => ['ID' => $id]])->fetch();
+        if (!$delivery) {
+            throw new NotFoundException('Delivery service not found');
+        }
+
+        return $delivery['CODE'];
     }
 
     /**
