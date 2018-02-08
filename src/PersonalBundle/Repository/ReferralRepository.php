@@ -6,6 +6,7 @@
 
 namespace FourPaws\PersonalBundle\Repository;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\AppBundle\Repository\BaseHlRepository;
 use FourPaws\PersonalBundle\Entity\Referral;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
@@ -38,13 +39,9 @@ class ReferralRepository extends BaseHlRepository
     /**
      * ReferralRepository constructor.
      *
-     * @param ValidatorInterface           $validator
-     *
-     * @param ArrayTransformerInterface    $arrayTransformer
+     * @inheritdoc
      *
      * @param CurrentUserProviderInterface $currentUserProvider
-     *
-     * @throws \Exception
      */
     public function __construct(
         ValidatorInterface $validator,
@@ -52,6 +49,7 @@ class ReferralRepository extends BaseHlRepository
         CurrentUserProviderInterface $currentUserProvider
     ) {
         parent::__construct($validator, $arrayTransformer);
+        $this->setEntityClass(Referral::class);
         $this->curUserService = $currentUserProvider;
     }
 
@@ -77,9 +75,9 @@ class ReferralRepository extends BaseHlRepository
      * @throws ServiceNotFoundException
      * @throws \Exception
      * @throws NotAuthorizedException
-     * @return array|Referral[]
+     * @return ArrayCollection
      */
-    public function findByCurUser(): array
+    public function findByCurUser(): ArrayCollection
     {
         $referrals = $this->findBy(
             [
@@ -89,20 +87,5 @@ class ReferralRepository extends BaseHlRepository
         );
 
         return $referrals;
-    }
-
-    /**
-     * @param array $params
-     *
-     * @throws \Exception
-     * @return array|Referral[]
-     */
-    public function findBy(array $params = []): array
-    {
-        if (empty($params['entityClass'])) {
-            $params['entityClass'] = Referral::class;
-        }
-
-        return parent::findBy($params);
     }
 }

@@ -2,16 +2,19 @@
 
 namespace FourPaws\PersonalBundle\Repository;
 
-use FourPaws\App\Application as App;
-use FourPaws\App\Exceptions\ApplicationCreateException;
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\AppBundle\Repository\BaseHlRepository;
 use FourPaws\PersonalBundle\Entity\Pet;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use FourPaws\UserBundle\Service\UserService;
+use JMS\Serializer\ArrayTransformerInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
  * Class PetRepository
@@ -21,60 +24,66 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 class PetRepository extends BaseHlRepository
 {
     const HL_NAME = 'Pet';
-    
+    /**
+     * @var UserService
+     */
+    public $curUserService;
     /** @var Pet $entity */
     protected $entity;
-    
+
+    /**
+     * PetRepository constructor.
+     *
+     * @inheritdoc
+     *
+     * @param CurrentUserProviderInterface $currentUserProvider
+     */
+    public function __construct(
+        ValidatorInterface $validator,
+        ArrayTransformerInterface $arrayTransformer,
+        CurrentUserProviderInterface $currentUserProvider
+    ) {
+        parent::__construct($validator, $arrayTransformer);
+        $this->setEntityClass(Pet::class);
+        $this->curUserService = $currentUserProvider;
+    }
+
     /**
      * @return bool
      * @throws ServiceNotFoundException
      * @throws ValidationException
-     * @throws \Exception
-     * @throws ApplicationCreateException
+     * @throws NotAuthorizedException
      * @throws BitrixRuntimeException
      * @throws ServiceCircularReferenceException
+     * @throws \Exception
      */
-    public function create() : bool
+    public function create(): bool
     {
         if ($this->entity->getUserId() === 0) {
-            $curUserService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
-            $this->entity->setUserId($curUserService->getCurrentUserId());
+            try {
+                $this->entity->setUserId($this->curUserService->getCurrentUserId());
+            } catch (NotAuthorizedException $e) {
+                return false;
+            }
         }
-        
+
         return parent::create();
     }
-    
+
     /**
-     * @return Pet[]|array
+     * @return Pet[]|ArrayCollection
      * @throws InvalidIdentifierException
      * @throws ServiceNotFoundException
-     * @throws \Exception
-     * @throws ApplicationCreateException
+     * @throws NotAuthorizedException
      * @throws ServiceCircularReferenceException
+     * @throws \Exception
      */
-    public function findByCurUser() : array
+    public function findByCurUser(): ArrayCollection
     {
-        $curUserService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
-        
         return $this->findBy(
             [
-                'filter' => ['UF_USER_ID' => $curUserService->getCurrentUserId()],
+                'filter' => ['UF_USER_ID' => $this->curUserService->getCurrentUserId()],
             ]
         );
-    }
-    
-    /**
-     * @param array $params
-     *
-     * @return Pet[]|array
-     * @throws \Exception
-     */
-    public function findBy(array $params = []) : array
-    {
-        if (empty($params['entityClass'])) {
-            $params['entityClass'] = Pet::class;
-        }
-        
-        return parent::findBy($params);
     }
 }

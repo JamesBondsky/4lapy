@@ -6,17 +6,19 @@
 
 namespace FourPaws\PersonalBundle\Service;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
 use FourPaws\PersonalBundle\Entity\Address;
-use FourPaws\PersonalBundle\Exception\NotFoundException;
 use FourPaws\PersonalBundle\Repository\AddressRepository;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -53,12 +55,14 @@ class AddressService
     }
 
     /**
-     * @param int $userId
+     * @param int    $userId
      * @param string $locationCode
      *
-     * @return array
+     * @return ArrayCollection
+     * @throws NotAuthorizedException
+     * @throws \Exception
      */
-    public function getAddressesByUser(int $userId = 0, string $locationCode = ''): array
+    public function getAddressesByUser(int $userId = 0, string $locationCode = ''): ArrayCollection
     {
         return $this->addressRepository->findByUser($userId, $locationCode);
     }
@@ -67,16 +71,18 @@ class AddressService
      * @param int $id
      *
      * @return Address
-     * @throws NotFoundException
+     * @throws \Exception
      */
     public function getById(int $id): Address
     {
         return $this->addressRepository->findById($id);
     }
-    
+
     /**
      * @param $data
      *
+     * @throws NotAuthorizedException
+     * @throws EmptyEntityClass
      * @throws \RuntimeException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
@@ -136,38 +142,7 @@ class AddressService
     }
 
     /**
-     * @param Address $address
-     *
-     * @throws ConstraintDefinitionException
-     * @throws InvalidIdentifierException
-     * @throws ServiceNotFoundException
-     * @throws ApplicationCreateException
-     * @throws ServiceCircularReferenceException
-     * @throws \RuntimeException
-     */
-    protected function updateManzanaAddress(Address $address)
-    {
-        $container = App::getInstance()->getContainer();
-        /** @var ManzanaService $manzanaService */
-        $manzanaService = $container->get('manzana.service');
-        $client = null;
-        try {
-            $contactId = $manzanaService->getContactIdByCurUser();
-            $client = new Client();
-            $client->contactId = $contactId;
-        } catch (ManzanaServiceException $e) {
-            $client = new Client();
-            $this->currentUser->setClientPersonalDataByCurUser($client);
-        }
-        
-        if ($client instanceof Client) {
-            $this->setClientAddress($client, $address);
-            $manzanaService->updateContactAsync($client);
-        }
-    }
-
-    /**
-     * @param Client $client
+     * @param Client  $client
      * @param Address $address
      */
     public function setClientAddress(&$client, Address $address)
@@ -184,6 +159,8 @@ class AddressService
     /**
      * @param array $data
      *
+     * @throws NotAuthorizedException
+     * @throws EmptyEntityClass
      * @throws \RuntimeException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
@@ -227,5 +204,37 @@ class AddressService
     public function delete(int $id): bool
     {
         return $this->addressRepository->delete($id);
+    }
+
+    /**
+     * @param Address $address
+     *
+     * @throws NotAuthorizedException
+     * @throws ConstraintDefinitionException
+     * @throws InvalidIdentifierException
+     * @throws ServiceNotFoundException
+     * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
+     * @throws \RuntimeException
+     */
+    protected function updateManzanaAddress(Address $address)
+    {
+        $container = App::getInstance()->getContainer();
+        /** @var ManzanaService $manzanaService */
+        $manzanaService = $container->get('manzana.service');
+        $client = null;
+        try {
+            $contactId = $manzanaService->getContactIdByCurUser();
+            $client = new Client();
+            $client->contactId = $contactId;
+        } catch (ManzanaServiceException $e) {
+            $client = new Client();
+            $this->currentUser->setClientPersonalDataByCurUser($client);
+        }
+
+        if ($client instanceof Client) {
+            $this->setClientAddress($client, $address);
+            $manzanaService->updateContactAsync($client);
+        }
     }
 }

@@ -9,12 +9,15 @@ namespace FourPaws\PersonalBundle\Service;
 use Bitrix\Main\Application;
 use Bitrix\Main\HttpRequest;
 use Bitrix\Main\Mail\Event;
+use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\UI\PageNavigation;
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Exception\CardNotFoundException;
@@ -74,11 +77,12 @@ class ReferralService
         $this->manzanaService     = $manzanaService;
         $this->currentUser        = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
     }
-    
+
     /**
      * @param bool                $redirectIfAdd
      * @param PageNavigation|null $nav
      *
+     * @throws EmptyEntityClass
      * @throws CardNotFoundException
      * @throws ServiceNotFoundException
      * @throws ValidationException
@@ -90,9 +94,9 @@ class ReferralService
      * @throws ConstraintDefinitionException
      * @throws NotAuthorizedException
      * @throws ServiceCircularReferenceException
-     * @return array|Referral[]
+     * @return ArrayCollection|Referral[]
      */
-    public function getCurUserReferrals(bool $redirectIfAdd = false, &$nav = null) : array
+    public function getCurUserReferrals(bool $redirectIfAdd = false, &$nav = null) : ArrayCollection
     {
         /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
         $request = Application::getInstance()->getContext()->getRequest();
@@ -158,11 +162,12 @@ class ReferralService
     
     /** @noinspection MoreThanThreeArgumentsInspection */
     /**
-     * @param User        $curUser
-     * @param array       $referrals
-     * @param HttpRequest $request
-     * @param bool        $redirectIfAdd
+     * @param User            $curUser
+     * @param ArrayCollection $referrals
+     * @param HttpRequest     $request
+     * @param bool            $redirectIfAdd
      *
+     * @throws EmptyEntityClass
      * @throws CardNotFoundException
      * @throws ServiceNotFoundException
      * @throws ValidationException
@@ -173,10 +178,10 @@ class ReferralService
      * @throws ConstraintDefinitionException
      * @throws ServiceCircularReferenceException
      */
-    private function setDataByManzana(User $curUser, array $referrals, HttpRequest $request, bool $redirectIfAdd)
+    private function setDataByManzana(User $curUser, ArrayCollection $referrals, HttpRequest $request, bool $redirectIfAdd)
     {
         $arCards = [];
-        if (\is_array($referrals) && !empty($referrals)) {
+        if (!$referrals->isEmpty()) {
             /** @var Referral $item */
             foreach ($referrals as $key => $item) {
                 $arCards[$item->getCard()] = $key;
@@ -262,12 +267,13 @@ class ReferralService
             }
         }
     }
-    
+
     /**
      * @param array $data
      *
      * @param bool  $updateManzana
      *
+     * @throws EmptyEntityClass
      * @throws ManzanaServiceException
      * @throws ContactUpdateException
      * @throws ValidationException
@@ -356,10 +362,11 @@ class ReferralService
         
         return $client;
     }
-    
+
     /**
      * @param array $data
      *
+     * @throws EmptyEntityClass
      * @throws ValidationException
      * @throws InvalidIdentifierException
      * @throws \Exception
@@ -387,9 +394,10 @@ class ReferralService
         
         return 0;
     }
-    
+
     /**
      * @return int
+     * @throws ObjectException
      */
     public function getActiveCountByUser() : int
     {
