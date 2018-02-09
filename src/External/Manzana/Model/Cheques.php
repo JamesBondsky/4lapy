@@ -11,6 +11,7 @@ use JMS\Serializer\Annotation\XmlRoot;
 
 /**
  * Class Cheques
+ * Элементы результата методов getCheques, getChequesByContactId (contact_cheques)
  *
  * @package FourPaws\External\Manzana\Model
  *

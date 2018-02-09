@@ -76,6 +76,7 @@ class ManzanaDateTimeImmutableFullShortHandler implements SubscribingHandlerInte
             $explode     = explode('T', $data);
             $explodeDate = explode('-', $explode[0]);
             $explodeTime = explode(':', $explode[1]);
+
             if (!empty($explodeTime[2])) {
                 $explodeMicroTime = explode('.', $explodeTime[2]);
             }

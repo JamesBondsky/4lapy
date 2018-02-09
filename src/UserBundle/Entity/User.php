@@ -201,6 +201,15 @@ class User implements UserInterface
     protected $phoneConfirmed = false;
 
     /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("UF_SHOP")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $shopCode = '';
+
+    /**
      * @var null|DateTime
      * @Serializer\Type("bitrix_date_time")
      * @Serializer\SerializedName("DATE_REGISTER")
@@ -218,6 +227,15 @@ class User implements UserInterface
      * @var Collection|Group[]
      */
     protected $groups;
+
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("UF_DISCOUNT_CARD")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $discountCardNumber = '';
 
     public function __construct()
     {
@@ -318,6 +336,16 @@ class User implements UserInterface
         }
 
         return '';
+    }
+
+    /**
+     * @return string
+     */
+    public function getManzanaNormalizePersonalPhone(): string
+    {
+        $value = $this->getNormalizePersonalPhone();
+
+        return strlen($value) ? '7'.$value : '';
     }
 
     /**
@@ -886,6 +914,54 @@ class User implements UserInterface
     public function eraseCredentials()
     {
         $this->password = '';
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDiscountCardNumber() : string
+    {
+        return $this->discountCardNumber ?? '';
+    }
+
+    /**
+     * @param string $discountCardNumber
+     *
+     * @return User
+     */
+    public function setDiscountCardNumber(string $discountCardNumber) : User
+    {
+        $this->discountCardNumber = $discountCardNumber;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isFastOrderUser() : bool
+    {
+        return (strpos($this->getEmail(), '@fastorder.ru') !== false);
+    }
+
+    /**
+     * @return string
+     */
+    public function getShopCode() : string
+    {
+        return $this->shopCode ?? '';
+    }
+
+    /**
+     * @param string $shopCode
+     *
+     * @return User
+     */
+    public function setShopCode(string $shopCode) : User
+    {
+        $this->shopCode = $shopCode;
+
         return $this;
     }
 }
