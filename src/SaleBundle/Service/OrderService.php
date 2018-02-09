@@ -482,10 +482,12 @@ class OrderService implements ContainerAwareInterface
          *    то происходит регистрация. Авторизации не происходит
          */
         $needCreateAddress = false;
+        $addressUserId = null;
         if ($storage->getUserId()) {
             $order->setFieldNoDemand('USER_ID', $storage->getUserId());
             if (!$address) {
                 $needCreateAddress = true;
+                $addressUserId = $storage->getUserId();
             }
         } else {
             $users = $this->currentUserProvider->getUserRepository()->findBy(
@@ -495,7 +497,9 @@ class OrderService implements ContainerAwareInterface
                 $order->setFieldNoDemand('USER_ID', $user->getId());
             } else {
                 /* @todo зарегистрировать юзера */
-                $order->setFieldNoDemand('USER_ID', 1);
+                $userId = 1;
+                $order->setFieldNoDemand('USER_ID', $userId);
+                $addressUserId = $userId;
                 $needCreateAddress = true;
             }
         }
@@ -508,18 +512,15 @@ class OrderService implements ContainerAwareInterface
         if ($needCreateAddress) {
             $address = (new Address())->setCity($storage->getCity())
                                       ->setCityLocation($storage->getCityCode())
+                                      ->setUserId($addressUserId)
                                       ->setStreet($storage->getStreet())
                                       ->setHouse($storage->getHouse())
                                       ->setHousing($storage->getBuilding())
                                       ->setEntrance($storage->getPorch())
                                       ->setFloor($storage->getFloor())
                                       ->setFlat($storage->getApartment());
-            if (!$storage->getUserId()) {
-                $address->setMain(true);
-            }
 
-            /** @todo сохранить адрес */
-            //            $this->addressService->add($address);
+            $this->addressService->add($address);
         }
 
         $result = $order->save();
