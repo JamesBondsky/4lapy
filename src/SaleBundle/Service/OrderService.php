@@ -29,8 +29,10 @@ use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Repository\OrderPropertyRepository;
 use FourPaws\SaleBundle\Repository\OrderPropertyVariantRepository;
 use FourPaws\SaleBundle\Repository\OrderStorage\StorageRepositoryInterface;
+use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
+use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareTrait;
 use Symfony\Component\HttpFoundation\Request;
@@ -112,6 +114,11 @@ class OrderService implements ContainerAwareInterface
     protected $addressService;
 
     /**
+     * @var UserRegistrationProviderInterface
+     */
+    protected $userRegistrationProvider;
+
+    /**
      * Порядок оформления заказа
      * @var array
      */
@@ -133,6 +140,7 @@ class OrderService implements ContainerAwareInterface
      * @param CurrentUserProviderInterface $currentUserProvider
      * @param UserCitySelectInterface $userCityProvider
      * @param AddressService $addressService
+     * @param UserRegistrationProviderInterface $userRegistrationProvider
      */
     public function __construct(
         StorageRepositoryInterface $storageRepository,
@@ -142,7 +150,8 @@ class OrderService implements ContainerAwareInterface
         DeliveryService $deliveryService,
         CurrentUserProviderInterface $currentUserProvider,
         UserCitySelectInterface $userCityProvider,
-        AddressService $addressService
+        AddressService $addressService,
+        UserRegistrationProviderInterface $userRegistrationProvider
     ) {
         $this->basketService = $basketService;
         $this->deliveryService = $deliveryService;
@@ -152,6 +161,7 @@ class OrderService implements ContainerAwareInterface
         $this->userCityProvider = $userCityProvider;
         $this->propertyRepository = $propertyRepository;
         $this->addressService = $addressService;
+        $this->userRegistrationProvider = $userRegistrationProvider;
     }
 
     /** @noinspection MoreThanThreeArgumentsInspection */
@@ -485,6 +495,14 @@ class OrderService implements ContainerAwareInterface
         $addressUserId = null;
         if ($storage->getUserId()) {
             $order->setFieldNoDemand('USER_ID', $storage->getUserId());
+            $user = $this->currentUserProvider->getCurrentUser();
+            if (!$user->getEmail() && $storage->getEmail()) {
+                $user->setEmail($storage->getEmail());
+                $this->currentUserProvider->getUserRepository()->updateEmail(
+                    $user->getId(),
+                    $storage->getEmail()
+                );
+            }
             if (!$address) {
                 $needCreateAddress = true;
                 $addressUserId = $storage->getUserId();
@@ -496,10 +514,14 @@ class OrderService implements ContainerAwareInterface
             if ($user = reset($users)) {
                 $order->setFieldNoDemand('USER_ID', $user->getId());
             } else {
-                /* @todo зарегистрировать юзера */
-                $userId = 1;
-                $order->setFieldNoDemand('USER_ID', $userId);
-                $addressUserId = $userId;
+                $user = (new User())->setName($storage->getName())
+                                    ->setEmail($storage->getEmail())
+                                    ->setLogin($storage->getPhone())
+                                    ->setPassword(randString(6))
+                                    ->setPersonalPhone($storage->getPhone());
+                $this->userRegistrationProvider->register($user, true);
+                $order->setFieldNoDemand('USER_ID', $user->getId());
+                $addressUserId = $user->getId();
                 $needCreateAddress = true;
             }
         }

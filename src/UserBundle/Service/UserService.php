@@ -9,7 +9,9 @@ namespace FourPaws\UserBundle\Service;
 use Bitrix\Sale\Fuser;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Model\Client;
+use FourPaws\External\ManzanaService;
 use FourPaws\Location\Exception\CityNotFoundException;
 use FourPaws\Location\LocationService;
 use FourPaws\UserBundle\Entity\User;
@@ -31,8 +33,11 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  * @package FourPaws\UserBundle\Service
  */
 class UserService implements
-    CurrentUserProviderInterface, UserAuthorizationInterface, UserRegistrationProviderInterface,
-    UserCitySelectInterface, UserAvatarAuthorizationInterface
+    CurrentUserProviderInterface,
+    UserAuthorizationInterface,
+    UserRegistrationProviderInterface,
+    UserCitySelectInterface,
+    UserAvatarAuthorizationInterface
 {
     /**
      * @var \CAllUser|\CUser
@@ -50,13 +55,21 @@ class UserService implements
     private $locationService;
 
     /**
+     * @var ManzanaService
+     */
+    private $manzanaService;
+
+    /**
      * UserService constructor.
      *
      * @param UserRepository $userRepository
      * @param LocationService $locationService
      */
-    public function __construct(UserRepository $userRepository, LocationService $locationService)
-    {
+    public function __construct(
+        UserRepository $userRepository,
+        LocationService $locationService,
+        ManzanaService $manzanaService
+    ) {
         /**
          * todo move to factory service
          */
@@ -64,8 +77,8 @@ class UserService implements
         $this->bitrixUserService = $USER;
         $this->userRepository = $userRepository;
         $this->locationService = $locationService;
+        $this->manzanaService = $manzanaService;
     }
-
 
     /**
      * @param string $rawLogin
@@ -93,6 +106,7 @@ class UserService implements
     public function logout(): bool
     {
         $this->bitrixUserService->Logout();
+
         return $this->isAuthorized();
     }
 
@@ -112,6 +126,7 @@ class UserService implements
     public function authorize(int $id): bool
     {
         $this->bitrixUserService->Authorize($id);
+
         return $this->isAuthorized();
     }
 
@@ -151,16 +166,40 @@ class UserService implements
 
     /**
      * @param User $user
+     * @param bool $manzanaSave
      *
      * @throws ValidationException
      * @throws BitrixRuntimeException
      * @return bool
      */
-    public function register(User $user): bool
+    public function register(User $user, bool $manzanaSave = true): bool
     {
-        return $this->userRepository->create($user);
+        $result = $this->userRepository->create($user);
+
+        if (!$manzanaSave) {
+            return $result;
+        }
+
+        /** todo refactor */
+        /** добавляем в зарегистрирвоанных пользователей */
+        \CUser::SetUserGroup($user->getId(), [6]);
+        
+        $client = null;
+        try {
+            $contactId = $this->manzanaService->getContactIdByPhone($user->getNormalizePersonalPhone());
+            $client = new Client();
+            $client->contactId = $contactId;
+        } catch (ManzanaServiceException $e) {
+            $client = new Client();
+        }
+
+        if ($client instanceof Client) {
+            $this->manzanaService->updateContactAsync($client);
+        }
+
+        return true;
     }
-    
+
     /**
      * @param string $code
      * @param string $name
@@ -195,10 +234,9 @@ class UserService implements
             }
         }
 
-
         return $city ?: false;
     }
-    
+
     /**
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
@@ -248,17 +286,17 @@ class UserService implements
         if (!($user instanceof User)) {
             $user = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class)->getCurrentUser();
         }
-        
-        $client->birthDate          = $user->getManzanaBirthday();
+
+        $client->birthDate = $user->getManzanaBirthday();
         // в Манзане телефон хранится с семеркой
         //$client->phone              = $user->getPersonalPhone();
-        $client->phone              = $user->getManzanaNormalizePersonalPhone();
-        $client->firstName          = $user->getName();
-        $client->secondName         = $user->getSecondName();
-        $client->lastName           = $user->getLastName();
-        $client->genderCode         = $user->getManzanaGender();
-        $client->email              = $user->getEmail();
-        $client->plLogin            = $user->getLogin();
+        $client->phone = $user->getManzanaNormalizePersonalPhone();
+        $client->firstName = $user->getName();
+        $client->secondName = $user->getSecondName();
+        $client->lastName = $user->getLastName();
+        $client->genderCode = $user->getManzanaGender();
+        $client->email = $user->getEmail();
+        $client->plLogin = $user->getLogin();
         $client->plRegistrationDate = $user->getManzanaDateRegister();
         if ($user->isEmailConfirmed() && $user->isPhoneConfirmed()) {
             // если e-mail и телефон подтверждены - отмечаем, что анкета актуальна и делаем карту бонусной
@@ -267,7 +305,7 @@ class UserService implements
             $client->setLoyaltyProgramContact(true);
         }
     }
-    
+
     /**
      * @param int $id
      *
@@ -275,7 +313,7 @@ class UserService implements
      * @throws NotAuthorizedException
      * @return array
      */
-    public function getUserGroups(int $id = 0) : array
+    public function getUserGroups(int $id = 0): array
     {
         if ($id === 0) {
             $id = $this->getCurrentUserId();
@@ -283,10 +321,10 @@ class UserService implements
         if ($id > 0) {
             return $this->userRepository->getUserGroupsIds($id);
         }
-        
+
         return [];
     }
-    
+
     /**
      * Авторизация текущего пользователя под другим пользователем
      *
@@ -296,12 +334,12 @@ class UserService implements
      * @throws AvatarSelfAuthorizationException
      * @return bool
      */
-    public function avatarAuthorize(int $id) : bool
+    public function avatarAuthorize(int $id): bool
     {
         $authResult = false;
-    
+
         /** @throws NotAuthorizedException */
-        $curUserId  = $this->getCurrentUserId();
+        $curUserId = $this->getCurrentUserId();
         $hostUserId = $this->getAvatarHostUserId() ?: $curUserId;
         if ($hostUserId) {
             if ($hostUserId === $id) {
@@ -312,24 +350,24 @@ class UserService implements
                 $this->setAvatarHostUserId($hostUserId);
             }
         }
-    
+
         return $authResult;
     }
-    
+
     /**
      * @return int
      */
-    public function getAvatarHostUserId() : int
+    public function getAvatarHostUserId(): int
     {
         $userId = 0;
         if (isset($_SESSION['4PAWS']['AVATAR_AUTH']['HOST_USER_ID'])) {
             $userId = (int)$_SESSION['4PAWS']['AVATAR_AUTH']['HOST_USER_ID'];
             $userId = $userId > 0 ? $userId : 0;
         }
-    
+
         return $userId;
     }
-    
+
     /**
      * @param int $id
      */
@@ -343,20 +381,20 @@ class UserService implements
             }
         }
     }
-    
+
     protected function flushAvatarHostUser()
     {
         $this->setAvatarHostUserId(0);
     }
-    
+
     /**
      * @return bool
      */
-    public function isAvatarAuthorized() : bool
+    public function isAvatarAuthorized(): bool
     {
         return $this->getAvatarHostUserId() > 0;
     }
-    
+
     /**
      * Возврат к авторизации под исходным пользователем
      *
@@ -364,25 +402,24 @@ class UserService implements
      * @throws AvatarSelfAuthorizationException
      * @return bool
      */
-    public function avatarLogout() : bool
+    public function avatarLogout(): bool
     {
         $isLoggedByHostUser = true;
         /** @throws NotAuthorizedException */
-        $curUserId  = $this->getCurrentUserId();
+        $curUserId = $this->getCurrentUserId();
         $hostUserId = $this->getAvatarHostUserId();
         if ($hostUserId) {
             $isLoggedByHostUser = false;
             if ($curUserId === $hostUserId) {
                 throw new AvatarSelfAuthorizationException('An attempt to authenticate yourself');
-            } else {
-                $authResult = $this->authorize($hostUserId);
-                if ($authResult) {
-                    $this->flushAvatarHostUser();
-                    $isLoggedByHostUser = true;
-                }
+            }
+            $authResult = $this->authorize($hostUserId);
+            if ($authResult) {
+                $this->flushAvatarHostUser();
+                $isLoggedByHostUser = true;
             }
         }
-    
+
         return $isLoggedByHostUser;
     }
 }

@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\MobileApiBundle\Services\Api;
 
 use FourPaws\MobileApiBundle\Dto\Request\UserLoginRequest;
@@ -103,6 +107,10 @@ class UserService
         $user = (new User())
             ->setLogin($login)
             ->setPassword($password);
-        return $this->userRegistrationProvider->register($user);
+
+        /**
+         * @todo нужно ли отправлять данные в manzana?
+         */
+        return $this->userRegistrationProvider->register($user, false);
     }
 }

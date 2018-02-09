@@ -103,6 +103,10 @@ class AddressService
             $address->setUserId($this->currentUser->getCurrentUserId());
         }
 
+        if (!$address->getName()) {
+            $address->setName($address->getFullAddress());
+        }
+
         if ($address->isMain()) {
             $this->disableMainItem();
         }

@@ -406,7 +406,8 @@ class Address extends BaseEntity
         /** @var LocationService $locationService */
         $locationService = Application::getInstance()->getContainer()->get('location.service');
         try {
-            $city = $locationService->findLocationCity($this->getCity(), null, 1, true);
+            $cities = $locationService->findLocationCity($this->getCity(), '', 1, true);
+            $city = reset($cities);
             $this->setCityLocation($city['CODE']);
         } catch (CityNotFoundException $e) {
         }

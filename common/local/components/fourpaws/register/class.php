@@ -281,19 +281,34 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         $data['UF_PHONE_CONFIRMED'] = 'Y';
         
         /** @var User $userEntity */
-        $userEntity =
-            $this->serializer->fromArray($data, User::class, DeserializationContext::create()->setGroups('create'));
+        $userEntity = $this->serializer->fromArray(
+                $data,
+                User::class,
+            DeserializationContext::create()->setGroups('create')
+        );
         try {
-            $res = $this->userRegistrationService->register($userEntity);
+            $res = $this->userRegistrationService->register($userEntity, true);
             if (!$res) {
                 return JsonErrorResponse::createWithData(
                     'При регистрации произошла ошибка',
                     ['errors' => ['registerError' => 'При регистрации произошла ошибка']]
                 );
             }
+
+            /** @noinspection PhpUnusedLocalVariableInspection */
+            $name = $userEntity->getName();
+            ob_start();
+            /** @noinspection PhpIncludeInspection */
+            include_once App::getDocumentRoot()
+                         . '/local/components/fourpaws/register/templates/.default/include/confirm.php';
+            $html = ob_get_clean();
             
-            /** добавляем в зарегистрирвоанных пользователей */
-            \CUser::SetUserGroup($userEntity->getId(), [6]);
+            return JsonSuccessResponse::createWithData(
+                'Регистрация прошла успешно',
+                [
+                    'html' => $html,
+                ]
+            );
         } catch (BitrixRuntimeException $e) {
             return JsonErrorResponse::createWithData(
                 'При регистрации произошла ошибка - ' . $e->getMessage(),
@@ -304,37 +319,6 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 ]
             );
         }
-        
-        /** @var ManzanaService $manzanaService */
-        $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
-        $client         = null;
-    
-        try {
-            $contactId         = $manzanaService->getContactIdByPhone($userEntity->getNormalizePersonalPhone());
-            $client            = new Client();
-            $client->contactId = $contactId;
-        } catch (ManzanaServiceException $e) {
-            $client = new Client();
-        }
-    
-        if ($client instanceof Client) {
-            $manzanaService->updateContactAsync($client);
-        }
-        
-        /** @noinspection PhpUnusedLocalVariableInspection */
-        $name = $userEntity->getName();
-        ob_start();
-        /** @noinspection PhpIncludeInspection */
-        include_once App::getDocumentRoot()
-                     . '/local/components/fourpaws/register/templates/.default/include/confirm.php';
-        $html = ob_get_clean();
-        
-        return JsonSuccessResponse::createWithData(
-            'Регистрация прошла успешно',
-            [
-                'html' => $html,
-            ]
-        );
     }
     
     /**
