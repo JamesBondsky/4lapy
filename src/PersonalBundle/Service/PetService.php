@@ -6,6 +6,7 @@
 
 namespace FourPaws\PersonalBundle\Service;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\External\Exception\ManzanaServiceException;
@@ -143,9 +144,9 @@ class PetService
      * @throws ServiceNotFoundException
      * @throws \Exception
      * @throws ServiceCircularReferenceException
-     * @return array
+     * @return ArrayCollection
      */
-    public function getCurUserPets() : array
+    public function getCurUserPets() : ArrayCollection
     {
         return $this->petRepository->findByCurUser();
     }

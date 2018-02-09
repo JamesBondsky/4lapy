@@ -94,7 +94,7 @@ class ReferralService
      * @throws ConstraintDefinitionException
      * @throws NotAuthorizedException
      * @throws ServiceCircularReferenceException
-     * @return ArrayCollection|Referral[]
+     * @return ArrayCollection
      */
     public function getCurUserReferrals(bool $redirectIfAdd = false, &$nav = null) : ArrayCollection
     {

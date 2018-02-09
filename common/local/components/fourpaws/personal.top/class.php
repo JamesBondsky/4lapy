@@ -99,6 +99,7 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
         $params['CACHE_TIME']           = $params['CACHE_TIME'] ?? 360000;
         $params['COUNT_ITEMS']          = $params['COUNT_ITEMS'] ?? 10;
         $params['LIMIT_MANZANA_CHEQUE'] = 50;
+        /** @todo возможно увеличить кеширование до 1-3х часов, не так часто происходят покупки */
         $params['MANZANA_CACHE_TIME']   = 15 * 60;
         
         return $params;

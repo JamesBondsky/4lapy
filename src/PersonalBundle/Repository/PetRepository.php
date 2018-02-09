@@ -71,7 +71,7 @@ class PetRepository extends BaseHlRepository
     }
 
     /**
-     * @return Pet[]|ArrayCollection
+     * @return ArrayCollection
      * @throws InvalidIdentifierException
      * @throws ServiceNotFoundException
      * @throws NotAuthorizedException
