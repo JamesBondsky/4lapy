@@ -9,6 +9,7 @@ use FourPaws\External\Manzana\Model\Client;
 use FourPaws\Location\Exception\CityNotFoundException;
 use FourPaws\Location\LocationService;
 use FourPaws\UserBundle\Entity\User;
+use FourPaws\UserBundle\Exception\AvatarSelfAuthorizationException;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidCredentialException;
@@ -29,7 +30,8 @@ class UserService implements
     CurrentUserProviderInterface,
     UserAuthorizationInterface,
     UserRegistrationProviderInterface,
-    UserCitySelectInterface
+    UserCitySelectInterface,
+    UserAvatarAuthorizationInterface
 {
     /**
      * @var \CAllUser|\CUser
@@ -256,7 +258,9 @@ class UserService implements
         }
         
         $client->birthDate          = $user->getManzanaBirthday();
-        $client->phone              = $user->getPersonalPhone();
+        // в Манзане телефон хранится с семеркой
+        //$client->phone              = $user->getPersonalPhone();
+        $client->phone              = $user->getManzanaNormalizePersonalPhone();
         $client->firstName          = $user->getName();
         $client->secondName         = $user->getSecondName();
         $client->lastName           = $user->getLastName();
@@ -264,6 +268,12 @@ class UserService implements
         $client->email              = $user->getEmail();
         $client->plLogin            = $user->getLogin();
         $client->plRegistrationDate = $user->getManzanaDateRegister();
+        if ($user->isEmailConfirmed() && $user->isPhoneConfirmed()) {
+            // если e-mail и телефон подтверждены - отмечаем, что анкета актуальна и делаем карту бонусной
+            // - так делалось по умолчанию на старом сайте
+            $client->setActualContact(true);
+            $client->setLoyaltyProgramContact(true);
+        }
     }
     
     /**
@@ -283,5 +293,103 @@ class UserService implements
         }
         
         return [];
+    }
+
+    /**
+     * Авторизация текущего пользователя под другим пользователем
+     *
+     * @param int $id
+     * @throws NotAuthorizedException
+     * @throws AvatarSelfAuthorizationException
+     * @return bool
+     */
+    public function avatarAuthorize(int $id) : bool
+    {
+        $authResult = false;
+
+        /** @throws NotAuthorizedException */
+        $curUserId = $this->getCurrentUserId();
+        $hostUserId = $this->getAvatarHostUserId() ?: $curUserId;
+        if ($hostUserId) {
+            if ($hostUserId === $id) {
+                throw new AvatarSelfAuthorizationException('An attempt to authenticate yourself');
+            }
+            $authResult = $this->bitrixUserService->Authorize($id);
+            if ($authResult) {
+                $this->setAvatarHostUserId($hostUserId);
+            }
+        }
+
+        return $authResult;
+    }
+
+    /**
+     * @return int
+     */
+    public function getAvatarHostUserId() : int
+    {
+        $userId = 0;
+        if (isset($_SESSION['4PAWS']['AVATAR_AUTH']['HOST_USER_ID'])) {
+            $userId = (int)$_SESSION['4PAWS']['AVATAR_AUTH']['HOST_USER_ID'];
+            $userId = $userId > 0 ? $userId : 0;
+        }
+
+        return $userId;
+    }
+
+    /**
+     * @param int $id
+     */
+    protected function setAvatarHostUserId(int $id)
+    {
+        if ($id > 0) {
+            $_SESSION['4PAWS']['AVATAR_AUTH']['HOST_USER_ID'] = $id;
+        } else {
+            if (isset($_SESSION['4PAWS']['AVATAR_AUTH']['HOST_USER_ID'])) {
+                unset($_SESSION['4PAWS']['AVATAR_AUTH']['HOST_USER_ID']);
+            }
+        }
+    }
+
+    protected function flushAvatarHostUser()
+    {
+        $this->setAvatarHostUserId(0);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isAvatarAuthorized() : bool
+    {
+        return $this->getAvatarHostUserId() > 0;
+    }
+
+    /**
+     * Возврат к авторизации под исходным пользователем
+     *
+     * @throws NotAuthorizedException
+     * @throws AvatarSelfAuthorizationException
+     * @return bool
+     */
+    public function avatarLogout() : bool
+    {
+        $isLoggedByHostUser = true;
+        /** @throws NotAuthorizedException */
+        $curUserId = $this->getCurrentUserId();
+        $hostUserId = $this->getAvatarHostUserId();
+        if ($hostUserId) {
+            $isLoggedByHostUser = false;
+            if ($curUserId === $hostUserId) {
+                throw new AvatarSelfAuthorizationException('An attempt to authenticate yourself');
+            } else {
+                $authResult = $this->authorize($hostUserId);
+                if ($authResult) {
+                    $this->flushAvatarHostUser();
+                    $isLoggedByHostUser = true;
+                }
+            }
+        }
+
+        return $isLoggedByHostUser;
     }
 }

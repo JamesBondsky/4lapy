@@ -9,9 +9,11 @@ use JMS\Serializer\Annotation\XmlElement;
 use JMS\Serializer\Annotation\XmlList;
 use JMS\Serializer\Annotation\XmlNamespace;
 use JMS\Serializer\Annotation\XmlRoot;
+use FourPaws\External\Manzana\Model\ChequePayment;
 
 /**
  * Class Cheque
+ * Элемент результата методов getCheques, getChequesByContactId (contact_cheques)
  *
  * @package FourPaws\External\Manzana\Model
  *
@@ -22,6 +24,8 @@ use JMS\Serializer\Annotation\XmlRoot;
 class Cheque
 {
     /**
+     * ID чека
+     *
      * @XmlElement(cdata=false)
      * @Type("string")
      * @SerializedName("ChequeId")
@@ -29,6 +33,8 @@ class Cheque
     public $chequeId;
     
     /**
+     * Номер чека
+     *
      * @XmlElement(cdata=false)
      * @Type("string")
      * @SerializedName("ChequeNumber")
@@ -36,12 +42,16 @@ class Cheque
     public $chequeNumber;
     
     /**
+     * Дата
+     *
      * @Type("manzana_date_time_short")
      * @SerializedName("Date")
      */
     public $date;
     
     /**
+     * Название чека
+     *
      * @XmlElement(cdata=false)
      * @Type("string")
      * @SerializedName("ChequeName")
@@ -49,6 +59,8 @@ class Cheque
     public $chequeName;
     
     /**
+     * Скидка
+     *
      * @XmlElement(cdata=false)
      * @Type("float")
      * @SerializedName("Discount")
@@ -56,6 +68,8 @@ class Cheque
     public $discount;
     
     /**
+     * Сумма
+     *
      * @XmlElement(cdata=false)
      * @Type("float")
      * @SerializedName("Summ")
@@ -63,6 +77,8 @@ class Cheque
     public $sum;
     
     /**
+     * Сумма со скидкой
+     *
      * @XmlElement(cdata=false)
      * @Type("float")
      * @SerializedName("SummDiscounted")
@@ -70,6 +86,8 @@ class Cheque
     public $sumDiscounted;
     
     /**
+     * Название магазина !!! не код !!!
+     *
      * @XmlElement(cdata=false)
      * @Type("string")
      * @SerializedName("BusinessUnit")
@@ -77,6 +95,8 @@ class Cheque
     public $businessUnit;
     
     /**
+     * ID партнёра
+     *
      * @XmlElement(cdata=false)
      * @Type("string")
      * @SerializedName("OrganizationId")
@@ -84,6 +104,8 @@ class Cheque
     public $organizationId;
     
     /**
+     * Название партнёра
+     *
      * @XmlElement(cdata=false)
      * @Type("string")
      * @SerializedName("OrganizationName")
@@ -91,36 +113,45 @@ class Cheque
     public $organizationName;
     
     /**
+     * Дата обработки чека
+     *
      * @Type("manzana_date_time_short")
      * @SerializedName("Processed")
      */
     public $processed;
     
     /**
+     * Идентификатор наличия позиций в чеке
+     * 1-No (Нет) 2-Yes (Да)
+     *
      * @XmlElement(cdata=false)
      * @Type("int")
      * @SerializedName("HasItems")
-     * 1 - No, 2 -Yes
      */
     public $hasItems;
     
     /**
+     * Код типа операции
+     * 1-Purchase (Продажа) 2-Return (Возврат)
+     *
      * @XmlElement(cdata=false)
      * @Type("int")
      * @SerializedName("OperationTypeCode")
-     * 1 - Purchase(Продажа) 2 - Return(Возврат)
      */
     public $operationTypeCode;
     
     /**
+     * Название типа операции
+     *
      * @XmlElement(cdata=false)
      * @Type("string")
      * @SerializedName("OperationTypeText")
-     * 1 - Purchase(Продажа) 2 - Return(Возврат)
      */
     public $operationTypeText;
     
     /**
+     * Начисленный бонус
+     *
      * @XmlElement(cdata=false)
      * @Type("float")
      * @SerializedName("Bonus")
@@ -128,6 +159,8 @@ class Cheque
     public $bonus;
     
     /**
+     * Оплачено бонусами
+     *
      * @XmlElement(cdata=false)
      * @Type("float")
      * @SerializedName("PaidByBonus")
@@ -135,17 +168,24 @@ class Cheque
     public $paidByBonus;
     
     /**
-     * @Type("ArrayCollection<FourPaws\External\Manzana\Model\Payment>")
-     * @XmlList(entry="Payment", inline=true)
+     * @Type("FourPaws\External\Manzana\Model\ChequePayments")
      * @SerializedName("Payments")
      */
     public $payments;
-    
+
     /**
-     * @return mixed
+     * @return bool
      */
     public function hasItemsBool()
     {
         return (int)$this->hasItems === 2;
+    }
+
+    /**
+     * @return array
+     */
+    public function getPaymentsArray()
+    {
+        return $this->payments->chequePayments ? $this->payments->chequePayments->toArray() : [];
     }
 }
