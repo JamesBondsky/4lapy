@@ -50,7 +50,7 @@ class Client
     public $lastName;
 
     /**
-     * @Type("manzana_date_time_short")
+     * @Type("DateTimeImmutable")
      * @SerializedName("birthdate")
      */
     public $birthDate;
@@ -241,7 +241,7 @@ class Client
     public $plShopsName;
 
     /**
-     * @Type("manzana_date_time_short")
+     * @Type("DateTimeImmutable")
      * @SerializedName("pl_registration_date")
      */
     public $plRegistrationDate;
@@ -336,7 +336,7 @@ class Client
     public $spousesName;
 
     /**
-     * @Type("manzana_date_time_short")
+     * @Type("DateTimeImmutable")
      * @SerializedName("Anniversary")
      */
     public $anniversary;

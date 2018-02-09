@@ -1,3 +1,3 @@
 <?
-$sSectionName="Чеки";
+$sSectionName = "Чеки";
 ?>

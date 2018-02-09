@@ -1,30 +1,30 @@
 <?php
 
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Adv\Bitrixtools\Tools\Main\UserGroupUtils;
 use Bitrix\Main\DB\Connection;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
 use FourPaws\App\Application;
+use FourPaws\AppBundle\Serialization\ArrayOrFalseHandler;
+use FourPaws\AppBundle\Serialization\BitrixBooleanHandler;
+use FourPaws\AppBundle\Serialization\BitrixDateHandler;
+use FourPaws\AppBundle\Serialization\BitrixDateTimeHandler;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Manzana\Exception\CardNotFoundException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
 use FourPaws\External\SmsService;
-use FourPaws\UserBundle\Repository\UserRepository;
-use FourPaws\UserBundle\Service\UserService;
-use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\UserBundle\Entity\User;
-use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use FourPaws\UserBundle\Repository\UserRepository;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use FourPaws\UserBundle\Service\UserService;
 use JMS\Serializer\DeserializationContext;
-use JMS\Serializer\SerializerBuilder;
 use JMS\Serializer\Handler\HandlerRegistry;
-use JMS\Serializer\Serializer;
 use JMS\Serializer\SerializationContext;
-use FourPaws\AppBundle\Serialization\ArrayOrFalseHandler;
-use FourPaws\AppBundle\Serialization\BitrixBooleanHandler;
-use FourPaws\AppBundle\Serialization\BitrixDateHandler;
-use FourPaws\AppBundle\Serialization\BitrixDateTimeHandler;
+use JMS\Serializer\Serializer;
+use JMS\Serializer\SerializerBuilder;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();

@@ -269,7 +269,7 @@ class Card
      * @SerializedName("EmployeeBreeder")
      */
     public $employeeBreeder;
-
+    
     /**
      * @return bool
      */
@@ -277,7 +277,7 @@ class Card
     {
         return (int)$this->hashChildrenCode === 200000;
     }
-
+    
     /**
      * @return bool
      */
@@ -285,7 +285,7 @@ class Card
     {
         return (int)$this->familyStatusCode === 2;
     }
-
+    
     /**
      * @return bool
      */

@@ -72,6 +72,12 @@ services:
     calls:
       - [setServiceLogger]
 
+  manzana.pos.service:
+    class: FourPaws\External\ManzanaPosService
+    arguments: ['@jms_serializer', '@manzana.pos.soap', '%manzana_pos%']
+    calls:
+      - [setServiceLogger]
+
   manzana.sync_consumer:
     class: FourPaws\External\Manzana\Consumer\ManzanaContactConsumer
     arguments: ['@jms_serializer', '@manzana.service']

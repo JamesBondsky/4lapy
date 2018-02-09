@@ -1,19 +1,19 @@
 <?
-$aMenuLinks = Array(
-	Array(
-		"Зарегистрировать карту",
-		"bonus/",
-		Array(),
-		Array(),
-		""
-	),
-    Array(
+$aMenuLinks = [
+    [
+        "Зарегистрировать карту",
+        "bonus/",
+        [],
+        [],
+        "",
+    ],
+    [
         "История по карте",
         "history/",
-        Array(),
-        Array(),
-        ""
-    ),
+        [],
+        [],
+        "",
+    ],
     /*
 	Array(
 		"Самовывоз",
@@ -23,28 +23,28 @@ $aMenuLinks = Array(
 		""
 	),
 	*/
-	Array(
-		"Бонусы",
-		"http://corp.4lapy.ru/company/bonus.php",
-		Array(),
-		Array(),
-		""
-	),
-	/*
-	Array(
-		"Чеки",
-		"bonusesCount/",
-		Array(),
-		Array(),
-		""
-	),
-	*/
+    [
+        "Бонусы",
+        "http://corp.4lapy.ru/company/bonus.php",
+        [],
+        [],
+        "",
+    ],
+    /*
     Array(
-        "Аватар",
-        "avatar/",
+        "Чеки",
+        "bonusesCount/",
         Array(),
         Array(),
         ""
     ),
-);
+    */
+    [
+        "Аватар",
+        "avatar/",
+        [],
+        [],
+        "",
+    ],
+];
 ?>

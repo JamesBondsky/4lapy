@@ -1,77 +1,77 @@
 $(document).ready(function () {
-	
-	$('#page').on('click', '#nextStep', function (ev) {
-		ev.preventDefault();
-		if ($('.err').length == 0) {
-			$(this).removeAttr('disabled');
-			nextStep('.form-page');
-		}
-	})
-
-	$('#page').on('click', '.ajaxButton', function () {
-		if (oGlobal.isCheckCode > 0) {
-			$(this).attr('disabled', true).addClass('loading-cur');
-			sendCheck($(this));
-		} else {
-			alert('Ой, Вы 2 раза ввели не тот номер телефона, пожалуйста, начните процесс регистрации с начала.');
-		}
-	})
-
-	$('#page').on('click', '.check-code__btn', function (ev) {
-		if (oGlobal.isCheckCode > 0) {
-			checkCode($('input.check-code__field').val(), $('.form-page'), $(this));
-		} else {
-			alert('Ой, Вы 2 раза ввели не тот номер телефона, пожалуйста, начните процесс регистрации с начала.');
-		};
-		ev.preventDefault();
-	})
-
-	$('#page').on('change', '#email', function (ev) {
-		var p = /^[-\w.]+@([A-z0-9][-A-z0-9]+\.)+[A-z]{2,4}$/;
-		if (this.value != '' && !p.test(this.value)) {
-			ev.preventDefault();
-			alert('В поле Email введены недопустимые символы!');
-		}
-	})
-
-
-	$('body').on('click', '.window-close', function () {
-		$(this).parents('.window').hide();
-	})
-
+    
+    $('#page').on('click', '#nextStep', function (ev) {
+        ev.preventDefault();
+        if ($('.err').length == 0) {
+            $(this).removeAttr('disabled');
+            nextStep('.form-page');
+        }
+    })
+    
+    $('#page').on('click', '.ajaxButton', function () {
+        if (oGlobal.isCheckCode > 0) {
+            $(this).attr('disabled', true).addClass('loading-cur');
+            sendCheck($(this));
+        } else {
+            alert('Ой, Вы 2 раза ввели не тот номер телефона, пожалуйста, начните процесс регистрации с начала.');
+        }
+    })
+    
+    $('#page').on('click', '.check-code__btn', function (ev) {
+        if (oGlobal.isCheckCode > 0) {
+            checkCode($('input.check-code__field').val(), $('.form-page'), $(this));
+        } else {
+            alert('Ой, Вы 2 раза ввели не тот номер телефона, пожалуйста, начните процесс регистрации с начала.');
+        }
+        ;
+        ev.preventDefault();
+    })
+    
+    $('#page').on('change', '#email', function (ev) {
+        var p = /^[-\w.]+@([A-z0-9][-A-z0-9]+\.)+[A-z]{2,4}$/;
+        if (this.value != '' && !p.test(this.value)) {
+            ev.preventDefault();
+            alert('В поле Email введены недопустимые символы!');
+        }
+    })
+    
+    $('body').on('click', '.window-close', function () {
+        $(this).parents('.window').hide();
+    })
+    
 });
 
 oGlobal = {
-	isCheckCode: 2
+    isCheckCode: 2
 }
 
-function nextStep (sElem) {
-	$(sElem).find('input[type=submit]').attr('disabled', true);
-	$(sElem).find('.form-page__submit-wrap').addClass('loading');
-	var oDataSerial = $(sElem).serializeArray(),
-		oData = {
-			'AJAX': 'Y'
-		},
-		sParam = '';
-	$.each(oDataSerial, function (i, field) {
-		oData[field.name] = field.value
-	})
-	sParam = $.param(oData);
-	$.ajax({
-		type: 'POST',
-		dataType: 'html',
-		url: $(sElem).attr('action'),
-		data: oData,
-		error: function(x, e) {
-			alert('Error ' + x.status);
-		},
-		complete: function (xhr, status) {
-			$(sElem).replaceWith(xhr.responseText);
-			$('html, body').animate({ scrollTop: $(document).height() }, 200);
-			$(sElem).find('#nextStep').removeAttr('disabled');
-			$(sElem).find('.form-page__submit-wrap').removeClass('loading');
-		}
-	})
+function nextStep(sElem) {
+    $(sElem).find('input[type=submit]').attr('disabled', true);
+    $(sElem).find('.form-page__submit-wrap').addClass('loading');
+    var oDataSerial = $(sElem).serializeArray(),
+        oData       = {
+            'AJAX': 'Y'
+        },
+        sParam      = '';
+    $.each(oDataSerial, function (i, field) {
+        oData[field.name] = field.value
+    })
+    sParam = $.param(oData);
+    $.ajax({
+               type:     'POST',
+               dataType: 'html',
+               url:      $(sElem).attr('action'),
+               data:     oData,
+               error:    function (x, e) {
+                   alert('Error ' + x.status);
+               },
+               complete: function (xhr, status) {
+                   $(sElem).replaceWith(xhr.responseText);
+                   $('html, body').animate({scrollTop: $(document).height()}, 200);
+                   $(sElem).find('#nextStep').removeAttr('disabled');
+                   $(sElem).find('.form-page__submit-wrap').removeClass('loading');
+               }
+           })
 }
 
 // function sendCheck (eBtnCheck) {
@@ -163,9 +163,5 @@ function nextStep (sElem) {
 // 					window.location.reload()
 // 				} else {
 // 					if(eBtn.data('type') == 'phone') oGlobal.isCheckCode--;
-// 					eBtn.removeAttr('disabled').parent().after('<p class="check-code__msg">Проверочный код неверный!</p>');
-// 				}
-// 			}
-// 		}
-// 	})
-// }
+// 					eBtn.removeAttr('disabled').parent().after('<p class="check-code__msg">Проверочный код
+// неверный!</p>'); } } } }) }

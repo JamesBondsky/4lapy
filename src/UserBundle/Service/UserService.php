@@ -27,11 +27,8 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  * @package FourPaws\UserBundle\Service
  */
 class UserService implements
-    CurrentUserProviderInterface,
-    UserAuthorizationInterface,
-    UserRegistrationProviderInterface,
-    UserCitySelectInterface,
-    UserAvatarAuthorizationInterface
+    CurrentUserProviderInterface, UserAuthorizationInterface, UserRegistrationProviderInterface,
+    UserCitySelectInterface, UserAvatarAuthorizationInterface
 {
     /**
      * @var \CAllUser|\CUser
@@ -294,11 +291,12 @@ class UserService implements
         
         return [];
     }
-
+    
     /**
      * Авторизация текущего пользователя под другим пользователем
      *
      * @param int $id
+     *
      * @throws NotAuthorizedException
      * @throws AvatarSelfAuthorizationException
      * @return bool
@@ -306,9 +304,9 @@ class UserService implements
     public function avatarAuthorize(int $id) : bool
     {
         $authResult = false;
-
+    
         /** @throws NotAuthorizedException */
-        $curUserId = $this->getCurrentUserId();
+        $curUserId  = $this->getCurrentUserId();
         $hostUserId = $this->getAvatarHostUserId() ?: $curUserId;
         if ($hostUserId) {
             if ($hostUserId === $id) {
@@ -319,10 +317,10 @@ class UserService implements
                 $this->setAvatarHostUserId($hostUserId);
             }
         }
-
+    
         return $authResult;
     }
-
+    
     /**
      * @return int
      */
@@ -333,10 +331,10 @@ class UserService implements
             $userId = (int)$_SESSION['4PAWS']['AVATAR_AUTH']['HOST_USER_ID'];
             $userId = $userId > 0 ? $userId : 0;
         }
-
+    
         return $userId;
     }
-
+    
     /**
      * @param int $id
      */
@@ -350,12 +348,12 @@ class UserService implements
             }
         }
     }
-
+    
     protected function flushAvatarHostUser()
     {
         $this->setAvatarHostUserId(0);
     }
-
+    
     /**
      * @return bool
      */
@@ -363,7 +361,7 @@ class UserService implements
     {
         return $this->getAvatarHostUserId() > 0;
     }
-
+    
     /**
      * Возврат к авторизации под исходным пользователем
      *
@@ -375,7 +373,7 @@ class UserService implements
     {
         $isLoggedByHostUser = true;
         /** @throws NotAuthorizedException */
-        $curUserId = $this->getCurrentUserId();
+        $curUserId  = $this->getCurrentUserId();
         $hostUserId = $this->getAvatarHostUserId();
         if ($hostUserId) {
             $isLoggedByHostUser = false;
@@ -389,7 +387,7 @@ class UserService implements
                 }
             }
         }
-
+    
         return $isLoggedByHostUser;
     }
 }

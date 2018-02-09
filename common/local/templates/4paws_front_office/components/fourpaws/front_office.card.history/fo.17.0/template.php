@@ -5,33 +5,33 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 /**
- * @global CMain $APPLICATION
- * @var array $arParams
- * @var array $arResult
+ * @global CMain                                     $APPLICATION
+ * @var array                                        $arParams
+ * @var array                                        $arResult
  * @var FourPawsFrontOfficeCardRegistrationComponent $component
- * @var CBitrixComponentTemplate $this
- * @var string $templateName
- * @var string $componentPath
+ * @var CBitrixComponentTemplate                     $this
+ * @var string                                       $templateName
+ * @var string                                       $componentPath
  */
 
 switch ($arResult['CURRENT_STAGE']) {
     case 'initial':
         // стартовая страница
-        include __DIR__.'/stage.initial.php';
+        include __DIR__ . '/stage.initial.php';
         break;
-
+    
     case 'history':
         // запрос истории по карте (ajax)
-        include __DIR__.'/stage.history.php';
+        include __DIR__ . '/stage.history.php';
         break;
-
+    
     case 'cheque_details':
         // запрос детализации чека (ajax)
-        include __DIR__.'/stage.cheque_details.php';
+        include __DIR__ . '/stage.cheque_details.php';
         break;
-
+    
     case 'print':
         // запрос полной версии для печати
-        include __DIR__.'/stage.print.php';
+        include __DIR__ . '/stage.print.php';
         break;
 }

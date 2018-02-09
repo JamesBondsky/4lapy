@@ -8,9 +8,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var \CMain $APPLICATION
  */
 
-                    ?></div>
-                </div>
-            </div>
-        </div>
-    </body>
+?></div>
+</div>
+</div>
+</div>
+</body>
 </html><?php
