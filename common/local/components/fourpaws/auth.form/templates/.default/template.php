@@ -41,7 +41,11 @@ use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
         if ($component->getMode() !== FourPawsAuthFormComponent::MODE_FORM) {
             $user = $component->getCurrentUserProvider()->getCurrentUser();
             // костыль, чтобы можно было использовать кеш в компоненте
-            $_GET['isAvatarAuthorized'] = Application::getInstance()->getContainer()->get(CurrentUserProviderInterface::class)->isAvatarAuthorized();
+            $_GET['isAvatarAuthorized'] =
+                Application::getInstance()
+                           ->getContainer()
+                           ->get(CurrentUserProviderInterface::class)
+                           ->isAvatarAuthorized();
             $APPLICATION->IncludeComponent(
                 'bitrix:menu',
                 'header.personal_menu',
@@ -50,7 +54,7 @@ use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
                     'CACHE_SELECTED_ITEMS' => 'N',
                     // Y - кеш будет создаваться для каждого юзера свой
                     'MENU_CACHE_USE_USERS' => 'N',
-
+    
                     'COMPONENT_TEMPLATE'    => 'header.personal_menu',
                     'ROOT_MENU_TYPE'        => 'personal',
                     'MENU_CACHE_TYPE'       => 'A',
@@ -58,7 +62,7 @@ use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
                     // должно быть Y - у нас это меню зависит от групп юзеров
                     'MENU_CACHE_USE_GROUPS' => 'Y',
                     'MENU_CACHE_GET_VARS'   => [
-                        'isAvatarAuthorized'
+                        'isAvatarAuthorized',
                     ],
                     'MAX_LEVEL'             => '1',
                     'CHILD_MENU_TYPE'       => '',

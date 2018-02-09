@@ -1,12 +1,12 @@
 <?php
 
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Adv\Bitrixtools\Tools\Main\UserGroupUtils;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
 use FourPaws\App\Application;
 use FourPaws\External\Manzana\Exception\CardNotFoundException;
 use FourPaws\External\ManzanaService;
-use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService;
 

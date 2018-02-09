@@ -18,6 +18,6 @@ foreach ($arResult as $item) {
     if (strpos($item['LINK'], 'http') === 0) {
         $attr .= ' target="blank"';
     }
-    ?><a href="<?=$item['LINK']?>"<?=$attr?> class="<?=$class?>"><?=$item['TEXT']?></a><?php
+    ?><a href="<?= $item['LINK'] ?>"<?= $attr ?> class="<?= $class ?>"><?= $item['TEXT'] ?></a><?php
 }
 echo '</div>';
