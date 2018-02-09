@@ -100,7 +100,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
         if ($offers->isEmpty()) {
             throw new \RuntimeException('Offers not found');
         }
-
+        /* @todo поправить метро у магазинов */
         /** @var \Symfony\Bundle\FrameworkBundle\Routing\Router $router */
         $router = Application::getInstance()->getContainer()->get('router');
         /** @var Symfony\Component\Routing\RouteCollection $routeCollection */
