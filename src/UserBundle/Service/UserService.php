@@ -27,9 +27,8 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  * @package FourPaws\UserBundle\Service
  */
 class UserService implements
-    CurrentUserProviderInterface,
-    UserAuthorizationInterface,
-    UserRegistrationProviderInterface, UserCitySelectInterface, UserAvatarAuthorizationInterface
+    CurrentUserProviderInterface, UserAuthorizationInterface, UserRegistrationProviderInterface,
+    UserCitySelectInterface, UserAvatarAuthorizationInterface
 {
     /**
      * @var \CAllUser|\CUser
@@ -305,7 +304,7 @@ class UserService implements
     public function avatarAuthorize(int $id) : bool
     {
         $authResult = false;
-        
+    
         /** @throws NotAuthorizedException */
         $curUserId  = $this->getCurrentUserId();
         $hostUserId = $this->getAvatarHostUserId() ?: $curUserId;
@@ -318,7 +317,7 @@ class UserService implements
                 $this->setAvatarHostUserId($hostUserId);
             }
         }
-        
+    
         return $authResult;
     }
     
@@ -332,7 +331,7 @@ class UserService implements
             $userId = (int)$_SESSION['4PAWS']['AVATAR_AUTH']['HOST_USER_ID'];
             $userId = $userId > 0 ? $userId : 0;
         }
-        
+    
         return $userId;
     }
     
@@ -388,7 +387,7 @@ class UserService implements
                 }
             }
         }
-        
+    
         return $isLoggedByHostUser;
     }
 }

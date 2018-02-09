@@ -26,14 +26,13 @@ if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
 }
 
 $firstStepFields  = ['cardNumber'];
-$secondStepFields =
-    [
-        'lastName',
-        'firstName',
-        'secondName',
-        'genderCode',
-        'birthDay',
-    ];
+$secondStepFields = [
+    'lastName',
+    'firstName',
+    'secondName',
+    'genderCode',
+    'birthDay',
+];
 $thirdStepFields  = ['phone'];
 $fourthStepFields = ['email'];
 $printFields      = array_merge($firstStepFields, $secondStepFields, $thirdStepFields, $fourthStepFields);
@@ -78,7 +77,7 @@ foreach ($printFields as $fieldName) {
         } elseif (in_array($fieldName, $fourthStepFields)) {
             $arResult['POSTED_STEP'] = 4;
         }
-        
+    
         if (is_scalar($arResult['FIELD_VALUES'][$fieldName])) {
             $arResult['PRINT_FIELDS'][$fieldName]['VALUE'] = trim($arResult['FIELD_VALUES'][$fieldName]);
         }

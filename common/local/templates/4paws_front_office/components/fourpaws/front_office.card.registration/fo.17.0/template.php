@@ -30,7 +30,7 @@ echo '<div id="refreshingBlockContainer">';
 if (isset($arResult['REGISTRATION_STATUS'])) {
     if ($arResult['REGISTRATION_STATUS'] === 'SUCCESS') {
         $showForm = false;
-        
+    
         ?><h2 class="text-h3">Поздравляем! Вы успешно зарегистрировали бонусную карту и теперь можете оплачивать покупки
                               бонусами!</h2>
         <h3 class="text-h4 mb-l">Предъявляйте карту при каждом посещении магазина, получайте и накапливайте бонусы.
@@ -44,7 +44,7 @@ if ($showForm) {
     $attr .= ' data-ajax-url="' . $componentPath . '/ajax.php"';
     $attr .= ' data-result-container="#refreshingBlockContainer"';
     ?>
-    <form class="form-page mb-l" action=""<?= $attr ?>  method="post">
+<form class="form-page mb-l" action=""<?= $attr ?> method="post">
     <div>
         <input type="hidden" name="formName" value="cardRegistration">
         <input type="hidden" name="action" value="postForm">
@@ -425,27 +425,27 @@ if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
                         }
                     }
                 );
-                
+    
                 $('body').on(
                     'click',
                     '#ajaxSubmitButton',
                     function (event) {
                         event.preventDefault();
-                        
+    
                         var siteId         = '<?=\CUtil::JSEscape(SITE_ID)?>';
                         var siteTemplateId = '<?=\CUtil::JSEscape(SITE_TEMPLATE_ID)?>';
                         var componentPath  = '<?=\CUtil::JSEscape($componentPath)?>';
                         var template       = '<?=\CUtil::JSEscape($arResult['JS']['signedTemplate'])?>';
                         var parameters     = '<?=\CUtil::JSEscape($arResult['JS']['signedParams'])?>';
-                        
+    
                         var submitButton            = $(this);
                         var submitForm              = submitButton.closest('form');
                         var ajaxUrl                 = submitForm.data('ajax-url');
                         var resultContainerSelector = submitForm.data('result-container');
-                        
+    
                         submitButton.attr('disabled', true);
                         submitForm.find('.form-page__submit-wrap').addClass('loading');
-                        
+    
                         var formData = submitForm.serializeArray();
                         var sendData = {
                             'ajaxContext': {
@@ -456,14 +456,14 @@ if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
                                 'parameters':     parameters
                             }
                         };
-                        
+    
                         $.each(
                             formData,
                             function (i, field) {
                                 sendData[field.name] = field.value;
                             }
                         );
-                        
+    
                         $.ajax({
                                    type:     'POST',
                                    dataType: 'html',

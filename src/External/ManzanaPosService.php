@@ -40,8 +40,8 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
                       ->setPos($this->parameters['pos'])
                       ->setDatetime(new \DateTimeImmutable())
                       ->setRequestId($requestId);
-        
-        $chequeRequest->getItems()->forAll(function (ChequePosition $item) use ($requestId) {
+    
+        $chequeRequest->getItems()->forAll(function ($k, ChequePosition $item) use ($requestId) {
             $item->setChequeId($requestId);
         });
         

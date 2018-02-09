@@ -52,12 +52,12 @@ if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
                     '#ajaxSubmitButton',
                     function (event) {
                         event.preventDefault();
-                        
+    
                         var submitButton = $(this);
                         var submitForm   = submitButton.closest('form');
                         submitButton.attr('disabled', true);
                         submitForm.find('.form-page__submit-wrap').addClass('loading');
-                        
+    
                         var formData = submitForm.serializeArray();
                         var sendData = {};
                         $.each(
@@ -66,7 +66,7 @@ if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
                                 sendData[field.name] = field.value;
                             }
                         );
-                        
+    
                         cardHistoryComponent.sendRequest(
                             sendData,
                             {
@@ -87,14 +87,14 @@ if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
                         );
                     }
                 );
-                
+    
                 // запрос детализации чека
                 $(cardHistoryComponent.containerSelector).on(
                     'click',
                     '.order-list__dropdown',
                     function (event) {
                         event.preventDefault();
-                        
+    
                         var actionElement            = $(this);
                         var chequeId                 = actionElement.data('id');
                         var orderListElement         = $('.order-detail[data-id="' + chequeId + '"] tbody');
@@ -133,10 +133,10 @@ if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
                         }
                     }
                 );
-                
+    
             }
         );
-        
+
         toggleOrderList = function (actionElement) {
             var dataId = actionElement.data('id');
             actionElement.toggleClass('open');

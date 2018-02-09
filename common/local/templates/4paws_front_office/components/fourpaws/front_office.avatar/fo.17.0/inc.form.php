@@ -28,7 +28,7 @@ if ($showForm) {
             <input type="hidden" name="sessid" value="<?= bitrix_sessid() ?>"><?php
             
             echo '<p class="text-h3 mb-l">Заполните любое из полей для поиска пользователя:</p>';
-            
+    
             // Поле: Номер карты
             $fieldName = 'cardNumber';
             $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
@@ -67,7 +67,7 @@ if ($showForm) {
                 <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
             </div>
             <?php
-            
+
             // Поле: Мобильный телефон (10 знаков без 7 или 8 в формате 9ХХХХХХХХХ)
             $fieldName = 'phone';
             $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
@@ -106,7 +106,7 @@ if ($showForm) {
                 <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
             </div>
             <?php
-            
+
             // Поле: Фамилия
             $fieldName = 'lastName';
             $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
@@ -144,7 +144,7 @@ if ($showForm) {
                 <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
             </div>
             <?php
-            
+
             // Поле: Имя
             $fieldName = 'firstName';
             $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
@@ -182,7 +182,7 @@ if ($showForm) {
                 <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
             </div>
             <?php
-            
+
             // Поле: Отчество
             $fieldName = 'secondName';
             $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
@@ -221,7 +221,7 @@ if ($showForm) {
                 <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
             </div>
             <?php
-            
+
             // Поле: Дата рождения дд.мм.гггг
             $fieldName = 'birthDay';
             $fieldMeta = $arResult['PRINT_FIELDS'][$fieldName];
@@ -260,7 +260,7 @@ if ($showForm) {
                 <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
             </div>
             <?php
-            
+
             // вывод общих ошибок, если есть
             if (!empty($arResult['ERROR']['EXEC'])) {
                 $errMessages = [];
@@ -273,7 +273,7 @@ if ($showForm) {
                 echo sprintf($errBlock, 'Ошибки запроса данных:<br>' . implode('<br>', $errMessages));
                 echo '</div>';
             }
-            
+
             $btnText = 'Поиск';
             ?>
             <div class="form-page__submit-wrap">

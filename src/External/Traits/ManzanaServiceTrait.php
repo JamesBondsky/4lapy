@@ -4,7 +4,7 @@ namespace FourPaws\External\Traits;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use JMS\Serializer\SerializerInterface;
+use JMS\Serializer\Serializer;
 use Meng\AsyncSoap\SoapClientInterface;
 use Psr\Log\LoggerAwareTrait;
 use RuntimeException;
@@ -25,7 +25,7 @@ trait ManzanaServiceTrait
     /**
      * ManzanaService constructor.
      *
-     * @param SerializerInterface $serializer
+     * @param Serializer          $serializer
      * @param SoapClientInterface $client
      * @param array               $parameters
      *
@@ -35,7 +35,7 @@ trait ManzanaServiceTrait
      * @throws InvalidArgumentException
      * @throws RuntimeException
      */
-    public function __construct(SerializerInterface $serializer, SoapClientInterface $client, array $parameters)
+    public function __construct(Serializer $serializer, SoapClientInterface $client, array $parameters)
     {
         $this->serializer = $serializer;
         $this->client     = $client;

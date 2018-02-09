@@ -535,7 +535,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         } catch (\Throwable $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
         }
-        
+    
         return $cardValidateResult;
     }
 
@@ -687,7 +687,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         } catch (\Exception $e) {
             throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
         }
-        
+    
         return $cheques;
     }
     

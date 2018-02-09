@@ -90,7 +90,7 @@ if (!empty($arResult['CHEQUES'])) {
                 <td class="order-id order-list__dt"><?= $chequeDate->format('d.m.Y H:i:s') ?></td>
                 <td class="order-id order-list__address"><?= htmlspecialcharsbx($cheque['BUSINESS_UNIT_NAME']) ?></td>
             </tr>
-            
+    
             <tr class="order-list__details <?= $rowClass ?>">
                 <td colspan="3" class="order-detail-td">
                     <div data-id="<?= htmlspecialcharsbx($cheque['CHEQUE_ID']) ?>"
@@ -112,7 +112,7 @@ if (!empty($arResult['CHEQUES'])) {
                                     <?php
                                     if ($isBonusCard) {
                                         echo '<ul>';
-                                        
+    
                                         echo '<li>';
                                         echo 'Итого: ';
                                         echo '<span class="info-count">';
@@ -120,21 +120,21 @@ if (!empty($arResult['CHEQUES'])) {
                                         echo '</span>';
                                         echo '&nbsp;руб.';
                                         echo '</li>';
-                                        
+    
                                         echo '<li>';
                                         echo 'Оплачено бонусами: ';
                                         echo '<span class="info-count">';
                                         echo round($cheque['PAID_BY_BONUS'], 2);
                                         echo '</span>';
                                         echo '</li>';
-                                        
+    
                                         echo '<li>';
                                         echo 'Начислено бонусов за покупку: ';
                                         echo '<span class="info-count">';
                                         echo round($cheque['BONUS'], 2);
                                         echo '</span>';
                                         echo '</li>';
-                                        
+    
                                         echo '</ul>';
                                     } else {
                                         echo '<div>';
@@ -144,7 +144,7 @@ if (!empty($arResult['CHEQUES'])) {
                                         echo '</span>';
                                         echo '&nbsp;руб.';
                                         echo '</div>';
-                                        
+    
                                         echo '<div>';
                                         echo 'Итого со скидкой: ';
                                         echo '<span class="fz34">';

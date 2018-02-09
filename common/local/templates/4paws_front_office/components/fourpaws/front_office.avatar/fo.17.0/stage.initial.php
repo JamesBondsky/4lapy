@@ -52,12 +52,12 @@ if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
                     '#ajaxSubmitButton',
                     function (event) {
                         event.preventDefault();
-                        
+    
                         var submitButton = $(this);
                         var submitForm   = submitButton.closest('form');
                         submitButton.attr('disabled', true);
                         submitForm.find('.form-page__submit-wrap').addClass('loading');
-                        
+    
                         var formData = submitForm.serializeArray();
                         var sendData = {};
                         $.each(
@@ -66,7 +66,7 @@ if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
                                 sendData[field.name] = field.value;
                             }
                         );
-                        
+    
                         avatarComponent.sendRequest(
                             sendData,
                             {
@@ -87,28 +87,28 @@ if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
                         );
                     }
                 );
-                
+    
                 // запрос авторизации от имени пользователя
                 $(avatarComponent.containerSelector).on(
                     'click',
                     '._action-auth',
                     function (event) {
                         event.preventDefault();
-                        
+    
                         var actionElement = $(this);
                         var userId        = actionElement.data('id');
                         actionElement.addClass('preloader');
-                        
+    
                         var actionContainer = actionElement.closest('.user-list');
                         if (actionContainer.hasClass('loading')) {
                             return;
                         }
-                        
+    
                         var submitButton = $('#ajaxSubmitButton');
                         var submitForm   = submitButton.closest('form');
                         submitButton.attr('disabled', true);
                         submitForm.find('.form-page__submit-wrap').addClass('loading');
-                        
+    
                         var sendRequest = true;
                         if (sendRequest) {
                             actionContainer.addClass('loading');

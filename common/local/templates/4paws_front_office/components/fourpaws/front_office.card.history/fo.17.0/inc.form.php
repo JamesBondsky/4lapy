@@ -71,7 +71,7 @@ if ($showForm) {
                 <?= ($errMess ? sprintf($errBlock, $errMess) : '') ?>
             </div>
             <?php
-            
+
             // вывод общих ошибок, если есть
             if (!empty($arResult['ERROR']['EXEC'])) {
                 $errMessages = [];
@@ -82,7 +82,7 @@ if ($showForm) {
                 echo sprintf($errBlock, 'Ошибки запроса данных:<br>' . implode('<br>', $errMessages));
                 echo '</div>';
             }
-            
+
             $btnText = 'Запросить';
             ?>
             <div class="form-page__submit-wrap">

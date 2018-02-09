@@ -54,7 +54,7 @@ use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
                     'CACHE_SELECTED_ITEMS' => 'N',
                     // Y - кеш будет создаваться для каждого юзера свой
                     'MENU_CACHE_USE_USERS' => 'N',
-    
+
                     'COMPONENT_TEMPLATE'    => 'header.personal_menu',
                     'ROOT_MENU_TYPE'        => 'personal',
                     'MENU_CACHE_TYPE'       => 'A',
