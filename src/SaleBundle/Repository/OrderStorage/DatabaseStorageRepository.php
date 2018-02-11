@@ -7,11 +7,11 @@
 namespace FourPaws\SaleBundle\Repository\OrderStorage;
 
 use FourPaws\SaleBundle\Entity\OrderStorage;
-use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\SaleBundle\Service\OrderStorageService;
 
 class DatabaseStorageRepository // extends StorageBaseRepository
 {
-    public function save(OrderStorage $storage, string $step = OrderService::AUTH_STEP): bool
+    public function save(OrderStorage $storage, string $step = OrderStorageService::AUTH_STEP): bool
     {
         // TODO: Implement save() method.
     }

@@ -8,25 +8,25 @@ namespace FourPaws\SaleBundle\Validation;
 
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
-use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\SaleBundle\Service\OrderStorageService;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 
 class OrderPaymentSystemValidator extends ConstraintValidator
 {
     /**
-     * @var OrderService
+     * @var OrderStorageService
      */
-    protected $orderService;
+    protected $orderStorageService;
 
     /**
      * @var DeliveryService
      */
     protected $deliveryService;
 
-    public function __construct(OrderService $orderService, DeliveryService $deliveryService)
+    public function __construct(OrderStorageService $orderStorageService, DeliveryService $deliveryService)
     {
-        $this->orderService = $orderService;
+        $this->orderStorageService = $orderStorageService;
     }
 
     /**
@@ -51,7 +51,7 @@ class OrderPaymentSystemValidator extends ConstraintValidator
         /**
          * Проверка, что выбран верный способ оплаты
          */
-        $availablePayments = $this->orderService->getAvailablePayments($entity);
+        $availablePayments = $this->orderStorageService->getAvailablePayments($entity);
 
         $selected = false;
         foreach ($availablePayments as $payment) {
