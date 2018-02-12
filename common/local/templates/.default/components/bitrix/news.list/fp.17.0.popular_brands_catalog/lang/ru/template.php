@@ -1,0 +1,5 @@
+<?php
+$MESS['POPULAR_BRANDS_CATALOG.TITLE'] = 'Популярные бренды';
+$MESS['POPULAR_BRANDS_CATALOG.ALL_LINK_TITLE'] = 'Показать все';
+$MESS['POPULAR_BRANDS_CATALOG.ALL_LINK'] = 'Показать все';
+$MESS['POPULAR_BRANDS_CATALOG.ALL'] = 'Все';
