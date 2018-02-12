@@ -10,6 +10,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectException;
@@ -20,7 +21,6 @@ use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\External\Exception\ManzanaServiceException;
-use FourPaws\PersonalBundle\Entity\Bonus;
 use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -30,6 +30,8 @@ use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use \Bitrix\Main;
+use \Bitrix\Sale;
 
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
@@ -79,6 +81,7 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
     public function onPrepareComponentParams($params): array
     {
         $params['PAGE_COUNT'] = 10;
+        $params['PATH_TO_BASKET'] = '/personal/cart/';
         /** @noinspection SummerTimeUnsafeTimeManipulationInspection */
         /** кешируем на сутки, можно будет увеличить если обновления будут не очень частые - чтобы лишний кеш не хранился */
         $params['CACHE_TIME'] = 24 * 60 * 60;
@@ -107,6 +110,14 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
             define('NEED_AUTH', true);
 
             return null;
+        }
+
+        $request = Application::getInstance()->getContext()->getRequest();
+        if($request->get('reply_order') === 'Y'){
+            $orderId = (int)$request->get('id');
+            if($orderId > 0){
+                $this->copyOrder2CustomerBasket($orderId);
+            }
         }
 
         $this->setFrameMode(true);
@@ -182,5 +193,88 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
         }
 
         return -1;
+    }
+
+    /**
+     * Взято из компонента списка заказов Битиркса common/bitrix/components/bitrix/sale.personal.order.list/class.php
+     *
+     * @param int $id Order id
+     *
+     * @throws Main\SystemException
+     * @return void
+     * @throws Exception
+     */
+    protected function copyOrder2CustomerBasket($id)
+    {
+        $result = new Main\Result();
+
+        if ($id)
+        {
+            $basket = Sale\Basket::loadItemsForFUser(Sale\Fuser::getId(), Main\Context::getCurrent()->getSite());
+
+            $filterFields = array(
+                'SET_PARENT_ID', 'TYPE',
+                'PRODUCT_ID', 'PRODUCT_PRICE_ID', 'PRICE', 'CURRENCY', 'WEIGHT', 'QUANTITY', 'LID',
+                'NAME', 'CALLBACK_FUNC', 'NOTES', 'PRODUCT_PROVIDER_CLASS', 'CANCEL_CALLBACK_FUNC',
+                'ORDER_CALLBACK_FUNC', 'PAY_CALLBACK_FUNC', 'DETAIL_PAGE_URL', 'CATALOG_XML_ID', 'PRODUCT_XML_ID',
+                'VAT_RATE', 'MEASURE_NAME', 'MEASURE_CODE', 'BASE_PRICE', 'VAT_INCLUDED'
+            );
+            $filterFields = array_flip($filterFields);
+
+            $oldOrder = Sale\Order::load($id);
+
+            $oldBasket = $oldOrder->getBasket();
+            $oldBasketItems = $oldBasket->getBasketItems();
+
+            /** @var Sale\BasketItem $oldBasketItem*/
+            foreach ($oldBasketItems as $oldBasketItem)
+            {
+                $propertyList = array();
+                if ($oldPropertyCollection = $oldBasketItem->getPropertyCollection())
+                {
+                    $propertyList = $oldPropertyCollection->getPropertyValues();
+                }
+
+                $item = $basket->getExistsItem($oldBasketItem->getField('MODULE'), $oldBasketItem->getField('PRODUCT_ID'), $propertyList);
+
+                if ($item)
+                {
+                    $resultItem = $item->setField('QUANTITY', $item->getQuantity() + $oldBasketItem->getQuantity());
+                }
+                else
+                {
+                    $item = $basket->createItem($oldBasketItem->getField('MODULE'), $oldBasketItem->getField('PRODUCT_ID'));
+                    $oldBasketValues = array_intersect_key($oldBasketItem->getFieldValues(), $filterFields);
+                    $item->setField('NAME', $oldBasketValues['NAME']);
+                    $resultItem = $item->setFields($oldBasketValues);
+                    $newPropertyCollection = $item->getPropertyCollection();
+
+                    /** @var Sale\BasketPropertyItem $oldProperty*/
+                    foreach ($propertyList as $oldPropertyFields)
+                    {
+                        $propertyItem = $newPropertyCollection->createItem();
+                        unset($oldPropertyFields['ID'], $oldPropertyFields['BASKET_ID']);
+
+                        /** @var Sale\BasketPropertyItem $propertyItem*/
+                        $propertyItem->setFields($oldPropertyFields);
+                    }
+                }
+                if (!$resultItem->isSuccess())
+                {
+                    $result->addErrors($resultItem->getErrors());
+                }
+            }
+
+            if ($result->isSuccess())
+            {
+                $basket->save();
+            }
+            else
+            {
+                throw new Main\SystemException('Невозможно копировать заказ');
+            }
+
+            LocalRedirect($this->arParams['PATH_TO_BASKET']);
+        }
     }
 }

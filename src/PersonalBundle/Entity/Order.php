@@ -10,6 +10,7 @@ use Bitrix\Sale\Internals\StatusTable;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\Helpers\DateHelper;
+use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\StoreBundle\Entity\Store;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -708,5 +709,13 @@ class Order extends BaseEntity
                 ->fetch());
         }
         return $this->getStatusMain()['SORT'];
+    }
+
+    /**
+     * @return bool
+     */
+    public function isClosed(): bool
+    {
+        return \in_array($this->getStatusId(), OrderService::$finalStatuses, true);
     }
 }

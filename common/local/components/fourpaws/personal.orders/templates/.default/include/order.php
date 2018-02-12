@@ -1,5 +1,7 @@
 <?php /** @var Order $order */
 
+use Bitrix\Main\Application;
+use Bitrix\Main\Web\Uri;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\PersonalBundle\Entity\Order;
@@ -46,18 +48,26 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
             </div>
         </div>
         <div class="b-accordion-order-item__pay">
-            <div class="b-accordion-order-item__not-pay"><?= $order->getPayPrefixText() . ' ' . $order->getPayment()->getName() ?>
-                онлайн
+            <div class="b-accordion-order-item__not-pay">
+                <?= $order->getPayPrefixText() . ' ' . $order->getPayment()->getName() ?>
             </div>
         </div>
         <div class="b-accordion-order-item__button js-button-default">
-            <?php /** @todo оплата заказа */ ?>
-            <?php if (!$order->isPayed()) { ?>
+            <?php if ($order->isClosed() && !$order->isManzana()) {
+                $uri = new Uri(Application::getInstance()->getContext()->getRequest()->getRequestUri());
+                $uri->addParams(['reply_order'=>'Y','id'=>$order->getId()]);?>
                 <div class="b-accordion-order-item__subscribe-link b-accordion-order-item__subscribe-link--full">
-                    <a
-                            class="b-link b-link--pay-account b-link--pay-account" href="javascript:void(0)"
-                            title="Оплатить"><span
-                                class="b-link__text b-link__text--pay-account">Оплатить</span></a>
+                    <a class="b-link b-link--repeat-order b-link--repeat-order" href="<?=$uri->getUri()?>" title="Повторить заказ">
+                        <span class="b-link__text b-link__text--repeat-order">Повторить заказ</span>
+                    </a>
+                </div>
+            <?php } ?>
+            <?php /** @todo оплата заказа */ ?>
+            <?php if (!$order->isClosed() && !$order->isPayed() && !$order->isManzana()) { ?>
+                <div class="b-accordion-order-item__subscribe-link b-accordion-order-item__subscribe-link--full">
+                    <a class="b-link b-link--pay-account b-link--pay-account" href="javascript:void(0)" title="Оплатить">
+                        <span class="b-link__text b-link__text--pay-account">Оплатить</span>
+                    </a>
                 </div>
             <?php } ?>
             <div class="b-accordion-order-item__sum b-accordion-order-item__sum--full"><?= $order->getFormatedPrice() ?>
