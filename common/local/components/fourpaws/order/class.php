@@ -84,7 +84,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         global $APPLICATION;
         try {
             $variables = [];
-            $componentPage = CComponentEngine::ParseComponentPath(
+            $componentPage = CComponentEngine::parseComponentPath(
                 $this->arParams['SEF_FOLDER'],
                 self::DEFAULT_TEMPLATES_404,
                 $variables
@@ -188,7 +188,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 LocalRedirect('/cart');
             }
             $realStep = $this->orderStorageService->validateStorage($storage, $this->currentStep);
-            if ($realStep != $this->currentStep) {
+            if ($realStep !== $this->currentStep) {
                 LocalRedirect($this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[$realStep]);
             }
 
@@ -219,11 +219,10 @@ class FourPawsOrderComponent extends \CBitrixComponent
                         $selectedDelivery = $calculationResult;
                     }
 
-                    $deliveryCode = $calculationResult->getData()['DELIVERY_CODE'];
-                    if (in_array($deliveryCode, DeliveryService::DELIVERY_CODES)) {
-                        $delivery = $calculationResult;
-                    } elseif (in_array($deliveryCode, DeliveryService::PICKUP_CODES)) {
+                    if ($this->deliveryService->isPickup($calculationResult)) {
                         $pickup = $calculationResult;
+                    } elseif ($this->deliveryService->isDelivery($calculationResult)) {
+                        $delivery = $calculationResult;
                     }
                 }
 
@@ -240,7 +239,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 $this->getPickupData($deliveries, $storage);
             } elseif ($this->currentStep === OrderStorageService::PAYMENT_STEP) {
                 $deliveries = $this->orderService->getDeliveries();
-                $payments = $this->orderService->getAvailablePayments($storage, true);
+                $payments = $this->orderStorageService->getAvailablePayments($storage, true);
                 $selectedDelivery = null;
                 /** @var CalculationResult $delivery */
                 foreach ($deliveries as $delivery) {
