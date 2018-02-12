@@ -126,8 +126,8 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
         $this->arResult['ITEMS'] = $items = new ArrayCollection();
 
         try {
-            $arResult['NAV'] = new PageNavigation('nav-referral');
-            $arResult['NAV']->allowAllRecords(false)->setPageSize($this->arParams['PAGE_COUNT'])->initFromUri();
+            $this->arResult['NAV'] = new PageNavigation('nav-referral');
+            $this->arResult['NAV']->allowAllRecords(false)->setPageSize($this->arParams['PAGE_COUNT'])->initFromUri();
 
             $this->arResult['ITEMS'] = $items = $this->referralService->getCurUserReferrals(true, $arResult['NAV']);
         } catch (NotAuthorizedException $e) {
@@ -138,7 +138,7 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
         $this->arResult['COUNT_MODERATE'] = $this->referralService->getModeratedCountByUser();
         $this->arResult['BONUS'] = 0;
         $cacheItems = [];
-        $arResult['referral_type'] = $this->referralService->getReferralType();
+        $this->arResult['referral_type'] = $this->referralService->getReferralType();
         if (!$items->isEmpty()) {
             /** @var Referral $item */
             /** @noinspection ForeachSourceInspection */

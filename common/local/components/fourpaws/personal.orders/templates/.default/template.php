@@ -30,18 +30,19 @@ if ($closedOrders->isEmpty() && $activeOrders->isEmpty()) {
         } ?>
     </ul>
 </div>
-<? /** постраничная навигация */ ?>
-<div class="b-pagination b-pagination--account">
-    <ul class="b-pagination__list">
-        <li class="b-pagination__item b-pagination__item--prev b-pagination__item--disabled"><span
-                    class="b-pagination__link">Назад</span>
-        </li>
-        <li class="b-pagination__item"><a class="b-pagination__link" href="javascript:void(0);" title="1">1</a>
-        </li>
-        <li class="b-pagination__item"><a class="b-pagination__link" href="javascript:void(0);" title="2">2</a>
-        </li>
-        <li class="b-pagination__item b-pagination__item--next"><a class="b-pagination__link" href="javascript:void(0);"
-                                                                   title="Вперед">Вперед</a>
-        </li>
-    </ul>
-</div>
+<?php if (!empty($arResult['NAV'])) { ?>
+    <div class="b-pagination b-pagination--account">
+        <?php
+        $APPLICATION->IncludeComponent(
+            'bitrix:main.pagenavigation',
+            'pagination',
+            [
+                'NAV_OBJECT' => $arResult['NAV'],
+                'SEF_MODE'   => 'Y',
+            ],
+            $component,
+            ['HIDE_ICONS'=>'Y']
+        );
+        ?>
+    </div>
+<?php } ?>

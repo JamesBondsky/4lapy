@@ -14,6 +14,7 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\UI\PageNavigation;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -126,14 +127,23 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
         if ($this->startResultCache($this->arParams['CACHE_TIME'],
             ['manzanaOrders' => array_keys($manzanaOrders), 'USER_ID' => $userId])) {
             try {
-                /** Сортировка по дате и статуса общих заказов */
                 $this->arResult['ACTIVE_ORDERS'] = $this->orderService->getActiveSiteOrders();
-                $this->arResult['CLOSED_ORDERS'] = $this->orderService->mergeAllClosedOrders($this->orderService->getClosedSiteOrders()->toArray(),
+                $allClosedOrders = $this->orderService->mergeAllClosedOrders($this->orderService->getClosedSiteOrders()->toArray(),
                     $manzanaOrders->toArray());
+                /** @todo Сортировка по дате и статуса общих заказов */
+                /** имитация постранички */
+                $nav = new PageNavigation('nav-orders');
+                $nav->allowAllRecords(false)->setPageSize($this->arParams['PAGE_COUNT'])->initFromUri();
+                $nav->setRecordCount($allClosedOrders->count());
+                $this->arResult['CLOSED_ORDERS'] = new ArrayCollection(array_slice($allClosedOrders->toArray(),
+                    $nav->getOffset(), $nav->getPageSize(), true));
             } catch (NotAuthorizedException $e) {
                 /** запрашиваем авторизацию */
                 \define('NEED_AUTH', true);
                 return null;
+            }
+            if ($nav instanceof PageNavigation) {
+                $this->arResult['NAV'] = $nav;
             }
             $storeService = App::getInstance()->getContainer()->get('store.service');
             $this->arResult['METRO'] = new ArrayCollection($storeService->getMetroInfo());
