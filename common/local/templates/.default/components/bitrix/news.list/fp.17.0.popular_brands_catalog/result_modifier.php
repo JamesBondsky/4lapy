@@ -8,7 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) {
 }
 
 /**
- * Популярные бренды на главной странице сайта
+ * Популярные бренды в каталоге
  *
  * @updated: 09.02.2018
  */
@@ -20,9 +20,10 @@ if (!$arResult['ITEMS']) {
     return;
 }
 
-$arParams['RESIZE_WIDTH'] = $arParams['RESIZE_WIDTH'] ?? 195;
-$arParams['RESIZE_HEIGHT'] = $arParams['RESIZE_HEIGHT'] ?? 69;
+$arParams['RESIZE_WIDTH'] = $arParams['RESIZE_WIDTH'] ?? 226;
+$arParams['RESIZE_HEIGHT'] = $arParams['RESIZE_HEIGHT'] ?? 101;
 $arParams['RESIZE_TYPE'] = $arParams['RESIZE_TYPE'] ?? 'BX_RESIZE_IMAGE_PROPORTIONAL';
+$arParams['ADD_URL_PARAMS'] = $arParams['ADD_URL_PARAMS'] ?? '';
 
 foreach ($arResult['ITEMS'] as &$item) {
     $imgField = false;
@@ -59,6 +60,11 @@ foreach ($arResult['ITEMS'] as &$item) {
                 );
             } catch (\Exception $exception) {}
         }
+    }
+
+    if ($arParams['ADD_URL_PARAMS']) {
+        $glue = strpos($item['DETAIL_PAGE_URL'], '?') === false ? '?' : '&amp;';
+        $item['DETAIL_PAGE_URL'] .= $glue.$arParams['ADD_URL_PARAMS'];
     }
 }
 unset($item);

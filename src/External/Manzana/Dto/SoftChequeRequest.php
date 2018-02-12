@@ -83,12 +83,13 @@ class SoftChequeRequest
     /**
      * Номер карты
      *
-     * @Serializer\Type("string")
-     * @Serializer\SerializedName("CardNumber")
+     * @Serializer\Type("FourPaws\External\Manzana\Dto\Card")
+     * @Serializer\SerializedName("Card")
+     * @Serializer\SkipWhenEmpty()
      *
      * @var string
      */
-    protected $cardNumber = '';
+    protected $card = '';
     
     /**
      * Номер чека
@@ -112,7 +113,7 @@ class SoftChequeRequest
     protected $operationType = 'Sale';
     
     /**
-     * @Serializer\XmlList(inline=true, entry="Item")
+     * @Serializer\XmlList(inline=true)
      * @Serializer\Type("ArrayCollection<FourPaws\External\Manzana\Dto\ChequePosition>")
      *
      * @var Collection|ChequePosition[]
@@ -120,9 +121,11 @@ class SoftChequeRequest
     protected $items;
     
     /**
-     * @Serializer\Type("FourPaws\External\Manzana\Dto\Coupons")
+     * @Serializer\XmlList(inline=false, entry="Coupon")
+     * @Serializer\SerializedName("Coupons")
+     * @Serializer\Type("ArrayCollection<FourPaws\External\Manzana\Dto\Coupon>")
      *
-     * @var Coupons
+     * @var Collection|Coupon[]
      */
     protected $coupons;
     
@@ -231,9 +234,21 @@ class SoftChequeRequest
      *
      * @return $this
      */
-    public function setCardNumber(string $cardNumber)
+    public function setCardByNumber(string $cardNumber)
     {
-        $this->cardNumber = $cardNumber;
+        $this->setCard((new Card())->setNumber($cardNumber));
+        
+        return $this;
+    }
+    
+    /**
+     * @param Card $card
+     *
+     * @return $this
+     */
+    public function setCard(Card $card)
+    {
+        $this->card = $card;
         
         return $this;
     }
@@ -270,8 +285,8 @@ class SoftChequeRequest
         if (!$this->coupons) {
             $this->coupons = new ArrayCollection();
         }
-        
-        $this->coupons->addCoupon($coupon);
+    
+        $this->coupons->add($coupon);
     }
     
     /**
@@ -287,11 +302,11 @@ class SoftChequeRequest
     }
     
     /**
-     * @param Coupons $coupons
+     * @param ArrayCollection $coupons
      *
      * @return $this
      */
-    public function setCoupons(Coupons $coupons)
+    public function setCoupons(ArrayCollection $coupons)
     {
         $this->coupons = $coupons;
         
@@ -347,9 +362,9 @@ class SoftChequeRequest
     }
     
     /**
-     * @return Coupons
+     * @return Collection|Coupon[]
      */
-    public function getCoupons() : Coupons
+    public function getCoupons() : Collection
     {
         return $this->coupons;
     }
