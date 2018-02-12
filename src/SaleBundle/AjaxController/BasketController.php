@@ -259,21 +259,40 @@ class BasketController extends Controller
      *
      * @param Request $request
      *
+     * @throws \RuntimeException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
      * @throws \Bitrix\Main\NotSupportedException
      * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws \Exception
+     * @return JsonErrorResponse|JsonResponse
      */
     public function selectGiftAction(Request $request) {
+        $response = null;
         $offerId = (int)$request->get('offerId', 0);
         $discountId = (int)$request->get('actionId', 0);
-        $this->basketService->getAdder()->selectGift($offerId, $discountId);
+        try {
+            $this->basketService->getAdder()->selectGift($offerId, $discountId);
+        } catch (BaseExceptionInterface $e) {
+            $response = JsonErrorResponse::create(
+                $e->getMessage(),
+                200,
+                [],
+                ['reload' => true]
+            );
+        }
+        if(null === $response) {
+            $response = JsonSuccessResponse::createWithData(
+                '',
+                [
+                    'giftId' => 9001,
+                    'basket' => $this->basketViewService->getBasketHtml(true)
+                ],
+                200,
+                ['reload' => false]
+            );
+        }
 
-        $data = [];
-        $response = JsonSuccessResponse::createWithData(
-            '',
-            $data,
-            200,
-            ['reload' => false]
-        );
         return $response;
     }
 }
