@@ -12,7 +12,8 @@ use Bitrix\Sale\PaymentCollection;
 use Bitrix\Sale\PaySystem\Manager as PaySystemManager;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\NotFoundException;
-use FourPaws\SaleBundle\Repository\OrderStorage\StorageRepositoryInterface;
+use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
+use FourPaws\SaleBundle\Repository\OrderStorage\DatabaseStorageRepository;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -53,7 +54,7 @@ class OrderStorageService
     protected $paymentCollection;
 
     /**
-     * @var StorageRepositoryInterface
+     * @var DatabaseStorageRepository
      */
     protected $storageRepository;
 
@@ -62,12 +63,12 @@ class OrderStorageService
      *
      * @param BasketService $basketService
      * @param CurrentUserProviderInterface $currentUserProvider
-     * @param StorageRepositoryInterface $storageRepository
+     * @param DatabaseStorageRepository $storageRepository
      */
     public function __construct(
         BasketService $basketService,
         CurrentUserProviderInterface $currentUserProvider,
-        StorageRepositoryInterface $storageRepository
+        DatabaseStorageRepository $storageRepository
     ) {
         $this->basketService = $basketService;
         $this->currentUserProvider = $currentUserProvider;
@@ -186,6 +187,7 @@ class OrderStorageService
      * @param OrderStorage $storage
      * @param string $step
      *
+     * @throws OrderStorageValidationException
      * @return bool
      */
     public function updateStorage(OrderStorage $storage, string $step = self::AUTH_STEP): bool
