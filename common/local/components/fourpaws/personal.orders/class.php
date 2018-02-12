@@ -14,6 +14,7 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Type\Collection;
 use Bitrix\Main\UI\PageNavigation;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
@@ -21,6 +22,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\PersonalBundle\Entity\Bonus;
+use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
@@ -130,12 +132,14 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
                 $this->arResult['ACTIVE_ORDERS'] = $this->orderService->getActiveSiteOrders();
                 $allClosedOrders = $this->orderService->mergeAllClosedOrders($this->orderService->getClosedSiteOrders()->toArray(),
                     $manzanaOrders->toArray());
-                /** @todo Сортировка по дате и статуса общих заказов */
+                /** Сортировка по дате и статусу общих заказов */
+                $allClosedOrdersList = $allClosedOrders->toArray();
+                usort($allClosedOrdersList, array('FourPawsPersonalCabinetOrdersComponent', 'sortByStatusAndDate'));
                 /** имитация постранички */
                 $nav = new PageNavigation('nav-orders');
                 $nav->allowAllRecords(false)->setPageSize($this->arParams['PAGE_COUNT'])->initFromUri();
                 $nav->setRecordCount($allClosedOrders->count());
-                $this->arResult['CLOSED_ORDERS'] = new ArrayCollection(array_slice($allClosedOrders->toArray(),
+                $this->arResult['CLOSED_ORDERS'] = new ArrayCollection(array_slice($allClosedOrdersList,
                     $nav->getOffset(), $nav->getPageSize(), true));
             } catch (NotAuthorizedException $e) {
                 /** запрашиваем авторизацию */
@@ -152,5 +156,32 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
         }
 
         return true;
+    }
+
+    /**
+     * @param Order $item1
+     * @param Order $item2
+     *
+     * @return int
+     */
+    public function sortByStatusAndDate(Order $item1, Order $item2): int
+    {
+        if ($item1->getStatusSort() === $item2->getStatusSort()) {
+            if ($item1->getDateInsert() > $item2->getDateInsert()) {
+                return 1;
+            }
+
+            if($item1->getDateInsert() < $item2->getDateInsert()) {
+                return -1;
+            }
+
+            return 0;
+        }
+
+        if($item1->getStatusSort() > $item2->getStatusSort()) {
+            return 1;
+        }
+
+        return -1;
     }
 }

@@ -9,6 +9,7 @@ use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Internals\StatusLangTable;
+use Bitrix\Sale\Internals\StatusTable;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Entity\BaseEntity;
@@ -163,6 +164,12 @@ class Order extends BaseEntity
 
     /** @var ArrayCollection */
     protected $props;
+
+    /** @var array */
+    protected $statusLang = [];
+
+    /** @var array  */
+    protected $statusMain = [];
 
     /**
      * @return string
@@ -356,12 +363,15 @@ class Order extends BaseEntity
 
     public function getStatus(): string
     {
-        return StatusLangTable::query()
-            ->where('STATUS_ID', $this->getStatusId())
-            ->where('LID', 'ru')
-            ->setCacheTtl(360000)
-            ->exec()
-            ->fetch()['NAME'];
+        if(empty($this->getStatusLang())) {
+            $this->setStatusLang(StatusLangTable::query()
+                ->where('STATUS_ID', $this->getStatusId())
+                ->where('LID', 'ru')
+                ->setCacheTtl(360000)
+                ->exec()
+                ->fetch());
+        }
+        return $this->getStatusLang()['NAME'];
     }
 
     /**
@@ -658,5 +668,49 @@ class Order extends BaseEntity
     public function setStore(Store $store)
     {
         $this->store = $store;
+    }
+
+    /**
+     * @return array
+     */
+    public function getStatusLang(): array
+    {
+        return $this->statusLang;
+    }
+
+    /**
+     * @param array $statusLang
+     */
+    public function setStatusLang(array $statusLang)
+    {
+        $this->statusLang = $statusLang;
+    }
+
+    /**
+     * @return array
+     */
+    public function getStatusMain(): array
+    {
+        return $this->statusMain;
+    }
+
+    /**
+     * @param array $statusMain
+     */
+    public function setStatusMain(array $statusMain)
+    {
+        $this->statusMain = $statusMain;
+    }
+
+    public function getStatusSort()
+    {
+        if(empty($this->getStatusMain())) {
+            $this->setStatusMain(StatusTable::query()
+                ->where('ID', $this->getStatusId())
+                ->setCacheTtl(360000)
+                ->exec()
+                ->fetch());
+        }
+        return $this->getStatusMain()['SORT'];
     }
 }
