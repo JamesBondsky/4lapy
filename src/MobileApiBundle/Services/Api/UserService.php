@@ -108,9 +108,6 @@ class UserService
             ->setLogin($login)
             ->setPassword($password);
 
-        /**
-         * @todo нужно ли отправлять данные в manzana?
-         */
-        return $this->userRegistrationProvider->register($user, false);
+        return $this->userRegistrationProvider->register($user);
     }
 }
