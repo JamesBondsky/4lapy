@@ -1,4 +1,5 @@
-<?if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
+<?php
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 /**
@@ -6,6 +7,16 @@
  *
  * @updated: 11.01.2018
  */
+/**
+ * @global CMain $APPLICATION
+ * @var array $arParams
+ * @var array $arResult
+ * @var CBitrixComponentTemplate $this
+ * @var string $templateName
+ * @var string $componentPath
+ * @var CBitrixComponent $component
+ */
+
 $this->setFrameMode(true);
 
 if (!$arResult['MENU_TREE']) {
@@ -80,7 +91,7 @@ foreach ($arResult['MENU_TREE'] as $arFirstLevelItem) {
                                 </div><?php
 
                                 if ($arSecondLevelItem['NESTED']) {
-                                    foreach($arSecondLevelItem['NESTED'] as $arThirdLevelItem) {
+                                    foreach ($arSecondLevelItem['NESTED'] as $arThirdLevelItem) {
                                         ?><div class="b-submenu-column">
                                             <a class="b-link b-link--submenu js-open-step-mobile js-open-step-mobile--submenu"<?=$arThirdLevelItem['_LINK_ATTR2_']?> href="<?=$arThirdLevelItem['_URL_']?>"><?php
                                                 echo '<span class="b-link__text b-link__text--submenu">'.$arThirdLevelItem['_TEXT_'].'</span>';
