@@ -1,4 +1,9 @@
 <?php
+
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
@@ -6,17 +11,21 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Iblock\Component\Tools;
 use Bitrix\Sale\Delivery\CalculationResult;
+use Bitrix\Sale\PropertyValue;
+use Bitrix\Sale\Shipment;
 use FourPaws\App\Application;
+use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\PersonalBundle\Service\AddressService;
+use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderService;
-use FourPaws\SaleBundle\Entity\OrderStorage;
-use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\StoreBundle\Entity\Store;
+use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
+use FourPaws\StoreBundle\Service\StoreService;
+use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 
 /** @noinspection AutoloadingIssuesInspection */
@@ -26,7 +35,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         OrderService::AUTH_STEP     => 'index.php',
         OrderService::DELIVERY_STEP => 'delivery/',
         OrderService::PAYMENT_STEP  => 'payment/',
-        OrderService::COMPLETE_STEP => 'complete/',
+        OrderService::COMPLETE_STEP => 'complete/#ORDER_ID#',
     ];
 
     /**
@@ -40,10 +49,27 @@ class FourPawsOrderComponent extends \CBitrixComponent
     /** @var DeliveryService */
     protected $deliveryService;
 
+    /** @var StoreService */
+    protected $storeService;
+
+    /** @var UserAuthorizationInterface */
+    protected $userAuthProvider;
+
+    /** @var UserCitySelectInterface */
+    protected $userCityProvider;
+
+    /** @var BasketService $basketService */
+    protected $basketService;
+
     public function __construct($component = null)
     {
-        $this->orderService = Application::getInstance()->getContainer()->get(OrderService::class);
-        $this->deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+        $serviceContainer = Application::getInstance()->getContainer();
+        $this->orderService = $serviceContainer->get(OrderService::class);
+        $this->deliveryService = $serviceContainer->get('delivery.service');
+        $this->storeService = $serviceContainer->get('store.service');
+        $this->userAuthProvider = $serviceContainer->get(UserAuthorizationInterface::class);
+        $this->userCityProvider = $serviceContainer->get(UserCitySelectInterface::class);
+        $this->basketService = $serviceContainer->get(BasketService::class);
         parent::__construct($component);
     }
 
@@ -58,6 +84,10 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 self::DEFAULT_TEMPLATES_404,
                 $variables
             );
+
+            foreach ($variables as $code => $value) {
+                $this->arParams[$code] = $value;
+            }
 
             if (!$componentPage) {
                 LocalRedirect($this->arParams['SEF_FOLDER']);
@@ -82,30 +112,38 @@ class FourPawsOrderComponent extends \CBitrixComponent
     }
 
     /**
-     * @return $this
      * @throws Exception
+     * @return $this
      */
     protected function prepareResult()
     {
-        $serviceContainer = Application::getInstance()->getContainer();
-
-        /** @var BasketService $basketService */
-        $basketService = $serviceContainer->get(BasketService::class);
-        /** @var StoreService $storeService */
-        $storeService = $serviceContainer->get('store.service');
-        $basket = $basketService->getBasket()->getOrderableItems();
-        if ($basket->isEmpty()) {
-            LocalRedirect('/cart');
-        }
+        $basket = $this->basketService->getBasket()->getOrderableItems();
 
         $order = null;
         if (!$storage = $this->orderService->getStorage()) {
             throw new Exception('Failed to initialize storage');
         }
 
-        $realStep = $this->orderService->validateStorage($storage, $this->currentStep);
-        if ($realStep != $this->currentStep) {
-            LocalRedirect($this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[$realStep]);
+        $this->arResult['URL'] = [
+            'AUTH'     => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderService::AUTH_STEP],
+            'DELIVERY' => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderService::DELIVERY_STEP],
+            'PAYMENT'  => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderService::PAYMENT_STEP],
+        ];
+
+        /** @var \Symfony\Bundle\FrameworkBundle\Routing\Router $router */
+        $router = Application::getInstance()->getContainer()->get('router');
+        /** @var Symfony\Component\Routing\RouteCollection $routeCollection */
+        $routeCollection = $router->getRouteCollection();
+        $routes = [
+            'AUTH_VALIDATION'     => 'fourpaws_sale_ajax_order_validateauth',
+            'DELIVERY_VALIDATION' => 'fourpaws_sale_ajax_order_validatedelivery',
+            'PAYMENT_VALIDATION'  => 'fourpaws_sale_ajax_order_validatepayment',
+        ];
+        foreach ($routes as $key => $name) {
+            if (!$route = $routeCollection->get($name)) {
+                continue;
+            }
+            $this->arResult['URL'][$key] = $route->getPath();
         }
 
         if ($this->currentStep === OrderService::COMPLETE_STEP) {
@@ -122,88 +160,110 @@ class FourPawsOrderComponent extends \CBitrixComponent
             } catch (NotFoundException $e) {
                 Tools::process404('', true, true, true);
             }
-        }
 
-        $url = [
-            'AUTH' => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderService::AUTH_STEP],
-            'DELIVERY' => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderService::DELIVERY_STEP],
-            'PAYMENT' => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderService::PAYMENT_STEP],
-        ];
-        
-        /** @var \Symfony\Bundle\FrameworkBundle\Routing\Router $router */
-        $router = Application::getInstance()->getContainer()->get('router');
-        /** @var Symfony\Component\Routing\RouteCollection $routeCollection */
-        $routeCollection = $router->getRouteCollection();
-        $routes = [
-            'AUTH_VALIDATION'     => 'fourpaws_sale_ajax_order_validateauth',
-            'DELIVERY_VALIDATION' => 'fourpaws_sale_ajax_order_validatedelivery',
-            'PAYMENT_VALIDATION'  => 'fourpaws_sale_ajax_order_validatepayment',
-        ];
-        foreach ($routes as $key => $name) {
-            if (!$route = $routeCollection->get($name)) {
-                continue;
-            }
-            $url[$key] = $route->getPath();
-        }
+            $this->arResult['ORDER'] = $order;
+            $this->arResult['ORDER_PROPERTIES'] = [];
+            /**
+             * флаг, что пользователь был зарегистрирован при оформлении заказа
+             */
+            $this->arResult['ORDER_REGISTERED'] = !$this->userAuthProvider->isAuthorized();
 
-        /** @var UserCitySelectInterface $userCityService */
-        $userCityService = Application::getInstance()->getContainer()->get(UserCitySelectInterface::class);
-        $selectedCity = $userCityService->getSelectedCity();
-
-        $addresses = [];
-
-        if ($this->currentStep === OrderService::DELIVERY_STEP) {
-            $deliveries = $this->orderService->getDeliveries();
-
-            if ($storage->getUserId()) {
-                /** @var AddressService $addressService */
-                $addressService = Application::getInstance()->getContainer()->get('address.service');
-                $addresses = $addressService->getAddressesByUser($storage->getUserId(), $selectedCity['CODE']);
+            /** @var PropertyValue $propertyValue */
+            foreach ($order->getPropertyCollection() as $propertyValue) {
+                $this->arResult['ORDER_PROPERTIES'][$propertyValue->getProperty()['CODE']] = $propertyValue->getValue();
             }
 
-            $delivery = null;
-            $pickup = null;
-            $selectedDelivery = null;
-            $selectedDeliveryId = $storage->getDeliveryId();
-            foreach ($deliveries as $calculationResult) {
-                $deliveryId = $calculationResult->getData()['DELIVERY_ID'];
-                if (!$selectedDeliveryId) {
-                    $selectedDeliveryId = $deliveryId;
+            /** @var Shipment $shipment */
+            if ($shipment = $order->getShipmentCollection()->current()) {
+                $this->arResult['ORDER_DELIVERY'] = $this->getDeliveryData($this->arResult['ORDER_PROPERTIES']);
+                $this->arResult['ORDER_DELIVERY']['DELIVERY_CODE'] = $shipment->getDelivery()->getCode();
+            }
+        } else {
+            if ($basket->isEmpty()) {
+                LocalRedirect('/cart');
+            }
+            $realStep = $this->orderService->validateStorage($storage, $this->currentStep);
+            if ($realStep != $this->currentStep) {
+                LocalRedirect($this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[$realStep]);
+            }
+
+            $selectedCity = $this->userCityProvider->getSelectedCity();
+
+            $addresses = [];
+            $payments = null;
+            if ($this->currentStep === OrderService::DELIVERY_STEP) {
+                $deliveries = $this->orderService->getDeliveries();
+
+                if ($storage->getUserId()) {
+                    /** @var AddressService $addressService */
+                    $addressService = Application::getInstance()->getContainer()->get('address.service');
+                    $addresses = $addressService->getAddressesByUser($storage->getUserId(), $selectedCity['CODE']);
                 }
 
-                if ($selectedDeliveryId === (int)$deliveryId) {
-                    $selectedDelivery = $calculationResult;
+                $delivery = null;
+                $pickup = null;
+                $selectedDelivery = null;
+                $selectedDeliveryId = $storage->getDeliveryId();
+                foreach ($deliveries as $calculationResult) {
+                    $deliveryId = $calculationResult->getData()['DELIVERY_ID'];
+                    if (!$selectedDeliveryId) {
+                        $selectedDeliveryId = $deliveryId;
+                    }
+
+                    if ($selectedDeliveryId === (int)$deliveryId) {
+                        $selectedDelivery = $calculationResult;
+                    }
+
+                    $deliveryCode = $calculationResult->getData()['DELIVERY_CODE'];
+                    if (in_array($deliveryCode, DeliveryService::DELIVERY_CODES)) {
+                        $delivery = $calculationResult;
+                    } elseif (in_array($deliveryCode, DeliveryService::PICKUP_CODES)) {
+                        $pickup = $calculationResult;
+                    }
                 }
 
-                $deliveryCode = $calculationResult->getData()['DELIVERY_CODE'];
-                if (in_array($deliveryCode, DeliveryService::DELIVERY_CODES)) {
-                    $delivery = $calculationResult;
-                } elseif (in_array($deliveryCode, DeliveryService::PICKUP_CODES)) {
-                    $pickup = $calculationResult;
+                if (!$selectedDelivery) {
+                    $selectedDelivery = reset($deliveries);
+                    $selectedDeliveryId = (int)$selectedDelivery->getData()['DELIVERY_ID'];
                 }
+
+                $this->arResult['PICKUP'] = $pickup;
+                $this->arResult['DELIVERY'] = $delivery;
+                $this->arResult['SELECTED_DELIVERY'] = $selectedDelivery;
+                $this->arResult['SELECTED_DELIVERY_ID'] = $selectedDeliveryId;
+
+                $this->getPickupData($deliveries, $storage);
+            } elseif ($this->currentStep === OrderService::PAYMENT_STEP) {
+                $deliveries = $this->orderService->getDeliveries();
+                $payments = $this->orderService->getAvailablePayments($storage, true);
+                $selectedDelivery = null;
+                /** @var CalculationResult $delivery */
+                foreach ($deliveries as $delivery) {
+                    if ((int)$delivery->getData()['DELIVERY_ID'] !== $storage->getDeliveryId()) {
+                        continue;
+                    }
+
+                    $selectedDelivery = $delivery;
+                }
+
+                if (!$selectedDelivery) {
+                    LocalRedirect(
+                        $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderService::DELIVERY_STEP]
+                    );
+                }
+
+                $this->arResult['SELECTED_DELIVERY'] = $selectedDelivery;
             }
 
-            if (!$selectedDelivery) {
-                $selectedDelivery = reset($deliveries);
-                $selectedDeliveryId = (int)$selectedDelivery->getData()['DELIVERY_ID'];
-            }
-
-            $this->arResult['PICKUP'] = $pickup;
-            $this->arResult['DELIVERY'] = $delivery;
-            $this->arResult['SELECTED_DELIVERY'] = $selectedDelivery;
-            $this->arResult['SELECTED_DELIVERY_ID'] = $selectedDeliveryId;
-
-            $this->getPickupData($deliveries, $storage);
+            $this->arResult['ADDRESSES'] = $addresses;
+            $this->arResult['PAYMENTS'] = $payments;
+            $this->arResult['SELECTED_CITY'] = $selectedCity;
         }
 
-        $this->arResult['ORDER'] = $order;
-        $this->arResult['METRO'] = $storeService->getMetroInfo();
+        $this->arResult['METRO'] = $this->storeService->getMetroInfo();
         $this->arResult['BASKET'] = $basket;
         $this->arResult['STORAGE'] = $storage;
-        $this->arResult['URL'] = $url;
         $this->arResult['STEP'] = $this->currentStep;
-        $this->arResult['SELECTED_CITY'] = $selectedCity;
-        $this->arResult['ADDRESSES'] = $addresses;
 
         return $this;
     }
@@ -228,11 +288,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $partialPickup = clone $pickup;
         /** @var StockResultCollection $stockResult */
         $stockResult = $this->deliveryService->getStockResultByDelivery($pickup);
-        if ($this->deliveryService->isDpdPickup($pickup)) {
-            $selectedShopCode = $storage->getDpdTerminalCode();
-        } else {
-            $selectedShopCode = $storage->getDeliveryPlaceCode();
-        }
+        $selectedShopCode = $storage->getDeliveryPlaceCode();
         $shops = $stockResult->getStores();
 
         $selectedShop = null;
@@ -262,5 +318,66 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
         $this->arResult['SELECTED_SHOP'] = $selectedShop;
         $this->arResult['PARTIAL_PICKUP'] = $partialPickup;
+    }
+
+    /**
+     * @param array $properties
+     *
+     * @return array
+     */
+    protected function getDeliveryData(array $properties): array
+    {
+        $result = [];
+        if ($properties['DELIVERY_PLACE_CODE']) {
+            try {
+                $store = $this->storeService->getByXmlId($properties['DELIVERY_PLACE_CODE']);
+                $result['ADDRESS'] = $store->getAddress();
+                $result['SCHEDULE'] = $store->getSchedule();
+            } catch (StoreNotFoundException $e) {
+            }
+        } elseif ($properties['DPD_TERMINAL_CODE']) {
+            $terminals = $this->deliveryService->getDpdTerminalsByLocation($properties['CITY_CODE']);
+            if ($terminal = $terminals[$properties['DPD_TERMINAL_CODE']]) {
+                $result['ADDRESS'] = $terminal->getAddress();
+                $result['SCHEDULE'] = $terminal->getSchedule();
+            }
+        } else {
+            $result['ADDRESS'] = [
+                $properties['CITY'],
+                $properties['STREET'],
+                $properties['HOUSE'],
+            ];
+            if (!empty($properties['BUILDING'])) {
+                $result['ADDRESS'][] = ', корпус ' . $properties['BUILDING'];
+            }
+            if (!empty($properties['PORCH'])) {
+                $result['ADDRESS'][] = ', подъезд ' . $properties['PORCH'];
+            }
+            if (!empty($properties['FLOOR'])) {
+                $result['ADDRESS'][] = ', этаж ' . $properties['FLOOR'];
+            }
+            if (!empty($properties['APARTMENT'])) {
+                $result['ADDRESS'][] = ', кв. ' . $properties['APARTMENT'];
+            }
+            $result['ADDRESS'] = implode(', ', $result['ADDRESS']);
+        }
+
+        if ($properties['DELIVERY_DATE']) {
+            $match = [];
+            $deliveryString = $properties['DELIVERY_DATE'];
+            if (preg_match('~^(\d{2}):\d{2}~', $properties['DELIVERY_INTERVAL'], $match)) {
+                $deliveryString .= ' ' . $match[1] . ':00';
+            } else {
+                $deliveryString .= ' 00:00';
+            }
+
+            $result['DELIVERY_DATE'] = \DateTime::createFromFormat('d.m.Y H:i', $deliveryString);
+        }
+
+        if ($properties['DELIVERY_INTERVAL']) {
+            $result['DELIVERY_INTERVAL'] = $properties['DELIVERY_INTERVAL'];
+        }
+
+        return $result;
     }
 }

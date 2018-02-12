@@ -15,7 +15,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 $component = $this->getComponent();
 
+use FourPaws\App\Application;
 use FourPaws\Decorators\SvgDecorator;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 
 ?>
 <div class="b-header-info__item b-header-info__item--person">
@@ -37,17 +39,31 @@ use FourPaws\Decorators\SvgDecorator;
         </a>
         <?php
         if ($component->getMode() !== FourPawsAuthFormComponent::MODE_FORM) {
-            $user = $component->getCurrentUserProvider()->getCurrentUser(); ?>
-            <?php $APPLICATION->IncludeComponent(
+            $user = $component->getCurrentUserProvider()->getCurrentUser();
+            // костыль, чтобы можно было использовать кеш в компоненте
+            $_GET['isAvatarAuthorized'] =
+                Application::getInstance()
+                           ->getContainer()
+                           ->get(CurrentUserProviderInterface::class)
+                           ->isAvatarAuthorized();
+            $APPLICATION->IncludeComponent(
                 'bitrix:menu',
                 'header.personal_menu',
                 [
+                    // если CACHE_SELECTED_ITEMS не определен, либо равен Y, то кеш создается для каждой страницы
+                    'CACHE_SELECTED_ITEMS' => 'N',
+                    // Y - кеш будет создаваться для каждого юзера свой
+                    'MENU_CACHE_USE_USERS' => 'N',
+
                     'COMPONENT_TEMPLATE'    => 'header.personal_menu',
                     'ROOT_MENU_TYPE'        => 'personal',
                     'MENU_CACHE_TYPE'       => 'A',
                     'MENU_CACHE_TIME'       => '360000',
-                    'MENU_CACHE_USE_GROUPS' => 'N',
-                    'MENU_CACHE_GET_VARS'   => [],
+                    // должно быть Y - у нас это меню зависит от групп юзеров
+                    'MENU_CACHE_USE_GROUPS' => 'Y',
+                    'MENU_CACHE_GET_VARS'   => [
+                        'isAvatarAuthorized',
+                    ],
                     'MAX_LEVEL'             => '1',
                     'CHILD_MENU_TYPE'       => '',
                     'USE_EXT'               => 'N',
@@ -57,8 +73,9 @@ use FourPaws\Decorators\SvgDecorator;
                 false,
                 ['HIDE_ICONS' => 'Y']
             );
+            // подчищаем за собой
+            unset($_GET['isAvatarAuthorized']);
         }
         ?>
     </div>
 </div>
-

@@ -7,6 +7,7 @@
 namespace FourPaws\MobileApiBundle\Services\Api;
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\Type\Date;
 use CIBlockElement;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -16,9 +17,12 @@ use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\MobileApiBundle\Dto\Object\Info;
 use FourPaws\MobileApiBundle\Enum\InfoEnum;
+use Psr\Log\LoggerAwareInterface;
 
-class InfoService
+class InfoService implements LoggerAwareInterface
 {
+    use LazyLoggerAwareTrait;
+
     /**
      * @var ImageProcessor
      */
@@ -35,6 +39,32 @@ class InfoService
         $this->bitrixPhpDateTimeFormat = Date::convertFormatToPhp(\FORMAT_DATETIME) ?: '';
     }
 
+    public function getInfo(string $type, string $id, array $select = []): Collection
+    {
+        try {
+            switch ($type) {
+                case InfoEnum::ACTION:
+                    $collection = $this->getActions($id, $select);
+                    break;
+                case InfoEnum::NEWS:
+                    $collection = $this->getNews($id, $select);
+                    break;
+                case InfoEnum::LETTERS:
+                    $collection = $this->getActions($id, $select);
+                    break;
+                default:
+                    throw new \RuntimeException(sprintf('No such method to get %s type', $type));
+            }
+        } catch (\Exception $exception) {
+            $collection = new ArrayCollection();
+            $this->log()->error($exception->getMessage());
+        }
+        return $collection->map(function (Info $info) use ($type) {
+            $info->setType($type);
+            return $info;
+        });
+    }
+
     /**
      * @param string $id
      *
@@ -43,7 +73,7 @@ class InfoService
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @return Collection|Info[]
      */
-    public function getNews(string $id = '', array $select = []): array
+    protected function getNews(string $id = '', array $select = []): array
     {
         $criteria = [
             'ACTIVE'    => 'Y',
@@ -70,7 +100,7 @@ class InfoService
             'DETAIL_TEXT',
         ];
 
-        return $this->find(InfoEnum::NEWS, $criteria, $order, $select, $id ? 1 : 50);
+        return $this->find($criteria, $order, $select, $id ? 1 : 50);
     }
 
     /**
@@ -81,7 +111,7 @@ class InfoService
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @return Collection|Info[]
      */
-    public function getArticles(string $id = '', array $select = []): array
+    protected function getArticles(string $id = '', array $select = []): array
     {
         $criteria = [
             'ACTIVE'    => 'Y',
@@ -108,7 +138,7 @@ class InfoService
             'DETAIL_TEXT',
         ];
 
-        return $this->find(InfoEnum::LETTERS, $criteria, $order, $select, $id ? 1 : 50);
+        return $this->find($criteria, $order, $select, $id ? 1 : 50);
     }
 
     /**
@@ -119,7 +149,7 @@ class InfoService
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @return ArrayCollection|Collection
      */
-    public function getActions(string $id, array $select = [])
+    protected function getActions(string $id, array $select = [])
     {
         $criteria = [
             'ACTIVE'    => 'Y',
@@ -146,11 +176,10 @@ class InfoService
             'SUB_ITEMS',
         ];
 
-        return $this->find(InfoEnum::ACTION, $criteria, $order, $select, $id ? 1 : 50);
+        return $this->find($criteria, $order, $select, $id ? 1 : 50);
     }
 
     protected function find(
-        string $type,
         array $criteria = [],
         array $orderBy = [],
         array $select = [],
@@ -172,14 +201,10 @@ class InfoService
         $imageCollection = ImageCollection::createFromIds($imagesIds);
 
         $infoItems = (new ArrayCollection($items))
-            ->map(function ($item) use ($type, $imageCollection) {
+            ->map(function ($item) use ($imageCollection) {
                 $apiView = new Info();
                 if ($item['ID'] ?? null) {
                     $apiView->setId((string)$item['ID']);
-                }
-
-                if ($type) {
-                    $apiView->setType($type);
                 }
 
                 if ($item['NAME'] ?? null) {

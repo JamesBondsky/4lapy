@@ -10,7 +10,7 @@ use JMS\Serializer\Annotation\XmlNamespace;
 use JMS\Serializer\Annotation\XmlRoot;
 
 /**
- * Class Payment
+ * Class ChequePayment
  *
  * @package FourPaws\External\Manzana\Model
  *
@@ -18,23 +18,30 @@ use JMS\Serializer\Annotation\XmlRoot;
  * @XmlNamespace(uri="http://www.w3.org/2001/XMLSchema-instance", prefix="xsi")
  * @XmlRoot("Payment")
  */
-class Payment
+class ChequePayment
 {
+
     /**
+     * Значение платежа данным типом
+     *
      * @XmlElement(cdata=false)
-     * @Type("float")
+     * @Type("int")
      * @SerializedName("Value")
      */
     public $value;
-    
+
     /**
+     * Название типа платежа
+     *
      * @XmlElement(cdata=false)
      * @Type("string")
      * @SerializedName("TypeName")
      */
     public $typeName;
-    
+
     /**
+     * ID типа платежа
+     *
      * @XmlElement(cdata=false)
      * @Type("string")
      * @SerializedName("ExternalId")

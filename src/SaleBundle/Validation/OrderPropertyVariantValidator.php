@@ -1,8 +1,11 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SaleBundle\Validation;
 
-use FourPaws\App\Application;
 use FourPaws\SaleBundle\Service\OrderService;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
@@ -13,8 +16,7 @@ class OrderPropertyVariantValidator extends ConstraintValidator
      * @var OrderService
      */
     protected $orderService;
-    
-    
+
     public function __construct(OrderService $orderService)
     {
         $this->orderService = $orderService;
@@ -26,7 +28,13 @@ class OrderPropertyVariantValidator extends ConstraintValidator
      */
     public function validate($value, Constraint $constraint)
     {
-        $availableValues = $this->orderService->getPropertyVariants($constraint->propertyCode);
+        if (!$constraint instanceof OrderPropertyVariant) {
+            return;
+        }
+
+        $availableValues = $this->orderService->getPropertyByCode($constraint->propertyCode)
+                                              ->getVariants();
+
         if (!isset($availableValues[$value])) {
             $this->context->buildViolation($constraint->message)
                           ->addViolation();

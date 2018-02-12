@@ -12,7 +12,6 @@ use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\MobileApiBundle\Dto\Error;
 use FourPaws\MobileApiBundle\Dto\Request\InfoRequest;
 use FourPaws\MobileApiBundle\Dto\Response;
-use FourPaws\MobileApiBundle\Enum\InfoEnum;
 use FourPaws\MobileApiBundle\Services\Api\InfoService;
 
 class InfoController extends FOSRestController
@@ -65,13 +64,13 @@ class InfoController extends FOSRestController
     /**
      * Получить статичные разделы
      *
+     * @todo Статичные страницы, Вакансии, Конкурсы, Условия доставки
      * @Rest\Get("/info/")
      * @Rest\View()
      *
      * @param InfoRequest        $infoRequest
      * @param Collection|Error[] $apiErrors
      *
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @return Response
      */
     public function getInfoAction(InfoRequest $infoRequest, Collection $apiErrors): Response
@@ -82,19 +81,11 @@ class InfoController extends FOSRestController
             return $response;
         }
 
-        switch ($infoRequest->getType()) {
-            case InfoEnum::NEWS:
-                $response->setData($this->infoService->getNews($infoRequest->getInfoId()));
-                break;
-            case InfoEnum::LETTERS:
-                $response->setData($this->infoService->getArticles($infoRequest->getInfoId()));
-                break;
-            case InfoEnum::ACTION:
-                $response->setData($this->infoService->getActions($infoRequest->getInfoId()));
-                break;
-            default:
-                $response->addError(new Error(100, 'Test'));
-        }
+        $response->setData($this->infoService->getInfo(
+            $infoRequest->getType(),
+            $infoRequest->getInfoId(),
+            $infoRequest->getFields()
+        ));
 
         return $response;
     }

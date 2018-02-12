@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SaleBundle\Repository\OrderStorage;
 
 use FourPaws\SaleBundle\Entity\OrderStorage;
@@ -36,4 +40,12 @@ interface StorageRepositoryInterface
      * @return ConstraintViolationListInterface
      */
     public function validate(OrderStorage $storage, string $step): ConstraintViolationListInterface;
+
+    /**
+     * @param OrderStorage $storage
+     * @param array $groups
+     *
+     * @return array
+     */
+    public function toArray(OrderStorage $storage, array $groups = ['read']): array;
 }

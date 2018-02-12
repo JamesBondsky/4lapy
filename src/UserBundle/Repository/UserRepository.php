@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\UserBundle\Repository;
 
 use Bitrix\Main\Type\DateTime;
@@ -299,6 +303,17 @@ class UserRepository
     public function updatePhone(int $id, string $phone): bool
     {
         return $this->updateData($id, ['PERSONAL_PHONE' => $phone]);
+    }
+
+    /**
+     * @param int $id
+     * @param string $email
+     *
+     * @return bool
+     */
+    public function updateEmail(int $id, string $email): bool
+    {
+        return $this->updateData($id, ['EMAIL' => $email]);
     }
 
     /**

@@ -27,7 +27,7 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
                        href="javascript:void(0);">Выберите пункт самовывоза</a>
                     <h4 class="b-availability__header b-availability__header--desktop">
                         Наши магазины
-                        <span class="b-availability__header-amount">(всего 0)</span>
+                        <span class="b-availability__header-amount js-orders-shop-count">(всего 0)</span>
                     </h4>
                     <h4 class="b-availability__header b-availability__header--tablet active">Выберите пункт самовывоза
                     </h4>
@@ -93,7 +93,7 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
                             </div>
                         </form>
                     </div>
-                    <div class="b-tab-delivery b-tab-delivery--order js-content-list js-map-list-scroll">
+                    <div class="b-tab-delivery b-tab-delivery--order js-content-list js-map-list-scroll js-fix-scroll">
                         <ul class="b-delivery-list b-delivery-list--order js-delivery-list">
                             <?php include 'include/shop.php' ?>
                         </ul>
@@ -101,7 +101,13 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
                             Заказ в наличии частично
                         </h4>
                         <ul class="b-delivery-list b-delivery-list--order js-delivery-part-list">
-                            <?php include 'include/shop.php' ?>
+                            <?php include 'include/shop_partial.php' ?>
+                        </ul>
+                        <h4 class="b-tab-delivery__addition-header">
+                            Требуется ждать поставки со склада
+                        </h4>
+                        <ul class="b-delivery-list b-delivery-list--order js-delivery-delay-list">
+                            <?php include 'include/shop_delayed.php' ?>
                         </ul>
                     </div>
                 </div>
