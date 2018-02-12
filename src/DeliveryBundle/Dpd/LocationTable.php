@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\DeliveryBundle\Dpd;
 
 use Bitrix\Main\Loader;
@@ -29,6 +33,12 @@ class LocationTable extends Table
     public static function getByLocationId($locationId)
     {
         $getDpdLocation = function () use ($locationId) {
+            $location = BitrixLocationTable::getList(
+                [
+                    'filter' => ['ID' => $locationId],
+                ]
+            )->fetch();
+
             $ret = static::getList(
                 array_filter(
                     [
@@ -39,12 +49,15 @@ class LocationTable extends Table
 
             $ret->addReplacedAliases(['LOCATION_ID' => 'ID']);
 
-            return $ret->fetch();
+            $result = $ret->fetch();
+            $result['CODE'] = $location['CODE'];
+
+            return ['result' => $result];
         };
 
         return (new BitrixCache())
             ->withId(__METHOD__ . $locationId)
-            ->resultOf($getDpdLocation);
+            ->resultOf($getDpdLocation)['result'];
     }
 
     /**
@@ -77,7 +90,10 @@ class LocationTable extends Table
             );
 
             $ret->addReplacedAliases(['LOCATION_ID' => 'ID']);
-            return ['result' => $ret->fetch()];
+            $result = $ret->fetch();
+            $result['CODE'] = $locationCode;
+
+            return ['result' => $result];
         };
 
         return (new BitrixCache())
