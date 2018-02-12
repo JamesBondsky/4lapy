@@ -55,7 +55,7 @@ class Cleaner
         $existGifts = Manager::getExistGifts($this->order);
         /**
          * Найти лишние подарки, удалить.
-         * 1. Для каждого подарка проверяем есть ли к нему аккция и есть ли в этой акции он.
+         * 1. Для каждого подарка проверяем есть ли к нему акция и есть ли в этой акции он.
          */
         foreach ($existGifts as $k => $gift) {
             $notFound = false;

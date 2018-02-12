@@ -9,6 +9,8 @@
 
 namespace FourPaws\SaleBundle\Discount;
 
+use Bitrix\Sale\Discount\Actions;
+
 
 /**
  * Class BasketFilter
@@ -124,10 +126,11 @@ class BasketFilter extends \CSaleCondCtrlBasketGroup
             $basket = (\is_callable($filter) ? array_filter($order['BASKET_ITEMS'], $filter) : $order['BASKET_ITEMS']);
             if (!empty($basket)) {
                 $clearBasket = array_filter($basket, '\CSaleBasketFilter::ClearBasket');
+                $clearBasket = array_filter($clearBasket, [Actions::class, 'filterBasketForAction']);
                 if (!empty($clearBasket)) {
                     foreach ($clearBasket as $row) {
                         if ($field === 'QUANTITY') {
-                            $sum += (float) $row['QUANTITY'];
+                            $sum += (float)$row['QUANTITY'];
                         } else {
                             $sum += (float)$row[$field] * (float)$row['QUANTITY'];
                         }
