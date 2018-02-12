@@ -55,6 +55,7 @@ class BasketComponent extends \CBitrixComponent
     /** @noinspection PhpMissingParentCallCommonInspection */
     /**
      *
+     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
      * @throws \Bitrix\Main\NotSupportedException
@@ -85,6 +86,7 @@ class BasketComponent extends \CBitrixComponent
 
     private function loadImages()
     {
+        /** @var Offer $item */
         foreach ($this->offerCollection as $item) {
             if (isset($this->images[$item->getId()])) {
                 continue;
@@ -98,8 +100,10 @@ class BasketComponent extends \CBitrixComponent
     private function calcTemplateFields() {
         $weight = 0;
         $quantity = 0;
+        /** @var Basket $basket */
+        $basket = $this->arResult['BASKET'];
         /** @var BasketItem $basketItem */
-        foreach($this->arResult['BASKET']->getOrderableItems() as $basketItem) {
+        foreach($basket->getOrderableItems() as $basketItem) {
             $weight+= (float)$basketItem->getWeight();
             $quantity+= (int)$basketItem->getQuantity();
         }

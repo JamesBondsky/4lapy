@@ -54,7 +54,8 @@ class BasketController extends Controller
      *
      * @param \Symfony\Component\HttpFoundation\Request $request
      *
-     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws \Bitrix\Main\LoaderException
      * @throws \RuntimeException
      *
      * @return \FourPaws\App\Response\JsonResponse
@@ -107,7 +108,7 @@ class BasketController extends Controller
         try {
             $this->basketService->deleteOfferFromBasket($basketId);
             $data = [
-                'basket'     => $this->basketViewService->getBasketHtml(),
+                'basket' => $this->basketViewService->getBasketHtml(),
                 'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
             ];
             $response = JsonSuccessResponse::createWithData(
@@ -152,23 +153,20 @@ class BasketController extends Controller
             if (!\is_array($items)) {
                 throw new InvalidArgumentException('Wrong basket parameters');
             }
-    
+
             foreach ($items as $item) {
                 if (!$item['basketId'] || !$item['quantity']) {
-                    /**
-                     * @todo ParamConverter
-                     */
+                    // todo wat? :)
                     continue;
                 }
-        
+
                 $this->basketService->updateBasketQuantity((int)$item['basketId'], (int)$item['quantity']);
             }
-            
             $data = [
-                'basket'     => $this->basketViewService->getBasketHtml(),
+                'basket' => $this->basketViewService->getBasketHtml(),
                 'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
             ];
-    
+
             $response = JsonSuccessResponse::createWithData(
                 '',
                 $data,
@@ -181,7 +179,7 @@ class BasketController extends Controller
                 $e->getMessage(),
                 200,
                 [],
-                ['reload' => false]
+                ['reload' => false]                     // todo TRUE !!!
             );
         }
         return $response;
@@ -228,7 +226,7 @@ class BasketController extends Controller
                 }
                 /** @var Product $product */
                 $product = $offer->getProduct();
-                $name = '<strong>' . $product->getBrandName() . '</strong>' . lcfirst(trim($product->getName()));
+                $name = '<strong>' . $product->getBrandName() . '</strong> ' . lcfirst(trim($product->getName()));
                 $items[] = [
                     'id' => $offer->getId(),
                     'actionId' => $discountId,
@@ -253,5 +251,17 @@ class BasketController extends Controller
         }
 
         return $response;
+    }
+
+
+    /**
+     * @Route("/gift/select/", methods={"GET", "POST"})
+     *
+     * @param Request $request
+     *
+     */
+    public function selectGiftAction(Request $request) {
+        $offerId = (int)$request->get('offerId', 0);
+        $actionId = (int)$request->get('actionId', 0);
     }
 }
