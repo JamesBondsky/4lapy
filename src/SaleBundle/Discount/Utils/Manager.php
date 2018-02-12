@@ -22,6 +22,8 @@ use FourPaws\SaleBundle\Service\BasketService;
  */
 class Manager
 {
+    protected static $finalActionEnabled = true;
+
     /**
      *
      *
@@ -43,7 +45,7 @@ class Manager
     public static function OnAfterSaleOrderFinalAction(Event $event = null)
     {
         static $execution;
-        if (!$execution) {
+        if (!$execution && self::$finalActionEnabled) {
             $execution = true;
             if ($event instanceof Event) {
                 /** @var Order $order */
@@ -51,20 +53,40 @@ class Manager
                 if ($order instanceof Order) {
 
                     // Автоматически добавляем подарки
-                    (new Adder(
-                        $order,
-                        Application::getInstance()->getContainer()->get(BasketService::class)
-                    ))->processOrder();
+                    Application::getInstance()
+                        ->getContainer()
+                        ->get(BasketService::class)
+                        ->getAdder()
+                        ->processOrder();
 
                     // Удаляем подарки, акции которых не выполнились
-                    (new Cleaner(
-                        $order,
-                        Application::getInstance()->getContainer()->get(BasketService::class)
-                    ))->processOrder();
+                    Application::getInstance()
+                        ->getContainer()
+                        ->get(BasketService::class)
+                        ->getCleaner()
+                        ->processOrder();
                 }
             }
             $execution = false;
         }
+    }
+
+    /**
+     *
+     *
+     */
+    public static function disableProcessingFinalAction()
+    {
+        self::$finalActionEnabled = false;
+    }
+
+    /**
+     *
+     *
+     */
+    public static function enableProcessingFinalAction()
+    {
+        self::$finalActionEnabled = true;
     }
 
     /**

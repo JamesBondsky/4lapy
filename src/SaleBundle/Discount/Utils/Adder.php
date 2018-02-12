@@ -14,6 +14,7 @@ use Bitrix\Sale\Order;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\SaleBundle\Discount\Gift;
+use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Service\BasketService;
 
 /**
@@ -156,24 +157,88 @@ class Adder
      *
      *
      * @param array $group
+     * @param bool|null $selected
      *
      * @return int
      */
-    protected function getExistGiftsQuantity(array $group): int
+    protected function getExistGiftsQuantity(array $group, bool $selected = null): int
     {
         $quantity = 0;
+
+        $list = [];
+        if ($group['list'] instanceof OfferCollection) {
+            /** @var OfferCollection $offerCollection */
+            $offerCollection = $group['list'];
+            $list = $offerCollection->getKeys();
+        } elseif (\is_array($group['list'])) {
+            $list = $group['list'];
+        }
+
         $existGifts = $this->getExistGifts($group['discountId']);
-        /** @var OfferCollection $offerCollection */
-        $offerCollection = $group['list'];
         if (!empty($existGifts)) {
             foreach ($existGifts as $elem) {
-                // Считаем только возможные подарки, остальные будут удалены
-                if (\in_array($elem['offerId'], $offerCollection->getKeys(), true)) {
+                // Считаем только возможные подарки, остальные (которые,
+                // например, были добавлены на предыдущем хите, но кончились на складе) будут удалены
+                if (
+                    \in_array($elem['offerId'], $list, true)
+                    && (null === $selected || $selected === ($elem['selected'] === 'Y'))
+                ) {
                     $quantity += $elem['quantity'];
                 }
             }
         }
         return $quantity;
+    }
+
+    /**
+     *
+     *
+     * @param int $offerId
+     * @param int $discountId
+     *
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws \RuntimeException
+     * @throws \FourPaws\SaleBundle\Exception\NotFoundException
+     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Exception
+     * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
+     */
+    public function selectGift(int $offerId, int $discountId)
+    {
+        $possibleGiftGroups = Gift::getPossibleGiftGroups($this->order, $discountId);
+        if (!isset($possibleGiftGroups[$discountId])) {
+            throw new NotFoundException('Акция не найдена');
+        }
+        $group = $possibleGiftGroups[$discountId];
+        if (\count($group) === 1) {
+            $group = current($group);
+        } else {
+            throw new \RuntimeException('TODO');
+        }
+        if (!\in_array($offerId, $group['list'], true)) {
+            throw new NotFoundException('Подарок не может быть предоставлен в рамках данной акции');
+        }
+        if ($this->getExistGiftsQuantity($group, false) < 1) {
+            throw new NotFoundException('Все подарки уже выбраны, сначала необходимо удалить выбранный подарок');
+        }
+
+        Manager::disableProcessingFinalAction(); // иначе нельзя будет уменьшить невыбранные подарки
+        $existGifts = $this->getExistGifts($discountId);
+        foreach ($existGifts as $existGift) {
+            // Находим первый невыбранный подарок и херим его
+            if ($existGift['selected'] === 'N') {
+                if ($existGift['quantity'] > 1) {
+                    $this->basketService->updateBasketQuantity($existGift['basketId'], $existGift['quantity'] - 1);
+                } else {
+                    $this->basketService->deleteOfferFromBasket($existGift['basketId']);
+                }
+                break;
+            }
+        }
+        $this->addGift($offerId, 1, $discountId, true);
+        Manager::enableProcessingFinalAction();
     }
 
 

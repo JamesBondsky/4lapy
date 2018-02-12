@@ -259,9 +259,21 @@ class BasketController extends Controller
      *
      * @param Request $request
      *
+     * @throws \Bitrix\Main\NotSupportedException
+     * @throws \Bitrix\Main\ObjectNotFoundException
      */
     public function selectGiftAction(Request $request) {
         $offerId = (int)$request->get('offerId', 0);
-        $actionId = (int)$request->get('actionId', 0);
+        $discountId = (int)$request->get('actionId', 0);
+        $this->basketService->getAdder()->selectGift($offerId, $discountId);
+
+        $data = [];
+        $response = JsonSuccessResponse::createWithData(
+            '',
+            $data,
+            200,
+            ['reload' => false]
+        );
+        return $response;
     }
 }

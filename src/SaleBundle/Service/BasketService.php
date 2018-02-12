@@ -11,6 +11,8 @@ use Bitrix\Sale\Order;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\SaleBundle\Discount\Gift;
+use FourPaws\SaleBundle\Discount\Utils\Adder;
+use FourPaws\SaleBundle\Discount\Utils\Cleaner;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
@@ -278,5 +280,35 @@ class BasketService
         $offerCollection = (new OfferQuery())->withFilterParameter('ID', $ids)->exec();
 
         return $this->offerCollection = $offerCollection;
+    }
+
+    /**
+     *
+     *
+     * @throws \Bitrix\Main\NotSupportedException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @return Adder
+     */
+    public function getAdder(): Adder {
+        if (null === $order = $this->getBasket()->getOrder()) {
+            $order = Order::create(SITE_ID);
+            $order->setBasket($this->getBasket());
+        }
+        return new Adder($order, $this);
+    }
+
+    /**
+     *
+     *
+     * @throws \Bitrix\Main\NotSupportedException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @return Cleaner
+     */
+    public function getCleaner(): Cleaner {
+        if (null === $order = $this->getBasket()->getOrder()) {
+            $order = Order::create(SITE_ID);
+            $order->setBasket($this->getBasket());
+        }
+        return new Cleaner($order, $this);
     }
 }
