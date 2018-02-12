@@ -125,7 +125,9 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
                 ->setSummDiscounted($sumDiscounted)
                 ->setDiscount(ArithmeticHelper::getPercent($sumDiscounted, $sum));
     
-        $request->setCardByNumber($card);
+        if ($card) {
+            $request->setCardByNumber($card);
+        }
         
         return $request;
     }

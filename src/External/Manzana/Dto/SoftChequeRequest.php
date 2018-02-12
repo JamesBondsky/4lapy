@@ -85,6 +85,7 @@ class SoftChequeRequest
      *
      * @Serializer\Type("FourPaws\External\Manzana\Dto\Card")
      * @Serializer\SerializedName("Card")
+     * @Serializer\SkipWhenEmpty()
      *
      * @var string
      */

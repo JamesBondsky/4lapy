@@ -9,7 +9,7 @@ parameters:
     password: '%env(MANZANA_PASSWORD)%'
     wdsl: '%env(MANZANA_HOST)%'
   manzana_pos:
-    pos: ishop2
+    pos: ishop
     business_unit: ishop
     organization: 1
     organization_name: fourfoots
