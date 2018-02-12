@@ -6,6 +6,7 @@ namespace FourPaws\PersonalBundle\Entity;
 use Bitrix\Main\Type\DateTime;
 use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\Helpers\DateHelper;
+use JMS\Serializer\Annotation as Serializer;
 
 class OrderDelivery extends BaseEntity
 {
@@ -13,7 +14,7 @@ class OrderDelivery extends BaseEntity
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("DELIVERY_NAME")
-     * @Serializer\Groups(groups={"read","update", "create")
+     * @Serializer\Groups(groups={"read","update", "create"})
      */
     protected $deliveryName = '';
 
@@ -21,7 +22,7 @@ class OrderDelivery extends BaseEntity
      * @var float
      * @Serializer\Type("float")
      * @Serializer\SerializedName("PRICE_DELIVERY")
-     * @Serializer\Groups(groups={"read","update", "create")
+     * @Serializer\Groups(groups={"read","update", "create"})
      */
     protected $priceDelivery = '';
 
@@ -29,7 +30,7 @@ class OrderDelivery extends BaseEntity
      * @var bool
      * @Serializer\Type("bitrix_bool")
      * @Serializer\SerializedName("DEDUCTED")
-     * @Serializer\Groups(groups={"read","update", "create")
+     * @Serializer\Groups(groups={"read","update", "create"})
      */
     protected $deducted = false;
 
@@ -37,7 +38,7 @@ class OrderDelivery extends BaseEntity
      * @var DateTime
      * @Serializer\Type("bitrix_date_time")
      * @Serializer\SerializedName("DATE_DEDUCTED")
-     * @Serializer\Groups(groups={"read","update", "create")
+     * @Serializer\Groups(groups={"read","update", "create"})
      */
     protected $dateDeducted = false;
 

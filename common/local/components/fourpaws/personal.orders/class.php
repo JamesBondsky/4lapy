@@ -14,7 +14,6 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\SystemException;
-use Bitrix\Main\Type\Collection;
 use Bitrix\Main\UI\PageNavigation;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
@@ -67,7 +66,7 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
             /** @noinspection PhpUnhandledExceptionInspection */
             throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
         }
-        $this->orderService = $container->get('bonus.service');
+        $this->orderService = $container->get('order.service');
         $this->authUserProvider = $container->get(UserAuthorizationInterface::class);
         $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
     }
@@ -121,20 +120,20 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
             \define('NEED_AUTH', true);
             return null;
         } catch (ManzanaServiceException $e) {
-            $manzanaOrders = [];
+            $manzanaOrders = new ArrayCollection();
         }
 
-        // кешируем шаблон
+        // кешируем шаблон по номерам чеков из манзаны, ибо инфа в манзану должна передаваться всегда
         /** @noinspection PhpUndefinedVariableInspection */
         if ($this->startResultCache($this->arParams['CACHE_TIME'],
-            ['manzanaOrders' => array_keys($manzanaOrders), 'USER_ID' => $userId])) {
+            ['manzanaOrders' => $manzanaOrders->getKeys(), 'USER_ID' => $userId])) {
             try {
                 $this->arResult['ACTIVE_ORDERS'] = $this->orderService->getActiveSiteOrders();
                 $allClosedOrders = $this->orderService->mergeAllClosedOrders($this->orderService->getClosedSiteOrders()->toArray(),
                     $manzanaOrders->toArray());
                 /** Сортировка по дате и статусу общих заказов */
                 $allClosedOrdersList = $allClosedOrders->toArray();
-                usort($allClosedOrdersList, array('FourPawsPersonalCabinetOrdersComponent', 'sortByStatusAndDate'));
+                usort($allClosedOrdersList, ['FourPawsPersonalCabinetOrdersComponent', 'sortByStatusAndDate']);
                 /** имитация постранички */
                 $nav = new PageNavigation('nav-orders');
                 $nav->allowAllRecords(false)->setPageSize($this->arParams['PAGE_COUNT'])->initFromUri();
@@ -171,14 +170,14 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
                 return 1;
             }
 
-            if($item1->getDateInsert() < $item2->getDateInsert()) {
+            if ($item1->getDateInsert() < $item2->getDateInsert()) {
                 return -1;
             }
 
             return 0;
         }
 
-        if($item1->getStatusSort() > $item2->getStatusSort()) {
+        if ($item1->getStatusSort() > $item2->getStatusSort()) {
             return 1;
         }
 

@@ -4,6 +4,7 @@ namespace FourPaws\PersonalBundle\Entity;
 
 
 use FourPaws\AppBundle\Entity\BaseEntity;
+use JMS\Serializer\Annotation as Serializer;
 
 class OrderProp extends BaseEntity
 {
@@ -11,7 +12,7 @@ class OrderProp extends BaseEntity
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("NAME")
-     * @Serializer\Groups(groups={"read","update", "create")
+     * @Serializer\Groups(groups={"read","update", "create"})
      */
     protected $name = '';
 
@@ -19,7 +20,7 @@ class OrderProp extends BaseEntity
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("CODE")
-     * @Serializer\Groups(groups={"read","update", "create")
+     * @Serializer\Groups(groups={"read","update", "create"})
      */
     protected $code = '';
 
@@ -27,7 +28,7 @@ class OrderProp extends BaseEntity
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("VALUE")
-     * @Serializer\Groups(groups={"read","update", "create")
+     * @Serializer\Groups(groups={"read","update", "create"})
      */
     protected $value = false;
 

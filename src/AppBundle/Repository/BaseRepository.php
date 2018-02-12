@@ -253,15 +253,14 @@ class BaseRepository
             $this->nav->setRecordCount($result->getCount());
         }
 
-        if(!empty($params['setKey'])){
+        if (!empty($params['setKey'])) {
             $allItems = [];
             $i = -1;
-            while($item = $result->fetch()){
+            while ($item = $result->fetch()) {
                 $i++;
-                $allItems[$item[$params['setKey']] ?? 'key_'.$i] = $item;
+                $allItems[$item[$params['setKey']] ?? 'key_' . $i] = $item;
             }
-        }
-        else{
+        } else {
             $allItems = $result->fetchAll();
         }
         if (!empty($params['entityClass'])) {
@@ -342,10 +341,10 @@ class BaseRepository
      *
      * @param string $type
      *
-     * @return BaseEntity
+     * @return BaseEntity|array
      * @throws EmptyEntityClass
      */
-    public function dataToEntity(array $data, string $entityClass = '', string $type = 'read'): BaseEntity
+    public function dataToEntity(array $data, string $entityClass = '', string $type = 'read')
     {
         if (empty($entityClass)) {
             $entityClass = $this->getEntityClass();

@@ -6,97 +6,98 @@ namespace FourPaws\PersonalBundle\Entity;
 use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
+use JMS\Serializer\Annotation as Serializer;
 
 class OrderItem extends BaseEntity
 {
     /** @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("XML_ID")
-     * @Serializer\Groups(groups={"read")
+     * @Serializer\Groups(groups={"read"})
      */
     protected $xmlId = '';
 
     /** @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("NAME")
-     * @Serializer\Groups(groups={"read","update", "create")
+     * @Serializer\Groups(groups={"read","update", "create"})
      */
     protected $name = '';
 
     /** @var float
      * @Serializer\Type("float")
      * @Serializer\SerializedName("QUANTITY")
-     * @Serializer\Groups(groups={"read","update", "create")
+     * @Serializer\Groups(groups={"read","update", "create"})
      */
     protected $quantity = 0;
 
     /** @var float
      * @Serializer\Type("float")
      * @Serializer\SerializedName("PRICE")
-     * @Serializer\Groups(groups={"read","update", "create")
+     * @Serializer\Groups(groups={"read","update", "create"})
      */
     protected $price = 0;
 
     /** @var float
      * @Serializer\Type("float")
      * @Serializer\SerializedName("SUMMARY_PRICE")
-     * @Serializer\Groups(groups={"read")
+     * @Serializer\Groups(groups={"read"})
      */
     protected $sum = 0;
 
     /** @var float
      * @Serializer\Type("float")
      * @Serializer\SerializedName("WEIGHT")
-     * @Serializer\Groups(groups={"read","update", "create")
+     * @Serializer\Groups(groups={"read","update", "create"})
      */
     protected $weight = 0;
 
     /** @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("XML_ID")
-     * @Serializer\Groups(groups={"read","update", "create")
+     * @Serializer\Groups(groups={"read","update", "create"})
      */
     protected $article = '';
 
     /** @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("PROPERTY_SELECTED")
-     * @Serializer\Groups(groups={"read")
+     * @Serializer\Groups(groups={"read"})
      */
     protected $offerSelectedProp = '';
 
     /** @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("PROPERTY_SELECTED_NAME")
-     * @Serializer\Groups(groups={"read")
+     * @Serializer\Groups(groups={"read"})
      */
     protected $offerSelectedPropName = '';
 
     /** @var float
      * @Serializer\Type("float")
      * @Serializer\SerializedName("BONUS")
-     * @Serializer\Groups(groups={"read")
+     * @Serializer\Groups(groups={"read"})
      */
     protected $bonus = 0;
 
     /** @var bool
      * @Serializer\Type("bitrix_bool")
      * @Serializer\SerializedName("HAVE_STOCK")
-     * @Serializer\Groups(groups={"read")
+     * @Serializer\Groups(groups={"read"})
      */
     protected $haveStock = false;
 
     /** @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("PROPERTY_IMG")
-     * @Serializer\Groups(groups={"read")
+     * @Serializer\Groups(groups={"read"})
      */
     protected $image;
 
     /** @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("PROPERTY_BRAND")
-     * @Serializer\Groups(groups={"read")
+     * @Serializer\Groups(groups={"read"})
      */
     protected $brand;
 

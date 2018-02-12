@@ -3,19 +3,15 @@
 namespace FourPaws\PersonalBundle\Entity;
 
 
-use Adv\Bitrixtools\Exception\IblockNotFoundException;
-use Bitrix\Main\ArgumentException;
-use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Internals\StatusLangTable;
 use Bitrix\Sale\Internals\StatusTable;
 use Doctrine\Common\Collections\ArrayCollection;
-use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Entity\BaseEntity;
-use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\StoreBundle\Entity\Store;
+use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -25,7 +21,7 @@ class Order extends BaseEntity
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("ACCOUNT_NUMBER")
-     * @Serializer\Groups(groups={"read","update", "create")
+     * @Serializer\Groups(groups={"read","update", "create"})
      */
     protected $accountNumber = '';
 
@@ -33,7 +29,7 @@ class Order extends BaseEntity
      * @var int
      * @Serializer\Type("int")
      * @Serializer\SerializedName("PAY_SYSTEM_ID")
-     * @Serializer\Groups(groups={"read","update", "create")
+     * @Serializer\Groups(groups={"read","update", "create"})
      */
     protected $paySystemId = 0;
 
@@ -41,7 +37,7 @@ class Order extends BaseEntity
      * @var int
      * @Serializer\Type("int")
      * @Serializer\SerializedName("DELIVERY_ID")
-     * @Serializer\Groups(groups={"read","update", "create")
+     * @Serializer\Groups(groups={"read","update", "create"})
      */
     protected $deliveryId = 0;
 
@@ -49,7 +45,7 @@ class Order extends BaseEntity
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("PERSON_TYPE_ID")
-     * @Serializer\Groups(groups={"read","update", "create")
+     * @Serializer\Groups(groups={"read","update", "create"})
      */
     protected $personTypeID = 0;
 
@@ -57,7 +53,7 @@ class Order extends BaseEntity
      * @var int
      * @Serializer\Type("int")
      * @Serializer\SerializedName("USER_ID")
-     * @Serializer\Groups(groups={"read","update", "create")
+     * @Serializer\Groups(groups={"read","update", "create"})
      */
     protected $userId = 0;
 
@@ -65,7 +61,7 @@ class Order extends BaseEntity
      * @var bool
      * @Serializer\Type("bitrix_bool")
      * @Serializer\SerializedName("PAYED")
-     * @Serializer\Groups(groups={"read","update", "create")
+     * @Serializer\Groups(groups={"read","update", "create"})
      */
     protected $payed = 'N';
 
@@ -73,7 +69,7 @@ class Order extends BaseEntity
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("STATUS_ID")
-     * @Serializer\Groups(groups={"read","update", "create")
+     * @Serializer\Groups(groups={"read","update", "create"})
      */
     protected $statusId = '';
 
@@ -81,7 +77,7 @@ class Order extends BaseEntity
      * @var float
      * @Serializer\Type("float")
      * @Serializer\SerializedName("PRICE")
-     * @Serializer\Groups(groups={"read","update", "create")
+     * @Serializer\Groups(groups={"read","update", "create"})
      */
     protected $price = 0;
 
@@ -89,7 +85,7 @@ class Order extends BaseEntity
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("CURRENCY")
-     * @Serializer\Groups(groups={"read","update", "create")
+     * @Serializer\Groups(groups={"read","update", "create"})
      */
     protected $currency = 'RUB';
 
@@ -97,7 +93,7 @@ class Order extends BaseEntity
      * @var float
      * @Serializer\Type("float")
      * @Serializer\SerializedName("SUM_PAID")
-     * @Serializer\Groups(groups={"read","update", "create")
+     * @Serializer\Groups(groups={"read","update", "create"})
      */
     protected $sumPaid = 0;
 
@@ -105,7 +101,7 @@ class Order extends BaseEntity
      * @var DateTime
      * @Serializer\Type("bitrix_date_time")
      * @Serializer\SerializedName("DATE_INSERT")
-     * @Serializer\Groups(groups={"read","update", "create")
+     * @Serializer\Groups(groups={"read","update", "create"})
      */
     protected $dateInsert;
 
@@ -113,7 +109,7 @@ class Order extends BaseEntity
      * @var DateTime
      * @Serializer\Type("bitrix_date_time")
      * @Serializer\SerializedName("DATE_UPDATE")
-     * @Serializer\Groups(groups={"read","update", "create")
+     * @Serializer\Groups(groups={"read","update", "create"})
      */
     protected $dateUpdate;
 
@@ -121,7 +117,7 @@ class Order extends BaseEntity
      * @var DateTime
      * @Serializer\Type("bitrix_date_time")
      * @Serializer\SerializedName("DATE_PAYED")
-     * @Serializer\Groups(groups={"read","update", "create")
+     * @Serializer\Groups(groups={"read","update", "create"})
      */
     protected $datePayed;
 
@@ -129,7 +125,7 @@ class Order extends BaseEntity
      * @var DateTime
      * @Serializer\Type("bitrix_date_time")
      * @Serializer\SerializedName("DATE_STATUS")
-     * @Serializer\Groups(groups={"read","update", "create")
+     * @Serializer\Groups(groups={"read","update", "create"})
      */
     protected $dateStatus;
 
@@ -137,7 +133,7 @@ class Order extends BaseEntity
      * @var DateTime
      * @Serializer\Type("bitrix_date_time")
      * @Serializer\SerializedName("DATE_CANCELED")
-     * @Serializer\Groups(groups={"read","update", "create")
+     * @Serializer\Groups(groups={"read","update", "create"})
      */
     protected $dateCanceled;
 
@@ -168,7 +164,7 @@ class Order extends BaseEntity
     /** @var array */
     protected $statusLang = [];
 
-    /** @var array  */
+    /** @var array */
     protected $statusMain = [];
 
     /**
@@ -176,7 +172,7 @@ class Order extends BaseEntity
      */
     public function getAccountNumber(): string
     {
-        return $this->accountNumber;
+        return $this->accountNumber ?? '';
     }
 
     /**
@@ -195,7 +191,7 @@ class Order extends BaseEntity
      */
     public function getPaySystemId(): int
     {
-        return $this->paySystemId;
+        return $this->paySystemId ?? 0;
     }
 
     /**
@@ -214,7 +210,7 @@ class Order extends BaseEntity
      */
     public function getDeliveryId(): int
     {
-        return $this->deliveryId;
+        return $this->deliveryId ?? 0;
     }
 
     /**
@@ -271,7 +267,7 @@ class Order extends BaseEntity
      */
     public function getPersonTypeID(): string
     {
-        return $this->personTypeID;
+        return $this->personTypeID ?? '';
     }
 
     /**
@@ -290,7 +286,7 @@ class Order extends BaseEntity
      */
     public function getUserId(): int
     {
-        return $this->userId;
+        return $this->userId ?? 0;
     }
 
     /**
@@ -309,7 +305,7 @@ class Order extends BaseEntity
      */
     public function isPayed(): bool
     {
-        return $this->payed;
+        return $this->payed ?? false;
     }
 
     /**
@@ -347,7 +343,7 @@ class Order extends BaseEntity
      */
     public function getStatusId(): string
     {
-        return $this->statusId;
+        return $this->statusId ?? '';
     }
 
     /**
@@ -363,15 +359,19 @@ class Order extends BaseEntity
 
     public function getStatus(): string
     {
-        if(empty($this->getStatusLang())) {
-            $this->setStatusLang(StatusLangTable::query()
+        if (empty($this->getStatusLang())) {
+            $res = StatusLangTable::query()
                 ->where('STATUS_ID', $this->getStatusId())
                 ->where('LID', 'ru')
+                ->setSelect(['NAME'])
+                ->setLimit(1)
                 ->setCacheTtl(360000)
-                ->exec()
-                ->fetch());
+                ->exec();
+            if ($res->getSelectedRowsCount() > 0) {
+                $this->setStatusLang($res->fetch());
+            }
         }
-        return $this->getStatusLang()['NAME'];
+        return $this->getStatusLang()['NAME'] ?? '';
     }
 
     /**
@@ -398,7 +398,7 @@ class Order extends BaseEntity
      */
     public function getPrice(): float
     {
-        return $this->price;
+        return $this->price ?? 0;
     }
 
     /**
@@ -417,7 +417,7 @@ class Order extends BaseEntity
      */
     public function getCurrency(): string
     {
-        return $this->currency;
+        return $this->currency ?? 'RUB';
     }
 
     /**
@@ -436,7 +436,7 @@ class Order extends BaseEntity
      */
     public function getSumPaid(): float
     {
-        return $this->sumPaid;
+        return $this->sumPaid ?? 0;
     }
 
     /**
@@ -473,17 +473,12 @@ class Order extends BaseEntity
      * @return ArrayCollection
      * @throws ServiceNotFoundException
      * @throws \RuntimeException
-     * @throws ApplicationCreateException
-     * @throws EmptyEntityClass
-     * @throws SystemException
-     * @throws ArgumentException
-     * @throws IblockNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws \Exception
      */
     public function getItems(): ArrayCollection
     {
-        return $this->items;
+        return $this->items ?? new ArrayCollection();
     }
 
     /**
@@ -502,7 +497,7 @@ class Order extends BaseEntity
      */
     public function isManzana(): bool
     {
-        return $this->manzana;
+        return $this->manzana ?? false;
     }
 
     /**
@@ -520,12 +515,12 @@ class Order extends BaseEntity
 
     public function getFormatedDateInsert(): string
     {
-        return DateHelper::replaceRuMonth($this->getDateInsert()->format('d #m# Y'));
+        return DateHelper::replaceRuMonth($this->getDateInsert()->format('d #n# Y'));
     }
 
     public function getFormatedDateStatus(): string
     {
-        return DateHelper::replaceRuMonth($this->getDateStatus()->format('d #m# Y'));
+        return DateHelper::replaceRuMonth($this->getDateStatus()->format('d #n# Y'));
     }
 
     public function getFormatedPrice()
@@ -538,7 +533,7 @@ class Order extends BaseEntity
      */
     public function getAllWeight(): int
     {
-        return $this->allWeight;
+        return $this->allWeigh ?? 0;
     }
 
     /**
@@ -565,7 +560,7 @@ class Order extends BaseEntity
      */
     public function getItemsSum(): float
     {
-        return $this->itemsSum;
+        return $this->itemsSum ?? 0;
     }
 
     /**
@@ -629,9 +624,9 @@ class Order extends BaseEntity
             /** @var OrderProp $prop */
             $prop = $this->getProps()->get('DELIVERY_DATE');
             /** @var Date|null $date */
-            $date = $prop->getValue();
-            if ($date !== null && !empty($date)) {
-                $formatedDate = DateHelper::replaceRuMonth($date->format('d #m# Y'), DateHelper::GENITIVE);
+            $date = new Date($prop->getValue());
+            if ($date !== null && $date instanceof Date) {
+                $formatedDate = DateHelper::replaceRuMonth($date->format('d #n# Y'), DateHelper::GENITIVE);
             }
         }
 
@@ -643,7 +638,7 @@ class Order extends BaseEntity
      */
     public function getProps(): ArrayCollection
     {
-        return $this->props;
+        return $this->props ?? new ArrayCollection();
     }
 
     /**
@@ -675,7 +670,7 @@ class Order extends BaseEntity
      */
     public function getStatusLang(): array
     {
-        return $this->statusLang;
+        return $this->statusLang ?? [];
     }
 
     /**
@@ -691,7 +686,7 @@ class Order extends BaseEntity
      */
     public function getStatusMain(): array
     {
-        return $this->statusMain;
+        return $this->statusMain ?? [];
     }
 
     /**
@@ -704,10 +699,11 @@ class Order extends BaseEntity
 
     public function getStatusSort()
     {
-        if(empty($this->getStatusMain())) {
+        if (empty($this->getStatusMain())) {
             $this->setStatusMain(StatusTable::query()
                 ->where('ID', $this->getStatusId())
                 ->setCacheTtl(360000)
+                ->setSelect(['SORT'])
                 ->exec()
                 ->fetch());
         }

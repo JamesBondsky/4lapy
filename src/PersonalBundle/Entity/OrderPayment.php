@@ -4,6 +4,7 @@ namespace FourPaws\PersonalBundle\Entity;
 
 
 use FourPaws\AppBundle\Entity\BaseEntity;
+use JMS\Serializer\Annotation as Serializer;
 
 class OrderPayment extends BaseEntity
 {
@@ -11,7 +12,7 @@ class OrderPayment extends BaseEntity
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("NAME")
-     * @Serializer\Groups(groups={"read","update", "create")
+     * @Serializer\Groups(groups={"read","update", "create"})
      */
     protected $name = '';
 
