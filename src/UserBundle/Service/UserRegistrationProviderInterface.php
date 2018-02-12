@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\UserBundle\Service;
 
 use FourPaws\UserBundle\Entity\User;
@@ -10,10 +14,11 @@ interface UserRegistrationProviderInterface
 {
     /**
      * @param User $user
+     * @param bool $manzanaSave
      *
-     * @return bool
      * @throws ValidationException
      * @throws BitrixRuntimeException
+     * @return bool
      */
-    public function register(User $user): bool;
+    public function register(User $user, bool $manzanaSave = true): bool;
 }

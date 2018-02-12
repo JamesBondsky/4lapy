@@ -1,11 +1,15 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\DeliveryBundle\Dpd;
 
-use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Loader;
-use Ipolh\DPD\DB\Terminal\Table;
-use WebArch\BitrixCache\BitrixCache;
+use FourPaws\App\Application;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\StoreBundle\Collection\StoreCollection;
 
 if (!Loader::includeModule('ipol.dpd')) {
     class Shipment
@@ -64,45 +68,20 @@ class Shipment extends \Ipolh\DPD\Shipment
             return false;
         }
 
-        return count($this->getDpdTerminals($isPaymentOnDelivery)) > 0;
+        return $this->getDpdTerminals($isPaymentOnDelivery)->count() > 0;
     }
 
-    public function getDpdTerminals($isPaymentOnDelivery = null)
+    public function getDpdTerminals($isPaymentOnDelivery = null): StoreCollection
     {
-        $locationId = $this->locationTo['ID'];
-        $getTerminals = function () use ($locationId) {
-            $terminals = Table::getList(
-                [
-                    'select' => ['*'],
-                    'filter' => [
-                        'LOCATION_ID' => $locationId,
-                    ],
-                ]
-            );
-
-            $result = [];
-            while ($terminal = $terminals->fetch()) {
-                $result[] = $terminal;
-            }
-
-            return $result;
-        };
-
-        $terminals = (new BitrixCache())
-            ->withId(__METHOD__ . $locationId)
-            ->resultOf($getTerminals);
-        $orderPrice = $this->getPrice();
+        /** @var DeliveryService $deliveryService */
+        $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
         $isPaymentOnDelivery = null === $isPaymentOnDelivery ? $this->isPaymentOnDelivery() : $isPaymentOnDelivery;
-        if ($isPaymentOnDelivery) {
-            $terminals = array_filter(
-                $terminals,
-                function ($item) use ($orderPrice) {
-                    return ($item['NPP_AVAILABLE'] === 'Y') && ($item['NPP_AMOUNT'] >= $orderPrice);
-                }
-            );
-        }
 
-        return $terminals;
+        return $deliveryService->getDpdTerminalsByLocation(
+            $this->locationTo['CODE'],
+            $isPaymentOnDelivery,
+            $this->getPrice()
+        );
     }
 
     public function isPaymentOnDelivery()

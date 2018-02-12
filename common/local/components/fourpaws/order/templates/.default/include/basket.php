@@ -34,14 +34,14 @@ $storage = $arResult['STORAGE'];
 /** @var DeliveryService $deliveryService */
 $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
 
-$selectedShop = $arResult['SELECTED_SHOP'];
-$showDelayed = ($arResult['STEP'] === OrderService::DELIVERY_STEP)
-    && $storage->isPartialGet()
-    && ($selectedShop instanceof Store)
-    && $deliveryService->isPickup($selectedDelivery);
-
-if ($showDelayed) {
-    $stockResult = $deliveryService->getStockResultByDelivery($selectedDelivery)->filterByStore($selectedShop);
+$showDelayed = false;
+if ($arResult['STEP'] === OrderService::DELIVERY_STEP) {
+    /** @var Store $selectedShop */
+    $selectedShop = $arResult['SELECTED_SHOP'];
+    $stockResult = $deliveryService->getStockResultByDelivery($selectedDelivery);
+    if ($deliveryService->isPickup($selectedDelivery)) {
+        $stockResult = $stockResult->filterByStore($selectedShop);
+    }
 
     $available = $stockResult->getAvailable();
     $availableWeight = 0;
@@ -76,6 +76,10 @@ if ($showDelayed) {
         $delayedPrice += $item->getPrice() * $item->getAmount();
         $delayedWeight += $item->getOffer()->getCatalogProduct()->getWeight() * $item->getAmount();
     }
+
+    if (!$delayed->isEmpty()) {
+        $showDelayed = true;
+    }
 } else {
     $availableQuantity = array_sum($basket->getQuantityList());
     $availableWeight = $basket->getWeight();
@@ -89,20 +93,25 @@ if ($showDelayed) {
             'price'    => $item->getPrice(),
         ];
     }
+    $delayedQuantity = 0;
+    $delayedWeight = 0;
+    $delayedPrice = 0;
+    $delayedItems = [];
 }
 
 ?>
 
 <aside class="b-order__list">
-    <h4 class="b-title b-title--order-list js-popup-mobile-link">
+    <h4 class="b-title b-title--order-list js-popup-mobile-link js-full-list-title">
         Заказ: <?= $availableQuantity ?> <?= (new Declension('товар', 'товара', 'товаров'))->get(
             $availableQuantity
         ) ?>
         (<?= WordHelper::showWeight($availableWeight) ?>) на сумму <?= CurrencyHelper::formatPrice(
-            $availablePrice
+            $availablePrice,
+            false
         ) ?>
     </h4>
-    <div class="b-order-list js-popup-mobile">
+    <div class="b-order-list js-popup-mobile js-full-list">
         <a class="b-link b-link--popup-back b-link--popup-choose-shop js-popup-mobile-close">Информация о
             заказе</a>
         <ul class="b-order-list__list js-order-list-block">
@@ -125,16 +134,19 @@ if ($showDelayed) {
             <?php } ?>
         </ul>
     </div>
-    <?php if ($showDelayed) { ?>
-        <h4 class="b-title b-title--order-list js-popup-mobile-link js-basket-link">
+    <?php if ($arResult['STEP'] === OrderService::DELIVERY_STEP) { ?>
+        <h4 class="b-title b-title--order-list js-popup-mobile-link js-basket-link js-parts-list-title"
+            <?= !$showDelayed ? 'style="display:none"' : '' ?>>
             <span class="js-mobile-title-order">Останется в корзине: <?= $delayedQuantity ?></span>
             <?= (new Declension('товар', 'товара', 'товаров'))->get(
                 $delayedQuantity
             ) ?> (<?= WordHelper::showWeight($delayedWeight) ?>) на сумму <?= CurrencyHelper::formatPrice(
-                $delayedPrice
+                $delayedPrice,
+                false
             ) ?>
         </h4>
-        <div class="b-order-list b-order-list--aside js-popup-mobile">
+        <div class="b-order-list b-order-list--aside js-popup-mobile js-parts-list"
+            <?= !$showDelayed ? 'style="display:none"' : '' ?>>
             <a class="b-link b-link--popup-back b-link--popup-choose-shop js-popup-mobile-close">Информация о заказе</a>
             <ul class="b-order-list__list js-order-list-block">
                 <?php foreach ($delayedItems as $item) { ?>
@@ -156,13 +168,14 @@ if ($showDelayed) {
                 <?php } ?>
             </ul>
         </div>
-        <div class="b-order__link-wrapper">
+        <div class="b-order__link-wrapper"
+            <?= !$showDelayed ? 'style="display:none"' : '' ?>>
             <a class="b-link b-link--order-gotobusket b-link--order-gotobusket"
-               href="javascript:void(0)"
+               href="/cart"
                title="Вернуться в корзину">
-                <span class="b-icon b-icon--order-busket">
-                    <?= new SvgDecorator('icon-reason', 16, 16) ?>
-                </span>
+            <span class="b-icon b-icon--order-busket">
+                <?= new SvgDecorator('icon-reason', 16, 16) ?>
+            </span>
                 <span class="b-link__text b-link__text--order-gotobusket">Вернуться в корзину</span>
             </a>
         </div>

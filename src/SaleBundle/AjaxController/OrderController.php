@@ -1,12 +1,18 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SaleBundle\AjaxController;
 
+use Bitrix\Main\Web\Uri;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\ReCaptcha\ReCaptchaService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
@@ -46,7 +52,11 @@ class OrderController extends Controller
     ];
 
     /**
+     * OrderController constructor.
+     *
      * @param OrderService $orderService
+     * @param UserAuthorizationInterface $userAuthProvider
+     * @param ReCaptchaService $recaptcha
      */
     public function __construct(
         OrderService $orderService,
@@ -122,7 +132,7 @@ class OrderController extends Controller
     {
         $storage = $this->orderService->getStorage();
         $currentStep = OrderService::DELIVERY_STEP;
-        if ($this->orderService->validateStorage($storage, $currentStep) != $currentStep) {
+        if ($this->orderService->validateStorage($storage, $currentStep) !== $currentStep) {
             return JsonErrorResponse::create('', 200, [], ['reload' => true]);
         }
 
@@ -150,7 +160,7 @@ class OrderController extends Controller
     {
         $storage = $this->orderService->getStorage();
         $currentStep = OrderService::PAYMENT_STEP;
-        if ($this->orderService->validateStorage($storage, $currentStep) != $currentStep) {
+        if ($this->orderService->validateStorage($storage, $currentStep) !== $currentStep) {
             return JsonErrorResponse::create('', 200, [], ['reload' => true]);
         }
 
@@ -159,14 +169,23 @@ class OrderController extends Controller
             return JsonErrorResponse::createWithData('', ['errors' => $validationErrors]);
         }
 
-        /*
+        try {
+            $order = $this->orderService->createOrder($storage);
+        } catch (OrderCreateException $e) {
+            return JsonErrorResponse::createWithData('', ['errors' => ['order' => 'Ошибка при создании заказа']]);
+        }
+
+        $url = new Uri('/sale/order/' . OrderService::COMPLETE_STEP . '/' . $order->getId());
+        if (!$this->userAuthProvider->isAuthorized()) {
+            $url->addParams(['hash' => $order->getHash()]);
+        }
+
         return JsonSuccessResponse::create(
             '',
             200,
             [],
-            ['redirect' => '/sale/order/' . OrderService::PAYMENT_STEP . '/']
+            ['redirect' => $url->getUri()]
         );
-        */
     }
 
     /**
@@ -179,14 +198,6 @@ class OrderController extends Controller
         $key = array_search($step, $this->stepOrder, true);
 
         return $this->stepOrder[++$key];
-    }
-
-    protected function validate($step)
-    {
-        $storage = $this->orderService->getStorage();
-
-        return $this->orderService->validateStorage($storage, $step);
-
     }
 
     protected function fillStorage(OrderStorage $storage, Request $request, string $step): array
@@ -202,12 +213,12 @@ class OrderController extends Controller
             $this->orderService->updateStorage($storage, $step);
         } catch (OrderStorageValidationException $e) {
             /** @var ConstraintViolation $error */
-            foreach ($e->getErrors() as $error) {
-                $errors[$error->getPropertyPath()] = $error->getMessage();
+            foreach ($e->getErrors() as $i => $error) {
+                $key = $error->getPropertyPath() ?: $i;
+                $errors[$key] = $error->getMessage();
             }
         }
 
         return $errors;
     }
-
 }

@@ -1,51 +1,64 @@
-<?if (!defined('B_PROLOG_INCLUDED')||B_PROLOG_INCLUDED!==true) {
+<?php
+
+use FourPaws\BitrixOrm\Model\CropImageDecorator;
+use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) {
     die();
 }
+
 /**
  * Популярные бренды на главной странице сайта
  *
- * @updated: 25.12.2017
+ * @updated: 09.02.2018
  */
+
+/** @var \CBitrixComponentTemplate $this */
+/** @var array $arResult */
 
 if (!$arResult['ITEMS']) {
     return;
 }
 
-foreach ($arResult['ITEMS'] as &$arItem) {
-    $mImgField = false;
-    if ($arItem['PREVIEW_PICTURE'] || $arItem['DETAIL_PICTURE']) {
-        $mImgField = $arItem['PREVIEW_PICTURE'] ? $arItem['PREVIEW_PICTURE'] : $arItem['DETAIL_PICTURE'];
+$arParams['RESIZE_WIDTH'] = $arParams['RESIZE_WIDTH'] ?? 195;
+$arParams['RESIZE_HEIGHT'] = $arParams['RESIZE_HEIGHT'] ?? 69;
+$arParams['RESIZE_TYPE'] = $arParams['RESIZE_TYPE'] ?? 'BX_RESIZE_IMAGE_PROPORTIONAL';
+
+foreach ($arResult['ITEMS'] as &$item) {
+    $imgField = false;
+    if ($item['PREVIEW_PICTURE'] || $item['DETAIL_PICTURE']) {
+        $imgField = $item['PREVIEW_PICTURE'] ? $item['PREVIEW_PICTURE'] : $item['DETAIL_PICTURE'];
     }
-    $arItem['PRINT_PICTURE'] = $mImgField && is_array($mImgField) ? $mImgField : array();
-    if ($mImgField) {
+    $item['PRINT_PICTURE'] = $imgField && is_array($imgField) ? $imgField : [];
+    if ($imgField) {
         if (!empty($arParams['RESIZE_WIDTH']) && !empty($arParams['RESIZE_HEIGHT'])) {
             try {
-                $bCrop = isset($arParams['RESIZE_TYPE']) && $arParams['RESIZE_TYPE'] == 'BX_RESIZE_IMAGE_EXACT';
-
-                if (is_array($mImgField)) {
-                    $obImg = new \FourPaws\BitrixOrm\Model\ResizeImageDecorator($mImgField);
-                } else {
-                    $obImg = \FourPaws\BitrixOrm\Model\ResizeImageDecorator::createFromPrimary($mImgField);
-                }
-                $obImg->setResizeWidth(!$bCrop ? $arParams['RESIZE_WIDTH'] : max(array($arParams['RESIZE_HEIGHT'], $arParams['RESIZE_WIDTH'])));
-                $obImg->setResizeHeight(!$bCrop ? $arParams['RESIZE_HEIGHT'] : max(array($arParams['RESIZE_HEIGHT'], $arParams['RESIZE_WIDTH'])));
-
-                if ($bCrop) {
-                    if (is_array($mImgField)) {
-                        $obImg = new \FourPaws\BitrixOrm\Model\CropImageDecorator($mImgField);
+                $isCrop = isset($arParams['RESIZE_TYPE']) && $arParams['RESIZE_TYPE'] == 'BX_RESIZE_IMAGE_EXACT';
+                if ($isCrop) {
+                    if (is_array($imgField)) {
+                        $img = new CropImageDecorator($imgField);
                     } else {
-                        $obImg = \FourPaws\BitrixOrm\Model\CropImageDecorator::createFromPrimary($mImgField);
+                        $img = CropImageDecorator::createFromPrimary($imgField);
                     }
-                    $obImg->setCropWidth($arParams['RESIZE_WIDTH']);
-                    $obImg->setCropHeight($arParams['RESIZE_HEIGHT']);
+                    $img->setCropWidth($arParams['RESIZE_WIDTH']);
+                    $img->setCropHeight($arParams['RESIZE_HEIGHT']);
+                } else {
+                    if (is_array($imgField)) {
+                        $img = new ResizeImageDecorator($imgField);
+                    } else {
+                        $img = ResizeImageDecorator::createFromPrimary($imgField);
+                    }
+                    $img->setResizeWidth($arParams['RESIZE_WIDTH']);
+                    $img->setResizeHeight($arParams['RESIZE_HEIGHT']);
                 }
 
-                $arItem['PRINT_PICTURE'] = array(
-                    'SRC' => $obImg->getSrc(),
+                $item['PRINT_PICTURE'] = array(
+                    'SRC' => $img->getSrc(),
+                    'TITLE' => $imgField['TITLE'] ?? '',
+                    'ALT' => isset($imgField['ALT']) ? $imgField['ALT'] : $item['NAME'],
                 );
-            } catch (\Exception $obException) {
-            }
+            } catch (\Exception $exception) {}
         }
     }
 }
-unset($arItem);
+unset($item);

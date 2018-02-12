@@ -41,7 +41,7 @@ class PetController extends Controller
      */
     public function addAction(Request $request) : JsonResponse
     {
-        $data = $request->request->getIterator()->getArrayCopy();
+        $data = $request->request->all();
         if (empty($data)) {
             return JsonErrorResponse::createWithData(
                 'Не указаны данные для добавления',
@@ -83,7 +83,7 @@ class PetController extends Controller
      */
     public function updateAction(Request $request) : JsonResponse
     {
-        $data = $request->request->getIterator()->getArrayCopy();
+        $data = $request->request->all();
         if (empty($data)) {
             return JsonErrorResponse::createWithData(
                 'Не указаны данные для обновления',

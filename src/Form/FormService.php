@@ -42,7 +42,7 @@ class FormService
      */
     public function validEmail($email) : bool
     {
-        return !(filter_var($email, FILTER_VALIDATE_EMAIL) === false);
+        return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
     }
     
     /**
@@ -82,9 +82,9 @@ class FormService
      * @throws \FourPaws\Form\Exception\FileSaveException
      * @throws \FourPaws\Form\Exception\FileSizeException
      * @throws \FourPaws\Form\Exception\FileTypeException
-     * @return int
+     * @return array
      */
-    public function saveFile($fileCode, $fileSizeMb, $valid_types) : int
+    public function saveFile($fileCode, $fileSizeMb, $valid_types) : array
     {
         if (!empty($_FILES[$fileCode])) {
             $max_file_size = $fileSizeMb * 1024 * 1024;
@@ -102,17 +102,13 @@ class FormService
                         'Разрешено загружать файлы только с расширениями ' . implode(' ,', $valid_types)
                     );
                 }
-                
-                $fileId = (int)\CFile::SaveFile($file, 'form');
-                if ($fileId > 0) {
-                    return $fileId;
-                }
+                return $file;
             }
             
             throw new FileSaveException('Произошла ошибка при сохранении файла, попробуйте позже');
         }
         
-        return 0;
+        return [];
     }
     
     /**
@@ -230,22 +226,38 @@ class FormService
     
     /**
      * @param int   $formId
-     * @param array $requiredFields
+     * @param array $fields
      *
      * @return array
      */
-    public function getRealNamesFields(int $formId, array $requiredFields) : array
+    public function getRealNamesFields(int $formId, array $fields = []) : array
     {
-        $items         = $this->getQuestions(
-            [
-                'formId' => $formId,
-                'filter' => ['SID' => $requiredFields],
-            ]
-        );
+        $params = [
+            'formId' => $formId
+        ];
+        if(!empty($fields)){
+            $params['filter'] = ['SID' => $fields];
+        }
+        $items         = $this->getQuestions($params);
         $originalNames = [];
         if (!empty($items)) {
             foreach ($items as $item) {
-                if (\in_array($item['SID'], $requiredFields, true)) {
+                if (!empty($fields) && \in_array($item['SID'], $fields, true)) {
+                    switch ($item['FIELD_TYPE']) {
+                        case 'radio':
+                        case 'dropdown':
+                            $postfix = $item['SID'];
+                            break;
+                        case 'checkbox':
+                        case 'multiselect':
+                            $postfix = $item['SID'] . '[]';
+                            break;
+                        default:
+                            $postfix = $item['ANSWER_ID'];
+                    }
+                    $originalNames[$item['SID']] = 'form_' . $item['FIELD_TYPE'] . '_' . $postfix;
+                }
+                elseif (empty($fields)){
                     switch ($item['FIELD_TYPE']) {
                         case 'radio':
                         case 'dropdown':

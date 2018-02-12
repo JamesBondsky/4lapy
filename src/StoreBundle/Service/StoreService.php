@@ -223,14 +223,12 @@ class StoreService
         $res = $query->setSelect($select)->exec();
         while ($item = $res->fetch()) {
             $result[$item['ID']] = $item;
-            if (!\in_array($item['UF_BRANCH'], $branchIds, true)) {
-                $branchIds[$item['ID']] = $item['UF_BRANCH'];
-            }
+            $branchIds[$item['ID']] = $item['UF_BRANCH'];
         }
 
         if (\is_array($branchIds) && !empty($branchIds)) {
             $highloadBranch = HLBlockFactory::createTableObject('MetroWays');
-            $res = $highloadBranch::query()->setFilter(['ID' => $branchIds])->setSelect(['*'])->exec();
+            $res = $highloadBranch::query()->setFilter(['ID' => array_unique($branchIds)])->setSelect(['*'])->exec();
             $reverseBranchIds = [];
             foreach ($branchIds as $id => $branch) {
                 $reverseBranchIds[$branch][] = $id;

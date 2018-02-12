@@ -20,6 +20,10 @@ services:
         public: true
         tags: ['controller.service_arguments']
 
+    FourPaws\MobileApiBundle\Serialization\:
+        resource: '../../Serialization/*'
+        tags: ['jms_serializer.subscribing_handler']
+
     FourPaws\MobileApiBundle\Services\Security\TokenGeneratorInterface:
         class: FourPaws\MobileApiBundle\Services\Security\Md5TokenGenerator
 

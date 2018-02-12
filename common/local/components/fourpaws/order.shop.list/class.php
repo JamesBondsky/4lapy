@@ -100,7 +100,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
         if ($offers->isEmpty()) {
             throw new \RuntimeException('Offers not found');
         }
-
+        /* @todo поправить метро у магазинов */
         /** @var \Symfony\Bundle\FrameworkBundle\Routing\Router $router */
         $router = Application::getInstance()->getContainer()->get('router');
         /** @var Symfony\Component\Routing\RouteCollection $routeCollection */
@@ -231,9 +231,9 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                     }
                 }
 
-                $delayedDate = $delayed->isEmpty()
+                $availableDate = $available->isEmpty()
                     ? $stockResultByStore->getDeliveryDate()
-                    : $delayed->getDeliveryDate();
+                    : $available->getDeliveryDate();
                 $result['items'][] = [
                     'id'              => $store->getXmlId(),
                     'adress'          => $address,
@@ -241,13 +241,13 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                     'schedule'        => $store->getSchedule(),
                     'pickup'          => DeliveryTimeHelper::showTime(
                         $resultByStore[$store->getXmlId()]['PARTIAL_RESULT'],
-                        $modifyDate ? $delayedDate : null,
-                        ['SHORT' => true]
+                        $modifyDate ? $availableDate : null,
+                        ['SHORT' => true, 'SHOW_TIME' => true]
                     ),
                     'pickup_full'     => DeliveryTimeHelper::showTime(
                         $resultByStore[$store->getXmlId()]['FULL_RESULT'],
                         $modifyDate ? $stockResultByStore->getDeliveryDate() : null,
-                        ['SHORT' => true]
+                        ['SHORT' => true, 'SHOW_TIME' => true]
                     ),
                     'metroClass'      => !empty($metro) ? '--' . $metroList[$metro]['UF_CLASS'] : '',
                     'order'           => $orderType,

@@ -12,9 +12,20 @@ use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\MobileApiBundle\Dto\Error;
 use FourPaws\MobileApiBundle\Dto\Request\InfoRequest;
 use FourPaws\MobileApiBundle\Dto\Response;
+use FourPaws\MobileApiBundle\Services\Api\InfoService;
 
 class InfoController extends FOSRestController
 {
+    /**
+     * @var InfoService
+     */
+    private $infoService;
+
+    public function __construct(InfoService $infoService)
+    {
+        $this->infoService = $infoService;
+    }
+
     /**
      * @Rest\Get("/social/")
      */
@@ -53,18 +64,29 @@ class InfoController extends FOSRestController
     /**
      * Получить статичные разделы
      *
+     * @todo Статичные страницы, Вакансии, Конкурсы, Условия доставки
      * @Rest\Get("/info/")
+     * @Rest\View()
      *
      * @param InfoRequest        $infoRequest
      * @param Collection|Error[] $apiErrors
      *
-     * @return \FOS\RestBundle\View\View
+     * @return Response
      */
-    public function getInfoAction(InfoRequest $infoRequest, Collection $apiErrors)
+    public function getInfoAction(InfoRequest $infoRequest, Collection $apiErrors): Response
     {
         $response = new Response();
         $response->setErrors($apiErrors);
+        if ($response->getErrors()->count()) {
+            return $response;
+        }
 
-        return $this->view($response);
+        $response->setData($this->infoService->getInfo(
+            $infoRequest->getType(),
+            $infoRequest->getInfoId(),
+            $infoRequest->getFields()
+        ));
+
+        return $response;
     }
 }

@@ -10,6 +10,8 @@ node_modules/
 !/web/robots.txt
 .php_cs.cache
 
+app/config/parameters.yml
+
 /var/*
 !/var/cache
 /var/cache/*

@@ -8,9 +8,7 @@ namespace FourPaws\PersonalBundle\Service;
 
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
-use FourPaws\External\Manzana\Exception\ManzanaException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
 use FourPaws\PersonalBundle\Entity\Address;
@@ -19,7 +17,6 @@ use FourPaws\PersonalBundle\Repository\AddressRepository;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
-use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -69,16 +66,18 @@ class AddressService
     /**
      * @param int $id
      *
-     * @return Address
      * @throws NotFoundException
+     * @return Address
      */
     public function getById(int $id): Address
     {
         return $this->addressRepository->findById($id);
     }
-    
+
     /**
      * @param $data
+     *
+     * @deprecated
      *
      * @throws \RuntimeException
      * @throws InvalidIdentifierException
@@ -91,23 +90,33 @@ class AddressService
      * @throws \Exception
      * @return bool
      */
-    public function add(array $data): bool
+    public function addFromArray(array $data): bool
     {
-        if (empty($data['UF_USER_ID'])) {
-            $data['UF_USER_ID'] = $this->currentUser->getCurrentUserId();
+        $address = $this->addressRepository->dataToEntity($data, Address::class);
+
+        return $this->add($address);
+    }
+
+    public function add(Address $address): bool
+    {
+        if (!$address->getUserId()) {
+            $address->setUserId($this->currentUser->getCurrentUserId());
         }
-        if ($data['UF_MAIN'] === 'Y') {
+
+        if (!$address->getName()) {
+            $address->setName($address->getFullAddress());
+        }
+
+        if ($address->isMain()) {
             $this->disableMainItem();
         }
 
-        /** @var Address $entity */
-        $entity = $this->addressRepository->dataToEntity($data, Address::class);
-        $entity->setCityLocationByEntity();
-        $res = $this->addressRepository->setEntity($entity)->create();
+        $address->setCityLocationByEntity();
+        $res = $this->addressRepository->setEntity($address)->create();
         if ($res) {
-            if ($data['UF_MAIN'] === 'Y') {
+            if ($address->isMain()) {
                 /** @noinspection PhpParamsInspection */
-                $this->updateManzanaAddress($this->addressRepository->dataToEntity($data, Address::class));
+                $this->updateManzanaAddress($address);
             }
         }
 
@@ -158,22 +167,14 @@ class AddressService
             $contactId = $manzanaService->getContactIdByCurUser();
             $client = new Client();
             $client->contactId = $contactId;
-        } catch (ManzanaServiceContactSearchNullException $e) {
-            $client = new Client();
-            try {
-                $this->currentUser->setClientPersonalDataByCurUser($client);
-            } catch (NotAuthorizedException $e) {
-            }
         } catch (ManzanaServiceException $e) {
-        } catch (NotAuthorizedException $e) {
+            $client = new Client();
+            $this->currentUser->setClientPersonalDataByCurUser($client);
         }
+
         if ($client instanceof Client) {
             $this->setClientAddress($client, $address);
-            try {
-                $manzanaService->updateContact($client);
-            } catch (ManzanaServiceException $e) {
-            } catch (ManzanaException $e) {
-            }
+            $manzanaService->updateContactAsync($client);
         }
     }
 

@@ -3,10 +3,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+use FourPaws\App\Application;
 use FourPaws\Location\LocationService;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
+use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\StoreBundle\Entity\Store;
 use Bitrix\Sale\Delivery\CalculationResult;
+use Bitrix\Sale\Basket;
 
 /**
  * @var array $arParams
@@ -21,6 +26,18 @@ $pickup = $arResult['PICKUP'];
 /** @var CalculationResult $selectedDelivery */
 $selectedDelivery = $arResult['SELECTED_DELIVERY'];
 $selectedDeliveryId = $arResult['SELECTED_DELIVERY_ID'];
+
+/** @var DeliveryService $deliveryService */
+$deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+
+/** @var Store $selectedShop */
+$selectedShop = $arResult['SELECTED_SHOP'];
+
+/** @var Basket $basket */
+$basket = $arResult['BASKET'];
+
+/** @var OrderStorage $storage */
+$storage = $arResult['STORAGE'];
 ?>
 <div class="b-container">
     <h1 class="b-title b-title--h1 b-title--order">
@@ -70,7 +87,9 @@ $selectedDeliveryId = $arResult['SELECTED_DELIVERY_ID'];
                                        type="radio"
                                        name="deliveryId"
                                        checked="checked"
-                                       value="<?= $delivery->getData()['DELIVERY_ID'] ?>"/>
+                                       value="<?= $delivery->getData()['DELIVERY_ID'] ?>"
+                                       data-delivery="<?= $delivery->getPrice() ?>"
+                                       data-total="<?= $basket->getPrice() ?>"/>
                                 <label class="b-choice-recovery__label b-choice-recovery__label--left b-choice-recovery__label--order-step"
                                        for="order-delivery-address">
                                     <span class="b-choice-recovery__main-text">
@@ -87,25 +106,39 @@ $selectedDeliveryId = $arResult['SELECTED_DELIVERY_ID'];
                                 </label>
                             <?php } ?>
                             <?php if ($pickup) { ?>
+                                <?php
+                                $stockResultByShop = $deliveryService->getStockResultByDelivery($pickup)
+                                                                     ->filterByStore($selectedShop);
+                                $available = $stockResultByShop->getAvailable();
+                                if (!$available->isEmpty() && $storage->isPartialGet()) {
+                                    $price = $available->getPrice();
+                                    $date = $available->getDeliveryDate();
+                                } else {
+                                    $price = $stockResultByShop->getPrice();
+                                    $date = $stockResultByShop->getDeliveryDate();
+                                }
+                                ?>
                                 <input class="b-choice-recovery__input js-recovery-email js-myself-shop"
                                        id="order-delivery-pick-up"
                                        type="radio"
                                        name="deliveryId"
-                                       value="<?= $pickup->getData()['DELIVERY_ID'] ?>"/>
+                                       value="<?= $pickup->getData()['DELIVERY_ID'] ?>"
+                                       data-delivery="<?= $pickup->getPrice() ?>"
+                                       data-total="<?= $price ?>"/>
                                 <label class="b-choice-recovery__label b-choice-recovery__label--right b-choice-recovery__label--order-step js-open-popup"
                                        for="order-delivery-pick-up"
                                        data-popup-id="popup-order-stores">
                                     <span class="b-choice-recovery__main-text">Самовывоз</span>
                                     <span class="b-choice-recovery__addition-text">
-                                        <?= DeliveryTimeHelper::showTime($pickup, null) ?>
+                                        <?= DeliveryTimeHelper::showTime($pickup, $date) ?>
                                     </span>
                                     <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile">
-                                        <?= DeliveryTimeHelper::showTime($pickup, null, ['SHORT' => true]) ?>
+                                        <?= DeliveryTimeHelper::showTime($pickup, $date, ['SHORT' => true]) ?>
                                     </span>
                                 </label>
                             <?php } ?>
                         </div>
-                        <ul class="b-radio-tab">
+                        <ul class="b-radio-tab js-myself-shop">
                             <? if ($delivery) { ?>
                                 <li class="b-radio-tab__tab js-telephone-recovery"
                                     <?= $selectedDeliveryId !== (int)$delivery->getData(
@@ -136,7 +169,7 @@ $selectedDeliveryId = $arResult['SELECTED_DELIVERY_ID'];
                             </div>
                         </div>
                     </div>
-                    <div class="b-order-list__order-value b-order-list__order-value--order-step-two">
+                    <div class="b-order-list__order-value b-order-list__order-value--order-step-two js-price-full">
                         <?= CurrencyHelper::formatPrice($basket->getPrice()) ?>
                     </div>
                 </li>
@@ -144,11 +177,11 @@ $selectedDeliveryId = $arResult['SELECTED_DELIVERY_ID'];
                     <div class="b-order-list__order-text b-order-list__order-text--order-step-two">
                         <div class="b-order-list__clipped-text">
                             <div class="b-order-list__text-backed">
-                                <?= $selectedDelivery->getData()['DELIVERY_NAME'] ?>
+                                Доставка
                             </div>
                         </div>
                     </div>
-                    <div class="b-order-list__order-value b-order-list__order-value--order-step-two">
+                    <div class="b-order-list__order-value b-order-list__order-value--order-step-two js-price-deliv">
                         <?= CurrencyHelper::formatPrice($selectedDelivery->getPrice()) ?>
                     </div>
                 </li>
@@ -160,7 +193,7 @@ $selectedDeliveryId = $arResult['SELECTED_DELIVERY_ID'];
                             </div>
                         </div>
                     </div>
-                    <div class="b-order-list__order-value b-order-list__order-value--order-step-two">
+                    <div class="b-order-list__order-value b-order-list__order-value--order-step-two js-price-total">
                         <?= CurrencyHelper::formatPrice($basket->getPrice() + $selectedDelivery->getPrice()) ?>
                     </div>
                 </li>

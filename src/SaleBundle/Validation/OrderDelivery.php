@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SaleBundle\Validation;
 
 use Symfony\Component\Validator\Constraint;
@@ -27,12 +31,7 @@ class OrderDelivery extends Constraint
     /**
      * @var string
      */
-    public $deliveryPlaceCodeMessage = 'Выберите магазин для самовывоза';
-
-    /**
-     * @var string
-     */
-    public $deliveryDpdTerminalMessage = 'Выберите терминал DPD';
+    public $deliveryPlaceCodeMessage = 'Выберите пункт самовывоза';
 
     public function getTargets()
     {

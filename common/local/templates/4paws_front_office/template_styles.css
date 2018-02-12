@@ -1,0 +1,36 @@
+@media print {
+    body {
+        background-color: white !important;
+        max-width: 100% !important;
+        margin: 0 ! importnat;
+    }
+
+    #page {
+        width: 100% !important;
+        background-color: white !important;
+        margin: 0 ! importnat;
+    }
+
+    .container {
+        width: 100% !important;
+        margin: 0 ! importnat;
+    }
+
+    .noprint {
+        display: none;
+    }
+}
+
+.menu-item {
+    margin-right: 3px;
+    margin-bottom: 10px;
+}
+
+.menu-item.selected {
+    color: #fe6927 !important;
+}
+
+.errortext {
+    color: red;
+    margin: 16px 0;
+}
