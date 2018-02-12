@@ -2,7 +2,6 @@
 
 namespace FourPaws\External\Manzana\Dto;
 
-use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 
 /**
@@ -14,28 +13,6 @@ use JMS\Serializer\Annotation as Serializer;
  */
 class SoftChequeResponse
 {
-    /**
-     * Идентификатор транзакции
-     *
-     * @Serializer\XmlElement(cdata=false)
-     * @Serializer\Type("integer")
-     * @Serializer\SerializedName("TransactionID")
-     *
-     * @var string
-     */
-    protected $transactionId = 0;
-    
-    /**
-     * Идентификатор запроса
-     *
-     * @Serializer\XmlElement(cdata=false)
-     * @Serializer\Type("string")
-     * @Serializer\SerializedName("RequestID")
-     *
-     * @var string
-     */
-    protected $requestId = '';
-    
     /**
      * Дата и время операции (в системе)
      * Используется локальное время системы, обрабатывающей мягкий чек (московское).
@@ -72,6 +49,28 @@ class SoftChequeResponse
     protected $message = '';
     
     /**
+     * Баланс карты, деньги
+     *
+     * @Serializer\XmlElement(cdata=false)
+     * @Serializer\Type("float")
+     * @Serializer\SerializedName("CardBalance")
+     *
+     * @var float
+     */
+    protected $cardBalance = 0;
+    
+    /**
+     * Активный баланс карты, деньги
+     *
+     * @Serializer\XmlElement(cdata=false)
+     * @Serializer\Type("float")
+     * @Serializer\SerializedName("CardActiveBalance")
+     *
+     * @var float
+     */
+    protected $cardActiveBalance = 0;
+    
+    /**
      * Сумма без скидки по чеку, деньги
      *
      * @Serializer\XmlElement(cdata=false)
@@ -105,6 +104,39 @@ class SoftChequeResponse
     protected $summDiscounted = '';
     
     /**
+     * ?, деньги
+     *
+     * @Serializer\XmlElement(cdata=false)
+     * @Serializer\Type("float")
+     * @Serializer\SerializedName("CardSumm")
+     *
+     * @var float
+     */
+    protected $cardSumm = 0;
+    
+    /**
+     * ?, %
+     *
+     * @Serializer\XmlElement(cdata=false)
+     * @Serializer\Type("float")
+     * @Serializer\SerializedName("CardDiscount")
+     *
+     * @var float
+     */
+    protected $cardDiscount = '';
+    
+    /**
+     * ?, деньги
+     *
+     * @Serializer\XmlElement(cdata=false)
+     * @Serializer\Type("float")
+     * @Serializer\SerializedName("CardSummDiscounted")
+     *
+     * @var float
+     */
+    protected $cardSummDiscounted = '';
+    
+    /**
      * Сумма начисленного бонуса
      *
      * @Serializer\XmlElement(cdata=false)
@@ -116,18 +148,106 @@ class SoftChequeResponse
     protected $chargedBonus = '';
     
     /**
-     * @Serializer\XmlList(inline=true, entry="Item")
-     * @Serializer\Type("ArrayCollection<FourPaws\External\Manzana\Dto\ChequePosition>")
-     *
-     * @var Collection|ChequePosition[]
-     */
-    protected $items;
-    
-    /**
      * @return bool
      */
     public function isErrorResponse() : bool
     {
         return $this->returnCode !== 0;
+    }
+    
+    /**
+     * @return \DateTimeImmutable
+     */
+    public function getProccessed() : \DateTimeImmutable
+    {
+        return $this->proccessed;
+    }
+    
+    /**
+     * @return int
+     */
+    public function getReturnCode() : int
+    {
+        return $this->returnCode;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getMessage() : string
+    {
+        return $this->message;
+    }
+    
+    /**
+     * @return float
+     */
+    public function getCardBalance() : float
+    {
+        return $this->cardBalance;
+    }
+    
+    /**
+     * @return float
+     */
+    public function getCardActiveBalance() : float
+    {
+        return $this->cardActiveBalance;
+    }
+    
+    /**
+     * @return float
+     */
+    public function getSumm() : float
+    {
+        return $this->summ;
+    }
+    
+    /**
+     * @return float
+     */
+    public function getDiscount() : float
+    {
+        return $this->discount;
+    }
+    
+    /**
+     * @return float
+     */
+    public function getSummDiscounted() : float
+    {
+        return $this->summDiscounted;
+    }
+    
+    /**
+     * @return float
+     */
+    public function getCardSumm() : float
+    {
+        return $this->cardSumm;
+    }
+    
+    /**
+     * @return float
+     */
+    public function getCardDiscount() : float
+    {
+        return $this->cardDiscount;
+    }
+    
+    /**
+     * @return float
+     */
+    public function getCardSummDiscounted() : float
+    {
+        return $this->cardSummDiscounted;
+    }
+    
+    /**
+     * @return float
+     */
+    public function getChargedBonus() : float
+    {
+        return $this->chargedBonus;
     }
 }
