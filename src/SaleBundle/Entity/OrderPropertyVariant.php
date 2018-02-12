@@ -1,7 +1,13 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SaleBundle\Entity;
 
+use FourPaws\App\Application;
+use FourPaws\SaleBundle\Service\OrderService;
 use JMS\Serializer\Annotation as Serializer;
 
 class OrderPropertyVariant
@@ -21,14 +27,6 @@ class OrderPropertyVariant
      * @Serializer\Groups(groups={"read"})
      */
     protected $propertyId = 0;
-
-    /**
-     * @var string
-     * @Serializer\Type("string")
-     * @Serializer\SerializedName("SALE_INTERNALS_ORDER_PROPS_VARIANT_PROPERTY_CODE")
-     * @Serializer\Groups(groups={"read"})
-     */
-    protected $propertyCode = '';
 
     /**
      * @var string
@@ -53,6 +51,11 @@ class OrderPropertyVariant
      * @Serializer\Groups(groups={"read"})
      */
     protected $sort = 0;
+
+    /**
+     * @var OrderProperty
+     */
+    protected $property;
 
     /**
      * @return int
@@ -90,26 +93,6 @@ class OrderPropertyVariant
     public function setPropertyId($propertyId): OrderPropertyVariant
     {
         $this->propertyId = $propertyId;
-
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getPropertyCode(): string
-    {
-        return (string)$this->propertyCode;
-    }
-
-    /**
-     * @param string $propertyCode
-     *
-     * @return OrderPropertyVariant
-     */
-    public function setPropertyCode(string $propertyCode): OrderPropertyVariant
-    {
-        $this->propertyCode = $propertyCode;
 
         return $this;
     }
@@ -170,6 +153,30 @@ class OrderPropertyVariant
     public function setSort(int $sort): OrderPropertyVariant
     {
         $this->sort = $sort;
+
+        return $this;
+    }
+
+    /**
+     * @return OrderProperty
+     */
+    public function getProperty(): OrderProperty
+    {
+        if (!$this->property) {
+            /** @var OrderService $orderService */
+            $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
+            $this->property = $orderService->getPropertyById($this->getPropertyId());
+        }
+
+        return $this->property;
+    }
+
+    /**
+     * @param OrderProperty $property
+     */
+    public function setProperty(OrderProperty $property): OrderPropertyVariant
+    {
+        $this->property = $property;
 
         return $this;
     }

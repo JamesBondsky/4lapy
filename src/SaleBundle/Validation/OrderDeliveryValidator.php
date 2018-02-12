@@ -1,11 +1,15 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SaleBundle\Validation;
 
-use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\StoreBundle\Exception\NotFoundException;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 
@@ -69,11 +73,11 @@ class OrderDeliveryValidator extends ConstraintValidator
          */
         if ($this->deliveryService->isDelivery($delivery)) {
             /*
-             * это число в общем случае должно быть от 1
-             * до разницы между минимальной и максимальной датами доставки включительно
+             * это число в общем случае должно быть от 0
+             * до разницы между минимальной и максимальной датами доставки
              */
             $dateIndex = $entity->getDeliveryDate();
-            if (($dateIndex < 1) || $dateIndex > ($delivery->getPeriodTo() - $delivery->getPeriodFrom())) {
+            if (($dateIndex < 0) || $dateIndex >= ($delivery->getPeriodTo() - $delivery->getPeriodFrom())) {
                 $this->context->addViolation($constraint->deliveryDateMessage);
             }
 
@@ -84,10 +88,19 @@ class OrderDeliveryValidator extends ConstraintValidator
                     $this->context->addViolation($constraint->deliveryIntervalMessage);
                 }
             }
-        } elseif ($this->deliveryService->isInnerPickup($delivery)) {
-            /* @todo проверка магазина */
-        } elseif ($this->deliveryService->isDpdPickup($delivery)) {
-            /* @todo проверка терминала */
+        } else {
+            try {
+                $availableStores = $this->deliveryService->getStockResultByDelivery($delivery)->getStores();
+                $storeXmlId = $entity->getDeliveryPlaceCode();
+                if (!isset($availableStores[$storeXmlId])) {
+                    $this->context->addViolation($constraint->deliveryPlaceCodeMessage);
+
+                    return;
+                }
+                /* @todo проверка частичного получения заказа */
+            } catch (NotFoundException $e) {
+                $this->context->addViolation($constraint->deliveryPlaceCodeMessage);
+            }
         }
     }
 }

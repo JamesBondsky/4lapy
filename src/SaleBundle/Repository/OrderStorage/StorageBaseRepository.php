@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SaleBundle\Repository\OrderStorage;
 
 use FourPaws\SaleBundle\Entity\OrderStorage;
@@ -8,8 +12,9 @@ use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 use JMS\Serializer\ArrayTransformerInterface;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
+use JMS\Serializer\SerializationContext;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 abstract class StorageBaseRepository implements StorageRepositoryInterface
 {
@@ -98,5 +103,19 @@ abstract class StorageBaseRepository implements StorageRepositoryInterface
     public function validate(OrderStorage $storage, string $step): ConstraintViolationListInterface
     {
         return $this->validator->validate($storage, null, [$step]);
+    }
+
+    /**
+     * @param OrderStorage $storage
+     * @param array $groups
+     *
+     * @return array
+     */
+    public function toArray(OrderStorage $storage, array $groups = ['read']): array
+    {
+        return $this->arrayTransformer->toArray(
+            $storage,
+            SerializationContext::create()->setGroups($groups)
+        );
     }
 }

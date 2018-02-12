@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\DeliveryBundle\Helpers;
 
 use Bitrix\Main\Grid\Declension;
@@ -10,7 +14,7 @@ class DeliveryTimeHelper
 {
     /**
      * @param CalculationResult $calculationResult
-     * @param \DateTime|null $exactDate
+     * @param null|\DateTime $exactDate
      * @param array $options
      *                  - SHOW_TIME - отображать ли время
      *                  - SHOW_PRICE - отображать стоимость доставки
@@ -58,11 +62,10 @@ class DeliveryTimeHelper
 
                     $result = FormatDate($options['DAY_FORMAT'], $date->getTimestamp());
                 } else {
-
                     if ($options['SHORT']) {
-                        $dateFormat = 'D, d M';
+                        $dateFormat = 'D, j M';
                     } else {
-                        $dateFormat = 'l, d F';
+                        $dateFormat = 'l, j F';
                     }
                     if ($options['SHOW_TIME']) {
                         $dateFormat .= ' в H:00';
@@ -73,7 +76,6 @@ class DeliveryTimeHelper
                 break;
             case CalculationResult::PERIOD_TYPE_HOUR:
                 if ($options['HOUR_FORMAT']) {
-
                     $date->modify('+' . ($delivery->getPeriodFrom()) . ' hours');
                     if ($options['HOUR_FORMAT'] instanceof \Closure) {
                         $options['HOUR_FORMAT'] = $options['HOUR_FORMAT']($date);

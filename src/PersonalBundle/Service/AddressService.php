@@ -66,16 +66,18 @@ class AddressService
     /**
      * @param int $id
      *
-     * @return Address
      * @throws NotFoundException
+     * @return Address
      */
     public function getById(int $id): Address
     {
         return $this->addressRepository->findById($id);
     }
-    
+
     /**
      * @param $data
+     *
+     * @deprecated
      *
      * @throws \RuntimeException
      * @throws InvalidIdentifierException
@@ -88,23 +90,33 @@ class AddressService
      * @throws \Exception
      * @return bool
      */
-    public function add(array $data): bool
+    public function addFromArray(array $data): bool
     {
-        if (empty($data['UF_USER_ID'])) {
-            $data['UF_USER_ID'] = $this->currentUser->getCurrentUserId();
+        $address = $this->addressRepository->dataToEntity($data, Address::class);
+
+        return $this->add($address);
+    }
+
+    public function add(Address $address): bool
+    {
+        if (!$address->getUserId()) {
+            $address->setUserId($this->currentUser->getCurrentUserId());
         }
-        if ($data['UF_MAIN'] === 'Y') {
+
+        if (!$address->getName()) {
+            $address->setName($address->getFullAddress());
+        }
+
+        if ($address->isMain()) {
             $this->disableMainItem();
         }
 
-        /** @var Address $entity */
-        $entity = $this->addressRepository->dataToEntity($data, Address::class);
-        $entity->setCityLocationByEntity();
-        $res = $this->addressRepository->setEntity($entity)->create();
+        $address->setCityLocationByEntity();
+        $res = $this->addressRepository->setEntity($address)->create();
         if ($res) {
-            if ($data['UF_MAIN'] === 'Y') {
+            if ($address->isMain()) {
                 /** @noinspection PhpParamsInspection */
-                $this->updateManzanaAddress($this->addressRepository->dataToEntity($data, Address::class));
+                $this->updateManzanaAddress($address);
             }
         }
 
@@ -159,7 +171,7 @@ class AddressService
             $client = new Client();
             $this->currentUser->setClientPersonalDataByCurUser($client);
         }
-        
+
         if ($client instanceof Client) {
             $this->setClientAddress($client, $address);
             $manzanaService->updateContactAsync($client);

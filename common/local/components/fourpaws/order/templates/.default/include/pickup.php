@@ -34,94 +34,101 @@ $storage = $arResult['STORAGE'];
 /** @var Store $selectedShop */
 $selectedShop = $arResult['SELECTED_SHOP'];
 $stockResultByShop = $stockResult->filterByStore($selectedShop);
-$available = $stockResult->getAvailable();
+$available = $stockResultByShop->getAvailable();
 $delayed = $stockResultByShop->getDelayed();
 
 $metro = $arResult['METRO'][$selectedShop->getMetro()];
 
-$canGetPartial = !$available->isEmpty() && !$delayed->isEmpty() && $deliveryService->isInnerPickup($pickup);
-$partialGet = $canGetPartial && $storage->isPartialGet();
+$canGetPartial = !$available->isEmpty();
+$partialGet = ($canGetPartial && $storage->isPartialGet()) || $delayed->isEmpty();
 
 ?>
-<div class="b-input-line b-input-line--address b-input-line--myself">
-    <div class="b-input-line__label-wrapper">
-        <span class="b-input-line__label">Адрес доставки</span>
-    </div>
-    <ul class="b-delivery-list">
-        <li class="b-delivery-list__item b-delivery-list__item--myself">
-            <span class="b-delivery-list__link b-delivery-list__link--myself">
-                <?php if ($metro) { ?>
-                    <span class="b-delivery-list__col b-delivery-list__col--color b-delivery-list__col--<?= $metro['BRANCH']['UF_COLOR'] ?>"></span>
-                <?php } ?>
-                <?= $selectedShop->getAddress() ?>
-            </span>
-        </li>
-    </ul>
-</div>
-<div class="b-input-line b-input-line--myself">
-    <div class="b-input-line__label-wrapper">
-        <span class="b-input-line__label">Время работы</span>
-    </div>
-    <div class="b-input-line__text-line b-input-line__text-line--myself">
-        <?= $selectedShop->getSchedule() ?>
-    </div>
-</div>
-<div class="b-input-line b-input-line--myself">
-    <div class="b-input-line__label-wrapper">
-        <span class="b-input-line__label">Оплата в магазине</span>
-    </div>
-    <div class="b-input-line__text-line">
-        <span class="b-input-line__pay-type">
-            <span class="b-icon b-icon--icon-cash">
-                <?= new SvgDecorator('icon-cash', 16, 12) ?>
-            </span>
-            наличными
-        </span>
-        <span class="b-input-line__pay-type">
-            <span class="b-icon b-icon--icon-bank">
-                <?= new SvgDecorator('icon-bank-card', 16, 12) ?>
-            </span>
-            банковской картой
-        </span>
-    </div>
-</div>
-<div class="b-input-line b-input-line--partially">
-    <?php if ($canGetPartial) { ?>
-        <div class="b-input-line__label-wrapper b-input-line__label-wrapper--order-full">
-            <span class="b-input-line__label">Заказ в наличии частично</span>
+
+<li class="b-radio-tab__tab js-email-recovery">
+    <div class="b-input-line b-input-line--address b-input-line--myself">
+        <div class="b-input-line__label-wrapper">
+            <span class="b-input-line__label">Адрес доставки</span>
         </div>
-        <div class="b-radio b-radio--tablet-big">
+        <ul class="b-delivery-list">
+            <li class="b-delivery-list__item b-delivery-list__item--myself">
+                <span class="b-delivery-list__link b-delivery-list__link--myself">
+                    <span class="b-delivery-list__col b-delivery-list__col--color b-delivery-list__col--grey"></span>
+                    <?= $selectedShop->getAddress() ?>
+                </span>
+            </li>
+        </ul>
+    </div>
+    <div class="b-input-line b-input-line--myself">
+        <div class="b-input-line__label-wrapper">
+            <span class="b-input-line__label">Время работы</span>
+        </div>
+        <div class="b-input-line__text-line b-input-line__text-line--myself">
+            <?= $selectedShop->getSchedule() ?>
+        </div>
+    </div>
+    <div class="b-input-line b-input-line--myself">
+        <div class="b-input-line__label-wrapper">
+            <span class="b-input-line__label">Оплата в магазине</span>
+        </div>
+        <div class="b-input-line__text-line">
+            <span class="b-input-line__pay-type">
+                <span class="b-icon b-icon--icon-cash">
+                    <?= new SvgDecorator('icon-cash', 16, 12) ?>
+                </span>
+                наличными
+            </span>
+            <span class="b-input-line__pay-type">
+                <span class="b-icon b-icon--icon-bank">
+                    <?= new SvgDecorator('icon-bank-card', 16, 12) ?>
+                </span>
+                банковской картой
+            </span>
+        </div>
+    </div>
+    <div class="b-input-line b-input-line--partially">
+        <div class="b-input-line__label-wrapper b-input-line__label-wrapper--order-full">
+            <span class="b-input-line__label js-parts-info">
+                <?php if (!$delayed->isEmpty() && !$available->isEmpty()) { ?>
+                    Заказ в наличии частично
+                <?php } elseif ($available->isEmpty()) { ?>
+                    Требуется ждать поставки со склада
+                <?php } else { ?>
+                    Заказ доступен в полном составе
+                <?php } ?>
+            </span>
+        </div>
+        <div class="b-radio b-radio--tablet-big" <?= $canGetPartial ? '' : 'style="display:none"' ?>>
             <input class="b-radio__input"
                    type="radio"
-                   name="isPartialGet"
+                   name="order-pick-time"
                    id="order-pick-time-now"
                 <?= $partialGet ? 'checked="checked"' : '' ?>
                    value="1"/>
-            <label class="b-radio__label b-radio__label--tablet-big"
-                   for="order-pick-time-now">
+            <label class="b-radio__label b-radio__label--tablet-big" for="order-pick-time-now">
             </label>
-            <div class="b-order-list b-order-list--myself">
+            <div class="b-order-list b-order-list--myself js-parts-price">
                 <ul class="b-order-list__list">
-                    <li class="b-order-list__item b-order-list__item--myself">
-                        <div class="b-order-list__order-text b-order-list__order-text--myself">
+                    <li class="b-order-list__item b-order-list__item--myself js-parts-price">
+                        <div class="b-order-list__order-text b-order-list__order-text--myself js-parts-price">
                             <div class="b-order-list__clipped-text">
                                 <div class="b-order-list__text-backed">
-                                    <?= DeliveryTimeHelper::showTime(
+                                    Забрать <?= DeliveryTimeHelper::showTime(
                                         $partialPickup,
                                         $available->getDeliveryDate()
                                     ) ?>
                                 </div>
                             </div>
                         </div>
-                        <div class="b-order-list__order-value b-order-list__order-value--myself">
+                        <div class="b-order-list__order-value b-order-list__order-value--myself js-parts-price">
                             <?= CurrencyHelper::formatPrice($available->getPrice()) ?>
                         </div>
                     </li>
                 </ul>
             </div>
-            <div class="b-radio__addition-text">
+            <div class="b-radio__addition-text js-excluded-parts" <?= $delayed->isEmpty(
+            ) ? 'style="display:none"' : '' ?>>
                 <p>За исключением:</p>
-                <ol>
+                <ol class="js-delay-items">
                     <?php /** @var StockResult $item */ ?>
                     <?php foreach ($delayed as $item) { ?>
                         <li>
@@ -132,38 +139,33 @@ $partialGet = $canGetPartial && $storage->isPartialGet();
                 </ol>
             </div>
         </div>
-    <?php } ?>
-    <div class="b-radio b-radio--tablet-big">
-        <input class="b-radio__input"
-               type="radio"
-               name="isPartialGet"
-               id="order-pick-time-then"
-            <?= !$partialGet ? 'checked="checked"' : '' ?>
-               value="0"/>
-        <label class="b-radio__label b-radio__label--tablet-big"
-               for="order-pick-time-then">
-        </label>
-        <div class="b-order-list b-order-list--myself">
-            <ul class="b-order-list__list">
-                <li class="b-order-list__item b-order-list__item--myself">
-                    <div class="b-order-list__order-text b-order-list__order-text--myself">
-                        <div class="b-order-list__clipped-text">
-                            <div class="b-order-list__text-backed">
-                                Забрать полный заказ
+        <div class="b-radio b-radio--tablet-big" <?= $delayed->isEmpty() ? 'style="display:none"' : '' ?>>
+            <input class="b-radio__input"
+                   type="radio"
+                   name="order-pick-time"
+                   id="order-pick-time-then"
+                <?= !$partialGet ? 'checked="checked"' : '' ?>
+                   value="0"/>
+            <label class="b-radio__label b-radio__label--tablet-big" for="order-pick-time-then">
+            </label>
+            <div class="b-order-list b-order-list--myself js-full-price">
+                <ul class="b-order-list__list">
+                    <li class="b-order-list__item b-order-list__item--myself js-full-price">
+                        <div class="b-order-list__order-text b-order-list__order-text--myself js-full-price">
+                            <div class="b-order-list__clipped-text">
+                                <div class="b-order-list__text-backed">Забрать полный заказ</div>
                             </div>
                         </div>
-                    </div>
-                    <div class="b-order-list__order-value b-order-list__order-value--myself">
-                        <?= CurrencyHelper::formatPrice($stockResultByShop->getPrice()) ?>
-                    </div>
-                </li>
-            </ul>
-        </div>
-        <div class="b-radio__addition-text">
-            <p><?= DeliveryTimeHelper::showTime($pickup, $stockResultByShop->getDeliveryDate()) ?></p>
+                        <div class="b-order-list__order-value b-order-list__order-value--myself js-full-price">
+                            <?= CurrencyHelper::formatPrice($stockResultByShop->getPrice()) ?>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <div class="b-radio__addition-text">
+                <p><?= DeliveryTimeHelper::showTime($pickup, $stockResultByShop->getDeliveryDate()) ?></p>
+            </div>
         </div>
     </div>
-</div>
-<a class="b-link b-link--another-point" href="javascript:void(0);" title="">
-    Выбрать другой пункт самовывоза
-</a>
+    <a class="b-link b-link--another-point" href="javascript:void(0);" title="">Выбрать другой пункт самовывоза</a>
+</li>

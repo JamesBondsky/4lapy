@@ -49,7 +49,7 @@ class AddressController extends Controller
             );
         }
         try {
-            if ($this->addressService->add($data)) {
+            if ($this->addressService->addFromArray($data)) {
                 return JsonSuccessResponse::create(
                     'Адресс доставки добавлен',
                     200,

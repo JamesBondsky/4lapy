@@ -10,10 +10,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var CalculationResult $delivery
  */
 
+use Bitrix\Sale\Delivery\CalculationResult;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\SaleBundle\Entity\OrderStorage;
-use Bitrix\Sale\Delivery\CalculationResult;
 
 $storage = $arResult['STORAGE'];
 
@@ -49,14 +49,16 @@ if ($storage->getAddressId()) {
 
 ?>
 
-<?php if (!empty($arResult['ADDRESSES'])) { ?>
+<?php if (!empty($arResult['ADDRESSES'])) {
+    ?>
     <div class="b-input-line b-input-line--delivery-address-current js-hide-if-address"
         <?= $showNewAddressForm ? 'style="display: none"' : '' ?>>
         <div class="b-input-line__label-wrapper">
             <span class="b-input-line__label">Адрес доставки</span>
         </div>
         <?php /** @var Address $address */ ?>
-        <?php foreach ($arResult['ADDRESSES'] as $address) { ?>
+        <?php foreach ($arResult['ADDRESSES'] as $address) {
+        ?>
             <div class="b-radio b-radio--tablet-big">
                 <input class="b-radio__input"
                        type="radio"
@@ -66,12 +68,13 @@ if ($storage->getAddressId()) {
                        value="<?= $address->getId() ?>"/>
                 <label class="b-radio__label b-radio__label--tablet-big"
                        for="order-address-<?= $address->getId() ?>">
-                                                        <span class="b-radio__text-label">
-                                                            <?= $address->getFullAddress() ?>
-                                                        </span>
+                    <span class="b-radio__text-label">
+                        <?= $address->getFullAddress() ?>
+                    </span>
                 </label>
             </div>
-        <?php } ?>
+        <?php
+    } ?>
         <div class="b-radio b-radio--tablet-big">
             <input class="b-radio__input"
                    type="radio"
@@ -86,22 +89,25 @@ if ($storage->getAddressId()) {
             </label>
         </div>
     </div>
-<?php } ?>
+<?php
+} ?>
 <div class="b-radio-tab__new-address js-form-new-address js-hidden-valid-fields" <?= $showNewAddressForm ? 'style="display:block"' : '' ?>>
     <div class="b-input-line b-input-line--new-address">
         <div class="b-input-line__label-wrapper b-input-line__label-wrapper--back-arrow">
-            <?php if ($showNewAddressFormHeader) { ?>
+            <?php if ($showNewAddressFormHeader) {
+        ?>
                 <span class="b-input-line__label">Новый адрес доставки</span>
                 <a class="b-link b-link--back-arrow js-back-list-address"
                    href="javascript:void(0);"
                    title="Назад">
-                                                    <span class="b-icon b-icon--back-long">
-                                                        <?= new SvgDecorator('icon-back-form', 13, 11) ?>
-                                                    </span>
+                    <span class="b-icon b-icon--back-long">
+                        <?= new SvgDecorator('icon-back-form', 13, 11) ?>
+                    </span>
                     <span class="b-link__back-word">Вернуться </span>
                     <span class="b-link__mobile-word">к списку</span>
                 </a>
-            <?php } ?>
+            <?php
+    } ?>
         </div>
     </div>
     <div class="b-input-line b-input-line--street">
@@ -122,7 +128,7 @@ if ($storage->getAddressId()) {
         </div>
     </div>
     <div class="b-radio-tab__address-house">
-        <div class="b-input-line b-input-line--house b-input-line--house-address">
+        <div class="b-input-line b-input-line--house b-input-line--house-address js-small-input">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="order-address-house">Дом
                 </label><span class="b-input-line__require">(обязательно)</span>
@@ -215,18 +221,19 @@ if ($storage->getAddressId()) {
             $end = $delivery->getPeriodTo();
             $time = time();
             $i = 0;
-            for ($i = 1; $i <= ($end - $start); $i++) {
+            for ($i = 0; $i < ($end - $start); $i++) {
                 $date = (new DateTime())->modify('+' . ($start + $i) . ' days');
-                $dateString = FormatDate('l, d.m.Y', $date->getTimestamp());
-                ?>
+                $dateString = FormatDate('l, d.m.Y', $date->getTimestamp()); ?>
                 <option value="<?= $i ?>" <?= $storage->getDeliveryDate() == ($i) ? 'selected="selected"' : '' ?>>
                     <?= $dateString ?>
                 </option>
-            <?php } ?>
+            <?php
+            } ?>
         </select>
     </div>
 </div>
-<?php if (!empty($delivery->getData()['INTERVALS'])) { ?>
+<?php if (!empty($delivery->getData()['INTERVALS'])) {
+                ?>
     <div class="b-input-line b-input-line--interval">
         <div class="b-input-line__label-wrapper b-input-line__label-wrapper--interval">
             <span class="b-input-line__label">интервал</span>
@@ -238,16 +245,19 @@ if ($storage->getAddressId()) {
                     выберите
                 </option>
                 <?php $intervals = $delivery->getData()['INTERVALS'] ?>
-                <?php foreach ($intervals as $i => $interval) { ?>
+                <?php foreach ($intervals as $i => $interval) {
+                    ?>
                     <option value="<?= $i + 1 ?>" <?= $storage->getDeliveryInterval(
                     ) == ($i + 1) ? 'selected="selected"' : '' ?>>
                         <?= showInterval($interval) ?>
                     </option>
-                <?php } ?>
+                <?php
+                } ?>
             </select>
         </div>
     </div>
-<?php } ?>
+<?php
+            } ?>
 <div class="b-input-line b-input-line--textarea b-input-line--address-textarea js-no-valid">
     <div class="b-input-line__label-wrapper">
         <label class="b-input-line__label" for="order-comment">
