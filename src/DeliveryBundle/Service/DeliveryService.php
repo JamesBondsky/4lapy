@@ -20,6 +20,7 @@ use Bitrix\Sale\Order;
 use Bitrix\Sale\Shipment;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\DeliveryBundle\Dpd\TerminalTable;
 use FourPaws\DeliveryBundle\Exception\InvalidArgumentException;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\Location\LocationService;
@@ -170,14 +171,14 @@ class DeliveryService
      *
      * @return CalculationResult[]
      */
-    public function calculateDeliveries(Shipment $shipment, array $codes = [])
+    public function calculateDeliveries(Shipment $shipment, array $codes = []): array
     {
         $availableServices = Manager::getRestrictedObjectsList($shipment);
 
         $result = [];
 
         foreach ($availableServices as $service) {
-            if ($codes && !\in_array($service->getCode(), $codes)) {
+            if ($codes && !\in_array($service->getCode(), $codes, true)) {
                 continue;
             }
 
@@ -471,6 +472,7 @@ class DeliveryService
     /**
      * @param int $id
      *
+     * @throws NotFoundException
      * @return string
      */
     public function getDeliveryCodeById(int $id): string
@@ -515,12 +517,8 @@ class DeliveryService
     ): StoreCollection {
         $result = new StoreCollection();
 
-        if (!class_exists('\Ipolh\DPD\DB\Terminal\Table')) {
-            return $result;
-        }
-
         $getTerminals = function () use ($locationCode) {
-            $terminals = \Ipolh\DPD\DB\Terminal\Table::query()->setSelect(['*'])
+            $terminals = TerminalTable::query()->setSelect(['*'])
                                                      ->setFilter(['LOCATION.CODE' => $locationCode])
                                                      ->registerRuntimeField(
                                                          new ReferenceField(
@@ -565,6 +563,53 @@ class DeliveryService
         }
 
         return $result;
+    }
+
+    /**
+     * @param $code
+     *
+     * @throws NotFoundException
+     * @return Store
+     */
+    public function getDpdTerminalByCode($code): Store
+    {
+        $getTerminal = function () use ($code) {
+            $terminal = TerminalTable::query()->setSelect(['*', 'LOCATION.CODE'])
+                                                    ->setFilter(['CODE' => $code])
+                                                    ->registerRuntimeField(
+                                                        new ReferenceField(
+                                                            'LOCATION',
+                                                            LocationTable::class,
+                                                            ['=this.LOCATION_ID' => 'ref.ID'],
+                                                            ['join_type' => 'INNER']
+                                                        )
+                                                    )
+                                                    ->exec()->fetch();
+            if (!$terminal) {
+                throw new NotFoundException('Терминал не найден');
+            }
+
+            return ['result' => $terminal];
+        };
+
+        /** @var array $terminals */
+        $terminal = (new BitrixCache())
+            ->withId(__METHOD__ . $code)
+            ->resultOf($getTerminal)['result'];
+
+        $store = new Store();
+        $store->setTitle($terminal['NAME'])
+              ->setLocation($terminal['IPOLH_DPD_DB_TERMINAL__LOCATION_CODE'])
+              ->setAddress($terminal['ADDRESS_SHORT'])
+              ->setCode($terminal['CODE'])
+              ->setXmlId($terminal['CODE'])
+              ->setLatitude($terminal['LATITUDE'])
+              ->setLongitude($terminal['LONGITUDE'])
+              ->setLocationId($terminal['LOCATION_ID'])
+              ->setSchedule($terminal['SCHEDULE_SELF_DELIVERY'])
+              ->setDescription($terminal['ADDRESS_DESCR']);
+
+        return $store;
     }
 
     protected function generateShipment(string $locationCode, BasketBase $basket = null): Shipment

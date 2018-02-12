@@ -6,6 +6,7 @@
 
 namespace FourPaws\SaleBundle\Repository;
 
+use Bitrix\Main\ArgumentException;
 use Bitrix\Sale\Internals\OrderPropsVariantTable;
 use FourPaws\SaleBundle\Collection\OrderPropertyVariantCollection;
 use FourPaws\SaleBundle\Entity\OrderProperty;
@@ -26,8 +27,9 @@ class OrderPropertyVariantRepository
     }
 
     /**
-     * @param OrderProperty $propertyCode
+     * @param OrderProperty $property
      *
+     * @throws ArgumentException
      * @return OrderPropertyVariantCollection
      */
     public function findByProperty(OrderProperty $property): OrderPropertyVariantCollection
@@ -44,6 +46,7 @@ class OrderPropertyVariantRepository
     /**
      * @param array $filter
      *
+     * @throws ArgumentException
      * @return OrderPropertyVariantCollection
      */
     public function findBy(array $filter = []): OrderPropertyVariantCollection

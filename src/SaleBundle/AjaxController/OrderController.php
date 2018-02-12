@@ -15,6 +15,7 @@ use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
 use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -35,6 +36,11 @@ class OrderController extends Controller
     private $orderService;
 
     /**
+     * @var OrderStorageService
+     */
+    private $orderStorageService;
+
+    /**
      * @var UserAuthorizationInterface
      */
     private $userAuthProvider;
@@ -45,25 +51,28 @@ class OrderController extends Controller
     private $recaptcha;
 
     protected $stepOrder = [
-        OrderService::AUTH_STEP,
-        OrderService::DELIVERY_STEP,
-        OrderService::PAYMENT_STEP,
-        OrderService::COMPLETE_STEP,
+        OrderStorageService::AUTH_STEP,
+        OrderStorageService::DELIVERY_STEP,
+        OrderStorageService::PAYMENT_STEP,
+        OrderStorageService::COMPLETE_STEP,
     ];
 
     /**
      * OrderController constructor.
      *
      * @param OrderService $orderService
+     * @param OrderStorageService $orderStorageService
      * @param UserAuthorizationInterface $userAuthProvider
      * @param ReCaptchaService $recaptcha
      */
     public function __construct(
         OrderService $orderService,
+        OrderStorageService $orderStorageService,
         UserAuthorizationInterface $userAuthProvider,
         ReCaptchaService $recaptcha
     ) {
         $this->orderService = $orderService;
+        $this->orderStorageService = $orderStorageService;
         $this->userAuthProvider = $userAuthProvider;
         $this->recaptcha = $recaptcha;
     }
@@ -98,11 +107,11 @@ class OrderController extends Controller
      */
     public function validateAuthAction(Request $request): JsonResponse
     {
-        $storage = $this->orderService->getStorage();
+        $storage = $this->orderStorageService->getStorage();
         if (!$this->userAuthProvider->isAuthorized() && !$storage->isCaptchaFilled()) {
             $request->request->add(['captchaFilled' => $this->recaptcha->checkCaptcha()]);
         }
-        $validationErrors = $this->fillStorage($storage, $request, OrderService::AUTH_STEP);
+        $validationErrors = $this->fillStorage($storage, $request, OrderStorageService::AUTH_STEP);
 
         if (!empty($validationErrors)) {
             return JsonErrorResponse::createWithData(
@@ -117,7 +126,7 @@ class OrderController extends Controller
             '',
             200,
             [],
-            ['redirect' => '/sale/order/' . OrderService::DELIVERY_STEP . '/']
+            ['redirect' => '/sale/order/' . OrderStorageService::DELIVERY_STEP . '/']
         );
     }
 
@@ -126,13 +135,13 @@ class OrderController extends Controller
      *
      * @param \Symfony\Component\HttpFoundation\Request $request
      *
-     * @return \FourPaws\App\Response\JsonResponse
+     * @return JsonResponse
      */
     public function validateDeliveryAction(Request $request): JsonResponse
     {
-        $storage = $this->orderService->getStorage();
-        $currentStep = OrderService::DELIVERY_STEP;
-        if ($this->orderService->validateStorage($storage, $currentStep) !== $currentStep) {
+        $storage = $this->orderStorageService->getStorage();
+        $currentStep = OrderStorageService::DELIVERY_STEP;
+        if ($this->orderStorageService->validateStorage($storage, $currentStep) !== $currentStep) {
             return JsonErrorResponse::create('', 200, [], ['reload' => true]);
         }
 
@@ -145,7 +154,7 @@ class OrderController extends Controller
             '',
             200,
             [],
-            ['redirect' => '/sale/order/' . OrderService::PAYMENT_STEP . '/']
+            ['redirect' => '/sale/order/' . OrderStorageService::PAYMENT_STEP . '/']
         );
     }
 
@@ -158,9 +167,9 @@ class OrderController extends Controller
      */
     public function validatePaymentAction(Request $request): JsonResponse
     {
-        $storage = $this->orderService->getStorage();
-        $currentStep = OrderService::PAYMENT_STEP;
-        if ($this->orderService->validateStorage($storage, $currentStep) !== $currentStep) {
+        $storage = $this->orderStorageService->getStorage();
+        $currentStep = OrderStorageService::PAYMENT_STEP;
+        if ($this->orderStorageService->validateStorage($storage, $currentStep) !== $currentStep) {
             return JsonErrorResponse::create('', 200, [], ['reload' => true]);
         }
 
@@ -175,7 +184,7 @@ class OrderController extends Controller
             return JsonErrorResponse::createWithData('', ['errors' => ['order' => 'Ошибка при создании заказа']]);
         }
 
-        $url = new Uri('/sale/order/' . OrderService::COMPLETE_STEP . '/' . $order->getId());
+        $url = new Uri('/sale/order/' . OrderStorageService::COMPLETE_STEP . '/' . $order->getId());
         if (!$this->userAuthProvider->isAuthorized()) {
             $url->addParams(['hash' => $order->getHash()]);
         }
@@ -203,14 +212,14 @@ class OrderController extends Controller
     protected function fillStorage(OrderStorage $storage, Request $request, string $step): array
     {
         $errors = [];
-        $this->orderService->setStorageValuesFromRequest(
+        $this->orderStorageService->setStorageValuesFromRequest(
             $storage,
             $request,
             $step
         );
 
         try {
-            $this->orderService->updateStorage($storage, $step);
+            $this->orderStorageService->updateStorage($storage, $step);
         } catch (OrderStorageValidationException $e) {
             /** @var ConstraintViolation $error */
             foreach ($e->getErrors() as $i => $error) {

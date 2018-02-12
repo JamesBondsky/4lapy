@@ -7,9 +7,9 @@
 namespace Sprint\Migration;
 
 use Adv\Bitrixtools\Migration\SprintMigrationBase;
+use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\Internals\ServiceRestrictionTable;
 use Bitrix\Sale\Services\PaySystem\Restrictions\Manager;
-use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\SaleBundle\Restrictions\PaymentByDeliveryRestriction;
 use FourPaws\SaleBundle\Service\OrderService;
@@ -32,15 +32,16 @@ class Payment_system_restrictions20180205114524 extends SprintMigrationBase
 
     public function up()
     {
-        /** @var OrderService $orderService */
-        $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
-
         foreach ($this->restrictions as $paymentCode => $restriction) {
-            $paymentId = $orderService->getPaymentIdByCode($paymentCode);
+            if (!$payment = PaySystemActionTable::getList(['filter' => ['CODE' => $paymentCode]])->fetch()) {
+                $this->log()->error('Не найдена платежная система с кодом ' . $paymentCode);
+
+                return false;
+            }
 
             $result = ServiceRestrictionTable::add(
                 [
-                    'SERVICE_ID'   => $paymentId,
+                    'SERVICE_ID'   => $payment['ID'],
                     'SERVICE_TYPE' => Manager::SERVICE_TYPE_PAYMENT,
                     'CLASS_NAME'   => $restriction['CLASS_NAME'],
                     'PARAMS'       => $restriction['PARAMS'],
@@ -69,15 +70,17 @@ class Payment_system_restrictions20180205114524 extends SprintMigrationBase
 
     public function down()
     {
-        /** @var OrderService $orderService */
-        $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
         foreach ($this->restrictions as $paymentCode => $deliveryCodes) {
-            $paymentId = $orderService->getPaymentIdByCode($paymentCode);
+            if (!$payment = PaySystemActionTable::getList(['filter' => ['CODE' => $paymentCode]])->fetch()) {
+                $this->log()->error('Не найдена платежная система с кодом ' . $paymentCode);
+
+                return false;
+            }
 
             $restrictions = ServiceRestrictionTable::getList(
                 [
                     'filter' => [
-                        'SERVICE_ID' => $paymentId,
+                        'SERVICE_ID' => $payment['ID'],
                     ],
                 ]
             );
