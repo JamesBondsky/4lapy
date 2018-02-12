@@ -48,6 +48,11 @@ class OrderService
     const PROPERTY_TYPE_ENUM = 'ENUM';
 
     /**
+     * Дефолтный статус заказа при курьерской доставке
+     */
+    const NEW_STATUS_COURIER = 'Q';
+
+    /**
      * @var AddressService
      */
     protected $addressService;
@@ -213,6 +218,10 @@ class OrderService
 
             if (null === $selectedDelivery) {
                 throw new OrderCreateException('Не выбрана доставка');
+            }
+
+            if ($this->deliveryService->isDelivery($delivery)) {
+                $order->setFieldNoDemand('STATUS_ID', static::NEW_STATUS_COURIER);
             }
 
             $shipment->setFields(
