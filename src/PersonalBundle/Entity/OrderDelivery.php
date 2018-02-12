@@ -24,7 +24,7 @@ class OrderDelivery extends BaseEntity
      * @Serializer\SerializedName("PRICE_DELIVERY")
      * @Serializer\Groups(groups={"read","update", "create"})
      */
-    protected $priceDelivery = '';
+    protected $priceDelivery = 0;
 
     /**
      * @var bool
@@ -40,14 +40,14 @@ class OrderDelivery extends BaseEntity
      * @Serializer\SerializedName("DATE_DEDUCTED")
      * @Serializer\Groups(groups={"read","update", "create"})
      */
-    protected $dateDeducted = false;
+    protected $dateDeducted;
 
     /**
      * @return string
      */
     public function getDeliveryName(): string
     {
-        return $this->deliveryName;
+        return $this->deliveryName ?? '';
     }
 
     /**
@@ -63,7 +63,12 @@ class OrderDelivery extends BaseEntity
      */
     public function getPriceDelivery(): float
     {
-        return $this->priceDelivery;
+        return $this->priceDelivery ?? 0;
+    }
+
+    public function getFormatedPriceDelivery()
+    {
+        return number_format(round($this->getPriceDelivery(), 2), 2, '.', ' ');
     }
 
     /**
@@ -79,7 +84,7 @@ class OrderDelivery extends BaseEntity
      */
     public function isDeducted(): bool
     {
-        return $this->deducted;
+        return $this->deducted ?? false;
     }
 
     /**

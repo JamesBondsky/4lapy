@@ -144,7 +144,7 @@ class Order extends BaseEntity
     /** @var bool */
     protected $manzana = false;
 
-    /** @var int */
+    /** @var float */
     protected $allWeight = 0;
 
     /** @var Store */
@@ -526,23 +526,23 @@ class Order extends BaseEntity
 
     public function getFormatedPrice()
     {
-        return number_format($this->getPrice(), 0, '.', ' ');
+        return number_format(round($this->getPrice(), 2), 2, '.', ' ');
     }
 
     /**
-     * @return int
+     * @return float
      */
-    public function getAllWeight(): int
+    public function getAllWeight(): float
     {
         return $this->allWeigh ?? 0;
     }
 
     /**
-     * @param int $allWeight
+     * @param float $allWeight
      *
      * @return Order
      */
-    public function setAllWeight(int $allWeight): Order
+    public function setAllWeight(float $allWeight): Order
     {
         $this->allWeight = $allWeight;
         return $this;
@@ -553,7 +553,8 @@ class Order extends BaseEntity
      */
     public function getFormatedAllWeight(): float
     {
-        return $this->getAllWeight() > 0 ? round($this->getAllWeight() / 1000, 2) : 0;
+        $allWeight =$this->getAllWeight();
+        return $allWeight > 0 ? number_format(round($allWeight / 1000, 2),2,'.',' ') : 0;
     }
 
     /**

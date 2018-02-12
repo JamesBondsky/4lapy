@@ -153,7 +153,6 @@ class OrderService
         if (!$cheques->isEmpty()) {
             /** @var Cheque $cheque */
             foreach ($cheques as $cheque) {
-                var_dump($cheque);
                 $order = new Order();
                 /** @var \DateTimeImmutable $date */
                 $date = $cheque->date;
@@ -239,9 +238,10 @@ class OrderService
                 /** @todo вынести все полученяи из цикла и сделать по феншую без запросов цикле */
                 if (!$order->isManzana() && $order->getId() > 0) {
                     list($items, $allWeight, $itemsSum) = $this->getOrderItems($order->getId());
+                    var_dump($allWeight);
                     $order->setItems($items);
-                    $order->setAllWeight($allWeight);
-                    $order->setItemsSum($itemsSum);
+                    $order->setAllWeight((float)$allWeight);
+                    $order->setItemsSum((float)$itemsSum);
                     $order->setPayment($this->getPayment($order->getPaySystemId()));
                     $order->setDelivery($this->getDelivery($order->getId()));
                     $order->setProps($this->getOrderProps($order->getId()));

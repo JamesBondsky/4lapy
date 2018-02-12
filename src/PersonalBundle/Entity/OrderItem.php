@@ -12,10 +12,10 @@ class OrderItem extends BaseEntity
 {
     /** @var string
      * @Serializer\Type("string")
-     * @Serializer\SerializedName("XML_ID")
+     * @Serializer\SerializedName("PRODUCT_XML_ID")
      * @Serializer\Groups(groups={"read"})
      */
-    protected $xmlId = '';
+    protected $article = '';
 
     /** @var string
      * @Serializer\Type("string")
@@ -54,13 +54,6 @@ class OrderItem extends BaseEntity
 
     /** @var string
      * @Serializer\Type("string")
-     * @Serializer\SerializedName("XML_ID")
-     * @Serializer\Groups(groups={"read","update", "create"})
-     */
-    protected $article = '';
-
-    /** @var string
-     * @Serializer\Type("string")
      * @Serializer\SerializedName("PROPERTY_SELECTED")
      * @Serializer\Groups(groups={"read"})
      */
@@ -92,21 +85,21 @@ class OrderItem extends BaseEntity
      * @Serializer\SerializedName("PROPERTY_IMG")
      * @Serializer\Groups(groups={"read"})
      */
-    protected $image;
+    protected $image = '';
 
     /** @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("PROPERTY_BRAND")
      * @Serializer\Groups(groups={"read"})
      */
-    protected $brand;
+    protected $brand = '';
 
     /**
      * @return string
      */
     public function getName(): string
     {
-        return $this->name;
+        return $this->name ?? '';
     }
 
     /**
@@ -125,7 +118,7 @@ class OrderItem extends BaseEntity
      */
     public function getBonus(): float
     {
-        return $this->bonus;
+        return $this->bonus ?? 0;
     }
 
     /**
@@ -144,7 +137,7 @@ class OrderItem extends BaseEntity
      */
     public function getQuantity(): float
     {
-        return $this->quantity;
+        return $this->quantity ?? 0;
     }
 
     /**
@@ -163,7 +156,7 @@ class OrderItem extends BaseEntity
      */
     public function getPrice(): float
     {
-        return $this->price;
+        return $this->price ?? 0;
     }
 
     /**
@@ -182,7 +175,7 @@ class OrderItem extends BaseEntity
      */
     public function getSum(): float
     {
-        return $this->sum;
+        return $this->sum ?? 0;
     }
 
     /**
@@ -201,7 +194,7 @@ class OrderItem extends BaseEntity
      */
     public function getWeight(): float
     {
-        return $this->weight;
+        return $this->weight ?? 0;
     }
 
     /**
@@ -217,7 +210,7 @@ class OrderItem extends BaseEntity
      */
     public function getArticle(): string
     {
-        return $this->article;
+        return  $this->article ?? '';
     }
 
     /**
@@ -233,7 +226,7 @@ class OrderItem extends BaseEntity
      */
     public function getOfferSelectedProp(): string
     {
-        return $this->offerSelectedProp;
+        return $this->offerSelectedProp ?? '';
     }
 
     /**
@@ -249,7 +242,7 @@ class OrderItem extends BaseEntity
      */
     public function isHaveStock(): bool
     {
-        return $this->haveStock;
+        return $this->haveStock ?? false;
     }
 
     /**
@@ -265,7 +258,7 @@ class OrderItem extends BaseEntity
      */
     public function getFormatedSum(): string
     {
-        return number_format($this->getSum(), 0, '.', ' ');
+        return number_format($this->getSum(), 2, '.', ' ');
     }
 
     /**
@@ -273,7 +266,7 @@ class OrderItem extends BaseEntity
      */
     public function getFormatedPrice(): string
     {
-        return number_format($this->getPrice(), 0, '.', ' ');
+        return number_format($this->getPrice(), 2, '.', ' ');
     }
 
     /**
@@ -281,7 +274,7 @@ class OrderItem extends BaseEntity
      */
     public function getImage(): string
     {
-        return $this->image;
+        return $this->image ?? '';
     }
 
     /**
@@ -317,7 +310,7 @@ class OrderItem extends BaseEntity
      */
     public function getBrand(): string
     {
-        return $this->brand;
+        return $this->brand ?? '';
     }
 
     /**
@@ -334,25 +327,9 @@ class OrderItem extends BaseEntity
     /**
      * @return string
      */
-    public function getXmlId(): string
-    {
-        return $this->xmlId;
-    }
-
-    /**
-     * @param string $xmlId
-     */
-    public function setXmlId(string $xmlId)
-    {
-        $this->xmlId = $xmlId;
-    }
-
-    /**
-     * @return string
-     */
     public function getOfferSelectedPropName(): string
     {
-        return $this->offerSelectedPropName;
+        return $this->offerSelectedPropName ?? '';
     }
 
     /**

@@ -30,14 +30,14 @@ class OrderProp extends BaseEntity
      * @Serializer\SerializedName("VALUE")
      * @Serializer\Groups(groups={"read","update", "create"})
      */
-    protected $value = false;
+    protected $value = '';
 
     /**
      * @return string
      */
     public function getName(): string
     {
-        return $this->name;
+        return $this->name ?? '';
     }
 
     /**
@@ -53,7 +53,7 @@ class OrderProp extends BaseEntity
      */
     public function getCode(): string
     {
-        return $this->code;
+        return $this->code ?? '';
     }
 
     /**
@@ -69,7 +69,7 @@ class OrderProp extends BaseEntity
      */
     public function getValue(): string
     {
-        return $this->value;
+        return $this->value ?? '';
     }
 
     /**

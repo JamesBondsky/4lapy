@@ -37,14 +37,14 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
                 <span><?= $order->getDateDelivery() ?></span>
             </div>
             <div class="b-adress-info b-adress-info--order">
-                <?if(!empty($order->getStore()->getMetro())){?>
-                    <span class="b-adress-info__label b-adress-info__label--<?=$arResult['METRO']->get($order->getStore()->getMetro())['BRANCH']['UF_CLASS']?>"></span>
-                    м. <?=$arResult['METRO']->get($order->getStore()->getMetro())['UF_NAME']?>,
-                <?}?>
-                <?=$order->getStore()->getAddress()?>
-                <?if(!empty($order->getStore()->getSchedule())){?>
-                    <p class="b-adress-info__mode-operation"><?=$order->getStore()->getSchedule()?></p>
-                <?}?>
+                <?php if (!empty($order->getStore()->getMetro())) { ?>
+                    <span class="b-adress-info__label b-adress-info__label--<?= $arResult['METRO']->get($order->getStore()->getMetro())['BRANCH']['UF_CLASS'] ?>"></span>
+                    м. <?= $arResult['METRO']->get($order->getStore()->getMetro())['UF_NAME'] ?>,
+                <?php } ?>
+                <?= $order->getStore()->getAddress() ?>
+                <?php if (!empty($order->getStore()->getSchedule())) { ?>
+                    <p class="b-adress-info__mode-operation"><?= $order->getStore()->getSchedule() ?></p>
+                <?php } ?>
             </div>
         </div>
         <div class="b-accordion-order-item__pay">
@@ -55,9 +55,10 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
         <div class="b-accordion-order-item__button js-button-default">
             <?php if ($order->isClosed() && !$order->isManzana()) {
                 $uri = new Uri(Application::getInstance()->getContext()->getRequest()->getRequestUri());
-                $uri->addParams(['reply_order'=>'Y','id'=>$order->getId()]);?>
+                $uri->addParams(['reply_order' => 'Y', 'id' => $order->getId()]); ?>
                 <div class="b-accordion-order-item__subscribe-link b-accordion-order-item__subscribe-link--full">
-                    <a class="b-link b-link--repeat-order b-link--repeat-order" href="<?=$uri->getUri()?>" title="Повторить заказ">
+                    <a class="b-link b-link--repeat-order b-link--repeat-order" href="<?= $uri->getUri() ?>"
+                       title="Повторить заказ">
                         <span class="b-link__text b-link__text--repeat-order">Повторить заказ</span>
                     </a>
                 </div>
@@ -65,7 +66,8 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
             <?php /** @todo оплата заказа */ ?>
             <?php if (!$order->isClosed() && !$order->isPayed() && !$order->isManzana()) { ?>
                 <div class="b-accordion-order-item__subscribe-link b-accordion-order-item__subscribe-link--full">
-                    <a class="b-link b-link--pay-account b-link--pay-account" href="javascript:void(0)" title="Оплатить">
+                    <a class="b-link b-link--pay-account b-link--pay-account" href="javascript:void(0)"
+                       title="Оплатить">
                         <span class="b-link__text b-link__text--pay-account">Оплатить</span>
                     </a>
                 </div>
@@ -100,11 +102,11 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
                                 </div>
                             <?php } ?>
                             <div class="b-clipped-text b-clipped-text--account">
-                                        <span>
-                                            <?php if (!empty($item->getBrand())) { ?>
-                                                <strong><?= $item->getBrand() ?>  </strong>
-                                            <?php } ?><?= $item->getName() ?>
-                                        </span>
+                                <span>
+                                    <?php if (!empty($item->getBrand())) { ?>
+                                        <strong><?= $item->getBrand() ?>  </strong>
+                                    <?php } ?><?= $item->getName() ?>
+                                </span>
                             </div>
                             <div class="b-list-order__option">
                                 <?php if (!empty($item->getOfferSelectedProp())) { ?>
@@ -130,10 +132,12 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
                                 <span
                                         class="b-ruble b-ruble--account-accordion">&nbsp;₽</span>
                             </div>
-                            <?php if ($item->getQuantity() > 0) { ?>
+                            <?php if ($item->getQuantity() > 1) { ?>
                                 <div class="b-list-order__calculation"><?= $item->getFormatedPrice() ?> ₽
                                     × <?= $item->getQuantity() ?> шт
                                 </div>
+                            <?php } ?>
+                            <?php if ($item->getBonus() > 0) { ?>
                                 <div class="b-list-order__bonus">
                                     + <?= $item->getBonus() . ' ' . WordHelper::declension($item->getBonus(),
                                         ['бонус', 'бонуса', 'бонусов']) ?>
@@ -157,17 +161,19 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
                                 class="b-ruble b-ruble--calculation-account">&nbsp;₽</span>
                     </div>
                 </li>
-                <li class="b-characteristics-tab__item b-characteristics-tab__item--account">
-                    <div class="b-characteristics-tab__characteristics-text b-characteristics-tab__characteristics-text--account">
-                        <span>Доставка</span>
-                        <div class="b-characteristics-tab__dots">
+                <?php if ($order->getDelivery()->getPriceDelivery() > 0) { ?>
+                    <li class="b-characteristics-tab__item b-characteristics-tab__item--account">
+                        <div class="b-characteristics-tab__characteristics-text b-characteristics-tab__characteristics-text--account">
+                            <span>Доставка</span>
+                            <div class="b-characteristics-tab__dots">
+                            </div>
                         </div>
-                    </div>
-                    <div class="b-characteristics-tab__characteristics-value b-characteristics-tab__characteristics-value--account">
-                        <?= $order->getDelivery()->getPriceDelivery() ?><span
-                                class="b-ruble b-ruble--calculation-account">&nbsp;₽</span>
-                    </div>
-                </li>
+                        <div class="b-characteristics-tab__characteristics-value b-characteristics-tab__characteristics-value--account">
+                            <?= $order->getDelivery()->getFormatedPriceDelivery() ?><span
+                                    class="b-ruble b-ruble--calculation-account">&nbsp;₽</span>
+                        </div>
+                    </li>
+                <?php } ?>
                 <li class="b-characteristics-tab__item b-characteristics-tab__item--account">
                     <div class="b-characteristics-tab__characteristics-text b-characteristics-tab__characteristics-text--account b-characteristics-tab__characteristics-text--last">
                         <span>Итого к оплате</span>

@@ -204,7 +204,7 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
      * @return void
      * @throws Exception
      */
-    protected function copyOrder2CustomerBasket($id)
+    protected function copyOrder2CustomerBasket(int $id)
     {
         $result = new Main\Result();
 

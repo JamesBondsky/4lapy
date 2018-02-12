@@ -5,6 +5,7 @@ namespace FourPaws\PersonalBundle\Repository;
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Bitrix\Iblock\ElementTable;
 use Bitrix\Iblock\PropertyTable;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\Query\Join;
@@ -128,17 +129,18 @@ class OrderRepository extends BaseRepository
         $basketRes = BasketTable::query()
             ->setSelect([
                 '*',
+                'SUMMARY_PRICE',
                 'PROPERTY_IMG'    => 'OFFER_PROPS.PROPERTY_' . $imgPropId,
                 'PROPERTY_VOLUME' => 'OFFER_PROPS.PROPERTY_' . $volumePropId,
                 'PROPERTY_SIZE'   => 'OFFER_PROPS.PROPERTY_' . $sizePropId,
-//                'PROPERTY_BRAND'  => 'PRODUCT_PROPS.PROPERTY_' . $brandPropId,
+                'PROPERTY_BRAND'  => 'PRODUCT_PROPS.PROPERTY_' . $brandPropId,
             ])
             ->where('ORDER_ID', $orderId)
             ->registerRuntimeField(new ReferenceField('OFFER_PROPS',
                 IblockPropEntityConstructor::getDataClass($iblockId)::getEntity(),
                 Join::on('this.PRODUCT_ID', 'ref.IBLOCK_ELEMENT_ID')))
             ->registerRuntimeField(new ReferenceField('PRODUCT_PROPS',
-                IblockPropEntityConstructor::getDataClass($iblockId)::getEntity(),
+                IblockPropEntityConstructor::getDataClass($productIblockId)::getEntity(),
                 Join::on('this.OFFER_PROPS.PROPERTY_' . $cml2LinkPropId, 'ref.IBLOCK_ELEMENT_ID')))
             ->setCacheTtl($queryCacheTtl)
             ->exec();
@@ -159,6 +161,10 @@ class OrderRepository extends BaseRepository
                             $item['PROPERTY_SELECTED'] = $res->fetch()['UF_NAME'];
                             $item['PROPERTY_SELECTED_NAME'] = 'Размер';
                         }
+                        else{
+                            $item['PROPERTY_SELECTED'] =$item['PROPERTY_SIZE'];
+                            $item['PROPERTY_SELECTED_NAME'] = 'Размер';
+                        }
                     } elseif (!empty($item['PROPERTY_VOLUME'])) {
                         $res = HLBlockFactory::createTableObject('Volume')::query()
                             ->setSelect(['UF_NAME'])
@@ -169,23 +175,35 @@ class OrderRepository extends BaseRepository
                             $item['PROPERTY_SELECTED'] = $res->fetch()['UF_NAME'];
                             $item['PROPERTY_SELECTED_NAME'] = 'Вариант фасовки';
                         }
+                        else{
+                            $item['PROPERTY_SELECTED'] =$item['PROPERTY_VOLUME'];
+                            $item['PROPERTY_SELECTED_NAME'] = 'Вариант фасовки';
+                        }
                     }
                 }
+
                 unset($item['PROPERTY_SIZE'], $item['PROPERTY_VOLUME']);
                 if (!empty($item['PROPERTY_BRAND'])) {
-                    $res = HLBlockFactory::createTableObject('Maker')::query()
-                        ->setSelect(['UF_NAME'])
+                    $res = ElementTable::query()
+                        ->setSelect(['NAME'])
                         ->where('ID', $item['PROPERTY_BRAND'])
                         ->setCacheTtl($queryCacheTtl)
                         ->exec();
                     if ($res->getSelectedRowsCount() > 0) {
-                        $item['PROPERTY_BRAND'] = $res->fetch()['UF_NAME'];
+                        $item['PROPERTY_BRAND'] = $res->fetch()['NAME'];
                     }
                 }
+
+                if(!empty($item['PRODUCT_XML_ID'])){
+                    $explode = explode('#', $item['PRODUCT_XML_ID']);
+                    if(\is_array($explode)){
+                        $item['PRODUCT_XML_ID'] = end($explode);
+                    }
+                }
+
                 $allWeight += $item['WEIGHT'] * $item['QUANTITY'];
                 $allSum += $item['SUMMARY_PRICE'];
-                $explode = explode('#', $item['PRODUCT_XML_ID']);
-                $key = \is_array($explode) ? end($explode) : $item['PRODUCT_XML_ID'];
+                $key = !empty($item['PRODUCT_XML_ID']) ? $item['PRODUCT_XML_ID'] : '';
                 if (\mb_strlen($key) <= 1) {
                     $key = $item['PRODUCT_ID'];
                 }
