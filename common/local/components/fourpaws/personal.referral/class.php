@@ -1,4 +1,4 @@
-<?php
+git a<?php
 
 /*
  * @copyright Copyright (c) ADV/web-engineering co
@@ -13,6 +13,7 @@ use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\UI\PageNavigation;
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
@@ -122,11 +123,13 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
         }
         $this->setFrameMode(true);
 
+        $this->arResult['ITEMS'] = $items = new ArrayCollection();
+
         try {
             $arResult['NAV'] = new PageNavigation('nav-referral');
             $arResult['NAV']->allowAllRecords(false)->setPageSize($this->arParams['PAGE_COUNT'])->initFromUri();
 
-            $this->arResult['ITEMS'] = $this->referralService->getCurUserReferrals(true, $arResult['NAV']);
+            $this->arResult['ITEMS'] = $items = $this->referralService->getCurUserReferrals(true, $arResult['NAV']);
         } catch (NotAuthorizedException $e) {
         } catch (CardNotFoundException $e) {
         }
@@ -136,10 +139,10 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
         $this->arResult['BONUS'] = 0;
         $cacheItems = [];
         $arResult['referral_type'] = $this->referralService->getReferralType();
-        if (\is_array($this->arResult['ITEMS']) && !empty($this->arResult['ITEMS'])) {
+        if (!$items->isEmpty()) {
             /** @var Referral $item */
             /** @noinspection ForeachSourceInspection */
-            foreach ($this->arResult['ITEMS'] as $item) {
+            foreach ($items as $item) {
                 if ($item instanceof Referral) {
                     $this->arResult['BONUS'] += $item->getBonus();
                     $cardId = $item->getCard();

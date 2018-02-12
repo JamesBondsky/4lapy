@@ -284,7 +284,7 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
                         $i = 0;
                         foreach ($cheques as $cheque) {
                             try {
-                                $chequeItems = $this->manzanaService->getItemsBuCheque($cheque->chequeId);
+                                $chequeItems = $this->manzanaService->getItemsByCheque($cheque->chequeId);
                                 $i++;
                                 if (!empty($chequeItems)) {
                                     /** @var ChequeItem $chequeItem */

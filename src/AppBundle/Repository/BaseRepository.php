@@ -253,7 +253,17 @@ class BaseRepository
             $this->nav->setRecordCount($result->getCount());
         }
 
-        $allItems = $result->fetchAll();
+        if(!empty($params['setKey'])){
+            $allItems = [];
+            $i = -1;
+            while($item = $result->fetch()){
+                $i++;
+                $allItems[$item[$params['setKey']] ?? 'key_'.$i] = $item;
+            }
+        }
+        else{
+            $allItems = $result->fetchAll();
+        }
         if (!empty($params['entityClass'])) {
             $entityClass = $params['entityClass'];
         }

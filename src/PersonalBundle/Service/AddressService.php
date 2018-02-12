@@ -45,7 +45,7 @@ class AddressService
      *
      * @param AddressRepository $addressRepository
      *
-     * @throws ServiceNotFoundException
+     * @throws ServiceNotFgit stashoundException
      * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
      */
