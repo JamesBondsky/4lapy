@@ -37,7 +37,7 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
         
         $chequeRequest->setBusinessUnit($this->parameters['business_unit'])
                       ->setOrganization($this->parameters['organization'])
-                      ->setPos($this->parameters['pos'])
+                      ->setPos($this->parameters['pos'])->setNumber($requestId)
                       ->setDatetime(new \DateTimeImmutable())
                       ->setRequestId($requestId);
     
@@ -80,7 +80,7 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
      *
      * @return SoftChequeRequest
      */
-    public function buildRequestFromBasketService(BasketService $basketService, string $card) : SoftChequeRequest
+    public function buildRequestFromBasketService(BasketService $basketService, string $card = '') : SoftChequeRequest
     {
         $sum = $sumDiscounted = $discount = 0.0;
         
@@ -110,13 +110,22 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
                                       ->setSummDiscounted($item->getPrice() * $item->getQuantity())
                                       ->setArticleId($xmlId)
                                       ->setChequeItemId($item->getId());
+    
+            /**
+             * @todo add SignCharge=0 (BonusBuy)
+             */
+            if ((int)$chequePosition->getDiscount() === 3) {
+                $chequePosition->setSignCharge(0);
+            }
+            
             $request->addItem($chequePosition);
         }
-        
-        $request->setCardNumber($card)
-                ->setSumm($sum)
+    
+        $request->setSumm($sum)
                 ->setSummDiscounted($sumDiscounted)
                 ->setDiscount(ArithmeticHelper::getPercent($sumDiscounted, $sum));
+    
+        $request->setCardByNumber($card);
         
         return $request;
     }
@@ -164,7 +173,7 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     public function processChequeWithCoupons(SoftChequeRequest $chequeRequest, string $coupon) : SoftChequeResponse
     {
-        $chequeRequest->getCoupons()->addCouponFromString($coupon);
+        $chequeRequest->addCoupon($coupon);
         
         return $this->execute($chequeRequest);
     }

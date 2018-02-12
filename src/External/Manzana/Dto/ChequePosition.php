@@ -40,7 +40,7 @@ class ChequePosition
      *
      * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("integer")
-     * @Serializer\SerializedName("cheque_item_number")
+     * @Serializer\SerializedName("PositionNumber")
      *
      * @var integer
      */
@@ -51,7 +51,7 @@ class ChequePosition
      *
      * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("integer")
-     * @Serializer\SerializedName("article_id")
+     * @Serializer\SerializedName("Article")
      *
      * @var integer
      */
@@ -73,7 +73,7 @@ class ChequePosition
      *
      * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("integer")
-     * @Serializer\SerializedName("quantity")
+     * @Serializer\SerializedName("Quantity")
      *
      * @var integer
      */
@@ -95,7 +95,7 @@ class ChequePosition
      *
      * @Serializer\XmlElement(cdata=false)
      * @Serializer\Type("float")
-     * @Serializer\SerializedName("summ_discounted")
+     * @Serializer\SerializedName("SummDiscounted")
      *
      * @var float
      */
@@ -111,6 +111,21 @@ class ChequePosition
      * @var float
      */
     protected $discount = '';
+    
+    /**
+     * SignCharge=0 должно передаваться в позиции чека:
+     *
+     * - Данная позиция участвует в акции БонусБай, для которой стоит признак "не начислять бонусы"
+     * - Для всех позиций, на которые действует скидка, за исключением скидки на упаковку (3%)
+     *
+     * Для всех остальных позиций должно передаваться SignCharge=1, даже если в заказе не указана БК
+     *
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("SignCharge")
+     *
+     * @var int
+     */
+    protected $signCharge = 1;
     
     /**
      * @return int
@@ -290,5 +305,29 @@ class ChequePosition
         $this->chequeItemNumber = $chequeItemNumber;
         
         return $this;
+    }
+    
+    /**
+     * @param int $signCharge
+     *
+     * @return ChequePosition
+     */
+    public function setSignCharge(int $signCharge) : ChequePosition
+    {
+        if ($signCharge && $signCharge !== 1) {
+            $signCharge = 1;
+        }
+        
+        $this->signCharge = $signCharge;
+        
+        return $this;
+    }
+    
+    /**
+     * @return int
+     */
+    public function getSignCharge() : int
+    {
+        return $this->signCharge;
     }
 }
