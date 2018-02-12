@@ -18,6 +18,10 @@ services:
     factory: 'search.factory:createElasticaClient'
     arguments: ['%elastica.client_options%']
 
+  manzana.contact_consumer:
+    class: FourPaws\External\Manzana\Consumer\ManzanaContactConsumer
+    arguments: ['@jms_serializer', '@manzana.service']
+
   search.sync_consumer:
     class: FourPaws\Search\Consumer\CatalogSyncConsumer
     arguments: ['@jms_serializer', '@search.service']
@@ -65,6 +69,12 @@ services:
   manzana.service:
     class: FourPaws\External\ManzanaService
     arguments: ['@jms_serializer', '@manzana.soap', '%manzana%']
+    calls:
+      - [setServiceLogger]
+
+  manzana.pos.service:
+    class: FourPaws\External\ManzanaPosService
+    arguments: ['@jms_serializer', '@manzana.pos.soap', '%manzana_pos%']
     calls:
       - [setServiceLogger]
 

@@ -1,19 +1,24 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SaleBundle\Entity;
 
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
-use JMS\Serializer\Annotation as Serializer;
-use Symfony\Component\Validator\Constraints as Assert;
 use FourPaws\SaleBundle\Validation as SaleValidation;
+use JMS\Serializer\Annotation as Serializer;
 use Misd\PhoneNumberBundle\Validator\Constraints\PhoneNumber;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * Class OrderStorage
  * @package FourPaws\SaleBundle\Entity
  * @SaleValidation\OrderDelivery(groups={"delivery","payment"})
  * @SaleValidation\OrderAddress(groups={"delivery","payment"})
+ * @SaleValidation\OrderPaymentSystem(groups={"payment"})
  */
 class OrderStorage
 {
@@ -29,7 +34,7 @@ class OrderStorage
     protected $fuserId = 0;
 
     /**
-     * ID пользователя корзины
+     * ID пользователя
      *
      * @var int
      * @Serializer\Type("integer")
@@ -56,7 +61,6 @@ class OrderStorage
      * @Serializer\Type("integer")
      * @Serializer\SerializedName("PAY_SYSTEM_ID")
      * @Serializer\Groups(groups={"read","update","delete"})
-     * @Assert\NotBlank(groups={"payment"})
      */
     protected $paymentId = 0;
 
@@ -131,7 +135,7 @@ class OrderStorage
      *
      * @var string
      * @Serializer\Type("string")
-     * @Serializer\SerializedName("PROPERTY_ADDRESS_ID")
+     * @Serializer\SerializedName("ADDRESS_ID")
      * @Serializer\Groups(groups={"read","update","delete"})
      */
     protected $addressId = 0;
@@ -197,21 +201,11 @@ class OrderStorage
     protected $floor = '';
 
     /**
-     * Имя профиля
-     *
-     * @var string
-     * @Serializer\Type("string")
-     * @Serializer\SerializedName("PROPERTY_PROFILE_NAME")
-     * @Serializer\Groups(groups={"read","update","delete"})
-     */
-    protected $profileName = '';
-
-    /**
      * Дата доставки (индекс выбранного значения из select'а)
      *
      * @var int
      * @Serializer\Type("int")
-     * @Serializer\SerializedName("PROPERTY_DELIVERY_DATE")
+     * @Serializer\SerializedName("DELIVERY_DATE")
      * @Serializer\Groups(groups={"read","update","delete"})
      */
     protected $deliveryDate = 0;
@@ -221,30 +215,20 @@ class OrderStorage
      *
      * @var int
      * @Serializer\Type("int")
-     * @Serializer\SerializedName("PROPERTY_DELIVERY_INTERVAL")
+     * @Serializer\SerializedName("DELIVERY_INTERVAL")
      * @Serializer\Groups(groups={"read","update","delete"})
      */
     protected $deliveryInterval = 0;
 
     /**
-     * Код места доставки
+     * Код места доставки (или код терминала DPD)
      *
      * @var string
      * @Serializer\Type("string")
-     * @Serializer\SerializedName("PROPERTY_DELIVERY_PLACE_CODE")
+     * @Serializer\SerializedName("DELIVERY_PLACE_CODE")
      * @Serializer\Groups(groups={"read","update","delete"})
      */
     protected $deliveryPlaceCode = '';
-
-    /**
-     * Код терминала DPD
-     *
-     * @var string
-     * @Serializer\Type("string")
-     * @Serializer\SerializedName("PROPERTY_DPD_TERMINAL_CODE")
-     * @Serializer\Groups(groups={"read","update","delete"})
-     */
-    protected $dpdTerminalCode = '';
 
     /**
      * Способ коммуникации
@@ -304,6 +288,25 @@ class OrderStorage
      * @Serializer\Groups(groups={"read","update","delete"})
      */
     protected $partialGet = true;
+
+    /**
+     *
+     * @var bool
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("BONUS_PAYMENT")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     */
+    protected $bonusPayment = false;
+
+    /**
+     * Сумма оплаты бонусами
+     *
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("BONUS_SUM")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     */
+    protected $bonusSum = 0;
 
     /**
      * @return int
@@ -640,26 +643,6 @@ class OrderStorage
     }
 
     /**
-     * @return string
-     */
-    public function getProfileName(): string
-    {
-        return $this->profileName;
-    }
-
-    /**
-     * @param string $profileName
-     *
-     * @return OrderStorage
-     */
-    public function setProfileName(string $profileName): OrderStorage
-    {
-        $this->profileName = $profileName;
-
-        return $this;
-    }
-
-    /**
      * @return int
      */
     public function getDeliveryDate(): int
@@ -715,26 +698,6 @@ class OrderStorage
     public function setDeliveryPlaceCode(string $deliveryPlaceCode): OrderStorage
     {
         $this->deliveryPlaceCode = $deliveryPlaceCode;
-
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getDpdTerminalCode(): string
-    {
-        return $this->dpdTerminalCode;
-    }
-
-    /**
-     * @param string $dpdTerminalCode
-     *
-     * @return OrderStorage
-     */
-    public function setDpdTerminalCode(string $dpdTerminalCode): OrderStorage
-    {
-        $this->dpdTerminalCode = $dpdTerminalCode;
 
         return $this;
     }
@@ -855,6 +818,46 @@ class OrderStorage
     public function setPartialGet(bool $partialGet): OrderStorage
     {
         $this->partialGet = $partialGet;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasBonusPayment(): bool
+    {
+        return $this->bonusPayment;
+    }
+
+    /**
+     * @param bool $bonusPayment
+     *
+     * @return OrderStorage
+     */
+    public function setBonusPayment(bool $bonusPayment): OrderStorage
+    {
+        $this->bonusPayment = $bonusPayment;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getBonusSum(): int
+    {
+        return $this->bonusSum;
+    }
+
+    /**
+     * @param int $bonusSum
+     *
+     * @return OrderStorage
+     */
+    public function setBonusSum(int $bonusSum): OrderStorage
+    {
+        $this->bonusSum = $bonusSum;
 
         return $this;
     }

@@ -238,7 +238,7 @@ class FourPawsShopListComponent extends CBitrixComponent
                     'schedule'   => $store->getSchedule(),
                     'photo'      => $imageSrc,
                     'metro'      => !empty($metro) ? 'м. ' . $metroList[$metro]['UF_NAME'] : '',
-                    'metroClass' => !empty($metro) ? '--' . $metroList[$metro]['UF_CLASS'] : '',
+                    'metroClass' => !empty($metro) ? '--' . $metroList[$metro]['BRANCH']['UF_CLASS'] : '',
                     'services'   => $services,
                     'gps_s'      => $gpsN,
                     //revert $gpsS

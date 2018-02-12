@@ -7,9 +7,16 @@ use Bitrix\Currency\CurrencyManager;
 
 class CurrencyHelper
 {
-    public static function formatPrice($price, $currency = null)
+    /**
+     * @param $price
+     * @param bool $zeroText
+     * @param null $currency
+     *
+     * @return mixed|string
+     */
+    public static function formatPrice($price, $zeroText = true, $currency = null)
     {
-        if ($price == 0) {
+        if ($zeroText && $price == 0) {
             return 'Бесплатно';
         }
 

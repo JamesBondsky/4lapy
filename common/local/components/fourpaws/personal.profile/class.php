@@ -17,17 +17,13 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
-use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
-use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Exception\SmsSendErrorException;
-use FourPaws\External\Manzana\Exception\ManzanaException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
-use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
@@ -206,18 +202,13 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                     $client            = new Client();
                     $client->contactId = $contactId;
                     $client->phone     = $phone;
-                } catch (ManzanaServiceContactSearchMoreOneException $e) {
-                } catch (ManzanaServiceContactSearchNullException $e) {
+                } catch (ManzanaServiceException $e) {
                     $client = new Client();
                     $this->currentUserProvider->setClientPersonalDataByCurUser($client);
-                } catch (ManzanaServiceException $e) {
                 }
+    
                 if ($client instanceof Client) {
-                    try {
-                        $manzanaService->updateContact($client);
-                    } catch (ManzanaServiceException $e) {
-                    } catch (ManzanaException $e) {
-                    }
+                    $manzanaService->updateContactAsync($client);
                 }
                 
                 return JsonSuccessResponse::create('Телефон верифицирован');

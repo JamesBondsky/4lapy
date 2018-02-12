@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\App;
 
 use Circle\RestClientBundle\CircleRestClientBundle;
@@ -131,7 +135,7 @@ class AppKernel extends Kernel
         /**
          * Ввиду использования вагранта симфони не может очистить директорию, которая используется по умолчанию
          */
-        if ($this->getEnvironment() === 'dev') {
+        if (is_dir('/home/vagrant') || is_dir('/vagrant')) {
             return '/tmp/sfcache/' . $this->getEnvironment();
         }
     

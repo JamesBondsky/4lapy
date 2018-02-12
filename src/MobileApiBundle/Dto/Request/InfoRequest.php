@@ -46,7 +46,7 @@ class InfoRequest implements SimpleUnserializeRequest, GetRequest
     protected $infoId = '';
 
     /**
-     * @Serializer\Type("array_comma_string")
+     * @Serializer\Type("api_info_fields")
      * @Serializer\SerializedName("fields")
      * @var array
      */

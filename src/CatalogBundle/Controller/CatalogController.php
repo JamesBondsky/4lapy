@@ -31,6 +31,9 @@ class CatalogController extends Controller
 
     /**
      * @Route("/search/")
+     * @param Request $request
+     * @param SearchRequest $searchRequest
+     * @return Response
      */
     public function searchAction(Request $request, SearchRequest $searchRequest): Response
     {
@@ -69,14 +72,30 @@ class CatalogController extends Controller
      * @Route("/{path}/")
      *
      * @param RootCategoryRequest $rootCategoryRequest
+     * @param Request $request
      *
      * @return Response
      */
-    public function rootCategoryAction(RootCategoryRequest $rootCategoryRequest)
+    public function rootCategoryAction(RootCategoryRequest $rootCategoryRequest, Request $request)
     {
-        return $this->render('FourPawsCatalogBundle:Catalog:rootCategory.html.php', [
-            'rootCategoryRequest' => $rootCategoryRequest,
-        ]);
+        /** @var \FourPaws\Search\SearchService $searchService */
+        $searchService = Application::getInstance()->getContainer()->get('search.service');
+
+        $result = $searchService->searchProducts(
+            $rootCategoryRequest->getCategory()->getFilters(),
+            $rootCategoryRequest->getSorts()->getSelected(),
+            $rootCategoryRequest->getNavigation(),
+            $rootCategoryRequest->getSearchString()
+        );
+
+        return $this->render(
+            'FourPawsCatalogBundle:Catalog:rootCategory.html.php',
+            [
+                'rootCategoryRequest' => $rootCategoryRequest,
+                'request' => $request,
+                'result' => $result,
+            ]
+        );
     }
 
     /**

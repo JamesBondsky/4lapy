@@ -1,8 +1,13 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\DeliveryBundle\Service;
 
 use Bitrix\Currency\CurrencyManager;
+use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketBase;
 use Bitrix\Sale\BasketItem;
@@ -19,8 +24,8 @@ use FourPaws\DeliveryBundle\Exception\InvalidArgumentException;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\Location\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
+use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Service\StoreService;
-use FourPaws\UserBundle\Service\UserService;
 use WebArch\BitrixCache\BitrixCache;
 
 class DeliveryService
@@ -65,19 +70,19 @@ class DeliveryService
     protected $locationService;
 
     /**
-     * @var UserService $userService
-     */
-    protected $userService;
-
-    /**
      * @var StoreService
      */
     protected $storeService;
 
-    public function __construct(LocationService $locationService, UserService $userService, StoreService $storeService)
+    /**
+     * DeliveryService constructor.
+     *
+     * @param LocationService $locationService
+     * @param StoreService $storeService
+     */
+    public function __construct(LocationService $locationService, StoreService $storeService)
     {
         $this->locationService = $locationService;
-        $this->userService = $userService;
         $this->storeService = $storeService;
     }
 
@@ -114,7 +119,7 @@ class DeliveryService
     public function getByBasket(BasketBase $basket, string $locationCode = '', array $codes = []): array
     {
         if (!$locationCode) {
-            $locationCode = $this->getCurrentLocation();
+            $locationCode = $this->locationService->getCurrentLocation();
         }
 
         $shipment = $this->generateShipment($locationCode, $basket);
@@ -176,7 +181,7 @@ class DeliveryService
                 continue;
             }
 
-            if ($service->isProfile()) {
+            if ($service::isProfile()) {
                 $name = $service->getNameWithParent();
             } else {
                 $name = $service->getName();
@@ -199,6 +204,7 @@ class DeliveryService
                     ],
                     true
                 )) {
+                    /* @todo не хранить эти данные в сессии */
                     $calculationResult->setPeriodFrom($_SESSION['DPD_DATA'][$service->getCode()]['DAYS_FROM']);
                     $calculationResult->setPeriodTo($_SESSION['DPD_DATA'][$service->getCode()]['DAYS_TO']);
                     $calculationResult->setData(
@@ -438,17 +444,43 @@ class DeliveryService
     /**
      * @param string $code
      *
-     * @return int
      * @throws NotFoundException
+     * @return int
      */
     public function getDeliveryIdByCode(string $code): int
+    {
+        return (int)$this->getDeliveryByCode($code)['ID'];
+    }
+
+    /**
+     * @param string $code
+     *
+     * @throws NotFoundException
+     * @return array
+     */
+    public function getDeliveryByCode(string $code): array
     {
         $delivery = DeliveryServiceTable::getList(['filter' => ['CODE' => $code]])->fetch();
         if (!$delivery) {
             throw new NotFoundException('Delivery service not found');
         }
 
-        return (int)$delivery['ID'];
+        return $delivery;
+    }
+
+    /**
+     * @param int $id
+     *
+     * @return string
+     */
+    public function getDeliveryCodeById(int $id): string
+    {
+        $delivery = DeliveryServiceTable::getList(['filter' => ['ID' => $id]])->fetch();
+        if (!$delivery) {
+            throw new NotFoundException('Delivery service not found');
+        }
+
+        return $delivery['CODE'];
     }
 
     /**
@@ -468,18 +500,78 @@ class DeliveryService
     }
 
     /**
-     * @return string
+     * Получение терминалов DPD
+     *
+     * @param string $locationCode код местоположения
+     * @param bool $withCod только те, где возможен наложенный платеж
+     * @param float $sum сумма наложенного платежа
+     *
+     * @return StoreCollection
      */
-    protected function getCurrentLocation()
-    {
-        return $this->locationService->getCurrentLocation();
+    public function getDpdTerminalsByLocation(
+        string $locationCode,
+        bool $withCod = true,
+        float $sum = 0
+    ): StoreCollection {
+        $result = new StoreCollection();
+
+        if (!class_exists('\Ipolh\DPD\DB\Terminal\Table')) {
+            return $result;
+        }
+
+        $getTerminals = function () use ($locationCode) {
+            $terminals = \Ipolh\DPD\DB\Terminal\Table::query()->setSelect(['*'])
+                                                     ->setFilter(['LOCATION.CODE' => $locationCode])
+                                                     ->registerRuntimeField(
+                                                         new ReferenceField(
+                                                             'LOCATION',
+                                                             LocationTable::class,
+                                                             ['=this.LOCATION_ID' => 'ref.ID'],
+                                                             ['join_type' => 'INNER']
+                                                         )
+                                                     )
+                                                     ->exec();
+
+            return ['result' => $terminals->fetchAll()];
+        };
+
+        /** @var array $terminals */
+        $terminals = (new BitrixCache())
+            ->withId(__METHOD__ . $locationCode)
+            ->resultOf($getTerminals)['result'];
+
+        if ($withCod) {
+            $terminals = array_filter(
+                $terminals,
+                function ($item) use ($sum) {
+                    return ($item['NPP_AVAILABLE'] === 'Y') && ($item['NPP_AMOUNT'] >= $sum);
+                }
+            );
+        }
+
+        foreach ($terminals as $terminal) {
+            $store = new Store();
+            $store->setTitle($terminal['NAME'])
+                  ->setLocation($locationCode)
+                  ->setAddress($terminal['ADDRESS_SHORT'])
+                  ->setCode($terminal['CODE'])
+                  ->setXmlId($terminal['CODE'])
+                  ->setLatitude($terminal['LATITUDE'])
+                  ->setLongitude($terminal['LONGITUDE'])
+                  ->setLocationId($terminal['LOCATION_ID'])
+                  ->setSchedule($terminal['SCHEDULE_SELF_DELIVERY'])
+                  ->setDescription($terminal['ADDRESS_DESCR']);
+            $result[$store->getXmlId()] = $store;
+        }
+
+        return $result;
     }
 
     protected function generateShipment(string $locationCode, BasketBase $basket = null): Shipment
     {
         $order = Order::create(
             SITE_ID,
-            $this->userService->getAnonymousUserId(),
+            null,
             CurrencyManager::getBaseCurrency()
         );
 
