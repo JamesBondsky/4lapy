@@ -32,6 +32,13 @@ $basket = $arResult['BASKET'];
 $isInnerDelivery = $deliveryService->isInnerDelivery($selectedDelivery) ||
     $deliveryService->isInnerPickup($selectedDelivery);
 
+$selectedPayment = null;
+foreach ($arResult['PAYMENTS'] as $payment) {
+    if ($payment['ID'] === $storage->getPaymentId()) {
+        $selectedPayment = $payment;
+    }
+}
+
 ?>
 <div class="b-container">
     <h1 class="b-title b-title--h1 b-title--order">
@@ -79,30 +86,32 @@ $isInnerDelivery = $deliveryService->isInnerDelivery($selectedDelivery) ||
                           data-url="<?= $arResult['URL']['PAYMENT_VALIDATION'] ?>"
                           id="order-step">
                         <div class="b-choice-recovery b-choice-recovery--flex">
-                            <?php foreach ($arResult['PAYMENTS'] as $payment) {
-    ?>
+                            <?php foreach ($arResult['PAYMENTS'] as $payment) { ?>
                                 <?php
                                 if ((int)PaySystemManager::getInnerPaySystemId() === (int)$payment['ID']) {
                                     continue;
                                 }
 
-    if ($isInnerDelivery && $payment['CODE'] === OrderService::PAYMENT_CASH) {
-        $displayName = 'Наличными или картой при получении';
-    } else {
-        $displayName = $payment['NAME'];
-    } ?>
+                                if ($isInnerDelivery && $payment['CODE'] === OrderService::PAYMENT_CASH) {
+                                    $displayName = 'Наличными или картой при получении';
+                                } else {
+                                    $displayName = $payment['NAME'];
+                                }
+
+                                ?>
                                 <input class="b-choice-recovery__input"
                                        id="order-payment-<?= $payment['ID'] ?>"
                                        type="radio"
                                        name="paymentId"
+                                       data-pay="<?= $payment['CODE'] === OrderService::PAYMENT_ONLINE ? 'online' : 'cashe' ?>"
                                        value="<?= $payment['ID'] ?>"
                                     <?= (int)$payment['ID'] === $storage->getPaymentId() ? 'checked="checked"' : '' ?>/>
                                 <label class="b-choice-recovery__label b-choice-recovery__label--left b-choice-recovery__label--order-step b-choice-recovery__label--radio-mobile"
                                        for="order-payment-<?= $payment['ID'] ?>">
                                     <span class="b-choice-recovery__main-text"><?= $displayName ?></span>
                                 </label>
-                            <?php
-} ?>
+                                <?php
+                            } ?>
                         </div>
                         <label class="b-order-contacts__label" for="point-pay">
                             <b>Оплатить часть заказа бонусными баллами </b>(до 299)
@@ -152,7 +161,7 @@ $isInnerDelivery = $deliveryService->isInnerDelivery($selectedDelivery) ||
                             </div>
                         </li>
                         <?php if ($storage->getBonusSum()) {
-        ?>
+                            ?>
                             <li class="b-order-list__item b-order-list__item--cost b-order-list__item--order-step-3">
                                 <div class="b-order-list__order-text b-order-list__order-text--order-step-3">
                                     <div class="b-order-list__clipped-text">
@@ -165,8 +174,7 @@ $isInnerDelivery = $deliveryService->isInnerDelivery($selectedDelivery) ||
                                     <?= mb_strtolower(CurrencyHelper::formatPrice($storage->getBonusSum())) ?>
                                 </div>
                             </li>
-                        <?php
-    } ?>
+                        <?php } ?>
                         <li class="b-order-list__item b-order-list__item--cost b-order-list__item--order-step-3">
                             <div class="b-order-list__order-text b-order-list__order-text--order-step-3">
                                 <div class="b-order-list__clipped-text">
@@ -185,12 +193,16 @@ $isInnerDelivery = $deliveryService->isInnerDelivery($selectedDelivery) ||
                         </li>
                     </ul>
                 </div>
-                <button class="b-button b-button--order-step-3 b-button--next b-button--fixed-bottom js-order-next js-valid-out-sub">
-                    Перейти к оплате
+                <button class="b-button b-button--order-step-3 b-button--next b-button--fixed-bottom js-order-next js-order-step-3-submit">
+                    <? if ($selectedPayment && $selectedPayment['CODE'] === OrderService::PAYMENT_ONLINE) { ?>
+                        Перейти к оплате
+                    <?php } else { ?>
+                        Заказать
+                    <?php } ?>
                 </button>
                 <div class="b-order__text-block b-order__text-block--additional">
-                    <p>Оформляя заказ я даю своё согласие на обработку персональных данных и подтверждаю ознакомление с
-                        договором офертой.</p>
+                    <p>Оформляя заказ, я даю своё согласие на обработку персональных данных и подтверждаю ознакомление с
+                        договором-офертой.</p>
                     <p>В соответствии с ФЗ №54-ФЗ кассовый чек при онлайн-оплате на сайте будет предоставлен в
                         электронном виде на указанный при оформлении заказа номер телефона или email.</p>
                 </div>

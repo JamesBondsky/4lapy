@@ -11,7 +11,7 @@ use Bitrix\Sale\Internals\Entity;
 use Bitrix\Sale\Payment;
 use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\SaleBundle\Service\OrderStorageService;
 
 class PaymentByDeliveryRestriction extends Restrictions\Base
 {
@@ -31,11 +31,11 @@ class PaymentByDeliveryRestriction extends Restrictions\Base
             return false;
         }
 
-        /** @var OrderService $orderService */
-        $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
+        /** @var OrderStorageService $orderStorageService */
+        $orderStorageService = Application::getInstance()->getContainer()->get(OrderStorageService::class);
         /** @var DeliveryService $deliveryService */
         $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
-        $orderStorage = $orderService->getStorage();
+        $orderStorage = $orderStorageService->getStorage();
         if (!$orderStorage->getDeliveryId()) {
             return true;
         }
@@ -44,7 +44,7 @@ class PaymentByDeliveryRestriction extends Restrictions\Base
         if (!isset($restrictionParams[$deliveryCode])) {
             return true;
         }
-        
+
         if ($restrictionParams[$deliveryCode] === 'Y') {
             return true;
         }
@@ -61,7 +61,7 @@ class PaymentByDeliveryRestriction extends Restrictions\Base
         return $payment->getField('SUM');
     }
 
-    public static function getParamsStructure($entityId = 0)
+    public static function getParamsStructure($entityId = 0): array
     {
         /** @var DeliveryService $deliveryService */
         $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');

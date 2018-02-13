@@ -224,7 +224,7 @@ if ($storage->getAddressId()) {
             for ($i = 0; $i < ($end - $start); $i++) {
                 $date = (new DateTime())->modify('+' . ($start + $i) . ' days');
                 $dateString = FormatDate('l, d.m.Y', $date->getTimestamp()); ?>
-                <option value="<?= $i ?>" <?= $storage->getDeliveryDate() == ($i) ? 'selected="selected"' : '' ?>>
+                <option value="<?= $i ?>" <?= ($storage->getDeliveryDate() === $i) ? 'selected="selected"' : '' ?>>
                     <?= $dateString ?>
                 </option>
             <?php
@@ -247,8 +247,8 @@ if ($storage->getAddressId()) {
                 <?php $intervals = $delivery->getData()['INTERVALS'] ?>
                 <?php foreach ($intervals as $i => $interval) {
                     ?>
-                    <option value="<?= $i + 1 ?>" <?= $storage->getDeliveryInterval(
-                    ) == ($i + 1) ? 'selected="selected"' : '' ?>>
+                    <option value="<?= $i + 1 ?>" <?= ($storage->getDeliveryInterval(
+                    ) === $i + 1) ? 'selected="selected"' : '' ?>>
                         <?= showInterval($interval) ?>
                     </option>
                 <?php

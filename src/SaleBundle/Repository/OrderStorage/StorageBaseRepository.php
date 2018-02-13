@@ -7,7 +7,7 @@
 namespace FourPaws\SaleBundle\Repository\OrderStorage;
 
 use FourPaws\SaleBundle\Entity\OrderStorage;
-use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\SaleBundle\Service\OrderPropertyService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
@@ -57,14 +57,14 @@ abstract class StorageBaseRepository implements StorageRepositoryInterface
      */
     protected function setInitialValues(array $data): array
     {
-        $data['FUSER_ID'] = $this->currentUserProvider->getCurrentFUserId();
+        $data['UF_FUSER_ID'] = $this->currentUserProvider->getCurrentFUserId();
         if (!$data['PROPERTY_COM_WAY']) {
-            $data['PROPERTY_COM_WAY'] = OrderService::COMMUNICATION_SMS;
+            $data['PROPERTY_COM_WAY'] = OrderPropertyService::COMMUNICATION_SMS;
         }
-
+        $data['UF_USER_ID'] = 0;
         try {
             $user = $this->currentUserProvider->getCurrentUser();
-            $data['USER_ID'] = $user->getId();
+            $data['UF_USER_ID'] = $user->getId();
 
             /**
              * Если пользователь не задал контактные данные вручную,
