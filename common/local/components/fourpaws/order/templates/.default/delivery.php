@@ -38,6 +38,7 @@ $basket = $arResult['BASKET'];
 
 /** @var OrderStorage $storage */
 $storage = $arResult['STORAGE'];
+
 ?>
 <div class="b-container">
     <h1 class="b-title b-title--h1 b-title--order">
@@ -48,7 +49,7 @@ $storage = $arResult['STORAGE'];
             <ul class="b-tab-list__list js-scroll-order">
                 <li class="b-tab-list__item completed">
                     <a class="b-tab-list__link"
-                       href="<?= $arParams['URL']['AUTH'] ?>"
+                       href="<?= $arResult['URL']['AUTH'] ?>"
                        title="">
                         <span class="b-tab-list__step">Шаг </span>1. Контактные данные
                     </a>
@@ -139,7 +140,7 @@ $storage = $arResult['STORAGE'];
                             <?php } ?>
                         </div>
                         <ul class="b-radio-tab js-myself-shop">
-                            <? if ($delivery) { ?>
+                            <?php if ($delivery) { ?>
                                 <li class="b-radio-tab__tab js-telephone-recovery"
                                     <?= $selectedDeliveryId !== (int)$delivery->getData(
                                     )['DELIVERY_ID'] ? 'style="display:none"' : '' ?>>

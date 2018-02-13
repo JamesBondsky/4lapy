@@ -12,7 +12,7 @@ class OrderStorageValidationException extends \Exception implements BaseExceptio
 
     public function __construct(
         ConstraintViolationListInterface $errors,
-        $message = "",
+        $message = '',
         $code = 0,
         Throwable $previous = null
     ) {

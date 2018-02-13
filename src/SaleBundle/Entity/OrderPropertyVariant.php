@@ -7,7 +7,7 @@
 namespace FourPaws\SaleBundle\Entity;
 
 use FourPaws\App\Application;
-use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\SaleBundle\Service\OrderPropertyService;
 use JMS\Serializer\Annotation as Serializer;
 
 class OrderPropertyVariant
@@ -163,9 +163,9 @@ class OrderPropertyVariant
     public function getProperty(): OrderProperty
     {
         if (!$this->property) {
-            /** @var OrderService $orderService */
-            $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
-            $this->property = $orderService->getPropertyById($this->getPropertyId());
+            /** @var OrderPropertyService $orderPropertyService */
+            $orderPropertyService = Application::getInstance()->getContainer()->get(OrderPropertyService::class);
+            $this->property = $orderPropertyService->getPropertyById($this->getPropertyId());
         }
 
         return $this->property;
@@ -173,6 +173,8 @@ class OrderPropertyVariant
 
     /**
      * @param OrderProperty $property
+     *
+     * @return OrderPropertyVariant
      */
     public function setProperty(OrderProperty $property): OrderPropertyVariant
     {

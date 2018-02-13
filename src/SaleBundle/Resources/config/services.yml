@@ -26,5 +26,11 @@ services:
     FourPaws\SaleBundle\Service\OrderService:
         class: FourPaws\SaleBundle\Service\OrderService
         public: true
-        calls:
-          - [setContainer, ['@service_container']]
+
+    FourPaws\SaleBundle\Service\OrderPropertyService:
+        class: FourPaws\SaleBundle\Service\OrderPropertyService
+        public: true
+
+    FourPaws\SaleBundle\Service\OrderStorageService:
+        class: FourPaws\SaleBundle\Service\OrderStorageService
+        public: true
