@@ -13,8 +13,6 @@ use FourPaws\External\Exception\SmsSendErrorException;
 use FourPaws\External\SmsTraffic\Client;
 use FourPaws\External\SmsTraffic\Exception\SmsTrafficApiException;
 use FourPaws\External\SmsTraffic\Sms\IndividualSms;
-use FourPaws\Health\HealthService;
-use FourPaws\Helpers\Exception\HealthException;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use Psr\Log\LoggerAwareInterface;
@@ -31,21 +29,16 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 class SmsService implements LoggerAwareInterface
 {
     use LoggerAwareTrait;
-    
+
     /**
      * @var Client
      */
     protected $client;
-    
-    /**
-     * @var HealthService
-     */
-    protected $healthService;
-    
+
     protected $startMessaging;
-    
+
     protected $stopMessaging;
-    
+
     /**
      * SmsService constructor.
      *
@@ -58,17 +51,15 @@ class SmsService implements LoggerAwareInterface
     public function __construct()
     {
         $container = Application::getInstance()->getContainer();
-        
+
         list(
             $this->startMessaging, $this->stopMessaging, $login, $password, $originator
-            ) = array_values($container->getParameter('sms'));
-        
-        $this->healthService = $container->get('health.service');
-        
+            ) = \array_values($container->getParameter('sms'));
+
         $this->client = new Client($login, $password, $originator);
         $this->setLogger(LoggerFactory::create('sms'));
     }
-    
+
     /**
      * @param string $text
      * @param string $number
@@ -78,11 +69,11 @@ class SmsService implements LoggerAwareInterface
     {
         $this->sendSms($text, $number, true);
     }
-    
+
     /**
      * @param string $text
      * @param string $number
-     * @param bool   $immediate
+     * @param bool $immediate
      */
     public function sendSms(string $text, string $number, bool $immediate = false)
     {
@@ -95,44 +86,28 @@ class SmsService implements LoggerAwareInterface
                     ],
                 ]
             );
-            
+
             if (!$immediate) {
                 $sms->updateParameters(
                     [
-                        'start_date'          => $this->buildQueueTime($this->startMessaging),
-                        'stop_date'           => $this->buildQueueTime($this->stopMessaging),
-                        'isSendNextDay'       => '1',
+                        'start_date' => $this->buildQueueTime($this->startMessaging),
+                        'stop_date' => $this->buildQueueTime($this->stopMessaging),
+                        'isSendNextDay' => '1',
                         'isAbonentLocaleTime' => '1',
                     ]
                 );
             }
-            
+
             try {
                 $this->client->send($sms);
             } catch (SmsTrafficApiException $e) {
                 throw new SmsSendErrorException($e->getMessage(), $e->getCode(), $e);
             }
-            
-            try {
-                $this->healthService->setStatus(
-                    $this->healthService::SERVICE_SMS,
-                    $this->healthService::STATUS_AVAILABLE
-                );
-            } catch (HealthException $e) {
-            }
         } catch (SmsSendErrorException $e) {
-            try {
-                $this->healthService->setStatus(
-                    $this->healthService::SERVICE_SMS,
-                    $this->healthService::STATUS_UNAVAILABLE
-                );
-            } catch (HealthException $e) {
-            }
-            
             $this->logger->error(sprintf('Sms send error: %s.', $e->getMessage()));
         }
     }
-    
+
     /**
      * @param string $phone
      *
@@ -140,27 +115,27 @@ class SmsService implements LoggerAwareInterface
      * @return string
      *
      */
-    protected function clearPhone(string $phone) : string
+    protected function clearPhone(string $phone): string
     {
         try {
             $formatedPhone = PhoneHelper::normalizePhone($phone);
             $phone = '7' . $formatedPhone;
-    
+
             if (\mb_strlen($phone) === 11) {
                 return $phone;
             }
         } catch (WrongPhoneNumberException $e) {
         }
-        
+
         throw new SmsSendErrorException(sprintf('Неверный формат номера телефона (%s)', $phone));
     }
-    
+
     /**
      * @param string $time
      *
      * @return string
      */
-    protected function buildQueueTime(string $time) : string
+    protected function buildQueueTime(string $time): string
     {
         return (new \DateTime($time))->format('Y-m-d H:i:s');
     }
