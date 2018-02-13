@@ -19,6 +19,7 @@ use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\ShipmentCollection;
+use Bitrix\Sale\ShipmentItemCollection;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\PersonalBundle\Exception\NotFoundException as AddressNotFoundException;
@@ -50,7 +51,12 @@ class OrderService
     /**
      * Дефолтный статус заказа при курьерской доставке
      */
-    const NEW_STATUS_COURIER = 'Q';
+    const STATUS_NEW_COURIER = 'Q';
+
+    /**
+     * Дефолтный статус заказа при самовывозе
+     */
+    const STATUS_NEW_PICKUP = 'N';
 
     /**
      * @var AddressService
@@ -137,7 +143,8 @@ class OrderService
             if ($hash && $order->getHash() !== $hash) {
                 throw new NotFoundException('Order not found');
             }
-            if ($userId && $order->getUserId() !== $userId) {
+
+            if ($userId && (int)$order->getUserId() !== $userId) {
                 throw new NotFoundException('Order not found');
             }
         }
@@ -221,7 +228,7 @@ class OrderService
             }
 
             if ($this->deliveryService->isDelivery($delivery)) {
-                $order->setFieldNoDemand('STATUS_ID', static::NEW_STATUS_COURIER);
+                $order->setFieldNoDemand('STATUS_ID', static::STATUS_NEW_COURIER);
             }
 
             $shipment->setFields(
