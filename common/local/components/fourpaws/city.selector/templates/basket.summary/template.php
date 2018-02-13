@@ -8,6 +8,7 @@
  */
 
 use FourPaws\Decorators\SvgDecorator;
+
 // todo UBERI BLABLABLA
 ?>
 <div class="b-information-order__delivery-info">

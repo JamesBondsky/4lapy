@@ -11,6 +11,8 @@ use Bitrix\Sale\Order;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\SaleBundle\Discount\Gift;
+use FourPaws\SaleBundle\Discount\Utils\Adder;
+use FourPaws\SaleBundle\Discount\Utils\Cleaner;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
@@ -42,37 +44,41 @@ class BasketService
         $this->currentUserProvider = $currentUserProvider;
     }
 
+
     /**
+     *
+     *
      * @param int $offerId
-     * @param int $quantity
+     * @param int|null $quantity
+     * @param array $rewriteFields
      *
-     * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
-     * @throws \Bitrix\Main\ArgumentNullException
      * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
-     *
+     * @throws BitrixProxyException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\ObjectNotFoundException
      * @return bool
      */
-    public function addOfferToBasket(int $offerId, int $quantity = null): bool
+    public function addOfferToBasket(int $offerId, int $quantity = null, array $rewriteFields = []): bool
     {
-        if ($quantity < 1) {
+        if ($quantity < 0) {
             throw new InvalidArgumentException('Wrong $quantity');
         }
         if ($offerId < 1 || null === $quantity) {
             throw new InvalidArgumentException('Wrong $offerId');
         }
-
+        if(!$quantity) {
+            $quantity = 1;
+        }
         $fields = [
             'PRODUCT_ID' => $offerId,
             'QUANTITY' => $quantity,
             'MODULE' => 'catalog',
             'PRODUCT_PROVIDER_CLASS' => CatalogProvider::class,
-//            'PROPS' => [[
-//                'NAME' => 'Тест',
-//                'CODE' => 'TEST',
-//                'VALUE' => 1,
-//                'SORT' => 100,
-//            ]]
         ];
+        if($rewriteFields) {
+            /** @noinspection AdditionOperationOnArraysInspection */
+            $fields = $rewriteFields + $fields;
+        }
 
         // вызов новго провайдера
 //        \Bitrix\Sale\Internals\Catalog\Provider::getProductData(
@@ -235,6 +241,8 @@ class BasketService
     /**
      * Возвращает OfferCollection содержащих товары корзины и возможные подарки
      *
+     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
+     *
      * @return OfferCollection
      */
     public function getOfferCollection(): OfferCollection
@@ -244,6 +252,8 @@ class BasketService
 
     /**
      *
+     *
+     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
      *
      * @return OfferCollection
      */
@@ -268,6 +278,37 @@ class BasketService
         }
         /** @var OfferCollection $offerCollection */
         $offerCollection = (new OfferQuery())->withFilterParameter('ID', $ids)->exec();
+
         return $this->offerCollection = $offerCollection;
+    }
+
+    /**
+     *
+     *
+     * @throws \Bitrix\Main\NotSupportedException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @return Adder
+     */
+    public function getAdder(): Adder {
+        if (null === $order = $this->getBasket()->getOrder()) {
+            $order = Order::create(SITE_ID);
+            $order->setBasket($this->getBasket());
+        }
+        return new Adder($order, $this);
+    }
+
+    /**
+     *
+     *
+     * @throws \Bitrix\Main\NotSupportedException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @return Cleaner
+     */
+    public function getCleaner(): Cleaner {
+        if (null === $order = $this->getBasket()->getOrder()) {
+            $order = Order::create(SITE_ID);
+            $order->setBasket($this->getBasket());
+        }
+        return new Cleaner($order, $this);
     }
 }
