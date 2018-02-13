@@ -34,7 +34,7 @@ class BasketComponent extends \CBitrixComponent
     /** @var array $images */
     private $images;
     /** @var OfferCollection */
-    private $offerCollection;
+    public $offerCollection;
 
     /**
      * BasketComponent constructor.
@@ -55,6 +55,7 @@ class BasketComponent extends \CBitrixComponent
     /** @noinspection PhpMissingParentCallCommonInspection */
     /**
      *
+     * @throws \RuntimeException
      * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
@@ -81,7 +82,32 @@ class BasketComponent extends \CBitrixComponent
         $this->offerCollection = $this->basketService->getOfferCollection();
         $this->calcTemplateFields();
         $this->loadImages();
+        $this->checkSelectedGifts();
         $this->includeComponentTemplate($this->getPage());
+    }
+
+    /**
+     *
+     *
+     * @throws \RuntimeException
+     * @throws \Bitrix\Main\NotSupportedException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     */
+    private function checkSelectedGifts()
+    {
+        $this->arResult['SELECTED_GIFTS'] = [];
+        if (\is_array($this->arResult['POSSIBLE_GIFT_GROUPS']) and !empty($this->arResult['POSSIBLE_GIFT_GROUPS'])) {
+            foreach ($this->arResult['POSSIBLE_GIFT_GROUPS'] as $group) {
+                if (\count($group) === 1) {
+                    $group = current($group);
+                } else {
+                    throw new \RuntimeException('TODO');
+                }
+
+                $this->arResult['SELECTED_GIFTS'][$group['discountId']] = $this->basketService
+                    ->getAdder()->getExistGifts($group['discountId'], true);
+            }
+        }
     }
 
     private function loadImages()
@@ -97,17 +123,18 @@ class BasketComponent extends \CBitrixComponent
         }
     }
 
-    private function calcTemplateFields() {
+    private function calcTemplateFields()
+    {
         $weight = 0;
         $quantity = 0;
         /** @var Basket $basket */
         $basket = $this->arResult['BASKET'];
         /** @var BasketItem $basketItem */
-        foreach($basket->getOrderableItems() as $basketItem) {
-            $weight+= (float)$basketItem->getWeight();
-            $quantity+= (int)$basketItem->getQuantity();
+        foreach ($basket->getOrderableItems() as $basketItem) {
+            $weight += (float)$basketItem->getWeight();
+            $quantity += (int)$basketItem->getQuantity();
         }
-        $this->arResult['BASKET_WEIGHT'] = number_format($weight/1000,  2);
+        $this->arResult['BASKET_WEIGHT'] = number_format($weight / 1000, 2);
         $this->arResult['TOTAL_QUANTITY'] = $quantity;
     }
 

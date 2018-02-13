@@ -139,15 +139,19 @@ class Adder
      *
      *
      * @param int $discountId
+     * @param bool|null $selected
      *
      * @return array
      */
-    protected function getExistGifts(int $discountId): array
+    public function getExistGifts(int $discountId, bool $selected = null): array
     {
         $result = Manager::getExistGifts($this->order);
         if (!empty($result) && !empty($discountId)) {
-            $result = array_filter($result, function ($elem) use ($discountId) {
-                return $elem['discountId'] === $discountId;
+            $result = array_filter($result, function ($elem) use ($discountId, $selected) {
+                return (
+                    $elem['discountId'] === $discountId
+                    && (null === $selected || $selected === ($elem['selected'] === 'Y'))
+                );
             });
         }
         return $result;

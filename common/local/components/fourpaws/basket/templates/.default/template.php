@@ -62,6 +62,62 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                                     </span>
                                 </a>
                             </div>
+                            <!--                            -->
+                            <?php
+                            if (
+                                isset($arResult['SELECTED_GIFTS'][$group['discountId']])
+                                && !empty($arResult['SELECTED_GIFTS'][$group['discountId']])
+                            ) {
+                                ?>
+                                <div class="b-gift-order__gift-product js-section-remove-stock">
+                                    <?php
+                                    foreach ($arResult['SELECTED_GIFTS'][$group['discountId']] as $gift) {
+                                        for($i = 0; $i < $gift['quantity']; ++$i) {
+                                            $offer = $component->offerCollection->getById($gift['offerId']);
+                                            $image = $component->getImage($gift['offerId']);
+                                            $product = $offer->getProduct();
+                                            $name = '<strong>' . $product->getBrandName() . '</strong> ' . lcfirst(trim($product->getName()));
+                                            ?>
+                                            <div class="b-common-item b-common-item--shopping-cart js-remove-shopping">
+                                    <span class="b-common-item__image-wrap b-common-item__image-wrap--shopping-cart">
+                                        <img class="b-common-item__image b-common-item__image--shopping-cart"
+                                             src="<?= $image; ?>" alt="<?= $product->getName(); ?>">
+                                    </span>
+                                                <div class="b-common-item__info-center-block b-common-item__info-center-block--shopping-cart">
+                                                    <a class="b-common-item__description-wrap"
+                                                       href="javascript:void(0);"
+                                                       title="">
+                                                    <span class="b-clipped-text b-clipped-text--shopping-cart">
+                                                        <span>
+                                                            <?= $name; ?>
+                                                        </span>
+                                                    </span>
+                                                        <!--                                            <span class="b-common-item__variant b-common-item__variant--shopping-cart">-->
+                                                        <!--                                                <span class="b-common-item__name-value">-->
+                                                        <!--                                                    Цвет:-->
+                                                        <!--                                                </span>-->
+                                                        <!--                                                <span>прозрачные</span>-->
+                                                        <!--                                            </span>-->
+                                                    </a>
+                                                    <a class="b-common-item__delete js-present-delete-item"
+                                                       href="javascript:void(0);" title=""
+                                                       data-url="json/presents-order-del.json"
+                                                       data-gift-id="350">
+                                            <span class="b-icon b-icon--delete">
+                                                <?= new SvgDecorator('icon-delete-cart-product', 12, 14); ?>
+                                            </span>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                            <?php
+                                        }
+                                    }
+                                    ?>
+                                </div>
+                                <?php
+                            }
+                            ?>
+                            <!--                            -->
                         </div>
                         <?php
                     }
@@ -75,7 +131,9 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                 <?php
                 /** @var \Bitrix\Sale\BasketItem $basketItem */
                 foreach ($orderableBasket as $basketItem) {
-                    //dump($basketItem->getPropertyCollection()->getPropertyValues());
+                    if(isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
+                        continue;
+                    }
                     $image = $component->getImage($basketItem->getProductId());
                     ?>
                     <div class="b-item-shopping">
@@ -121,16 +179,16 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                         </div>
                         <div class="b-item-shopping__operation">
                             <div class="b-plus-minus b-plus-minus--half-mobile b-plus-minus--shopping js-plus-minus-cont">
-                                <a
-                                        class="b-plus-minus__minus js-minus" data-url="/ajax/sale/basket/update/"
-                                        href="javascript:void(0);"></a>
-                                <input title=""
-                                       class="b-plus-minus__count js-plus-minus-count"
+                                <a class="b-plus-minus__minus js-minus" data-url="/ajax/sale/basket/update/"
+                                   href="javascript:void(0);"></a>
+
+                                <input title="" class="b-plus-minus__count js-plus-minus-count"
                                        value="<?= $basketItem->getQuantity() ?>"
                                        data-one-price="<?= $basketItem->getPrice() ?>"
                                        data-cont-max="1000<?php
                                        /** @todo Maximum quantity */ ?>"
                                        data-basketid="<?= $basketItem->getId(); ?>" type="text"/>
+
                                 <a class="b-plus-minus__plus js-plus" data-url="/ajax/sale/basket/update/"
                                    href="javascript:void(0);"></a>
                             </div>
