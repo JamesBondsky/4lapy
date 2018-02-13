@@ -4,6 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use FourPaws\App\Application as App;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\ReCaptcha\ReCaptchaService;
 
 /** @var string $phone */ ?>
@@ -43,9 +44,11 @@ use FourPaws\ReCaptcha\ReCaptchaService;
                title="Отправить снова">Отправить снова</a>
         </div>
         <?php /** @var ReCaptchaService $recaptchaService */
-        /** @noinspection PhpUnhandledExceptionInspection */
-        $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
-        echo $recaptchaService->getCaptcha(' b-registration__captcha') ?>
+        try {
+            $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
+            echo $recaptchaService->getCaptcha(' b-registration__captcha');
+        } catch (ApplicationCreateException $e) {
+        }?>
         <div><span class="b-registration__auth-error"></span></div>
         <button class="b-button b-button--social b-button--full-width">Подтвердить</button>
     </form>

@@ -7,6 +7,7 @@ if (!\is_array($arResult['QUESTIONS']) || empty($arResult['QUESTIONS'])) {
 }
 
 use FourPaws\App\Application as App;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 
 ?>
 <h2 class="b-title b-title--feedback-form"><?= $arResult['FORM_DESCRIPTION'] ?></h2>
@@ -128,8 +129,10 @@ use FourPaws\App\Application as App;
     if ($arResult['isUseCaptcha']) {
         ?>
         <div class="b-feedback-page__capcha">
-            <?= /** @noinspection PhpUnhandledExceptionInspection */
-            App::getInstance()->getContainer()->get('recaptcha.service')->getCaptcha(); ?>
+            <?php try {
+                echo App::getInstance()->getContainer()->get('recaptcha.service')->getCaptcha();
+            } catch (ApplicationCreateException $e) {
+            } ?>
         </div>
         <?php
     }

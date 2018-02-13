@@ -4,6 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\ReCaptcha\ReCaptchaService;
 use FourPaws\SaleBundle\Entity\OrderPropertyVariant;
 use FourPaws\SaleBundle\Entity\OrderStorage;
@@ -18,7 +19,10 @@ use FourPaws\SaleBundle\Service\OrderPropertyService;
 /** @var OrderStorage $storage */
 $storage = $arResult['STORAGE'];
 
-$serviceContainer = Application::getInstance()->getContainer();
+try {
+    $serviceContainer = Application::getInstance()->getContainer();
+} catch (ApplicationCreateException $e) {
+}
 
 /** @var OrderPropertyService $orderPropertyService */
 $orderPropertyService = $serviceContainer->get(OrderPropertyService::class);

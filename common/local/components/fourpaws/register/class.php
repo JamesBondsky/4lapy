@@ -484,17 +484,23 @@ class FourPawsRegisterComponent extends \CBitrixComponent
      * @throws GuzzleException
      * @throws ServiceNotFoundException
      * @throws \Exception
-     * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
      * @return JsonResponse|string
      */
     private function ajaxGetStep2($confirmCode, $phone)
     {
+        try {
+            $container = App::getInstance()->getContainer();
+        } catch (ApplicationCreateException $e) {
+            return JsonErrorResponse::create(
+                'Системная ошибка, пожалуйста обратитесь к администратору'
+            );
+        }
         $request = Application::getInstance()->getContext()->getRequest();
         if ($request->offsetExists('g-recaptcha-response')) {
             $recaptcha = (string)$request->get('g-recaptcha-response');
             /** @var ReCaptchaService $recaptchaService */
-            $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
+            $recaptchaService = $container->get('recaptcha.service');
             if (!$recaptchaService->checkCaptcha($recaptcha)) {
                 return JsonErrorResponse::create(
                     'Проверка капчи не пройдена'
@@ -503,7 +509,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         }
         try {
             /** @var ConfirmCodeService $confirmService */
-            $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+            $confirmService = $container->get(ConfirmCodeInterface::class);
             $res            = $confirmService::checkConfirmSms(
                 $phone,
                 (string)$confirmCode
@@ -533,7 +539,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         $mess = 'Смс прошло проверку';
         
         /** @var ManzanaService $manzanaService */
-        $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
+        $manzanaService = $container->get('manzana.service');
         try {
             /** @noinspection PhpUnusedLocalVariableInspection */
             $manzanaItem = $manzanaService->getContactByPhone($phone);

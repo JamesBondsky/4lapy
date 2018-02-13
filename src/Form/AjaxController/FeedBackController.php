@@ -7,6 +7,7 @@
 namespace FourPaws\Form\AjaxController;
 
 use FourPaws\App\Application as App;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
@@ -39,10 +40,18 @@ class FeedBackController extends Controller
     public function addAction(Request $request) : JsonResponse
     {
         $data = $request->request->all();
-        
+
+        try {
+            $container = App::getInstance()->getContainer();
+        } catch (ApplicationCreateException $e) {
+            return JsonErrorResponse::create(
+                'Системная ошибка, пожалуйста обратитесь к администратору'
+            );
+        }
+
         try {
             /** @var FormService $formService */
-            $formService = App::getInstance()->getContainer()->get('form.service');
+            $formService = $container->get('form.service');
             
             $requiredFields = [
                 'name',
@@ -104,7 +113,7 @@ class FeedBackController extends Controller
             
             if ($request->request->has('g-recaptcha-response')) {
                 /** @var ReCaptchaService $recaptchaService */
-                $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
+                $recaptchaService = $container->get('recaptcha.service');
                 if (!$recaptchaService->checkCaptcha()) {
                     return JsonErrorResponse::createWithData(
                         'Проверка капчи не пройдена',
