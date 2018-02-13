@@ -33,7 +33,7 @@ if (empty($arResult)) {
 <?php $frame = $this->createFrame()->begin() ?>
 <div class="b-header__wrapper-for-popover">
     <a class="b-combobox b-combobox--delivery b-combobox--header js-open-popover"
-       href="javascript:void(0);"
+       href="/customer/payment-and-delivery/"
        title="<?= $arResult['CURRENT']['LOCATION']['NAME'] ?>">
         <span class="b-icon b-icon--delivery-header">
             <?= new SvgDecorator('icon-delivery', 20, 16) ?>
@@ -60,7 +60,7 @@ if (empty($arResult)) {
 <?php $frame->beginStub() ?>
 <div class="b-header__wrapper-for-popover">
     <a class="b-combobox b-combobox--delivery b-combobox--header js-open-popover"
-       href="javascript:void(0);"
+       href="/customer/payment-and-delivery/"
        title="<?= $arResult['DEFAULT']['LOCATION']['NAME'] ?>">
         <span class="b-icon b-icon--delivery-header">
             <?= new SvgDecorator('icon-delivery', 20, 16) ?>

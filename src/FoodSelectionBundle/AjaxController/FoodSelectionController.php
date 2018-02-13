@@ -11,6 +11,7 @@ use FourPaws\App\Application as App;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\BitrixOrm\Model\IblockSect;
+use FourPaws\Catalog\Model\Product;
 use FourPaws\FoodSelectionBundle\Service\FoodSelectionService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -283,9 +284,17 @@ class FoodSelectionController extends Controller
         $step = 'items';
         /** @noinspection PhpUnusedLocalVariableInspection */
         $recommendedItems = $this->foodSelectionService->getProductsBySections(array_values($data));
+
+        /** @var Product $product */
+        $exceptionItems = [];
+        if(\is_array($recommendedItems) && !empty($recommendedItems)) {
+            foreach ($recommendedItems as $product) {
+                $exceptionItems[] = $product->getId();
+            }
+        }
         unset($data['food_consistence']);
         /** @noinspection PhpUnusedLocalVariableInspection */
-        $alsoItems = $this->foodSelectionService->getProductsBySections(array_values($data));
+        $alsoItems = $this->foodSelectionService->getProductsBySections(array_values($data), $exceptionItems);
         ob_start();
         /** @noinspection PhpIncludeInspection */
         include_once App::getDocumentRoot()
