@@ -43,6 +43,10 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                     <?php
                     foreach ($arResult['POSSIBLE_GIFT_GROUPS'] as $group) {
                         $group = current($group);
+                        $disableClass = '';
+                        if(1 > $component->basketService->getAdder()->getExistGiftsQuantity($group, false)) {
+                            $disableClass = ' b-link-gift--disabled';
+                        }
                         ?>
                         <div class="b-gift-order">
                             <div class="b-gift-order__info">
@@ -50,7 +54,7 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                             Мы решили подарить вам подарок на весь заказ за красивые глаза
                         </span>
                                 <a
-                                        class="b-link-gift js-open-popup js-presents-order-open"
+                                        class="b-link-gift js-presents-order-open<?= $disableClass; ?>"
                                         href="javascript:void(0);"
                                         data-url="/ajax/sale/basket/gift/get/"
                                         data-url-gift="/ajax/sale/basket/gift/select/"
@@ -62,7 +66,6 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                                     </span>
                                 </a>
                             </div>
-                            <!--                            -->
                             <?php
                             if (
                                 isset($arResult['SELECTED_GIFTS'][$group['discountId']])
@@ -101,8 +104,8 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                                                     </a>
                                                     <a class="b-common-item__delete js-present-delete-item"
                                                        href="javascript:void(0);" title=""
-                                                       data-url="json/presents-order-del.json"
-                                                       data-gift-id="350">
+                                                       data-url="/ajax/sale/basket/gift/refuse/"
+                                                       data-gift-id="<?= $gift['basketId']; ?>">
                                             <span class="b-icon b-icon--delete">
                                                 <?= new SvgDecorator('icon-delete-cart-product', 12, 14); ?>
                                             </span>
@@ -117,7 +120,6 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                                 <?php
                             }
                             ?>
-                            <!--                            -->
                         </div>
                         <?php
                     }

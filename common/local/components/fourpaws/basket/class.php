@@ -30,7 +30,7 @@ use FourPaws\SaleBundle\Service\BasketService;
  */
 class BasketComponent extends \CBitrixComponent
 {
-    private $basketService;
+    public $basketService;
     /** @var array $images */
     private $images;
     /** @var OfferCollection */
