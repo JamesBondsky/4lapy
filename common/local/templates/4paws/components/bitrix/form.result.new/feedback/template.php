@@ -17,7 +17,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
       enctype="multipart/form-data">
     <?= bitrix_sessid_post() ?>
     <input name="WEB_FORM_ID" value="<?= $arResult['arForm']['ID'] ?>" type="hidden">
-    
+
     <?php
     foreach ($arResult['QUESTIONS'] as $fieldSid => $question) {
         if ($question['STRUCTURE'][0]['FIELD_TYPE'] === 'hidden') {
@@ -45,7 +45,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
                                    id="feedback-<?= $fieldSid ?>"
                                    placeholder=""
                                    name="<?= $fieldName ?>" <?= $question['REQUIRED'] === 'Y' ? ' required' : '' ?>
-                                   value="<?= $arResult['CUR_USER'][$fieldSid] ?>" />
+                                   value="<?= $arResult['CUR_USER'][$fieldSid] ?>"/>
                             <div class="b-error"><span class="js-message" title=""></span></div>
                         </div>
                     </div>
@@ -89,8 +89,9 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
                                    for="feedback-<?= $fieldSid ?>"><?= $question['CAPTION'] ?></label>
                         </div>
                         <div class="b-input b-input--registration-form">
-                            <textarea class="b-input__input-field b-input__input-field--textarea b-input__input-field--registration-form"
-                                      id="feedback-<?= $fieldSid ?>" name="<?= $fieldName ?>"></textarea>
+                            <textarea
+                                    class="b-input__input-field b-input__input-field--textarea b-input__input-field--registration-form"
+                                    id="feedback-<?= $fieldSid ?>" name="<?= $fieldName ?>"></textarea>
                             <div class="b-error"><span class="js-message" title=""></span></div>
                         </div>
                     </div>
@@ -103,12 +104,12 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
                     <div class="b-input-line b-input-line--file">
                         <div class="b-input-line__comment-block">
                             <div class="b-input b-input--feedback-page js-no-valid">
-                                <input type="hidden" name="MAX_FILE_SIZE" value="<?= 2 * 1024 * 1024 ?>" />
+                                <input type="hidden" name="MAX_FILE_SIZE" value="<?= 2 * 1024 * 1024 ?>"/>
                                 <input class="b-input__input-field b-input__input-field--feedback-page js-no-valid"
                                        type="file"
                                        id="feedback-<?= $fieldSid ?>"
                                        placeholder=""
-                                       name="<?= $fieldName ?>" />
+                                       name="<?= $fieldName ?>"/>
                             </div>
                             <label class="b-input-line__label b-input-line__label--feedback-page"
                                    for="feedback-<?= $fieldSid ?>">
@@ -116,7 +117,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
                             </label>
                             <div class="b-error"><span class="js-message" title=""></span></div>
                             <span class="b-input-line__comment b-input-line__comment--feedback-page">
-                                Объем файла не более 2 Мб.<br /> Допустимые форматы файла: jpg, png, doc, docx
+                                Объем файла не более 2 Мб.<br/> Допустимые форматы файла: jpg, png, doc, docx
                             </span>
                         </div>
                     </div>

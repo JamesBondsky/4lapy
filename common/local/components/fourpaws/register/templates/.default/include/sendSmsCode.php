@@ -23,7 +23,7 @@ use FourPaws\ReCaptcha\ReCaptchaService;
        title="Сменить номер"
        data-url="/ajax/user/auth/register/"
        data-action="get"
-       data-step="<?=!empty($newAction) ? 'addPhone' : 'step1'?>"
+       data-step="<?= !empty($newAction) ? 'addPhone' : 'step1' ?>"
        data-phone="<?= $phone ?>">Сменить номер</a>
     <form class="b-registration__form js-form-validation js-registration-form"
           id="reg-step3-form"
@@ -41,7 +41,7 @@ use FourPaws\ReCaptcha\ReCaptchaService;
                        type="text"
                        id="sms-code-3"
                        placeholder=""
-                       name="confirmCode" />
+                       name="confirmCode"/>
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>

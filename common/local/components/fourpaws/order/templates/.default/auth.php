@@ -22,6 +22,7 @@ $storage = $arResult['STORAGE'];
 try {
     $serviceContainer = Application::getInstance()->getContainer();
 } catch (ApplicationCreateException $e) {
+    return;
 }
 
 /** @var OrderPropertyService $orderPropertyService */

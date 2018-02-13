@@ -31,7 +31,7 @@ use FourPaws\ReCaptcha\ReCaptchaService;
                        type="text"
                        id="sms-code-3"
                        placeholder=""
-                       name="confirmCode" />
+                       name="confirmCode"/>
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
@@ -48,7 +48,7 @@ use FourPaws\ReCaptcha\ReCaptchaService;
             $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
             echo $recaptchaService->getCaptcha(' b-registration__captcha');
         } catch (ApplicationCreateException $e) {
-        }?>
+        } ?>
         <div><span class="b-registration__auth-error"></span></div>
         <button class="b-button b-button--social b-button--full-width">Подтвердить</button>
     </form>

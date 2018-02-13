@@ -20,7 +20,6 @@ use FourPaws\Helpers\PhoneHelper;
 use FourPaws\ReCaptcha\ReCaptchaService;
 use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -34,10 +33,9 @@ class FeedBackController extends Controller
      * @param Request $request
      *
      * @throws GuzzleException
-     * @throws ServiceNotFoundException
      * @return JsonResponse
      */
-    public function addAction(Request $request) : JsonResponse
+    public function addAction(Request $request): JsonResponse
     {
         $data = $request->request->all();
 
@@ -52,7 +50,7 @@ class FeedBackController extends Controller
         try {
             /** @var FormService $formService */
             $formService = $container->get('form.service');
-            
+
             $requiredFields = [
                 'name',
                 'email',
@@ -61,7 +59,8 @@ class FeedBackController extends Controller
                 'message',
             ];
             $formatedFields = $formService->getRealNamesFields((int)$data['WEB_FORM_ID']);
-            if (!$formService->checkRequiredFields($data, array_intersect_key($formatedFields, array_flip($requiredFields)))) {
+            if (!$formService->checkRequiredFields($data,
+                array_intersect_key($formatedFields, array_flip($requiredFields)))) {
                 return JsonErrorResponse::createWithData(
                     'Не заполнены все обязательные поля',
                     ['errors' => ['emptyData' => 'Не заполнены все обязательные поля']]
@@ -74,7 +73,7 @@ class FeedBackController extends Controller
                     ['errors' => ['wrongEmail' => 'Некорректно заполнен эл. адрес']]
                 );
             }
-            
+
             try {
                 $data[$formatedFields['phone']] = PhoneHelper::normalizePhone($data[$formatedFields['phone']]);
             } catch (WrongPhoneNumberException $e) {
@@ -83,9 +82,9 @@ class FeedBackController extends Controller
                     ['errors' => ['wrongPhone' => 'Некорретно заполнен телефон']]
                 );
             }
-            
-            $fileCode    = $formatedFields['file'];
-            $fileSizeMb  = 2 * 1024 * 1024;
+
+            $fileCode = $formatedFields['file'];
+            $fileSizeMb = 2 * 1024 * 1024;
             $valid_types = [
                 'jpg',
                 'png',
@@ -106,11 +105,15 @@ class FeedBackController extends Controller
                 );
             } catch (FileTypeException $e) {
                 return JsonErrorResponse::createWithData(
-                    'Неверный формат файла, допусимые форматы '.implode(', ', $valid_types),
-                    ['errors' => ['wrongPhone' => 'Неверный формат файла, допусимые форматы '.implode(', ', $valid_types)]]
+                    'Неверный формат файла, допусимые форматы ' . implode(', ', $valid_types),
+                    [
+                        'errors' => [
+                            'wrongPhone' => 'Неверный формат файла, допусимые форматы ' . implode(', ', $valid_types),
+                        ],
+                    ]
                 );
             }
-            
+
             if ($request->request->has('g-recaptcha-response')) {
                 /** @var ReCaptchaService $recaptchaService */
                 $recaptchaService = $container->get('recaptcha.service');
@@ -121,20 +124,20 @@ class FeedBackController extends Controller
                     );
                 }
             }
-            
+
             if ($formService->addResult($data)) {
                 $_SESSION['FEEDBACK_SUCCESS'] = 'Y';
-                
+
                 return JsonSuccessResponse::create('Ваша завка принята', 200, [], ['reload' => true]);
             }
-            
+
             return JsonErrorResponse::createWithData(
                 'Произошла ошибка при сохранении',
                 ['errors' => ['updateSave' => 'Произошла ошибка при сохранении']]
             );
         } catch (\Exception $e) {
         }
-        
+
         return JsonErrorResponse::createWithData(
             'Неизвестаня ошибка. Пожалуйста обратитесь к администратору сайта',
             ['errors' => ['systemError' => 'Неизвестаня ошибка. Пожалуйста обратитесь к администратору сайта']]
