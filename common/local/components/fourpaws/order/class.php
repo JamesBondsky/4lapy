@@ -166,6 +166,20 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 Tools::process404('', true, true, true);
             }
 
+            /**
+             * Попытка открыть уже обработанный заказ
+             */
+            if (!\in_array(
+                    $order->getField('STATUS_ID'),
+                    [
+                        OrderService::STATUS_NEW_COURIER,
+                        OrderService::STATUS_NEW_PICKUP
+                    ]
+                )
+            ) {
+                Tools::process404('', true, true, true);
+            }
+
             $this->arResult['ORDER'] = $order;
             $this->arResult['ORDER_PROPERTIES'] = [];
             /**
@@ -194,11 +208,11 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
             $selectedCity = $this->userCityProvider->getSelectedCity();
 
-            $addresses = [];
             $payments = null;
             if ($this->currentStep === OrderStorageService::DELIVERY_STEP) {
                 $deliveries = $this->orderService->getDeliveries();
 
+                $addresses = null;
                 if ($storage->getUserId()) {
                     /** @var AddressService $addressService */
                     $addressService = Application::getInstance()->getContainer()->get('address.service');
@@ -233,6 +247,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
                 $this->arResult['PICKUP'] = $pickup;
                 $this->arResult['DELIVERY'] = $delivery;
+                $this->arResult['ADDRESSES'] = $addresses;
                 $this->arResult['SELECTED_DELIVERY'] = $selectedDelivery;
                 $this->arResult['SELECTED_DELIVERY_ID'] = $selectedDeliveryId;
 
@@ -259,7 +274,6 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 $this->arResult['SELECTED_DELIVERY'] = $selectedDelivery;
             }
 
-            $this->arResult['ADDRESSES'] = $addresses;
             $this->arResult['PAYMENTS'] = $payments;
             $this->arResult['SELECTED_CITY'] = $selectedCity;
         }
@@ -352,16 +366,16 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 $properties['HOUSE'],
             ];
             if (!empty($properties['BUILDING'])) {
-                $result['ADDRESS'][] = ', корпус ' . $properties['BUILDING'];
+                $result['ADDRESS'][] = 'корпус ' . $properties['BUILDING'];
             }
             if (!empty($properties['PORCH'])) {
-                $result['ADDRESS'][] = ', подъезд ' . $properties['PORCH'];
+                $result['ADDRESS'][] = 'подъезд ' . $properties['PORCH'];
             }
             if (!empty($properties['FLOOR'])) {
-                $result['ADDRESS'][] = ', этаж ' . $properties['FLOOR'];
+                $result['ADDRESS'][] = 'этаж ' . $properties['FLOOR'];
             }
             if (!empty($properties['APARTMENT'])) {
-                $result['ADDRESS'][] = ', кв. ' . $properties['APARTMENT'];
+                $result['ADDRESS'][] = 'кв. ' . $properties['APARTMENT'];
             }
             $result['ADDRESS'] = implode(', ', $result['ADDRESS']);
         }
