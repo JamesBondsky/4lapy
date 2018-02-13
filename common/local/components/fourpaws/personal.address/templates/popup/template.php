@@ -20,7 +20,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                     <label class="b-input-line__label" for="name-adress">Название</label>
                     <span class="b-input-line__require">(например, дом, работа, дача)</span>
                 </div>
-                <div class="b-input b-input--registration-form">
+                <div class="b-input b-input--registration-form js-name js-regular-field-parent">
                     <input class="b-input__input-field b-input__input-field--registration-form"
                            type="text"
                            id="name-adress"
@@ -36,7 +36,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                     <label class="b-input-line__label" for="city-adress">Город</label>
                     <span class="b-input-line__require">(обязательно)</span>
                 </div>
-                <div class="b-input b-input--registration-form">
+                <div class="b-input b-input--registration-form js-city js-regular-field-parent">
                     <input class="b-input__input-field b-input__input-field--registration-form"
                            type="text"
                            id="city-adress"
@@ -52,7 +52,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                     <label class="b-input-line__label" for="street-adress">Улица</label>
                     <span class="b-input-line__require">(обязательно)</span>
                 </div>
-                <div class="b-input b-input--registration-form">
+                <div class="b-input b-input--registration-form js-street js-regular-field-parent">
                     <input class="b-input__input-field b-input__input-field--registration-form"
                            type="text"
                            id="street-adress"
@@ -70,7 +70,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                         <span class="b-input-line__require">(обязательно)</span>
                     </div>
                     <div class="b-input b-input--registration-form">
-                        <input class="b-input__input-field b-input__input-field--registration-form js-home js-small-input"
+                        <input class="b-input__input-field b-input__input-field--registration-form js-small-input js-regular-field js-home"
                                id="home-adress"
                                type="text"
                                data-text="3"
@@ -84,7 +84,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                         <label class="b-input-line__label" for="housing-adress">Корпус</label>
                     </div>
                     <div class="b-input b-input--registration-form">
-                        <input class="b-input__input-field b-input__input-field--registration-form js-housing js-no-valid"
+                        <input class="b-input__input-field b-input__input-field--registration-form js-no-valid js-regular-field js-housing"
                                id="housing-adress"
                                type="text"
                                name="UF_HOUSING" />
@@ -97,7 +97,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                         <label class="b-input-line__label" for="porch-adress">Подъезд</label>
                     </div>
                     <div class="b-input b-input--registration-form">
-                        <input class="b-input__input-field b-input__input-field--registration-form js-entrance js-no-valid"
+                        <input class="b-input__input-field b-input__input-field--registration-form js-no-valid js-regular-field js-entrance"
                                id="porch-adress"
                                type="text"
                                name="UF_ENTRANCE" />
@@ -110,7 +110,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                         <label class="b-input-line__label" for="floor-adress">Этаж</label>
                     </div>
                     <div class="b-input b-input--registration-form">
-                        <input class="b-input__input-field b-input__input-field--registration-form js-floor js-no-valid"
+                        <input class="b-input__input-field b-input__input-field--registration-form js-no-valid js-regular-field js-floor"
                                id="floor-adress"
                                type="text"
                                name="UF_FLOOR" />
@@ -122,7 +122,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                         <label class="b-input-line__label" for="flat-adress">Квартира, офис</label>
                     </div>
                     <div class="b-input b-input--registration-form">
-                        <input class="b-input__input-field b-input__input-field--registration-form js-office js-no-valid"
+                        <input class="b-input__input-field b-input__input-field--registration-form js-no-valid js-regular-field js-office"
                                id="flat-adress"
                                type="text"
                                name="UF_FLAT" />
@@ -135,7 +135,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                         <label class="b-input-line__label" for="doorphone-code-adress">Код домофона</label>
                     </div>
                     <div class="b-input b-input--registration-form">
-                        <input class="b-input__input-field b-input__input-field--registration-form js-doorphone-code js-no-valid"
+                        <input class="b-input__input-field b-input__input-field--registration-form js-no-valid js-regular-field js-doorphone-code"
                                id="doorphone-code-adress"
                                type="text"
                                name="UF_INTERCOM_CODE" />
