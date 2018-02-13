@@ -6,25 +6,28 @@
 
 namespace FourPaws\SaleBundle\Validation;
 
-use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\SaleBundle\Exception\NotFoundException;
+use FourPaws\SaleBundle\Service\OrderPropertyService;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 
 class OrderPropertyVariantValidator extends ConstraintValidator
 {
     /**
-     * @var OrderService
+     * @var OrderPropertyService
      */
-    protected $orderService;
+    protected $orderPropertyService;
 
-    public function __construct(OrderService $orderService)
+    public function __construct(OrderPropertyService $orderPropertyService)
     {
-        $this->orderService = $orderService;
+        $this->orderPropertyService = $orderPropertyService;
     }
 
     /**
      * @param mixed $value
      * @param Constraint $constraint
+     *
+     * @throws NotFoundException
      */
     public function validate($value, Constraint $constraint)
     {
@@ -32,8 +35,8 @@ class OrderPropertyVariantValidator extends ConstraintValidator
             return;
         }
 
-        $availableValues = $this->orderService->getPropertyByCode($constraint->propertyCode)
-                                              ->getVariants();
+        $availableValues = $this->orderPropertyService->getPropertyByCode($constraint->propertyCode)
+                                                      ->getVariants();
 
         if (!isset($availableValues[$value])) {
             $this->context->buildViolation($constraint->message)

@@ -20,10 +20,6 @@ use FourPaws\Decorators\SvgDecorator;
             {{schedule}}
         </span>
         <span class="b-delivery-list__col b-delivery-list__col--self-picked">{{pickup}}</span>
-        <span class="b-delivery-list__col b-delivery-list__col--added">
-          <p>Сейчас нет в наличии:</p>
-          <ol>{{parts_delayed_html}}</ol>
-        </span>
     </a>
     <div class="b-order-info-baloon">
         <a class="b-link b-link--popup-back b-link--order b-link--desktop js-close-order-baloon"
