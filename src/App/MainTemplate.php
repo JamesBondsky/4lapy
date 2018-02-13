@@ -318,7 +318,7 @@ class MainTemplate extends TemplateAbstract
      */
     public function isOrderPage() : bool
     {
-        return $this->isPartitionDir('/sale/order');
+        return $this->isDir('/sale/order') || $this->isPartitionDir('/sale/order');
     }
     
     /**

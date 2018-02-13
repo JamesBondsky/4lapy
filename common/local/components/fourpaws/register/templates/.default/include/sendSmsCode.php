@@ -4,6 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use FourPaws\App\Application as App;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\ReCaptcha\ReCaptchaService;
 
 /** @var string $phone
@@ -22,7 +23,7 @@ use FourPaws\ReCaptcha\ReCaptchaService;
        title="Сменить номер"
        data-url="/ajax/user/auth/register/"
        data-action="get"
-       data-step="<?=!empty($newAction) ? 'addPhone' : 'step1'?>"
+       data-step="<?= !empty($newAction) ? 'addPhone' : 'step1' ?>"
        data-phone="<?= $phone ?>">Сменить номер</a>
     <form class="b-registration__form js-form-validation js-registration-form"
           id="reg-step3-form"
@@ -40,7 +41,7 @@ use FourPaws\ReCaptcha\ReCaptchaService;
                        type="text"
                        id="sms-code-3"
                        placeholder=""
-                       name="confirmCode" />
+                       name="confirmCode"/>
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
@@ -52,9 +53,11 @@ use FourPaws\ReCaptcha\ReCaptchaService;
                title="Отправить снова">Отправить снова</a>
         </div>
         <?php /** @var ReCaptchaService $recaptchaService */
-        /** @noinspection PhpUnhandledExceptionInspection */
-        $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
-        echo $recaptchaService->getCaptcha(' b-registration__captcha') ?>
+        try {
+            $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
+            echo $recaptchaService->getCaptcha(' b-registration__captcha');
+        } catch (ApplicationCreateException $e) {
+        } ?>
         <button class="b-button b-button--social b-button--full-width">Подтвердить</button>
     </form>
 </div>

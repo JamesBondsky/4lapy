@@ -39,6 +39,8 @@ class SmsService implements LoggerAwareInterface
 
     protected $stopMessaging;
 
+    protected $parameters;
+
     /**
      * SmsService constructor.
      *
@@ -51,10 +53,9 @@ class SmsService implements LoggerAwareInterface
     public function __construct()
     {
         $container = Application::getInstance()->getContainer();
+        $this->parameters = $container->getParameter('sms');
 
-        list(
-            $this->startMessaging, $this->stopMessaging, $login, $password, $originator
-            ) = \array_values($container->getParameter('sms'));
+        list($this->startMessaging, $this->stopMessaging, $login, $password, $originator) = \array_values($this->parameters);
 
         $this->client = new Client($login, $password, $originator);
         $this->setLogger(LoggerFactory::create('sms'));
@@ -87,7 +88,10 @@ class SmsService implements LoggerAwareInterface
                 ]
             );
 
-            if (!$immediate) {
+            if ($immediate) {
+                $this->client->setLogin($this->parameters['login.immediate']);
+                $this->client->setPassword($this->parameters['password.immediate']);
+            } else {
                 $sms->updateParameters(
                     [
                         'start_date' => $this->buildQueueTime($this->startMessaging),
