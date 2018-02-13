@@ -8,7 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @global CMain                                     $APPLICATION
  * @var array                                        $arParams
  * @var array                                        $arResult
- * @var FourPawsFrontOfficeCardRegistrationComponent $component
+ * @var CBitrixComponent $component
  * @var CBitrixComponentTemplate                     $this
  * @var string                                       $templateName
  * @var string                                       $componentPath
@@ -16,7 +16,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 if ($arResult['CAN_ACCESS'] !== 'Y') {
     ShowError('При обработке запроса произошла ошибка: отказано в доступе');
-    
+    return;
+}
+
+if ($arResult['IS_AVATAR_AUTHORIZED'] === 'Y') {
+    echo '<br><p>Вы уже находитесь в режиме "аватар". <a href="'.$arParams['LOGOUT_URL'].'">Выйти из режима</a>.</p>';
     return;
 }
 
@@ -146,7 +150,7 @@ if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
                                         } else if (jqXHR.status == 401) {
                                             alert('Пожалуйста, авторизуйтесь');
                                         } else {
-                                            alert('Request error: ' + jqXHR.status + ' ' + jqXHR.statusText);
+                                            //alert('Request error: ' + jqXHR.status + ' ' + jqXHR.statusText);
                                         }
                                     }
                                 }

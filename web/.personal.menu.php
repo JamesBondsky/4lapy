@@ -68,6 +68,6 @@ $aMenuLinks = [
         '/front-office/avatar/logout.php',
         [],
         ['icon' => 'icon-exit'],
-        "\FourPaws\App\Application::getInstance()->getContainer()->get(\FourPaws\UserBundle\Service\CurrentUserProviderInterface::class)->isAvatarAuthorized()",
+        "\$USER->IsAuthorized() && \FourPaws\App\Application::getInstance()->getContainer()->get(\FourPaws\UserBundle\Service\CurrentUserProviderInterface::class)->isAvatarAuthorized()",
     ],
 ];
