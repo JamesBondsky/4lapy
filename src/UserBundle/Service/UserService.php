@@ -392,14 +392,25 @@ class UserService implements
      */
     public function isAvatarAuthorized(): bool
     {
-        return $this->getAvatarHostUserId() > 0;
+        $hostUserId = $this->getAvatarHostUserId();
+        if ($hostUserId > 0) {
+            $curUserId = 0;
+            try {
+                $curUserId = $this->getCurrentUserId();
+            } catch (\Exception $exception) {}
+            if (!$curUserId || $curUserId === $hostUserId) {
+                $this->flushAvatarHostUser();
+                $hostUserId = 0;
+            }
+        }
+
+        return $hostUserId > 0;
     }
 
     /**
      * Возврат к авторизации под исходным пользователем
      *
      * @throws NotAuthorizedException
-     * @throws AvatarSelfAuthorizationException
      * @return bool
      */
     public function avatarLogout(): bool
@@ -411,12 +422,14 @@ class UserService implements
         if ($hostUserId) {
             $isLoggedByHostUser = false;
             if ($curUserId === $hostUserId) {
-                throw new AvatarSelfAuthorizationException('An attempt to authenticate yourself');
-            }
-            $authResult = $this->authorize($hostUserId);
-            if ($authResult) {
                 $this->flushAvatarHostUser();
                 $isLoggedByHostUser = true;
+            } else {
+                $authResult = $this->authorize($hostUserId);
+                if ($authResult) {
+                    $this->flushAvatarHostUser();
+                    $isLoggedByHostUser = true;
+                }
             }
         }
 

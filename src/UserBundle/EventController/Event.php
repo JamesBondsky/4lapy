@@ -41,6 +41,8 @@ abstract class Event implements ServiceHandlerInterface
         self::initHandler('OnBeforeUserAdd', 'checkSocserviseRegisterHandler');
         
         self::initHandler('OnBeforeUserLogon', 'replaceLogin');
+
+        self::initHandler('OnAfterUserLogout', 'avatarLogout');
     }
     
     /**
@@ -88,6 +90,16 @@ abstract class Event implements ServiceHandlerInterface
             $fields['LOGIN'] = $userService->getLoginByRawLogin((string)$fields['LOGIN']);
         } else {
             $APPLICATION->ThrowException('Поле не может быть пустым');
+        }
+    }
+
+    /**
+     * @param array $params
+     */
+    public static function avatarLogout(array $params)
+    {
+        if ($params['SUCCESS']) {
+
         }
     }
 }
