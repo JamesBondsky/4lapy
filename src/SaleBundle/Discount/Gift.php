@@ -9,10 +9,12 @@
 
 namespace FourPaws\SaleBundle\Discount;
 
+
 use Bitrix\Sale\Discount;
 use Bitrix\Sale\Discount\Actions;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\OrderDiscountManager;
+use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 
 
 /**
@@ -34,7 +36,6 @@ class Gift extends \CSaleActionGiftCtrlGroup
             'CondBsktAmtBaseGroup'
         ];
         $controlDescr['SORT'] = 300;
-        dump($controlDescr);
         return $controlDescr;
     }
 
@@ -109,6 +110,7 @@ class Gift extends \CSaleActionGiftCtrlGroup
         return $result;
     }
 
+
     /**
      *
      *
@@ -116,8 +118,8 @@ class Gift extends \CSaleActionGiftCtrlGroup
      * @param $params
      * @param Discount|null $callerObject
      * @param int $applyCount
+     *
      */
-
     public static function applyGift(
         $order,
         $params,
@@ -150,18 +152,25 @@ class Gift extends \CSaleActionGiftCtrlGroup
             return;
         }
 
-        // Пример получения корзины
-//        $basket = false;
-//        if (\is_object($callerObject) and $callerObject instanceof Discount) {
-//            /** @noinspection NullPointerExceptionInspection */
-//            $basket = $callerObject->getOrder()->getBasket();
-//        }
-
         foreach ($applyBasket as $basketCode => $basketRow) {
             $rowActionDescription = $actionDescription;
             $rowActionDescription['BASKET_CODE'] = $basketRow['ID'];
             Actions::setActionResult(Actions::RESULT_ENTITY_BASKET, $rowActionDescription);
+//            /** @var BasketItem $ifItem */
+//            if($basket && $ifItem = $basket->getItemByBasketCode($basketRow['ID'])) {
+//                dump($ifItem->getField('NAME'), $ifItem->getQuantity());
+//            }
         }
+
+        // пытаемся получить корзину, чтобы добавить подарков
+        /** @noinspection NullPointerExceptionInspection */
+//        if (
+//            \is_object($callerObject)
+//            && $callerObject instanceof Discount
+//            && $basket = $callerObject->getOrder()->getBasket() && false
+//        ) {
+//
+//        }
     }
 
     /**
@@ -226,20 +235,23 @@ class Gift extends \CSaleActionGiftCtrlGroup
      * @param Order|null $order
      * @param int|null $discountId
      *
+     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
+     *
      * @return array
      */
     public static function getPossibleGiftGroups(Order $order = null, int $discountId = null): array
     {
-        $result = [];
         if ($order instanceof Order) {
             /** @var \Bitrix\Sale\Discount $discount */
             $discount = $order->getDiscount();
             $result = self::parseApplyResult($discount->getApplyResult(true));
-            if($discountId && isset($result[$discountId])) {
+            if ($discountId && isset($result[$discountId])) {
                 $result = [$discountId => $result[$discountId]];
-            } elseif($discountId) {
+            } elseif ($discountId) {
                 $result = [];
             }
+        } else {
+            throw new InvalidArgumentException('Не передан заказ');
         }
         return $result;
     }
@@ -249,6 +261,8 @@ class Gift extends \CSaleActionGiftCtrlGroup
      *
      * @param Order|null $order
      * @param int|null $discountId
+     *
+     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
      *
      * @return array
      */
@@ -292,7 +306,7 @@ class Gift extends \CSaleActionGiftCtrlGroup
                 ) {
                     foreach ($data as $k => $elem) {
                         if (\is_int($k) && isset($elem['count']) && $elem['count'] > 0) {
-                            $elem['discountId'] = $discount['REAL_DISCOUNT_ID'];
+                            $elem['discountId'] = (int)$discount['REAL_DISCOUNT_ID'];
                             $result[$discount['REAL_DISCOUNT_ID']][] = $elem;
                         }
                     }
