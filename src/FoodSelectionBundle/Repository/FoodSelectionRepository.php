@@ -160,7 +160,7 @@ class FoodSelectionRepository
                 )->setGroup(['IBLOCK_ELEMENT_ID'])
         );
         if(!empty($exceptionItems)){
-            $query->whereNotIn('ID', $exceptionItems);
+            $query->whereNotIn('PROP.PROPERTY_' . $propId, $exceptionItems);
         }
         $query->setSelect(
             [
@@ -177,7 +177,7 @@ class FoodSelectionRepository
         $products = [];
         if (!empty($itemIds)) {
             $query    = new ProductQuery();
-            $res      = $query->withFilter(['=ID' => $itemIds])->exec();
+            $res      = $query->withFilter(['=ID' => array_unique($itemIds)])->exec();
             $products = $res->toArray();
         }
         
