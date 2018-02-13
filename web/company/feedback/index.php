@@ -51,5 +51,10 @@ if ($_SESSION['FEEDBACK_SUCCESS'] === 'Y') {
     );
 } ?>
 <?php
-echo '</div></div>';
+echo '</div></div>
+<div class="b-preloader b-preloader--fixed">
+    <div class="b-preloader__spinner">
+        <img class="b-preloader__image" src="/static/build/images/inhtml/spinner.svg" alt="spinner" title=""/>
+    </div>
+</div>';
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/footer.php'; ?>

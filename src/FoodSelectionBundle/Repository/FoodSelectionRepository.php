@@ -111,17 +111,19 @@ class FoodSelectionRepository
             return [];
         }
     }
-    
+
     /**
      * @param array $sections
      *
      * @param int   $iblockId
      *
+     * @param array $exceptionItems
+     *
      * @return array
      * @throws ArgumentException
      * @throws SystemException
      */
-    public function getProductsBySections(array $sections, int $iblockId) : array
+    public function getProductsBySections(array $sections, int $iblockId, array $exceptionItems = []) : array
     {
         $countSections = \count($sections);
         $propId        = PropertyTable::query()->setFilter(
@@ -157,6 +159,9 @@ class FoodSelectionRepository
                     $countSections
                 )->setGroup(['IBLOCK_ELEMENT_ID'])
         );
+        if(!empty($exceptionItems)){
+            $query->whereNotIn('ID', $exceptionItems);
+        }
         $query->setSelect(
             [
                 'ITEM' => 'PROP.PROPERTY_' . $propId,
