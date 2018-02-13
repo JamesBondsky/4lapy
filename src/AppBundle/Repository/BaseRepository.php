@@ -9,7 +9,9 @@ namespace FourPaws\AppBundle\Repository;
 use Bitrix\Main\Entity\DataManager;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\UI\PageNavigation;
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\AppBundle\Entity\BaseEntity;
+use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
@@ -45,6 +47,8 @@ class BaseRepository
     /** @var ArrayTransformerInterface $arrayTransformer */
     protected $arrayTransformer;
 
+    protected $entityClass = self::class;
+
     /**
      * @var DataManager
      */
@@ -53,7 +57,7 @@ class BaseRepository
     private $fileList;
 
     /**
-     * AddressRepository constructor.
+     * BaseRepository constructor.
      *
      * @param ValidatorInterface        $validator
      *
@@ -177,42 +181,62 @@ class BaseRepository
     }
 
     /**
+     * можно передавать сформированный объект DataManager, можно массив
+     * [
+     *      'select'=>array
+     *      'filter'=>array
+     *      'order'=>array
+     *      'limit'=>int
+     *      'offset'=>int
+     *      'ttl'=>int
+     *      'group'=>array
+     *      'runtime'=>array
+     *      'countTotal'=>bool
+     * ]
+     *
      * @param array $params
      *
      * @throws \Exception
-     * @return array|BaseEntity[]
+     * @return ArrayCollection
      */
-    public function findBy(array $params = []): array
+    public function findBy($params): ArrayCollection
     {
-        if (!isset($params['select'])) {
-            $params['select'] = ['*'];
-        }
-        $query = $this->dataManager::query()->setSelect($params['select']);
-        if (!empty($params['filter'])) {
-            $query->setFilter($params['filter']);
-        }
-        if (!empty($params['order'])) {
-            $query->setOrder($params['order']);
-        }
-        if (!empty($params['limit'])) {
-            $query->setLimit($params['limit']);
-        }
-        if (!empty($params['offset'])) {
-            $query->setOffset($params['offset']);
-        }
-        if (!empty($params['ttl'])) {
-            $query->setCacheTtl($params['ttl']);
-        }
-        if (!empty($params['group'])) {
-            $query->setGroup($params['group']);
-        }
-        if (!empty($params['runtime'])) {
-            if (\is_array($params['runtime'])) {
-                foreach ($params['runtime'] as $runtime) {
-                    $query->registerRuntimeField($runtime);
+        if ($params instanceof DataManager) {
+            $query = $params;
+        } else {
+            if (!isset($params['select'])) {
+                $params['select'] = ['*'];
+            }
+            $query = $this->dataManager::query()->setSelect($params['select']);
+            if (!empty($params['filter'])) {
+                $query->setFilter($params['filter']);
+            }
+            if (!empty($params['order'])) {
+                $query->setOrder($params['order']);
+            }
+            if (!empty($params['limit'])) {
+                $query->setLimit($params['limit']);
+            }
+            if (!empty($params['offset'])) {
+                $query->setOffset($params['offset']);
+            }
+            if (!empty($params['ttl'])) {
+                $query->setCacheTtl($params['ttl']);
+            }
+            if (!empty($params['group'])) {
+                $query->setGroup($params['group']);
+            }
+            if (!empty($params['countTotal'])) {
+                $query->countTotal($params['countTotal']);
+            }
+            if (!empty($params['runtime'])) {
+                if (\is_array($params['runtime'])) {
+                    foreach ($params['runtime'] as $runtime) {
+                        $query->registerRuntimeField($runtime);
+                    }
+                } else {
+                    $query->registerRuntimeField($params['runtime']);
                 }
-            } else {
-                $query->registerRuntimeField($params['runtime']);
             }
         }
         if ($this->nav instanceof PageNavigation) {
@@ -222,23 +246,38 @@ class BaseRepository
         }
         $result = $query->exec();
         if (0 === $result->getSelectedRowsCount()) {
-            return [];
+            return new ArrayCollection();
         }
 
         if ($this->nav instanceof PageNavigation) {
             $this->nav->setRecordCount($result->getCount());
         }
 
-        $allItems = $result->fetchAll();
+        if (!empty($params['setKey'])) {
+            $allItems = [];
+            $i = -1;
+            while ($item = $result->fetch()) {
+                $i++;
+                $allItems[$item[$params['setKey']] ?? 'key_' . $i] = $item;
+            }
+        } else {
+            $allItems = $result->fetchAll();
+        }
         if (!empty($params['entityClass'])) {
-            return $this->arrayTransformer->fromArray(
+            $entityClass = $params['entityClass'];
+        }
+        if (empty($entityClass) && !empty($this->getEntityClass())) {
+            $entityClass = $this->getEntityClass();
+        }
+        if (!empty($entityClass)) {
+            return new ArrayCollection($this->arrayTransformer->fromArray(
                 $allItems,
-                sprintf('array<%s>', $params['entityClass']),
+                sprintf('array<%s>', $entityClass),
                 DeserializationContext::create()->setGroups(['read'])
-            );
+            ));
         }
 
-        return $allItems;
+        return new ArrayCollection($allItems);
     }
 
     /**
@@ -275,8 +314,9 @@ class BaseRepository
      * @param string $entityClass
      *
      * @return BaseRepository
+     * @throws EmptyEntityClass
      */
-    public function setEntityFromData(array $data, string $entityClass): BaseRepository
+    public function setEntityFromData(array $data, string $entityClass = ''): BaseRepository
     {
         $this->setEntity($this->dataToEntity($data, $entityClass));
 
@@ -301,10 +341,17 @@ class BaseRepository
      *
      * @param string $type
      *
-     * @return BaseEntity
+     * @return BaseEntity|array
+     * @throws EmptyEntityClass
      */
-    public function dataToEntity(array $data, string $entityClass, string $type = 'read'): BaseEntity
+    public function dataToEntity(array $data, string $entityClass = '', string $type = 'read')
     {
+        if (empty($entityClass)) {
+            $entityClass = $this->getEntityClass();
+        }
+        if (empty($entityClass)) {
+            throw new EmptyEntityClass('Не указан класс, преобразование невозможно');
+        }
         return $this->arrayTransformer->fromArray(
             $data,
             $entityClass,
@@ -366,6 +413,22 @@ class BaseRepository
     public function clearFileList()
     {
         $this->fileList = null;
+    }
+
+    /**
+     * @return string
+     */
+    public function getEntityClass(): string
+    {
+        return $this->entityClass;
+    }
+
+    /**
+     * @param string $entityClass
+     */
+    public function setEntityClass(string $entityClass)
+    {
+        $this->entityClass = $entityClass;
     }
 
     /**

@@ -77,6 +77,8 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
             
             return null;
         }
+
+        /** @todo получение из манзаны должно кеширвоатсья отдельно, иначе будет трабла с кешем */
         
         $this->setFrameMode(true);
         

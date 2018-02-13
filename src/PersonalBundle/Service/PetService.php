@@ -6,7 +6,9 @@
 
 namespace FourPaws\PersonalBundle\Service;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
@@ -47,7 +49,6 @@ class PetService
      * @param ManzanaService               $manzanaService
      *
      * @throws ServiceNotFoundException
-     * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
      */
     public function __construct(
@@ -60,11 +61,13 @@ class PetService
         $this->currentUser    = $currentUserProvider;
         $this->manzanaService = $manzanaService;
     }
-    
+
     /**
      * @param array $data
      *
      * @return bool
+     * @throws EmptyEntityClass
+     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
      * @throws ConstraintDefinitionException
      * @throws ServiceNotFoundException
      * @throws InvalidIdentifierException
@@ -106,7 +109,6 @@ class PetService
      */
     protected function updateManzanaPets()
     {
-        $container = App::getInstance()->getContainer();
         $types     = [];
 
         try {
@@ -120,10 +122,7 @@ class PetService
             
             $client = null;
             try {
-                /** @var ManzanaService $manzanaService */
-                $manzanaService = $container->get('manzana.service');
-    
-                $contactId         = $manzanaService->getContactIdByCurUser();
+                $contactId         = $this->manzanaService->getContactIdByCurUser();
                 $client            = new Client();
                 $client->contactId = $contactId;
             } catch (ManzanaServiceException $e) {
@@ -133,21 +132,21 @@ class PetService
     
             if ($client instanceof Client) {
                 $this->setClientPets($client, $types);
-                $manzanaService->updateContactAsync($client);
+                $this->manzanaService->updateContactAsync($client);
             }
         } catch (NotAuthorizedException $e) {
         }
     }
-    
+
     /**
+     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
      * @throws InvalidIdentifierException
      * @throws ServiceNotFoundException
      * @throws \Exception
-     * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
-     * @return array
+     * @return ArrayCollection
      */
-    public function getCurUserPets() : array
+    public function getCurUserPets() : ArrayCollection
     {
         return $this->petRepository->findByCurUser();
     }
@@ -185,10 +184,11 @@ class PetService
         }
         $client->ffOthers = $others;
     }
-    
+
     /**
      * @param array $data
      *
+     * @throws EmptyEntityClass
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws \RuntimeException

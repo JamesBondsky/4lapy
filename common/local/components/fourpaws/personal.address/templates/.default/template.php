@@ -1,5 +1,6 @@
 <?php
 
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\PersonalBundle\Entity\Address;
 
@@ -10,12 +11,14 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @global CMain $APPLICATION
  */
 
+/** @var ArrayCollection $items */
+$items = $arResult['ITEMS'];
 ?>
 <div class="b-tab-content__container -active js-tab-account active" data-tab-content="adress">
     <div class="b-account-adress">
         <?php /** @var Address $address */
-        if (\is_array($arResult['ITEMS']) && !empty($arResult['ITEMS'])) {
-            foreach ($arResult['ITEMS'] as $address) {
+        if (!$items->isEmpty()) {
+            foreach ($items as $address) {
                 $name = $address->getName(); ?>
                 <div class="b-account-border-block js-delivery-address js-delivery-address"
                      data-name="<?= $address->getName() ?>"
