@@ -70,7 +70,7 @@ $currentCommWay = $communicationWays[$storage->getCommunicationWay()];
                           id="order-step"
                           method="post"
                           data-url="<?= $arResult['URL']['AUTH_VALIDATION'] ?>">
-                        <div class="b-input-line">
+                        <div class="b-input-line js-small-input">
                             <div class="b-input-line__label-wrapper">
                                 <label class="b-input-line__label" for="order-name">Имя
                                 </label><span class="b-input-line__require">(обязательно)</span>
@@ -115,7 +115,7 @@ $currentCommWay = $communicationWays[$storage->getCommunicationWay()];
                                 <span class="b-input-line__comment js-comment">Для проверки статуса заказов на сайте</span>
                             </div>
                         </div>
-                        <div class="b-input-line">
+                        <div class="b-input-line js-no-valid">
                             <div class="b-input-line__label-wrapper js-information-comment">
                                 <label class="b-input-line__label" for="order-email">Эл. почта
                                 </label>
@@ -160,7 +160,7 @@ $currentCommWay = $communicationWays[$storage->getCommunicationWay()];
                             </div>
                             <div class="b-order-contacts__layout js-order-add-phone js-hidden-valid-fields"
                                 <?= $storage->getAltPhone() ? 'style="display:block"' : '' ?>>
-                                <div class="b-input-line">
+                                <div class="b-input-line js-no-valid">
                                     <div class="b-input-line__label-wrapper js-information-comment">
                                         <label class="b-input-line__label" for="order-phone-dop">Дополнительный телефон
                                         </label>
