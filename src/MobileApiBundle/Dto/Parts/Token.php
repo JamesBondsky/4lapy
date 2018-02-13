@@ -8,7 +8,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 trait Token
 {
     /**
-     * @Assert\NotBlank()
+     * @Assert\NotBlank(message = "Token is empty")
      * @Assert\Length(min="32",max="32")
      * @Serializer\Type("string")
      * @Serializer\SerializedName("token")

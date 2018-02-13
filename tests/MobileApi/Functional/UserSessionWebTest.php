@@ -4,7 +4,7 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
-namespace FourPaws\Tests\MobileApi\Functional;
+namespace FourPaws\Test\MobileApi\Functional;
 
 use FourPaws\MobileApiBundle\Repository\ApiUserSessionRepository;
 use FourPaws\MobileApiBundle\Services\Security\FakeTokenGenerator;

@@ -37,5 +37,8 @@ services:
 
     FourPaws\MobileApiBundle\Security\ApiTokenListener:
         arguments: ['@security.token_storage', '@security.authentication.manager']
+        public: false
 
-
+    FourPaws\MobileApiBundle\Services\Session\SessionHandlerInterface:
+        class: FourPaws\MobileApiBundle\Services\Session\SessionHandler
+        public: true

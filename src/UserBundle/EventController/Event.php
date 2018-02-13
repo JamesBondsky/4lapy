@@ -10,6 +10,7 @@ use Bitrix\Main\EventManager;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\ServiceHandlerInterface;
+use FourPaws\MobileApiBundle\Services\Session\SessionHandlerInterface;
 use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -41,8 +42,37 @@ abstract class Event implements ServiceHandlerInterface
         self::initHandler('OnBeforeUserAdd', 'checkSocserviseRegisterHandler');
         
         self::initHandler('OnBeforeUserLogon', 'replaceLogin');
+
+        self::initHandler('OnUserLogin', 'updateTokenAfterLogin');
+        self::initHandler('OnAfterUserLogout', 'updateTokenAfterLogout');
     }
-    
+
+    /**
+     * @param array $fields
+     *
+     * @throws ServiceNotFoundException
+     * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
+     */
+    public static function updateTokenAfterLogin()
+    {
+        $sessionHandler = Application::getInstance()->getContainer()->get(SessionHandlerInterface::class);
+        $sessionHandler->login();
+    }
+
+    /**
+     * @param array $fields
+     *
+     * @throws ServiceNotFoundException
+     * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
+     */
+    public static function updateTokenAfterLogout(array &$fields)
+    {
+        $sessionHandler = Application::getInstance()->getContainer()->get(SessionHandlerInterface::class);
+        $sessionHandler->logout();
+    }
+
     /**
      * @param string $eventName
      * @param string $method
