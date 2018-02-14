@@ -150,6 +150,7 @@ if ($arResult['USE_AJAX'] === 'Y' && $arResult['IS_AJAX_REQUEST'] !== 'Y') {
                                         } else if (jqXHR.status == 401) {
                                             alert('Пожалуйста, авторизуйтесь');
                                         } else {
+                                            console.error('Request error: ' + jqXHR.status + ' ' + jqXHR.statusText);
                                             //alert('Request error: ' + jqXHR.status + ' ' + jqXHR.statusText);
                                         }
                                     }
