@@ -348,6 +348,7 @@ class UserService implements
             $authResult = $this->bitrixUserService->Authorize($id);
             if ($authResult) {
                 $this->setAvatarHostUserId($hostUserId);
+                $this->setAvatarGuestUserId($id);
             }
         }
 
@@ -369,6 +370,20 @@ class UserService implements
     }
 
     /**
+     * @return int
+     */
+    public function getAvatarGuestUserId(): int
+    {
+        $userId = 0;
+        if (isset($_SESSION['4PAWS']['AVATAR_AUTH']['GUEST_USER_ID'])) {
+            $userId = (int)$_SESSION['4PAWS']['AVATAR_AUTH']['GUEST_USER_ID'];
+            $userId = $userId > 0 ? $userId : 0;
+        }
+
+        return $userId;
+    }
+
+    /**
      * @param int $id
      */
     protected function setAvatarHostUserId(int $id)
@@ -382,9 +397,24 @@ class UserService implements
         }
     }
 
-    protected function flushAvatarHostUser()
+    /**
+     * @param int $id
+     */
+    protected function setAvatarGuestUserId(int $id)
+    {
+        if ($id > 0) {
+            $_SESSION['4PAWS']['AVATAR_AUTH']['GUEST_USER_ID'] = $id;
+        } else {
+            if (isset($_SESSION['4PAWS']['AVATAR_AUTH']['GUEST_USER_ID'])) {
+                unset($_SESSION['4PAWS']['AVATAR_AUTH']['GUEST_USER_ID']);
+            }
+        }
+    }
+
+    protected function flushAvatarUserData()
     {
         $this->setAvatarHostUserId(0);
+        $this->setAvatarGuestUserId(0);
     }
 
     /**
@@ -392,14 +422,28 @@ class UserService implements
      */
     public function isAvatarAuthorized(): bool
     {
-        return $this->getAvatarHostUserId() > 0;
+        $isAuthorized = false;
+        $hostUserId = $this->getAvatarHostUserId();
+        $guestUserId = $this->getAvatarGuestUserId();
+        if ($hostUserId > 0 && $guestUserId > 0) {
+            $curUserId = 0;
+            try {
+                $curUserId = $this->getCurrentUserId();
+            } catch (\Exception $exception) {}
+            if ($curUserId === $guestUserId && $curUserId !== $hostUserId) {
+                $isAuthorized = true;
+            } else {
+                $this->flushAvatarUserData();
+            }
+        }
+
+        return $isAuthorized;
     }
 
     /**
      * Возврат к авторизации под исходным пользователем
      *
      * @throws NotAuthorizedException
-     * @throws AvatarSelfAuthorizationException
      * @return bool
      */
     public function avatarLogout(): bool
@@ -411,12 +455,15 @@ class UserService implements
         if ($hostUserId) {
             $isLoggedByHostUser = false;
             if ($curUserId === $hostUserId) {
-                throw new AvatarSelfAuthorizationException('An attempt to authenticate yourself');
-            }
-            $authResult = $this->authorize($hostUserId);
-            if ($authResult) {
-                $this->flushAvatarHostUser();
                 $isLoggedByHostUser = true;
+            } else {
+                $authResult = $this->authorize($hostUserId);
+                if ($authResult) {
+                    $isLoggedByHostUser = true;
+                }
+            }
+            if ($isLoggedByHostUser) {
+                $this->flushAvatarUserData();
             }
         }
 
