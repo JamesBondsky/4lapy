@@ -36,6 +36,16 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
     private $userOperations;
     /** @var array $userSubordinateGroups */
     private $userSubordinateGroups;
+    /** @var array $canAccessOperations */
+    protected $canAccessOperations = [
+        'view_subordinate_users',
+        'view_all_users',
+        'edit_subordinate_users',
+    ];
+    /** @var array $checkSubordinateOperations */
+    protected $checkSubordinateOperations = [
+        'view_all_users', 'edit_all_users'
+    ];
 
     public function __construct($component = null)
     {
@@ -225,11 +235,7 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
                 $canAccessGroups = array_merge($this->arParams['USER_GROUPS'], [static::BX_ADMIN_GROUP_ID]);
                 if (array_intersect($canAccessGroups, $userGroups)) {
                     // т.к. данный компонент связан с просмотром юзеров, то дополнительно проверяем операции уровней доступа
-                    $canAccessOperations = [
-                        'view_subordinate_users', 'view_all_users',
-                        'edit_subordinate_users',
-                    ];
-                    foreach ($canAccessOperations as $operationName) {
+                    foreach ($this->canAccessOperations as $operationName) {
                         if ($this->canUserDoOperation($operationName)) {
                             $this->canAccess = 'Y';
                             break;
@@ -299,7 +305,10 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
                 $usersList = $this->getUserListByFilter($filter);
                 if ($usersList) {
                     $user = reset($usersList);
-                    $authResult = $this->getUserService()->avatarAuthorize($user['ID']);
+                    $authResult = false;
+                    try {
+                        $authResult = $this->getUserService()->avatarAuthorize($user['ID']);
+                    } catch (\Exception $exception) {}
                     if ($authResult) {
                         $this->arResult['AUTH_ACTION_SUCCESS'] = 'Y';
                     } else {
@@ -321,6 +330,8 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
         $this->arResult['IS_AUTHORIZED'] = $GLOBALS['USER']->isAuthorized() ? 'Y' : 'N';
         $this->arResult['CAN_ACCESS'] = $this->canAccess() ? 'Y' : 'N';
         $this->arResult['ACTION'] = $this->getAction();
+        $this->arResult['IS_AVATAR_AUTHORIZED'] = $this->getUserService()->isAvatarAuthorized() ? 'Y' : 'N';
+
         $this->includeComponentTemplate();
     }
 
@@ -446,8 +457,11 @@ class FourPawsFrontOfficeAvatarComponent extends \CBitrixComponent
             $filter['ACTIVE'] = 'Y';
             $filter['!ID'] = $this->arParams['USER_ID'];
 
-            if (!$this->canUserDoOperation('edit_all_users') && !$this->canUserDoOperation('view_all_users')) {
-                $filter['CHECK_SUBORDINATE'] = $this->getUserSubordinateGroups();
+            foreach ($this->checkSubordinateOperations as $operation) {
+                if (!$this->canUserDoOperation($operation)) {
+                    $filter['CHECK_SUBORDINATE'] = $this->getUserSubordinateGroups();
+                    break;
+                }
             }
             if (!$this->canUserDoOperation('edit_php')) {
                 $filter['NOT_ADMIN'] = true;

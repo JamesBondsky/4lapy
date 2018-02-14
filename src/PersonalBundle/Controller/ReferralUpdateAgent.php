@@ -48,7 +48,7 @@ class ReferralUpdateAgent
         /** @var ReferralService $referralService */
         $referralService = App::getInstance()->getContainer()->get('referral.service');
         $referrals       = $referralService->referralRepository->findBy(['filter' => ['UF_MODERATED' => 1]]);
-        if (\is_array($referrals) && !empty($referrals)) {
+        if (!$referrals->isEmpty()) {
             $manzanaReferrals = [];
             foreach ($referrals as $referral) {
                 $userId = $referral->getUserId();

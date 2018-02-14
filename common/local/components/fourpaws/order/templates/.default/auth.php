@@ -4,10 +4,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\ReCaptcha\ReCaptchaService;
 use FourPaws\SaleBundle\Entity\OrderPropertyVariant;
 use FourPaws\SaleBundle\Entity\OrderStorage;
-use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\SaleBundle\Service\OrderPropertyService;
 
 /**
  * @var array $arParams
@@ -18,20 +19,24 @@ use FourPaws\SaleBundle\Service\OrderService;
 /** @var OrderStorage $storage */
 $storage = $arResult['STORAGE'];
 
-$serviceContainer = Application::getInstance()->getContainer();
+try {
+    $serviceContainer = Application::getInstance()->getContainer();
+} catch (ApplicationCreateException $e) {
+    return;
+}
 
-/** @var OrderService $orderService */
-$orderService = $serviceContainer->get(OrderService::class);
+/** @var OrderPropertyService $orderPropertyService */
+$orderPropertyService = $serviceContainer->get(OrderPropertyService::class);
 /** @var ReCaptchaService $recaptchaService */
 $recaptchaService = $serviceContainer->get('recaptcha.service');
 
-$communicationWays = $orderService->getPropertyVariants($orderService->getPropertyByCode('COM_WAY'))->filter(
+$communicationWays = $orderPropertyService->getPropertyVariants($orderPropertyService->getPropertyByCode('COM_WAY'))->filter(
     function (OrderPropertyVariant $variant) {
         return in_array(
             $variant->getValue(),
             [
-                OrderService::COMMUNICATION_PHONE,
-                OrderService::COMMUNICATION_SMS,
+                OrderPropertyService::COMMUNICATION_PHONE,
+                OrderPropertyService::COMMUNICATION_SMS,
             ],
             true
         );
@@ -70,7 +75,7 @@ $currentCommWay = $communicationWays[$storage->getCommunicationWay()];
                           id="order-step"
                           method="post"
                           data-url="<?= $arResult['URL']['AUTH_VALIDATION'] ?>">
-                        <div class="b-input-line">
+                        <div class="b-input-line js-small-input">
                             <div class="b-input-line__label-wrapper">
                                 <label class="b-input-line__label" for="order-name">Имя
                                 </label><span class="b-input-line__require">(обязательно)</span>
@@ -115,7 +120,7 @@ $currentCommWay = $communicationWays[$storage->getCommunicationWay()];
                                 <span class="b-input-line__comment js-comment">Для проверки статуса заказов на сайте</span>
                             </div>
                         </div>
-                        <div class="b-input-line">
+                        <div class="b-input-line js-no-valid">
                             <div class="b-input-line__label-wrapper js-information-comment">
                                 <label class="b-input-line__label" for="order-email">Эл. почта
                                 </label>
@@ -160,7 +165,7 @@ $currentCommWay = $communicationWays[$storage->getCommunicationWay()];
                             </div>
                             <div class="b-order-contacts__layout js-order-add-phone js-hidden-valid-fields"
                                 <?= $storage->getAltPhone() ? 'style="display:block"' : '' ?>>
-                                <div class="b-input-line">
+                                <div class="b-input-line js-no-valid">
                                     <div class="b-input-line__label-wrapper js-information-comment">
                                         <label class="b-input-line__label" for="order-phone-dop">Дополнительный телефон
                                         </label>
@@ -194,8 +199,7 @@ $currentCommWay = $communicationWays[$storage->getCommunicationWay()];
                                 <span class="b-input-line__label">Как с вами связаться для подтверждения заказа</span>
                             </div>
                             <?php /** @var OrderPropertyVariant $commWay */ ?>
-                            <?php foreach ($communicationWays as $commWay) {
-    ?>
+                            <?php foreach ($communicationWays as $commWay) { ?>
                                 <?php
                                 $isSelected = $currentCommWay && ($commWay->getValue() === $currentCommWay->getValue()); ?>
                                 <div class="b-radio b-radio--tablet-big">
@@ -211,16 +215,13 @@ $currentCommWay = $communicationWays[$storage->getCommunicationWay()];
                                         <span class="b-radio__text-label"><?= $commWay->getName() ?></span>
                                     </label>
                                 </div>
-                            <?php
-} ?>
+                            <?php } ?>
                         </div>
-                        <?php if (!$storage->getUserId() && !$storage->isCaptchaFilled()) {
-                                    ?>
+                        <?php if (!$storage->getUserId() && !$storage->isCaptchaFilled()) { ?>
                             <div class="b-input-line">
                                 <?= $recaptchaService->getCaptcha() ?>
                             </div>
-                        <?php
-                                } ?>
+                        <?php } ?>
                     </form>
                 </article>
             </div>

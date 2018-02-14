@@ -6,6 +6,7 @@
 
 namespace FourPaws\SaleBundle\Validation;
 
+use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Service\OrderService;
@@ -32,8 +33,10 @@ class OrderDeliveryValidator extends ConstraintValidator
     }
 
     /**
-     * @param mixed $entity
+     * @param OrderStorage $entity
      * @param Constraint $constraint
+     *
+     * @throws DeliveryNotFoundException
      */
     public function validate($entity, Constraint $constraint)
     {

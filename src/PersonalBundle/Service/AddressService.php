@@ -6,8 +6,10 @@
 
 namespace FourPaws\PersonalBundle\Service;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
@@ -17,6 +19,7 @@ use FourPaws\PersonalBundle\Repository\AddressRepository;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -53,12 +56,14 @@ class AddressService
     }
 
     /**
-     * @param int $userId
+     * @param int    $userId
      * @param string $locationCode
      *
-     * @return array
+     * @return ArrayCollection
+     * @throws NotAuthorizedException
+     * @throws \Exception
      */
-    public function getAddressesByUser(int $userId = 0, string $locationCode = ''): array
+    public function getAddressesByUser(int $userId = 0, string $locationCode = ''): ArrayCollection
     {
         return $this->addressRepository->findByUser($userId, $locationCode);
     }
@@ -66,8 +71,9 @@ class AddressService
     /**
      * @param int $id
      *
-     * @throws NotFoundException
      * @return Address
+     * @throws \Exception
+     * @throws NotFoundException
      */
     public function getById(int $id): Address
     {
@@ -79,10 +85,12 @@ class AddressService
      *
      * @deprecated
      *
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws NotAuthorizedException
+     * @throws EmptyEntityClass
      * @throws \RuntimeException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
-     * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
      * @throws ServiceNotFoundException
      * @throws ValidationException
@@ -97,6 +105,21 @@ class AddressService
         return $this->add($address);
     }
 
+    /**
+     * @param Address $address
+     *
+     * @return bool
+     * @throws ValidationException
+     * @throws BitrixRuntimeException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws \RuntimeException
+     * @throws NotAuthorizedException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws ApplicationCreateException
+     * @throws \Exception
+     */
     public function add(Address $address): bool
     {
         if (!$address->getUserId()) {
@@ -113,11 +136,9 @@ class AddressService
 
         $address->setCityLocationByEntity();
         $res = $this->addressRepository->setEntity($address)->create();
-        if ($res) {
-            if ($address->isMain()) {
-                /** @noinspection PhpParamsInspection */
-                $this->updateManzanaAddress($address);
-            }
+        if ($res && $address->isMain()) {
+            /** @noinspection PhpParamsInspection */
+            $this->updateManzanaAddress($address);
         }
 
         return $res;
@@ -150,6 +171,7 @@ class AddressService
     /**
      * @param Address $address
      *
+     * @throws NotAuthorizedException
      * @throws ConstraintDefinitionException
      * @throws InvalidIdentifierException
      * @throws ServiceNotFoundException
@@ -196,6 +218,8 @@ class AddressService
     /**
      * @param array $data
      *
+     * @throws NotAuthorizedException
+     * @throws EmptyEntityClass
      * @throws \RuntimeException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
@@ -217,11 +241,9 @@ class AddressService
         $entity = $this->addressRepository->dataToEntity($data, Address::class);
         $entity->setCityLocationByEntity();
         $res = $this->addressRepository->setEntity($entity)->update();
-        if ($res) {
-            if ($data['UF_MAIN'] === 'Y') {
-                /** @noinspection PhpParamsInspection */
-                $this->updateManzanaAddress($this->addressRepository->dataToEntity($data, Address::class));
-            }
+        if ($res && $data['UF_MAIN'] === 'Y') {
+            /** @noinspection PhpParamsInspection */
+            $this->updateManzanaAddress($this->addressRepository->dataToEntity($data, Address::class));
         }
 
         return $res;

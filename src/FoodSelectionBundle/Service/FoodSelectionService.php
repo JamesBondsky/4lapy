@@ -99,15 +99,18 @@ class FoodSelectionService
         
         return 0;
     }
-    
+
     /**
      * @param array $sections
      *
+     * @param array $exceptionItems
+     *
      * @return array
      * @throws SystemException
+     * @throws \Bitrix\Main\ArgumentException
      */
-    public function getProductsBySections(array $sections) : array
+    public function getProductsBySections(array $sections, array $exceptionItems = []) : array
     {
-        return $this->foodSelectionRepository->getProductsBySections($sections, $this->iblockId);
+        return $this->foodSelectionRepository->getProductsBySections($sections, $this->iblockId, $exceptionItems);
     }
 }

@@ -6,52 +6,37 @@
 
 namespace FourPaws\SaleBundle\Service;
 
-use Bitrix\Currency\CurrencyManager;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\ArgumentTypeException;
+use Bitrix\Main\NotImplementedException;
+use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\CalculationResult;
-use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
-use Bitrix\Sale\PaymentCollection;
-use Bitrix\Sale\PaySystem\Manager as PaySystemManager;
 use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\ShipmentCollection;
+use Bitrix\Sale\ShipmentItemCollection;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\PersonalBundle\Exception\NotFoundException as AddressNotFoundException;
 use FourPaws\PersonalBundle\Service\AddressService;
-use FourPaws\SaleBundle\Collection\OrderPropertyCollection;
-use FourPaws\SaleBundle\Collection\OrderPropertyVariantCollection;
 use FourPaws\SaleBundle\Entity\OrderProperty;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
-use FourPaws\SaleBundle\Repository\OrderPropertyRepository;
-use FourPaws\SaleBundle\Repository\OrderPropertyVariantRepository;
-use FourPaws\SaleBundle\Repository\OrderStorage\StorageRepositoryInterface;
 use FourPaws\UserBundle\Entity\User;
+use FourPaws\UserBundle\Exception\BitrixRuntimeException;
+use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
-use Symfony\Component\DependencyInjection\ContainerAwareInterface;
-use Symfony\Component\DependencyInjection\ContainerAwareTrait;
-use Symfony\Component\HttpFoundation\Request;
 
-class OrderService implements ContainerAwareInterface
+class OrderService
 {
-    use ContainerAwareTrait;
-
-    const AUTH_STEP = 'auth';
-
-    const DELIVERY_STEP = 'delivery';
-
-    const PAYMENT_STEP = 'payment';
-
-    const COMPLETE_STEP = 'complete';
-
-    const COMMUNICATION_SMS = '01';
-
-    const COMMUNICATION_PHONE = '02';
 
     const PAYMENT_CASH = 'cash';
 
@@ -64,24 +49,29 @@ class OrderService implements ContainerAwareInterface
     const PROPERTY_TYPE_ENUM = 'ENUM';
 
     /**
-     * @var StorageRepositoryInterface
+     * Дефолтный статус заказа при курьерской доставке
      */
-    protected $storageRepository;
+    const STATUS_NEW_COURIER = 'Q';
 
     /**
-     * @var OrderPropertyVariantRepository
+     * Дефолтный статус заказа при самовывозе
      */
-    protected $variantRepository;
+    const STATUS_NEW_PICKUP = 'N';
 
     /**
-     * @var OrderPropertyRepository
+     * @var AddressService
      */
-    protected $propertyRepository;
+    protected $addressService;
 
     /**
      * @var BasketService
      */
     protected $basketService;
+
+    /**
+     * @var CurrentUserProviderInterface
+     */
+    protected $currentUserProvider;
 
     /**
      * @var DeliveryService
@@ -94,14 +84,9 @@ class OrderService implements ContainerAwareInterface
     protected $deliveries;
 
     /**
-     * @var PaymentCollection
+     * @var OrderStorageService
      */
-    protected $paymentCollection;
-
-    /**
-     * @var CurrentUserProviderInterface
-     */
-    protected $currentUserProvider;
+    protected $orderStorageService;
 
     /**
      * @var UserCitySelectInterface
@@ -109,58 +94,25 @@ class OrderService implements ContainerAwareInterface
     protected $userCityProvider;
 
     /**
-     * @var AddressService
-     */
-    protected $addressService;
-
-    /**
      * @var UserRegistrationProviderInterface
      */
     protected $userRegistrationProvider;
 
-    /**
-     * Порядок оформления заказа
-     * @var array
-     */
-    protected $stepOrder = [
-        OrderService::AUTH_STEP,
-        OrderService::DELIVERY_STEP,
-        OrderService::PAYMENT_STEP,
-        OrderService::COMPLETE_STEP,
-    ];
-
-    /**
-     * OrderService constructor.
-     *
-     * @param StorageRepositoryInterface $storageRepository
-     * @param OrderPropertyRepository $propertyRepository
-     * @param OrderPropertyVariantRepository $variantRepository
-     * @param BasketService $basketService
-     * @param DeliveryService $deliveryService
-     * @param CurrentUserProviderInterface $currentUserProvider
-     * @param UserCitySelectInterface $userCityProvider
-     * @param AddressService $addressService
-     * @param UserRegistrationProviderInterface $userRegistrationProvider
-     */
     public function __construct(
-        StorageRepositoryInterface $storageRepository,
-        OrderPropertyRepository $propertyRepository,
-        OrderPropertyVariantRepository $variantRepository,
-        BasketService $basketService,
-        DeliveryService $deliveryService,
-        CurrentUserProviderInterface $currentUserProvider,
-        UserCitySelectInterface $userCityProvider,
         AddressService $addressService,
+        BasketService $basketService,
+        CurrentUserProviderInterface $currentUserProvider,
+        DeliveryService $deliveryService,
+        OrderStorageService $orderStorageService,
+        UserCitySelectInterface $userCityProvider,
         UserRegistrationProviderInterface $userRegistrationProvider
     ) {
-        $this->basketService = $basketService;
-        $this->deliveryService = $deliveryService;
-        $this->variantRepository = $variantRepository;
-        $this->storageRepository = $storageRepository;
-        $this->currentUserProvider = $currentUserProvider;
-        $this->userCityProvider = $userCityProvider;
-        $this->propertyRepository = $propertyRepository;
         $this->addressService = $addressService;
+        $this->basketService = $basketService;
+        $this->currentUserProvider = $currentUserProvider;
+        $this->deliveryService = $deliveryService;
+        $this->orderStorageService = $orderStorageService;
+        $this->userCityProvider = $userCityProvider;
         $this->userRegistrationProvider = $userRegistrationProvider;
     }
 
@@ -174,9 +126,11 @@ class OrderService implements ContainerAwareInterface
      * @param string $hash хеш заказа (проверяется, если не передан userId)
      *
      * @throws NotFoundException
+     * @throws ArgumentNullException
+     * @throws NotImplementedException
      * @return Order
      */
-    public function getById(int $id, bool $check = false, int $userId = null, string $hash = null): Order
+    public function getOrderById(int $id, bool $check = false, int $userId = null, string $hash = null): Order
     {
         if (!$order = Order::load($id)) {
             throw new NotFoundException('Order not found');
@@ -189,7 +143,8 @@ class OrderService implements ContainerAwareInterface
             if ($hash && $order->getHash() !== $hash) {
                 throw new NotFoundException('Order not found');
             }
-            if ($userId && $order->getUserId() !== $userId) {
+
+            if ($userId && (int)$order->getUserId() !== $userId) {
                 throw new NotFoundException('Order not found');
             }
         }
@@ -198,119 +153,19 @@ class OrderService implements ContainerAwareInterface
     }
 
     /**
-     * @param null $fuserId
-     *
-     * @return bool|OrderStorage
-     */
-    public function getStorage($fuserId = null)
-    {
-        if (!$fuserId) {
-            $fuserId = $this->currentUserProvider->getCurrentFUserId();
-        }
-
-        try {
-            return $this->storageRepository->findByFuser($fuserId);
-        } catch (NotFoundException $e) {
-            return false;
-        }
-    }
-
-    /**
-     * @param OrderStorage $storage
-     * @param Request $request
-     * @param string $step
-     *
-     * @return OrderStorage
-     */
-    public function setStorageValuesFromRequest(OrderStorage $storage, Request $request, string $step): OrderStorage
-    {
-        /**
-         * Чтобы нельзя было, например, обойти проверку капчи,
-         * отправив в POST данные со всех форм разом
-         */
-        $availableValues = [];
-        switch ($step) {
-            case self::AUTH_STEP:
-                $availableValues = [
-                    'name',
-                    'phone',
-                    'email',
-                    'altPhone',
-                    'communicationWay',
-                    'captchaFilled',
-                ];
-                break;
-            case self::DELIVERY_STEP:
-                $availableValues = [
-                    'deliveryId',
-                    'addressId',
-                    'street',
-                    'house',
-                    'building',
-                    'porch',
-                    'floor',
-                    'apartment',
-                    'deliveryDate',
-                    'deliveryInterval',
-                    'deliveryPlaceCode',
-                    'dpdTerminalCode',
-                    'comment',
-                    'partialGet',
-                ];
-                break;
-            case self::PAYMENT_STEP:
-                $availableValues = [
-                    'paymentId',
-                    'bonusSum',
-                ];
-        }
-
-        foreach ($request->request as $name => $value) {
-            if (!\in_array($name, $availableValues, true)) {
-                continue;
-            }
-            $setter = 'set' . ucfirst($name);
-            if (method_exists($storage, $setter)) {
-                $storage->$setter($value);
-            }
-        }
-
-        return $storage;
-    }
-
-    /**
-     * @param OrderStorage $storage
-     * @param string $step
-     *
-     * @return bool
-     */
-    public function updateStorage(OrderStorage $storage, string $step = OrderService::AUTH_STEP): bool
-    {
-        try {
-            return $this->storageRepository->save($storage, $step);
-        } catch (NotFoundException $e) {
-            return false;
-        }
-    }
-
-    /**
-     * @param $storage
-     *
-     * @return bool
-     */
-    public function clearStorage($storage): bool
-    {
-        try {
-            return $this->storageRepository->clear($storage);
-        } catch (NotFoundException $e) {
-            return false;
-        }
-    }
-
-    /**
      * @param OrderStorage $storage
      *
+     * @throws \Exception
      * @throws OrderCreateException
+     * @throws NotFoundException
+     * @throws ArgumentException
+     * @throws ArgumentOutOfRangeException
+     * @throws ArgumentTypeException
+     * @throws BitrixRuntimeException
+     * @throws ValidationException
+     * @throws NotImplementedException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
      * @return Order
      */
     public function createOrder(OrderStorage $storage): Order
@@ -328,9 +183,8 @@ class OrderService implements ContainerAwareInterface
          * Задание способов оплаты
          */
         if ($storage->getPaymentId()) {
-            $this->getPayments($storage, $order);
             /** @var Payment $payment */
-            foreach ($this->getPayments($storage, $order) as $payment) {
+            foreach ($this->orderStorageService->getPayments($storage, $order) as $payment) {
                 if (!$payment->isInner()) {
                     $payment->setField('PAY_SYSTEM_ID', $storage->getPaymentId());
                 }
@@ -373,6 +227,10 @@ class OrderService implements ContainerAwareInterface
                 throw new OrderCreateException('Не выбрана доставка');
             }
 
+            if ($this->deliveryService->isDelivery($delivery)) {
+                $order->setFieldNoDemand('STATUS_ID', static::STATUS_NEW_COURIER);
+            }
+
             $shipment->setFields(
                 [
                     'DELIVERY_ID'   => $selectedDelivery->getData()['DELIVERY_ID'],
@@ -411,7 +269,7 @@ class OrderService implements ContainerAwareInterface
          * Обработка свойств заказа
          */
         $propertyValueCollection = $order->getPropertyCollection();
-        $arrayStorage = $this->storageRepository->toArray($storage);
+        $arrayStorage = $this->orderStorageService->storageToArray($storage);
         /** @var OrderProperty $orderProperty */
 
         $deliveryDate = $this->deliveryService->getStockResultByDelivery($selectedDelivery)
@@ -519,7 +377,7 @@ class OrderService implements ContainerAwareInterface
                                     ->setLogin($storage->getPhone())
                                     ->setPassword(randString(6))
                                     ->setPersonalPhone($storage->getPhone());
-                $this->userRegistrationProvider->register($user, true);
+                $this->userRegistrationProvider->register($user);
                 $order->setFieldNoDemand('USER_ID', $user->getId());
                 $addressUserId = $user->getId();
                 $needCreateAddress = true;
@@ -550,47 +408,9 @@ class OrderService implements ContainerAwareInterface
             throw new OrderCreateException(implode(', ', $result->getErrorMessages()));
         }
 
-        $this->storageRepository->clear($storage);
+        $this->orderStorageService->clearStorage($storage);
 
         return $order;
-    }
-
-    /**
-     * @return OrderPropertyCollection
-     */
-    public function getProperties(): OrderPropertyCollection
-    {
-        return $this->propertyRepository->findBy();
-    }
-
-    /**
-     * @param int $id
-     *
-     * @return OrderProperty
-     */
-    public function getPropertyById(int $id): OrderProperty
-    {
-        return $this->propertyRepository->findById($id);
-    }
-
-    /**
-     * @param string $code
-     *
-     * @return OrderProperty
-     */
-    public function getPropertyByCode(string $code): OrderProperty
-    {
-        return $this->propertyRepository->findByCode($code);
-    }
-
-    /**
-     * @param OrderProperty $property
-     *
-     * @return OrderPropertyVariantCollection
-     */
-    public function getPropertyVariants(OrderProperty $property): OrderPropertyVariantCollection
-    {
-        return $this->variantRepository->findByProperty($property);
     }
 
     /**
@@ -607,118 +427,5 @@ class OrderService implements ContainerAwareInterface
         }
 
         return $this->deliveries;
-    }
-
-    /**
-     * Вычисляет шаг оформления заказа в соответствии с состоянием хранилища
-     *
-     * @param OrderStorage $storage
-     * @param string $startStep
-     */
-    public function validateStorage(OrderStorage $storage, string $startStep = self::AUTH_STEP): string
-    {
-        $steps = array_reverse($this->stepOrder);
-        $stepIndex = array_search($startStep, $steps);
-        if ($stepIndex === false) {
-            return $startStep;
-        }
-
-        $realStep = $startStep;
-        $steps = array_slice($steps, $stepIndex);
-        foreach ($steps as $step) {
-            if ($this->storageRepository->validate($storage, $step)->count()) {
-                $realStep = $step;
-            }
-        }
-
-        return $realStep;
-    }
-
-    /**
-     * @param string $code
-     *
-     * @throws NotFoundException
-     * @return int
-     */
-    public function getPaymentIdByCode(string $code): int
-    {
-        $payment = PaySystemActionTable::getList(['filter' => ['CODE' => $code]])->fetch();
-        if (!$payment) {
-            throw new NotFoundException('Payment system not found');
-        }
-
-        return (int)$payment['ID'];
-    }
-
-    /**
-     * @param OrderStorage $storage
-     * @param null|Order $order
-     *
-     * @throws NotFoundException
-     * @return PaymentCollection
-     */
-    public function getPayments(OrderStorage $storage, Order $order = null): PaymentCollection
-    {
-        if (!$deliveryId = $storage->getDeliveryId()) {
-            throw new NotFoundException('No payments available');
-        }
-
-        if (!$this->paymentCollection) {
-            if (!$order instanceof Order) {
-                /** @noinspection CallableParameterUseCaseInTypeContextInspection */
-                $order = Order::create(
-                    SITE_ID,
-                    null,
-                    CurrencyManager::getBaseCurrency()
-                );
-            }
-            $this->paymentCollection = $order->getPaymentCollection();
-            $sum = $this->basketService->getBasket()->getOrderableItems()->getPrice();
-
-            if ($storage->hasBonusPayment() && $storage->getBonusSum()) {
-                $innerPayment = $this->paymentCollection->getInnerPayment();
-                $innerPayment->setField('SUM', $storage->getBonusSum());
-                $sum -= $storage->getBonusSum();
-            }
-
-            $extPayment = $this->paymentCollection->createItem();
-            $extPayment->setField('SUM', $sum);
-        }
-
-        return $this->paymentCollection;
-    }
-
-    /**
-     * @param OrderStorage $storage
-     * @param bool $withInner
-     *
-     * @return array
-     */
-    public function getAvailablePayments(OrderStorage $storage, $withInner = false): array
-    {
-        $paymentCollection = $this->getPayments($storage);
-
-        $payments = [];
-        /** @var Payment $payment */
-        foreach ($paymentCollection as $payment) {
-            if ($payment->isInner()) {
-                continue;
-            }
-
-            $payments = PaySystemManager::getListWithRestrictions($payment);
-        }
-
-        if (!$withInner) {
-            $innerPaySystemId = (int)PaySystemManager::getInnerPaySystemId();
-            /** @var Payment $payment */
-            foreach ($payments as $id => $payment) {
-                if ($innerPaySystemId === $id) {
-                    unset($payments[$id]);
-                    break;
-                }
-            }
-        }
-
-        return $payments;
     }
 }

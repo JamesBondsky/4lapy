@@ -114,8 +114,13 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
         $result = new Result();
 
         $xmlId = trim($xmlId);
-        if ('' === $xmlId) {
-            $result->addError(new Error('Не задан внешний код торгового предложения', 100));
+        if ($xmlId === '') {
+            $result->addError(
+                new Error(
+                    'Не задан внешний код торгового предложения',
+                    'emptyOfferXmlId'
+                )
+            );
         }
 
         if ($result->isSuccess()) {
@@ -128,10 +133,12 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
                     ]
                 );
             } else {
-                $result->addError(new Error(
-                    'Не найден элемент торгового предложения по внешнему коду: ' . $xmlId,
-                    200
-                ));
+                $result->addError(
+                    new Error(
+                        'Не найден элемент торгового предложения по внешнему коду: ' . $xmlId,
+                        'offerElementNotFound'
+                    )
+                );
             }
         }
 
@@ -140,21 +147,27 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
 
     /**
      * @param string $xmlId
+     * @param bool $refreshCache
      *
      * @throws \Bitrix\Main\ArgumentException
      * @return Result
      */
-    protected function getStoreDataByXmlId(string $xmlId): Result
+    protected function getStoreDataByXmlId(string $xmlId, $refreshCache = false): Result
     {
         $result = new Result();
 
         $xmlId = trim($xmlId);
-        if ('' === $xmlId) {
-            $result->addError(new Error('Не задан внешний код склада', 100));
+        if ($xmlId === '') {
+            $result->addError(
+                new Error(
+                    'Не задан внешний код склада',
+                    'emptyStoreXmlId'
+                )
+            );
         }
 
         if ($result->isSuccess()) {
-            $item = $this->getStoreByXmlId($xmlId);
+            $item = $this->getStoreByXmlId($xmlId, $refreshCache);
             if ($item) {
                 $result->setData(
                     [
@@ -162,7 +175,12 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
                     ]
                 );
             } else {
-                $result->addError(new Error('Не найден склад по внешнему коду: ' . $xmlId, 200));
+                $result->addError(
+                    new Error(
+                        'Не найден склад по внешнему коду: ' . $xmlId,
+                        'storeNotFound'
+                    )
+                );
             }
         }
 
@@ -171,14 +189,15 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
 
     /**
      * @param string $xmlId
+     * @param bool $refreshCache
      *
      * @throws \Bitrix\Main\ArgumentException
      * @return array
      */
-    protected function getStoreByXmlId(string $xmlId): array
+    protected function getStoreByXmlId(string $xmlId, $refreshCache = false): array
     {
         $return = [];
-        if (!isset($this->storesCache[$xmlId])) {
+        if ($refreshCache || !isset($this->storesCache[$xmlId])) {
             $items = StoreTable::getList(
                 [
                     'order'  => [
@@ -210,6 +229,58 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
 
     /**
      * @param StockItem $stockItem
+     *
+     * @return Result
+     */
+    protected function createStore($stockItem) : Result
+    {
+        $result = new Result();
+
+        $resultData = [];
+        $xmlId = trim($stockItem->getPlantCode());
+
+        $id = \CCatalogStore::Add(
+            [
+                'TITLE' => $xmlId,
+                'XML_ID' => $xmlId,
+                'ACTIVE' => 'Y',
+                //'ADDRESS' => 'нет данных',
+            ]
+        );
+        if (!$id) {
+            $errorMsg = sprintf(
+                'Ошибка создания склада с внешним кодом %s: %s',
+                $xmlId,
+                $GLOBALS['APPLICATION']->GetException()
+            );
+            $result->addError(
+                new Error(
+                    $errorMsg,
+                    'createStoreError'
+                )
+            );
+
+            $this->log()->error($errorMsg);
+        } else {
+            $resultData['id'] = $id;
+
+            $this->log()->info(
+                sprintf(
+                    'Создан склад с внешним кодом %s; ID: %s',
+                    $xmlId,
+                    $id
+                )
+            );
+        }
+
+        $resultData['xmlId'] = $xmlId;
+        $result->setData($resultData);
+
+        return $result;
+    }
+
+    /**
+     * @param StockItem $stockItem
      * @param bool      $getExtResult
      *
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
@@ -227,7 +298,12 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
         // система должна логировать ошибку и не обрабатывать эту строку
         if ($result->isSuccess()) {
             if ($stockItem->isStorePlantCode() && strtoupper($stockItem->getStockType()) === 'VEND') {
-                $result->addError(new Error('Задан некорректный тип запаса (LIFNR = склад и ATTRB = VEND)', 501));
+                $result->addError(
+                    new Error(
+                        'Задан некорректный тип запаса (LIFNR = склад и ATTRB = VEND)',
+                        'incorrectStockTypeVend'
+                    )
+                );
             }
         }
 
@@ -235,7 +311,12 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
         // система должна логировать ошибку и не обрабатывать эту строку
         if ($result->isSuccess()) {
             if ($stockItem->isSupplierPlantCode() && strtoupper($stockItem->getStockType()) === 'FREE') {
-                $result->addError(new Error('Задан некорректный тип запаса (LIFNR = поставщик и ATTRB = FREE)', 502));
+                $result->addError(
+                    new Error(
+                        'Задан некорректный тип запаса (LIFNR = поставщик и ATTRB = FREE)',
+                        'incorrectStockTypeFree'
+                    )
+                );
             }
         }
 
@@ -249,9 +330,24 @@ class DcStockConsumer implements ConsumerInterface, LoggerAwareInterface
 
         $storeDataResult = null;
         if ($result->isSuccess()) {
+            // ищется склад по коду,
+            // если склад не будет найден, то создается склад с незаполненными полями
             $storeDataResult = $this->getStoreDataByXmlId($stockItem->getPlantCode());
+
             if (!$storeDataResult->isSuccess()) {
-                $result->addErrors($storeDataResult->getErrors());
+                foreach ($storeDataResult->getErrors() as $error) {
+                    if ($error->getCode() === 'storeNotFound') {
+                        $createStoreResult = $this->createStore($stockItem);
+                        if ($createStoreResult->isSuccess()) {
+                            // повторный поиск с обновлением кеша метода
+                            $storeDataResult = $this->getStoreDataByXmlId($stockItem->getPlantCode(), true);
+                        }
+                        break;
+                    }
+                }
+                if (!$storeDataResult->isSuccess()) {
+                    $result->addErrors($storeDataResult->getErrors());
+                }
             }
         }
 

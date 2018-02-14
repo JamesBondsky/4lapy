@@ -14,6 +14,7 @@ use Bitrix\Sale\Delivery\CalculationResult;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use Doctrine\Common\Collections\ArrayCollection;
 
 $storage = $arResult['STORAGE'];
 
@@ -25,31 +26,28 @@ function showInterval($interval)
     return $from . '-' . $to;
 }
 
-$selectedAddress = null;
+/** @var ArrayCollection $addresses */
+$addresses = $arResult['ADDRESSES'];
+$selectedAddressId = null;
 $showNewAddressForm = false;
 $showNewAddressFormHeader = false;
-if (!empty($arResult['ADDRESSES'])) {
-    $showNewAddressFormHeader = true;
-    if (!$selectedAddressId = $storage->getAddressId()) {
-        $showNewAddressForm = true;
-    }
-} else {
-    $showNewAddressForm = true;
-}
 
-if ($storage->getAddressId()) {
-    $selectedAddressId = $storage->getAddressId();
-} elseif (!empty($arResult['ADDRESSES']) && !$storage->getStreet()) {
-    /** @var Address $firstAddress */
-    $firstAddress = reset($arResult['ADDRESSES']);
-    $selectedAddressId = $firstAddress->getId();
+if (!$addresses || $addresses->isEmpty()) {
+    $showNewAddressForm = true;
 } else {
-    $selectedAddressId = $storage->getAddressId();
+    if ($storage->getAddressId()) {
+        $selectedAddressId = $storage->getAddressId();
+    } elseif ($storage->getStreet()) {
+        $showNewAddressForm = true;
+        $showNewAddressFormHeader = true;
+    } else {
+        $selectedAddressId = $addresses->first()->getId();
+    }
 }
 
 ?>
 
-<?php if (!empty($arResult['ADDRESSES'])) {
+<?php if ($addresses && !$addresses->isEmpty()) {
     ?>
     <div class="b-input-line b-input-line--delivery-address-current js-hide-if-address"
         <?= $showNewAddressForm ? 'style="display: none"' : '' ?>>
@@ -57,14 +55,13 @@ if ($storage->getAddressId()) {
             <span class="b-input-line__label">Адрес доставки</span>
         </div>
         <?php /** @var Address $address */ ?>
-        <?php foreach ($arResult['ADDRESSES'] as $address) {
-        ?>
+        <?php foreach ($addresses as $address) { ?>
             <div class="b-radio b-radio--tablet-big">
                 <input class="b-radio__input"
                        type="radio"
                        name="addressId"
                        id="order-address-<?= $address->getId() ?>"
-                    <?= $selectedAddressId == $address->getId() ? 'checked="checked"' : '' ?>
+                    <?= $selectedAddressId === $address->getId() ? 'checked="checked"' : '' ?>
                        value="<?= $address->getId() ?>"/>
                 <label class="b-radio__label b-radio__label--tablet-big"
                        for="order-address-<?= $address->getId() ?>">
@@ -73,15 +70,14 @@ if ($storage->getAddressId()) {
                     </span>
                 </label>
             </div>
-        <?php
-    } ?>
+        <?php } ?>
         <div class="b-radio b-radio--tablet-big">
             <input class="b-radio__input"
                    type="radio"
                    name="addressId"
                    id="order-address-another"
                    data-radio="4"
-                <?= $selectedAddressId == 0 ? 'checked="checked"' : '' ?>
+                <?= $selectedAddressId === 0 ? 'checked="checked"' : '' ?>
                    value="0">
             <label class="b-radio__label b-radio__label--tablet-big js-order-address-another"
                    for="order-address-another">
@@ -89,13 +85,12 @@ if ($storage->getAddressId()) {
             </label>
         </div>
     </div>
-<?php
+    <?php
 } ?>
 <div class="b-radio-tab__new-address js-form-new-address js-hidden-valid-fields" <?= $showNewAddressForm ? 'style="display:block"' : '' ?>>
     <div class="b-input-line b-input-line--new-address">
         <div class="b-input-line__label-wrapper b-input-line__label-wrapper--back-arrow">
-            <?php if ($showNewAddressFormHeader) {
-        ?>
+            <?php if ($showNewAddressFormHeader) { ?>
                 <span class="b-input-line__label">Новый адрес доставки</span>
                 <a class="b-link b-link--back-arrow js-back-list-address"
                    href="javascript:void(0);"
@@ -106,8 +101,7 @@ if ($storage->getAddressId()) {
                     <span class="b-link__back-word">Вернуться </span>
                     <span class="b-link__mobile-word">к списку</span>
                 </a>
-            <?php
-    } ?>
+            <?php } ?>
         </div>
     </div>
     <div class="b-input-line b-input-line--street">
@@ -224,16 +218,16 @@ if ($storage->getAddressId()) {
             for ($i = 0; $i < ($end - $start); $i++) {
                 $date = (new DateTime())->modify('+' . ($start + $i) . ' days');
                 $dateString = FormatDate('l, d.m.Y', $date->getTimestamp()); ?>
-                <option value="<?= $i ?>" <?= $storage->getDeliveryDate() == ($i) ? 'selected="selected"' : '' ?>>
+                <option value="<?= $i ?>" <?= ($storage->getDeliveryDate() === $i) ? 'selected="selected"' : '' ?>>
                     <?= $dateString ?>
                 </option>
-            <?php
+                <?php
             } ?>
         </select>
     </div>
 </div>
 <?php if (!empty($delivery->getData()['INTERVALS'])) {
-                ?>
+    ?>
     <div class="b-input-line b-input-line--interval">
         <div class="b-input-line__label-wrapper b-input-line__label-wrapper--interval">
             <span class="b-input-line__label">интервал</span>
@@ -247,17 +241,17 @@ if ($storage->getAddressId()) {
                 <?php $intervals = $delivery->getData()['INTERVALS'] ?>
                 <?php foreach ($intervals as $i => $interval) {
                     ?>
-                    <option value="<?= $i + 1 ?>" <?= $storage->getDeliveryInterval(
-                    ) == ($i + 1) ? 'selected="selected"' : '' ?>>
+                    <option value="<?= $i + 1 ?>" <?= ($storage->getDeliveryInterval(
+                        ) === $i + 1) ? 'selected="selected"' : '' ?>>
                         <?= showInterval($interval) ?>
                     </option>
-                <?php
+                    <?php
                 } ?>
             </select>
         </div>
     </div>
-<?php
-            } ?>
+    <?php
+} ?>
 <div class="b-input-line b-input-line--textarea b-input-line--address-textarea js-no-valid">
     <div class="b-input-line__label-wrapper">
         <label class="b-input-line__label" for="order-comment">

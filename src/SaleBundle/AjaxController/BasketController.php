@@ -54,7 +54,8 @@ class BasketController extends Controller
      *
      * @param \Symfony\Component\HttpFoundation\Request $request
      *
-     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws \Bitrix\Main\LoaderException
      * @throws \RuntimeException
      *
      * @return \FourPaws\App\Response\JsonResponse
@@ -107,7 +108,7 @@ class BasketController extends Controller
         try {
             $this->basketService->deleteOfferFromBasket($basketId);
             $data = [
-                'basket'     => $this->basketViewService->getBasketHtml(),
+                'basket' => $this->basketViewService->getBasketHtml(),
                 'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
             ];
             $response = JsonSuccessResponse::createWithData(
@@ -148,27 +149,25 @@ class BasketController extends Controller
     {
         $items = $request->get('items', []);
 
+        /** @noinspection BadExceptionsProcessingInspection */
         try {
             if (!\is_array($items)) {
                 throw new InvalidArgumentException('Wrong basket parameters');
             }
-    
+
             foreach ($items as $item) {
                 if (!$item['basketId'] || !$item['quantity']) {
-                    /**
-                     * @todo ParamConverter
-                     */
+                    // todo wat? :)
                     continue;
                 }
-        
+
                 $this->basketService->updateBasketQuantity((int)$item['basketId'], (int)$item['quantity']);
             }
-            
             $data = [
-                'basket'     => $this->basketViewService->getBasketHtml(),
+                'basket' => $this->basketViewService->getBasketHtml(),
                 'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
             ];
-    
+
             $response = JsonSuccessResponse::createWithData(
                 '',
                 $data,
@@ -181,7 +180,7 @@ class BasketController extends Controller
                 $e->getMessage(),
                 200,
                 [],
-                ['reload' => false]
+                ['reload' => false]                     // todo TRUE !!!
             );
         }
         return $response;
@@ -228,7 +227,7 @@ class BasketController extends Controller
                 }
                 /** @var Product $product */
                 $product = $offer->getProduct();
-                $name = '<strong>' . $product->getBrandName() . '</strong>' . lcfirst(trim($product->getName()));
+                $name = '<strong>' . $product->getBrandName() . '</strong> ' . lcfirst(trim($product->getName()));
                 $items[] = [
                     'id' => $offer->getId(),
                     'actionId' => $discountId,
@@ -238,15 +237,111 @@ class BasketController extends Controller
                 ];
 
             }
+            $unselectedCount = $this->basketService->getAdder()->getExistGiftsQuantity($giftGroup, false);
             $giftDeclension = new Declension('подарок', 'подарка', 'подарков');
             $data = [
-                'count' => $giftGroup['count'],
-                'title' => 'Выберете ' . $giftGroup['count'] . ' ' . $giftDeclension->get($giftGroup['count']),
+                'count' => $unselectedCount,
+                'title' => 'Выберете ' . $unselectedCount . ' ' . $giftDeclension->get($unselectedCount),
                 'items' => $items
             ];
             $response = JsonSuccessResponse::createWithData(
                 '',
                 $data,
+                200,
+                ['reload' => false]
+            );
+        }
+
+        return $response;
+    }
+
+
+    /**
+     * @Route("/gift/select/", methods={"GET", "POST"})
+     *
+     * @param Request $request
+     *
+     * @throws \RuntimeException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\NotSupportedException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws \Exception
+     *
+     * @return JsonErrorResponse|JsonResponse
+     */
+    public function selectGiftAction(Request $request) {
+        $response = null;
+        $offerId = (int)$request->get('offerId', 0);
+        $discountId = (int)$request->get('actionId', 0);
+        try {
+            $this->basketService->getAdder()->selectGift($offerId, $discountId);
+        } catch (BaseExceptionInterface $e) {
+            $response = JsonErrorResponse::create(
+                $e->getMessage(),
+                200,
+                [],
+                ['reload' => true]
+            );
+        }
+        if(null === $response) {
+            $response = JsonSuccessResponse::createWithData(
+                '',
+                [
+                    'giftId' => 9001,
+                    'basket' => $this->basketViewService->getBasketHtml(true)
+                ],
+                200,
+                ['reload' => false]
+            );
+        }
+
+        return $response;
+    }
+
+    /**
+     * @Route("/gift/refuse/", methods={"GET", "POST"})
+     *
+     * @param Request $request
+     *
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Exception
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws \Bitrix\Main\NotSupportedException
+     *
+     * @return JsonErrorResponse|JsonResponse
+     */
+    public function refuseGiftAction(Request $request) {
+        $response = null;
+        $giftBasketId = (int)$request->get('giftId', 0);
+
+        /** @noinspection BadExceptionsProcessingInspection */
+        try {
+            $gift = $this->basketService->getAdder()->getExistGifts(null, true);
+            if(!isset($gift[$giftBasketId])) {
+                throw new NotFoundException('Подарок не найден');
+            }
+            $gift = $gift[$giftBasketId];
+            if($gift['quantity'] === 1) {
+                $this->basketService->deleteOfferFromBasket($giftBasketId);
+            } else {
+                $this->basketService->updateBasketQuantity($giftBasketId, $gift['quantity'] - 1);
+            }
+        } catch (BaseExceptionInterface $e) {
+            $response = JsonErrorResponse::create(
+                $e->getMessage(),
+                200,
+                [],
+                ['reload' => true]
+            );
+        }
+        if(null === $response) {
+            $response = JsonSuccessResponse::createWithData(
+                '',
+                [
+                    'giftId' => 9001,
+                    'basket' => $this->basketViewService->getBasketHtml(true)
+                ],
                 200,
                 ['reload' => false]
             );

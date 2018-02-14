@@ -3,6 +3,7 @@
 namespace FourPaws\SapBundle\Consumer;
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Catalog\StoreProductTable;
 use Bitrix\Catalog\StoreTable;
 use Bitrix\Main\Error;
@@ -11,9 +12,13 @@ use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\SapBundle\Dto\In\StoresStock\StockItem;
 use FourPaws\SapBundle\Dto\In\StoresStock\StoresStock;
+use Psr\Log\LoggerAwareInterface;
+use FourPaws\SapBundle\Exception\InvalidArgumentException;
 
-class StoresStockConsumer implements ConsumerInterface
+class StoresStockConsumer implements ConsumerInterface, LoggerAwareInterface
 {
+    use LazyLoggerAwareTrait;
+
     /** @var array $offersCache */
     private $offersCache = [];
 
@@ -31,6 +36,7 @@ class StoresStockConsumer implements ConsumerInterface
      *
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\SapBundle\Exception\InvalidArgumentException
      * @return bool
      */
     public function consume($storesStock): bool
@@ -39,11 +45,51 @@ class StoresStockConsumer implements ConsumerInterface
             return false;
         }
 
-        foreach ($storesStock->getItems() as $stockItem) {
-            $this->setOfferStock($stockItem);
+        $result = true;
+
+        $this->log()->info(sprintf('Импортируется %s остатков', $storesStock->getItems()->count()));
+
+        foreach ($storesStock->getItems() as $id => $stockItem) {
+            $this->log()->debug(
+                sprintf(
+                    'Импортируется остаток %s для оффера с xml id %s для склада %s',
+                    $id + 1,
+                    $stockItem->getOfferXmlId(),
+                    $stockItem->getStoreCode()
+                )
+            );
+
+            if (!$stockItem instanceof StockItem) {
+                throw new InvalidArgumentException(sprintf('Trying to pass not %s object', StockItem::class));
+            }
+
+            $setResult = $this->setOfferStock($stockItem);
+            $result &= $setResult->isSuccess();
+            if ($setResult->isSuccess()) {
+                $this->log()->debug(
+                    sprintf(
+                        'Проимпортирован остаток %s для оффера с xml id %s  для склада %s',
+                        $id + 1,
+                        $stockItem->getOfferXmlId(),
+                        $stockItem->getStoreCode()
+                    )
+                );
+            } else {
+                foreach ($setResult->getErrors() as $error) {
+                    $this->log()->error(
+                        sprintf(
+                            'Ошибка импорта остатка %s для оффера с xml id %s для склада %s: %s',
+                            $id + 1,
+                            $stockItem->getOfferXmlId(),
+                            $stockItem->getStoreCode(),
+                            $error->getMessage()
+                        )
+                    );
+                }
+            }
         }
 
-        return true;
+        return $result;
     }
 
     /**
@@ -76,8 +122,13 @@ class StoresStockConsumer implements ConsumerInterface
         $result = new Result();
 
         $xmlId = trim($xmlId);
-        if ('' === $xmlId) {
-            $result->addError(new Error('Не задан внешний код торгового предложения', 100));
+        if ($xmlId === '') {
+            $result->addError(
+                new Error(
+                    'Не задан внешний код торгового предложения',
+                    'emptyOfferXmlId'
+                )
+            );
         }
 
         if ($result->isSuccess()) {
@@ -90,7 +141,12 @@ class StoresStockConsumer implements ConsumerInterface
                     ]
                 );
             } else {
-                $result->addError(new Error('Не найден элемент торгового предложения по внешнему коду: '.$xmlId, 200));
+                $result->addError(
+                    new Error(
+                        'Не найден элемент торгового предложения по внешнему коду: '.$xmlId,
+                        'offerElementNotFound'
+                    )
+                );
             }
         }
 
@@ -126,7 +182,7 @@ class StoresStockConsumer implements ConsumerInterface
             }
 
             $this->offersCache[$xmlId] = $return;
-            
+
             if ($this->maxOffersCacheSize > 0 && \count($this->offersCache) > $this->maxOffersCacheSize) {
                 $this->offersCache = \array_slice($this->offersCache, 1, null, true);
             }
@@ -139,21 +195,27 @@ class StoresStockConsumer implements ConsumerInterface
 
     /**
      * @param string $xmlId
+     * @param bool $refreshCache
      *
      * @throws \Bitrix\Main\ArgumentException
      * @return Result
      */
-    protected function getStoreDataByXmlId(string $xmlId): Result
+    protected function getStoreDataByXmlId(string $xmlId, $refreshCache = false): Result
     {
         $result = new Result();
 
         $xmlId = trim($xmlId);
-        if ('' === $xmlId) {
-            $result->addError(new Error('Не задан внешний код склада', 100));
+        if ($xmlId === '') {
+            $result->addError(
+                new Error(
+                    'Не задан внешний код склада',
+                    'emptyStoreXmlId'
+                )
+            );
         }
 
         if ($result->isSuccess()) {
-            $item = $this->getStoreByXmlId($xmlId);
+            $item = $this->getStoreByXmlId($xmlId, $refreshCache);
             if ($item) {
                 $result->setData(
                     [
@@ -161,7 +223,12 @@ class StoresStockConsumer implements ConsumerInterface
                     ]
                 );
             } else {
-                $result->addError(new Error('Не найден склад по внешнему коду: '.$xmlId, 200));
+                $result->addError(
+                    new Error(
+                        'Не найден склад по внешнему коду: ' . $xmlId,
+                        'storeNotFound'
+                    )
+                );
             }
         }
 
@@ -170,17 +237,18 @@ class StoresStockConsumer implements ConsumerInterface
 
     /**
      * @param string $xmlId
+     * @param bool $refreshCache
      *
      * @throws \Bitrix\Main\ArgumentException
      * @return array
      */
-    protected function getStoreByXmlId(string $xmlId): array
+    protected function getStoreByXmlId(string $xmlId, $refreshCache = false): array
     {
         $return = [];
-        if (!isset($this->storesCache[$xmlId])) {
+        if ($refreshCache || !isset($this->storesCache[$xmlId])) {
             $items = StoreTable::getList(
                 [
-                    'order' => [
+                    'order'  => [
                         'ID' => 'ASC',
                     ],
                     'filter' => [
@@ -209,6 +277,58 @@ class StoresStockConsumer implements ConsumerInterface
 
     /**
      * @param StockItem $stockItem
+     *
+     * @return Result
+     */
+    protected function createStore($stockItem) : Result
+    {
+        $result = new Result();
+
+        $resultData = [];
+        $xmlId = trim($stockItem->getStoreCode());
+
+        $id = \CCatalogStore::Add(
+            [
+                'TITLE' => $xmlId,
+                'XML_ID' => $xmlId,
+                'ACTIVE' => 'Y',
+                //'ADDRESS' => 'нет данных',
+            ]
+        );
+        if (!$id) {
+            $errorMsg = sprintf(
+                'Ошибка создания склада с внешним кодом %s: %s',
+                $xmlId,
+                $GLOBALS['APPLICATION']->GetException()
+            );
+            $result->addError(
+                new Error(
+                    $errorMsg,
+                    'createStoreError'
+                )
+            );
+
+            $this->log()->error($errorMsg);
+        } else {
+            $resultData['id'] = $id;
+
+            $this->log()->info(
+                sprintf(
+                    'Создан склад с внешним кодом %s; ID: %s',
+                    $xmlId,
+                    $id
+                )
+            );
+        }
+
+        $resultData['xmlId'] = $xmlId;
+        $result->setData($resultData);
+
+        return $result;
+    }
+
+    /**
+     * @param StockItem $stockItem
      * @param bool      $getExtResult
      *
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
@@ -232,9 +352,24 @@ class StoresStockConsumer implements ConsumerInterface
 
         $storeDataResult = null;
         if ($result->isSuccess()) {
+            // ищется склад по коду,
+            // если склад не будет найден, то создается склад с незаполненными полями
             $storeDataResult = $this->getStoreDataByXmlId($stockItem->getStoreCode());
+
             if (!$storeDataResult->isSuccess()) {
-                $result->addErrors($storeDataResult->getErrors());
+                foreach ($storeDataResult->getErrors() as $error) {
+                    if ($error->getCode() === 'storeNotFound') {
+                        $createStoreResult = $this->createStore($stockItem);
+                        if ($createStoreResult->isSuccess()) {
+                            // повторный поиск с обновлением кеша метода
+                            $storeDataResult = $this->getStoreDataByXmlId($stockItem->getStoreCode(), true);
+                        }
+                        break;
+                    }
+                }
+                if (!$storeDataResult->isSuccess()) {
+                    $result->addErrors($storeDataResult->getErrors());
+                }
             }
         }
 

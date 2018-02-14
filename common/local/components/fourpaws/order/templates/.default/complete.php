@@ -118,7 +118,7 @@ $calcResult = new \Bitrix\Sale\Delivery\CalculationResult();
                         <p>Ваш заказ будет доставлен <b>в <?= DeliveryTimeHelper::showTime(
                                     $calcResult,
                                     $arResult['ORDER_DELIVERY']['DELIVERY_DATE'],
-                                    ['SHOW_TIME' => false]
+                                    ['SHOW_TIME' => false, 'SHORT' => true]
                                 ) ?></b> по
                             адресу
                             <b><?= $arResult['ORDER_DELIVERY']['ADDRESS'] ?></b></p>

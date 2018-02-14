@@ -22,6 +22,7 @@ use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
@@ -32,10 +33,10 @@ use FourPaws\UserBundle\Service\UserCitySelectInterface;
 class FourPawsOrderComponent extends \CBitrixComponent
 {
     const DEFAULT_TEMPLATES_404 = [
-        OrderService::AUTH_STEP     => 'index.php',
-        OrderService::DELIVERY_STEP => 'delivery/',
-        OrderService::PAYMENT_STEP  => 'payment/',
-        OrderService::COMPLETE_STEP => 'complete/#ORDER_ID#',
+        OrderStorageService::AUTH_STEP     => 'index.php',
+        OrderStorageService::DELIVERY_STEP => 'delivery/',
+        OrderStorageService::PAYMENT_STEP  => 'payment/',
+        OrderStorageService::COMPLETE_STEP => 'complete/#ORDER_ID#',
     ];
 
     /**
@@ -45,6 +46,9 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
     /** @var OrderService */
     protected $orderService;
+
+    /** @var OrderStorageService */
+    protected $orderStorageService;
 
     /** @var DeliveryService */
     protected $deliveryService;
@@ -65,6 +69,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
     {
         $serviceContainer = Application::getInstance()->getContainer();
         $this->orderService = $serviceContainer->get(OrderService::class);
+        $this->orderStorageService = $serviceContainer->get(OrderStorageService::class);
         $this->deliveryService = $serviceContainer->get('delivery.service');
         $this->storeService = $serviceContainer->get('store.service');
         $this->userAuthProvider = $serviceContainer->get(UserAuthorizationInterface::class);
@@ -79,7 +84,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         global $APPLICATION;
         try {
             $variables = [];
-            $componentPage = CComponentEngine::ParseComponentPath(
+            $componentPage = CComponentEngine::parseComponentPath(
                 $this->arParams['SEF_FOLDER'],
                 self::DEFAULT_TEMPLATES_404,
                 $variables
@@ -120,14 +125,14 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $basket = $this->basketService->getBasket()->getOrderableItems();
 
         $order = null;
-        if (!$storage = $this->orderService->getStorage()) {
+        if (!$storage = $this->orderStorageService->getStorage()) {
             throw new Exception('Failed to initialize storage');
         }
 
         $this->arResult['URL'] = [
-            'AUTH'     => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderService::AUTH_STEP],
-            'DELIVERY' => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderService::DELIVERY_STEP],
-            'PAYMENT'  => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderService::PAYMENT_STEP],
+            'AUTH'     => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderStorageService::AUTH_STEP],
+            'DELIVERY' => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderStorageService::DELIVERY_STEP],
+            'PAYMENT'  => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderStorageService::PAYMENT_STEP],
         ];
 
         /** @var \Symfony\Bundle\FrameworkBundle\Routing\Router $router */
@@ -146,18 +151,32 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->arResult['URL'][$key] = $route->getPath();
         }
 
-        if ($this->currentStep === OrderService::COMPLETE_STEP) {
+        if ($this->currentStep === OrderStorageService::COMPLETE_STEP) {
             /**
              * При переходе на страницу "спасибо за заказ" мы ищем заказ с переданным id
              */
             try {
-                $order = $this->orderService->getById(
+                $order = $this->orderService->getOrderById(
                     $this->arParams['ORDER_ID'],
                     true,
                     $storage->getUserId(),
                     $this->arParams['HASH']
                 );
             } catch (NotFoundException $e) {
+                Tools::process404('', true, true, true);
+            }
+
+            /**
+             * Попытка открыть уже обработанный заказ
+             */
+            if (!\in_array(
+                    $order->getField('STATUS_ID'),
+                    [
+                        OrderService::STATUS_NEW_COURIER,
+                        OrderService::STATUS_NEW_PICKUP
+                    ]
+                )
+            ) {
                 Tools::process404('', true, true, true);
             }
 
@@ -182,18 +201,18 @@ class FourPawsOrderComponent extends \CBitrixComponent
             if ($basket->isEmpty()) {
                 LocalRedirect('/cart');
             }
-            $realStep = $this->orderService->validateStorage($storage, $this->currentStep);
-            if ($realStep != $this->currentStep) {
+            $realStep = $this->orderStorageService->validateStorage($storage, $this->currentStep);
+            if ($realStep !== $this->currentStep) {
                 LocalRedirect($this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[$realStep]);
             }
 
             $selectedCity = $this->userCityProvider->getSelectedCity();
 
-            $addresses = [];
             $payments = null;
-            if ($this->currentStep === OrderService::DELIVERY_STEP) {
+            if ($this->currentStep === OrderStorageService::DELIVERY_STEP) {
                 $deliveries = $this->orderService->getDeliveries();
 
+                $addresses = null;
                 if ($storage->getUserId()) {
                     /** @var AddressService $addressService */
                     $addressService = Application::getInstance()->getContainer()->get('address.service');
@@ -214,11 +233,10 @@ class FourPawsOrderComponent extends \CBitrixComponent
                         $selectedDelivery = $calculationResult;
                     }
 
-                    $deliveryCode = $calculationResult->getData()['DELIVERY_CODE'];
-                    if (in_array($deliveryCode, DeliveryService::DELIVERY_CODES)) {
-                        $delivery = $calculationResult;
-                    } elseif (in_array($deliveryCode, DeliveryService::PICKUP_CODES)) {
+                    if ($this->deliveryService->isPickup($calculationResult)) {
                         $pickup = $calculationResult;
+                    } elseif ($this->deliveryService->isDelivery($calculationResult)) {
+                        $delivery = $calculationResult;
                     }
                 }
 
@@ -229,13 +247,14 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
                 $this->arResult['PICKUP'] = $pickup;
                 $this->arResult['DELIVERY'] = $delivery;
+                $this->arResult['ADDRESSES'] = $addresses;
                 $this->arResult['SELECTED_DELIVERY'] = $selectedDelivery;
                 $this->arResult['SELECTED_DELIVERY_ID'] = $selectedDeliveryId;
 
                 $this->getPickupData($deliveries, $storage);
-            } elseif ($this->currentStep === OrderService::PAYMENT_STEP) {
+            } elseif ($this->currentStep === OrderStorageService::PAYMENT_STEP) {
                 $deliveries = $this->orderService->getDeliveries();
-                $payments = $this->orderService->getAvailablePayments($storage, true);
+                $payments = $this->orderStorageService->getAvailablePayments($storage, true);
                 $selectedDelivery = null;
                 /** @var CalculationResult $delivery */
                 foreach ($deliveries as $delivery) {
@@ -248,14 +267,13 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
                 if (!$selectedDelivery) {
                     LocalRedirect(
-                        $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderService::DELIVERY_STEP]
+                        $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderStorageService::DELIVERY_STEP]
                     );
                 }
 
                 $this->arResult['SELECTED_DELIVERY'] = $selectedDelivery;
             }
 
-            $this->arResult['ADDRESSES'] = $addresses;
             $this->arResult['PAYMENTS'] = $payments;
             $this->arResult['SELECTED_CITY'] = $selectedCity;
         }
@@ -348,16 +366,16 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 $properties['HOUSE'],
             ];
             if (!empty($properties['BUILDING'])) {
-                $result['ADDRESS'][] = ', корпус ' . $properties['BUILDING'];
+                $result['ADDRESS'][] = 'корпус ' . $properties['BUILDING'];
             }
             if (!empty($properties['PORCH'])) {
-                $result['ADDRESS'][] = ', подъезд ' . $properties['PORCH'];
+                $result['ADDRESS'][] = 'подъезд ' . $properties['PORCH'];
             }
             if (!empty($properties['FLOOR'])) {
-                $result['ADDRESS'][] = ', этаж ' . $properties['FLOOR'];
+                $result['ADDRESS'][] = 'этаж ' . $properties['FLOOR'];
             }
             if (!empty($properties['APARTMENT'])) {
-                $result['ADDRESS'][] = ', кв. ' . $properties['APARTMENT'];
+                $result['ADDRESS'][] = 'кв. ' . $properties['APARTMENT'];
             }
             $result['ADDRESS'] = implode(', ', $result['ADDRESS']);
         }

@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Main\Type\Date;
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\PersonalBundle\Entity\Pet;
 
@@ -11,12 +12,14 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @global CMain $APPLICATION
  */
 
+/** @var ArrayCollection $items */
+$items = $arResult['ITEMS'];
 ?>
 <div class="b-tab-content__container -active js-tab-account active" data-tab-content="my-pet">
     <div class="b-account-adress">
         <?php /** @var Pet $pet */
-        if (\is_array($arResult['ITEMS']) && !empty($arResult['ITEMS'])) {
-            foreach ($arResult['ITEMS'] as $pet) {?>
+        if (!$items->isEmpty()) {
+            foreach ($items as $pet) {?>
                 <div class="b-account-border-block b-account-border-block--pet js-parent-cont js-parent-cont--pet"
                      data-image="<?= $pet->getResizePopupImgPath() ?>"
                      data-name-pet="<?= $pet->getName() ?>"

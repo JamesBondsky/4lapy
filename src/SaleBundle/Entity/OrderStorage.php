@@ -27,7 +27,7 @@ class OrderStorage
      *
      * @var int
      * @Serializer\Type("integer")
-     * @Serializer\SerializedName("FUSER_ID")
+     * @Serializer\SerializedName("UF_FUSER_ID")
      * @Serializer\Groups(groups={"read","update","delete"})
      * @Assert\NotBlank(groups={"auth","delivery","payment"})
      */
@@ -38,7 +38,7 @@ class OrderStorage
      *
      * @var int
      * @Serializer\Type("integer")
-     * @Serializer\SerializedName("USER_ID")
+     * @Serializer\SerializedName("UF_USER_ID")
      * @Serializer\Groups(groups={"read","update","delete"})
      */
     protected $userId = 0;
@@ -313,7 +313,7 @@ class OrderStorage
      */
     public function getFuserId(): int
     {
-        return $this->fuserId;
+        return $this->fuserId ?: 0;
     }
 
     /**
@@ -333,7 +333,7 @@ class OrderStorage
      */
     public function getUserId(): int
     {
-        return $this->userId;
+        return $this->userId ?: 0;
     }
 
     /**
@@ -341,7 +341,7 @@ class OrderStorage
      */
     public function isCaptchaFilled(): bool
     {
-        return $this->captchaFilled;
+        return $this->captchaFilled ?: false;
     }
 
     /**
@@ -361,7 +361,7 @@ class OrderStorage
      */
     public function getPaymentId(): int
     {
-        return $this->paymentId;
+        return $this->paymentId ?: 0;
     }
 
     /**
@@ -381,7 +381,7 @@ class OrderStorage
      */
     public function getDeliveryId(): int
     {
-        return $this->deliveryId;
+        return $this->deliveryId ?: 0;
     }
 
     /**
@@ -401,7 +401,7 @@ class OrderStorage
      */
     public function getComment(): string
     {
-        return $this->comment;
+        return $this->comment ?: '';
     }
 
     /**
@@ -421,7 +421,7 @@ class OrderStorage
      */
     public function getName(): string
     {
-        return $this->name;
+        return $this->name ?: '';
     }
 
     /**
@@ -441,7 +441,7 @@ class OrderStorage
      */
     public function getPhone(): string
     {
-        return $this->phone;
+        return $this->phone ?: '';
     }
 
     /**
@@ -464,7 +464,7 @@ class OrderStorage
      */
     public function getAltPhone(): string
     {
-        return $this->altPhone;
+        return $this->altPhone ?: '';
     }
 
     /**
@@ -487,7 +487,7 @@ class OrderStorage
      */
     public function getEmail(): string
     {
-        return $this->email;
+        return $this->email ?: '';
     }
 
     /**
@@ -507,7 +507,7 @@ class OrderStorage
      */
     public function getAddressId(): int
     {
-        return $this->addressId;
+        return $this->addressId ?: 0;
     }
 
     /**
@@ -527,7 +527,7 @@ class OrderStorage
      */
     public function getStreet(): string
     {
-        return $this->street;
+        return $this->street ?: '';
     }
 
     /**
@@ -547,7 +547,7 @@ class OrderStorage
      */
     public function getHouse(): string
     {
-        return $this->house;
+        return $this->house ?: '';
     }
 
     /**
@@ -567,7 +567,7 @@ class OrderStorage
      */
     public function getBuilding(): string
     {
-        return $this->building;
+        return $this->building ?: '';
     }
 
     /**
@@ -587,7 +587,7 @@ class OrderStorage
      */
     public function getApartment(): string
     {
-        return $this->apartment;
+        return $this->apartment ?: '';
     }
 
     /**
@@ -607,7 +607,7 @@ class OrderStorage
      */
     public function getPorch(): string
     {
-        return $this->porch;
+        return $this->porch ?: '';
     }
 
     /**
@@ -627,7 +627,7 @@ class OrderStorage
      */
     public function getFloor(): string
     {
-        return $this->floor;
+        return $this->floor ?: '';
     }
 
     /**
@@ -647,7 +647,7 @@ class OrderStorage
      */
     public function getDeliveryDate(): int
     {
-        return (int)$this->deliveryDate;
+        return $this->deliveryDate ?: 0;
     }
 
     /**
@@ -667,7 +667,7 @@ class OrderStorage
      */
     public function getDeliveryInterval(): int
     {
-        return (int)$this->deliveryInterval;
+        return $this->deliveryInterval ?: 0;
     }
 
     /**
@@ -687,7 +687,7 @@ class OrderStorage
      */
     public function getDeliveryPlaceCode(): string
     {
-        return $this->deliveryPlaceCode;
+        return $this->deliveryPlaceCode ?: '';
     }
 
     /**
@@ -707,7 +707,7 @@ class OrderStorage
      */
     public function getCommunicationWay(): string
     {
-        return $this->communicationWay;
+        return $this->communicationWay ?: '';
     }
 
     /**
@@ -727,7 +727,7 @@ class OrderStorage
      */
     public function getSourceCode(): string
     {
-        return $this->sourceCode;
+        return $this->sourceCode ?: '';
     }
 
     /**
@@ -747,7 +747,7 @@ class OrderStorage
      */
     public function getPartnerCode(): string
     {
-        return $this->partnerCode;
+        return $this->partnerCode ?: '';
     }
 
     /**
@@ -767,7 +767,7 @@ class OrderStorage
      */
     public function getCity(): string
     {
-        return $this->city;
+        return $this->city ?: '';
     }
 
     /**
@@ -787,7 +787,7 @@ class OrderStorage
      */
     public function getCityCode(): string
     {
-        return $this->cityCode;
+        return $this->cityCode ?: '';
     }
 
     /**
@@ -807,7 +807,7 @@ class OrderStorage
      */
     public function isPartialGet(): bool
     {
-        return $this->partialGet;
+        return $this->partialGet ?: true;
     }
 
     /**
@@ -827,7 +827,7 @@ class OrderStorage
      */
     public function hasBonusPayment(): bool
     {
-        return $this->bonusPayment;
+        return $this->bonusPayment ?: false;
     }
 
     /**
@@ -847,7 +847,7 @@ class OrderStorage
      */
     public function getBonusSum(): int
     {
-        return $this->bonusSum;
+        return $this->bonusSum ?: 0;
     }
 
     /**

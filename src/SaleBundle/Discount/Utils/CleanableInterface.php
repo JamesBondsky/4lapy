@@ -7,7 +7,7 @@
  * @copyright   ADV/web-engineering co.
  */
 
-namespace FourPaws\SaleBundle\Discount\Cleaner;
+namespace FourPaws\SaleBundle\Discount\Utils;
 
 
 use Bitrix\Sale\Basket;

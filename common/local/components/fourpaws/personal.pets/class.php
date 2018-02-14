@@ -33,10 +33,10 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
      * @var PetService
      */
     private $petService;
-    
+
     /** @var UserAuthorizationInterface */
     private $authUserProvider;
-    
+
     /**
      * AutoloadingIssuesInspection constructor.
      *
@@ -58,10 +58,10 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
             /** @noinspection PhpUnhandledExceptionInspection */
             throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
         }
-        $this->petService       = $container->get('pet.service');
+        $this->petService = $container->get('pet.service');
         $this->authUserProvider = $container->get(UserAuthorizationInterface::class);
     }
-    
+
     /**
      * {@inheritdoc}
      * @throws ArgumentException
@@ -78,26 +78,27 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
     {
         if (!$this->authUserProvider->isAuthorized()) {
             define('NEED_AUTH', true);
-            
+
             return null;
         }
-        
+
         $this->setFrameMode(true);
-        
+
+        /** @todo проверить кеширование - возможно его надо будет сбрасывать по тегу */
         if ($this->startResultCache()) {
             $this->arResult['ITEMS'] = $this->petService->getCurUserPets();
             /** получение пола */
             $this->setGenderVals();
-            
+
             /** получение типов питомцев */
             $this->setPetTypes();
-            
+
             $this->includeComponentTemplate();
         }
-        
+
         return true;
     }
-    
+
     /**
      * @throws ArgumentException
      * @throws LoaderException
@@ -105,26 +106,26 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
     private function setGenderVals()
     {
         $this->arResult['GENDER'] = [];
-        $userFieldId              = UserFieldTable::query()->setSelect(['ID', 'XML_ID'])->setFilter(
+        $userFieldId = UserFieldTable::query()->setSelect(['ID', 'XML_ID'])->setFilter(
             [
                 'FIELD_NAME' => 'UF_GENDER',
                 'ENTITY_ID'  => 'HLBLOCK_' . HighloadHelper::getIdByName('Pet'),
             ]
         )->exec()->fetch()['ID'];
-        $userFieldEnum            = new \CUserFieldEnum();
-        $res                      = $userFieldEnum->GetList([], ['USER_FIELD_ID' => $userFieldId]);
+        $userFieldEnum = new \CUserFieldEnum();
+        $res = $userFieldEnum->GetList([], ['USER_FIELD_ID' => $userFieldId]);
         while ($item = $res->Fetch()) {
             $this->arResult['GENDER'][$item['XML_ID']] = $item;
         }
     }
-    
+
     /**
      * @throws \Exception
      */
     private function setPetTypes()
     {
         $this->arResult['PET_TYPES'] = [];
-        $res                         =
+        $res =
             HLBlockFactory::createTableObject(Pet::PET_TYPE)::query()->setFilter(['UF_USE_BY_PET' => 1])->setSelect(
                 [
                     'ID',

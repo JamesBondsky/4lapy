@@ -19,7 +19,7 @@ use FourPaws\External\Manzana\Model\Client;
           method="post">
         <input type="hidden" name="action" value="register">
         <input type="hidden" name="PERSONAL_PHONE" value="<?= $phone ?>">
-        <div class="b-input-line b-input-line--user-data js-no-valid">
+        <div class="b-input-line b-input-line--user-data js-hidden-valid-fields js-small-input-two">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-surname">Фамилия</label>
             </div>
@@ -30,12 +30,12 @@ use FourPaws\External\Manzana\Model\Client;
                        name="LAST_NAME"
                        data-text="0"
                        type="text"
-                       value="<?= $manzanaItem instanceof Client ? $manzanaItem->lastName : '' ?>" />
+                       value="<?= $manzanaItem instanceof Client ? $manzanaItem->lastName : '' ?>"/>
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
         </div>
-        <div class="b-input-line b-input-line--user-data js-small-input">
+        <div class="b-input-line b-input-line--user-data js-small-input-two">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-name">Имя</label>
                 <span class="b-input-line__require">(обязательно)</span>
@@ -47,7 +47,7 @@ use FourPaws\External\Manzana\Model\Client;
                        name="NAME"
                        data-text="1"
                        placeholder=""
-                       value="<?= $manzanaItem instanceof Client ? $manzanaItem->firstName : '' ?>" />
+                       value="<?= $manzanaItem instanceof Client ? $manzanaItem->firstName : '' ?>"/>
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
@@ -63,7 +63,7 @@ use FourPaws\External\Manzana\Model\Client;
                        name="SECOND_NAME"
                        data-text="2"
                        placeholder=""
-                       value="<?= $manzanaItem instanceof Client ? $manzanaItem->secondName : '' ?>" />
+                       value="<?= $manzanaItem instanceof Client ? $manzanaItem->secondName : '' ?>"/>
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
@@ -79,12 +79,12 @@ use FourPaws\External\Manzana\Model\Client;
                        name="PERSONAL_BIRTHDAY"
                        data-text="3"
                        placeholder=""
-                       value="<?= $manzanaItem instanceof Client ? $manzanaItem->birthDate : '' ?>" />
+                       value="<?= $manzanaItem instanceof Client ? $manzanaItem->birthDate : '' ?>"/>
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
         </div>
-        <div class="b-input-line b-input-line--user-data js-small-input">
+        <div class="b-input-line b-input-line--user-data">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-email">Эл. почта</label>
                 <span class="b-input-line__require">(обязательно)</span>
@@ -95,12 +95,12 @@ use FourPaws\External\Manzana\Model\Client;
                        id="registration-email"
                        name="EMAIL"
                        placeholder=""
-                       value="<?= $manzanaItem instanceof Client ? $manzanaItem->email : '' ?>" />
+                       value="<?= $manzanaItem instanceof Client ? $manzanaItem->email : '' ?>"/>
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
         </div>
-        <div class="b-input-line b-input-line--user-data js-small-input">
+        <div class="b-input-line b-input-line--user-data">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-password-5">Пароль</label>
                 <span class="b-input-line__require">(обязательно)</span>
@@ -110,7 +110,7 @@ use FourPaws\External\Manzana\Model\Client;
                        type="password"
                        id="registration-password-5"
                        name="PASSWORD"
-                       placeholder="" />
+                       placeholder=""/>
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
@@ -126,7 +126,7 @@ use FourPaws\External\Manzana\Model\Client;
                        id="registration-male"
                        value="M"
                        data-radio="0"
-                       checked="checked" />
+                       checked="checked"/>
                 <label class="b-radio__label" for="registration-male"><span class="b-radio__text-label">мужской</span>
                 </label>
             </div>
@@ -136,13 +136,13 @@ use FourPaws\External\Manzana\Model\Client;
                        name="PERSONAL_GENDER"
                        id="registration-female"
                        value="F"
-                       data-radio="1" />
+                       data-radio="1"/>
                 <label class="b-radio__label" for="registration-female"><span class="b-radio__text-label">женский</span>
                 </label>
             </div>
         </div>
         <div class="b-checkbox b-checkbox--agree">
-            <input class="b-checkbox__input" type="checkbox" name="UF_CONFIRMATION" id="registration-agree" required />
+            <input class="b-checkbox__input" type="checkbox" name="UF_CONFIRMATION" id="registration-agree" required/>
             <label class="b-checkbox__name b-checkbox__name--agree" for="registration-agree">
                 <span class="b-checkbox__text-agree">Я ознакомлен(а) и соглашаюсь с условиями
                     <a class="b-checkbox__link-agree"

@@ -22,7 +22,7 @@ use FourPaws\Helpers\WordHelper;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\SaleBundle\Entity\OrderStorage;
-use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\SaleBundle\Service\OrderStorageService;
 
 $basket = $arResult['BASKET'];
 
@@ -35,7 +35,7 @@ $storage = $arResult['STORAGE'];
 $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
 
 $showDelayed = false;
-if ($arResult['STEP'] === OrderService::DELIVERY_STEP) {
+if ($arResult['STEP'] === OrderStorageService::DELIVERY_STEP) {
     /** @var Store $selectedShop */
     $selectedShop = $arResult['SELECTED_SHOP'];
     $stockResult = $deliveryService->getStockResultByDelivery($selectedDelivery);
@@ -134,7 +134,7 @@ if ($arResult['STEP'] === OrderService::DELIVERY_STEP) {
             <?php } ?>
         </ul>
     </div>
-    <?php if ($arResult['STEP'] === OrderService::DELIVERY_STEP) { ?>
+    <?php if ($arResult['STEP'] === OrderStorageService::DELIVERY_STEP) { ?>
         <h4 class="b-title b-title--order-list js-popup-mobile-link js-basket-link js-parts-list-title"
             <?= !$showDelayed ? 'style="display:none"' : '' ?>>
             <span class="js-mobile-title-order">Останется в корзине: <?= $delayedQuantity ?></span>
