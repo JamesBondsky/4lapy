@@ -29,9 +29,10 @@ class FourPawsSapExtension extends ConfigurableExtension
     {
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
         $loader->load('services.yml');
+
+        $this->configDirectoryFinder($mergedConfig['directory_sources'], $container);
         $this->registerConsumerTags($container);
         $this->registerSourceTags($container);
-        $this->configDirectoryFinder($mergedConfig['directory_sources'], $container);
         $this->configPipelines($mergedConfig['pipelines'], $container);
     }
 

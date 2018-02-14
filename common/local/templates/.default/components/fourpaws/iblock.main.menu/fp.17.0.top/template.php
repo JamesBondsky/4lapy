@@ -5,7 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 /**
  * Главное меню сайта
  *
- * @updated: 11.01.2018
+ * @updated: 14.02.2018
  */
 /**
  * @global CMain $APPLICATION
@@ -35,34 +35,70 @@ $sArrowDownIcoBrand = '<span class="b-icon b-icon--brand-menu">'.$sArrowDownSwg_
 // 
 // Основной блок меню
 //
-?><nav class="b-menu js-nav-first-mobile">
-    <ul class="b-menu__list"><?php
+?>
+<nav class="b-menu js-nav-first-mobile">
+    <ul class="b-menu__list">
+        <?php
         foreach ($arResult['MENU_TREE'] as $arItem) {
             if ($arItem['NESTED'] || $arItem['IS_BRAND_MENU']) {
-                $sAddClass1 = $arItem['IS_BRAND_MENU'] ? ' js-menu-brand-mobile' : ' js-menu-pet-mobile';
-                $sAddClass2 = $arItem['IS_BRAND_MENU'] ? ' js-open-brand-mobile' : ' js-open-step-mobile';
-                ?><li class="b-menu__item b-menu__item--more<?=$sAddClass1?>">
-                    <a class="b-menu__link b-menu__link--more js-open-main-menu<?=$sAddClass2?>"<?=$arItem['_LINK_ATTR1_']?> href="<?=$arItem['_URL_']?>"><?php
+                if ($arItem['CODE'] === 'pet') {
+                    $sAddClass1 = ' js-menu-pet-mobile';
+                    $sAddClass2 = ' js-open-step-mobile';
+                } else {
+                    $sAddClass1 = $arItem['IS_BRAND_MENU'] ? ' js-menu-brand-mobile' : '';
+                    $sAddClass2 = $arItem['IS_BRAND_MENU'] ? ' js-open-brand-mobile' : '';
+                }
+                ?>
+                <li class="b-menu__item b-menu__item--more<?=$sAddClass1?>">
+                    <a class="b-menu__link b-menu__link--more js-open-main-menu<?=$sAddClass2?>"<?=$arItem['_LINK_ATTR1_']?> href="<?=$arItem['_URL_']?>">
+                        <?php
                         echo $arItem['_TEXT_'];
                         echo $sArrowDownIco;
-                    ?></a>
-                </li><?php
+                        ?>
+                    </a>
+                    <?php
+                    // Выпадающее меню, если это не меню "Товары по питомцу" и "По бренду".
+                    // Только второй уровень версткой предусмотрен
+                    if ($arItem['CODE'] !== 'pet' && !$arItem['IS_BRAND_MENU']) {
+                        ?>
+                        <div class="b-menu__dropdown b-dropdown-menu">
+                            <?php
+                                foreach ($arItem['NESTED'] as $arSecondLevelItem) {
+                                    ?>
+                                    <a class="b-menu__link"<?=$arSecondLevelItem['_LINK_ATTR1_']?> href="<?=$arSecondLevelItem['_URL_']?>">
+                                        <?=$arSecondLevelItem['_TEXT_']?>
+                                    </a>
+                                    <?php
+                                }
+                            ?>
+                        </div>
+                        <?php
+                    }
+                    ?>
+                </li>
+                <?php
             } else {
-                ?><li class="b-menu__item">
+                ?>
+                <li class="b-menu__item">
                     <a class="b-menu__link"<?=$arItem['_LINK_ATTR1_']?> href="<?=$arItem['_URL_']?>"><?=$arItem['_TEXT_']?></a>
-                </li><?php
+                </li>
+                <?php
             }
         }
-    ?></ul>
+        ?>
+    </ul>
 </nav><?php
 
 //
-// Dropdown-меню
+// Dropdown-меню для пунктов "Товары по питомцу" и "По бренду"
 //
 ob_start();
 foreach ($arResult['MENU_TREE'] as $arFirstLevelItem) {
     if (!$arFirstLevelItem['IS_BRAND_MENU']) {
         if (!$arFirstLevelItem['NESTED']) {
+            continue;
+        }
+        if ($arFirstLevelItem['CODE'] !== 'pet') {
             continue;
         }
         ?><div class="b-menu-dropdown js-menu-dropdown js-menu-pet-desktop">
@@ -254,7 +290,7 @@ foreach ($arResult['MENU_TREE'] as $arFirstLevelItem) {
 }
 $arResult['header_dropdown_menu'] = ob_get_clean();
 $component->setResultCacheKeys(
-	array(
-		'header_dropdown_menu',
-	)
+    array(
+        'header_dropdown_menu',
+    )
 );
