@@ -8,7 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @global CMain                                     $APPLICATION
  * @var array                                        $arParams
  * @var array                                        $arResult
- * @var FourPawsFrontOfficeCardRegistrationComponent $component
+ * @var CBitrixComponent $component
  * @var CBitrixComponentTemplate                     $this
  * @var string                                       $templateName
  * @var string                                       $componentPath
@@ -31,6 +31,10 @@ if ($arResult['AUTH_ACTION_SUCCESS'] === 'Y') {
         $jsonResult['message'] = 'Невозможно авторизоваться под указанным пользователем';
     } elseif (!empty($arResult['ERROR']['EXEC']['emptyUserId'])) {
         $jsonResult['message'] = 'Идентификатор пользователя не задан, либо задан некорректно';
+    } elseif ($arResult['IS_AVATAR_AUTHORIZED'] === 'Y') {
+        $jsonResult['message'] = 'Авторизация уже была произведена';
+    } elseif ($arResult['CAN_ACCESS'] === 'N') {
+        $jsonResult['message'] = 'При обработке запроса произошла ошибка: отказано в доступе';
     }
 }
 
