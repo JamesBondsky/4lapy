@@ -215,7 +215,6 @@ class OrderStorageService
 
     /**
      * @param OrderStorage $storage
-     * @param null|Order $order
      *
      * @throws \Exception
      * @throws NotFoundException
@@ -224,21 +223,19 @@ class OrderStorageService
      * @throws ObjectNotFoundException
      * @return PaymentCollection
      */
-    public function getPayments(OrderStorage $storage, Order $order = null): PaymentCollection
+    public function getPayments(OrderStorage $storage): PaymentCollection
     {
         if (!$deliveryId = $storage->getDeliveryId()) {
             throw new NotFoundException('No payments available');
         }
 
         if (!$this->paymentCollection) {
-            if (!$order instanceof Order) {
-                /** @noinspection CallableParameterUseCaseInTypeContextInspection */
-                $order = Order::create(
-                    SITE_ID,
-                    null,
-                    CurrencyManager::getBaseCurrency()
-                );
-            }
+            /** @noinspection CallableParameterUseCaseInTypeContextInspection */
+            $order = Order::create(
+                SITE_ID,
+                null,
+                CurrencyManager::getBaseCurrency()
+            );
             $this->paymentCollection = $order->getPaymentCollection();
             $sum = $this->basketService->getBasket()->getOrderableItems()->getPrice();
 

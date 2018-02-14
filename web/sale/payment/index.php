@@ -1,5 +1,4 @@
 <?php
-
 /*
  * @copyright Copyright (c) ADV/web-engineering co
  */
@@ -11,12 +10,10 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
  */
 
 $APPLICATION->IncludeComponent(
-    'fourpaws:order',
+    'fourpaws:order.payment',
     '',
     [
-        'SET_TITLE'  => 'Y',
-        'SEF_MODE'   => 'Y',
-        'SEF_FOLDER' => '/sale/order/',
+        'ORDER_ID'   => $_REQUEST['ORDER_ID'],
         'HASH'       => $_REQUEST['HASH'],
     ],
     false,

@@ -59,6 +59,11 @@ class OrderService
     const STATUS_NEW_PICKUP = 'N';
 
     /**
+     * Статус, в который заказ переходит при оплате
+     */
+    const STATUS_PAID = 'J';
+
+    /**
      * @var AddressService
      */
     protected $addressService;
@@ -183,12 +188,22 @@ class OrderService
          * Задание способов оплаты
          */
         if ($storage->getPaymentId()) {
-            /** @var Payment $payment */
-            foreach ($this->orderStorageService->getPayments($storage, $order) as $payment) {
-                if (!$payment->isInner()) {
-                    $payment->setField('PAY_SYSTEM_ID', $storage->getPaymentId());
-                }
+            $paymentCollection = $order->getPaymentCollection();
+            $sum = $order->getBasket()->getOrderableItems()->getPrice();
+
+            if ($storage->hasBonusPayment() && $storage->getBonusSum()) {
+                $innerPayment = $paymentCollection->getInnerPayment();
+                $innerPayment->setField('SUM', $storage->getBonusSum());
+                $sum -= $storage->getBonusSum();
             }
+
+            $extPayment = $paymentCollection->createItem();
+            $extPayment->setField('SUM', $sum);
+            $extPayment->setField('PAY_SYSTEM_ID', $storage->getPaymentId());
+
+            /** @var \Bitrix\Sale\PaySystem\Service $paySystem */
+            $paySystem = $extPayment->getPaySystem();
+            $extPayment->setField('PAY_SYSTEM_NAME', $paySystem->getField('NAME'));
         } else {
             throw new OrderCreateException('Не выбран способ оплаты');
         }
@@ -402,6 +417,7 @@ class OrderService
 
             $this->addressService->add($address);
         }
+        $order->doFinalAction(true);
 
         $result = $order->save();
         if (!$result->isSuccess()) {
