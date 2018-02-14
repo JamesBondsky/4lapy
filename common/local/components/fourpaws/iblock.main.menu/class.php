@@ -5,7 +5,7 @@
  * Class CFourPawsIBlockMainMenu
  * Компонент главного меню сайта, генерируемого по специальному инфоблоку
  *
- * @updated: 28.12.2017
+ * @updated: 14.02.2018
  */
 
 class CFourPawsIBlockMainMenu extends \CBitrixComponent {
@@ -70,7 +70,7 @@ class CFourPawsIBlockMainMenu extends \CBitrixComponent {
         $sCacheDir = '/'.ltrim($sCacheDir, '/');
         $sCachePath = $sCacheDir; 
 
-        $sCacheId = md5(serialize([$arGroups]));
+        $sCacheId = md5(serialize([$arGroups, 'v2']));
 
         if ($this->startResultCache($arParams['CACHE_TIME'], $sCacheId, $sCachePath)) {
             if (!\Bitrix\Main\Loader::includeModule('iblock')) {
@@ -338,13 +338,15 @@ class CFourPawsIBlockMainMenu extends \CBitrixComponent {
                 'ID', 'NAME', 'IBLOCK_SECTION_ID',
                 'LEFT_MARGIN', 'RIGHT_MARGIN', 'DEPTH_LEVEL',
                 'SORT',
-                //'CODE', 'XML_ID',
+                'CODE', 'XML_ID',
                 'UF_*',
             ]
         );
         while ($arItem = $dbItems->getNext(true, false)) {
             $this->arMenuIBlockSectionsTree[$arItem['ID']] = [
                 'ID' => $arItem['ID'],
+                'CODE' => $arItem['CODE'],
+                'XML_ID' => $arItem['XML_ID'],
                 'NAME' => $arItem['NAME'],
                 'IBLOCK_SECTION_ID' => (int)$arItem['IBLOCK_SECTION_ID'],
                 'SORT' => $arItem['SORT'],
@@ -413,7 +415,7 @@ class CFourPawsIBlockMainMenu extends \CBitrixComponent {
             [
                 'ID', 'NAME', 'IBLOCK_ID', 'IBLOCK_SECTION_ID',
                 'SORT',
-                //'CODE', 'XML_ID',
+                'CODE', 'XML_ID',
                 'PROPERTY_HREF',
                 'PROPERTY_ELEMENT_HREF',
                 'PROPERTY_SECTION_HREF',
@@ -423,6 +425,8 @@ class CFourPawsIBlockMainMenu extends \CBitrixComponent {
         while ($arItem = $dbItems->getNext(true, false)) {
             $this->arMenuIBlockElements[$arItem['ID']] = [
                 'ID' => $arItem['ID'],
+                'CODE' => $arItem['CODE'],
+                'XML_ID' => $arItem['XML_ID'],
                 'NAME' => $arItem['NAME'],
                 'IBLOCK_SECTION_ID' => (int)$arItem['IBLOCK_SECTION_ID'],
                 'SORT' => $arItem['SORT'],
