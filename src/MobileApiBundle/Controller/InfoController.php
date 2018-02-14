@@ -6,10 +6,8 @@
 
 namespace FourPaws\MobileApiBundle\Controller;
 
-use Doctrine\Common\Collections\Collection;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
-use FourPaws\MobileApiBundle\Dto\Error;
 use FourPaws\MobileApiBundle\Dto\Request\InfoRequest;
 use FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\MobileApiBundle\Services\Api\InfoService;
@@ -68,19 +66,13 @@ class InfoController extends FOSRestController
      * @Rest\Get("/info/")
      * @Rest\View()
      *
-     * @param InfoRequest        $infoRequest
-     * @param Collection|Error[] $apiErrors
+     * @param InfoRequest $infoRequest
      *
      * @return Response
      */
-    public function getInfoAction(InfoRequest $infoRequest, Collection $apiErrors): Response
+    public function getInfoAction(InfoRequest $infoRequest): Response
     {
         $response = new Response();
-        $response->setErrors($apiErrors);
-        if ($response->getErrors()->count()) {
-            return $response;
-        }
-
         $response->setData($this->infoService->getInfo(
             $infoRequest->getType(),
             $infoRequest->getInfoId(),

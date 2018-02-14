@@ -6,6 +6,7 @@ imports:
   - { resource: configs/fos_rest.yml }
   - { resource: configs/old_sound_rabbit_mq.yml }
   - { resource: configs/four_paws_sap.yml }
+  - { resource: configs/four_paws_mobile_api.yml }
 
 parameters:
   manzana.guzzle.curl:

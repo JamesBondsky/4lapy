@@ -79,12 +79,13 @@ class SimpleUnserializeRequestConverter implements ParamConverterInterface
             throw new SystemException('Cant converte request to object');
         }
 
+        $notThrowException = $configuration->getOptions()['not_throw_exception'] ?? false;
+
         $validationResult = $this->validator->validate($object);
-        if ($validationResult->count() > 0) {
-            if ($configuration->getOptions()['throw_validation_exception'] ?? false) {
-                throw new ValidationException('Cant converte request to object');
-            }
+        if (!$notThrowException && $validationResult->count() > 0) {
+            throw new ValidationException('Cant converte request to object');
         }
+
         if (!$request->attributes->has(static::API_ERRORS)) {
             $request->attributes->set(
                 static::API_ERRORS,

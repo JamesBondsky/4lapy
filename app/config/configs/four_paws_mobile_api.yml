@@ -1,0 +1,6 @@
+four_paws_mobile_api:
+  exceptions:
+#    FourPaws\MobileApiBundle\Exception\ValidationException:
+#      code: 123
+#      message: 'we all gonna die'
+#      status_code: 401

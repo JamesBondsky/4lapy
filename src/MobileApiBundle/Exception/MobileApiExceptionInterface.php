@@ -6,6 +6,6 @@
 
 namespace FourPaws\MobileApiBundle\Exception;
 
-class InvalidCredentialException extends InvalidArgumentException
+interface MobileApiExceptionInterface
 {
 }
