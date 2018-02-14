@@ -17,7 +17,12 @@ interface UserAvatarAuthorizationInterface
      * @return int
      */
     public function getAvatarHostUserId() : int;
-    
+
+    /**
+     * @return int
+     */
+    public function getAvatarGuestUserId() : int;
+
     /**
      * @return bool
      */
