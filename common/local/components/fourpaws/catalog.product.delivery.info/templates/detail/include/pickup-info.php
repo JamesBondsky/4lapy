@@ -3,9 +3,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+use Bitrix\Sale\Delivery\CalculationResult;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\WordHelper;
-use Bitrix\Sale\Delivery\CalculationResult;
 
 /**
  * @var array $pickup
@@ -34,7 +34,7 @@ switch ($pickup['PERIOD_TYPE']) {
                 $pickupDateString = 'Завтра';
                 break;
             default:
-                $pickupDateString = 'В течение ' . $pickupDays . ' ' . WordHelper::declension(
+                $pickupDateString = 'Через ' . $pickupDays . ' ' . WordHelper::declension(
                         $pickupDays,
                         ['дня', 'дней', 'дней']
                     );
