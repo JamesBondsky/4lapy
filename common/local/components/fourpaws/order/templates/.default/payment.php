@@ -39,6 +39,17 @@ foreach ($arResult['PAYMENTS'] as $payment) {
     }
 }
 
+/**
+ * @todo фикс цены. Нужен до тех пор, пока не реализовано разделение заказов
+ */
+$basketPrice = $basket->getPrice();
+if ($deliveryService->isPickup($selectedDelivery) && $storage->isPartialGet()) {
+    $basketPrice = $deliveryService->getStockResultByDelivery($selectedDelivery)
+                                   ->filterByStore($arResult['SELECTED_SHOP'])
+                                   ->getAvailable()
+                                   ->getPrice();
+}
+
 ?>
 <div class="b-container">
     <h1 class="b-title b-title--h1 b-title--order">
@@ -145,7 +156,7 @@ foreach ($arResult['PAYMENTS'] as $payment) {
                                 </div>
                             </div>
                             <div class="b-order-list__order-value b-order-list__order-value--order-step-3">
-                                <?= mb_strtolower(CurrencyHelper::formatPrice($basket->getPrice())) ?>
+                                <?= mb_strtolower(CurrencyHelper::formatPrice($basketPrice)) ?>
                             </div>
                         </li>
                         <li class="b-order-list__item b-order-list__item--cost b-order-list__item--order-step-3">
@@ -186,7 +197,7 @@ foreach ($arResult['PAYMENTS'] as $payment) {
                             <div class="b-order-list__order-value b-order-list__order-value--order-step-3">
                                 <?= mb_strtolower(
                                     CurrencyHelper::formatPrice(
-                                        $basket->getPrice() + $selectedDelivery->getPrice() - $storage->getBonusSum()
+                                        $basketPrice + $selectedDelivery->getPrice() - $storage->getBonusSum()
                                     )
                                 ) ?>
                             </div>
