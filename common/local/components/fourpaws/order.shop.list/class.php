@@ -332,7 +332,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
             return new StoreCollection();
         }
         if ($this->deliveryService->isDpdPickup($pickupDelivery)) {
-            return $stockResult->getStores()->toArray();
+            return $stockResult->getStores();
         }
 
         $storeRepository = $this->storeService->getRepository();
