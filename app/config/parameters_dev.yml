@@ -1,8 +1,0 @@
----
-
-parameters:
-  # Sap directories
-  sap.directory: '/home/vagrant/project/common/upload/sap-exchange'
-
-imports:
-  - { resource: parameters.yml }

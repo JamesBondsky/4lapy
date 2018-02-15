@@ -1,5 +1,5 @@
 imports:
-  - { resource: parameters_test.yml }
+  - { resource: parameters.yml }
   - { resource: config_dev.yml }
   - { resource: services_test.yml }
 
