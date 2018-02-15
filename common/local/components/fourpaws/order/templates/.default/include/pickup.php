@@ -163,9 +163,17 @@ $partialGet = ($canGetPartial && $storage->isPartialGet()) || $delayed->isEmpty(
                 </ul>
             </div>
             <div class="b-radio__addition-text">
-                <p><?= DeliveryTimeHelper::showTime($pickup, $stockResultByShop->getDeliveryDate()) ?></p>
+                <p class="js-pickup_full"><?= DeliveryTimeHelper::showTime(
+                        $pickup,
+                        $stockResultByShop->getDeliveryDate()
+                    ) ?></p>
             </div>
         </div>
     </div>
-    <a class="b-link b-link--another-point" href="javascript:void(0);" title="">Выбрать другой пункт самовывоза</a>
+    <a class="b-link b-link--another-point js-open-popup"
+       href="javascript:void(0);"
+       data-popup-id="popup-order-stores"
+       title="">
+        Выбрать другой пункт самовывоза
+    </a>
 </li>

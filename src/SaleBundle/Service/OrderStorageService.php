@@ -158,9 +158,9 @@ class OrderStorageService
                     'deliveryDate',
                     'deliveryInterval',
                     'deliveryPlaceCode',
-                    'dpdTerminalCode',
                     'comment',
                     'partialGet',
+                    'shopId',
                 ];
                 break;
             case self::PAYMENT_STEP:
@@ -170,6 +170,10 @@ class OrderStorageService
                 ];
         }
 
+        $mapping = [
+            'shopId' => 'deliveryPlaceCode',
+        ];
+
         foreach ($request->request as $name => $value) {
             if (!\in_array($name, $availableValues, true)) {
                 continue;
@@ -177,6 +181,11 @@ class OrderStorageService
             $setter = 'set' . ucfirst($name);
             if (method_exists($storage, $setter)) {
                 $storage->$setter($value);
+            } elseif (isset($mapping[$name])) {
+                $setter = 'set' . ucfirst($mapping[$name]);
+                if (method_exists($storage, $setter)) {
+                    $storage->$setter($value);
+                }
             }
         }
 

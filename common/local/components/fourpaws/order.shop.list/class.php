@@ -228,9 +228,19 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                     'pickup'          => DeliveryTimeHelper::showTime(
                         $resultByStore[$store->getXmlId()]['PARTIAL_RESULT'],
                         $modifyDate ? $availableDate : null,
-                        ['SHORT' => true, 'SHOW_TIME' => true]
+                        ['SHORT' => false, 'SHOW_TIME' => true]
                     ),
                     'pickup_full'     => DeliveryTimeHelper::showTime(
+                        $resultByStore[$store->getXmlId()]['FULL_RESULT'],
+                        $modifyDate ? $stockResultByStore->getDeliveryDate() : null,
+                        ['SHORT' => false, 'SHOW_TIME' => true]
+                    ),
+                    'pickup_short'    => DeliveryTimeHelper::showTime(
+                        $resultByStore[$store->getXmlId()]['PARTIAL_RESULT'],
+                        $modifyDate ? $availableDate : null,
+                        ['SHORT' => true, 'SHOW_TIME' => true]
+                    ),
+                    'pickup_short_full'     => DeliveryTimeHelper::showTime(
                         $resultByStore[$store->getXmlId()]['FULL_RESULT'],
                         $modifyDate ? $stockResultByStore->getDeliveryDate() : null,
                         ['SHORT' => true, 'SHOW_TIME' => true]
@@ -240,7 +250,9 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                     'parts_available' => $partsAvailable,
                     'parts_delayed'   => $partsDelayed,
                     'services'        => $services,
-                    'price'           => $delayed->isEmpty() ? $stockResultByStore->getPrice() : $delayed->getPrice(),
+                    'price'           => $available->isEmpty() ?
+                        $stockResultByStore->getPrice() :
+                        $available->getPrice(),
                     'full_price'      => $stockResultByStore->getPrice(),
                     /* @todo поменять местами gps_s и gps_n */
                     'gps_n'           => $store->getLongitude(),
