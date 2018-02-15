@@ -5,7 +5,7 @@ namespace FourPaws\SapBundle\DependencyInjection;
 use FourPaws\SapBundle\Consumer\ConsumerInterface;
 use FourPaws\SapBundle\Pipeline\Pipeline;
 use FourPaws\SapBundle\Service\DirectorySourceFinderBuilder;
-use FourPaws\SapBundle\Source\DirectorySource;
+use FourPaws\SapBundle\Source\SerializerDirectorySource;
 use FourPaws\SapBundle\Source\SourceInterface;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -20,7 +20,7 @@ class FourPawsSapExtension extends ConfigurableExtension
     /**
      * Configures the passed container according to the merged configuration.
      *
-     * @param array            $mergedConfig
+     * @param array $mergedConfig
      * @param ContainerBuilder $container
      *
      * @throws \Exception
@@ -47,7 +47,7 @@ class FourPawsSapExtension extends ConfigurableExtension
     }
 
     /**
-     * @param array            $directorySources
+     * @param array $directorySources
      * @param ContainerBuilder $container
      *
      * @throws \Exception
@@ -66,7 +66,7 @@ class FourPawsSapExtension extends ConfigurableExtension
                 ]);
 
             $container->register('sap.source.' . $name)
-                ->setClass(DirectorySource::class)
+                ->setClass(SerializerDirectorySource::class)
                 ->addArgument(new Reference('sap.source.finder.' . $name))
                 ->addArgument($source['out'])
                 ->addArgument($source['error'])
@@ -76,7 +76,7 @@ class FourPawsSapExtension extends ConfigurableExtension
 
     /**
      *
-     * @param array            $pipelines
+     * @param array $pipelines
      * @param ContainerBuilder $container
      * @throws InvalidArgumentException
      */
