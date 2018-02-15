@@ -7,6 +7,7 @@
 namespace FourPaws\SaleBundle\AjaxController;
 
 use Bitrix\Main\Web\Uri;
+use Bitrix\Sale\Payment;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
@@ -92,8 +93,10 @@ class OrderController extends Controller
         return JsonSuccessResponse::createWithData(
             'Подгрузка успешна',
             $shopListClass->getStores(
-                $shopListClass->getFilterByRequest($request),
-                $shopListClass->getOrderByRequest($request)
+                [
+                    'filter' => $shopListClass->getFilterByRequest($request),
+                    'order'  => $shopListClass->getOrderByRequest($request),
+                ]
             )
         );
     }
@@ -186,7 +189,18 @@ class OrderController extends Controller
 
         $url = new Uri('/sale/order/' . OrderStorageService::COMPLETE_STEP . '/' . $order->getId());
         if (!$this->userAuthProvider->isAuthorized()) {
-            $url->addParams(['hash' => $order->getHash()]);
+            $url->addParams(['HASH' => $order->getHash()]);
+        }
+
+        /** @var Payment $payment */
+        foreach ($order->getPaymentCollection() as $payment) {
+            if ($payment->isInner()) {
+                continue;
+            }
+            if ($payment->getPaySystem()->getField('CODE') === OrderService::PAYMENT_ONLINE) {
+                $url->setPath('/sale/payment/');
+                $url->addParams(['ORDER_ID' => $order->getId()]);
+            }
         }
 
         return JsonSuccessResponse::create(

@@ -170,12 +170,12 @@ class FourPawsOrderComponent extends \CBitrixComponent
              * Попытка открыть уже обработанный заказ
              */
             if (!\in_array(
-                    $order->getField('STATUS_ID'),
-                    [
-                        OrderService::STATUS_NEW_COURIER,
-                        OrderService::STATUS_NEW_PICKUP
-                    ]
-                )
+                $order->getField('STATUS_ID'),
+                [
+                    OrderService::STATUS_NEW_COURIER,
+                    OrderService::STATUS_NEW_PICKUP,
+                ]
+            )
             ) {
                 Tools::process404('', true, true, true);
             }
@@ -196,6 +196,15 @@ class FourPawsOrderComponent extends \CBitrixComponent
             if ($shipment = $order->getShipmentCollection()->current()) {
                 $this->arResult['ORDER_DELIVERY'] = $this->getDeliveryData($this->arResult['ORDER_PROPERTIES']);
                 $this->arResult['ORDER_DELIVERY']['DELIVERY_CODE'] = $shipment->getDelivery()->getCode();
+                if ($this->arResult['ORDER_PROPERTIES']['DELIVERY_PLACE_CODE']) {
+                    $this->arResult['ORDER_DELIVERY']['SELECTED_SHOP'] = $this->storeService->getByXmlId(
+                        $this->arResult['ORDER_PROPERTIES']['DELIVERY_PLACE_CODE']
+                    );
+                } elseif ($this->arResult['ORDER_PROPERTIES']['DPD_TERMINAL_CODE']) {
+                    $this->arResult['ORDER_DELIVERY']['SELECTED_SHOP'] = $this->deliveryService->getDpdTerminalByCode(
+                        $this->arResult['ORDER_PROPERTIES']['DPD_TERMINAL_CODE']
+                    );
+                }
             }
         } else {
             if ($basket->isEmpty()) {
@@ -209,8 +218,10 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $selectedCity = $this->userCityProvider->getSelectedCity();
 
             $payments = null;
+            $deliveries = $this->orderService->getDeliveries();
+            $this->getPickupData($deliveries, $storage);
+
             if ($this->currentStep === OrderStorageService::DELIVERY_STEP) {
-                $deliveries = $this->orderService->getDeliveries();
 
                 $addresses = null;
                 if ($storage->getUserId()) {
@@ -251,7 +262,6 @@ class FourPawsOrderComponent extends \CBitrixComponent
                 $this->arResult['SELECTED_DELIVERY'] = $selectedDelivery;
                 $this->arResult['SELECTED_DELIVERY_ID'] = $selectedDeliveryId;
 
-                $this->getPickupData($deliveries, $storage);
             } elseif ($this->currentStep === OrderStorageService::PAYMENT_STEP) {
                 $deliveries = $this->orderService->getDeliveries();
                 $payments = $this->orderStorageService->getAvailablePayments($storage, true);
