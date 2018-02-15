@@ -93,7 +93,7 @@ class MainTemplate extends TemplateAbstract
      */
     public function hasShortHeaderFooter() : bool
     {
-        return $this->isOrderPage();
+        return $this->isOrderPage() || $this->isPaymentPage();
     }
     
     /**
@@ -319,6 +319,14 @@ class MainTemplate extends TemplateAbstract
     public function isOrderPage() : bool
     {
         return $this->isDir('/sale/order') || $this->isPartitionDir('/sale/order');
+    }
+
+    /**
+     * @return bool
+     */
+    public function isPaymentPage() : bool
+    {
+        return $this->isDir('/sale/payment') || $this->isPartitionDir('/sale/payment');
     }
     
     /**
