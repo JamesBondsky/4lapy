@@ -12,6 +12,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
+use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Location\Exception\CityNotFoundException;
 use FourPaws\Location\LocationService;
 use FourPaws\UserBundle\Entity\User;
@@ -62,8 +63,9 @@ class UserService implements
     /**
      * UserService constructor.
      *
-     * @param UserRepository $userRepository
+     * @param UserRepository  $userRepository
      * @param LocationService $locationService
+     * @param ManzanaService  $manzanaService
      */
     public function __construct(
         UserRepository $userRepository,
@@ -84,10 +86,11 @@ class UserService implements
      * @param string $rawLogin
      * @param string $password
      *
+     * @return bool
      * @throws UsernameNotFoundException
      * @throws TooManyUserFoundException
      * @throws InvalidCredentialException
-     * @return bool
+     * @throws WrongPhoneNumberException
      */
     public function login(string $rawLogin, string $password): bool
     {
@@ -168,6 +171,8 @@ class UserService implements
      * @param User $user
      * @param bool $manzanaSave
      *
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
      * @throws ValidationException
      * @throws BitrixRuntimeException
      * @return bool
@@ -180,10 +185,6 @@ class UserService implements
             return $result;
         }
 
-        /** todo refactor */
-        /** добавляем в зарегистрирвоанных пользователей */
-        \CUser::SetUserGroup($user->getId(), [6]);
-        
         $client = null;
         try {
             $contactId = $this->manzanaService->getContactIdByPhone($user->getNormalizePersonalPhone());
@@ -228,9 +229,7 @@ class UserService implements
             setcookie('user_city_id', $city['CODE'], 86400 * 30);
 
             if ($this->isAuthorized()) {
-                $user = $this->getCurrentUser();
-                $user->setLocation($city['CODE']);
-                $this->userRepository->update($user);
+                $this->userRepository->updateData($this->getCurrentUserId(), ['UF_LOCATION' => $city['CODE']]);
             }
         }
 
@@ -273,9 +272,11 @@ class UserService implements
     }
 
     /**
-     * @param Client $client
+     * @param Client    $client
      * @param null|User $user
      *
+     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
+     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
      * @throws InvalidIdentifierException
      * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
@@ -384,40 +385,6 @@ class UserService implements
     }
 
     /**
-     * @param int $id
-     */
-    protected function setAvatarHostUserId(int $id)
-    {
-        if ($id > 0) {
-            $_SESSION['4PAWS']['AVATAR_AUTH']['HOST_USER_ID'] = $id;
-        } else {
-            if (isset($_SESSION['4PAWS']['AVATAR_AUTH']['HOST_USER_ID'])) {
-                unset($_SESSION['4PAWS']['AVATAR_AUTH']['HOST_USER_ID']);
-            }
-        }
-    }
-
-    /**
-     * @param int $id
-     */
-    protected function setAvatarGuestUserId(int $id)
-    {
-        if ($id > 0) {
-            $_SESSION['4PAWS']['AVATAR_AUTH']['GUEST_USER_ID'] = $id;
-        } else {
-            if (isset($_SESSION['4PAWS']['AVATAR_AUTH']['GUEST_USER_ID'])) {
-                unset($_SESSION['4PAWS']['AVATAR_AUTH']['GUEST_USER_ID']);
-            }
-        }
-    }
-
-    protected function flushAvatarUserData()
-    {
-        $this->setAvatarHostUserId(0);
-        $this->setAvatarGuestUserId(0);
-    }
-
-    /**
      * @return bool
      */
     public function isAvatarAuthorized(): bool
@@ -429,7 +396,8 @@ class UserService implements
             $curUserId = 0;
             try {
                 $curUserId = $this->getCurrentUserId();
-            } catch (\Exception $exception) {}
+            } catch (\Exception $exception) {
+            }
             if ($curUserId === $guestUserId && $curUserId !== $hostUserId) {
                 $isAuthorized = true;
             } else {
@@ -468,5 +436,39 @@ class UserService implements
         }
 
         return $isLoggedByHostUser;
+    }
+
+    /**
+     * @param int $id
+     */
+    protected function setAvatarHostUserId(int $id)
+    {
+        if ($id > 0) {
+            $_SESSION['4PAWS']['AVATAR_AUTH']['HOST_USER_ID'] = $id;
+        } else {
+            if (isset($_SESSION['4PAWS']['AVATAR_AUTH']['HOST_USER_ID'])) {
+                unset($_SESSION['4PAWS']['AVATAR_AUTH']['HOST_USER_ID']);
+            }
+        }
+    }
+
+    /**
+     * @param int $id
+     */
+    protected function setAvatarGuestUserId(int $id)
+    {
+        if ($id > 0) {
+            $_SESSION['4PAWS']['AVATAR_AUTH']['GUEST_USER_ID'] = $id;
+        } else {
+            if (isset($_SESSION['4PAWS']['AVATAR_AUTH']['GUEST_USER_ID'])) {
+                unset($_SESSION['4PAWS']['AVATAR_AUTH']['GUEST_USER_ID']);
+            }
+        }
+    }
+
+    protected function flushAvatarUserData()
+    {
+        $this->setAvatarHostUserId(0);
+        $this->setAvatarGuestUserId(0);
     }
 }

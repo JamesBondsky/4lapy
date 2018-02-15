@@ -21,6 +21,7 @@ use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\EmptyDateException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -167,11 +168,12 @@ class ProfileController extends Controller
             ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
         );
     }
-    
+
     /**
      * @Route("/changeData/", methods={"POST"})
      * @param Request $request
      *
+     * @throws NotAuthorizedException
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
      * @throws ServiceNotFoundException
@@ -184,18 +186,20 @@ class ProfileController extends Controller
         /** @var UserRepository $userRepository */
         $userRepository = $this->currentUserProvider->getUserRepository();
         $data           = $request->request->all();
-        if (!empty($data['EMAIL'])) {
-            if (filter_var($data['EMAIL'], FILTER_VALIDATE_EMAIL) === false) {
-                return JsonErrorResponse::createWithData(
-                    'Некорректный email',
-                    ['errors' => ['wrongEmail' => 'Некорректный email']]
-                );
-            }
+        if (!empty($data['EMAIL']) && filter_var($data['EMAIL'], FILTER_VALIDATE_EMAIL) === false) {
+            return JsonErrorResponse::createWithData(
+                'Некорректный email',
+                ['errors' => ['wrongEmail' => 'Некорректный email']]
+            );
         }
+
+        /** @var User $user */
+        $user = SerializerBuilder::create()->build()->fromArray($data, User::class);
         
         $haveUsers = $userRepository->havePhoneAndEmailByUsers(
             [
-                'EMAIL'          => $data['EMAIL']
+                'EMAIL'          => $data['EMAIL'],
+                'ID' => $user->getId()
             ]
         );
         if($haveUsers['email']){
@@ -205,11 +209,12 @@ class ProfileController extends Controller
             );
         }
         
-        /** @var User $user */
-        $user = SerializerBuilder::create()->build()->fromArray($data, User::class);
-        
         try {
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+            $curUser = $userRepository->find($user->getId());
+            if($curUser->getEmail() !== $user->getEmail()){
+                $data['UF_EMAIL_CONFIRMED'] = 'N';
+            }
             $res = $userRepository->updateData($user->getId(), $userRepository->prepareData($data));
             if (!$res) {
                 return JsonErrorResponse::createWithData(
@@ -261,7 +266,7 @@ class ProfileController extends Controller
             );
         } catch (ConstraintDefinitionException $e) {
         }
-        
+
         return JsonErrorResponse::createWithData(
             'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
             ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]

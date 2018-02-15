@@ -46,10 +46,10 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
      * @var CurrentUserProviderInterface
      */
     private $currentUserProvider;
-    
+
     /** @var UserAuthorizationInterface */
     private $authUserProvider;
-    
+
     /**
      * AutoloadingIssuesInspection constructor.
      *
@@ -72,9 +72,9 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
         }
         $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
-        $this->authUserProvider    = $container->get(UserAuthorizationInterface::class);
+        $this->authUserProvider = $container->get(UserAuthorizationInterface::class);
     }
-    
+
     /**
      * {@inheritdoc}
      * @throws ServiceNotFoundException
@@ -87,15 +87,15 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
     public function executeComponent()
     {
         $this->setFrameMode(true);
-        
+
         if (!$this->authUserProvider->isAuthorized()) {
             define('NEED_AUTH', true);
-            
+
             return null;
         }
-        
+
         $curUser = $this->currentUserProvider->getCurrentUser();
-        
+
         $curBirthday = $curUser->getBirthday();
         if ($curBirthday instanceof Date) {
             try {
@@ -106,7 +106,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         } else {
             $birthday = '';
         }
-        
+
         $this->arResult['CUR_USER'] = [
             'ID'              => $curUser->getId(),
             'PERSONAL_PHONE'  => PhoneHelper::formatPhone($curUser->getPersonalPhone(), '+7 (%s%s%s) %s%s%s-%s%s-%s%s'),
@@ -124,12 +124,12 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             'EMAIL_CONFIRMED' => $curUser->isEmailConfirmed(),
             'PHONE_CONFIRMED' => $curUser->isPhoneConfirmed(),
         ];
-        
+
         $this->includeComponentTemplate();
-        
+
         return true;
     }
-    
+
     /**
      * @param Request $request
      *
@@ -141,12 +141,12 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
      * @throws ServiceCircularReferenceException
      * @return JsonResponse
      */
-    public function ajaxConfirmPhone(Request $request) : JsonResponse
+    public function ajaxConfirmPhone(Request $request): JsonResponse
     {
-        $phone    = $request->get('phone');
+        $phone = $request->get('phone');
         $oldPhone = $request->get('oldPhone', '');
         try {
-            $phone    = PhoneHelper::normalizePhone($phone);
+            $phone = PhoneHelper::normalizePhone($phone);
             $oldPhone = PhoneHelper::normalizePhone($oldPhone);
         } catch (WrongPhoneNumberException $e) {
             return JsonErrorResponse::createWithData(
@@ -157,7 +157,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         try {
             /** @var ConfirmCodeService $confirmService */
             $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
-            $res            = $confirmService::checkConfirmSms(
+            $res = $confirmService::checkConfirmSms(
                 $phone,
                 $request->get('confirmCode')
             );
@@ -190,7 +190,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             if ($this->currentUserProvider->getUserRepository()->updateData((int)$request->get('ID', 0), $data)) {
                 /** @var ManzanaService $manzanaService */
                 $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
-                $client         = null;
+                $client = null;
                 if (empty($oldPhone)) {
                     return JsonErrorResponse::createWithData(
                         'Текущий телефон не задан',
@@ -198,19 +198,19 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                     );
                 }
                 try {
-                    $contactId         = $manzanaService->getContactIdByPhone($oldPhone);
-                    $client            = new Client();
+                    $contactId = $manzanaService->getContactIdByPhone($oldPhone);
+                    $client = new Client();
                     $client->contactId = $contactId;
-                    $client->phone     = $phone;
+                    $client->phone = $phone;
                 } catch (ManzanaServiceException $e) {
                     $client = new Client();
                     $this->currentUserProvider->setClientPersonalDataByCurUser($client);
                 }
-    
+
                 if ($client instanceof Client) {
                     $manzanaService->updateContactAsync($client);
                 }
-                
+
                 return JsonSuccessResponse::create('Телефон верифицирован');
             }
         } catch (BitrixRuntimeException $e) {
@@ -224,19 +224,19 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             );
         } catch (\Exception $e) {
         }
-        
+
         return JsonErrorResponse::createWithData(
             'Ошибка верификации',
             ['errors' => ['verificationError' => 'Ошибка верификации']]
         );
     }
-    
+
     /**
      * @param string $phone
      *
      * @return JsonResponse
      */
-    public function ajaxResendSms(string $phone) : JsonResponse
+    public function ajaxResendSms(string $phone): JsonResponse
     {
         try {
             $phone = PhoneHelper::normalizePhone($phone);
@@ -246,11 +246,11 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                 ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
             );
         }
-        
+
         try {
             /** @var ConfirmCodeService $confirmService */
             $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
-            $res            = $confirmService::sendConfirmSms($phone);
+            $res = $confirmService::sendConfirmSms($phone);
             if (!$res) {
                 return JsonErrorResponse::createWithData(
                     'Ошибка отправки смс, попробуйте позднее',
@@ -278,10 +278,10 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                 ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
             );
         }
-        
+
         return JsonSuccessResponse::create('Смс успешно отправлено');
     }
-    
+
     /**
      * @param Request $request
      *
@@ -290,13 +290,13 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
      * @return JsonResponse
      * @throws ConstraintDefinitionException
      */
-    public function ajaxGet(Request $request) : JsonResponse
+    public function ajaxGet(Request $request): JsonResponse
     {
         $phone = $request->get('phone', '');
-        $step  = $request->get('step', '');
+        $step = $request->get('step', '');
         /** @noinspection PhpUnusedLocalVariableInspection */
         $oldPhone = $request->get('oldPhone', '');
-        $mess     = '';
+        $mess = '';
         try {
             $phone = PhoneHelper::normalizePhone($phone);
             /** @noinspection PhpUnusedLocalVariableInspection */
@@ -315,15 +315,15 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                 }
                 break;
         }
-        
+
         $phone = PhoneHelper::formatPhone($phone, '+7 (%s%s%s) %s%s%s-%s%s-%s%s');
         ob_start();
         /** @noinspection PhpIncludeInspection */
         include_once App::getDocumentRoot()
-                     . '/local/components/fourpaws/personal.profile/templates/popupChangePhone/include/' . $step
-                     . '.php';
+            . '/local/components/fourpaws/personal.profile/templates/popupChangePhone/include/' . $step
+            . '.php';
         $html = ob_get_clean();
-        
+
         return JsonSuccessResponse::createWithData(
             $mess,
             [
@@ -333,11 +333,12 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             ]
         );
     }
-    
+
     /**
      * @param string $phone
      * @param int    $id
      *
+     * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @return JsonResponse|string
      */
@@ -348,31 +349,37 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         $haveUsers = $userRepository->havePhoneAndEmailByUsers(
             [
                 'PERSONAL_PHONE' => $phone,
+                'ID'             => $id,
             ]
         );
-        if($haveUsers['phone']){
+        if ($haveUsers['phone']) {
             return JsonErrorResponse::createWithData(
                 'Такой телефон уже существует',
                 ['errors' => ['havePhone' => 'Такой телефон уже существует']]
             );
         }
-        
+
         try {
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-            $res = $userRepository->updatePhone($id, $phone);
+            $curUser = $userRepository->find($id);
+            $data = ['PERSONAL_PHONE' => $phone];
+            if ($curUser->getPersonalPhone() !== $phone) {
+                $data['UF_PHONE_CONFIRMED'] = 'N';
+            }
+            $res = $userRepository->updateData($id, $data);
             if (!$res) {
                 return JsonErrorResponse::createWithData(
                     'Произошла ошибка при обновлении',
                     ['errors' => ['updateError' => 'Произошла ошибка при обновлении']]
                 );
             }
-            
+
             $mess = 'Телефон обновлен';
-            
+
             try {
                 /** @var ConfirmCodeService $confirmService */
                 $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
-                $res            = $confirmService::sendConfirmSms($phone);
+                $res = $confirmService::sendConfirmSms($phone);
                 if (!$res) {
                     return JsonErrorResponse::createWithData(
                         'Ошибка отправки смс, попробуйте позднее',
@@ -410,7 +417,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                 ]
             );
         }
-        
+
         return $mess;
     }
 }

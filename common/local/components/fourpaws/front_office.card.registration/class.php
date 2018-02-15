@@ -1193,7 +1193,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
 
         if ($result->isSuccess()) {
             try {
-                $smsService = new SmsService();
+                $smsService = Application::getInstance()->getContainer()->get('sms.service');
                 $smsService->sendSmsImmediate($text, $phone);
             } catch (\Exception $exception) {
                 $result->addError(

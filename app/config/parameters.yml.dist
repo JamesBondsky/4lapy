@@ -16,7 +16,11 @@ parameters:
   sms:
     start_messaging: '09:00'
     stop_messaging: '21:00'
+    login: '%env(SMS_LOGIN)%'
+    password: '%env(SMS_PASSWORD)%'
     originator: 4lapy
+    login.immediate: '%env(SMS_LOGIN_IMMEDIATE)%'
+    password.immediate: '%env(SMS_PASSWORD_IMMEDIATE)%'
 
   expertsender:
     url: https://api.esv2.com

@@ -96,6 +96,8 @@ class UserRepository
     /**
      * @param User $user
      *
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
      * @throws ValidationException
      * @throws BitrixRuntimeException
      * @return bool
@@ -107,13 +109,21 @@ class UserRepository
             throw new ValidationException('Wrong entity passed to create');
         }
 
-        $result = $this->cuser->Add(
-            $this->serializer->toArray($user, SerializationContext::create()->setGroups(['create']))
+        /** регистрируем битровым методом регистрации*/
+        $res = $this->cuser->Register(
+            $user->getLogin() ?? $user->getEmail(),
+            $user->getName() ?? '',
+            $user->getLastName() ?? '',
+            $user->getPassword(),
+            $user->getPassword(),
+            $user->getEmail()
         );
-        if ((int)$result > 0) {
-            $user->setId((int)$result);
 
-            return true;
+        if ((int)$res['ID'] > 0) {
+            /** дообновляем данные которых не хватает */
+            $user->setActive(true);
+            $user->setId((int)$res['ID']);
+            return $this->update($user);
         }
 
         throw new BitrixRuntimeException($this->cuser->LAST_ERROR);
@@ -306,10 +316,13 @@ class UserRepository
     }
 
     /**
-     * @param int $id
+     * @param int    $id
      * @param string $email
      *
      * @return bool
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws BitrixRuntimeException
      */
     public function updateEmail(int $id, string $email): bool
     {
@@ -368,6 +381,9 @@ class UserRepository
         }
         if (!empty($params['PERSONAL_PHONE'])) {
             $filter[0]['PERSONAL_PHONE'] = $params['PERSONAL_PHONE'];
+        }
+        if (!empty($params['ID'])) {
+            $filter['!ID'] = $params['ID'];
         }
         $users = $this->findBy(
             $filter,
