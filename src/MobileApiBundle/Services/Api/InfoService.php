@@ -73,7 +73,7 @@ class InfoService implements LoggerAwareInterface
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @return Collection|Info[]
      */
-    protected function getNews(string $id = '', array $select = []): array
+    protected function getNews(string $id = '', array $select = []): Collection
     {
         $criteria = [
             'ACTIVE'    => 'Y',
@@ -111,7 +111,7 @@ class InfoService implements LoggerAwareInterface
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @return Collection|Info[]
      */
-    protected function getArticles(string $id = '', array $select = []): array
+    protected function getArticles(string $id = '', array $select = []): Collection
     {
         $criteria = [
             'ACTIVE'    => 'Y',
@@ -149,7 +149,7 @@ class InfoService implements LoggerAwareInterface
      * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
      * @return ArrayCollection|Collection
      */
-    protected function getActions(string $id, array $select = [])
+    protected function getActions(string $id, array $select = []): Collection
     {
         $criteria = [
             'ACTIVE'    => 'Y',

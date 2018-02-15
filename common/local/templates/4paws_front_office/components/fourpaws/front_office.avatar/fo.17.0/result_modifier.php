@@ -12,8 +12,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  */
 
 $arParams['USE_AJAX'] = isset($arParams['USE_AJAX']) && $arParams['USE_AJAX'] === 'N' ? 'N' : 'Y';
-
 $arResult['WAS_POSTED'] = $arResult['ACTION'] !== 'initialLoad' && !empty($arResult['FIELD_VALUES']) ? 'Y' : 'N';
+$arParams['LOGOUT_URL'] = isset($arParams['LOGOUT_URL']) && $arParams['LOGOUT_URL'] !== '' ? $arParams['LOGOUT_URL'] : 'logout.php';
 
 $arResult['USE_AJAX']        = $arParams['USE_AJAX'];
 $arResult['IS_AJAX_REQUEST'] = isset($arResult['FIELD_VALUES']['ajaxContext']) ? 'Y' : 'N';

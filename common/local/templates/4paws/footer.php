@@ -33,9 +33,20 @@ if ($template->hasMainWrapper()) {
     if ($template->hasHeaderPersonalContainer()) { ?>
         </main>
         </div>
+        <div class="b-preloader b-preloader--fixed">
+            <div class="b-preloader__spinner">
+                <img class="b-preloader__image" src="/static/build/images/inhtml/spinner.svg" alt="spinner" title=""/>
+            </div>
+        </div>
         </div>
     <?php }
-} ?>
+    /** Основной прелоадер из gui */?>
+    <div class="b-preloader b-preloader--fixed">
+        <div class="b-preloader__spinner">
+            <img class="b-preloader__image" src="/static/build/images/inhtml/spinner.svg" alt="spinner" title=""/>
+        </div>
+    </div>
+<?php } ?>
 </main>
 <footer class="b-footer <?= $template->getFooterClass() ?>">
     <?php if (!$template->hasShortHeaderFooter()) { ?>

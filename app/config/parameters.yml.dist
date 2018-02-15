@@ -26,6 +26,8 @@ parameters:
     login: '%env(SMS_LOGIN)%'
     password: '%env(SMS_PASSWORD)%'
     originator: 4lapy
+    login.immediate: '%env(SMS_LOGIN_IMMEDIATE)%'
+    password.immediate: '%env(SMS_PASSWORD_IMMEDIATE)%'
 
   expertsender:
     url: https://api.esv2.com

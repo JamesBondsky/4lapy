@@ -191,8 +191,7 @@ class Client
     public function setPreRequestCallback(callable $preRequestCallback)
     {
         $this->preRequestCallback = $preRequestCallback;
-        
-        
+
         return $this;
     }
     
@@ -238,5 +237,21 @@ class Client
         }
         
         return $ret;
+    }
+
+    /**
+     * @param string $login
+     */
+    public function setLogin(string $login)
+    {
+        $this->login = $login;
+    }
+
+    /**
+     * @param string $password
+     */
+    public function setPassword(string $password)
+    {
+        $this->password = $password;
     }
 }
