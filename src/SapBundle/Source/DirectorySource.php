@@ -113,7 +113,10 @@ abstract class DirectorySource implements SourceInterface
      */
     protected function move(FileSourceInterface $source, string $destination)
     {
-        rename($source->getDirectory() . $source->getName(), $destination . $source->getName());
+        $from = $this->normalizePath($source->getDirectory()) . $source->getName();
+        $to = $this->normalizePath($destination) . $source->getName();
+
+        rename($from, $to);
     }
 
     /**
@@ -126,6 +129,16 @@ abstract class DirectorySource implements SourceInterface
         if (!\is_dir($destination) && !\mkdir($destination) && !\is_dir($destination)) {
             throw new RuntimeException(sprintf('Wrong destination: %s', $destination));
         }
+    }
+
+    /**
+     * @param string $path
+     *
+     * @return string
+     */
+    protected function normalizePath(string $path): string
+    {
+        return sprintf('/%s/', trim($path, '/'));
     }
 
     abstract protected function convert($data);
