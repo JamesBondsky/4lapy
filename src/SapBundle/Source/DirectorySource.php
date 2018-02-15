@@ -11,37 +11,50 @@ use Symfony\Component\Finder\Finder;
  *
  * @package FourPaws\SapBundle\Source
  */
-class DirectorySource implements SourceInterface
+abstract class DirectorySource implements SourceInterface
 {
     /**
      * @var Finder
      */
-    private $inFinder;
-    
-    private $success;
-    
-    private $error;
+    protected $inFinder;
+
+    /**
+     * @var string
+     */
+    protected $success;
+
+    /**
+     * @var string
+     */
+    protected $error;
+
+    /**
+     * @var string
+     */
+    protected $type;
 
     /**
      * DirectorySource constructor.
      *
      * @param Finder $inFinder
+     * @param string $type
      * @param string $success (success folder)
-     * @param string $error   (error folder)
+     * @param string $error (error folder)
      *
-     * @throws \FourPaws\SapBundle\Exception\RuntimeException
+     * @throws RuntimeException
      */
-    public function __construct(Finder $inFinder, string $success, string $error)
+    public function __construct(Finder $inFinder, string $type, string $success, string $error)
     {
         $this->inFinder = $inFinder;
-        
+        $this->type = $type;
+
         $this->success = $success;
         $this->checkPath($success);
-        
+
         $this->error = $error;
         $this->checkPath($error);
     }
-    
+
     /**
      * @param SourceMessageInterface $sourceMessage
      *
@@ -49,16 +62,16 @@ class DirectorySource implements SourceInterface
      *
      * @return bool
      */
-    public function ack(SourceMessageInterface $sourceMessage) : bool
+    public function ack(SourceMessageInterface $sourceMessage): bool
     {
         /**
          * @var FileSourceInterface $sourceMessage
          */
         $this->move($sourceMessage, $this->success);
-        
+
         return true;
     }
-    
+
     /**
      * @param SourceMessageInterface $sourceMessage
      *
@@ -66,19 +79,18 @@ class DirectorySource implements SourceInterface
      *
      * @return bool
      */
-    public function noAck(SourceMessageInterface $sourceMessage) : bool
+    public function noAck(SourceMessageInterface $sourceMessage): bool
     {
         /**
          * @var FileSourceInterface $sourceMessage
          */
         $this->move($sourceMessage, $this->error);
-        
+
         return true;
     }
-    
+
     /**
      * @throws \RuntimeException
-     * @throws RuntimeException
      *
      * @return Generator|SourceMessageInterface[]
      */
@@ -87,16 +99,17 @@ class DirectorySource implements SourceInterface
         foreach ($this->inFinder as $fileInfo) {
             yield (new FileSourceMessage(
                 $fileInfo->getInode(),
-                                         $fileInfo->getType(),
-                                         $fileInfo->getContents()
-            ))->setName($fileInfo->getFilename())
-                                                                   ->setDirectory($fileInfo->getPath());
+                $this->type,
+                $this->convert($fileInfo->getContents())
+            ))
+                ->setName($fileInfo->getFilename())
+                ->setDirectory($fileInfo->getPath());
         }
     }
-    
+
     /**
      * @param FileSourceInterface $source
-     * @param string              $destination
+     * @param string $destination
      */
     protected function move(FileSourceInterface $source, string $destination)
     {
@@ -106,7 +119,7 @@ class DirectorySource implements SourceInterface
     /**
      * @param $destination
      *
-     * @throws \FourPaws\SapBundle\Exception\RuntimeException
+     * @throws RuntimeException
      */
     protected function checkPath($destination)
     {
@@ -114,4 +127,6 @@ class DirectorySource implements SourceInterface
             throw new RuntimeException(sprintf('Wrong destination: %s', $destination));
         }
     }
+
+    abstract protected function convert($data);
 }

@@ -287,41 +287,64 @@ class StoresStockConsumer implements ConsumerInterface, LoggerAwareInterface
         $resultData = [];
         $xmlId = trim($stockItem->getStoreCode());
 
-        $id = \CCatalogStore::Add(
-            [
-                'TITLE' => $xmlId,
-                'XML_ID' => $xmlId,
-                'ACTIVE' => 'Y',
-                //'ADDRESS' => 'нет данных',
-            ]
-        );
-        if (!$id) {
+        $fields = [
+            'TITLE' => $xmlId,
+            'XML_ID' => $xmlId,
+            'ACTIVE' => 'Y',
+            'UF_IS_SHOP' => 1,
+            'ADDRESS' => '-',
+        ];
+
+        $addResult = null;
+        try {
+            $addResult = StoreTable::add($fields);
+        } catch (\Exception $exception) {
             $errorMsg = sprintf(
                 'Ошибка создания склада с внешним кодом %s: %s',
                 $xmlId,
-                $GLOBALS['APPLICATION']->GetException()
+                $exception->getMessage()
             );
             $result->addError(
                 new Error(
                     $errorMsg,
-                    'createStoreError'
+                    'createStoreErrorException'
                 )
             );
 
             $this->log()->error($errorMsg);
-        } else {
-            $resultData['id'] = $id;
-
-            $this->log()->info(
-                sprintf(
-                    'Создан склад с внешним кодом %s; ID: %s',
-                    $xmlId,
-                    $id
-                )
-            );
         }
 
-        $resultData['xmlId'] = $xmlId;
+        $id = 0;
+        if ($addResult) {
+            if ($addResult->isSuccess()) {
+                $id = $addResult->getId();
+
+                $this->log()->info(
+                    sprintf(
+                        'Создан склад с внешним кодом %s; ID: %s',
+                        $xmlId,
+                        $id
+                    )
+                );
+            } else {
+                $errorMsg = sprintf(
+                    'Ошибка создания склада с внешним кодом %s: %s',
+                    $xmlId,
+                    implode('; ', $addResult->getErrorMessages())
+                );
+                $result->addError(
+                    new Error(
+                        $errorMsg,
+                        'createStoreError'
+                    )
+                );
+
+                $this->log()->error($errorMsg);
+            }
+        }
+
+        $resultData['id'] = $id;
+        $resultData['fields'] = $fields;
         $result->setData($resultData);
 
         return $result;

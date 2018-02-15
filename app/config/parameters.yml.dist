@@ -4,18 +4,11 @@ parameters:
   locale: ru
   secret: 7371018148815e9de0f88dba6a44126524d6a80e
 
-  manzana:
-    login: '%env(MANZANA_LOGIN)%'
-    password: '%env(MANZANA_PASSWORD)%'
-    wdsl: '%env(MANZANA_HOST)%'
   manzana_pos:
     pos: ishop
     business_unit: ishop
     organization: 1
     organization_name: fourfoots
-
-  manzana.wdsl: '%env(MANZANA_HOST)%'
-  manzana.pos.wdsl: '%env(MANZANA_HOST_POS)%'
 
   migrator:
     token: c81789b482ecbe6976f496a9697d75de
@@ -23,11 +16,7 @@ parameters:
   sms:
     start_messaging: '09:00'
     stop_messaging: '21:00'
-    login: '%env(SMS_LOGIN)%'
-    password: '%env(SMS_PASSWORD)%'
     originator: 4lapy
-    login.immediate: '%env(SMS_LOGIN_IMMEDIATE)%'
-    password.immediate: '%env(SMS_PASSWORD_IMMEDIATE)%'
 
   expertsender:
     url: https://api.esv2.com
@@ -47,6 +36,7 @@ parameters:
     - retryOnConflict: 0
 
   # Sap directories
+  sap.directory: '/home/vagrant/project/common/upload/sap-exchange'
   sap.product.directory.in: '%sap.directory%'
   sap.product.directory.out: '%sap.directory%/ArchMat/'
   sap.product.directory.error: '%sap.directory%/ArchMat_Errors/'
