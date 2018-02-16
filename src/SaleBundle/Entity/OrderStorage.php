@@ -309,6 +309,14 @@ class OrderStorage
     protected $bonusSum = 0;
 
     /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("DISCOUNT_CARD_NUMBER")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     */
+    protected $discountCardNumber = '';
+
+    /**
      * @return int
      */
     public function getFuserId(): int
@@ -858,6 +866,26 @@ class OrderStorage
     public function setBonusSum(int $bonusSum): OrderStorage
     {
         $this->bonusSum = $bonusSum;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDiscountCardNumber(): string
+    {
+        return $this->discountCardNumber;
+    }
+
+    /**
+     * @param string $discountCardNumber
+     *
+     * @return OrderStorage
+     */
+    public function setDiscountCardNumber(string $discountCardNumber): OrderStorage
+    {
+        $this->discountCardNumber = $discountCardNumber;
 
         return $this;
     }

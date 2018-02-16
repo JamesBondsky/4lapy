@@ -369,6 +369,12 @@ class OrderService
         if ($storage->getUserId()) {
             $order->setFieldNoDemand('USER_ID', $storage->getUserId());
             $user = $this->currentUserProvider->getCurrentUser();
+            if (!$user->getDiscountCardNumber() && $storage->getDiscountCardNumber()) {
+                $this->currentUserProvider->getUserRepository()->updateDiscountCard(
+                    $user->getId(),
+                    $storage->getDiscountCardNumber()
+                );
+            }
             if (!$user->getEmail() && $storage->getEmail()) {
                 $user->setEmail($storage->getEmail());
                 $this->currentUserProvider->getUserRepository()->updateEmail(
@@ -388,6 +394,7 @@ class OrderService
                 $order->setFieldNoDemand('USER_ID', $user->getId());
             } else {
                 $user = (new User())->setName($storage->getName())
+                                    ->setActive(true)
                                     ->setEmail($storage->getEmail())
                                     ->setLogin($storage->getPhone())
                                     ->setPassword(randString(6))

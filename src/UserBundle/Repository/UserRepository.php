@@ -318,6 +318,17 @@ class UserRepository
 
     /**
      * @param int $id
+     * @param string $email
+     *
+     * @return bool
+     */
+    public function updateDiscountCard(int $id, string $discountCardNumber): bool
+    {
+        return $this->updateData($id, ['UF_DISCOUNT_CARD' => $discountCardNumber]);
+    }
+
+    /**
+     * @param int $id
      *
      * @throws ConstraintDefinitionException
      * @throws InvalidIdentifierException
