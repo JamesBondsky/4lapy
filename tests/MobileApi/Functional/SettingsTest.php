@@ -134,19 +134,18 @@ class SettingsTest extends BaseTest
             static::assertArrayHasKey('data', $data);
             static::assertArrayHasKey('settings', $data['data']);
 
-            foreach($settings as $field => $value){
+            foreach ($settings as $field => $value) {
                 static::assertArrayHasKey($field, $data['data']['settings']);
                 static::assertEquals($value, $data['data']['settings'][$field]);
             }
         }
-
     }
 
     public function testInValid()
     {
         $client = static::createClient();
         $client->request(Request::METHOD_POST, '/mobile_app_v2/settings/', [
-            'token'           => $this->getToken(),
+            'token' => $this->getToken(),
         ]);
 
         $response = $client->getResponse();
