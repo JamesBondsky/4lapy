@@ -34,7 +34,7 @@ $isInnerDelivery = $deliveryService->isInnerDelivery($selectedDelivery) ||
 
 $selectedPayment = null;
 foreach ($arResult['PAYMENTS'] as $payment) {
-    if ($payment['ID'] === $storage->getPaymentId()) {
+    if ((int)$payment['ID'] === $storage->getPaymentId()) {
         $selectedPayment = $payment;
     }
 }
@@ -92,7 +92,6 @@ if ($deliveryService->isPickup($selectedDelivery) && $storage->isPartialGet()) {
                         </h2>
                     </header>
                     <form class="b-order-contacts__form b-order-contacts__form--points-top js-form-validation"
-                          action="/"
                           method="post"
                           data-url="<?= $arResult['URL']['PAYMENT_VALIDATION'] ?>"
                           id="order-step">
@@ -124,26 +123,33 @@ if ($deliveryService->isPickup($selectedDelivery) && $storage->isPartialGet()) {
                                 <?php
                             } ?>
                         </div>
+                    </form>
+                    <form class="b-order-contacts__form b-order-contacts__form--points js-form-validation success-valid"
+                          action="/">
                         <label class="b-order-contacts__label" for="point-pay">
                             <b>Оплатить часть заказа бонусными баллами </b>(до 299)
                         </label>
                         <div class="b-input b-input--order-line js-pointspay-input">
-                            <input class="b-input__input-field b-input__input-field--order-line js-pointspay-input js-no-valid"
+                            <input class="b-input__input-field b-input__input-field--order-line js-pointspay-input js-only-number js-no-valid"
                                    id="point-pay"
-                                   type="text"/>
+                                   type="text"
+                                   maxlength="4"
+                                   size="4">
                             <div class="b-error">
                                 <span class="js-message"></span>
                             </div>
                             <a class="b-input__close-points js-pointspay-close"
                                href="javascript:void(0)"
-                               title=""></a>
+                               title=""
+                               style="display: none;">
+                            </a>
                         </div>
-                        <button class="b-button b-button--order-line js-pointspay-button">Подтвердить
+                        <button class="b-button b-button--order-line js-pointspay-button" style="">Подтвердить
                         </button>
                     </form>
                 </article>
             </div>
-            <hr class="b-hr b-hr--order-step-3"/>
+            <hr class="b-hr b-hr--order-step-3">
             <div class="b-order__content b-order__content--no-border b-order__content--no-padding b-order__content--step-3">
                 <div class="b-order-list b-order-list--cost b-order-list--order-step-3">
                     <ul class="b-order-list__list b-order-list__list--cost">
@@ -155,8 +161,7 @@ if ($deliveryService->isPickup($selectedDelivery) && $storage->isPartialGet()) {
                                     </div>
                                 </div>
                             </div>
-                            <div class="b-order-list__order-value b-order-list__order-value--order-step-3">
-                                <?= mb_strtolower(CurrencyHelper::formatPrice($basketPrice)) ?>
+                            <div class="b-order-list__order-value b-order-list__order-value--order-step-3">4 703 ₽
                             </div>
                         </li>
                         <li class="b-order-list__item b-order-list__item--cost b-order-list__item--order-step-3">
@@ -167,57 +172,33 @@ if ($deliveryService->isPickup($selectedDelivery) && $storage->isPartialGet()) {
                                     </div>
                                 </div>
                             </div>
-                            <div class="b-order-list__order-value b-order-list__order-value--order-step-3">
-                                <?= mb_strtolower(CurrencyHelper::formatPrice($selectedDelivery->getPrice())) ?>
+                            <div class="b-order-list__order-value b-order-list__order-value--order-step-3">350 ₽
                             </div>
                         </li>
-                        <?php if ($storage->getBonusSum()) {
-                            ?>
-                            <li class="b-order-list__item b-order-list__item--cost b-order-list__item--order-step-3">
-                                <div class="b-order-list__order-text b-order-list__order-text--order-step-3">
-                                    <div class="b-order-list__clipped-text">
-                                        <div class="b-order-list__text-backed">
-                                            Оплачено баллами
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="b-order-list__order-value b-order-list__order-value--order-step-3">
-                                    <?= mb_strtolower(CurrencyHelper::formatPrice($storage->getBonusSum())) ?>
-                                </div>
-                            </li>
-                        <?php } ?>
                         <li class="b-order-list__item b-order-list__item--cost b-order-list__item--order-step-3">
                             <div class="b-order-list__order-text b-order-list__order-text--order-step-3">
                                 <div class="b-order-list__clipped-text">
-                                    <div class="b-order-list__text-backed">
-                                        Итого к оплате
+                                    <div class="b-order-list__text-backed">Итого к оплате
                                     </div>
                                 </div>
                             </div>
-                            <div class="b-order-list__order-value b-order-list__order-value--order-step-3">
-                                <?= mb_strtolower(
-                                    CurrencyHelper::formatPrice(
-                                        $basketPrice + $selectedDelivery->getPrice() - $storage->getBonusSum()
-                                    )
-                                ) ?>
+                            <div class="b-order-list__order-value b-order-list__order-value--order-step-3">5 053 ₽
                             </div>
                         </li>
                     </ul>
                 </div>
-                <button class="b-button b-button--order-step-3 b-button--next b-button--fixed-bottom js-order-next js-order-step-3-submit">
-                    <? if ($selectedPayment && $selectedPayment['CODE'] === OrderService::PAYMENT_ONLINE) { ?>
-                        Перейти к оплате
-                    <?php } else { ?>
-                        Заказать
-                    <?php } ?>
-                </button>
+
                 <div class="b-order__text-block b-order__text-block--additional">
-                    <p>Оформляя заказ, я даю своё согласие на обработку персональных данных и подтверждаю ознакомление с
-                        договором-офертой.</p>
+                    <p>Оформляя заказ я даю своё согласие на обработку персональных данных и подтверждаю ознакомление с
+                        договором офертой.</p>
                     <p>В соответствии с ФЗ №54-ФЗ кассовый чек при онлайн-оплате на сайте будет предоставлен в
-                        электронном виде на указанный при оформлении заказа номер телефона или email.</p>
+                        электронном виде
+                        на указанный при оформлении заказа номер телефона или email.</p>
                 </div>
             </div>
         </div>
+        <button class="b-button b-button--order-step-3 b-button--next b-button--fixed-bottom js-order-next js-order-step-3-submit">
+            Перейти к оплате
+        </button>
     </div>
 </div>
