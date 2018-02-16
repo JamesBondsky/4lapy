@@ -306,10 +306,13 @@ class UserRepository
     }
 
     /**
-     * @param int $id
+     * @param int    $id
      * @param string $email
      *
      * @return bool
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws BitrixRuntimeException
      */
     public function updateEmail(int $id, string $email): bool
     {
@@ -380,6 +383,9 @@ class UserRepository
         if (!empty($params['PERSONAL_PHONE'])) {
             $filter[0]['PERSONAL_PHONE'] = $params['PERSONAL_PHONE'];
         }
+        if (!empty($params['ID'])) {
+            $filter['!ID'] = $params['ID'];
+        }
         $users = $this->findBy(
             $filter,
             [],
@@ -426,6 +432,14 @@ class UserRepository
         }
 
         return $data;
+    }
+
+    /**
+     * @return ValidatorInterface
+     */
+    public function getValidator(): ValidatorInterface
+    {
+        return $this->validator;
     }
 
     /** @noinspection PhpDocMissingThrowsInspection

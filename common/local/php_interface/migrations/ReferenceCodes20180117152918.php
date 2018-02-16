@@ -3,9 +3,9 @@
 namespace Sprint\Migration;
 
 use Adv\Bitrixtools\Migration\SprintMigrationBase;
-use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
+use Bitrix\Main\Application;
 
-class ReferenceCodes20181701152918 extends SprintMigrationBase
+class ReferenceCodes20180117152918 extends SprintMigrationBase
 {
     
     protected $description = 'Add codes to references (colour, country)';
@@ -16,12 +16,30 @@ class ReferenceCodes20181701152918 extends SprintMigrationBase
             'Country' => '',
         ];
     }
+
+    private function isApplied() {
+        $connection = Application::getConnection();
+        $sql='select * from sprint_migration_versions where version=\'ReferenceCodes20181701152918\'';
+
+        if ($connection->query($sql)->getSelectedRowsCount() > 0) {
+            $sql='delete from sprint_migration_versions where version=\'ReferenceCodes20181701152918\'';
+            $connection->query($sql);
+
+            return true;
+        }
+
+        return false;
+    }
     
     /**
      * @return bool|void
      * @throws \Exception
      */
     public function up() {
+        if ($this->isApplied()) {
+            return true;
+        }
+
         $result = $this->getValues();
         
         foreach ($result as $hlBlock => $values) {

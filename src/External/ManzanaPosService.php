@@ -97,7 +97,7 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
             $xmlId = $item->getField('PRODUCT_XML_ID');
             
             if (strpos($xmlId, '#')) {
-                $xmlId = explode('#', $xmlId)[0];
+                $xmlId = explode('#', $xmlId)[1];
             }
             
             $chequePosition =

@@ -10,16 +10,16 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Data\Cache;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\PersonalBundle\Entity\Bonus;
 use FourPaws\PersonalBundle\Service\BonusService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
-use FourPaws\UserBundle\Service\UserAuthorizationInterface;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -30,10 +30,10 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
      * @var BonusService
      */
     private $bonusService;
-    
-    /** @var UserAuthorizationInterface */
-    private $authUserProvider;
-    
+
+    /** @var CurrentUserProviderInterface */
+    private $currentUserProvider;
+
     /**
      * AutoloadingIssuesInspection constructor.
      *
@@ -55,8 +55,20 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
             /** @noinspection PhpUnhandledExceptionInspection */
             throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
         }
-        $this->bonusService     = $container->get('bonus.service');
-        $this->authUserProvider = $container->get(UserAuthorizationInterface::class);
+        $this->bonusService = $container->get('bonus.service');
+        $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
+    }
+
+    /**
+     * @param $params
+     *
+     * @return array
+     */
+    public function onPrepareComponentParams($params): array
+    {
+        $params['CACHE_TIME'] = 360000;
+        $params['MANZANA_CACHE_TIME'] = 8 * 60 * 60;
+        return $params;
     }
 
     /**
@@ -72,28 +84,45 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
      */
     public function executeComponent()
     {
-        if (!$this->authUserProvider->isAuthorized()) {
-            define('NEED_AUTH', true);
-            
+        try {
+            $user = $this->currentUserProvider->getCurrentUser();
+        } catch (NotAuthorizedException $e) {
+            /** запрашиваем авторизацию */
+            \define('NEED_AUTH', true);
             return null;
         }
 
-        /** @todo получение из манзаны должно кеширвоатсья отдельно, иначе будет трабла с кешем */
-        
-        $this->setFrameMode(true);
-        
-        if ($this->startResultCache()) {
+        if(!$user->havePersonalPhone()){
+            $this->includeComponentTemplate('notPhone');
+            return false;
+        }
+
+        $cache = Cache::createInstance();
+        if ($cache->initCache($this->arParams['MANZANA_CACHE_TIME'], ['userId' => $user->getId()])) {
+            $result = $cache->getVars();
+            $this->arResult['BONUS'] = $bonus = $result['bonus'];
+        } elseif ($cache->startDataCache()) {
             try {
-                $this->arResult['BONUS'] = $this->bonusService->getUserBonusInfo();
+                $this->arResult['BONUS'] = $bonus = $this->bonusService->getUserBonusInfo();
             } catch (NotAuthorizedException $e) {
                 /** запрашиваем авторизацию */
                 \define('NEED_AUTH', true);
+                $cache->abortDataCache();
                 return null;
             }
+            $cache->endDataCache(['bonus' => $bonus]);
+        }
 
+        $this->setFrameMode(true);
+
+        if ($this->startResultCache($this->arParams['CACHE_TIME'], [
+            'cardNumber'  => $bonus->getCard()->getCardNumber(),
+            'sum'         => $bonus->getSum(),
+            'paidByBonus' => $bonus->getCredit(),
+        ])) {
             $this->includeComponentTemplate();
         }
-        
+
         return true;
     }
 }

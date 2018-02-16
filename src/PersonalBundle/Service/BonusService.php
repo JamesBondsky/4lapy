@@ -41,16 +41,19 @@ class BonusService
      */
     public $manzanaService;
 
+    /**
+     * @var CurrentUserProviderInterface
+     */
+    public $currentUserProvider;
+    
     /** @var LoggerInterface */
     private $logger;
-
-    /** @var CurrentUserProviderInterface */
-    private $currentUserProvider;
 
     /**
      * ReferralService constructor.
      *
      * @param ManzanaService $manzanaService
+     * @param CurrentUserProviderInterface $currentUserProvider
      *
      * @throws \RuntimeException
      * @throws ServiceNotFoundException
@@ -58,8 +61,8 @@ class BonusService
     public function __construct(ManzanaService $manzanaService, CurrentUserProviderInterface $currentUserProvider)
     {
         $this->manzanaService = $manzanaService;
-        $this->logger = LoggerFactory::create('manzana');
         $this->currentUserProvider = $currentUserProvider;
+        $this->logger = LoggerFactory::create('manzana');
     }
 
     /**

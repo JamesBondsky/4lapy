@@ -25,7 +25,7 @@ return [
                 'host' => getenv('BX_MEMCACHE_HOST'),
                 'port' => getenv('BX_MEMCACHE_PORT'),
             ],
-            'sid'      => $_SERVER['DOCUMENT_ROOT'] . '#01',
+            'sid'      => realpath($_SERVER['DOCUMENT_ROOT']) . '#01',
         ],
     ],
     'cache_flags'        =>
