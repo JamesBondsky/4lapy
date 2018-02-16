@@ -4,6 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use Bitrix\Sale\Order;
+use Bitrix\Main\Grid\Declension;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\StoreBundle\Entity\Store;
 
@@ -33,15 +34,21 @@ $calcResult = new \Bitrix\Sale\Delivery\CalculationResult();
             </span>Идёт подсчёт баллов ...
         </div>
          */ ?>
-        <?php /*@todo бонусные баллы */ ?>
-        <div class="b-order__text-block b-order__text-block--top-line js">
-            <p>Вы получили 230 бонусных баллов. Узнать,
-                <a class="b-link b-link--inherit b-link--orange"
-                   href="/customer/bonus-program/"
-                   title="как получить и потратить баллы.">
-                    как получить и потратить баллы.</a>
-            </p>
-        </div>
+        <?php if (!empty($arResult['ORDER_PROPERTIES']['BONUS_COUNT'])) { ?>
+            <div class="b-order__text-block b-order__text-block--top-line js">
+                <p>Вы получили <?= $arResult['ORDER_PROPERTIES']['BONUS_COUNT'] ?>
+                    <?= (new Declension($arResult['ORDER_PROPERTIES']['BONUS_COUNT']))->get(
+                        'бонусный балл',
+                        'бонусных балла',
+                        'бонусных баллов'
+                    ) ?>.
+                    Узнать, <a class="b-link b-link--inherit b-link--orange"
+                               href="/customer/bonus-program/"
+                               title="как получить и потратить баллы.">
+                        как получить и потратить баллы.</a>
+                </p>
+            </div>
+        <?php } ?>
         <hr class="b-hr b-hr--order b-hr--top-line"/>
         <div class="b-order__block b-order__block--no-border">
             <div class="b-order__content b-order__content--no-border b-order__content--step-five">

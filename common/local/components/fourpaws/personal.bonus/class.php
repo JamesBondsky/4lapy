@@ -84,7 +84,7 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
         
         if ($this->startResultCache()) {
             try {
-                $this->arResult['BONUS'] = $this->bonusService->getCurUserBonusInfo();
+                $this->arResult['BONUS'] = $this->bonusService->getUserBonusInfo();
             } catch (NotAuthorizedException $e) {
                 /** запрашиваем авторизацию */
                 \define('NEED_AUTH', true);

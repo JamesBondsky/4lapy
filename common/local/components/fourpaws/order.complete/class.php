@@ -14,6 +14,7 @@ use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\Shipment;
 use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\PersonalBundle\Service\BonusService;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\StoreBundle\Service\StoreService;
@@ -36,6 +37,9 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
     /** @var StoreService */
     protected $storeService;
 
+    /** @var  BonusService */
+    protected $bonusService;
+
     public function __construct($component = null)
     {
         $serviceContainer = Application::getInstance()->getContainer();
@@ -43,6 +47,7 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
         $this->currentUserProvider = $serviceContainer->get(CurrentUserProviderInterface::class);
         $this->storeService = $serviceContainer->get('store.service');
         $this->deliveryService = $serviceContainer->get('delivery.service');
+        $this->bonusService = $serviceContainer->get('bonus.service');
 
         parent::__construct($component);
     }
@@ -80,10 +85,12 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
      */
     protected function prepareResult()
     {
-        $userId = null;
+        $user = null;
+        $isAuthorized = false;
         $order = null;
         try {
-            $userId = $this->currentUserProvider->getCurrentUserId();
+            $user = $this->currentUserProvider->getCurrentUser();
+            $isAuthorized = true;
         } catch (NotAuthorizedException $e) {
         }
         /**
@@ -93,7 +100,7 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
             $order = $this->orderService->getOrderById(
                 $this->arParams['ORDER_ID'],
                 true,
-                $userId,
+                $user ? $user->getId() : null,
                 $this->arParams['HASH']
             );
         } catch (NotFoundException $e) {
@@ -108,10 +115,16 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
             [
                 OrderService::STATUS_NEW_COURIER,
                 OrderService::STATUS_NEW_PICKUP,
-            ]
+                OrderService::STATUS_PAID,
+            ],
+            true
         )
         ) {
             Tools::process404('', true, true, true);
+        }
+
+        if (!$user) {
+            $user = $this->currentUserProvider->getUserRepository()->find($order->getUserId());
         }
 
         $this->arResult['ORDER'] = $order;
@@ -119,11 +132,25 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
         /**
          * флаг, что пользователь был зарегистрирован при оформлении заказа
          */
-        $this->arResult['ORDER_REGISTERED'] = (bool)$userId;
+        $this->arResult['ORDER_REGISTERED'] = !$isAuthorized;
 
         /** @var PropertyValue $propertyValue */
         foreach ($order->getPropertyCollection() as $propertyValue) {
-            $this->arResult['ORDER_PROPERTIES'][$propertyValue->getProperty()['CODE']] = $propertyValue->getValue();
+            $propertyCode = $propertyValue->getProperty()['CODE'];
+            /**
+             * У юзера есть бонусная карта, а бонусы за заказ еще не начислены.
+             */
+            if ($user->getDiscountCardNumber() &&
+                ($propertyCode === 'BONUS_COUNT') &&
+                (null === $propertyValue->getValue())
+            ) {
+                /* @todo получить бонусы */
+                $bonusCount = 100;
+                $propertyValue->setValue($bonusCount);
+                $order->save();
+            }
+
+            $this->arResult['ORDER_PROPERTIES'][] = $propertyValue->getValue();
         }
 
         /** @var Shipment $shipment */
