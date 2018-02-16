@@ -6,11 +6,10 @@
 
 namespace FourPaws\UserBundle\Service;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Type\DateTime;
-use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\External\Exception\SmsSendErrorException;
-use FourPaws\External\SmsService;
+use FourPaws\App\Application;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
@@ -18,8 +17,6 @@ use FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException;
 use FourPaws\UserBundle\Model\ConfirmCode;
 use FourPaws\UserBundle\Query\ConfirmCodeQuery;
 use FourPaws\UserBundle\Table\ConfirmCodeTable;
-use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
-use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /**
@@ -30,14 +27,14 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 class ConfirmCodeService implements ConfirmCodeInterface
 {
     const LIFE_TIME = 30 * 60;
-    
+
     /**
      * @throws \Exception
      */
     public static function delExpiredCodes()
     {
         $ConfirmCodeQuery = new ConfirmCodeQuery(ConfirmCodeTable::query());
-        $ConfirmCode      = $ConfirmCodeQuery->withFilter(
+        $ConfirmCode = $ConfirmCodeQuery->withFilter(
             ['<DATE' => DateTime::createFromTimestamp(time() - static::LIFE_TIME)]
         )->withSelect(['ID'])->exec();
         /** @var ConfirmCode $confirmCode */
@@ -45,39 +42,38 @@ class ConfirmCodeService implements ConfirmCodeInterface
             ConfirmCodeTable::delete($confirmCode->getId());
         }
     }
-    
+
     /**
      * @param string $phone
      *
      * @return bool
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws InvalidArgumentException
-     * @throws \RuntimeException
-     * @throws ApplicationCreateException
-     * @throws \Exception
-     * @throws SmsSendErrorException
      * @throws WrongPhoneNumberException
+     * @throws \Exception
      */
-    public static function sendConfirmSms(string $phone) : bool
+    public static function sendConfirmSms(string $phone): bool
     {
         $phone = PhoneHelper::normalizePhone($phone);
         if (PhoneHelper::isPhone($phone)) {
             $generatedCode = static::generateCode($phone);
             static::setGeneratedCode($phone);
-            
+
             if (!empty($generatedCode)) {
-                $smsService = new SmsService();
-                $text       = 'Ваш код подверждения - ' . $generatedCode;
-                $smsService->sendSmsImmediate($text, $phone);
-                
-                return true;
+                $text = 'Ваш код подверждения - ' . $generatedCode;
+                try {
+                    $smsService = Application::getInstance()->getContainer()->get('sms.service');
+                    $smsService->sendSmsImmediate($text, $phone);
+
+                    return true;
+                } catch (\Exception $exception) {
+                    $logger = LoggerFactory::create('sms');
+                    $logger->error(sprintf('%s exception: %s', __FUNCTION__, $exception->getMessage()));
+                }
             }
         }
-        
+
         return false;
     }
-    
+
     /**
      * @param string $phone
      *
@@ -87,7 +83,7 @@ class ConfirmCodeService implements ConfirmCodeInterface
     {
         return empty($phone) ? false : (string)hexdec(substr(md5($phone . time()), 7, 5));
     }
-    
+
     /**
      * @param $phone
      *
@@ -114,7 +110,7 @@ class ConfirmCodeService implements ConfirmCodeInterface
             }
         }
     }
-    
+
     /**
      * @throws \Exception
      */
@@ -126,7 +122,7 @@ class ConfirmCodeService implements ConfirmCodeInterface
             unset($_COOKIE['SMS_ID']);
         }
     }
-    
+
     /**
      * @param string $phone
      * @param string $confirmCode
@@ -138,7 +134,7 @@ class ConfirmCodeService implements ConfirmCodeInterface
      * @throws \Exception
      * @return bool
      */
-    public static function checkConfirmSms(string $phone, string $confirmCode) : bool
+    public static function checkConfirmSms(string $phone, string $confirmCode): bool
     {
         $phone = PhoneHelper::normalizePhone($phone);
         if (PhoneHelper::isPhone($phone)) {
@@ -148,14 +144,14 @@ class ConfirmCodeService implements ConfirmCodeInterface
                 if ($confirmed) {
                     static::delCurrentCode();
                 }
-                
+
                 return $confirmed;
             }
         }
-        
+
         return false;
     }
-    
+
     /**
      *
      * @throws NotFoundConfirmedCodeException
@@ -164,29 +160,29 @@ class ConfirmCodeService implements ConfirmCodeInterface
      *
      * @return string
      */
-    public static function getGeneratedCode() : string
+    public static function getGeneratedCode(): string
     {
         $ConfirmCodeQuery = new ConfirmCodeQuery(ConfirmCodeTable::query());
         /** @var ConfirmCode $confirmCode */
         $confirmCode = $ConfirmCodeQuery->withFilter(['ID' => $_COOKIE['SMS_ID']])->exec()->first();
-        
-        if(!($confirmCode instanceof ConfirmCode)){
+
+        if (!($confirmCode instanceof ConfirmCode)) {
             throw new NotFoundConfirmedCodeException('не найден код');
         }
         if (static::isExpire($confirmCode)) {
             static::delCurrentCode();
             throw new ExpiredConfirmCodeException('истек срок действия кода');
         }
-        
+
         return $confirmCode->getCode();
     }
-    
+
     /**
      * @param ConfirmCode $confirmCode
      *
      * @return bool
      */
-    public static function isExpire(ConfirmCode $confirmCode) : bool
+    public static function isExpire(ConfirmCode $confirmCode): bool
     {
         return $confirmCode->getDate()->getTimestamp() < (time() - static::LIFE_TIME);
     }
