@@ -98,6 +98,7 @@ $bonus = $arResult['BONUS'];
                 </div>
             </div>
         </div>
+
         <ul class="b-account-bonus__list-info">
             <li class="b-account-bonus__item-info">
                 <div class="b-account-bonus__title-info">Осталось до <?= $bonus->getNextDiscount() ?>% —
