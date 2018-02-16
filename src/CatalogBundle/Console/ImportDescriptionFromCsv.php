@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\CatalogBundle\Console;
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
@@ -73,7 +77,7 @@ class ImportDescriptionFromCsv extends Command implements LoggerAwareInterface
                     $element = $element ?: '';
                     return trim($element);
                 }, $data);
-                list($xmlId, $name, $detailText, $composition, $normsOfUse) = $data;
+                list($xmlId, $name, $complectName, $detailText, $composition, $normsOfUse, $code) = $data;
                 if (!$xmlId) {
                     $this->log()->error('No xml id was passed');
                     continue;
@@ -95,8 +99,17 @@ class ImportDescriptionFromCsv extends Command implements LoggerAwareInterface
                 try {
                     $this->connect->startTransaction();
 
+                    $fields = [
+                        'NAME'        => $complectName ?: $name,
+                        'IBLOCK_ID'   => $iblockId,
+                        'DETAIL_TEXT' => $detailText,
+                    ];
+                    if ($code) {
+                        $fields['CODE'] = $code;
+                    }
+
                     $updateResult = $this->cIblockElement->Update($productId, [
-                        'NAME'        => $name,
+                        'NAME'        => $complectName ?: $name,
                         'IBLOCK_ID'   => $iblockId,
                         'DETAIL_TEXT' => $detailText,
                     ]);
