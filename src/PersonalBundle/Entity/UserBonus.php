@@ -124,9 +124,9 @@ class UserBonus
     /**
      * @return CardBonus
      */
-    public function getCard() : CardBonus
+    public function getCard():CardBonus
     {
-        return $this->card ?? null;
+        return $this->card ?? new CardBonus();
     }
     
     /**
@@ -247,6 +247,10 @@ class UserBonus
                 $sumToNext = $nextSumCondition - $sum;
             }
         }
+        else{
+            $discountTable = static::$discountTable;
+            $sumToNext = next($discountTable);
+        }
         
         return $sumToNext;
     }
@@ -356,40 +360,43 @@ class UserBonus
     public function getProgress() : int
     {
         if ($this->progress <= 0) {
+            $progress = 0;
             $minDiscount        = $this->getRealDiscount();
-            $discountTable      = static::$discountTable;
-            $percentOneInterval = round(100 / (\count($discountTable) - 1), 2);
-            $activeIntervals    = -1;
-            $beginDiscount      = key($discountTable);
-            end($discountTable);
-            $endDiscount = key($discountTable);
-            reset($discountTable);
-            if ($minDiscount < $endDiscount) {
-                $minPrice  = 0;
-                $nextPrice = 0;
-                foreach ($discountTable as $discount => $price) {
-                    if ($minDiscount >= $discount) {
-                        $activeIntervals++;
-                        if ($discount > $beginDiscount) {
-                            next($discountTable);
+            if($minDiscount > 0) {
+                $discountTable = static::$discountTable;
+                $percentOneInterval = round(100 / (\count($discountTable) - 1), 2);
+                $activeIntervals = -1;
+                $beginDiscount = key($discountTable);
+                end($discountTable);
+                $endDiscount = key($discountTable);
+                reset($discountTable);
+                if ($minDiscount < $endDiscount) {
+                    $minPrice = 0;
+                    $nextPrice = 0;
+                    foreach ($discountTable as $discount => $price) {
+                        if ($minDiscount >= $discount) {
+                            $activeIntervals++;
+                            if ($discount > $beginDiscount) {
+                                next($discountTable);
+                            }
+                        }
+                        if ($minDiscount === $discount) {
+                            $minPrice = $price;
+                            $nextPrice = next($discountTable);
+                            break;
                         }
                     }
-                    if ($minDiscount === $discount) {
-                        $minPrice  = $price;
-                        $nextPrice = next($discountTable);
-                        break;
-                    }
+                    /** формула
+                     * прогресс = активные интервалы * процент одного интервала + ((((сумма покупок - сумма нижней границы) / (сумма верхней границы - сумма нижней границы))*100)* процент одного интервала / 100)*/
+                    $progress = floor(
+                        $activeIntervals * $percentOneInterval + ((floor(
+                                    ($this->getSum() - $minPrice) / ($nextPrice
+                                        - $minPrice)
+                                ) * 100) * $percentOneInterval / 100)
+                    );
+                } else {
+                    $progress = 100;
                 }
-                /** формула
-                 * прогресс = активные интервалы * процент одного интервала + ((((сумма покупок - сумма нижней границы) / (сумма верхней границы - сумма нижней границы))*100)* процент одного интервала / 100)*/
-                $progress = floor(
-                    $activeIntervals * $percentOneInterval + ((floor(
-                                                                   ($this->getSum() - $minPrice) / ($nextPrice
-                                                                                                    - $minPrice)
-                                                               ) * 100) * $percentOneInterval / 100)
-                );
-            } else {
-                $progress = 100;
             }
             $this->progress = $progress;
         }
