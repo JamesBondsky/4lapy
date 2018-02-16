@@ -94,13 +94,8 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
         }
 
         if(!$user->havePersonalPhone()){
-            global $error404Message, $error404Title, $error404CustomCloseWorkerTags, $error404H1, $error404DivErrorPageCustomAttributes;
-            $error404Title = 'Бонусы';
-            $error404CustomCloseWorkerTags = '</div></div></main>';
-            $error404H1 = 'Бонусы не доступны';
-            $error404DivErrorPageCustomAttributes = ' style="margin:0 !important"';
-            $error404Message = '<p>Для доступа к бонусам необходимо заполнить телефон в профиле</p><a href="/personal/">Перейти в профиль</a>';
-            Tools::process404('', true, true, true);
+            $this->includeComponentTemplate('notPhone');
+            return false;
         }
 
         $cache = Cache::createInstance();
