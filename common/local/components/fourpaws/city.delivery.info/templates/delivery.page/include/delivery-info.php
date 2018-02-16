@@ -17,25 +17,25 @@ use FourPaws\Helpers\WordHelper;
         <span><?= CurrencyHelper::formatPrice($delivery['PRICE']) ?></span>
         <?php if (!empty($delivery['FREE_FROM'])) { ?>
             <span>Бесплатно при заказе от <?= CurrencyHelper::formatPrice($delivery['FREE_FROM']) ?></span>
-        <? } ?>
+        <?php } ?>
     </div>
     <div class="b-delivery__delivery-type-row__day">
         <p>Получение</p>
-        <? if ($delivery['CODE'] == DeliveryService::INNER_DELIVERY_CODE) { ?>
+        <?php if ($delivery['CODE'] === DeliveryService::INNER_DELIVERY_CODE) { ?>
             <span>В день оформления заказа (при оформлении до 14:00) или на следующий день</span>
-        <? } else { ?>
+        <?php } else { ?>
             <span>
-                В течение <?= $delivery['PERIOD_FROM'] ?> <?= WordHelper::declension(
+                Через <?= $delivery['PERIOD_FROM'] ?> <?= WordHelper::declension(
                     $delivery['PERIOD_FROM'],
                     ['день', 'дня', 'дней']
                 ) ?>
             </span>
-        <? } ?>
+        <?php } ?>
     </div>
     <div class="b-delivery__delivery-type-row__time">
         <?php if (!empty($delivery['INTERVALS'])) { ?>
             <p>Время</p>
-            <?php $lastKey = end(array_keys($delivery['INTERVALS'])) ?>
+            <?php $lastKey = end(array_keys($delivery['INTERVALS'])); ?>
             <?php foreach ($delivery['INTERVALS'] as $i => $interval) { ?>
                 <span>
                     <?= date('H:00', mktime($interval['FROM'])) . ' - ' . date(

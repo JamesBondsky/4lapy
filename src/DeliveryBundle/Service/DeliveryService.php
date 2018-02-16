@@ -599,7 +599,7 @@ class DeliveryService
 
         $store = new Store();
         $store->setTitle($terminal['NAME'])
-              ->setLocation($terminal['IPOLH_DPD_DB_TERMINAL__LOCATION_CODE'])
+              ->setLocation($terminal['FOURPAWS_DELIVERYBUNDLE_DPD_TERMINAL_LOCATION_CODE'])
               ->setAddress($terminal['ADDRESS_SHORT'])
               ->setCode($terminal['CODE'])
               ->setXmlId($terminal['CODE'])
