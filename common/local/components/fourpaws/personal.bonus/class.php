@@ -101,6 +101,7 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
             } catch (NotAuthorizedException $e) {
                 /** запрашиваем авторизацию */
                 \define('NEED_AUTH', true);
+                $cache->abortDataCache();
                 return null;
             }
             $cache->endDataCache(['bonus' => $bonus]);
