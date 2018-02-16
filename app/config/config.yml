@@ -7,6 +7,7 @@ imports:
   - { resource: configs/old_sound_rabbit_mq.yml }
   - { resource: configs/four_paws_sap.yml }
   - { resource: configs/four_paws_mobile_api.yml }
+  - { resource: configs/env.parameters.yml }
 
 parameters:
   manzana.guzzle.curl:
@@ -34,6 +35,15 @@ parameters:
     business_unit: kuvi_shop
   manzana.wdsl: '%env(MANZANA_HOST)%'
   manzana.pos.wdsl: '%env(MANZANA_HOST_POS)%'
+
+  sms:
+    login: '%env(SMS_LOGIN)%'
+    password: '%env(SMS_PASSWORD)%'
+    login.immediate: '%env(SMS_LOGIN_IMMEDIATE)%'
+    password.immediate: '%env(SMS_PASSWORD_IMMEDIATE)%'
+    start_messaging: '%sms.start_messaging%'
+    stop_messaging: '%sms.stop_messaging%'
+    originator: '%sms.originator%'
 
 framework:
   esi: { enabled: true }
