@@ -58,7 +58,7 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
         $this->bonusService     = $container->get('bonus.service');
         $this->authUserProvider = $container->get(UserAuthorizationInterface::class);
     }
-    
+
     /**
      * {@inheritdoc}
      * @throws ArgumentException
@@ -90,7 +90,7 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
                 \define('NEED_AUTH', true);
                 return null;
             }
-    
+
             $this->includeComponentTemplate();
         }
         
