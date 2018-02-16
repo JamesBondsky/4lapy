@@ -62,7 +62,7 @@ class BonusService
     public function __construct(ManzanaService $manzanaService, UserService $userService)
     {
         $this->manzanaService = $manzanaService;
-        $this->userService = $manzanaService;
+        $this->userService = $userService;
         $this->logger         = LoggerFactory::create('manzana');
     }
     

@@ -96,13 +96,40 @@ class UserRepository
     /**
      * @param User $user
      *
+     * @throws ValidationException
+     * @throws BitrixRuntimeException
+     * @return bool
+     */
+    public function create(User $user): bool
+    {
+        $validationResult = $this->validator->validate($user, null, ['create']);
+        if ($validationResult->count() > 0) {
+            throw new ValidationException('Wrong entity passed to create');
+        }
+
+        $result = $this->cuser->Add(
+            $this->serializer->toArray($user, SerializationContext::create()->setGroups(['create']))
+        );
+        if ((int)$result > 0) {
+            $user->setId((int)$result);
+
+            return true;
+        }
+
+        throw new BitrixRuntimeException($this->cuser->LAST_ERROR);
+    }
+
+
+    /**
+     * @param User $user
+     *
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws ValidationException
      * @throws BitrixRuntimeException
      * @return bool
      */
-    public function create(User $user): bool
+    public function register(User $user): bool
     {
         $validationResult = $this->validator->validate($user, null, ['create']);
         if ($validationResult->count() > 0) {

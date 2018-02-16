@@ -179,7 +179,7 @@ class UserService implements
      */
     public function register(User $user, bool $manzanaSave = true): bool
     {
-        $result = $this->userRepository->create($user);
+        $result = $this->userRepository->register($user);
 
         if (!$manzanaSave) {
             return $result;
