@@ -92,24 +92,20 @@ class FourPawsOrderPaymentResultComponent extends \CBitrixComponent
             }
 
             $actionFile = $payment->getPaySystem()->getFieldsValues()['ACTION_FILE'];
-            if (is_dir($_SERVER['DOCUMENT_ROOT'] . $actionFile) &&
-                file_exists($_SERVER['DOCUMENT_ROOT'] . $actionFile . '/result.php')
-            ) {
-                try {
-                    require $_SERVER['DOCUMENT_ROOT'] . $actionFile . '/result.php';
-                    $url = new \Bitrix\Main\Web\Uri('/sale/order/complete/' . $order->getId());
-                    if (!empty($this->arParams['HASH'])) {
-                        $url->addParams(['HASH' => $this->arParams['HASH']]);
-                    }
-
-                    if (!empty($this->arParams['REDIRECT_URL'])) {
-                        $url->setPath($this->arParams['REDIRECT_URL']);
-                        $url->addParams(['ORDER_ID' => $order->getId()]);
-                    }
-
-                    LocalRedirect($url->getUri());
-                } catch (PaymentException $e) {
+            try {
+                $this->includeResultFile($actionFile);
+                $url = new \Bitrix\Main\Web\Uri('/sale/order/complete/' . $order->getId());
+                if (!empty($this->arParams['HASH'])) {
+                    $url->addParams(['HASH' => $this->arParams['HASH']]);
                 }
+
+                if (!empty($this->arParams['REDIRECT_URL'])) {
+                    $url->setPath($this->arParams['REDIRECT_URL']);
+                    $url->addParams(['ORDER_ID' => $order->getId()]);
+                }
+
+                LocalRedirect($url->getUri());
+            } catch (PaymentException $e) {
             }
         } catch (\Exception $e) {
             try {
@@ -120,5 +116,23 @@ class FourPawsOrderPaymentResultComponent extends \CBitrixComponent
         }
 
         $this->includeComponentTemplate();
+    }
+
+    /**
+     * @param string $actionFile
+     *
+     * @return bool
+     */
+    protected function includeResultFile(string $actionFile): bool
+    {
+        if (is_dir($_SERVER['DOCUMENT_ROOT'] . $actionFile) &&
+            file_exists($_SERVER['DOCUMENT_ROOT'] . $actionFile . '/result.php')
+        ) {
+            require $_SERVER['DOCUMENT_ROOT'] . $actionFile . '/result.php';
+
+            return true;
+        }
+
+        return false;
     }
 }
