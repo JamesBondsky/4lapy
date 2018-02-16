@@ -9,6 +9,9 @@ use FourPaws\SaleBundle\Service\OrderService;
 IncludeModuleLangFile(__FILE__);
 
 $orderId = $_REQUEST['ORDER_ID'];
+if (!$sberbankOrderId = $_REQUEST['orderId']) {
+    throw new PaymentException('Заказ не найден');
+}
 
 $order = new CSaleOrder();
 $arOrder = $order->GetByID($orderId);
@@ -47,8 +50,7 @@ $rbs = new RBS(
     $testMode,
     $logging
 );
-
-$response = $rbs->get_order_status_by_orderId($orderId);
+$response = $rbs->get_order_status_by_orderId($sberbankOrderId);
 
 if ((int)$response['errorCode'] === 0) {
     $arOrderFields = [

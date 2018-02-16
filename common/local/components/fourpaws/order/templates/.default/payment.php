@@ -113,7 +113,7 @@ if ($deliveryService->isPickup($selectedDelivery) && $storage->isPartialGet()) {
                                 <input class="b-choice-recovery__input"
                                        id="order-payment-<?= $payment['ID'] ?>"
                                        type="radio"
-                                       name="paymentId"
+                                       name="pay-type"
                                        data-pay="<?= $payment['CODE'] === OrderService::PAYMENT_ONLINE ? 'online' : 'cashe' ?>"
                                        value="<?= $payment['ID'] ?>"
                                     <?= (int)$payment['ID'] === $storage->getPaymentId() ? 'checked="checked"' : '' ?>/>
