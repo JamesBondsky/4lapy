@@ -245,7 +245,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                         $modifyDate ? $stockResultByStore->getDeliveryDate() : null,
                         ['SHORT' => true, 'SHOW_TIME' => true]
                     ),
-                    'metroClass'      => !empty($metro) ? '--' . $metroList[$metro]['UF_CLASS'] : '',
+                    'metroClass'      => !empty($metro) ? '--' . $metroList[$metro]['BRANCH']['UF_CLASS'] : '',
                     'order'           => $orderType,
                     'parts_available' => $partsAvailable,
                     'parts_delayed'   => $partsDelayed,
