@@ -27,9 +27,9 @@ class SourceMessage implements SourceMessageInterface
     }
     
     /**
-     * @return string
+     * @return mixed
      */
-    public function getData() : string
+    public function getData()
     {
         return $this->data;
     }
@@ -41,7 +41,7 @@ class SourceMessage implements SourceMessageInterface
      * @param string $type
      * @param string $data
      */
-    public function __construct(string $id, string $type, string $data)
+    public function __construct(string $id, string $type, $data)
     {
         $this->id   = $id;
         $this->type = $type;

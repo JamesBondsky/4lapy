@@ -41,21 +41,28 @@ class BonusService
      * @var ManzanaService
      */
     public $manzanaService;
+
+    /**
+     * @var UserService
+     */
+    public $userService;
     
     /** @var LoggerInterface */
     private $logger;
-    
+
     /**
      * ReferralService constructor.
      *
      * @param ManzanaService $manzanaService
+     * @param UserService $userService
      *
      * @throws \RuntimeException
      * @throws ServiceNotFoundException
      */
-    public function __construct(ManzanaService $manzanaService)
+    public function __construct(ManzanaService $manzanaService, UserService $userService)
     {
         $this->manzanaService = $manzanaService;
+        $this->userService = $userService;
         $this->logger         = LoggerFactory::create('manzana');
     }
     
@@ -115,13 +122,11 @@ class BonusService
             }
         } catch (ManzanaServiceContactSearchMoreOneException $e) {
             /** @var UserService $userService */
-            $userService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
-            $phone       = $userService->getCurrentUser()->getPersonalPhone();
+            $phone       = $this->userService->getCurrentUser()->getPersonalPhone();
             $this->logger->info('Найдено больше одного пользователя в манзане по телефону ' . $phone);
         } catch (ManzanaServiceContactSearchNullException $e) {
             /** @var UserService $userService */
-            $userService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
-            $phone       = $userService->getCurrentUser()->getPersonalPhone();
+            $phone       = $this->userService->getCurrentUser()->getPersonalPhone();
             $this->logger->info('Не найдено пользователей в манзане по телефону ' . $phone);
         } /** сбрасываем исключения связанные с ошибкой сервиса и возвращаем пустой объект */
         catch (ManzanaServiceException $e) {
@@ -153,16 +158,14 @@ class BonusService
             /** сбрасываем исключения связанные с маназной если не найден пользователь или ошибка сервиса и возвращаем пустой объект */
         } catch (ManzanaServiceContactSearchMoreOneException $e) {
             /** @var UserService $userService */
-            $userService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
             $this->logger->info(
-                'Найдено больше одного пользователя в манзане по телефону ' . $userService->getCurrentUser()
+                'Найдено больше одного пользователя в манзане по телефону ' . $this->userService->getCurrentUser()
                                                                                           ->getPersonalPhone()
             );
         } catch (ManzanaServiceContactSearchNullException $e) {
             /** @var UserService $userService */
-            $userService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
             $this->logger->info(
-                'Не найдено пользователей в манзане по телефону ' . $userService->getCurrentUser()->getPersonalPhone()
+                'Не найдено пользователей в манзане по телефону ' . $this->userService->getCurrentUser()->getPersonalPhone()
             );
         } /** глушим остальные ошибки по манзане и обрабытываем в контроллере - финальный return */
         catch (ManzanaServiceException $e) {
