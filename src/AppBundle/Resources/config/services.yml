@@ -28,6 +28,9 @@ services:
         class: FourPaws\AppBundle\Callback\CallbackService
         arguments: ['%callback%']
 
+    ajax.mess:
+        class: FourPaws\AppBundle\Service\AjaxMess
+
     FourPaws\AppBundle\Serialization\:
         resource: '../../Serialization/*'
         tags: ['jms_serializer.subscribing_handler']
