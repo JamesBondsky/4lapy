@@ -14,12 +14,17 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var string $componentPath
  */
 
+// текстовый блок с преимуществами подписки
 $APPLICATION->IncludeComponent(
-    'fourpaws:personal.orders.subscribe',
+    'bitrix:main.include',
     '',
-    [],
-    $component,
     [
-        'HIDE_ICONS' => 'Y',
+        'AREA_FILE_SHOW' => 'file',
+        'PATH' => '/local/include/blocks/personal.orders_subscribe.php',
+        'EDIT_TEMPLATE'  => '',
+    ],
+    null,
+    [
+        'HIDE_ICONS' => 'N',
     ]
 );

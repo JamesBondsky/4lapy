@@ -14,12 +14,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var string $componentPath
  */
 
-$APPLICATION->IncludeComponent(
-    'fourpaws:personal.orders.subscribe',
-    '',
-    [],
-    $component,
-    [
-        'HIDE_ICONS' => 'Y',
-    ]
-);
+switch ($arResult['CURRENT_STAGE']) {
+    case 'intro':
+        // страница с описанием
+        include __DIR__.'/stage.intro.php';
+        break;
+}
