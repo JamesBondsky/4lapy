@@ -8,7 +8,6 @@ namespace FourPaws\PersonalBundle\Service;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Doctrine\Common\Collections\ArrayCollection;
-use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
@@ -20,11 +19,11 @@ use FourPaws\External\Manzana\Model\Contact;
 use FourPaws\External\ManzanaService;
 use FourPaws\PersonalBundle\Entity\CardBonus;
 use FourPaws\PersonalBundle\Entity\UserBonus;
+use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
-use FourPaws\UserBundle\Service\UserService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -36,15 +35,18 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  */
 class BonusService
 {
-    
+
     /**
      * @var ManzanaService
      */
     public $manzanaService;
-    
+
     /** @var LoggerInterface */
     private $logger;
-    
+
+    /** @var CurrentUserProviderInterface */
+    private $currentUserProvider;
+
     /**
      * ReferralService constructor.
      *
@@ -53,13 +55,16 @@ class BonusService
      * @throws \RuntimeException
      * @throws ServiceNotFoundException
      */
-    public function __construct(ManzanaService $manzanaService)
+    public function __construct(ManzanaService $manzanaService, CurrentUserProviderInterface $currentUserProvider)
     {
         $this->manzanaService = $manzanaService;
-        $this->logger         = LoggerFactory::create('manzana');
+        $this->logger = LoggerFactory::create('manzana');
+        $this->currentUserProvider = $currentUserProvider;
     }
-    
+
     /**
+     * @param User $user
+     *
      * @return UserBonus
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
@@ -68,14 +73,18 @@ class BonusService
      * @throws ApplicationCreateException
      * @throws NotAuthorizedException
      */
-    public function getCurUserBonusInfo() : UserBonus
+    public function getUserBonusInfo(User $user = null): UserBonus
     {
+        if (!$user) {
+            $user = $this->currentUserProvider->getCurrentUser();
+        }
+
         $bonus = new UserBonus();
         $bonus->setEmpty(true);
         try {
             /** @var Contact $contact */
-            $contact = $this->manzanaService->getContactByCurUser();
-            
+            $contact = $this->manzanaService->getContactByUser($user);
+
             if ($contact->isLoyaltyProgramContact()) {
                 /** @var ArrayCollection $cards */
                 $cards = $contact->cards;
@@ -106,30 +115,26 @@ class BonusService
                         $bonus->setDebit((float)$contact->plDebet);
                         $bonus->setSum((float)$contact->plSumm);
                         $bonus->setDiscount((float)$contact->plDiscount);
-                        
+
                         $bonus->setCard($cardBonus);
-                        
+
                         $bonus->setEmpty(false);
                     }
                 }
             }
         } catch (ManzanaServiceContactSearchMoreOneException $e) {
-            /** @var UserService $userService */
-            $userService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
-            $phone       = $userService->getCurrentUser()->getPersonalPhone();
-            $this->logger->info('Найдено больше одного пользователя в манзане по телефону ' . $phone);
+            $this->logger->info(
+                'Найдено больше одного пользователя в манзане по телефону ' . $user->getPersonalPhone()
+            );
         } catch (ManzanaServiceContactSearchNullException $e) {
-            /** @var UserService $userService */
-            $userService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
-            $phone       = $userService->getCurrentUser()->getPersonalPhone();
-            $this->logger->info('Не найдено пользователей в манзане по телефону ' . $phone);
+            $this->logger->info('Не найдено пользователей в манзане по телефону ' . $user->getPersonalPhone());
         } /** сбрасываем исключения связанные с ошибкой сервиса и возвращаем пустой объект */
         catch (ManzanaServiceException $e) {
         }
-        
+
         return $bonus;
     }
-    
+
     /**
      * @param string $bonusCard
      *
@@ -141,34 +146,33 @@ class BonusService
      * @throws ServiceCircularReferenceException
      * @throws NotAuthorizedException
      */
-    public function activateBonusCard(string $bonusCard) : bool
+    public function activateBonusCard(string $bonusCard, User $user = null): bool
     {
-        $contact             = new Client();
+        if (!($user instanceof User)) {
+            $user = $this->currentUserProvider->getCurrentUser();
+        }
+
+        $contact = new Client();
         $contact->cardnumber = $bonusCard;
         try {
-            $contact->contactId = $this->manzanaService->getContactByCurUser();
+            $contact->contactId = $this->manzanaService->getContactByUser($user);
             $this->manzanaService->updateContact($contact);
-            
+
             return true;
             /** сбрасываем исключения связанные с маназной если не найден пользователь или ошибка сервиса и возвращаем пустой объект */
         } catch (ManzanaServiceContactSearchMoreOneException $e) {
-            /** @var UserService $userService */
-            $userService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
             $this->logger->info(
-                'Найдено больше одного пользователя в манзане по телефону ' . $userService->getCurrentUser()
-                                                                                          ->getPersonalPhone()
+                'Найдено больше одного пользователя в манзане по телефону ' . $user->getPersonalPhone()
             );
         } catch (ManzanaServiceContactSearchNullException $e) {
-            /** @var UserService $userService */
-            $userService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
             $this->logger->info(
-                'Не найдено пользователей в манзане по телефону ' . $userService->getCurrentUser()->getPersonalPhone()
+                'Не найдено пользователей в манзане по телефону ' . $user->getPersonalPhone()
             );
         } /** глушим остальные ошибки по манзане и обрабытываем в контроллере - финальный return */
         catch (ManzanaServiceException $e) {
         } catch (ManzanaException $e) {
         }
-        
+
         return false;
     }
 }

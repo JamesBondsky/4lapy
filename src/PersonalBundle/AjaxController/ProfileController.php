@@ -222,7 +222,7 @@ class ProfileController extends Controller
             $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
             $client         = null;
             try {
-                $contactId         = $manzanaService->getContactIdByCurUser();
+                $contactId         = $manzanaService->getContactIdByUser();
                 $client            = new Client();
                 $client->contactId = $contactId;
             } catch (ManzanaServiceException $e) {
