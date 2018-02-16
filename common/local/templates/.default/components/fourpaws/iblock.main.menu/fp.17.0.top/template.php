@@ -5,7 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 /**
  * Главное меню сайта
  *
- * @updated: 14.02.2018
+ * @updated: 16.02.2018
  */
 /**
  * @global CMain $APPLICATION
@@ -27,6 +27,7 @@ $sArrowDownSwg_10_10 = (new \FourPaws\Decorators\SvgDecorator('icon-arrow-down',
 $sArrowDownSwg_6_10 = (new \FourPaws\Decorators\SvgDecorator('icon-arrow-down', 6, 10))->__toString();
 $sArrowDownIco = '<span class="b-icon b-icon--more b-icon--orange b-icon--left-5">'.$sArrowDownSwg_10_10.'</span>';
 $sArrowDownOrangeIco = '<span class="b-icon b-icon--back-mobile b-icon--orange">'.$sArrowDownSwg_10_10.'</span>';
+$sArrowDownOrangeIcoBack = '<span class="b-icon b-icon--back-mobile b-icon--orange">'.$sArrowDownSwg_6_10.'</span>';
 $sArrowDownIcoSecond = '<span class="b-icon b-icon--menu-main">'.$sArrowDownSwg_6_10.'</span>';
 $sArrowDownIcoThird = '<span class="b-icon">'.$sArrowDownSwg_6_10.'</span>';
 $sArrowDownIcoFourth = '<span class="b-icon b-icon--menu-main b-icon--none-desktop">'.$sArrowDownSwg_6_10.'</span>';
@@ -43,14 +44,14 @@ $sArrowDownIcoBrand = '<span class="b-icon b-icon--brand-menu">'.$sArrowDownSwg_
             if ($arItem['NESTED'] || $arItem['IS_BRAND_MENU']) {
                 if ($arItem['CODE'] === 'pet') {
                     $sAddClass1 = ' js-menu-pet-mobile';
-                    $sAddClass2 = ' js-open-step-mobile';
+                    $sAddClass2 = ' js-open-main-menu js-open-step-mobile';
                 } else {
-                    $sAddClass1 = $arItem['IS_BRAND_MENU'] ? ' js-menu-brand-mobile' : '';
-                    $sAddClass2 = $arItem['IS_BRAND_MENU'] ? ' js-open-brand-mobile' : '';
+                    $sAddClass1 = $arItem['IS_BRAND_MENU'] ? ' js-menu-brand-mobile' : ' js-show-dropdown';
+                    $sAddClass2 = $arItem['IS_BRAND_MENU'] ? ' js-open-main-menu js-open-brand-mobile' : '';
                 }
                 ?>
                 <li class="b-menu__item b-menu__item--more<?=$sAddClass1?>">
-                    <a class="b-menu__link b-menu__link--more js-open-main-menu<?=$sAddClass2?>"<?=$arItem['_LINK_ATTR1_']?> href="<?=$arItem['_URL_']?>">
+                    <a class="b-menu__link b-menu__link--more<?=$sAddClass2?>"<?=$arItem['_LINK_ATTR1_']?> href="<?=$arItem['_URL_']?>">
                         <?php
                         echo $arItem['_TEXT_'];
                         echo $sArrowDownIco;
@@ -62,6 +63,14 @@ $sArrowDownIcoBrand = '<span class="b-icon b-icon--brand-menu">'.$sArrowDownSwg_
                     if ($arItem['CODE'] !== 'pet' && !$arItem['IS_BRAND_MENU']) {
                         ?>
                         <div class="b-menu__dropdown b-dropdown-menu">
+                            <div class="b-item-back">
+                                <a class="b-item-back__link js-close-dropdown"<?=$arItem['_LINK_ATTR2_']?> href="<?=$arItem['_URL_']?>">
+                                    <?php
+                                    echo $sArrowDownOrangeIcoBack;
+                                    echo $arItem['_TEXT_'];
+                                    ?>
+                                </a>
+                            </div>
                             <?php
                                 foreach ($arItem['NESTED'] as $arSecondLevelItem) {
                                     ?>
