@@ -1,4 +1,5 @@
 four_paws_mobile_api:
+  debug: '%kernel.debug%'
   exceptions:
     FourPaws\MobileApiBundle\Exception\MetroByNoneMetroCityException:
       code: 44

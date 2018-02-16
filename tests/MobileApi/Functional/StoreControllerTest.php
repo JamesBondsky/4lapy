@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\Test\MobileApi\Functional;
 
 use Symfony\Component\HttpFoundation\Request;
@@ -90,7 +94,6 @@ class StoreControllerTest extends BaseTest
             static::assertJson($content);
             $data = json_decode($content, true);
             static::assertInternalType('array', $data);
-            static::assertTrue($response->isClientError());
             static::assertInternalType('array', $data['error']);
             static::assertArrayHasKey('error', $data);
             if (\is_array($data['error']) && !empty($data['error'])) {
@@ -163,7 +166,7 @@ class StoreControllerTest extends BaseTest
         static::assertArrayHasKey('service', $shop);
         static::assertInternalType('array', $shop['service']);
         $countShopService = \count($shop['service']);
-        if($countShopService > 0) {
+        if ($countShopService > 0) {
             $this->doTestServicesStructure($shop['service']);
         }
     }
@@ -200,7 +203,7 @@ class StoreControllerTest extends BaseTest
             static::assertArrayHasKey('shops', $data['data']);
             static::assertInternalType('array', $data['data']['shops']);
             $shopsCount = \count($data['data']['shops']);
-            if($shopsCount > 0) {
+            if ($shopsCount > 0) {
                 $this->doTestShopsStructure($data['data']['shops']);
             }
         }
