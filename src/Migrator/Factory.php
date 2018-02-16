@@ -7,6 +7,7 @@ use FourPaws\Migrator\Client\ArticlePull;
 use FourPaws\Migrator\Client\Catalog;
 use FourPaws\Migrator\Client\CityPhone;
 use FourPaws\Migrator\Client\News;
+use FourPaws\Migrator\Client\SaleBasePull;
 use FourPaws\Migrator\Client\SalePull;
 use FourPaws\Migrator\Client\Saveable;
 use FourPaws\Migrator\Client\Store;
@@ -34,6 +35,7 @@ final class Factory
         'news',
         'city_phone',
         'sale',
+        'sale_base',
         'store',
         'user',
     ];
@@ -77,6 +79,9 @@ final class Factory
                 break;
             case 'sale':
                 $client = new SalePull($options);
+                break;
+            case 'sale_base':
+                $client = new SaleBasePull($options);
                 break;
             case 'store':
                 $client = new Store(new StoreProvider(new StoreEntity(Store::ENTITY_NAME)), $options);

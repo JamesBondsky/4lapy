@@ -13,14 +13,9 @@ parameters:
   migrator:
     token: c81789b482ecbe6976f496a9697d75de
 
-  sms:
-    start_messaging: '09:00'
-    stop_messaging: '21:00'
-    login: '%env(SMS_LOGIN)%'
-    password: '%env(SMS_PASSWORD)%'
-    originator: 4lapy
-    login.immediate: '%env(SMS_LOGIN_IMMEDIATE)%'
-    password.immediate: '%env(SMS_PASSWORD_IMMEDIATE)%'
+  sms.start_messaging: '09:00'
+  sms.stop_messaging: '21:00'
+  sms.originator: 4lapy
 
   expertsender:
     url: https://api.esv2.com

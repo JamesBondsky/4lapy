@@ -28,6 +28,7 @@ class DirectorySourceFinderBuilder
 
         return (new Finder())
             ->in($path)->name($nameMask . '.' . $fileType)
+            ->depth(0)
             ->files()
             ->ignoreDotFiles(true)->sortByName()
             ->filter(function (\SplFileInfo $file) {

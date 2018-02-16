@@ -171,11 +171,14 @@ class OrderStorageService
         }
 
         $mapping = [
-            'shopId' => 'deliveryPlaceCode',
+            'shopId'   => 'deliveryPlaceCode',
+            'pay-type' => 'paymentId',
         ];
 
         foreach ($request->request as $name => $value) {
-            if (!\in_array($name, $availableValues, true)) {
+            if (!\in_array($name, $availableValues, true) &&
+                !\in_array($mapping[$name], $availableValues, true)
+            ) {
                 continue;
             }
             $setter = 'set' . ucfirst($name);
