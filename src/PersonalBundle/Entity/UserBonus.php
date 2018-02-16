@@ -136,6 +136,14 @@ class UserBonus
     {
         $this->card = $card;
     }
+
+    /**
+     * @return bool
+     */
+    public function haveCard(): bool
+    {
+        return !empty($this->getCard()->getCardId());
+    }
     
     /**
      * @return float

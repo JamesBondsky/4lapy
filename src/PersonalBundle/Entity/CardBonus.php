@@ -13,7 +13,7 @@ class CardBonus
      *
      * @var string
      */
-    private $cardId = 0;
+    private $cardId = '';
     
     /**
      * номер карты
