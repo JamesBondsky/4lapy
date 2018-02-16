@@ -9,6 +9,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Iblock\Component\Tools;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Data\Cache;
 use Bitrix\Main\LoaderException;
@@ -85,14 +86,25 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
     public function executeComponent()
     {
         try {
-            $userId = $this->currentUserProvider->getCurrentUserId();
+            $user = $this->currentUserProvider->getCurrentUser();
         } catch (NotAuthorizedException $e) {
             /** запрашиваем авторизацию */
             \define('NEED_AUTH', true);
             return null;
         }
+
+        if(!$user->havePersonalPhone()){
+            global $error404Message, $error404Title, $error404CustomCloseWorkerTags, $error404H1, $error404DivErrorPageCustomAttributes;
+            $error404Title = 'Бонусы';
+            $error404CustomCloseWorkerTags = '</div></div></main>';
+            $error404H1 = 'Бонусы не доступны';
+            $error404DivErrorPageCustomAttributes = ' style="margin:0 !important"';
+            $error404Message = '<p>Для доступа к бонусам необходимо заполнить телефон в профиле</p><a href="/personal/">Перейти в профиль</a>';
+            Tools::process404('', true, true, true);
+        }
+
         $cache = Cache::createInstance();
-        if ($cache->initCache($this->arParams['MANZANA_CACHE_TIME'], ['userId' => $userId])) {
+        if ($cache->initCache($this->arParams['MANZANA_CACHE_TIME'], ['userId' => $user->getId()])) {
             $result = $cache->getVars();
             $this->arResult['BONUS'] = $bonus = $result['bonus'];
         } elseif ($cache->startDataCache()) {
