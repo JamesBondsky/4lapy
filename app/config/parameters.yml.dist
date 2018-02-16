@@ -29,7 +29,7 @@ parameters:
   elastica.client_options:
     - timeout: 60
       # ВНИМАНИЕ! Логирование следует включать только временно при отладке,
-      # т.к. оно записывает очень много данных в лог.
+      # т.к. оно записывает clearочень много данных в лог.
     - log: false
     - bigintConversion: false
     - retryOnConflict: 0
