@@ -108,11 +108,7 @@ class ImportDescriptionFromCsv extends Command implements LoggerAwareInterface
                         $fields['CODE'] = $code;
                     }
 
-                    $updateResult = $this->cIblockElement->Update($productId, [
-                        'NAME'        => $complectName ?: $name,
-                        'IBLOCK_ID'   => $iblockId,
-                        'DETAIL_TEXT' => $detailText,
-                    ]);
+                    $updateResult = $this->cIblockElement->Update($productId, $fields);
                     if (!$updateResult) {
                         $this->log()->error(sprintf(
                             'Product %s update error: %s',
