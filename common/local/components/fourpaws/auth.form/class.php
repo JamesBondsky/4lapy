@@ -15,9 +15,9 @@ use Bitrix\Main\LoaderException;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\AppBundle\Service\AjaxMess;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Exception\SmsSendErrorException;
 use FourPaws\External\Manzana\Model\Client;
@@ -63,6 +63,9 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      */
     private $userAuthorizationService;
 
+    /** @var AjaxMess */
+    private $ajaxMess;
+
     /**
      * FourPawsAuthFormComponent constructor.
      *
@@ -86,6 +89,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         }
         $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
         $this->userAuthorizationService = $container->get(UserAuthorizationInterface::class);
+        $this->ajaxMess = $container->get('ajax.mess');
     }
 
     /** {@inheritdoc} */
@@ -154,16 +158,10 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
     {
         $needWritePhone = false;
         if (empty($rawLogin)) {
-            return JsonErrorResponse::createWithData(
-                'Не указан телефон или email',
-                ['errors' => ['emptyData' => 'Не указан телефон или email']]
-            );
+            return $this->ajaxMess->getEmptyDataError();
         }
         if (empty($password)) {
-            return JsonErrorResponse::createWithData(
-                'Не указан пароль',
-                ['errors' => ['emptyPassword' => 'Не указан пароль']]
-            );
+            return $this->ajaxMess->getEmptyPasswordError();
         }
         try {
             $this->userAuthorizationService->login($rawLogin, $password);
@@ -172,35 +170,18 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 $needWritePhone = true;
             }
         } catch (UsernameNotFoundException $e) {
-            return JsonErrorResponse::createWithData(
-                'Неверный логин или пароль',
-                ['errors' => ['wrongPassword' => 'Неверный логин или пароль']]
-            );
+            return $this->ajaxMess->getWrongPasswordError();
         } catch (InvalidCredentialException $e) {
-            return JsonErrorResponse::createWithData(
-                'Неверный логин или пароль',
-                ['errors' => ['wrongPassword' => 'Неверный логин или пароль']]
-            );
+            return $this->ajaxMess->getWrongPasswordError();
         } catch (TooManyUserFoundException $e) {
             /** @noinspection PhpUnhandledExceptionInspection */
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             $logger = LoggerFactory::create('auth');
             $logger->critical('Найдено больше одного совпадения по логину/email/телефону ' . $rawLogin);
 
-            return JsonErrorResponse::createWithData(
-                'Найдено больше одного совпадения, обратитесь на горячую линию по телефону ' . $this->getSitePhone(),
-                [
-                    'errors' => [
-                        'moreOneUser' => 'Найдено больше одного совпадения, обратитесь на горячую линию по телефону'
-                            . $this->getSitePhone(),
-                    ],
-                ]
-            );
+            return $this->ajaxMess->getTooManyUserFoundException($this->getSitePhone(), $rawLogin);
         } catch (\Exception $e) {
-            return JsonErrorResponse::createWithData(
-                'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
-                ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
-            );
+            return $this->ajaxMess->getSystemError();
         }
 
         if (!$needWritePhone) {
@@ -229,10 +210,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         try {
             $phone = PhoneHelper::normalizePhone($phone);
         } catch (WrongPhoneNumberException $e) {
-            return JsonErrorResponse::createWithData(
-                'Некорректный номер телефона',
-                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
-            );
+            return $this->ajaxMess->getWrongPhoneNumberException();
         }
 
         try {
@@ -240,31 +218,16 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
             $res = $confirmService::sendConfirmSms($phone);
             if (!$res) {
-                return JsonErrorResponse::createWithData(
-                    'Ошибка при отправке смс, попробуйте позднее',
-                    ['errors' => ['errorSmsSend' => 'Ошибка отправки смс, попробуйте позднее']]
-                );
+                return $this->ajaxMess->getSmsSendErrorException();
             }
         } catch (SmsSendErrorException $e) {
-            return JsonErrorResponse::createWithData(
-                'Ошибка отправки смс, попробуйте позднее',
-                ['errors' => ['errorSmsSend' => 'Ошибка отправки смс, попробуйте позднее']]
-            );
+            return $this->ajaxMess->getSmsSendErrorException();
         } catch (WrongPhoneNumberException $e) {
-            return JsonErrorResponse::createWithData(
-                $e->getMessage(),
-                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
-            );
+            return $this->ajaxMess->getWrongPhoneNumberException();
         } catch (\RuntimeException $e) {
-            return JsonErrorResponse::createWithData(
-                'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
-                ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
-            );
+            return $this->ajaxMess->getSystemError();
         } catch (\Exception $e) {
-            return JsonErrorResponse::createWithData(
-                'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
-                ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
-            );
+            return $this->ajaxMess->getSystemError();
         }
 
         return JsonSuccessResponse::create('Смс успешно отправлено');
@@ -291,10 +254,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         try {
             $phone = PhoneHelper::normalizePhone($phone);
         } catch (WrongPhoneNumberException $e) {
-            return JsonErrorResponse::createWithData(
-                $e->getMessage(),
-                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
-            );
+            return $this->ajaxMess->getWrongPhoneNumberException();
         }
         try {
             /** @var ConfirmCodeService $confirmService */
@@ -304,30 +264,18 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 $confirmCode
             );
             if (!$res) {
-                return JsonErrorResponse::createWithData(
-                    'Код подтверждения не соответствует',
-                    ['errors' => ['wrongConfirmCode' => 'Код подтверждения не соответствует']]
-                );
+                return $this->ajaxMess->getWrongConfirmCode();
             }
         } catch (ExpiredConfirmCodeException $e) {
-            return JsonErrorResponse::createWithData(
-                $e->getMessage(),
-                ['errors' => ['expiredConfirmCode' => $e->getMessage()]]
-            );
+            return $this->ajaxMess->getExpiredConfirmCodeException();
         } catch (NotFoundConfirmedCodeException $e) {
-            return JsonErrorResponse::createWithData(
-                $e->getMessage(),
-                ['errors' => ['notFoundConfirmCode' => $e->getMessage()]]
-            );
+            return $this->ajaxMess->getNotFoundConfirmedCodeException();
         } catch (WrongPhoneNumberException $e) {
-            return JsonErrorResponse::createWithData(
-                $e->getMessage(),
-                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
-            );
+            return $this->ajaxMess->getWrongPhoneNumberException();
         }
 
         $data = [
-            'UF_PHONE_CONFIRMED' => 'Y'
+            'UF_PHONE_CONFIRMED' => 'Y',
         ];
 
         if ($this->currentUserProvider->getUserRepository()->updateData(
@@ -373,10 +321,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         try {
             $phone = PhoneHelper::normalizePhone($phone);
         } catch (WrongPhoneNumberException $e) {
-            return JsonErrorResponse::createWithData(
-                $e->getMessage(),
-                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
-            );
+            return $this->ajaxMess->getWrongPhoneNumberException();
         }
         $title = 'Авторизация';
         switch ($step) {
@@ -489,10 +434,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             ]
         );
         if ($haveUsers['phone']) {
-            return JsonErrorResponse::createWithData(
-                'Такой телефон уже существует',
-                ['errors' => ['havePhone' => 'Такой телефон уже существует']]
-            );
+            return $this->ajaxMess->getHavePhoneError();
         }
 
         try {
@@ -502,31 +444,16 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             if ($res) {
                 $mess = 'Смс успешно отправлено';
             } else {
-                return JsonErrorResponse::createWithData(
-                    'Ошибка отправки смс, попробуйте позднее',
-                    ['errors' => ['errorSmsSend' => 'Ошибка отправки смс, попробуйте позднее']]
-                );
+                return $this->ajaxMess->getSmsSendErrorException();
             }
         } catch (SmsSendErrorException $e) {
-            return JsonErrorResponse::createWithData(
-                'Ошибка отправки смс, попробуйте позднее',
-                ['errors' => ['errorSmsSend' => 'Ошибка отправки смс, попробуйте позднее']]
-            );
+            return $this->ajaxMess->getSmsSendErrorException();
         } catch (WrongPhoneNumberException $e) {
-            return JsonErrorResponse::createWithData(
-                $e->getMessage(),
-                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
-            );
+            return $this->ajaxMess->getWrongPhoneNumberException();
         } catch (\RuntimeException $e) {
-            return JsonErrorResponse::createWithData(
-                'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
-                ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
-            );
+            return $this->ajaxMess->getSystemError();
         } catch (\Exception $e) {
-            return JsonErrorResponse::createWithData(
-                'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
-                ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
-            );
+            return $this->ajaxMess->getSystemError();
         }
 
         $data = [
@@ -538,10 +465,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             $this->currentUserProvider->getCurrentUserId(),
             $data
         )) {
-            return JsonErrorResponse::createWithData(
-                'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
-                ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
-            );
+            return $this->ajaxMess->getSystemError();
         }
 
         return $mess;

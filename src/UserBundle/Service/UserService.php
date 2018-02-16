@@ -179,7 +179,30 @@ class UserService implements
      */
     public function register(User $user, bool $manzanaSave = true): bool
     {
-        $result = $this->userRepository->register($user);
+        $validationResult = $this->userRepository->getValidator()->validate($user, null, ['create']);
+        if ($validationResult->count() > 0) {
+            throw new ValidationException('Wrong entity passed to create');
+        }
+
+        /** регистрируем битровым методом регистрации*/
+        $res = $this->bitrixUserService->Register(
+            $user->getLogin() ?? $user->getEmail(),
+            $user->getName() ?? '',
+            $user->getLastName() ?? '',
+            $user->getPassword(),
+            $user->getPassword(),
+            $user->getEmail()
+        );
+
+        if ((int)$res['ID'] > 0) {
+            /** дообновляем данные которых не хватает */
+            $user->setActive(true);
+            $user->setId((int)$res['ID']);
+            $result = $this->userRepository->update($user);
+        }
+        else {
+            throw new BitrixRuntimeException($this->bitrixUserService->LAST_ERROR);
+        }
 
         if (!$manzanaSave) {
             return $result;

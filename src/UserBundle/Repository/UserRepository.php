@@ -119,43 +119,6 @@ class UserRepository
         throw new BitrixRuntimeException($this->cuser->LAST_ERROR);
     }
 
-
-    /**
-     * @param User $user
-     *
-     * @throws InvalidIdentifierException
-     * @throws ConstraintDefinitionException
-     * @throws ValidationException
-     * @throws BitrixRuntimeException
-     * @return bool
-     */
-    public function register(User $user): bool
-    {
-        $validationResult = $this->validator->validate($user, null, ['create']);
-        if ($validationResult->count() > 0) {
-            throw new ValidationException('Wrong entity passed to create');
-        }
-
-        /** регистрируем битровым методом регистрации*/
-        $res = $this->cuser->Register(
-            $user->getLogin() ?? $user->getEmail(),
-            $user->getName() ?? '',
-            $user->getLastName() ?? '',
-            $user->getPassword(),
-            $user->getPassword(),
-            $user->getEmail()
-        );
-
-        if ((int)$res['ID'] > 0) {
-            /** дообновляем данные которых не хватает */
-            $user->setActive(true);
-            $user->setId((int)$res['ID']);
-            return $this->update($user);
-        }
-
-        throw new BitrixRuntimeException($this->cuser->LAST_ERROR);
-    }
-
     /**
      * @param int $id
      *
@@ -458,6 +421,14 @@ class UserRepository
         }
 
         return $data;
+    }
+
+    /**
+     * @return ValidatorInterface
+     */
+    public function getValidator(): ValidatorInterface
+    {
+        return $this->validator;
     }
 
     /** @noinspection PhpDocMissingThrowsInspection
