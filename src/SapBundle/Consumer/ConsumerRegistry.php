@@ -53,6 +53,7 @@ class ConsumerRegistry implements ConsumerRegistryInterface
         $supported = $this->collection->filter(function (ConsumerInterface $consumer) use ($data) {
             return $consumer->support($data);
         });
+
         if ($supported->count() === 0) {
             throw new UnexpectedValueException('No such consumer for passed data');
         }
