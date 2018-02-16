@@ -35,10 +35,6 @@ class SmsService implements LoggerAwareInterface
      */
     protected $client;
 
-    protected $startMessaging;
-
-    protected $stopMessaging;
-
     protected $parameters;
 
     /**
@@ -55,9 +51,8 @@ class SmsService implements LoggerAwareInterface
         $container = Application::getInstance()->getContainer();
         $this->parameters = $container->getParameter('sms');
 
-        list($this->startMessaging, $this->stopMessaging, $login, $password, $originator) = \array_values($this->parameters);
+        $this->client = new Client($this->parameters['login'], $this->parameters['password'], $this->parameters['originator']);
 
-        $this->client = new Client($login, $password, $originator);
         $this->setLogger(LoggerFactory::create('sms'));
     }
 
@@ -94,8 +89,8 @@ class SmsService implements LoggerAwareInterface
             } else {
                 $sms->updateParameters(
                     [
-                        'start_date' => $this->buildQueueTime($this->startMessaging),
-                        'stop_date' => $this->buildQueueTime($this->stopMessaging),
+                        'start_date' => $this->buildQueueTime($this->parameters['start_messaging']),
+                        'stop_date' => $this->buildQueueTime($this->parameters['stop_messaging']),
                         'isSendNextDay' => '1',
                         'isAbonentLocaleTime' => '1',
                     ]
