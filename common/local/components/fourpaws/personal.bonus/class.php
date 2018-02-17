@@ -9,6 +9,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Iblock\Component\Tools;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Data\Cache;
 use Bitrix\Main\LoaderException;
@@ -85,14 +86,20 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
     public function executeComponent()
     {
         try {
-            $userId = $this->currentUserProvider->getCurrentUserId();
+            $user = $this->currentUserProvider->getCurrentUser();
         } catch (NotAuthorizedException $e) {
             /** запрашиваем авторизацию */
             \define('NEED_AUTH', true);
             return null;
         }
+
+        if(!$user->havePersonalPhone()){
+            $this->includeComponentTemplate('notPhone');
+            return false;
+        }
+
         $cache = Cache::createInstance();
-        if ($cache->initCache($this->arParams['MANZANA_CACHE_TIME'], ['userId' => $userId])) {
+        if ($cache->initCache($this->arParams['MANZANA_CACHE_TIME'], ['userId' => $user->getId()])) {
             $result = $cache->getVars();
             $this->arResult['BONUS'] = $bonus = $result['bonus'];
         } elseif ($cache->startDataCache()) {
@@ -101,6 +108,7 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
             } catch (NotAuthorizedException $e) {
                 /** запрашиваем авторизацию */
                 \define('NEED_AUTH', true);
+                $cache->abortDataCache();
                 return null;
             }
             $cache->endDataCache(['bonus' => $bonus]);
