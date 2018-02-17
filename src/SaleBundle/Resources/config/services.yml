@@ -34,3 +34,7 @@ services:
     FourPaws\SaleBundle\Service\OrderStorageService:
         class: FourPaws\SaleBundle\Service\OrderStorageService
         public: true
+
+    FourPaws\SaleBundle\Service\UserAccountService:
+        class: FourPaws\SaleBundle\Service\UserAccountService
+        public: true
