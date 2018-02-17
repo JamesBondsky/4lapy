@@ -84,7 +84,9 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
         $params['PATH_TO_BASKET'] = '/personal/cart/';
         /** @noinspection SummerTimeUnsafeTimeManipulationInspection */
         /** кешируем на сутки, можно будет увеличить если обновления будут не очень частые - чтобы лишний кеш не хранился */
-        $params['CACHE_TIME'] = 24 * 60 * 60;
+        $params['CACHE_TIME'] = $params['CACHE_TIME'] ?? 24 * 60 * 60;
+        $params['CACHE_TYPE'] = $params['CACHE_TYPE'] ?? 'A';
+
         return $params;
     }
 

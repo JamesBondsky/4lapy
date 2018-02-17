@@ -3,6 +3,7 @@
 namespace FourPaws\PersonalBundle\Entity;
 
 
+use Bitrix\Main\ObjectException;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Internals\StatusLangTable;
@@ -615,24 +616,26 @@ class Order extends BaseEntity
 
     /**
      * @return string
+     * @throws ObjectException
      */
     public function getDateDelivery(): string
     {
-        $formatedDate = '';
+        $formattedDate = '';
         if ($this->getDelivery()->isDeducted()) {
-            $formatedDate = $this->getDelivery()->getFormatedDateDeducted();
+            $formattedDate = $this->getDelivery()->getFormatedDateDeducted();
         } else {
             /** @todo рассчитанная дата доставки */
-            /** @var OrderProp $prop */
-            $prop = $this->getProps()->get('DELIVERY_DATE');
-            /** @var Date|null $date */
-            $date = new Date($prop->getValue());
-            if ($date !== null && $date instanceof Date) {
-                $formatedDate = DateHelper::replaceRuMonth($date->format('d #n# Y'), DateHelper::GENITIVE);
+            $propVal = $this->getPropValue('DELIVERY_DATE');
+            if ($propVal) {
+                /** @var Date|null $date */
+                $date = new Date($propVal);
+                if ($date instanceof Date) {
+                    $formattedDate = DateHelper::replaceRuMonth($date->format('d #n# Y'), DateHelper::GENITIVE);
+                }
             }
         }
 
-        return $formatedDate;
+        return $formattedDate;
     }
 
     /**
@@ -718,5 +721,29 @@ class Order extends BaseEntity
     public function isClosed(): bool
     {
         return \in_array($this->getStatusId(), OrderService::$finalStatuses, true);
+    }
+
+    /**
+     * @param string $propCode
+     *
+     * @return mixed
+     */
+    public function getPropValue(string $propCode)
+    {
+        $orderProp = $this->getProps()->get($propCode);
+
+        return $orderProp ? $orderProp->getValue() : '';
+    }
+
+    /**
+     * @return bool
+     */
+    public function canBeSubscribed(): bool
+    {
+        /** @todo уточнить требуемую логику */
+        $result = $this->isPayed();
+// временно для разработки
+$result = true;
+        return $result;
     }
 }

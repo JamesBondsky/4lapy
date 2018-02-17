@@ -1,7 +1,19 @@
-<?php /** @var Order $order */
+<?php
+/**
+ * @global CMain $APPLICATION
+ * @var array $arParams
+ * @var array $arResult
+ * @var CBitrixComponent $component
+ * @var CBitrixComponentTemplate $this
+ * @var string $templateName
+ * @var string $componentPath
+ */
+
+/** @var Order $order */
 
 use Bitrix\Main\Application;
 use Bitrix\Main\Web\Uri;
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\PersonalBundle\Entity\Order;
@@ -37,10 +49,18 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
                 <span><?= $order->getDateDelivery() ?></span>
             </div>
             <div class="b-adress-info b-adress-info--order">
-                <?php if (!empty($order->getStore()->getMetro())) { ?>
-                    <span class="b-adress-info__label b-adress-info__label--<?= $arResult['METRO']->get($order->getStore()->getMetro())['BRANCH']['UF_CLASS'] ?>"></span>
-                    м. <?= $arResult['METRO']->get($order->getStore()->getMetro())['UF_NAME'] ?>,
-                <?php } ?>
+                <?php
+                $currentMetro = $order->getStore()->getMetro();
+                if (!empty($currentMetro)) {
+                    /** @var ArrayCollection $metroCollection */
+                    $metroCollection = $arResult['METRO'];
+                    $metroItem = $metroCollection->get($currentMetro);
+                    if (!empty($metroItem)) {
+                        ?>
+                        <span class="b-adress-info__label b-adress-info__label--<?= $metroItem['BRANCH']['UF_CLASS'] ?>"></span>
+                        м. <?= $metroItem['UF_NAME'] ?>,
+                    <?php }
+                }?>
                 <?= $order->getStore()->getAddress() ?>
                 <?php if (!empty($order->getStore()->getSchedule())) { ?>
                     <p class="b-adress-info__mode-operation"><?= $order->getStore()->getSchedule() ?></p>
@@ -76,10 +96,30 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
                 <span
                         class="b-ruble b-ruble--account-accordion">&nbsp;₽</span>
             </div>
-            <?php /** @todo подписаться на доставку */ ?>
-            <a class="b-accordion-order-item__subscribe js-open-popup" href="javascript:void(0);"
-               title="Подписаться на доставку" data-popup-id="subscribe-delivery">Подписаться
-                на&nbsp;доставку</a>
+            <?php
+
+            /**
+             * Подписка на доставку заказа
+             */
+            if ($order->canBeSubscribed()) {
+                // ссылка и попап c формой
+                $APPLICATION->IncludeComponent(
+                    'fourpaws:personal.orders.subscribe.form',
+                    'popup',
+                    [
+                        'ORDER_ID' => $order->getId(),
+                        // Y - выводить ссылку подписки
+                        'SHOW_SUBSCRIBE_ACTION' => 'Y',
+                        // Y - вставлять html через отложенные функции
+                        'OUTPUT_VIA_BUFFER' => 'Y',
+                    ],
+                    $component,
+                    [
+                        'HIDE_ICONS' => 'Y',
+                    ]
+                );
+            }
+            ?>
         </div>
     </div>
     <div class="b-accordion-order-item__hidden js-hidden-order">

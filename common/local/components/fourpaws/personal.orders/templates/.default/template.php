@@ -5,6 +5,15 @@ use Doctrine\Common\Collections\ArrayCollection;
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
+/**
+ * @global CMain $APPLICATION
+ * @var array $arParams
+ * @var array $arResult
+ * @var CBitrixComponent $component
+ * @var CBitrixComponentTemplate $this
+ * @var string $templateName
+ * @var string $componentPath
+ */
 
 /** @var ArrayCollection $closedOrders */
 $closedOrders = $arResult['CLOSED_ORDERS'];
@@ -20,7 +29,7 @@ if ($closedOrders->isEmpty() && $activeOrders->isEmpty()) {
         <div class="b-account__title">Текущие</div>
         <ul class="b-account__accordion-order-list">
             <?php foreach ($activeOrders as $order) {
-                require_once 'include/order.php';
+                include 'include/order.php';
             } ?>
         </ul>
     </div>
@@ -30,7 +39,7 @@ if ($closedOrders->isEmpty() && $activeOrders->isEmpty()) {
         <div class="b-account__title">Завершенные</div>
         <ul class="b-account__accordion-order-list">
             <?php foreach ($closedOrders as $order) {
-                require_once 'include/order.php';
+                include 'include/order.php';
             } ?>
         </ul>
     </div>
