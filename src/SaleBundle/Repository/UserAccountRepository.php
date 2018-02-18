@@ -122,6 +122,12 @@ class UserAccountRepository
         );
     }
 
+    /**
+     * @param UserAccount $userAccount
+     *
+     * @return bool
+     * @throws ValidationException
+     */
     public function updateBalance(UserAccount $userAccount): bool
     {
         $validationResult = $this->validator->validate($userAccount, null, ['update']);

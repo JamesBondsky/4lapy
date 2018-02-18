@@ -62,6 +62,7 @@ class Event implements ServiceHandlerInterface
 
     public static function updateUserAccountBalance()
     {
+        /* @todo по ТЗ должно выполняться в фоновом режиме */
         Application::getInstance()->getContainer()->get(UserAccountService::class)->refreshUserBalance();
     }
 }

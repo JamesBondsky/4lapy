@@ -44,7 +44,6 @@ class UserAccountService
      */
     public function refreshUserBalance(User $user = null): bool
     {
-        /* @todo по ТЗ должно выполняться в фоновом режиме */
         if (!$user) {
             $user = $this->currentUserProvider->getCurrentUser();
         }

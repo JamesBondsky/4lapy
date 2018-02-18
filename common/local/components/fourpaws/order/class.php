@@ -19,10 +19,12 @@ use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
+use FourPaws\SaleBundle\Service\UserAccountService;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Service\StoreService;
-use FourPaws\UserBundle\Service\UserAuthorizationInterface;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsOrderComponent extends \CBitrixComponent
@@ -34,9 +36,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         OrderStorageService::COMPLETE_STEP => 'complete/#ORDER_ID#',
     ];
 
-    /**
-     * @var string
-     */
+    /** @var string */
     protected $currentStep;
 
     /** @var OrderService */
@@ -51,14 +51,17 @@ class FourPawsOrderComponent extends \CBitrixComponent
     /** @var StoreService */
     protected $storeService;
 
-    /** @var UserAuthorizationInterface */
-    protected $userAuthProvider;
+    /** @var CurrentUserProviderInterface */
+    protected $currentUserProvider;
 
     /** @var UserCitySelectInterface */
     protected $userCityProvider;
 
     /** @var BasketService $basketService */
     protected $basketService;
+
+    /** @var UserAccountService */
+    protected $userAccountService;
 
     public function __construct($component = null)
     {
@@ -67,9 +70,10 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $this->orderStorageService = $serviceContainer->get(OrderStorageService::class);
         $this->deliveryService = $serviceContainer->get('delivery.service');
         $this->storeService = $serviceContainer->get('store.service');
-        $this->userAuthProvider = $serviceContainer->get(UserAuthorizationInterface::class);
+        $this->currentUserProvider = $serviceContainer->get(CurrentUserProviderInterface::class);
         $this->userCityProvider = $serviceContainer->get(UserCitySelectInterface::class);
         $this->basketService = $serviceContainer->get(BasketService::class);
+        $this->userAccountService = $serviceContainer->get(UserAccountService::class);
         parent::__construct($component);
     }
 
@@ -163,9 +167,13 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $payments = null;
         $deliveries = $this->orderService->getDeliveries();
         $this->getPickupData($deliveries, $storage);
-
+        
+        $user = null;
+        try {
+            $user = $this->currentUserProvider->getCurrentUser();
+        } catch (NotAuthorizedException $e) {}
+        
         if ($this->currentStep === OrderStorageService::DELIVERY_STEP) {
-
             $addresses = null;
             if ($storage->getUserId()) {
                 /** @var AddressService $addressService */
@@ -222,10 +230,16 @@ class FourPawsOrderComponent extends \CBitrixComponent
                     $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderStorageService::DELIVERY_STEP]
                 );
             }
-
             $this->arResult['SELECTED_DELIVERY'] = $selectedDelivery;
+
+            $this->arResult['ACCOUNT_BALANCE'] = null;
+            if ($storage->getUserId()) {
+                $this->userAccountService->refreshUserBalance($user);
+                $this->arResult['ACCOUNT_BALANCE'] = $this->userAccountService->findAccountByUser($user);
+            }
         }
 
+        $this->arResult['USER'] = $user;
         $this->arResult['PAYMENTS'] = $payments;
         $this->arResult['SELECTED_CITY'] = $selectedCity;
 

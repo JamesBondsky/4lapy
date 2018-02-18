@@ -64,6 +64,11 @@ class OrderService
     const STATUS_PAID = 'J';
 
     /**
+     * 90% заказа можно оплатить бонусами
+     */
+    const MAX_BONUS_PAYMENT = 0.9;
+
+    /**
      * @var AddressService
      */
     protected $addressService;

@@ -11,6 +11,8 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\SaleBundle\Entity\UserAccount;
+use FourPaws\UserBundle\Entity\User;
 
 /**
  * @var array $arResult
@@ -50,6 +52,12 @@ if ($deliveryService->isPickup($selectedDelivery) && $storage->isPartialGet()) {
                                    ->getPrice();
 }
 
+$payments = $arResult['PAYMENTS'];
+
+/** @var UserAccount $accountBalance */
+$accountBalance = $arResult['ACCOUNT_BALANCE'];
+/** @var User $user */
+$user = $arResult['USER'];
 ?>
 <div class="b-container">
     <h1 class="b-title b-title--h1 b-title--order">
@@ -96,7 +104,8 @@ if ($deliveryService->isPickup($selectedDelivery) && $storage->isPartialGet()) {
                           data-url="<?= $arResult['URL']['PAYMENT_VALIDATION'] ?>"
                           id="order-step">
                         <div class="b-choice-recovery b-choice-recovery--flex">
-                            <?php foreach ($arResult['PAYMENTS'] as $payment) { ?>
+                            <?php /** @var array $payment */ ?>
+                            <?php foreach ($payments as $payment) { ?>
                                 <?php
                                 if ((int)PaySystemManager::getInnerPaySystemId() === (int)$payment['ID']) {
                                     continue;
@@ -126,26 +135,37 @@ if ($deliveryService->isPickup($selectedDelivery) && $storage->isPartialGet()) {
                     </form>
                     <form class="b-order-contacts__form b-order-contacts__form--points js-form-validation success-valid"
                           action="/">
-                        <label class="b-order-contacts__label" for="point-pay">
-                            <b>Оплатить часть заказа бонусными баллами </b>(до 299)
-                        </label>
-                        <div class="b-input b-input--order-line js-pointspay-input">
-                            <input class="b-input__input-field b-input__input-field--order-line js-pointspay-input js-only-number js-no-valid"
-                                   id="point-pay"
-                                   type="text"
-                                   maxlength="4"
-                                   size="4">
-                            <div class="b-error">
-                                <span class="js-message"></span>
-                            </div>
-                            <a class="b-input__close-points js-pointspay-close"
-                               href="javascript:void(0)"
-                               title=""
-                               style="display: none;">
-                            </a>
-                        </div>
-                        <button class="b-button b-button--order-line js-pointspay-button" style="">Подтвердить
-                        </button>
+                        <?php if ($user->getDiscountCardNumber()) {
+                            $maxBonuses = min(
+                                OrderService::MAX_BONUS_PAYMENT * $basket->getPrice(),
+                                $accountBalance->getCurrentBudget()
+                            );
+                            if ($maxBonuses) {
+                                ?>
+                                <label class="b-order-contacts__label" for="point-pay">
+                                    <b>Оплатить часть заказа бонусными баллами </b>(до <?= $maxBonuses ?>)
+                                </label>
+                                <div class="b-input b-input--order-line js-pointspay-input">
+                                    <input class="b-input__input-field b-input__input-field--order-line js-pointspay-input js-only-number js-no-valid"
+                                           id="point-pay"
+                                           type="text"
+                                           maxlength="5"
+                                           size="5">
+                                    <div class="b-error">
+                                        <span class="js-message"></span>
+                                    </div>
+                                    <a class="b-input__close-points js-pointspay-close"
+                                       href="javascript:void(0)"
+                                       title=""
+                                       style="display: none;">
+                                    </a>
+                                </div>
+                                <button class="b-button b-button--order-line js-pointspay-button" style="">Подтвердить
+                                </button>
+                            <?php } ?>
+                        <?php } else { ?>
+                            <?php /* @todo форма ввода номера бонусной карты - верстки нет */ ?>
+                        <?php } ?>
                     </form>
                 </article>
             </div>
@@ -161,7 +181,8 @@ if ($deliveryService->isPickup($selectedDelivery) && $storage->isPartialGet()) {
                                     </div>
                                 </div>
                             </div>
-                            <div class="b-order-list__order-value b-order-list__order-value--order-step-3">4 703 ₽
+                            <div class="b-order-list__order-value b-order-list__order-value--order-step-3">
+                                <?= CurrencyHelper::formatPrice($basketPrice, false) ?>
                             </div>
                         </li>
                         <li class="b-order-list__item b-order-list__item--cost b-order-list__item--order-step-3">
@@ -172,28 +193,46 @@ if ($deliveryService->isPickup($selectedDelivery) && $storage->isPartialGet()) {
                                     </div>
                                 </div>
                             </div>
-                            <div class="b-order-list__order-value b-order-list__order-value--order-step-3">350 ₽
+                            <div class="b-order-list__order-value b-order-list__order-value--order-step-3">
+                                <?= CurrencyHelper::formatPrice($selectedDelivery->getPrice(), false) ?>
                             </div>
                         </li>
+                        <?php if ($storage->hasBonusPayment() && $storage->getBonusSum()) { ?>
+                            <li class="b-order-list__item b-order-list__item--cost b-order-list__item--order-step-3">
+                                <div class="b-order-list__order-text b-order-list__order-text--order-step-3">
+                                    <div class="b-order-list__clipped-text">
+                                        <div class="b-order-list__text-backed">
+                                            Оплачено бонусами
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="b-order-list__order-value b-order-list__order-value--order-step-3">
+                                    <?= CurrencyHelper::formatPrice($storage->getBonusSum(), false) ?>
+                                </div>
+                            </li>
+                        <?php } ?>
                         <li class="b-order-list__item b-order-list__item--cost b-order-list__item--order-step-3">
                             <div class="b-order-list__order-text b-order-list__order-text--order-step-3">
                                 <div class="b-order-list__clipped-text">
-                                    <div class="b-order-list__text-backed">Итого к оплате
+                                    <div class="b-order-list__text-backed">
+                                        Итого к оплате
                                     </div>
                                 </div>
                             </div>
-                            <div class="b-order-list__order-value b-order-list__order-value--order-step-3">5 053 ₽
+                            <div class="b-order-list__order-value b-order-list__order-value--order-step-3">
+                                <?= CurrencyHelper::formatPrice(
+                                    $basketPrice - $storage->getBonusSum() + $selectedDelivery->getPrice()
+                                ) ?>
                             </div>
                         </li>
                     </ul>
                 </div>
 
                 <div class="b-order__text-block b-order__text-block--additional">
-                    <p>Оформляя заказ я даю своё согласие на обработку персональных данных и подтверждаю ознакомление с
-                        договором офертой.</p>
+                    <p>Оформляя заказ, я даю своё согласие на обработку персональных данных и подтверждаю ознакомление с
+                        договором-офертой.</p>
                     <p>В соответствии с ФЗ №54-ФЗ кассовый чек при онлайн-оплате на сайте будет предоставлен в
-                        электронном виде
-                        на указанный при оформлении заказа номер телефона или email.</p>
+                        электронном виде на указанный при оформлении заказа номер телефона или email.</p>
                 </div>
             </div>
         </div>
