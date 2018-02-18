@@ -11,7 +11,6 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Service\OrderService;
-use FourPaws\SaleBundle\Entity\UserAccount;
 use FourPaws\UserBundle\Entity\User;
 
 /**
@@ -54,8 +53,6 @@ if ($deliveryService->isPickup($selectedDelivery) && $storage->isPartialGet()) {
 
 $payments = $arResult['PAYMENTS'];
 
-/** @var UserAccount $accountBalance */
-$accountBalance = $arResult['ACCOUNT_BALANCE'];
 /** @var User $user */
 $user = $arResult['USER'];
 ?>
@@ -136,21 +133,19 @@ $user = $arResult['USER'];
                     <form class="b-order-contacts__form b-order-contacts__form--points js-form-validation success-valid"
                           action="/">
                         <?php if ($user->getDiscountCardNumber()) {
-                            $maxBonuses = min(
-                                OrderService::MAX_BONUS_PAYMENT * $basket->getPrice(),
-                                $accountBalance->getCurrentBudget()
-                            );
-                            if ($maxBonuses) {
+                            if ($arResult['MAX_BONUS_SUM']) {
                                 ?>
                                 <label class="b-order-contacts__label" for="point-pay">
-                                    <b>Оплатить часть заказа бонусными баллами </b>(до <?= $maxBonuses ?>)
+                                    <b>Оплатить часть заказа бонусными баллами </b>
+                                    (до <?= $arResult['MAX_BONUS_SUM'] ?>)
                                 </label>
                                 <div class="b-input b-input--order-line js-pointspay-input">
                                     <input class="b-input__input-field b-input__input-field--order-line js-pointspay-input js-only-number js-no-valid"
                                            id="point-pay"
                                            type="text"
                                            maxlength="5"
-                                           size="5">
+                                           size="5"
+                                           value="<?= $storage->getBonusSum() ?>">
                                     <div class="b-error">
                                         <span class="js-message"></span>
                                     </div>
@@ -197,7 +192,7 @@ $user = $arResult['USER'];
                                 <?= CurrencyHelper::formatPrice($selectedDelivery->getPrice(), false) ?>
                             </div>
                         </li>
-                        <?php if ($storage->hasBonusPayment() && $storage->getBonusSum()) { ?>
+                        <?php if ($storage->getBonusSum()) { ?>
                             <li class="b-order-list__item b-order-list__item--cost b-order-list__item--order-step-3">
                                 <div class="b-order-list__order-text b-order-list__order-text--order-step-3">
                                     <div class="b-order-list__clipped-text">

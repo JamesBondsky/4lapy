@@ -108,6 +108,23 @@ class OrderService
      */
     protected $userRegistrationProvider;
 
+    /**
+     * @var UserAccountService
+     */
+    protected $userAccountService;
+
+    /**
+     * OrderService constructor.
+     *
+     * @param AddressService $addressService
+     * @param BasketService $basketService
+     * @param CurrentUserProviderInterface $currentUserProvider
+     * @param DeliveryService $deliveryService
+     * @param OrderStorageService $orderStorageService
+     * @param UserCitySelectInterface $userCityProvider
+     * @param UserRegistrationProviderInterface $userRegistrationProvider
+     * @param UserAccountService $userAccountService
+     */
     public function __construct(
         AddressService $addressService,
         BasketService $basketService,
@@ -115,7 +132,8 @@ class OrderService
         DeliveryService $deliveryService,
         OrderStorageService $orderStorageService,
         UserCitySelectInterface $userCityProvider,
-        UserRegistrationProviderInterface $userRegistrationProvider
+        UserRegistrationProviderInterface $userRegistrationProvider,
+        UserAccountService $userAccountService
     ) {
         $this->addressService = $addressService;
         $this->basketService = $basketService;
@@ -124,6 +142,7 @@ class OrderService
         $this->orderStorageService = $orderStorageService;
         $this->userCityProvider = $userCityProvider;
         $this->userRegistrationProvider = $userRegistrationProvider;
+        $this->userAccountService = $userAccountService;
     }
 
     /** @noinspection MoreThanThreeArgumentsInspection */
@@ -196,7 +215,7 @@ class OrderService
             $paymentCollection = $order->getPaymentCollection();
             $sum = $order->getBasket()->getOrderableItems()->getPrice();
 
-            if ($storage->hasBonusPayment() && $storage->getBonusSum()) {
+            if ($storage->getBonusSum()) {
                 $innerPayment = $paymentCollection->getInnerPayment();
                 $innerPayment->setField('SUM', $storage->getBonusSum());
                 $sum -= $storage->getBonusSum();
@@ -439,6 +458,28 @@ class OrderService
         $this->orderStorageService->clearStorage($storage);
 
         return $order;
+    }
+
+    /**
+     * Получение максимального кол-ва бонусов, которыми можно оплатить заказ
+     *
+     * @param OrderStorage $storage
+     *
+     * @return float
+     */
+    public function getMaxBonusesForPayment(OrderStorage $storage): float
+    {
+        if (!$storage->getUserId()) {
+            return 0;
+        }
+
+        /* @todo возможно, стоит обновить баланс бонусов на карте */
+        $bonuses = $this->userAccountService->findAccountByUser($this->currentUserProvider->getCurrentUser())
+                                            ->getCurrentBudget();
+
+        $basket = $this->basketService->getBasket()->getOrderableItems();
+
+        return min($basket->getPrice() * static::MAX_BONUS_PAYMENT, $bonuses);
     }
 
     /**

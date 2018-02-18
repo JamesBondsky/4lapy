@@ -19,6 +19,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  * @SaleValidation\OrderDelivery(groups={"delivery","payment"})
  * @SaleValidation\OrderAddress(groups={"delivery","payment"})
  * @SaleValidation\OrderPaymentSystem(groups={"payment"})
+ * @SaleValidation\OrderBonusPayment(groups={"payment"})
  */
 class OrderStorage
 {
@@ -288,15 +289,6 @@ class OrderStorage
      * @Serializer\Groups(groups={"read","update","delete"})
      */
     protected $partialGet = true;
-
-    /**
-     *
-     * @var bool
-     * @Serializer\Type("bool")
-     * @Serializer\SerializedName("BONUS_PAYMENT")
-     * @Serializer\Groups(groups={"read","update","delete"})
-     */
-    protected $bonusPayment = false;
 
     /**
      * Сумма оплаты бонусами
@@ -826,26 +818,6 @@ class OrderStorage
     public function setPartialGet(bool $partialGet): OrderStorage
     {
         $this->partialGet = $partialGet;
-
-        return $this;
-    }
-
-    /**
-     * @return bool
-     */
-    public function hasBonusPayment(): bool
-    {
-        return $this->bonusPayment ?: false;
-    }
-
-    /**
-     * @param bool $bonusPayment
-     *
-     * @return OrderStorage
-     */
-    public function setBonusPayment(bool $bonusPayment): OrderStorage
-    {
-        $this->bonusPayment = $bonusPayment;
 
         return $this;
     }

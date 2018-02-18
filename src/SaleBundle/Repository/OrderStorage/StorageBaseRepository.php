@@ -85,6 +85,7 @@ abstract class StorageBaseRepository implements StorageRepositoryInterface
              */
             $data['CAPTCHA_FILLED'] = true;
         } catch (NotAuthorizedException $e) {
+            $data['BONUS_SUM'] = 0;
         }
 
         $selectedCity = $this->userCitySelect->getSelectedCity();

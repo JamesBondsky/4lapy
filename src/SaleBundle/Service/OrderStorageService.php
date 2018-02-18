@@ -251,7 +251,7 @@ class OrderStorageService
             $this->paymentCollection = $order->getPaymentCollection();
             $sum = $this->basketService->getBasket()->getOrderableItems()->getPrice();
 
-            if ($storage->hasBonusPayment() && $storage->getBonusSum()) {
+            if ($storage->getBonusSum()) {
                 $innerPayment = $this->paymentCollection->getInnerPayment();
                 $innerPayment->setField('SUM', $storage->getBonusSum());
                 $sum -= $storage->getBonusSum();

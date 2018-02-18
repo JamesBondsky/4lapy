@@ -232,11 +232,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             }
             $this->arResult['SELECTED_DELIVERY'] = $selectedDelivery;
 
-            $this->arResult['ACCOUNT_BALANCE'] = null;
-            if ($storage->getUserId()) {
-                $this->userAccountService->refreshUserBalance($user);
-                $this->arResult['ACCOUNT_BALANCE'] = $this->userAccountService->findAccountByUser($user);
-            }
+            $this->arResult['MAX_BONUS_SUM'] = $this->orderService->getMaxBonusesForPayment($storage);
         }
 
         $this->arResult['USER'] = $user;
