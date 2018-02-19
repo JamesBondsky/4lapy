@@ -24,6 +24,10 @@ services:
         resource: '../../ParamConverter/*'
         tags: ['request.param_converter']
 
+    # Используется в компонентах (@todo private)
+    FourPaws\CatalogBundle\Service\DiscountMarkService:
+        public: true
+
     # Постараться спрятать за интерфейс
     # @see
     FourPaws\CatalogBundle\Service\FilterService:
