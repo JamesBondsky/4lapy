@@ -42,7 +42,7 @@ class UserAccountService
      * @return bool
      * @throws ValidationException
      */
-    public function refreshUserBalance(User $user = null): bool
+    public function refreshUserBalance(User $user = null, float $newBudget = null): bool
     {
         if (!$user) {
             $user = $this->currentUserProvider->getCurrentUser();
@@ -52,23 +52,26 @@ class UserAccountService
             return false;
         }
 
-        $bonus = $this->bonusService->getUserBonusInfo($user);
-        if ($bonus->isEmpty()) {
-            return false;
+        if (null === $newBudget) {
+            $bonus = $this->bonusService->getUserBonusInfo($user);
+            if ($bonus->isEmpty()) {
+                return false;
+            }
+            $newBudget = $bonus->getCard()->getBalance();
         }
 
         try {
             $userAccount = $this->userAccountRepository->findByUser($user);
 
             return $this->userAccountRepository->updateBalance(
-                $userAccount->setCurrentBudget($bonus->getCard()->getBalance())
+                $userAccount->setCurrentBudget($newBudget)
             );
         } catch (NotFoundException $e) {
         }
 
         $userAccount = (new UserAccount())->setUser($user)
                                           ->setCurrency(CurrencyManager::getBaseCurrency())
-                                          ->setCurrentBudget($bonus->getCard()->getActiveBalance());
+                                          ->setCurrentBudget($newBudget);
 
         return $this->userAccountRepository->create($userAccount);
     }

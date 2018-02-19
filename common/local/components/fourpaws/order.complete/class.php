@@ -14,9 +14,10 @@ use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\Shipment;
 use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\PersonalBundle\Service\BonusService;
+use FourPaws\External\ManzanaPosService;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\SaleBundle\Service\UserAccountService;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -37,8 +38,11 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
     /** @var StoreService */
     protected $storeService;
 
-    /** @var  BonusService */
-    protected $bonusService;
+    /** @var ManzanaPosService */
+    protected $manzanaPosService;
+
+    /** @var UserAccountService */
+    protected $userAccountService;
 
     public function __construct($component = null)
     {
@@ -47,7 +51,8 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
         $this->currentUserProvider = $serviceContainer->get(CurrentUserProviderInterface::class);
         $this->storeService = $serviceContainer->get('store.service');
         $this->deliveryService = $serviceContainer->get('delivery.service');
-        $this->bonusService = $serviceContainer->get('bonus.service');
+        $this->manzanaPosService = $serviceContainer->get('manzana.pos.service');
+        $this->userAccountService = $serviceContainer->get(UserAccountService::class);
 
         parent::__construct($component);
     }
@@ -115,7 +120,6 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
             [
                 OrderService::STATUS_NEW_COURIER,
                 OrderService::STATUS_NEW_PICKUP,
-                OrderService::STATUS_PAID,
             ],
             true
         )
@@ -144,9 +148,23 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
                 ($propertyCode === 'BONUS_COUNT') &&
                 (null === $propertyValue->getValue())
             ) {
-                /* @todo получить бонусы */
-                $bonusCount = 100;
-                $propertyValue->setValue($bonusCount);
+                if (!$order->getPaymentCollection()->getInnerPayment()->getSum()) {
+                    $cheque = $this->manzanaPosService->processChequeWithoutBonus(
+                        $this->manzanaPosService->buildRequestFromBasket(
+                            $order->getBasket(),
+                            $user->getDiscountCardNumber()
+                        )
+                    );
+
+                    $newBalance = $cheque->getCardActiveBalance();
+                    $balance = $this->userAccountService->findAccountByUser($user);
+                    $this->userAccountService->refreshUserBalance($user, $newBalance);
+                    $balance->setCurrentBudget($cheque->getCardActiveBalance());
+
+                    $propertyValue->setValue($balance->getCurrentBudget() - $balance->getInitialBudget());
+                } else {
+                    $propertyValue->setValue(0);
+                }
                 $order->save();
             }
 

@@ -15,6 +15,7 @@ use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\PersonalBundle\Service\AddressService;
+use FourPaws\External\ManzanaPosService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderService;
@@ -63,6 +64,9 @@ class FourPawsOrderComponent extends \CBitrixComponent
     /** @var UserAccountService */
     protected $userAccountService;
 
+    /** @var ManzanaPosService */
+    protected $manzanaPosService;
+
     public function __construct($component = null)
     {
         $serviceContainer = Application::getInstance()->getContainer();
@@ -74,6 +78,8 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $this->userCityProvider = $serviceContainer->get(UserCitySelectInterface::class);
         $this->basketService = $serviceContainer->get(BasketService::class);
         $this->userAccountService = $serviceContainer->get(UserAccountService::class);
+        $this->manzanaPosService = $serviceContainer->get('manzana.pos.service');
+
         parent::__construct($component);
     }
 
@@ -167,12 +173,13 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $payments = null;
         $deliveries = $this->orderService->getDeliveries();
         $this->getPickupData($deliveries, $storage);
-        
+
         $user = null;
         try {
             $user = $this->currentUserProvider->getCurrentUser();
-        } catch (NotAuthorizedException $e) {}
-        
+        } catch (NotAuthorizedException $e) {
+        }
+
         if ($this->currentStep === OrderStorageService::DELIVERY_STEP) {
             $addresses = null;
             if ($storage->getUserId()) {
@@ -232,7 +239,16 @@ class FourPawsOrderComponent extends \CBitrixComponent
             }
             $this->arResult['SELECTED_DELIVERY'] = $selectedDelivery;
 
-            $this->arResult['MAX_BONUS_SUM'] = $this->orderService->getMaxBonusesForPayment($storage);
+            $this->arResult['MAX_BONUS_SUM'] = 0;
+            if ($user) {
+                $cheque = $this->manzanaPosService->processCheque(
+                    $this->manzanaPosService->buildRequestFromBasket(
+                        $basket,
+                        $user->getDiscountCardNumber()
+                    )
+                );
+                $this->arResult['MAX_BONUS_SUM'] = floor($cheque->getCardActiveBalance());
+            }
         }
 
         $this->arResult['USER'] = $user;

@@ -59,11 +59,6 @@ class OrderService
     const STATUS_NEW_PICKUP = 'N';
 
     /**
-     * Статус, в который заказ переходит при оплате
-     */
-    const STATUS_PAID = 'J';
-
-    /**
      * 90% заказа можно оплатить бонусами
      */
     const MAX_BONUS_PAYMENT = 0.9;
