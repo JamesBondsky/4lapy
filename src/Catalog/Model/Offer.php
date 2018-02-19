@@ -256,14 +256,6 @@ class Offer extends IblockElement
     protected $price = 0;
 
     /**
-     * @Type("float")
-     * @Groups({"elastic"})
-     * @Accessor(getter="getPrice", setter="withPrice")
-     * @var float
-     */
-    protected $applicablePrice = 0;
-
-    /**
      * @var float
      */
     protected $oldPrice = 0;
@@ -794,11 +786,6 @@ class Offer extends IblockElement
         return $this->getXmlId();
     }
 
-    public function getRawPrice()
-    {
-        return $this->price;
-    }
-
     /**
      * @return float
      */
@@ -806,7 +793,7 @@ class Offer extends IblockElement
     {
         $this->checkOptimalPrice();
 
-        return $this->applicablePrice;
+        return $this->price;
     }
 
     protected function checkOptimalPrice()
