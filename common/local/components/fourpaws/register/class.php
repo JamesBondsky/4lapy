@@ -226,10 +226,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             DeserializationContext::create()->setGroups('create')
         );
         try {
-            $res = $this->userRegistrationService->register($userEntity, true);
-            if (!$res) {
-                return $this->ajaxMess->getRegisterError();
-            }
+            $this->userRegistrationService->register($userEntity, true);
 
             /** @noinspection PhpUnusedLocalVariableInspection */
             $name = $userEntity->getName();
@@ -245,8 +242,8 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                     'html' => $html,
                 ]
             );
-        } catch (BitrixRuntimeException $e) {
-            return $this->ajaxMess->getRegisterError($e->getMessage());
+        } catch (\FourPaws\UserBundle\Exception\RuntimeException $exception) {
+            return $this->ajaxMess->getRegisterError($exception->getMessage());
         }
     }
 
@@ -294,8 +291,10 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             'UF_PHONE_CONFIRMED' => 'Y',
             'PERSONAL_PHONE'     => $phone,
         ];
-        if ($this->currentUserProvider->getUserRepository()->updateData($this->currentUserProvider->getCurrentUserId(),
-            $data)) {
+        if ($this->currentUserProvider->getUserRepository()->updateData(
+            $this->currentUserProvider->getCurrentUserId(),
+            $data
+        )) {
             /** @var ManzanaService $manzanaService */
             $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
             $client = null;
@@ -453,8 +452,8 @@ class FourPawsRegisterComponent extends \CBitrixComponent
      * @throws SystemException
      * @throws \RuntimeException
      * @throws GuzzleException
-     * @return JsonResponse|string
      * @throws Exception
+     * @return JsonResponse|string
      */
     private function ajaxGetStep2($confirmCode, $phone)
     {

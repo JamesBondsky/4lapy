@@ -16,10 +16,8 @@ use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Order;
-use Bitrix\Sale\Payment;
 use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\ShipmentCollection;
-use Bitrix\Sale\ShipmentItemCollection;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\PersonalBundle\Exception\NotFoundException as AddressNotFoundException;
@@ -37,7 +35,6 @@ use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
 
 class OrderService
 {
-
     const PAYMENT_CASH = 'cash';
 
     const PAYMENT_CARD = 'card';
@@ -125,10 +122,10 @@ class OrderService
     /**
      * Получение заказа по id
      *
-     * @param int $id id заказа
-     * @param bool $check выполнять ли проверки
-     * @param int $userId id пользователя, к которому привязан заказ
-     * @param string $hash хеш заказа (проверяется, если не передан userId)
+     * @param int    $id     id заказа
+     * @param bool   $check  выполнять ли проверки
+     * @param int    $userId id пользователя, к которому привязан заказ
+     * @param string $hash   хеш заказа (проверяется, если не передан userId)
      *
      * @throws NotFoundException
      * @throws ArgumentNullException
@@ -271,11 +268,11 @@ class OrderService
             try {
                 $address = $this->addressService->getById($storage->getAddressId());
                 $storage->setStreet($address->getStreet())
-                        ->setHouse($address->getHouse())
-                        ->setBuilding($address->getHousing())
-                        ->setFloor($address->getFloor())
-                        ->setApartment($address->getFlat())
-                        ->setPorch($address->getEntrance());
+                    ->setHouse($address->getHouse())
+                    ->setBuilding($address->getHousing())
+                    ->setFloor($address->getFloor())
+                    ->setApartment($address->getFlat())
+                    ->setPorch($address->getEntrance());
             } catch (AddressNotFoundException $e) {
             }
         }
@@ -288,7 +285,7 @@ class OrderService
         /** @var OrderProperty $orderProperty */
 
         $deliveryDate = $this->deliveryService->getStockResultByDelivery($selectedDelivery)
-                                              ->getDeliveryDate();
+            ->getDeliveryDate();
 
         /** @var PropertyValue $propertyValue */
         foreach ($propertyValueCollection as $propertyValue) {
@@ -387,12 +384,13 @@ class OrderService
             if ($user = reset($users)) {
                 $order->setFieldNoDemand('USER_ID', $user->getId());
             } else {
-                $user = (new User())->setName($storage->getName())
-                                    ->setEmail($storage->getEmail())
-                                    ->setLogin($storage->getPhone())
-                                    ->setPassword(randString(6))
-                                    ->setPersonalPhone($storage->getPhone());
-                $this->userRegistrationProvider->register($user);
+                $user = (new User())
+                    ->setName($storage->getName())
+                    ->setEmail($storage->getEmail())
+                    ->setLogin($storage->getPhone())
+                    ->setPassword(randString(6))
+                    ->setPersonalPhone($storage->getPhone());
+                $user = $this->userRegistrationProvider->register($user);
                 $order->setFieldNoDemand('USER_ID', $user->getId());
                 $addressUserId = $user->getId();
                 $needCreateAddress = true;
@@ -406,14 +404,14 @@ class OrderService
          */
         if ($needCreateAddress) {
             $address = (new Address())->setCity($storage->getCity())
-                                      ->setCityLocation($storage->getCityCode())
-                                      ->setUserId($addressUserId)
-                                      ->setStreet($storage->getStreet())
-                                      ->setHouse($storage->getHouse())
-                                      ->setHousing($storage->getBuilding())
-                                      ->setEntrance($storage->getPorch())
-                                      ->setFloor($storage->getFloor())
-                                      ->setFlat($storage->getApartment());
+                ->setCityLocation($storage->getCityCode())
+                ->setUserId($addressUserId)
+                ->setStreet($storage->getStreet())
+                ->setHouse($storage->getHouse())
+                ->setHousing($storage->getBuilding())
+                ->setEntrance($storage->getPorch())
+                ->setFloor($storage->getFloor())
+                ->setFlat($storage->getApartment());
 
             $this->addressService->add($address);
         }

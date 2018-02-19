@@ -6,6 +6,7 @@
 
 namespace FourPaws\UserBundle\Service;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Fuser;
 use FourPaws\App\Application as App;
@@ -23,6 +24,7 @@ use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidCredentialException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Exception\RuntimeException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Exception\ValidationException;
@@ -87,11 +89,11 @@ class UserService implements
      * @param string $rawLogin
      * @param string $password
      *
-     * @return bool
      * @throws UsernameNotFoundException
      * @throws TooManyUserFoundException
      * @throws InvalidCredentialException
      * @throws WrongPhoneNumberException
+     * @return bool
      */
     public function login(string $rawLogin, string $password): bool
     {
@@ -169,6 +171,9 @@ class UserService implements
     }
 
     /**
+     * @todo remove manzanaSave parameter
+     * @todo return entity
+     *
      * @param User $user
      * @param bool $manzanaSave
      *
@@ -176,17 +181,20 @@ class UserService implements
      * @throws ConstraintDefinitionException
      * @throws ValidationException
      * @throws BitrixRuntimeException
-     * @return bool
+     * @throws \Bitrix\Main\Db\SqlQueryException
+     * @return User
      */
-    public function register(User $user, bool $manzanaSave = true): bool
+    public function register(User $user, bool $manzanaSave = true): User
     {
         $validationResult = $this->userRepository->getValidator()->validate($user, null, ['create']);
         if ($validationResult->count() > 0) {
             throw new ValidationException('Wrong entity passed to create');
         }
 
+        Application::getConnection()->startTransaction();
+
         /** регистрируем битровым методом регистрации*/
-        $res = $this->bitrixUserService->Register(
+        $result = $this->bitrixUserService->Register(
             $user->getLogin() ?? $user->getEmail(),
             $user->getName() ?? '',
             $user->getLastName() ?? '',
@@ -195,34 +203,42 @@ class UserService implements
             $user->getEmail()
         );
 
-        if ((int)$res['ID'] > 0) {
-            /** дообновляем данные которых не хватает */
-            $user->setActive(true);
-            $user->setId((int)$res['ID']);
-            $result = $this->userRepository->update($user);
-        }
-        else {
+        $result['ID'] = $result['ID'] ?? '';
+        $id = (int)$result['ID'];
+
+        if ($id <= 0) {
+            Application::getConnection()->rollbackTransaction();
             throw new BitrixRuntimeException($this->bitrixUserService->LAST_ERROR);
         }
 
-        if (!$manzanaSave) {
-            return $result;
+        $registeredUser = $this->userRepository->find($id);
+        if (!($registeredUser instanceof User)) {
+            Application::getConnection()->rollbackTransaction();
+            throw new RuntimeException('Cant fetch registred user');
+        }
+        Application::getConnection()->commitTransaction();
+
+
+        /**
+         * @todo move manzana to events and out of here!!!
+         * @todo async update!!! we totaly dont need get contactId right here
+         */
+        if ($manzanaSave) {
+            $client = null;
+            try {
+                $contactId = $this->manzanaService->getContactIdByPhone($registeredUser->getNormalizePersonalPhone());
+                $client = new Client();
+                $client->contactId = $contactId;
+            } catch (ManzanaServiceException $e) {
+                $client = new Client();
+            }
+
+            if ($client instanceof Client) {
+                $this->manzanaService->updateContactAsync($client);
+            }
         }
 
-        $client = null;
-        try {
-            $contactId = $this->manzanaService->getContactIdByPhone($user->getNormalizePersonalPhone());
-            $client = new Client();
-            $client->contactId = $contactId;
-        } catch (ManzanaServiceException $e) {
-            $client = new Client();
-        }
-
-        if ($client instanceof Client) {
-            $this->manzanaService->updateContactAsync($client);
-        }
-
-        return true;
+        return $registeredUser;
     }
 
     /**
@@ -323,7 +339,7 @@ class UserService implements
         $client->email = $user->getEmail();
         $client->plLogin = $user->getLogin();
         $dateRegister = $user->getManzanaDateRegister();
-        if($dateRegister instanceof DateTime) {
+        if ($dateRegister instanceof DateTime) {
             $client->plRegistrationDate = $user->getManzanaDateRegister();
         }
         if ($user->isEmailConfirmed() && $user->isPhoneConfirmed()) {

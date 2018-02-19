@@ -58,21 +58,25 @@ if (!$arParams['ITEM_ATTR_ID']) {
         <?php } ?>
         <span class="b-common-item__image-wrap">
             <?php if ($currentOffer->getImagesIds()) { ?>
-                <img class="b-common-item__image js-weight-img"
-                     src="<?= $currentOffer->getResizeImages(240, 240)->first() ?>"
-                     alt="<?= $currentOffer->getName() ?>"
-                     title="">
+                <a class="b-common-item__image-link js-item-link" href="<?= $product->getDetailPageUrl() ?>">
+                    <img class="b-common-item__image js-weight-img"
+                         src="<?= $currentOffer->getResizeImages(240, 240)->first() ?>"
+                         alt="<?= $currentOffer->getName() ?>"
+                         title="">
+                </a>
             <?php } ?>
         </span>
         <div class="b-common-item__info-center-block">
-            <a class="b-common-item__description-wrap track-recommendation" href="<?= $product->getDetailPageUrl() ?>">
-            <span class="b-clipped-text b-clipped-text--three">
-                <span><?php
-                    echo '<strong>' . $product->getBrand()->getName() . '</strong>';
-                    echo ' ';
-                    echo $currentOffer->getName();
-                    ?></span>
-            </span>
+            <a class="b-common-item__description-wrap js-item-link track-recommendation" href="<?= $product->getDetailPageUrl() ?>">
+                <span class="b-clipped-text b-clipped-text--three">
+                    <span><?php
+                        if ($product->getBrand()) {
+                            echo '<strong>' . $product->getBrand()->getName() . '</strong>';
+                            echo ' ';
+                        }
+                        echo $currentOffer->getName();
+                        ?></span>
+                </span>
             </a><?php
 
             //
@@ -93,55 +97,57 @@ if (!$arParams['ITEM_ATTR_ID']) {
                 ob_start();
                 ?>
                 <div class="b-weight-container b-weight-container--list">
-                <a class="b-weight-container__link b-weight-container__link--mobile js-mobile-select"
-                   href="javascript:void(0);"></a>
-                <ul class="b-weight-container__list"><?php
-                    foreach ($offers as $offer) {
-                        $value = '';
-                        switch ($mainCombinationType) {
-                            case 'SIZE':
-                                $value = $offer->getClothingSize()->getName();
-                                break;
+                    <a class="b-weight-container__link b-weight-container__link--mobile js-mobile-select"
+                       href="javascript:void(0);"></a>
+                    <ul class="b-weight-container__list"><?php
+                        foreach ($offers as $offer) {
+                            $value = '';
+                            switch ($mainCombinationType) {
+                                case 'SIZE':
+                                    $value = $offer->getClothingSize()->getName();
+                                    break;
 
-                            case 'VOLUME':
-                                $value = $offer->getVolumeReference()->getName();
-                                break;
+                                case 'VOLUME':
+                                    $value = $offer->getVolumeReference()->getName();
+                                    break;
 
-                            case 'WEIGHT':
-                                $catalogProduct = $offer->getCatalogProduct();
-                                $weightGrams = $catalogProduct->getWeight();
-                                if ($weightGrams > 1000) {
-                                    $value =
-                                        ($weightGrams / 1000) . '&nbsp;' . Loc::getMessage(
-                                            'CATALOG_ITEM_SNIPPET_VERTICAL.MEASURE_KG'
-                                        );
-                                } else {
-                                    $value =
-                                        $weightGrams . '&nbsp;' . Loc::getMessage(
-                                            'CATALOG_ITEM_SNIPPET_VERTICAL.MEASURE_G'
-                                        );
-                                }
-                                break;
+                                case 'WEIGHT':
+                                    $catalogProduct = $offer->getCatalogProduct();
+                                    $weightGrams = $catalogProduct->getWeight();
+                                    if ($weightGrams > 1000) {
+                                        $value =
+                                            ($weightGrams / 1000) . '&nbsp;' . Loc::getMessage(
+                                                'CATALOG_ITEM_SNIPPET_VERTICAL.MEASURE_KG'
+                                            );
+                                    } else {
+                                        $value =
+                                            $weightGrams . '&nbsp;' . Loc::getMessage(
+                                                'CATALOG_ITEM_SNIPPET_VERTICAL.MEASURE_G'
+                                            );
+                                    }
+                                    break;
+                            }
+                            if (!strlen($value)) {
+                                continue;
+                            }
+                            $isOffersPrinted = true;
+                            $addAttr = '';
+                            $addAttr .= ' data-price="' . $offer->getPrice() . '"';
+                            $addAttr .= ' data-offerid="' . $offer->getId() . '"';
+                            $addAttr .= ' data-image="' . $offer->getResizeImages(240, 240)->first() . '"';
+                            $addAttr .= ' data-name="' . $offer->getName() . '"';
+                            $addAttr .= ' data-link="' . $offer->getLink() . '"';
+                            $addClass = $currentOffer->getId() === $offer->getId() ? ' active-link' : '';
+                            ?>
+                            <li class="b-weight-container__item">
+                                <a<?= $addAttr ?> href="javascript:void(0)"
+                                                  class="b-weight-container__link js-price<?= $addClass ?>"><?= $value ?></a>
+                            </li><?php
                         }
-                        if (!strlen($value)) {
-                            continue;
-                        }
-                        $isOffersPrinted = true;
-                        $addAttr = '';
-                        $addAttr .= ' data-price="' . $offer->getPrice() . '"';
-                        $addAttr .= ' data-offerid="' . $offer->getId() . '"';
-                        $addAttr .= ' data-image="' . $offer->getResizeImages(240, 240)->first() . '"';
-                        $addAttr .= ' data-name="' . $offer->getName() . '"';
-                        $addClass = $currentOffer->getId() === $offer->getId() ? ' active-link' : '';
                         ?>
-                        <li class="b-weight-container__item">
-                        <a<?= $addAttr ?> href="javascript:void(0)"
-                                          class="b-weight-container__link js-price<?= $addClass ?>"><?= $value ?></a>
-                        </li><?php
-                    }
-                    ?></ul>
-                </div><?php
-                if ($isOffersPrinted) {
+                    </ul>
+                </div>
+                <?php if ($isOffersPrinted) {
                     echo ob_get_clean();
                 } else {
                     ob_end_clean();
@@ -184,10 +190,9 @@ if (!$arParams['ITEM_ATTR_ID']) {
 
             /** @todo инфо о доставке/самовывозе */
             $addInfo = ob_get_clean();
-            if (strlen($addInfo)) {
+            if ($addInfo) {
                 echo '<div class="b-common-item__additional-information">' . $addInfo . '</div>';
-            }
-            ?>
+            } ?>
         </div>
     </div><?php
 
