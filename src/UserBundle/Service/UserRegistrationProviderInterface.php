@@ -18,7 +18,7 @@ interface UserRegistrationProviderInterface
      *
      * @throws ValidationException
      * @throws BitrixRuntimeException
-     * @return bool
+     * @return User
      */
-    public function register(User $user, bool $manzanaSave = true): bool;
+    public function register(User $user, bool $manzanaSave = true): User;
 }

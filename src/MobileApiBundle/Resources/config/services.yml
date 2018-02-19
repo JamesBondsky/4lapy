@@ -38,10 +38,4 @@ services:
     FourPaws\MobileApiBundle\Security\ApiTokenListener:
         arguments: ['@security.token_storage', '@security.authentication.manager']
 
-    # Exception View
-    FourPaws\MobileApiBundle\EventListener\ExceptionListener:
-        arguments: ['FourPaws\MobileApiBundle\Controller\ExceptionController::showAction', null]
-        tags:
-          - {name: 'monolog.logger', channel: 'request'}
-
 

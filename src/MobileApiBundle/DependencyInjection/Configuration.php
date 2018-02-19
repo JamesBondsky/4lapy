@@ -19,9 +19,11 @@ class Configuration implements ConfigurationInterface
     {
         $treeBuilder = new TreeBuilder();
         $rootNode = $treeBuilder->root('four_paws_mobile_api');
+        /** @noinspection NullPointerExceptionInspection */
         $rootNode
             ->addDefaultsIfNotSet()
             ->children()
+            ->scalarNode('debug')->defaultValue(false)->end()
             ->append($this->getExceptionsMap())
             ->end();
         return $treeBuilder;
