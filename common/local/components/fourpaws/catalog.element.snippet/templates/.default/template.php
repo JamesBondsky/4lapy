@@ -48,13 +48,13 @@ if (!empty($arParams['CURRENT_OFFER']) && $arParams['CURRENT_OFFER'] instanceof 
 
 <div class="b-common-item b-common-item--catalog-item js-product-item">
     <?php if ($markImage = $component->getDiscountMarkService()->getMarkImagePath($currentOffer)) { ?>
-        <span class="b-common-item__sticker-wrap" style="background-color:;data-background:;">
+        <span class="b-common-item__sticker-wrap">
             <img class="b-common-item__sticker" src="<?= $markImage ?>" alt="" role="presentation">
         </span>
     <?php }
 
     if ($currentOffer->getImages()->count() > 0) { ?>
-        <span class="b-common-item__sticker-wrap">
+        <span class="b-common-item__image-wrap">
             <a class="b-common-item__image-link js-item-link" href="<?= $product->getDetailPageUrl() ?>">
                 <img class="b-common-item__image js-weight-img"
                      src="<?= $currentOffer->getResizeImages(240, 240)->first() ?>"
