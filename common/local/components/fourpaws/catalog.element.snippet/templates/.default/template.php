@@ -1,16 +1,16 @@
 <?php
 /**
- * @var array $arParams
- * @var array $arResult
+ * @var array                 $arParams
+ * @var array                 $arResult
  *
  * @var CatalogElementSnippet $component
  *
- * @var Product $product
- * @var OfferCollection $offers
- * @var Offer $offer
- * @var Offer $currentOffer
+ * @var Product               $product
+ * @var OfferCollection       $offers
+ * @var Offer                 $offer
+ * @var Offer                 $currentOffer
  *
- * @global \CMain $APPLICATION
+ * @global \CMain             $APPLICATION
  */
 
 use FourPaws\App\Templates\MediaEnum;
@@ -81,12 +81,13 @@ if (!empty($arParams['CURRENT_OFFER']) && $arParams['CURRENT_OFFER'] instanceof 
                 'fourpaws:comments',
                 'catalog.snippet',
                 [
-                    'HL_ID' => HighloadHelper::getIdByName('Comments'),
-                    'OBJECT_ID' => $productId,
-                    'SORT_DESC' => 'Y',
-                    'ITEMS_COUNT' => 5,
+                    'HL_ID'              => HighloadHelper::getIdByName('Comments'),
+                    'OBJECT_ID'          => $productId,
+                    'SORT_DESC'          => 'Y',
+                    'ITEMS_COUNT'        => 5,
                     'ACTIVE_DATE_FORMAT' => 'd j Y',
-                    'TYPE' => 'catalog',
+                    'TYPE'               => 'catalog',
+                    'ITEM_LINK'          => $product->getDetailPageUrl() . '#new-review',
                 ],
                 false,
                 ['HIDE_ICONS' => 'Y']
