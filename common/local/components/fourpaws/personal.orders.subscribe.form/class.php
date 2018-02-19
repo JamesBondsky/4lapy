@@ -2,6 +2,8 @@
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService;
@@ -18,6 +20,8 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
     private $action = '';
     /** @var UserService $userCurrentUserService */
     private $userCurrentUserService;
+    /** @var OrderSubscribeService $orderSubscribeService */
+    private $orderSubscribeService = null;
 
     public function __construct($component = null)
     {
@@ -34,6 +38,8 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
 
         $params['CACHE_TYPE'] = $params['CACHE_TYPE'] ?? 'A';
         $params['CACHE_TIME'] = $params['CACHE_TIME'] ?? 3600;
+
+        $params['ORDER_ID'] = $params['ORDER_ID'] ? (int)$params['ORDER_ID'] : 0;
 
         $params = parent::onPrepareComponentParams($params);
 
@@ -53,6 +59,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
 
     /**
      * @return UserService
+     * @throws ApplicationCreateException
      */
     public function getUserService()
     {
@@ -60,15 +67,31 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
             $appCont = Application::getInstance()->getContainer();
             $this->userCurrentUserService = $appCont->get(CurrentUserProviderInterface::class);
         }
+
         return $this->userCurrentUserService;
     }
 
     /**
      * @return UserRepository
+     * @throws ApplicationCreateException
      */
     public function getUserRepository()
     {
         return $this->getUserService()->getUserRepository();
+    }
+
+    /**
+     * @return OrderSubscribeService
+     * @throws ApplicationCreateException
+     */
+    public function getOrderSubscribeService()
+    {
+        if (!$this->orderSubscribeService) {
+            $appCont = Application::getInstance()->getContainer();
+            $this->orderSubscribeService = $appCont->get('order_subscribe.service');
+        }
+
+        return $this->orderSubscribeService;
     }
 
     /**
@@ -108,12 +131,23 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
 
     protected function initialLoadAction()
     {
+        $this->obtainOrderData();
         $this->loadData();
     }
 
     protected function loadData()
     {
         $this->includeComponentTemplate();
+    }
+
+    protected function obtainOrderData()
+    {
+        if (!$this->arResult['order']) {
+            if ($this->arParams['ORDER_ID'] > 0) {
+                $orderSubscribeService = $this->getOrderSubscribeService();
+                $this->arResult['ORDER'] = $orderSubscribeService->getOrderById($this->arParams['ORDER_ID']);
+            }
+        }
     }
 
     /**

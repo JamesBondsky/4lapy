@@ -29,7 +29,17 @@ if ($closedOrders->isEmpty() && $activeOrders->isEmpty()) {
         <div class="b-account__title">Текущие</div>
         <ul class="b-account__accordion-order-list">
             <?php foreach ($activeOrders as $order) {
-                include 'include/order.php';
+                $APPLICATION->IncludeComponent(
+                    'fourpaws:personal.order.item',
+                    '',
+                    [
+                        'ORDER' => $order,
+                    ],
+                    $component,
+                    [
+                        'HIDE_ICONS' => 'Y'
+                    ]
+                );
             } ?>
         </ul>
     </div>
@@ -39,7 +49,17 @@ if ($closedOrders->isEmpty() && $activeOrders->isEmpty()) {
         <div class="b-account__title">Завершенные</div>
         <ul class="b-account__accordion-order-list">
             <?php foreach ($closedOrders as $order) {
-                include 'include/order.php';
+                $APPLICATION->IncludeComponent(
+                    'fourpaws:personal.order.item',
+                    '',
+                    [
+                        'ORDER' => $order,
+                    ],
+                    $component,
+                    [
+                        'HIDE_ICONS' => 'Y'
+                    ]
+                );
             } ?>
         </ul>
     </div>

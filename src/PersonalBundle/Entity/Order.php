@@ -2,14 +2,15 @@
 
 namespace FourPaws\PersonalBundle\Entity;
 
-
-use Bitrix\Main\ObjectException;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Internals\StatusLangTable;
 use Bitrix\Sale\Internals\StatusTable;
 use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Entity\BaseEntity;
+use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\StoreBundle\Entity\Store;
@@ -168,6 +169,9 @@ class Order extends BaseEntity
 
     /** @var array */
     protected $statusMain = [];
+
+    /** @var OrderService $orderService */
+    private $orderService = null;
 
     /**
      * @return string
@@ -584,9 +588,15 @@ class Order extends BaseEntity
 
     /**
      * @return OrderPayment
+     * @throws ApplicationCreateException
+     * @throws EmptyEntityClass
      */
     public function getPayment(): OrderPayment
     {
+        if (!$this->payment && $this->getId()) {
+            $this->payment = $this->getOrderService()->getPayment($this->getId());
+        }
+
         return $this->payment;
     }
 
@@ -600,9 +610,15 @@ class Order extends BaseEntity
 
     /**
      * @return OrderDelivery
+     * @throws ApplicationCreateException
+     * @throws EmptyEntityClass
      */
     public function getDelivery(): OrderDelivery
     {
+        if (!$this->delivery && $this->getId()) {
+            $this->delivery = $this->getOrderService()->getDelivery($this->getId());
+        }
+
         return $this->delivery;
     }
 
@@ -616,7 +632,8 @@ class Order extends BaseEntity
 
     /**
      * @return string
-     * @throws ObjectException
+     * @throws ApplicationCreateException
+     * @throws EmptyEntityClass
      */
     public function getDateDelivery(): string
     {
@@ -746,4 +763,19 @@ class Order extends BaseEntity
 $result = true;
         return $result;
     }
+
+    /**
+     * @return OrderService
+     * @throws ApplicationCreateException
+     */
+    protected function getOrderService() : OrderService
+    {
+        if (!$this->orderService) {
+            $appCont = Application::getInstance()->getContainer();
+            $this->orderService = $appCont->get('order.service');
+        }
+
+        return $this->orderService;
+    }
+
 }

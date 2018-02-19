@@ -239,7 +239,7 @@ class OrderService
                 /** @todo вынести все полученяи из цикла и сделать по феншую без запросов цикле */
                 if (!$order->isManzana() && $order->getId() > 0) {
                     list($items, $allWeight, $itemsSum) = $this->getOrderItems($order->getId());
-                    var_dump($allWeight);
+                    //var_dump($allWeight);
                     $order->setItems($items);
                     $order->setAllWeight((float)$allWeight);
                     $order->setItemsSum((float)$itemsSum);
@@ -362,5 +362,21 @@ class OrderService
         $store->setIsShop(false);
 
         return $store;
+    }
+
+    /**
+     * @param int $orderId
+     * @return Order
+     * @throws \Exception
+     */
+    public function getOrderById(int $orderId): Order
+    {
+        $params = [
+            'filter' => [
+                'ID' => $orderId
+            ]
+        ];
+
+        return $this->orderRepository->findBy($params)->first();
     }
 }

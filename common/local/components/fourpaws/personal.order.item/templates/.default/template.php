@@ -9,8 +9,6 @@
  * @var string $componentPath
  */
 
-/** @var Order $order */
-
 use Bitrix\Main\Application;
 use Bitrix\Main\Web\Uri;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -19,6 +17,11 @@ use FourPaws\Helpers\WordHelper;
 use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 
+if (!$arResult['ORDER']) {
+    return;
+}
+/** @var Order $order */
+$order = $arResult['ORDER'];
 ?>
 <li class="b-accordion-order-item js-permutation-li js-item-content">
     <div class="b-accordion-order-item__visible js-premutation-accordion-content">
@@ -100,6 +103,7 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
 
             /**
              * Подписка на доставку заказа
+             * @todo Переделать на вызов через ajax
              */
             if ($order->canBeSubscribed()) {
                 // ссылка и попап c формой
@@ -231,3 +235,4 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
     <div class="b-accordion-order-item__mobile-bottom js-button-permutation-mobile">
     </div>
 </li>
+<?php

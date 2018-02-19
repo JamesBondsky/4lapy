@@ -35,6 +35,10 @@ services:
         class: FourPaws\PersonalBundle\Service\OrderService
         public: true
 
+    order_subscribe.service:
+        class: FourPaws\PersonalBundle\Service\OrderSubscribeService
+        public: true
+
     FourPaws\PersonalBundle\AjaxController\:
         resource: '../../AjaxController'
         public: true
