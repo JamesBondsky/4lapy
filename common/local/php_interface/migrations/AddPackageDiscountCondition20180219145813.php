@@ -11,7 +11,7 @@ use Adv\Bitrixtools\Migration\SprintMigrationBase;
 class AddPackageDiscountCondition20180219145813 extends SprintMigrationBase
 {
 
-    protected $description = 'Добавление';
+    protected $description = 'Пресет скидки за упаковку';
 
     /**
      *
