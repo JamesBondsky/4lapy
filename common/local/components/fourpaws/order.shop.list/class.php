@@ -53,6 +53,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
         parent::__construct($component);
         $serviceContainer = Application::getInstance()->getContainer();
         $this->orderService = $serviceContainer->get(OrderService::class);
+        $this->deliveryService = $serviceContainer->get('delivery.service');
     }
 
     /**

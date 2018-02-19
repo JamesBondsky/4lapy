@@ -148,20 +148,17 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
                 ($propertyCode === 'BONUS_COUNT') &&
                 (null === $propertyValue->getValue())
             ) {
-                if (!$order->getPaymentCollection()->getInnerPayment()->getSum()) {
+                if ($order->getPaymentCollection()->getInnerPayment()->getSum()) {
                     $cheque = $this->manzanaPosService->processChequeWithoutBonus(
                         $this->manzanaPosService->buildRequestFromBasket(
                             $order->getBasket(),
-                            $user->getDiscountCardNumber()
+                            $user->getDiscountCardNumber(),
+                            $order->getPaymentCollection()->getInnerPayment()->getSum()
                         )
                     );
 
-                    $newBalance = $cheque->getCardActiveBalance();
-                    $balance = $this->userAccountService->findAccountByUser($user);
-                    $this->userAccountService->refreshUserBalance($user, $newBalance);
-                    $balance->setCurrentBudget($cheque->getCardActiveBalance());
-
-                    $propertyValue->setValue($balance->getCurrentBudget() - $balance->getInitialBudget());
+                    $propertyValue->setValue($cheque->getChargedBonus());
+                    $this->userAccountService->refreshUserBalance($user);
                 } else {
                     $propertyValue->setValue(0);
                 }
