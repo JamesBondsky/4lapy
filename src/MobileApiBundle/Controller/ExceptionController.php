@@ -33,7 +33,7 @@ class ExceptionController
         $this->exceptionDataMap = $exceptionDataMap;
     }
 
-    public function showAction(Request $request, $exception, DebugLoggerInterface $logger = null)
+    public function showAction(Request $request, $exception, DebugLoggerInterface $logger = null): Response
     {
         $currentContent = $this->getAndCleanOutputBuffering($request->headers->get('X-Php-Ob-Level', -1));
         $code = $this->getStatusCode($exception);

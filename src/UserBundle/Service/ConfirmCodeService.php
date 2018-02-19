@@ -81,7 +81,7 @@ class ConfirmCodeService implements ConfirmCodeInterface
      */
     public static function generateCode(string $phone)
     {
-        return empty($phone) ? false : (string)hexdec(substr(md5($phone . time()), 7, 5));
+        return empty($phone) ? false : str_pad((string)hexdec(substr(md5($phone . time()), 7, 5)), 5, random_int(0, 9));
     }
 
     /**
@@ -101,7 +101,7 @@ class ConfirmCodeService implements ConfirmCodeInterface
             }
             $res = ConfirmCodeTable::add(
                 [
-                    'ID'   => $smsId,
+                    'ID' => $smsId,
                     'CODE' => static::generateCode($phone),
                 ]
             );

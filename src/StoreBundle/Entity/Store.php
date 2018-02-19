@@ -1,7 +1,13 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\StoreBundle\Entity;
 
+use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
+use FourPaws\BitrixOrm\Model\Image;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -392,6 +398,21 @@ class Store extends Base
     public function getImageId(): int
     {
         return $this->imageId ?? 0;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSrcImage(): string
+    {
+        if ($this->getImageId() > 0) {
+            try {
+                $image = Image::createFromPrimary($this->getImageId());
+                return $image->getSrc();
+            } catch (FileNotFoundException $e) {
+            }
+        }
+        return '';
     }
 
     /**

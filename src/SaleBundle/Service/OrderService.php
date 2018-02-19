@@ -16,10 +16,8 @@ use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Order;
-use Bitrix\Sale\Payment;
 use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\ShipmentCollection;
-use Bitrix\Sale\ShipmentItemCollection;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\PersonalBundle\Exception\NotFoundException as AddressNotFoundException;
@@ -37,7 +35,6 @@ use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
 
 class OrderService
 {
-
     const PAYMENT_CASH = 'cash';
 
     const PAYMENT_CARD = 'card';
@@ -412,13 +409,15 @@ class OrderService
             if ($user = reset($users)) {
                 $order->setFieldNoDemand('USER_ID', $user->getId());
             } else {
-                $user = (new User())->setName($storage->getName())
-                                    ->setActive(true)
-                                    ->setEmail($storage->getEmail())
-                                    ->setLogin($storage->getPhone())
-                                    ->setPassword(randString(6))
-                                    ->setPersonalPhone($storage->getPhone());
-                $this->userRegistrationProvider->register($user);
+                $user = (new User())
+                    ->setName($storage->getName())
+                    ->setActive(true)
+                    ->setEmail($storage->getEmail())
+                    ->setLogin($storage->getPhone())
+                    ->setPassword(randString(6))
+                    ->setPersonalPhone($storage->getPhone());
+                $user = $this->userRegistrationProvider->register($user);
+
                 $order->setFieldNoDemand('USER_ID', $user->getId());
                 $addressUserId = $user->getId();
                 $needCreateAddress = true;
@@ -431,15 +430,16 @@ class OrderService
          * 2) авторизованный пользователь задал новый адрес
          */
         if ($needCreateAddress) {
-            $address = (new Address())->setCity($storage->getCity())
-                                      ->setCityLocation($storage->getCityCode())
-                                      ->setUserId($addressUserId)
-                                      ->setStreet($storage->getStreet())
-                                      ->setHouse($storage->getHouse())
-                                      ->setHousing($storage->getBuilding())
-                                      ->setEntrance($storage->getPorch())
-                                      ->setFloor($storage->getFloor())
-                                      ->setFlat($storage->getApartment());
+            $address = (new Address())
+                ->setCity($storage->getCity())
+                ->setCityLocation($storage->getCityCode())
+                ->setUserId($addressUserId)
+                ->setStreet($storage->getStreet())
+                ->setHouse($storage->getHouse())
+                ->setHousing($storage->getBuilding())
+                ->setEntrance($storage->getPorch())
+                ->setFloor($storage->getFloor())
+                ->setFlat($storage->getApartment());
 
             $this->addressService->add($address);
         }

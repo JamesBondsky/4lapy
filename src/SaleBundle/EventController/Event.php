@@ -5,6 +5,7 @@ namespace FourPaws\SaleBundle\EventController;
 use Bitrix\Main\EventManager;
 use FourPaws\App\Application;
 use FourPaws\App\ServiceHandlerInterface;
+use FourPaws\SaleBundle\Discount\Action\Condition\BasketQuantity;
 use FourPaws\SaleBundle\Discount\BasketFilter;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Discount\Gift;
@@ -36,6 +37,7 @@ class Event implements ServiceHandlerInterface
         self::initHandler('OnCondSaleActionsControlBuildList', [Gift::class, 'GetControlDescr']);
         self::initHandler('OnCondSaleActionsControlBuildList', [Gifter::class, 'GetControlDescr']);
         self::initHandler('OnCondSaleActionsControlBuildList', [BasketFilter::class, 'GetControlDescr']);
+        self::initHandler('OnCondSaleActionsControlBuildList', [BasketQuantity::class, 'GetControlDescr']);
         self::initHandler('OnAfterSaleOrderFinalAction', [Manager::class, 'OnAfterSaleOrderFinalAction']);
 
         self::initHandler('OnAfterUserLogin', [__CLASS__, 'updateUserAccountBalance'], 'main');

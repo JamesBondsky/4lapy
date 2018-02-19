@@ -6,6 +6,7 @@
 
 namespace FourPaws\MobileApiBundle\DependencyInjection;
 
+use FourPaws\MobileApiBundle\Serialization\ExceptionHandler;
 use FourPaws\MobileApiBundle\Util\ExceptionDataMap;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -26,6 +27,12 @@ class FourPawsMobileApiExtension extends ConfigurableExtension
         $loader->load('services.yml');
 
         $this->configExceptionsMap($mergedConfig, $container);
+
+        $debug = $mergedConfig['debug'] ?? false;
+        $debug = (bool)$debug;
+        $container
+            ->getDefinition(ExceptionHandler::class)
+            ->addMethodCall('setDebug', [$debug]);
     }
 
     /**
