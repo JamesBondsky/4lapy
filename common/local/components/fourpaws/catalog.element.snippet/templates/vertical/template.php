@@ -1,32 +1,32 @@
-<?php
+<?php if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
+    die();
+}
 
 use Bitrix\Main\Localization\Loc;
 use FourPaws\App\Templates\MediaEnum;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
+use FourPaws\Components\CatalogElementSnippet;
 use FourPaws\Decorators\SvgDecorator;
 
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
-    die();
-}
 /**
- * @global CMain                 $APPLICATION
- * @var array                    $arParams
- * @var array                    $arResult
- * @var CatalogSectionComponent  $component
+ * @global CMain $APPLICATION
+ * @var array $arParams
+ * @var array $arResult
+ * @var CatalogElementSnippet $component
  * @var CBitrixComponentTemplate $this
- * @var string                   $templateName
- * @var string                   $componentPath
+ * @var string $templateName
+ * @var string $componentPath
  *
- * @var Product                  $product
- * @var OfferCollection          $offers
- * @var Offer                    $offer
- * @var Offer                    $currentOffer
+ * @var Product $product
+ * @var OfferCollection $offers
+ * @var Offer $offer
+ * @var Offer $currentOffer
  */
 
 $product = $arResult['PRODUCT'];
-$offers  = $product->getOffers();
+$offers = $product->getOffers();
 
 if (!empty($arParams['CURRENT_OFFER']) && $arParams['CURRENT_OFFER'] instanceof Offer) {
     $currentOffer = $arParams['CURRENT_OFFER'];
@@ -39,30 +39,31 @@ if (!empty($arParams['CURRENT_OFFER']) && $arParams['CURRENT_OFFER'] instanceof 
             $currentOffer = $offer;
         }
     }
-    
+
     if (!$currentOffer) {
         $currentOffer = $offers->first();
     }
 }
 
 $arParams['ITEM_ATTR_ID'] = isset($arParams['ITEM_ATTR_ID']) ? trim($arParams['ITEM_ATTR_ID']) : '';
-if (!strlen($arParams['ITEM_ATTR_ID'])) {
-    $arParams['ITEM_ATTR_ID'] = $this->GetEditAreaId($product->getId().'_'.md5($this->randString()));
-}
 
-?>
-    <div class="b-common-item js-product-item" id="<?= $arParams['ITEM_ATTR_ID'] ?>"><?php
-        
-        /** @todo шильдики акций */
-        
-        ?><span class="b-common-item__image-wrap"><?php
-            if ($currentOffer->getImagesIds()) {
-                ?><img class="b-common-item__image js-weight-img"
-                       src="<?= $currentOffer->getResizeImages(240, 240)->first() ?>"
-                       alt="<?= $currentOffer->getName() ?>"
-                       title=""><?php
-            }
-            ?></span>
+if (!$arParams['ITEM_ATTR_ID']) {
+    $arParams['ITEM_ATTR_ID'] = $this->GetEditAreaId($product->getId() . '_' . md5($this->randString()));
+} ?>
+    <div class="b-common-item js-product-item" id="<?= $arParams['ITEM_ATTR_ID'] ?>">
+        <?php if ($markImage = $component->getDiscountMarkService()->getMarkImagePath($currentOffer)) { ?>
+            <span class="b-common-item__sticker-wrap" style="background-color:;data-background:;">
+                <img class="b-common-item__sticker" src="<?= $markImage ?>" alt="" role="presentation">
+            </span>
+        <?php } ?>
+        <span class="b-common-item__image-wrap">
+            <?php if ($currentOffer->getImagesIds()) { ?>
+                <img class="b-common-item__image js-weight-img"
+                     src="<?= $currentOffer->getResizeImages(240, 240)->first() ?>"
+                     alt="<?= $currentOffer->getName() ?>"
+                     title="">
+            <?php } ?>
+        </span>
         <div class="b-common-item__info-center-block">
             <a class="b-common-item__description-wrap track-recommendation" href="<?= $product->getDetailPageUrl() ?>">
             <span class="b-clipped-text b-clipped-text--three">
@@ -73,14 +74,14 @@ if (!strlen($arParams['ITEM_ATTR_ID'])) {
                     ?></span>
             </span>
             </a><?php
-            
+
             //
             // Переключение торговых предложений
             //
             //$isWeightCapacityPacking = strlen(trim($product->getWeightCapacityPacking())) ? true : false;
             $isWeightCapacityPacking = true;
             if ($offers->count() > 1 || $isWeightCapacityPacking) {
-                $isOffersPrinted     = false;
+                $isOffersPrinted = false;
                 $mainCombinationType = '';
                 if ($currentOffer->getClothingSize()) {
                     $mainCombinationType = 'SIZE';
@@ -101,14 +102,14 @@ if (!strlen($arParams['ITEM_ATTR_ID'])) {
                             case 'SIZE':
                                 $value = $offer->getClothingSize()->getName();
                                 break;
-                            
+
                             case 'VOLUME':
                                 $value = $offer->getVolumeReference()->getName();
                                 break;
-                            
+
                             case 'WEIGHT':
                                 $catalogProduct = $offer->getCatalogProduct();
-                                $weightGrams    = $catalogProduct->getWeight();
+                                $weightGrams = $catalogProduct->getWeight();
                                 if ($weightGrams > 1000) {
                                     $value =
                                         ($weightGrams / 1000) . '&nbsp;' . Loc::getMessage(
@@ -126,12 +127,12 @@ if (!strlen($arParams['ITEM_ATTR_ID'])) {
                             continue;
                         }
                         $isOffersPrinted = true;
-                        $addAttr         = '';
-                        $addAttr         .= ' data-price="' . $offer->getPrice() . '"';
-                        $addAttr         .= ' data-offerid="' . $offer->getId() . '"';
-                        $addAttr         .= ' data-image="' . $offer->getResizeImages(240, 240)->first() . '"';
-                        $addAttr         .= ' data-name="' . $offer->getName() . '"';
-                        $addClass        = $currentOffer->getId() === $offer->getId() ? ' active-link' : '';
+                        $addAttr = '';
+                        $addAttr .= ' data-price="' . $offer->getPrice() . '"';
+                        $addAttr .= ' data-offerid="' . $offer->getId() . '"';
+                        $addAttr .= ' data-image="' . $offer->getResizeImages(240, 240)->first() . '"';
+                        $addAttr .= ' data-name="' . $offer->getName() . '"';
+                        $addClass = $currentOffer->getId() === $offer->getId() ? ' active-link' : '';
                         ?>
                         <li class="b-weight-container__item">
                         <a<?= $addAttr ?> href="javascript:void(0)"
@@ -146,7 +147,7 @@ if (!strlen($arParams['ITEM_ATTR_ID'])) {
                     ob_end_clean();
                 }
             }
-            
+
             //
             // Кнопка добавления в корзину
             //
@@ -164,14 +165,14 @@ if (!strlen($arParams['ITEM_ATTR_ID'])) {
                 <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
             </span>
             </a><?php
-            
+
             //
             // Информация об особенностях покупки товара
             //
             ob_start();
-            
+
             /** @todo инфо о скидке */
-            
+
             if ($currentOffer->isByRequest()) {
                 ?>
                 <div class="b-common-item__info-wrap">
@@ -180,7 +181,7 @@ if (!strlen($arParams['ITEM_ATTR_ID'])) {
                     ) ?></span>
                 </div><?php
             }
-            
+
             /** @todo инфо о доставке/самовывозе */
             $addInfo = ob_get_clean();
             if (strlen($addInfo)) {
@@ -202,22 +203,22 @@ if (!strlen($arParams['ITEM_ATTR_ID'])) {
 // то проверяем наличие переданного id рекомендации, иначе не нагружаем впустую браузеры
 //
 if (isset($arParams['BIG_DATA']['RCM_ID']) && !empty($arParams['BIG_DATA']['RCM_ID'])) {
-    $jsProduct   = [
-        'ID'     => $product->getId(),
+    $jsProduct = [
+        'ID' => $product->getId(),
         'RCM_ID' => $arParams['BIG_DATA']['RCM_ID'] ?? '',
     ];
     $jsSelectors = [
-        'item' => '#'.$arParams['ITEM_ATTR_ID'],
-        'trackRecommendation' => '#'.$arParams['ITEM_ATTR_ID'].' .track-recommendation',
+        'item' => '#' . $arParams['ITEM_ATTR_ID'],
+        'trackRecommendation' => '#' . $arParams['ITEM_ATTR_ID'] . ' .track-recommendation',
     ];
-    $jsParams    = [
+    $jsParams = [
         'cookiePrefix' => $arParams['BIG_DATA']['cookiePrefix'] ?? '',
         'cookieDomain' => $arParams['BIG_DATA']['cookieDomain'] ?? '',
-        'serverTime'   => $arParams['BIG_DATA']['serverTime'] ?? 0,
-        'product'      => $jsProduct,
-        'selectors'    => $jsSelectors,
+        'serverTime' => $arParams['BIG_DATA']['serverTime'] ?? 0,
+        'product' => $jsProduct,
+        'selectors' => $jsSelectors,
     ];
-    
+
     ?>
     <script type="text/javascript">
         new FourPawsCatalogElementSnippet(<?=\CUtil::PhpToJSObject($jsParams)?>);
