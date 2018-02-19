@@ -50,16 +50,16 @@ class UserController extends FOSRestController
      * @param LoginRequest $loginRequest
      * @param Collection   $apiErrors
      *
+     * @throws UsernameNotFoundException
+     * @throws TooManyUserFoundException
+     * @throws InvalidCredentialException
+     * @throws LogicException
      * @return ApiResponse
      * @internal param Request $request
      *
      * @Security("!has_role('REGISTERED_USERS')")
      *
      * @Rest\View()
-     * @throws UsernameNotFoundException
-     * @throws TooManyUserFoundException
-     * @throws InvalidCredentialException
-     * @throws LogicException
      */
     public function loginAction(
         LoginRequest $loginRequest,
