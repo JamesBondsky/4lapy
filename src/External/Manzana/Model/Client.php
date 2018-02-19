@@ -50,7 +50,7 @@ class Client
     public $lastName;
 
     /**
-     * @Type("DateTimeImmutable")
+     * @Type("DateTimeImmutable<'Y-m-d\TH:i:s'>")
      * @SerializedName("birthdate")
      */
     public $birthDate;
@@ -241,7 +241,7 @@ class Client
     public $plShopsName;
 
     /**
-     * @Type("DateTimeImmutable")
+     * @Type("DateTimeImmutable<'Y-m-d\TH:i:s'>")
      * @SerializedName("pl_registration_date")
      */
     public $plRegistrationDate;
@@ -336,7 +336,7 @@ class Client
     public $spousesName;
 
     /**
-     * @Type("DateTimeImmutable")
+     * @Type("DateTimeImmutable<'Y-m-d\TH:i:s'>")
      * @SerializedName("Anniversary")
      */
     public $anniversary;

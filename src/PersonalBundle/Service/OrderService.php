@@ -149,7 +149,7 @@ class OrderService
     public function getManzanaOrders(): ArrayCollection
     {
         $orders = new ArrayCollection();
-        $cheques = new ArrayCollection($this->manzanaService->getCheques($this->manzanaService->getContactIdByCurUser()));
+        $cheques = new ArrayCollection($this->manzanaService->getCheques($this->manzanaService->getContactIdByUser()));
         if (!$cheques->isEmpty()) {
             /** @var Cheque $cheque */
             foreach ($cheques as $cheque) {

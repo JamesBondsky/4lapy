@@ -2,6 +2,8 @@
 
 namespace FourPaws\External;
 
+use Bitrix\Sale\Basket;
+use Bitrix\Sale\BasketBase;
 use Bitrix\Sale\BasketItem;
 use FourPaws\External\Interfaces\ManzanaServiceInterface;
 use FourPaws\External\Manzana\Dto\ChequePosition;
@@ -10,7 +12,6 @@ use FourPaws\External\Manzana\Dto\SoftChequeResponse;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\Traits\ManzanaServiceTrait;
 use FourPaws\Helpers\ArithmeticHelper;
-use FourPaws\SaleBundle\Service\BasketService;
 use Psr\Log\LoggerAwareInterface;
 
 /**
@@ -75,19 +76,20 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
     }
     
     /**
-     * @param BasketService $basketService
+     * @param Basket $basket
      * @param string        $card
      *
      * @return SoftChequeRequest
      */
-    public function buildRequestFromBasketService(BasketService $basketService, string $card = '') : SoftChequeRequest
-    {
+    public function buildRequestFromBasket(
+        BasketBase $basket,
+        string $card = '',
+        float $paidByBonus = 0
+    ) : SoftChequeRequest {
         $sum = $sumDiscounted = $discount = 0.0;
         
         $request = new SoftChequeRequest();
-        
-        $basket = $basketService->getBasket();
-        
+
         $iterator = 0;
         /** @var BasketItem $item */
         foreach ($basket->getBasketItems() as $k => $item) {
@@ -124,9 +126,10 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
         $request->setSumm($sum)
                 ->setSummDiscounted($sumDiscounted)
                 ->setDiscount(ArithmeticHelper::getPercent($sumDiscounted, $sum));
-    
+
         if ($card) {
-            $request->setCardByNumber($card);
+            $request->setCardByNumber($card)
+                    ->setPaidByBonus($paidByBonus);
         }
         
         return $request;

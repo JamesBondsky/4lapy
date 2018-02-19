@@ -247,7 +247,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      * @throws ServiceCircularReferenceException
      * @throws NotAuthorizedException
      */
-    public function getContactByCurUser(User $user = null) : Client
+    public function getContactByUser(User $user = null) : Client
     {
         if (!($user instanceof User)) {
             $user = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class)->getCurrentUser();
@@ -429,7 +429,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     public function getUserReferralList(User $user = null) : array
     {
-        $contact_id = $this->getContactIdByCurUser($user);
+        $contact_id = $this->getContactIdByUser($user);
         $referrals  = [];
         if ($contact_id > 0) {
             $bag = new ParameterBag(
@@ -466,7 +466,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
      * @throws NotAuthorizedException
      * @throws ServiceCircularReferenceException
      */
-    public function getContactIdByCurUser(User $user = null) : string
+    public function getContactIdByUser(User $user = null) : string
     {
         if (!($user instanceof User)) {
             $user = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class)->getCurrentUser();

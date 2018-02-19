@@ -19,6 +19,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  * @SaleValidation\OrderDelivery(groups={"delivery","payment"})
  * @SaleValidation\OrderAddress(groups={"delivery","payment"})
  * @SaleValidation\OrderPaymentSystem(groups={"payment"})
+ * @SaleValidation\OrderBonusPayment(groups={"payment"})
  */
 class OrderStorage
 {
@@ -290,23 +291,22 @@ class OrderStorage
     protected $partialGet = true;
 
     /**
-     *
-     * @var bool
-     * @Serializer\Type("bool")
-     * @Serializer\SerializedName("BONUS_PAYMENT")
-     * @Serializer\Groups(groups={"read","update","delete"})
-     */
-    protected $bonusPayment = false;
-
-    /**
      * Сумма оплаты бонусами
      *
      * @var int
      * @Serializer\Type("int")
-     * @Serializer\SerializedName("BONUS_SUM")
+     * @Serializer\SerializedName("BONUS")
      * @Serializer\Groups(groups={"read","update","delete"})
      */
-    protected $bonusSum = 0;
+    protected $bonus = 0;
+
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("DISCOUNT_CARD_NUMBER")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     */
+    protected $discountCardNumber = '';
 
     /**
      * @return int
@@ -823,41 +823,41 @@ class OrderStorage
     }
 
     /**
-     * @return bool
+     * @return int
      */
-    public function hasBonusPayment(): bool
+    public function getBonus(): int
     {
-        return $this->bonusPayment ?: false;
+        return $this->bonus ?: 0;
     }
 
     /**
-     * @param bool $bonusPayment
+     * @param int $bonus
      *
      * @return OrderStorage
      */
-    public function setBonusPayment(bool $bonusPayment): OrderStorage
+    public function setBonus(int $bonus): OrderStorage
     {
-        $this->bonusPayment = $bonusPayment;
+        $this->bonus = $bonus;
 
         return $this;
     }
 
     /**
-     * @return int
+     * @return string
      */
-    public function getBonusSum(): int
+    public function getDiscountCardNumber(): string
     {
-        return $this->bonusSum ?: 0;
+        return $this->discountCardNumber;
     }
 
     /**
-     * @param int $bonusSum
+     * @param string $discountCardNumber
      *
      * @return OrderStorage
      */
-    public function setBonusSum(int $bonusSum): OrderStorage
+    public function setDiscountCardNumber(string $discountCardNumber): OrderStorage
     {
-        $this->bonusSum = $bonusSum;
+        $this->discountCardNumber = $discountCardNumber;
 
         return $this;
     }

@@ -63,11 +63,6 @@ if ((int)$response['errorCode'] === 0) {
         'PS_STATUS_CODE'        => 'Y',
     ];
 
-    $order->StatusOrder(
-        $orderId,
-        OrderService::STATUS_PAID
-    );
-
     $order->PayOrder($orderId, 'Y', true, true);
     if ($paysystem->GetParamValue('SHIPMENT_ENABLE') === 'Y') {
         $order->DeliverOrder($orderId, 'Y');
