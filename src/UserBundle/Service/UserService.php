@@ -6,6 +6,7 @@
 
 namespace FourPaws\UserBundle\Service;
 
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Fuser;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -321,7 +322,10 @@ class UserService implements
         $client->genderCode = $user->getManzanaGender();
         $client->email = $user->getEmail();
         $client->plLogin = $user->getLogin();
-        $client->plRegistrationDate = $user->getManzanaDateRegister();
+        $dateRegister = $user->getManzanaDateRegister();
+        if($dateRegister instanceof DateTime) {
+            $client->plRegistrationDate = $user->getManzanaDateRegister();
+        }
         if ($user->isEmailConfirmed() && $user->isPhoneConfirmed()) {
             // если e-mail и телефон подтверждены - отмечаем, что анкета актуальна и делаем карту бонусной
             // - так делалось по умолчанию на старом сайте

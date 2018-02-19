@@ -129,7 +129,14 @@ class ExceptionHandler implements SubscribingHandlerInterface
         array $type,
         Context $context
     ): array {
-        return $visitor->visitArray($this->convertToArray($exception, $context), $type, $context);
+        return $visitor->getNavigator()->accept(
+            $this->convertToArray($exception, $context),
+            [
+                'name'   => 'array',
+                'params' => $type['params'],
+            ],
+            $context
+        );
     }
 
     /**
@@ -145,7 +152,7 @@ class ExceptionHandler implements SubscribingHandlerInterface
             'code'    => $this->exceptionDataMap->resolveCode($exception) ?: $this->getDefaultErrorCode(),
         ];
         if ($this->isDebug()) {
-            $error['trace'] = $exception->getTrace();
+            $error['trace'] = $exception->getTraceAsString();
         }
 
         return [
