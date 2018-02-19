@@ -160,7 +160,7 @@ class BasketController extends Controller
                     // todo wat? :)
                     continue;
                 }
-
+                // todo изменять только то что нужно изменять
                 $this->basketService->updateBasketQuantity((int)$item['basketId'], (int)$item['quantity']);
             }
             $data = [

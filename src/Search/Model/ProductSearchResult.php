@@ -6,8 +6,10 @@ use CDBResult;
 use Elastica\Result;
 use Elastica\ResultSet;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Collection\ProductCollection;
 use FourPaws\Search\Factory;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 
 class ProductSearchResult implements ProductResultInterface
 {
@@ -41,9 +43,10 @@ class ProductSearchResult implements ProductResultInterface
      *
      * @param ResultSet $resultSet
      * @param Navigation $navigation
+     * @param string $query
      *
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
      */
     public function __construct(ResultSet $resultSet, Navigation $navigation = null, $query = '')
     {
