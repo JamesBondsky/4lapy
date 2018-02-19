@@ -23,4 +23,6 @@ class IblockCode
     const SHARES    = 'shares';
     
     const FOOD_SELECTION    = 'food_selection';
+
+    const RELATED_LINKS    = 'related_links';
 }

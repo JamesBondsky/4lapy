@@ -37,3 +37,7 @@ services:
         class: FourPaws\CatalogBundle\Service\FilterHelper
         arguments: ['@bx.hlblock.filter']
         public: true
+
+    FourPaws\CatalogBundle\Service\OftenSeekRepository:
+        class: FourPaws\CatalogBundle\Service\OftenSeekRepository
+        public: true
