@@ -87,6 +87,7 @@ if (!empty($arParams['CURRENT_OFFER']) && $arParams['CURRENT_OFFER'] instanceof 
                     'ITEMS_COUNT' => 5,
                     'ACTIVE_DATE_FORMAT' => 'd j Y',
                     'TYPE' => 'catalog',
+                    'ITEM_LINK' => $product->getDetailPageUrl().'#new-review'
                 ],
                 false,
                 ['HIDE_ICONS' => 'Y']
