@@ -56,9 +56,9 @@ class OrderService
     const STATUS_NEW_PICKUP = 'N';
 
     /**
-     * Статус, в который заказ переходит при оплате
+     * 90% заказа можно оплатить бонусами
      */
-    const STATUS_PAID = 'J';
+    const MAX_BONUS_PAYMENT = 0.9;
 
     /**
      * @var AddressService
@@ -100,6 +100,23 @@ class OrderService
      */
     protected $userRegistrationProvider;
 
+    /**
+     * @var UserAccountService
+     */
+    protected $userAccountService;
+
+    /**
+     * OrderService constructor.
+     *
+     * @param AddressService $addressService
+     * @param BasketService $basketService
+     * @param CurrentUserProviderInterface $currentUserProvider
+     * @param DeliveryService $deliveryService
+     * @param OrderStorageService $orderStorageService
+     * @param UserCitySelectInterface $userCityProvider
+     * @param UserRegistrationProviderInterface $userRegistrationProvider
+     * @param UserAccountService $userAccountService
+     */
     public function __construct(
         AddressService $addressService,
         BasketService $basketService,
@@ -107,7 +124,8 @@ class OrderService
         DeliveryService $deliveryService,
         OrderStorageService $orderStorageService,
         UserCitySelectInterface $userCityProvider,
-        UserRegistrationProviderInterface $userRegistrationProvider
+        UserRegistrationProviderInterface $userRegistrationProvider,
+        UserAccountService $userAccountService
     ) {
         $this->addressService = $addressService;
         $this->basketService = $basketService;
@@ -116,16 +134,17 @@ class OrderService
         $this->orderStorageService = $orderStorageService;
         $this->userCityProvider = $userCityProvider;
         $this->userRegistrationProvider = $userRegistrationProvider;
+        $this->userAccountService = $userAccountService;
     }
 
     /** @noinspection MoreThanThreeArgumentsInspection */
     /**
      * Получение заказа по id
      *
-     * @param int    $id     id заказа
-     * @param bool   $check  выполнять ли проверки
-     * @param int    $userId id пользователя, к которому привязан заказ
-     * @param string $hash   хеш заказа (проверяется, если не передан userId)
+     * @param int $id id заказа
+     * @param bool $check выполнять ли проверки
+     * @param int $userId id пользователя, к которому привязан заказ
+     * @param string $hash хеш заказа (проверяется, если не передан userId)
      *
      * @throws NotFoundException
      * @throws ArgumentNullException
@@ -188,10 +207,10 @@ class OrderService
             $paymentCollection = $order->getPaymentCollection();
             $sum = $order->getBasket()->getOrderableItems()->getPrice();
 
-            if ($storage->hasBonusPayment() && $storage->getBonusSum()) {
+            if ($storage->getBonus()) {
                 $innerPayment = $paymentCollection->getInnerPayment();
-                $innerPayment->setField('SUM', $storage->getBonusSum());
-                $sum -= $storage->getBonusSum();
+                $innerPayment->setField('SUM', $storage->getBonus());
+                $sum -= $storage->getBonus();
             }
 
             $extPayment = $paymentCollection->createItem();
@@ -268,11 +287,11 @@ class OrderService
             try {
                 $address = $this->addressService->getById($storage->getAddressId());
                 $storage->setStreet($address->getStreet())
-                    ->setHouse($address->getHouse())
-                    ->setBuilding($address->getHousing())
-                    ->setFloor($address->getFloor())
-                    ->setApartment($address->getFlat())
-                    ->setPorch($address->getEntrance());
+                        ->setHouse($address->getHouse())
+                        ->setBuilding($address->getHousing())
+                        ->setFloor($address->getFloor())
+                        ->setApartment($address->getFlat())
+                        ->setPorch($address->getEntrance());
             } catch (AddressNotFoundException $e) {
             }
         }
@@ -285,7 +304,7 @@ class OrderService
         /** @var OrderProperty $orderProperty */
 
         $deliveryDate = $this->deliveryService->getStockResultByDelivery($selectedDelivery)
-            ->getDeliveryDate();
+                                              ->getDeliveryDate();
 
         /** @var PropertyValue $propertyValue */
         foreach ($propertyValueCollection as $propertyValue) {
@@ -366,6 +385,12 @@ class OrderService
         if ($storage->getUserId()) {
             $order->setFieldNoDemand('USER_ID', $storage->getUserId());
             $user = $this->currentUserProvider->getCurrentUser();
+            if (!$user->getDiscountCardNumber() && $storage->getDiscountCardNumber()) {
+                $this->currentUserProvider->getUserRepository()->updateDiscountCard(
+                    $user->getId(),
+                    $storage->getDiscountCardNumber()
+                );
+            }
             if (!$user->getEmail() && $storage->getEmail()) {
                 $user->setEmail($storage->getEmail());
                 $this->currentUserProvider->getUserRepository()->updateEmail(
@@ -386,11 +411,13 @@ class OrderService
             } else {
                 $user = (new User())
                     ->setName($storage->getName())
+                    ->setActive(true)
                     ->setEmail($storage->getEmail())
                     ->setLogin($storage->getPhone())
                     ->setPassword(randString(6))
                     ->setPersonalPhone($storage->getPhone());
                 $user = $this->userRegistrationProvider->register($user);
+
                 $order->setFieldNoDemand('USER_ID', $user->getId());
                 $addressUserId = $user->getId();
                 $needCreateAddress = true;
@@ -403,7 +430,8 @@ class OrderService
          * 2) авторизованный пользователь задал новый адрес
          */
         if ($needCreateAddress) {
-            $address = (new Address())->setCity($storage->getCity())
+            $address = (new Address())
+                ->setCity($storage->getCity())
                 ->setCityLocation($storage->getCityCode())
                 ->setUserId($addressUserId)
                 ->setStreet($storage->getStreet())
@@ -425,6 +453,32 @@ class OrderService
         $this->orderStorageService->clearStorage($storage);
 
         return $order;
+    }
+
+    /**
+     * Получение максимального кол-ва бонусов, которыми можно оплатить заказ
+     *
+     * @param OrderStorage $storage
+     *
+     * @return float
+     */
+    public function getMaxBonusesForPayment(OrderStorage $storage): float
+    {
+        if (!$storage->getUserId()) {
+            return 0;
+        }
+
+        $bonuses = 0;
+        try {
+            $this->userAccountService->refreshUserBalance();
+            $bonuses = $this->userAccountService->findAccountByUser($this->currentUserProvider->getCurrentUser())
+                                                ->getCurrentBudget();
+        } catch (NotFoundException $e) {
+        }
+
+        $basket = $this->basketService->getBasket()->getOrderableItems();
+
+        return floor(min($basket->getPrice() * static::MAX_BONUS_PAYMENT, $bonuses));
     }
 
     /**

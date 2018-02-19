@@ -335,7 +335,7 @@ class ReferralService
         
         $contactId = '';
         try {
-            $contactId = $this->manzanaService->getContactIdByCurUser();
+            $contactId = $this->manzanaService->getContactIdByUser();
         } catch (ManzanaServiceContactSearchNullException $e) {
             $contactClient = new Client();
             try {

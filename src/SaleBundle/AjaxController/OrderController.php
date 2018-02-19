@@ -178,7 +178,12 @@ class OrderController extends Controller
 
         $validationErrors = $this->fillStorage($storage, $request, $currentStep);
         if (!empty($validationErrors)) {
-            return JsonErrorResponse::createWithData('', ['errors' => $validationErrors]);
+            return JsonErrorResponse::createWithData(
+                '',
+                ['errors' => $validationErrors],
+                200,
+                ['reload' => true]
+            );
         }
 
         try {
@@ -188,9 +193,6 @@ class OrderController extends Controller
         }
 
         $url = new Uri('/sale/order/' . OrderStorageService::COMPLETE_STEP . '/' . $order->getId());
-        if (!$this->userAuthProvider->isAuthorized()) {
-            $url->addParams(['HASH' => $order->getHash()]);
-        }
 
         /** @var Payment $payment */
         foreach ($order->getPaymentCollection() as $payment) {
@@ -201,6 +203,10 @@ class OrderController extends Controller
                 $url->setPath('/sale/payment/');
                 $url->addParams(['ORDER_ID' => $order->getId()]);
             }
+        }
+
+        if (!$this->userAuthProvider->isAuthorized()) {
+            $url->addParams(['HASH' => $order->getHash()]);
         }
 
         return JsonSuccessResponse::create(

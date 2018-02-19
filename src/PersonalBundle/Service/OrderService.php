@@ -23,7 +23,6 @@ use FourPaws\PersonalBundle\Entity\OrderPayment;
 use FourPaws\PersonalBundle\Repository\OrderRepository;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
-use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -150,7 +149,7 @@ class OrderService
     public function getManzanaOrders(): ArrayCollection
     {
         $orders = new ArrayCollection();
-        $cheques = new ArrayCollection($this->manzanaService->getCheques($this->manzanaService->getContactIdByCurUser()));
+        $cheques = new ArrayCollection($this->manzanaService->getCheques($this->manzanaService->getContactIdByUser()));
         if (!$cheques->isEmpty()) {
             /** @var Cheque $cheque */
             foreach ($cheques as $cheque) {
@@ -239,7 +238,7 @@ class OrderService
                 /** @todo вынести все полученяи из цикла и сделать по феншую без запросов цикле */
                 if (!$order->isManzana() && $order->getId() > 0) {
                     list($items, $allWeight, $itemsSum) = $this->getOrderItems($order->getId());
-                    //var_dump($allWeight);
+                    var_dump($allWeight);
                     $order->setItems($items);
                     $order->setAllWeight((float)$allWeight);
                     $order->setItemsSum((float)$itemsSum);
@@ -342,41 +341,24 @@ class OrderService
         //
         //CITY_CODE
         /** @todo может что сделать с dpd */
-        $storeXmlId = $order->getPropValue('DELIVERY_PLACE_CODE');
+        $storeXmlId = $order->getProps()->get('DELIVERY_PLACE_CODE')->getValue();
         if (!empty($storeXmlId)) {
-            /** @var StoreService $storeService */
             $storeService = App::getInstance()->getContainer()->get('store.service');
             return $storeService->getByXmlId($storeXmlId);
         }
 
         $store = new Store();
-        $street = $order->getPropValue('STREET') . ' ул.';
-        $house = ', д.' . $order->getPropValue('HOUSE');
-        $building = !empty($order->getPropValue('BUILDING')) ? ', корпус/строение ' . $order->getPropValue('BUILDING') : '';
-        $porch = !empty($order->getPropValue('PORCH')) ? ', подъезд. ' . $order->getPropValue('PORCH') : '';
-        $apartment = !empty($order->getPropValue('APARTMENT')) ? ', кв. ' . $order->getPropValue('APARTMENT') : '';
-        $floor = !empty($order->getPropValue('FLOOR')) ? ', этаж ' . $order->getPropValue('FLOOR') : '';
-        $city = ', г. ' . $order->getPropValue('CITY');
+        $props = $order->getProps();
+        $street = $props->get('STREET')->getValue() . ' ул.';
+        $house = ', д.' . $props->get('HOUSE')->getValue();
+        $building = !empty($props->get('BUILDING')->getValue()) ? ', корпус/строение ' . $props->get('BUILDING')->getValue() : '';
+        $porch = !empty($props->get('PORCH')->getValue()) ? ', подъезд. ' . $props->get('PORCH')->getValue() : '';
+        $apartment = !empty($props->get('APARTMENT')->getValue()) ? ', кв. ' . $props->get('APARTMENT')->getValue() : '';
+        $floor = !empty($props->get('FLOOR')->getValue()) ? ', этаж ' . $props->get('FLOOR')->getValue() : '';
+        $city = ', г. ' . $props->get('CITY')->getValue();
         $store->setAddress($street . $house . $building . $porch . $apartment . $floor . $city);
         $store->setActive(true);
         $store->setIsShop(false);
-
         return $store;
-    }
-
-    /**
-     * @param int $orderId
-     * @return Order
-     * @throws \Exception
-     */
-    public function getOrderById(int $orderId): Order
-    {
-        $params = [
-            'filter' => [
-                'ID' => $orderId
-            ]
-        ];
-
-        return $this->orderRepository->findBy($params)->first();
     }
 }
