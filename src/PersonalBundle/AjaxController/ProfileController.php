@@ -9,7 +9,6 @@ namespace FourPaws\PersonalBundle\AjaxController;
 use Bitrix\Main\Type\Date;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
@@ -27,6 +26,7 @@ use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
+use JMS\Serializer\Serializer;
 use JMS\Serializer\SerializerBuilder;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -68,7 +68,6 @@ class ProfileController extends Controller
      * @throws ValidationException
      * @throws InvalidIdentifierException
      * @throws \Exception
-     * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
      * @return JsonResponse
      */
@@ -148,17 +147,14 @@ class ProfileController extends Controller
 
     /**
      * @Route("/changeData/", methods={"POST"})
-     * @param Request $request
+     * @param Request    $request
      *
-     * @throws NotAuthorizedException
-     * @throws ServiceCircularReferenceException
-     * @throws ApplicationCreateException
-     * @throws ServiceNotFoundException
-     * @throws ValidationException
-     * @throws InvalidIdentifierException
+     * @param Serializer $serializer
+     *
      * @return JsonResponse
+     * @throws ApplicationCreateException
      */
-    public function changeDataAction(Request $request): JsonResponse
+    public function changeDataAction(Request $request, Serializer $serializer): JsonResponse
     {
         /** @var UserRepository $userRepository */
         $userRepository = $this->currentUserProvider->getUserRepository();
@@ -167,12 +163,15 @@ class ProfileController extends Controller
             return $this->ajaxMess->getWrongEmailError();
         }
 
+        if(!empty($data['ID'])){
+            $data['ID'] = (int)$data['ID'];
+        }
         /** @var User $user */
-        $user = SerializerBuilder::create()->build()->fromArray($data, User::class);
+        $user = $serializer->fromArray($data, User::class);
 
         $haveUsers = $userRepository->havePhoneAndEmailByUsers(
             [
-                'EMAIL' => $data['EMAIL'],
+                'EMAIL' => $user->getEmail(),
                 'ID'    => $user->getId(),
             ]
         );
@@ -203,7 +202,7 @@ class ProfileController extends Controller
             }
 
             if ($client instanceof Client) {
-                $this->currentUserProvider->setClientPersonalDataByCurUser($client, $user);
+                $this->currentUserProvider->setClientPersonalDataByCurUser($client);
                 $manzanaService->updateContactAsync($client);
             }
 
@@ -229,8 +228,9 @@ class ProfileController extends Controller
             );
         } catch (BitrixRuntimeException $e) {
             return $this->ajaxMess->getUpdateError($e->getMessage());
-        } catch (ConstraintDefinitionException $e) {
         }
+        catch(\RuntimeException $e){}
+        catch(\InvalidArgumentException $e){}
 
         return $this->ajaxMess->getSystemError();
     }
