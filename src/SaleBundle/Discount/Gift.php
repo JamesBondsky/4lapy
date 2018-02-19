@@ -36,6 +36,11 @@ class Gift extends \CSaleActionGiftCtrlGroup
             'CondBsktAmtBaseGroup'
         ];
         $controlDescr['SORT'] = 300;
+//        $controlDescr['ENTITY'] = 'ELEMENT_PROPERTY';
+//        $controlDescr['FIELD'] = 'PROPERTY_6_VALUE';
+//        $controlDescr['FIELD_TABLE'] = '3:6';
+//        $controlDescr['MODULE_ENTITY'] = 'catalog';
+
         return $controlDescr;
     }
 
@@ -121,7 +126,7 @@ class Gift extends \CSaleActionGiftCtrlGroup
      *
      */
     public static function applyGift(
-        $order,
+        array $order,
         $params,
         /** @noinspection PhpUnusedParameterInspection */
         Discount $callerObject = null,

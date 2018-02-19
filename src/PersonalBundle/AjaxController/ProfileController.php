@@ -21,13 +21,11 @@ use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\EmptyDateException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
-use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use JMS\Serializer\Serializer;
-use JMS\Serializer\SerializerBuilder;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -163,7 +161,7 @@ class ProfileController extends Controller
             return $this->ajaxMess->getWrongEmailError();
         }
 
-        if(!empty($data['ID'])){
+        if (!empty($data['ID'])) {
             $data['ID'] = (int)$data['ID'];
         }
         /** @var User $user */
@@ -228,9 +226,9 @@ class ProfileController extends Controller
             );
         } catch (BitrixRuntimeException $e) {
             return $this->ajaxMess->getUpdateError($e->getMessage());
+        } catch (\RuntimeException $e) {
+        } catch (\InvalidArgumentException $e) {
         }
-        catch(\RuntimeException $e){}
-        catch(\InvalidArgumentException $e){}
 
         return $this->ajaxMess->getSystemError();
     }

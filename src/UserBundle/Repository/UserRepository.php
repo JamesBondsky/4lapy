@@ -365,6 +365,11 @@ class UserRepository
         if (!empty($params['PERSONAL_PHONE'])) {
             $filter[0]['PERSONAL_PHONE'] = $params['PERSONAL_PHONE'];
         }
+        if(\count($filter[0]) === 2){
+            $val = end($filter[0]);
+            $filter[key($filter[0])] = $val;
+            unset($filter[0]);
+        }
         if (!empty($params['ID'])) {
             $filter['!ID'] = $params['ID'];
         }
@@ -375,15 +380,11 @@ class UserRepository
         );
         if (\is_array($users) && !empty($users)) {
             /** @var User $user */
-            $return = [
-                'phone' => false,
-                'email' => false,
-            ];
             foreach ($users as $user) {
-                if ($user->getPersonalPhone() === $params['PERSONAL_PHONE']) {
+                if (!$return['phone'] && $user->getPersonalPhone() === $params['PERSONAL_PHONE']) {
                     $return['phone'] = true;
                 }
-                if ($user->getEmail() === $params['EMAIL']) {
+                if (!$return['email'] && $user->getEmail() === $params['EMAIL']) {
                     $return['email'] = true;
                 }
             }
