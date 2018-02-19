@@ -54,6 +54,7 @@ class UserController extends FOSRestController
      * @throws TooManyUserFoundException
      * @throws InvalidCredentialException
      * @throws LogicException
+     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
      * @return ApiResponse
      * @internal param Request $request
      *

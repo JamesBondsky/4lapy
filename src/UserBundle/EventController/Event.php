@@ -23,7 +23,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  * @package FourPaws\UserBundle\EventController
  * @todo    Почему этот класс абстрактный? оО что за магия
  */
-abstract class Event implements ServiceHandlerInterface
+class Event implements ServiceHandlerInterface
 {
     /**
      * @var EventManager

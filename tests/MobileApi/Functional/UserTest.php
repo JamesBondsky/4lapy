@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\Test\MobileApi\Functional;
 
 use Symfony\Component\HttpFoundation\Request;
@@ -14,21 +18,39 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class UserTest extends BaseTest
 {
-    public function testCreate()
-    {
-        $userData = $this->generateUserData();
-        $userId = $this->createUser($userData);
-        $this->checkUserAuthValid($userData['LOGIN'], $userData['PASSWORD'], $userData);
-        $this->checkUserAuthInValid(randString(), randString());
-        $this->checkUserLogoutValid();
+    /**
+     * @var array
+     */
+    protected static $userData = [];
 
-        $this->deleteUser($userId);
+    /**
+     * @var int
+     */
+    protected static $userId = 0;
+
+
+    public static function setUpBeforeClass()
+    {
+        static::$userData = static::generateUserData();
+        if (!static::$userData) {
+            throw new \RuntimeException('Cant generate test data');
+        }
+        $cUser = new \CUser();
+        static::$userId = $cUser->Add(static::$userData);
+        if (!static::$userId) {
+            throw new \RuntimeException(sprintf('Cant create user. %s', $cUser->LAST_ERROR));
+        }
+    }
+
+    public static function tearDownAfterClass()
+    {
+        \CUser::Delete(static::$userId);
     }
 
     /**
      * @return array
      */
-    private function generateUserData(): array
+    private static function generateUserData(): array
     {
         $pass = randString();
         return [
@@ -43,38 +65,14 @@ class UserTest extends BaseTest
         ];
     }
 
-    /**
-     * @param array $userData
-     *
-     * @return bool|int|string
-     */
-    private function createUser(array $userData)
-    {
-        $user = new \CUser;
-        return $user->Add($userData);
-    }
-
-    /**
-     * @param int $id
-     */
-    private function deleteUser(int $id)
-    {
-        \CUser::Delete($id);
-    }
-
-    /**
-     * @param string $login
-     * @param string $password
-     * @param array  $userData
-     */
-    private function checkUserAuthValid(string $login, string $password, array $userData)
+    public function testAuth()
     {
         $client = static::createClient();
         $client->request(Request::METHOD_POST, '/mobile_app_v2/user_login/', [
             'token'           => $this->getToken(),
             'user_login_info' => [
-                'login'    => $login,
-                'password' => $password,
+                'login'    => static::$userData['LOGIN'],
+                'password' => static::$userData['PASSWORD'],
             ],
         ]);
 
@@ -86,20 +84,28 @@ class UserTest extends BaseTest
             static::assertJson($content);
             $data = json_decode($content, true);
 
-            static::assertTrue(\is_array($data));
+            static::assertInternalType('array', $data);
             static::assertCount(0, $data['error']);
             static::assertArrayHasKey('data', $data);
-            static::assertEquals($userData['EMAIL'], $data['data']['email']);
-            static::assertEquals($userData['NAME'], $data['data']['firstname']);
-            static::assertEquals($userData['LAST_NAME'], $data['data']['lastname']);
+            static::assertEquals(static::$userData['EMAIL'], $data['data']['email']);
+            static::assertEquals(static::$userData['NAME'], $data['data']['firstname']);
+            static::assertEquals(static::$userData['LAST_NAME'], $data['data']['lastname']);
         }
     }
 
+//    public function testCreate()
+//    {
+//        $this->checkUserAuthInValid(randString(), randString());
+//        $this->checkUserLogoutValid();
+//    }
+
     /**
-     * @param string $login
-     * @param string $password
+     * @param $login
+     * @param $password
+     *
+     * @dataProvider wrongAuthDataProvider
      */
-    private function checkUserAuthInValid(string $login, string $password)
+    public function testWrongAuth($login, $password)
     {
         $client = static::createClient();
         $client->request(Request::METHOD_POST, '/mobile_app_v2/user_login/', [
@@ -117,33 +123,40 @@ class UserTest extends BaseTest
             static::assertEquals(Response::HTTP_OK, $response->getStatusCode());
             static::assertJson($content);
             $data = json_decode($content, true);
-            static::assertTrue(\is_array($data));
+            static::assertInternalType('array', $data);
             static::assertCount(1, $data['error']);
             static::assertArrayHasKey('data', $data);
             static::assertEmpty($data['data']);
         }
     }
 
-
-    private function checkUserLogoutValid()
+    public function wrongAuthDataProvider(): array
     {
-        $client = static::createClient();
-        $client->request(Request::METHOD_GET, '/mobile_app_v2/logout/', [
-            'token' => $this->getToken(),
-        ]);
-
-        $response = $client->getResponse();
-
-        if ($response) {
-            $content = $response->getContent();
-            static::assertEquals(Response::HTTP_OK, $response->getStatusCode());
-            static::assertJson($content);
-            $data = json_decode($content, true);
-            static::assertTrue(\is_array($data));
-            static::assertCount(0, $data['error']);
-            static::assertArrayHasKey('data', $data);
-            static::assertArrayHasKey('feedback_text', $data['data']);
-            static::assertNotEmpty($data['data']['feedback_text']);
-        }
+        return [
+            'email, string'     => [
+                static::$userData['EMAIL'],
+                randString(12),
+            ],
+            'phone, string'     => [
+                static::$userData['PHONE'],
+                randString(12),
+            ],
+            'email, null'       => [
+                static::$userData['EMAIL'],
+                null,
+            ],
+            'phone, null'       => [
+                static::$userData['PHONE'],
+                null,
+            ],
+            'email, big_string' => [
+                static::$userData['EMAIL'],
+                random_bytes(1024),
+            ],
+            'phone, big_string' => [
+                static::$userData['PHONE'],
+                random_bytes(1024),
+            ],
+        ];
     }
 }
