@@ -24,8 +24,8 @@ use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Service\StoreService;
-use JMS\Serializer\Annotation\Accessor;
 use JMS\Serializer\Annotation as Serializer;
+use JMS\Serializer\Annotation\Accessor;
 use JMS\Serializer\Annotation\Groups;
 use JMS\Serializer\Annotation\Type;
 use RuntimeException;
@@ -34,6 +34,9 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 class Offer extends IblockElement
 {
+    const SIMPLE_SHARE_SALE_CODE = 'VKA0';
+    const SIMPLE_SHARE_DISCOUNT_CODE = 'ZRBT';
+
     /**
      * @var bool
      * @Type("bool")
@@ -226,12 +229,39 @@ class Offer extends IblockElement
     protected $PROPERTY_BY_REQUEST = 0;
 
     /**
+     * Цена по акции - простая акция из SAP
+     *
+     * @var float
+     */
+    protected $PROPERTY_PRICE_ACTION = 0;
+
+    /**
+     * @var string
+     */
+    protected $PROPERTY_COND_FOR_ACTION = '';
+
+    /**
+     * Размер скидки на товар - простая акция из SAP
+     *
+     * @var float
+     */
+    protected $PROPERTY_COND_VALUE = 0;
+
+    /**
      * @Type("float")
      * @Groups({"elastic"})
      * @Accessor(getter="getPrice", setter="withPrice")
      * @var float
      */
     protected $price = 0;
+
+    /**
+     * @Type("float")
+     * @Groups({"elastic"})
+     * @Accessor(getter="getPrice", setter="withPrice")
+     * @var float
+     */
+    protected $applicablePrice = 0;
 
     /**
      * @var float
@@ -764,6 +794,11 @@ class Offer extends IblockElement
         return $this->getXmlId();
     }
 
+    public function getRawPrice()
+    {
+        return $this->price;
+    }
+
     /**
      * @return float
      */
@@ -771,7 +806,7 @@ class Offer extends IblockElement
     {
         $this->checkOptimalPrice();
 
-        return $this->price;
+        return $this->applicablePrice;
     }
 
     protected function checkOptimalPrice()
@@ -785,8 +820,8 @@ class Offer extends IblockElement
              * @var array $optimalPrice
              */
             $resultPrice = $optimalPrice['RESULT_PRICE'] ?? [
-                    'PERCENT'        => 0,
-                    'BASE_PRICE'     => $this->price,
+                    'PERCENT' => 0,
+                    'BASE_PRICE' => $this->price,
                     'DISCOUNT_PRICE' => $this->price,
                 ];
             $this->withDiscount(floor($resultPrice['PERCENT']));
@@ -993,5 +1028,29 @@ class Offer extends IblockElement
         $this->stocks = $stocks;
 
         return $this;
+    }
+
+    /**
+     * Участвует ли товар в акции "Скидка на товар"
+     */
+    public function isSimpleDiscountAction()
+    {
+        return $this->PROPERTY_COND_VALUE > 0 && $this->PROPERTY_COND_FOR_ACTION === self::SIMPLE_SHARE_DISCOUNT_CODE;
+    }
+
+    /**
+     * Участвует ли товар в ации "Цена по акции"
+     */
+    public function isSimpleSaleAction()
+    {
+        return $this->PROPERTY_PRICE_ACTION > 0 && $this->PROPERTY_COND_FOR_ACTION === self::SIMPLE_SHARE_SALE_CODE;
+    }
+
+    public function hasAction(): bool
+    {
+        /**
+         * @todo
+         */
+        return false;
     }
 }
