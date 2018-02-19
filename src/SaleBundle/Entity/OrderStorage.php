@@ -295,10 +295,10 @@ class OrderStorage
      *
      * @var int
      * @Serializer\Type("int")
-     * @Serializer\SerializedName("BONUS_SUM")
+     * @Serializer\SerializedName("BONUS")
      * @Serializer\Groups(groups={"read","update","delete"})
      */
-    protected $bonusSum = 0;
+    protected $bonus = 0;
 
     /**
      * @var string
@@ -825,19 +825,19 @@ class OrderStorage
     /**
      * @return int
      */
-    public function getBonusSum(): int
+    public function getBonus(): int
     {
-        return $this->bonusSum ?: 0;
+        return $this->bonus ?: 0;
     }
 
     /**
-     * @param int $bonusSum
+     * @param int $bonus
      *
      * @return OrderStorage
      */
-    public function setBonusSum(int $bonusSum): OrderStorage
+    public function setBonus(int $bonus): OrderStorage
     {
-        $this->bonusSum = $bonusSum;
+        $this->bonus = $bonus;
 
         return $this;
     }

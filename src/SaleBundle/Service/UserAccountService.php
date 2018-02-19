@@ -68,7 +68,7 @@ class UserAccountService
 
         $userAccount = (new UserAccount())->setUser($user)
                                           ->setCurrency(CurrencyManager::getBaseCurrency())
-                                          ->setCurrentBudget($bonus->getCard()->getBalance());
+                                          ->setCurrentBudget($bonus->getCard()->getActiveBalance());
 
         return $this->userAccountRepository->create($userAccount);
     }

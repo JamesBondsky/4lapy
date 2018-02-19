@@ -51,7 +51,7 @@ class OrderBonusPaymentValidator extends ConstraintValidator
         }
 
         if (!$entity->getUserId()) {
-            if ($entity->getBonusSum()) {
+            if ($entity->getBonus()) {
                 $this->context->addViolation($constraint->notAvailableMessage);
             }
 
@@ -59,20 +59,20 @@ class OrderBonusPaymentValidator extends ConstraintValidator
         }
 
         $user = $this->currentUserProvider->getCurrentUser();
-        if (!$user->getDiscountCardNumber() && $entity->getBonusSum()) {
+        if (!$user->getDiscountCardNumber() && $entity->getBonus()) {
             $this->context->addViolation($constraint->notAvailableMessage);
 
             return;
         }
 
-        if ($entity->getBonusSum() < 0) {
+        if ($entity->getBonus() < 0) {
             $this->context->addViolation($constraint->wrongValueMessage);
 
             return;
         }
 
         $maxValue = $this->orderService->getMaxBonusesForPayment($entity);
-        if ($entity->getBonusSum() > $maxValue) {
+        if ($entity->getBonus() > $maxValue) {
             $this->context->addViolation($constraint->wrongValueMessage);
         }
     }

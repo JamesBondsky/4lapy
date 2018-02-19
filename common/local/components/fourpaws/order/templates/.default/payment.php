@@ -132,7 +132,7 @@ $user = $arResult['USER'];
                     </form>
                     <form class="b-order-contacts__form b-order-contacts__form--points js-form-validation success-valid"
                           action="/">
-                        <?php if ($user->getDiscountCardNumber()) {
+                        <?php if ($user && $user->getDiscountCardNumber()) {
                             if ($arResult['MAX_BONUS_SUM']) {
                                 ?>
                                 <label class="b-order-contacts__label" for="point-pay">
@@ -145,7 +145,7 @@ $user = $arResult['USER'];
                                            type="text"
                                            maxlength="5"
                                            size="5"
-                                           value="<?= $storage->getBonusSum() ?>">
+                                           value="<?= $storage->getBonus() ?>">
                                     <div class="b-error">
                                         <span class="js-message"></span>
                                     </div>
@@ -192,7 +192,7 @@ $user = $arResult['USER'];
                                 <?= CurrencyHelper::formatPrice($selectedDelivery->getPrice(), false) ?>
                             </div>
                         </li>
-                        <?php if ($storage->getBonusSum()) { ?>
+                        <?php if ($storage->getBonus()) { ?>
                             <li class="b-order-list__item b-order-list__item--cost b-order-list__item--order-step-3">
                                 <div class="b-order-list__order-text b-order-list__order-text--order-step-3">
                                     <div class="b-order-list__clipped-text">
@@ -202,7 +202,7 @@ $user = $arResult['USER'];
                                     </div>
                                 </div>
                                 <div class="b-order-list__order-value b-order-list__order-value--order-step-3">
-                                    <?= CurrencyHelper::formatPrice($storage->getBonusSum(), false) ?>
+                                    <?= CurrencyHelper::formatPrice($storage->getBonus(), false) ?>
                                 </div>
                             </li>
                         <?php } ?>
@@ -216,7 +216,7 @@ $user = $arResult['USER'];
                             </div>
                             <div class="b-order-list__order-value b-order-list__order-value--order-step-3">
                                 <?= CurrencyHelper::formatPrice(
-                                    $basketPrice - $storage->getBonusSum() + $selectedDelivery->getPrice()
+                                    $basketPrice - $storage->getBonus() + $selectedDelivery->getPrice()
                                 ) ?>
                             </div>
                         </li>

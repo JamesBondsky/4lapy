@@ -178,7 +178,12 @@ class OrderController extends Controller
 
         $validationErrors = $this->fillStorage($storage, $request, $currentStep);
         if (!empty($validationErrors)) {
-            return JsonErrorResponse::createWithData('', ['errors' => $validationErrors]);
+            return JsonErrorResponse::createWithData(
+                '',
+                ['errors' => $validationErrors],
+                200,
+                ['reload' => true]
+            );
         }
 
         try {

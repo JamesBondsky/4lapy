@@ -215,10 +215,10 @@ class OrderService
             $paymentCollection = $order->getPaymentCollection();
             $sum = $order->getBasket()->getOrderableItems()->getPrice();
 
-            if ($storage->getBonusSum()) {
+            if ($storage->getBonus()) {
                 $innerPayment = $paymentCollection->getInnerPayment();
-                $innerPayment->setField('SUM', $storage->getBonusSum());
-                $sum -= $storage->getBonusSum();
+                $innerPayment->setField('SUM', $storage->getBonus());
+                $sum -= $storage->getBonus();
             }
 
             $extPayment = $paymentCollection->createItem();
@@ -473,13 +473,17 @@ class OrderService
             return 0;
         }
 
-        /* @todo возможно, стоит обновить баланс бонусов на карте */
-        $bonuses = $this->userAccountService->findAccountByUser($this->currentUserProvider->getCurrentUser())
-                                            ->getCurrentBudget();
+        $bonuses = 0;
+        try {
+            $this->userAccountService->refreshUserBalance();
+            $bonuses = $this->userAccountService->findAccountByUser($this->currentUserProvider->getCurrentUser())
+                                                ->getCurrentBudget();
+        } catch (NotFoundException $e) {
+        }
 
         $basket = $this->basketService->getBasket()->getOrderableItems();
 
-        return min($basket->getPrice() * static::MAX_BONUS_PAYMENT, $bonuses);
+        return floor(min($basket->getPrice() * static::MAX_BONUS_PAYMENT, $bonuses));
     }
 
     /**
