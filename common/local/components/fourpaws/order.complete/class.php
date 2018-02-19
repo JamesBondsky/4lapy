@@ -150,7 +150,7 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
                 $order->save();
             }
 
-            $this->arResult['ORDER_PROPERTIES'][] = $propertyValue->getValue();
+            $this->arResult['ORDER_PROPERTIES'][$propertyCode] = $propertyValue->getValue();
         }
 
         /** @var Shipment $shipment */

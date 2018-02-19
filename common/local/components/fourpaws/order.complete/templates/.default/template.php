@@ -16,7 +16,6 @@ use FourPaws\StoreBundle\Entity\Store;
 
 /** @var Order $order */
 $order = $arResult['ORDER'];
-
 $calcResult = new \Bitrix\Sale\Delivery\CalculationResult();
 ?>
 <div class="b-container">
@@ -37,11 +36,11 @@ $calcResult = new \Bitrix\Sale\Delivery\CalculationResult();
         <?php if (!empty($arResult['ORDER_PROPERTIES']['BONUS_COUNT'])) { ?>
             <div class="b-order__text-block b-order__text-block--top-line js">
                 <p>Вы получили <?= $arResult['ORDER_PROPERTIES']['BONUS_COUNT'] ?>
-                    <?= (new Declension($arResult['ORDER_PROPERTIES']['BONUS_COUNT']))->get(
+                    <?= (new Declension(
                         'бонусный балл',
                         'бонусных балла',
                         'бонусных баллов'
-                    ) ?>.
+                    ))->get($arResult['ORDER_PROPERTIES']['BONUS_COUNT']) ?>.
                     Узнать, <a class="b-link b-link--inherit b-link--orange"
                                href="/customer/bonus-program/"
                                title="как получить и потратить баллы.">
