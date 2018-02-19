@@ -9,7 +9,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use Bitrix\Iblock\Component\Tools;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Data\Cache;
 use Bitrix\Main\LoaderException;
@@ -104,7 +103,7 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
             $this->arResult['BONUS'] = $bonus = $result['bonus'];
         } elseif ($cache->startDataCache()) {
             try {
-                $this->arResult['BONUS'] = $bonus = $this->bonusService->getCurUserBonusInfo();
+                $this->arResult['BONUS'] = $bonus = $this->bonusService->getUserBonusInfo();
             } catch (NotAuthorizedException $e) {
                 /** запрашиваем авторизацию */
                 \define('NEED_AUTH', true);
