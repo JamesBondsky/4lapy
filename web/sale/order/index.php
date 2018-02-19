@@ -17,7 +17,7 @@ $APPLICATION->IncludeComponent(
         'SET_TITLE'  => 'Y',
         'SEF_MODE'   => 'Y',
         'SEF_FOLDER' => '/sale/order/',
-        'HASH'       => $_REQUEST['hash'],
+        'HASH'       => $_REQUEST['HASH'],
     ],
     false,
     ['HIDE_ICONS' => 'Y']

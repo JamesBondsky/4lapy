@@ -26,7 +26,6 @@ use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\Location\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
-use FourPaws\StoreBundle\Service\StoreService;
 use WebArch\BitrixCache\BitrixCache;
 
 class DeliveryService
@@ -71,20 +70,13 @@ class DeliveryService
     protected $locationService;
 
     /**
-     * @var StoreService
-     */
-    protected $storeService;
-
-    /**
      * DeliveryService constructor.
      *
-     * @param LocationService $locationService
-     * @param StoreService $storeService
+     * @param LocationService $locationServic
      */
-    public function __construct(LocationService $locationService, StoreService $storeService)
+    public function __construct(LocationService $locationService)
     {
         $this->locationService = $locationService;
-        $this->storeService = $storeService;
     }
 
     /**
@@ -599,7 +591,7 @@ class DeliveryService
 
         $store = new Store();
         $store->setTitle($terminal['NAME'])
-              ->setLocation($terminal['IPOLH_DPD_DB_TERMINAL__LOCATION_CODE'])
+              ->setLocation($terminal['FOURPAWS_DELIVERYBUNDLE_DPD_TERMINAL_LOCATION_CODE'])
               ->setAddress($terminal['ADDRESS_SHORT'])
               ->setCode($terminal['CODE'])
               ->setXmlId($terminal['CODE'])

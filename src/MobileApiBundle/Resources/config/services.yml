@@ -30,9 +30,12 @@ services:
     FourPaws\MobileApiBundle\Services\CaptchaServiceInterface:
         class: FourPaws\MobileApiBundle\Services\BitrixCaptchaService
 
+
+    # Security
     FourPaws\MobileApiBundle\Security\SignCheckerInterface:
         class: FourPaws\MobileApiBundle\Security\SignChecker
 
     FourPaws\MobileApiBundle\Security\ApiTokenListener:
         arguments: ['@security.token_storage', '@security.authentication.manager']
-        public: false
+
+

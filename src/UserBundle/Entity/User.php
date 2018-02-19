@@ -749,7 +749,11 @@ class User implements UserInterface
      */
     public function getManzanaDateRegister(): \DateTimeImmutable
     {
-        return new \DateTimeImmutable($this->getDateRegister()->format('Y-m-d\TH:i:s'));
+        $dateRegister = $this->getDateRegister();
+        if($dateRegister instanceof DateTime) {
+            return new \DateTimeImmutable($dateRegister->format('Y-m-d\TH:i:s'));
+        }
+        return null;
     }
 
     /**

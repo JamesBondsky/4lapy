@@ -1,7 +1,23 @@
 <?php
-
-/**
- * Скрипт стандартного модуля sberbank.ecom
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
  */
 
-require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/php_interface/include/sale_payment/payment/result.php');
+require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
+
+/**
+ * @var CMain $APPLICATION
+ */
+
+$APPLICATION->IncludeComponent(
+    'fourpaws:order.payment.result',
+    '',
+    [
+        'ORDER_ID'   => $_REQUEST['ORDER_ID'],
+        'HASH'       => $_REQUEST['HASH'],
+    ],
+    false,
+    ['HIDE_ICONS' => 'Y']
+);
+
+require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/footer.php';

@@ -8,6 +8,7 @@ use Bitrix\Sale\PropertyValue;
 use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\StoreBundle\Entity\Store;
 
 /**
  * @var array $arResult
@@ -63,7 +64,7 @@ $calcResult = new \Bitrix\Sale\Delivery\CalculationResult();
                     ) ?> оформлен
                 </h2>
                 <?php if ($arResult['ORDER_PROPERTIES']['EMAIL']) {
-                        ?>
+                    ?>
                     <div class="b-order__text-block">
                         <p><?= $arResult['ORDER_PROPERTIES']['NAME'] ?>, мы отправили письмо на адрес
                             <a class="b-link b-link--blue-bold"
@@ -73,8 +74,8 @@ $calcResult = new \Bitrix\Sale\Delivery\CalculationResult();
                             со всеми подробностями заказа.
                         </p>
                     </div>
-                <?php
-                    } ?>
+                    <?php
+                } ?>
                 <h2 class="b-title b-title--order-heading b-title--block">Как получить заказ</h2>
                 <div class="b-order__text-block">
                     <?php if ($isDpdPickup) {
@@ -86,15 +87,15 @@ $calcResult = new \Bitrix\Sale\Delivery\CalculationResult();
                             адресу
                             < b><?= $arResult['ORDER_DELIVERY']['ADDRESS'] ?></b></p>
                         <?php if ($arResult['ORDER_DELIVERY']['SCHEDULE']) {
-                                    ?>
+                            ?>
                             <p><b>Время работы: </b><?= $arResult['ORDER_DELIVERY']['SCHEDULE'] ?>
                             </p>
-                        <?php
-                                } ?>
+                            <?php
+                        } ?>
                         <p><b>Хранение заказа: </b>Обратите внимание, что заказ будет храниться 5 дней. После этого
                             заказ
                             нужно будет делать заново на нашем сайте или по телефону.</p>
-                    <?php
+                        <?php
                     } elseif ($isPickup) {
                         ?>
                         <p>Ваш заказ вы можете получить <b>в <?= DeliveryTimeHelper::showTime(
@@ -104,15 +105,15 @@ $calcResult = new \Bitrix\Sale\Delivery\CalculationResult();
                             адресу
                             <b><?= $arResult['ORDER_DELIVERY']['ADDRESS'] ?></b></p>
                         <?php if ($arResult['ORDER_DELIVERY']['SCHEDULE']) {
-                                    ?>
+                            ?>
                             <p><b>Время работы: </b><?= $arResult['ORDER_DELIVERY']['SCHEDULE'] ?>
                             </p>
-                        <?php
-                                } ?>
+                            <?php
+                        } ?>
                         <p><b>Хранение заказа: </b>Обратите внимание, что заказ будет храниться 5 дней. После этого
                             заказ
                             нужно будет делать заново на нашем сайте или по телефону.</p>
-                    <?php
+                        <?php
                     } else {
                         ?>
                         <p>Ваш заказ будет доставлен <b>в <?= DeliveryTimeHelper::showTime(
@@ -123,20 +124,22 @@ $calcResult = new \Bitrix\Sale\Delivery\CalculationResult();
                             адресу
                             <b><?= $arResult['ORDER_DELIVERY']['ADDRESS'] ?></b></p>
                         <p><b>Время доставки: </b><?= $arResult['ORDER_DELIVERY']['DELIVERY_INTERVAL'] ?></p>
-                    <?php
+                        <?php
                     } ?>
                 </div>
             </div>
-            <?php if ($isPickup) {
-                        ?>
+            <?php if ($isPickup && $arResult['ORDER_DELIVERY']['SELECTED_SHOP'] instanceof Store) {
+                /** @var Store $shop */
+                $shop = $arResult['ORDER_DELIVERY']['SELECTED_SHOP'];
+                ?>
                 <aside class="b-order__list b-order__list--map"
-                       data-lat="<?= $arResult['ORDER_DELIVERY']['LATITUDE'] ?>"
-                       data-lon="<?= $arResult['ORDER_DELIVERY']['LONGITUDE'] ?>">
-                    <div class="b-order__map-wrapper" id="map-2">
+                    <div class="b-order__map-wrapper"
+                         id="map-2"
+                         data-coords="[<?= $shop->getLatitude() ?>, <?= $shop->getLongitude() ?>]">
                     </div>
                 </aside>
-            <?php
-                    } ?>
+                <?php
+            } ?>
         </div>
         <div class="b-order__block b-order__block--no-border b-order__block--no-flex">
             <div class="b-order__content b-order__content--no-border b-order__content--no-padding b-order__content--no-flex">
@@ -158,7 +161,7 @@ $calcResult = new \Bitrix\Sale\Delivery\CalculationResult();
                 </div>
                  */ ?>
                 <?php if ($arResult['ORDER_REGISTERED']) {
-                        ?>
+                    ?>
                     <hr class="b-hr b-hr--order"/>
                     <div class="b-order__text-block">
                         <h5 class="b-order__text-list-heading">Также мы создали вам личный кабинет, где вы можете:</h5>
@@ -178,8 +181,8 @@ $calcResult = new \Bitrix\Sale\Delivery\CalculationResult();
                             </a>.
                         </p>
                     </div>
-                <?php
-                    } ?>
+                    <?php
+                } ?>
             </div>
         </div>
     </div>

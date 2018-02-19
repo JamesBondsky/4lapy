@@ -11,3 +11,6 @@ fos_rest:
       - { path: '^/mobile_app_v2',  priorities: ['json'], fallback_format: json, prefer_extension: true }
       - { path: '^/', priorities: [ 'html', '*/*'], fallback_format: html, prefer_extension: true }
   disable_csrf_role:    null
+  exception:
+    enabled: true
+    exception_controller: FourPaws\MobileApiBundle\Controller\ExceptionController::showAction

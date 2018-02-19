@@ -11,7 +11,7 @@ use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
  * Главное меню сайта
  * result_modifier.php
  *
- * @updated: 11.01.2018
+ * @updated: 16.02.2018
  */
 
 /**
@@ -35,11 +35,13 @@ $funcWalkRecursive = function($arData, $funcSelf) {
         $arItem['_TEXT_'] = $arItem['NAME'];
         $arItem['_URL_'] = $arItem['URL'] !== '' ? $arItem['URL'] : 'javascript:void(0);';
         $arItem['_LINK_ATTR1_'] = '';
-        if ($arItem['TARGET_BLANK']) {
+        $arItem['_LINK_ATTR2_'] = '';
+
+        if ($arItem['TARGET_BLANK'] && $arItem['URL'] !== '') {
             $arItem['_LINK_ATTR1_'] .= ' target="_blank"';
         }
-        $arItem['_LINK_ATTR2_'] = $arItem['_LINK_ATTR1_'];
         $arItem['_LINK_ATTR2_'] .= ' title="'.$arItem['NAME'].'"';
+
         if ($arItem['NESTED']) {
             $arItem['NESTED'] = $funcSelf($arItem['NESTED'], $funcSelf);
         }

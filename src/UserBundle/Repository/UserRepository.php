@@ -73,20 +73,13 @@ class UserRepository
      *
      * @param LazyCallbackValueLoader $lazyCallbackValueLoader
      *
-     * @throws \JMS\Serializer\Exception\RuntimeException
+     * @param Serializer              $serializer
      */
-    public function __construct(ValidatorInterface $validator, LazyCallbackValueLoader $lazyCallbackValueLoader)
+    public function __construct(ValidatorInterface $validator, LazyCallbackValueLoader $lazyCallbackValueLoader, Serializer $serializer)
     {
-        $this->serializer = SerializerBuilder::create()->configureHandlers(
-            function (HandlerRegistry $registry) {
-                $registry->registerSubscribingHandler(new BitrixDateHandler());
-                $registry->registerSubscribingHandler(new BitrixDateTimeHandler());
-                $registry->registerSubscribingHandler(new BitrixBooleanHandler());
-                $registry->registerSubscribingHandler(new ArrayOrFalseHandler());
-            }
-        )->build();
+        $this->serializer = $serializer;
 
-        $this->cuser = new CUser();
+        $this->cuser = new \CUser();
         $this->validator = $validator;
         global $APPLICATION;
         $this->cmain = $APPLICATION;
@@ -218,7 +211,7 @@ class UserRepository
      * @param string $rawLogin
      * @param bool   $onlyActive
      *
-     * @throws \FourPaws\UserBundle\Exception\TooManyUserFoundException
+     * @throws TooManyUserFoundException
      * @return bool
      */
     public function isExist(string $rawLogin, bool $onlyActive = true): bool
@@ -306,10 +299,13 @@ class UserRepository
     }
 
     /**
-     * @param int $id
+     * @param int    $id
      * @param string $email
      *
      * @return bool
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws BitrixRuntimeException
      */
     public function updateEmail(int $id, string $email): bool
     {
@@ -369,6 +365,14 @@ class UserRepository
         if (!empty($params['PERSONAL_PHONE'])) {
             $filter[0]['PERSONAL_PHONE'] = $params['PERSONAL_PHONE'];
         }
+        if(\count($filter[0]) === 2){
+            $val = end($filter[0]);
+            $filter[key($filter[0])] = $val;
+            unset($filter[0]);
+        }
+        if (!empty($params['ID'])) {
+            $filter['!ID'] = $params['ID'];
+        }
         $users = $this->findBy(
             $filter,
             [],
@@ -376,15 +380,11 @@ class UserRepository
         );
         if (\is_array($users) && !empty($users)) {
             /** @var User $user */
-            $return = [
-                'phone' => false,
-                'email' => false,
-            ];
             foreach ($users as $user) {
-                if ($user->getPersonalPhone() === $params['PERSONAL_PHONE']) {
+                if (!$return['phone'] && $user->getPersonalPhone() === $params['PERSONAL_PHONE']) {
                     $return['phone'] = true;
                 }
-                if ($user->getEmail() === $params['EMAIL']) {
+                if (!$return['email'] && $user->getEmail() === $params['EMAIL']) {
                     $return['email'] = true;
                 }
             }
@@ -402,7 +402,7 @@ class UserRepository
     public function prepareData(array $data, string $group = 'update'): array
     {
         $formattedData = $this->serializer->toArray(
-            $this->serializer->fromArray($data, DeserializationContext::create()->setGroups([$group])),
+            $this->serializer->fromArray($data, User::class, DeserializationContext::create()->setGroups([$group])),
             SerializationContext::create()->setGroups([$group])
         );
         foreach ($data as $key => $val) {
@@ -415,6 +415,14 @@ class UserRepository
         }
 
         return $data;
+    }
+
+    /**
+     * @return ValidatorInterface
+     */
+    public function getValidator(): ValidatorInterface
+    {
+        return $this->validator;
     }
 
     /** @noinspection PhpDocMissingThrowsInspection

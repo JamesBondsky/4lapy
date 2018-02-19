@@ -8,9 +8,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 /** @var UserBonus $bonus */
 $bonus = $arResult['BONUS'];
-if ($bonus->isEmpty()) {
-    return;
-}
 ?>
 <div class="b-account-bonus">
     <div class="b-account-bonus-card">
@@ -101,6 +98,7 @@ if ($bonus->isEmpty()) {
                 </div>
             </div>
         </div>
+
         <ul class="b-account-bonus__list-info">
             <li class="b-account-bonus__item-info">
                 <div class="b-account-bonus__title-info">Осталось до <?= $bonus->getNextDiscount() ?>% —

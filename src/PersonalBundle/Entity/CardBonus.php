@@ -13,14 +13,14 @@ class CardBonus
      *
      * @var string
      */
-    private $cardId = 0;
+    private $cardId = '';
     
     /**
      * номер карты
      *
      * @var string
      */
-    private $cardNumber = 0;
+    private $cardNumber = '0000000000000';
     
     /**
      * текущие бонусы
@@ -108,7 +108,7 @@ class CardBonus
      */
     public function getCardNumber() : string
     {
-        return $this->cardNumber ?? '';
+        return $this->cardNumber ?? '0000000000000';
     }
     
     /**
