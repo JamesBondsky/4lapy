@@ -318,62 +318,6 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     }
     
     /**
-     * Получение виртуальной бонусной карты
-     *
-     * - заказ в один клик
-     * - заказ
-     */
-    public function getCard()
-    {
-    
-    }
-    
-    /**
-     * Получение покупок и заказов пользователя из ML
-     *
-     * - ЛК покупателя, переход в список последних заказов
-     * - ЛК магазина, просмотр истории по карте
-     */
-    public function getOrderList()
-    {
-    
-    }
-    
-    /**
-     * Получение детальной информации о заказе
-     *
-     * - ЛК покупателя, переход в карточку заказа
-     * - ЛК магазина, просмотр истории по карте, детализация чека
-     */
-    public function getOrderDetail()
-    {
-    
-    }
-    
-    /**
-     * Получение данных о количестве активных бонусов и размере бонуса (% от стоимости товара, который возвращается
-     * баллами на бонусную карту пользователя)
-     *
-     * - после авторизации (?!)
-     *
-     */
-    public function getActiveBonus()
-    {
-    
-    }
-    
-    /**
-     * Получение данных о расширенном балансе бонусной карты пользователя
-     *
-     * - переход в раздел "Бонусы" в ЛК
-     * - ЛК магазина, просмотр истории по карте
-     */
-    public function getAdvancedBalance()
-    {
-    
-    }
-    
-    /**
      * Передача номера бонусной карты реферала для получения Contact_ID реферала
      *
      * - первый шаг заполнения формы добавления реферала
@@ -506,10 +450,8 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     public function validateCardByNumber(string $cardNumber) : bool
     {
         $cardValidateResult = $this->validateCardByNumberRaw($cardNumber);
-        //$result = $cardValidateResult->cardId !== '';
-        $result = $cardValidateResult->isValid ? true : false;
     
-        return $result;
+        return $cardValidateResult->isValid ? true : false;
     }
     
     /**
@@ -722,14 +664,6 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         }
 
         return $chequeItems;
-    }
-    
-    /**
-     * Опечатка в имени метода
-     */
-    public function getItemsBuCheque(string $chequeId) : array
-    {
-        return $this->getItemsByCheque($chequeId);
     }
 
     /**

@@ -28,7 +28,7 @@ abstract class Event implements ServiceHandlerInterface
      * @var EventManager
      */
     protected static $eventManager;
-    
+
     /**
      * @param EventManager $eventManager
      *
@@ -37,12 +37,14 @@ abstract class Event implements ServiceHandlerInterface
     public static function initHandlers(EventManager $eventManager)
     {
         self::$eventManager = $eventManager;
-        
+
         self::initHandler('OnBeforeUserAdd', 'checkSocserviseRegisterHandler');
-        
+
         self::initHandler('OnBeforeUserLogon', 'replaceLogin');
+
+        self::initHandler('onBeforeUserLoginByHttpAuth', 'deleteBasicAuth');
     }
-    
+
     /**
      * @param string $eventName
      * @param string $method
@@ -59,7 +61,7 @@ abstract class Event implements ServiceHandlerInterface
             ]
         );
     }
-    
+
     /**
      * @param array $fields
      *
@@ -72,7 +74,7 @@ abstract class Event implements ServiceHandlerInterface
             $fields['UF_CONFIRMATION'] = 1;
         }
     }
-    
+
     /**
      * @param array $fields
      *
@@ -88,6 +90,16 @@ abstract class Event implements ServiceHandlerInterface
             $fields['LOGIN'] = $userService->getLoginByRawLogin((string)$fields['LOGIN']);
         } else {
             $APPLICATION->ThrowException('Поле не может быть пустым');
+        }
+    }
+
+    /**
+     * @param array $auth
+     */
+    public function deleteBasicAuth(&$auth)
+    {
+        if(\is_array($auth) && isset($auth['basic'])) {
+            unset($auth['basic']);
         }
     }
 }
