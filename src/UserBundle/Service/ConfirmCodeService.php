@@ -29,7 +29,7 @@ class ConfirmCodeService implements ConfirmCodeInterface
     const LIFE_TIME = 30 * 60;
 
     /**
-     * @throws \Exception
+     *
      */
     public static function delExpiredCodes()
     {

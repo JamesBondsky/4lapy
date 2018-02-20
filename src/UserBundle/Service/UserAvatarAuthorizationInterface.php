@@ -2,6 +2,9 @@
 
 namespace FourPaws\UserBundle\Service;
 
+use FourPaws\UserBundle\Exception\AvatarSelfAuthorizationException;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
+
 interface UserAvatarAuthorizationInterface
 {
     /**
@@ -9,6 +12,8 @@ interface UserAvatarAuthorizationInterface
      *
      * @param int $id
      *
+     * @throws NotAuthorizedException
+     * @throws AvatarSelfAuthorizationException
      * @return bool
      */
     public function avatarAuthorize(int $id) : bool;
@@ -27,10 +32,11 @@ interface UserAvatarAuthorizationInterface
      * @return bool
      */
     public function isAvatarAuthorized() : bool;
-    
+
     /**
      * Возврат к авторизации под исходным пользователем
      *
+     * @throws NotAuthorizedException
      * @return bool
      */
     public function avatarLogout() : bool;
