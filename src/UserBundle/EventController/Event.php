@@ -42,7 +42,7 @@ abstract class Event implements ServiceHandlerInterface
 
         self::initHandler('OnBeforeUserLogon', 'replaceLogin');
 
-        self::initHandler('onBeforeUserLoginByHttpAuth', 'disableHttpAuth');
+        self::initHandler('onBeforeUserLoginByHttpAuth', 'deleteBasicAuth');
     }
 
     /**
@@ -96,8 +96,10 @@ abstract class Event implements ServiceHandlerInterface
     /**
      * @param array $auth
      */
-    public static function disableHttpAuth(&$auth)
+    public function deleteBasicAuth(&$auth)
     {
-        unset($auth['basic']);
+        if(\is_array($auth) && isset($auth['basic'])) {
+            unset($auth['basic']);
+        }
     }
 }
