@@ -44,8 +44,8 @@ class UserAccount
      * @var float
      * @Serializer\Type("float")
      * @Serializer\SerializedName("CURRENT_BUDGET")
-     * @Serializer\Groups(groups={"create", "read", "update", "delete"})
-     * @Assert\GreaterThanOrEqual(value="0",groups={"create", "read", "update", "delete"})
+     * @Serializer\Groups(groups={"read"})
+     * @Assert\GreaterThanOrEqual(value="0",groups={"read"})
      */
     protected $initialBudget = 0;
 
