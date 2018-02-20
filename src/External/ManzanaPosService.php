@@ -83,8 +83,7 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     public function buildRequestFromBasket(
         BasketBase $basket,
-        string $card = '',
-        float $paidByBonus = 0
+        string $card = ''
     ) : SoftChequeRequest {
         $sum = $sumDiscounted = $discount = 0.0;
         
@@ -128,8 +127,7 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
                 ->setDiscount(ArithmeticHelper::getPercent($sumDiscounted, $sum));
 
         if ($card) {
-            $request->setCardByNumber($card)
-                    ->setPaidByBonus($paidByBonus);
+            $request->setCardByNumber($card);
         }
         
         return $request;
