@@ -286,10 +286,10 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             $manzanaService = $container->get('manzana.service');
             $client = null;
             try {
-                $contactId = $manzanaService->getContactIdByPhone($phone);
+                $contactId = $manzanaService->getContactIdByPhone(PhoneHelper::getManzanaPhone($phone));
                 $client = new Client();
                 $client->contactId = $contactId;
-                $client->phone = $phone;
+                $client->phone = PhoneHelper::getManzanaPhone($phone);
             } catch (ManzanaServiceException $e) {
                 $client = new Client();
 
@@ -297,6 +297,8 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                     $this->currentUserProvider->setClientPersonalDataByCurUser($client);
                 } catch (NotAuthorizedException $e) {
                 }
+            } catch (WrongPhoneNumberException $e) {
+                return $this->ajaxMess->getWrongPhoneNumberException();
             }
 
             if ($client instanceof Client) {

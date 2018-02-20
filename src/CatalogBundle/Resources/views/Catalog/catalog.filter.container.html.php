@@ -104,18 +104,16 @@ $filterCollection = $catalogRequest->getCategory()->getFilters();
             </span>
         </a>
         <div class="b-catalog-filter__filter-part">
-            <dl class="b-catalog-filter__row">
-                <dt class="b-catalog-filter__label">Часто ищут:
-                </dt>
-                <dd class="b-catalog-filter__block">
-                    <a class="b-link b-link--filter"
-                       href="javascript:void(0);"
-                       title="Hills для взрослых собак среднего размера"> Hills для взрослых собак среднего размера</a>
-                    <a class="b-link b-link--filter"
-                       href="javascript:void(0);"
-                       title="Chappy для маленьких собак">Chappy для маленьких собак</a>
-                </dd>
-            </dl>
+            <?php $APPLICATION->IncludeComponent(
+                'fourpaws:catalog.often.seek',
+                '',
+                [
+                    'SECTION_ID'   => $category->getId(),
+                    'LEFT_MARGIN'  => $category->getLeftMargin(),
+                    'RIGHT_MARGIN' => $category->getRightMargin(),
+                    'DEPTH_LEVEL' => $category->getDepthLevel(),
+                ]
+            ); ?>
             <div class="b-line b-line--sort-desktop">
             </div>
             <div class="b-catalog-filter__row b-catalog-filter__row--sort">
