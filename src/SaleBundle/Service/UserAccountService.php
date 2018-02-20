@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SaleBundle\Service;
 
 use Bitrix\Currency\CurrencyManager;
@@ -38,10 +42,10 @@ class UserAccountService
     }
 
     /**
-     * @param User|null $user
+     * @param null|User $user
      *
-     * @return bool
      * @throws ValidationException
+     * @return bool
      */
     public function refreshUserBalance(User $user = null, float $newBudget = null): bool
     {
@@ -82,7 +86,7 @@ class UserAccountService
     }
 
     /**
-     * @param User|null $user
+     * @param null|User $user
      *
      * @return UserAccount
      */
