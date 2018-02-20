@@ -8,14 +8,14 @@ use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\CatalogBundle\Service\OftenSeekService;
+use FourPaws\CatalogBundle\Service\OftenSeekInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /** @noinspection AutoloadingIssuesInspection */
 class CFourPawsFoodSelectionComponent extends CBitrixComponent
 {
-    /** @var OftenSeekService $oftenSeekService */
+    /** @var OftenSeekInterface $oftenSeekService */
     private $oftenSeekService;
 
     /**
@@ -40,7 +40,21 @@ class CFourPawsFoodSelectionComponent extends CBitrixComponent
             throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
         }
 
-        $this->oftenSeekService = $container->get('often_seek.service');
+        $this->oftenSeekService = $container->get(OftenSeekInterface::class);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function onPrepareComponentParams($params): array
+    {
+        if (!empty($params['SECTION_ID'])) {
+            $params['SECTION_ID'] = (int)$params['SECTION_ID'];
+        }
+        $params['LEFT_MARGIN'] = (int)$params['LEFT_MARGIN'];
+        $params['RIGHT_MARGIN'] = (int)$params['RIGHT_MARGIN'];
+        $params['DEPTH_LEVEL'] = (int)$params['DEPTH_LEVEL'];
+        return $params;
     }
 
     /**
@@ -49,10 +63,18 @@ class CFourPawsFoodSelectionComponent extends CBitrixComponent
      */
     public function executeComponent()
     {
+        if ($this->arParams['SECTION_ID'] <= 0) {
+            return null;
+        }
         $this->setFrameMode(true);
 
         if ($this->startResultCache()) {
-            $this->arResult['ITEMS'] = $this->oftenSeekService->get;
+            $this->arResult['ITEMS'] = $this->oftenSeekService->getItems(
+                $this->arParams['SECTION_ID'],
+                $this->arParams['LEFT_MARGIN'],
+                $this->arParams['RIGHT_MARGIN'],
+                $this->arParams['DEPTH_LEVEL']
+            );
             $this->includeComponentTemplate();
         }
 

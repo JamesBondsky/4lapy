@@ -4,7 +4,7 @@ namespace FourPaws\CatalogBundle\Repository;
 
 use Bitrix\Iblock\ElementTable;
 use FourPaws\AppBundle\Repository\BaseRepository;
-use FourPaws\CatalogBundle\Service\OftenSeek;
+use FourPaws\Catalog\Model\OftenSeek;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use JMS\Serializer\ArrayTransformerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;

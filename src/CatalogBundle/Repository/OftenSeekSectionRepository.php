@@ -5,8 +5,6 @@ namespace FourPaws\CatalogBundle\Repository;
 use Bitrix\Sale\SectionTable;
 use FourPaws\AppBundle\Repository\BaseRepository;
 use FourPaws\Catalog\Model\OftenSeekSection;
-use FourPaws\Catalog\Model\OftenSeek;
-use FourPaws\CatalogBundle\Service\OftenSeekService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use JMS\Serializer\ArrayTransformerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;

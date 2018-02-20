@@ -43,30 +43,6 @@ class OftenSeekSection extends BaseEntity
      */
     protected $catalogSection = 0;
 
-    /**
-     * @var int
-     * @Serializer\Type("int")
-     * @Serializer\SerializedName("DEPTH_LEVEL")
-     * @Serializer\Groups(groups={"read"})
-     */
-    protected $depthLvl = 0;
-
-    /**
-     * @var int
-     * @Serializer\Type("int")
-     * @Serializer\SerializedName("LEFT_MARGIN")
-     * @Serializer\Groups(groups={"read"})
-     */
-    protected $leftMargin = 0;
-
-    /**
-     * @var int
-     * @Serializer\Type("int")
-     * @Serializer\SerializedName("RIGHT_MARGIN")
-     * @Serializer\Groups(groups={"read"})
-     */
-    protected $rightMargin = 0;
-
 
     /**
      * @return bool
