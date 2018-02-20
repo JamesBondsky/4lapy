@@ -23,14 +23,16 @@ interface OftenSeekInterface
     /**
      * @param int $sectionId
      *
-     * @return ArrayCollection|void
+     * @param int $countItems
+     *
+     * @return ArrayCollection
      */
-    public function getItemsBySection(int $sectionId) : ArrayCollection;
+    public function getItemsBySection(int $sectionId, int $countItems) : ArrayCollection;
 
     /**
      * @param int $sectionId
      *
-     * @return ArrayCollection|void
+     * @return ArrayCollection
      */
     public function getSectionsByCatalogSection(int $sectionId) : ArrayCollection;
 }

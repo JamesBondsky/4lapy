@@ -3,8 +3,12 @@
 namespace FourPaws\CatalogBundle\Service;
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Bitrix\Iblock\PropertyTable;
+use Bitrix\Main\Entity\Query\Join;
+use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Sale\SectionTable;
 use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\BitrixOrm\Utils\IblockPropEntityConstructor;
 use FourPaws\Catalog\Model\OftenSeekSection;
 use FourPaws\CatalogBundle\Repository\OftenSeekRepository;
 use FourPaws\CatalogBundle\Repository\OftenSeekSectionRepository;
@@ -28,19 +32,37 @@ class OftenSeekService implements OftenSeekInterface
     /**
      * @param int $sectionId
      *
+     * @param int $countItems
+     *
      * @return ArrayCollection
      */
-    public function getItemsBySection(int $sectionId): ArrayCollection
+    public function getItemsBySection(int $sectionId, int $countItems): ArrayCollection
     {
         $result = new ArrayCollection();
         try {
+            $iblockId = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::RELATED_LINKS);
+            $propLinkId = PropertyTable::query()->setFilter([
+                'CODE'      => 'LINK',
+                'IBLOCK_ID' => $iblockId,
+            ])->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
+            $orderDirectionList = ['ASC', 'DESC'];
+            $orderFieldList = ['ID', 'NAME', 'SORT'];
+            /** @todo может можно по другому сделать рандомную сортирвоку в d7 */
+            shuffle($orderDirectionList);
+            shuffle($orderFieldList);
             $this->oftenSeekRepository->findBy([
-                'filter' => [
-                    '=IBLOCK_ID'         => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::RELATED_LINKS),
+                'filter'  => [
+                    '=IBLOCK_ID'         => $iblockId,
                     '=IBLOCK_SECTION_ID' => $sectionId,
                     '=ACTIVE'            => 'Y',
                 ],
-                'select' => [],
+                'limit'   => $countItems,
+                'order'   => [current($orderFieldList) => current($orderDirectionList)],
+                'runtime' => [
+                    new ReferenceField('PROPS', IblockPropEntityConstructor::getDataClass($iblockId),
+                        Join::on('this.ID', 'ref.IBLOCK_ELEMENT_ID')),
+                ],
+                'select'  => ['ID', 'ACTIVE', 'NAME', 'PROPERTY_LINK' => 'PROPS.PROPERTY_' . $propLinkId],
             ]);
         } catch (\Exception $e) {
         }
@@ -154,7 +176,7 @@ class OftenSeekService implements OftenSeekInterface
         if (!$sections->isEmpty()) {
             /** @var OftenSeekSection $section */
             foreach ($sections as $section) {
-                $items = $this->getItemsBySection($section->getId());
+                $items = $this->getItemsBySection($section->getId(), $section->getCountItems());
                 if (!$items->isEmpty()) {
                     $result = $items;
                     break;
