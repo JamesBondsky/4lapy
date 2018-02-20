@@ -252,9 +252,9 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         if (!($user instanceof User)) {
             $user = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class)->getCurrentUser();
         }
-    
+
         return $this->getContactByPhone(
-            $user->getPersonalPhone()
+            $user->getManzanaNormalizePersonalPhone()
         );
     }
     
@@ -473,7 +473,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         }
     
         return $this->getContactIdByPhone(
-            $user->getPersonalPhone()
+            $user->getManzanaNormalizePersonalPhone()
         );
     }
     
