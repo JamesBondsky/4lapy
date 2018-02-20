@@ -28,9 +28,11 @@ class OftenSeekService implements OftenSeekInterface
     /**
      * @param int $sectionId
      *
+     * @param int $countItems
+     *
      * @return ArrayCollection
      */
-    public function getItemsBySection(int $sectionId): ArrayCollection
+    public function getItemsBySection(int $sectionId, int $countItems): ArrayCollection
     {
         $result = new ArrayCollection();
         try {
@@ -40,7 +42,8 @@ class OftenSeekService implements OftenSeekInterface
                     '=IBLOCK_SECTION_ID' => $sectionId,
                     '=ACTIVE'            => 'Y',
                 ],
-                'select' => [],
+                'limit'=> $countItems,
+                'select' => ['ID'],
             ]);
         } catch (\Exception $e) {
         }
@@ -154,7 +157,7 @@ class OftenSeekService implements OftenSeekInterface
         if (!$sections->isEmpty()) {
             /** @var OftenSeekSection $section */
             foreach ($sections as $section) {
-                $items = $this->getItemsBySection($section->getId());
+                $items = $this->getItemsBySection($section->getId(), $section->getCountItems());
                 if (!$items->isEmpty()) {
                     $result = $items;
                     break;

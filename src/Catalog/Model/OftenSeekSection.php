@@ -49,7 +49,7 @@ class OftenSeekSection extends BaseEntity
      */
     public function isActive(): bool
     {
-        return $this->active;
+        return $this->active ?? false;
     }
 
     /**
@@ -65,7 +65,7 @@ class OftenSeekSection extends BaseEntity
      */
     public function getName(): string
     {
-        return $this->name;
+        return $this->name ?? '';
     }
 
     /**
@@ -77,17 +77,17 @@ class OftenSeekSection extends BaseEntity
     }
 
     /**
-     * @return string
+     * @return int
      */
-    public function getCountItems(): string
+    public function getCountItems(): int
     {
-        return $this->countItems;
+        return $this->countItems ?? 3;
     }
 
     /**
-     * @param string $countItems
+     * @param int $countItems
      */
-    public function setCountItems(string $countItems)
+    public function setCountItems(int $countItems)
     {
         $this->countItems = $countItems;
     }
@@ -97,7 +97,7 @@ class OftenSeekSection extends BaseEntity
      */
     public function getCatalogSection(): int
     {
-        return $this->catalogSection;
+        return $this->catalogSection ?? 0;
     }
 
     /**
