@@ -45,8 +45,9 @@ class OftenSeekService implements OftenSeekInterface
                 'CODE'      => 'LINK',
                 'IBLOCK_ID' => $iblockId,
             ])->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
-            $orderDirectionList = ['asc', 'desc'];
+            $orderDirectionList = ['ASC', 'DESC'];
             $orderFieldList = ['ID', 'NAME', 'SORT'];
+            /** @todo может можно по другому сделать рандомную сортирвоку в d7 */
             shuffle($orderDirectionList);
             shuffle($orderFieldList);
             $this->oftenSeekRepository->findBy([
