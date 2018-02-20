@@ -28,15 +28,13 @@ class UserTest extends BaseTest
      */
     protected static $userId = 0;
 
-
     public static function setUpBeforeClass()
     {
-        static::$userData = static::generateUserData();
-        if (!static::$userData) {
+        if (!static::getUserData()) {
             throw new \RuntimeException('Cant generate test data');
         }
         $cUser = new \CUser();
-        static::$userId = $cUser->Add(static::$userData);
+        static::$userId = $cUser->Add(static::getUserData());
         if (!static::$userId) {
             throw new \RuntimeException(sprintf('Cant create user. %s', $cUser->LAST_ERROR));
         }
@@ -50,19 +48,24 @@ class UserTest extends BaseTest
     /**
      * @return array
      */
-    private static function generateUserData(): array
+    private static function getUserData(): array
     {
-        $pass = randString();
-        return [
-            'NAME'             => \randString(),
-            'LAST_NAME'        => \randString(),
-            'LOGIN'            => \randString(),
-            'EMAIL'            => \randString(5) . '@' . randString(5) . '.ru',
-            'GROUP_ID'         => [6],
-            'ACTIVE'           => 'Y',
-            'PASSWORD'         => $pass,
-            'CONFIRM_PASSWORD' => $pass,
-        ];
+        if (!count(static::$userData)) {
+            $pass = randString();
+            static::$userData = [
+                'NAME'             => \randString(),
+                'LAST_NAME'        => \randString(),
+                'LOGIN'            => \randString(),
+                'EMAIL'            => \randString(5) . '@' . randString(5) . '.ru',
+                'GROUP_ID'         => [6],
+                'ACTIVE'           => 'Y',
+                'PASSWORD'         => $pass,
+                'CONFIRM_PASSWORD' => $pass,
+                'PERSONAL_PHONE'   => \randString(10, '0123456789'),
+            ];
+        }
+
+        return static::$userData;
     }
 
     public function testAuth()
@@ -71,8 +74,8 @@ class UserTest extends BaseTest
         $client->request(Request::METHOD_POST, '/mobile_app_v2/user_login/', [
             'token'           => $this->getToken(),
             'user_login_info' => [
-                'login'    => static::$userData['LOGIN'],
-                'password' => static::$userData['PASSWORD'],
+                'login'    => static::getUserData()['LOGIN'],
+                'password' => static::getUserData()['PASSWORD'],
             ],
         ]);
 
@@ -87,17 +90,11 @@ class UserTest extends BaseTest
             static::assertInternalType('array', $data);
             static::assertCount(0, $data['error']);
             static::assertArrayHasKey('data', $data);
-            static::assertEquals(static::$userData['EMAIL'], $data['data']['email']);
-            static::assertEquals(static::$userData['NAME'], $data['data']['firstname']);
-            static::assertEquals(static::$userData['LAST_NAME'], $data['data']['lastname']);
+            static::assertEquals(static::getUserData()['EMAIL'], $data['data']['email']);
+            static::assertEquals(static::getUserData()['NAME'], $data['data']['firstname']);
+            static::assertEquals(static::getUserData()['LAST_NAME'], $data['data']['lastname']);
         }
     }
-
-//    public function testCreate()
-//    {
-//        $this->checkUserAuthInValid(randString(), randString());
-//        $this->checkUserLogoutValid();
-//    }
 
     /**
      * @param $login
@@ -120,7 +117,38 @@ class UserTest extends BaseTest
 
         if ($response) {
             $content = $response->getContent();
-            static::assertEquals(Response::HTTP_OK, $response->getStatusCode());
+            static::assertEquals(Response::HTTP_FORBIDDEN, $response->getStatusCode());
+            static::assertJson($content);
+            $data = json_decode($content, true);
+            static::assertInternalType('array', $data);
+            static::assertCount(1, $data['error']);
+            static::assertArrayHasKey('data', $data);
+            static::assertEmpty($data['data']);
+        }
+    }
+
+    /**
+     * @param $login
+     * @param $password
+     *
+     * @dataProvider wrongParametersDataProvider
+     */
+    public function testWrongParameters($login, $password)
+    {
+        $client = static::createClient();
+        $client->request(Request::METHOD_POST, '/mobile_app_v2/user_login/', [
+            'token'           => $this->getToken(),
+            'user_login_info' => [
+                'login'    => $login,
+                'password' => $password,
+            ],
+        ]);
+
+        $response = $client->getResponse();
+
+        if ($response) {
+            $content = $response->getContent();
+            static::assertEquals(Response::HTTP_INTERNAL_SERVER_ERROR, $response->getStatusCode());
             static::assertJson($content);
             $data = json_decode($content, true);
             static::assertInternalType('array', $data);
@@ -134,29 +162,134 @@ class UserTest extends BaseTest
     {
         return [
             'email, string'     => [
-                static::$userData['EMAIL'],
+                static::getUserData()['EMAIL'],
                 randString(12),
             ],
             'phone, string'     => [
-                static::$userData['PHONE'],
+                static::getUserData()['PERSONAL_PHONE'],
                 randString(12),
             ],
-            'email, null'       => [
-                static::$userData['EMAIL'],
-                null,
-            ],
-            'phone, null'       => [
-                static::$userData['PHONE'],
-                null,
-            ],
             'email, big_string' => [
-                static::$userData['EMAIL'],
+                static::getUserData()['EMAIL'],
                 random_bytes(1024),
             ],
             'phone, big_string' => [
-                static::$userData['PHONE'],
+                static::getUserData()['PERSONAL_PHONE'],
                 random_bytes(1024),
             ],
         ];
+    }
+
+    public function wrongParametersDataProvider(): array
+    {
+        return [
+            'email, null'      => [
+                static::getUserData()['EMAIL'],
+                null,
+            ],
+            'phone, null'      => [
+                static::getUserData()['PERSONAL_PHONE'],
+                null,
+            ],
+            'null, null'       => [
+                null,
+                null,
+            ],
+            'null, string'     => [
+                null,
+                randString(12),
+            ],
+            'null, big_string' => [
+                null,
+                random_bytes(1024),
+            ],
+        ];
+    }
+
+    /**
+     * @param $login
+     * @param $password
+     *
+     * @dataProvider logoutDataProvider
+     */
+    public function testWrongLogout($login, $password)
+    {
+        $client = static::createClient();
+        $client->request(Request::METHOD_POST, '/mobile_app_v2/logout/', [
+            'token'           => $this->getToken(),
+            'user_login_info' => [
+                'login'    => $login,
+                'password' => $password,
+            ],
+        ]);
+
+        $response = $client->getResponse();
+
+        if ($response) {
+            $content = $response->getContent();
+            static::assertEquals(Response::HTTP_METHOD_NOT_ALLOWED, $response->getStatusCode());
+            static::assertJson($content);
+            $data = json_decode($content, true);
+            static::assertInternalType('array', $data);
+            static::assertCount(1, $data['error']);
+            static::assertArrayHasKey('data', $data);
+            static::assertEmpty($data['data']);
+        }
+    }
+
+    public function logoutDataProvider(): array
+    {
+        return [
+            'email, string'    => [
+                static::getUserData()['EMAIL'],
+                static::getUserData()['PASSWORD'],
+            ],
+            'phone, string'    => [
+                static::getUserData()['PERSONAL_PHONE'],
+                static::getUserData()['PASSWORD'],
+            ],
+            'email, null'      => [
+                static::getUserData()['EMAIL'],
+                null,
+            ],
+            'phone, null'      => [
+                static::getUserData()['PERSONAL_PHONE'],
+                null,
+            ],
+            'null, null'       => [
+                null,
+                null,
+            ],
+            'null, string'     => [
+                null,
+                randString(12),
+            ],
+            'null, big_string' => [
+                null,
+                random_bytes(1024),
+            ],
+        ];
+    }
+
+    public function testLogout()
+    {
+        $client = static::createClient();
+        $client->request(Request::METHOD_GET, '/mobile_app_v2/logout/', [
+            'token' => $this->getToken(),
+        ]);
+
+        $response = $client->getResponse();
+
+        if ($response) {
+            $content = $response->getContent();
+            static::assertEquals(Response::HTTP_OK, $response->getStatusCode());
+            static::assertJson($content);
+            $data = json_decode($content, true);
+
+            static::assertInternalType('array', $data);
+            static::assertCount(0, $data['error']);
+            static::assertArrayHasKey('data', $data);
+            static::assertArrayHasKey('feedback_text', $data['data']);
+        }
     }
 }

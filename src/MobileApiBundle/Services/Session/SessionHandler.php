@@ -16,7 +16,7 @@ use FourPaws\UserBundle\Service\UserService;
 use InvalidArgumentException;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
-class SessionHandler
+class SessionHandler implements SessionHandlerInterface
 {
     /**
      * @var TokenStorageInterface

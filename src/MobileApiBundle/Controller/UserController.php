@@ -6,7 +6,6 @@
 
 namespace FourPaws\MobileApiBundle\Controller;
 
-use Doctrine\Common\Collections\Collection;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\Decorators\FullHrefDecorator;
@@ -14,11 +13,7 @@ use FourPaws\MobileApiBundle\Dto\Object\ClientCard;
 use FourPaws\MobileApiBundle\Dto\Request\LoginRequest;
 use FourPaws\MobileApiBundle\Dto\Response as ApiResponse;
 use FourPaws\UserBundle\Entity\User;
-use FourPaws\UserBundle\Exception\InvalidCredentialException;
-use FourPaws\UserBundle\Exception\TooManyUserFoundException;
-use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Service\UserService;
-use LogicException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Swagger\Annotations\Parameter;
 use Swagger\Annotations\Response;
@@ -48,13 +43,7 @@ class UserController extends FOSRestController
      *     response="200"
      * )
      * @param LoginRequest $loginRequest
-     * @param Collection   $apiErrors
      *
-     * @throws UsernameNotFoundException
-     * @throws TooManyUserFoundException
-     * @throws InvalidCredentialException
-     * @throws LogicException
-     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
      * @return ApiResponse
      * @internal param Request $request
      *
@@ -63,39 +52,34 @@ class UserController extends FOSRestController
      * @Rest\View()
      */
     public function loginAction(
-        LoginRequest $loginRequest,
-        Collection $apiErrors
+        LoginRequest $loginRequest
     ): ApiResponse {
         $response = new ApiResponse();
 
-        if ($apiErrors->count()) {
-            $response->setErrors($apiErrors);
-        } else {
-            $this->userService->login($loginRequest->getLogin(), $loginRequest->getPassword());
+        $this->userService->login($loginRequest->getLogin(), $loginRequest->getPassword());
 
-            /**
-             * @var User $user
-             */
-            $user = $this->getUser();
+        /**
+         * @var User $user
+         */
+        $user = $this->getUser();
 
-            // ToDo: Сделать реальное получение карты
-            $card = (new ClientCard())->setTitle('Карта клиента')
-                ->setPicture(new FullHrefDecorator('/upload/card/img.png'))
-                ->setBalance(1500)
-                ->setNumber('000011112222')
-                ->setBarCode('60832513')
-                ->setSaleAmount(3);
+        // ToDo: Сделать реальное получение карты
+        $card = (new ClientCard())->setTitle('Карта клиента')
+            ->setPicture(new FullHrefDecorator('/upload/card/img.png'))
+            ->setBalance(1500)
+            ->setNumber('000011112222')
+            ->setBarCode('60832513')
+            ->setSaleAmount(3);
 
-            $response->setData([
-                'email'     => $user->getEmail(),
-                'firstname' => $user->getName(),
-                'lastname'  => $user->getLastName(),
-                'midname'   => $user->getSecondName() ?: '',
-                'birthdate' => $user->getBirthday() ? $user->getBirthday()->format('d.m.Y') : '',
-                'phone'     => $user->getNormalizePersonalPhone(),
-                'card'      => $card,
-            ]);
-        }
+        $response->setData([
+            'email'     => $user->getEmail(),
+            'firstname' => $user->getName(),
+            'lastname'  => $user->getLastName(),
+            'midname'   => $user->getSecondName() ?: '',
+            'birthdate' => $user->getBirthday() ? $user->getBirthday()->format('d.m.Y') : '',
+            'phone'     => $user->getNormalizePersonalPhone(),
+            'card'      => $card,
+        ]);
 
         return $response;
     }

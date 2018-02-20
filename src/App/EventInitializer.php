@@ -5,6 +5,7 @@ namespace FourPaws\App;
 use Bitrix\Main\EventManager;
 use FourPaws\DeliveryBundle\Event as DeliveryEvent;
 use FourPaws\IblockProps\Event as IblockPropsEvent;
+use FourPaws\MobileApiBundle\EventController\Event as MobileApiUserEvent;
 use FourPaws\ProductAutoSort\Event as ProductAutoSortEvent;
 use FourPaws\SaleBundle\EventController\Event as SaleEvent;
 use FourPaws\SapBundle\Subscriber\BitrixEvents;
@@ -30,6 +31,7 @@ final class EventInitializer
         UserEvent::class,
         UserPropLocationEvent::class,
         BitrixEvents::class,
+        MobileApiUserEvent::class,
     ];
 
     /**

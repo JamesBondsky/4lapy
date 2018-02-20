@@ -10,7 +10,6 @@ use Bitrix\Main\EventManager;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\ServiceHandlerInterface;
-use FourPaws\MobileApiBundle\Services\Session\SessionHandlerInterface;
 use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -21,7 +20,6 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  * Обработчики событий
  *
  * @package FourPaws\UserBundle\EventController
- * @todo    Почему этот класс абстрактный? оО что за магия
  */
 class Event implements ServiceHandlerInterface
 {
@@ -29,7 +27,7 @@ class Event implements ServiceHandlerInterface
      * @var EventManager
      */
     protected static $eventManager;
-    
+
     /**
      * @param EventManager $eventManager
      *
@@ -38,39 +36,10 @@ class Event implements ServiceHandlerInterface
     public static function initHandlers(EventManager $eventManager)
     {
         self::$eventManager = $eventManager;
-        
+
         self::initHandler('OnBeforeUserAdd', 'checkSocserviseRegisterHandler');
-        
+
         self::initHandler('OnBeforeUserLogon', 'replaceLogin');
-
-        self::initHandler('OnUserLogin', 'updateTokenAfterLogin');
-        self::initHandler('OnAfterUserLogout', 'updateTokenAfterLogout');
-    }
-
-    /**
-     * @param array $fields
-     *
-     * @throws ServiceNotFoundException
-     * @throws ApplicationCreateException
-     * @throws ServiceCircularReferenceException
-     */
-    public static function updateTokenAfterLogin()
-    {
-        $sessionHandler = Application::getInstance()->getContainer()->get(SessionHandlerInterface::class);
-        $sessionHandler->login();
-    }
-
-    /**
-     * @param array $fields
-     *
-     * @throws ServiceNotFoundException
-     * @throws ApplicationCreateException
-     * @throws ServiceCircularReferenceException
-     */
-    public static function updateTokenAfterLogout(array &$fields)
-    {
-        $sessionHandler = Application::getInstance()->getContainer()->get(SessionHandlerInterface::class);
-        $sessionHandler->logout();
     }
 
     /**
@@ -89,7 +58,7 @@ class Event implements ServiceHandlerInterface
             ]
         );
     }
-    
+
     /**
      * @param array $fields
      *
@@ -102,7 +71,7 @@ class Event implements ServiceHandlerInterface
             $fields['UF_CONFIRMATION'] = 1;
         }
     }
-    
+
     /**
      * @param array $fields
      *
