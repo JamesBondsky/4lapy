@@ -38,6 +38,6 @@ services:
         arguments: ['@bx.hlblock.filter']
         public: true
 
-    FourPaws\CatalogBundle\Service\OftenSeekRepository:
-        class: FourPaws\CatalogBundle\Service\OftenSeekRepository
+    FourPaws\CatalogBundle\Service\OftenSeekInterface:
+        class: FourPaws\CatalogBundle\Service\OftenSeekService
         public: true

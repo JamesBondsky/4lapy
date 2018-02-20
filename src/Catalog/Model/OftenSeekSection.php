@@ -28,8 +28,8 @@ class OftenSeekSection extends BaseEntity
     protected $name = '';
 
     /**
-     * @var string
-     * @Serializer\Type("string")
+     * @var int
+     * @Serializer\Type("int")
      * @Serializer\SerializedName("UF_COUNT")
      * @Serializer\Groups(groups={"read"})
      */
@@ -42,6 +42,30 @@ class OftenSeekSection extends BaseEntity
      * @Serializer\Groups(groups={"read"})
      */
     protected $catalogSection = 0;
+
+    /**
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("DEPTH_LEVEL")
+     * @Serializer\Groups(groups={"read"})
+     */
+    protected $depthLvl = 0;
+
+    /**
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("LEFT_MARGIN")
+     * @Serializer\Groups(groups={"read"})
+     */
+    protected $leftMargin = 0;
+
+    /**
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("RIGHT_MARGIN")
+     * @Serializer\Groups(groups={"read"})
+     */
+    protected $rightMargin = 0;
 
 
     /**
