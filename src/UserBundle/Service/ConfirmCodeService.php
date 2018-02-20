@@ -58,7 +58,7 @@ class ConfirmCodeService implements ConfirmCodeInterface
             static::setGeneratedCode($phone);
 
             if (!empty($generatedCode)) {
-                $text = 'Ваш код подверждения - ' . $generatedCode;
+                $text = 'Ваш код: ' . $generatedCode;
                 try {
                     $smsService = Application::getInstance()->getContainer()->get('sms.service');
                     $smsService->sendSmsImmediate($text, $phone);
