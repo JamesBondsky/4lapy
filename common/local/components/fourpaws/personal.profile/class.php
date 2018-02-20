@@ -184,7 +184,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                     return $this->ajaxMess->getNotOldPhoneError();
                 }
                 try {
-                    $contactId = $manzanaService->getContactIdByPhone($oldPhone);
+                    $contactId = $manzanaService->getContactIdByPhone('7'.$oldPhone);
                     $client = new Client();
                     $client->contactId = $contactId;
                     $client->phone = $phone;

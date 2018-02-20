@@ -226,7 +226,7 @@ class UserService implements
         if ($manzanaSave) {
             $client = null;
             try {
-                $contactId = $this->manzanaService->getContactIdByPhone($registeredUser->getNormalizePersonalPhone());
+                $contactId = $this->manzanaService->getContactIdByPhone($registeredUser->getManzanaNormalizePersonalPhone());
                 $client = new Client();
                 $client->contactId = $contactId;
             } catch (ManzanaServiceException $e) {

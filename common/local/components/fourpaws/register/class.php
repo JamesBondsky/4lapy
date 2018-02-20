@@ -516,7 +516,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         }
         try {
             /** @noinspection PhpUnusedLocalVariableInspection */
-            $manzanaItem = $manzanaService->getContactByPhone($phone);
+            $manzanaItem = $manzanaService->getContactByPhone('7'.$phone);
         } catch (ManzanaServiceException $e) {
         }
 

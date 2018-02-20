@@ -286,10 +286,10 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             $manzanaService = $container->get('manzana.service');
             $client = null;
             try {
-                $contactId = $manzanaService->getContactIdByPhone($phone);
+                $contactId = $manzanaService->getContactIdByPhone('7'.$phone);
                 $client = new Client();
                 $client->contactId = $contactId;
-                $client->phone = $phone;
+                $client->phone = '7'.$phone;
             } catch (ManzanaServiceException $e) {
                 $client = new Client();
 
