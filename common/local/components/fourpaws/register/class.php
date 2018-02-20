@@ -299,7 +299,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
             $client = null;
             try {
-                $contactId = $manzanaService->getContactIdByCurUser();
+                $contactId = $manzanaService->getContactIdByUser();
                 $client = new Client();
                 $client->contactId = $contactId;
             } catch (ManzanaServiceException $e) {
@@ -516,8 +516,10 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         }
         try {
             /** @noinspection PhpUnusedLocalVariableInspection */
-            $manzanaItem = $manzanaService->getContactByPhone($phone);
+            $manzanaItem = $manzanaService->getContactByPhone(PhoneHelper::getManzanaPhone($phone));
         } catch (ManzanaServiceException $e) {
+        } catch (WrongPhoneNumberException $e) {
+            return $this->ajaxMess->getWrongPhoneNumberException();
         }
 
         return $mess;

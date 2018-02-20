@@ -53,6 +53,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
         parent::__construct($component);
         $serviceContainer = Application::getInstance()->getContainer();
         $this->orderService = $serviceContainer->get(OrderService::class);
+        $this->deliveryService = $serviceContainer->get('delivery.service');
     }
 
     /**
@@ -233,54 +234,53 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                     ];
                 }
 
+                $orderType = 'parts';
                 if ($delayed->isEmpty()) {
                     $orderType = 'full';
                 } elseif ($available->isEmpty()) {
                     $orderType = 'delay';
-                } else {
-                    $orderType = 'parts';
                 }
 
                 $availableDate = $available->isEmpty()
                     ? $stockResultByStore->getDeliveryDate()
                     : $available->getDeliveryDate();
                 $result['items'][] = [
-                    'id'              => $store->getXmlId(),
-                    'adress'          => $address,
-                    'phone'           => $store->getPhone(),
-                    'schedule'        => $store->getSchedule(),
-                    'pickup'          => DeliveryTimeHelper::showTime(
+                    'id'                => $store->getXmlId(),
+                    'adress'            => $address,
+                    'phone'             => $store->getPhone(),
+                    'schedule'          => $store->getSchedule(),
+                    'pickup'            => DeliveryTimeHelper::showTime(
                         $resultByStore[$store->getXmlId()]['PARTIAL_RESULT'],
                         $modifyDate ? $availableDate : null,
                         ['SHORT' => false, 'SHOW_TIME' => true]
                     ),
-                    'pickup_full'     => DeliveryTimeHelper::showTime(
+                    'pickup_full'       => DeliveryTimeHelper::showTime(
                         $resultByStore[$store->getXmlId()]['FULL_RESULT'],
                         $modifyDate ? $stockResultByStore->getDeliveryDate() : null,
                         ['SHORT' => false, 'SHOW_TIME' => true]
                     ),
-                    'pickup_short'    => DeliveryTimeHelper::showTime(
+                    'pickup_short'      => DeliveryTimeHelper::showTime(
                         $resultByStore[$store->getXmlId()]['PARTIAL_RESULT'],
                         $modifyDate ? $availableDate : null,
                         ['SHORT' => true, 'SHOW_TIME' => true]
                     ),
-                    'pickup_short_full'     => DeliveryTimeHelper::showTime(
+                    'pickup_short_full' => DeliveryTimeHelper::showTime(
                         $resultByStore[$store->getXmlId()]['FULL_RESULT'],
                         $modifyDate ? $stockResultByStore->getDeliveryDate() : null,
                         ['SHORT' => true, 'SHOW_TIME' => true]
                     ),
-                    'metroClass'      => !empty($metro) ? '--' . $metroList[$metro]['UF_CLASS'] : '',
-                    'order'           => $orderType,
-                    'parts_available' => $partsAvailable,
-                    'parts_delayed'   => $partsDelayed,
-                    'services'        => $services,
-                    'price'           => $available->isEmpty() ?
+                    'metroClass'        => !empty($metro) ? '--' . $metroList[$metro]['BRANCH']['UF_CLASS'] : '',
+                    'order'             => $orderType,
+                    'parts_available'   => $partsAvailable,
+                    'parts_delayed'     => $partsDelayed,
+                    'services'          => $services,
+                    'price'             => $available->isEmpty() ?
                         $stockResultByStore->getPrice() :
                         $available->getPrice(),
-                    'full_price'      => $stockResultByStore->getPrice(),
+                    'full_price'        => $stockResultByStore->getPrice(),
                     /* @todo поменять местами gps_s и gps_n */
-                    'gps_n'           => $store->getLongitude(),
-                    'gps_s'           => $store->getLatitude(),
+                    'gps_n'             => $store->getLongitude(),
+                    'gps_s'             => $store->getLatitude(),
                 ];
                 $avgGpsN += $store->getLongitude();
                 $avgGpsS += $store->getLatitude();

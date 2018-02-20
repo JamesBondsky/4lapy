@@ -166,13 +166,14 @@ class OrderStorageService
             case self::PAYMENT_STEP:
                 $availableValues = [
                     'paymentId',
-                    'bonusSum',
+                    'bonus',
                 ];
         }
 
         $mapping = [
-            'shopId'   => 'deliveryPlaceCode',
-            'pay-type' => 'paymentId',
+            'order-pick-time' => 'partialGet',
+            'shopId'          => 'deliveryPlaceCode',
+            'pay-type'        => 'paymentId',
         ];
 
         foreach ($request->request as $name => $value) {
@@ -251,10 +252,10 @@ class OrderStorageService
             $this->paymentCollection = $order->getPaymentCollection();
             $sum = $this->basketService->getBasket()->getOrderableItems()->getPrice();
 
-            if ($storage->hasBonusPayment() && $storage->getBonusSum()) {
+            if ($storage->getBonus()) {
                 $innerPayment = $this->paymentCollection->getInnerPayment();
-                $innerPayment->setField('SUM', $storage->getBonusSum());
-                $sum -= $storage->getBonusSum();
+                $innerPayment->setField('SUM', $storage->getBonus());
+                $sum -= $storage->getBonus();
             }
 
             $extPayment = $this->paymentCollection->createItem();

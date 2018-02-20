@@ -129,7 +129,7 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
             $this->arResult['NAV'] = new PageNavigation('nav-referral');
             $this->arResult['NAV']->allowAllRecords(false)->setPageSize($this->arParams['PAGE_COUNT'])->initFromUri();
 
-            $this->arResult['ITEMS'] = $items = $this->referralService->getCurUserReferrals(true, $arResult['NAV']);
+            $this->arResult['ITEMS'] = $items = $this->referralService->getCurUserReferrals(true, $this->arResult['NAV']);
         } catch (NotAuthorizedException $e) {
         } catch (CardNotFoundException $e) {
         }

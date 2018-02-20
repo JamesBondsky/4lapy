@@ -148,8 +148,6 @@ class UserService implements
     }
 
     /**
-     *
-     *
      * @return int
      */
     public function getCurrentFUserId(): int
@@ -181,7 +179,6 @@ class UserService implements
      * @throws ConstraintDefinitionException
      * @throws ValidationException
      * @throws BitrixRuntimeException
-     * @throws \Bitrix\Main\Db\SqlQueryException
      * @return User
      */
     public function register(User $user, bool $manzanaSave = true): User
@@ -226,7 +223,7 @@ class UserService implements
         if ($manzanaSave) {
             $client = null;
             try {
-                $contactId = $this->manzanaService->getContactIdByPhone($registeredUser->getNormalizePersonalPhone());
+                $contactId = $this->manzanaService->getContactIdByPhone($registeredUser->getManzanaNormalizePersonalPhone());
                 $client = new Client();
                 $client->contactId = $contactId;
             } catch (ManzanaServiceException $e) {
@@ -315,8 +312,8 @@ class UserService implements
      * @param Client    $client
      * @param null|User $user
      *
-     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
+     * @throws NotAuthorizedException
+     * @throws ConstraintDefinitionException
      * @throws InvalidIdentifierException
      * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
