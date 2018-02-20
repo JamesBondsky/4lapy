@@ -254,7 +254,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         }
     
         return $this->getContactByPhone(
-            $user->getPersonalPhone()
+            $user->getManzanaNormalizePersonalPhone()
         );
     }
     
