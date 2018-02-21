@@ -4666,16 +4666,16 @@
         },
         {
             "name": "somework/composer-symlinks",
-            "version": "1.1",
+            "version": "1.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/somework/composer-symlinks.git",
-                "reference": "39a572d72621601c713c4f6b5e270d83ca156256"
+                "reference": "885c7730d8b53ae7a49477a3d2c7d721e61562cf"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/somework/composer-symlinks/zipball/39a572d72621601c713c4f6b5e270d83ca156256",
-                "reference": "39a572d72621601c713c4f6b5e270d83ca156256",
+                "url": "https://api.github.com/repos/somework/composer-symlinks/zipball/885c7730d8b53ae7a49477a3d2c7d721e61562cf",
+                "reference": "885c7730d8b53ae7a49477a3d2c7d721e61562cf",
                 "shasum": ""
             },
             "require": {
@@ -4706,7 +4706,7 @@
                 }
             ],
             "description": "Create relative symlinks based on getcwd() and relative data",
-            "time": "2018-02-20T14:49:40+00:00"
+            "time": "2018-02-21T12:34:29+00:00"
         },
         {
             "name": "somework/expert-sender-api",
