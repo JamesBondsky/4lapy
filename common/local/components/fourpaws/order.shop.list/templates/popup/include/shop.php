@@ -13,7 +13,7 @@ use FourPaws\Decorators\SvgDecorator;
        href="javascript:void(0);"
        title="">
         <span class="b-delivery-list__col b-delivery-list__col--addr">
-            <span class="b-delivery-list__col b-delivery-list__col--color b-delivery-list__col--blue"></span>
+            <span class="b-delivery-list__col b-delivery-list__col--color b-delivery-list__col{{metroClass}}"></span>
             {{adress}}
         </span>
         <span class="b-delivery-list__col b-delivery-list__col--time">
@@ -37,7 +37,7 @@ use FourPaws\Decorators\SvgDecorator;
             <ul class="b-delivery-list">
                 <li class="b-delivery-list__item b-delivery-list__item--myself">
                     <span class="b-delivery-list__link b-delivery-list__link--myself">
-                        <span class="b-delivery-list__col b-delivery-list__col--color b-delivery-list__col--blue"></span>
+                        <span class="b-delivery-list__col b-delivery-list__col--color b-delivery-list__col{{metroClass}}"></span>
                         {{adress}}
                     </span>
                 </li>
