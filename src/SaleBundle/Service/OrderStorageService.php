@@ -171,8 +171,9 @@ class OrderStorageService
         }
 
         $mapping = [
-            'shopId'   => 'deliveryPlaceCode',
-            'pay-type' => 'paymentId',
+            'order-pick-time' => 'partialGet',
+            'shopId'          => 'deliveryPlaceCode',
+            'pay-type'        => 'paymentId',
         ];
 
         foreach ($request->request as $name => $value) {

@@ -17,6 +17,7 @@ use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
+use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -47,6 +48,11 @@ class OrderController extends Controller
     private $userAuthProvider;
 
     /**
+     * @var StoreService
+     */
+    private $storeService;
+
+    /**
      * @var ReCaptchaService
      */
     private $recaptcha;
@@ -68,11 +74,13 @@ class OrderController extends Controller
      */
     public function __construct(
         OrderService $orderService,
+        StoreService $storeService,
         OrderStorageService $orderStorageService,
         UserAuthorizationInterface $userAuthProvider,
         ReCaptchaService $recaptcha
     ) {
         $this->orderService = $orderService;
+        $this->storeService = $storeService;
         $this->orderStorageService = $orderStorageService;
         $this->userAuthProvider = $userAuthProvider;
         $this->recaptcha = $recaptcha;
@@ -94,8 +102,8 @@ class OrderController extends Controller
             'Подгрузка успешна',
             $shopListClass->getStores(
                 [
-                    'filter' => $shopListClass->getFilterByRequest($request),
-                    'order'  => $shopListClass->getOrderByRequest($request),
+                    'filter' => $this->storeService->getFilterByRequest($request),
+                    'order'  => $this->storeService->getOrderByRequest($request),
                 ]
             )
         );

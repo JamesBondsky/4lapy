@@ -115,6 +115,7 @@ class SoftChequeRequest
     /**
      * @Serializer\XmlList(inline=true)
      * @Serializer\Type("ArrayCollection<FourPaws\External\Manzana\Dto\ChequePosition>")
+     * @Serializer\SerializedName("Item")
      *
      * @var Collection|ChequePosition[]
      */

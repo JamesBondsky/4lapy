@@ -184,13 +184,15 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                     return $this->ajaxMess->getNotOldPhoneError();
                 }
                 try {
-                    $contactId = $manzanaService->getContactIdByPhone($oldPhone);
+                    $contactId = $manzanaService->getContactIdByPhone(PhoneHelper::getManzanaPhone($oldPhone));
                     $client = new Client();
                     $client->contactId = $contactId;
                     $client->phone = $phone;
                 } catch (ManzanaServiceException $e) {
                     $client = new Client();
                     $this->currentUserProvider->setClientPersonalDataByCurUser($client);
+                } catch (WrongPhoneNumberException $e) {
+                    return $this->ajaxMess->getWrongPhoneNumberException();
                 }
 
                 if ($client instanceof Client) {
