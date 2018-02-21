@@ -233,29 +233,7 @@ class OrderService
     public function getUserOrders(array $params): ArrayCollection
     {
         $orderCollection = $this->orderRepository->getUserOrders($params);
-        if (!$orderCollection->isEmpty()) {
-            /** @var Order $order */
-            foreach ($orderCollection as &$order) {
-                /** @todo вынести все полученяи из цикла и сделать по феншую без запросов цикле */
-                if (!$order->isManzana() && $order->getId() > 0) {
-                    list($items, $allWeight, $itemsSum) = $this->getOrderItems($order->getId());
-                    //var_dump($allWeight);
-                    $order->setItems($items);
-                    $order->setAllWeight((float)$allWeight);
-                    $order->setItemsSum((float)$itemsSum);
-                    $order->setPayment($this->getPayment($order->getPaySystemId()));
-                    $order->setDelivery($this->getDelivery($order->getId()));
-                    $order->setProps($this->getOrderProps($order->getId()));
-                    $order->setStore($this->getStore($order));
-                }
 
-                $payment = $this->getPayment($order->getPaySystemId());
-                $order->setPayment($payment);
-                $delivery = $this->getDelivery($order->getId());
-                $order->setDelivery($delivery);
-            }
-            unset($order);
-        }
         return $orderCollection;
     }
 
@@ -366,17 +344,18 @@ class OrderService
 
     /**
      * @param int $orderId
-     * @return Order
+     * @return Order|null
      * @throws \Exception
      */
-    public function getOrderById(int $orderId): Order
+    public function getOrderById(int $orderId)
     {
         $params = [
             'filter' => [
                 'ID' => $orderId
             ]
         ];
+        $collection = $this->orderRepository->findBy($params);
 
-        return $this->orderRepository->findBy($params)->first();
+        return $collection->count() ? $collection->first() : null;
     }
 }

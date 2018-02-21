@@ -23,8 +23,8 @@ class OrderSubscribeService
     private $currentUser;
     /** @var OrderService $orderService */
     private $orderService;
-
-
+    /** @var array $miscData */
+    private $miscData = [];
 
     /**
      * OrderSubscribeService constructor.
@@ -52,12 +52,48 @@ class OrderSubscribeService
 
     /**
      * @param int $orderId
-     * @return Order
+     * @return Order|null
      * @throws \Exception
      */
-    public function getOrderById(int $orderId): Order
+    public function getOrderById(int $orderId)
     {
         return $this->orderService->getOrderById($orderId);
+    }
+
+    /**
+     * @return array
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Exception
+     */
+    public function getFrequencyEnum(): array
+    {
+        if (!isset($this->miscData['FREQUENCY_ENUM'])) {
+            $this->miscData['FREQUENCY_ENUM'] = [];
+            $hlBlockEntityFields = $this->orderSubscribeRepository->getHlBlockEntityFields();
+            if (isset($hlBlockEntityFields['UF_FREQUENCY'])) {
+                if ($hlBlockEntityFields['UF_FREQUENCY']['USER_TYPE_ID'] === 'enumeration') {
+                    $enumItems = (new \CUserFieldEnum())->GetList(
+                        [
+                            'SORT' => 'ASC'
+                        ],
+                        [
+                            'USER_FIELD_ID' => $hlBlockEntityFields['UF_FREQUENCY']['ID']
+                        ]
+                    );
+                    while ($item = $enumItems->Fetch()) {
+                        $this->miscData['FREQUENCY_ENUM'][$item['ID']] = $item;
+                    }
+                }
+            }
+        }
+
+        return $this->miscData['FREQUENCY_ENUM'];
+    }
+
+    public function edit($orderId): array
+    {
+
     }
 
 }

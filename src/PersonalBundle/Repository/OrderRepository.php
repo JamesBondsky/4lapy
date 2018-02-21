@@ -255,6 +255,7 @@ class OrderRepository extends BaseRepository
                 ->setSelect([
                     'ID',
                     'DELIVERY_NAME',
+                    'ORDER_ID'
                 ])->exec()->fetch(),
             OrderDelivery::class);
     }

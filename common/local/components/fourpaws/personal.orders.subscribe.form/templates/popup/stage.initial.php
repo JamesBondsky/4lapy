@@ -24,6 +24,10 @@ $arParams['SHOW_SUBSCRIBE_ACTION'] = $arParams['SHOW_SUBSCRIBE_ACTION'] ?? 'N';
 $attrSuffix = '-'.$arParams['ORDER_ID'].'-'.randString(3);
 $attrPopupId = $arParams['ATTR_POPUP_ID'] ?? 'subscribe-delivery'.$attrSuffix;
 
+if (!$arResult['ORDER']) {
+    return;
+}
+
 /** @var Order $order */
 $order = $arResult['ORDER'];
 
@@ -52,6 +56,7 @@ if ($arParams['OUTPUT_VIA_BUFFER'] === 'Y') {
 }
 
 $errorBlock = '<div class="b-error"><span class="js-message"></span></div>';
+
 ?>
     <section class="b-popup-pick-city b-popup-pick-city--subscribe-delivery js-popup-section" data-popup="<?=$attrPopupId?>">
         <a class="b-popup-pick-city__close b-popup-pick-city__close--subscribe-delivery js-close-popup" href="javascript:void(0);" title="Закрыть"></a>
@@ -61,8 +66,10 @@ $errorBlock = '<div class="b-error"><span class="js-message"></span></div>';
                     Подписка на доставку
                 </h1>
             </header>
-            <form class="b-registration__form js-form-validation js-subscribe-query" method="get" data-url="json/subscribe-delivery-edit.json">
-                <input class="js-data-id js-no-valid" type="hidden" name="id" value="<?=$order->getId()?>">
+            <form class="b-registration__form js-form-validation js-subscribe-query" method="post" data-url="/ajax/personal/orderSubscribe/edit/">
+                <input class="js-data-id js-no-valid" type="hidden" name="orderId" value="<?=$order->getId()?>">
+                <input type="hidden" name="action" value="deliveryOrderSubscribe">
+
                 <div class="b-input-line b-input-line--popup-authorization">
                     <div class="b-input-line__label-wrapper">
                         <label class="b-input-line__label" for="<?='first-delivery'.$attrSuffix?>">
@@ -77,37 +84,48 @@ $errorBlock = '<div class="b-error"><span class="js-message"></span></div>';
                 <label class="b-registration__label b-registration__label--subscribe-delivery">
                     Интервал
                 </label>
-                <div class="b-select b-select--subscribe-delivery js-delivery-interval">
-                    <select name="delivery-interval" class="b-select__block b-select__block--subscribe-delivery js-delivery-interval">
-                        <option value="" disabled="disabled" selected="selected">
-                            выберите
-                        </option>
-                        <?php
-                        foreach ($arResult['TIME_VARIANTS'] as $variant) {
-                            $selected = $variant['VALUE'] === '' ? ' selected="selected"' : '';
-                            ?><option<?=$selected?> value="<?=$variant['VALUE']?>"><?=$variant['TEXT']?></option><?
-                        }
-                        ?>
-                    </select>
-                    <?=$errorBlock?>
-                </div>
-                <label class="b-registration__label b-registration__label--subscribe-delivery">
-                    Как часто
-                </label>
-                <div class="b-select b-select--subscribe-delivery js-frequency-delivery">
-                    <select name="frequency-delivery" class="b-select__block b-select__block--subscribe-delivery js-frequency-delivery">
-                        <option value="" disabled="disabled" selected="selected">
-                            выберите
-                        </option>
-                        <?php
-                        foreach ($arResult['FREQUENCY_VARIANTS'] as $variant) {
-                            $selected = $variant['VALUE'] === '' ? ' selected="selected"' : '';
-                            ?><option<?=$selected?> value="<?=$variant['VALUE']?>"><?=$variant['TEXT']?></option><?
-                        }
-                        ?>
-                    </select>
-                    <?=$errorBlock?>
-                </div>
+                <?php
+                if ($arResult['TIME_VARIANTS']) {
+                    ?>
+                    <div class="b-select b-select--subscribe-delivery js-delivery-interval">
+                        <select name="deliveryInterval" class="b-select__block b-select__block--subscribe-delivery js-delivery-interval">
+                            <option value="" disabled="disabled" selected="selected">
+                                выберите
+                            </option>
+                            <?php
+                            foreach ($arResult['TIME_VARIANTS'] as $variant) {
+                                $selected = $variant['VALUE'] === '' ? ' selected="selected"' : '';
+                                ?><option<?=$selected?> value="<?=$variant['VALUE']?>"><?=$variant['TEXT']?></option><?
+                            }
+                            ?>
+                        </select>
+                        <?=$errorBlock?>
+                    </div>
+                    <?php
+                }
+
+                if ($arResult['FREQUENCY_VARIANTS']) {
+                    ?>
+                    <label class="b-registration__label b-registration__label--subscribe-delivery">
+                        Как часто
+                    </label>
+                    <div class="b-select b-select--subscribe-delivery js-frequency-delivery">
+                        <select name="deliveryFrequency" class="b-select__block b-select__block--subscribe-delivery js-frequency-delivery">
+                            <option value="" disabled="disabled" selected="selected">
+                                выберите
+                            </option>
+                            <?php
+                            foreach ($arResult['FREQUENCY_VARIANTS'] as $variant) {
+                                $selected = $variant['VALUE'] === '' ? ' selected="selected"' : '';
+                                ?><option<?=$selected?> value="<?=$variant['VALUE']?>"><?=$variant['TEXT']?></option><?
+                            }
+                            ?>
+                        </select>
+                        <?=$errorBlock?>
+                    </div>
+                    <?php
+                }
+                ?>
                 <div class="b-registration__text b-registration__text--subscribe-delivery">
                     Периодичность, день и время доставки вы сможете поменять в личном кабинете в любой момент
                 </div>
@@ -126,8 +144,8 @@ $errorBlock = '<div class="b-error"><span class="js-message"></span></div>';
                             <?=(new SvgDecorator('icon-delivery-dollar', 18, 14))?>
                         </span>
                         <div class="b-registration__text b-registration__text--info-delivery">
-                            <p>Доставка курьером, по адресу:</p>
-                            <p>г. Москва, ул. Ленина, д. 4, кв. 24, под. 3, эт. 4</p>
+                            <p><?=$order->getDelivery()->getDeliveryName().', по адресу:'?></p>
+                            <p><?=$order->getStore()->getAddress()?></p>
                         </div>
                     </li>
                     <li class="b-registration__item-delivery">
@@ -135,7 +153,7 @@ $errorBlock = '<div class="b-error"><span class="js-message"></span></div>';
                             <?=(new SvgDecorator('icon-delivery-dollar', 18, 14))?>
                         </span>
                         <div class="b-registration__text b-registration__text--info-delivery">
-                            <p>Оплата: наличными или картой при получении.</p>
+                            <p><?='Оплата: '.$order->getPayment()->getName().'.'?></p>
                         </div>
                     </li>
                 </ul>

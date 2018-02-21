@@ -240,7 +240,7 @@ class HLBlockOrdersSubscribe20180215180000 extends \Adv\Bitrixtools\Migration\Sp
             $fieldName,
             [
                 'FIELD_NAME' => $fieldName,
-                'USER_TYPE_ID' => 'enumeration',
+                'USER_TYPE_ID' => 'string',
                 'XML_ID' => '',
                 'SORT' => $sort,
                 'MULTIPLE' => 'N',
@@ -250,8 +250,12 @@ class HLBlockOrdersSubscribe20180215180000 extends \Adv\Bitrixtools\Migration\Sp
                 'EDIT_IN_LIST' => 'Y',
                 'IS_SEARCHABLE' => 'N',
                 'SETTINGS' => [
-                    'DISPLAY' => 'LIST',
-                    'CAPTION_NO_VALUE' => 'выберите',
+                    'SIZE' => 20,
+                    'ROWS' => 1,
+                    'REGEXP' => '',
+                    'MIN_LENGTH' => 0,
+                    'MAX_LENGTH' => 0,
+                    'DEFAULT_VALUE' => '',
                 ],
                 'EDIT_FORM_LABEL' => [
                     'ru' => $ruName,
@@ -267,26 +271,6 @@ class HLBlockOrdersSubscribe20180215180000 extends \Adv\Bitrixtools\Migration\Sp
                 ],
                 'HELP_MESSAGE' => [
                     'ru' => '',
-                ],
-            ]
-        );
-        (new \CUserFieldEnum())->SetEnumValues(
-            $fieldId,
-            [
-                'n1' => [
-                    'XML_ID' => 'TIME_1',
-                    'VALUE' => '10:00—16:00',
-                    'SORT' => 100,
-                ],
-                'n2' => [
-                    'XML_ID' => 'TIME_2',
-                    'VALUE' => '16:00—18:00',
-                    'SORT' => 200,
-                ],
-                'n3' => [
-                    'XML_ID' => 'TIME_3',
-                    'VALUE' => '18:00—20:00',
-                    'SORT' => 300,
                 ],
             ]
         );

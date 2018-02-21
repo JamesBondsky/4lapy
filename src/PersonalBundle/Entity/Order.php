@@ -147,13 +147,13 @@ class Order extends BaseEntity
     protected $manzana = false;
 
     /** @var float */
-    protected $allWeight = 0;
+    protected $allWeight;
 
     /** @var Store */
     protected $store;
 
     /** @var float */
-    protected $itemsSum = 0;
+    protected $itemsSum;
 
     /** @var OrderPayment */
     protected $payment;
@@ -172,6 +172,12 @@ class Order extends BaseEntity
 
     /** @var OrderService $orderService */
     private $orderService = null;
+
+    /** @var array $orderItems */
+    private $orderItems = [];
+
+    /** @var \Bitrix\Sale\Order $bitrixOrder */
+    private $bitrixOrder;
 
     /**
      * @return string
@@ -484,6 +490,11 @@ class Order extends BaseEntity
      */
     public function getItems(): ArrayCollection
     {
+        if (!$this->items && $this->getId()) {
+            $orderItems = $this->getOrderItems();
+            $this->items = $orderItems[0];
+        }
+
         return $this->items ?? new ArrayCollection();
     }
 
@@ -539,7 +550,12 @@ class Order extends BaseEntity
      */
     public function getAllWeight(): float
     {
-        return $this->allWeigh ?? 0;
+        if (!isset($this->allWeight) && $this->getId()) {
+            $orderItems = $this->getOrderItems();
+            $this->allWeight = (float)$orderItems[1];
+        }
+
+        return $this->allWeight ?? 0;
     }
 
     /**
@@ -558,7 +574,7 @@ class Order extends BaseEntity
      */
     public function getFormatedAllWeight(): float
     {
-        $allWeight =$this->getAllWeight();
+        $allWeight = $this->getAllWeight();
         return $allWeight > 0 ? number_format(round($allWeight / 1000, 2),2,'.',' ') : 0;
     }
 
@@ -567,6 +583,11 @@ class Order extends BaseEntity
      */
     public function getItemsSum(): float
     {
+        if (!isset($this->itemsSum) && $this->getId()) {
+            $orderItems = $this->getOrderItems();
+            $this->itemsSum = (float)$orderItems[2];
+        }
+
         return $this->itemsSum ?? 0;
     }
 
@@ -593,8 +614,8 @@ class Order extends BaseEntity
      */
     public function getPayment(): OrderPayment
     {
-        if (!$this->payment && $this->getId()) {
-            $this->payment = $this->getOrderService()->getPayment($this->getId());
+        if (!$this->payment) {
+            $this->payment = $this->getOrderService()->getPayment($this->getPaySystemId());
         }
 
         return $this->payment;
@@ -615,7 +636,7 @@ class Order extends BaseEntity
      */
     public function getDelivery(): OrderDelivery
     {
-        if (!$this->delivery && $this->getId()) {
+        if (!$this->delivery) {
             $this->delivery = $this->getOrderService()->getDelivery($this->getId());
         }
 
@@ -657,9 +678,15 @@ class Order extends BaseEntity
 
     /**
      * @return ArrayCollection
+     * @throws ApplicationCreateException
+     * @throws EmptyEntityClass
      */
     public function getProps(): ArrayCollection
     {
+        if (!$this->props && $this->getId()) {
+            $this->props = $this->getOrderService()->getOrderProps($this->getId());
+        }
+
         return $this->props ?? new ArrayCollection();
     }
 
@@ -673,9 +700,16 @@ class Order extends BaseEntity
 
     /**
      * @return Store
+     * @throws ApplicationCreateException
+     * @throws \Exception
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
     public function getStore(): Store
     {
+        if (!$this->store && $this->getId()) {
+            $this->store = $this->getOrderService()->getStore($this);
+        }
+
         return $this->store;
     }
 
@@ -742,8 +776,9 @@ class Order extends BaseEntity
 
     /**
      * @param string $propCode
-     *
      * @return mixed
+     * @throws ApplicationCreateException
+     * @throws EmptyEntityClass
      */
     public function getPropValue(string $propCode)
     {
@@ -768,7 +803,7 @@ $result = true;
      * @return OrderService
      * @throws ApplicationCreateException
      */
-    protected function getOrderService() : OrderService
+    protected function getOrderService(): OrderService
     {
         if (!$this->orderService) {
             $appCont = Application::getInstance()->getContainer();
@@ -778,4 +813,35 @@ $result = true;
         return $this->orderService;
     }
 
+    /**
+     * @return array
+     * @throws ApplicationCreateException
+     * @throws EmptyEntityClass
+     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Exception
+     */
+    protected function getOrderItems(): array
+    {
+        if (!$this->orderItems) {
+            $this->orderItems = $this->getOrderService()->getOrderItems($this->getId());
+        }
+
+        return $this->orderItems;
+    }
+
+    /**
+     * @return \Bitrix\Sale\Order
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\NotImplementedException
+     */
+    public function getBitrixOrder(): \Bitrix\Sale\Order
+    {
+        if (!$this->bitrixOrder) {
+            $this->bitrixOrder = \Bitrix\Sale\Order::load($this->getId());
+        }
+
+        return $this->bitrixOrder;
+    }
 }

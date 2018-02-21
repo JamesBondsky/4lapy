@@ -43,6 +43,14 @@ class OrderDelivery extends BaseEntity
     protected $dateDeducted;
 
     /**
+     * @var int
+     * @Serializer\Type("integer")
+     * @Serializer\SerializedName("ORDER_ID")
+     * @Serializer\Groups(groups={"read", "update", "create"})
+     */
+    protected $orderId = 0;
+
+    /**
      * @return string
      */
     public function getDeliveryName(): string
@@ -117,5 +125,21 @@ class OrderDelivery extends BaseEntity
     public function getFormatedDateDeducted(): string
     {
         return DateHelper::replaceRuMonth($this->getDateDeducted()->format('d #m# Y'), DateHelper::GENITIVE);
+    }
+
+    /**
+     * @return int
+     */
+    public function getOrderId(): int
+    {
+        return $this->orderId;
+    }
+
+    /**
+     * @param int $orderId
+     */
+    public function setOrderId(int $orderId)
+    {
+        $this->orderId = $orderId;
     }
 }

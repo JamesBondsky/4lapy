@@ -29,25 +29,48 @@ class OrderSubscribeController extends Controller
     }
     
     /**
-     * @Route("/add/", methods={"POST"})
+     * @Route("/edit/", methods={"POST"})
      * @param Request $request
      *
      * @return JsonResponse
      */
-    public function addAction(Request $request) : JsonResponse
+    public function editAction(Request $request) : JsonResponse
     {
+        try {
+            $result = $GLOBALS['APPLICATION']->IncludeComponent(
+                'fourpaws:personal.orders.subscribe.form',
+                '',
+                [
+                    'INCLUDE_TEMPLATE' => 'N',
+                ],
+                null,
+                [
+                    'HIDE_ICONS' => 'Y',
+                ]
+            );
+            $return = JsonSuccessResponse::create(
+                'Подписка на доставку изменена',
+                200,
+                [],
+                [
+                    'reload' => true,
+                    'redirect' => ''
+                ]
+            );
+        } catch (\Exception $exception) {
+            $return = JsonErrorResponse::createWithData(
+                'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
+                [
+                    'errors' => [
+                        'systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта'
+                    ]
+                ]
+            );
+        }
+
+        return $return;
     }
-    
-    /**
-     * @Route("/update/", methods={"POST"})
-     * @param Request $request
-     *
-     * @return JsonResponse
-     */
-    public function updateAction(Request $request) : JsonResponse
-    {
-    }
-    
+
     /**
      * @Route("/delete/", methods={"GET"})
      * @param Request $request
@@ -56,5 +79,39 @@ class OrderSubscribeController extends Controller
      */
     public function deleteAction(Request $request) : JsonResponse
     {
+        try {
+            $result = $GLOBALS['APPLICATION']->IncludeComponent(
+                'fourpaws:personal.orders.subscribe.form',
+                '',
+                [
+                    'INCLUDE_TEMPLATE' => 'N'
+                ],
+                null,
+                [
+                    'HIDE_ICONS' => 'Y',
+                ]
+            );
+
+            $return = JsonSuccessResponse::create(
+                'Подписка на доставку удалена',
+                200,
+                [],
+                [
+                    'reload' => true,
+                    'redirect' => ''
+                ]
+            );
+        } catch (\Exception $exception) {
+            $return = JsonErrorResponse::createWithData(
+                'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
+                [
+                    'errors' => [
+                        'systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта'
+                    ]
+                ]
+            );
+        }
+
+        return $return;
     }
 }
