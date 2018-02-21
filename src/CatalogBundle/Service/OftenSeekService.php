@@ -55,6 +55,16 @@ class OftenSeekService implements OftenSeekInterface
                     '=IBLOCK_ID'         => $iblockId,
                     '=IBLOCK_SECTION_ID' => $sectionId,
                     '=ACTIVE'            => 'Y',
+                    array(
+                        'LOGIC' => 'OR',
+                        '>=ACTIVE_TO' => new \Bitrix\Main\Type\DateTime(),
+                        'ACTIVE_TO' => null,
+                    ),
+                    array(
+                        'LOGIC' => 'OR',
+                        '<=ACTIVE_FROM' => new \Bitrix\Main\Type\DateTime(),
+                        'ACTIVE_FROM' => null,
+                    ),
                 ],
                 'limit'   => $countItems,
                 'order'   => [current($orderFieldList) => current($orderDirectionList)],
