@@ -49,13 +49,24 @@
         "common/bitrix": "web/bitrix",
         "common/upload": "web/upload",
         "common/static": "web/static",
-        "common/local/.settings.php": "common/bitrix/.settings.php",
-        "common/local/php_interface/dbconn.php": "common/bitrix/php_interface/dbconn.php",
-        "common/local/php_interface/after_connect.php": "common/bitrix/php_interface/after_connect.php",
-        "common/local/php_interface/after_connect_d7.php": "common/bitrix/php_interface/after_connect_d7.php"
+        "common/local/.settings.php": {
+          "link": "common/bitrix/.settings.php",
+          "absolute-path": true
+        },
+        "common/local/php_interface/dbconn.php": {
+          "link": "common/bitrix/php_interface/dbconn.php",
+          "absolute-path": true
+        },
+        "common/local/php_interface/after_connect.php": {
+          "link": "common/bitrix/php_interface/after_connect.php",
+          "absolute-path": true
+        },
+        "common/local/php_interface/after_connect_d7.php": {
+          "link": "common/bitrix/php_interface/after_connect_d7.php",
+          "absolute-path": true
+        }
       },
-      "skip-missing-target": true,
-      "absolute-path": true
+      "skip-missing-target": true
     },
     "installer-paths": {
       "common/local/modules/{$name}/": [

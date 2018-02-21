@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "c3db9cd0bb19135211c2f81499b1fdbc",
+    "content-hash": "8ec9b44b458d7f813e105c4112f48589",
     "packages": [
         {
             "name": "adv/bitrix-tools",
@@ -4666,16 +4666,16 @@
         },
         {
             "name": "somework/composer-symlinks",
-            "version": "1.2.0",
+            "version": "1.3.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/somework/composer-symlinks.git",
-                "reference": "885c7730d8b53ae7a49477a3d2c7d721e61562cf"
+                "reference": "2b2ccf3e7098422dcfc43679565a392687765565"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/somework/composer-symlinks/zipball/885c7730d8b53ae7a49477a3d2c7d721e61562cf",
-                "reference": "885c7730d8b53ae7a49477a3d2c7d721e61562cf",
+                "url": "https://api.github.com/repos/somework/composer-symlinks/zipball/2b2ccf3e7098422dcfc43679565a392687765565",
+                "reference": "2b2ccf3e7098422dcfc43679565a392687765565",
                 "shasum": ""
             },
             "require": {
@@ -4706,7 +4706,7 @@
                 }
             ],
             "description": "Create relative symlinks based on getcwd() and relative data",
-            "time": "2018-02-21T12:34:29+00:00"
+            "time": "2018-02-21T22:06:53+00:00"
         },
         {
             "name": "somework/expert-sender-api",
