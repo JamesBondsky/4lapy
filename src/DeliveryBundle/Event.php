@@ -1,10 +1,15 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\DeliveryBundle;
 
 use Bitrix\Main\EventManager;
 use Bitrix\Main\EventResult;
 use FourPaws\App\ServiceHandlerInterface;
+use FourPaws\DeliveryBundle\InputTypes\DeliveryInterval;
 
 class Event implements ServiceHandlerInterface
 {
@@ -23,6 +28,12 @@ class Event implements ServiceHandlerInterface
             'sale',
             'onSaleDeliveryRestrictionsClassNamesBuildList',
             [__CLASS__, 'addCustomRestrictions']
+        );
+
+        $eventManager->addEventHandler(
+            'sale',
+            'registerInputTypes',
+            [__CLASS__, 'addCustomTypes']
         );
     }
 
@@ -51,6 +62,22 @@ class Event implements ServiceHandlerInterface
             EventResult::SUCCESS,
             [
                 Restrictions\LocationExceptRestriction::class => __DIR__ . '/Restrictions/LocationExceptRestriction.php',
+            ]
+        );
+    }
+
+    /**
+     * @return EventResult
+     */
+    public static function addCustomTypes()
+    {
+        return new EventResult(
+            EventResult::SUCCESS,
+            [
+                'DELIVERY_INTERVALS' => [
+                    'NAME'  => 'Интервал доставки',
+                    'CLASS' => DeliveryInterval::class,
+                ],
             ]
         );
     }

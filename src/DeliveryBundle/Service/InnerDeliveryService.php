@@ -1,9 +1,12 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\DeliveryBundle\Service;
 
 use Bitrix\Main\Error;
-use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Shipment;
 use FourPaws\StoreBundle\Collection\StoreCollection;
@@ -173,6 +176,16 @@ class InnerDeliveryService extends DeliveryServiceHandlerBase
         $result = parent::getConfigStructure();
 
         $zones = $this->deliveryService->getAvailableZones($this->getId());
+
+        $result['MAIN']['TITLE'] = 'Настройки интервалов';
+        $result['MAIN']['DESCRIPTION'] = 'Настройки интервалов';
+
+        $result['MAIN']['ITEMS']['INTERVALS'] = [
+            'TYPE'    => 'DELIVERY_INTERVALS',
+            'NAME'    => 'Интервалы доставок',
+            'DEFAULT' => [],
+            'ZONES'   => $zones,
+        ];
 
         $result['PRICES'] = [
             'TITLE'       => 'Стоимости доставок по зонам',
