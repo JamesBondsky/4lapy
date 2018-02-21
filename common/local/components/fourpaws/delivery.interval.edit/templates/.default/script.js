@@ -2,6 +2,7 @@ $(document).ready(function () {
     const template = doT.template(`
         {{~it.intervals :item:i}}
             <h2>{{=item.ZONE_NAME}}</h2>
+            <input type="hidden" name="{{=it.inputName}}[{{=i}}][ZONE_CODE]" value="{{=item.ZONE_CODE}}">
             <div class="delivery-intervals" data-zone="{{=i}}">
                 <h3>Интервалы доставки</h3>
                 <table class="adm-list-table delivery-intervals__list">

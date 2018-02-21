@@ -12,6 +12,16 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 class DeliveryInterval extends StringInput
 {
     /**
+     * @param $value
+     *
+     * @return bool
+     */
+    public static function isMultiple($value)
+    {
+        return false;
+    }
+
+    /**
      * @param $name
      * @param array $input
      * @param $value
@@ -20,12 +30,16 @@ class DeliveryInterval extends StringInput
     {
         global $APPLICATION;
         foreach ($input['ZONES'] as $code => $zone) {
-            if (!in_array($code, [
-                DeliveryService::ZONE_1,
-                DeliveryService::ZONE_2,
-                DeliveryService::ZONE_3,
-                DeliveryService::ZONE_4,
-            ], true)) {
+            if (!in_array(
+                $code,
+                [
+                    DeliveryService::ZONE_1,
+                    DeliveryService::ZONE_2,
+                    DeliveryService::ZONE_3,
+                    DeliveryService::ZONE_4,
+                ],
+                true
+            )) {
                 unset($input['ZONES'][$code]);
             }
         }
@@ -33,9 +47,9 @@ class DeliveryInterval extends StringInput
             'fourpaws:delivery.interval.edit',
             '',
             [
-                'VALUE'  => $value,
-                'ZONES' => $input['ZONES'],
-                'INPUT_NAME'  => $name,
+                'VALUE'      => $value,
+                'ZONES'      => $input['ZONES'],
+                'INPUT_NAME' => $name,
             ]
         );
     }

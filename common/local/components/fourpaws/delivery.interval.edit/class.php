@@ -33,7 +33,7 @@ class FourPawsDeliveryIntervalEditComponent extends \CBitrixComponent
             foreach ($params['VALUE'] as $i => $value) {
                 if ($value['ZONE_CODE'] === $code) {
                     $found = true;
-                    $params[$i]['ZONE_NAME'] = $zone['NAME'];
+                    $params['VALUE'][$i]['ZONE_NAME'] = $zone['NAME'];
                     break;
                 }
             }
