@@ -23,6 +23,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\App\Templates\ViewsEnum;
+
 $this->setFrameMode(true);
 
 $currentHasInnerDelivery = $arResult['CURRENT']['DELIVERY']['CODE'] == DeliveryService::INNER_DELIVERY_CODE;

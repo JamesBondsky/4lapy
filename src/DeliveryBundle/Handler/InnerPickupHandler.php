@@ -1,20 +1,19 @@
 <?php
 
-namespace FourPaws\DeliveryBundle\Service;
+namespace FourPaws\DeliveryBundle\Handler;
 
 use Bitrix\Main\Error;
-use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\Shipment;
+use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
-use FourPaws\StoreBundle\Collection\StockCollection;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
-use FourPaws\StoreBundle\Entity\Stock;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Service\StoreService;
 
-class InnerPickupService extends DeliveryServiceHandlerBase
+class InnerPickupHandler extends DeliveryHandlerBase
 {
     const ORDER_DELIVERY_PLACE_CODE_PROP = 'DELIVERY_PLACE_CODE';
 
@@ -54,9 +53,9 @@ class InnerPickupService extends DeliveryServiceHandlerBase
         return true;
     }
 
-    public function getIntervals(Shipment $shipment): array
+    public function getIntervals(Shipment $shipment): IntervalCollection
     {
-        return [];
+        return new IntervalCollection();
     }
 
     protected function calculateConcrete(Shipment $shipment)

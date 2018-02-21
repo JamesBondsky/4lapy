@@ -45,8 +45,8 @@ class Event implements ServiceHandlerInterface
         $result = new EventResult(
             EventResult::SUCCESS,
             [
-                Service\InnerDeliveryService::class => __DIR__ . '/Service/InnerDeliveryService.php',
-                Service\InnerPickupService::class   => __DIR__ . '/Service/InnerPickupService.php',
+                Handler\InnerDeliveryHandler::class => __DIR__ . '/Handler/InnerDeliveryHandler.php',
+                Handler\InnerPickupHandler::class   => __DIR__ . '/Handler/InnerPickupHandler.php',
             ]
         );
 

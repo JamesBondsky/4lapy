@@ -3,9 +3,7 @@
 }
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use FourPaws\App\Application;
-use FourPaws\Helpers\PhoneHelper;
-use FourPaws\Location\Exception\CityNotFoundException;
+use FourPaws\DeliveryBundle\Entity\IntervalRuleBase;
 
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsDeliveryIntervalEditComponent extends \CBitrixComponent
@@ -36,6 +34,10 @@ class FourPawsDeliveryIntervalEditComponent extends \CBitrixComponent
                     $params['VALUE'][$i]['ZONE_NAME'] = $zone['NAME'];
                     break;
                 }
+
+                if (!isset($params['VALUE'][$i]['RULES'][IntervalRuleBase::TYPE_ADD_DAYS])) {
+                    $params['VALUE'][$i]['RULES'][IntervalRuleBase::TYPE_ADD_DAYS] = [];
+                }
             }
 
             if (!$found) {
@@ -43,7 +45,9 @@ class FourPawsDeliveryIntervalEditComponent extends \CBitrixComponent
                     'ZONE_CODE' => $code,
                     'ZONE_NAME' => $zone['NAME'],
                     'INTERVALS' => [],
-                    'RULES'     => [],
+                    'RULES'     => [
+                        IntervalRuleBase::TYPE_ADD_DAYS => [],
+                    ],
                 ];
             }
         }

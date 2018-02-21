@@ -4,15 +4,19 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
-namespace FourPaws\DeliveryBundle\Service;
+namespace FourPaws\DeliveryBundle\Handler;
 
 use Bitrix\Main\Error;
 use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Shipment;
+use FourPaws\DeliveryBundle\Collection\IntervalCollection;
+use FourPaws\DeliveryBundle\Collection\IntervalRuleCollection;
+use FourPaws\DeliveryBundle\Entity\Interval;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Service\StoreService;
 
-class InnerDeliveryService extends DeliveryServiceHandlerBase
+class InnerDeliveryHandler extends DeliveryHandlerBase
 {
     protected $code = '4lapy_delivery';
 
@@ -40,42 +44,55 @@ class InnerDeliveryService extends DeliveryServiceHandlerBase
         return true;
     }
 
-    public function getIntervals(Shipment $shipment): array
+    public function getIntervals(Shipment $shipment): IntervalCollection
     {
-        switch ($this->deliveryService->getDeliveryZoneCode($shipment)) {
-            case DeliveryService::ZONE_1:
-                return [
-                    [
-                        'FROM' => 9,
-                        'TO'   => 18,
-                    ],
-                    [
-                        'FROM' => 18,
-                        'TO'   => 23,
-                    ],
-                ];
-            case DeliveryService::ZONE_2:
-                return [
-                    [
-                        'FROM' => 8,
-                        'TO'   => 12,
-                    ],
-                    [
-                        'FROM' => 12,
-                        'TO'   => 16,
-                    ],
-                    [
-                        'FROM' => 16,
-                        'TO'   => 20,
-                    ],
-                    [
-                        'FROM' => 20,
-                        'TO'   => 0,
-                    ],
-                ];
+        $result = new IntervalCollection();
+
+        $deliveryZone = $this->deliveryService->getDeliveryZoneCode($shipment);
+
+        $config = $this->getConfig();
+        $intervalConfig = $config['MAIN']['ITEMS']['INTERVALS']['VALUE'];
+        foreach ($intervalConfig as $intervalGroup) {
+            if ($intervalGroup['ZONE_CODE'] !== $deliveryZone) {
+                continue;
+            }
+
+            $intervalGroup['RULES'];
+            foreach ($intervalGroup['INTERVALS'] as $intervalIndex => $interval) {
+                $ruleCollection = new IntervalRuleCollection();
+                foreach ($interval['RULES'] as $type => $values) {
+                    if (!isset($intervalGroup['RULES'][$type])) {
+                        continue;
+                    }
+
+                    $ruleData = [];
+                    foreach ($values as $i => $value) {
+                        if (!isset($intervalGroup['RULES'][$type][$i])) {
+                            continue;
+                        }
+
+                        $ruleValue = $intervalGroup['RULES'][$type][$i];
+                        $ruleValue['VALUE'] = $value;
+                        $ruleData[] = $ruleValue;
+                    }
+
+                    $ruleCollection = new IntervalRuleCollection(
+                        array_merge(
+                            $ruleCollection->toArray(),
+                            $this->intervalService->createRules($type, $ruleData)->toArray()
+                        )
+                    );
+                }
+
+                $result->add(
+                    (new Interval())->setFrom($interval['FROM'])
+                                    ->setTo($interval['TO'])
+                                    ->setRules($ruleCollection)
+                );
+            }
         }
 
-        return [];
+        return $result;
     }
 
     protected function calculateConcrete(Shipment $shipment)

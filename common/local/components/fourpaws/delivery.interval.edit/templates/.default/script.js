@@ -63,20 +63,20 @@ $(document).ready(function () {
                             {{~}}
                         </tr>
                     </thead>
-                    {{~item.RULES :rule:j}}
+                    {{~item.RULES.ADD_DAYS :rule:j}}
                     <tr class="adm-list-table-row delivery-intervals__list-item" data-item="{{=j}}">
                         <td class="adm-list-table-cell">
-                            <input type="number" min="0" max="23" value="{{=rule.FROM}}" name="{{=it.inputName}}[{{=i}}][RULES][{{=j}}][FROM]" data-type="rule" data-from>
+                            <input type="number" min="0" max="23" value="{{=rule.FROM}}" name="{{=it.inputName}}[{{=i}}][RULES][ADD_DAYS][{{=j}}][FROM]" data-type="rule" data-from>
                         </td>
                         <td class="adm-list-table-cell">
-                            <input type="number" min="0" max="23" value="{{=rule.TO}}" name="{{=it.inputName}}[{{=i}}][RULES][{{=j}}][TO]" data-type="rule" data-to>
+                            <input type="number" min="0" max="23" value="{{=rule.TO}}" name="{{=it.inputName}}[{{=i}}][RULES][ADD_DAYS][{{=j}}][TO]" data-type="rule" data-to>
                         </td>
                         <td class="adm-list-table-cell">
                             <button class="adm-btn adm-btn-delete js-delivery-interval-rule-action" data-action="delete">Удалить</button>
                         </td>
                         {{~item.INTERVALS :interval:k}}
                             <td class="adm-list-table-cell">
-                                <input type="number" min="0" value="{{=interval.RULES[j]}}" name="{{=it.inputName}}[{{=i}}][INTERVALS][{{=k}}][RULES][{{=j}}]" data-type="interval-rule" data-id="{{=k}}">
+                                <input type="number" min="0" value="{{=interval.RULES.ADD_DAYS[j]}}" name="{{=it.inputName}}[{{=i}}][INTERVALS][{{=k}}][RULES][ADD_DAYS][{{=j}}]" data-type="interval-rule" data-id="{{=k}}">
                             </td>
                         {{~}}
                     </tr>
@@ -115,9 +115,9 @@ $(document).ready(function () {
         let intervalId = $this.closest('.delivery-intervals__list-item').attr('data-item');
         switch (action) {
             case 'add':
-                let intervalData = {FROM: 0, TO: 0, RULES: []};
-                for (let i = 0; i < data[zoneIndex].RULES.length; i++) {
-                    intervalData.RULES.push(0);
+                let intervalData = {FROM: 0, TO: 0, RULES: {'ADD_DAYS': []}};
+                for (let i = 0; i < data[zoneIndex].RULES.ADD_DAYS.length; i++) {
+                    intervalData.RULES.ADD_DAYS.push(0);
                 }
                 data[zoneIndex].INTERVALS.push(intervalData);
                 break;
@@ -143,13 +143,13 @@ $(document).ready(function () {
             case 'add':
                 data[zoneIndex].RULES.push({FROM: 0, TO: 0});
                 for (let i = 0; i < data[zoneIndex].INTERVALS.length; i++) {
-                    data[zoneIndex].INTERVALS[i].RULES.push(0);
+                    data[zoneIndex].INTERVALS[i].RULES.ADD_DAYS.push(0);
                 }
                 break;
             case 'delete':
                 data[zoneIndex].RULES.splice(ruleId, 1);
                 for (let i = 0; i < data[zoneIndex].INTERVALS.length; i++) {
-                    data[zoneIndex].INTERVALS[i].RULES.splice(ruleId, 1);
+                    data[zoneIndex].INTERVALS[i].RULES.ADD_DAYS.splice(ruleId, 1);
                 }
                 break;
         }
@@ -172,14 +172,14 @@ $(document).ready(function () {
                 break;
             case 'rule':
                 if ($this.is('[data-from]')) {
-                    data[zoneIndex].RULES[id].FROM = $this.val();
+                    data[zoneIndex].RULES.ADD_DAYS[id].FROM = $this.val();
                 } else if ($this.is('[data-to]')) {
-                    data[zoneIndex].RULES[id].TO = $this.val();
+                    data[zoneIndex].RULES.ADD_DAYS[id].TO = $this.val();
                 }
                 break;
             case 'interval-rule':
                 let intervalId = $this.attr('data-id');
-                data[zoneIndex].INTERVALS[intervalId].RULES[id] = $this.val();
+                data[zoneIndex].INTERVALS[intervalId].RULES.ADD_DAYS[id] = $this.val();
                 break;
         }
     });

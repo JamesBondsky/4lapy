@@ -12,19 +12,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use Bitrix\Sale\Delivery\CalculationResult;
 use FourPaws\Decorators\SvgDecorator;
+use FourPaws\DeliveryBundle\Entity\Interval;
+use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use Doctrine\Common\Collections\ArrayCollection;
 
 $storage = $arResult['STORAGE'];
-
-function showInterval($interval)
-{
-    $from = str_pad($interval['FROM'], 2, 0, STR_PAD_LEFT) . ':00';
-    $to = str_pad($interval['TO'], 2, 0, STR_PAD_LEFT) . ':00';
-
-    return $from . '-' . $to;
-}
 
 /** @var ArrayCollection $addresses */
 $addresses = $arResult['ADDRESSES'];
@@ -227,6 +221,8 @@ if (!$addresses || $addresses->isEmpty()) {
     </div>
 </div>
 <?php if (!empty($delivery->getData()['INTERVALS'])) {
+    /** @var IntervalCollection $intervals */
+    $intervals = $delivery->getData()['INTERVALS'];
     ?>
     <div class="b-input-line b-input-line--interval">
         <div class="b-input-line__label-wrapper b-input-line__label-wrapper--interval">
@@ -238,12 +234,13 @@ if (!$addresses || $addresses->isEmpty()) {
                 <option value="" disabled="disabled" selected="selected">
                     выберите
                 </option>
-                <?php $intervals = $delivery->getData()['INTERVALS'] ?>
-                <?php foreach ($intervals as $i => $interval) {
+                <?php 
+                /** @var Interval $interval */
+                foreach ($intervals as $i => $interval) {
                     ?>
                     <option value="<?= $i + 1 ?>" <?= ($storage->getDeliveryInterval(
                         ) === $i + 1) ? 'selected="selected"' : '' ?>>
-                        <?= showInterval($interval) ?>
+                        <?= $interval->toString() ?>
                     </option>
                     <?php
                 } ?>
