@@ -22,4 +22,24 @@ class BonusBuyToItem
      * @var int
      */
     protected $offerId = '';
+
+    /**
+     * @return int
+     */
+    public function getOfferId(): int
+    {
+        return $this->offerId;
+    }
+
+    /**
+     * @param int $offerId
+     *
+     * @return BonusBuyToItem
+     */
+    public function setOfferId(int $offerId): BonusBuyToItem
+    {
+        $this->offerId = $offerId;
+
+        return $this;
+    }
 }

@@ -90,21 +90,6 @@ class BonusBuyShare
     protected $conditionType = '';
 
     /**
-     * Содержит объект, на который применяется условие акции. Тип поля – единственный выбор из значений:
-     *
-     * - R (документ). Условие применяется ко всему чеку;
-     * - P (предпосылки). Условие применяется к некоторым товарам в чеке;
-     * - M (материал). Условие применяется к конкретному товару.
-     *
-     * @Serializer\XmlAttribute()
-     * @Serializer\SerializedName("POINT")
-     * @Serializer\Type("string")
-     *
-     * @var string
-     */
-    protected $point = '';
-
-    /**
      * Содержит индикатор изменения действия акции. Тип поля – единственный выбор из значений:
      *
      * - MODI – модификация, значение по умолчанию;
@@ -288,25 +273,6 @@ class BonusBuyShare
     public function setConditionType(string $conditionType): BonusBuyShare
     {
         $this->conditionType = $conditionType;
-
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getPoint(): string
-    {
-        return $this->point;
-    }
-
-    /**
-     * @param string $point
-     * @return BonusBuyShare
-     */
-    public function setPoint(string $point): BonusBuyShare
-    {
-        $this->point = $point;
 
         return $this;
     }

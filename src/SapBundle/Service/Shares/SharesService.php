@@ -1,6 +1,6 @@
 <?php
 
-namespace FourPaws\SapBundle\Service\Orders;
+namespace FourPaws\SapBundle\Service\Shares;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use JMS\Serializer\Serializer;
@@ -35,5 +35,16 @@ class SharesService implements LoggerAwareInterface
     public function delete()
     {
 
+    }
+
+    /**
+     * @param string $groupName
+     * @param string $shareName
+     *
+     * @return string
+     */
+    public function getGroupHash(string $groupName, string $shareName): string
+    {
+        return md5(sprintf('%s|%s', $groupName, $shareName));
     }
 }

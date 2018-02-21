@@ -123,9 +123,34 @@ class BonusBuyFrom
     /**
      * @return Collection|BonusBuyFromItem[]
      */
-    public function getBonusBuyFrom(): Collection
+    public function getBonusBuyFromItems(): Collection
     {
-        return $this->bonusBuyFromItems;
+        return $this->bonusBuyFromItems->filter(function ($key, $item) {
+            /**
+             * @var $item BonusBuyFromItem
+             */
+            return $item->getOfferId() > 0;
+        });
+    }
+
+    /**
+     * Для определения количества товаров в группе должна быть создана позиция предпосылки с единственным заполненным
+     * параметром MAT_QUAN.
+     *
+     * @return int
+     */
+    public function getGroupQuantity(): int {
+        $item = $this->bonusBuyFromItems->filter(function ($key, $item) {
+            /**
+             * @var $item BonusBuyFromItem
+             */
+            return empty($item->getOfferId());
+        })->first();
+
+        /**
+         * @var $item BonusBuyFromItem
+         */
+        return $item ? $item->getQuantity() : 0;
     }
 
     /**
@@ -133,7 +158,7 @@ class BonusBuyFrom
      *
      * @return BonusBuyFrom
      */
-    public function setBonusBuyFrom($bonusBuyFromItems): BonusBuyFrom
+    public function setBonusBuyFromItems($bonusBuyFromItems): BonusBuyFrom
     {
         $this->bonusBuyFromItems = $bonusBuyFromItems;
 
