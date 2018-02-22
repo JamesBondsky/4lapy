@@ -2,7 +2,7 @@
 
 namespace FourPaws\CatalogBundle\Repository;
 
-use Bitrix\Sale\SectionTable;
+use Bitrix\Iblock\SectionTable;
 use FourPaws\AppBundle\Repository\BaseRepository;
 use FourPaws\Catalog\Model\OftenSeekSection;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -30,7 +30,8 @@ class OftenSeekSectionRepository extends BaseRepository
         ValidatorInterface $validator,
         ArrayTransformerInterface $arrayTransformer,
         CurrentUserProviderInterface $currentUserProvider
-    ) {
+    )
+    {
         parent::__construct($validator, $arrayTransformer);
         $this->setDataManager(new SectionTable());
         $this->setEntityClass(OftenSeekSection::class);

@@ -4,9 +4,9 @@ namespace FourPaws\CatalogBundle\Service;
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Iblock\PropertyTable;
+use Bitrix\Iblock\SectionTable;
 use Bitrix\Main\Entity\Query\Join;
 use Bitrix\Main\Entity\ReferenceField;
-use Bitrix\Sale\SectionTable;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\BitrixOrm\Utils\IblockPropEntityConstructor;
 use FourPaws\Catalog\Model\OftenSeekSection;
@@ -50,11 +50,22 @@ class OftenSeekService implements OftenSeekInterface
             /** @todo может можно по другому сделать рандомную сортирвоку в d7 */
             shuffle($orderDirectionList);
             shuffle($orderFieldList);
+
             $this->oftenSeekRepository->findBy([
                 'filter'  => [
                     '=IBLOCK_ID'         => $iblockId,
                     '=IBLOCK_SECTION_ID' => $sectionId,
                     '=ACTIVE'            => 'Y',
+                    array(
+                        'LOGIC' => 'OR',
+                        '>=ACTIVE_TO' => new \Bitrix\Main\Type\DateTime(),
+                        'ACTIVE_TO' => null,
+                    ),
+                    array(
+                        'LOGIC' => 'OR',
+                        '<=ACTIVE_FROM' => new \Bitrix\Main\Type\DateTime(),
+                        'ACTIVE_FROM' => null,
+                    ),
                 ],
                 'limit'   => $countItems,
                 'order'   => [current($orderFieldList) => current($orderDirectionList)],
@@ -66,10 +77,12 @@ class OftenSeekService implements OftenSeekInterface
             ]);
         } catch (\Exception $e) {
         }
+
         return $result;
     }
 
-    /**
+    /** @noinspection MoreThanThreeArgumentsInspection
+     *
      * @param int $sectionId
      *
      * @param int $leftMargin
@@ -89,6 +102,7 @@ class OftenSeekService implements OftenSeekInterface
         try {
             //Получаем структуру разделов каталога
             $catalogSections = [$sectionId];
+
             if ($leftMargin <= 0 || $rightMargin <= 0 || $depthLevel <= 0) {
                 $catalogSect = SectionTable::query()->setFilter([
                     '=IBLOCK_ID'  => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS),
@@ -99,10 +113,12 @@ class OftenSeekService implements OftenSeekInterface
                     'LEFT_MARGIN',
                     'RIGHT_MARGIN',
                 ])->exec()->fetch();
+
                 $leftMargin = $catalogSect['LEFT_MARGIN'];
                 $rightMargin = $catalogSect['RIGHT_MARGIN'];
                 $depthLevel = $catalogSect['DEPTH_LEVEL'];
             }
+
             if ($depthLevel > 1) {
                 $parentCatalogSections = SectionTable::query()->setFilter([
                     '=IBLOCK_ID'     => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS),
@@ -112,6 +128,7 @@ class OftenSeekService implements OftenSeekInterface
                 ])->setSelect([
                     'ID',
                 ])->setOrder(['LEFT_MARGIN' => 'asc'])->exec();
+
                 while ($sect = $parentCatalogSections->fetch()) {
                     $catalogSections[] = $sect['ID'];
                 }
@@ -151,11 +168,13 @@ class OftenSeekService implements OftenSeekInterface
             }
 
         } catch (\Exception $e) {
+
         }
+
         return $result;
     }
-
-    /**
+    /** @noinspection MoreThanThreeArgumentsInspection
+     *
      * @param int $sectionId
      *
      * @param int $leftMargin
@@ -172,7 +191,9 @@ class OftenSeekService implements OftenSeekInterface
         int $depthLevel = 0
     ): ArrayCollection {
         $result = new ArrayCollection();
+
         $sections = $this->getSectionsByCatalogSection($sectionId, $leftMargin, $rightMargin, $depthLevel);
+
         if (!$sections->isEmpty()) {
             /** @var OftenSeekSection $section */
             foreach ($sections as $section) {
@@ -183,6 +204,7 @@ class OftenSeekService implements OftenSeekInterface
                 }
             }
         }
+
         return $result;
     }
 }
