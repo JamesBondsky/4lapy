@@ -29,13 +29,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         <input type="hidden" name="email" value="<?= $arResult['EMAIL'] ?>">
         <div class="b-account-profile__subscribe-setting">
             <div class="b-checkbox b-checkbox--agree b-checkbox--account-subscribe">
-                <input class="b-checkbox__input" name="subscribe_sale" id="subscribe-sale" type="checkbox">
+                <input class="b-checkbox__input" name="type[]" id="subscribe-sale" type="checkbox" value="sale">
                 <label class="b-checkbox__name b-checkbox__name--agree b-checkbox__name--account-subscribe"
                        for="subscribe-sale"><span class="b-checkbox__text">Я хочу получать информацию о скидках и подарках</span>
                 </label>
             </div>
             <div class="b-checkbox b-checkbox--agree b-checkbox--account-subscribe">
-                <input class="b-checkbox__input" name="subscribe_material" id="subscribe-material" type="checkbox">
+                <input class="b-checkbox__input" name="type[]" id="subscribe-material" type="checkbox" value="material">
                 <label
                         class="b-checkbox__name b-checkbox__name--agree b-checkbox__name--account-subscribe"
                         for="subscribe-material"><span class="b-checkbox__text">Я хочу получать полезные статьи и материалы о питомцах</span>

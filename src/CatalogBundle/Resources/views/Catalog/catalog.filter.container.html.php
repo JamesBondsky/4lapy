@@ -108,14 +108,12 @@ $filterCollection = $catalogRequest->getCategory()->getFilters();
                 'fourpaws:catalog.often.seek',
                 '',
                 [
-                    'SECTION_ID'   => $category->getId(),
-                    'LEFT_MARGIN'  => $category->getLeftMargin(),
+                    'SECTION_ID' => $category->getId(),
+                    'LEFT_MARGIN' => $category->getLeftMargin(),
                     'RIGHT_MARGIN' => $category->getRightMargin(),
                     'DEPTH_LEVEL' => $category->getDepthLevel(),
-                ]
+                ], false, ['HIDE_ICONS' => 'Y']
             ); ?>
-            <div class="b-line b-line--sort-desktop">
-            </div>
             <div class="b-catalog-filter__row b-catalog-filter__row--sort">
                 <div class="b-catalog-filter__sort-part js-permutation-mobile-here">
                     <?php
@@ -181,8 +179,7 @@ $filterCollection = $catalogRequest->getCategory()->getFilters();
                     </a>
                 </div>
             </div>
-            <div class="b-line b-line--sort-mobile">
-            </div>
+            <div class="b-line b-line--sort-mobile"></div>
         </div>
     </div>
     <div class="b-common-wrapper b-common-wrapper--visible js-catalog-wrapper">
@@ -196,8 +193,7 @@ $filterCollection = $catalogRequest->getCategory()->getFilters();
         }
         ?>
     </div>
-    <div class="b-line b-line--catalog-filter">
-    </div>
+    <div class="b-line b-line--catalog-filter"></div>
     <?php $APPLICATION->IncludeComponent(
         'bitrix:system.pagenavigation',
         'pagination',

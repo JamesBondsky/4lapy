@@ -17,9 +17,11 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
+use FourPaws\External\Exception\ExpertsenderServiceException;
 use FourPaws\External\Exception\SmsSendErrorException;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
 use FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException;
@@ -103,21 +105,20 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                 }
             }
 
-            /** @todo верификаци по ссылке из email */
-            if (1 === 2) {
-                if ($backUrl === static::BASKET_BACK_URL) {
-                    $confirmAuth = $request->get('confirm_auth');
-                    if (!empty($confirmAuth) && !empty($backUrl)) {
-                        /** @var ConfirmCodeService $confirmService */
-                        $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
-                        if ($confirmService::getGeneratedCode() === $confirmAuth) {
-                            $this->authService->authorize($request->get('user_id'));
-                            LocalRedirect($backUrl);
-                        }
+            $emailGet = $request->get('email');
+            $hash = $request->get('hash');
+            if (!empty($emailGet) && !empty($hash)) {
+                /** @var ConfirmCodeService $confirmService */
+                $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+                $siteHash = $confirmService::getGeneratedCode('email');
+                if ($siteHash === $hash) {
+                    if ($backUrl === static::BASKET_BACK_URL) {
+                        $this->authService->authorize($request->get('user_id'));
+                        LocalRedirect($backUrl);
+                    } else {
+                        $this->arResult['EMAIL'] = $emailGet;
+                        $this->arResult['STEP'] = 'createNewPassword';
                     }
-                } else {
-                    $this->arResult['EMAIL'] = 'email';
-                    $this->arResult['STEP'] = 'createNewPassword';
                 }
             }
 
@@ -290,8 +291,7 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                 $phone = $res;
             } elseif ($recovery === 'email') {
                 $title = 'Создание нового пароля';
-                /** @todo отправка письма для верификации */
-                $res = $this->ajaxGetSendEmailCode($email);
+                $res = $this->ajaxGetSendEmailCode($email, $backUrl);
                 if ($res instanceof JsonResponse) {
                     return $res;
                 }
@@ -330,11 +330,6 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                         return $this->ajaxMess->getWrongPhoneNumberException();
                     } catch (NotFoundConfirmedCodeException $e) {
                         return $this->ajaxMess->getNotFoundConfirmedCodeException();
-                    }
-                } elseif (!empty($email)) {
-                    /** @todo верификация по ссылке из письма */
-                    if ($backUrl === static::BASKET_BACK_URL) {
-                        return $this->redirectByBasket($backUrl, $login);
                     }
                 }
 
@@ -399,12 +394,14 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
 
     /**
      * @param string $email
+     * @param string $backUrl
      *
      * @return bool|JsonResponse
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
      */
-    private function ajaxGetSendEmailCode(string $email)
+    private function ajaxGetSendEmailCode(string $email, string $backUrl = '')
     {
-        //входящая строка, в которой может быть все, что угодно, а должна быть почта
         if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
             return $this->ajaxMess->getWrongEmailError();
         }
@@ -422,8 +419,16 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
             return $this->ajaxMess->getUsernameNotFoundException($email);
         }
 
-        /** @todo отправка сообщения для верификации по email через expertSender */
-        return true;
+        /** @var User $curUser */
+        $curUser = current($users);
+
+        try {
+            $expertSenderService = App::getInstance()->getContainer()->get('expertsender.service');
+            return $expertSenderService->sendForgotPassword($curUser, $backUrl);
+        } catch (ExpertsenderServiceException $e) {
+        } catch (ApplicationCreateException $e) {
+        }
+        return false;
     }
 
     /**

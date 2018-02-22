@@ -141,13 +141,20 @@ if (!($offer instanceof Offer)) {
                         
                         if ($product->getComposition()->getText()) { ?>
                             <div class="b-tab-content__container js-tab-content" data-tab-content="composition">
-                                <div><?= $product->getComposition()->getText() ?></div>
+                                <div class="b-description-tab b-description-tab--full">
+                                    <div class="b-description-tab__column b-description-tab__column--full">
+                                        <?= $product->getComposition()->getText() ?>
+                                </div>
                             </div>
                         <?php }
                         
                         if ($product->getNormsOfUse()->getText()) { ?>
                             <div class="b-tab-content__container js-tab-content" data-tab-content="recommendations">
-                                <div><?= $product->getNormsOfUse()->getText() ?>></div>
+                                <div class="b-description-tab b-description-tab--full">
+                                    <div class="b-description-tab__column b-description-tab__column--full">
+                                        <?= $product->getNormsOfUse()->getText() ?>
+                                    </div>
+                                </div>
                             </div>
                         <?php }
                         
