@@ -20,22 +20,22 @@ class Application extends AppKernel
      * Папка для кеширования
      */
     const BITRIX_CACHE_DIR = '/local/cache';
-    
+
     /**
      * Папка с включаемыми областями
      */
     const INCLUDES_DIR = '/includes';
-    
+
     /**
      * @var MarkupBuild
      */
     private static $markupBuild;
-    
+
     /**
      * @var \FourPaws\App\Application
      */
     private static $instance;
-    
+
     /**
      * @todo отрефакторить
      *
@@ -44,17 +44,17 @@ class Application extends AppKernel
      *
      * @return MarkupBuild
      */
-    public static function markup() : MarkupBuild
+    public static function markup(): MarkupBuild
     {
         if (null === self::$markupBuild) {
             $cache = new FilesystemAdapter('4lapy', 86400, self::getInstance()->getCacheDir());
-            
+
             $markupBuildItem = $cache->getItem('markup_build');
-    
+
             /** @noinspection PhpUndefinedMethodInspection */
             if (!$markupBuildItem->isHit() || !Env::isProd()) {
                 $markupBuild = new MarkupBuild();
-        
+
                 /** @noinspection NotOptimalIfConditionsInspection
                  *
                  * Ускорение отладки для front-end на реальном коде сайта
@@ -64,26 +64,26 @@ class Application extends AppKernel
                 if (!Env::isProd() && is_file(self::getDocumentRoot() . MarkupBuild::STATIC_DEV_JS)) {
                     //подключить результаты сборки к реальному сайту
                     $markupBuild->withJsFile(MarkupBuild::STATIC_DEV_JS)
-                                ->withCssFile(MarkupBuild::STATIC_DEV_CSS)
-                                ->withSvgFile(MarkupBuild::STATIC_DEV_SVG);
+                        ->withCssFile(MarkupBuild::STATIC_DEV_CSS)
+                        ->withSvgFile(MarkupBuild::STATIC_DEV_SVG);
                 } else {
                     $jsonFileLoader =
                         new JsonFileLoader($markupBuild, new FileLocator(self::getDocumentRoot() . '/static'));
                     $jsonFileLoader->load('versions.json');
                 }
-        
+
                 /** @noinspection PhpUndefinedMethodInspection */
                 $markupBuildItem->set($markupBuild);
                 $cache->save($markupBuildItem);
             }
-    
+
             /** @noinspection PhpUndefinedMethodInspection */
             self::$markupBuild = $markupBuildItem->get();
         }
-    
+
         return self::$markupBuild;
     }
-    
+
     /**
      * Handle current request
      *
@@ -99,13 +99,13 @@ class Application extends AppKernel
         $response->send();
         $instance->terminate($request, $response);
     }
-    
+
     /**
      * @throws Exceptions\ApplicationCreateException
      * @return \FourPaws\App\Application
      *
      */
-    public static function getInstance() : Application
+    public static function getInstance(): Application
     {
         /**
          * Можем себе позволить, в общем случае объект иммутабелен.
@@ -113,37 +113,37 @@ class Application extends AppKernel
         if (!self::$instance) {
             self::$instance = new self(Env::getServerType(), !Env::isProd());
         }
-    
+
         if (!self::$instance->booted) {
             self::$instance->boot();
         }
-    
+
         return self::$instance;
     }
-    
+
     /**
      * @param string $path
      *
      * @return string
      */
-    public static function getAbsolutePath(string $path) : string
+    public static function getAbsolutePath(string $path): string
     {
         return self::getDocumentRoot() . $path;
     }
-    
+
     public static function includeBitrix()
     {
         defined('NO_KEEP_STATISTIC') || define('NO_KEEP_STATISTIC', 'Y');
         defined('NOT_CHECK_PERMISSIONS') || define('NOT_CHECK_PERMISSIONS', true);
         defined('NO_AGENT_CHECK') || define('NO_AGENT_CHECK', true);
         defined('PUBLIC_AJAX_MODE') || define('PUBLIC_AJAX_MODE', true);
-        
+
         if (empty($_SERVER['DOCUMENT_ROOT'])) {
             $_SERVER['DOCUMENT_ROOT'] = self::getDocumentRoot();
         }
-        
+
         $GLOBALS['DOCUMENT_ROOT'] = $_SERVER['DOCUMENT_ROOT'];
-        
+
         /** @noinspection PhpIncludeInspection */
         require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_before.php';
     }
@@ -159,16 +159,16 @@ class Application extends AppKernel
      * @throws Exceptions\ApplicationCreateException
      * @throws ServiceCircularReferenceException
      */
-    public static function getHlBlockDataManager(string $hlblockServiceName) : DataManager
+    public static function getHlBlockDataManager(string $hlblockServiceName): DataManager
     {
         $dataManager = self::getInstance()->getContainer()->get($hlblockServiceName);
-    
+
         if (!($dataManager instanceof DataManager)) {
             throw new RuntimeException(sprintf('Сервис %s не является %s',
-                                               $hlblockServiceName,
-                                               DataManager::class));
+                $hlblockServiceName,
+                DataManager::class));
         }
-    
+
         return $dataManager;
     }
 }
