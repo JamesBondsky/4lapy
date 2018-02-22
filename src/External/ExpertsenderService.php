@@ -41,7 +41,7 @@ class ExpertsenderService
     {
         $client = new Client();
 
-        list($url, $key) = Application::getInstance()->getContainer()->getParameter('expertsender');
+        list($url, $key) = \array_values(Application::getInstance()->getContainer()->getParameter('expertsender'));
         $this->client = new ExpertSender($url, $key, $client);
     }
 
@@ -68,16 +68,17 @@ class ExpertsenderService
             $addUserToList->setFirstName($user->getName());
             $addUserToList->setLastName($user->getLastName());
             /** флаг подписки на новости */
-            $addUserToList->addProperty(new Property(23, 'boolean', false));
+            $addUserToList->addProperty(new Property(23, 'boolean', 0));
             /** флаг регистрации */
             $addUserToList->addProperty(new Property(47, 'boolean', true));
-            try {
+//            try {
                 /** хеш строка для подтверждения мыла */
                 /** @var ConfirmCodeService $confirmService */
                 $confirmService = Application::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
                 $generatedHash = $confirmService::getConfirmHash($user->getEmail());
                 $confirmService::setGeneratedCode($generatedHash, 'email');
                 $addUserToList->addProperty(new Property(10, 'string', $generatedHash));
+                unset($generatedHash, $confirmService, $user);
                 /** ip юзверя */
                 $addUserToList->addProperty(new Property(48, 'string',
                     BitrixApplication::getInstance()->getContext()->getServer()->get('REMOTE_ADDR')));
@@ -85,13 +86,13 @@ class ExpertsenderService
                 if ($apiResult->isOk()) {
                     return true;
                 }
-            } catch (SystemException $e) {
-                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
-            } catch (GuzzleException $e) {
-                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
-            } catch (\Exception $e) {
-                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
-            }
+//            } catch (SystemException $e) {
+//                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
+//            } catch (GuzzleException $e) {
+//                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
+//            } catch (\Exception $e) {
+//                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
+//            }
         }
         return false;
     }
@@ -197,9 +198,9 @@ class ExpertsenderService
                 $addUserToList->setFirstName($curUser->getName());
                 $addUserToList->setLastName($curUser->getLastName());
                 /** флаг подписки на новости */
-                $addUserToList->addProperty(new Property(23, 'boolean', false));
+                $addUserToList->addProperty(new Property(23, 'boolean', 0));
                 /** флаг регистрации */
-                $addUserToList->addProperty(new Property(47, 'boolean', false));
+                $addUserToList->addProperty(new Property(47, 'boolean', 0));
 
                 /** хеш строка для подтверждения мыла */
                 /** @var ConfirmCodeService $confirmService */
@@ -289,7 +290,7 @@ class ExpertsenderService
                     /** флаг подписки на новости */
                     $addUserToList->addProperty(new Property(23, 'boolean', true));
                     /** флаг регистрации */
-                    $addUserToList->addProperty(new Property(47, 'boolean', false));
+                    $addUserToList->addProperty(new Property(47, 'boolean', 0));
 
                     /** хеш строка для подтверждения мыла */
                     /** @var ConfirmCodeService $confirmService */
@@ -344,7 +345,7 @@ class ExpertsenderService
                     $addUserToList->setListId(178);
                     $addUserToList->setId($expertSenderId);
                     /** флаг подписки на новости */
-                    $addUserToList->addProperty(new Property(23, 'boolean', false));
+                    $addUserToList->addProperty(new Property(23, 'boolean', 0));
 
                     $apiResult = $this->client->addUserToList($addUserToList);
                     if ($apiResult->isOk()) {
