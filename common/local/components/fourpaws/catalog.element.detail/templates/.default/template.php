@@ -369,9 +369,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB);
             <div class="b-description-tab__column">
                 <div class="b-description-tab__title">Описание</div>
                 <div class="b-description-tab__text">
-                    <p>
-                        <?= $product->getDetailText()->getText() ?>
-                    </p>
+                    <?= $product->getDetailText()->getText() ?>
                 </div>
             </div>
             <div class="b-description-tab__column b-description-tab__column--characteristics">
