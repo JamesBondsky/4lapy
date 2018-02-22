@@ -71,7 +71,7 @@ class ExpertsenderService
             $addUserToList->addProperty(new Property(23, 'boolean', 0));
             /** флаг регистрации */
             $addUserToList->addProperty(new Property(47, 'boolean', true));
-//            try {
+            try {
                 /** хеш строка для подтверждения мыла */
                 /** @var ConfirmCodeService $confirmService */
                 $confirmService = Application::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
@@ -86,13 +86,13 @@ class ExpertsenderService
                 if ($apiResult->isOk()) {
                     return true;
                 }
-//            } catch (SystemException $e) {
-//                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
-//            } catch (GuzzleException $e) {
-//                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
-//            } catch (\Exception $e) {
-//                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
-//            }
+            } catch (SystemException $e) {
+                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
+            } catch (GuzzleException $e) {
+                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
+            } catch (\Exception $e) {
+                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
+            }
         }
         return false;
     }
