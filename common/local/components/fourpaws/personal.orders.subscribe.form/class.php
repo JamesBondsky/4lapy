@@ -5,6 +5,7 @@ use Bitrix\Main\Error;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Service\DeliveryServiceInterface;
+use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\UserBundle\Repository\UserRepository;
@@ -27,6 +28,12 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
     private $orderSubscribeService = null;
     /** @var array $data */
     protected $data = [];
+    /** @var array */
+    protected $fieldCaptions = [
+        'dateStart' => 'Дата первой доставки',
+        'deliveryFrequency' => 'Как часто',
+        'deliveryInterval' => 'Интервал',
+    ];
 
     public function __construct($component = null)
     {
@@ -64,7 +71,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
     }
 
     /**
-     * @return array
+     * @return $this
      * @throws Exception
      */
     public function executeComponent()
@@ -77,7 +84,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
             throw $exception;
         }
 
-        return $this->arResult;
+        return $this;
     }
 
     /**
@@ -158,10 +165,11 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
 
     protected function initialLoadAction()
     {
-        $this->arResult['ORDER'] = $this->getOrderData();
+        $this->arResult['ORDER'] = $this->getOrder();
         if ($this->arResult['ORDER']) {
             $this->arResult['TIME_VARIANTS'] = $this->getTimeVariants();
             $this->arResult['FREQUENCY_VARIANTS'] = $this->getFrequencyVariants();
+            $this->arResult['ORDER_SUBSCRIBE'] = $this->getOrderSubscribe();
         }
 
         $this->loadData();
@@ -174,10 +182,48 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
             $this->arParams['ORDER_ID'] = (int)$this->arResult['FIELD_VALUES']['orderId'];
         }
 
-        $this->arResult['ORDER'] = $this->getOrderData();
-        if ($this->arResult['ORDER']) {
-            $this->arResult['TIME_VARIANTS'] = $this->getTimeVariants();
-            $this->arResult['FREQUENCY_VARIANTS'] = $this->getFrequencyVariants();
+        $this->arResult['SUBSCRIBE_ACTION']['SUCCESS'] = 'N';
+
+        $this->processFormFields();
+
+        if (empty($this->arResult['ERROR']['FIELD'])) {
+            $order = $this->getOrder();
+            if ($order) {
+                $fields = [
+                    'UF_ACTIVE' => 1,
+                    'UF_ORDER_ID' => $order->getId(),
+                    'UF_DATE_START' => $this->arResult['FIELD_VALUES']['dateStart'] ?? '',
+                    'UF_FREQUENCY' => $this->arResult['FIELD_VALUES']['deliveryFrequency'] ?? '',
+                    'UF_DELIVERY_TIME' => $this->arResult['FIELD_VALUES']['deliveryInterval'] ?? '',
+                ];
+
+                $orderSubscribeService = $this->getOrderSubscribeService();
+                $orderSubscribe = $this->getOrderSubscribe();
+                if ($orderSubscribe) {
+                    // подписка уже есть, обновляем
+                    $this->arResult['SUBSCRIBE_ACTION']['SUBSCRIPTION_ID'] = $orderSubscribe->getId();
+                    $this->arResult['SUBSCRIBE_ACTION']['TYPE'] = 'UPDATE';
+                    $fields['ID'] = $orderSubscribe->getId();
+                    $updateResult = $orderSubscribeService->update($fields);
+                    if ($updateResult->isSuccess()) {
+                        $this->arResult['SUBSCRIBE_ACTION']['SUCCESS'] = 'Y';
+                        $this->flushOrderSubscribe();
+                    } else {
+                        $this->setExecError('subscriptionUpdate', $updateResult->getErrors(), 'subscriptionUpdate');
+                    }
+                } else {
+                    // создание новой подписки
+                    $this->arResult['SUBSCRIBE_ACTION']['TYPE'] = 'CREATE';
+                    $addResult = $orderSubscribeService->add($fields);
+                    if ($addResult->isSuccess()) {
+                        $this->arResult['SUBSCRIBE_ACTION']['SUCCESS'] = 'Y';
+                        $this->arResult['SUBSCRIBE_ACTION']['SUBSCRIPTION_ID'] = $addResult->getId();
+                        $this->flushOrderSubscribe();
+                    } else {
+                        $this->setExecError('subscriptionAdd', $addResult->getErrors(), 'subscriptionAdd');
+                    }
+                }
+            }
         }
 
         $this->loadData();
@@ -187,6 +233,59 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
     {
         if ($this->arParams['INCLUDE_TEMPLATE'] !== 'N') {
             $this->includeComponentTemplate();
+        }
+    }
+
+    protected function processFormFields()
+    {
+        $fieldName = 'dateStart';
+        $value = $this->arResult['FIELD_VALUES'][$fieldName] ?? '';
+        if ($value === '') {
+            $this->setFieldError($fieldName, 'Значение не задано', 'empty');
+        } else {
+            if(!preg_match('/^\d{2}\.\d{2}\.\d{4}$/', $value)) {
+                $this->setFieldError($fieldName, 'Значение задано некорректно', 'not_valid');
+            } else {
+                if (!$GLOBALS['DB']->IsDate($value, 'DD.MM.YYYY')) {
+                    $this->setFieldError($fieldName, 'Значение задано некорректно', 'not_valid');
+                }
+            }
+        }
+
+        $fieldName = 'deliveryFrequency';
+        $value = $this->arResult['FIELD_VALUES'][$fieldName] ?? '';
+        if ($value === '') {
+            $this->setFieldError($fieldName, 'Значение не задано', 'empty');
+        } else {
+            $success = false;
+            $deliveryFrequency = $this->getFrequencyVariants();
+            foreach ($deliveryFrequency as $variant) {
+                if ($variant['VALUE'] === $value) {
+                    $success = true;
+                    break;
+                }
+            }
+            if (!$success) {
+                $this->setFieldError($fieldName, 'Значение задано некорректно', 'not_valid');
+            }
+        }
+
+        $fieldName = 'deliveryInterval';
+        $value = $this->arResult['FIELD_VALUES'][$fieldName] ?? '';
+        $timeIntervals = $this->getTimeVariants();
+        if ($value === '' && $timeIntervals) {
+            $this->setFieldError($fieldName, 'Значение не задано', 'empty');
+        } elseif ($value !== '') {
+            $success = false;
+            foreach ($timeIntervals as $variant) {
+                if ($variant['VALUE'] === $value) {
+                    $success = true;
+                    break;
+                }
+            }
+            if (!$success) {
+                $this->setFieldError($fieldName, 'Значение задано некорректно', 'not_valid');
+            }
         }
     }
 
@@ -201,7 +300,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
      * @throws ApplicationCreateException
      * @throws Exception
      */
-    protected function getOrderData()
+    public function getOrder()
     {
         if (!isset($this->data['ORDER'])) {
             $this->data['ORDER'] = null;
@@ -213,7 +312,11 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                     if ($order->getUserId() === $this->arParams['USER_ID']) {
                         $this->data['ORDER'] = $order;
                     } else {
-                        $this->setExecError('notThisUserOrder', 'Нельзя подписаться на заказ под данным пользователем', 'notThisUserOrder');
+                        $this->setExecError(
+                            'notThisUserOrder',
+                            'Нельзя подписаться на заказ под данным пользователем',
+                            'notThisUserOrder'
+                        );
                     }
                 } else {
                     $this->setExecError('orderNotFound', 'Заказ не найден', 'orderNotFound');
@@ -225,6 +328,36 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
     }
 
     /**
+     * @return OrderSubscribe|null
+     * @throws ApplicationCreateException
+     * @throws Exception
+     */
+    public function getOrderSubscribe()
+    {
+        if (!isset($this->data['ORDER_SUBSCRIBE'])) {
+            $this->data['ORDER_SUBSCRIBE'] = null;
+            $order = $this->getOrder();
+            if ($order) {
+                $orderSubscribeService = $this->getOrderSubscribeService();
+                $collection = $orderSubscribeService->getSubscriptionsByOrder(
+                    $order->getId(),
+                    false
+                );
+                $this->data['ORDER_SUBSCRIBE'] = $collection->count() ? $collection->first() : null;
+            }
+        }
+
+        return $this->data['ORDER_SUBSCRIBE'];
+    }
+
+    public function flushOrderSubscribe()
+    {
+        if (isset($this->data['ORDER_SUBSCRIBE'])) {
+            unset($this->data['ORDER_SUBSCRIBE']);
+        }
+    }
+
+    /**
      * Варианты времени доставки
      *
      * @return array
@@ -233,13 +366,13 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
      * @throws \Bitrix\Main\ArgumentNullException
      * @throws \Bitrix\Main\NotImplementedException
      */
-    protected function getTimeVariants(): array
+    public function getTimeVariants(): array
     {
         if (!isset($this->data['TIME_VARIANTS'])) {
             $this->data['TIME_VARIANTS'] = [];
 
             /** @var Order $order */
-            $order = $this->getOrderData();
+            $order = $this->getOrder();
             if ($order) {
                 $bitrixOrder = $order->getBitrixOrder();
                 foreach ($bitrixOrder->getShipmentCollection() as $shipment) {
@@ -278,14 +411,14 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\SystemException
      */
-    protected function getFrequencyVariants(): array
+    public function getFrequencyVariants(): array
     {
         if (!isset($this->data['FREQUENCY_VARIANTS'])) {
             $this->data['FREQUENCY_VARIANTS'] = [];
             $enum = $this->getOrderSubscribeService()->getFrequencyEnum();
             foreach ($enum as $item) {
                 $this->data['FREQUENCY_VARIANTS'][] = [
-                    'VALUE' => $item['XML_ID'],
+                    'VALUE' => $item['ID'],
                     'TEXT' => $item['VALUE'],
                 ];
             }
@@ -305,7 +438,11 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
             $result = [];
             foreach ($errorMsg as $item) {
                 if ($item instanceof Error) {
-                    $result[] = '['.$item->getCode().'] '.$item->getMessage();
+                    if ($item->getCode()) {
+                        $result[] = '['.$item->getCode().'] '.$item->getMessage();
+                    } else {
+                        $result[] = $item->getMessage();
+                    }
                 } elseif (is_scalar($item)) {
                     $result[] = $item;
                 }
@@ -316,6 +453,15 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         }
 
         return $result;
+    }
+
+    /**
+     * @param string $fieldName
+     * @return string
+     */
+    public function getFieldCaption(string $fieldName)
+    {
+        return $this->fieldCaptions[$fieldName] ?? '';
     }
 
     /**

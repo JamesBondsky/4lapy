@@ -4,7 +4,9 @@ namespace Sprint\Migration;
 
 class HLBlockOrdersSubscribe20180215180000 extends \Adv\Bitrixtools\Migration\SprintMigrationBase
 {
-    
+    const HL_NAME = 'OrderSubscribe';
+    const TABLE_NAME = '4lp_order_subscribe';
+
     protected $description = 'Highloadblock для подписок на заказы';
     
     public function up()
@@ -13,8 +15,8 @@ class HLBlockOrdersSubscribe20180215180000 extends \Adv\Bitrixtools\Migration\Sp
 
         $hlBlockId = $hlBlockHelper->addHlblockIfNotExists(
             [
-                'NAME' => 'OrderSubscribe',
-                'TABLE_NAME' => '4lp_order_subscribe',
+                'NAME' => static::HL_NAME,
+                'TABLE_NAME' => static::TABLE_NAME,
                 'LANG' => [
                     'ru' => [
                         'NAME' => 'Подписка на заказ',
@@ -73,6 +75,49 @@ class HLBlockOrdersSubscribe20180215180000 extends \Adv\Bitrixtools\Migration\Sp
         // ---
         $fieldName = 'UF_DATE_CREATE';
         $ruName = 'Дата создания';
+        $sort += 100;
+        $userTypeEntityHelper->addUserTypeEntityIfNotExists(
+            $entityId,
+            $fieldName,
+            [
+                'FIELD_NAME' => $fieldName,
+                'USER_TYPE_ID' => 'datetime',
+                'XML_ID' => '',
+                'SORT' => $sort,
+                'MULTIPLE' => 'N',
+                'MANDATORY' => 'Y',
+                'SHOW_FILTER' => 'Y',
+                'SHOW_IN_LIST' => 'Y',
+                'EDIT_IN_LIST' => 'Y',
+                'IS_SEARCHABLE' => 'N',
+                'SETTINGS' => [
+                    'DEFAULT_VALUE' => [
+                        'TYPE' => 'NOW',
+                        'VALUE' => '',
+                    ],
+                    'USE_SECOND' => 'Y',
+                ],
+                'EDIT_FORM_LABEL' => [
+                    'ru' => $ruName,
+                ],
+                'LIST_COLUMN_LABEL' => [
+                    'ru' => $ruName,
+                ],
+                'LIST_FILTER_LABEL' => [
+                    'ru' => $ruName,
+                ],
+                'ERROR_MESSAGE' => [
+                    'ru' => '',
+                ],
+                'HELP_MESSAGE' => [
+                    'ru' => '',
+                ],
+            ]
+        );
+
+        // ---
+        $fieldName = 'UF_DATE_EDIT';
+        $ruName = 'Дата изменения';
         $sort += 100;
         $userTypeEntityHelper->addUserTypeEntityIfNotExists(
             $entityId,
@@ -319,6 +364,8 @@ class HLBlockOrdersSubscribe20180215180000 extends \Adv\Bitrixtools\Migration\Sp
                 ],
             ]
         );
+
+        $GLOBALS['DB']->Query('ALTER TABLE `'.static::TABLE_NAME.'` ADD UNIQUE(`UF_ORDER_ID`);', true);
 
         return true;
     }

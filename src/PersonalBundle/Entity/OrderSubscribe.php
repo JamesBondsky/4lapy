@@ -2,18 +2,13 @@
 
 namespace FourPaws\PersonalBundle\Entity;
 
-use Bitrix\Main\ObjectException;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
-use Bitrix\Sale\Internals\StatusLangTable;
-use Bitrix\Sale\Internals\StatusTable;
-use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\App\Application;
 use FourPaws\AppBundle\Entity\BaseEntity;
-use FourPaws\Helpers\DateHelper;
-use FourPaws\StoreBundle\Entity\Store;
+use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use JMS\Serializer\Annotation as Serializer;
-use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
-use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use Symfony\Component\Validator\Constraints as Assert;
 
 class OrderSubscribe extends BaseEntity
 {
@@ -21,32 +16,44 @@ class OrderSubscribe extends BaseEntity
      * @var int
      * @Serializer\Type("integer")
      * @Serializer\SerializedName("UF_ORDER_ID")
-     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\Groups(groups={"create","read"})
      * @Assert\NotBlank(groups={"create","read"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $orderId;
     /**
-     * @var Date
-     * @Serializer\Type("bitrix_date")
+     * @var DateTime
+     * @Serializer\Type("bitrix_date_time")
      * @Serializer\SerializedName("UF_DATE_CREATE")
      * @Serializer\Groups(groups={"create","read"})
+     * @Assert\NotBlank(groups={"create","read"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $dateCreate;
+    /**
+     * @var DateTime
+     * @Serializer\Type("bitrix_date_time")
+     * @Serializer\SerializedName("UF_DATE_EDIT")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Assert\NotBlank(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $dateEdit;
     /**
      * @var Date
      * @Serializer\Type("bitrix_date")
      * @Serializer\SerializedName("UF_DATE_START")
      * @Serializer\Groups(groups={"create","read","update"})
+     * @Assert\NotBlank(groups={"create","read"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $dateStart;
     /**
-     * @var string
-     * @Serializer\Type("string")
+     * @var int
+     * @Serializer\Type("integer")
      * @Serializer\SerializedName("UF_FREQUENCY")
      * @Serializer\Groups(groups={"create","read","update"})
+     * @Assert\NotBlank(groups={"create","read"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $deliveryFrequency;
@@ -60,12 +67,15 @@ class OrderSubscribe extends BaseEntity
     protected $deliveryTime;
     /**
      * @var bool
-     * @Serializer\Type("bitrix_bool")
+     * @Serializer\Type("bool")
      * @Serializer\SerializedName("UF_ACTIVE")
      * @Serializer\Groups(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $active;
+
+    /** @var  string */
+    private $deliveryFrequencyXmlId;
 
     /**
      * @return int
@@ -88,7 +98,7 @@ class OrderSubscribe extends BaseEntity
     }
 
     /**
-     * @return null|Date
+     * @return null|DateTime
      */
     public function getDateCreate()
     {
@@ -96,19 +106,47 @@ class OrderSubscribe extends BaseEntity
     }
 
     /**
-     * @param null|Date|string $dateCreate
+     * @param null|DateTime|string $dateCreate
      *
      * @return self
      */
     public function setDateCreate($dateCreate) : self
     {
-        if ($dateCreate instanceof Date) {
+        if ($dateCreate instanceof DateTime) {
             $this->dateCreate = $dateCreate;
         } else {
             if (is_scalar($dateCreate)) {
-                $this->dateCreate = new Date($dateCreate, 'd.m.Y H:i:s');
-            } else {
-                $this->dateCreate = new Date('', 'd.m.Y H:i:s');
+                $this->dateCreate = new DateTime($dateCreate, 'd.m.Y H:i:s');
+            } elseif($dateCreate === null) {
+                $this->dateCreate = null;
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return null|DateTime
+     */
+    public function getDateEdit()
+    {
+        return $this->dateEdit ?? null;
+    }
+
+    /**
+     * @param null|DateTime|string $dateEdit
+     *
+     * @return self
+     */
+    public function setDateEdit($dateEdit) : self
+    {
+        if ($dateEdit instanceof DateTime) {
+            $this->dateEdit = $dateEdit;
+        } else {
+            if (is_scalar($dateEdit)) {
+                $this->dateEdit = new DateTime($dateEdit, 'd.m.Y H:i:s');
+            } elseif($dateEdit === null) {
+                $this->dateEdit = null;
             }
         }
 
@@ -144,23 +182,45 @@ class OrderSubscribe extends BaseEntity
     }
 
     /**
-     * @return string
+     * @return int
      */
-    public function getDeliveryFrequency() : string
+    public function getDeliveryFrequency() : int
     {
-        return $this->deliveryFrequency ?? '';
+        return $this->deliveryFrequency ?? 0;
     }
 
     /**
-     * @param string $deliveryFrequency
+     * @param int $deliveryFrequency
      *
      * @return self
      */
-    public function setDeliveryFrequency(string $deliveryFrequency) : self
+    public function setDeliveryFrequency(int $deliveryFrequency) : self
     {
-        $this->deliveryFrequency = $deliveryFrequency;
+        $this->deliveryFrequency = (int)$deliveryFrequency;
+        unset($this->deliveryFrequencyXmlId);
 
         return $this;
+    }
+
+    /**
+     * @return string
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Exception
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
+    public function getDeliveryFrequencyXmlId() : string
+    {
+        if (!isset($this->deliveryFrequencyXmlId)) {
+            $appCont = Application::getInstance()->getContainer();
+            /** @var OrderSubscribeService $orderSubscribeService */
+            $orderSubscribeService = $appCont->get('order_subscribe.service');
+            $this->deliveryFrequencyXmlId = $orderSubscribeService->getFrequencyXmlId(
+                $this->getDeliveryFrequency()
+            );
+        }
+
+        return $this->deliveryFrequencyXmlId;
     }
 
     /**

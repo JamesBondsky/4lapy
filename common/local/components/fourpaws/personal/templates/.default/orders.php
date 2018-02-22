@@ -16,7 +16,7 @@ $APPLICATION->IncludeComponent(
     'fourpaws:personal.orders',
     '',
     [
-        'CACHE_TYPE' => 'N',
+        'CACHE_TYPE' => 'A',
     ],
     $component,
     ['HIDE_ICONS' => 'Y']

@@ -19,4 +19,8 @@ switch ($arResult['CURRENT_STAGE']) {
         // страница с описанием
         include __DIR__.'/stage.intro.php';
         break;
+    case 'list':
+        // страница со списком подписанных заказов
+        include __DIR__.'/stage.list.php';
+        break;
 }

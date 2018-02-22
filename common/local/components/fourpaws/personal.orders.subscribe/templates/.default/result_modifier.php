@@ -11,7 +11,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var CBitrixComponentTemplate $this
  */
 
+//$this->getComponent()->arParams = $arParams;
+
 // Запрашиваемое представление страницы
 $arResult['CURRENT_STAGE'] = 'intro';
+if ($arResult['ORDERS']) {
+    $arResult['CURRENT_STAGE'] = 'list';
+}
 
-$this->getComponent()->arParams = $arParams;
+_log_array($arResult);

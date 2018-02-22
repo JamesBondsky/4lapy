@@ -165,8 +165,10 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
             $storeService = App::getInstance()->getContainer()->get('store.service');
             $this->arResult['METRO'] = new ArrayCollection($storeService->getMetroInfo());
 
-            $this->includeComponentTemplate();
+            $this->endResultCache();
         }
+
+        $this->includeComponentTemplate();
 
         return true;
     }

@@ -2,6 +2,7 @@
 
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\PersonalBundle\Entity\Order;
+use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -20,6 +21,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 $arParams['OUTPUT_VIA_BUFFER_CONTENT'] = $arParams['OUTPUT_VIA_BUFFER_CONTENT'] ?? 'N';
 $arParams['BUFFER_CONTENT_VIEW_NAME'] = $arParams['BUFFER_CONTENT_VIEW_NAME'] ?? 'footer_popup_cont';
 $arParams['SHOW_SUBSCRIBE_ACTION'] = $arParams['SHOW_SUBSCRIBE_ACTION'] ?? 'N';
+$arParams['ORDER_SUBSCRIBE_LIST_URL'] = $arParams['ORDER_SUBSCRIBE_LIST_URL'] ?? '/personal/subscribe/';
 
 $attrSuffix = '-'.$arParams['ORDER_ID'].'-'.randString(3);
 $attrPopupId = $arParams['ATTR_POPUP_ID'] ?? 'subscribe-delivery'.$attrSuffix;
@@ -36,11 +38,22 @@ if (!$order->canBeSubscribed()) {
 }
 
 if ($arParams['SHOW_SUBSCRIBE_ACTION'] === 'Y') {
-    ?>
-    <a href="javascript:void(0)" class="b-accordion-order-item__subscribe js-open-popup" data-popup-id="<?=$attrPopupId?>">
-        Подписаться на&nbsp;доставку
-    </a>
-    <?php
+    /** @var OrderSubscribe $orderSubscribe */
+    $orderSubscribe = $arResult['ORDER_SUBSCRIBE'];
+
+    if ($orderSubscribe && $orderSubscribe->isActive()) {
+        ?>
+        <a href="<?=$arParams['ORDER_SUBSCRIBE_LIST_URL']?>" class="b-accordion-order-item__subscribe">
+            Оформлена подписка на&nbsp;доставку
+        </a>
+        <?php
+    } else {
+        ?>
+        <a href="javascript:void(0)" class="b-accordion-order-item__subscribe js-open-popup" data-popup-id="<?=$attrPopupId?>">
+            Подписаться на&nbsp;доставку
+        </a>
+        <?php
+    }
 }
 
 $viewTemplate = $this;
@@ -77,7 +90,12 @@ $errorBlock = '<div class="b-error"><span class="js-message"></span></div>';
                         </label>
                     </div>
                     <div class="b-input b-input--registration-form b-input--datepicker">
-                        <input class="b-input__input-field b-input__input-field--registration-form js-date-subscribe" id="<?='first-delivery'.$attrSuffix?>" type="text" readonly="readonly" onfocus="blur();">
+                        <input name="dateStart"
+                               class="b-input__input-field b-input__input-field--registration-form js-date-subscribe"
+                               id="<?='first-delivery'.$attrSuffix?>"
+                               type="text"
+                               readonly="readonly"
+                               onfocus="blur();">
                         <?=$errorBlock?>
                     </div>
                 </div>
@@ -88,7 +106,7 @@ $errorBlock = '<div class="b-error"><span class="js-message"></span></div>';
                 if ($arResult['TIME_VARIANTS']) {
                     ?>
                     <div class="b-select b-select--subscribe-delivery js-delivery-interval">
-                        <select name="deliveryInterval" class="b-select__block b-select__block--subscribe-delivery js-delivery-interval">
+                        <select name="deliveryInterval" class="b-select__block b-select__block--subscribe-delivery js-delivery-interval" title="">
                             <option value="" disabled="disabled" selected="selected">
                                 выберите
                             </option>
@@ -110,7 +128,7 @@ $errorBlock = '<div class="b-error"><span class="js-message"></span></div>';
                         Как часто
                     </label>
                     <div class="b-select b-select--subscribe-delivery js-frequency-delivery">
-                        <select name="deliveryFrequency" class="b-select__block b-select__block--subscribe-delivery js-frequency-delivery">
+                        <select name="deliveryFrequency" class="b-select__block b-select__block--subscribe-delivery js-frequency-delivery" title="">
                             <option value="" disabled="disabled" selected="selected">
                                 выберите
                             </option>
@@ -127,7 +145,8 @@ $errorBlock = '<div class="b-error"><span class="js-message"></span></div>';
                 }
                 ?>
                 <div class="b-registration__text b-registration__text--subscribe-delivery">
-                    Периодичность, день и время доставки вы сможете поменять в личном кабинете в любой момент
+                    Периодичность, день и время доставки вы сможете поменять в личном кабинете в любой момент.<br>
+                    Стоимость заказа по подписке будет уточнена оператором с учетом действующих акций.
                 </div>
                 <ul class="b-registration__info-delivery">
                     <li class="b-registration__item-delivery">
