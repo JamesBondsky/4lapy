@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "342e1ece287a3db0fb85bf6e230ca53d",
+    "content-hash": "c3db9cd0bb19135211c2f81499b1fdbc",
     "packages": [
         {
             "name": "adv/bitrix-tools",
@@ -4666,26 +4666,30 @@
         },
         {
             "name": "somework/composer-symlinks",
-            "version": "0.3.1",
+            "version": "1.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/somework/composer-symlinks.git",
-                "reference": "d6e24fb52da870243231fd9cfa11dc4fea80d056"
+                "reference": "885c7730d8b53ae7a49477a3d2c7d721e61562cf"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/somework/composer-symlinks/zipball/d6e24fb52da870243231fd9cfa11dc4fea80d056",
-                "reference": "d6e24fb52da870243231fd9cfa11dc4fea80d056",
+                "url": "https://api.github.com/repos/somework/composer-symlinks/zipball/885c7730d8b53ae7a49477a3d2c7d721e61562cf",
+                "reference": "885c7730d8b53ae7a49477a3d2c7d721e61562cf",
                 "shasum": ""
             },
             "require": {
-                "php": ">7.0",
-                "roave/security-advisories": "dev-master"
+                "composer-plugin-api": "^1.0",
+                "php": ">7.0"
             },
             "require-dev": {
+                "composer/composer": "^1.0",
                 "friendsofphp/php-cs-fixer": "@stable"
             },
-            "type": "library",
+            "type": "composer-plugin",
+            "extra": {
+                "class": "SomeWork\\Symlinks\\Plugin"
+            },
             "autoload": {
                 "psr-4": {
                     "SomeWork\\": "src/"
@@ -4702,7 +4706,7 @@
                 }
             ],
             "description": "Create relative symlinks based on getcwd() and relative data",
-            "time": "2017-11-16T10:10:36+00:00"
+            "time": "2018-02-21T12:34:29+00:00"
         },
         {
             "name": "somework/expert-sender-api",

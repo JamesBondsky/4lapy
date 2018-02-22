@@ -54,7 +54,8 @@
         "common/local/php_interface/after_connect.php": "common/bitrix/php_interface/after_connect.php",
         "common/local/php_interface/after_connect_d7.php": "common/bitrix/php_interface/after_connect_d7.php"
       },
-      "skip-missing-target": true
+      "skip-missing-target": true,
+      "absolute-path": true
     },
     "installer-paths": {
       "common/local/modules/{$name}/": [
@@ -81,7 +82,7 @@
     "roave/security-advisories": "dev-master",
     "ruflin/elastica": "^5.3",
     "sensio/framework-extra-bundle": "^5.0",
-    "somework/composer-symlinks": "^0.3.0",
+    "somework/composer-symlinks": "^1.1",
     "somework/expert-sender-api": "^0.4.5",
     "symfony/symfony": "3.3.*",
     "twig/twig": "^1.0",
@@ -101,11 +102,9 @@
   ],
   "scripts": {
     "post-install-cmd": [
-      "SomeWork\\Composer\\Symlinks::create",
       "Incenteev\\ParameterHandler\\ScriptHandler::buildParameters"
     ],
     "post-update-cmd": [
-      "SomeWork\\Composer\\Symlinks::create",
       "Incenteev\\ParameterHandler\\ScriptHandler::buildParameters"
     ]
   }
