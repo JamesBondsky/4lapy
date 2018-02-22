@@ -173,7 +173,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             return $this->ajaxMess->getNotFoundConfirmedCodeException();
         }
         $data = [
-            'UF_PHONE_CONFIRMED' => 'Y',
+            'UF_PHONE_CONFIRMED' => true,
         ];
         try {
             if ($this->currentUserProvider->getUserRepository()->updateData((int)$request->get('ID', 0), $data)) {
@@ -319,7 +319,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             $data = ['PERSONAL_PHONE' => $phone];
             $oldPhone = $curUser->getPersonalPhone();
             if ($oldPhone !== $phone) {
-                $data['UF_PHONE_CONFIRMED'] = 'N';
+                $data['UF_PHONE_CONFIRMED'] = false;
             }
             $res = $userRepository->updateData($id, $data);
             if (!$res) {

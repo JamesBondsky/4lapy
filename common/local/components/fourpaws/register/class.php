@@ -302,7 +302,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         }
 
         $data = [
-            'UF_PHONE_CONFIRMED' => 'Y',
+            'UF_PHONE_CONFIRMED' => true,
             'PERSONAL_PHONE'     => $phone,
         ];
         if ($this->currentUserProvider->getUserRepository()->updateData(
