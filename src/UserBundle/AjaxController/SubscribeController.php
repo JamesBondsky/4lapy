@@ -65,12 +65,12 @@ class SubscribeController extends Controller
         $success = false;
 
         if (\in_array('sale', $type, true)) {
-            if ($type['sale'] === 'Y') {
-                /** @todo реализовать подписку на подарки */
-                $success = true;
-            }
+            /** @todo реализовать подписку на подарки */
+            $success = true;
         } else {
-            /** @todo удаление подписки на подарки */
+            if (!\in_array('skipSaleDelete', $type, true)) {
+                /** @todo удаление подписки на подарки */
+            }
         }
 
         /** В эксперт сендере только о новостях список есть */

@@ -45,11 +45,6 @@ class ExpertsenderService
         $this->client = new ExpertSender($url, $key, $client);
     }
 
-    public function simpleUnsubscribe(string $email)
-    {
-
-    }
-
     /**
      * @param User $user
      *
