@@ -8,6 +8,7 @@ use Bitrix\Iblock\SectionTable;
 use Bitrix\Main\Entity\Query\Join;
 use Bitrix\Main\Entity\ReferenceField;
 use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\BitrixOrm\Utils\EntityConstructor;
 use FourPaws\BitrixOrm\Utils\IblockPropEntityConstructor;
 use FourPaws\Catalog\Model\OftenSeekSection;
 use FourPaws\CatalogBundle\Repository\OftenSeekRepository;
@@ -51,21 +52,21 @@ class OftenSeekService implements OftenSeekInterface
             shuffle($orderDirectionList);
             shuffle($orderFieldList);
 
-            $this->oftenSeekRepository->findBy([
+            $result = $this->oftenSeekRepository->findBy([
                 'filter'  => [
                     '=IBLOCK_ID'         => $iblockId,
                     '=IBLOCK_SECTION_ID' => $sectionId,
                     '=ACTIVE'            => 'Y',
-                    array(
-                        'LOGIC' => 'OR',
+                    [
+                        'LOGIC'       => 'OR',
                         '>=ACTIVE_TO' => new \Bitrix\Main\Type\DateTime(),
-                        'ACTIVE_TO' => null,
-                    ),
-                    array(
-                        'LOGIC' => 'OR',
+                        'ACTIVE_TO'   => null,
+                    ],
+                    [
+                        'LOGIC'         => 'OR',
                         '<=ACTIVE_FROM' => new \Bitrix\Main\Type\DateTime(),
-                        'ACTIVE_FROM' => null,
-                    ),
+                        'ACTIVE_FROM'   => null,
+                    ],
                 ],
                 'limit'   => $countItems,
                 'order'   => [current($orderFieldList) => current($orderDirectionList)],
@@ -121,50 +122,60 @@ class OftenSeekService implements OftenSeekInterface
 
             if ($depthLevel > 1) {
                 $parentCatalogSections = SectionTable::query()->setFilter([
-                    '=IBLOCK_ID'     => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS),
-                    '>=LEFT_MARGIN'  => $leftMargin,
-                    '<=RIGHT_MARGIN' => $rightMargin,
-                    'ACTIVE'         => 'Y',
+                    '=IBLOCK_ID'    => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS),
+                    '<LEFT_MARGIN'  => $leftMargin,
+                    '>RIGHT_MARGIN' => $rightMargin,
+                    '<DEPTH_LEVEL'  => $depthLevel,
+                    'ACTIVE'        => 'Y',
                 ])->setSelect([
                     'ID',
-                ])->setOrder(['LEFT_MARGIN' => 'asc'])->exec();
+                ])->setOrder(['LEFT_MARGIN' => 'desc'])->exec();
 
                 while ($sect = $parentCatalogSections->fetch()) {
-                    $catalogSections[] = $sect['ID'];
+                    $catalogSections[] = (int)$sect['ID'];
                 }
             }
 
             if (!empty($catalogSections)) {
+                $catalogSections = array_unique($catalogSections);
+                $iblockId = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::RELATED_LINKS);
                 $items = $this->oftenSeekSectionRepository->findBy([
-                    'filter' => [
-                        '=IBLOCK_ID'  => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::RELATED_LINKS),
-                        '=UF_SECTION' => $catalogSections,
-                        '=ACTIVE'     => 'Y',
+                    'filter'  => [
+                        '=IBLOCK_ID'              => IblockUtils::getIblockId(IblockType::CATALOG,
+                            IblockCode::RELATED_LINKS),
+                        '=USER_FIELDS.UF_SECTION' => $catalogSections,
+                        '=ACTIVE'                 => 'Y',
                     ],
-                    'select' => [
+                    'select'  => [
                         'ID',
                         'NAME',
                         'ACTIVE',
-                        'UF_SECTION',
-                        'UF_COUNT',
+                        'UF_SECTION' => 'USER_FIELDS.UF_SECTION',
+                        'UF_COUNT'   => 'USER_FIELDS.UF_COUNT',
+                    ],
+                    'runtime' => [
+                        new ReferenceField('USER_FIELDS',
+                            EntityConstructor::compileEntityDataClass('UtsIblock' . $iblockId . 'SectionTable',
+                                'b_uts_iblock_' . $iblockId . '_section')::getEntity(),
+                            Join::on('this.ID', 'ref.VALUE_ID')),
                     ],
                 ]);
 
-                if (\count($catalogSections) > 1) {
+                if (\count($catalogSections) > 1 && $items->count() > 1) {
                     /** @todo подумать над сортировкой - сейчас не изящно */
                     /** @var OftenSeekSection $item */
                     $tmpItems = $items;
-                    $items = [];
+                    $items->clear();
                     foreach ($catalogSections as $sectId) {
                         foreach ($tmpItems as $item) {
                             if ($sectId === $item->getCatalogSection()) {
-                                $result[] = $item;
+                                $items->add($item);
                                 break;
                             }
                         }
                     }
                 }
-                $result = new ArrayCollection($items);
+                $result = $items;
             }
 
         } catch (\Exception $e) {
@@ -173,6 +184,7 @@ class OftenSeekService implements OftenSeekInterface
 
         return $result;
     }
+
     /** @noinspection MoreThanThreeArgumentsInspection
      *
      * @param int $sectionId
