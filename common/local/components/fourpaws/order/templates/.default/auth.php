@@ -3,8 +3,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+use Bitrix\Main\Grid\Declension;
+use Bitrix\Sale\Basket;
+use Bitrix\Sale\BasketItem;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Helpers\WordHelper;
+use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\ReCaptcha\ReCaptchaService;
 use FourPaws\SaleBundle\Entity\OrderPropertyVariant;
 use FourPaws\SaleBundle\Entity\OrderStorage;
@@ -18,6 +23,9 @@ use FourPaws\SaleBundle\Service\OrderPropertyService;
 
 /** @var OrderStorage $storage */
 $storage = $arResult['STORAGE'];
+/** @var Basket $basket */
+$basket = $arResult['BASKET'];
+$basketQuantity = array_sum($basket->getQuantityList());
 
 try {
     $serviceContainer = Application::getInstance()->getContainer();
@@ -229,7 +237,46 @@ $currentCommWay = $communicationWays[$storage->getCommunicationWay()];
                     </form>
                 </article>
             </div>
-            <?php include 'include/basket.php' ?>
+            <aside class="b-order__list">
+                <h4 class="b-title b-title--order-list js-popup-mobile-link">
+                    Заказ: <?= $basketQuantity ?> <?= (new Declension(
+                        'товар',
+                        'товара',
+                        'товаров'
+                    ))->get(
+                        $basketQuantity
+                    ) ?>
+                    (<?= WordHelper::showWeight($basket->getWeight(), true) ?>) на
+                    сумму <?= CurrencyHelper::formatPrice(
+                        $basket->getPrice(),
+                        false
+                    ) ?>
+                </h4>
+                <div class="b-order-list js-popup-mobile">
+                    <a class="b-link b-link--popup-back b-link--popup-choose-shop js-popup-mobile-close">Информация о
+                        заказе</a>
+                    <ul class="b-order-list__list js-order-list-block">
+                        <?php /** @var BasketItem $item */ ?>
+                        <?php foreach ($basket as $item) { ?>
+                            <li class="b-order-list__item b-order-list__item--aside js-full-list">
+                                <div class="b-order-list__order-text b-order-list__order-text--aside js-full-list">
+                                    <div class="b-order-list__clipped-text">
+                                        <div class="b-order-list__text-backed">
+                                            <?= $item->getField('NAME') ?>
+                                            <?php if ($item->getQuantity() > 1) { ?>
+                                                (<?= $item->getQuantity() ?> шт)
+                                            <?php } ?>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="b-order-list__order-value b-order-list__order-value--aside js-full-list">
+                                    <?= CurrencyHelper::formatPrice($item->getQuantity() * $item->getPrice()) ?>
+                                </div>
+                            </li>
+                        <?php } ?>
+                    </ul>
+                </div>
+            </aside>
         </div>
 
         <button class="b-button b-button--social b-button--next b-button--fixed-bottom js-order-next js-valid-out-sub">
@@ -238,7 +285,7 @@ $currentCommWay = $communicationWays[$storage->getCommunicationWay()];
     </div>
 </div>
 <div class="b-preloader b-preloader--fixed">
-  <div class="b-preloader__spinner">
-      <img class="b-preloader__image" src="/static/build/images/inhtml/spinner.svg" alt="spinner" title="">
-  </div>
+    <div class="b-preloader__spinner">
+        <img class="b-preloader__image" src="/static/build/images/inhtml/spinner.svg" alt="spinner" title="">
+    </div>
 </div>
