@@ -2,12 +2,8 @@
 
 namespace FourPaws\Catalog\Model;
 
-use DateTimeImmutable;
 use FourPaws\AppBundle\Entity\BaseEntity;
-use FourPaws\BitrixOrm\Model\IblockElement;
-use JMS\Serializer\Annotation\Accessor;
-use JMS\Serializer\Annotation\Groups;
-use JMS\Serializer\Annotation\Type;
+use JMS\Serializer\Annotation as Serializer;
 
 class OftenSeek extends BaseEntity
 {
