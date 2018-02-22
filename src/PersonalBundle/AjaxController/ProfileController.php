@@ -191,7 +191,7 @@ class ProfileController extends Controller
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             $curUser = $userRepository->find($user->getId());
             if ($curUser->getEmail() !== $user->getEmail()) {
-                $data['UF_EMAIL_CONFIRMED'] = 'N';
+                $data['UF_EMAIL_CONFIRMED'] = false;
             }
             $res = $userRepository->updateData($user->getId(), $userRepository->prepareData($data));
             if (!$res) {
