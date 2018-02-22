@@ -317,12 +317,21 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             $curUser = $userRepository->find($id);
             $data = ['PERSONAL_PHONE' => $phone];
-            if ($curUser->getPersonalPhone() !== $phone) {
+            $oldPhone = $curUser->getPersonalPhone();
+            if ($oldPhone !== $phone) {
                 $data['UF_PHONE_CONFIRMED'] = 'N';
             }
             $res = $userRepository->updateData($id, $data);
             if (!$res) {
                 return $this->ajaxMess->getUpdateError();
+            }
+
+            //Посылаем смс о смененном номере телефона
+            $text = 'Номер телефона в Личном кабинете изменен на '.$phone.'. Если это не вы, обратитесь по тел. 8(800)7700022';
+            try {
+                $smsService = App::getInstance()->getContainer()->get('sms.service');
+                $smsService->send($text, $oldPhone);
+            } catch (ApplicationCreateException $e) {
             }
 
             $mess = 'Телефон обновлен';
