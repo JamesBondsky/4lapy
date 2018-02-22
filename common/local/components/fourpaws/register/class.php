@@ -238,10 +238,14 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 }
             }
 
+            $title= 'Ура, можно покупать! ';
             /** @noinspection PhpUnusedLocalVariableInspection */
             $name = $userEntity->getName();
-            ob_start();
-            /** @noinspection PhpIncludeInspection */
+            ob_start();?>
+            <header class="b-registration__header">
+                <h1 class="b-title b-title--h1 b-title--registration"><?= $title ?></h1>
+            </header>
+            <?php /** @noinspection PhpIncludeInspection */
             include_once App::getDocumentRoot()
                 . '/local/components/fourpaws/register/templates/.default/include/confirm.php';
             $html = ob_get_clean();
@@ -298,7 +302,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         }
 
         $data = [
-            'UF_PHONE_CONFIRMED' => 'Y',
+            'UF_PHONE_CONFIRMED' => true,
             'PERSONAL_PHONE'     => $phone,
         ];
         if ($this->currentUserProvider->getUserRepository()->updateData(
