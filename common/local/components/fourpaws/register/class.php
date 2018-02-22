@@ -22,6 +22,7 @@ use FourPaws\AppBundle\Serialization\BitrixBooleanHandler;
 use FourPaws\AppBundle\Serialization\BitrixDateHandler;
 use FourPaws\AppBundle\Serialization\BitrixDateTimeHandler;
 use FourPaws\AppBundle\Service\AjaxMess;
+use FourPaws\External\Exception\ExpertsenderServiceException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Exception\SmsSendErrorException;
 use FourPaws\External\Manzana\Model\Client;
@@ -37,6 +38,7 @@ use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException;
+use FourPaws\UserBundle\Exception\RuntimeException as UserRuntimeException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Exception\ValidationException;
@@ -226,7 +228,15 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             DeserializationContext::create()->setGroups('create')
         );
         try {
-            $this->userRegistrationService->register($userEntity, true);
+            $regUser = $this->userRegistrationService->register($userEntity, true);
+            if($regUser instanceof User && $regUser->getId() > 0){
+                try {
+                    $expertSenderService = App::getInstance()->getContainer()->get('expertsender.service');
+                    $expertSenderService->sendEmailAfterRegister($regUser);
+                } catch (ExpertsenderServiceException $e) {
+                } catch (ApplicationCreateException $e) {
+                }
+            }
 
             /** @noinspection PhpUnusedLocalVariableInspection */
             $name = $userEntity->getName();
@@ -242,7 +252,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                     'html' => $html,
                 ]
             );
-        } catch (\FourPaws\UserBundle\Exception\RuntimeException $exception) {
+        } catch (UserRuntimeException $exception) {
             return $this->ajaxMess->getRegisterError($exception->getMessage());
         }
     }
