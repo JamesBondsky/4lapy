@@ -51,13 +51,14 @@ class OrderSubscribeController extends Controller
             $result = $component->arResult;
             $actionResult = $result['SUBSCRIBE_ACTION'] ?? [];
             if ($actionResult && $actionResult['SUCCESS'] === 'Y') {
+                $isCreate = $actionResult['TYPE'] === 'CREATE';
                 $return = JsonSuccessResponse::create(
-                    $actionResult['TYPE'] === 'CREATE' ? 'Подписка на доставку выполнена' : 'Подписка на доставку изменена',
+                    $isCreate ? 'Подписка на доставку оформлена' : 'Подписка на доставку изменена',
                     200,
                     [],
                     [
-                        'reload' => false,
-                        'redirect' => '/personal/subscribe/'
+                        'reload' => $isCreate ? false : true,
+                        'redirect' => $isCreate ? '/personal/subscribe/' : ''
                     ]
                 );
             } else {
@@ -90,7 +91,9 @@ class OrderSubscribeController extends Controller
                     );
                 }
             }
-        } catch (\Exception $exception) {}
+        } catch (\Exception $exception) {
+            // При исключениях выводим общее уведомление об ошибке
+        }
 
         if (!$return) {
             $return = JsonErrorResponse::createWithData(
@@ -109,12 +112,67 @@ class OrderSubscribeController extends Controller
     /**
      * @Route("/delete/", methods={"GET"})
      * @param Request $request
-     *
      * @return JsonResponse
+     * @throws \Bitrix\Main\SystemException
      */
     public function deleteAction(Request $request) : JsonResponse
     {
         $return = null;
+
+        $bxRequest = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
+        $requestParams = $bxRequest->toArray();
+        $requestParams['action'] = 'deliveryOrderUnsubscribe';
+        $bxRequest->set($requestParams);
+        try {
+            /** @var \FourPawsPersonalCabinetOrdersSubscribeFormComponent $component */
+            $component = $GLOBALS['APPLICATION']->IncludeComponent(
+                'fourpaws:personal.orders.subscribe.form',
+                '',
+                [
+                    'INCLUDE_TEMPLATE' => 'N',
+                ],
+                null,
+                [
+                    'HIDE_ICONS' => 'Y',
+                ]
+            );
+            $result = $component->arResult;
+            $actionResult = $result['UNSUBSCRIBE_ACTION'] ?? [];
+            if ($actionResult && $actionResult['SUCCESS'] === 'Y') {
+                $return = JsonSuccessResponse::create(
+                    'Подписка на доставку отменена',
+                    200,
+                    [],
+                    [
+                        'reload' => true,
+                        //'redirect' => ''
+                    ]
+                );
+            } else {
+                $errors = [];
+                if ($result['ERROR']['EXEC']) {
+                    foreach($result['ERROR']['EXEC'] as $errName => $error) {
+                        /** @var \Bitrix\Main\Error $error */
+                        $errors[$errName] = $error->getMessage();
+                    }
+                }
+                if ($errors) {
+                    $return = JsonErrorResponse::createWithData(
+                        'Обнаружены ошибки при обработке запроса',
+                        [
+                            'errors' => $errors
+                        ],
+                        200,
+                        [
+                            'reload' => false,
+                            'redirect' => ''
+                        ]
+                    );
+                }
+            }
+        } catch (\Exception $exception) {
+            // При исключениях выводим общее уведомление об ошибке
+        }
 
         if (!$return) {
             $return = JsonErrorResponse::createWithData(

@@ -3,6 +3,7 @@
 namespace FourPaws\PersonalBundle\Service;
 
 use Bitrix\Main\Entity\AddResult;
+use Bitrix\Main\Entity\DeleteResult;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Entity\UpdateResult;
 use Bitrix\Sale\Internals\OrderTable;
@@ -103,6 +104,20 @@ class OrderSubscribeService
     }
 
     /**
+     * @param int $enumId
+     * @return string
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Exception
+     */
+    public function getFrequencyValue(int $enumId): string
+    {
+        $enum = $this->getFrequencyEnum();
+
+        return isset($enum[$enumId]) ? $enum[$enumId]['VALUE'] : '';
+    }
+
+    /**
      * @param int|array $orderId
      * @param bool $filterActive
      * @return ArrayCollection
@@ -194,5 +209,16 @@ class OrderSubscribeService
         $updateResult = $this->orderSubscribeRepository->updateEx($data);
 
         return $updateResult;
+    }
+
+    /**
+     * @param int $id
+     * @return DeleteResult
+     */
+    public function delete(int $id): DeleteResult
+    {
+        $deleteResult = $this->orderSubscribeRepository->deleteEx($id);
+
+        return $deleteResult;
     }
 }

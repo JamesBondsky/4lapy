@@ -6,6 +6,7 @@ use Bitrix\Highloadblock\HighloadBlockTable;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\Entity\AddResult;
 use Bitrix\Main\Entity\Base;
+use Bitrix\Main\Entity\DeleteResult;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Entity\UpdateResult;
 use Bitrix\Main\Error;
@@ -314,6 +315,26 @@ class OrderSubscribeRepository extends BaseHlRepository
                 $result->addError(
                     new Error($exception->getMessage(), 'argumentNullException')
                 );
+            } catch(\Exception $exception) {
+                $result->addError(
+                    new Error($exception->getMessage(), $exception->getCode())
+                );
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param int $id
+     * @return DeleteResult
+     */
+    public function deleteEx(int $id): DeleteResult
+    {
+        $result = new DeleteResult();
+        if ($result->isSuccess()) {
+            try {
+                $this->delete($id);
             } catch(\Exception $exception) {
                 $result->addError(
                     new Error($exception->getMessage(), $exception->getCode())

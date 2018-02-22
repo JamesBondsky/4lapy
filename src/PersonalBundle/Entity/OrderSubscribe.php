@@ -5,8 +5,11 @@ namespace FourPaws\PersonalBundle\Entity;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Entity\BaseEntity;
+use FourPaws\Helpers\DateHelper;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
+use function GuzzleHttp\Psr7\str;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -74,8 +77,26 @@ class OrderSubscribe extends BaseEntity
      */
     protected $active;
 
+    /** @var  OrderSubscribeService */
+    private $orderSubscribeService;
     /** @var  string */
     private $deliveryFrequencyXmlId;
+    /** @var  string */
+    private $deliveryFrequencyValue;
+
+    /**
+     * @return OrderSubscribeService
+     * @throws ApplicationCreateException
+     */
+    protected function getOrderSubscribeService() : OrderSubscribeService
+    {
+        if (!$this->orderSubscribeService) {
+            $appCont = Application::getInstance()->getContainer();
+            $this->orderSubscribeService = $appCont->get('order_subscribe.service');
+        }
+
+        return $this->orderSubscribeService;
+    }
 
     /**
      * @return int
@@ -162,6 +183,40 @@ class OrderSubscribe extends BaseEntity
     }
 
     /**
+     * @param string $format
+     * @return string
+     */
+    public function getDateStartFormatted(string $format = 'd.m.Y') : string
+    {
+        $date =  $this->getDateStart();
+
+        return $date ? $date->format($format) : '';
+    }
+
+    /**
+     * @return int
+     */
+    public function getDateStartWeekday() : int
+    {
+        $dateStart = $this->getDateStart();
+        return $dateStart ? (int)$dateStart->format('N') : 0;
+    }
+
+    /**
+     * @param bool $lower
+     * @param string $case
+     * @return string
+     */
+    public function getDateStartWeekdayRu(bool $lower = true, string $case = '') : string
+    {
+        $case = $case === '' ? DateHelper::NOMINATIVE : $case;
+        $weekDay = $this->getDateStartWeekday();
+        $result = $weekDay ? DateHelper::replaceRuDayOfWeek('#'.$weekDay.'#', $case) : '';
+
+        return $lower ? ToLower($result) : $result;
+    }
+
+    /**
      * @param null|Date|string $dateStart
      *
      * @return self
@@ -207,20 +262,39 @@ class OrderSubscribe extends BaseEntity
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\SystemException
      * @throws \Exception
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ApplicationCreateException
      */
     public function getDeliveryFrequencyXmlId() : string
     {
         if (!isset($this->deliveryFrequencyXmlId)) {
-            $appCont = Application::getInstance()->getContainer();
             /** @var OrderSubscribeService $orderSubscribeService */
-            $orderSubscribeService = $appCont->get('order_subscribe.service');
+            $orderSubscribeService = $this->getOrderSubscribeService();
             $this->deliveryFrequencyXmlId = $orderSubscribeService->getFrequencyXmlId(
                 $this->getDeliveryFrequency()
             );
         }
 
         return $this->deliveryFrequencyXmlId;
+    }
+
+    /**
+     * @return string
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Exception
+     * @throws ApplicationCreateException
+     */
+    public function getDeliveryFrequencyValue() : string
+    {
+        if (!isset($this->deliveryFrequencyValue)) {
+            /** @var OrderSubscribeService $orderSubscribeService */
+            $orderSubscribeService = $this->getOrderSubscribeService();
+            $this->deliveryFrequencyValue = $orderSubscribeService->getFrequencyValue(
+                $this->getDeliveryFrequency()
+            );
+        }
+
+        return $this->deliveryFrequencyValue;
     }
 
     /**
@@ -241,6 +315,52 @@ class OrderSubscribe extends BaseEntity
         $this->deliveryTime = $deliveryTime;
 
         return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDeliveryTimeNormalized() : string
+    {
+        $result = $this->getDeliveryTime();
+        // &mdash;, &ndash;
+        $result = str_replace(
+            ['—', '–'],
+            '-',
+            $result
+        );
+
+        return $result;
+    }
+
+    /**
+     * Преобразовывает значение вида "09:00-16:00" к виду: "с 9 до 16"
+     *
+     * @param bool $noBreak
+     * @return string
+     */
+    public function getDeliveryTimeFormattedRu(bool $noBreak = false) : string
+    {
+        $result = $this->getDeliveryTimeNormalized();
+        $pieces = explode('-', $result);
+        if (count($pieces) === 2) {
+            $from = trim($pieces[0]);
+            $to = trim($pieces[1]);
+            $timePieces = explode(':', $from);
+            if (count($timePieces) === 2 && $timePieces[1] === '00') {
+                $from = (int)$timePieces[0];
+            }
+            $timePieces = explode(':', $to);
+            if (count($timePieces) === 2 && $timePieces[1] === '00') {
+                $to = (int)$timePieces[0];
+            }
+            $result = 'с '.$from.' до '.$to;
+            if ($noBreak) {
+                $result = str_replace(' ', '&nbsp;', $result);
+            }
+        }
+
+        return $result;
     }
 
     /**

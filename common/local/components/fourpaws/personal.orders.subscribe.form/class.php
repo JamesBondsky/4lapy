@@ -148,8 +148,13 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
     {
         $action = 'initialLoad';
 
-        if ($this->request->get('action') === 'deliveryOrderSubscribe')  {
-            $action = 'subscribe';
+        switch ($this->request->get('action')) {
+            case 'deliveryOrderSubscribe':
+                $action = 'subscribe';
+                break;
+            case 'deliveryOrderUnsubscribe':
+                $action = 'unsubscribe';
+                break;
         }
 
         return $action;
@@ -165,13 +170,6 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
 
     protected function initialLoadAction()
     {
-        $this->arResult['ORDER'] = $this->getOrder();
-        if ($this->arResult['ORDER']) {
-            $this->arResult['TIME_VARIANTS'] = $this->getTimeVariants();
-            $this->arResult['FREQUENCY_VARIANTS'] = $this->getFrequencyVariants();
-            $this->arResult['ORDER_SUBSCRIBE'] = $this->getOrderSubscribe();
-        }
-
         $this->loadData();
     }
 
@@ -184,7 +182,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
 
         $this->arResult['SUBSCRIBE_ACTION']['SUCCESS'] = 'N';
 
-        $this->processFormFields();
+        $this->processSubscribeFormFields();
 
         if (empty($this->arResult['ERROR']['FIELD'])) {
             $order = $this->getOrder();
@@ -209,7 +207,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                         $this->arResult['SUBSCRIBE_ACTION']['SUCCESS'] = 'Y';
                         $this->flushOrderSubscribe();
                     } else {
-                        $this->setExecError('subscriptionUpdate', $updateResult->getErrors(), 'subscriptionUpdate');
+                        $this->setExecError('subscribeAction', $updateResult->getErrors(), 'subscriptionUpdate');
                     }
                 } else {
                     // создание новой подписки
@@ -220,7 +218,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                         $this->arResult['SUBSCRIBE_ACTION']['SUBSCRIPTION_ID'] = $addResult->getId();
                         $this->flushOrderSubscribe();
                     } else {
-                        $this->setExecError('subscriptionAdd', $addResult->getErrors(), 'subscriptionAdd');
+                        $this->setExecError('subscribeAction', $addResult->getErrors(), 'subscriptionAdd');
                     }
                 }
             }
@@ -229,14 +227,52 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         $this->loadData();
     }
 
+    protected function unsubscribeAction()
+    {
+        if ($this->request->get('orderId')) {
+            $this->arParams['ORDER_ID'] = (int)$this->request->get('orderId');
+        }
+
+        $this->arResult['UNSUBSCRIBE_ACTION']['SUCCESS'] = 'N';
+
+        $order = $this->getOrder();
+        if ($order) {
+            $orderSubscribeService = $this->getOrderSubscribeService();
+            $orderSubscribe = $this->getOrderSubscribe();
+            if ($orderSubscribe) {
+                $this->arResult['UNSUBSCRIBE_ACTION']['SUBSCRIPTION_ID'] = $orderSubscribe->getId();
+                $deleteResult = $orderSubscribeService->delete($orderSubscribe->getId());
+                if ($deleteResult->isSuccess()) {
+                    $this->arResult['UNSUBSCRIBE_ACTION']['SUCCESS'] = 'Y';
+                    $this->flushOrderSubscribe();
+                } else {
+                    $this->setExecError('unsubscribeAction', $deleteResult->getErrors(), 'subscriptionDelete');
+                }
+            } else {
+                $this->setExecError('unsubscribeAction', 'Подписка на заказ не найдена', 'subscriptionNotFound');
+            }
+        }
+
+        $this->loadData();
+    }
+
     protected function loadData()
     {
+        if ($this->getAction() === 'initialLoad') {
+            $this->arResult['ORDER'] = $this->getOrder();
+            if ($this->arResult['ORDER']) {
+                $this->arResult['TIME_VARIANTS'] = $this->getTimeVariants();
+                $this->arResult['FREQUENCY_VARIANTS'] = $this->getFrequencyVariants();
+                $this->arResult['ORDER_SUBSCRIBE'] = $this->getOrderSubscribe();
+            }
+        }
+
         if ($this->arParams['INCLUDE_TEMPLATE'] !== 'N') {
             $this->includeComponentTemplate();
         }
     }
 
-    protected function processFormFields()
+    protected function processSubscribeFormFields()
     {
         $fieldName = 'dateStart';
         $value = $this->arResult['FIELD_VALUES'][$fieldName] ?? '';
@@ -313,13 +349,19 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                         $this->data['ORDER'] = $order;
                     } else {
                         $this->setExecError(
-                            'notThisUserOrder',
+                            'getOrder',
                             'Нельзя подписаться на заказ под данным пользователем',
                             'notThisUserOrder'
                         );
                     }
                 } else {
-                    $this->setExecError('orderNotFound', 'Заказ не найден', 'orderNotFound');
+                    $this->setExecError('getOrder', 'Заказ не найден', 'orderNotFound');
+                }
+            } else {
+                if ($this->arParams['ORDER_ID'] <= 0) {
+                    $this->setExecError('getOrder', 'Некорректный идентификатор заказа', 'incorrectOrderId');
+                } elseif ($this->arParams['USER_ID'] <= 0) {
+                    $this->setExecError('getOrder', 'Некорректный идентификатор пользователя', 'incorrectUserId');
                 }
             }
         }

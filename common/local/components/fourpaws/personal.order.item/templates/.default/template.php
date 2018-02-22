@@ -1,4 +1,18 @@
 <?php
+
+use Bitrix\Main\Application;
+use Bitrix\Main\Web\Uri;
+use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\Decorators\SvgDecorator;
+use FourPaws\Helpers\WordHelper;
+use FourPaws\PersonalBundle\Entity\Order;
+use FourPaws\PersonalBundle\Entity\OrderItem;
+use FourPaws\PersonalBundle\Entity\OrderSubscribe;
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
+    die();
+}
+
 /**
  * @global CMain $APPLICATION
  * @var array $arParams
@@ -9,21 +23,57 @@
  * @var string $componentPath
  */
 
-use Bitrix\Main\Application;
-use Bitrix\Main\Web\Uri;
-use Doctrine\Common\Collections\ArrayCollection;
-use FourPaws\Decorators\SvgDecorator;
-use FourPaws\Helpers\WordHelper;
-use FourPaws\PersonalBundle\Entity\Order;
-use FourPaws\PersonalBundle\Entity\OrderItem;
-
 if (!$arResult['ORDER']) {
     return;
 }
 /** @var Order $order */
 $order = $arResult['ORDER'];
+
+/** @var OrderSubscribe $orderSubscribe */
+$orderSubscribe = $arParams['ORDER_SUBSCRIBE'] ?? null;
+
+/**
+ * Подписка на доставку заказа
+ * (элементы управления подпиской и попап c формой)
+ * @todo Сделать вызов попапа через ajax
+ */
+$subscribeOrderAddControls = '';
+$subscribeOrderEditControls = '';
+if ($order->canBeSubscribed()) {
+    /** @var \FourPawsPersonalCabinetOrdersSubscribeFormComponent $subscribeFormComponent */
+    $subscribeFormComponent = $APPLICATION->IncludeComponent(
+        'fourpaws:personal.orders.subscribe.form',
+        'popup',
+        [
+            'ORDER_ID' => $order->getId(),
+            // Y - вставлять html через отложенные функции
+            'OUTPUT_VIA_BUFFER' => 'Y',
+        ],
+        $component,
+        [
+            'HIDE_ICONS' => 'Y',
+        ]
+    );
+    if ($subscribeFormComponent->arResult['CONTROLS_HTML']) {
+        if ($orderSubscribe) {
+            // элементы управления подпиской
+            $subscribeOrderEditControls = $subscribeFormComponent->arResult['CONTROLS_HTML']['EDIT'];
+        } else {
+            // элементы добавления подписки
+            $subscribeOrderAddControls = $subscribeFormComponent->arResult['CONTROLS_HTML']['ADD'];
+        }
+    }
+}
+
+$attr = '';
+if ($orderSubscribe) {
+    $attr .= ' data-first-subscribe="'.$orderSubscribe->getDateStart().'"';
+    $attr .= ' data-interval="'.$orderSubscribe->getDeliveryTime().'"';
+    $attr .= ' data-frequency="'.$orderSubscribe->getDeliveryFrequency().'"';
+    //$attr .= ' data-id="'.$orderSubscribe->getOrderId().'"';
+}
 ?>
-<li class="b-accordion-order-item js-permutation-li js-item-content">
+<li<?=$attr?> class="b-accordion-order-item js-permutation-li js-item-content">
     <div class="b-accordion-order-item__visible js-premutation-accordion-content">
         <div class="b-accordion-order-item__info">
             <a class="b-accordion-order-item__open-accordion js-open-accordion"
@@ -34,8 +84,21 @@ $order = $arResult['ORDER'];
                         <?= new SvgDecorator('icon-arrow-account', 25, 25) ?>
                     </span>
                 </span>
-                <span class="b-accordion-order-item__number-order">№ <?= $order->getId() ?>
-                    от <?= $order->getFormatedDateInsert() ?></span>
+                <?php
+                if ($orderSubscribe) {
+                    ?>
+                    <span class="b-accordion-order-item__number-order">
+                        <?=($orderSubscribe->getDeliveryFrequencyValue().', '.$orderSubscribe->getDateStartWeekdayRu())?>
+                    </span>
+                    <?php
+                } else {
+                    ?>
+                    <span class="b-accordion-order-item__number-order">
+                        <?=('№ '.$order->getId().' от '.$order->getFormatedDateInsert())?>
+                    </span>
+                    <?php
+                }
+                ?>
             </a>
             <?php $countItems = $order->getItems()->count(); ?>
             <div class="b-accordion-order-item__info-order"><?= $countItems ?> <?= WordHelper::declension($countItems,
@@ -76,53 +139,45 @@ $order = $arResult['ORDER'];
             </div>
         </div>
         <div class="b-accordion-order-item__button js-button-default">
-            <?php if ($order->isClosed() && !$order->isManzana()) {
+            <?php
+            if (!$orderSubscribe && $order->isClosed() && !$order->isManzana()) {
                 $uri = new Uri(Application::getInstance()->getContext()->getRequest()->getRequestUri());
-                $uri->addParams(['reply_order' => 'Y', 'id' => $order->getId()]); ?>
+                $uri->addParams(['reply_order' => 'Y', 'id' => $order->getId()]);
+                ?>
                 <div class="b-accordion-order-item__subscribe-link b-accordion-order-item__subscribe-link--full">
                     <a class="b-link b-link--repeat-order b-link--repeat-order" href="<?= $uri->getUri() ?>"
                        title="Повторить заказ">
                         <span class="b-link__text b-link__text--repeat-order">Повторить заказ</span>
                     </a>
                 </div>
-            <?php } ?>
-            <?php /** @todo оплата заказа */ ?>
-            <?php if (!$order->isClosed() && !$order->isPayed() && !$order->isManzana()) { ?>
+                <?php
+            }
+
+            /** @todo оплата заказа */
+            if (!$orderSubscribe && !$order->isClosed() && !$order->isPayed() && !$order->isManzana()) {
+                ?>
                 <div class="b-accordion-order-item__subscribe-link b-accordion-order-item__subscribe-link--full">
                     <a class="b-link b-link--pay-account b-link--pay-account" href="javascript:void(0)"
                        title="Оплатить">
                         <span class="b-link__text b-link__text--pay-account">Оплатить</span>
                     </a>
                 </div>
-            <?php } ?>
-            <div class="b-accordion-order-item__sum b-accordion-order-item__sum--full"><?= $order->getFormatedPrice() ?>
-                <span
-                        class="b-ruble b-ruble--account-accordion">&nbsp;₽</span>
+                <?php
+            }
+
+            // элементы управления подпиской
+            echo $subscribeOrderEditControls;
+
+            ?>
+            <div class="b-accordion-order-item__sum b-accordion-order-item__sum--full">
+                <?= $order->getFormatedPrice() ?>
+                <span class="b-ruble b-ruble--account-accordion">&nbsp;₽</span>
             </div>
             <?php
 
-            /**
-             * Подписка на доставку заказа
-             * @todo Переделать на вызов через ajax
-             */
-            if ($order->canBeSubscribed()) {
-                // ссылка и попап c формой
-                $APPLICATION->IncludeComponent(
-                    'fourpaws:personal.orders.subscribe.form',
-                    'popup',
-                    [
-                        'ORDER_ID' => $order->getId(),
-                        // Y - выводить ссылку подписки
-                        'SHOW_SUBSCRIBE_ACTION' => 'Y',
-                        // Y - вставлять html через отложенные функции
-                        'OUTPUT_VIA_BUFFER' => 'Y',
-                    ],
-                    $component,
-                    [
-                        'HIDE_ICONS' => 'Y',
-                    ]
-                );
-            }
+            // элементы добавления подписки
+            echo $subscribeOrderAddControls;
+
             ?>
         </div>
     </div>

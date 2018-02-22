@@ -2,6 +2,9 @@
 
 namespace FourPaws\PersonalBundle\Entity;
 
+use Adv\Bitrixtools\Exception\IblockNotFoundException;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Internals\StatusLangTable;
@@ -547,6 +550,12 @@ class Order extends BaseEntity
 
     /**
      * @return float
+     * @throws ApplicationCreateException
+     * @throws EmptyEntityClass
+     * @throws IblockNotFoundException
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws \Exception
      */
     public function getAllWeight(): float
     {
@@ -571,6 +580,12 @@ class Order extends BaseEntity
 
     /**
      * @return float
+     * @throws ApplicationCreateException
+     * @throws EmptyEntityClass
+     * @throws IblockNotFoundException
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws \Exception
      */
     public function getFormatedAllWeight(): float
     {
@@ -580,6 +595,12 @@ class Order extends BaseEntity
 
     /**
      * @return float
+     * @throws ApplicationCreateException
+     * @throws EmptyEntityClass
+     * @throws IblockNotFoundException
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws \Exception
      */
     public function getItemsSum(): float
     {
@@ -601,6 +622,12 @@ class Order extends BaseEntity
 
     /**
      * @return float
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws EmptyEntityClass
+     * @throws IblockNotFoundException
+     * @throws SystemException
+     * @throws \Exception
      */
     public function getFormatedItemsSum(): float
     {
@@ -817,9 +844,9 @@ $result = true;
      * @return array
      * @throws ApplicationCreateException
      * @throws EmptyEntityClass
-     * @throws \Adv\Bitrixtools\Exception\IblockNotFoundException
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\SystemException
+     * @throws IblockNotFoundException
+     * @throws ArgumentException
+     * @throws SystemException
      * @throws \Exception
      */
     protected function getOrderItems(): array

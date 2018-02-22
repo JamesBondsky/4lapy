@@ -18,5 +18,3 @@ $arResult['CURRENT_STAGE'] = 'intro';
 if ($arResult['ORDERS']) {
     $arResult['CURRENT_STAGE'] = 'list';
 }
-
-_log_array($arResult);

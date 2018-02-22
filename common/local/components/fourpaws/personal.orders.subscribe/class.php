@@ -181,42 +181,4 @@ class FourPawsPersonalCabinetOrdersSubscribeComponent extends CBitrixComponent
 
         $this->includeComponentTemplate();
     }
-
-    /**
-     * @param array|string $errorMsg
-     * @return string
-     */
-    protected function prepareErrorMsg($errorMsg)
-    {
-        $result = '';
-        if (is_array($errorMsg)) {
-            $result = [];
-            foreach ($errorMsg as $item) {
-                if ($item instanceof Error) {
-                    $result[] = '['.$item->getCode().'] '.$item->getMessage();
-                } elseif (is_scalar($item)) {
-                    $result[] = $item;
-                }
-            }
-            $result = implode('<br>', $result);
-        } elseif (is_scalar($errorMsg)) {
-            $result = $errorMsg;
-        }
-
-        return $result;
-    }
-
-    protected function walkRequestValues($value)
-    {
-        if (is_scalar($value)) {
-            return htmlspecialcharsbx($value);
-        } elseif (is_array($value)) {
-            return array_map(
-                [$this, __FUNCTION__],
-                $value
-            );
-        }
-
-        return $value;
-    }
 }
