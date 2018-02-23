@@ -117,7 +117,6 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->includeComponentTemplate($componentPage);
         } catch (\Exception $e) {
             try {
-                var_dump($e->getMessage());
                 $logger = LoggerFactory::create('component');
                 $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
             } catch (\RuntimeException $e) {
@@ -142,8 +141,6 @@ class FourPawsOrderComponent extends \CBitrixComponent
         try {
             $order = $this->orderService->createOrder($storage, false);
         } catch (OrderCreateException $e) {
-            var_dump($e->getMessage());
-            die();
             LocalRedirect('/cart');
         }
 
