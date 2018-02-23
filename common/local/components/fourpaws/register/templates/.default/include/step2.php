@@ -147,12 +147,14 @@ use FourPaws\External\Manzana\Model\Client;
                 <span class="b-checkbox__text-agree">Я ознакомлен(а) и соглашаюсь с условиями
                     <a class="b-checkbox__link-agree"
                        href="/company/user-agreement/"
-                       title="пользовательского соглашения">пользовательского соглашения.</a>
+                       title="пользовательского соглашения"
+                       target="_blank">пользовательского соглашения.</a>
                 </span>
                 <span class="b-checkbox__text-agree">Я даю согласие на
                     <a class="b-checkbox__link-agree"
                        href="/company/privacy-policy/"
-                       title="обработку персональных данных">обработку персональных данных.</a>
+                       title="обработку персональных данных"
+                       target="_blank">обработку персональных данных.</a>
                 </span>
             </label>
         </div>
