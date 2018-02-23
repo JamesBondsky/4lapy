@@ -6,112 +6,61 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 /**
  * @var \CBitrixComponentTemplate $this
  *
- * @var array $arResult
+ * @var array                     $arResult
  */
 $this->setFrameMode(true);
 
-if (!(bool)$arResult['NavShowAlways']) {
-    if ((int)$arResult['NavRecordCount'] === 0
+if (!(bool)$arResult['NavShowAlways'] && ((int)$arResult['NavRecordCount'] === 0
         || ((int)$arResult['NavPageCount'] === 1
-            && (bool)$arResult['NavShowAll'] === false)) {
-        return;
-    }
+            && (bool)$arResult['NavShowAll'] === false))) {
+    return;
 }
 
 $class = '';
 if ($arParams['AJAX_MODE'] === 'Y') {
-    $class = 'js-pagination';
-}
-
-/**
- * на основе visual
- */
-?>
+    $class = ' js-pagination';
+} ?>
 
 <div class="b-pagination">
     <ul class="b-pagination__list">
-        <li class="b-pagination__item b-pagination__item--prev <?= ((int)$arResult['NavPageNomer']
-            > 1) ? '' : 'b-pagination__item--disabled' ?>">
-            <?php if ((int)$arResult['NavPageNomer'] > 1) {
-                $title = GetMessage(
-                    'nav_page_num_title',
-                    ['#NUM#' => 1]
-                );
-                ?>
-                <a class="b-pagination__link <?= $class ?>" title="<?= $title ?>" href="<?= $arResult['PREV_URL'] ?>">Назад</a>
-                <?php
-            } else {
-                ?>
+        <?php $disabled = ((int)$arResult['NavPageNomer'] > 1) ? '' : ' b-pagination__item--disabled'; ?>
+        <li class="b-pagination__item b-pagination__item--prev<?= $disabled ?>">
+            <?php if ((int)$arResult['NavPageNomer'] > 1) { ?>
+                <a class="b-pagination__link<?= $class ?>" title="Назад" href="<?= $arResult['PREV_URL'] ?>">Назад</a>
+            <?php } else { ?>
                 <span class="b-pagination__link">Назад</span>
-                <?php
-            } ?>
+            <?php } ?>
         </li>
 
 
         <?php $navRecordGroup = 1;
-        while ($navRecordGroup <= $arResult['NavPageCount']) {
-            $title = GetMessage(
-                'nav_page_num_title',
-                ['#NUM#' => $navRecordGroup]
-            );
-            if ($navRecordGroup === (int)$arResult['NavPageNomer']) {
-                ?>
-                <li class="b-pagination__item">
-                <a class="b-pagination__link <?= $class ?> active"
-                   href="javascript:void(0);"
-                   title="<?= $title ?>"><?= $navRecordGroup ?></a>
-                </li><?php
-            } elseif ($navRecordGroup === 1 && (bool)$arResult['bSavePage'] === false) {
-                ?>
-            <li class="b-pagination__item <?= $arResult['HIDDEN'][$navRecordGroup] ?? '' ?>">
-                <a class="b-pagination__link <?= $class ?>"
-                   href="<?= $arResult['BASE_URI'] ?>"
-                   title="<?= $title ?>"><?= $navRecordGroup ?></a>
-                </li><?php
-            } else {
-                ?>
-            <li class="b-pagination__item <?= $arResult['HIDDEN'][$navRecordGroup] ?? '' ?>">
-                <a class="b-pagination__link <?= $class ?>"
-                   href="<?= $arResult['URLS'][$navRecordGroup] ?>"
-                   title="<?= $title ?>"><?= $navRecordGroup ?></a>
-                </li><?php
-            }
-            if ($navRecordGroup === 1 && (int)$arResult['nStartPage'] > 1
-                && (int)$arResult['nStartPage'] - $navRecordGroup >= 0) {
-                ?>
+        while ($navRecordGroup <= $arResult['NavPageCount']) { ?>
+            <li class="b-pagination__item <?= $navRecordGroup === (int)$arResult['NavPageNomer'] ? '' : $arResult['HIDDEN'][$navRecordGroup] ?? '' ?>">
+                <a class="b-pagination__link<?= $class ?> <?= $navRecordGroup === (int)$arResult['NavPageNomer'] ? 'active' : '' ?>"
+                   href="<?= $navRecordGroup === (int)$arResult['NavPageNomer'] ? '' : $arResult['URLS'][$navRecordGroup] ?>"
+                   title="<?= $navRecordGroup ?>">
+                    <?= $navRecordGroup ?>
+                </a>
+            </li>
+            <?php /** установка точек */
+            if (($arResult['START_BETWEEN_BEGIN'] > 0 && $navRecordGroup === $arResult['START_BETWEEN_BEGIN'])
+                || ($arResult['END_BETWEEN_BEGIN'] > 0 && $navRecordGroup === $arResult['END_BETWEEN_BEGIN'])) { ?>
                 <li class="b-pagination__item">
                     <span class="b-pagination__dot">&hellip;</span>
-                </li><?php
-                $navRecordGroup = (int)$arResult['nStartPage'];
-            } elseif ($navRecordGroup === (int)$arResult['nEndPage']
-                && (int)$arResult['nEndPage'] < ($arResult['NavPageCount'] - 1)) {
-                ?>
-                <li class="b-pagination__item">
-                    <span class="b-pagination__dot">&hellip;</span>
-                </li><?php
-                $navRecordGroup = $arResult['NavPageCount'];
-            } else {
-                $navRecordGroup++;
+                </li>
+                <?php $navRecordGroup = $arResult['START_BETWEEN_BEGIN'] === $navRecordGroup ? $arResult['START_BETWEEN_END'] : $arResult['END_BETWEEN_END'];
             }
         } ?>
 
-        <li class="b-pagination__item b-pagination__item--next <?= ((int)$arResult['NavPageNomer']
-            < $arResult['NavPageCount']) ? '' : 'b-pagination__item--disabled' ?>">
-            <?php if ((int)$arResult['NavPageNomer'] < $arResult['NavPageCount']) {
-                $title = GetMessage(
-                    'nav_page_num_title',
-                    ['#NUM#' => $arResult['NavPageCount']]
-                );
-                ?>
-                <a class="b-pagination__link <?= $class ?>" title="<?= $title ?>" href="<?= $arResult['NEXT_URL'] ?>">
+        <?php $disabled = ((int)$arResult['NavPageNomer'] < $arResult['NavPageCount']) ? '' : ' b-pagination__item--disabled'; ?>
+        <li class="b-pagination__item b-pagination__item--next<?= $disabled ?>">
+            <?php if ((int)$arResult['NavPageNomer'] < $arResult['NavPageCount']) { ?>
+                <a class="b-pagination__link<?= $class ?>" title="Вперед" href="<?= $arResult['NEXT_URL'] ?>">
                     Вперед
                 </a>
-                <?php
-            } else {
-                ?>
+            <?php } else { ?>
                 <span class="b-pagination__link">Вперед</span>
-                <?php
-            } ?>
+            <?php } ?>
         </li>
     </ul>
 </div>
