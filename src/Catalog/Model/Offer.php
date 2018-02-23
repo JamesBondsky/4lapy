@@ -46,7 +46,7 @@ class Offer extends IblockElement
      */
     protected $active = true;
 
-    /**p
+    /**
      * @var DateTimeImmutable
      * @Type("DateTimeImmutable")
      * @Accessor(getter="getDateActiveFrom")
@@ -203,7 +203,7 @@ class Offer extends IblockElement
      * @Type("string")
      * @Groups({"elastic"})
      */
-    protected $Catalog_structure20170920134928_REWARD_TYPE = '';
+    protected $PROPERTY_REWARD_TYPE = '';
 
     /**
      * @var HlbReferenceItem

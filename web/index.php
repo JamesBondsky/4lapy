@@ -15,9 +15,7 @@ $APPLICATION->IncludeComponent('bitrix:news.list',
     [
         'COMPONENT_TEMPLATE'              => 'index.slider',
         'IBLOCK_TYPE'                     => IblockType::PUBLICATION,
-        'IBLOCK_ID'                       => IblockUtils::getIblockId(IblockType::PUBLICATION,
-            IblockCode::BANNERS),
-        //не проставлен символьный код
+        'IBLOCK_ID'                       => IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::BANNERS),
         'NEWS_COUNT'                      => '7',
         'SORT_BY1'                        => 'SORT',
         'SORT_ORDER1'                     => 'ASC',
