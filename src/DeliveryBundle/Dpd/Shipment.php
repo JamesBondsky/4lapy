@@ -34,7 +34,7 @@ class Shipment extends \Ipolh\DPD\Shipment
      */
     public function setSender($locationCode)
     {
-        $this->locationFrom = \is_array($locationCode)
+        $this->locationFrom = (\is_array($locationCode) && isset($locationCode['CODE']))
             ? $locationCode
             : LocationTable::getByLocationCode($locationCode);
 
@@ -50,7 +50,7 @@ class Shipment extends \Ipolh\DPD\Shipment
      */
     public function setReceiver($locationCode)
     {
-        $this->locationTo = \is_array($locationCode)
+        $this->locationTo = (\is_array($locationCode) && isset($locationCode['CODE']))
             ? $locationCode
             : LocationTable::getByLocationCode($locationCode);
 
