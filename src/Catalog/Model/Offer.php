@@ -298,20 +298,20 @@ class Offer extends IblockElement
      * @Type("bool")
      * @Groups({"elastic"})
      */
-    protected $PROPERTY_HIT;
+    protected $PROPERTY_IS_HIT = false;
 
     /**
      * @var bool
      * @Type("bool")
      * @Groups({"elastic"})
      */
-    protected $PROPERTY_NEW;
+    protected $PROPERTY_IS_NEW = false;
     /**
      * @var bool
      * @Type("bool")
      * @Groups({"elastic"})
      */
-    protected $PROPERTY_SALE;
+    protected $PROPERTY_IS_SALE = false;
 
     /**
      * @var string
@@ -831,9 +831,9 @@ class Offer extends IblockElement
     /**
      * @return bool
      */
-    public function getPropertyHit()
+    public function getPropertyIsHit()
     {
-        return $this->PROPERTY_HIT;
+        return $this->PROPERTY_IS_HIT;
     }
 
     /**
@@ -841,9 +841,9 @@ class Offer extends IblockElement
      *
      * @return Offer
      */
-    public function setPropertyHit($propertyHit)
+    public function setPropertyIsHit($propertyHit)
     {
-        $this->PROPERTY_HIT = $propertyHit;
+        $this->PROPERTY_IS_HIT = $propertyHit;
 
         return $this;
     }
@@ -851,9 +851,9 @@ class Offer extends IblockElement
     /**
      * @return bool
      */
-    public function getPropertyNew()
+    public function getPropertyIsNew()
     {
-        return $this->PROPERTY_NEW;
+        return $this->PROPERTY_IS_NEW;
     }
 
     /**
@@ -861,9 +861,9 @@ class Offer extends IblockElement
      *
      * @return Offer
      */
-    public function setPropertyNew($propertyNew)
+    public function setPropertyIsNew($propertyNew)
     {
-        $this->PROPERTY_HIT = $propertyNew;
+        $this->PROPERTY_IS_HIT = $propertyNew;
 
         return $this;
     }
@@ -871,9 +871,9 @@ class Offer extends IblockElement
     /**
      * @return bool
      */
-    public function getPropertySale()
+    public function getPropertyIsSale()
     {
-        return $this->PROPERTY_SALE;
+        return $this->PROPERTY_IS_SALE;
     }
 
     /**
@@ -881,9 +881,9 @@ class Offer extends IblockElement
      *
      * @return Offer
      */
-    public function setPropertySale($propertySale)
+    public function setPropertyIsSale($propertySale)
     {
-        $this->PROPERTY_SALE = $propertySale;
+        $this->PROPERTY_IS_SALE = $propertySale;
 
         return $this;
     }
@@ -1139,7 +1139,7 @@ class Offer extends IblockElement
      */
     public function isHit(): bool
     {
-        return $this->getPropertyHit();
+        return $this->getPropertyIsHit();
     }
 
     /**
@@ -1147,7 +1147,7 @@ class Offer extends IblockElement
      */
     public function isNew(): bool
     {
-        return $this->getPropertyNew();
+        return $this->getPropertyIsNew();
     }
 
     /**

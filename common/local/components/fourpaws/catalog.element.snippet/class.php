@@ -2,6 +2,7 @@
 
 namespace FourPaws\Components;
 
+use CBitrixComponent;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Product;
@@ -13,13 +14,20 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  *
  * Class CatalogElementSnippet
  */
-class CatalogElementSnippet extends \CBitrixComponent
+class CatalogElementSnippet extends CBitrixComponent
 {
     /**
      * @var MarkService
      */
     private $markService;
-
+    
+    /**
+     * CatalogElementSnippet constructor.
+     *
+     * @param CBitrixComponent $component
+     *
+     * @throws ApplicationCreateException
+     */
     public function __construct($component = null)
     {
         parent::__construct($component);
@@ -48,7 +56,6 @@ class CatalogElementSnippet extends \CBitrixComponent
      *
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
-     * @throws ApplicationCreateException
      */
     public function executeComponent()
     {

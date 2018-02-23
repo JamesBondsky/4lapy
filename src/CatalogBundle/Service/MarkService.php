@@ -24,7 +24,6 @@ final class MarkService
 
     /**
      * Returns mark`s html
-     * @todo get text
      *
      * @param Offer  $offer
      * @param string $content
@@ -33,14 +32,18 @@ final class MarkService
      */
     public function getMark(Offer $offer, $content = ''): string
     {
+        /**
+         * @todo get content from shares
+         */
+        
         if (!$content) {
             $content = $this->getMarkImage($offer);
         }
-
+        
         if ($content) {
             return sprintf($this->getMarkTemplate($offer), $content);
         }
-
+        
         return '';
     }
 

@@ -116,9 +116,21 @@ $APPLICATION->IncludeComponent(
 );
 
 /**
- * @todo Распродажа (товары со скидкой). Заменить компонентом и удалить файл.
+ * Распродажа
  */
-require_once '_temp_sale.php';
+$APPLICATION->IncludeComponent(
+    'bitrix:main.include',
+    '',
+    [
+        'AREA_FILE_SHOW' => 'file',
+        'PATH'           => '/local/include/blocks/index.sale_products.php',
+        'EDIT_TEMPLATE'  => '',
+    ],
+    null,
+    [
+        'HIDE_ICONS' => 'Y',
+    ]
+);
 
 /**
  * Преимущества
