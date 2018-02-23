@@ -156,8 +156,8 @@ class ExceptionHandler implements SubscribingHandlerInterface
         }
 
         return [
-            'data'   => null,
-            'errors' => [
+            'data'   => [],
+            'error' => [
                 $error,
             ],
         ];
