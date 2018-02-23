@@ -201,7 +201,7 @@ class OrderService
         /** @noinspection PhpParamsInspection */
         $order->setBasket($this->basketService->getBasket());
         if ($order->getBasket()->getOrderableItems()->isEmpty()) {
-            throw new OrderCreateException('НУ ЕПТА!');
+            throw new OrderCreateException('Корзина пуста');
         }
 
         /**
