@@ -1,44 +1,106 @@
-<?if (!defined('B_PROLOG_INCLUDED')||B_PROLOG_INCLUDED!==true) {
+<?php
+
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 /**
  * Бренды: главная страница
- *
- * @updated: 28.12.2017
  */
 
-$arParams['CACHE_TIME'] = isset($arParams['CACHE_TIME']) ? $arParams['CACHE_TIME'] : '43200';
-$arParams['CACHE_TYPE'] = isset($arParams['CACHE_TYPE']) ? $arParams['CACHE_TYPE'] : 'A';
+/**
+ * @global CMain $APPLICATION
+ * @var array $arParams
+ * @var array $arResult
+ * @var CBitrixComponent $component
+ * @var CBitrixComponentTemplate $this
+ * @var string $templateName
+ * @var string $componentPath
+ */
 
-$arParams['RESIZE_WIDTH'] = isset($arParams['RESIZE_WIDTH']) ? $arParams['RESIZE_WIDTH'] : '115';
-$arParams['RESIZE_HEIGHT'] = isset($arParams['RESIZE_HEIGHT']) ? $arParams['RESIZE_HEIGHT'] : '43';
-$arParams['RESIZE_TYPE'] = isset($arParams['RESIZE_TYPE']) ? $arParams['RESIZE_TYPE'] : 'BX_RESIZE_IMAGE_PROPORTIONAL';
+$arParams['CACHE_TIME'] = $arParams['CACHE_TIME'] ?? 43200;
+$arParams['CACHE_TYPE'] = $arParams['CACHE_TYPE'] ?? 'A';
 
-$arParams['IBLOCK_TYPE'] = isset($arParams['IBLOCK_TYPE']) ? $arParams['IBLOCK_TYPE'] : \FourPaws\Enum\IblockType::CATALOG;
-$arParams['IBLOCK_CODE'] = isset($arParams['IBLOCK_CODE']) ? $arParams['IBLOCK_CODE'] : \FourPaws\Enum\IblockCode::BRANDS;
+$arParams['RESIZE_WIDTH'] = $arParams['RESIZE_WIDTH'] ?? 115;
+$arParams['RESIZE_HEIGHT'] = $arParams['RESIZE_HEIGHT'] ?? 43;
+$arParams['RESIZE_TYPE'] = $arParams['RESIZE_TYPE'] ?? 'BX_RESIZE_IMAGE_PROPORTIONAL';
+
+$arParams['IBLOCK_TYPE'] = $arParams['IBLOCK_TYPE'] ?? IblockType::CATALOG;
+$arParams['IBLOCK_CODE'] = $arParams['IBLOCK_CODE'] ?? IblockCode::BRANDS;
+
+// получим id брендов, у которых есть товары
+$GLOBALS['arGetActualBrandsFilterExt'] = [
+    '!PROPERTY_BRAND' => false,
+    'PROPERTY_BRAND.ACTIVE' => 'Y',
+    'PROPERTY_BRAND.ACTIVE_DATE' => 'Y',
+];
+$componentResult = $APPLICATION->IncludeComponent(
+    'adv:system.iblock_data_list',
+    '',
+    [
+        'CACHE_TYPE' => 'A',
+        'CACHE_TIME' => 43200,
+        'CACHE_GROUPS' => 'N',
+        'ELEMENT_CNT' => 0,
+        'PAGER_SHOW' => 'N',
+        'ELEMENT_FILTER_NAME' => 'arGetActualBrandsFilterExt',
+        'SORT_BY1' => '',
+        'SORT_ORDER1' => '',
+        'SORT_BY2' => '',
+        'SORT_ORDER2' => '',
+        'IBLOCKS' => [
+            IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS)
+        ],
+        'IBLOCK_CODES' => [],
+        'GROUP_BY' => [
+            'PROPERTY_BRAND'
+        ],
+        'FIELD_CODE' => [],
+        'KEY_FIELD' => 'PROPERTY_BRAND_VALUE',
+        'INCLUDE_TEMPLATE' => 'N',
+        'CACHE_TEMPLATE' => 'Y',
+        'CACHE_EMPTY_RESULT' => 'Y',
+        'GET_NEXT_ELEMENT_MODE' => 'N',
+        'GET_DISPLAY_PROPERTIES' => 'N',
+        'CHECK_DATES' => 'Y',
+    ],
+    null,
+    [
+        'HIDE_ICONS' => 'Y'
+    ]
+);
+$actualBrandIds = $componentResult['ITEMS'] ? array_keys($componentResult['ITEMS']) : [];
+
+$GLOBALS['arActualBrandsFilterExt'] = [];
+if ($actualBrandIds) {
+    $GLOBALS['arActualBrandsFilterExt']['ID'] = $actualBrandIds;
+}
+
 
 echo '<div class="b-container">';
 echo '<h1 class="b-title b-title--h1 b-title--block b-title--catalog-h2">Бренды</h1>';
 //
 // Популярные бренды
 //
-$GLOBALS['arPopularBrandsFilterExt'] = array(
-    '=PROPERTY_POPULAR' => 1
-);
+$GLOBALS['arPopularBrandsFilterExt'] = $GLOBALS['arActualBrandsFilterExt'];
+$GLOBALS['arPopularBrandsFilterExt']['=PROPERTY_POPULAR'] = 1;
 $APPLICATION->IncludeComponent(
     'bitrix:news.list',
     'fp.17.0.popular',
-    array(
+    [
         'IBLOCK_TYPE' => $arParams['IBLOCK_TYPE'],
         'IBLOCK_ID' => $arParams['IBLOCK_CODE'],
         'SORT_BY1' => 'SORT',
         'SORT_ORDER1' => 'ASC',
         'SORT_BY2' => 'NAME',
         'SORT_ORDER2' => 'ASC',
-        'FIELD_CODE' => array(
+        'FIELD_CODE' => [
             'NAME',
             'DETAIL_PICTURE',
-        ),
+        ],
         'FILTER_NAME' => 'arPopularBrandsFilterExt',
         'CACHE_FILTER' => 'Y',
         'CACHE_GROUPS' => 'N',
@@ -71,7 +133,7 @@ $APPLICATION->IncludeComponent(
         'PARENT_SECTION' => '',
         'PARENT_SECTION_CODE' => '',
         'PREVIEW_TRUNCATE_LEN' => '',
-        'PROPERTY_CODE' => array(),
+        'PROPERTY_CODE' => [],
         'SET_BROWSER_TITLE' => 'N',
         'SET_LAST_MODIFIED' => 'N',
         'SET_META_DESCRIPTION' => 'N',
@@ -79,14 +141,13 @@ $APPLICATION->IncludeComponent(
         'SET_STATUS_404' => 'N',
         'SET_TITLE' => 'N',
         'SHOW_404' => 'N',
-    ),
+    ],
     $component,
-    array(
+    [
         'HIDE_ICONS' => 'Y'
-    )
+    ]
 );
 echo '</div>';
-
 
 
 echo '<div class="b-container b-container--brand-list">';
@@ -96,7 +157,8 @@ echo '<div class="b-container b-container--brand-list">';
 $APPLICATION->IncludeComponent(
     'fourpaws:iblock.alphabetical.index',
     'fp.17.0.default',
-    array(
+    [
+        'ELEMENT_FILTER_NAME' => 'arActualBrandsFilterExt',
         'IBLOCK_TYPE' => $arParams['IBLOCK_TYPE'],
         'IBLOCK_CODE' => $arParams['IBLOCK_CODE'],
         'CACHE_TIME' => $arParams['CACHE_TIME'],
@@ -104,11 +166,11 @@ $APPLICATION->IncludeComponent(
         'CHARS_COUNT' => 1,
         'TEMPLATE_NO_CACHE' => 'N',
         'LETTER_PAGE_URL' => $arResult['FOLDER'].'#LETTER_REDUCED#/',
-    ),
+    ],
     $component,
-    array(
+    [
         'HIDE_ICONS' => 'Y'
-    )
+    ]
 );
 
 //
@@ -117,19 +179,19 @@ $APPLICATION->IncludeComponent(
 $APPLICATION->IncludeComponent(
     'bitrix:news.list',
     'fp.17.0.list',
-    array(
+    [
         'IBLOCK_TYPE' => $arParams['IBLOCK_TYPE'],
         'IBLOCK_ID' => $arParams['IBLOCK_CODE'],
         'SORT_BY1' => 'SORT',
         'SORT_ORDER1' => 'ASC',
         'SORT_BY2' => 'NAME',
         'SORT_ORDER2' => 'ASC',
-        'FIELD_CODE' => array(
+        'FIELD_CODE' => [
             'NAME',
             'PREVIEW_PICTURE',
             'DETAIL_PICTURE',
-        ),
-        'FILTER_NAME' => '',
+        ],
+        'FILTER_NAME' => 'arActualBrandsFilterExt',
         'CACHE_FILTER' => 'Y',
         'CACHE_GROUPS' => 'N',
         'NEWS_COUNT' => '9999',
@@ -162,7 +224,7 @@ $APPLICATION->IncludeComponent(
         'PARENT_SECTION' => '',
         'PARENT_SECTION_CODE' => '',
         'PREVIEW_TRUNCATE_LEN' => '',
-        'PROPERTY_CODE' => array(),
+        'PROPERTY_CODE' => [],
         'SET_BROWSER_TITLE' => 'N',
         'SET_LAST_MODIFIED' => 'N',
         'SET_META_DESCRIPTION' => 'N',
@@ -170,10 +232,10 @@ $APPLICATION->IncludeComponent(
         'SET_STATUS_404' => 'N',
         'SET_TITLE' => 'N',
         'SHOW_404' => 'N',
-    ),
+    ],
     $component,
-    array(
+    [
         'HIDE_ICONS' => 'Y'
-    )
+    ]
 );
 echo '</div>';

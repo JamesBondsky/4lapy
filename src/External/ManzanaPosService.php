@@ -58,13 +58,17 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
 
             $rawResult = $this->client->call(self::METHOD_EXECUTE, ['request_options' => $arguments]);
             $rawResult = (array)$rawResult->ProcessRequestInfoResult->Responses->ChequeResponse;
+            if ($rawResult['Item']) {
+                if(is_array($rawResult['Item'])) {
 
-            if ($rawResult['Item'] && is_array($rawResult['Item'])) {
-                foreach ($rawResult['Item'] as &$item) {
-                    $item = (array)$item;
+                    foreach ($rawResult['Item'] as &$item) {
+                        $item = (array)$item;
+                    }
+
+                    unset($item);
+                } elseif ($rawResult['Item'] instanceof \stdClass) {
+                    $rawResult['Item'] = [(array)$rawResult['Item']];
                 }
-
-                unset($item);
             }
 
             $result = $this->serializer->fromArray($rawResult, SoftChequeResponse::class);

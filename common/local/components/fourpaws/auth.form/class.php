@@ -275,7 +275,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         }
 
         $data = [
-            'UF_PHONE_CONFIRMED' => 'Y',
+            'UF_PHONE_CONFIRMED' => true,
         ];
 
         if ($this->currentUserProvider->getUserRepository()->updateData(
@@ -460,7 +460,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
 
         $data = [
             'PERSONAL_PHONE'     => $phone,
-            'UF_PHONE_CONFIRMED' => 'N',
+            'UF_PHONE_CONFIRMED' => false,
         ];
 
         if (!$this->currentUserProvider->getUserRepository()->updateData(

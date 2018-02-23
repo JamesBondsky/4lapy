@@ -22,6 +22,7 @@ use FourPaws\AppBundle\Serialization\BitrixBooleanHandler;
 use FourPaws\AppBundle\Serialization\BitrixDateHandler;
 use FourPaws\AppBundle\Serialization\BitrixDateTimeHandler;
 use FourPaws\AppBundle\Service\AjaxMess;
+use FourPaws\External\Exception\ExpertsenderServiceException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Exception\SmsSendErrorException;
 use FourPaws\External\Manzana\Model\Client;
@@ -37,6 +38,7 @@ use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException;
+use FourPaws\UserBundle\Exception\RuntimeException as UserRuntimeException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Exception\ValidationException;
@@ -226,12 +228,24 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             DeserializationContext::create()->setGroups('create')
         );
         try {
-            $this->userRegistrationService->register($userEntity, true);
+            $regUser = $this->userRegistrationService->register($userEntity, true);
+            if($regUser instanceof User && $regUser->getId() > 0){
+                try {
+                    $expertSenderService = App::getInstance()->getContainer()->get('expertsender.service');
+                    $expertSenderService->sendEmailAfterRegister($regUser);
+                } catch (ExpertsenderServiceException $e) {
+                } catch (ApplicationCreateException $e) {
+                }
+            }
 
+            $title= 'Ура, можно покупать! ';
             /** @noinspection PhpUnusedLocalVariableInspection */
             $name = $userEntity->getName();
-            ob_start();
-            /** @noinspection PhpIncludeInspection */
+            ob_start();?>
+            <header class="b-registration__header">
+                <h1 class="b-title b-title--h1 b-title--registration"><?= $title ?></h1>
+            </header>
+            <?php /** @noinspection PhpIncludeInspection */
             include_once App::getDocumentRoot()
                 . '/local/components/fourpaws/register/templates/.default/include/confirm.php';
             $html = ob_get_clean();
@@ -242,7 +256,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                     'html' => $html,
                 ]
             );
-        } catch (\FourPaws\UserBundle\Exception\RuntimeException $exception) {
+        } catch (UserRuntimeException $exception) {
             return $this->ajaxMess->getRegisterError($exception->getMessage());
         }
     }
@@ -288,7 +302,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         }
 
         $data = [
-            'UF_PHONE_CONFIRMED' => 'Y',
+            'UF_PHONE_CONFIRMED' => true,
             'PERSONAL_PHONE'     => $phone,
         ];
         if ($this->currentUserProvider->getUserRepository()->updateData(

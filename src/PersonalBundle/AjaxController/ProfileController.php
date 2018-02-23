@@ -12,6 +12,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
+use FourPaws\External\Exception\ExpertsenderServiceException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
@@ -21,6 +22,7 @@ use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\EmptyDateException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -95,6 +97,9 @@ class ProfileController extends Controller
      * @Route("/changePassword/", methods={"POST"})
      * @param Request $request
      *
+     * @throws NotAuthorizedException
+     * @throws ConstraintDefinitionException
+     * @throws ServiceCircularReferenceException
      * @throws ServiceNotFoundException
      * @throws ValidationException
      * @throws InvalidIdentifierException
@@ -134,10 +139,15 @@ class ProfileController extends Controller
                 return $this->ajaxMess->getUpdateError();
             }
 
+            $expertSenderService = App::getInstance()->getContainer()->get('expertsender.service');
+            $expertSenderService->sendChangePasswordByProfile($this->currentUserProvider->getUserRepository()->find($id)->getEmail());
+
             return JsonSuccessResponse::create('Пароль обновлен');
         } catch (BitrixRuntimeException $e) {
             return $this->ajaxMess->getUpdateError($e->getMessage());
         } catch (ConstraintDefinitionException $e) {
+        } catch (ExpertsenderServiceException $e) {
+        } catch (ApplicationCreateException $e) {
         }
 
         return $this->ajaxMess->getSystemError();
@@ -181,11 +191,18 @@ class ProfileController extends Controller
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             $curUser = $userRepository->find($user->getId());
             if ($curUser->getEmail() !== $user->getEmail()) {
-                $data['UF_EMAIL_CONFIRMED'] = 'N';
+                $data['UF_EMAIL_CONFIRMED'] = false;
             }
             $res = $userRepository->updateData($user->getId(), $userRepository->prepareData($data));
             if (!$res) {
                 return $this->ajaxMess->getUpdateError();
+            }
+
+            try {
+                $expertSenderService = App::getInstance()->getContainer()->get('expertsender.service');
+                $expertSenderService->sendChangeEmail($curUser, $user);
+            } catch (ExpertsenderServiceException $e) {
+            } catch (ApplicationCreateException $e) {
             }
 
             /** @var ManzanaService $manzanaService */
