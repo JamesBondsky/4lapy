@@ -8,33 +8,54 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+$countItemsBetweenDot = 5;
+$leftCount = 2;
+$noneHiddenCount = 3;
+
 $arResult['HIDDEN'] = [];
 $page = 1;
 $i                  = 0;
+
+$arResult['START_BETWEEN_BEGIN'] = 0;
+$arResult['START_BETWEEN_END'] = 0;
+$arResult['END_BETWEEN_BEGIN'] = 0;
+$arResult['END_BETWEEN_END'] = 0;
+
 while ($page <= (int)$arResult['END_PAGE']) {
     $i++;
-    if ($i > 3 && (int)$arResult['START_PAGE'] <= 1) {
+    /** установка хидденов*/
+    if ($i > $noneHiddenCount && $page !== $arResult['CURRENT_PAGE']) {
         $arResult['HIDDEN'][$page] = ' hidden';
     }
-    if ((int)$arResult['START_PAGE']  > 1 && (int)$arResult['END_PAGE'] < ((int)$arResult['CURRENT_PAGE'] - 1)
-        && ($page === (int)$arResult['START_PAGE']  || $page === (int)$arResult['END_PAGE'])) {
-        $arResult['HIDDEN'][$page] = ' hidden';
-    }
-    if ($page > 1
-        && $page <= (int)$arResult['CURRENT_PAGE'] - 3
-        && (int)$arResult['END_PAGE'] >= ((int)$arResult['CURRENT_PAGE'] - 1)) {
-        $arResult['HIDDEN'][$page] = ' hidden';
-    }
-    
-    if ($page === 1 && (int)$arResult['START_PAGE']  > 1
-        && (int)$arResult['START_PAGE']  - $page >= 0) {
-        $page = (int)$arResult['START_PAGE'] ;
-        $i              = 0;
-    } elseif ($page === (int)$arResult['END_PAGE']
-              && (int)$arResult['END_PAGE'] < ((int)$arResult['CURRENT_PAGE'] - 1)) {
-        $page = (int)$arResult['CURRENT_PAGE'];
-        $i              = 0;
-    } else {
-        $page++;
+
+    /** установка метки точек */
+    if ($arResult['END_PAGE'] > $countItemsBetweenDot + 1) {
+        if ($page === 1) {
+            if ($arResult['CURRENT_PAGE'] >= ($countItemsBetweenDot - 1)) {
+                $arResult['START_BETWEEN_BEGIN'] = 1;
+                $arResult['START_BETWEEN_END'] = $page = $arResult['CURRENT_PAGE'] - $leftCount;
+                $i = 0;
+            } elseif ($arResult['CURRENT_PAGE'] >= ($arResult['END_PAGE'] - $leftCount)) {
+                $arResult['START_BETWEEN_BEGIN'] = 1;
+                $arResult['START_BETWEEN_END'] = $page = $arResult['END_PAGE'] - ($countItemsBetweenDot - 1);
+                $arResult['END_BETWEEN_BEGIN'] = $arResult['END_BETWEEN_END'] = -1;
+                $i = 0;
+                continue;
+            }
+        } elseif ($page === $countItemsBetweenDot && $arResult['CURRENT_PAGE'] < ($countItemsBetweenDot - 1)) {
+            $arResult['START_BETWEEN_BEGIN'] = $page;
+            $arResult['START_BETWEEN_END'] = $page = $arResult['END_PAGE'];
+            $arResult['END_BETWEEN_BEGIN'] = $arResult['END_BETWEEN_END'] = -1;
+            $i = 0;
+            continue;
+        }
+
+        if ($page === ($arResult['CURRENT_PAGE'] + $leftCount) && $arResult['CURRENT_PAGE'] >= ($countItemsBetweenDot - 1)
+            && $page !== $arResult['END_PAGE'] && $arResult['END_BETWEEN_BEGIN'] === 0) {
+
+            $arResult['END_BETWEEN_BEGIN'] = $page;
+            $arResult['END_BETWEEN_END'] = $page = $arResult['END_PAGE'];
+            $i = 0;
+        }
     }
 }
