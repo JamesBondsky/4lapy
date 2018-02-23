@@ -79,7 +79,6 @@
     "andreyryabin/sprint.migration": "^2.3",
     "ci/restclientbundle": "~2.0.2",
     "cocur/slugify": "^3.0",
-    "codeception/codeception": "~2.3.5",
     "doctrine/collections": "^1.4",
     "friendsofsymfony/rest-bundle": "^2.2",
     "incenteev/composer-parameter-handler": "^2.1",
@@ -101,6 +100,8 @@
     "webarchitect609/bitrix-neverinclude": "^0.4.2"
   },
   "require-dev": {
+    "codeception/codeception": "^2.3",
+    "flow/jsonpath": "^0.3.4",
     "friendsofphp/php-cs-fixer": "@stable",
     "phpunit/phpunit": "^6.5",
     "sensio/distribution-bundle": "^5.0"
