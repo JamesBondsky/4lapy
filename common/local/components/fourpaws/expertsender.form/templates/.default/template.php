@@ -28,6 +28,8 @@ use FourPaws\Decorators\SvgDecorator;
             <form class="b-form-inline__form b-form-inline__form--feedback js-form-validation"
                   data-url="/ajax/user/subscribe/subscribe/"
                   method="post">
+                <input type="hidden" name="type[]" value="material">
+                <input type="hidden" name="type[]" value="skipSaleDelete">
                 <div class="b-input">
                     <input class="b-input__input-field"
                            type="email"

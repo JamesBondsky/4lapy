@@ -12,20 +12,23 @@ use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Sale\Delivery\CalculationResult;
 use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\External\ManzanaPosService;
+use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\SaleBundle\Service\UserAccountService;
+use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Service\StoreService;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
-use FourPaws\UserBundle\Exception\NotAuthorizedException;
 
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsOrderComponent extends \CBitrixComponent
@@ -131,12 +134,17 @@ class FourPawsOrderComponent extends \CBitrixComponent
             return $this;
         }
 
-        $basket = $this->basketService->getBasket()->getOrderableItems();
-
-        $order = null;
         if (!$storage = $this->orderStorageService->getStorage()) {
             throw new Exception('Failed to initialize storage');
         }
+
+        try {
+            $order = $this->orderService->createOrder($storage, false);
+        } catch (OrderCreateException $e) {
+            LocalRedirect('/cart');
+        }
+
+        $basket = $order->getBasket()->getOrderableItems();
 
         $this->arResult['URL'] = [
             'AUTH'     => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderStorageService::AUTH_STEP],
@@ -160,9 +168,6 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->arResult['URL'][$key] = $route->getPath();
         }
 
-        if ($basket->isEmpty()) {
-            LocalRedirect('/cart');
-        }
         $realStep = $this->orderStorageService->validateStorage($storage, $this->currentStep);
         if ($realStep !== $this->currentStep) {
             LocalRedirect($this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[$realStep]);
@@ -284,7 +289,17 @@ class FourPawsOrderComponent extends \CBitrixComponent
         /** @var StockResultCollection $stockResult */
         $stockResult = $this->deliveryService->getStockResultByDelivery($pickup);
         $selectedShopCode = $storage->getDeliveryPlaceCode();
-        $shops = $stockResult->getStores();
+
+        /**
+         * @hotfix
+         *
+         * @todo реализовать обработку
+         */
+        try {
+            $shops = $stockResult->getStores(false);
+        } catch (NotFoundException $e) {
+            $shops = new StoreCollection();
+        }
 
         $selectedShop = null;
         if (!$selectedShopCode || !isset($shops[$selectedShopCode])) {

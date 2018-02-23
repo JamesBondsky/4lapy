@@ -39,9 +39,14 @@ abstract class FilterBase extends HlbItemBase implements FilterInterface
     public function __construct(array $fields = [])
     {
         if (isset($fields['UF_ACTIVE'])) {
-            $fields['UF_ACTIVE'] = BitrixUtils::bitrixBool2bool($fields['UF_ACTIVE']);
+            if (is_numeric($fields['UF_ACTIVE'])) {
+                $fields['UF_ACTIVE'] = (bool)$fields['UF_ACTIVE'];
+            } else {
+                $fields['UF_ACTIVE'] = BitrixUtils::bitrixBool2bool($fields['UF_ACTIVE']);
+            }
         }
         parent::__construct($fields);
+
     }
 
     /**

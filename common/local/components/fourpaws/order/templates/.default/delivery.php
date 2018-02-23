@@ -40,8 +40,10 @@ $basket = $arResult['BASKET'];
 $storage = $arResult['STORAGE'];
 
 $selectedShopCode = '';
+$isPickup = false;
 if ($pickup && $selectedDelivery->getData()['DELIVERY_CODE'] == $pickup->getData()['DELIVERY_CODE']) {
-    $selectedShopCode = $arResult['SELECTED_SHOP']->getCode();
+    $selectedShopCode = $arResult['SELECTED_SHOP']->getXmlId();
+    $isPickup = true;
 }
 
 ?>
@@ -141,7 +143,7 @@ if ($pickup && $selectedDelivery->getData()['DELIVERY_CODE'] == $pickup->getData
                                        for="order-delivery-pick-up"
                                        data-popup-id="popup-order-stores">
                                     <span class="b-choice-recovery__main-text">Самовывоз</span>
-                                    <span class="b-choice-recovery__addition-text js-my-pickup">
+                                    <span class="b-choice-recovery__addition-text js-my-pickup js-pickup-tab">
                                         <?= DeliveryTimeHelper::showTime(
                                             $pickup,
                                             $date,
@@ -153,7 +155,7 @@ if ($pickup && $selectedDelivery->getData()['DELIVERY_CODE'] == $pickup->getData
                                         ) ?>
                                         , <?= CurrencyHelper::formatPrice($pickup->getPrice(), false) ?>
                                     </span>
-                                    <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile js-my-pickup">
+                                    <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile js-my-pickup js-pickup-tab">
                                         <?= DeliveryTimeHelper::showTime(
                                             $pickup,
                                             $date,
@@ -190,6 +192,20 @@ if ($pickup && $selectedDelivery->getData()['DELIVERY_CODE'] == $pickup->getData
             </div>
             <?php include 'include/basket.php' ?>
         </div>
+        <?php
+        $basketPrice = $basket->getPrice();
+        if ($isPickup) {
+            $stockResultByShop = $deliveryService->getStockResultByDelivery($selectedDelivery)->filterByStore(
+                $arResult['SELECTED_SHOP']
+            );
+            /* todo это нужно до тех пор, пока не реализовано разделение заказа */
+            if ($storage->isPartialGet()) {
+                $basketPrice = $stockResultByShop->getAvailable()->getPrice();
+            } else {
+                $basketPrice = $stockResultByShop->getPrice();
+            }
+        }
+        ?>
         <div class="b-order-list b-order-list--cost b-order-list--order-step-two js-order-next">
             <ul class="b-order-list__list b-order-list__list--cost">
                 <li class="b-order-list__item b-order-list__item--cost b-order-list__item--order-step-two">
@@ -201,7 +217,7 @@ if ($pickup && $selectedDelivery->getData()['DELIVERY_CODE'] == $pickup->getData
                         </div>
                     </div>
                     <div class="b-order-list__order-value b-order-list__order-value--order-step-two js-price-full">
-                        <?= CurrencyHelper::formatPrice($basket->getPrice()) ?>
+                        <?= CurrencyHelper::formatPrice($basketPrice, false) ?>
                     </div>
                 </li>
                 <li class="b-order-list__item b-order-list__item--cost b-order-list__item--order-step-two">
@@ -213,7 +229,7 @@ if ($pickup && $selectedDelivery->getData()['DELIVERY_CODE'] == $pickup->getData
                         </div>
                     </div>
                     <div class="b-order-list__order-value b-order-list__order-value--order-step-two js-price-deliv">
-                        <?= CurrencyHelper::formatPrice($selectedDelivery->getPrice()) ?>
+                        <?= CurrencyHelper::formatPrice($selectedDelivery->getPrice(), false) ?>
                     </div>
                 </li>
                 <li class="b-order-list__item b-order-list__item--cost b-order-list__item--order-step-two">
@@ -225,7 +241,7 @@ if ($pickup && $selectedDelivery->getData()['DELIVERY_CODE'] == $pickup->getData
                         </div>
                     </div>
                     <div class="b-order-list__order-value b-order-list__order-value--order-step-two js-price-total">
-                        <?= CurrencyHelper::formatPrice($basket->getPrice() + $selectedDelivery->getPrice()) ?>
+                        <?= CurrencyHelper::formatPrice($basketPrice + $selectedDelivery->getPrice(), false) ?>
                     </div>
                 </li>
             </ul>

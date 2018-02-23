@@ -171,8 +171,9 @@ class OrderStorageService
         }
 
         $mapping = [
-            'shopId'   => 'deliveryPlaceCode',
-            'pay-type' => 'paymentId',
+            'order-pick-time' => 'partialGet',
+            'shopId'          => 'deliveryPlaceCode',
+            'pay-type'        => 'paymentId',
         ];
 
         foreach ($request->request as $name => $value) {
@@ -181,6 +182,11 @@ class OrderStorageService
             ) {
                 continue;
             }
+
+            if (($name === 'bonus') && (!is_numeric($value))) {
+                continue;
+            }
+
             $setter = 'set' . ucfirst($name);
             if (method_exists($storage, $setter)) {
                 $storage->$setter($value);

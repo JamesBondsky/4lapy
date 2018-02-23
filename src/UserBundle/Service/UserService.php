@@ -176,6 +176,7 @@ class UserService implements
      * @param User $user
      * @param bool $manzanaSave
      *
+     * @throws \FourPaws\UserBundle\Exception\RuntimeException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws ValidationException
@@ -209,6 +210,14 @@ class UserService implements
             throw new BitrixRuntimeException($this->bitrixUserService->LAST_ERROR);
         }
 
+        $user
+            ->setId($id)
+            ->setActive(true);
+        if (!$this->userRepository->update($user)) {
+            Application::getConnection()->rollbackTransaction();
+            throw new RuntimeException('Cant update registred user');
+        }
+
         $registeredUser = $this->userRepository->find($id);
         if (!($registeredUser instanceof User)) {
             Application::getConnection()->rollbackTransaction();
@@ -224,7 +233,7 @@ class UserService implements
         if ($manzanaSave) {
             $client = null;
             try {
-                $contactId = $this->manzanaService->getContactIdByPhone($registeredUser->getNormalizePersonalPhone());
+                $contactId = $this->manzanaService->getContactIdByPhone($registeredUser->getManzanaNormalizePersonalPhone());
                 $client = new Client();
                 $client->contactId = $contactId;
             } catch (ManzanaServiceException $e) {

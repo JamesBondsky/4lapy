@@ -20,6 +20,11 @@ services:
         public: true
         tags: ['controller.service_arguments']
 
+    FourPaws\MobileApiBundle\TestController\:
+        resource: '../../TestController'
+        public: true
+        tags: ['controller.service_arguments']
+
     FourPaws\MobileApiBundle\Serialization\:
         resource: '../../Serialization/*'
         tags: ['jms_serializer.subscribing_handler']

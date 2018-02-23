@@ -173,7 +173,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             return $this->ajaxMess->getNotFoundConfirmedCodeException();
         }
         $data = [
-            'UF_PHONE_CONFIRMED' => 'Y',
+            'UF_PHONE_CONFIRMED' => true,
         ];
         try {
             if ($this->currentUserProvider->getUserRepository()->updateData((int)$request->get('ID', 0), $data)) {
@@ -184,13 +184,15 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                     return $this->ajaxMess->getNotOldPhoneError();
                 }
                 try {
-                    $contactId = $manzanaService->getContactIdByPhone($oldPhone);
+                    $contactId = $manzanaService->getContactIdByPhone(PhoneHelper::getManzanaPhone($oldPhone));
                     $client = new Client();
                     $client->contactId = $contactId;
                     $client->phone = $phone;
                 } catch (ManzanaServiceException $e) {
                     $client = new Client();
                     $this->currentUserProvider->setClientPersonalDataByCurUser($client);
+                } catch (WrongPhoneNumberException $e) {
+                    return $this->ajaxMess->getWrongPhoneNumberException();
                 }
 
                 if ($client instanceof Client) {
@@ -315,12 +317,21 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             $curUser = $userRepository->find($id);
             $data = ['PERSONAL_PHONE' => $phone];
-            if ($curUser->getPersonalPhone() !== $phone) {
-                $data['UF_PHONE_CONFIRMED'] = 'N';
+            $oldPhone = $curUser->getPersonalPhone();
+            if ($oldPhone !== $phone) {
+                $data['UF_PHONE_CONFIRMED'] = false;
             }
             $res = $userRepository->updateData($id, $data);
             if (!$res) {
                 return $this->ajaxMess->getUpdateError();
+            }
+
+            //Посылаем смс о смененном номере телефона
+            $text = 'Номер телефона в Личном кабинете изменен на '.$phone.'. Если это не вы, обратитесь по тел. 8(800)7700022';
+            try {
+                $smsService = App::getInstance()->getContainer()->get('sms.service');
+                $smsService->send($text, $oldPhone);
+            } catch (ApplicationCreateException $e) {
             }
 
             $mess = 'Телефон обновлен';

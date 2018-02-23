@@ -18,12 +18,14 @@ use FourPaws\BitrixOrm\Model\CatalogProduct;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\BitrixOrm\Model\Image;
+use FourPaws\BitrixOrm\Model\Interfaces\ResizeImageInterface;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\BitrixOrm\Query\CatalogProductQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Service\StoreService;
+use InvalidArgumentException;
 use JMS\Serializer\Annotation as Serializer;
 use JMS\Serializer\Annotation\Accessor;
 use JMS\Serializer\Annotation\Groups;
@@ -331,14 +333,17 @@ class Offer extends IblockElement
      * @param int $width
      * @param int $height
      *
-     * @return ResizeImageCollection
+     * @return Collection|ResizeImageInterface[]
+     *
+     * @throws InvalidArgumentException
      */
     public function getResizeImages(int $width = 0, int $height = 0): Collection
     {
         if ($this->resizeImages instanceof Collection) {
             if ($width) {
                 $this->resizeImages->forAll(
-                    function ($key, ResizeImageDecorator $image) use ($width) {
+                    function (/** @noinspection PhpUnusedParameterInspection */
+                        $key, ResizeImageDecorator $image) use ($width) {
                         $image->setResizeWidth($width);
 
                         return true;
@@ -348,7 +353,8 @@ class Offer extends IblockElement
 
             if ($height) {
                 $this->resizeImages->forAll(
-                    function ($key, ResizeImageDecorator $image) use ($height) {
+                    function (/** @noinspection PhpUnusedParameterInspection */
+                    $key, ResizeImageDecorator $image) use ($height) {
                         $image->setResizeHeight($height);
 
                         return true;
@@ -365,7 +371,7 @@ class Offer extends IblockElement
     }
 
     /**
-     * @throws \InvalidArgumentException
+     * @throws InvalidArgumentException
      * @return Collection|Image[]
      */
     public function getImages(): Collection
@@ -781,7 +787,7 @@ class Offer extends IblockElement
     /**
      * @return string
      */
-    public function getSkuId()
+    public function getSkuId(): string
     {
         return $this->getXmlId();
     }
@@ -954,12 +960,12 @@ class Offer extends IblockElement
      *
      *
      * @param Product $product
-     * @throws \InvalidArgumentException
+     * @throws InvalidArgumentException
      */
     public function setProduct(Product $product)
     {
         if ($product->getId() !== $this->getCml2Link()) {
-            throw new \InvalidArgumentException('Wrong product set');
+            throw new InvalidArgumentException('Wrong product set');
         }
 
         $this->product = $product;

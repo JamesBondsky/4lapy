@@ -3,12 +3,14 @@ declare(strict_types=1);
 
 namespace FourPaws\SaleBundle\Service;
 
+use Adv\Bitrixtools\Tools\BitrixUtils;
 use Bitrix\Catalog\Product\CatalogProvider;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Compatible\DiscountCompatibility;
 use Bitrix\Sale\Order;
 use FourPaws\Catalog\Collection\OfferCollection;
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Utils\Adder;
@@ -234,7 +236,7 @@ class BasketService
         }
         return [
             'SITE_ID' => SITE_ID,
-            'USER_ID' => $userId
+            'USER_ID' => $userId,
         ];
     }
 
@@ -280,6 +282,32 @@ class BasketService
         $offerCollection = (new OfferQuery())->withFilterParameter('ID', $ids)->exec();
 
         return $this->offerCollection = $offerCollection;
+    }
+
+    /**
+     * @param BasketItem $basketItem
+     */
+    public function refreshItemAvailability(BasketItem $basketItem): BasketItem
+    {
+        $offerCollection = $this->getOfferCollection();
+        /** @var Offer $offer */
+        foreach ($offerCollection as $offer) {
+            if ($offer->getId() !== (int)$basketItem->getProductId()) {
+                continue;
+            }
+
+            $delay = $offer->getStocks()->isEmpty();
+            if ($basketItem->isDelay() !== $delay) {
+                $basketItem->setField(
+                    'DELAY',
+                    $delay ? BitrixUtils::BX_BOOL_TRUE : BitrixUtils::BX_BOOL_FALSE
+                );
+            }
+
+            break;
+        }
+
+        return $basketItem;
     }
 
     /**

@@ -510,17 +510,18 @@ class DeliveryService
         $result = new StoreCollection();
 
         $getTerminals = function () use ($locationCode) {
-            $terminals = TerminalTable::query()->setSelect(['*'])
-                                                     ->setFilter(['LOCATION.CODE' => $locationCode])
-                                                     ->registerRuntimeField(
-                                                         new ReferenceField(
-                                                             'LOCATION',
-                                                             LocationTable::class,
-                                                             ['=this.LOCATION_ID' => 'ref.ID'],
-                                                             ['join_type' => 'INNER']
-                                                         )
-                                                     )
-                                                     ->exec();
+            $terminals = TerminalTable::query()
+                                      ->setSelect(['*'])
+                                      ->setFilter(['LOCATION.CODE' => $locationCode])
+                                      ->registerRuntimeField(
+                                          new ReferenceField(
+                                              'LOCATION',
+                                              LocationTable::class,
+                                              ['=this.LOCATION_ID' => 'ref.ID'],
+                                              ['join_type' => 'INNER']
+                                          )
+                                      )
+                                      ->exec();
 
             return ['result' => $terminals->fetchAll()];
         };
@@ -567,16 +568,16 @@ class DeliveryService
     {
         $getTerminal = function () use ($code) {
             $terminal = TerminalTable::query()->setSelect(['*', 'LOCATION.CODE'])
-                                                    ->setFilter(['CODE' => $code])
-                                                    ->registerRuntimeField(
-                                                        new ReferenceField(
-                                                            'LOCATION',
-                                                            LocationTable::class,
-                                                            ['=this.LOCATION_ID' => 'ref.ID'],
-                                                            ['join_type' => 'INNER']
-                                                        )
-                                                    )
-                                                    ->exec()->fetch();
+                                     ->setFilter(['CODE' => $code])
+                                     ->registerRuntimeField(
+                                         new ReferenceField(
+                                             'LOCATION',
+                                             LocationTable::class,
+                                             ['=this.LOCATION_ID' => 'ref.ID'],
+                                             ['join_type' => 'INNER']
+                                         )
+                                     )
+                                     ->exec()->fetch();
             if (!$terminal) {
                 throw new NotFoundException('Терминал не найден');
             }
@@ -611,6 +612,8 @@ class DeliveryService
             null,
             CurrencyManager::getBaseCurrency()
         );
+
+        $order->setMathActionOnly(true);
 
         if (!$basket) {
             $basket = Basket::createFromRequest([]);

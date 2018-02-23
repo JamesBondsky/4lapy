@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\Catalog\Model\Filter\Abstraction;
 
 use Elastica\Aggregation\Max;
@@ -150,62 +154,6 @@ abstract class RangeFilterBase extends FilterBase implements RangeFilterInterfac
     }
 
     /**
-     * Возвращает пустую коллекцию, т.к. для этого типа список вариантов невозможен.
-     *
-     * @return VariantCollection
-     */
-    protected function doGetAllVariants(): VariantCollection
-    {
-        return new VariantCollection();
-    }
-
-    /**
-     * Заполняет границы доступного диапазона при первом обращении.
-     */
-    private function initRange()
-    {
-        if (is_null($this->minValue) || is_null($this->maxValue)) {
-            list($this->minValue, $this->maxValue) = $this->getRange();
-        }
-    }
-
-    /**
-     * @return array
-     */
-    protected function doGetRange(): array
-    {
-        $internalFilters = $this->filterService->getInternalFilters();
-
-        $search = $this->searchService->getIndexHelper()->createProductSearch();
-        $search->getQuery()
-               ->setSize(0)
-               ->setParam('query', $this->searchService->getFullQueryRule($internalFilters));
-
-        foreach ($this->getAggs() as $agg) {
-            $search->getQuery()->addAggregation($agg);
-        }
-
-        $result = $search->search();
-
-        foreach ($result->getAggregations() as $aggName => $aggResult) {
-            $this->collapse($aggName, $aggResult);
-        }
-
-        /**
-         * Лучше прямое обращение к полям, чтобы не рисковать получить зацикливание,
-         * если аггрегация будет возвращаться неверно.
-         */
-        return [$this->minValue, $this->maxValue];
-    }
-
-    /**
-     * Возвращает минимальное и максимальное возможные значения. Результат работы этого метода должен кешироваться.
-     *
-     * @return float[]
-     */
-    abstract protected function getRange(): array;
-
-    /**
      * Возвращает true, если фильтр выбран.
      *
      * @inheritdoc
@@ -274,8 +222,11 @@ abstract class RangeFilterBase extends FilterBase implements RangeFilterInterfac
      */
     public function initState(Request $request)
     {
-        $fromValue = $request->query->get($this->getFromFilterCode());
-        $toValue = $request->query->get($this->getToFilterCode());
+        $fromValue = $request->query->get($this->getFromFilterCode(), 0);
+        $toValue = $request->query->get($this->getToFilterCode(), 0);
+
+        $fromValue = preg_replace('/\D+/', '', $fromValue);
+        $toValue = preg_replace('/\D+/', '', $toValue);
 
         if (!is_numeric($fromValue)) {
             $fromValue = 0;
@@ -285,8 +236,12 @@ abstract class RangeFilterBase extends FilterBase implements RangeFilterInterfac
             $toValue = 0;
         }
 
+        if ($toValue < $fromValue) {
+            $toValue = $fromValue;
+        }
+
         $this->withFromValue($fromValue)
-             ->withToValue($toValue);
+            ->withToValue($toValue);
     }
 
     /**
@@ -316,6 +271,68 @@ abstract class RangeFilterBase extends FilterBase implements RangeFilterInterfac
             );
         }
     }
+
+    /**
+     * @return string
+     */
+    public function getFromFilterCode(): string
+    {
+        return $this->getFilterCode() . 'From';
+    }
+
+    /**
+     * @return string
+     */
+    public function getToFilterCode(): string
+    {
+        return $this->getFilterCode() . 'To';
+    }
+
+    /**
+     * Возвращает пустую коллекцию, т.к. для этого типа список вариантов невозможен.
+     *
+     * @return VariantCollection
+     */
+    protected function doGetAllVariants(): VariantCollection
+    {
+        return new VariantCollection();
+    }
+
+    /**
+     * @return array
+     */
+    protected function doGetRange(): array
+    {
+        $internalFilters = $this->filterService->getInternalFilters();
+
+        $search = $this->searchService->getIndexHelper()->createProductSearch();
+        $search->getQuery()
+            ->setSize(0)
+            ->setParam('query', $this->searchService->getFullQueryRule($internalFilters));
+
+        foreach ($this->getAggs() as $agg) {
+            $search->getQuery()->addAggregation($agg);
+        }
+
+        $result = $search->search();
+
+        foreach ($result->getAggregations() as $aggName => $aggResult) {
+            $this->collapse($aggName, $aggResult);
+        }
+
+        /**
+         * Лучше прямое обращение к полям, чтобы не рисковать получить зацикливание,
+         * если аггрегация будет возвращаться неверно.
+         */
+        return [$this->minValue, $this->maxValue];
+    }
+
+    /**
+     * Возвращает минимальное и максимальное возможные значения. Результат работы этого метода должен кешироваться.
+     *
+     * @return float[]
+     */
+    abstract protected function getRange(): array;
 
     /**
      * @return Min
@@ -350,18 +367,12 @@ abstract class RangeFilterBase extends FilterBase implements RangeFilterInterfac
     }
 
     /**
-     * @return string
+     * Заполняет границы доступного диапазона при первом обращении.
      */
-    private function getFromFilterCode(): string
+    private function initRange()
     {
-        return $this->getFilterCode() . 'From';
-    }
-
-    /**
-     * @return string
-     */
-    private function getToFilterCode(): string
-    {
-        return $this->getFilterCode() . 'To';
+        if (is_null($this->minValue) || is_null($this->maxValue)) {
+            list($this->minValue, $this->maxValue) = $this->getRange();
+        }
     }
 }
