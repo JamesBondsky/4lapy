@@ -18,6 +18,7 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\ManzanaPosService;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
@@ -116,6 +117,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->includeComponentTemplate($componentPage);
         } catch (\Exception $e) {
             try {
+                var_dump($e->getMessage());
                 $logger = LoggerFactory::create('component');
                 $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
             } catch (\RuntimeException $e) {
@@ -133,12 +135,19 @@ class FourPawsOrderComponent extends \CBitrixComponent
             return $this;
         }
 
-        $basket = $this->basketService->getBasket()->getOrderableItems();
-
-        $order = null;
         if (!$storage = $this->orderStorageService->getStorage()) {
             throw new Exception('Failed to initialize storage');
         }
+
+        try {
+            $order = $this->orderService->createOrder($storage, false);
+        } catch (OrderCreateException $e) {
+            var_dump($e->getMessage());
+            die();
+            LocalRedirect('/cart');
+        }
+
+        $basket = $order->getBasket()->getOrderableItems();
 
         $this->arResult['URL'] = [
             'AUTH'     => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderStorageService::AUTH_STEP],
@@ -162,9 +171,6 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->arResult['URL'][$key] = $route->getPath();
         }
 
-        if ($basket->isEmpty()) {
-            LocalRedirect('/cart');
-        }
         $realStep = $this->orderStorageService->validateStorage($storage, $this->currentStep);
         if ($realStep !== $this->currentStep) {
             LocalRedirect($this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[$realStep]);

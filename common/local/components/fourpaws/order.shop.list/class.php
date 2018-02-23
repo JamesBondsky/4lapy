@@ -187,11 +187,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
 
             uasort($stores, $sortFunc);
 
-            /**
-             * для самовывоза из DPD показываем то, что вернула доставка
-             * для самовывоза из магазина - с учетом времени работы магазина
-             */
-            $modifyDate = $this->deliveryService->isInnerPickup($pickupDelivery);
+            $showTime = $this->deliveryService->isInnerPickup($pickupDelivery);
             /** @var Store $store */
             foreach ($stores as $store) {
                 $metro = $store->getMetro();
@@ -241,9 +237,12 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                     $orderType = 'delay';
                 }
 
-                $availableDate = $available->isEmpty()
-                    ? $stockResultByStore->getDeliveryDate()
-                    : $available->getDeliveryDate();
+                $availableDate = $available->getDeliveryDate();
+                $fullDeliveryDate = $stockResultByStore->getDeliveryDate();
+                if ($available->isEmpty()) {
+                    $availableDate = $fullDeliveryDate;
+                }
+
                 $result['items'][] = [
                     'id'                => $store->getXmlId(),
                     'adress'            => $address,
@@ -251,23 +250,23 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                     'schedule'          => $store->getSchedule(),
                     'pickup'            => DeliveryTimeHelper::showTime(
                         $resultByStore[$store->getXmlId()]['PARTIAL_RESULT'],
-                        $modifyDate ? $availableDate : null,
-                        ['SHORT' => false, 'SHOW_TIME' => true]
+                        $availableDate,
+                        ['SHORT' => false, 'SHOW_TIME' => $showTime]
                     ),
                     'pickup_full'       => DeliveryTimeHelper::showTime(
                         $resultByStore[$store->getXmlId()]['FULL_RESULT'],
-                        $modifyDate ? $stockResultByStore->getDeliveryDate() : null,
-                        ['SHORT' => false, 'SHOW_TIME' => true]
+                        $fullDeliveryDate,
+                        ['SHORT' => false, 'SHOW_TIME' => $showTime]
                     ),
                     'pickup_short'      => DeliveryTimeHelper::showTime(
                         $resultByStore[$store->getXmlId()]['PARTIAL_RESULT'],
-                        $modifyDate ? $availableDate : null,
-                        ['SHORT' => true, 'SHOW_TIME' => true]
+                        $availableDate,
+                        ['SHORT' => true, 'SHOW_TIME' => $showTime]
                     ),
                     'pickup_short_full' => DeliveryTimeHelper::showTime(
                         $resultByStore[$store->getXmlId()]['FULL_RESULT'],
-                        $modifyDate ? $stockResultByStore->getDeliveryDate() : null,
-                        ['SHORT' => true, 'SHOW_TIME' => true]
+                        $fullDeliveryDate,
+                        ['SHORT' => true, 'SHOW_TIME' => $showTime]
                     ),
                     'metroClass'        => !empty($metro) ? '--' . $metroList[$metro]['BRANCH']['UF_CLASS'] : '',
                     'order'             => $orderType,
