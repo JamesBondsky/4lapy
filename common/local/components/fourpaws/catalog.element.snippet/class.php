@@ -2,10 +2,11 @@
 
 namespace FourPaws\Components;
 
+use CBitrixComponent;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Product;
-use FourPaws\CatalogBundle\Service\DiscountMarkService;
+use FourPaws\CatalogBundle\Service\MarkService;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -13,18 +14,25 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  *
  * Class CatalogElementSnippet
  */
-class CatalogElementSnippet extends \CBitrixComponent
+class CatalogElementSnippet extends CBitrixComponent
 {
     /**
-     * @var DiscountMarkService
+     * @var MarkService
      */
-    private $discountMarkService;
-
+    private $markService;
+    
+    /**
+     * CatalogElementSnippet constructor.
+     *
+     * @param CBitrixComponent $component
+     *
+     * @throws ApplicationCreateException
+     */
     public function __construct($component = null)
     {
         parent::__construct($component);
 
-        $this->discountMarkService = Application::getInstance()->getContainer()->get(DiscountMarkService::class);
+        $this->markService = Application::getInstance()->getContainer()->get(MarkService::class);
     }
 
     /**
@@ -48,7 +56,6 @@ class CatalogElementSnippet extends \CBitrixComponent
      *
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
-     * @throws ApplicationCreateException
      */
     public function executeComponent()
     {
@@ -67,10 +74,10 @@ class CatalogElementSnippet extends \CBitrixComponent
     }
 
     /**
-     * @return DiscountMarkService
+     * @return MarkService
      */
-    public function getDiscountMarkService(): DiscountMarkService
+    public function getMarkService(): MarkService
     {
-        return $this->discountMarkService;
+        return $this->markService;
     }
 }
