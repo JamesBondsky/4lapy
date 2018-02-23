@@ -14,6 +14,11 @@ if ($arResult['END_PAGE'] <= 1) {
 }
 
 $this->setFrameMode(true);
+
+$class = '';
+if ($arParams['AJAX_MODE'] === 'Y') {
+    $class = ' js-pagination';
+}
 ?>
 
 <div class="b-pagination">
@@ -21,7 +26,7 @@ $this->setFrameMode(true);
         <?php $disabled = (int)$arResult['CURRENT_PAGE'] === 1 ? '' : 'b-pagination__item--disabled'; ?>
         <li class="b-pagination__item b-pagination__item--prev <?= $disabled ?>">
             <?php if ((int)$arResult['CURRENT_PAGE'] > 1) { ?>
-                <a class="b-pagination__link  js-pagination"
+                <a class="b-pagination__link<?= $class ?>"
                    title="Назад"
                    href="<?= $arResult['CURRENT_PAGE'] > 2 ? htmlspecialcharsbx(
                        $component->replaceUrlTemplate(
@@ -54,7 +59,7 @@ $this->setFrameMode(true);
         <?php $disabled = (int)$arResult['CURRENT_PAGE'] === (int)$arResult['END_PAGE'] ? '' : 'b-pagination__item--disabled'; ?>
         <li class="b-pagination__item b-pagination__item--next <?= $disabled ?>">
             <?php if ((int)$arResult['CURRENT_PAGE'] < (int)$arResult['END_PAGE']) { ?>
-                <a class="b-pagination__link js-pagination"
+                <a class="b-pagination__link<?= $class ?>"
                    title="Вперед"
                    href="<?= htmlspecialcharsbx($component->replaceUrlTemplate($arResult['CURRENT_PAGE'] + 1)) ?>">
                     Вперед
