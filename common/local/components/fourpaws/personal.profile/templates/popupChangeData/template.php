@@ -18,6 +18,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             <div class="b-input-line b-input-line--popup-authorization b-input-line--referal js-last-name">
                 <div class="b-input-line__label-wrapper">
                     <label class="b-input-line__label" for="data-last-name">Фамилия</label>
+                    <span class="b-input-line__require">(обязательно)</span>
                 </div>
                 <div class="b-input b-input--registration-form">
                     <input class="b-input__input-field b-input__input-field--registration-form"
@@ -83,6 +84,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             <div class="b-input-line b-input-line--popup-authorization b-input-line--referal js-email">
                 <div class="b-input-line__label-wrapper">
                     <label class="b-input-line__label" for="data-email">Эл. почта</label>
+                    <span class="b-input-line__require">(обязательно)</span>
                 </div>
                 <div class="b-input b-input--registration-form">
                     <input class="b-input__input-field b-input__input-field--registration-form"
