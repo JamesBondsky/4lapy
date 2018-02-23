@@ -233,32 +233,35 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 try {
                     $expertSenderService = App::getInstance()->getContainer()->get('expertsender.service');
                     $expertSenderService->sendEmailAfterRegister($regUser);
-                } catch (ExpertsenderServiceException $e) {
-                } catch (ApplicationCreateException $e) {
+                } catch (Exception $e) {
+                    $logger = LoggerFactory::create('expertsender');
+                    $logger->error(sprintf('Error send email: %s', $e->getMessage()));
                 }
+
+                $title= 'Ура, можно покупать! ';
+                /** @noinspection PhpUnusedLocalVariableInspection */
+                $name = $userEntity->getName();
+                ob_start();?>
+                <header class="b-registration__header">
+                    <h1 class="b-title b-title--h1 b-title--registration"><?= $title ?></h1>
+                </header>
+                <?php /** @noinspection PhpIncludeInspection */
+                include_once App::getDocumentRoot()
+                    . '/local/components/fourpaws/register/templates/.default/include/confirm.php';
+                $html = ob_get_clean();
+
+                return JsonSuccessResponse::createWithData(
+                    'Регистрация прошла успешно',
+                    [
+                        'html' => $html,
+                    ]
+                );
             }
-
-            $title= 'Ура, можно покупать! ';
-            /** @noinspection PhpUnusedLocalVariableInspection */
-            $name = $userEntity->getName();
-            ob_start();?>
-            <header class="b-registration__header">
-                <h1 class="b-title b-title--h1 b-title--registration"><?= $title ?></h1>
-            </header>
-            <?php /** @noinspection PhpIncludeInspection */
-            include_once App::getDocumentRoot()
-                . '/local/components/fourpaws/register/templates/.default/include/confirm.php';
-            $html = ob_get_clean();
-
-            return JsonSuccessResponse::createWithData(
-                'Регистрация прошла успешно',
-                [
-                    'html' => $html,
-                ]
-            );
         } catch (UserRuntimeException $exception) {
             return $this->ajaxMess->getRegisterError($exception->getMessage());
         }
+
+        return $this->ajaxMess->getSystemError();
     }
 
     /**
@@ -556,15 +559,19 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         try {
             $id = $this->currentUserProvider->getUserRepository()->findIdentifierByRawLogin($phone);
         } catch (TooManyUserFoundException $e) {
-            $this->ajaxMess->getTooManyUserFoundException($this->getSitePhone());
+            return $this->ajaxMess->getTooManyUserFoundException($this->getSitePhone(), $phone);
         } catch (UsernameNotFoundException $e) {
             try {
-                $id = $this->currentUserProvider->getUserRepository()->findIdentifierByRawLogin($phone, false);
+                $this->currentUserProvider->getUserRepository()->findIdentifierByRawLogin($phone, false);
+                return $this->ajaxMess->getNotActiveUserError();
             } catch (WrongPhoneNumberException $e) {
                 return $this->ajaxMess->getWrongPhoneNumberException();
-            } catch (Exception $e) {
+            } catch (TooManyUserFoundException $e) {
+                return $this->ajaxMess->getTooManyUserFoundException($this->getSitePhone(), $phone);
+            } catch (UsernameNotFoundException $e) {
+                /** если пользователя не найдено регистрируем */
             }
-            $this->ajaxMess->getUsernameNotFoundException($phone);
+            /** если пользователь не найден можно регаться */
         } catch (WrongPhoneNumberException $e) {
             return $this->ajaxMess->getWrongPhoneNumberException();
         }
