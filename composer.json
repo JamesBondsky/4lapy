@@ -103,6 +103,7 @@
     "codeception/codeception": "^2.3",
     "flow/jsonpath": "^0.3.4",
     "friendsofphp/php-cs-fixer": "@stable",
+    "nelmio/alice": "^3.1",
     "phpunit/phpunit": "^6.5",
     "sensio/distribution-bundle": "^5.0"
   },
