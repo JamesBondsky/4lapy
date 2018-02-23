@@ -46,7 +46,7 @@ class Offer extends IblockElement
      */
     protected $active = true;
 
-    /**
+    /**p
      * @var DateTimeImmutable
      * @Type("DateTimeImmutable")
      * @Accessor(getter="getDateActiveFrom")
@@ -203,7 +203,7 @@ class Offer extends IblockElement
      * @Type("string")
      * @Groups({"elastic"})
      */
-    protected $PROPERTY_REWARD_TYPE = '';
+    protected $Catalog_structure20170920134928_REWARD_TYPE = '';
 
     /**
      * @var HlbReferenceItem
@@ -294,6 +294,26 @@ class Offer extends IblockElement
     protected $resizeImages;
 
     /**
+     * @var bool
+     * @Type("bool")
+     * @Groups({"elastic"})
+     */
+    protected $PROPERTY_HIT;
+
+    /**
+     * @var bool
+     * @Type("bool")
+     * @Groups({"elastic"})
+     */
+    protected $PROPERTY_NEW;
+    /**
+     * @var bool
+     * @Type("bool")
+     * @Groups({"elastic"})
+     */
+    protected $PROPERTY_SALE;
+
+    /**
      * @var string
      */
     protected $link = '';
@@ -342,8 +362,11 @@ class Offer extends IblockElement
         if ($this->resizeImages instanceof Collection) {
             if ($width) {
                 $this->resizeImages->forAll(
-                    function (/** @noinspection PhpUnusedParameterInspection */
-                        $key, ResizeImageDecorator $image) use ($width) {
+                    function (
+                        /** @noinspection PhpUnusedParameterInspection */
+                        $key,
+                        ResizeImageDecorator $image
+                    ) use ($width) {
                         $image->setResizeWidth($width);
 
                         return true;
@@ -353,8 +376,11 @@ class Offer extends IblockElement
 
             if ($height) {
                 $this->resizeImages->forAll(
-                    function (/** @noinspection PhpUnusedParameterInspection */
-                    $key, ResizeImageDecorator $image) use ($height) {
+                    function (
+                        /** @noinspection PhpUnusedParameterInspection */
+                        $key,
+                        ResizeImageDecorator $image
+                    ) use ($height) {
                         $image->setResizeHeight($height);
 
                         return true;
@@ -802,6 +828,66 @@ class Offer extends IblockElement
         return $this->price;
     }
 
+    /**
+     * @return bool
+     */
+    public function getPropertyHit()
+    {
+        return $this->PROPERTY_HIT;
+    }
+
+    /**
+     * @param bool $propertyHit
+     *
+     * @return Offer
+     */
+    public function setPropertyHit($propertyHit)
+    {
+        $this->PROPERTY_HIT = $propertyHit;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getPropertyNew()
+    {
+        return $this->PROPERTY_NEW;
+    }
+
+    /**
+     * @param bool $propertyNew
+     *
+     * @return Offer
+     */
+    public function setPropertyNew($propertyNew)
+    {
+        $this->PROPERTY_HIT = $propertyNew;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getPropertySale()
+    {
+        return $this->PROPERTY_SALE;
+    }
+
+    /**
+     * @param bool $propertySale
+     *
+     * @return Offer
+     */
+    public function setPropertySale($propertySale)
+    {
+        $this->PROPERTY_SALE = $propertySale;
+
+        return $this;
+    }
+
     protected function checkOptimalPrice()
     {
         CCatalogDiscountSave::Disable();
@@ -813,8 +899,8 @@ class Offer extends IblockElement
              * @var array $optimalPrice
              */
             $resultPrice = $optimalPrice['RESULT_PRICE'] ?? [
-                    'PERCENT' => 0,
-                    'BASE_PRICE' => $this->price,
+                    'PERCENT'        => 0,
+                    'BASE_PRICE'     => $this->price,
                     'DISCOUNT_PRICE' => $this->price,
                 ];
             $this->withDiscount(floor($resultPrice['PERCENT']));
@@ -960,6 +1046,7 @@ class Offer extends IblockElement
      *
      *
      * @param Product $product
+     *
      * @throws InvalidArgumentException
      */
     public function setProduct(Product $product)
@@ -1045,5 +1132,29 @@ class Offer extends IblockElement
          * @todo
          */
         return false;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isHit(): bool
+    {
+        return $this->getPropertyHit();
+    }
+
+    /**
+     * @return bool
+     */
+    public function isNew(): bool
+    {
+        return $this->getPropertyNew();
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSale(): bool
+    {
+        return $this->isSale();
     }
 }

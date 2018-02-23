@@ -30,6 +30,8 @@ class OfferQuery extends IblockElementQuery
             'LIST_PAGE_URL',
             'CANONICAL_PAGE_URL',
             'PROPERTY_CML2_LINK',
+            'PROPERTY_NEW',
+            'PROPERTY_HIT',
             'PROPERTY_COLOUR',
             'PROPERTY_VOLUME_REFERENCE',
             'PROPERTY_VOLUME',
