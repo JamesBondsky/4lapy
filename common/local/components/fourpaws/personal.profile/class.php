@@ -259,8 +259,10 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         $mess = '';
         try {
             $phone = PhoneHelper::normalizePhone($phone);
-            /** @noinspection PhpUnusedLocalVariableInspection */
-            $oldPhone = PhoneHelper::normalizePhone($oldPhone);
+            if (!empty($oldPhone)) {
+                /** @noinspection PhpUnusedLocalVariableInspection */
+                $oldPhone = PhoneHelper::normalizePhone($oldPhone);
+            }
         } catch (WrongPhoneNumberException $e) {
             return $this->ajaxMess->getWrongPhoneNumberException();
         }
@@ -314,10 +316,14 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         }
 
         try {
+            $container = App::getInstance()->getContainer();
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             $curUser = $userRepository->find($id);
             $data = ['PERSONAL_PHONE' => $phone];
-            $oldPhone = $curUser->getPersonalPhone();
+            $oldPhone = '';
+            if ($curUser !== null) {
+                $oldPhone = $curUser->getPersonalPhone();
+            }
             if ($oldPhone !== $phone) {
                 $data['UF_PHONE_CONFIRMED'] = false;
             }
@@ -326,19 +332,18 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                 return $this->ajaxMess->getUpdateError();
             }
 
-            //Посылаем смс о смененном номере телефона
-            $text = 'Номер телефона в Личном кабинете изменен на '.$phone.'. Если это не вы, обратитесь по тел. 8(800)7700022';
-            try {
-                $smsService = App::getInstance()->getContainer()->get('sms.service');
+            if (!empty($oldPhone)) {
+                //Посылаем смс о смененном номере телефона
+                $text = 'Номер телефона в Личном кабинете изменен на ' . $phone . '. Если это не вы, обратитесь по тел. 8(800)7700022';
+                $smsService = $container->get('sms.service');
                 $smsService->send($text, $oldPhone);
-            } catch (ApplicationCreateException $e) {
             }
 
             $mess = 'Телефон обновлен';
 
             try {
                 /** @var ConfirmCodeService $confirmService */
-                $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+                $confirmService = $container->get(ConfirmCodeInterface::class);
                 $res = $confirmService::sendConfirmSms($phone);
                 if (!$res) {
                     return $this->ajaxMess->getSmsSendErrorException();
@@ -354,6 +359,12 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             }
         } catch (BitrixRuntimeException $e) {
             return $this->ajaxMess->getUpdateError($e->getMessage());
+        } catch (ApplicationCreateException $e) {
+            return $this->ajaxMess->getSystemError();
+        } catch (ServiceNotFoundException $e) {
+            return $this->ajaxMess->getSystemError();
+        } catch (ServiceCircularReferenceException $e) {
+            return $this->ajaxMess->getSystemError();
         }
 
         return $mess;
