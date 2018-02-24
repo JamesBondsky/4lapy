@@ -99,4 +99,5 @@ while ($navRecordGroup <= $countPages) {
             $i = 0;
         }
     }
+    $navRecordGroup++;
 }
