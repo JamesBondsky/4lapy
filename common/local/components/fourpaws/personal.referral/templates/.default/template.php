@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Main\UI\PageNavigation;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\PersonalBundle\Entity\Referral;
@@ -128,7 +129,7 @@ $items = $arResult['ITEMS'];
                         ?>
                     </ul>
                 </div>
-                <?php if (!empty($arResult['NAV'])) { ?>
+                <?php if ($arResult['NAV'] instanceof PageNavigation) { ?>
                     <div class="b-pagination b-pagination--referal">
                         <?php
                         $APPLICATION->IncludeComponent(
@@ -136,8 +137,8 @@ $items = $arResult['ITEMS'];
                             'pagination',
                             [
                                 'NAV_OBJECT' => $arResult['NAV'],
-//                                'SEF_MODE'   => 'Y',
-                                'AJAX_MODE'   => 'Y',
+                                'SEF_MODE'   => 'N',
+                                'AJAX_MODE'   => 'N',
                             ],
                             false
                         );
