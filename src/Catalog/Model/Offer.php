@@ -1155,6 +1155,6 @@ class Offer extends IblockElement
      */
     public function isSale(): bool
     {
-        return $this->isSale();
+        return $this->getPropertyIsSale();
     }
 }
