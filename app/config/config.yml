@@ -61,7 +61,7 @@ framework:
   session:
     # https://symfony.com/doc/current/reference/configuration/framework.html#handler-id
     storage_id: session.storage.php_bridge
-    handler_id: ~
+    handler_id: FourPaws\AppBundle\Session\BitrixSessionBridge
   fragments: ~
   http_method_override: true
   php_errors:
