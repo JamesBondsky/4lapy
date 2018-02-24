@@ -147,14 +147,18 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
     /**
      * @param string $rawLogin
      * @param string $password
+     * @param string $backUrl
      *
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \Bitrix\Main\SystemException
      * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
      * @throws \RuntimeException
      * @throws ServiceCircularReferenceException
      * @return JsonResponse
+     * @throws LoaderException
      */
-    public function ajaxLogin(string $rawLogin, string $password): JsonResponse
+    public function ajaxLogin(string $rawLogin, string $password, string $backUrl = ''): JsonResponse
     {
         $needWritePhone = false;
         if (empty($rawLogin)) {
@@ -163,15 +167,46 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         if (empty($password)) {
             return $this->ajaxMess->getEmptyPasswordError();
         }
+        $checkedCaptcha = true;
+        if ($_SESSION['COUNT_AUTH_AUTHORIZE'] >= 3) {
+            try {
+                $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
+                $checkedCaptcha = $recaptchaService->checkCaptcha();
+            } catch (ApplicationCreateException $e) {
+                return $this->ajaxMess->getSystemError();
+            }
+        }
+        if (!$checkedCaptcha) {
+            return $this->ajaxMess->getFailCaptchaCheckError();
+        }
         try {
+            if (!isset($_SESSION['COUNT_AUTH_AUTHORIZE'])) {
+                $_SESSION['COUNT_AUTH_AUTHORIZE'] = 0;
+            }
+            $_SESSION['COUNT_AUTH_AUTHORIZE']++;
             $this->userAuthorizationService->login($rawLogin, $password);
             if ($this->userAuthorizationService->isAuthorized()
                 && !$this->currentUserProvider->getCurrentUser()->havePersonalPhone()) {
                 $needWritePhone = true;
             }
         } catch (UsernameNotFoundException $e) {
+            if ($_SESSION['COUNT_AUTH_AUTHORIZE'] === 3) {
+                $this->setSocial();
+                $html = $this->getHtml('begin', 'Авторизация',
+                    ['isAjax' => true, 'backurl' => $backUrl, 'arResult' => $this->arResult]);
+
+                return JsonSuccessResponse::createWithData('',
+                    ['html' => $html]);
+            }
             return $this->ajaxMess->getWrongPasswordError();
         } catch (InvalidCredentialException $e) {
+            if ($_SESSION['COUNT_AUTH_AUTHORIZE'] === 3) {
+                $this->setSocial();
+                $html = $this->getHtml('begin', 'Авторизация',
+                    ['isAjax' => true, 'backurl' => $backUrl, 'arResult' => $this->arResult]);
+
+                return JsonSuccessResponse::createWithData('', ['html' => $html]);
+            }
             return $this->ajaxMess->getWrongPasswordError();
         } catch (TooManyUserFoundException $e) {
             /** @noinspection PhpUnhandledExceptionInspection */
@@ -204,17 +239,12 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             }
         }
 
+        unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
         if (!$needWritePhone) {
             return JsonSuccessResponse::create('Вы успешно авторизованы.', 200, [], ['reload' => true]);
         }
 
-        ob_start(); ?>
-        <header class="b-registration__header">
-            <h1 class="b-title b-title--h1 b-title--registration">Добавление телефона</h1>
-        </header>
-        <?php require_once App::getDocumentRoot()
-        . '/local/components/fourpaws/auth.form/templates/popup/include/addPhone.php';
-        $html = ob_get_clean();
+        $html = $this->getHtml('addPhone', 'Добавление телефона');
 
         return JsonSuccessResponse::createWithData('Необходимо заполнить номер телефона', ['html' => $html]);
     }
@@ -258,6 +288,9 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      *
      * @param string $confirmCode
      *
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \RuntimeException
      * @throws ValidationException
      * @throws InvalidIdentifierException
      * @throws ServiceNotFoundException
@@ -270,13 +303,31 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      */
     public function ajaxSavePhone(string $phone, string $confirmCode): JsonResponse
     {
-        $container = App::getInstance()->getContainer();
+        try {
+            $container = App::getInstance()->getContainer();
+        } catch (ApplicationCreateException $e) {
+            return $this->ajaxMess->getSystemError();
+        }
         try {
             $phone = PhoneHelper::normalizePhone($phone);
         } catch (WrongPhoneNumberException $e) {
             return $this->ajaxMess->getWrongPhoneNumberException();
         }
+
+        $checkedCaptcha = true;
+        if ($_SESSION['COUNT_AUTH_CONFIRM_CODE'] >= 3) {
+            $recaptchaService = $container->get('recaptcha.service');
+            $checkedCaptcha = $recaptchaService->checkCaptcha();
+        }
+        if (!$checkedCaptcha) {
+            return $this->ajaxMess->getFailCaptchaCheckError();
+        }
+
         try {
+            if (!isset($_SESSION['COUNT_AUTH_CONFIRM_CODE'])) {
+                $_SESSION['COUNT_AUTH_CONFIRM_CODE'] = 0;
+            }
+            $_SESSION['COUNT_AUTH_CONFIRM_CODE']++;
             /** @var ConfirmCodeService $confirmService */
             $confirmService = $container->get(ConfirmCodeInterface::class);
             $res = $confirmService::checkConfirmSms(
@@ -284,16 +335,38 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 $confirmCode
             );
             if (!$res) {
+                if ($_SESSION['COUNT_AUTH_CONFIRM_CODE'] === 3) {
+                    $html = $this->getHtml('sendSmsCode', 'Подтверждение телефона',
+                        ['phone' => $phone]);
+
+                    return JsonSuccessResponse::createWithData('',
+                        ['html' => $html]);
+                }
                 return $this->ajaxMess->getWrongConfirmCode();
             }
         } catch (ExpiredConfirmCodeException $e) {
+            if ($_SESSION['COUNT_AUTH_CONFIRM_CODE'] === 3) {
+                $html = $this->getHtml('sendSmsCode', 'Подтверждение телефона',
+                    ['phone' => $phone]);
+
+                return JsonSuccessResponse::createWithData('',
+                    ['html' => $html]);
+            }
             return $this->ajaxMess->getExpiredConfirmCodeException();
         } catch (NotFoundConfirmedCodeException $e) {
+            if ($_SESSION['COUNT_AUTH_CONFIRM_CODE'] === 3) {
+                $html = $this->getHtml('sendSmsCode', 'Подтверждение телефона',
+                    ['phone' => $phone]);
+
+                return JsonSuccessResponse::createWithData('',
+                    ['html' => $html]);
+            }
             return $this->ajaxMess->getNotFoundConfirmedCodeException();
         } catch (WrongPhoneNumberException $e) {
             return $this->ajaxMess->getWrongPhoneNumberException();
         }
 
+        unset($_SESSION['COUNT_AUTH_CONFIRM_CODE']);
         $data = [
             'UF_PHONE_CONFIRMED' => true,
         ];
@@ -359,16 +432,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 break;
         }
         $phone = PhoneHelper::formatPhone($phone, '+7 (%s%s%s) %s%s%s-%s%s-%s%s');
-        ob_start(); ?>
-        <header class="b-registration__header">
-            <h1 class="b-title b-title--h1 b-title--registration"><?= $title ?></h1>
-        </header>
-        <?php
-        /** @noinspection PhpIncludeInspection */
-        include_once sprintf('%s/local/components/fourpaws/auth.form/templates/popup/include/%s.php',
-            App::getDocumentRoot(),
-            $step);
-        $html = ob_get_clean();
+        $html = $this->getHtml($step, $title);
 
         return JsonSuccessResponse::createWithData(
             $mess,
@@ -435,6 +499,33 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         }
 
         return $phone;
+    }
+
+    /**
+     * @param string $page
+     * @param string $title
+     * @param array  $params
+     *
+     * @return string
+     */
+    private function getHtml(string $page, string $title = '', array $params = []): string
+    {
+        if (!empty($params)) {
+            extract($params, EXTR_OVERWRITE);
+        }
+        $html = '';
+        ob_start();
+        if (!empty($title)) { ?>
+            <header class="b-registration__header">
+                <h1 class="b-title b-title--h1 b-title--registration"><?= $title ?></h1>
+            </header>
+            <?php
+        }
+        require_once App::getDocumentRoot()
+            . '/local/components/fourpaws/auth.form/templates/popup/include/' . $page . '.php';
+        $html = ob_get_clean();
+
+        return $html;
     }
 
     /**

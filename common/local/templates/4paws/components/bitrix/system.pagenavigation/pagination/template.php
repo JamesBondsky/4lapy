@@ -50,6 +50,7 @@ if ($arParams['AJAX_MODE'] === 'Y') {
                 </li>
                 <?php $navRecordGroup = $arResult['START_BETWEEN_BEGIN'] === $navRecordGroup ? $arResult['START_BETWEEN_END'] : $arResult['END_BETWEEN_END'];
             }
+            $navRecordGroup++;
         } ?>
 
         <?php $disabled = ((int)$arResult['NavPageNomer'] < $arResult['NavPageCount']) ? '' : ' b-pagination__item--disabled'; ?>

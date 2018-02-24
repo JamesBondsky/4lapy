@@ -29,7 +29,7 @@ class ReCaptchaService implements LoggerAwareInterface
     /** @noinspection SpellCheckingInspection */
 
     /**
-     * CallbackConsumerBase constructor.
+     * ReCaptchaService constructor.
      *
      * @param ClientInterface $guzzle
      *
