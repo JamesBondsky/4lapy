@@ -175,6 +175,7 @@ class OrderService
 
     /**
      * @param OrderStorage $storage
+     * @param bool $save
      *
      * @throws \Exception
      * @throws OrderCreateException
@@ -189,7 +190,7 @@ class OrderService
      * @throws ObjectNotFoundException
      * @return Order
      */
-    public function createOrder(OrderStorage $storage): Order
+    public function createOrder(OrderStorage $storage, $save = true): Order
     {
         $order = Order::create(SITE_ID);
         $selectedCity = $this->userCityProvider->getSelectedCity();
@@ -198,7 +199,10 @@ class OrderService
          * Привязываем корзину
          */
         /** @noinspection PhpParamsInspection */
-        $order->setBasket($this->basketService->getBasket()->getOrderableItems());
+        $order->setBasket($this->basketService->getBasket());
+        if ($order->getBasket()->getOrderableItems()->isEmpty()) {
+            throw new OrderCreateException('Корзина пуста');
+        }
 
         /**
          * Задание способов оплаты
@@ -220,13 +224,14 @@ class OrderService
             /** @var \Bitrix\Sale\PaySystem\Service $paySystem */
             $paySystem = $extPayment->getPaySystem();
             $extPayment->setField('PAY_SYSTEM_NAME', $paySystem->getField('NAME'));
-        } else {
+        } elseif ($save) {
             throw new OrderCreateException('Не выбран способ оплаты');
         }
 
         /**
          * Задание способов доставки
          */
+        $propertyValueCollection = $order->getPropertyCollection();
         if ($storage->getDeliveryId()) {
             $locationProp = $order->getPropertyCollection()->getDeliveryLocation();
             if (!$locationProp) {
@@ -271,49 +276,16 @@ class OrderService
             );
 
             $shipmentCollection->calculateDelivery();
-        } else {
-            throw new OrderCreateException('Не выбрана доставка');
-        }
 
-        /**
-         * Обработка полей заказа
-         */
-        if ($storage->getComment()) {
-            $order->setField('USER_DESCRIPTION', $storage->getComment());
-        }
+            $deliveryDate = $this->deliveryService->getStockResultByDelivery($selectedDelivery)
+                                                  ->getDeliveryDate();
 
-        $address = null;
-        if ($storage->getAddressId()) {
-            try {
-                $address = $this->addressService->getById($storage->getAddressId());
-                $storage->setStreet($address->getStreet())
-                        ->setHouse($address->getHouse())
-                        ->setBuilding($address->getHousing())
-                        ->setFloor($address->getFloor())
-                        ->setApartment($address->getFlat())
-                        ->setPorch($address->getEntrance());
-            } catch (AddressNotFoundException $e) {
-            }
-        }
-
-        /**
-         * Обработка свойств заказа
-         */
-        $propertyValueCollection = $order->getPropertyCollection();
-        $arrayStorage = $this->orderStorageService->storageToArray($storage);
-        /** @var OrderProperty $orderProperty */
-
-        $deliveryDate = $this->deliveryService->getStockResultByDelivery($selectedDelivery)
-                                              ->getDeliveryDate();
-
-        /** @var PropertyValue $propertyValue */
-        foreach ($propertyValueCollection as $propertyValue) {
-            $code = $propertyValue->getProperty()['CODE'];
-            $key = 'PROPERTY_' . $code;
-
-            if (!empty($arrayStorage[$key])) {
-                $value = $arrayStorage[$key];
-            } else {
+            /**
+             * Задание свойств заказа, связанных с доставкой
+             */
+            /** @var PropertyValue $propertyValue */
+            foreach ($propertyValueCollection as $propertyValue) {
+                $code = $propertyValue->getProperty()['CODE'];
                 switch ($code) {
                     case 'DELIVERY_PLACE_CODE':
                         if (!$this->deliveryService->isInnerPickup($selectedDelivery)) {
@@ -367,90 +339,131 @@ class OrderService
                     default:
                         continue 2;
                 }
-            }
 
-            $propertyValue->setValue($value);
+                $propertyValue->setValue($value);
+            }
+        } elseif ($save) {
+            throw new OrderCreateException('Не выбрана доставка');
         }
 
         /**
-         * Три ситуации:
-         * 1) Если юзер авторизован, то привязываем заказ к нему
-         * 2) Если не авторизован, но телефон совпадает с телефоном существующего пользователя,
-         *    то заказ привязывается к этому пользователю. Авторизации не происходит
-         * 3) Если не авторизован, а номер телефона отсутствует в базе,
-         *    то происходит регистрация. Авторизации не происходит
+         * Обработка полей заказа
          */
-        $needCreateAddress = false;
-        $addressUserId = null;
-        if ($storage->getUserId()) {
-            $order->setFieldNoDemand('USER_ID', $storage->getUserId());
-            $user = $this->currentUserProvider->getCurrentUser();
-            if (!$user->getDiscountCardNumber() && $storage->getDiscountCardNumber()) {
-                $this->currentUserProvider->getUserRepository()->updateDiscountCard(
-                    $user->getId(),
-                    $storage->getDiscountCardNumber()
-                );
-            }
-            if (!$user->getEmail() && $storage->getEmail()) {
-                $user->setEmail($storage->getEmail());
-                $this->currentUserProvider->getUserRepository()->updateEmail(
-                    $user->getId(),
-                    $storage->getEmail()
-                );
-            }
-            if (!$address) {
-                $needCreateAddress = true;
-                $addressUserId = $storage->getUserId();
-            }
-        } else {
-            $users = $this->currentUserProvider->getUserRepository()->findBy(
-                ['PERSONAL_PHONE' => $storage->getPhone()]
-            );
-            if ($user = reset($users)) {
-                $order->setFieldNoDemand('USER_ID', $user->getId());
-            } else {
-                $user = (new User())
-                    ->setName($storage->getName())
-                    ->setActive(true)
-                    ->setEmail($storage->getEmail())
-                    ->setLogin($storage->getPhone())
-                    ->setPassword(randString(6))
-                    ->setPersonalPhone($storage->getPhone());
-                $user = $this->userRegistrationProvider->register($user);
+        if ($storage->getComment()) {
+            $order->setField('USER_DESCRIPTION', $storage->getComment());
+        }
 
-                $order->setFieldNoDemand('USER_ID', $user->getId());
-                $addressUserId = $user->getId();
-                $needCreateAddress = true;
+        $address = null;
+        if ($storage->getAddressId()) {
+            try {
+                $address = $this->addressService->getById($storage->getAddressId());
+                $storage->setStreet($address->getStreet())
+                        ->setHouse($address->getHouse())
+                        ->setBuilding($address->getHousing())
+                        ->setFloor($address->getFloor())
+                        ->setApartment($address->getFlat())
+                        ->setPorch($address->getEntrance());
+            } catch (AddressNotFoundException $e) {
             }
         }
 
         /**
-         * Сохраняем адрес, если:
-         * 1) пользователь только что зарегистрирован
-         * 2) авторизованный пользователь задал новый адрес
+         * Обработка свойств заказа
          */
-        if ($needCreateAddress) {
-            $address = (new Address())
-                ->setCity($storage->getCity())
-                ->setCityLocation($storage->getCityCode())
-                ->setUserId($addressUserId)
-                ->setStreet($storage->getStreet())
-                ->setHouse($storage->getHouse())
-                ->setHousing($storage->getBuilding())
-                ->setEntrance($storage->getPorch())
-                ->setFloor($storage->getFloor())
-                ->setFlat($storage->getApartment());
+        $arrayStorage = $this->orderStorageService->storageToArray($storage);
 
-            $this->addressService->add($address);
+        /** @var PropertyValue $propertyValue */
+        foreach ($propertyValueCollection as $propertyValue) {
+            $code = $propertyValue->getProperty()['CODE'];
+            $key = 'PROPERTY_' . $code;
+
+            if (!empty($arrayStorage[$key])) {
+                $propertyValue->setValue($arrayStorage[$key]);
+            }
         }
+
         $order->doFinalAction(true);
 
-        $result = $order->save();
-        if (!$result->isSuccess()) {
-            throw new OrderCreateException(implode(', ', $result->getErrorMessages()));
-        }
+        if ($save) {
+            /**
+             * Три ситуации:
+             * 1) Если юзер авторизован, то привязываем заказ к нему
+             * 2) Если не авторизован, но телефон совпадает с телефоном существующего пользователя,
+             *    то заказ привязывается к этому пользователю. Авторизации не происходит
+             * 3) Если не авторизован, а номер телефона отсутствует в базе,
+             *    то происходит регистрация. Авторизации не происходит
+             */
+            $needCreateAddress = false;
+            $addressUserId = null;
+            if ($storage->getUserId()) {
+                $order->setFieldNoDemand('USER_ID', $storage->getUserId());
+                $user = $this->currentUserProvider->getCurrentUser();
+                if (!$user->getDiscountCardNumber() && $storage->getDiscountCardNumber()) {
+                    $this->currentUserProvider->getUserRepository()->updateDiscountCard(
+                        $user->getId(),
+                        $storage->getDiscountCardNumber()
+                    );
+                }
+                if (!$user->getEmail() && $storage->getEmail()) {
+                    $user->setEmail($storage->getEmail());
+                    $this->currentUserProvider->getUserRepository()->updateEmail(
+                        $user->getId(),
+                        $storage->getEmail()
+                    );
+                }
+                if (!$address) {
+                    $needCreateAddress = true;
+                    $addressUserId = $storage->getUserId();
+                }
+            } else {
+                $users = $this->currentUserProvider->getUserRepository()->findBy(
+                    ['PERSONAL_PHONE' => $storage->getPhone()]
+                );
+                if ($user = reset($users)) {
+                    $order->setFieldNoDemand('USER_ID', $user->getId());
+                } else {
+                    $user = (new User())
+                        ->setName($storage->getName())
+                        ->setActive(true)
+                        ->setEmail($storage->getEmail())
+                        ->setLogin($storage->getPhone())
+                        ->setPassword(randString(6))
+                        ->setPersonalPhone($storage->getPhone());
+                    $user = $this->userRegistrationProvider->register($user);
 
-        $this->orderStorageService->clearStorage($storage);
+                    $order->setFieldNoDemand('USER_ID', $user->getId());
+                    $addressUserId = $user->getId();
+                    $needCreateAddress = true;
+                }
+            }
+
+            /**
+             * Сохраняем адрес, если:
+             * 1) пользователь только что зарегистрирован
+             * 2) авторизованный пользователь задал новый адрес
+             */
+            if ($needCreateAddress) {
+                $address = (new Address())
+                    ->setCity($storage->getCity())
+                    ->setCityLocation($storage->getCityCode())
+                    ->setUserId($addressUserId)
+                    ->setStreet($storage->getStreet())
+                    ->setHouse($storage->getHouse())
+                    ->setHousing($storage->getBuilding())
+                    ->setEntrance($storage->getPorch())
+                    ->setFloor($storage->getFloor())
+                    ->setFlat($storage->getApartment());
+
+                $this->addressService->add($address);
+            }
+
+            $result = $order->save();
+            if (!$result->isSuccess()) {
+                throw new OrderCreateException(implode(', ', $result->getErrorMessages()));
+            }
+
+            $this->orderStorageService->clearStorage($storage);
+        }
 
         return $order;
     }

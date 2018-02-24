@@ -136,7 +136,8 @@ $items = $arResult['ITEMS'];
                             'pagination',
                             [
                                 'NAV_OBJECT' => $arResult['NAV'],
-                                'SEF_MODE'   => 'Y',
+//                                'SEF_MODE'   => 'Y',
+                                'AJAX_MODE'   => 'Y',
                             ],
                             false
                         );

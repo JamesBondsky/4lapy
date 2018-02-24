@@ -6,12 +6,15 @@
 
 namespace FourPaws\PersonalBundle\AjaxController;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\DB\Exception;
 use Bitrix\Main\Type\Date;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
+use FourPaws\External\Exception\ExpertsenderServiceException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
@@ -21,6 +24,7 @@ use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\EmptyDateException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -95,6 +99,9 @@ class ProfileController extends Controller
      * @Route("/changePassword/", methods={"POST"})
      * @param Request $request
      *
+     * @throws NotAuthorizedException
+     * @throws ConstraintDefinitionException
+     * @throws ServiceCircularReferenceException
      * @throws ServiceNotFoundException
      * @throws ValidationException
      * @throws InvalidIdentifierException
@@ -134,10 +141,18 @@ class ProfileController extends Controller
                 return $this->ajaxMess->getUpdateError();
             }
 
+            $expertSenderService = App::getInstance()->getContainer()->get('expertsender.service');
+            $user = $this->currentUserProvider->getUserRepository()->find($id);
+            if($user !== null) {
+                $expertSenderService->sendChangePasswordByProfile($user->getEmail());
+            }
+
             return JsonSuccessResponse::create('Пароль обновлен');
         } catch (BitrixRuntimeException $e) {
             return $this->ajaxMess->getUpdateError($e->getMessage());
         } catch (ConstraintDefinitionException $e) {
+        } catch (ExpertsenderServiceException $e) {
+        } catch (ApplicationCreateException $e) {
         }
 
         return $this->ajaxMess->getSystemError();
@@ -150,7 +165,6 @@ class ProfileController extends Controller
      * @param Serializer $serializer
      *
      * @return JsonResponse
-     * @throws ApplicationCreateException
      */
     public function changeDataAction(Request $request, Serializer $serializer): JsonResponse
     {
@@ -178,30 +192,54 @@ class ProfileController extends Controller
         }
 
         try {
+            try {
+                $container = App::getInstance()->getContainer();
+            } catch (ApplicationCreateException $e) {
+                return $this->ajaxMess->getSystemError();
+            }
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             $curUser = $userRepository->find($user->getId());
-            if ($curUser->getEmail() !== $user->getEmail()) {
-                $data['UF_EMAIL_CONFIRMED'] = 'N';
+            if ($curUser !== null && $curUser->getEmail() !== $user->getEmail()) {
+                $data['UF_EMAIL_CONFIRMED'] = false;
             }
-            $res = $userRepository->updateData($user->getId(), $userRepository->prepareData($data));
-            if (!$res) {
+            try {
+                $res = $userRepository->updateData($user->getId(), $userRepository->prepareData($data));
+                if (!$res) {
+                    return $this->ajaxMess->getUpdateError();
+                }
+            }
+            catch (\Exception $e){
                 return $this->ajaxMess->getUpdateError();
             }
 
-            /** @var ManzanaService $manzanaService */
-            $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
-            $client = null;
-            try {
-                $contactId         = $manzanaService->getContactIdByUser();
-                $client            = new Client();
-                $client->contactId = $contactId;
-            } catch (ManzanaServiceException $e) {
-                $client = new Client();
+            if($user->getEmail() !== $curUser->getEmail()) {
+                try {
+                    $expertSenderService = $container->get('expertsender.service');
+                    $expertSenderService->sendChangeEmail($curUser, $user);
+                } catch (ExpertsenderServiceException $e) {
+                    $logger = LoggerFactory::create('expersender');
+                    $logger->error('expersender error:'.$e->getMessage());
+                }
             }
 
-            if ($client instanceof Client) {
-                $this->currentUserProvider->setClientPersonalDataByCurUser($client);
-                $manzanaService->updateContactAsync($client);
+            /** @var ManzanaService $manzanaService */
+            try {
+                $manzanaService = $container->get('manzana.service');
+                $client = null;
+                try {
+                    $contactId = $manzanaService->getContactIdByUser();
+                    $client = new Client();
+                    $client->contactId = $contactId;
+                } catch (ManzanaServiceException $e) {
+                    $client = new Client();
+                }
+
+                if ($client instanceof Client) {
+                    $this->currentUserProvider->setClientPersonalDataByCurUser($client);
+                    $manzanaService->updateContactAsync($client);
+                }
+            } catch (ApplicationCreateException $e) {
+                return $this->ajaxMess->getSystemError();
             }
 
             try {
@@ -226,10 +264,6 @@ class ProfileController extends Controller
             );
         } catch (BitrixRuntimeException $e) {
             return $this->ajaxMess->getUpdateError($e->getMessage());
-        } catch (\RuntimeException $e) {
-        } catch (\InvalidArgumentException $e) {
         }
-
-        return $this->ajaxMess->getSystemError();
     }
 }
