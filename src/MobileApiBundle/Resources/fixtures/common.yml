@@ -1,0 +1,11 @@
+FourPaws\UserBundle\Entity\User:
+  user{1..10}:
+    id: <current()>
+    email: '<ru_RU:email()>'
+    login: '@self->email'
+    password (unique): '<password()>'
+    name: <ru_RU:word()>
+    lastname: <ru_RU:word()>
+    secondName: 'fixture'
+    personalPhone: '<numberBetween(70000000000, 79990000000)>'
+
