@@ -1,16 +1,16 @@
 <?php
 /**
- * @var array                 $arParams
- * @var array                 $arResult
+ * @var array $arParams
+ * @var array $arResult
  *
  * @var CatalogElementSnippet $component
  *
- * @var Product               $product
- * @var OfferCollection       $offers
- * @var Offer                 $offer
- * @var Offer                 $currentOffer
+ * @var Product $product
+ * @var OfferCollection $offers
+ * @var Offer $offer
+ * @var Offer $currentOffer
  *
- * @global \CMain             $APPLICATION
+ * @global \CMain $APPLICATION
  */
 
 use FourPaws\App\Templates\MediaEnum;
@@ -139,7 +139,8 @@ if (!empty($arParams['CURRENT_OFFER']) && $arParams['CURRENT_OFFER'] instanceof 
                         } ?>
                         <li class="b-weight-container__item">
                             <a href="javascript:void(0)"
-                               class="b-weight-container__link js-price<?= $currentOffer->getId() === $offer->getId() ? ' active-link' : '' ?><?= $i >= 4 ? ' mobile-hidden' : '' ?>"
+                               class="b-weight-container__link js-price<?= $currentOffer->getId() === $offer->getId(
+                               ) ? ' active-link' : '' ?><?= $i >= 4 ? ' mobile-hidden' : '' ?>"
                                data-price="<?= $offer->getPrice() ?>" data-offerid="<?= $offer->getId() ?>"
                                data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
                                data-link="<?= $offer->getLink() ?>"><?= $value ?></a>
@@ -176,10 +177,16 @@ if (!empty($arParams['CURRENT_OFFER']) && $arParams['CURRENT_OFFER'] instanceof 
                 </div>
                 <?php
             } ?>
-            <?php /* @todo инфо о доставке/самовывозе */ ?>
-            <div class="b-common-item__pickup">
-                Самовывоз
-            </div>
+            <?php if ($currentOffer->getProduct()->isDeliveryAvailable()) { ?>
+                <div class="b-common-item__pickup">
+                    Доставка
+                </div>
+            <?php } ?>
+            <?php if ($currentOffer->getProduct()->isPickupAvailable()) { ?>
+                <div class="b-common-item__pickup">
+                    Самовывоз
+                </div>
+            <?php } ?>
         </div>
         <?php $offerId = $currentOffer->getId();
         if ($offerId > 0) { ?>
