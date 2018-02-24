@@ -81,7 +81,7 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
      */
     public function onPrepareComponentParams($params): array
     {
-        $params['PAGE_COUNT'] = 1;
+        $params['PAGE_COUNT'] = 10;
         /** @noinspection SummerTimeUnsafeTimeManipulationInspection */
         /** кешируем на сутки, можно будет увеличить если обновления будут не очень частые - чтобы лишний кеш не хранился */
         $params['CACHE_TIME'] = 24 * 60 * 60;
