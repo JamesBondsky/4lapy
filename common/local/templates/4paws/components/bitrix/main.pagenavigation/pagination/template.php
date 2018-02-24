@@ -55,6 +55,7 @@ if ($arParams['AJAX_MODE'] === 'Y') {
                 </li>
                 <?php $page = $arResult['START_BETWEEN_BEGIN'] === $page ? $arResult['START_BETWEEN_END'] : $arResult['END_BETWEEN_END'];
             }
+            $page++;
         endwhile; ?>
         <?php $disabled = (int)$arResult['CURRENT_PAGE'] === (int)$arResult['END_PAGE'] ? '' : 'b-pagination__item--disabled'; ?>
         <li class="b-pagination__item b-pagination__item--next <?= $disabled ?>">

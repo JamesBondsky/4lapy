@@ -58,4 +58,5 @@ while ($page <= (int)$arResult['END_PAGE']) {
             $i = 0;
         }
     }
+    $page++;
 }
