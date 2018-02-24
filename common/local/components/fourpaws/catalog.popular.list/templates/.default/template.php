@@ -12,6 +12,10 @@ use FourPaws\Components\CatalogSaleListComponent;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
+}
+
+if (0 === $component->getProductCollection()->count()) {
+    return;
 } ?>
 <div class="b-container">
     <section class="b-common-section">
