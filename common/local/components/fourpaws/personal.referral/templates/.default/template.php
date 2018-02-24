@@ -137,7 +137,7 @@ $items = $arResult['ITEMS'];
                             [
                                 'NAV_OBJECT' => $arResult['NAV'],
 //                                'SEF_MODE'   => 'Y',
-//                                'AJAX_MODE'   => 'Y',
+                                'AJAX_MODE'   => 'Y',
                             ],
                             false
                         );

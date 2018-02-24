@@ -26,7 +26,7 @@ if ($arParams['AJAX_MODE'] === 'Y') {
         <?php $disabled = ((int)$arResult['NavPageNomer'] > 1) ? '' : ' b-pagination__item--disabled'; ?>
         <li class="b-pagination__item b-pagination__item--prev<?= $disabled ?>">
             <?php if ((int)$arResult['NavPageNomer'] > 1) { ?>
-                <a class="b-pagination__link<?= $class ?>" title="Назад" href="<?= $arResult['PREV_URL'] ?>">Назад</a>
+                <a class="b-pagination__link<?= $class ?>" title="<?=(int)$arResult['NavPageNomer']-1?>" href="<?= $arResult['PREV_URL'] ?>">Назад</a>
             <?php } else { ?>
                 <span class="b-pagination__link">Назад</span>
             <?php } ?>
@@ -55,7 +55,7 @@ if ($arParams['AJAX_MODE'] === 'Y') {
         <?php $disabled = ((int)$arResult['NavPageNomer'] < $arResult['NavPageCount']) ? '' : ' b-pagination__item--disabled'; ?>
         <li class="b-pagination__item b-pagination__item--next<?= $disabled ?>">
             <?php if ((int)$arResult['NavPageNomer'] < $arResult['NavPageCount']) { ?>
-                <a class="b-pagination__link<?= $class ?>" title="Вперед" href="<?= $arResult['NEXT_URL'] ?>">
+                <a class="b-pagination__link<?= $class ?>" title="<?=(int)$arResult['NavPageNomer']+1?>" href="<?= $arResult['NEXT_URL'] ?>">
                     Вперед
                 </a>
             <?php } else { ?>

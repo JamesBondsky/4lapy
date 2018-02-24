@@ -43,7 +43,7 @@ if ($closedOrders->isEmpty() && $activeOrders->isEmpty()) {
                 [
                     'NAV_OBJECT' => $arResult['NAV'],
 //                    'SEF_MODE'   => 'Y',
-//                    'AJAX_MODE'   => 'Y',
+                    'AJAX_MODE'   => 'Y',
                 ],
                 $component,
                 ['HIDE_ICONS' => 'Y']
