@@ -30,6 +30,9 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 class ExpertsenderService
 {
     protected $client;
+    private $guzzleClient;
+    private $key;
+    private $url;
 
     /**
      * ExpertsenderService constructor.
@@ -40,8 +43,11 @@ class ExpertsenderService
     public function __construct()
     {
         $client = new Client();
+        $this->guzzleClient = $client;
 
         list($url, $key) = \array_values(Application::getInstance()->getContainer()->getParameter('expertsender'));
+        $this->key = $key;
+        $this->url = $url;
         $this->client = new ExpertSender($url, $key, $client);
     }
 
@@ -58,7 +64,6 @@ class ExpertsenderService
     public function sendEmailAfterRegister(User $user): bool
     {
         if (!empty($user->getEmail())) {
-            /** @todo должно быть письмо с верификацией мыла - под него подогнать проверку */
             $addUserToList = new AddUserToList();
             $addUserToList->setForce(true);
             $addUserToList->setMode('AddAndUpdate');
@@ -370,6 +375,61 @@ class ExpertsenderService
             } catch (\Exception $e) {
                 throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
             }
+        }
+        return false;
+    }
+
+    /**
+     * @param string $email
+     *
+     * @return bool
+     */
+    public function checkConfirmEmail(string $email): bool
+    {
+        //Проверяем статус активного или неподписанного в списке
+        $response = $this->guzzleClient->get($this->url.'/Api/Subscribers?apiKey='.$this->key.'&email='.$email.'&option=Short');
+        $activeLists = [];
+        if($response->getStatusCode() === 200){
+            $xml = new \SimpleXMLElement($response->getBody()->getContents());
+            if(!(bool)$xml->Data->BlackList) {
+                foreach ((array)$xml->Data->StateOnLists as $StateOnList) {
+                    if ((string)$StateOnList->Status === 'Active' || (string)$StateOnList->Status === 'Unsubscribed') {
+                        $activeLists[] = (int)$StateOnList->ListId;
+                    }
+                }
+            }
+            unset($xml);
+        }
+
+        if(\in_array(178, $activeLists, true)){
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * @param string $email
+     *
+     * @return bool
+     */
+    public function checkConfirmEmailSubscribe(string $email): bool
+    {
+        $response = $this->guzzleClient->get($this->url.'/Api/Subscribers?apiKey='.$this->key.'&email='.$email.'&option=Short');
+        $activeLists = [];
+        if($response->getStatusCode() === 200){
+            $xml = new \SimpleXMLElement($response->getBody()->getContents());
+            if(!(bool)$xml->Data->BlackList) {
+                foreach ((array)$xml->Data->StateOnLists as $StateOnList) {
+                    if ((string)$StateOnList->Status === 'Active') {
+                        $activeLists[] = (int)$StateOnList->ListId;
+                    }
+                }
+            }
+            unset($xml);
+        }
+
+        if(\in_array(178, $activeLists, true)){
+            return true;
         }
         return false;
     }

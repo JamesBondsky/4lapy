@@ -81,6 +81,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
 
     /**
      * {@inheritdoc}
+     * @throws BitrixRuntimeException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
@@ -99,6 +100,14 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         }
 
         $curUser = $this->currentUserProvider->getCurrentUser();
+
+        /** обновление флага подтвержденности email */
+        if (!$curUser->isEmailConfirmed() && !empty($curUser->getEmail())) {
+            $expertSenderService = App::getInstance()->getContainer()->get('expertsender.service');
+            if ($expertSenderService->checkConfirmEmail($curUser->getEmail())) {
+                $this->currentUserProvider->getUserRepository()->updateData($curUser->getId(), ['UF_EMAIL_CONFIRMED' => true]);
+            }
+        }
 
         $curBirthday = $curUser->getBirthday();
         if ($curBirthday instanceof Date) {
