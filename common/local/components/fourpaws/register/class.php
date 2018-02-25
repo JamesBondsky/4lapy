@@ -296,7 +296,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         }
 
         $checkedCaptcha = true;
-        if ($_SESSION['COUNT_REGISTER_CONFIRM_CODE'] >= 3) {
+        if ($_SESSION['COUNT_REGISTER_CONFIRM_CODE'] > 3) {
             $recaptchaService = $container->get('recaptcha.service');
             $checkedCaptcha = $recaptchaService->checkCaptcha();
         }
@@ -525,7 +525,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         }
 
         $checkedCaptcha = true;
-        if ($_SESSION['COUNT_REGISTER_CONFIRM_CODE'] >= 3) {
+        if ($_SESSION['COUNT_REGISTER_CONFIRM_CODE'] > 3) {
             $recaptchaService = $container->get('recaptcha.service');
             $checkedCaptcha = $recaptchaService->checkCaptcha();
         }
