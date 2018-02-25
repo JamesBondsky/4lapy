@@ -75,7 +75,7 @@ $calcResult = new \Bitrix\Sale\Delivery\CalculationResult();
                                     $arResult['ORDER_DELIVERY']['DELIVERY_DATE']
                                 ) ?> </b> в пункте самовывоза по
                             адресу
-                            < b><?= $arResult['ORDER_DELIVERY']['ADDRESS'] ?></b></p>
+                            <b><?= $arResult['ORDER_DELIVERY']['ADDRESS'] ?></b></p>
                         <?php if ($arResult['ORDER_DELIVERY']['SCHEDULE']) {
                             ?>
                             <p><b>Время работы: </b><?= $arResult['ORDER_DELIVERY']['SCHEDULE'] ?>
@@ -163,14 +163,10 @@ $calcResult = new \Bitrix\Sale\Delivery\CalculationResult();
                             <li class="b-order__text-item">управлять адресами доставки.</li>
                         </ul>
                         <p>Перейти в
-                            <a class="b-link b-link--inherit b-link--orange" href="/personal/" title="">
-                                личный кабинет
-                            </a>.
+                            <a class="b-link b-link--inherit b-link--orange" href="/personal/" title="">личный кабинет</a>.
                         </p>
                         <p>Перейти на
-                            <a class="b-link b-link--inherit b-link--orange" href="/" title="">
-                                главную страницу
-                            </a>.
+                            <a class="b-link b-link--inherit b-link--orange" href="/" title="">главную страницу</a>.
                         </p>
                     </div>
                     <?php
