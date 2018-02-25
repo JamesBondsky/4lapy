@@ -127,14 +127,14 @@ class Calculator extends DPD
 
         /* @todo не хранить эти данные в сессии */
         $_SESSION['DPD_DATA'][$profileCode] = [
-            'INTERVALS'    => [
+            'INTERVALS' => [
                 [
                     'FROM' => $interval[0],
                     'TO'   => $interval[1],
                 ],
             ],
-            'DAYS_FROM'    => $result['DPD_TARIFF']['DAYS'],
-            'DAYS_TO'      => $result['DPD_TARIFF']['DAYS'] + 10,
+            'DAYS_FROM' => $result['DPD_TARIFF']['DAYS'],
+            'DAYS_TO' => $result['DPD_TARIFF']['DAYS'] + 10,
             'STOCK_RESULT' => $stockResult ?? new StockResultCollection(),
         ];
 
@@ -158,6 +158,7 @@ class Calculator extends DPD
                 ->setReceiver($arOrder['LOCATION_TO'])
                 ->setItems($arOrder['ITEMS'], $arOrder['PRICE'], $defaultDimensions);
         }
+
         return self::$shipment;
     }
 
@@ -196,5 +197,22 @@ class Calculator extends DPD
         }
 
         return $profiles;
+    }
+}
+
+DPD::$needIncludeComponent = false;
+$eventManager = \Bitrix\Main\EventManager::getInstance();
+$events = [
+    'OnSaleComponentOrderOneStepDelivery',
+    'OnSaleComponentOrderOneStepPaySystem',
+    'OnSaleComponentOrderOneStepDelivery',
+];
+
+foreach ($events as $event) {
+    $handlers = $eventManager->findEventHandlers('sale', $event);
+    foreach ($handlers as $i => $handler) {
+        if (in_array('\\' . DPD::class, $handler['CALLBACK'], true)) {
+            $eventManager->removeEventHandler('sale', $event, $i);
+        }
     }
 }

@@ -137,7 +137,6 @@ class DeliveryService
         };
 
         $result = (new BitrixCache())
-            ->withClearCache(true) // debug
             ->withId(__METHOD__ . $locationCode)
             ->resultOf($getDeliveries);
 
