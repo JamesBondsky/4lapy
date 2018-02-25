@@ -63,7 +63,12 @@ class Calculator extends DPD
         }
 
         $arOrder['LOCATION_FROM'] = $arOrder['LOCATION_TO'];
-        $storesAvailable = $storeService->getByLocation($arOrder['LOCATION_TO'], StoreService::TYPE_STORE);
+        $storesAvailable = $storeService->getByLocation($arOrder['LOCATION_FROM'], StoreService::TYPE_STORE, true);
+        if ($storesAvailable->isEmpty()) {
+            $arOrder['LOCATION_FROM'] = LocationService::LOCATION_CODE_MOSCOW;
+            $storesAvailable = $storeService->getByLocation($arOrder['LOCATION_FROM'], StoreService::TYPE_STORE, true);
+        }
+
         $storesDelay = new StoreCollection();
 
         $result = parent::Calculate($profile, $arConfig, $arOrder, $STEP, $TEMP);
@@ -98,14 +103,12 @@ class Calculator extends DPD
                  * Получаем пункты самовывоза DPD
                  */
                 if ($profileCode === DeliveryService::DPD_PICKUP_CODE) {
-                    $shipment = self::$shipment;
-                    if ($shipment instanceof Shipment) {
-                        $terminals = $shipment->getDpdTerminals();
+                    $shipment = self::makeShipment($arOrder);
+                    $terminals = $shipment->getDpdTerminals();
 
-                        /** @var StockResult $item */
-                        foreach ($stockResult as $item) {
-                            $item->setStores($terminals);
-                        }
+                    /** @var StockResult $item */
+                    foreach ($stockResult as $item) {
+                        $item->setStores($terminals);
                     }
                 }
             }
@@ -155,7 +158,6 @@ class Calculator extends DPD
                 ->setReceiver($arOrder['LOCATION_TO'])
                 ->setItems($arOrder['ITEMS'], $arOrder['PRICE'], $defaultDimensions);
         }
-
         return self::$shipment;
     }
 
