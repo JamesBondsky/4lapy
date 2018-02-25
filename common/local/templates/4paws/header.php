@@ -33,6 +33,7 @@ $markup = PawsApplication::markup();
     <?php
     Asset::getInstance()->addCss($markup->getCssFile());
     Asset::getInstance()->addJs('https://api-maps.yandex.ru/2.1.56/?lang=ru_RU');
+    Asset::getInstance()->addJs('https://www.google.com/recaptcha/api.js');
     ?>
 </head>
 <body>

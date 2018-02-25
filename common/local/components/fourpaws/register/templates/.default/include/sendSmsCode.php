@@ -56,7 +56,7 @@ use FourPaws\ReCaptcha\ReCaptchaService;
         if($_SESSION['COUNT_REGISTER_CONFIRM_CODE'] >= 3) {
             try {
                 $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
-                echo $recaptchaService->getCaptcha();
+                echo $recaptchaService->getCaptcha('', true);
             } catch (ApplicationCreateException $e) {
             }
         }?>
