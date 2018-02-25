@@ -80,7 +80,9 @@ class OrderService implements LoggerAwareInterface
     public function transformOrderToMessage(Order $order)
     {
         /**
-         * Something do with order
+         * @todo
+         *
+         * Do some magic with order
          */
         $orderArray = [];
         

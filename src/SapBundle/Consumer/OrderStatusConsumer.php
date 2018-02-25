@@ -8,6 +8,11 @@ use FourPaws\SapBundle\Service\Orders\OrderService;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LogLevel;
 
+/**
+ * Class OrderStatusConsumer
+ *
+ * @package FourPaws\SapBundle\Consumer
+ */
 class OrderStatusConsumer implements ConsumerInterface, LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
@@ -49,7 +54,7 @@ class OrderStatusConsumer implements ConsumerInterface, LoggerAwareInterface
         } catch (\Exception $e) {
             $success = false;
             
-            $this->log()->log(LogLevel::INFO, sprintf('Ошибка импорта статуса заказа: %s', $e->getMessage()));
+            $this->log()->log(LogLevel::ERROR, sprintf('Ошибка импорта статуса заказа: %s', $e->getMessage()));
         }
         
         return $success;
