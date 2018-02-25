@@ -9,7 +9,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 /** @var Cmain $APPLICATION */
 ?>
-<?php if ($component->getMode() === FourPawsAuthFormComponent::MODE_FORM || $isAjax) {
+<?php if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormComponent::MODE_FORM) {
     $backUrl = !empty($backUrl) ? $backUrl : Application::getInstance()->getContext()->getRequest()->getRequestUri();
     ?>
     <div class="b-registration b-registration--popup-authorization js-auth-block js-ajax-replace-block">
@@ -53,14 +53,18 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                 </div>
             </div>
             <?php
-            if($_SESSION['COUNT_AUTH_AUTHORIZE'] >= 3) {
+            if((int)$_SESSION['COUNT_AUTH_AUTHORIZE'] >= 3) {
                 try {
                     $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
-                    echo $recaptchaService->getCaptcha();
+                    echo $recaptchaService->getCaptcha('', true);
                 } catch (ApplicationCreateException $e) {
                 }
             }?>
-            <div><span class="b-registration__auth-error"></span></div>
+            <div>
+                <span class="b-registration__auth-error">
+                    <?=(int)$_SESSION['COUNT_AUTH_AUTHORIZE'] >= 3 ? 'Неверный логин или пароль' : ''?>
+                </span>
+            </div>
             <button class="b-button b-button--social b-button--full-width b-button--popup-authorization">
                 Войти
             </button>
