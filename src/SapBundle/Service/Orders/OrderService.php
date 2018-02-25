@@ -3,9 +3,12 @@
 namespace FourPaws\SapBundle\Service\Orders;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\NotImplementedException;
 use Bitrix\Sale\Order;
 use FourPaws\SaleBundle\Service\OrderService as BaseOrderService;
-use FourPaws\SapBundle\Dto\Out\Orders\Order as OrderDto;
+use FourPaws\SapBundle\Dto\In\Orders\Order as OrderDtoIn;
+use FourPaws\SapBundle\Dto\Out\Orders\Order as OrderDtoOut;
 use FourPaws\SapBundle\Source\SourceMessage;
 use JMS\Serializer\ArrayTransformerInterface;
 use JMS\Serializer\SerializerInterface;
@@ -62,7 +65,7 @@ class OrderService implements LoggerAwareInterface
     
     public function out(Order $order)
     {
-        $message = $this->transformOrder($order);
+        $message = $this->transformOrderToMessage($order);
         $fileName = $this->getFileName($order);
         /**
          * Получаем из настроек ftp и выгружаем по ftp
@@ -74,17 +77,39 @@ class OrderService implements LoggerAwareInterface
      *
      * @return SourceMessage
      */
-    public function transformOrder(Order $order)
+    public function transformOrderToMessage(Order $order)
     {
         /**
          * Something do with order
          */
         $orderArray = [];
         
-        $dto = $this->arrayTransformer->fromArray($orderArray, OrderDto::class);
+        $dto = $this->arrayTransformer->fromArray($orderArray, OrderDtoOut::class);
         $xml = $this->serializer->serialize($dto, 'xml');
         
-        return new SourceMessage($this->getMessageId($order), OrderDto::class, $xml);
+        return new SourceMessage($this->getMessageId($order), OrderDtoOut::class, $xml);
+    }
+    
+    /**
+     * @param OrderDtoIn $orderDto
+     *
+     * @return Order
+     * @throws ArgumentNullException
+     * @throws NotImplementedException
+     */
+    public function transformDtoToOrder(OrderDtoIn $orderDto): Order
+    {
+        $orderArray = $this->arrayTransformer->toArray($orderDto);
+        
+        $order = Order::load($orderArray['id']);
+        
+        /**
+         * @todo
+         *
+         * Do some magic with order
+         */
+        
+        return $order;
     }
     
     /**
@@ -106,7 +131,8 @@ class OrderService implements LoggerAwareInterface
      *
      * @return string
      */
-    public function getFileName(Order $order) {
+    public function getFileName(Order $order)
+    {
         return sprintf('%s-%s.xml', $order->getDateInsert()->format('Ymd'), $order->getId());
     }
     
