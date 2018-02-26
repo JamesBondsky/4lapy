@@ -24,10 +24,7 @@ if ($userService->isAuthorized()) {
 <div class="b-shopping-cart">
     <div class="b-container">
         <main class="b-shopping-cart__main" role="main">
-            <br>
-            <h1 class="b-title b-title--h1 b-title--shopping-cart"><?= $emptyText ?></h1>
-            <br>
-            <br>
+            <h1 class="b-title b-title--h1 b-title--shopping-cart" style="margin-top: 44px;"><?= $emptyText ?></h1>
         </main>
         <?php $APPLICATION->IncludeFile(
             'blocks/components/viewed_products.php',
