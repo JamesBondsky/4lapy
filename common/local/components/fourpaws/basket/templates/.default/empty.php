@@ -16,7 +16,7 @@ $userService = $component->getCurrentUserService();
 if ($userService->isAuthorized()) {
     $emptyText = sprintf('%s, ваша корзина пуста. Посмотрите, что у нас есть в <a href="/catalog/" class="link--orange">каталоге</a>, или воспользуйтесь поиском.', $userService->getCurrentUser()->getName());
 } else {
-    $emptyText = 'В это сложно поверить, но ваша корзина пуста. Воспользуйтесь нашим <a href="/catalog/">каталогом</a>, чтобы наполнить её.';
+    $emptyText = 'В это сложно поверить, но ваша корзина пуста. Воспользуйтесь нашим <a href="/catalog/" class="link--orange">каталогом</a>, чтобы наполнить её.';
 }
 
 ?>
