@@ -15,9 +15,7 @@ $APPLICATION->IncludeComponent('bitrix:news.list',
     [
         'COMPONENT_TEMPLATE'              => 'index.slider',
         'IBLOCK_TYPE'                     => IblockType::PUBLICATION,
-        'IBLOCK_ID'                       => IblockUtils::getIblockId(IblockType::PUBLICATION,
-            IblockCode::BANNERS),
-        //не проставлен символьный код
+        'IBLOCK_ID'                       => IblockUtils::getIblockId(IblockType::PUBLICATION, IblockCode::BANNERS),
         'NEWS_COUNT'                      => '7',
         'SORT_BY1'                        => 'SORT',
         'SORT_ORDER1'                     => 'ASC',
@@ -118,9 +116,21 @@ $APPLICATION->IncludeComponent(
 );
 
 /**
- * @todo Распродажа (товары со скидкой). Заменить компонентом и удалить файл.
+ * Распродажа
  */
-require_once '_temp_sale.php';
+$APPLICATION->IncludeComponent(
+    'bitrix:main.include',
+    '',
+    [
+        'AREA_FILE_SHOW' => 'file',
+        'PATH'           => '/local/include/blocks/index.sale_products.php',
+        'EDIT_TEMPLATE'  => '',
+    ],
+    null,
+    [
+        'HIDE_ICONS' => 'Y',
+    ]
+);
 
 /**
  * Преимущества

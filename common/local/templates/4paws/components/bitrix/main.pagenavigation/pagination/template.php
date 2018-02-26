@@ -27,7 +27,7 @@ if ($arParams['AJAX_MODE'] === 'Y') {
         <li class="b-pagination__item b-pagination__item--prev <?= $disabled ?>">
             <?php if ((int)$arResult['CURRENT_PAGE'] > 1) { ?>
                 <a class="b-pagination__link<?= $class ?>"
-                   title="Назад"
+                   title="<?=$arResult['CURRENT_PAGE'] - 1?>"
                    href="<?= $arResult['CURRENT_PAGE'] > 2 ? htmlspecialcharsbx(
                        $component->replaceUrlTemplate(
                            $arResult['CURRENT_PAGE'] - 1
@@ -55,12 +55,13 @@ if ($arParams['AJAX_MODE'] === 'Y') {
                 </li>
                 <?php $page = $arResult['START_BETWEEN_BEGIN'] === $page ? $arResult['START_BETWEEN_END'] : $arResult['END_BETWEEN_END'];
             }
+            $page++;
         endwhile; ?>
         <?php $disabled = (int)$arResult['CURRENT_PAGE'] === (int)$arResult['END_PAGE'] ? '' : 'b-pagination__item--disabled'; ?>
         <li class="b-pagination__item b-pagination__item--next <?= $disabled ?>">
             <?php if ((int)$arResult['CURRENT_PAGE'] < (int)$arResult['END_PAGE']) { ?>
                 <a class="b-pagination__link<?= $class ?>"
-                   title="Вперед"
+                   title="<?=$arResult['CURRENT_PAGE'] + 1?>"
                    href="<?= htmlspecialcharsbx($component->replaceUrlTemplate($arResult['CURRENT_PAGE'] + 1)) ?>">
                     Вперед
                 </a>

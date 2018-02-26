@@ -6,6 +6,8 @@
 
 namespace FourPaws\PersonalBundle\AjaxController;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\DB\Exception;
 use Bitrix\Main\Type\Date;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -140,7 +142,10 @@ class ProfileController extends Controller
             }
 
             $expertSenderService = App::getInstance()->getContainer()->get('expertsender.service');
-            $expertSenderService->sendChangePasswordByProfile($this->currentUserProvider->getUserRepository()->find($id)->getEmail());
+            $user = $this->currentUserProvider->getUserRepository()->find($id);
+            if($user !== null) {
+                $expertSenderService->sendChangePasswordByProfile($user->getEmail());
+            }
 
             return JsonSuccessResponse::create('Пароль обновлен');
         } catch (BitrixRuntimeException $e) {
@@ -160,7 +165,6 @@ class ProfileController extends Controller
      * @param Serializer $serializer
      *
      * @return JsonResponse
-     * @throws ApplicationCreateException
      */
     public function changeDataAction(Request $request, Serializer $serializer): JsonResponse
     {
@@ -188,37 +192,54 @@ class ProfileController extends Controller
         }
 
         try {
+            try {
+                $container = App::getInstance()->getContainer();
+            } catch (ApplicationCreateException $e) {
+                return $this->ajaxMess->getSystemError();
+            }
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             $curUser = $userRepository->find($user->getId());
-            if ($curUser->getEmail() !== $user->getEmail()) {
+            if ($curUser !== null && $curUser->getEmail() !== $user->getEmail()) {
                 $data['UF_EMAIL_CONFIRMED'] = false;
             }
-            $res = $userRepository->updateData($user->getId(), $userRepository->prepareData($data));
-            if (!$res) {
+            try {
+                $res = $userRepository->updateData($user->getId(), $userRepository->prepareData($data));
+                if (!$res) {
+                    return $this->ajaxMess->getUpdateError();
+                }
+            }
+            catch (\Exception $e){
                 return $this->ajaxMess->getUpdateError();
             }
 
-            try {
-                $expertSenderService = App::getInstance()->getContainer()->get('expertsender.service');
-                $expertSenderService->sendChangeEmail($curUser, $user);
-            } catch (ExpertsenderServiceException $e) {
-            } catch (ApplicationCreateException $e) {
+            if($user->getEmail() !== $curUser->getEmail()) {
+                try {
+                    $expertSenderService = $container->get('expertsender.service');
+                    $expertSenderService->sendChangeEmail($curUser, $user);
+                } catch (ExpertsenderServiceException $e) {
+                    $logger = LoggerFactory::create('expersender');
+                    $logger->error('expersender error:'.$e->getMessage());
+                }
             }
 
             /** @var ManzanaService $manzanaService */
-            $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
-            $client = null;
             try {
-                $contactId         = $manzanaService->getContactIdByUser();
-                $client            = new Client();
-                $client->contactId = $contactId;
-            } catch (ManzanaServiceException $e) {
-                $client = new Client();
-            }
+                $manzanaService = $container->get('manzana.service');
+                $client = null;
+                try {
+                    $contactId = $manzanaService->getContactIdByUser();
+                    $client = new Client();
+                    $client->contactId = $contactId;
+                } catch (ManzanaServiceException $e) {
+                    $client = new Client();
+                }
 
-            if ($client instanceof Client) {
-                $this->currentUserProvider->setClientPersonalDataByCurUser($client);
-                $manzanaService->updateContactAsync($client);
+                if ($client instanceof Client) {
+                    $this->currentUserProvider->setClientPersonalDataByCurUser($client);
+                    $manzanaService->updateContactAsync($client);
+                }
+            } catch (ApplicationCreateException $e) {
+                return $this->ajaxMess->getSystemError();
             }
 
             try {
@@ -243,10 +264,6 @@ class ProfileController extends Controller
             );
         } catch (BitrixRuntimeException $e) {
             return $this->ajaxMess->getUpdateError($e->getMessage());
-        } catch (\RuntimeException $e) {
-        } catch (\InvalidArgumentException $e) {
         }
-
-        return $this->ajaxMess->getSystemError();
     }
 }

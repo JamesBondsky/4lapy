@@ -164,7 +164,7 @@ class OftenSeekService implements OftenSeekInterface
                 if (\count($catalogSections) > 1 && $items->count() > 1) {
                     /** @todo подумать над сортировкой - сейчас не изящно */
                     /** @var OftenSeekSection $item */
-                    $tmpItems = $items;
+                    $tmpItems = $items->toArray();
                     $items->clear();
                     foreach ($catalogSections as $sectId) {
                         foreach ($tmpItems as $item) {

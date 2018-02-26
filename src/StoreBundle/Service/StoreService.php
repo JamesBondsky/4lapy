@@ -68,8 +68,10 @@ class StoreService
 
     /** @var  CalculationResult */
     protected $pickupDelivery;
+
     /** @var DeliveryService $deliveryService */
     protected $deliveryService;
+
     /** @var Offer[] $offers */
     private $offers;
 
@@ -155,12 +157,15 @@ class StoreService
      *
      * @param string $locationCode
      * @param string $type
+     * @param bool $strict
      *
-     * @throws \Exception
      * @return StoreCollection
      */
-    public function getByLocation(string $locationCode, string $type = self::TYPE_ALL): StoreCollection
-    {
+    public function getByLocation(
+        string $locationCode,
+        string $type = self::TYPE_ALL,
+        bool $strict = false
+    ): StoreCollection {
         $typeFilter = $this->getTypeFilter($type);
         $getStores = function () use ($locationCode, $typeFilter) {
             $filter = array_merge(
@@ -181,7 +186,8 @@ class StoreService
         /**
          * Если не нашлось ничего с типом "склад" для данного местоположения, то добавляем склады для Москвы
          */
-        if ($locationCode !== LocationService::LOCATION_CODE_MOSCOW &&
+        if (!$strict &&
+            $locationCode !== LocationService::LOCATION_CODE_MOSCOW &&
             \in_array($type, [self::TYPE_STORE, self::TYPE_ALL], true) &&
             $stores->getStores()->isEmpty()
         ) {
@@ -308,7 +314,7 @@ class StoreService
     /**
      * Получить наличие офферов на указанных складах
      *
-     * @param Collection      $offers
+     * @param Collection $offers
      * @param StoreCollection $stores
      *
      * @throws \Exception
@@ -318,7 +324,7 @@ class StoreService
         foreach ($offers as $offer) {
             $offer->withStocks(
                 $this->getStocksByOffer($offer)
-                    ->filterByStores($stores)
+                     ->filterByStores($stores)
             );
         }
     }
@@ -425,11 +431,11 @@ class StoreService
             if ($this->pickupDelivery) {
                 $stockResult = $this->getStockResult($this->pickupDelivery);
                 $storeAmount = reset($this->offers)->getStocks()
-                    ->filterByStores(
-                        $this->getByCurrentLocation(
-                            static::TYPE_STORE
-                        )
-                    )->getTotalAmount();
+                                                   ->filterByStores(
+                                                       $this->getByCurrentLocation(
+                                                           static::TYPE_STORE
+                                                       )
+                                                   )->getTotalAmount();
             }
 
             /** @var Store $store */
@@ -497,9 +503,9 @@ class StoreService
                     /** @var StockResult $stockResultByStore */
                     $stockResultByStore = $stockResult->filterByStore($store)->first();
                     $amount = $storeAmount + $stockResultByStore->getOffer()
-                            ->getStocks()
-                            ->filterByStore($store)
-                            ->getTotalAmount();
+                                                                ->getStocks()
+                                                                ->filterByStore($store)
+                                                                ->getTotalAmount();
                     $item['amount'] = $amount > 5 ? 'много' : 'мало';
                     $item['pickup'] = DeliveryTimeHelper::showTime(
                         $this->pickupDelivery,
@@ -532,7 +538,6 @@ class StoreService
     /**
      * @param int $offerId
      *
-     * @throws DeliveryNotFoundException
      * @return StoreCollection
      */
     public function getActiveStoresByProduct(int $offerId): StoreCollection
@@ -544,7 +549,7 @@ class StoreService
 
         try {
             return $this->getStockResult($pickupDelivery)->getStores();
-        } catch (NotFoundException $e) {
+        } catch (DeliveryNotFoundException $e) {
             return new StoreCollection();
         }
     }
@@ -671,7 +676,6 @@ class StoreService
         if ($longitude > 0 && $latitude > 0) {
             $result['DISTANCE_' . (string)$latitude . '_' . (string)$longitude] = 'ASC';
         }
-
 
         return $result;
     }
