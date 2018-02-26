@@ -34,6 +34,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /**
  * Class UserService
+ *
  * @package FourPaws\UserBundle\Service
  */
 class UserService implements

@@ -8,46 +8,111 @@ namespace FourPaws\MobileApiBundle\Controller;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
+use FourPaws\Decorators\FullHrefDecorator;
+use FourPaws\MobileApiBundle\Dto\Object\ClientCard;
+use FourPaws\MobileApiBundle\Dto\Request\LoginRequest;
 use FourPaws\MobileApiBundle\Dto\Response as ApiResponse;
+use FourPaws\UserBundle\Entity\User;
+use FourPaws\UserBundle\Service\UserService;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Swagger\Annotations\Parameter;
 use Swagger\Annotations\Response;
-use Symfony\Component\HttpFoundation\Request;
 
 class UserController extends FOSRestController
 {
     /**
-     * @Rest\Post(path="/user_login", name="user_login")
+     * @var UserService
+     */
+    private $userService;
+
+    public function __construct(UserService $userService)
+    {
+        $this->userService = $userService;
+    }
+
+    /**
+     * @Rest\Post(path="/user_login/", name="user_login")
      * @Parameter(
      *     name="token",
      *     in="query",
      *     type="string",
      *     required=true,
-     *     description="identifier token from /start request"
+     *     description="identifier token from /start/ request"
      * )
      * @Response(
      *     response="200"
      * )
-     * @Rest\View()
-     * @param Request $request
+     * @param LoginRequest $loginRequest
      *
      * @return ApiResponse
+     * @internal param Request $request
+     *
+     * @Security("!has_role('REGISTERED_USERS')")
+     *
+     * @Rest\View()
      */
-    public function loginAction(Request $request): ApiResponse
-    {
+    public function loginAction(
+        LoginRequest $loginRequest
+    ): ApiResponse {
+        $response = new ApiResponse();
+
+        $this->userService->login($loginRequest->getLogin(), $loginRequest->getPassword());
+
+        /**
+         * @var User $user
+         */
+        $user = $this->getUser();
+
+        // ToDo: Сделать реальное получение карты
+        $card = (new ClientCard())->setTitle('Карта клиента')
+            ->setPicture(new FullHrefDecorator('/upload/card/img.png'))
+            ->setBalance(1500)
+            ->setNumber('000011112222')
+            ->setBarCode('60832513')
+            ->setSaleAmount(3);
+
+        $response->setData([
+            'email'     => $user->getEmail(),
+            'firstname' => $user->getName(),
+            'lastname'  => $user->getLastName(),
+            'midname'   => $user->getSecondName() ?: '',
+            'birthdate' => $user->getBirthday() ? $user->getBirthday()->format('d.m.Y') : '',
+            'phone'     => $user->getNormalizePersonalPhone(),
+            'card'      => $card,
+        ]);
+
+        return $response;
     }
 
     /**
-     * @Rest\Get(path="/logout")
+     * @Rest\Get(path="/logout/", name="logout")
+     * @Response(
+     *     response="200"
+     * )
+     *
+     * @Security("has_role('REGISTERED_USERS')")
+     *
+     * @Rest\View()
      */
-    public function logoutAction()
+    public function logoutAction(): ApiResponse
     {
-        /**
-         * @todo logout bitrix
-         */
+        $response = new ApiResponse();
 
-        /**
-         * @todo update session - clear session
-         */
+        $this->userService->logout();
+
+        $response->setData([
+            'feedback_text' => 'Вы вышли из своей учетной записи',
+        ]);
+
+        return $response;
+    }
+
+    /**
+     * @Rest\Get(path="/check/")
+     * @Rest\View()
+     */
+    public function checkAction()
+    {
     }
 
     /**
