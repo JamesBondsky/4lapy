@@ -241,4 +241,75 @@ class UserCest
             'FUSER_ID' => $fUserId,
         ]);
     }
+
+
+    /**
+     * @param ApiTester $I
+     * @param Example   $example
+     *
+     * @dataprovider existLoginProvider
+     */
+    public function testExistLoginExist(ApiTester $I, Example $example)
+    {
+        $I->wantTo('Test exist user');
+
+        $I->haveHttpHeader('Content-type', 'application/json');
+        $I->sendGET('/login_exist/', [
+            'token' => $this->token,
+            'login' => $example['callback'](),
+        ]);
+
+        $I->seeResponseCodeIs(HttpCode::OK);
+        $I->seeResponseIsJson();
+        $I->seeResponseMatchesJsonType([
+            'data'  => [
+                'exist' => 'boolean',
+            ],
+            'error' => 'array:empty',
+        ]);
+        $I->seeResponseContainsJson(['exist' => true]);
+    }
+
+    public function existLoginProvider()
+    {
+        return [
+            [
+                'callback' => function () {
+                    return $this->user['LOGIN'];
+                },
+            ],
+            [
+                'callback' => function () {
+                    return $this->user['EMAIL'];
+                },
+            ],
+            [
+                'callback' => function () {
+                    return $this->user['PERSONAL_PHONE'];
+                },
+            ],
+        ];
+    }
+
+    public function testNonExistLoginExist(ApiTester $I)
+    {
+        $I->wantTo('Test exist user');
+
+        $I->haveHttpHeader('Content-type', 'application/json');
+        $I->sendGET('/login_exist/', [
+            'token' => $this->token,
+            'login' => md5(random_bytes(1024)),
+        ]);
+
+        $I->seeResponseCodeIs(HttpCode::OK);
+        $I->seeResponseIsJson();
+        $I->seeResponseMatchesJsonType([
+            'data'  => [
+                'exist'         => 'boolean',
+                'feedback_text' => 'string:!empty',
+            ],
+            'error' => 'array:empty',
+        ]);
+        $I->seeResponseContainsJson(['exist' => false]);
+    }
 }

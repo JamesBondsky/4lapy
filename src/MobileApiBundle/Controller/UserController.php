@@ -10,6 +10,7 @@ use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\MobileApiBundle\Dto\Object\ClientCard;
+use FourPaws\MobileApiBundle\Dto\Request\LoginExistRequest;
 use FourPaws\MobileApiBundle\Dto\Request\LoginRequest;
 use FourPaws\MobileApiBundle\Dto\Response as ApiResponse;
 use FourPaws\UserBundle\Entity\User;
@@ -44,6 +45,7 @@ class UserController extends FOSRestController
      * )
      * @param LoginRequest $loginRequest
      *
+     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
      * @return ApiResponse
      * @internal param Request $request
      *
@@ -156,7 +158,8 @@ class UserController extends FOSRestController
     }
 
     /**
-     * @Rest\Get(path="/login_exist")
+     * @Rest\Get(path="/login_exist/")
+     * @Rest\View()
      * @Parameter(
      *     name="login",
      *     in="query",
@@ -164,16 +167,21 @@ class UserController extends FOSRestController
      *     required=true,
      *     description="Phone or Email of user"
      * )
+     * @param LoginExistRequest $existRequest
+     *
+     * @throws \FourPaws\UserBundle\Exception\TooManyUserFoundException
+     * @return ApiResponse
      */
-    public function isExistAction()
+    public function isExistAction(LoginExistRequest $existRequest)
     {
+        $exist = $this->userService->getUserRepository()->isExist($existRequest->getLogin());
         /**
          * @todo Необходимо предусмотреть максимальное кол-во попыток
          */
 
-        return [
-            'exist'         => true,
-            'feedback_text' => '',
-        ];
+        return (new ApiResponse())->setData([
+            'exist'         => $exist,
+            'feedback_text' => $exist ? '' : 'Проверьте правильность заполнения поля. Введите ваш E-mail или номер телефона',
+        ]);
     }
 }
