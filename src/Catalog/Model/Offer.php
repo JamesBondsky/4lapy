@@ -18,12 +18,14 @@ use FourPaws\BitrixOrm\Model\CatalogProduct;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\BitrixOrm\Model\Image;
+use FourPaws\BitrixOrm\Model\Interfaces\ResizeImageInterface;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\BitrixOrm\Query\CatalogProductQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Service\StoreService;
+use InvalidArgumentException;
 use JMS\Serializer\Annotation as Serializer;
 use JMS\Serializer\Annotation\Accessor;
 use JMS\Serializer\Annotation\Groups;
@@ -292,6 +294,26 @@ class Offer extends IblockElement
     protected $resizeImages;
 
     /**
+     * @var bool
+     * @Type("bool")
+     * @Groups({"elastic"})
+     */
+    protected $PROPERTY_IS_HIT = false;
+
+    /**
+     * @var bool
+     * @Type("bool")
+     * @Groups({"elastic"})
+     */
+    protected $PROPERTY_IS_NEW = false;
+    /**
+     * @var bool
+     * @Type("bool")
+     * @Groups({"elastic"})
+     */
+    protected $PROPERTY_IS_SALE = false;
+
+    /**
      * @var string
      */
     protected $link = '';
@@ -331,14 +353,20 @@ class Offer extends IblockElement
      * @param int $width
      * @param int $height
      *
-     * @return ResizeImageCollection
+     * @return Collection|ResizeImageInterface[]
+     *
+     * @throws InvalidArgumentException
      */
     public function getResizeImages(int $width = 0, int $height = 0): Collection
     {
         if ($this->resizeImages instanceof Collection) {
             if ($width) {
                 $this->resizeImages->forAll(
-                    function ($key, ResizeImageDecorator $image) use ($width) {
+                    function (
+                        /** @noinspection PhpUnusedParameterInspection */
+                        $key,
+                        ResizeImageDecorator $image
+                    ) use ($width) {
                         $image->setResizeWidth($width);
 
                         return true;
@@ -348,7 +376,11 @@ class Offer extends IblockElement
 
             if ($height) {
                 $this->resizeImages->forAll(
-                    function ($key, ResizeImageDecorator $image) use ($height) {
+                    function (
+                        /** @noinspection PhpUnusedParameterInspection */
+                        $key,
+                        ResizeImageDecorator $image
+                    ) use ($height) {
                         $image->setResizeHeight($height);
 
                         return true;
@@ -365,7 +397,7 @@ class Offer extends IblockElement
     }
 
     /**
-     * @throws \InvalidArgumentException
+     * @throws InvalidArgumentException
      * @return Collection|Image[]
      */
     public function getImages(): Collection
@@ -781,7 +813,7 @@ class Offer extends IblockElement
     /**
      * @return string
      */
-    public function getSkuId()
+    public function getSkuId(): string
     {
         return $this->getXmlId();
     }
@@ -796,6 +828,66 @@ class Offer extends IblockElement
         return $this->price;
     }
 
+    /**
+     * @return bool
+     */
+    public function getPropertyIsHit()
+    {
+        return $this->PROPERTY_IS_HIT;
+    }
+
+    /**
+     * @param bool $propertyHit
+     *
+     * @return Offer
+     */
+    public function setPropertyIsHit($propertyHit)
+    {
+        $this->PROPERTY_IS_HIT = $propertyHit;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getPropertyIsNew()
+    {
+        return $this->PROPERTY_IS_NEW;
+    }
+
+    /**
+     * @param bool $propertyNew
+     *
+     * @return Offer
+     */
+    public function setPropertyIsNew($propertyNew)
+    {
+        $this->PROPERTY_IS_HIT = $propertyNew;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getPropertyIsSale()
+    {
+        return $this->PROPERTY_IS_SALE;
+    }
+
+    /**
+     * @param bool $propertySale
+     *
+     * @return Offer
+     */
+    public function setPropertyIsSale($propertySale)
+    {
+        $this->PROPERTY_IS_SALE = $propertySale;
+
+        return $this;
+    }
+
     protected function checkOptimalPrice()
     {
         CCatalogDiscountSave::Disable();
@@ -807,8 +899,8 @@ class Offer extends IblockElement
              * @var array $optimalPrice
              */
             $resultPrice = $optimalPrice['RESULT_PRICE'] ?? [
-                    'PERCENT' => 0,
-                    'BASE_PRICE' => $this->price,
+                    'PERCENT'        => 0,
+                    'BASE_PRICE'     => $this->price,
                     'DISCOUNT_PRICE' => $this->price,
                 ];
             $this->withDiscount(floor($resultPrice['PERCENT']));
@@ -954,12 +1046,13 @@ class Offer extends IblockElement
      *
      *
      * @param Product $product
-     * @throws \InvalidArgumentException
+     *
+     * @throws InvalidArgumentException
      */
     public function setProduct(Product $product)
     {
         if ($product->getId() !== $this->getCml2Link()) {
-            throw new \InvalidArgumentException('Wrong product set');
+            throw new InvalidArgumentException('Wrong product set');
         }
 
         $this->product = $product;
@@ -1039,5 +1132,29 @@ class Offer extends IblockElement
          * @todo
          */
         return false;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isHit(): bool
+    {
+        return $this->getPropertyIsHit();
+    }
+
+    /**
+     * @return bool
+     */
+    public function isNew(): bool
+    {
+        return $this->getPropertyIsNew();
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSale(): bool
+    {
+        return $this->getPropertyIsSale();
     }
 }

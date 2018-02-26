@@ -25,7 +25,7 @@ services:
         tags: ['request.param_converter']
 
     # Используется в компонентах (@todo private)
-    FourPaws\CatalogBundle\Service\DiscountMarkService:
+    FourPaws\CatalogBundle\Service\MarkService:
         public: true
 
     # Постараться спрятать за интерфейс
@@ -36,4 +36,8 @@ services:
     FourPaws\CatalogBundle\Service\FilterHelper:
         class: FourPaws\CatalogBundle\Service\FilterHelper
         arguments: ['@bx.hlblock.filter']
+        public: true
+
+    FourPaws\CatalogBundle\Service\OftenSeekInterface:
+        class: FourPaws\CatalogBundle\Service\OftenSeekService
         public: true

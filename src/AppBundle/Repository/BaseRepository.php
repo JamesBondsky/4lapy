@@ -245,12 +245,13 @@ class BaseRepository
             $query->countTotal(true);
         }
         $result = $query->exec();
-        if (0 === $result->getSelectedRowsCount()) {
-            return new ArrayCollection();
-        }
 
         if ($this->nav instanceof PageNavigation) {
             $this->nav->setRecordCount($result->getCount());
+        }
+
+        if (0 === $result->getSelectedRowsCount()) {
+            return new ArrayCollection();
         }
 
         if (!empty($params['setKey'])) {

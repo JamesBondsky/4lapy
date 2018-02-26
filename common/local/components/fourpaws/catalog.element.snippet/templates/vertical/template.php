@@ -51,11 +51,7 @@ if (!$arParams['ITEM_ATTR_ID']) {
     $arParams['ITEM_ATTR_ID'] = $this->GetEditAreaId($product->getId() . '_' . md5($this->randString()));
 } ?>
     <div class="b-common-item js-product-item" id="<?= $arParams['ITEM_ATTR_ID'] ?>">
-        <?php if ($markImage = $component->getDiscountMarkService()->getMarkImagePath($currentOffer)) { ?>
-            <span class="b-common-item__sticker-wrap" style="background-color:;data-background:;">
-                <img class="b-common-item__sticker" src="<?= $markImage ?>" alt="" role="presentation">
-            </span>
-        <?php } ?>
+        <?= $component->getMarkService()->getMark($currentOffer) ?>
         <span class="b-common-item__image-wrap">
             <?php if ($currentOffer->getImagesIds()) { ?>
                 <a class="b-common-item__image-link js-item-link" href="<?= $product->getDetailPageUrl() ?>">

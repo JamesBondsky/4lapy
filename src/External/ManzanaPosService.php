@@ -55,10 +55,22 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
                 ],
                 'orgName' => $this->parameters['organization_name'],
             ];
-            
+
             $rawResult = $this->client->call(self::METHOD_EXECUTE, ['request_options' => $arguments]);
             $rawResult = (array)$rawResult->ProcessRequestInfoResult->Responses->ChequeResponse;
-            
+            if ($rawResult['Item']) {
+                if(is_array($rawResult['Item'])) {
+
+                    foreach ($rawResult['Item'] as &$item) {
+                        $item = (array)$item;
+                    }
+
+                    unset($item);
+                } elseif ($rawResult['Item'] instanceof \stdClass) {
+                    $rawResult['Item'] = [(array)$rawResult['Item']];
+                }
+            }
+
             $result = $this->serializer->fromArray($rawResult, SoftChequeResponse::class);
         } catch (\Exception $e) {
             try {
@@ -83,8 +95,7 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
      */
     public function buildRequestFromBasket(
         BasketBase $basket,
-        string $card = '',
-        float $paidByBonus = 0
+        string $card = ''
     ) : SoftChequeRequest {
         $sum = $sumDiscounted = $discount = 0.0;
         
@@ -128,8 +139,7 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
                 ->setDiscount(ArithmeticHelper::getPercent($sumDiscounted, $sum));
 
         if ($card) {
-            $request->setCardByNumber($card)
-                    ->setPaidByBonus($paidByBonus);
+            $request->setCardByNumber($card);
         }
         
         return $request;

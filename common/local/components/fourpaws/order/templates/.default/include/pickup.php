@@ -40,7 +40,7 @@ $delayed = $stockResultByShop->getDelayed();
 $metro = $arResult['METRO'][$selectedShop->getMetro()];
 
 $canGetPartial = !$available->isEmpty();
-$partialGet = ($canGetPartial && $storage->isPartialGet()) || $delayed->isEmpty();
+$partialGet = $storage->isPartialGet();
 
 ?>
 
@@ -98,28 +98,28 @@ $partialGet = ($canGetPartial && $storage->isPartialGet()) || $delayed->isEmpty(
             </span>
         </div>
         <div class="b-radio b-radio--tablet-big" <?= $canGetPartial ? '' : 'style="display:none"' ?>>
-            <input class="b-radio__input"
+            <input class="b-radio__input ok"
                    type="radio"
                    name="order-pick-time"
                    id="order-pick-time-now"
                 <?= $partialGet ? 'checked="checked"' : '' ?>
-                   value="1"/>
+                   value="1"
+                   data-radio="5">
             <label class="b-radio__label b-radio__label--tablet-big" for="order-pick-time-now">
             </label>
-            <div class="b-order-list b-order-list--myself js-parts-price">
+            <div class="b-order-list b-order-list--myself js-parts-price js-price-block">
                 <ul class="b-order-list__list">
-                    <li class="b-order-list__item b-order-list__item--myself js-parts-price">
-                        <div class="b-order-list__order-text b-order-list__order-text--myself js-parts-price">
+                    <li class="b-order-list__item b-order-list__item--myself js-parts-price js-price-block">
+                        <div class="b-order-list__order-text b-order-list__order-text--myself js-parts-price js-price-block">
                             <div class="b-order-list__clipped-text">
-                                <div class="b-order-list__text-backed">
+                                <div class="b-order-list__text-backed js-my-pickup js-pickup-time">
                                     Забрать <?= DeliveryTimeHelper::showTime(
                                         $partialPickup,
                                         $available->getDeliveryDate()
-                                    ) ?>
-                                </div>
+                                    ) ?></div>
                             </div>
                         </div>
-                        <div class="b-order-list__order-value b-order-list__order-value--myself js-parts-price">
+                        <div class="b-order-list__order-value b-order-list__order-value--myself js-parts-price js-price-block">
                             <?= CurrencyHelper::formatPrice($available->getPrice()) ?>
                         </div>
                     </li>
@@ -139,34 +139,38 @@ $partialGet = ($canGetPartial && $storage->isPartialGet()) || $delayed->isEmpty(
                 </ol>
             </div>
         </div>
-        <div class="b-radio b-radio--tablet-big" <?= $delayed->isEmpty() ? 'style="display:none"' : '' ?>>
-            <input class="b-radio__input"
+        <div class="b-radio b-radio--tablet-big">
+            <input class="b-radio__input ok"
                    type="radio"
                    name="order-pick-time"
                    id="order-pick-time-then"
                 <?= !$partialGet ? 'checked="checked"' : '' ?>
-                   value="0"/>
+                   value="0"
+                   data-radio="6">
             <label class="b-radio__label b-radio__label--tablet-big" for="order-pick-time-then">
             </label>
-            <div class="b-order-list b-order-list--myself js-full-price">
+            <div class="b-order-list b-order-list--myself js-full-price js-price-block">
                 <ul class="b-order-list__list">
-                    <li class="b-order-list__item b-order-list__item--myself js-full-price">
-                        <div class="b-order-list__order-text b-order-list__order-text--myself js-full-price">
+                    <li class="b-order-list__item b-order-list__item--myself js-full-price js-price-block">
+                        <div class="b-order-list__order-text b-order-list__order-text--myself js-full-price js-price-block">
                             <div class="b-order-list__clipped-text">
-                                <div class="b-order-list__text-backed">Забрать полный заказ</div>
+                                <div class="b-order-list__text-backed">Забрать полный заказ
+                                </div>
                             </div>
                         </div>
-                        <div class="b-order-list__order-value b-order-list__order-value--myself js-full-price">
+                        <div class="b-order-list__order-value b-order-list__order-value--myself js-full-price js-price-block">
                             <?= CurrencyHelper::formatPrice($stockResultByShop->getPrice()) ?>
                         </div>
                     </li>
                 </ul>
             </div>
             <div class="b-radio__addition-text">
-                <p class="js-pickup_full"><?= DeliveryTimeHelper::showTime(
+                <p class="js-pickup_full js-pickup-time">
+                    <?= DeliveryTimeHelper::showTime(
                         $pickup,
                         $stockResultByShop->getDeliveryDate()
-                    ) ?></p>
+                    ) ?>
+                </p>
             </div>
         </div>
     </div>

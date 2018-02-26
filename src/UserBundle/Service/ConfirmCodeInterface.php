@@ -6,81 +6,79 @@
 
 namespace FourPaws\UserBundle\Service;
 
-use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\External\Exception\SmsSendErrorException;
-use FourPaws\Helpers\Exception\WrongPhoneNumberException;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\DB\SqlQueryException;
 use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
+use FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException;
 use FourPaws\UserBundle\Model\ConfirmCode;
-use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
-use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
-use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 interface ConfirmCodeInterface
 {
     /**
-     * @throws \Exception
+     *
+     * @throws ArgumentException
+     * @throws SqlQueryException
      */
     public static function delExpiredCodes();
-    
+
     /**
-     * @param string $phone
-     *
-     * @throws ServiceCircularReferenceException
-     * @throws \RuntimeException
-     * @throws ApplicationCreateException
-     * @throws ServiceNotFoundException
-     * @throws InvalidArgumentException
-     * @throws SmsSendErrorException
-     * @throws WrongPhoneNumberException
-     * @throws \Exception
-     * @return bool
-     */
-    public static function sendConfirmSms(string $phone) : bool;
-    
-    /**
-     * @param string $phone
+     * @param string $text
      *
      * @return bool|string
      */
-    public static function generateCode(string $phone);
-    
+    public static function generateCode(string $text);
+
     /**
-     * @param $phone
+     * @param string $text
+     * @param string $type
      *
      * @throws \Exception
      */
-    public static function setGeneratedCode($phone);
-    
+    public static function setGeneratedCode(string $text, string $type = 'sms');
+
     /**
+     * @param string $type
+     *
      * @throws \Exception
      */
-    public static function delCurrentCode();
-    
+    public static function delCurrentCode(string $type = 'sms');
+
     /**
-     * @param string $phone
      * @param string $confirmCode
      *
-     * @throws ServiceNotFoundException
-     * @throws ExpiredConfirmCodeException
-     * @throws WrongPhoneNumberException
-     * @throws \Exception
+     * @param string $type
+     *
      * @return bool
+     * @throws ExpiredConfirmCodeException
+     * @throws NotFoundConfirmedCodeException
+     * @throws \Exception
      */
-    public static function checkConfirmSms(string $phone, string $confirmCode) : bool;
-    
+    public static function checkCode(string $confirmCode, string $type = 'sms'): bool;
+
     /**
      *
-     * @throws ExpiredConfirmCodeException
-     * @throws \Exception
+     * @param string $type
      *
      * @return string
+     * @throws ExpiredConfirmCodeException
+     * @throws NotFoundConfirmedCodeException
+     * @throws \Exception
      */
-    public static function getGeneratedCode() : string;
-    
+    public static function getGeneratedCode(string $type = 'sms'): string;
+
     /**
      * @param ConfirmCode $confirmCode
      *
+     * @param string      $type
+     *
      * @return bool
      */
-    public static function isExpire(ConfirmCode $confirmCode) : bool;
+    public static function isExpire(ConfirmCode $confirmCode, string $type = 'sms'): bool;
+
+    /**
+     * @param string $text
+     *
+     * @return string
+     */
+    public static function getConfirmHash(string $text): string;
 }

@@ -81,6 +81,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
 
     /**
      * {@inheritdoc}
+     * @throws BitrixRuntimeException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
@@ -99,6 +100,14 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         }
 
         $curUser = $this->currentUserProvider->getCurrentUser();
+
+        /** обновление флага подтвержденности email */
+        if (!$curUser->isEmailConfirmed() && !empty($curUser->getEmail())) {
+            $expertSenderService = App::getInstance()->getContainer()->get('expertsender.service');
+            if ($expertSenderService->checkConfirmEmail($curUser->getEmail())) {
+                $this->currentUserProvider->getUserRepository()->updateData($curUser->getId(), ['UF_EMAIL_CONFIRMED' => true]);
+            }
+        }
 
         $curBirthday = $curUser->getBirthday();
         if ($curBirthday instanceof Date) {
@@ -173,7 +182,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             return $this->ajaxMess->getNotFoundConfirmedCodeException();
         }
         $data = [
-            'UF_PHONE_CONFIRMED' => 'Y',
+            'UF_PHONE_CONFIRMED' => true,
         ];
         try {
             if ($this->currentUserProvider->getUserRepository()->updateData((int)$request->get('ID', 0), $data)) {
@@ -184,13 +193,15 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                     return $this->ajaxMess->getNotOldPhoneError();
                 }
                 try {
-                    $contactId = $manzanaService->getContactIdByPhone($oldPhone);
+                    $contactId = $manzanaService->getContactIdByPhone(PhoneHelper::getManzanaPhone($oldPhone));
                     $client = new Client();
                     $client->contactId = $contactId;
                     $client->phone = $phone;
                 } catch (ManzanaServiceException $e) {
                     $client = new Client();
                     $this->currentUserProvider->setClientPersonalDataByCurUser($client);
+                } catch (WrongPhoneNumberException $e) {
+                    return $this->ajaxMess->getWrongPhoneNumberException();
                 }
 
                 if ($client instanceof Client) {
@@ -257,8 +268,10 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         $mess = '';
         try {
             $phone = PhoneHelper::normalizePhone($phone);
-            /** @noinspection PhpUnusedLocalVariableInspection */
-            $oldPhone = PhoneHelper::normalizePhone($oldPhone);
+            if (!empty($oldPhone)) {
+                /** @noinspection PhpUnusedLocalVariableInspection */
+                $oldPhone = PhoneHelper::normalizePhone($oldPhone);
+            }
         } catch (WrongPhoneNumberException $e) {
             return $this->ajaxMess->getWrongPhoneNumberException();
         }
@@ -312,22 +325,34 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         }
 
         try {
+            $container = App::getInstance()->getContainer();
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             $curUser = $userRepository->find($id);
             $data = ['PERSONAL_PHONE' => $phone];
-            if ($curUser->getPersonalPhone() !== $phone) {
-                $data['UF_PHONE_CONFIRMED'] = 'N';
+            $oldPhone = '';
+            if ($curUser !== null) {
+                $oldPhone = $curUser->getPersonalPhone();
+            }
+            if ($oldPhone !== $phone) {
+                $data['UF_PHONE_CONFIRMED'] = false;
             }
             $res = $userRepository->updateData($id, $data);
             if (!$res) {
                 return $this->ajaxMess->getUpdateError();
             }
 
+            if (!empty($oldPhone)) {
+                //Посылаем смс о смененном номере телефона
+                $text = 'Номер телефона в Личном кабинете изменен на ' . $phone . '. Если это не вы, обратитесь по тел. 8(800)7700022';
+                $smsService = $container->get('sms.service');
+                $smsService->send($text, $oldPhone);
+            }
+
             $mess = 'Телефон обновлен';
 
             try {
                 /** @var ConfirmCodeService $confirmService */
-                $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+                $confirmService = $container->get(ConfirmCodeInterface::class);
                 $res = $confirmService::sendConfirmSms($phone);
                 if (!$res) {
                     return $this->ajaxMess->getSmsSendErrorException();
@@ -343,6 +368,12 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             }
         } catch (BitrixRuntimeException $e) {
             return $this->ajaxMess->getUpdateError($e->getMessage());
+        } catch (ApplicationCreateException $e) {
+            return $this->ajaxMess->getSystemError();
+        } catch (ServiceNotFoundException $e) {
+            return $this->ajaxMess->getSystemError();
+        } catch (ServiceCircularReferenceException $e) {
+            return $this->ajaxMess->getSystemError();
         }
 
         return $mess;

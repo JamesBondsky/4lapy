@@ -358,13 +358,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     protected $PROPERTY_LOW_TEMPERATURE = false;
 
     /**
-     * @var bool
-     * @Type("bool")
-     * @Groups({"elastic"})
-     */
-    protected $PROPERTY_REFRIGERATED = false;
-
-    /**
      * @var string
      * @Type("string")
      * @Groups({"elastic"})
@@ -1360,16 +1353,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
-     * Возвращает признак "Перевозить в холодильнике"
-     *
-     * @return bool
-     */
-    public function isRefrigerated()
-    {
-        return (bool)(int)$this->PROPERTY_REFRIGERATED;
-    }
-
-    /**
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
@@ -1936,7 +1919,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     {
         // @todo учитывать региональные ограничения
         $result = [self::AVAILABILITY_PICKUP];
-        if (!($this->isLowTemperatureRequired() || $this->isRefrigerated())) {
+        if (!($this->isLowTemperatureRequired() || $this->isTransportOnlyRefrigerator())) {
             $result[] = self::AVAILABILITY_DELIVERY;
         }
         if ($this->isByRequest()) {
@@ -1944,6 +1927,30 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         }
 
         return $result;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isDeliveryAvailable(): bool
+    {
+        return in_array(
+            self::AVAILABILITY_DELIVERY,
+            $this->getDeliveryAvailability(),
+            true
+        );
+    }
+
+    /**
+     * @return bool
+     */
+    public function isPickupAvailable(): bool
+    {
+        return in_array(
+            self::AVAILABILITY_PICKUP,
+            $this->getDeliveryAvailability(),
+            true
+        );
     }
 
     /**

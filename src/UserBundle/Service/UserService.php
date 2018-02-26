@@ -148,8 +148,6 @@ class UserService implements
     }
 
     /**
-     *
-     *
      * @return int
      */
     public function getCurrentFUserId(): int
@@ -177,11 +175,11 @@ class UserService implements
      * @param User $user
      * @param bool $manzanaSave
      *
+     * @throws \FourPaws\UserBundle\Exception\RuntimeException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws ValidationException
      * @throws BitrixRuntimeException
-     * @throws \Bitrix\Main\Db\SqlQueryException
      * @return User
      */
     public function register(User $user, bool $manzanaSave = true): User
@@ -211,6 +209,14 @@ class UserService implements
             throw new BitrixRuntimeException($this->bitrixUserService->LAST_ERROR);
         }
 
+        $user
+            ->setId($id)
+            ->setActive(true);
+        if (!$this->userRepository->update($user)) {
+            Application::getConnection()->rollbackTransaction();
+            throw new RuntimeException('Cant update registred user');
+        }
+
         $registeredUser = $this->userRepository->find($id);
         if (!($registeredUser instanceof User)) {
             Application::getConnection()->rollbackTransaction();
@@ -226,7 +232,7 @@ class UserService implements
         if ($manzanaSave) {
             $client = null;
             try {
-                $contactId = $this->manzanaService->getContactIdByPhone($registeredUser->getNormalizePersonalPhone());
+                $contactId = $this->manzanaService->getContactIdByPhone($registeredUser->getManzanaNormalizePersonalPhone());
                 $client = new Client();
                 $client->contactId = $contactId;
             } catch (ManzanaServiceException $e) {
@@ -315,8 +321,8 @@ class UserService implements
      * @param Client    $client
      * @param null|User $user
      *
-     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
+     * @throws NotAuthorizedException
+     * @throws ConstraintDefinitionException
      * @throws InvalidIdentifierException
      * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
