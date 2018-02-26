@@ -14,7 +14,6 @@ use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
-use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Order;
@@ -22,6 +21,8 @@ use Bitrix\Sale\Payment;
 use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\Shipment;
 use Bitrix\Sale\ShipmentCollection;
+use FourPaws\Catalog\Collection\OfferCollection;
+use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundEXception;
 use FourPaws\PersonalBundle\Entity\Address;
@@ -30,6 +31,8 @@ use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
+use FourPaws\StoreBundle\Service\StoreService;
+use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ValidationException;
@@ -120,12 +123,18 @@ class OrderService
     protected $userRegistrationProvider;
 
     /**
+     * @var StoreService
+     */
+    protected $storeService;
+
+    /**
      * OrderService constructor.
      *
      * @param AddressService $addressService
      * @param BasketService $basketService
      * @param CurrentUserProviderInterface $currentUserProvider
      * @param DeliveryService $deliveryService
+     * @param StoreService $storeService
      * @param OrderStorageService $orderStorageService
      * @param UserCitySelectInterface $userCityProvider
      * @param UserRegistrationProviderInterface $userRegistrationProvider
@@ -135,6 +144,7 @@ class OrderService
         BasketService $basketService,
         CurrentUserProviderInterface $currentUserProvider,
         DeliveryService $deliveryService,
+        StoreService $storeService,
         OrderStorageService $orderStorageService,
         UserCitySelectInterface $userCityProvider,
         UserRegistrationProviderInterface $userRegistrationProvider
@@ -143,6 +153,7 @@ class OrderService
         $this->basketService = $basketService;
         $this->currentUserProvider = $currentUserProvider;
         $this->deliveryService = $deliveryService;
+        $this->storeService = $storeService;
         $this->orderStorageService = $orderStorageService;
         $this->userCityProvider = $userCityProvider;
         $this->userRegistrationProvider = $userRegistrationProvider;
@@ -439,12 +450,13 @@ class OrderService
                 if ($user = reset($users)) {
                     $order->setFieldNoDemand('USER_ID', $user->getId());
                 } else {
+                    $password = randString(6);
                     $user = (new User())
                         ->setName($storage->getName())
                         ->setActive(true)
                         ->setEmail($storage->getEmail())
                         ->setLogin($storage->getPhone())
-                        ->setPassword(randString(6))
+                        ->setPassword($password)
                         ->setPersonalPhone($storage->getPhone());
                     $user = $this->userRegistrationProvider->register($user);
 
@@ -452,6 +464,13 @@ class OrderService
                     $addressUserId = $user->getId();
                     $needCreateAddress = true;
                     $newUser = true;
+
+                    /* @todo вынести из сессии? */
+                    /* нужно для expertsender */
+                    $_SESSION['NEW_USER'] = [
+                        'LOGIN'    => $storage->getPhone(),
+                        'PASSWORD' => $password,
+                    ];
                 }
             }
 
@@ -557,6 +576,41 @@ class OrderService
 
     /**
      * @param Order $order
+     * @param string $code
+     * @param $value
+     */
+    public function setOrderPropertyByCode(Order $order, string $code, $value)
+    {
+        /** @var PropertyValue $propertyValue */
+        foreach ($order->getPropertyCollection() as $propertyValue) {
+            if ($propertyValue->getField('CODE') === $code) {
+                $propertyValue->setValue($value);
+            }
+        }
+    }
+
+    /**
+     * @param Order $order
+     * @param array $codes
+     *
+     * @return array
+     */
+    public function getOrderPropertiesByCode(Order $order, array $codes): array
+    {
+        $result = [];
+        /** @var PropertyValue $propertyValue */
+        foreach ($order->getPropertyCollection() as $propertyValue) {
+            $code = $propertyValue->getField('CODE');
+            if (\in_array($propertyValue->getField('CODE'), $codes, true)) {
+                $result[$code] = $propertyValue->getValue();
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param Order $order
      *
      * @return string
      * @throws NotFoundException
@@ -576,5 +630,87 @@ class OrderService
         }
 
         throw new NotFoundException('Не указан тип доставки');
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @return string
+     */
+    public function getOrderDeliveryAddress(Order $order): string
+    {
+        $properties = $this->getOrderPropertiesByCode(
+            $order,
+            [
+                'DPD_TERMINAL_CODE',
+                'DELIVERY_PLACE_CODE',
+                'CITY_CODE',
+                'CITY',
+                'STREET',
+                'HOUSE',
+                'BUILDING',
+                'PORCH',
+                'FLOOR',
+                'APARTMENT',
+            ]
+        );
+        $address = '';
+        if ($properties['DELIVERY_PLACE_CODE']) {
+            try {
+                $store = $this->storeService->getByXmlId($properties['DELIVERY_PLACE_CODE']);
+                $address = $store->getAddress();
+            } catch (StoreNotFoundException $e) {
+            }
+        } elseif ($properties['DELIVERY_PLACE_CODE'] && $properties['CITY_CODE']) {
+            $terminals = $this->deliveryService->getDpdTerminalsByLocation($properties['CITY_CODE']);
+            if ($terminal = $terminals[$properties['DPD_TERMINAL_CODE']]) {
+                $address = $terminal->getAddress();
+            }
+        } elseif ($properties['CITY'] && $properties['STREET']) {
+            $address = [
+                $properties['CITY'],
+                $properties['STREET'],
+            ];
+            if (isset($properties['HOUSE'])) {
+                $address[] = $properties['HOUSE'];
+            }
+            if (isset($properties['BUILDING'])) {
+                $address[] = 'корпус ' . $properties['BUILDING'];
+            }
+            if (isset($properties['PORCH'])) {
+                $address[] = 'подъезд ' . $properties['PORCH'];
+            }
+            if (isset($properties['FLOOR'])) {
+                $address[] = 'этаж ' . $properties['FLOOR'];
+            }
+            if (isset($properties['APARTMENT'])) {
+                $address[] = 'кв. ' . $properties['APARTMENT'];
+            }
+            $address = implode(', ', $address);
+        }
+
+        return $address;
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @return OfferCollection
+     * @throws NotFoundException
+     */
+    public function getOrderProducts(Order $order): OfferCollection
+    {
+        $basket = $order->getBasket();
+        $ids = [];
+        /** @var BasketItem $basketItem */
+        foreach ($basket as $basketItem) {
+            $ids[] = $basketItem->getProductId();
+        }
+
+        if (empty($ids)) {
+            throw new NotFoundException('Корзина заказа пуста');
+        }
+
+        return (new OfferQuery())->withFilterParameter('ID', $ids)->exec();
     }
 }

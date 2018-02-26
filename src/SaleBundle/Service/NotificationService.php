@@ -5,9 +5,9 @@ namespace FourPaws\SaleBundle\Service;
 use Adv\Bitrixtools\Tools\BitrixUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Sale\Order;
-use Bitrix\Sale\Shipment;
 use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\External\Exception\ExpertsenderServiceException;
 use FourPaws\External\ExpertsenderService;
 use FourPaws\External\SmsService;
 use FourPaws\SaleBundle\Exception\NotFoundException;
@@ -90,11 +90,14 @@ class NotificationService implements LoggerAwareInterface
             // заказ не должен быть с оплатой "онлайн"
         }
 
-        $parameters = $this->getOrderData($order);
-
-        $this->emailService->sendOrderNewEmail($order);
+        try {
+            $this->emailService->sendOrderNewEmail($order);
+        } catch (ExpertsenderServiceException $e) {
+            $this->logger->error($e->getMessage());
+        }
 
         $smsTemplate = null;
+        $parameters = $this->getOrderData($order);
         switch ($parameters['deliveryCode']) {
             case DeliveryService::INNER_DELIVERY_CODE:
                 $smsTemplate = 'FourPawsSaleBundle:Sms:order.new.delivery.inner.html.php';
@@ -132,9 +135,12 @@ class NotificationService implements LoggerAwareInterface
             return;
         }
 
-        $this->emailService->sendOrderNewEmail($order);
+        try {
+            $this->emailService->sendOrderNewEmail($order);
+        } catch (ExpertsenderServiceException $e) {
+            $this->logger->error($e->getMessage());
+        }
         $parameters = $this->getOrderData($order);
-
         $this->sendSms('FourPawsSaleBundle:Sms:order.paid.html.php', $parameters, true);
     }
 
@@ -168,6 +174,7 @@ class NotificationService implements LoggerAwareInterface
         $parameters = $this->getOrderData($order);
 
         $smsTemplate = null;
+        $sendCompleteEmail = false;
         switch ($status) {
             case OrderService::STATUS_ISSUING_POINT:
                 if ($parameters['deliveryCode'] === DeliveryService::INNER_PICKUP_CODE) {
@@ -179,18 +186,28 @@ class NotificationService implements LoggerAwareInterface
                 }
                 break;
             case OrderService::STATUS_DELIVERING:
+                $sendCompleteEmail = true;
                 if ($parameters['deliveryCode'] === DeliveryService::INNER_DELIVERY_CODE) {
                     $smsTemplate = 'order.status.delivering.html.php';
                 }
-                $this->emailService->sendOrderCompleteEmail($order);
                 break;
             case OrderService::STATUS_DELIVERED:
+                $sendCompleteEmail = true;
                 if ($parameters['deliveryCode'] === DeliveryService::INNER_DELIVERY_CODE) {
                     $smsTemplate = 'order.status.delivered.html.php';
                 }
-                /** @todo проверять, что письмо уже было отправлено в статусе "Исполнен" */
-                $this->emailService->sendOrderCompleteEmail($order);
                 break;
+        }
+
+        if ($sendCompleteEmail && $this->orderService->getOrderPropertyByCode(
+                $order,
+                'COMPLETE_MESSAGE_SENT'
+            ) !== BitrixUtils::BX_BOOL_TRUE) {
+            try {
+                $this->emailService->sendOrderCompleteEmail($order);
+            } catch (ExpertsenderServiceException $e) {
+                $this->logger->error($e->getMessage());
+            }
         }
 
         if ($smsTemplate) {
@@ -206,8 +223,12 @@ class NotificationService implements LoggerAwareInterface
      * @param array $parameters
      * @param bool $immediate
      */
-    protected function sendSms(string $tpl, array $parameters = [], bool $immediate = false)
+    protected function sendSms(string $tpl, array $parameters, bool $immediate = false)
     {
+        if (empty($parameters)) {
+            return;
+        }
+
         $text = $this->renderer->render($tpl, $parameters);
         if ($immediate) {
             $this->smsService->sendSmsImmediate($text, $parameters['phone']);
@@ -226,24 +247,31 @@ class NotificationService implements LoggerAwareInterface
         $result = [];
 
         try {
+            $properties = $this->orderService->getOrderPropertiesByCode(
+                $order,
+                [
+                    'REGION_COURIER_FROM_DC',
+                    'PHONE',
+                    'EMAIL',
+                    'DELIVERY_DATE',
+                    'DELIVERY_PLACE_CODE',
+                ]
+            );
+
             $result['accountNumber'] = $order->getField('ACCOUNT_NUMBER');
-            $result['dcDelivery'] = $this->orderService->getOrderPropertyByCode($order, 'REGION_COURIER_FROM_DC')
-                                                       ->getValue() === BitrixUtils::BX_BOOL_TRUE ? true : false;
-            $result['phone'] = $this->orderService->getOrderPropertyByCode($order, 'PHONE')
-                                                  ->getValue();
-            $result['email'] = $this->orderService->getOrderPropertyByCode($order, 'EMAIL')
-                                                  ->getValue();
+            $result['dcDelivery'] = $properties['REGION_COURIER_FROM_DC'] === BitrixUtils::BX_BOOL_TRUE ? true : false;
+            $result['phone'] = $properties['PHONE'];
+            $result['email'] = $properties['EMAIL'];
             $result['price'] = $order->getPrice();
             $result['deliveryDate'] = \DateTime::createFromFormat(
                 'd.m.Y',
-                $this->orderService->getOrderPropertyByCode($order, 'DELIVERY_DATE')
-                                   ->getValue()
+                $properties['DELIVERY_DATE']
             );
             $result['deliveryCode'] = $this->orderService->getOrderDeliveryCode($order);
 
             if ($result['deliveryCode'] === DeliveryService::INNER_PICKUP_CODE) {
                 $shop = $this->storeService->getByXmlId(
-                    $this->orderService->getOrderPropertyByCode($order, 'DELIVERY_PLACE_CODE')->getValue()
+                    $properties['DELIVERY_PLACE_CODE']
                 );
                 $result['shop'] = [
                     'address'  => $shop->getAddress(),
