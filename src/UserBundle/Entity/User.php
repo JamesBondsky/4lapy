@@ -677,7 +677,7 @@ class User implements UserInterface
      *
      * @return User
      */
-    public function setBirthday(Date $birthday): User
+    public function setBirthday(Date $birthday = null): User
     {
         $this->birthday = $birthday;
 

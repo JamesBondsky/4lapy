@@ -8,13 +8,11 @@ namespace FourPaws\MobileApiBundle\Controller;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
-use FourPaws\Decorators\FullHrefDecorator;
-use FourPaws\MobileApiBundle\Dto\Object\ClientCard;
 use FourPaws\MobileApiBundle\Dto\Request\LoginExistRequest;
 use FourPaws\MobileApiBundle\Dto\Request\LoginRequest;
+use FourPaws\MobileApiBundle\Dto\Request\PostUserInfoRequest;
 use FourPaws\MobileApiBundle\Dto\Response as ApiResponse;
-use FourPaws\UserBundle\Entity\User;
-use FourPaws\UserBundle\Service\UserService;
+use FourPaws\MobileApiBundle\Services\Api\UserService as ApiUserService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Swagger\Annotations\Parameter;
 use Swagger\Annotations\Response;
@@ -22,13 +20,13 @@ use Swagger\Annotations\Response;
 class UserController extends FOSRestController
 {
     /**
-     * @var UserService
+     * @var ApiUserService
      */
-    private $userService;
+    private $apiUserService;
 
-    public function __construct(UserService $userService)
+    public function __construct(ApiUserService $apiUserService)
     {
-        $this->userService = $userService;
+        $this->apiUserService = $apiUserService;
     }
 
     /**
@@ -45,6 +43,12 @@ class UserController extends FOSRestController
      * )
      * @param LoginRequest $loginRequest
      *
+     * @throws \FourPaws\UserBundle\Exception\UsernameNotFoundException
+     * @throws \FourPaws\UserBundle\Exception\TooManyUserFoundException
+     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
+     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
+     * @throws \FourPaws\UserBundle\Exception\InvalidCredentialException
+     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
      * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
      * @return ApiResponse
      * @internal param Request $request
@@ -53,37 +57,10 @@ class UserController extends FOSRestController
      *
      * @Rest\View()
      */
-    public function loginAction(
-        LoginRequest $loginRequest
-    ): ApiResponse {
-        $response = new ApiResponse();
-
-        $this->userService->login($loginRequest->getLogin(), $loginRequest->getPassword());
-
-        /**
-         * @var User $user
-         */
-        $user = $this->getUser();
-
-        // ToDo: Сделать реальное получение карты
-        $card = (new ClientCard())->setTitle('Карта клиента')
-            ->setPicture(new FullHrefDecorator('/upload/card/img.png'))
-            ->setBalance(1500)
-            ->setNumber('000011112222')
-            ->setBarCode('60832513')
-            ->setSaleAmount(3);
-
-        $response->setData([
-            'email'     => $user->getEmail(),
-            'firstname' => $user->getName(),
-            'lastname'  => $user->getLastName(),
-            'midname'   => $user->getSecondName() ?: '',
-            'birthdate' => $user->getBirthday() ? $user->getBirthday()->format('d.m.Y') : '',
-            'phone'     => $user->getNormalizePersonalPhone(),
-            'card'      => $card,
-        ]);
-
-        return $response;
+    public function loginAction(LoginRequest $loginRequest): ApiResponse
+    {
+        return (new ApiResponse())
+            ->setData($this->apiUserService->login($loginRequest));
     }
 
     /**
@@ -95,18 +72,12 @@ class UserController extends FOSRestController
      * @Security("has_role('REGISTERED_USERS')")
      *
      * @Rest\View()
+     * @throws \FourPaws\MobileApiBundle\Exception\RuntimeException
      */
     public function logoutAction(): ApiResponse
     {
-        $response = new ApiResponse();
-
-        $this->userService->logout();
-
-        $response->setData([
-            'feedback_text' => 'Вы вышли из своей учетной записи',
-        ]);
-
-        return $response;
+        return (new ApiResponse())
+            ->setData($this->apiUserService->logout());
     }
 
     /**
@@ -136,30 +107,28 @@ class UserController extends FOSRestController
     }
 
     /**
-     * @Rest\Post(path="/user_info")
+     * @Rest\Post(path="/user_info/")
+     * @Rest\View()
+     * @Security("has_role('REGISTERED_USERS')")
+     * @param PostUserInfoRequest $userInfoRequest
+     *
+     * @throws \FourPaws\UserBundle\Exception\ValidationException
+     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
+     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
+     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
+     * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
+     * @return ApiResponse
      */
-    public function updateAction()
+    public function postUserInfoAction(PostUserInfoRequest $userInfoRequest)
     {
-        /**
-         * @todo covert $_POST to Dto UserInfoPost
-         */
-
-        /**
-         * @todo Проверяем авторизованность пользователя
-         */
-
-        /**
-         * @todo Обновляем логин если он равен телефону или емейлу
-         */
-
-        /**
-         * @todo Возвращаем результат
-         */
+        return (new ApiResponse())
+            ->setData($this->apiUserService->update($userInfoRequest));
     }
 
     /**
      * @Rest\Get(path="/login_exist/")
      * @Rest\View()
+     * @Security("!has_role('REGISTERED_USERS')")
      * @Parameter(
      *     name="login",
      *     in="query",
@@ -174,14 +143,7 @@ class UserController extends FOSRestController
      */
     public function isExistAction(LoginExistRequest $existRequest)
     {
-        $exist = $this->userService->getUserRepository()->isExist($existRequest->getLogin());
-        /**
-         * @todo Необходимо предусмотреть максимальное кол-во попыток
-         */
-
-        return (new ApiResponse())->setData([
-            'exist'         => $exist,
-            'feedback_text' => $exist ? '' : 'Проверьте правильность заполнения поля. Введите ваш E-mail или номер телефона',
-        ]);
+        return (new ApiResponse())
+            ->setData($this->apiUserService->isExist($existRequest));
     }
 }

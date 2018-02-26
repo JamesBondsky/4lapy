@@ -47,18 +47,18 @@ class UserCest
         $I->seeResponseIsJson();
         $I->seeResponseMatchesJsonType([
             'data'  => [
-                'firstname' => 'string',
-                'lastname'  => 'string',
-                'email'     => 'string:!empty',
+                'user' => [
+                    'firstname' => 'string',
+                    'lastname'  => 'string',
+                    'email'     => 'string:!empty',
+                ],
             ],
             'error' => 'array:empty',
         ]);
         $I->seeResponseContainsJson([
-            'data' => [
-                'firstname' => $this->user['NAME'],
-                'lastname'  => $this->user['LAST_NAME'],
-                'email'     => $this->user['EMAIL'],
-            ],
+            'firstname' => $this->user['NAME'],
+            'lastname'  => $this->user['LAST_NAME'],
+            'email'     => $this->user['EMAIL'],
         ]);
         $fUserId = $I->grabFromDatabase('api_user_session', 'FUSER_ID', [
             'TOKEN' => $this->token,
@@ -121,7 +121,7 @@ class UserCest
         $I->seeResponseCodeIs(HttpCode::OK);
         $I->seeResponseIsJson();
         $I->seeResponseMatchesJsonType([
-            'data'  => 'array',
+            'data'  => 'array:empty',
             'error' => 'array:!empty',
         ]);
     }
@@ -311,5 +311,52 @@ class UserCest
             'error' => 'array:empty',
         ]);
         $I->seeResponseContainsJson(['exist' => false]);
+    }
+
+    /**
+     * @param ApiTester $I
+     * @param Example   $example
+     *
+     * @dataprovider validUpdateUserInfoProvider
+     */
+    public function testUpdateUserInfo(ApiTester $I, Example $example)
+    {
+        $I->wantTo('Test updating exist user');
+        $I->login($this->token, $this->user['LOGIN'], $this->user['PASSWORD']);
+        $I->haveHttpHeader('Content-type', 'application/json');
+        $I->sendPOST('/user_info/', [
+            'token' => $this->token,
+            'user'  => $example['data'],
+        ]);
+
+        $I->seeResponseCodeIs(HttpCode::OK);
+        $I->seeResponseIsJson();
+        $I->seeResponseMatchesJsonType([
+            'data'  => [
+                'user' => 'array:!empty',
+            ],
+            'error' => 'array:empty',
+        ]);
+        $I->seeResponseContainsJson($example['data']);
+    }
+
+    public function validUpdateUserInfoProvider()
+    {
+        return [
+            [
+                'data' => [
+                    'email'     => md5(random_bytes(1024)) . '@' . md5(random_bytes(1024)) . '.ru',
+                    'firstname' => md5(random_bytes(1024)),
+                    'lastname'  => md5(random_bytes(1024)),
+                    'midname'   => md5(random_bytes(1024)),
+                    'birthdate' => implode('.', [
+                        str_pad(random_int(1, 26), 2, '0'),
+                        str_pad(random_int(1, 12), 2, '0'),
+                        random_int(1900, 2017),
+                    ]),
+                    'phone'     => random_int(70000000000, 79000000000),
+                ],
+            ],
+        ];
     }
 }
