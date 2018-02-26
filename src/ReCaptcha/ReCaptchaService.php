@@ -29,7 +29,7 @@ class ReCaptchaService implements LoggerAwareInterface
     /** @noinspection SpellCheckingInspection */
 
     /**
-     * CallbackConsumerBase constructor.
+     * ReCaptchaService constructor.
      *
      * @param ClientInterface $guzzle
      *
@@ -48,17 +48,31 @@ class ReCaptchaService implements LoggerAwareInterface
      *
      * @return string
      */
-    public function getCaptcha(string $additionalClass = ''): string
+    public function getCaptcha(string $additionalClass = '', bool $isAjax = false): string
     {
-        $this->addJs();
+        if(!$isAjax) {
+            $script= '';
+            $this->addJs();
+        }
+        else{
+            $script = $this->getJs();
+        }
 
-        return '<div class="g-recaptcha' . $additionalClass . '" data-sitekey="' . $this->parameters['key']
+        return $script.'<div class="g-recaptcha' . $additionalClass . '" data-sitekey="' . $this->parameters['key']
             . '"></div>';
     }
 
     public function addJs()
     {
         Asset::getInstance()->addJs('https://www.google.com/recaptcha/api.js');
+    }
+
+    /**
+     * @return string
+     */
+    public function getJs(): string
+    {
+        return '<script data-skip-moving=true async src="https://www.google.com/recaptcha/api.js"></script>';
     }
 
     /**

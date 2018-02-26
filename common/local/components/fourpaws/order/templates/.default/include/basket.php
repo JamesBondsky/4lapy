@@ -22,7 +22,6 @@ use FourPaws\Helpers\WordHelper;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\SaleBundle\Entity\OrderStorage;
-use FourPaws\SaleBundle\Service\OrderStorageService;
 
 $basket = $arResult['BASKET'];
 $basketQuantity = array_sum($basket->getQuantityList());

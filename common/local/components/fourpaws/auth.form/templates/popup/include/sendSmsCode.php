@@ -43,12 +43,14 @@ use FourPaws\ReCaptcha\ReCaptchaService;
                data-action="resendSms"
                title="Отправить снова">Отправить снова</a>
         </div>
-        <?php /** @var ReCaptchaService $recaptchaService */
-        try {
-            $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
-            echo $recaptchaService->getCaptcha(' b-registration__captcha');
-        } catch (ApplicationCreateException $e) {
-        } ?>
+        <?php
+        if($_SESSION['COUNT_AUTH_CONFIRM_CODE'] >= 3) {
+            try {
+                $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
+                echo $recaptchaService->getCaptcha('', true);
+            } catch (ApplicationCreateException $e) {
+            }
+        }?>
         <div><span class="b-registration__auth-error"></span></div>
         <button class="b-button b-button--social b-button--full-width">Подтвердить</button>
     </form>

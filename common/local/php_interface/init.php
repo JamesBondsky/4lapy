@@ -47,12 +47,3 @@ YesNoPropertyType::init();
  * Регистрируем события
  */
 (new EventInitializer())(EventManager::getInstance());
-
-/**
- * Модуль DPD подключает свой компонент, который
- * 1) адово тормозит
- * 2) никак не отключить, не влезая в код этого самого модуля
- */
-if (class_exists('\Ipolh\DPD\Delivery\DPD')) {
-    \Ipolh\DPD\Delivery\DPD::$needIncludeComponent = false;
-}

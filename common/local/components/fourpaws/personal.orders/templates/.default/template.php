@@ -71,7 +71,8 @@ if ($closedOrders->isEmpty() && $activeOrders->isEmpty()) {
                 'pagination',
                 [
                     'NAV_OBJECT' => $arResult['NAV'],
-                    'SEF_MODE'   => 'Y',
+                    'SEF_MODE'   => 'N',
+                    'AJAX_MODE'   => 'N',
                 ],
                 $component,
                 ['HIDE_ICONS' => 'Y']

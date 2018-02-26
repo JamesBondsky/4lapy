@@ -182,6 +182,11 @@ class OrderStorageService
             ) {
                 continue;
             }
+
+            if (($name === 'bonus') && (!is_numeric($value))) {
+                continue;
+            }
+
             $setter = 'set' . ucfirst($name);
             if (method_exists($storage, $setter)) {
                 $storage->$setter($value);

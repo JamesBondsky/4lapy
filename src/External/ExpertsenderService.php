@@ -30,6 +30,9 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 class ExpertsenderService
 {
     protected $client;
+    private $guzzleClient;
+    private $key;
+    private $url;
 
     /**
      * ExpertsenderService constructor.
@@ -40,8 +43,11 @@ class ExpertsenderService
     public function __construct()
     {
         $client = new Client();
+        $this->guzzleClient = $client;
 
         list($url, $key) = \array_values(Application::getInstance()->getContainer()->getParameter('expertsender'));
+        $this->key = $key;
+        $this->url = $url;
         $this->client = new ExpertSender($url, $key, $client);
     }
 
@@ -58,7 +64,6 @@ class ExpertsenderService
     public function sendEmailAfterRegister(User $user): bool
     {
         if (!empty($user->getEmail())) {
-            /** @todo должно быть письмо с верификацией мыла - под него подогнать проверку */
             $addUserToList = new AddUserToList();
             $addUserToList->setForce(true);
             $addUserToList->setMode('AddAndUpdate');
@@ -105,17 +110,20 @@ class ExpertsenderService
      */
     public function sendChangePasswordByProfile(string $email): bool
     {
-        try {
-            $receiver = new Receiver($email);
-            $apiResult = $this->client->sendTransactional(7073, $receiver);
-            if ($apiResult->isOk()) {
-                return true;
+        if(!empty($email)) {
+            try {
+                $receiver = new Receiver($email);
+                $apiResult = $this->client->sendTransactional(7073, $receiver);
+                if ($apiResult->isOk()) {
+                    return true;
+                }
+            } catch (ExpertSenderException $e) {
+                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
+            } catch (GuzzleException $e) {
+                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
             }
-        } catch (ExpertSenderException $e) {
-            throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
-        } catch (GuzzleException $e) {
-            throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
         }
+
         return false;
     }
 
@@ -128,29 +136,31 @@ class ExpertsenderService
      */
     public function sendForgotPassword(User $user, string $backUrl = ''): bool
     {
-        try {
-            /** хеш строка для подтверждения мыла */
-            /** @var ConfirmCodeService $confirmService */
-            $confirmService = Application::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
-            $generatedHash = $confirmService::getConfirmHash($user->getEmail());
-            $receiver = new Receiver($user->getEmail());
-            $backUrlText = !empty($backUrl) ? '&backurl=' . $backUrl : '';
-            $snippets = [
-                'user_name' => $user->getName(),
-                'link'      => new FullHrefDecorator('/forgot-password/?hash=' . $generatedHash . '&email=' . $user->getEmail() . $backUrlText),
-            ];
-            $apiResult = $this->client->sendTransactional(7072, $receiver, $snippets);
-            if ($apiResult->isOk()) {
-                return true;
+        if (!empty($user->getEmail())) {
+            try {
+                /** хеш строка для подтверждения мыла */
+                /** @var ConfirmCodeService $confirmService */
+                $confirmService = Application::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+                $generatedHash = $confirmService::getConfirmHash($user->getEmail());
+                $receiver = new Receiver($user->getEmail());
+                $backUrlText = !empty($backUrl) ? '&backurl=' . $backUrl : '';
+                $snippets = [
+                    'user_name' => $user->getName(),
+                    'link'      => new FullHrefDecorator('/forgot-password/?hash=' . $generatedHash . '&email=' . $user->getEmail() . $backUrlText),
+                ];
+                $apiResult = $this->client->sendTransactional(7072, $receiver, $snippets);
+                if ($apiResult->isOk()) {
+                    return true;
+                }
+            } catch (ExpertSenderException $e) {
+                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
+            } catch (GuzzleException $e) {
+                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
+            } catch (ApplicationCreateException $e) {
+                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
+            } catch (\Exception $e) {
+                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
             }
-        } catch (ExpertSenderException $e) {
-            throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
-        } catch (GuzzleException $e) {
-            throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
-        } catch (ApplicationCreateException $e) {
-            throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
-        } catch (\Exception $e) {
-            throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
         }
         return false;
     }
@@ -166,68 +176,70 @@ class ExpertsenderService
      */
     public function sendChangeEmail(User $oldUser, User $curUser): bool
     {
-        try {
-            $expertSenderId = 0;
-            $userIdResult = $this->client->getUserId($oldUser->getEmail());
-            if ($userIdResult->isOk()) {
-                $expertSenderId = $userIdResult->getId();
-            }
-
-            $continue = false;
-            if ($expertSenderId > 0) {
-                /** @todo должно быть письмо с верификацией мыла - под него подогнать проверку */
-                $addUserToList = new AddUserToList();
-                $addUserToList->setForce(true);
-                $addUserToList->setMode('AddAndUpdate');
-                $addUserToList->setListId(178);
-                $addUserToList->setEmail($curUser->getEmail());
-                $addUserToList->setId($expertSenderId);
-
-                $apiResult = $this->client->addUserToList($addUserToList);
-                if ($apiResult->isOk()) {
-                    $continue = true;
+        if(!empty($oldUser->getEmail()) && !empty($curUser->getEmail())) {
+            try {
+                $expertSenderId = 0;
+                $userIdResult = $this->client->getUserId($oldUser->getEmail());
+                if ($userIdResult->isOk()) {
+                    $expertSenderId = $userIdResult->getId();
                 }
-            } else {
-                /** @todo должно быть письмо с верификацией мыла - под него подогнать проверку */
-                $addUserToList = new AddUserToList();
-                $addUserToList->setForce(true);
-                $addUserToList->setMode('AddAndUpdate');
-                $addUserToList->setTrackingCode('reg_form');
-                $addUserToList->setListId(178);
-                $addUserToList->setEmail($curUser->getEmail());
-                $addUserToList->setFirstName($curUser->getName());
-                $addUserToList->setLastName($curUser->getLastName());
-                /** флаг подписки на новости */
-                $addUserToList->addProperty(new Property(23, 'boolean', 0));
-                /** флаг регистрации */
-                $addUserToList->addProperty(new Property(47, 'boolean', 0));
 
-                /** хеш строка для подтверждения мыла */
-                /** @var ConfirmCodeService $confirmService */
-                $confirmService = Application::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
-                $generatedHash = $confirmService::getConfirmHash($curUser->getEmail());
-                $confirmService::setGeneratedCode($generatedHash, 'email');
-                $addUserToList->addProperty(new Property(10, 'string', $generatedHash));
-                /** ip юзверя */
-                $addUserToList->addProperty(new Property(48, 'string',
-                    BitrixApplication::getInstance()->getContext()->getServer()->get('REMOTE_ADDR')));
-                $apiResult = $this->client->addUserToList($addUserToList);
-                if ($apiResult->isOk()) {
-                    $continue = true;
-                }
-            }
+                $continue = false;
+                if ($expertSenderId > 0) {
+                    /** @todo должно быть письмо с верификацией мыла - под него подогнать проверку */
+                    $addUserToList = new AddUserToList();
+                    $addUserToList->setForce(true);
+                    $addUserToList->setMode('AddAndUpdate');
+                    $addUserToList->setListId(178);
+                    $addUserToList->setEmail($curUser->getEmail());
+                    $addUserToList->setId($expertSenderId);
 
-            if ($continue) {
-                $receiver = new Receiver($curUser->getEmail());
-                $apiResult = $this->client->sendTransactional(7071, $receiver);
-                if ($apiResult->isOk()) {
-                    return true;
+                    $apiResult = $this->client->addUserToList($addUserToList);
+                    if ($apiResult->isOk()) {
+                        $continue = true;
+                    }
+                } else {
+                    /** @todo должно быть письмо с верификацией мыла - под него подогнать проверку */
+                    $addUserToList = new AddUserToList();
+                    $addUserToList->setForce(true);
+                    $addUserToList->setMode('AddAndUpdate');
+                    $addUserToList->setTrackingCode('reg_form');
+                    $addUserToList->setListId(178);
+                    $addUserToList->setEmail($curUser->getEmail());
+                    $addUserToList->setFirstName($curUser->getName());
+                    $addUserToList->setLastName($curUser->getLastName());
+                    /** флаг подписки на новости */
+                    $addUserToList->addProperty(new Property(23, 'boolean', 0));
+                    /** флаг регистрации */
+                    $addUserToList->addProperty(new Property(47, 'boolean', 0));
+
+                    /** хеш строка для подтверждения мыла */
+                    /** @var ConfirmCodeService $confirmService */
+                    $confirmService = Application::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+                    $generatedHash = $confirmService::getConfirmHash($curUser->getEmail());
+                    $confirmService::setGeneratedCode($generatedHash, 'email');
+                    $addUserToList->addProperty(new Property(10, 'string', $generatedHash));
+                    /** ip юзверя */
+                    $addUserToList->addProperty(new Property(48, 'string',
+                        BitrixApplication::getInstance()->getContext()->getServer()->get('REMOTE_ADDR')));
+                    $apiResult = $this->client->addUserToList($addUserToList);
+                    if ($apiResult->isOk()) {
+                        $continue = true;
+                    }
                 }
+
+                if ($continue) {
+                    $receiver = new Receiver($curUser->getEmail());
+                    $apiResult = $this->client->sendTransactional(7071, $receiver);
+                    if ($apiResult->isOk()) {
+                        return true;
+                    }
+                }
+            } catch (GuzzleException $e) {
+                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
+            } catch (\Exception $e) {
+                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
             }
-        } catch (GuzzleException $e) {
-            throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
-        } catch (\Exception $e) {
-            throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
         }
 
         return false;
@@ -363,6 +375,61 @@ class ExpertsenderService
             } catch (\Exception $e) {
                 throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
             }
+        }
+        return false;
+    }
+
+    /**
+     * @param string $email
+     *
+     * @return bool
+     */
+    public function checkConfirmEmail(string $email): bool
+    {
+        //Проверяем статус активного или неподписанного в списке
+        $response = $this->guzzleClient->get($this->url.'/Api/Subscribers?apiKey='.$this->key.'&email='.$email.'&option=Short');
+        $activeLists = [];
+        if($response->getStatusCode() === 200){
+            $xml = new \SimpleXMLElement($response->getBody()->getContents());
+            if(!(bool)$xml->Data->BlackList) {
+                foreach ((array)$xml->Data->StateOnLists as $StateOnList) {
+                    if ((string)$StateOnList->Status === 'Active' || (string)$StateOnList->Status === 'Unsubscribed') {
+                        $activeLists[] = (int)$StateOnList->ListId;
+                    }
+                }
+            }
+            unset($xml);
+        }
+
+        if(\in_array(178, $activeLists, true)){
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * @param string $email
+     *
+     * @return bool
+     */
+    public function checkConfirmEmailSubscribe(string $email): bool
+    {
+        $response = $this->guzzleClient->get($this->url.'/Api/Subscribers?apiKey='.$this->key.'&email='.$email.'&option=Short');
+        $activeLists = [];
+        if($response->getStatusCode() === 200){
+            $xml = new \SimpleXMLElement($response->getBody()->getContents());
+            if(!(bool)$xml->Data->BlackList) {
+                foreach ((array)$xml->Data->StateOnLists as $StateOnList) {
+                    if ((string)$StateOnList->Status === 'Active') {
+                        $activeLists[] = (int)$StateOnList->ListId;
+                    }
+                }
+            }
+            unset($xml);
+        }
+
+        if(\in_array(178, $activeLists, true)){
+            return true;
         }
         return false;
     }

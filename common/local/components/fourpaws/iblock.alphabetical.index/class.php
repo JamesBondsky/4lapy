@@ -1,12 +1,17 @@
 <?php
+
+use Bitrix\Iblock\ElementTable;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Entity\ExpressionField;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\Result;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 /**
  * Class CFourPawsIBlockAlphabeticalIndex
  * Компонент алфавитного указателя
- *
- * @updated: 25.12.2017
  */
 
 class CFourPawsIBlockAlphabeticalIndex extends \CBitrixComponent
@@ -16,6 +21,8 @@ class CFourPawsIBlockAlphabeticalIndex extends \CBitrixComponent
 
     /** @var int $iIBlockId */
     private $iIBlockId = -1;
+    /** @var array $extElementFilter */
+    private $extElementFilter;
 
     /**
      * @param null|\CBitrixComponent $obParentComponent
@@ -34,30 +41,34 @@ class CFourPawsIBlockAlphabeticalIndex extends \CBitrixComponent
         $arParams['IBLOCK_TYPE'] = isset($arParams['IBLOCK_TYPE']) ? trim($arParams['IBLOCK_TYPE']) : '';
         $arParams['IBLOCK_CODE'] = isset($arParams['IBLOCK_CODE']) ? trim($arParams['IBLOCK_CODE']) : '';
 
-        $arParams['CACHE_TIME'] = isset($arParams['CACHE_TIME']) ? intval($arParams['CACHE_TIME']) : 43200 ;
+        $arParams['CACHE_TIME'] = isset($arParams['CACHE_TIME']) ? (int)$arParams['CACHE_TIME'] : 43200 ;
         if ($arParams['CACHE_TYPE'] === 'N' || ($arParams['CACHE_TYPE'] === 'A' && \COption::GetOptionString('main', 'component_cache_on', 'Y') === 'N')) {
             $arParams['CACHE_TIME'] = 0;
         }
 
-        $arParams['CHARS_COUNT'] = isset($arParams['CHARS_COUNT']) ? intval($arParams['CHARS_COUNT']) : 1;
+        $arParams['CHARS_COUNT'] = isset($arParams['CHARS_COUNT']) ? (int)$arParams['CHARS_COUNT'] : 1;
         $arParams['CHARS_COUNT'] = $arParams['CHARS_COUNT'] > 1 ? $arParams['CHARS_COUNT'] : 1;
 
         $arParams['TEMPLATE_NO_CACHE'] = isset($arParams['TEMPLATE_NO_CACHE']) && $arParams['TEMPLATE_NO_CACHE'] === 'Y' ? 'Y' : 'N';
         $arParams['LETTER_PAGE_URL'] = isset($arParams['LETTER_PAGE_URL']) ? trim($arParams['LETTER_PAGE_URL']) : '';
+
+        $arParams['ELEMENT_FILTER_NAME'] = $arParams['ELEMENT_FILTER_NAME'] ?? '';
 
         return $arParams;
     }
 
     /**
      * @return array
+     * @throws ArgumentException
+     * @throws LoaderException
      */
     public function executeComponent()
     {
         $arParams =& $this->arParams;
         $arResult =& $this->arResult;
 
-        if (!strlen($arParams['IBLOCK_TYPE']) || !strlen($arParams['IBLOCK_CODE'])) {
-            return false;
+        if ($arParams['IBLOCK_TYPE'] === '' || $arParams['IBLOCK_CODE'] === '') {
+            return [];
         }
 
         $arGroups = [];
@@ -66,14 +77,9 @@ class CFourPawsIBlockAlphabeticalIndex extends \CBitrixComponent
         $sCacheDir = '/'.ltrim($sCacheDir, '/');
         $sCachePath = $sCacheDir;
 
-        $sCacheId = md5(serialize([$arGroups]));
+        $sCacheId = md5(serialize([$arGroups, $this->getExtFilter()]));
 
         if ($this->startResultCache($arParams['CACHE_TIME'], $sCacheId, $sCachePath)) {
-            if (!\Bitrix\Main\Loader::includeModule('iblock')) {
-                $this->abortResultCache();
-                return $arResult;
-            }
-
             $arParams['IBLOCK_ID'] = $this->getIBlockId();
 
             if ($arParams['IBLOCK_ID'] <= 0) {
@@ -110,6 +116,7 @@ class CFourPawsIBlockAlphabeticalIndex extends \CBitrixComponent
 
     /**
      * @return int
+     * @throws LoaderException
      */
     public function getIBlockId()
     {
@@ -124,21 +131,16 @@ class CFourPawsIBlockAlphabeticalIndex extends \CBitrixComponent
      * @param string $sIBlockCode
      * @param string $sIBlockType
      * @return int
+     * @throws LoaderException
      */
     protected function getIBlockIdByCode($sIBlockCode, $sIBlockType = '')
     {
-        $iReturn = 0;
-
-        if (!\Bitrix\Main\Loader::includeModule('iblock')) {
-            return $iReturn;
-        }
-
         $arFilter = [
             'CHECK_PERMISSIONS' => 'N',
             'CODE' => $sIBlockCode,
             'SITE_ID' => SITE_ID,
         ];
-        if (strlen($sIBlockType)) {
+        if ($sIBlockType !== '') {
             $arFilter['TYPE'] = $sIBlockType;
         }
         $arIBlock = \CIBlock::GetList(['ID' => 'ASC'], $arFilter)->fetch();
@@ -148,38 +150,43 @@ class CFourPawsIBlockAlphabeticalIndex extends \CBitrixComponent
     }
 
     /**
-     * @return \Bitrix\Main\Result
+     * @return Result
+     * @throws LoaderException
+     * @throws ArgumentException
      */
     public function getLettersList()
     {
-        $obResult = new \Bitrix\Main\Result();
+        $obResult = new Result();
 
         $iIBlockId = $this->getIBlockId();
-        if (!$iIBlockId || !\Bitrix\Main\Loader::includeModule('iblock')) {
+        if (!$iIBlockId) {
             return $obResult;
         }
+
+        $filter = [
+            '=IBLOCK_ID' => $iIBlockId,
+            '=ACTIVE' => 'Y',
+        ];
+        $filter = array_merge($filter, $this->getExtFilter());
 
         $arData = [];
         $arData['LIST'] = [];
         $arData['IS_NUM_EXISTS'] = 'N';
         $arData['IS_SPEC_EXISTS'] = 'N';
-        $dbItems = \Bitrix\Iblock\ElementTable::getList(
+        $dbItems = ElementTable::getList(
             [
                 'order' => [
                     'LETTER' => 'asc',
                 ],
                 'select' => [
                     'IBLOCK_ID',
-                    new \Bitrix\Main\Entity\ExpressionField(
+                    new ExpressionField(
                         'LETTER',
                         'UPPER(LEFT(LTRIM(%s), '.$this->arParams['CHARS_COUNT'].'))',
                         'NAME'
                     ),
                 ],
-                'filter' => [
-                    '=IBLOCK_ID' => $iIBlockId,
-                    '=ACTIVE' => 'Y',
-                ],
+                'filter' => $filter,
                 'group' => [
                     'LETTER',
                 ],
@@ -190,11 +197,11 @@ class CFourPawsIBlockAlphabeticalIndex extends \CBitrixComponent
             switch ($arItem['LETTER_REDUCED']) {
                 case static::DIGITS:
                     $arData['IS_NUM_EXISTS'] = 'Y';
-                break;
+                    break;
 
                 case static::SPECIAL:
                     $arData['IS_SPEC_EXISTS'] = 'Y';
-                break;
+                    break;
             }
 
             $arItem['LETTER_PAGE_URL'] = '';
@@ -229,6 +236,22 @@ class CFourPawsIBlockAlphabeticalIndex extends \CBitrixComponent
                 $sReturn = static::SPECIAL;
             }
         }
+
         return $sReturn;
+    }
+
+    protected function getExtFilter()
+    {
+        if (!isset($this->extElementFilter)) {
+            $this->extElementFilter = [];
+            if ($this->arParams['ELEMENT_FILTER_NAME'] !== '') {
+                $this->extElementFilter = $GLOBALS[$this->arParams['ELEMENT_FILTER_NAME']] ?? [];
+                if (!is_array($this->extElementFilter)) {
+                    $this->extElementFilter = [];
+                }
+            }
+        }
+
+        return $this->extElementFilter;
     }
 }
