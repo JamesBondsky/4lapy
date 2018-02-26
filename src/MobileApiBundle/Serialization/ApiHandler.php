@@ -77,7 +77,44 @@ class ApiHandler implements SubscribingHandlerInterface
                 'type'      => 'api_info_fields',
                 'method'    => 'deserializeFields',
             ],
+            [
+                'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
+                'format'    => 'json',
+                'type'      => 'api_date_time',
+                'method'    => 'serializeApiDateTime',
+            ],
+//            [
+//                'direction' => GraphNavigator::DIRECTION_DESERIALIZATION,
+//                'format'    => 'json',
+//                'type'      => 'api_date_time',
+//                'method'    => 'deserializeApiDateTime',
+//            ],
         ];
+    }
+
+    public function serializeApiDateTime(JsonSerializationVisitor $visitor, $data, array $type, Context $context)
+    {
+        dump(123);
+        die();
+        if ($data === null || $data === '') {
+            return $visitor->getNavigator()->accept(
+                '',
+                [
+                    'name'   => 'string',
+                    'params' => $type['params'],
+                ],
+                $context
+            );
+        }
+
+        return $visitor->getNavigator()->accept(
+            \DateTime::createFromFormat('d.m.Y', $data),
+            [
+                'name'   => 'DateTime',
+                'params' => $type['params'],
+            ],
+            $context
+        );
     }
 
     public function serializeDetails(JsonSerializationVisitor $visitor, $data, array $type, Context $context)

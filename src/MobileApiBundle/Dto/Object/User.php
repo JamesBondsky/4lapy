@@ -42,7 +42,7 @@ class User
 
     /**
      * @Serializer\SerializedName("birthdate")
-     * @Serializer\Type("DateTime<'d.m.Y'>")
+     * @Serializer\Type("api_date_time")
      * @var null|\DateTime
      */
     protected $birthDate;

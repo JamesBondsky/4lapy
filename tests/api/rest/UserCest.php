@@ -357,6 +357,16 @@ class UserCest
                     'phone'     => random_int(70000000000, 79000000000),
                 ],
             ],
+            [
+                'data' => [
+                    'email'     => md5(random_bytes(1024)) . '@' . md5(random_bytes(1024)) . '.ru',
+                    'firstname' => md5(random_bytes(1024)),
+                    'lastname'  => md5(random_bytes(1024)),
+                    'midname'   => md5(random_bytes(1024)),
+                    'birthdate' => '',
+                    'phone'     => random_int(70000000000, 79000000000),
+                ],
+            ],
         ];
     }
 }
