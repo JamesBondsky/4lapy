@@ -1,7 +1,10 @@
 <?php
 
-namespace FourPaws\MobileApiBundle\Services\Session;
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
 
+namespace FourPaws\MobileApiBundle\Services\Session;
 
 use Bitrix\Sale\Fuser;
 use FourPaws\MobileApiBundle\Exception\BitrixException;
@@ -60,7 +63,8 @@ class SessionHandler implements SessionHandlerInterface
          * @var ApiToken $token | null
          */
         $token = $this->tokenStorage->getToken();
-        if ($token && $session = $token->getApiUserSession()) {
+
+        if ($token && $token instanceof ApiToken && $session = $token->getApiUserSession()) {
             $session->setFUserId($this->userService->getCurrentFUserId());
             $session->setUserId($this->userService->getCurrentUserId());
             $token->setApiUserSession($session);
@@ -72,7 +76,7 @@ class SessionHandler implements SessionHandlerInterface
     }
 
     /**
-     * Update toket and session after logout
+     * Update token and session after logout
      *
      * @throws WrongTransformerResultException
      * @throws ValidationException
@@ -85,7 +89,7 @@ class SessionHandler implements SessionHandlerInterface
          * @var ApiToken $token | null
          */
         $token = $this->tokenStorage->getToken();
-        if ($token && $session = $token->getApiUserSession()) {
+        if ($token && $token instanceof ApiToken && $session = $token->getApiUserSession()) {
             $session->setUserId(0);
             $session->setFUserId(Fuser::getId());
             $token->setApiUserSession($session);

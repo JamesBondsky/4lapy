@@ -1,7 +1,7 @@
 FourPaws\UserBundle\Entity\User:
   user{1..10}:
     id: <current()>
-    email: '<ru_RU:email()>'
+    email (unique): '<ru_RU:email()>'
     login: '@self->email'
     password (unique): '<password()>'
     name: <ru_RU:word()>

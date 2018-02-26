@@ -23,9 +23,6 @@
     }
   },
   "autoload-dev": {
-    "psr-4": {
-      "FourPaws\\Test\\": "tests"
-    },
     "files": [
       "vendor/symfony/symfony/src/Symfony/Component/VarDumper/Resources/functions/dump.php"
     ]

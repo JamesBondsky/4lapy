@@ -20,7 +20,7 @@ four_paws_mobile_api:
     FourPaws\MobileApiBundle\Exception\InvalidSignRequestException:
       code: 401
       status_code: 401
-#    FourPaws\MobileApiBundle\Exception\ValidationException:
-#      code: 123
-#      message: 'we all gonna die'
-#      status_code: 401
+    FourPaws\MobileApiBundle\Exception\ValidationException:
+      code: 3
+      message: 'Пропущен обязательный параметр'
+      status_code: 200

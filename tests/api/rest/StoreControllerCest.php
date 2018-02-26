@@ -8,6 +8,27 @@ use Codeception\Util\HttpCode;
 
 class StoreControllerCest
 {
+    protected $token;
+
+
+    /**
+     * @param ApiTester $I
+     *
+     * @throws Exception
+     */
+    public function _before(ApiTester $I)
+    {
+        $this->token = $I->createToken();
+    }
+
+    /**
+     * @param ApiTester $I
+     */
+    public function _after(ApiTester $I)
+    {
+        $I->deleteToken($this->token);
+    }
+
     /**
      * @param ApiTester            $I
      * @param \Codeception\Example $example
@@ -20,7 +41,7 @@ class StoreControllerCest
         $I->wantTo('Test valid store data');
         $I->haveHttpHeader('Content-type', 'application/json');
         $params = $example['params'] ?? [];
-        $params['token'] = $I->getToken();
+        $params['token'] = $this->token;
 
         $I->sendGET('/shop_list/', $params);
         $I->seeResponseCodeIs(HttpCode::OK);
@@ -92,7 +113,7 @@ class StoreControllerCest
         $I->wantTo('Test invalid store data');
         $I->haveHttpHeader('Content-type', 'application/json');
         $params = $example['params'] ?? [];
-        $params['token'] = $I->getToken();
+        $params['token'] = $this->token;
 
         $I->sendGET('/shop_list/', $params);
         $I->seeResponseCodeIs(HttpCode::OK);

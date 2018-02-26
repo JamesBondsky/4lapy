@@ -10,56 +10,70 @@ use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FourPaws\MobileApiBundle\Services\Fixtures\FixtureService;
 use FourPaws\UserBundle\Entity\User;
-use FourPaws\UserBundle\Service\UserService;
+use FourPaws\UserBundle\Repository\UserRepository;
 
 class TestUserController extends FOSRestController
 {
     /**
-     * @var UserService
-     */
-    private $userService;
-    /**
      * @var FixtureService
      */
     private $fixtureService;
+    /**
+     * @var UserRepository
+     */
+    private $userRepository;
 
-    public function __construct(UserService $userService, FixtureService $fixtureService)
+    public function __construct(UserRepository $userRepository, FixtureService $fixtureService)
     {
-        $this->userService = $userService;
         $this->fixtureService = $fixtureService;
+        $this->userRepository = $userRepository;
     }
 
     /**
      * @Rest\Get("/user/dummy/")
-     * @Rest\View()
+     * @Rest\View(serializerGroups={"dummy"})
+     * @throws \RuntimeException
+     * @throws \FourPaws\UserBundle\Exception\ValidationException
+     * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
+     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
+     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
      */
     public function createDummyUserAction()
     {
         $users = $this->fixtureService->get(User::class, 1);
         /**
-         * @var User $fixtureUser
+         * @var User $user
          */
-        $fixtureUser = reset($users);
-        $user = $this->userService->register($fixtureUser);
-        $user->setPassword($fixtureUser->getPassword());
-        return $user;
+        $user = reset($users);
+        $user->setActive(true);
+        if ($this->userRepository->create($user)) {
+            \CUser::SetUserGroup($user->getId(), [6]);
+            if ($loadedUser = $this->userRepository->find($user->getId())) {
+                $loadedUser->setPassword($user->getPassword());
+
+                return ['status' => true, 'user' => $loadedUser];
+            }
+        }
+        return ['status' => false];
     }
 
     /**
      * @Rest\Delete("/user/dummy/")
      * @Rest\View()
+     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
+     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
+     * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
      */
     public function deleteDummyUsersAction()
     {
-        $repository = $this->userService->getUserRepository();
-        $users = $repository->findBy([
+        $users = $this->userRepository->findBy([
             'SECOND_NAME' => 'fixture',
         ]);
         $result = true;
         foreach ($users as $user) {
-            $result &= $repository->delete($user->getId());
+            $result &= $this->userRepository->delete($user->getId());
         }
 
-        return ['status' => $result];
+        return ['status' => $result, 'count' => \count($users)];
     }
 }

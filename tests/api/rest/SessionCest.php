@@ -10,6 +10,7 @@ class SessionCest
     {
         $I->wantTo('Create token');
         /** @noinspection PhpUnhandledExceptionInspection */
-        $I->getToken();
+        $token = $I->createToken();
+        $I->deleteToken($token);
     }
 }
