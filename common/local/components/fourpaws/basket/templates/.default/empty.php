@@ -14,23 +14,19 @@ use FourPaws\Components\BasketComponent;
 $userService = $component->getCurrentUserService();
 
 if ($userService->isAuthorized()) {
-    $emptyText = sprintf('%s, ваша корзина пуста. Посмотрите, что у нас есть в <a href="/catalog/">каталоге, или воспользуйтесь поиском.</a>', $userService->getCurrentUser()->getName());
+    $emptyText = sprintf('%s, ваша корзина пуста. Посмотрите, что у нас есть в <a href="/catalog/" class="link--orange">каталоге</a>, или воспользуйтесь поиском.', $userService->getCurrentUser()->getName());
 } else {
-    $emptyText = 'В это сложно поверить, но ваша корзина пуста. Воспользуйтесь нашим <a href="/catalog/">каталогом, чтобы наполнить её.</a>';
+    $emptyText = 'В это сложно поверить, но ваша корзина пуста. Воспользуйтесь нашим <a href="/catalog/" class="link--orange">каталогом</a>, чтобы наполнить её.';
 }
 
 ?>
 
 <div class="b-shopping-cart">
     <div class="b-container">
-        <h1 class="b-title b-title--h1 b-title--shopping-cart"><?= $emptyText ?></h1>
         <main class="b-shopping-cart__main" role="main">
-
-        </main><?php
-        /**
-         * Просмотренные товары
-         */
-        $APPLICATION->IncludeFile(
+            <h1 class="b-title b-title--h1 b-title--shopping-cart" style="margin-top: 44px;"><?= $emptyText ?></h1>
+        </main>
+        <?php $APPLICATION->IncludeFile(
             'blocks/components/viewed_products.php',
             [
                 'WRAP_CONTAINER_BLOCK' => 'N',
@@ -43,6 +39,6 @@ if ($userService->isAuthorized()) {
                 'NAME' => 'Блок просмотренных товаров',
                 'MODE' => 'php',
             ]
-        );
-    ?></div>
+        ); ?>
+    </div>
 </div>
