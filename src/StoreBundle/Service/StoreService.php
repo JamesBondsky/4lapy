@@ -538,7 +538,6 @@ class StoreService
     /**
      * @param int $offerId
      *
-     * @throws DeliveryNotFoundException
      * @return StoreCollection
      */
     public function getActiveStoresByProduct(int $offerId): StoreCollection
@@ -550,7 +549,7 @@ class StoreService
 
         try {
             return $this->getStockResult($pickupDelivery)->getStores();
-        } catch (NotFoundException $e) {
+        } catch (DeliveryNotFoundException $e) {
             return new StoreCollection();
         }
     }
