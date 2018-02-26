@@ -6,6 +6,7 @@
 
 namespace FourPaws\SaleBundle\Service;
 
+use Adv\Bitrixtools\Tools\BitrixUtils;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
@@ -13,16 +14,19 @@ use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Order;
+use Bitrix\Sale\Payment;
 use Bitrix\Sale\PropertyValue;
+use Bitrix\Sale\Shipment;
 use Bitrix\Sale\ShipmentCollection;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundEXception;
 use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\PersonalBundle\Exception\NotFoundException as AddressNotFoundException;
 use FourPaws\PersonalBundle\Service\AddressService;
-use FourPaws\SaleBundle\Entity\OrderProperty;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
@@ -54,6 +58,21 @@ class OrderService
      * Дефолтный статус заказа при самовывозе
      */
     const STATUS_NEW_PICKUP = 'N';
+
+    /**
+     * Заказ доставляется ("Исполнен" для курьерской доставки)
+     */
+    const STATUS_DELIVERING = 'Y';
+
+    /**
+     * Заказ в пункте выдачи
+     */
+    const STATUS_ISSUING_POINT = 'F';
+
+    /**
+     * Заказ доставлен
+     */
+    const STATUS_DELIVERED = 'J';
 
     /**
      * 90% заказа можно оплатить бонусами
@@ -101,11 +120,6 @@ class OrderService
     protected $userRegistrationProvider;
 
     /**
-     * @var UserAccountService
-     */
-    protected $userAccountService;
-
-    /**
      * OrderService constructor.
      *
      * @param AddressService $addressService
@@ -115,7 +129,6 @@ class OrderService
      * @param OrderStorageService $orderStorageService
      * @param UserCitySelectInterface $userCityProvider
      * @param UserRegistrationProviderInterface $userRegistrationProvider
-     * @param UserAccountService $userAccountService
      */
     public function __construct(
         AddressService $addressService,
@@ -124,8 +137,7 @@ class OrderService
         DeliveryService $deliveryService,
         OrderStorageService $orderStorageService,
         UserCitySelectInterface $userCityProvider,
-        UserRegistrationProviderInterface $userRegistrationProvider,
-        UserAccountService $userAccountService
+        UserRegistrationProviderInterface $userRegistrationProvider
     ) {
         $this->addressService = $addressService;
         $this->basketService = $basketService;
@@ -134,7 +146,6 @@ class OrderService
         $this->orderStorageService = $orderStorageService;
         $this->userCityProvider = $userCityProvider;
         $this->userRegistrationProvider = $userRegistrationProvider;
-        $this->userAccountService = $userAccountService;
     }
 
     /** @noinspection MoreThanThreeArgumentsInspection */
@@ -277,8 +288,8 @@ class OrderService
 
             $shipmentCollection->calculateDelivery();
 
-            $deliveryDate = $this->deliveryService->getStockResultByDelivery($selectedDelivery)
-                                                  ->getDeliveryDate();
+            $stockResult = $this->deliveryService->getStockResultByDelivery($selectedDelivery);
+            $deliveryDate = $stockResult->getDeliveryDate();
 
             /**
              * Задание свойств заказа, связанных с доставкой
@@ -335,6 +346,11 @@ class OrderService
                             );
                         }
 
+                        break;
+                    case 'REGION_COURIER_FROM_DC':
+                        $value = $stockResult->getDelayed()->isEmpty()
+                            ? BitrixUtils::BX_BOOL_FALSE
+                            : BitrixUtils::BX_BOOL_TRUE;
                         break;
                     default:
                         continue 2;
@@ -395,6 +411,7 @@ class OrderService
              */
             $needCreateAddress = false;
             $addressUserId = null;
+            $newUser = true;
             if ($storage->getUserId()) {
                 $order->setFieldNoDemand('USER_ID', $storage->getUserId());
                 $user = $this->currentUserProvider->getCurrentUser();
@@ -434,7 +451,20 @@ class OrderService
                     $order->setFieldNoDemand('USER_ID', $user->getId());
                     $addressUserId = $user->getId();
                     $needCreateAddress = true;
+                    $newUser = true;
                 }
+            }
+
+            /** @var PropertyValue $propertyValue */
+            foreach ($propertyValueCollection as $propertyValue) {
+                $code = $propertyValue->getProperty()['CODE'];
+                if ($code !== 'USER_REGISTERED') {
+                    continue;
+                }
+                $propertyValue->setValue(
+                    $newUser ? BitrixUtils::BX_BOOL_FALSE : BitrixUtils::BX_BOOL_TRUE
+                );
+                break;
             }
 
             /**
@@ -469,32 +499,6 @@ class OrderService
     }
 
     /**
-     * Получение максимального кол-ва бонусов, которыми можно оплатить заказ
-     *
-     * @param OrderStorage $storage
-     *
-     * @return float
-     */
-    public function getMaxBonusesForPayment(OrderStorage $storage): float
-    {
-        if (!$storage->getUserId()) {
-            return 0;
-        }
-
-        $bonuses = 0;
-        try {
-            $this->userAccountService->refreshUserBalance();
-            $bonuses = $this->userAccountService->findAccountByUser($this->currentUserProvider->getCurrentUser())
-                                                ->getCurrentBudget();
-        } catch (NotFoundException $e) {
-        }
-
-        $basket = $this->basketService->getBasket()->getOrderableItems();
-
-        return floor(min($basket->getPrice() * static::MAX_BONUS_PAYMENT, $bonuses));
-    }
-
-    /**
      * @param bool $reload
      *
      * @return CalculationResult[]
@@ -508,5 +512,69 @@ class OrderService
         }
 
         return $this->deliveries;
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @return Payment
+     * @throws NotFoundException
+     */
+    public function getOnlinePayment(Order $order): Payment
+    {
+        /** @var Payment $orderPayment */
+        foreach ($order->getPaymentCollection() as $orderPayment) {
+            if ($orderPayment->isInner()) {
+                continue;
+            }
+
+            if ($orderPayment->getPaySystem()->getField('CODE') === static::PAYMENT_ONLINE) {
+                return $orderPayment;
+            }
+        }
+
+        throw new NotFoundException('В данном заказе нет онлайн-оплаты');
+    }
+
+    /**
+     * @param Order $order
+     * @param string $code
+     *
+     * @return PropertyValue
+     * @throws NotFoundException
+     */
+    public function getOrderPropertyByCode(Order $order, string $code): PropertyValue
+    {
+        /** @var PropertyValue $propertyValue */
+        foreach ($order->getPropertyCollection() as $propertyValue) {
+            if ($propertyValue->getField('CODE') === $code) {
+                return $propertyValue;
+            }
+        }
+
+        throw new NotFoundException(sprintf('Свойство %s не найдено', $code));
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @return string
+     * @throws NotFoundException
+     */
+    public function getOrderDeliveryCode(Order $order): string
+    {
+        try {
+            /** @var Shipment $shipment */
+            foreach ($order->getShipmentCollection() as $shipment) {
+                if ($shipment->isSystem()) {
+                    continue;
+                }
+
+                return $this->deliveryService->getDeliveryCodeById($shipment->getDeliveryId());
+            }
+        } catch (DeliveryNotFoundException $e) {
+        }
+
+        throw new NotFoundException('Не указан тип доставки');
     }
 }

@@ -4,10 +4,12 @@ namespace FourPaws\External;
 
 use Bitrix\Main\Application as BitrixApplication;
 use Bitrix\Main\SystemException;
+use Bitrix\Sale\Order;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\External\Exception\ExpertsenderServiceException;
+use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Service\ConfirmCodeInterface;
 use FourPaws\UserBundle\Service\ConfirmCodeService;
@@ -431,6 +433,40 @@ class ExpertsenderService
         if(\in_array(178, $activeLists, true)){
             return true;
         }
+        return false;
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @return bool
+     */
+    public function sendOrderNewEmail(Order $order): bool
+    {
+        /**
+         * @todo send email
+         * email  для зарегистрированного - стр. 34
+         * email  для незарегистрированного - стр. 36
+         * email  для зарегистрированного с онлайн-оплатой - стр. 32
+         * email  для незарегистрированного с онлайн-оплатой - стр. 35
+         */
+        return false;
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @return bool
+     */
+    public function sendOrderCompleteEmail(Order $order): bool
+    {
+        /** @var OrderService $orderService */
+        $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
+        if (!$email = $orderService->getOrderPropertyByCode($order, 'EMAIL')->getValue()) {
+            return false;
+        }
+
+        /** @todo send email */
         return false;
     }
 }
