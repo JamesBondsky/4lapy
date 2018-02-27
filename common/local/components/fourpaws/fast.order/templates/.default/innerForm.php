@@ -86,17 +86,22 @@ $orderableBasket = $basket->getOrderableItems(); ?>
                              <span class="b-common-item__name-value">Вес: </span>
                              <span><?= WordHelper::showWeight($basketItem->getWeight(), true) ?></span>
                         </span>
-                        <?php /** @todo props
-                         * <span class="b-common-item__variant b-common-item__variant--shopping-cart b-common-item__variant--shopping">
-                         * <span class="b-common-item__name-value">Цвет: </span>
-                         * <span>Синяя</span>
-                         * </span>
-                         * <span class="b-common-item__variant b-common-item__variant--shopping-cart b-common-item__variant--shopping">
-                         * <span class="b-common-item__name-value">Артикул: </span>
-                         * <span class="b-common-item__name-value b-common-item__name-value--shopping-mobile">, Арт. </span>
-                         * <span>1016408</span>
-                         * </span>
-                         */ ?>
+                        <?php if ($offer !== null) {
+                            $color = $offer->getColor();
+                            if ($color !== null) { ?>
+                                <span class="b-common-item__variant b-common-item__variant--shopping-cart b-common-item__variant--shopping">
+                                            <span class="b-common-item__name-value">Цвет: </span>
+                                            <span><?= $color->getName() ?></span>
+                                        </span>
+                            <?php }
+                            $article = $offer->getXmlId();
+                            if (!empty($article)) { ?>
+                                <span class="b-common-item__variant b-common-item__variant--shopping-cart b-common-item__variant--shopping">
+                                                <span class="b-common-item__name-value">Артикул: </span>
+                                                <span class="b-common-item__name-value b-common-item__name-value--shopping-mobile">, Арт. </span><span><?= $article ?></span>
+                                            </span>
+                            <?php }
+                        } ?>
                     </a>
                     <?php if ($offer !== null) {
                         $bonus = $component->getItemBonus($offer);
