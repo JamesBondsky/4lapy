@@ -180,7 +180,7 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
             $weight += (float)$basketItem->getWeight();
             $quantity += (int)$basketItem->getQuantity();
         }
-        $this->arResult['BASKET_WEIGHT'] = number_format($weight / 1000, 2);
+        $this->arResult['BASKET_WEIGHT'] = $weight;
         $this->arResult['TOTAL_QUANTITY'] = $quantity;
     }
 }

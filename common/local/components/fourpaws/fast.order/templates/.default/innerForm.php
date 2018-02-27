@@ -72,7 +72,7 @@ $orderableBasket = $basket->getOrderableItems(); ?>
                 </span>
                 <div class="b-common-item__info-center-block b-common-item__info-center-block--shopping-cart b-common-item__info-center-block--shopping">
                     <a class="b-common-item__description-wrap b-common-item__description-wrap--shopping"
-                       href="javascript:void(0);" title="">
+                       href="<?= $basketItem->getField('DETAIL_PAGE_URL'); ?>" title="">
                         <span class="b-clipped-text b-clipped-text--shopping-cart">
                             <span>
                                 <?php /** @todo brand
@@ -102,41 +102,37 @@ $orderableBasket = $basket->getOrderableItems(); ?>
                 </div>
             </div>
             <div class="b-item-shopping__operation b-item-shopping__operation--one-click">
+                <?php /** @todo max quantity */
+                $maxQuantity = 1000;?>
                 <div class="b-plus-minus b-plus-minus--half-mobile b-plus-minus--shopping js-plus-minus-cont">
                     <a class="b-plus-minus__minus js-minus" href="javascript:void(0);"
                        data-url="/ajax/sale/basket/update/"></a>
                     <input class="b-plus-minus__count js-plus-minus-count"
-                           value="<?= $basketItem->getQuantity() ?>"
-                           data-cont-max="1000<?php /** @todo Maximum quantity */ ?>"
+                           value="<?= WordHelper::numberFormat($basketItem->getQuantity(),0) ?>"
+                           data-cont-max="<?=$maxQuantity?>"
                            data-one-price="<?= $basketItem->getPrice() ?>"
                            data-basketid="<?= $basketItem->getId(); ?>" type="text" title=""/>
                     <a class="b-plus-minus__plus js-plus" href="javascript:void(0);"
                        data-url="/ajax/sale/basket/update/"></a>
                 </div>
                 <div class="b-select b-select--shopping-cart">
-                    <?php /** @todo mobile quantity */ ?>
+                    <?php /** @todo mobile max quantity */
+                    $maxMobileQuantity = 10;?>
                     <select class="b-select__block b-select__block--shopping-cart" name="one-click" title="">
                         <option value="" disabled="disabled" selected="selected">выберите</option>
-                        <option value="one-click-0">1</option>
-                        <option value="one-click-1">2</option>
-                        <option value="one-click-2">3</option>
-                        <option value="one-click-3">4</option>
-                        <option value="one-click-4">5</option>
-                        <option value="one-click-5">6</option>
-                        <option value="one-click-6">7</option>
-                        <option value="one-click-7">8</option>
-                        <option value="one-click-8">9</option>
-                        <option value="one-click-9">10</option>
+                        <?for ($i=0; $i<$maxMobileQuantity; $i++){?>
+                            <option value="one-click-<?=$i?>"><?=$i+1?></option>
+                        <?}?>
                     </select>
                 </div>
                 <div class="b-price">
-                    <span class="b-price__current"><?= $basketItem->getPrice() * $basketItem->getQuantity() ?>  </span>
+                    <span class="b-price__current"><?= WordHelper::numberFormat($basketItem->getPrice() * $basketItem->getQuantity()) ?>  </span>
                     <span class="b-ruble">₽</span>
                     <?php
                     if ($basketItem->getDiscountPrice() > 0) { ?>
                         <span class="b-old-price b-old-price--crossed-out">
-                            <span class="b-old-price__old"><?= $basketItem->getBasePrice()
-                                * $basketItem->getQuantity() ?>  </span>
+                            <span class="b-old-price__old"><?= WordHelper::numberFormat($basketItem->getBasePrice()
+                                * $basketItem->getQuantity()) ?>  </span>
                             <span class="b-ruble b-ruble--old-weight-price">₽</span>
                         </span>
                     <?php } ?>
@@ -150,16 +146,16 @@ $orderableBasket = $basket->getOrderableItems(); ?>
                 <div class="b-item-shopping__sale-info">
                     <?php if ($basketItem->getDiscountPrice() > 0) { ?>
                         <span class="b-old-price b-old-price--inline b-old-price--crossed-out">
-                            <span class="b-old-price__old"><?= $basketItem->getBasePrice() ?>  </span>
+                            <span class="b-old-price__old"><?= WordHelper::numberFormat($basketItem->getBasePrice()) ?>  </span>
                             <span class="b-ruble b-ruble--old-weight-price">₽</span>
                         </span>
                     <?php } ?>
                     <span class="b-old-price b-old-price--inline">
-                        <span class="b-old-price__old"><?= $basketItem->getPrice() ?> </span>
+                        <span class="b-old-price__old"><?= WordHelper::numberFormat($basketItem->getPrice()) ?> </span>
                         <span class="b-ruble b-ruble--old-weight-price">₽</span>
                     </span>
                     <span class="b-old-price b-old-price--inline b-old-price--on">
-                        <span class="b-old-price__old"><?= $basketItem->getQuantity() ?>  </span>
+                        <span class="b-old-price__old"><?= WordHelper::numberFormat($basketItem->getQuantity(),0) ?>  </span>
                         <span class="b-ruble b-ruble--old-weight-price">шт</span>
                     </span>
                     <?php /** @todo хз че это
@@ -183,10 +179,10 @@ $orderableBasket = $basket->getOrderableItems(); ?>
     <hr class="b-hr b-hr--one-click3"/>
     <dl class="b-popup-one-click__result">
         <dt class="b-popup-one-click__result-dt">
-            Итого <?= $arResult['TOTAL_QUANTITY'] ?> <?= WordHelper::declension(1,
-                ['товар', 'товара', 'товаров']) ?> (<?= $arResult['BASKET_WEIGHT'] ?> кг)
+            Итого <?= WordHelper::numberFormat($arResult['TOTAL_QUANTITY'], 0) ?> <?= WordHelper::declension(1,
+                ['товар', 'товара', 'товаров']) ?> (<?= WordHelper::showWeight($arResult['BASKET_WEIGHT'], true) ?>)
         </dt>
-        <dd class="b-popup-one-click__result-dd"><?= $basket->getPrice() ?> ₽</dd>
+        <dd class="b-popup-one-click__result-dd"><?= WordHelper::numberFormat($basket->getPrice()) ?> ₽</dd>
     </dl>
 <?php } ?>
 <div class="b-checkbox b-checkbox--one-click">
