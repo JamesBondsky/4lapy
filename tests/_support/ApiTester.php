@@ -71,7 +71,7 @@ class ApiTester extends \Codeception\Actor
         return $user;
     }
 
-    public function deleteDummyUser()
+    public function deleteDummyUsers()
     {
         $this->sendDELETE('/fake/user/dummy/');
         $this->seeResponseCodeIs(HttpCode::OK);
@@ -80,13 +80,24 @@ class ApiTester extends \Codeception\Actor
         ]);
     }
 
-    public function login(string $token, string $login, string $password)
+    public function deleteDummyUser(int $id)
+    {
+        $this->sendDELETE(sprintf('/fake/user/dummy/%s/', $id));
+        $this->seeResponseCodeIs(HttpCode::OK);
+        $this->dontSeeInDatabase('b_user', [
+            'ID'          => $id,
+            'SECOND_NAME' => 'fixture',
+        ]);
+    }
+
+
+    public function login(string $token, string $phone, string $password)
     {
         $this->haveHttpHeader('Content-type', 'application/json');
         $this->sendPOST('/user_login/', [
             'token'           => $token,
             'user_login_info' => [
-                'login'    => $login,
+                'login'    => $phone,
                 'password' => $password,
             ],
         ]);

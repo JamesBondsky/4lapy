@@ -14,7 +14,7 @@ class UserCest
 
     public function _before(ApiTester $I)
     {
-        $I->deleteDummyUser();
+        $I->deleteDummyUsers();
         $this->token = $I->createToken();
         $this->user = $I->createDummyUser();
     }
@@ -23,8 +23,10 @@ class UserCest
     {
         $I->deleteToken($this->token);
         $this->token = '';
-        $I->deleteDummyUser();
-        $this->user = [];
+        if ($dummyUserId = (int)$this->user['ID']) {
+            $I->deleteDummyUser($dummyUserId);
+            $this->user = [];
+        }
     }
 
     /**
@@ -77,23 +79,7 @@ class UserCest
             [
                 'callback' => function () {
                     return [
-                        'login'    => $this->user['EMAIL'],
-                        'password' => $this->user['PASSWORD'],
-                    ];
-                },
-            ],
-            [
-                'callback' => function () {
-                    return [
                         'login'    => $this->user['PERSONAL_PHONE'],
-                        'password' => $this->user['PASSWORD'],
-                    ];
-                },
-            ],
-            [
-                'callback' => function () {
-                    return [
-                        'login'    => $this->user['LOGIN'],
                         'password' => $this->user['PASSWORD'],
                     ];
                 },
@@ -133,16 +119,8 @@ class UserCest
             [
                 'callback' => function () {
                     return [
-                        'login'    => $this->user['LOGIN'],
-                        'password' => md5(random_bytes(32)),
-                    ];
-                },
-            ],
-            [
-                'callback' => function () {
-                    return [
                         'login'    => $this->user['EMAIL'],
-                        'password' => md5(random_bytes(32)),
+                        'password' => $this->user['PASSWORD'],
                     ];
                 },
             ],
@@ -208,7 +186,7 @@ class UserCest
             'USER_ID' => null,
         ]);
 
-        $I->login($this->token, $this->user['LOGIN'], $this->user['PASSWORD']);
+        $I->login($this->token, $this->user['PERSONAL_PHONE'], $this->user['PASSWORD']);
 
         $fUserId = $I->grabFromDatabase('api_user_session', 'FUSER_ID', [
             'TOKEN' => $this->token,
@@ -322,7 +300,7 @@ class UserCest
     public function testUpdateUserInfo(ApiTester $I, Example $example)
     {
         $I->wantTo('Test updating exist user');
-        $I->login($this->token, $this->user['LOGIN'], $this->user['PASSWORD']);
+        $I->login($this->token, $this->user['PERSONAL_PHONE'], $this->user['PASSWORD']);
         $I->haveHttpHeader('Content-type', 'application/json');
 
         $data = $example['data'];
@@ -366,7 +344,7 @@ class UserCest
                         str_pad(random_int(1, 12), 2, '0', STR_PAD_LEFT),
                         random_int(1900, 2017),
                     ]),
-                    'phone'     => random_int(70000000000, 79000000000),
+                    'phone'     => random_int(9160000000, 9169999999),
                 ],
             ],
             [
@@ -380,7 +358,7 @@ class UserCest
                         str_pad(random_int(1, 12), 2, '0', STR_PAD_LEFT),
                         random_int(1900, 2017),
                     ]),
-                    'phone'     => random_int(70000000000, 79000000000),
+                    'phone'     => random_int(9160000000, 9169999999),
                 ],
             ],
             [
@@ -394,18 +372,18 @@ class UserCest
                         str_pad(random_int(1, 12), 2, '0', STR_PAD_LEFT),
                         random_int(1900, 2017),
                     ]),
-                    'phone'     => random_int(70000000000, 79000000000),
+                    'phone'     => random_int(9160000000, 9169999999),
                 ],
             ],
             [
                 'data' => [
                     'email' => md5(random_bytes(1024)) . '@' . md5(random_bytes(1024)) . '.ru',
-                    'phone' => random_int(70000000000, 79000000000),
+                    'phone' => random_int(9160000000, 9169999999),
                 ],
             ],
             [
                 'data' => [
-                    'phone' => random_int(70000000000, 79000000000),
+                    'phone' => random_int(9160000000, 9169999999),
                 ],
             ],
         ];
@@ -414,7 +392,7 @@ class UserCest
     public function testUserInfoGet(ApiTester $I)
     {
         $I->wantTo('Test get user info');
-        $I->login($this->token, $this->user['LOGIN'], $this->user['PASSWORD']);
+        $I->login($this->token, $this->user['PERSONAL_PHONE'], $this->user['PASSWORD']);
         $I->haveHttpHeader('Content-type', 'application/json');
         $I->sendGET('/user_info/', [
             'token' => $this->token,
@@ -431,12 +409,12 @@ class UserCest
         $I->seeResponseContainsJson([
             'data' => [
                 'user' => [
-                    'email'     => $this->user['EMAIL'],
-                    'firstname' => $this->user['NAME'],
-                    'lastname'  => $this->user['LAST_NAME'],
-                    'midname'   => $this->user['SECOND_NAME'],
-                    'phone'     => $this->user['PERSONAL_PHONE'],
-                    'birthdate' => $this->user['PERSONAL_BIRTHDAY'],
+                    'email'     => (string)$this->user['EMAIL'],
+                    'firstname' => (string)$this->user['NAME'],
+                    'lastname'  => (string)$this->user['LAST_NAME'],
+                    'midname'   => (string)$this->user['SECOND_NAME'],
+                    'phone'     => (string)$this->user['PERSONAL_PHONE'],
+                    'birthdate' => (string)$this->user['PERSONAL_BIRTHDAY'],
                 ],
             ],
         ]);

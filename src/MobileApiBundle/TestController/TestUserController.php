@@ -40,11 +40,11 @@ class TestUserController extends FOSRestController
      */
     public function createDummyUserAction()
     {
-        $users = $this->fixtureService->get(User::class, 1);
+        $users = $this->fixtureService->get(User::class, 10);
         /**
          * @var User $user
          */
-        $user = reset($users);
+        $user = $users[array_rand($users, 1)];
         $user->setActive(true);
         if ($this->userRepository->create($user)) {
             \CUser::SetUserGroup($user->getId(), [6]);
@@ -68,6 +68,30 @@ class TestUserController extends FOSRestController
     {
         $users = $this->userRepository->findBy([
             'SECOND_NAME' => 'fixture',
+        ]);
+        $result = true;
+        foreach ($users as $user) {
+            $result &= $this->userRepository->delete($user->getId());
+        }
+
+        return ['status' => $result, 'count' => \count($users)];
+    }
+
+    /**
+     * @Rest\Delete("/user/dummy/{id}/")
+     * @Rest\View()
+     * @param int $id
+     *
+     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
+     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
+     * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
+     * @return array
+     */
+    public function deleteDummyUserAction(int $id)
+    {
+        $users = $this->userRepository->findBy([
+            'SECOND_NAME' => 'fixture',
+            'ID'          => $id,
         ]);
         $result = true;
         foreach ($users as $user) {
