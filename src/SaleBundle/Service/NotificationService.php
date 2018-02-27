@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SaleBundle\Service;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
@@ -170,7 +174,7 @@ class NotificationService implements LoggerAwareInterface
             return;
         }
 
-        $status = $order->getField('STATUS_CODE');
+        $status = $order->getField('STATUS_ID');
         $parameters = $this->getOrderData($order);
 
         $smsTemplate = null;
@@ -179,22 +183,22 @@ class NotificationService implements LoggerAwareInterface
             case OrderService::STATUS_ISSUING_POINT:
                 if ($parameters['deliveryCode'] === DeliveryService::INNER_PICKUP_CODE) {
                     if ($parameters['dcDelivery']) {
-                        $smsTemplate = 'order.status.issuingPoint.dc.html.php';
+                        $smsTemplate = 'FourPawsSaleBundle:Sms:order.status.issuingPoint.dc.html.php';
                     } else {
-                        $smsTemplate = 'order.status.issuingPoint.shop.html.php';
+                        $smsTemplate = 'FourPawsSaleBundle:Sms:order.status.issuingPoint.shop.html.php';
                     }
                 }
                 break;
             case OrderService::STATUS_DELIVERING:
                 $sendCompleteEmail = true;
                 if ($parameters['deliveryCode'] === DeliveryService::INNER_DELIVERY_CODE) {
-                    $smsTemplate = 'order.status.delivering.html.php';
+                    $smsTemplate = 'FourPawsSaleBundle:Sms:order.status.delivering.html.php';
                 }
                 break;
             case OrderService::STATUS_DELIVERED:
                 $sendCompleteEmail = true;
                 if ($parameters['deliveryCode'] === DeliveryService::INNER_DELIVERY_CODE) {
-                    $smsTemplate = 'order.status.delivered.html.php';
+                    $smsTemplate = 'FourPawsSaleBundle:Sms:order.status.delivered.html.php';
                 }
                 break;
         }
@@ -212,7 +216,7 @@ class NotificationService implements LoggerAwareInterface
 
         if ($smsTemplate) {
             $this->sendSms(
-                'FourPawsSaleBundle:Sms:order.canceled.html.php',
+                $smsTemplate,
                 $parameters
             );
         }
