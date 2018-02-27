@@ -51,12 +51,15 @@ class ProfileController extends Controller
 
     /** @var AjaxMess */
     private $ajaxMess;
+    /** @var UserAuthorizationInterface  */
+    private $userAuthorization;
 
     public function __construct(
         UserAuthorizationInterface $userAuthorization,
         CurrentUserProviderInterface $currentUserProvider,
         AjaxMess $ajaxMess
     ) {
+        $this->userAuthorization = $userAuthorization;
         $this->currentUserProvider = $currentUserProvider;
         $this->ajaxMess = $ajaxMess;
     }
@@ -75,6 +78,9 @@ class ProfileController extends Controller
      */
     public function changePhoneAction(Request $request): JsonResponse
     {
+        if(!$this->userAuthorization->isAuthorized()){
+            return $this->ajaxMess->getNeedAuthError();
+        }
         $action = $request->get('action', '');
 
         \CBitrixComponent::includeComponentClass('fourpaws:personal.profile');
@@ -109,6 +115,9 @@ class ProfileController extends Controller
      */
     public function changePasswordAction(Request $request): JsonResponse
     {
+        if(!$this->userAuthorization->isAuthorized()){
+            return $this->ajaxMess->getNeedAuthError();
+        }
         $id = (int)$request->get('ID', 0);
         $old_password = $request->get('old_password', '');
         $password = $request->get('password', '');
@@ -168,6 +177,9 @@ class ProfileController extends Controller
      */
     public function changeDataAction(Request $request, Serializer $serializer): JsonResponse
     {
+        if(!$this->userAuthorization->isAuthorized()){
+            return $this->ajaxMess->getNeedAuthError();
+        }
         /** @var UserRepository $userRepository */
         $userRepository = $this->currentUserProvider->getUserRepository();
         $data = $request->request->all();
@@ -197,7 +209,6 @@ class ProfileController extends Controller
             } catch (ApplicationCreateException $e) {
                 return $this->ajaxMess->getSystemError();
             }
-            /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             $curUser = $userRepository->find($user->getId());
             if ($curUser !== null && $curUser->getEmail() !== $user->getEmail()) {
                 $data['UF_EMAIL_CONFIRMED'] = false;
