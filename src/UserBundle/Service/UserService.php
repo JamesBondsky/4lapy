@@ -114,7 +114,7 @@ class UserService implements
     {
         $this->bitrixUserService->Logout();
 
-        return $this->isAuthorized();
+        return !$this->isAuthorized();
     }
 
     /**
