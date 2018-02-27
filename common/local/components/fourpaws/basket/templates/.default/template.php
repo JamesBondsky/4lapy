@@ -337,7 +337,7 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                     </a>
                     <div class="b-information-order__one-click">
                         <a class="b-link b-link--one-click js-open-popup js-open-popup--one-click js-open-popup"
-                           href="javascript:void(0)" title="Купить в 1 клик" data-popup-id="buy-one-click">
+                           href="javascript:void(0)" title="Купить в 1 клик" data-popup-id="buy-one-click" data-url="/ajax/fast_order/load/">
                             <span class="b-link__text b-link__text--one-click js-open-popup">Купить в 1 клик</span>
                         </a>
                     </div>

@@ -8,6 +8,20 @@ use FourPaws\App\Response\JsonResponse;
 class AjaxMess
 {
     /**
+     * @param string $text
+     *
+     * @return JsonResponse
+     */
+    public function getOrderCreateError(string $text = ''): JsonResponse
+    {
+        $mess = 'Ошибка при создании заказа';
+        if(!empty($text)){
+            $mess.=' - '.$text;
+        }
+        return $this->getJsonError('orderCreateError', $mess);
+    }
+
+    /**
      * @return JsonResponse
      */
     public function getWrongPhoneNumberException(): JsonResponse

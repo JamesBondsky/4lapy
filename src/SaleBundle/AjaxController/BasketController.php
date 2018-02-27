@@ -110,6 +110,7 @@ class BasketController extends Controller
             $data = [
                 'basket' => $this->basketViewService->getBasketHtml(),
                 'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
+                'fastOrder' => $this->basketViewService->getFastOrderHtml()
             ];
             $response = JsonSuccessResponse::createWithData(
                 '',
@@ -166,6 +167,7 @@ class BasketController extends Controller
             $data = [
                 'basket' => $this->basketViewService->getBasketHtml(),
                 'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
+                'fastOrder' => $this->basketViewService->getFastOrderHtml()
             ];
 
             $response = JsonSuccessResponse::createWithData(

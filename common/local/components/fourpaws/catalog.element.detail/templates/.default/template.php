@@ -318,14 +318,9 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                 <span class="b-counter-basket__basket-text">Добавить в корзину</span>
                 <span class="b-icon b-icon--advice"><?= new SvgDecorator('icon-cart', 20, 20) ?></span>
             </a>
-            <?php
-            /**
-             * @todo купить в 1 клик
-             */
-            ?>
-            <a class="b-link b-link--one-click" href="javascript:void(0)"
-               title="Купить в 1 клик">
-                <span class="b-link__text b-link__text--one-click">Купить в 1 клик</span>
+            <a class="b-link b-link--one-click js-open-popup js-open-popup--one-click" href="javascript:void(0)"
+               title="Купить в 1 клик" data-popup-id="buy-one-click" data-url="/ajax/fast_order/load/">
+                <span class="b-link__text b-link__text--one-click js-open-popup">Купить в 1 клик</span>
             </a>
             <hr class="b-counter-basket__hr" />
             <?php
