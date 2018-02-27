@@ -169,6 +169,22 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
         }
     }
 
+    /**
+     * @param $id
+     *
+     * @return Offer|null
+     */
+    public function getOffer($id)
+    {
+        /** @var Offer $item */
+        foreach ($this->offerCollection as $item) {
+            if($item->getId() === $id){
+                return $item;
+            }
+        }
+        return null;
+    }
+
     private function calcTemplateFields()
     {
         $weight = 0;

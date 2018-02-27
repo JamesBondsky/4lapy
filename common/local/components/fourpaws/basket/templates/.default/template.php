@@ -184,8 +184,11 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                             </div>
                         </div>
                         <div class="b-item-shopping__operation">
-                            <?php /** @todo max quantity */
-                            $maxQuantity = 1000;?>
+                            <?php $offer = $component->getOffer($basketItem->getProductId());
+                            $maxQuantity = 1000;
+                            if ($offer !== null) {
+                                $maxQuantity = $offer->getQuantity();
+                            } ?>
                             <div class="b-plus-minus b-plus-minus--half-mobile b-plus-minus--shopping js-plus-minus-cont">
                                 <a class="b-plus-minus__minus js-minus" data-url="/ajax/sale/basket/update/"
                                    href="javascript:void(0);"></a>
@@ -201,7 +204,10 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                             </div>
                             <div class="b-select b-select--shopping-cart">
                                 <?php /** @todo mobile max quantity */
-                                $maxMobileQuantity = 10;?>
+                                $maxMobileQuantity = 100;
+                                if ($maxQuantity < $maxMobileQuantity) {
+                                    $maxMobileQuantity = $maxMobileQuantity;
+                                } ?>
                                 <select title="" class="b-select__block b-select__block--shopping-cart"
                                         name="shopping-cart">
                                     <option value="" disabled="disabled" selected="selected">выберите</option>

@@ -183,4 +183,20 @@ class BasketComponent extends \CBitrixComponent
     {
         return $this->currentUserService;
     }
+
+    /**
+     * @param $id
+     *
+     * @return Offer|null
+     */
+    public function getOffer($id)
+    {
+        /** @var Offer $item */
+        foreach ($this->offerCollection as $item) {
+            if($item->getId() === $id){
+                return $item;
+            }
+        }
+        return null;
+    }
 }

@@ -102,14 +102,17 @@ $orderableBasket = $basket->getOrderableItems(); ?>
                 </div>
             </div>
             <div class="b-item-shopping__operation b-item-shopping__operation--one-click">
-                <?php /** @todo max quantity */
-                $maxQuantity = 1000;?>
+                <?php $offer = $component->getOffer($basketItem->getProductId());
+                $maxQuantity = 1000;
+                if ($offer !== null) {
+                    $maxQuantity = $offer->getQuantity();
+                } ?>
                 <div class="b-plus-minus b-plus-minus--half-mobile b-plus-minus--shopping js-plus-minus-cont">
                     <a class="b-plus-minus__minus js-minus" href="javascript:void(0);"
                        data-url="/ajax/sale/basket/update/"></a>
                     <input class="b-plus-minus__count js-plus-minus-count"
-                           value="<?= WordHelper::numberFormat($basketItem->getQuantity(),0) ?>"
-                           data-cont-max="<?=$maxQuantity?>"
+                           value="<?= WordHelper::numberFormat($basketItem->getQuantity(), 0) ?>"
+                           data-cont-max="<?= $maxQuantity ?>"
                            data-one-price="<?= $basketItem->getPrice() ?>"
                            data-basketid="<?= $basketItem->getId(); ?>" type="text" title=""/>
                     <a class="b-plus-minus__plus js-plus" href="javascript:void(0);"
@@ -117,12 +120,15 @@ $orderableBasket = $basket->getOrderableItems(); ?>
                 </div>
                 <div class="b-select b-select--shopping-cart">
                     <?php /** @todo mobile max quantity */
-                    $maxMobileQuantity = 10;?>
+                    $maxMobileQuantity = 100;
+                    if ($maxQuantity < $maxMobileQuantity) {
+                        $maxMobileQuantity = $maxMobileQuantity;
+                    } ?>
                     <select class="b-select__block b-select__block--shopping-cart" name="one-click" title="">
                         <option value="" disabled="disabled" selected="selected">выберите</option>
-                        <?for ($i=0; $i<$maxMobileQuantity; $i++){?>
-                            <option value="one-click-<?=$i?>"><?=$i+1?></option>
-                        <?}?>
+                        <?php for ($i = 0; $i < $maxMobileQuantity; $i++) { ?>
+                            <option value="one-click-<?= $i ?>"><?= $i + 1 ?></option>
+                        <?php } ?>
                     </select>
                 </div>
                 <div class="b-price">
@@ -132,7 +138,7 @@ $orderableBasket = $basket->getOrderableItems(); ?>
                     if ($basketItem->getDiscountPrice() > 0) { ?>
                         <span class="b-old-price b-old-price--crossed-out">
                             <span class="b-old-price__old"><?= WordHelper::numberFormat($basketItem->getBasePrice()
-                                * $basketItem->getQuantity()) ?>  </span>
+                                    * $basketItem->getQuantity()) ?>  </span>
                             <span class="b-ruble b-ruble--old-weight-price">₽</span>
                         </span>
                     <?php } ?>
@@ -155,7 +161,8 @@ $orderableBasket = $basket->getOrderableItems(); ?>
                         <span class="b-ruble b-ruble--old-weight-price">₽</span>
                     </span>
                     <span class="b-old-price b-old-price--inline b-old-price--on">
-                        <span class="b-old-price__old"><?= WordHelper::numberFormat($basketItem->getQuantity(),0) ?>  </span>
+                        <span class="b-old-price__old"><?= WordHelper::numberFormat($basketItem->getQuantity(),
+                                0) ?>  </span>
                         <span class="b-ruble b-ruble--old-weight-price">шт</span>
                     </span>
                     <?php /** @todo хз че это
