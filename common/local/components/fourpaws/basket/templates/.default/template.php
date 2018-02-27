@@ -157,11 +157,9 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                                    href="<?= $basketItem->getField('DETAIL_PAGE_URL'); ?>" title="">
                                     <span class="b-clipped-text b-clipped-text--shopping-cart">
                                         <span>
-                                            <?/** @todo brand */?>
-                                            <!--
-                                            <strong>Moderna  </strong>
-                                            миска пластиковая для кошек 210 мл friends forever
-                                            -->
+                                            <?php if ($offer !== 'null') { ?>
+                                                <strong><?= $offer->getProduct()->getBrand() ?>  </strong>
+                                            <?php } ?>
                                             <?= $basketItem->getField('NAME') ?>
                                         </span>
                                     </span>

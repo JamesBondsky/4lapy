@@ -76,8 +76,9 @@ $orderableBasket = $basket->getOrderableItems(); ?>
                        href="<?= $basketItem->getField('DETAIL_PAGE_URL'); ?>" title="">
                         <span class="b-clipped-text b-clipped-text--shopping-cart">
                             <span>
-                                <?php /** @todo brand
-                                 * <strong>Moderna  </strong>*/ ?>
+                                <?php if ($offer !== 'null') { ?>
+                                    <strong><?= $offer->getProduct()->getBrand() ?>  </strong>
+                                <?php } ?>
                                 <?= $basketItem->getField('NAME') ?>
                             </span>
                         </span>
