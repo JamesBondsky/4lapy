@@ -31,6 +31,8 @@ use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
+use FourPaws\StoreBundle\Collection\StoreCollection;
+use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\UserBundle\Entity\User;
@@ -250,6 +252,15 @@ class OrderService
             throw new OrderCreateException('Не выбран способ оплаты');
         }
 
+        $deliveries = $this->getDeliveries();
+        $selectedDelivery = null;
+        /** @var CalculationResult $delivery */
+        foreach ($deliveries as $delivery) {
+            if ($storage->getDeliveryId() === (int)$delivery->getData()['DELIVERY_ID']) {
+                $selectedDelivery = $delivery;
+            }
+        }
+
         /**
          * Задание способов доставки
          */
@@ -272,14 +283,6 @@ class OrderService
             }
             /** @var ShipmentCollection $shipmentCollection */
             $shipmentCollection = $shipment->getCollection();
-            $deliveries = $this->getDeliveries();
-            $selectedDelivery = null;
-            /** @var CalculationResult $delivery */
-            foreach ($deliveries as $delivery) {
-                if ($storage->getDeliveryId() === (int)$delivery->getData()['DELIVERY_ID']) {
-                    $selectedDelivery = $delivery;
-                }
-            }
 
             if (null === $selectedDelivery) {
                 throw new OrderCreateException('Не выбрана доставка');
@@ -422,7 +425,7 @@ class OrderService
              */
             $needCreateAddress = false;
             $addressUserId = null;
-            $newUser = true;
+            $newUser = false;
             if ($storage->getUserId()) {
                 $order->setFieldNoDemand('USER_ID', $storage->getUserId());
                 $user = $this->currentUserProvider->getCurrentUser();
@@ -491,7 +494,7 @@ class OrderService
              * 1) пользователь только что зарегистрирован
              * 2) авторизованный пользователь задал новый адрес
              */
-            if ($needCreateAddress) {
+            if ($needCreateAddress && $selectedDelivery && $this->deliveryService->isDelivery($selectedDelivery)) {
                 $address = (new Address())
                     ->setCity($storage->getCity())
                     ->setCityLocation($storage->getCityCode())
