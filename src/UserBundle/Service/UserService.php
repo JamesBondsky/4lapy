@@ -34,6 +34,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /**
  * Class UserService
+ *
  * @package FourPaws\UserBundle\Service
  */
 class UserService implements
@@ -113,7 +114,7 @@ class UserService implements
     {
         $this->bitrixUserService->Logout();
 
-        return $this->isAuthorized();
+        return !$this->isAuthorized();
     }
 
     /**
@@ -335,8 +336,6 @@ class UserService implements
         }
 
         $client->birthDate = $user->getManzanaBirthday();
-        // в Манзане телефон хранится с семеркой
-        //$client->phone              = $user->getPersonalPhone();
         $client->phone = $user->getManzanaNormalizePersonalPhone();
         $client->firstName = $user->getName();
         $client->secondName = $user->getSecondName();

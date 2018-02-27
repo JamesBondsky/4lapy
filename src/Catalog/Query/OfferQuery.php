@@ -33,6 +33,7 @@ class OfferQuery extends IblockElementQuery
             'PROPERTY_IS_NEW',
             'PROPERTY_IS_HIT',
             'PROPERTY_IS_SALE',
+            'PROPERTY_IS_POPULAR',
             'PROPERTY_COLOUR',
             'PROPERTY_VOLUME_REFERENCE',
             'PROPERTY_VOLUME',

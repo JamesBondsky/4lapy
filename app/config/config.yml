@@ -8,6 +8,7 @@ imports:
   - { resource: configs/four_paws_sap.yml }
   - { resource: configs/four_paws_mobile_api.yml }
   - { resource: configs/env.parameters.yml }
+  - { resource: configs/jms_serializer.yml }
 
 parameters:
   manzana.guzzle.curl:
@@ -61,7 +62,7 @@ framework:
   session:
     # https://symfony.com/doc/current/reference/configuration/framework.html#handler-id
     storage_id: session.storage.php_bridge
-    handler_id: ~
+    handler_id: FourPaws\AppBundle\Session\BitrixSessionBridge
   fragments: ~
   http_method_override: true
   php_errors:
@@ -93,11 +94,6 @@ nelmio_api_doc:
 twig:
     debug: '%kernel.debug%'
     strict_variables: '%kernel.debug%'
-
-jms_serializer:
-  property_naming:
-    id: jms_serialized_name_annotation_strategy
-    enable_cache: true
 
 sensio_framework_extra:
   request:

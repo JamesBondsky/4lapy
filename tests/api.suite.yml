@@ -1,0 +1,17 @@
+actor: ApiTester
+modules:
+    REST:
+        PhpBrowser:
+            cookies:
+                cookie-1:
+                    Name: userName
+                    Value: john.doe
+    enabled:
+        - Db:
+            dsn: 'mysql:host=localhost;dbname=bitrix'
+            user: 'bitrix'
+            password: 'bitrix'
+        - \Helper\Api
+        - REST:
+            url: http://4lapy.vag/mobile_app_v2
+            depends: PhpBrowser
