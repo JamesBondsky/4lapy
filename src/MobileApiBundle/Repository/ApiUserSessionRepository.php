@@ -105,6 +105,7 @@ class ApiUserSessionRepository implements ApiUserSessionRepositoryInterface
 
     /**
      * @param ApiUserSession $session
+     *
      * @throws ValidationException
      * @throws BitrixException
      * @throws WrongTransformerResultException
@@ -139,6 +140,7 @@ class ApiUserSessionRepository implements ApiUserSessionRepositoryInterface
 
     /**
      * @param ApiUserSession $session
+     *
      * @throws ValidationException
      * @throws BitrixException
      * @throws WrongTransformerResultException
@@ -170,6 +172,7 @@ class ApiUserSessionRepository implements ApiUserSessionRepositoryInterface
 
     /**
      * @param int $id
+     *
      * @throws InvalidIdentifierException
      * @throws BitrixException
      * @return bool
@@ -183,6 +186,32 @@ class ApiUserSessionRepository implements ApiUserSessionRepositoryInterface
                 throw new BitrixException($exception->getMessage(), $exception->getCode(), $exception);
             }
             return $result->isSuccess();
+        }
+        throw new InvalidIdentifierException('Wrong identifier passed: ' . $id);
+    }
+
+    /**
+     * @param string $token
+     *
+     * @return bool
+     */
+    public function deleteByToken(string $token): bool
+    {
+        if ($token) {
+            try {
+                $result = ApiUserSessionTable::query()
+                    ->addSelect('ID')
+                    ->addFilter('TOKEN', $token)
+                    ->exec()
+                    ->fetch();
+                if ($result) {
+                    return $this->delete((int)$result['ID']);
+                }
+                return true;
+
+            } catch (\Exception $exception) {
+                throw new BitrixException($exception->getMessage(), $exception->getCode(), $exception);
+            }
         }
         throw new InvalidIdentifierException('Wrong identifier passed: ' . $id);
     }

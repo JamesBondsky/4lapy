@@ -22,6 +22,7 @@ class ManzanaContactConsumer extends ManzanaConsumerBase
         try {
             $contact = $this->serializer->deserialize($message->getBody(), Client::class, 'json');
             $this->manzanaService->updateContact($contact);
+            $this->manzanaService->updateUserCardByClient($contact);
         } catch (ContactUpdateException $e) {
             $this->log()->error(sprintf('contact update error: %s',
                                         $e->getMessage()));

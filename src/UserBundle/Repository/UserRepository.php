@@ -12,10 +12,6 @@ use Bitrix\Main\UserTable;
 use CUser;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use FourPaws\AppBundle\Serialization\ArrayOrFalseHandler;
-use FourPaws\AppBundle\Serialization\BitrixBooleanHandler;
-use FourPaws\AppBundle\Serialization\BitrixDateHandler;
-use FourPaws\AppBundle\Serialization\BitrixDateTimeHandler;
 use FourPaws\AppBundle\Service\LazyCallbackValueLoader;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
@@ -28,10 +24,8 @@ use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use JMS\Serializer\DeserializationContext;
-use JMS\Serializer\Handler\HandlerRegistry;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\Serializer;
-use JMS\Serializer\SerializerBuilder;
 use ProxyManager\Proxy\VirtualProxyInterface;
 use Symfony\Component\Validator\Constraints\GreaterThanOrEqual;
 use Symfony\Component\Validator\Constraints\NotBlank;
@@ -75,8 +69,11 @@ class UserRepository
      *
      * @param Serializer              $serializer
      */
-    public function __construct(ValidatorInterface $validator, LazyCallbackValueLoader $lazyCallbackValueLoader, Serializer $serializer)
-    {
+    public function __construct(
+        ValidatorInterface $validator,
+        LazyCallbackValueLoader $lazyCallbackValueLoader,
+        Serializer $serializer
+    ) {
         $this->serializer = $serializer;
 
         $this->cuser = new \CUser();
@@ -302,10 +299,10 @@ class UserRepository
      * @param int    $id
      * @param string $email
      *
-     * @return bool
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws BitrixRuntimeException
+     * @return bool
      */
     public function updateEmail(int $id, string $email): bool
     {
@@ -313,7 +310,7 @@ class UserRepository
     }
 
     /**
-     * @param int $id
+     * @param int    $id
      * @param string $email
      *
      * @return bool
@@ -376,7 +373,7 @@ class UserRepository
         if (!empty($params['PERSONAL_PHONE'])) {
             $filter[0]['PERSONAL_PHONE'] = $params['PERSONAL_PHONE'];
         }
-        if(\count($filter[0]) === 2){
+        if (\count($filter[0]) === 2) {
             $val = end($filter[0]);
             $filter[key($filter[0])] = $val;
             unset($filter[0]);
@@ -488,27 +485,45 @@ class UserRepository
      */
     protected function findIdAndLoginByRawLogin(string $rawLogin, bool $onlyActive = true): array
     {
-        $query = UserTable::query()
-            ->addSelect('ID')
-            ->addSelect('LOGIN')
-            ->setFilter(
+        $filter = [
+            '=LOGIN' => $rawLogin,
+        ];
+
+        if (filter_var($rawLogin, FILTER_VALIDATE_EMAIL)) {
+            $filter = [
+                [
+                    [
+                        'LOGIC' => 'OR',
+                        $filter,
+                        [
+                            '=EMAIL' => $rawLogin,
+                        ],
+                    ],
+                ],
+            ];
+        }
+
+        if (PhoneHelper::isPhone($rawLogin)) {
+            $filter = [
                 [
                     [
                         'LOGIC' => 'OR',
                         [
-                            '=LOGIN' => $rawLogin,
+                            '=PERSONAL_PHONE' => $rawLogin,
                         ],
                         [
-                            '=EMAIL' => $rawLogin,
-                        ],
-                        [
-                            '=PERSONAL_PHONE' => PhoneHelper::isPhone($rawLogin) ? PhoneHelper::normalizePhone(
-                                $rawLogin
-                            ) : $rawLogin,
+                            '=PERSONAL_PHONE' => PhoneHelper::normalizePhone($rawLogin),
                         ],
                     ],
-                ]
-            );
+                ],
+            ];
+        }
+
+        $query = UserTable::query()
+            ->addSelect('ID')
+            ->addSelect('LOGIN')
+            ->setFilter($filter);
+
         if ($onlyActive) {
             $query->addFilter('ACTIVE', 'Y');
         }
