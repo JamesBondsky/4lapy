@@ -155,7 +155,7 @@ class ExpertsenderService implements LoggerAwareInterface
                 $backUrlText = !empty($backUrl) ? '&backurl=' . $backUrl : '';
                 $snippets = [
                     'user_name' => $user->getName(),
-                    'link'      => new FullHrefDecorator('/forgot-password/?hash=' . $generatedHash . '&email=' . $user->getEmail() . $backUrlText),
+                    'link'      => (new FullHrefDecorator('/forgot-password/?hash=' . $generatedHash . '&email=' . $user->getEmail() . $backUrlText))->getFullPublicPath(),
                 ];
                 $apiResult = $this->client->sendTransactional(7072, $receiver, $snippets);
                 if ($apiResult->isOk()) {
