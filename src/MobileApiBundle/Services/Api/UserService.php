@@ -125,7 +125,7 @@ class UserService
      * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
      * @return User
      */
-    protected function getCurrentApiUser(): User
+    public function getCurrentApiUser(): User
     {
         $user = $this->userBundleService->getCurrentUser();
         $apiUser = new User();

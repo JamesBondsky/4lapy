@@ -410,4 +410,58 @@ class UserCest
             ],
         ];
     }
+
+    public function testUserInfoGet(ApiTester $I)
+    {
+        $I->wantTo('Test get user info');
+        $I->login($this->token, $this->user['LOGIN'], $this->user['PASSWORD']);
+        $I->haveHttpHeader('Content-type', 'application/json');
+        $I->sendGET('/user_info/', [
+            'token' => $this->token,
+        ]);
+
+        $I->seeResponseCodeIs(HttpCode::OK);
+        $I->seeResponseIsJson();
+        $I->seeResponseMatchesJsonType([
+            'data'  => [
+                'user' => 'array:!empty',
+            ],
+            'error' => 'array:empty',
+        ]);
+        $I->seeResponseContainsJson([
+            'data' => [
+                'user' => [
+                    'email'     => $this->user['EMAIL'],
+                    'firstname' => $this->user['NAME'],
+                    'lastname'  => $this->user['LAST_NAME'],
+                    'midname'   => $this->user['SECOND_NAME'],
+                    'phone'     => $this->user['PERSONAL_PHONE'],
+                    'birthdate' => $this->user['PERSONAL_BIRTHDAY'],
+                ],
+            ],
+        ]);
+    }
+
+    public function testUserInfoGetUnauthorized(ApiTester $I)
+    {
+        $I->wantTo('Test get user info unauthorized');
+        $I->haveHttpHeader('Content-type', 'application/json');
+        $I->sendGET('/user_info/', [
+            'token' => $this->token,
+        ]);
+
+        $I->seeResponseCodeIs(HttpCode::OK);
+        $I->seeResponseIsJson();
+        $I->seeResponseMatchesJsonType([
+            'data'  => 'array:empty',
+            'error' => 'array:!empty',
+        ]);
+        $I->seeResponseContainsJson([
+            'error' => [
+                [
+                    'code' => 9,
+                ],
+            ],
+        ]);
+    }
 }

@@ -8,7 +8,6 @@ namespace FourPaws\MobileApiBundle\Controller;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
-use FourPaws\MobileApiBundle\Dto\Object\User;
 use FourPaws\MobileApiBundle\Dto\Request\LoginExistRequest;
 use FourPaws\MobileApiBundle\Dto\Request\LoginRequest;
 use FourPaws\MobileApiBundle\Dto\Request\PostUserInfoRequest;
@@ -92,21 +91,17 @@ class UserController extends FOSRestController
     /**
      * @Rest\Get(path="/user_info/")
      * @Rest\View()
+     * @Security("has_role('REGISTERED_USERS')")
+     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
+     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
+     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
      */
     public function getUserInfoAction()
     {
-        return new User();
-        /**
-         * @todo проверяем авторизован ли пользователь
-         */
-
-        /**
-         * @todo если авторизован - возвращаем пользователя
-         */
-
-        /**
-         * @todo если не авторизован возвращаем "user_not_authorized"
-         */
+        return (new ApiResponse())
+            ->setData([
+                'user' => $this->apiUserService->getCurrentApiUser(),
+            ]);
     }
 
     /**
