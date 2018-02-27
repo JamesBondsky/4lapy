@@ -415,7 +415,7 @@ class ExpertsenderService implements LoggerAwareInterface
                 return true;
             }
         } catch (GuzzleException $e) {
-            $this->logger->critical('Переписать нахуй. Так делатть НЕЛЬЗЯ.');
+            $this->logger->critical('Переписать нахер. Так делатть НЕЛЬЗЯ.');
         }
 
         return false;
