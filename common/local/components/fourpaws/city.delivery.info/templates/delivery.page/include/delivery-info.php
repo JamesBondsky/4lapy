@@ -3,6 +3,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+use FourPaws\DeliveryBundle\Entity\Interval;
+use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\Helpers\WordHelper;
@@ -33,17 +35,21 @@ use FourPaws\Helpers\WordHelper;
         <?php } ?>
     </div>
     <div class="b-delivery__delivery-type-row__time">
-        <?php if (!empty($delivery['INTERVALS'])) { ?>
+        <?php
+        /** @var IntervalCollection $intervals */
+        $intervals = $delivery['INTERVALS'];
+
+        ?>
+        <?php if (!$intervals->isEmpty()) { ?>
             <p>Время</p>
-            <?php $lastKey = end(array_keys($delivery['INTERVALS'])); ?>
-            <?php foreach ($delivery['INTERVALS'] as $i => $interval) { ?>
-                <span>
-                    <?= date('H:00', mktime($interval['FROM'])) . ' - ' . date(
-                        'H:00',
-                        mktime($interval['TO'])
-                    ) . ($i !== $lastKey ? ',' : '') ?>
-                </span>
-            <?php } ?>
+            <?php
+            $intervalData = [];
+            /** @var Interval $interval */
+            foreach ($intervals as $i => $interval) {
+                $intervalData[] = $interval->toString();
+            }
+            ?>
+            <span><?= implode(', ', $intervalData) ?></span>
         <?php } ?>
     </div>
 </div>

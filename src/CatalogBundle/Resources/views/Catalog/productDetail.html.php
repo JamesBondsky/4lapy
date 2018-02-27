@@ -145,6 +145,7 @@ if (!($offer instanceof Offer)) {
                                     <div class="b-description-tab__column b-description-tab__column--full">
                                         <h2>Состав</h2>
                                         <p><?= $product->getComposition()->getText() ?></p>
+                                    </div>
                                 </div>
                             </div>
                         <?php }
