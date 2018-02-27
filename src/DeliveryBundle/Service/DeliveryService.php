@@ -375,13 +375,31 @@ class DeliveryService
     }
 
     /**
+     * @param string $deliveryCode
+     * @return bool
+     */
+    public function isPickupCode(string $deliveryCode): bool
+    {
+        return \in_array($deliveryCode, static::PICKUP_CODES, true);
+    }
+
+    /**
      * @param CalculationResult $calculationResult
      *
      * @return bool
      */
     public function isPickup(CalculationResult $calculationResult): bool
     {
-        return \in_array($calculationResult->getData()['DELIVERY_CODE'], static::PICKUP_CODES, true);
+        return $this->isPickupCode($calculationResult->getData()['DELIVERY_CODE']);
+    }
+
+    /**
+     * @param string $deliveryCode
+     * @return bool
+     */
+    public function isDeliveryCode(string $deliveryCode): bool
+    {
+        return \in_array($deliveryCode, static::DELIVERY_CODES, true);
     }
 
     /**
@@ -391,7 +409,16 @@ class DeliveryService
      */
     public function isDelivery(CalculationResult $calculationResult): bool
     {
-        return \in_array($calculationResult->getData()['DELIVERY_CODE'], static::DELIVERY_CODES, true);
+        return $this->isDeliveryCode($calculationResult->getData()['DELIVERY_CODE']);
+    }
+
+    /**
+     * @param string $deliveryCode
+     * @return bool
+     */
+    public function isInnerPickupCode(string $deliveryCode): bool
+    {
+        return $deliveryCode === static::INNER_PICKUP_CODE;
     }
 
     /**
@@ -401,7 +428,16 @@ class DeliveryService
      */
     public function isInnerPickup(CalculationResult $calculationResult): bool
     {
-        return $calculationResult->getData()['DELIVERY_CODE'] === static::INNER_PICKUP_CODE;
+        return $this->isInnerPickupCode($calculationResult->getData()['DELIVERY_CODE']);
+    }
+
+    /**
+     * @param string $deliveryCode
+     * @return bool
+     */
+    public function isDpdPickupCode(string $deliveryCode): bool
+    {
+        return $deliveryCode === static::DPD_PICKUP_CODE;
     }
 
     /**
@@ -411,7 +447,16 @@ class DeliveryService
      */
     public function isDpdPickup(CalculationResult $calculationResult): bool
     {
-        return $calculationResult->getData()['DELIVERY_CODE'] === static::DPD_PICKUP_CODE;
+        return $this->isDpdPickupCode($calculationResult->getData()['DELIVERY_CODE']);
+    }
+
+    /**
+     * @param string $deliveryCode
+     * @return bool
+     */
+    public function isInnerDeliveryCode(string $deliveryCode): bool
+    {
+        return $deliveryCode === static::INNER_DELIVERY_CODE;
     }
 
     /**
@@ -421,7 +466,16 @@ class DeliveryService
      */
     public function isInnerDelivery(CalculationResult $calculationResult): bool
     {
-        return $calculationResult->getData()['DELIVERY_CODE'] === static::INNER_DELIVERY_CODE;
+        return $this->isInnerDeliveryCode($calculationResult->getData()['DELIVERY_CODE']);
+    }
+
+    /**
+     * @param string $deliveryCode
+     * @return bool
+     */
+    public function isDpdDeliveryCode(string $deliveryCode): bool
+    {
+        return $deliveryCode === static::DPD_DELIVERY_CODE;
     }
 
     /**
@@ -431,7 +485,7 @@ class DeliveryService
      */
     public function isDpdDelivery(CalculationResult $calculationResult): bool
     {
-        return $calculationResult->getData()['DELIVERY_CODE'] === static::DPD_DELIVERY_CODE;
+        return $this->isDpdDeliveryCode($calculationResult->getData()['DELIVERY_CODE']);
     }
 
     /**

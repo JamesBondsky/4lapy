@@ -9,7 +9,6 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
-use function GuzzleHttp\Psr7\str;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -76,6 +75,14 @@ class OrderSubscribe extends BaseEntity
      * @Serializer\SkipWhenEmpty()
      */
     protected $active;
+    /**
+     * @var DateTime
+     * @Serializer\Type("bitrix_date_time")
+     * @Serializer\SerializedName("UF_NEXT_CHECK")
+     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $nextCheck;
 
     /** @var  OrderSubscribeService */
     private $orderSubscribeService;
@@ -382,4 +389,33 @@ class OrderSubscribe extends BaseEntity
 
         return $this;
     }
+
+    /**
+     * @return null|DateTime
+     */
+    public function getNextCheck()
+    {
+        return $this->nextCheck ?? null;
+    }
+
+    /**
+     * @param null|DateTime|string $nextCheckDate
+     *
+     * @return self
+     */
+    public function setNextCheck($nextCheckDate) : self
+    {
+        if ($nextCheckDate instanceof DateTime) {
+            $this->nextCheck = $nextCheckDate;
+        } else {
+            if (is_scalar($nextCheckDate)) {
+                $this->nextCheck = new DateTime($nextCheckDate, 'd.m.Y H:i:s');
+            } elseif($nextCheckDate === null) {
+                $this->nextCheck = null;
+            }
+        }
+
+        return $this;
+    }
+
 }

@@ -13,7 +13,6 @@ use Bitrix\Main\Error;
 use Bitrix\Sale\Internals\OrderTable;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\AppBundle\Repository\BaseHlRepository;
-use FourPaws\AppBundle\Repository\BaseRepository;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use JMS\Serializer\ArrayTransformerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -219,7 +218,7 @@ class OrderSubscribeRepository extends BaseHlRepository
 
         // дата создания всегда текущая
         $this->entity->setDateCreate('');
-        // дата обновления всегда текущая
+        // дата изменения всегда текущая
         $this->entity->setDateEdit('');
 
         if (!$this->entity->getDateStart()) {
@@ -284,8 +283,6 @@ class OrderSubscribeRepository extends BaseHlRepository
 
         // дата создания не обновляется
         $this->entity->setDateCreate(null);
-        // дата обновления всегда текущая
-        $this->entity->setDateEdit('');
 
         return parent::update();
     }
@@ -297,6 +294,11 @@ class OrderSubscribeRepository extends BaseHlRepository
     public function updateEx(array $data): UpdateResult
     {
         $result = new UpdateResult();
+
+        // если дата изменения не задана, то устанавливаем текущую дату автоматически
+        if (!isset($data['UF_DATE_EDIT'])) {
+            $data['UF_DATE_EDIT'] = '';
+        }
 
         try {
             $this->setEntity(
@@ -310,7 +312,7 @@ class OrderSubscribeRepository extends BaseHlRepository
 
         if ($result->isSuccess()) {
             try {
-                $res = $this->update();
+                $this->update();
             } catch(ArgumentNullException $exception) {
                 $result->addError(
                     new Error($exception->getMessage(), 'argumentNullException')
