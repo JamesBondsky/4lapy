@@ -6,5 +6,10 @@
  */
 
 /** @global $APPLICATION */
-
-$APPLICATION->IncludeComponent('fourpaws:catalog.popular.list', '', ['COUNT' => 12], false, ['HIDE_ICONS' => 'Y']);
+$APPLICATION->IncludeComponent('fourpaws:catalog.snippet.list', '', [
+    'COUNT'        => 12,
+    'OFFER_FILTER' => [
+        '!PROPERTY_IS_SALE' => false,
+    ],
+    'TITLE' => 'Распродажа',
+], false, ['HIDE_ICONS' => 'Y']);

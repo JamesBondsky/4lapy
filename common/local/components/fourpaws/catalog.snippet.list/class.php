@@ -16,6 +16,8 @@ class CatalogSaleListComponent extends CBitrixComponent
 {
     const PROPERTY_SALE = 'PROPERTY_SALE';
     
+    protected $filter;
+    
     /**
      * @param $params
      *
@@ -23,7 +25,7 @@ class CatalogSaleListComponent extends CBitrixComponent
      */
     public function onPrepareComponentParams($params): array
     {
-        $params['CACHE_TYPE']='N';
+        $params['CACHE_TYPE'] = 'N';
         if (!isset($params['CACHE_TIME'])) {
             $params['CACHE_TIME'] = 36000;
         }
@@ -56,25 +58,42 @@ class CatalogSaleListComponent extends CBitrixComponent
      */
     protected function prepareResult()
     {
+        $this->prepareProductFilter();
         $this->arResult['products'] = $this->getProductList();
     }
     
     /**
-     * @return CollectionBase|ProductCollection
-     *
      * @throws IblockNotFoundException
+     */
+    protected function prepareProductFilter()
+    {
+        $this->filter = [];
+        
+        if ($this->arParams['PRODUCT_FILTER']) {
+            $this->filter = $this->arParams['PRODUCT_FILTER'];
+        }
+        
+        if ($this->arParams['OFFER_FILTER'] && is_array($this->arParams['OFFER_FILTER'])) {
+            $this->filter['ID'] = \CIBlockElement::SubQuery('PROPERTY_CML2_LINK',
+                array_merge($this->arParams['OFFER_FILTER'], [
+                        'IBLOCK_ID' => IblockUtils::getIblockId(
+                            IblockType::CATALOG,
+                            IblockCode::OFFERS
+                        ),
+                    ]
+                )
+            );
+        }
+        
+        $this->filter = $this->filter ?: ['ID' => '-1'];
+    }
+    
+    /**
+     * @return CollectionBase|ProductCollection
      */
     protected function getProductList(): ProductCollection
     {
-        $subquery = \CIBlockElement::SubQuery('PROPERTY_CML2_LINK', [
-            '!PROPERTY_IS_SALE' => false,
-            'IBLOCK_ID'      => IblockUtils::getIblockId(
-                IblockType::CATALOG,
-                IblockCode::OFFERS
-            ),
-        ]);
-        
-        return (new ProductQuery())->withFilter(['ID' => $subquery])->withOrder(['sort' => 'asc'])->withNav(['nTopCount' => $this->arParams['COUNT']])->exec();
+        return (new ProductQuery())->withFilter($this->filter)->withOrder(['sort' => 'asc'])->withNav(['nTopCount' => $this->arParams['COUNT']])->exec();
     }
     
     /**
