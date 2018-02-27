@@ -33,6 +33,73 @@ class UserCest
      * @param ApiTester $I
      * @param Example   $example
      *
+     * @dataprovider goodRegistrationProvider
+     */
+    public function testRegister(ApiTester $I, Example $example)
+    {
+        $I->wantTo('Test registration process');
+        $I->haveHttpHeader('Content-type', 'application/json');
+        $data = $example['callback']();
+        $I->sendPOST('/user_login/', [
+            'token'           => $this->token,
+            'user_login_info' => $data,
+        ]);
+
+        $I->seeResponseCodeIs(HttpCode::OK);
+        $I->seeResponseIsJson();
+        $I->seeResponseMatchesJsonType([
+            'data'  => [
+                'user' => [
+                    'email'     => 'string:empty',
+                    'firstname' => 'string:empty',
+                    'lastname'  => 'string:empty',
+                    'phone'     => 'string:!empty',
+                ],
+            ],
+            'error' => 'array:empty',
+        ]);
+        $I->seeResponseContainsJson([
+            'data' => [
+                'user' => [
+                    'phone' => $data['login'],
+                ],
+            ],
+        ]);
+        $fUserId = $I->grabFromDatabase('api_user_session', 'FUSER_ID', [
+            'TOKEN' => $this->token,
+        ]);
+        $userId = (int)$I->grabFromDatabase('b_sale_fuser', 'USER_ID', [
+            'ID' => $fUserId,
+        ]);
+        if (!$userId) {
+            throw new RuntimeException('No user for token ' . $this->token);
+        }
+        $I->seeInDatabase('b_user', [
+            'ID'             => $userId,
+            'LOGIN'          => $data['login'],
+            'PERSONAL_PHONE' => $data['login'],
+        ]);
+        $I->deleteUser($userId);
+    }
+
+    public function goodRegistrationProvider()
+    {
+        return [
+            [
+                'callback' => function () {
+                    return [
+                        'login'    => random_int(9160000000, 9179999999),
+                        'password' => md5(random_bytes(1024)),
+                    ];
+                },
+            ],
+        ];
+    }
+
+    /**
+     * @param ApiTester $I
+     * @param Example   $example
+     *
      * @dataprovider goodAuthProvider
      * @throws \RuntimeException
      */
@@ -73,6 +140,7 @@ class UserCest
         }
     }
 
+
     public function goodAuthProvider()
     {
         return [
@@ -111,7 +179,6 @@ class UserCest
             'error' => 'array:!empty',
         ]);
     }
-
 
     public function wrongAuthProvider()
     {
@@ -175,6 +242,7 @@ class UserCest
         ];
     }
 
+
     public function testLogout(ApiTester $I)
     {
         $I->wantTo('Test logout');
@@ -219,7 +287,6 @@ class UserCest
             'FUSER_ID' => $fUserId,
         ]);
     }
-
 
     /**
      * @param ApiTester $I

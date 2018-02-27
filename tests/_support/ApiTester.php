@@ -90,6 +90,15 @@ class ApiTester extends \Codeception\Actor
         ]);
     }
 
+    public function deleteUser(int $id)
+    {
+        $this->sendDELETE(sprintf('/fake/user/%s/', $id));
+        $this->seeResponseCodeIs(HttpCode::OK);
+        $this->dontSeeInDatabase('b_user', [
+            'ID' => $id,
+        ]);
+    }
+
 
     public function login(string $token, string $phone, string $password)
     {

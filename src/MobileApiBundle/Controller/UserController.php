@@ -60,7 +60,7 @@ class UserController extends FOSRestController
     public function loginAction(LoginRequest $loginRequest): ApiResponse
     {
         return (new ApiResponse())
-            ->setData($this->apiUserService->login($loginRequest));
+            ->setData($this->apiUserService->loginOrRegister($loginRequest));
     }
 
     /**
@@ -78,14 +78,6 @@ class UserController extends FOSRestController
     {
         return (new ApiResponse())
             ->setData($this->apiUserService->logout());
-    }
-
-    /**
-     * @Rest\Get(path="/check/")
-     * @Rest\View()
-     */
-    public function checkAction()
-    {
     }
 
     /**

@@ -100,4 +100,27 @@ class TestUserController extends FOSRestController
 
         return ['status' => $result, 'count' => \count($users)];
     }
+
+    /**
+     * @Rest\Delete("/user/{id}/")
+     * @Rest\View()
+     * @param int $id
+     *
+     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
+     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
+     * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
+     * @return array
+     */
+    public function deleteUserAction(int $id)
+    {
+        $users = $this->userRepository->findBy([
+            'ID' => $id,
+        ]);
+        $result = true;
+        foreach ($users as $user) {
+            $result &= $this->userRepository->delete($user->getId());
+        }
+
+        return ['status' => $result, 'count' => \count($users)];
+    }
 }

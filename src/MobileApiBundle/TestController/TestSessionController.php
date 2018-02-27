@@ -4,6 +4,7 @@ namespace FourPaws\MobileApiBundle\TestController;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
+use FourPaws\MobileApiBundle\Exception\InvalidIdentifierException;
 use FourPaws\MobileApiBundle\Repository\ApiUserSessionRepository;
 
 /**
@@ -23,16 +24,20 @@ class TestSessionController extends FOSRestController
     }
 
     /**
-     * @Rest\Delete("/session/{token}/")
+     * @Rest\Delete("/session/{tokenToDelete}/")
      * @Rest\View()
-     * @param string $token
+     * @param string $tokenToDelete
      *
      * @return array
-     * @throws \FourPaws\MobileApiBundle\Exception\InvalidIdentifierException
      * @throws \FourPaws\MobileApiBundle\Exception\BitrixException
      */
-    public function deleteAction(string $token): array
+    public function deleteAction(string $tokenToDelete): array
     {
-        return ['status' => $this->apiUserSessionRepository->deleteByToken($token)];
+        $status = true;
+        try {
+            $status = $this->apiUserSessionRepository->deleteByToken($tokenToDelete);
+        } catch (InvalidIdentifierException $exception) {
+        }
+        return ['status' => $status];
     }
 }
