@@ -195,7 +195,6 @@ class ExpertsenderService implements LoggerAwareInterface
 
                 $continue = false;
                 if ($expertSenderId > 0) {
-                    /** @todo должно быть письмо с верификацией мыла - под него подогнать проверку */
                     $addUserToList = new AddUserToList();
                     $addUserToList->setForce(true);
                     $addUserToList->setMode('AddAndUpdate');
@@ -208,7 +207,6 @@ class ExpertsenderService implements LoggerAwareInterface
                         $continue = true;
                     }
                 } else {
-                    /** @todo должно быть письмо с верификацией мыла - под него подогнать проверку */
                     $addUserToList = new AddUserToList();
                     $addUserToList->setForce(true);
                     $addUserToList->setMode('AddAndUpdate');
@@ -245,9 +243,9 @@ class ExpertsenderService implements LoggerAwareInterface
                     }
                 }
             } catch (GuzzleException $e) {
-                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
+                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
             } catch (\Exception $e) {
-                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
+                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
             }
         }
 
