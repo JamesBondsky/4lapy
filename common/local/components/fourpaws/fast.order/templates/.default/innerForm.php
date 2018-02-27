@@ -4,6 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use FourPaws\Decorators\SvgDecorator;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\UserBundle\Entity\User;
 
@@ -187,11 +188,14 @@ $orderableBasket = $basket->getOrderableItems(); ?>
                      * </a>
                      */ ?>
                 </div>
-                <?php /** @todo предварительная дата доставки
-                 * <div class="b-item-shopping__sale-info b-item-shopping__sale-info--width">
-                 * Предварительная дата доставки:<span>12.09.2017</span>
-                 * </div>
-                 */ ?>
+                <?php if($offer !== null) {
+                    $deliveryDate = $component->getDeliveryDate($offer);
+                    if(!empty($deliveryDate)){ ?>
+                        <div class="b-item-shopping__sale-info b-item-shopping__sale-info--width">
+                            Предварительная дата доставки:<span><?=$deliveryDate?></span>
+                        </div>
+                    <?php }
+                }?>
             </div>
         </div>
     <?php } ?>

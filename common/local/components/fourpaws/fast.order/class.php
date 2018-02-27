@@ -200,4 +200,24 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
         $this->arResult['BASKET_WEIGHT'] = $weight;
         $this->arResult['TOTAL_QUANTITY'] = $quantity;
     }
+
+    /**
+     * @param Offer $offer
+     *
+     * @return string
+     */
+    public function getDeliveryDate(Offer $offer) : string
+    {
+        /** @todo предварительная дата доставки */
+        $deliveryDate = '';
+        try {
+            $deliveryService = App::getInstance()->getContainer()->get('delivery.service');
+            $res = $deliveryService->getByProduct($offer);
+            foreach ($res as $item) {
+                $item->getPeriodDescription();
+            }
+        } catch (ApplicationCreateException $e) {
+        }
+        return $deliveryDate;
+    }
 }
