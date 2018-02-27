@@ -16,6 +16,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use LinguaLeo\ExpertSender\Entities\Property;
 use LinguaLeo\ExpertSender\Entities\Receiver;
+use LinguaLeo\ExpertSender\Entities\Snippet;
 use LinguaLeo\ExpertSender\ExpertSender;
 use LinguaLeo\ExpertSender\ExpertSenderException;
 use LinguaLeo\ExpertSender\Request\AddUserToList;
@@ -154,8 +155,8 @@ class ExpertsenderService implements LoggerAwareInterface
                 $receiver = new Receiver($user->getEmail());
                 $backUrlText = !empty($backUrl) ? '&backurl=' . $backUrl : '';
                 $snippets = [
-                    'user_name' => $user->getName(),
-                    'link'      => (new FullHrefDecorator('/forgot-password/?hash=' . $generatedHash . '&email=' . $user->getEmail() . $backUrlText))->getFullPublicPath(),
+                    new Snippet('user_name', $user->getName()),
+                    new Snippet('link', (new FullHrefDecorator('/forgot-password/?hash=' . $generatedHash . '&email=' . $user->getEmail() . $backUrlText))->getFullPublicPath()),
                 ];
                 $apiResult = $this->client->sendTransactional(7072, $receiver, $snippets);
                 if ($apiResult->isOk()) {
