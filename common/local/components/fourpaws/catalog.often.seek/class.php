@@ -13,7 +13,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceExce
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /** @noinspection AutoloadingIssuesInspection */
-class CFourPawsFoodSelectionComponent extends CBitrixComponent
+class CatalogOftenSeekComponent extends CBitrixComponent
 {
     /** @var OftenSeekInterface $oftenSeekService */
     private $oftenSeekService;
@@ -51,9 +51,11 @@ class CFourPawsFoodSelectionComponent extends CBitrixComponent
         if (!empty($params['SECTION_ID'])) {
             $params['SECTION_ID'] = (int)$params['SECTION_ID'];
         }
+
         $params['LEFT_MARGIN'] = (int)$params['LEFT_MARGIN'];
         $params['RIGHT_MARGIN'] = (int)$params['RIGHT_MARGIN'];
         $params['DEPTH_LEVEL'] = (int)$params['DEPTH_LEVEL'];
+
         return $params;
     }
 
@@ -66,17 +68,17 @@ class CFourPawsFoodSelectionComponent extends CBitrixComponent
         if ($this->arParams['SECTION_ID'] <= 0) {
             return null;
         }
-        $this->setFrameMode(true);
 
-        if ($this->startResultCache()) {
+        //if ($this->startResultCache()) {
             $this->arResult['ITEMS'] = $this->oftenSeekService->getItems(
                 $this->arParams['SECTION_ID'],
                 $this->arParams['LEFT_MARGIN'],
                 $this->arParams['RIGHT_MARGIN'],
                 $this->arParams['DEPTH_LEVEL']
             );
+
             $this->includeComponentTemplate();
-        }
+        //}
 
         return true;
     }

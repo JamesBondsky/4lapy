@@ -45,6 +45,7 @@ if ($pickup && $selectedDelivery->getData()['DELIVERY_CODE'] == $pickup->getData
     $selectedShopCode = $arResult['SELECTED_SHOP']->getXmlId();
     $isPickup = true;
 }
+
 ?>
 <div class="b-container">
     <h1 class="b-title b-title--h1 b-title--order">
@@ -142,7 +143,7 @@ if ($pickup && $selectedDelivery->getData()['DELIVERY_CODE'] == $pickup->getData
                                        for="order-delivery-pick-up"
                                        data-popup-id="popup-order-stores">
                                     <span class="b-choice-recovery__main-text">Самовывоз</span>
-                                    <span class="b-choice-recovery__addition-text js-my-pickup">
+                                    <span class="b-choice-recovery__addition-text js-my-pickup js-pickup-tab">
                                         <?= DeliveryTimeHelper::showTime(
                                             $pickup,
                                             $date,
@@ -154,7 +155,7 @@ if ($pickup && $selectedDelivery->getData()['DELIVERY_CODE'] == $pickup->getData
                                         ) ?>
                                         , <?= CurrencyHelper::formatPrice($pickup->getPrice(), false) ?>
                                     </span>
-                                    <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile js-my-pickup">
+                                    <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile js-my-pickup js-pickup-tab">
                                         <?= DeliveryTimeHelper::showTime(
                                             $pickup,
                                             $date,
@@ -216,7 +217,7 @@ if ($pickup && $selectedDelivery->getData()['DELIVERY_CODE'] == $pickup->getData
                         </div>
                     </div>
                     <div class="b-order-list__order-value b-order-list__order-value--order-step-two js-price-full">
-                        <?= CurrencyHelper::formatPrice($basketPrice) ?>
+                        <?= CurrencyHelper::formatPrice($basketPrice, false) ?>
                     </div>
                 </li>
                 <li class="b-order-list__item b-order-list__item--cost b-order-list__item--order-step-two">
@@ -240,7 +241,7 @@ if ($pickup && $selectedDelivery->getData()['DELIVERY_CODE'] == $pickup->getData
                         </div>
                     </div>
                     <div class="b-order-list__order-value b-order-list__order-value--order-step-two js-price-total">
-                        <?= CurrencyHelper::formatPrice($basketPrice + $selectedDelivery->getPrice()) ?>
+                        <?= CurrencyHelper::formatPrice($basketPrice + $selectedDelivery->getPrice(), false) ?>
                     </div>
                 </li>
             </ul>

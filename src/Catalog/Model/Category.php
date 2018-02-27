@@ -11,6 +11,7 @@ use Elastica\Query\Simple;
 use Elastica\Query\Terms;
 use Exception;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Model\IblockSection;
 use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Collection\VariantCollection;
@@ -20,6 +21,8 @@ use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\CatalogBundle\Service\FilterService;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 use WebArch\BitrixCache\BitrixCache;
 
@@ -31,32 +34,32 @@ class Category extends IblockSection implements FilterInterface
      * @var int
      */
     protected $UF_SYMLINK = 0;
-
     /**
      * @var Category
      */
     protected $symlink;
-
     /**
      * @var static
      */
     protected $parent;
-
+    /**
+     * It`s root category
+     *
+     * @var bool
+     */
+    protected $root = false;
     /**
      * @var Collection|static[]
      */
     protected $child;
-
     /**
      * @var int
      */
     protected $PICTURE = 0;
-
     /**
      * @var string
      */
     protected $UF_DISPLAY_NAME = '';
-
     /**
      * @var string
      */
@@ -78,8 +81,9 @@ class Category extends IblockSection implements FilterInterface
      *
      * @param array $fields
      *
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
+     * @throws ServiceNotFoundException
      */
     public function __construct(array $fields = [])
     {
@@ -95,22 +99,26 @@ class Category extends IblockSection implements FilterInterface
      *
      * @throws IblockNotFoundException
      * @return Category
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
      */
-    public static function createRoot(array $fields = [])
+    public static function createRoot(array $fields = []): Category
     {
         $category = new self(
             array_merge(
+                ['NAME' => 'Результаты поиска',],
                 $fields,
                 [
                     'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::PRODUCTS),
-                    'ID'        => 0,
-                    'CODE'      => '',
-                    'NAME'      => 'Результаты поиска',
+                    'ID' => 0,
+                    'CODE' => '',
                 ]
             )
         );
 
         $category->setVisible(true);
+        $category->setRoot(true);
 
         return $category;
     }
@@ -219,16 +227,25 @@ class Category extends IblockSection implements FilterInterface
             $this->child = new ArrayCollection();
         }
 
-        if (0 === $this->child->count() && $this->getRightMargin() - $this->getLeftMargin() > 1) {
-            $this->child = (new CategoryQuery())
-                ->withFilterParameter('SECTION_ID', $this->getId())
-                ->withFilterParameter('CNT_ACTIVE', 'Y')
-                ->withOrder(['SORT' => 'ASC'])
-                ->withCountElements(true)
-                ->exec();
-            $this->child->map(function (Category $category) {
-                $category->withParent($this);
-            });
+        if (0 === $this->child->count()) {
+            if ($this->getRightMargin() - $this->getLeftMargin() > 1) {
+                $this->child = (new CategoryQuery())
+                    ->withFilterParameter('SECTION_ID', $this->getId())
+                    ->withFilterParameter('CNT_ACTIVE', 'Y')
+                    ->withOrder(['SORT' => 'ASC'])
+                    ->withCountElements(true)
+                    ->exec();
+                $this->child->map(function (Category $category) {
+                    $category->withParent($this);
+                });
+            } elseif ($this->isRoot()) {
+                $this->child = (new CategoryQuery())
+                    ->withFilterParameter('SECTION_ID', false)
+                    ->withFilterParameter('CNT_ACTIVE', 'Y')
+                    ->withOrder(['SORT' => 'ASC'])
+                    ->withCountElements(true)
+                    ->exec();
+            }
         }
 
         $result = $this->child;
@@ -413,5 +430,21 @@ class Category extends IblockSection implements FilterInterface
     public function initState(Request $request)
     {
         // TODO: Implement initState() method для древовидного фильтра.
+    }
+
+    /**
+     * @return bool
+     */
+    public function isRoot(): bool
+    {
+        return $this->root;
+    }
+
+    /**
+     * @param bool $root
+     */
+    public function setRoot(bool $root)
+    {
+        $this->root = $root;
     }
 }

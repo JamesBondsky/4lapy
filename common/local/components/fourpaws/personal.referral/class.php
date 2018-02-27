@@ -125,11 +125,12 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
 
         $this->arResult['ITEMS'] = $items = new ArrayCollection();
 
+        $nav = null;
         try {
-            $this->arResult['NAV'] = new PageNavigation('nav-referral');
-            $this->arResult['NAV']->allowAllRecords(false)->setPageSize($this->arParams['PAGE_COUNT'])->initFromUri();
+            $nav = new PageNavigation('nav-referral');
+            $nav->allowAllRecords(false)->setPageSize($this->arParams['PAGE_COUNT'])->initFromUri();
 
-            $this->arResult['ITEMS'] = $items = $this->referralService->getCurUserReferrals(true, $this->arResult['NAV']);
+            $this->arResult['ITEMS'] = $items = $this->referralService->getCurUserReferrals(true, $nav);
         } catch (NotAuthorizedException $e) {
         } catch (CardNotFoundException $e) {
         }
@@ -158,7 +159,7 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
                 $this->arResult['BONUS'] = floor($this->arResult['BONUS']);
             }
             $this->arResult['FORMATED_BONUS'] = \number_format($this->arResult['BONUS'], 0, '.', ' ');
-
+            $this->arResult['NAV'] = $nav;
         }
         if ($this->startResultCache(
             $this->arParams['CACHE_TIME'],

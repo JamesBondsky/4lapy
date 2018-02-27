@@ -1,9 +1,13 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\MobileApiBundle\Security;
 
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Response;
+use FourPaws\MobileApiBundle\Exception\InvalidSignRequestException;
+use FourPaws\MobileApiBundle\Exception\InvalidTokenException;
 use Symfony\Component\HttpKernel\Event\GetResponseEvent;
 use Symfony\Component\Security\Core\Authentication\AuthenticationManagerInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
@@ -37,12 +41,17 @@ class ApiTokenListener implements ListenerInterface
         $this->signChecker = $signChecker;
     }
 
+    /**
+     * @param GetResponseEvent $event
+     *
+     * @throws \FourPaws\MobileApiBundle\Exception\InvalidTokenException
+     * @throws \FourPaws\MobileApiBundle\Exception\InvalidSignRequestException
+     */
     public function handle(GetResponseEvent $event)
     {
         $request = $event->getRequest();
         if (!$this->signChecker->handle($request)) {
-            $event->setResponse(new JsonResponse(['errors' => [2]], Response::HTTP_UNAUTHORIZED));
-            return;
+            throw new InvalidSignRequestException('Invalid sign provided');
         }
 
         $token = $request->get('token', '');
@@ -58,6 +67,6 @@ class ApiTokenListener implements ListenerInterface
             return;
         } catch (AuthenticationException $exception) {
         }
-        $event->setResponse(new JsonResponse(['errors' => [1]], Response::HTTP_UNAUTHORIZED));
+        throw new InvalidTokenException('Invalid token provided');
     }
 }

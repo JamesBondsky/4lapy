@@ -21,6 +21,8 @@ use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Service\BasketService;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use FourPaws\UserBundle\Service\UserService;
 
 /** @noinspection AutoloadingIssuesInspection */
 
@@ -30,7 +32,13 @@ use FourPaws\SaleBundle\Service\BasketService;
  */
 class BasketComponent extends \CBitrixComponent
 {
+    /**
+     * @var UserService
+     */
+    private $currentUserService;
+
     public $basketService;
+
     /** @var array $images */
     private $images;
     /** @var OfferCollection */
@@ -48,8 +56,10 @@ class BasketComponent extends \CBitrixComponent
     public function __construct(CBitrixComponent $component = null)
     {
         parent::__construct($component);
+        $container = Application::getInstance()->getContainer();
 
-        $this->basketService = Application::getInstance()->getContainer()->get(BasketService::class);
+        $this->basketService = $container->get(BasketService::class);
+        $this->currentUserService = $container->get(CurrentUserProviderInterface::class);
     }
 
     /** @noinspection PhpMissingParentCallCommonInspection */
@@ -164,5 +174,13 @@ class BasketComponent extends \CBitrixComponent
             $page = 'empty';
         }
         return $page;
+    }
+
+    /**
+     * @return UserService
+     */
+    public function getCurrentUserService(): UserService
+    {
+        return $this->currentUserService;
     }
 }

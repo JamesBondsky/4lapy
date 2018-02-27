@@ -5,7 +5,22 @@ four_paws_mobile_api:
       code: 44
       message: 'Данные о станциях метро для этого города отсутствуют'
       status_code: 200
-#    FourPaws\MobileApiBundle\Exception\ValidationException:
-#      code: 123
-#      message: 'we all gonna die'
-#      status_code: 401
+    FourPaws\UserBundle\Exception\UsernameNotFoundException:
+      code: 5
+      message: 'Пользователь с таким логином не найден'
+      status_code: 200
+    FourPaws\UserBundle\Exception\InvalidCredentialException:
+      code: 6
+      message: 'Пароль указан неверно'
+      status_code: 200
+    FourPaws\MobileApiBundle\Exception\InvalidTokenException:
+      code: 1
+      message: Неверный токен
+      status_code: 200
+    FourPaws\MobileApiBundle\Exception\InvalidSignRequestException:
+      code: 401
+      status_code: 401
+    FourPaws\MobileApiBundle\Exception\ValidationException:
+      code: 3
+      message: 'Пропущен обязательный параметр'
+      status_code: 200

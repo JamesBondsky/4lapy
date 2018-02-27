@@ -13,10 +13,15 @@ services:
         resource: '../../*'
         # you can exclude directories or files
         # but if a service is unused, it's removed anyway
-        exclude: '../../{Entity,Tests}'
+        exclude: '../../{Entity,Tests,EventController}'
 
     FourPaws\MobileApiBundle\Controller\:
         resource: '../../Controller'
+        public: true
+        tags: ['controller.service_arguments']
+
+    FourPaws\MobileApiBundle\TestController\:
+        resource: '../../TestController'
         public: true
         tags: ['controller.service_arguments']
 
@@ -37,5 +42,8 @@ services:
 
     FourPaws\MobileApiBundle\Security\ApiTokenListener:
         arguments: ['@security.token_storage', '@security.authentication.manager']
+        public: false
 
-
+    FourPaws\MobileApiBundle\Services\Session\SessionHandlerInterface:
+        class: FourPaws\MobileApiBundle\Services\Session\SessionHandler
+        public: true
