@@ -122,7 +122,7 @@ class UserController extends FOSRestController
      * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
      * @return ApiResponse
      */
-    public function postUserInfoAction(PostUserInfoRequest $userInfoRequest)
+    public function postUserInfoAction(PostUserInfoRequest $userInfoRequest): ApiResponse
     {
         return (new ApiResponse())
             ->setData($this->apiUserService->update($userInfoRequest));
@@ -144,7 +144,7 @@ class UserController extends FOSRestController
      * @throws \FourPaws\UserBundle\Exception\TooManyUserFoundException
      * @return ApiResponse
      */
-    public function isExistAction(LoginExistRequest $existRequest)
+    public function isExistAction(LoginExistRequest $existRequest): ApiResponse
     {
         return (new ApiResponse())
             ->setData($this->apiUserService->isExist($existRequest));

@@ -6,6 +6,7 @@
 
 namespace FourPaws\MobileApiBundle\Services\Api;
 
+use Bitrix\Main\ObjectException;
 use Bitrix\Main\Type\Date;
 use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\MobileApiBundle\Dto\Object\ClientCard;
@@ -42,7 +43,7 @@ class UserService
      * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
      * @return UserLoginResponse
      */
-    public function login(LoginRequest $loginRequest)
+    public function login(LoginRequest $loginRequest): UserLoginResponse
     {
         $this->userBundleService->login($loginRequest->getLogin(), $loginRequest->getPassword());
         return new UserLoginResponse($this->getCurrentApiUser());
@@ -51,7 +52,7 @@ class UserService
     /**
      * @throws \FourPaws\MobileApiBundle\Exception\RuntimeException
      */
-    public function logout()
+    public function logout(): array
     {
         if (!$this->userBundleService->logout()) {
             throw new RuntimeException('Cant logout user');
@@ -71,7 +72,7 @@ class UserService
      * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
      * @return PostUserInfoResponse
      */
-    public function update(PostUserInfoRequest $userInfoRequest)
+    public function update(PostUserInfoRequest $userInfoRequest): PostUserInfoResponse
     {
         $fromRequestUser = $userInfoRequest->getUser();
         $user = $this->userBundleService->getCurrentUser();
@@ -87,13 +88,13 @@ class UserService
             ->setLastName($fromRequestUser->getLastName() ?? $user->getLastName())
             ->setSecondName($fromRequestUser->getMidName() ?? $user->getSecondName());
 
-        /**
-         * @todo А точно ли в строку превратится? Возможно нужен свой тип
-         */
         if ('' === $fromRequestUser->getBirthDate()) {
             $user->setBirthday(null);
         } elseif (null !== $fromRequestUser->getBirthDate()) {
-            $user->setBirthday(Date::createFromPhp($fromRequestUser->getBirthDate()));
+            try {
+                $user->setBirthday(new Date($fromRequestUser->getBirthDate(), 'd.m.Y'));
+            } catch (ObjectException $e) {
+            }
         }
         $this->userBundleService->getUserRepository()->update($user);
         return new PostUserInfoResponse($this->getCurrentApiUser());
@@ -105,7 +106,7 @@ class UserService
      * @throws \FourPaws\UserBundle\Exception\TooManyUserFoundException
      * @return array
      */
-    public function isExist(LoginExistRequest $existRequest)
+    public function isExist(LoginExistRequest $existRequest): array
     {
         $exist = $this->userBundleService->getUserRepository()->isExist($existRequest->getLogin());
         /**
@@ -124,7 +125,7 @@ class UserService
      * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
      * @return User
      */
-    protected function getCurrentApiUser()
+    protected function getCurrentApiUser(): User
     {
         $user = $this->userBundleService->getCurrentUser();
         $apiUser = new User();
@@ -136,12 +137,12 @@ class UserService
             ->setPhone($user->getPersonalPhone())
             ->setCard($this->getCard($user->getId()));
         if ($user->getBirthday()) {
-            $apiUser->setBirthDate(\DateTime::createFromFormat('d.m.Y', $user->getBirthday()->format('d.m.Y')));
+            $apiUser->setBirthDate($user->getBirthday()->format('d.m.Y'));
         }
         return $apiUser;
     }
 
-    protected function getCard(int $userId)
+    protected function getCard(int $userId): ClientCard
     {
         // ToDo: Сделать реальное получение карты
         return (new ClientCard())->setTitle('Карта клиента')

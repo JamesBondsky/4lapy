@@ -324,9 +324,12 @@ class UserCest
         $I->wantTo('Test updating exist user');
         $I->login($this->token, $this->user['LOGIN'], $this->user['PASSWORD']);
         $I->haveHttpHeader('Content-type', 'application/json');
+
+        $data = $example['data'];
+
         $I->sendPOST('/user_info/', [
             'token' => $this->token,
-            'user'  => $example['data'],
+            'user'  => $data,
         ]);
 
         $I->seeResponseCodeIs(HttpCode::OK);
@@ -337,10 +340,19 @@ class UserCest
             ],
             'error' => 'array:empty',
         ]);
-        $I->seeResponseContainsJson($example['data']);
+
+
+        $I->seeResponseContainsJson(['data' => ['user' => $data]]);
+        $I->seeInDatabase('b_user', [
+            'EMAIL'          => $data['email'] ?? $this->user['EMAIL'],
+            'NAME'           => $data['firstname'] ?? $this->user['NAME'],
+            'LAST_NAME'      => $data['lastname'] ?? $this->user['LAST_NAME'],
+            'SECOND_NAME'    => $data['midname'] ?? $this->user['SECOND_NAME'],
+            'PERSONAL_PHONE' => $data['phone'] ?? $this->user['PERSONAL_PHONE'],
+        ]);
     }
 
-    public function validUpdateUserInfoProvider()
+    public function validUpdateUserInfoProvider(): array
     {
         return [
             [
@@ -350,8 +362,8 @@ class UserCest
                     'lastname'  => md5(random_bytes(1024)),
                     'midname'   => md5(random_bytes(1024)),
                     'birthdate' => implode('.', [
-                        str_pad(random_int(1, 26), 2, '0'),
-                        str_pad(random_int(1, 12), 2, '0'),
+                        str_pad(random_int(1, 26), 2, '0', STR_PAD_LEFT),
+                        str_pad(random_int(1, 12), 2, '0', STR_PAD_LEFT),
                         random_int(1900, 2017),
                     ]),
                     'phone'     => random_int(70000000000, 79000000000),
@@ -363,8 +375,37 @@ class UserCest
                     'firstname' => md5(random_bytes(1024)),
                     'lastname'  => md5(random_bytes(1024)),
                     'midname'   => md5(random_bytes(1024)),
-                    'birthdate' => '',
+                    'birthdate' => implode('.', [
+                        str_pad(random_int(1, 26), 2, '0', STR_PAD_LEFT),
+                        str_pad(random_int(1, 12), 2, '0', STR_PAD_LEFT),
+                        random_int(1900, 2017),
+                    ]),
                     'phone'     => random_int(70000000000, 79000000000),
+                ],
+            ],
+            [
+                'data' => [
+                    'email'     => md5(random_bytes(1024)) . '@' . md5(random_bytes(1024)) . '.ru',
+                    'firstname' => md5(random_bytes(1024)),
+                    'lastname'  => md5(random_bytes(1024)),
+                    'midname'   => md5(random_bytes(1024)),
+                    'birthdate' => implode('.', [
+                        str_pad(random_int(1, 26), 2, '0', STR_PAD_LEFT),
+                        str_pad(random_int(1, 12), 2, '0', STR_PAD_LEFT),
+                        random_int(1900, 2017),
+                    ]),
+                    'phone'     => random_int(70000000000, 79000000000),
+                ],
+            ],
+            [
+                'data' => [
+                    'email' => md5(random_bytes(1024)) . '@' . md5(random_bytes(1024)) . '.ru',
+                    'phone' => random_int(70000000000, 79000000000),
+                ],
+            ],
+            [
+                'data' => [
+                    'phone' => random_int(70000000000, 79000000000),
                 ],
             ],
         ];

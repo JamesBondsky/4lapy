@@ -42,8 +42,8 @@ class User
 
     /**
      * @Serializer\SerializedName("birthdate")
-     * @Serializer\Type("api_date_time")
-     * @var null|\DateTime
+     * @Serializer\Type("string")
+     * @var null|\string
      */
     protected $birthDate;
 
@@ -72,7 +72,7 @@ class User
     /**
      * @return ClientCard
      */
-    public function getCard()
+    public function getCard(): ClientCard
     {
         return $this->card;
     }
@@ -165,7 +165,7 @@ class User
     }
 
     /**
-     * @return null|\DateTime
+     * @return null|\string
      */
     public function getBirthDate()
     {
@@ -173,11 +173,11 @@ class User
     }
 
     /**
-     * @param null|\DateTime $birthDate
+     * @param null|\string $birthDate
      *
      * @return User
      */
-    public function setBirthDate(\DateTime $birthDate): User
+    public function setBirthDate(string $birthDate): User
     {
         $this->birthDate = $birthDate;
         return $this;
