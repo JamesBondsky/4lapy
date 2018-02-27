@@ -3,6 +3,7 @@
 namespace FourPaws\Catalog\Model\Filter;
 
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
+use Exception;
 use FourPaws\Catalog\Collection\VariantCollection;
 use FourPaws\Catalog\Model\Brand;
 use FourPaws\Catalog\Model\Variant;
@@ -43,13 +44,15 @@ class BrandFilter extends Abstraction\FilterBase
 
     /**
      * @inheritdoc
+     *
+     * @throws Exception
      */
     protected function doGetAllVariants(): VariantCollection
     {
         $doGetAllVariants = function () {
             $variants = [];
 
-            $brandCollection = (new BrandQuery())->withOrder([])
+            $brandCollection = (new BrandQuery())->withOrder(['SORT' => 'asc', 'NAME' => 'asc'])
                 ->exec();
 
             /** @var Brand $brand */

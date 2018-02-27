@@ -3,6 +3,7 @@
 namespace FourPaws\External;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Application as BitrixApplication;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\BasketItem;
@@ -27,6 +28,9 @@ use LinguaLeo\ExpertSender\Entities\Snippet;
 use LinguaLeo\ExpertSender\ExpertSender;
 use LinguaLeo\ExpertSender\ExpertSenderException;
 use LinguaLeo\ExpertSender\Request\AddUserToList;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
+use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -36,8 +40,10 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  *
  * @package FourPaws\External
  */
-class ExpertsenderService
+class ExpertsenderService implements LoggerAwareInterface
 {
+    use LoggerAwareTrait;
+
     protected $client;
     private $guzzleClient;
     private $key;
@@ -48,6 +54,7 @@ class ExpertsenderService
      *
      * @throws ApplicationCreateException
      * @throws InvalidArgumentException
+     * @throws RuntimeException
      */
     public function __construct()
     {
@@ -58,6 +65,8 @@ class ExpertsenderService
         $this->key = $key;
         $this->url = $url;
         $this->client = new ExpertSender($url, $key, $client);
+
+        $this->setLogger(LoggerFactory::create('expertsender'));
     }
 
     /**
@@ -396,23 +405,28 @@ class ExpertsenderService
     public function checkConfirmEmail(string $email): bool
     {
         //Проверяем статус активного или неподписанного в списке
-        $response = $this->guzzleClient->get($this->url.'/Api/Subscribers?apiKey='.$this->key.'&email='.$email.'&option=Short');
-        $activeLists = [];
-        if($response->getStatusCode() === 200){
-            $xml = new \SimpleXMLElement($response->getBody()->getContents());
-            if(!(bool)$xml->Data->BlackList) {
-                foreach ((array)$xml->Data->StateOnLists as $StateOnList) {
-                    if ((string)$StateOnList->Status === 'Active' || (string)$StateOnList->Status === 'Unsubscribed') {
-                        $activeLists[] = (int)$StateOnList->ListId;
+        try {
+            $response = $this->guzzleClient->get($this->url . '/Api/Subscribers?apiKey=' . $this->key . '&email=' . $email . '&option=Short');
+            $activeLists = [];
+            if ($response->getStatusCode() === 200) {
+                $xml = new \SimpleXMLElement($response->getBody()->getContents());
+                if (!(bool)$xml->Data->BlackList) {
+                    foreach ((array)$xml->Data->StateOnLists as $StateOnList) {
+                        if ((string)$StateOnList->Status === 'Active' || (string)$StateOnList->Status === 'Unsubscribed') {
+                            $activeLists[] = (int)$StateOnList->ListId;
+                        }
                     }
                 }
+                unset($xml);
             }
-            unset($xml);
+
+            if (\in_array(178, $activeLists, true)) {
+                return true;
+            }
+        } catch (GuzzleException $e) {
+            $this->logger->critical('Переписать нахер. Так делатть НЕЛЬЗЯ.');
         }
 
-        if(\in_array(178, $activeLists, true)){
-            return true;
-        }
         return false;
     }
 
