@@ -177,10 +177,15 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                                     </span>
                                     -->
                                 </a>
-                                <?/** @todo bonus */?>
-                                <!--
-                                <span class="b-common-item__rank-text b-common-item__rank-text--red b-common-item__rank-text--shopping">+ 6 бонусов </span>
-                                -->
+                                <?php if ($offer !== null) {
+                                    $bonus = $component->getItemBonus($offer);
+                                    if ($bonus > 0) {
+                                        $bonus = floor($bonus); ?>
+                                        <span class="b-common-item__rank-text b-common-item__rank-text--red b-common-item__rank-text--shopping">+ <?= WordHelper::numberFormat($bonus,
+                                                0) ?>
+                                            <?= WordHelper::declension($bonus, ['бонус', 'бонуса', 'бонусов']) ?> </span>
+                                    <?php }
+                                } ?>
                             </div>
                         </div>
                         <div class="b-item-shopping__operation">

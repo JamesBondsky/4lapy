@@ -48,7 +48,8 @@ $orderableBasket = $basket->getOrderableItems(); ?>
     /** @var \Bitrix\Sale\BasketItem $basketItem */
     foreach ($orderableBasket as $basketItem) {
         $i++;
-        $image = $component->getImage($basketItem->getProductId()); ?>
+        $image = $component->getImage($basketItem->getProductId());
+        $offer = $component->getOffer($basketItem->getProductId()); ?>
         <div class="b-item-shopping b-item-shopping--one-click <?= $countItems === $i ? ' b-item-shopping--last' : '' ?> js-remove-shopping">
             <?php /** @todo акция
              * <div class="b-gift-order b-gift-order--shopping js-open-gift">
@@ -96,14 +97,19 @@ $orderableBasket = $basket->getOrderableItems(); ?>
                          * </span>
                          */ ?>
                     </a>
-                    <?php /** @todo bonus
-                     * <span class="b-common-item__rank-text b-common-item__rank-text--red b-common-item__rank-text--shopping">+ 6 бонусов </span>
-                     */ ?>
+                    <?php if ($offer !== null) {
+                        $bonus = $component->getItemBonus($offer);
+                        if ($bonus > 0) {
+                            $bonus = floor($bonus); ?>
+                            <span class="b-common-item__rank-text b-common-item__rank-text--red b-common-item__rank-text--shopping">+ <?= WordHelper::numberFormat($bonus,
+                                    0) ?>
+                                <?= WordHelper::declension($bonus, ['бонус', 'бонуса', 'бонусов']) ?> </span>
+                        <?php }
+                    } ?>
                 </div>
             </div>
             <div class="b-item-shopping__operation b-item-shopping__operation--one-click">
-                <?php $offer = $component->getOffer($basketItem->getProductId());
-                $maxQuantity = 1000;
+                <?php $maxQuantity = 1000;
                 if ($offer !== null) {
                     $maxQuantity = $offer->getQuantity();
                 } ?>

@@ -12,15 +12,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\SystemException;
-use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
-use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
@@ -28,9 +25,6 @@ use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
-use FourPaws\External\Exception\ManzanaServiceException;
-use FourPaws\PersonalBundle\Entity\Order;
-use FourPaws\PersonalBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
@@ -39,28 +33,25 @@ use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
-use \Bitrix\Main;
-use \Bitrix\Sale;
 
 /** @noinspection AutoloadingIssuesInspection */
+
 /**
  * Class FourPawsFastOrderComponent
  * @package FourPaws\Components
  */
 class FourPawsFastOrderComponent extends \CBitrixComponent
 {
-    /** @var UserAuthorizationInterface */
-    private $authUserProvider;
-
-    /** @var UserAuthorizationInterface */
-    private $currentUserProvider;
-    /** @var BasketService  */
-    private $basketService;
-
-    /** @var array $images */
-    private $images;
     /** @var OfferCollection */
     public $offerCollection;
+    /** @var UserAuthorizationInterface */
+    private $authUserProvider;
+    /** @var UserAuthorizationInterface */
+    private $currentUserProvider;
+    /** @var BasketService */
+    private $basketService;
+    /** @var array $images */
+    private $images;
 
     /**
      * AutoloadingIssuesInspection constructor.
@@ -118,7 +109,7 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
      */
     public function executeComponent()
     {
-        if(!empty($this->arParams['TYPE'])) {
+        if (!empty($this->arParams['TYPE'])) {
             if ($this->arParams['TYPE'] === 'innerForm') {
                 $this->arResult['IS_AUTH'] = $this->authUserProvider->isAuthorized();
                 if ($this->authUserProvider->isAuthorized()) {
@@ -134,9 +125,8 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
                 $this->calcTemplateFields();
             }
             $this->includeComponentTemplate($this->arParams['TYPE']);
-        }
-        else{
-            if($this->startResultCache(360000)) {
+        } else {
+            if ($this->startResultCache(360000)) {
                 $this->includeComponentTemplate();
             }
         }
@@ -156,6 +146,33 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
         return $this->images[$offerId] ?? null;
     }
 
+    /**
+     * @param $id
+     *
+     * @return Offer|null
+     */
+    public function getOffer($id)
+    {
+        /** @var Offer $item */
+        foreach ($this->offerCollection as $item) {
+            if ($item->getId() === $id) {
+                return $item;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * @param Offer $offer
+     * @param int   $quantity
+     *
+     * @return float
+     */
+    public function getItemBonus(Offer $offer, int $quantity = 1): float
+    {
+        return $this->basketService->getItemBonus($offer, $quantity);
+    }
+
     private function loadImages()
     {
         /** @var Offer $item */
@@ -167,22 +184,6 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
             $images = $item->getResizeImages(110, 110);
             $this->images[$item->getId()] = $images->first();
         }
-    }
-
-    /**
-     * @param $id
-     *
-     * @return Offer|null
-     */
-    public function getOffer($id)
-    {
-        /** @var Offer $item */
-        foreach ($this->offerCollection as $item) {
-            if($item->getId() === $id){
-                return $item;
-            }
-        }
-        return null;
     }
 
     private function calcTemplateFields()

@@ -32,17 +32,15 @@ use FourPaws\UserBundle\Service\UserService;
  */
 class BasketComponent extends \CBitrixComponent
 {
+    public $basketService;
+    /** @var OfferCollection */
+    public $offerCollection;
     /**
      * @var UserService
      */
     private $currentUserService;
-
-    public $basketService;
-
     /** @var array $images */
     private $images;
-    /** @var OfferCollection */
-    public $offerCollection;
 
     /**
      * BasketComponent constructor.
@@ -94,6 +92,53 @@ class BasketComponent extends \CBitrixComponent
         $this->loadImages();
         $this->checkSelectedGifts();
         $this->includeComponentTemplate($this->getPage());
+    }
+
+    /**
+     *
+     *
+     * @param $offerId
+     *
+     * @return ResizeImageDecorator|null
+     */
+    public function getImage($offerId)
+    {
+        return $this->images[$offerId] ?? null;
+    }
+
+    /**
+     * @return UserService
+     */
+    public function getCurrentUserService(): UserService
+    {
+        return $this->currentUserService;
+    }
+
+    /**
+     * @param $id
+     *
+     * @return Offer|null
+     */
+    public function getOffer($id)
+    {
+        /** @var Offer $item */
+        foreach ($this->offerCollection as $item) {
+            if ($item->getId() === $id) {
+                return $item;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * @param Offer $offer
+     * @param int   $quantity
+     *
+     * @return float
+     */
+    public function getItemBonus(Offer $offer, int $quantity = 1): float
+    {
+        return $this->basketService->getItemBonus($offer, $quantity);
     }
 
     /**
@@ -151,18 +196,6 @@ class BasketComponent extends \CBitrixComponent
     /**
      *
      *
-     * @param $offerId
-     *
-     * @return ResizeImageDecorator|null
-     */
-    public function getImage($offerId)
-    {
-        return $this->images[$offerId] ?? null;
-    }
-
-    /**
-     *
-     *
      * @return string
      */
     private function getPage(): string
@@ -174,29 +207,5 @@ class BasketComponent extends \CBitrixComponent
             $page = 'empty';
         }
         return $page;
-    }
-
-    /**
-     * @return UserService
-     */
-    public function getCurrentUserService(): UserService
-    {
-        return $this->currentUserService;
-    }
-
-    /**
-     * @param $id
-     *
-     * @return Offer|null
-     */
-    public function getOffer($id)
-    {
-        /** @var Offer $item */
-        foreach ($this->offerCollection as $item) {
-            if($item->getId() === $id){
-                return $item;
-            }
-        }
-        return null;
     }
 }

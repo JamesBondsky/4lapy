@@ -11,6 +11,8 @@ use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Fuser;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
+use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
@@ -520,5 +522,25 @@ class UserService implements
     {
         $this->setAvatarHostUserId(0);
         $this->setAvatarGuestUserId(0);
+    }
+
+    public function getActiveCard():string
+    {
+        $cardNumber = '';
+        try {
+            $cards = $this->manzanaService->getCardsByContactId($this->manzanaService->getContactIdByUser());
+            foreach ($cards as $card) {
+                if ($card->isActive()) {
+                    $cardNumber = $card->cardNumber;
+                    break;
+                }
+            }
+        } catch (ApplicationCreateException $e) {
+        } catch (ManzanaServiceContactSearchMoreOneException $e) {
+        } catch (ManzanaServiceContactSearchNullException $e) {
+        } catch (ManzanaServiceException $e) {
+        } catch (NotAuthorizedException $e) {
+        }
+        return $cardNumber;
     }
 }
