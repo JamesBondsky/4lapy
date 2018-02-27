@@ -23,6 +23,7 @@ use Bitrix\Sale\Shipment;
 use Bitrix\Sale\ShipmentCollection;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundEXception;
 use FourPaws\PersonalBundle\Entity\Address;
@@ -344,14 +345,15 @@ class OrderService
                             if (($index = $storage->getDeliveryInterval() - 1) < 0) {
                                 continue 2;
                             }
+                            /** @var Interval $interval */
                             if (!$interval = $selectedDelivery->getData()['INTERVALS'][$index]) {
                                 continue 2;
                             }
 
                             $value = sprintf(
                                 '%s:00-%s:00',
-                                str_pad($interval['FROM'], 2, '0', STR_PAD_LEFT),
-                                str_pad($interval['TO'], 2, '0', STR_PAD_LEFT)
+                                str_pad($interval->getFrom(), 2, '0', STR_PAD_LEFT),
+                                str_pad($interval->getTo(), 2, '0', STR_PAD_LEFT)
                             );
                         } else {
                             $value = sprintf(
