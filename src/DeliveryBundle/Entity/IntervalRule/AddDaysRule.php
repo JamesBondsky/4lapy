@@ -1,15 +1,17 @@
 <?php
 
-namespace FourPaws\DeliveryBundle\Entity;
+namespace FourPaws\DeliveryBundle\Entity\IntervalRule;
+
+use Bitrix\Sale\Delivery\CalculationResult;
 
 /**
  * Правило, добавляющее $value дней к дате доставке,
  * если время заказа лежит в промежутке между $from и $to
  *
- * Class IntervalRuleAddDays
+ * Class AddDaysRule
  * @package FourPaws\DeliveryBundle\Entity
  */
-class IntervalRuleAddDays extends IntervalRuleBase
+class AddDaysRule extends BaseRule implements TimeRuleInterface
 {
     /**
      * @var string
@@ -19,13 +21,12 @@ class IntervalRuleAddDays extends IntervalRuleBase
     /**
      * @var int
      */
-    protected $from;
+    protected $from = 0;
 
     /**
      * @var int
      */
-    protected $to;
-
+    protected $to = 0;
     /**
      * @var int
      */
@@ -50,9 +51,9 @@ class IntervalRuleAddDays extends IntervalRuleBase
     /**
      * @param int $from
      *
-     * @return IntervalRuleAddDays
+     * @return AddDaysRule
      */
-    public function setFrom(int $from): IntervalRuleAddDays
+    public function setFrom(int $from): AddDaysRule
     {
         $this->from = $from;
 
@@ -70,9 +71,9 @@ class IntervalRuleAddDays extends IntervalRuleBase
     /**
      * @param int $to
      *
-     * @return IntervalRuleAddDays
+     * @return AddDaysRule
      */
-    public function setTo(int $to): IntervalRuleAddDays
+    public function setTo(int $to): AddDaysRule
     {
         $this->to = $to;
 
@@ -90,12 +91,37 @@ class IntervalRuleAddDays extends IntervalRuleBase
     /**
      * @param int $value
      *
-     * @return IntervalRuleAddDays
+     * @return AddDaysRule
      */
-    public function setValue(int $value): IntervalRuleAddDays
+    public function setValue(int $value): AddDaysRule
     {
         $this->value = $value;
 
         return $this;
+    }
+
+    public function isSuitable(CalculationResult $result): bool
+    {
+        /* @todo брать дату из CalculationResult */
+        $hour = (new \DateTime())->format('G');
+
+        return ($hour >= $this->getFrom()) && ($hour < $this->getTo());
+    }
+
+    public function apply(CalculationResult $result): CalculationResult
+    {
+        if (!$this->isSuitable($result)) {
+            return $result;
+        }
+
+        if ($this->getValue() === 0) {
+            return $result;
+        }
+
+        $result->setPeriodType(CalculationResult::PERIOD_TYPE_DAY);
+        $result->setPeriodFrom($result->getPeriodFrom() + $this->getValue());
+        $result->setPeriodTo($result->getPeriodTo() + $this->getValue());
+
+        return $result;
     }
 }

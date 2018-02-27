@@ -3,7 +3,7 @@
 }
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use FourPaws\DeliveryBundle\Entity\IntervalRuleBase;
+use FourPaws\DeliveryBundle\Entity\IntervalRule\BaseRule;
 
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsDeliveryIntervalEditComponent extends \CBitrixComponent
@@ -35,8 +35,8 @@ class FourPawsDeliveryIntervalEditComponent extends \CBitrixComponent
                     break;
                 }
 
-                if (!isset($params['VALUE'][$i]['RULES'][IntervalRuleBase::TYPE_ADD_DAYS])) {
-                    $params['VALUE'][$i]['RULES'][IntervalRuleBase::TYPE_ADD_DAYS] = [];
+                if (!isset($params['VALUE'][$i]['RULES'][\FourPaws\DeliveryBundle\Entity\IntervalRule\BaseRule::TYPE_ADD_DAYS])) {
+                    $params['VALUE'][$i]['RULES'][BaseRule::TYPE_ADD_DAYS] = [];
                 }
             }
 
@@ -46,7 +46,7 @@ class FourPawsDeliveryIntervalEditComponent extends \CBitrixComponent
                     'ZONE_NAME' => $zone['NAME'],
                     'INTERVALS' => [],
                     'RULES'     => [
-                        IntervalRuleBase::TYPE_ADD_DAYS => [],
+                        BaseRule::TYPE_ADD_DAYS => [],
                     ],
                 ];
             }

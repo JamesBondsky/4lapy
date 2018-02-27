@@ -2,37 +2,27 @@
 
 namespace FourPaws\DeliveryBundle\Service;
 
-use Bitrix\Sale\Delivery\CalculationResult;
 use FourPaws\DeliveryBundle\Collection\IntervalRuleCollection;
-use FourPaws\DeliveryBundle\Entity\IntervalRuleAddDays;
-use FourPaws\DeliveryBundle\Entity\IntervalRuleBase;
+use FourPaws\DeliveryBundle\Entity\IntervalRule\AddDaysRule;
+use FourPaws\DeliveryBundle\Entity\IntervalRule\BaseRule;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 
 class IntervalService
 {
-    public function applyRules(CalculationResult $result, IntervalRuleCollection $rules)
-    {
-        $result = clone $result;
-
-        /* @todo apply rules */
-
-        return $result;
-    }
-
     /**
      * @param string $type
      * @param array $data
      *
-     * @return IntervalRuleBase
+     * @return BaseRule
      * @throws NotFoundException
      */
-    public function createRule(string $type, array $data): IntervalRuleBase
+    public function createRule(string $type, array $data): BaseRule
     {
         switch ($type) {
-            case IntervalRuleBase::TYPE_ADD_DAYS:
-                return (new IntervalRuleAddDays())->setTo($data['TO'] ?? 0)
-                                                  ->setFrom($data['FROM'] ?? 0)
-                                                  ->setValue($data['VALUE'] ?? 0);
+            case BaseRule::TYPE_ADD_DAYS:
+                return (new AddDaysRule())->setTo($data['TO'] ?? 0)
+                                      ->setFrom($data['FROM'] ?? 0)
+                                      ->setValue($data['VALUE'] ?? 0);
         }
 
         throw new NotFoundException(sprintf('Rule type %s not found', $type));

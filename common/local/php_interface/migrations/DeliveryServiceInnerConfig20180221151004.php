@@ -8,7 +8,7 @@ namespace Sprint\Migration;
 
 use Adv\Bitrixtools\Migration\SprintMigrationBase;
 use Bitrix\Sale\Delivery\Services\Table as ServicesTable;
-use FourPaws\DeliveryBundle\Entity\IntervalRuleBase;
+use FourPaws\DeliveryBundle\Entity\IntervalRule\BaseRule;
 use FourPaws\DeliveryBundle\Handler\InnerDeliveryHandler;
 use FourPaws\DeliveryBundle\Handler\InnerPickupHandler;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
@@ -31,10 +31,10 @@ class DeliveryServiceInnerConfig20180221151004 extends SprintMigrationBase
                                     'FROM'  => '9',
                                     'TO'    => '18',
                                     'RULES' => [
-                                        IntervalRuleBase::TYPE_ADD_DAYS => [
-                                            '1',
-                                            '1',
-                                            '2',
+                                        'ADD_DAYS' => [
+                                            0 => '1',
+                                            1 => '1',
+                                            2 => '2',
                                         ],
                                     ],
                                 ],
@@ -42,10 +42,10 @@ class DeliveryServiceInnerConfig20180221151004 extends SprintMigrationBase
                                     'FROM'  => '15',
                                     'TO'    => '21',
                                     'RULES' => [
-                                        IntervalRuleBase::TYPE_ADD_DAYS => [
-                                            '1',
-                                            '1',
-                                            '2',
+                                        'ADD_DAYS' => [
+                                            0 => '1',
+                                            1 => '1',
+                                            2 => '2',
                                         ],
                                     ],
                                 ],
@@ -53,16 +53,16 @@ class DeliveryServiceInnerConfig20180221151004 extends SprintMigrationBase
                                     'FROM'  => '18',
                                     'TO'    => '23',
                                     'RULES' => [
-                                        IntervalRuleBase::TYPE_ADD_DAYS => [
-                                            '0',
-                                            '1',
-                                            '1',
+                                        'ADD_DAYS' => [
+                                            0 => '0',
+                                            1 => '1',
+                                            2 => '1',
                                         ],
                                     ],
                                 ],
                             ],
                             'RULES'     => [
-                                IntervalRuleBase::TYPE_ADD_DAYS => [
+                                'ADD_DAYS' => [
                                     [
                                         'FROM' => '0',
                                         'TO'   => '14',
@@ -85,10 +85,10 @@ class DeliveryServiceInnerConfig20180221151004 extends SprintMigrationBase
                                     'FROM'  => '8',
                                     'TO'    => '12',
                                     'RULES' => [
-                                        IntervalRuleBase::TYPE_ADD_DAYS => [
-                                            '1',
-                                            '1',
-                                            '2',
+                                        'ADD_DAYS' => [
+                                            0 => '1',
+                                            1 => '1',
+                                            2 => '2',
                                         ],
                                     ],
                                 ],
@@ -96,12 +96,10 @@ class DeliveryServiceInnerConfig20180221151004 extends SprintMigrationBase
                                     'FROM'  => '12',
                                     'TO'    => '16',
                                     'RULES' => [
-                                        IntervalRuleBase::TYPE_ADD_DAYS => [
-                                            [
-                                                '1',
-                                                '1',
-                                                '1',
-                                            ],
+                                        'ADD_DAYS' => [
+                                            0 => '1',
+                                            1 => '1',
+                                            2 => '1',
                                         ],
                                     ],
                                 ],
@@ -109,10 +107,10 @@ class DeliveryServiceInnerConfig20180221151004 extends SprintMigrationBase
                                     'FROM'  => '16',
                                     'TO'    => '20',
                                     'RULES' => [
-                                        IntervalRuleBase::TYPE_ADD_DAYS => [
-                                            '0',
-                                            '1',
-                                            '1',
+                                        'ADD_DAYS' => [
+                                            0 => '0',
+                                            1 => '1',
+                                            2 => '1',
                                         ],
                                     ],
                                 ],
@@ -120,17 +118,16 @@ class DeliveryServiceInnerConfig20180221151004 extends SprintMigrationBase
                                     'FROM'  => '20',
                                     'TO'    => '0',
                                     'RULES' => [
-                                        IntervalRuleBase::TYPE_ADD_DAYS => [
-
-                                            '0',
-                                            '1',
-                                            '1',
+                                        'ADD_DAYS' => [
+                                            0 => '0',
+                                            1 => '1',
+                                            2 => '1',
                                         ],
                                     ],
                                 ],
                             ],
                             'RULES'     => [
-                                IntervalRuleBase::TYPE_ADD_DAYS => [
+                                'ADD_DAYS' => [
                                     [
                                         'FROM' => '0',
                                         'TO'   => '14',
