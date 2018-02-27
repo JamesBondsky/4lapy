@@ -130,7 +130,7 @@ class User implements UserInterface
 
     /**
      * @var string
-     * @Serializer\Type("string")
+     * @Serializer\Type("phone")
      * @Serializer\SerializedName("PERSONAL_PHONE")
      * @Serializer\Groups(groups={"dummy","create","read","update"})
      * @PhoneNumber(defaultRegion="RU",type="mobile")
@@ -363,7 +363,11 @@ class User implements UserInterface
      */
     public function setPersonalPhone(string $personalPhone): User
     {
-        $this->personalPhone = $personalPhone;
+        try {
+            $this->personalPhone = PhoneHelper::normalizePhone($personalPhone);
+        } catch (WrongPhoneNumberException $e) {
+            $this->personalPhone = '';
+        }
 
         return $this;
     }
