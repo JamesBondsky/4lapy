@@ -662,6 +662,15 @@ class OrderService
             try {
                 $store = $this->storeService->getByXmlId($properties['DELIVERY_PLACE_CODE']);
                 $address = $store->getAddress();
+
+                if ($store->getMetro()) {
+                    /** @noinspection PhpUnusedLocalVariableInspection */
+                    list ($services, $metro) = $this->storeService->getFullStoreInfo(new StoreCollection([$store]));
+
+                    if ($metro[$store->getMetro()]) {
+                        $address = 'м. ' . $metro[$store->getMetro()]['UF_NAME'] . ', ' . $address;
+                    }
+                }
             } catch (StoreNotFoundException $e) {
             }
         } elseif ($properties['DELIVERY_PLACE_CODE'] && $properties['CITY_CODE']) {

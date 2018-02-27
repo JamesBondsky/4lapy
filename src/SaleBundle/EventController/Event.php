@@ -15,7 +15,6 @@ use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Gifter;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\NotificationService;
-use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\UserAccountService;
 
 /**
@@ -118,11 +117,7 @@ class Event implements ServiceHandlerInterface
     public static function sendOrderPaymentMessage(BitrixEvent $event)
     {
         /** @var Payment $payment */
-        $payment = $event->getParameter('ENTITY');
-        $order = Order::load($payment->getOrderId());
-        if (!$order) {
-            return;
-        }
+        $order = $event->getParameter('ENTITY');
 
         /** @var NotificationService $notificationService */
         $notificationService = Application::getInstance()

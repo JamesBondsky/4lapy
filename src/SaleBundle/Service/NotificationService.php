@@ -206,7 +206,7 @@ class NotificationService implements LoggerAwareInterface
         if ($sendCompleteEmail && $this->orderService->getOrderPropertyByCode(
                 $order,
                 'COMPLETE_MESSAGE_SENT'
-            ) !== BitrixUtils::BX_BOOL_TRUE) {
+            )->getValue() !== BitrixUtils::BX_BOOL_TRUE) {
             try {
                 $this->emailService->sendOrderCompleteEmail($order);
             } catch (ExpertsenderServiceException $e) {

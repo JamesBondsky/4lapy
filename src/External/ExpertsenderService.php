@@ -11,7 +11,9 @@ use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Decorators\FullHrefDecorator;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\Exception\ExpertsenderServiceException;
+use FourPaws\Helpers\PhoneHelper;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\UserBundle\Entity\User;
@@ -463,12 +465,17 @@ class ExpertsenderService
             'USER_REGISTERED',
         ]);
 
+        $address = $orderService->getOrderDeliveryAddress($order);
+        if ($orderService->getOrderDeliveryCode($order) === DeliveryService::INNER_PICKUP_CODE) {
+            $address .= ' Внимание! Заказ необходимо забрать в течение 3х дней';
+        }
+
         $snippets = [
             new Snippet('Order_number', $order->getField('ACCOUNT_NUMBER')),
             new Snippet('user_name', $properties['NAME']),
-            new Snippet('delivery_address', $orderService->getOrderDeliveryAddress($order)),
+            new Snippet('delivery_address', $address),
             new Snippet('delivery_date', $properties['DELIVERY_DATE']),
-            new Snippet('tel_number', $properties['PHONE']),
+            new Snippet('tel_number', PhoneHelper::formatPhone($properties['PHONE'])),
             new Snippet('delivery_cost', $order->getDeliveryPrice()),
             new Snippet('total_bonuses', (int)$properties['BONUS_COUNT'])
         ];
@@ -480,7 +487,7 @@ class ExpertsenderService
         } catch (NotFoundException $e) {
             //не требуется
         }
-        
+
         if ($properties['USER_REGISTERED'] === BitrixUtils::BX_BOOL_TRUE) {
             // зарегистрированный пользователь
             if ($isOnlinePayment) {
@@ -539,9 +546,7 @@ class ExpertsenderService
         try {
             $apiResult = $this->client->sendTransactional($transactionId, new Receiver($email), $snippets);
             if ($apiResult->isOk()) {
-                $orderService->setOrderPropertyByCode($order, 'COMPLETE_MESSAGE_SENT', 'Y');
                 unset($_SESSION['NEW_USER']);
-                $order->save();
 
                 return true;
             }
@@ -552,7 +557,6 @@ class ExpertsenderService
         } catch (\Exception $e) {
             throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
         }
-
         return false;
     }
 
