@@ -456,7 +456,6 @@ class OrderService
                     $password = randString(6);
                     $user = (new User())
                         ->setName($storage->getName())
-                        ->setActive(true)
                         ->setEmail($storage->getEmail())
                         ->setLogin($storage->getPhone())
                         ->setPassword($password)
