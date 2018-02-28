@@ -110,8 +110,7 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
             if (!empty($emailGet) && !empty($hash)) {
                 /** @var ConfirmCodeService $confirmService */
                 $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
-                $siteHash = $confirmService::getGeneratedCode('email');
-                if ($siteHash === $hash) {
+                if ($confirmService::checkConfirmEmail($hash)) {
                     if ($backUrl === static::BASKET_BACK_URL) {
                         $this->authService->authorize($request->get('user_id'));
                         LocalRedirect($backUrl);
