@@ -18,14 +18,16 @@ use FourPaws\BitrixOrm\Model\CatalogProduct;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\BitrixOrm\Model\Image;
+use FourPaws\BitrixOrm\Model\Interfaces\ResizeImageInterface;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\BitrixOrm\Query\CatalogProductQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Service\StoreService;
-use JMS\Serializer\Annotation\Accessor;
+use InvalidArgumentException;
 use JMS\Serializer\Annotation as Serializer;
+use JMS\Serializer\Annotation\Accessor;
 use JMS\Serializer\Annotation\Groups;
 use JMS\Serializer\Annotation\Type;
 use RuntimeException;
@@ -34,6 +36,9 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 class Offer extends IblockElement
 {
+    const SIMPLE_SHARE_SALE_CODE = 'VKA0';
+    const SIMPLE_SHARE_DISCOUNT_CODE = 'ZRBT';
+
     /**
      * @var bool
      * @Type("bool")
@@ -226,6 +231,25 @@ class Offer extends IblockElement
     protected $PROPERTY_BY_REQUEST = 0;
 
     /**
+     * Цена по акции - простая акция из SAP
+     *
+     * @var float
+     */
+    protected $PROPERTY_PRICE_ACTION = 0;
+
+    /**
+     * @var string
+     */
+    protected $PROPERTY_COND_FOR_ACTION = '';
+
+    /**
+     * Размер скидки на товар - простая акция из SAP
+     *
+     * @var float
+     */
+    protected $PROPERTY_COND_VALUE = 0;
+
+    /**
      * @Type("float")
      * @Groups({"elastic"})
      * @Accessor(getter="getPrice", setter="withPrice")
@@ -270,6 +294,34 @@ class Offer extends IblockElement
     protected $resizeImages;
 
     /**
+     * @var bool
+     * @Type("bool")
+     * @Groups({"elastic"})
+     */
+    protected $PROPERTY_IS_HIT = false;
+
+    /**
+     * @var bool
+     * @Type("bool")
+     * @Groups({"elastic"})
+     */
+    protected $PROPERTY_IS_NEW = false;
+    
+    /**
+     * @var bool
+     * @Type("bool")
+     * @Groups({"elastic"})
+     */
+    protected $PROPERTY_IS_SALE = false;
+    
+    /**
+     * @var bool
+     * @Type("bool")
+     * @Groups({"elastic"})
+     */
+    protected $PROPERTY_IS_POPULAR = false;
+
+    /**
      * @var string
      */
     protected $link = '';
@@ -309,14 +361,20 @@ class Offer extends IblockElement
      * @param int $width
      * @param int $height
      *
-     * @return ResizeImageCollection
+     * @return Collection|ResizeImageInterface[]
+     *
+     * @throws InvalidArgumentException
      */
     public function getResizeImages(int $width = 0, int $height = 0): Collection
     {
         if ($this->resizeImages instanceof Collection) {
             if ($width) {
                 $this->resizeImages->forAll(
-                    function ($key, ResizeImageDecorator $image) use ($width) {
+                    function (
+                        /** @noinspection PhpUnusedParameterInspection */
+                        $key,
+                        ResizeImageDecorator $image
+                    ) use ($width) {
                         $image->setResizeWidth($width);
 
                         return true;
@@ -326,7 +384,11 @@ class Offer extends IblockElement
 
             if ($height) {
                 $this->resizeImages->forAll(
-                    function ($key, ResizeImageDecorator $image) use ($height) {
+                    function (
+                        /** @noinspection PhpUnusedParameterInspection */
+                        $key,
+                        ResizeImageDecorator $image
+                    ) use ($height) {
                         $image->setResizeHeight($height);
 
                         return true;
@@ -343,7 +405,7 @@ class Offer extends IblockElement
     }
 
     /**
-     * @throws \InvalidArgumentException
+     * @throws InvalidArgumentException
      * @return Collection|Image[]
      */
     public function getImages(): Collection
@@ -759,7 +821,7 @@ class Offer extends IblockElement
     /**
      * @return string
      */
-    public function getSkuId()
+    public function getSkuId(): string
     {
         return $this->getXmlId();
     }
@@ -774,6 +836,86 @@ class Offer extends IblockElement
         return $this->price;
     }
 
+    /**
+     * @return bool
+     */
+    public function getPropertyIsHit()
+    {
+        return $this->PROPERTY_IS_HIT;
+    }
+
+    /**
+     * @param bool $propertyHit
+     *
+     * @return Offer
+     */
+    public function setPropertyIsHit($propertyHit)
+    {
+        $this->PROPERTY_IS_HIT = $propertyHit;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getPropertyIsNew()
+    {
+        return $this->PROPERTY_IS_NEW;
+    }
+
+    /**
+     * @param bool $propertyNew
+     *
+     * @return Offer
+     */
+    public function setPropertyIsNew($propertyNew)
+    {
+        $this->PROPERTY_IS_HIT = $propertyNew;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getPropertyIsSale()
+    {
+        return $this->PROPERTY_IS_SALE;
+    }
+
+    /**
+     * @param bool $propertySale
+     *
+     * @return Offer
+     */
+    public function setPropertyIsSale($propertySale)
+    {
+        $this->PROPERTY_IS_SALE = $propertySale;
+
+        return $this;
+    }
+    
+    /**
+     * @return bool
+     */
+    public function getPropertyPopular(): bool
+    {
+        return $this->PROPERTY_IS_POPULAR;
+    }
+    
+    /**
+     * @param bool $PROPERTY_IS_POPULAR
+     *
+     * @return Offer
+     */
+    public function setPropertyPopular(bool $PROPERTY_IS_POPULAR)
+    {
+        $this->PROPERTY_IS_POPULAR = $PROPERTY_IS_POPULAR;
+        
+        return $this;
+    }
+    
     protected function checkOptimalPrice()
     {
         CCatalogDiscountSave::Disable();
@@ -932,12 +1074,13 @@ class Offer extends IblockElement
      *
      *
      * @param Product $product
-     * @throws \InvalidArgumentException
+     *
+     * @throws InvalidArgumentException
      */
     public function setProduct(Product $product)
     {
         if ($product->getId() !== $this->getCml2Link()) {
-            throw new \InvalidArgumentException('Wrong product set');
+            throw new InvalidArgumentException('Wrong product set');
         }
 
         $this->product = $product;
@@ -993,5 +1136,53 @@ class Offer extends IblockElement
         $this->stocks = $stocks;
 
         return $this;
+    }
+
+    /**
+     * Участвует ли товар в акции "Скидка на товар"
+     */
+    public function isSimpleDiscountAction()
+    {
+        return $this->PROPERTY_COND_VALUE > 0 && $this->PROPERTY_COND_FOR_ACTION === self::SIMPLE_SHARE_DISCOUNT_CODE;
+    }
+
+    /**
+     * Участвует ли товар в ации "Цена по акции"
+     */
+    public function isSimpleSaleAction()
+    {
+        return $this->PROPERTY_PRICE_ACTION > 0 && $this->PROPERTY_COND_FOR_ACTION === self::SIMPLE_SHARE_SALE_CODE;
+    }
+
+    public function hasAction(): bool
+    {
+        /**
+         * @todo
+         */
+        return false;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isHit(): bool
+    {
+        return $this->getPropertyIsHit();
+    }
+
+    /**
+     * @return bool
+     */
+    public function isNew(): bool
+    {
+        return $this->getPropertyIsNew();
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSale(): bool
+    {
+        return $this->getPropertyIsSale();
     }
 }

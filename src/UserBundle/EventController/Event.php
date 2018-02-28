@@ -10,6 +10,8 @@ use Bitrix\Main\EventManager;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\ServiceHandlerInterface;
+use FourPaws\Helpers\Exception\WrongPhoneNumberException;
+use FourPaws\Helpers\PhoneHelper;
 use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -20,15 +22,14 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  * Обработчики событий
  *
  * @package FourPaws\UserBundle\EventController
- * @todo    Почему этот класс абстрактный? оО что за магия
  */
-abstract class Event implements ServiceHandlerInterface
+class Event implements ServiceHandlerInterface
 {
     /**
      * @var EventManager
      */
     protected static $eventManager;
-    
+
     /**
      * @param EventManager $eventManager
      *
@@ -37,12 +38,21 @@ abstract class Event implements ServiceHandlerInterface
     public static function initHandlers(EventManager $eventManager)
     {
         self::$eventManager = $eventManager;
-        
+
         self::initHandler('OnBeforeUserAdd', 'checkSocserviseRegisterHandler');
-        
+
+        /**
+         * События форматирования телефона
+         */
+        self::initHandler('OnBeforeUserAdd', 'checkPhoneFormat');
+        self::initHandler('OnBeforeUserUpdate', 'checkPhoneFormat');
+
         self::initHandler('OnBeforeUserLogon', 'replaceLogin');
+
+        self::initHandler('onBeforeUserLoginByHttpAuth', 'deleteBasicAuth');
+        self::initHandler('OnBeforeUserRegister', 'preventAuthorizationOnRegister');
     }
-    
+
     /**
      * @param string $eventName
      * @param string $method
@@ -59,7 +69,18 @@ abstract class Event implements ServiceHandlerInterface
             ]
         );
     }
-    
+
+    public static function checkPhoneFormat(array &$fields)
+    {
+        if ($fields['PERSONAL_PHONE'] ?? '') {
+            try {
+                $fields['PERSONAL_PHONE'] = PhoneHelper::normalizePhone($fields['PERSONAL_PHONE']);
+            } catch (WrongPhoneNumberException $e) {
+                unset($fields['PERSONAL_PHONE']);
+            }
+        }
+    }
+
     /**
      * @param array $fields
      *
@@ -72,7 +93,7 @@ abstract class Event implements ServiceHandlerInterface
             $fields['UF_CONFIRMATION'] = 1;
         }
     }
-    
+
     /**
      * @param array $fields
      *
@@ -89,5 +110,23 @@ abstract class Event implements ServiceHandlerInterface
         } else {
             $APPLICATION->ThrowException('Поле не может быть пустым');
         }
+    }
+
+    /**
+     * @param array $auth
+     */
+    public function deleteBasicAuth(&$auth)
+    {
+        if (\is_array($auth) && isset($auth['basic'])) {
+            unset($auth['basic']);
+        }
+    }
+
+    /**
+     * @param $fields
+     */
+    public function preventAuthorizationOnRegister(&$fields)
+    {
+        $fields['ACTIVE'] = 'N';
     }
 }

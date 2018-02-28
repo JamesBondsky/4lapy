@@ -39,6 +39,13 @@ $basket = $arResult['BASKET'];
 /** @var OrderStorage $storage */
 $storage = $arResult['STORAGE'];
 
+$selectedShopCode = '';
+$isPickup = false;
+if ($pickup && $selectedDelivery->getData()['DELIVERY_CODE'] == $pickup->getData()['DELIVERY_CODE']) {
+    $selectedShopCode = $arResult['SELECTED_SHOP']->getXmlId();
+    $isPickup = true;
+}
+
 ?>
 <div class="b-container">
     <h1 class="b-title b-title--h1 b-title--order">
@@ -81,16 +88,18 @@ $storage = $arResult['STORAGE'];
                           data-url="<?= $arResult['URL']['DELIVERY_VALIDATION'] ?>"
                           method="post"
                           id="order-step">
+                        <input type="hidden" name="shopId" class="js-no-valid" value="<?= $selectedShopCode ?>">
                         <div class="b-choice-recovery b-choice-recovery--order-step">
                             <?php if ($delivery) { ?>
-                                <input class="b-choice-recovery__input js-recovery-telephone"
+                                <input class="b-choice-recovery__input js-recovery-telephone js-delivery"
                                        id="order-delivery-address"
                                        type="radio"
                                        name="deliveryId"
-                                       checked="checked"
+                                    <?= $deliveryService->isDelivery($selectedDelivery) ? 'checked="checked"' : '' ?>
                                        value="<?= $delivery->getData()['DELIVERY_ID'] ?>"
                                        data-delivery="<?= $delivery->getPrice() ?>"
-                                       data-total="<?= $basket->getPrice() ?>"/>
+                                       data-full="<?= $basket->getPrice() ?>"
+                                       data-check="js-list-orders-static"/>
                                 <label class="b-choice-recovery__label b-choice-recovery__label--left b-choice-recovery__label--order-step"
                                        for="order-delivery-address">
                                     <span class="b-choice-recovery__main-text">
@@ -100,10 +109,12 @@ $storage = $arResult['STORAGE'];
                                         </span>
                                     </span>
                                     <span class="b-choice-recovery__addition-text">
-                                        <?= DeliveryTimeHelper::showTime($delivery) ?>
+                                        <?= DeliveryTimeHelper::showTime($delivery, null) ?>
+                                        , <?= CurrencyHelper::formatPrice($delivery->getPrice(), false) ?>
                                     </span>
                                     <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile">
                                         <?= DeliveryTimeHelper::showTime($delivery, null, ['SHORT' => true]) ?>
+                                        , <?= CurrencyHelper::formatPrice($delivery->getPrice(), false) ?>
                                 </label>
                             <?php } ?>
                             <?php if ($pickup) { ?>
@@ -119,22 +130,43 @@ $storage = $arResult['STORAGE'];
                                     $date = $stockResultByShop->getDeliveryDate();
                                 }
                                 ?>
-                                <input class="b-choice-recovery__input js-recovery-email js-myself-shop"
+                                <input class="b-choice-recovery__input js-recovery-email js-myself-shop js-delivery"
                                        id="order-delivery-pick-up"
                                        type="radio"
                                        name="deliveryId"
+                                    <?= $deliveryService->isPickup($selectedDelivery) ? 'checked="checked"' : '' ?>
                                        value="<?= $pickup->getData()['DELIVERY_ID'] ?>"
                                        data-delivery="<?= $pickup->getPrice() ?>"
-                                       data-total="<?= $price ?>"/>
+                                       data-full="<?= $price ?>"
+                                       data-check="js-list-orders-cont"/>
                                 <label class="b-choice-recovery__label b-choice-recovery__label--right b-choice-recovery__label--order-step js-open-popup"
                                        for="order-delivery-pick-up"
                                        data-popup-id="popup-order-stores">
                                     <span class="b-choice-recovery__main-text">Самовывоз</span>
-                                    <span class="b-choice-recovery__addition-text">
-                                        <?= DeliveryTimeHelper::showTime($pickup, $date) ?>
+                                    <span class="b-choice-recovery__addition-text js-my-pickup js-pickup-tab">
+                                        <?= DeliveryTimeHelper::showTime(
+                                            $pickup,
+                                            $date,
+                                            [
+                                                'SHOW_TIME' => !$deliveryService->isDpdPickup(
+                                                    $pickup
+                                                ),
+                                            ]
+                                        ) ?>
+                                        , <?= CurrencyHelper::formatPrice($pickup->getPrice(), false) ?>
                                     </span>
-                                    <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile">
-                                        <?= DeliveryTimeHelper::showTime($pickup, $date, ['SHORT' => true]) ?>
+                                    <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile js-my-pickup js-pickup-tab">
+                                        <?= DeliveryTimeHelper::showTime(
+                                            $pickup,
+                                            $date,
+                                            [
+                                                'SHORT'     => true,
+                                                'SHOW_TIME' => !$deliveryService->isDpdPickup(
+                                                    $pickup
+                                                ),
+                                            ]
+                                        ) ?>
+                                        , <?= CurrencyHelper::formatPrice($pickup->getPrice(), false) ?>
                                     </span>
                                 </label>
                             <?php } ?>
@@ -160,6 +192,20 @@ $storage = $arResult['STORAGE'];
             </div>
             <?php include 'include/basket.php' ?>
         </div>
+        <?php
+        $basketPrice = $basket->getPrice();
+        if ($isPickup) {
+            $stockResultByShop = $deliveryService->getStockResultByDelivery($selectedDelivery)->filterByStore(
+                $arResult['SELECTED_SHOP']
+            );
+            /* todo это нужно до тех пор, пока не реализовано разделение заказа */
+            if ($storage->isPartialGet()) {
+                $basketPrice = $stockResultByShop->getAvailable()->getPrice();
+            } else {
+                $basketPrice = $stockResultByShop->getPrice();
+            }
+        }
+        ?>
         <div class="b-order-list b-order-list--cost b-order-list--order-step-two js-order-next">
             <ul class="b-order-list__list b-order-list__list--cost">
                 <li class="b-order-list__item b-order-list__item--cost b-order-list__item--order-step-two">
@@ -171,7 +217,7 @@ $storage = $arResult['STORAGE'];
                         </div>
                     </div>
                     <div class="b-order-list__order-value b-order-list__order-value--order-step-two js-price-full">
-                        <?= CurrencyHelper::formatPrice($basket->getPrice()) ?>
+                        <?= CurrencyHelper::formatPrice($basketPrice, false) ?>
                     </div>
                 </li>
                 <li class="b-order-list__item b-order-list__item--cost b-order-list__item--order-step-two">
@@ -183,7 +229,7 @@ $storage = $arResult['STORAGE'];
                         </div>
                     </div>
                     <div class="b-order-list__order-value b-order-list__order-value--order-step-two js-price-deliv">
-                        <?= CurrencyHelper::formatPrice($selectedDelivery->getPrice()) ?>
+                        <?= CurrencyHelper::formatPrice($selectedDelivery->getPrice(), false) ?>
                     </div>
                 </li>
                 <li class="b-order-list__item b-order-list__item--cost b-order-list__item--order-step-two">
@@ -195,7 +241,7 @@ $storage = $arResult['STORAGE'];
                         </div>
                     </div>
                     <div class="b-order-list__order-value b-order-list__order-value--order-step-two js-price-total">
-                        <?= CurrencyHelper::formatPrice($basket->getPrice() + $selectedDelivery->getPrice()) ?>
+                        <?= CurrencyHelper::formatPrice($basketPrice + $selectedDelivery->getPrice(), false) ?>
                     </div>
                 </li>
             </ul>

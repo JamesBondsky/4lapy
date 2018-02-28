@@ -33,7 +33,8 @@ class SapService
         ConsumerRegistryInterface $consumerRegistry,
         SourceRegistryInterface $sourceRegistry,
         PipelineRegistry $pipelineRegistry
-    ) {
+    )
+    {
         $this->consumerRegistry = $consumerRegistry;
         $this->sourceRegistry = $sourceRegistry;
         $this->pipelineRegistry = $pipelineRegistry;

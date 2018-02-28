@@ -2,7 +2,11 @@
 
 namespace FourPaws\SaleBundle\EventController;
 
+use Bitrix\Main\Event as BitrixEvent;
 use Bitrix\Main\EventManager;
+use Bitrix\Sale\Order;
+use Bitrix\Sale\Payment;
+use FourPaws\App\Application;
 use FourPaws\App\ServiceHandlerInterface;
 use FourPaws\SaleBundle\Discount\Action\Action\DiscountFromProperty;
 use FourPaws\SaleBundle\Discount\Action\Condition\BasketQuantity;
@@ -10,6 +14,9 @@ use FourPaws\SaleBundle\Discount\BasketFilter;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Gifter;
+use FourPaws\SaleBundle\Service\BasketService;
+use FourPaws\SaleBundle\Service\NotificationService;
+use FourPaws\SaleBundle\Service\UserAccountService;
 
 /**
  * Class Event
@@ -39,6 +46,16 @@ class Event implements ServiceHandlerInterface
         self::initHandler('OnCondSaleActionsControlBuildList', [BasketQuantity::class, 'GetControlDescr']);
         self::initHandler('OnCondSaleActionsControlBuildList', [DiscountFromProperty::class, 'GetControlDescr']);
         self::initHandler('OnAfterSaleOrderFinalAction', [Manager::class, 'OnAfterSaleOrderFinalAction']);
+        self::initHandler('OnSaleBasketItemRefreshData', [__CLASS__, 'updateItemAvailability']);
+
+        self::initHandler('OnSaleOrderSaved', [__CLASS__, 'sendNewOrderMessage']);
+        self::initHandler('OnSaleOrderPaid', [__CLASS__, 'sendOrderPaymentMessage']);
+        self::initHandler('OnSaleOrderCanceled', [__CLASS__, 'sendOrderCancelMessage']);
+        self::initHandler('OnSaleStatusOrderChange', [__CLASS__, 'sendOrderStatusMessage']);
+
+        self::initHandler('OnAfterUserLogin', [__CLASS__, 'updateUserAccountBalance'], 'main');
+        self::initHandler('OnAfterUserAuthorize', [__CLASS__, 'updateUserAccountBalance'], 'main');
+        self::initHandler('OnAfterUserLoginByHash', [__CLASS__, 'updateUserAccountBalance'], 'main');
     }
 
     /**
@@ -56,5 +73,91 @@ class Event implements ServiceHandlerInterface
             $eventName,
             $callback
         );
+    }
+
+    public static function updateUserAccountBalance()
+    {
+        /* @todo по ТЗ должно выполняться в фоновом режиме */
+        Application::getInstance()->getContainer()->get(UserAccountService::class)->refreshUserBalance();
+    }
+
+    /**
+     * @param BitrixEvent $event
+     */
+    public static function updateItemAvailability(BitrixEvent $event)
+    {
+        $basketItem = $event->getParameter('ENTITY');
+        Application::getInstance()
+                   ->getContainer()
+                   ->get(BasketService::class)
+                   ->refreshItemAvailability($basketItem);
+    }
+
+    /**
+     * @param BitrixEvent $event
+     */
+    public static function sendNewOrderMessage(BitrixEvent $event)
+    {
+        /** @var Order $order */
+        $order = $event->getParameter('ENTITY');
+        $isNew = $event->getParameter('IS_NEW');
+        if (!$isNew) {
+            return;
+        }
+
+        /** @var NotificationService $notificationService */
+        $notificationService = Application::getInstance()
+                                          ->getContainer()
+                                          ->get(NotificationService::class);
+
+        $notificationService->sendNewOrderMessage($order);
+    }
+
+    /**
+     * @param BitrixEvent $event
+     */
+    public static function sendOrderPaymentMessage(BitrixEvent $event)
+    {
+        /** @var Payment $payment */
+        $order = $event->getParameter('ENTITY');
+
+        /** @var NotificationService $notificationService */
+        $notificationService = Application::getInstance()
+                                          ->getContainer()
+                                          ->get(NotificationService::class);
+
+        $notificationService->sendOrderPaymentMessage($order);
+    }
+
+    /**
+     * @param BitrixEvent $event
+     */
+    public static function sendOrderCancelMessage(BitrixEvent $event)
+    {
+        /** @var Order $order */
+        $order = $event->getParameter('ENTITY');
+
+        /** @var NotificationService $notificationService */
+        $notificationService = Application::getInstance()
+                                          ->getContainer()
+                                          ->get(NotificationService::class);
+
+        $notificationService->sendOrderCancelMessage($order);
+    }
+
+    /**
+     * @param BitrixEvent $event
+     */
+    public static function sendOrderStatusMessage(BitrixEvent $event)
+    {
+        /** @var Order $order */
+        $order = $event->getParameter('ENTITY');
+
+        /** @var NotificationService $notificationService */
+        $notificationService = Application::getInstance()
+                                          ->getContainer()
+                                          ->get(NotificationService::class);
+
+        $notificationService->sendOrderStatusMessage($order);
     }
 }

@@ -122,7 +122,7 @@ class PetService
             
             $client = null;
             try {
-                $contactId         = $this->manzanaService->getContactIdByCurUser();
+                $contactId         = $this->manzanaService->getContactIdByUser();
                 $client            = new Client();
                 $client->contactId = $contactId;
             } catch (ManzanaServiceException $e) {

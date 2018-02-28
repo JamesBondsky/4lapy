@@ -7,6 +7,7 @@
 namespace FourPaws\SaleBundle\AjaxController;
 
 use Bitrix\Main\Web\Uri;
+use Bitrix\Sale\Payment;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
@@ -16,6 +17,7 @@ use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderStorageValidationException;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
+use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -46,6 +48,11 @@ class OrderController extends Controller
     private $userAuthProvider;
 
     /**
+     * @var StoreService
+     */
+    private $storeService;
+
+    /**
      * @var ReCaptchaService
      */
     private $recaptcha;
@@ -67,11 +74,13 @@ class OrderController extends Controller
      */
     public function __construct(
         OrderService $orderService,
+        StoreService $storeService,
         OrderStorageService $orderStorageService,
         UserAuthorizationInterface $userAuthProvider,
         ReCaptchaService $recaptcha
     ) {
         $this->orderService = $orderService;
+        $this->storeService = $storeService;
         $this->orderStorageService = $orderStorageService;
         $this->userAuthProvider = $userAuthProvider;
         $this->recaptcha = $recaptcha;
@@ -92,8 +101,10 @@ class OrderController extends Controller
         return JsonSuccessResponse::createWithData(
             'Подгрузка успешна',
             $shopListClass->getStores(
-                $shopListClass->getFilterByRequest($request),
-                $shopListClass->getOrderByRequest($request)
+                [
+                    'filter' => $this->storeService->getFilterByRequest($request),
+                    'order'  => $this->storeService->getOrderByRequest($request),
+                ]
             )
         );
     }
@@ -175,7 +186,12 @@ class OrderController extends Controller
 
         $validationErrors = $this->fillStorage($storage, $request, $currentStep);
         if (!empty($validationErrors)) {
-            return JsonErrorResponse::createWithData('', ['errors' => $validationErrors]);
+            return JsonErrorResponse::createWithData(
+                '',
+                ['errors' => $validationErrors],
+                200,
+                ['reload' => true]
+            );
         }
 
         try {
@@ -185,8 +201,20 @@ class OrderController extends Controller
         }
 
         $url = new Uri('/sale/order/' . OrderStorageService::COMPLETE_STEP . '/' . $order->getId());
+
+        /** @var Payment $payment */
+        foreach ($order->getPaymentCollection() as $payment) {
+            if ($payment->isInner()) {
+                continue;
+            }
+            if ($payment->getPaySystem()->getField('CODE') === OrderService::PAYMENT_ONLINE) {
+                $url->setPath('/sale/payment/');
+                $url->addParams(['ORDER_ID' => $order->getId()]);
+            }
+        }
+
         if (!$this->userAuthProvider->isAuthorized()) {
-            $url->addParams(['hash' => $order->getHash()]);
+            $url->addParams(['HASH' => $order->getHash()]);
         }
 
         return JsonSuccessResponse::create(

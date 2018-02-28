@@ -59,6 +59,11 @@ class OrderStorageService
     protected $storageRepository;
 
     /**
+     * @var UserAccountService
+     */
+    protected $userAccountService;
+
+    /**
      * OrderStorageService constructor.
      *
      * @param BasketService $basketService
@@ -68,11 +73,13 @@ class OrderStorageService
     public function __construct(
         BasketService $basketService,
         CurrentUserProviderInterface $currentUserProvider,
-        DatabaseStorageRepository $storageRepository
+        DatabaseStorageRepository $storageRepository,
+        UserAccountService $userAccountService
     ) {
         $this->basketService = $basketService;
         $this->currentUserProvider = $currentUserProvider;
         $this->storageRepository = $storageRepository;
+        $this->userAccountService = $userAccountService;
     }
 
     /**
@@ -158,25 +165,43 @@ class OrderStorageService
                     'deliveryDate',
                     'deliveryInterval',
                     'deliveryPlaceCode',
-                    'dpdTerminalCode',
                     'comment',
                     'partialGet',
+                    'shopId',
                 ];
                 break;
             case self::PAYMENT_STEP:
                 $availableValues = [
                     'paymentId',
-                    'bonusSum',
+                    'bonus',
                 ];
         }
 
+        $mapping = [
+            'order-pick-time' => 'partialGet',
+            'shopId'          => 'deliveryPlaceCode',
+            'pay-type'        => 'paymentId',
+        ];
+
         foreach ($request->request as $name => $value) {
-            if (!\in_array($name, $availableValues, true)) {
+            if (!\in_array($name, $availableValues, true) &&
+                !\in_array($mapping[$name], $availableValues, true)
+            ) {
                 continue;
             }
+
+            if (($name === 'bonus') && (!is_numeric($value))) {
+                continue;
+            }
+
             $setter = 'set' . ucfirst($name);
             if (method_exists($storage, $setter)) {
                 $storage->$setter($value);
+            } elseif (isset($mapping[$name])) {
+                $setter = 'set' . ucfirst($mapping[$name]);
+                if (method_exists($storage, $setter)) {
+                    $storage->$setter($value);
+                }
             }
         }
 
@@ -215,7 +240,6 @@ class OrderStorageService
 
     /**
      * @param OrderStorage $storage
-     * @param null|Order $order
      *
      * @throws \Exception
      * @throws NotFoundException
@@ -224,28 +248,26 @@ class OrderStorageService
      * @throws ObjectNotFoundException
      * @return PaymentCollection
      */
-    public function getPayments(OrderStorage $storage, Order $order = null): PaymentCollection
+    public function getPayments(OrderStorage $storage): PaymentCollection
     {
         if (!$deliveryId = $storage->getDeliveryId()) {
             throw new NotFoundException('No payments available');
         }
 
         if (!$this->paymentCollection) {
-            if (!$order instanceof Order) {
-                /** @noinspection CallableParameterUseCaseInTypeContextInspection */
-                $order = Order::create(
-                    SITE_ID,
-                    null,
-                    CurrencyManager::getBaseCurrency()
-                );
-            }
+            /** @noinspection CallableParameterUseCaseInTypeContextInspection */
+            $order = Order::create(
+                SITE_ID,
+                null,
+                CurrencyManager::getBaseCurrency()
+            );
             $this->paymentCollection = $order->getPaymentCollection();
             $sum = $this->basketService->getBasket()->getOrderableItems()->getPrice();
 
-            if ($storage->hasBonusPayment() && $storage->getBonusSum()) {
+            if ($storage->getBonus()) {
                 $innerPayment = $this->paymentCollection->getInnerPayment();
-                $innerPayment->setField('SUM', $storage->getBonusSum());
-                $sum -= $storage->getBonusSum();
+                $innerPayment->setField('SUM', $storage->getBonus());
+                $sum -= $storage->getBonus();
             }
 
             $extPayment = $this->paymentCollection->createItem();
@@ -292,6 +314,32 @@ class OrderStorageService
         }
 
         return $payments;
+    }
+
+    /**
+     * Получение максимального кол-ва бонусов, которыми можно оплатить заказ
+     *
+     * @param OrderStorage $storage
+     *
+     * @return float
+     */
+    public function getMaxBonusesForPayment(OrderStorage $storage): float
+    {
+        if (!$storage->getUserId()) {
+            return 0;
+        }
+
+        $bonuses = 0;
+        try {
+            $this->userAccountService->refreshUserBalance();
+            $bonuses = $this->userAccountService->findAccountByUser($this->currentUserProvider->getCurrentUser())
+                                                ->getCurrentBudget();
+        } catch (NotFoundException $e) {
+        }
+
+        $basket = $this->basketService->getBasket()->getOrderableItems();
+
+        return floor(min($basket->getPrice() * OrderService::MAX_BONUS_PAYMENT, $bonuses));
     }
 
     /**

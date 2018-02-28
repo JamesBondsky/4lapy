@@ -2,6 +2,8 @@
 
 namespace FourPaws\External;
 
+use Bitrix\Sale\Basket;
+use Bitrix\Sale\BasketBase;
 use Bitrix\Sale\BasketItem;
 use FourPaws\External\Interfaces\ManzanaServiceInterface;
 use FourPaws\External\Manzana\Dto\ChequePosition;
@@ -10,7 +12,6 @@ use FourPaws\External\Manzana\Dto\SoftChequeResponse;
 use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\Traits\ManzanaServiceTrait;
 use FourPaws\Helpers\ArithmeticHelper;
-use FourPaws\SaleBundle\Service\BasketService;
 use Psr\Log\LoggerAwareInterface;
 
 /**
@@ -54,10 +55,22 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
                 ],
                 'orgName' => $this->parameters['organization_name'],
             ];
-            
+
             $rawResult = $this->client->call(self::METHOD_EXECUTE, ['request_options' => $arguments]);
             $rawResult = (array)$rawResult->ProcessRequestInfoResult->Responses->ChequeResponse;
-            
+            if ($rawResult['Item']) {
+                if(is_array($rawResult['Item'])) {
+
+                    foreach ($rawResult['Item'] as &$item) {
+                        $item = (array)$item;
+                    }
+
+                    unset($item);
+                } elseif ($rawResult['Item'] instanceof \stdClass) {
+                    $rawResult['Item'] = [(array)$rawResult['Item']];
+                }
+            }
+
             $result = $this->serializer->fromArray($rawResult, SoftChequeResponse::class);
         } catch (\Exception $e) {
             try {
@@ -75,19 +88,19 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
     }
     
     /**
-     * @param BasketService $basketService
+     * @param Basket $basket
      * @param string        $card
      *
      * @return SoftChequeRequest
      */
-    public function buildRequestFromBasketService(BasketService $basketService, string $card = '') : SoftChequeRequest
-    {
+    public function buildRequestFromBasket(
+        BasketBase $basket,
+        string $card = ''
+    ) : SoftChequeRequest {
         $sum = $sumDiscounted = $discount = 0.0;
         
         $request = new SoftChequeRequest();
-        
-        $basket = $basketService->getBasket();
-        
+
         $iterator = 0;
         /** @var BasketItem $item */
         foreach ($basket->getBasketItems() as $k => $item) {
@@ -97,7 +110,7 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
             $xmlId = $item->getField('PRODUCT_XML_ID');
             
             if (strpos($xmlId, '#')) {
-                $xmlId = explode('#', $xmlId)[0];
+                $xmlId = explode('#', $xmlId)[1];
             }
             
             $chequePosition =
@@ -124,7 +137,7 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
         $request->setSumm($sum)
                 ->setSummDiscounted($sumDiscounted)
                 ->setDiscount(ArithmeticHelper::getPercent($sumDiscounted, $sum));
-    
+
         if ($card) {
             $request->setCardByNumber($card);
         }

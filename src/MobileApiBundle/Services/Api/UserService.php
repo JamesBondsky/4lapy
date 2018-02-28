@@ -6,108 +6,161 @@
 
 namespace FourPaws\MobileApiBundle\Services\Api;
 
-use FourPaws\MobileApiBundle\Dto\Request\UserLoginRequest;
-use FourPaws\MobileApiBundle\Exception\AlreadyAuthorizedException;
-use FourPaws\MobileApiBundle\Exception\InvalidCredentialException as MobileInvalidCredentialException;
-use FourPaws\MobileApiBundle\Exception\LogicException;
-use FourPaws\MobileApiBundle\Exception\SystemException;
-use FourPaws\UserBundle\Entity\User;
-use FourPaws\UserBundle\Exception\InvalidCredentialException;
-use FourPaws\UserBundle\Exception\TooManyUserFoundException;
+use Bitrix\Main\ObjectException;
+use Bitrix\Main\Type\Date;
+use FourPaws\Decorators\FullHrefDecorator;
+use FourPaws\MobileApiBundle\Dto\Object\ClientCard;
+use FourPaws\MobileApiBundle\Dto\Object\User;
+use FourPaws\MobileApiBundle\Dto\Request\LoginExistRequest;
+use FourPaws\MobileApiBundle\Dto\Request\LoginRequest;
+use FourPaws\MobileApiBundle\Dto\Request\PostUserInfoRequest;
+use FourPaws\MobileApiBundle\Dto\Response\PostUserInfoResponse;
+use FourPaws\MobileApiBundle\Dto\Response\UserLoginResponse;
+use FourPaws\MobileApiBundle\Exception\RuntimeException;
+use FourPaws\UserBundle\Entity\User as AppUser;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
-use FourPaws\UserBundle\Repository\UserRepository;
-use FourPaws\UserBundle\Service\UserAuthorizationInterface;
-use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
+use FourPaws\UserBundle\Service\UserService as UserBundleService;
 
 class UserService
 {
     /**
-     * @var UserRepository
+     * @var UserBundleService
      */
-    private $userRepository;
+    private $userBundleService;
 
-    /**
-     * @var UserAuthorizationInterface
-     */
-    private $userAuthorization;
-
-    /**
-     * @var UserRegistrationProviderInterface
-     */
-    private $userRegistrationProvider;
-
-    public function __construct(
-        UserRepository $userRepository,
-        UserAuthorizationInterface $userAuthorization,
-        UserRegistrationProviderInterface $userRegistrationProvider
-    ) {
-        $this->userRepository = $userRepository;
-        $this->userAuthorization = $userAuthorization;
-        $this->userRegistrationProvider = $userRegistrationProvider;
+    public function __construct(UserBundleService $userBundleService)
+    {
+        $this->userBundleService = $userBundleService;
     }
 
     /**
-     * @param UserLoginRequest $userLoginRequest
+     * @param LoginRequest $loginRequest
      *
-     * @throws \FourPaws\MobileApiBundle\Exception\AlreadyAuthorizedException
-     * @throws \FourPaws\MobileApiBundle\Exception\LogicException
-     * @throws \FourPaws\MobileApiBundle\Exception\InvalidCredentialException
-     * @throws \FourPaws\MobileApiBundle\Exception\SystemException
-     * @return bool
+     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
+     * @throws \FourPaws\UserBundle\Exception\UsernameNotFoundException
+     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
+     * @throws \FourPaws\UserBundle\Exception\TooManyUserFoundException
+     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
+     * @throws \FourPaws\UserBundle\Exception\InvalidCredentialException
+     * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
+     * @return UserLoginResponse
      */
-    public function loginOrRegister(UserLoginRequest $userLoginRequest): bool
-    {
-        if ($this->userAuthorization->isAuthorized()) {
-            throw new AlreadyAuthorizedException('Trying to login or create while already authorized');
-        }
-        try {
-            if ($this->userRepository->isExist($userLoginRequest->getLogin())) {
-                return $this->login($userLoginRequest->getLogin(), $userLoginRequest->getPassword());
-            }
-            return $this->register($userLoginRequest->getLogin(), $userLoginRequest->getPassword());
-            /**
-             * @todo update token on event?
-             */
-        } catch (TooManyUserFoundException $exception) {
-            throw new SystemException($exception->getMessage(), $exception->getCode(), $exception);
-        }
-    }
-
-    /**
-     * @param string $login
-     * @param string $password
-     *
-     * @throws TooManyUserFoundException
-     * @throws MobileInvalidCredentialException
-     * @throws LogicException
-     * @return bool
-     */
-    protected function login(string $login, string $password): bool
+    public function loginOrRegister(LoginRequest $loginRequest): UserLoginResponse
     {
         try {
-            return $this->userAuthorization->login($login, $password);
+            $this->userBundleService->login($loginRequest->getLogin(), $loginRequest->getPassword());
         } catch (UsernameNotFoundException $exception) {
-            throw new LogicException(sprintf('Username %s not found and exists', $login));
-        } catch (InvalidCredentialException $exception) {
-            throw new MobileInvalidCredentialException($exception->getMessage(), $exception->getCode(), $exception);
+            $user = new AppUser();
+            $user
+                ->setPersonalPhone($loginRequest->getLogin())
+                ->setLogin($user->getPersonalPhone())
+                ->setPassword($loginRequest->getPassword());
+            $this->userBundleService->register($user);
         }
+        return new UserLoginResponse($this->getCurrentApiUser());
     }
 
     /**
-     * @param string $login
-     * @param string $password
-     *
-     * @return bool
+     * @throws \FourPaws\MobileApiBundle\Exception\RuntimeException
      */
-    protected function register(string $login, string $password)
+    public function logout(): array
     {
-        /**
-         * @todo factory
-         */
-        $user = (new User())
-            ->setLogin($login)
-            ->setPassword($password);
+        if (!$this->userBundleService->logout()) {
+            throw new RuntimeException('Cant logout user');
+        }
+        return [
+            'feedback_text' => 'Вы вышли из своей учетной записи',
+        ];
+    }
 
-        return $this->userRegistrationProvider->register($user);
+    /**
+     * @param PostUserInfoRequest $userInfoRequest
+     *
+     * @throws \FourPaws\UserBundle\Exception\ValidationException
+     * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
+     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
+     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
+     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
+     * @return PostUserInfoResponse
+     */
+    public function update(PostUserInfoRequest $userInfoRequest): PostUserInfoResponse
+    {
+        $fromRequestUser = $userInfoRequest->getUser();
+        $user = $this->userBundleService->getCurrentUser();
+        if ($fromRequestUser->getEmail() && $user->getEmail() === $user->getLogin()) {
+            $user->setLogin($fromRequestUser->getEmail());
+        } elseif ($fromRequestUser->getPhone() && $user->getPersonalPhone() === $user->getLogin()) {
+            $user->setLogin($fromRequestUser->getPhone());
+        }
+        $user
+            ->setEmail($fromRequestUser->getEmail() ?? $user->getEmail())
+            ->setPersonalPhone($fromRequestUser->getPhone() ?? $user->getPersonalPhone())
+            ->setName($fromRequestUser->getFirstName() ?? $user->getName())
+            ->setLastName($fromRequestUser->getLastName() ?? $user->getLastName())
+            ->setSecondName($fromRequestUser->getMidName() ?? $user->getSecondName());
+
+        if ('' === $fromRequestUser->getBirthDate()) {
+            $user->setBirthday(null);
+        } elseif (null !== $fromRequestUser->getBirthDate()) {
+            try {
+                $user->setBirthday(new Date($fromRequestUser->getBirthDate(), 'd.m.Y'));
+            } catch (ObjectException $e) {
+            }
+        }
+        $this->userBundleService->getUserRepository()->update($user);
+        return new PostUserInfoResponse($this->getCurrentApiUser());
+    }
+
+    /**
+     * @param LoginExistRequest $existRequest
+     *
+     * @throws \FourPaws\UserBundle\Exception\TooManyUserFoundException
+     * @return array
+     */
+    public function isExist(LoginExistRequest $existRequest): array
+    {
+        $exist = $this->userBundleService->getUserRepository()->isExist($existRequest->getLogin());
+        /**
+         * @todo Необходимо предусмотреть максимальное кол-во попыток
+         */
+
+        return [
+            'exist'         => $exist,
+            'feedback_text' => $exist ? '' : 'Проверьте правильность заполнения поля. Введите ваш E-mail или номер телефона',
+        ];
+    }
+
+    /**
+     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
+     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
+     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
+     * @return User
+     */
+    public function getCurrentApiUser(): User
+    {
+        $user = $this->userBundleService->getCurrentUser();
+        $apiUser = new User();
+        $apiUser
+            ->setEmail($user->getEmail())
+            ->setFirstName($user->getName())
+            ->setLastName($user->getLastName())
+            ->setMidName($user->getSecondName())
+            ->setPhone($user->getPersonalPhone())
+            ->setCard($this->getCard($user->getId()));
+        if ($user->getBirthday()) {
+            $apiUser->setBirthDate($user->getBirthday()->format('d.m.Y'));
+        }
+        return $apiUser;
+    }
+
+    protected function getCard(int $userId): ClientCard
+    {
+        // ToDo: Сделать реальное получение карты
+        return (new ClientCard())->setTitle('Карта клиента')
+            ->setPicture(new FullHrefDecorator('/upload/card/img.png'))
+            ->setBalance(1500)
+            ->setNumber('000011112222')
+            ->setBarCode('60832513')
+            ->setSaleAmount(3);
     }
 }

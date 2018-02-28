@@ -1,19 +1,28 @@
 <?php
+
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
-use FourPaws\App\Application;
-use FourPaws\Catalog\Query\OfferQuery;
-use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
-use FourPaws\DeliveryBundle\Entity\StockResult;
-use FourPaws\DeliveryBundle\Collection\StockResultCollection;
-use FourPaws\SaleBundle\Service\BasketService;
-use FourPaws\SaleBundle\Service\OrderService;
-use FourPaws\StoreBundle\Entity\Store;
-use FourPaws\StoreBundle\Collection\StoreCollection;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\CalculationResult;
+use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\DeliveryBundle\Entity\StockResult;
+use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\SaleBundle\Service\BasketService;
+use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\StoreBundle\Collection\StoreCollection;
+use FourPaws\StoreBundle\Entity\Store;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 CBitrixComponent::includeComponentClass('fourpaws:shop.list');
 
@@ -25,16 +34,26 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
      */
     protected $orderService;
 
+    /** @var DeliveryService $deliveryService */
+    protected $deliveryService;
+
     /**
      * FourPawsOrderShopListComponent constructor.
      *
      * @param null $component
+     *
+     * @throws \RuntimeException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws \Bitrix\Main\SystemException
+     * @throws ApplicationCreateException
      */
     public function __construct($component = null)
     {
         parent::__construct($component);
         $serviceContainer = Application::getInstance()->getContainer();
         $this->orderService = $serviceContainer->get(OrderService::class);
+        $this->deliveryService = $serviceContainer->get('delivery.service');
     }
 
     /**
@@ -50,9 +69,14 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
     }
 
     /**
+     * @param array $city
+     *
      * @throws \RuntimeException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
      */
-    protected function prepareResult()
+    protected function prepareResult(array $city = [])
     {
         /** @var BasketService $basketService */
         $basketService = Application::getInstance()->getContainer()->get(BasketService::class);
@@ -62,7 +86,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
         }
 
         /** @var StockResultCollection $stockResult */
-        if (!$stockResult = $this->getStockResult($pickupDelivery)) {
+        if (!$stockResult = $this->storeService->getStockResult($pickupDelivery)) {
             return;
         }
 
@@ -101,6 +125,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
     /**
      * @param array $params
      *
+     * @throws Exception
      * @return array
      */
     public function getStores(array $params = []): array
@@ -113,7 +138,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
 
         $stores = $this->getStoreList($params['filter'] ?? [], $params['order'] ?? []);
         if (!$stores->isEmpty()) {
-            $stockResult = $this->getStockResult($pickupDelivery);
+            $stockResult = $this->storeService->getStockResult($pickupDelivery);
             list($servicesList, $metroList) = $this->getFullStoreInfo($stores);
 
             $avgGpsN = 0;
@@ -162,11 +187,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
 
             uasort($stores, $sortFunc);
 
-            /**
-             * для самовывоза из DPD показываем то, что вернула доставка
-             * для самовывоза из магазина - с учетом времени работы магазина
-             */
-            $modifyDate = $this->deliveryService->isInnerPickup($pickupDelivery);
+            $showTime = $this->deliveryService->isInnerPickup($pickupDelivery);
             /** @var Store $store */
             foreach ($stores as $store) {
                 $metro = $store->getMetro();
@@ -209,42 +230,56 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                     ];
                 }
 
+                $orderType = 'parts';
                 if ($delayed->isEmpty()) {
                     $orderType = 'full';
                 } elseif ($available->isEmpty()) {
                     $orderType = 'delay';
-                } else {
-                    $orderType = 'parts';
                 }
 
-                $availableDate = $available->isEmpty()
-                    ? $stockResultByStore->getDeliveryDate()
-                    : $available->getDeliveryDate();
+                $availableDate = $available->getDeliveryDate();
+                $fullDeliveryDate = $stockResultByStore->getDeliveryDate();
+                if ($available->isEmpty()) {
+                    $availableDate = $fullDeliveryDate;
+                }
+
                 $result['items'][] = [
-                    'id'              => $store->getXmlId(),
-                    'adress'          => $address,
-                    'phone'           => $store->getPhone(),
-                    'schedule'        => $store->getSchedule(),
-                    'pickup'          => DeliveryTimeHelper::showTime(
+                    'id'                => $store->getXmlId(),
+                    'adress'            => $address,
+                    'phone'             => $store->getPhone(),
+                    'schedule'          => $store->getSchedule(),
+                    'pickup'            => DeliveryTimeHelper::showTime(
                         $resultByStore[$store->getXmlId()]['PARTIAL_RESULT'],
-                        $modifyDate ? $availableDate : null,
-                        ['SHORT' => true, 'SHOW_TIME' => true]
+                        $availableDate,
+                        ['SHORT' => false, 'SHOW_TIME' => $showTime]
                     ),
-                    'pickup_full'     => DeliveryTimeHelper::showTime(
+                    'pickup_full'       => DeliveryTimeHelper::showTime(
                         $resultByStore[$store->getXmlId()]['FULL_RESULT'],
-                        $modifyDate ? $stockResultByStore->getDeliveryDate() : null,
-                        ['SHORT' => true, 'SHOW_TIME' => true]
+                        $fullDeliveryDate,
+                        ['SHORT' => false, 'SHOW_TIME' => $showTime]
                     ),
-                    'metroClass'      => !empty($metro) ? '--' . $metroList[$metro]['UF_CLASS'] : '',
-                    'order'           => $orderType,
-                    'parts_available' => $partsAvailable,
-                    'parts_delayed'   => $partsDelayed,
-                    'services'        => $services,
-                    'price'           => $delayed->isEmpty() ? $stockResultByStore->getPrice() : $delayed->getPrice(),
-                    'full_price'      => $stockResultByStore->getPrice(),
+                    'pickup_short'      => DeliveryTimeHelper::showTime(
+                        $resultByStore[$store->getXmlId()]['PARTIAL_RESULT'],
+                        $availableDate,
+                        ['SHORT' => true, 'SHOW_TIME' => $showTime]
+                    ),
+                    'pickup_short_full' => DeliveryTimeHelper::showTime(
+                        $resultByStore[$store->getXmlId()]['FULL_RESULT'],
+                        $fullDeliveryDate,
+                        ['SHORT' => true, 'SHOW_TIME' => $showTime]
+                    ),
+                    'metroClass'        => !empty($metro) ? '--' . $metroList[$metro]['BRANCH']['UF_CLASS'] : '',
+                    'order'             => $orderType,
+                    'parts_available'   => $partsAvailable,
+                    'parts_delayed'     => $partsDelayed,
+                    'services'          => $services,
+                    'price'             => $available->isEmpty() ?
+                        $stockResultByStore->getPrice() :
+                        $available->getPrice(),
+                    'full_price'        => $stockResultByStore->getPrice(),
                     /* @todo поменять местами gps_s и gps_n */
-                    'gps_n'           => $store->getLongitude(),
-                    'gps_s'           => $store->getLatitude(),
+                    'gps_n'             => $store->getLongitude(),
+                    'gps_s'             => $store->getLatitude(),
                 ];
                 $avgGpsN += $store->getLongitude();
                 $avgGpsS += $store->getLatitude();
@@ -298,11 +333,12 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
      * @param array $filter
      * @param array $order
      *
+     * @throws Exception
      * @return StoreCollection
      */
     protected function getStoreList(array $filter, array $order): StoreCollection
     {
-        if (!$stockResult = $this->getStockResult($this->getPickupDelivery())) {
+        if (!$stockResult = $this->storeService->getStockResult($this->getPickupDelivery())) {
             return new StoreCollection();
         }
 
@@ -320,7 +356,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
             return new StoreCollection();
         }
         if ($this->deliveryService->isDpdPickup($pickupDelivery)) {
-            return $stockResult->getStores()->toArray();
+            return $stockResult->getStores();
         }
 
         $storeRepository = $this->storeService->getRepository();
@@ -329,7 +365,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
     }
 
     /**
-     * @return CalculationResult|null
+     * @return null|CalculationResult
      */
     protected function getPickupDelivery()
     {
@@ -377,5 +413,4 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
 
         return $result;
     }
-
 }

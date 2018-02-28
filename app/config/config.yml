@@ -7,6 +7,8 @@ imports:
   - { resource: configs/old_sound_rabbit_mq.yml }
   - { resource: configs/four_paws_sap.yml }
   - { resource: configs/four_paws_mobile_api.yml }
+  - { resource: configs/env.parameters.yml }
+  - { resource: configs/jms_serializer.yml }
 
 parameters:
   manzana.guzzle.curl:
@@ -35,6 +37,15 @@ parameters:
   manzana.wdsl: '%env(MANZANA_HOST)%'
   manzana.pos.wdsl: '%env(MANZANA_HOST_POS)%'
 
+  sms:
+    login: '%env(SMS_LOGIN)%'
+    password: '%env(SMS_PASSWORD)%'
+    login.immediate: '%env(SMS_LOGIN_IMMEDIATE)%'
+    password.immediate: '%env(SMS_PASSWORD_IMMEDIATE)%'
+    start_messaging: '%sms.start_messaging%'
+    stop_messaging: '%sms.stop_messaging%'
+    originator: '%sms.originator%'
+
 framework:
   esi: { enabled: true }
   translator: { fallbacks: ['%locale%'] }
@@ -51,7 +62,7 @@ framework:
   session:
     # https://symfony.com/doc/current/reference/configuration/framework.html#handler-id
     storage_id: session.storage.php_bridge
-    handler_id: ~
+    handler_id: FourPaws\AppBundle\Session\BitrixSessionBridge
   fragments: ~
   http_method_override: true
   php_errors:
@@ -83,11 +94,6 @@ nelmio_api_doc:
 twig:
     debug: '%kernel.debug%'
     strict_variables: '%kernel.debug%'
-
-jms_serializer:
-  property_naming:
-    id: jms_serialized_name_annotation_strategy
-    enable_cache: true
 
 sensio_framework_extra:
   request:

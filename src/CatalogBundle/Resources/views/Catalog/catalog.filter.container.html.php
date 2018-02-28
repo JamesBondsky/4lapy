@@ -104,20 +104,16 @@ $filterCollection = $catalogRequest->getCategory()->getFilters();
             </span>
         </a>
         <div class="b-catalog-filter__filter-part">
-            <dl class="b-catalog-filter__row">
-                <dt class="b-catalog-filter__label">Часто ищут:
-                </dt>
-                <dd class="b-catalog-filter__block">
-                    <a class="b-link b-link--filter"
-                       href="javascript:void(0);"
-                       title="Hills для взрослых собак среднего размера"> Hills для взрослых собак среднего размера</a>
-                    <a class="b-link b-link--filter"
-                       href="javascript:void(0);"
-                       title="Chappy для маленьких собак">Chappy для маленьких собак</a>
-                </dd>
-            </dl>
-            <div class="b-line b-line--sort-desktop">
-            </div>
+            <?php $APPLICATION->IncludeComponent(
+                'fourpaws:catalog.often.seek',
+                '',
+                [
+                    'SECTION_ID' => $category->getId(),
+                    'LEFT_MARGIN' => $category->getLeftMargin(),
+                    'RIGHT_MARGIN' => $category->getRightMargin(),
+                    'DEPTH_LEVEL' => $category->getDepthLevel(),
+                ], false, ['HIDE_ICONS' => 'Y']
+            ); ?>
             <div class="b-catalog-filter__row b-catalog-filter__row--sort">
                 <div class="b-catalog-filter__sort-part js-permutation-mobile-here">
                     <?php
@@ -183,8 +179,7 @@ $filterCollection = $catalogRequest->getCategory()->getFilters();
                     </a>
                 </div>
             </div>
-            <div class="b-line b-line--sort-mobile">
-            </div>
+            <div class="b-line b-line--sort-mobile"></div>
         </div>
     </div>
     <div class="b-common-wrapper b-common-wrapper--visible js-catalog-wrapper">
@@ -198,8 +193,7 @@ $filterCollection = $catalogRequest->getCategory()->getFilters();
         }
         ?>
     </div>
-    <div class="b-line b-line--catalog-filter">
-    </div>
+    <div class="b-line b-line--catalog-filter"></div>
     <?php $APPLICATION->IncludeComponent(
         'bitrix:system.pagenavigation',
         'pagination',

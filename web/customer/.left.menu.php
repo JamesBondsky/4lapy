@@ -36,8 +36,8 @@ $aMenuLinks = Array(
 		"" 
 	),
 	Array(
-		"Возврат товара", 
-		"/customer/return-policy/", 
+		"Подписка на доставку",
+		"/customer/podpiska/",
 		Array(), 
 		Array(), 
 		"" 

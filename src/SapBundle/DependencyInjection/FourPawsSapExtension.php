@@ -5,8 +5,10 @@ namespace FourPaws\SapBundle\DependencyInjection;
 use FourPaws\SapBundle\Consumer\ConsumerInterface;
 use FourPaws\SapBundle\Pipeline\Pipeline;
 use FourPaws\SapBundle\Service\DirectorySourceFinderBuilder;
-use FourPaws\SapBundle\Source\DirectorySource;
+use FourPaws\SapBundle\Source\CsvDirectorySource;
+use FourPaws\SapBundle\Source\SerializerDirectorySource;
 use FourPaws\SapBundle\Source\SourceInterface;
+use JMS\Serializer\SerializerInterface;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
@@ -20,7 +22,7 @@ class FourPawsSapExtension extends ConfigurableExtension
     /**
      * Configures the passed container according to the merged configuration.
      *
-     * @param array            $mergedConfig
+     * @param array $mergedConfig
      * @param ContainerBuilder $container
      *
      * @throws \Exception
@@ -47,7 +49,7 @@ class FourPawsSapExtension extends ConfigurableExtension
     }
 
     /**
-     * @param array            $directorySources
+     * @param array $directorySources
      * @param ContainerBuilder $container
      *
      * @throws \Exception
@@ -65,18 +67,31 @@ class FourPawsSapExtension extends ConfigurableExtension
                     'build',
                 ]);
 
-            $container->register('sap.source.' . $name)
-                ->setClass(DirectorySource::class)
-                ->addArgument(new Reference('sap.source.finder.' . $name))
-                ->addArgument($source['out'])
-                ->addArgument($source['error'])
-                ->addTag('sap.source', ['type' => $source['entity']]);
+            if ($source['filetype'] === 'csv') {
+                $container->register('sap.source.' . $name)
+                    ->setClass(CsvDirectorySource::class)
+                    ->addArgument(new Reference('sap.source.finder.' . $name))
+                    ->addArgument($source['entity'])
+                    ->addArgument($source['out'])
+                    ->addArgument($source['error'])
+                    ->addTag('sap.source', ['type' => $source['entity']]);
+            } else {
+                $container->register('sap.source.' . $name)
+                    ->setClass(SerializerDirectorySource::class)
+                    ->addArgument(new Reference('sap.source.finder.' . $name))
+                    ->addArgument($source['entity'])
+                    ->addArgument($source['out'])
+                    ->addArgument($source['error'])
+                    ->addArgument(new Reference(SerializerInterface::class))
+                    ->addArgument($source['filetype'])
+                    ->addTag('sap.source', ['type' => $source['entity']]);
+            }
         }
     }
 
     /**
      *
-     * @param array            $pipelines
+     * @param array $pipelines
      * @param ContainerBuilder $container
      * @throws InvalidArgumentException
      */

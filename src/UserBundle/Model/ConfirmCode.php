@@ -32,6 +32,11 @@ class ConfirmCode extends CustomTable
      * @var DateTime $DATE
      */
     protected $DATE;
+
+    /**
+     * @var string $TYPE
+     */
+    protected $TYPE;
     
     /**
      * @return DateTime
@@ -92,5 +97,21 @@ class ConfirmCode extends CustomTable
         $this->ID = $id;
         
         return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getType(): string
+    {
+        return $this->TYPE;
+    }
+
+    /**
+     * @param string $type
+     */
+    public function withType(string $type)
+    {
+        $this->TYPE = $type;
     }
 }

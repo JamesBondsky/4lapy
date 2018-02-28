@@ -367,15 +367,13 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB);
     <div class="b-tab-content__container active js-tab-content" data-tab-content="description">
         <div class="b-description-tab">
             <div class="b-description-tab__column">
-                <div class="b-description-tab__title">Описание</div>
-                <div class="b-description-tab__text">
-                    <p>
-                        <?= $product->getDetailText()->getText() ?>
-                    </p>
-                </div>
+                <h2>Описание</h2>
+                <p>
+                    <?= $product->getDetailText()->getText() ?>
+                </p>
             </div>
             <div class="b-description-tab__column b-description-tab__column--characteristics">
-                <div class="b-description-tab__title">Подробные характеристики</div>
+                <h2>Подробные характеристики</h2>
                 <div class="b-characteristics-tab">
                     <ul class="b-characteristics-tab__list">
                         <li class="b-characteristics-tab__item" <?= (!$currentOffer->getXmlId()) ? 'style="display:none"' : '' ?>>

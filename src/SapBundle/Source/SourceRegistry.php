@@ -4,6 +4,8 @@ namespace FourPaws\SapBundle\Source;
 
 use FourPaws\SapBundle\Exception\UnexpectedValueException;
 use FourPaws\SapBundle\Model\SourceCollection;
+use Generator;
+use InvalidArgumentException;
 
 class SourceRegistry implements SourceRegistryInterface
 {
@@ -11,7 +13,8 @@ class SourceRegistry implements SourceRegistryInterface
 
     /**
      * SourceRegistry constructor.
-     * @throws \InvalidArgumentException
+     *
+     * @throws InvalidArgumentException
      */
     public function __construct()
     {
@@ -22,7 +25,7 @@ class SourceRegistry implements SourceRegistryInterface
      * @param string          $type
      * @param SourceInterface $source
      *
-     * @throws \InvalidArgumentException
+     * @throws InvalidArgumentException
      * @return SourceRegistryInterface
      */
     public function register(string $type, SourceInterface $source) : SourceRegistryInterface
@@ -36,9 +39,9 @@ class SourceRegistry implements SourceRegistryInterface
      * @param string $type
      *
      * @throws UnexpectedValueException
-     * @return \Generator|SourceMessageInterface[]
+     * @return Generator|SourceMessageInterface[]
      */
-    public function generator(string $type) : \Generator
+    public function generator(string $type) : Generator
     {
         yield from $this->get($type)->generator();
     }
