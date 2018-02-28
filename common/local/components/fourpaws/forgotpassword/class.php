@@ -290,7 +290,7 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
 
                 $phone = $res;
             } elseif ($recovery === 'email') {
-                $title = 'Создание нового пароля';
+                $title = 'Восстановление пароля';
                 $res = $this->ajaxGetSendEmailCode($email, $backUrl);
                 if ($res instanceof JsonResponse) {
                     return $res;
