@@ -10,49 +10,56 @@ use FourPaws\Catalog\Model\Offer;
 use FourPaws\SapBundle\Dto\In\Offers\BarCode;
 use FourPaws\SapBundle\Dto\In\Offers\Material;
 use FourPaws\SapBundle\Enum\SapOfferProperty;
+use FourPaws\SapBundle\Exception\CantCreateReferenceItem;
+use FourPaws\SapBundle\Exception\LogicException;
+use FourPaws\SapBundle\Exception\NotFoundBasicUomException;
+use FourPaws\SapBundle\Exception\NotFoundDataManagerException;
+use FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException;
+use FourPaws\SapBundle\Exception\RuntimeException as SapRuntimeException;
 use FourPaws\SapBundle\Repository\OfferRepository;
 use FourPaws\SapBundle\Service\ReferenceService;
 use Psr\Log\LoggerAwareInterface;
+use RuntimeException;
 
 class OfferService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
-
+    
     /**
      * @var ReferenceService
      */
     private $referenceService;
-
+    
     /**
      * @var OfferRepository
      */
     private $offerRepository;
-
+    
     public function __construct(ReferenceService $referenceService, OfferRepository $offerRepository)
     {
         $this->referenceService = $referenceService;
         $this->offerRepository = $offerRepository;
     }
-
+    
     /**
      * @param Material $material
      *
-     * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
-     * @throws \FourPaws\SapBundle\Exception\NotFoundBasicUomException
-     * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
-     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
-     * @throws \FourPaws\SapBundle\Exception\LogicException
-     * @throws \FourPaws\SapBundle\Exception\RuntimeException
+     * @throws NotFoundDataManagerException
+     * @throws NotFoundBasicUomException
+     * @throws CantCreateReferenceItem
+     * @throws NotFoundReferenceRepositoryException
+     * @throws LogicException
+     * @throws SapRuntimeException
      * @return Offer
      */
     public function processMaterial(Material $material): Offer
     {
         $offer = $this->findByMaterial($material) ?: new Offer();
         $this->fillFromMaterial($offer, $material);
-
+        
         return $offer;
     }
-
+    
     /**
      * @param Offer $offer
      *
@@ -62,7 +69,7 @@ class OfferService implements LoggerAwareInterface
     {
         return $this->offerRepository->create($offer);
     }
-
+    
     /**
      * @param Offer $offer
      *
@@ -72,11 +79,11 @@ class OfferService implements LoggerAwareInterface
     {
         return $this->offerRepository->update($offer);
     }
-
+    
     /**
      * @param string $xmlId
      *
-     * @throws \RuntimeException
+     * @throws RuntimeException
      * @return bool
      */
     public function deativate(string $xmlId)
@@ -90,7 +97,7 @@ class OfferService implements LoggerAwareInterface
         }
         return true;
     }
-
+    
     /**
      * @param Material $material
      *
@@ -100,16 +107,16 @@ class OfferService implements LoggerAwareInterface
     {
         return $this->offerRepository->findByXmlId($material->getOfferXmlId());
     }
-
+    
     /**
      * @param Offer    $offer
      * @param Material $material
      *
-     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
-     * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
-     * @throws \FourPaws\SapBundle\Exception\LogicException
-     * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
-     * @throws \FourPaws\SapBundle\Exception\NotFoundBasicUomException
+     * @throws NotFoundReferenceRepositoryException
+     * @throws NotFoundDataManagerException
+     * @throws LogicException
+     * @throws CantCreateReferenceItem
+     * @throws NotFoundBasicUomException
      * @return void
      */
     protected function fillFromMaterial(Offer $offer, Material $material)
@@ -117,7 +124,7 @@ class OfferService implements LoggerAwareInterface
         $this->fillFields($offer, $material);
         $this->fillProperties($offer, $material);
     }
-
+    
     /**
      * @param Offer    $offer
      * @param Material $material
@@ -129,52 +136,53 @@ class OfferService implements LoggerAwareInterface
             ->withName($material->getOfferName())
             ->withXmlId($material->getOfferXmlId());
     }
-
+    
     /**
      * @param Offer    $offer
      * @param Material $material
      *
-     * @throws \RuntimeException
-     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
-     * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
-     * @throws \FourPaws\SapBundle\Exception\LogicException
-     * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
-     * @throws \FourPaws\SapBundle\Exception\NotFoundBasicUomException
+     * @throws RuntimeException
+     * @throws NotFoundReferenceRepositoryException
+     * @throws NotFoundDataManagerException
+     * @throws LogicException
+     * @throws CantCreateReferenceItem
+     * @throws NotFoundBasicUomException
      */
     protected function fillProperties(Offer $offer, Material $material)
     {
         /**
-         * @todo На данный момент нет описания полей по SAP
-         * $offer->withFlavourCombination();
-         * $offer->withColourCombination();
+         * Пока из SAP такое свойство мы не получаем
+         *
+         * $offer->withFlavourCombination($material->getProperties()->getProperty('COLOUR_COMBINATION')->getValues()->first()->getName());
          */
+        $offer->withColourCombination($material->getProperties()->getProperty('FLAVOUR_COMBINATION')->getValues()->first()->getName());
         $offer->withMultiplicity($material->getCountInPack());
         $this->fillReferenceProperties($offer, $material);
         $this->fillBarCodes($offer, $material);
         $this->fillVolume($offer, $material);
     }
-
+    
     /**
      * @param Offer    $offer
      * @param Material $material
      *
-     * @throws \FourPaws\SapBundle\Exception\NotFoundBasicUomException
+     * @throws NotFoundBasicUomException
      */
     protected function fillVolume(Offer $offer, Material $material)
     {
         $offer->withVolume($material->getBasicUnitOfMeasure()->getVolume());
     }
-
-
+    
+    
     /**
      * @param Offer    $offer
      * @param Material $material
      *
-     * @throws \RuntimeException
-     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
-     * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
-     * @throws \FourPaws\SapBundle\Exception\LogicException
-     * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
+     * @throws RuntimeException
+     * @throws NotFoundReferenceRepositoryException
+     * @throws NotFoundDataManagerException
+     * @throws LogicException
+     * @throws CantCreateReferenceItem
      */
     protected function fillReferenceProperties(Offer $offer, Material $material)
     {
@@ -197,7 +205,7 @@ class OfferService implements LoggerAwareInterface
                 $material
             ));
     }
-
+    
     /**
      * @param Offer    $offer
      * @param Material $material
