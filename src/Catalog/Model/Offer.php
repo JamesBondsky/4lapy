@@ -306,12 +306,20 @@ class Offer extends IblockElement
      * @Groups({"elastic"})
      */
     protected $PROPERTY_IS_NEW = false;
+    
     /**
      * @var bool
      * @Type("bool")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_IS_SALE = false;
+    
+    /**
+     * @var bool
+     * @Type("bool")
+     * @Groups({"elastic"})
+     */
+    protected $PROPERTY_IS_POPULAR = false;
 
     /**
      * @var string
@@ -887,7 +895,27 @@ class Offer extends IblockElement
 
         return $this;
     }
-
+    
+    /**
+     * @return bool
+     */
+    public function getPropertyPopular(): bool
+    {
+        return $this->PROPERTY_IS_POPULAR;
+    }
+    
+    /**
+     * @param bool $PROPERTY_IS_POPULAR
+     *
+     * @return Offer
+     */
+    public function setPropertyPopular(bool $PROPERTY_IS_POPULAR)
+    {
+        $this->PROPERTY_IS_POPULAR = $PROPERTY_IS_POPULAR;
+        
+        return $this;
+    }
+    
     protected function checkOptimalPrice()
     {
         CCatalogDiscountSave::Disable();

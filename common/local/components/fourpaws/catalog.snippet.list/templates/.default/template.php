@@ -20,9 +20,8 @@ if (0 === $component->getProductCollection()->count()) {
 <div class="b-container">
     <section class="b-common-section">
         <div class="b-common-section__title-box b-common-section__title-box--sale">
-            <h2 class="b-title b-title--sale">Распродажа</h2>
-            <?
-            /**
+            <h2 class="b-title b-title--sale"><?= $arParams['TITLE'] ?></h2>
+            <?/**
              * Ссылка "Показать все" потребуется в случае добавления отдельной страницы с распродажей
              *
              * <a class="b-link b-link--title b-link--title" href="javascript:void(0)"

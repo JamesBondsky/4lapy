@@ -130,7 +130,7 @@ class User implements UserInterface
 
     /**
      * @var string
-     * @Serializer\Type("string")
+     * @Serializer\Type("phone")
      * @Serializer\SerializedName("PERSONAL_PHONE")
      * @Serializer\Groups(groups={"dummy","create","read","update"})
      * @PhoneNumber(defaultRegion="RU",type="mobile")
@@ -345,7 +345,7 @@ class User implements UserInterface
     {
         $value = $this->getNormalizePersonalPhone();
 
-        return strlen($value) ? '7'.$value : '';
+        return '' !== $value ? '7' . $value : '';
     }
 
     /**
@@ -363,7 +363,11 @@ class User implements UserInterface
      */
     public function setPersonalPhone(string $personalPhone): User
     {
-        $this->personalPhone = $personalPhone;
+        try {
+            $this->personalPhone = PhoneHelper::normalizePhone($personalPhone);
+        } catch (WrongPhoneNumberException $e) {
+            $this->personalPhone = '';
+        }
 
         return $this;
     }
@@ -677,7 +681,7 @@ class User implements UserInterface
      *
      * @return User
      */
-    public function setBirthday(Date $birthday): User
+    public function setBirthday(Date $birthday = null): User
     {
         $this->birthday = $birthday;
 
@@ -822,26 +826,6 @@ class User implements UserInterface
     }
 
     /**
-     * @param Role $role
-     *
-     * @return bool
-     */
-    public function addRole(Role $role)
-    {
-        return $this->getRolesCollection()->add($role);
-    }
-
-    /**
-     * @param Role $role
-     *
-     * @return bool
-     */
-    public function removeRole(Role $role)
-    {
-        return $this->getRolesCollection()->removeElement($role);
-    }
-
-    /**
      * @param Role[] $roles
      *
      * @return $this
@@ -865,6 +849,26 @@ class User implements UserInterface
                 return $role;
             });
         return $this;
+    }
+
+    /**
+     * @param Role $role
+     *
+     * @return bool
+     */
+    public function addRole(Role $role)
+    {
+        return $this->getRolesCollection()->add($role);
+    }
+
+    /**
+     * @param Role $role
+     *
+     * @return bool
+     */
+    public function removeRole(Role $role)
+    {
+        return $this->getRolesCollection()->removeElement($role);
     }
 
     /**
@@ -924,7 +928,7 @@ class User implements UserInterface
     /**
      * @return string
      */
-    public function getDiscountCardNumber() : string
+    public function getDiscountCardNumber(): string
     {
         return $this->discountCardNumber ?? '';
     }
@@ -934,7 +938,7 @@ class User implements UserInterface
      *
      * @return User
      */
-    public function setDiscountCardNumber(string $discountCardNumber) : User
+    public function setDiscountCardNumber(string $discountCardNumber): User
     {
         $this->discountCardNumber = $discountCardNumber;
 
@@ -944,7 +948,7 @@ class User implements UserInterface
     /**
      * @return bool
      */
-    public function isFastOrderUser() : bool
+    public function isFastOrderUser(): bool
     {
         return (strpos($this->getEmail(), '@fastorder.ru') !== false);
     }
@@ -952,7 +956,7 @@ class User implements UserInterface
     /**
      * @return string
      */
-    public function getShopCode() : string
+    public function getShopCode(): string
     {
         return $this->shopCode ?? '';
     }
@@ -962,7 +966,7 @@ class User implements UserInterface
      *
      * @return User
      */
-    public function setShopCode(string $shopCode) : User
+    public function setShopCode(string $shopCode): User
     {
         $this->shopCode = $shopCode;
 

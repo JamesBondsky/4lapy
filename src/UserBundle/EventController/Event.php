@@ -10,6 +10,8 @@ use Bitrix\Main\EventManager;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\ServiceHandlerInterface;
+use FourPaws\Helpers\Exception\WrongPhoneNumberException;
+use FourPaws\Helpers\PhoneHelper;
 use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -39,6 +41,12 @@ class Event implements ServiceHandlerInterface
 
         self::initHandler('OnBeforeUserAdd', 'checkSocserviseRegisterHandler');
 
+        /**
+         * События форматирования телефона
+         */
+        self::initHandler('OnBeforeUserAdd', 'checkPhoneFormat');
+        self::initHandler('OnBeforeUserUpdate', 'checkPhoneFormat');
+
         self::initHandler('OnBeforeUserLogon', 'replaceLogin');
 
         self::initHandler('onBeforeUserLoginByHttpAuth', 'deleteBasicAuth');
@@ -59,6 +67,17 @@ class Event implements ServiceHandlerInterface
                 $method,
             ]
         );
+    }
+
+    public static function checkPhoneFormat(array &$fields)
+    {
+        if ($fields['PERSONAL_PHONE'] ?? '') {
+            try {
+                $fields['PERSONAL_PHONE'] = PhoneHelper::normalizePhone($fields['PERSONAL_PHONE']);
+            } catch (WrongPhoneNumberException $e) {
+                unset($fields['PERSONAL_PHONE']);
+            }
+        }
     }
 
     /**
@@ -97,7 +116,7 @@ class Event implements ServiceHandlerInterface
      */
     public function deleteBasicAuth(&$auth)
     {
-        if(\is_array($auth) && isset($auth['basic'])) {
+        if (\is_array($auth) && isset($auth['basic'])) {
             unset($auth['basic']);
         }
     }

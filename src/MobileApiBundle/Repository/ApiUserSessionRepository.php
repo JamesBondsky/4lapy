@@ -194,6 +194,8 @@ class ApiUserSessionRepository implements ApiUserSessionRepositoryInterface
      * @param string $token
      *
      * @return bool
+     * @throws \FourPaws\MobileApiBundle\Exception\InvalidIdentifierException
+     * @throws \FourPaws\MobileApiBundle\Exception\BitrixException
      */
     public function deleteByToken(string $token): bool
     {
@@ -213,6 +215,6 @@ class ApiUserSessionRepository implements ApiUserSessionRepositoryInterface
                 throw new BitrixException($exception->getMessage(), $exception->getCode(), $exception);
             }
         }
-        throw new InvalidIdentifierException('Wrong identifier passed: ' . $id);
+        throw new InvalidIdentifierException('Wrong identifier passed: ' . $token);
     }
 }

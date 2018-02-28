@@ -2,13 +2,9 @@
 
 namespace FourPaws\SaleBundle\Validation;
 
-use FourPaws\App\Application;
-use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\PersonalBundle\Exception\NotFoundException;
-use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Service\BasketService;
-use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
@@ -16,9 +12,9 @@ use Symfony\Component\Validator\ConstraintValidator;
 class OrderBonusPaymentValidator extends ConstraintValidator
 {
     /**
-     * @var OrderService
+     * @var OrderStorageService
      */
-    protected $orderService;
+    protected $orderStorageService;
 
     /**
      * @var BasketService
@@ -31,11 +27,11 @@ class OrderBonusPaymentValidator extends ConstraintValidator
     protected $currentUserProvider;
 
     public function __construct(
-        OrderService $orderService,
+        OrderStorageService $orderStorageService,
         BasketService $basketService,
         CurrentUserProviderInterface $currentUserProvider
     ) {
-        $this->orderService = $orderService;
+        $this->orderStorageService = $orderStorageService;
         $this->basketService = $basketService;
         $this->currentUserProvider = $currentUserProvider;
     }
@@ -71,7 +67,7 @@ class OrderBonusPaymentValidator extends ConstraintValidator
             return;
         }
 
-        $maxValue = $this->orderService->getMaxBonusesForPayment($entity);
+        $maxValue = $this->orderStorageService->getMaxBonusesForPayment($entity);
         if ($entity->getBonus() > $maxValue) {
             $this->context->addViolation($constraint->wrongValueMessage);
         }

@@ -12,11 +12,13 @@ use Bitrix\Main\EventResult;
 use Bitrix\Main\Loader;
 
 use FourPaws\App\Application;
+use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\DeliveryBundle\Service\DeliveryServiceHandlerBase;
+use FourPaws\DeliveryBundle\Handler\DeliveryHandlerBase;
 use FourPaws\Location\LocationService;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
@@ -78,11 +80,11 @@ class Calculator extends DPD
 
         if (!empty($arOrder['ITEMS'])) {
             $basket = $basketService->getBasket()->getOrderableItems();
-            if ($offers = DeliveryServiceHandlerBase::getOffers(
+            if ($offers = DeliveryHandlerBase::getOffers(
                 $arOrder['LOCATION_FROM'],
                 $basket
             )) {
-                $stockResult = DeliveryServiceHandlerBase::getStocks($basket, $offers, $storesAvailable, $storesDelay);
+                $stockResult = DeliveryHandlerBase::getStocks($basket, $offers, $storesAvailable, $storesDelay);
                 if (!$stockResult->getUnavailable()->isEmpty()) {
                     $result = [
                         'RESULT' => 'ERROR',
@@ -125,16 +127,16 @@ class Calculator extends DPD
             $result['DPD_TARIFF']['DAYS']++;
         }
 
+        $intervals = new IntervalCollection();
+        $intervals->add(
+            (new Interval())->setFrom($interval[0])
+                            ->setTo($interval[1])
+        );
         /* @todo не хранить эти данные в сессии */
         $_SESSION['DPD_DATA'][$profileCode] = [
-            'INTERVALS' => [
-                [
-                    'FROM' => $interval[0],
-                    'TO'   => $interval[1],
-                ],
-            ],
-            'DAYS_FROM' => $result['DPD_TARIFF']['DAYS'],
-            'DAYS_TO' => $result['DPD_TARIFF']['DAYS'] + 10,
+            'INTERVALS'    => $intervals,
+            'DAYS_FROM'    => $result['DPD_TARIFF']['DAYS'],
+            'DAYS_TO'      => $result['DPD_TARIFF']['DAYS'] + 10,
             'STOCK_RESULT' => $stockResult ?? new StockResultCollection(),
         ];
 

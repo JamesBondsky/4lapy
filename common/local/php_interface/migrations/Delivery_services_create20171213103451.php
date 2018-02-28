@@ -8,8 +8,8 @@ use Bitrix\Sale\Delivery\Services\Manager;
 use Bitrix\Sale\Delivery\Services\Table as ServicesTable;
 use Bitrix\Sale\Internals\ServiceRestrictionTable;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\DeliveryBundle\Service\InnerDeliveryService;
-use FourPaws\DeliveryBundle\Service\InnerPickupService;
+use FourPaws\DeliveryBundle\Handler\InnerDeliveryHandler;
+use FourPaws\DeliveryBundle\Handler\InnerPickupHandler;
 
 class Delivery_services_create20171213103451 extends SprintMigrationBase
 {
@@ -31,7 +31,7 @@ class Delivery_services_create20171213103451 extends SprintMigrationBase
 
     protected $deliveries = [
         '4lapy_delivery' => [
-            'CLASS_NAME' => InnerDeliveryService::class,
+            'CLASS_NAME' => InnerDeliveryHandler::class,
             'CONFIG'     => [
                 'MAIN'      => [
                     'CURRENCY' => 'RUB',
@@ -49,7 +49,7 @@ class Delivery_services_create20171213103451 extends SprintMigrationBase
             ],
         ],
         '4lapy_pickup'   => [
-            'CLASS_NAME' => InnerPickupService::class,
+            'CLASS_NAME' => InnerPickupHandler::class,
             'CONFIG'     => [
                 'MAIN' => [
                     'CURRENCY' => 'RUB',
