@@ -40,17 +40,18 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
      */
     public static function delExpiredCodes()
     {
+        $time = time();
         $query = ConfirmCodeTable::query();
         $query->setFilter([
             [
                 'LOGIC' => 'OR',
                 [
-                    '<DATE' => DateTime::createFromTimestamp(time() - static::SMS_LIFE_TIME),
-                    'TYPE'  => 'sms',
+                    '<DATE' => DateTime::createFromTimestamp($time - static::SMS_LIFE_TIME),
+                    '=TYPE'  => 'sms',
                 ],
                 [
-                    '<DATE' => DateTime::createFromTimestamp(time() - static::EMAIL_LIFE_TIME),
-                    'TYPE'  => 'email',
+                    '<DATE' => DateTime::createFromTimestamp($time - static::EMAIL_LIFE_TIME),
+                    '=TYPE'  => 'email',
                 ],
             ],
 
@@ -106,14 +107,17 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
      *
      * @throws \Exception
      */
-    public static function setGeneratedCode(string $text, string $type = 'sms')
+    public static function setGeneratedCode(string $text, string $type = 'sms', int $time = 0)
     {
         if (!empty($text)) {
+            if($time === 0){
+                $time = time();
+            }
             if (!empty($_COOKIE[ToUpper($type) . '_ID'])) {
                 static::delCurrentCode($type);
             }
-            $_COOKIE[ToUpper($type) . '_ID'] = $smsId = session_id() . '_' . time();
-            if (!setcookie(ToUpper($type) . '_ID', $smsId, time() + static::SMS_LIFE_TIME, '/')) {
+            $_COOKIE[ToUpper($type) . '_ID'] = $smsId = session_id() . '_' . $time;
+            if (!setcookie(ToUpper($type) . '_ID', $smsId, $time + static::SMS_LIFE_TIME, '/')) {
                 throw new \RuntimeException('ошибка установки куков');
             }
             $res = ConfirmCodeTable::add(
@@ -232,9 +236,12 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
      *
      * @return string
      */
-    public static function getConfirmHash(string $text): string
+    public static function getConfirmHash(string $text, int $time = 0): string
     {
-        return md5('confirm'.$text.time());
+        if($time === 0){
+            $time = time();
+        }
+        return md5('confirm'.$text.$time);
     }
 
 
@@ -249,5 +256,40 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
     public static function checkConfirmEmail(string $confirmCode): bool
     {
         return static::checkCode($confirmCode, 'email');
+    }
+
+    /**
+     * @param string $text
+     * @param string $type
+     *
+     * @param int    $time
+     *
+     * @throws ArgumentException
+     * @throws \Exception
+     */
+    public static function setGeneratedHash(string $text, string $type = 'sms', int $time = 0)
+    {
+        if (!empty($text)) {
+            if($time === 0){
+                $time = time();
+            }
+            if (!empty($_COOKIE[ToUpper($type) . '_ID'])) {
+                static::delCurrentCode($type);
+            }
+            $_COOKIE[ToUpper($type) . '_ID'] = $smsId = session_id() . '_' . $time;
+            if (!setcookie(ToUpper($type) . '_ID', $smsId, $time + static::EMAIL_LIFE_TIME, '/')) {
+                throw new \RuntimeException('ошибка установки куков');
+            }
+            $res = ConfirmCodeTable::add(
+                [
+                    'ID'   => $smsId,
+                    'CODE' => static::getConfirmHash($text, $time),
+                    'TYPE' => $type,
+                ]
+            );
+            if (!$res->isSuccess()) {
+                throw new ArgumentException($res->getErrorMessages());
+            }
+        }
     }
 }
