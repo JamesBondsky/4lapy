@@ -7,7 +7,7 @@
 namespace FourPaws\DeliveryBundle\Helpers;
 
 use Bitrix\Main\Grid\Declension;
-use Bitrix\Sale\Delivery\CalculationResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult;
 use FourPaws\Helpers\CurrencyHelper;
 
 class DeliveryTimeHelper

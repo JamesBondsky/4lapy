@@ -7,14 +7,13 @@
 namespace FourPaws\StoreBundle\Service;
 
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
-use Bitrix\Sale\Delivery\CalculationResult;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Model\CropImageDecorator;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
-use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\DeliveryBundle\Entity\CalculationResult;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
@@ -429,7 +428,7 @@ class StoreService
             $stockResult = null;
             $storeAmount = 0;
             if ($this->pickupDelivery) {
-                $stockResult = $this->getStockResult($this->pickupDelivery);
+                $stockResult = $this->pickupDelivery->getStockResult();
                 $storeAmount = reset($this->offers)->getStocks()
                                                    ->filterByStores(
                                                        $this->getByCurrentLocation(
@@ -548,7 +547,7 @@ class StoreService
         }
 
         try {
-            return $this->getStockResult($pickupDelivery)->getStores();
+            return $pickupDelivery->getStockResult()->getStores();
         } catch (DeliveryNotFoundException $e) {
             return new StoreCollection();
         }

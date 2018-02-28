@@ -7,10 +7,10 @@
 namespace FourPaws\DeliveryBundle\Handler;
 
 use Bitrix\Main\Error;
-use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Shipment;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\IntervalRuleCollection;
+use FourPaws\DeliveryBundle\Entity\CalculationResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\StoreBundle\Collection\StoreCollection;

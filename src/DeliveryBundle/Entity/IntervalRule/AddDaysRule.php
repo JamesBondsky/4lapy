@@ -2,7 +2,7 @@
 
 namespace FourPaws\DeliveryBundle\Entity\IntervalRule;
 
-use Bitrix\Sale\Delivery\CalculationResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult;
 
 /**
  * Правило, добавляющее $value дней к дате доставке,
