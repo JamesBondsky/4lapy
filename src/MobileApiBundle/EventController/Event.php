@@ -39,11 +39,10 @@ class Event implements ServiceHandlerInterface
 
         self::initHandler('OnUserLogin', 'updateTokenAfterLogin');
         self::initHandler('OnAfterUserLogout', 'updateTokenAfterLogout');
+        self::initHandler('onAfterUserUpdate', 'updateUser');
     }
 
     /**
-     * @param array $fields
-     *
      * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
@@ -65,6 +64,19 @@ class Event implements ServiceHandlerInterface
     {
         $sessionHandler = Application::getInstance()->getContainer()->get(SessionHandlerInterface::class);
         $sessionHandler->logout();
+    }
+
+    /**
+     * @param array $fields
+     *
+     * @throws ApplicationCreateException
+     */
+    public static function updateUser(array &$fields)
+    {
+        if ($fields['RESULT'] && $fields['ID'] ?? 0) {
+            $sessionHandler = Application::getInstance()->getContainer()->get(SessionHandlerInterface::class);
+            $sessionHandler->update((int)$fields['ID']);
+        }
     }
 
     /**

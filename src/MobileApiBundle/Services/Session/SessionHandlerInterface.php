@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\MobileApiBundle\Services\Session;
 
 use FourPaws\MobileApiBundle\Exception\BitrixException;
@@ -39,4 +43,11 @@ interface SessionHandlerInterface
      * @throws InvalidArgumentException
      */
     public function logout();
+
+    /**
+     * Update user
+     *
+     * @param int $id
+     */
+    public function update(int $id);
 }

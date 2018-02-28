@@ -1,8 +1,13 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\MobileApiBundle\Dto\Request;
 
 use JMS\Serializer\Annotation as Serializer;
+use Misd\PhoneNumberBundle\Validator\Constraints\PhoneNumber;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
@@ -15,7 +20,11 @@ class LoginRequest implements SimpleUnserializeRequest, PostRequest
     /**
      * @Assert\Collection(
      *     fields = {
-     *         "login" = @Assert\NotBlank,
+     *         "login" = {
+     *              @Assert\NotBlank,
+     *              @PhoneNumber(defaultRegion="RU",type="mobile"),
+     *              @Assert\Regex("/^\d{10}$/")
+     *         },
      *         "password" = {
      *             @Assert\NotBlank(),
      *         }
