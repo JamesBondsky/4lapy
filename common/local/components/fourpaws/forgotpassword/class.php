@@ -426,11 +426,11 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
             $expertSenderService = App::getInstance()->getContainer()->get('expertsender.service');
             return $expertSenderService->sendForgotPassword($curUser, $backUrl);
         } catch (ExpertsenderServiceException $e) {
-            /** скипаем для показа системной ошибки */
+            /** скипаем для показа системной ошибки в вызвавшем методе */
         } catch (ApplicationCreateException $e) {
-            /** скипаем для показа системной ошибки */
+            /** скипаем для показа системной ошибки в вызвавшем методе */
         }
-        return $this->ajaxMess->getSystemError();
+        return false;
     }
 
     /**
