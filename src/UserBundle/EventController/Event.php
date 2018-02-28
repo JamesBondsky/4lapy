@@ -50,6 +50,7 @@ class Event implements ServiceHandlerInterface
         self::initHandler('OnBeforeUserLogon', 'replaceLogin');
 
         self::initHandler('onBeforeUserLoginByHttpAuth', 'deleteBasicAuth');
+        self::initHandler('OnBeforeUserRegister', 'preventAuthorizationOnRegister');
     }
 
     /**
@@ -119,5 +120,13 @@ class Event implements ServiceHandlerInterface
         if (\is_array($auth) && isset($auth['basic'])) {
             unset($auth['basic']);
         }
+    }
+
+    /**
+     * @param $fields
+     */
+    public function preventAuthorizationOnRegister(&$fields)
+    {
+        $fields['ACTIVE'] = 'N';
     }
 }
