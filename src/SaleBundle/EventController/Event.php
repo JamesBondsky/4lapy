@@ -4,6 +4,7 @@ namespace FourPaws\SaleBundle\EventController;
 
 use Bitrix\Main\EventManager;
 use FourPaws\App\ServiceHandlerInterface;
+use FourPaws\SaleBundle\Discount\Action\Action\DiscountFromProperty;
 use FourPaws\SaleBundle\Discount\Action\Condition\BasketQuantity;
 use FourPaws\SaleBundle\Discount\BasketFilter;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
@@ -36,6 +37,7 @@ class Event implements ServiceHandlerInterface
         self::initHandler('OnCondSaleActionsControlBuildList', [Gifter::class, 'GetControlDescr']);
         self::initHandler('OnCondSaleActionsControlBuildList', [BasketFilter::class, 'GetControlDescr']);
         self::initHandler('OnCondSaleActionsControlBuildList', [BasketQuantity::class, 'GetControlDescr']);
+        self::initHandler('OnCondSaleActionsControlBuildList', [DiscountFromProperty::class, 'GetControlDescr']);
         self::initHandler('OnAfterSaleOrderFinalAction', [Manager::class, 'OnAfterSaleOrderFinalAction']);
     }
 
