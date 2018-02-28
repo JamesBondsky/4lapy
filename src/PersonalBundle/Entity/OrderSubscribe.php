@@ -2,6 +2,8 @@
 
 namespace FourPaws\PersonalBundle\Entity;
 
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 use FourPaws\App\Application;
@@ -266,8 +268,8 @@ class OrderSubscribe extends BaseEntity
 
     /**
      * @return string
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\SystemException
+     * @throws ArgumentException
+     * @throws SystemException
      * @throws \Exception
      * @throws ApplicationCreateException
      */
@@ -286,8 +288,8 @@ class OrderSubscribe extends BaseEntity
 
     /**
      * @return string
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\SystemException
+     * @throws ArgumentException
+     * @throws SystemException
      * @throws \Exception
      * @throws ApplicationCreateException
      */
@@ -416,6 +418,84 @@ class OrderSubscribe extends BaseEntity
         }
 
         return $this;
+    }
+
+    /**
+     * @return \DateTime|null
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws \Exception
+     */
+    public function getNextDeliveryDate()
+    {
+        $result = null;
+        $baseDateRaw = '';
+
+        $dateStartRaw = $this->getDateStart();
+        if ($dateStartRaw) {
+            $dateStart = new \DateTime($dateStartRaw);
+            $baseDate = new \DateTime($baseDateRaw);
+            $intervalPassed = $dateStart->diff($baseDate);
+            if ($intervalPassed->invert) {
+                // если заданная дата первой доставки является будущей, то она и будет ближайшей датой
+                $result = $dateStart;
+            } else {
+                $periodIntervalSpec = '';
+
+                $frequencyXmlId = $this->getDeliveryFrequencyXmlId();
+                switch ($frequencyXmlId) {
+                    case 'WEEK_1':
+                        // раз в неделю
+                        $periodIntervalSpec = 'P1W';
+                        break;
+
+                    case 'WEEK_2':
+                        // раз в две недели
+                        $periodIntervalSpec = 'P2W';
+                        break;
+
+                    case 'WEEK_3':
+                        // раз в три недели
+                        $periodIntervalSpec = 'P3W';
+                        break;
+
+                    case 'MONTH_1':
+                        // раз в месяц
+                        $periodIntervalSpec = 'P1M';
+                        break;
+
+                    case 'MONTH_2':
+                        // раз в два месяца
+                        $periodIntervalSpec = 'P2M';
+                        break;
+
+                    case 'MONTH_3':
+                        // раз в три месяца
+                        $periodIntervalSpec = 'P3M';
+                        break;
+                }
+
+                if ($periodIntervalSpec) {
+                    $periodStart = $dateStart;
+                    $periodEnd = clone $baseDate;
+                    $periodInterval = new \DateInterval($periodIntervalSpec);
+                    // конечная дата периода: +два интервала
+                    $periodEnd->add($periodInterval);
+                    $periodEnd->add($periodInterval);
+
+                    $period = new \DatePeriod($periodStart, $periodInterval, $periodEnd);
+                    foreach($period as $periodDate) {
+                        if ($periodDate > $baseDate) {
+                            $result = $periodDate;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        return $result;
     }
 
 }

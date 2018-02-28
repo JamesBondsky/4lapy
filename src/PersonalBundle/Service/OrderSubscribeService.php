@@ -3,31 +3,20 @@
 namespace FourPaws\PersonalBundle\Service;
 
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\ArgumentNullException;
-use Bitrix\Main\ArgumentOutOfRangeException;
-use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Entity\AddResult;
 use Bitrix\Main\Entity\DeleteResult;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Entity\UpdateResult;
-use Bitrix\Main\NotImplementedException;
-use Bitrix\Main\NotSupportedException;
-use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\Error;
 use Bitrix\Main\Result;
-use Bitrix\Sale\Basket;
-use Bitrix\Sale\BasketItem;
-use Bitrix\Sale\Payment;
-use Bitrix\Sale\PropertyValue;
-use Bitrix\Sale\Shipment;
-use Bitrix\Sale\ShipmentItem;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\PersonalBundle\Entity\Order;
-use FourPaws\PersonalBundle\Exception\OrderCreateException;
-use FourPaws\PersonalBundle\Exception\OrderNotFoundException;
+use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Repository\OrderSubscribeRepository;
+use FourPaws\SaleBundle\Helper\OrderCopy;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -49,29 +38,14 @@ class OrderSubscribeService
     private $deliveryService;
     /** @var array $miscData */
     private $miscData = [];
-    /** @var array */
-    private $basketItemCopyFields = [
-        'SET_PARENT_ID', 'TYPE',
-        'PRODUCT_ID', 'PRODUCT_PRICE_ID', 'PRICE', 'CURRENCY', 'WEIGHT', 'QUANTITY', 'LID',
-        'NAME', 'CALLBACK_FUNC', 'NOTES', 'PRODUCT_PROVIDER_CLASS', 'CANCEL_CALLBACK_FUNC',
-        'ORDER_CALLBACK_FUNC', 'PAY_CALLBACK_FUNC', 'DETAIL_PAGE_URL', 'CATALOG_XML_ID', 'PRODUCT_XML_ID',
-        'VAT_RATE', 'MEASURE_NAME', 'MEASURE_CODE', 'BASE_PRICE', 'VAT_INCLUDED'
-    ];
-    /** @var array */
-    private $basketItemExcludeFields = [];
-    /** @var array */
-    private $basketItemCopyProps = [];
-    /** @var array */
+
+    /** @var array Исключаемые свойства корзины */
     private $basketItemExcludeProps = [
         /** @todo: Уточнить какие свойства позиции корзины следует исключать */
-        'CATALOG.XML_ID', 'PRODUCT.XML_ID',
     ];
-    /** @var array */
-    private $orderCopyProps = [];
-    /** @var array */
+    /** @var array Исключаемые свойства заказа */
     private $orderExcludeProps = [
-        'IS_EXPORTED',
-        'DELIVERY_DATE', 'DELIVERY_INTERVAL',
+        'IS_EXPORTED', 'DELIVERY_DATE', 'DELIVERY_INTERVAL',
         /** @todo: Уточнить насчет этих свойств */
         'FROM_APP',
     ];
@@ -295,283 +269,59 @@ class OrderSubscribeService
     }
 
     /**
-     * @param int $orderId
+     * @param int $copyOrderId
+     * @param bool $checkActiveSubscribe
      * @return Result
-     * @throws ApplicationCreateException
-     * @throws OrderCreateException
-     * @throws OrderNotFoundException
-     * @throws ArgumentException
-     * @throws ArgumentNullException
-     * @throws ArgumentOutOfRangeException
-     * @throws ArgumentTypeException
-     * @throws NotImplementedException
-     * @throws NotSupportedException
-     * @throws ObjectNotFoundException
-     * @throws \Exception
      */
-    public function copyOrder(int $orderId)
+    public function copyOrder(int $copyOrderId, bool $checkActiveSubscribe = true)
     {
         $result = new Result();
 
-        $oldBitrixOrder = \Bitrix\Sale\Order::load($orderId);
-        if (!$oldBitrixOrder) {
-            throw new OrderNotFoundException('Копируемый заказ не найден');
-        }
-
-        $newBitrixOrder = \Bitrix\Sale\Order::create(
-            $oldBitrixOrder->getSiteId(),
-            $oldBitrixOrder->getUserId(),
-            $oldBitrixOrder->getCurrency()
-        );
-        if (!$newBitrixOrder) {
-            throw new OrderCreateException('Не удалось создать новый заказ для заполнения', 100);
-        }
-
-        $oldBasket2NewMap = [];
-
-        /**
-         * Установка типа плательщика для нового заказа
-         */
-        $newBitrixOrder->setPersonTypeId($oldBitrixOrder->getPersonTypeId());
-
-        /**
-         * Копирование корзины старого заказа в корзину нового заказа
-         */
-        $oldBasket = $oldBitrixOrder->getBasket();
-        /** @var Basket $newBasket */
-        $newBasket = Basket::create($oldBasket->getSiteId());
-
-        $oldBasketItems = $oldBasket->getBasketItems();
-        foreach ($oldBasketItems as $oldBasketItem) {
-            /** @var BasketItem $oldBasketItem*/
-            // копирование значений полей позиции корзины
-            $newBasketItem = $newBasket->createItem(
-                $oldBasketItem->getField('MODULE'),
-                $oldBasketItem->getField('PRODUCT_ID')
+        /** @var OrderSubscribe $orderSubscribe */
+        $orderSubscribe = null;
+        try {
+            $subscriptionsCollect = $this->getSubscriptionsByOrder($copyOrderId, $checkActiveSubscribe);
+            $orderSubscribe = $subscriptionsCollect->first();
+            if (!$orderSubscribe) {
+                $result->addError(
+                    new Error('Подписка на заказ не найдена', 'orderSubscribeNotFound')
+                );
+            }
+        } catch (\Exception $exception) {
+            $result->addError(
+                new Error($exception->getMessage(), 'orderSubscribeException')
             );
+        }
 
-            $oldBasketItemValues = $this->filterCopyBasketItemFields($oldBasketItem->getFieldValues());
-            $newBasketItem->setField('NAME', $oldBasketItemValues['NAME']);
-            $tmpResult = $newBasketItem->setFields($oldBasketItemValues);
-            if (!$tmpResult->isSuccess()) {
-                throw new OrderCreateException(implode("\n", $tmpResult->getErrorMessages()), 200);
-            }
+        if ($result->isSuccess()) {
+            try {
+                $orderCopyHelper = new OrderCopy($copyOrderId);
+                $orderCopyHelper->appendBasketItemExcludeProps(
+                    $this->basketItemExcludeProps
+                );
+                $orderCopyHelper->appendOrderExcludeProps(
+                    $this->orderExcludeProps
+                );
 
-            // копирование свойств позиции корзины
-            $newBasketPropertyCollection = $newBasketItem->getPropertyCollection();
-            $oldItemPropertyList = [];
-            if ($oldPropertyCollection = $oldBasketItem->getPropertyCollection()) {
-                $oldItemPropertyList = $this->filterCopyBasketItemProps(
-                    $oldPropertyCollection->getPropertyValues()
+                $orderCopyHelper->doFullCopy();
+                $orderCopyHelper->setPropValueByCode(
+                    'DELIVERY_INTERVAL',
+                    $orderSubscribe->getDeliveryTime()
+                );
+                $deliveryDate = $orderSubscribe->getNextDeliveryDate();
+                /** @todo: Если дата не определилась, то нужно ли создавать такой заказ? */
+                $orderCopyHelper->setPropValueByCode(
+                    'DELIVERY_DATE',
+                    $deliveryDate ? $deliveryDate->format('d.m.Y') : ''
+                );
+                $orderCopyHelper->save();
+            } catch (\Exception $exception) {
+                $result->addError(
+                    new Error($exception->getMessage(), 'orderCopyException')
                 );
             }
-            foreach ($oldItemPropertyList as $oldItemPropertyFields) {
-                unset($oldItemPropertyFields['ID'], $oldItemPropertyFields['BASKET_ID']);
-                $newBasketPropertyItem = $newBasketPropertyCollection->createItem([]);
-                $tmpResult = $newBasketPropertyItem->setFields($oldItemPropertyFields);
-                if (!$tmpResult->isSuccess()) {
-                    throw new OrderCreateException(implode("\n", $tmpResult->getErrorMessages()), 300);
-                }
-            }
-
-            $oldBasket2NewMap[$oldBasketItem->getId()] = $newBasketItem->getInternalIndex();
-        }
-
-        // привязка корзины к новому заказу
-        $tmpResult = $newBitrixOrder->setBasket($newBasket);
-        if (!$tmpResult->isSuccess()) {
-            throw new OrderCreateException(implode("\n", $tmpResult->getErrorMessages()), 500);
-        }
-        if ($newBitrixOrder->getBasket()->getOrderableItems()->isEmpty()) {
-            throw new OrderCreateException('Корзина пуста', 600);
-        }
-
-        /**
-         * Копирование свойств заказа
-         */
-        $oldOrderPropsCollect = $oldBitrixOrder->getPropertyCollection();
-        $oldOrderProps = [];
-        if ($oldOrderPropsCollect) {
-            foreach($oldOrderPropsCollect as $oldOrderProperty) {
-                /** @var PropertyValue $oldOrderProperty */
-                $tmpValues = $oldOrderProperty->getFieldValues();
-                $oldOrderProps[$tmpValues['CODE']] = $oldOrderProperty->getValue();
-            }
-        }
-        $oldOrderProps = $this->filterCopyOrderProps($oldOrderProps);
-
-        $newPropertyCollection = $newBitrixOrder->getPropertyCollection();
-        foreach($newPropertyCollection as $newOrderProperty) {
-            /** @var PropertyValue $newOrderProperty */
-            $tmpValues = $newOrderProperty->getFieldValues();
-            if ($tmpValues['CODE'] && isset($oldOrderProps[$tmpValues['CODE']])) {
-                $newOrderProperty->setValue($oldOrderProps[$tmpValues['CODE']]);
-            }
-        }
-
-        /**
-         * Копирование способов доставки
-         * (свойство местоположения должно было скопироваться выше)
-         */
-        $newBitrixOrder->setField('DELIVERY_LOCATION', $oldBitrixOrder->getDeliveryLocation());
-        $oldShipmentCollect = $oldBitrixOrder->getShipmentCollection();
-        $newShipmentCollect = $newBitrixOrder->getShipmentCollection();
-        foreach ($oldShipmentCollect as $oldShipment) {
-            /** @var Shipment $oldShipment */
-            if ($oldShipment->isSystem()) {
-                continue;
-            }
-
-            // новое отправление
-            $newShipment = $newShipmentCollect->createItem();
-            $newShipment->setField('CURRENCY', $oldShipment->getCurrency());
-            $newShipment->setField('DELIVERY_ID', $oldShipment->getDeliveryId());
-            $newShipment->setField('DELIVERY_NAME', $oldShipment->getDeliveryName());
-
-            /** @todo: Нехорошо присваивать статус заказа так, обсудить с разработчиками системы оформления заказов изменение подхода */
-            $deliveryCode = $newShipment->getDelivery()->getCode();
-            if ($this->getDeliveryService()->isDeliveryCode($deliveryCode)) {
-                $newBitrixOrder->setFieldNoDemand(
-                    'STATUS_ID',
-                    \FourPaws\SaleBundle\Service\OrderService::STATUS_NEW_COURIER
-                );
-            }
-
-            // привязывание позиций корзины к отправлению
-            $newShipmentItemsCollect = $newShipment->getShipmentItemCollection();
-            foreach ($oldShipment->getShipmentItemCollection() as $oldShipmentItem) {
-                /** @var ShipmentItem $oldShipmentItem */
-                $oldBasketItemId = $oldShipmentItem->getBasketId();
-                if (isset($oldBasket2NewMap[$oldBasketItemId])) {
-                    /** @var BasketItem $newShipmentBasketItem */
-                    $newShipmentBasketItem = $newBitrixOrder->getBasket()->getItemByIndex(
-                        $oldBasket2NewMap[$oldBasketItemId]
-                    );
-                    if ($newShipmentBasketItem) {
-                        $newShipmentItem = $newShipmentItemsCollect->createItem($newShipmentBasketItem);
-                        $newShipmentItem->setQuantity($oldShipmentItem->getQuantity());
-                    }
-                }
-            }
-        }
-        $tmpResult = $newShipmentCollect->calculateDelivery();
-        if (!$tmpResult->isSuccess()) {
-            throw new OrderCreateException(implode("\n", $tmpResult->getErrorMessages()), 700);
-        }
-
-        /**
-         * Копирование способов оплаты
-         */
-        $oldPaymentCollect = $oldBitrixOrder->getPaymentCollection();
-        $newPaymentCollect = $newBitrixOrder->getPaymentCollection();
-        foreach ($oldPaymentCollect as $oldPayment) {
-            /** @var Payment $oldPayment */
-            if ($oldPayment->isInner()) {
-                continue;
-            }
-
-            $newPayment = $newPaymentCollect->createItem();
-            $newPayment->setField('PAY_SYSTEM_ID', $oldPayment->getPaymentSystemId());
-            $newPayment->setField('PAY_SYSTEM_NAME', $oldPayment->getPaymentSystemName());
-            $newPayment->setField('SUM', $newBitrixOrder->getPrice());
-        }
-
-        /**
-         * Пересчет заказа
-         */
-        $tmpResult = $newBitrixOrder->doFinalAction(true);
-        if (!$tmpResult->isSuccess()) {
-            throw new OrderCreateException(implode("\n", $tmpResult->getErrorMessages()), 800);
-        }
-
-        /**
-         * Сохранение заказа в базу
-         */
-        $tmpResult = $newBitrixOrder->save();
-        if (!$tmpResult->isSuccess()) {
-            throw new OrderCreateException(implode("\n", $tmpResult->getErrorMessages()), 900);
         }
 
         return $result;
-    }
-
-    /**
-     * @param array $fieldValues
-     * @param array $copyFields
-     * @param array $excludeFields
-     * @return array
-     */
-    protected function filterCopyFields(array $fieldValues, array $copyFields = [], array $excludeFields = [])
-    {
-        $resultFields = $fieldValues;
-        if ($copyFields) {
-            $resultFields = array_intersect_key(
-                $resultFields,
-                $copyFields
-            );
-        }
-
-        if ($excludeFields) {
-            $resultFields = array_diff_key(
-                $resultFields,
-                $excludeFields
-            );
-        }
-
-        return $resultFields;
-    }
-
-    /**
-     * @param array $basketItemFieldValues
-     * @return array
-     */
-    protected function filterCopyBasketItemFields(array $basketItemFieldValues)
-    {
-        static $copyFields = null;
-        static $excludeFields = null;
-        if ($copyFields === null) {
-            $copyFields = array_flip($this->basketItemCopyFields);
-        }
-        if ($excludeFields === null) {
-            $excludeFields = array_flip($this->basketItemExcludeFields);
-        }
-
-        return $this->filterCopyFields($basketItemFieldValues, $copyFields, $excludeFields);
-    }
-
-    /**
-     * @param array $basketItemPropValues
-     * @return array
-     */
-    protected function filterCopyBasketItemProps(array $basketItemPropValues)
-    {
-        static $copyFields = null;
-        static $excludeFields = null;
-        if ($copyFields === null) {
-            $copyFields = array_flip($this->basketItemCopyProps);
-        }
-        if ($excludeFields === null) {
-            $excludeFields = array_flip($this->basketItemExcludeProps);
-        }
-
-        return $this->filterCopyFields($basketItemPropValues, $copyFields, $excludeFields);
-    }
-
-    /**
-     * @param array $orderProps
-     * @return array
-     */
-    protected function filterCopyOrderProps(array $orderProps)
-    {
-        static $copyFields = null;
-        static $excludeFields = null;
-        if ($copyFields === null) {
-            $copyFields = array_flip($this->orderCopyProps);
-        }
-        if ($excludeFields === null) {
-            $excludeFields = array_flip($this->orderExcludeProps);
-        }
-
-        return $this->filterCopyFields($orderProps, $copyFields, $excludeFields);
     }
 }
