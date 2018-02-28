@@ -57,7 +57,7 @@ class OrderAddressValidator extends ConstraintValidator
         $deliveryMethods = $this->orderService->getDeliveries();
         $delivery = null;
         foreach ($deliveryMethods as $deliveryMethod) {
-            if ($deliveryId === (int)$deliveryMethod->getData()['DELIVERY_ID']) {
+            if ($deliveryId === $deliveryMethod->getDeliveryId()) {
                 $delivery = $deliveryMethod;
                 break;
             }

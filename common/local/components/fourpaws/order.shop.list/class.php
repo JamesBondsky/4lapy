@@ -9,11 +9,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use Bitrix\Sale\BasketItem;
-use Bitrix\Sale\Delivery\CalculationResult;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\DeliveryBundle\Entity\CalculationResult;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
@@ -85,11 +85,6 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
             return;
         }
 
-        /** @var StockResultCollection $stockResult */
-        if (!$stockResult = $this->storeService->getStockResult($pickupDelivery)) {
-            return;
-        }
-
         $offerIds = [];
         $basket = $basketService->getBasket()->getOrderableItems();
         /** @var BasketItem $item */
@@ -118,7 +113,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
             $storeListUrlRoute = $routeCollection->get('fourpaws_sale_ajax_order_storesearch');
         }
         $this->arResult['DELIVERY'] = $pickupDelivery;
-        $this->arResult['DELIVERY_CODE'] = $pickupDelivery->getData()['DELIVERY_CODE'];
+        $this->arResult['DELIVERY_CODE'] = $pickupDelivery->getDeliveryCode();
         $this->arResult['STORE_LIST_URL'] = $storeListUrlRoute ? $storeListUrlRoute->getPath() : '';
     }
 
@@ -138,7 +133,6 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
 
         $stores = $this->getStoreList($params['filter'] ?? [], $params['order'] ?? []);
         if (!$stores->isEmpty()) {
-            $stockResult = $this->storeService->getStockResult($pickupDelivery);
             list($servicesList, $metroList) = $this->getFullStoreInfo($stores);
 
             $avgGpsN = 0;
@@ -149,7 +143,11 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
             $stores = $stores->toArray();
             /** @var Store $store */
             foreach ($stores as $store) {
-                $resultByStore[$store->getXmlId()] = $this->getStoreData($pickupDelivery, $stockResult, $store);
+                $resultByStore[$store->getXmlId()] = $this->getStoreData(
+                    $pickupDelivery,
+                    $pickupDelivery->getStockResult(),
+                    $store
+                );
             }
 
             /**
@@ -338,9 +336,10 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
      */
     protected function getStoreList(array $filter, array $order): StoreCollection
     {
-        if (!$stockResult = $this->storeService->getStockResult($this->getPickupDelivery())) {
+        if (!$pickupDelivery = $this->getPickupDelivery()) {
             return new StoreCollection();
         }
+        $stockResult = $pickupDelivery->getStockResult();
 
         $defaultFilter = [];
         /** @var Store $store */

@@ -104,14 +104,13 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
 
         $basket = $shipment->getParentOrder()->getBasket()->getOrderableItems();
 
-        $data = [];
         $deliveryZone = $this->deliveryService->getDeliveryZoneCode($shipment, false);
         $deliveryLocation = $this->deliveryService->getDeliveryLocation($shipment);
         if ($this->config['PRICES'][$deliveryZone]) {
             $result->setDeliveryPrice($this->config['PRICES'][$deliveryZone]);
 
             if (!empty($this->config['FREE_FROM'][$deliveryZone])) {
-                $data['FREE_FROM'] = $this->config['FREE_FROM'][$deliveryZone];
+                $result->setFreeFrom((int)$this->config['FREE_FROM'][$deliveryZone]);
                 if ($basket->getPrice() >= $this->config['FREE_FROM'][$deliveryZone]) {
                     $result->setDeliveryPrice(0);
                 }
@@ -119,20 +118,17 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
         } else {
             $result->addError(new Error('Не задана стоимость доставки'));
         }
-        $data['INTERVALS'] = $this->getIntervals($shipment);
-
+        $result->setIntervals($this->getIntervals($shipment));
         $result->setPeriodType(CalculationResult::PERIOD_TYPE_DAY);
         if (!$offers = static::getOffers($deliveryLocation, $basket)) {
             /**
              * Нужно для отображения списка доставок в хедере и на странице доставок
              */
-
             if ($this->canDeliverToday()) {
                 $result->setPeriodFrom(0);
             } else {
                 $result->setPeriodFrom(1);
             }
-            $result->setData($data);
 
             return $result;
         }
@@ -161,8 +157,7 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
         }
 
         $stockResult = static::getStocks($basket, $offers, $availableStores, $delayStores);
-        $data['STOCK_RESULT'] = $stockResult;
-        $result->setData($data);
+        $result->setStockResult($stockResult);
 
         if (!$stockResult->getUnavailable()->isEmpty()) {
             $result->addError(new Error('Присутствуют товары не в наличии'));

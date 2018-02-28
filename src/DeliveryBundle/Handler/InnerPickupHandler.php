@@ -3,11 +3,11 @@
 namespace FourPaws\DeliveryBundle\Handler;
 
 use Bitrix\Main\Error;
-use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\Shipment;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\DeliveryBundle\Entity\CalculationResult;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
@@ -126,8 +126,8 @@ class InnerPickupHandler extends DeliveryHandlerBase
             $stockResult = static::getStocks($basket, $offers, $availableStores, $delayStores, $stockResult);
         }
 
-        $data['STOCK_RESULT'] = $stockResult;
-        $result->setData($data);
+        $result->setStockResult($stockResult);
+        $result->setIntervals($this->getIntervals($shipment));
 
         if ($shopCode) {
             if (!$stockResult->getUnavailable()->isEmpty()) {

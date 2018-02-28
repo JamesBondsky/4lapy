@@ -11,7 +11,7 @@ use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketBase;
 use Bitrix\Sale\BasketItem;
-use Bitrix\Sale\Delivery\CalculationResult;
+use Bitrix\Sale\Delivery\CalculationResult as BitrixCalculationResult;
 use Bitrix\Sale\Delivery\DeliveryLocationTable;
 use Bitrix\Sale\Delivery\Services\Manager;
 use Bitrix\Sale\Delivery\Services\Table as DeliveryServiceTable;
@@ -21,6 +21,7 @@ use Bitrix\Sale\Shipment;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Dpd\TerminalTable;
+use FourPaws\DeliveryBundle\Entity\CalculationResult;
 use FourPaws\DeliveryBundle\Exception\InvalidArgumentException;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\Location\LocationService;
@@ -146,7 +147,7 @@ class DeliveryService
              * @var CalculationResult $delivery
              */
             foreach ($deliveries as $i => $delivery) {
-                if (!in_array($delivery->getData()['DELIVERY_CODE'], $codes, true)) {
+                if (!in_array($delivery->getDeliveryCode(), $codes, true)) {
                     unset($deliveries[$i]);
                 }
             }
@@ -188,6 +189,10 @@ class DeliveryService
             );
             $calculationResult = $shipment->calculateDelivery();
             if ($calculationResult->isSuccess()) {
+                if (!$calculationResult instanceof CalculationResult) {
+                    $calculationResult = new CalculationResult($calculationResult);
+                }
+
                 if (\in_array(
                     $service->getCode(),
                     [
@@ -199,27 +204,13 @@ class DeliveryService
                     /* @todo не хранить эти данные в сессии */
                     $calculationResult->setPeriodFrom($_SESSION['DPD_DATA'][$service->getCode()]['DAYS_FROM']);
                     $calculationResult->setPeriodTo($_SESSION['DPD_DATA'][$service->getCode()]['DAYS_TO']);
-                    $calculationResult->setData(
-                        array_merge(
-                            $calculationResult->getData(),
-                            [
-                                'INTERVALS'    => $_SESSION['DPD_DATA'][$service->getCode()]['INTERVALS'],
-                                'STOCK_RESULT' => $_SESSION['DPD_DATA'][$service->getCode()]['STOCK_RESULT'],
-                            ]
-                        )
-                    );
+                    $calculationResult->setStockResult($_SESSION['DPD_DATA'][$service->getCode()]['STOCK_RESULT']);
+                    $calculationResult->setIntervals($_SESSION['DPD_DATA'][$service->getCode()]['INTERVALS']);
                 }
 
-                $calculationResult->setData(
-                    array_merge(
-                        [
-                            'DELIVERY_ID'   => $service->getId(),
-                            'DELIVERY_NAME' => $name,
-                            'DELIVERY_CODE' => $service->getCode(),
-                        ],
-                        $calculationResult->getData()
-                    )
-                );
+                $calculationResult->setDeliveryId($service->getId());
+                $calculationResult->setDeliveryName($name);
+                $calculationResult->setDeliveryCode($service->getCode());
 
                 $result[] = $calculationResult;
             }
@@ -380,7 +371,7 @@ class DeliveryService
      */
     public function isPickup(CalculationResult $calculationResult): bool
     {
-        return \in_array($calculationResult->getData()['DELIVERY_CODE'], static::PICKUP_CODES, true);
+        return \in_array($calculationResult->getDeliveryCode(), static::PICKUP_CODES, true);
     }
 
     /**
@@ -390,7 +381,7 @@ class DeliveryService
      */
     public function isDelivery(CalculationResult $calculationResult): bool
     {
-        return \in_array($calculationResult->getData()['DELIVERY_CODE'], static::DELIVERY_CODES, true);
+        return \in_array($calculationResult->getDeliveryCode(), static::DELIVERY_CODES, true);
     }
 
     /**
@@ -400,7 +391,7 @@ class DeliveryService
      */
     public function isInnerPickup(CalculationResult $calculationResult): bool
     {
-        return $calculationResult->getData()['DELIVERY_CODE'] === static::INNER_PICKUP_CODE;
+        return $calculationResult->getDeliveryCode() === static::INNER_PICKUP_CODE;
     }
 
     /**
@@ -410,7 +401,7 @@ class DeliveryService
      */
     public function isDpdPickup(CalculationResult $calculationResult): bool
     {
-        return $calculationResult->getData()['DELIVERY_CODE'] === static::DPD_PICKUP_CODE;
+        return $calculationResult->getDeliveryCode() === static::DPD_PICKUP_CODE;
     }
 
     /**
@@ -420,7 +411,7 @@ class DeliveryService
      */
     public function isInnerDelivery(CalculationResult $calculationResult): bool
     {
-        return $calculationResult->getData()['DELIVERY_CODE'] === static::INNER_DELIVERY_CODE;
+        return $calculationResult->getDeliveryCode() === static::INNER_DELIVERY_CODE;
     }
 
     /**
@@ -430,7 +421,7 @@ class DeliveryService
      */
     public function isDpdDelivery(CalculationResult $calculationResult): bool
     {
-        return $calculationResult->getData()['DELIVERY_CODE'] === static::DPD_DELIVERY_CODE;
+        return $calculationResult->getDeliveryCode() === static::DPD_DELIVERY_CODE;
     }
 
     /**
@@ -484,7 +475,7 @@ class DeliveryService
     public function getStockResultByDelivery(CalculationResult $delivery): StockResultCollection
     {
         /** @var StockResultCollection $stockResult */
-        $stockResult = $delivery->getData()['STOCK_RESULT'];
+        $stockResult = $delivery->getStockResult();
         if (!$stockResult instanceof StockResultCollection) {
             throw new InvalidArgumentException('Stock result not defined');
         }

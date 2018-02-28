@@ -681,16 +681,6 @@ class StoreService
     }
 
     /**
-     * @param CalculationResult $delivery
-     *
-     * @return bool|StockResultCollection
-     */
-    public function getStockResult(CalculationResult $delivery)
-    {
-        return $this->deliveryService->getStockResultByDelivery($delivery);
-    }
-
-    /**
      * @param int $offerId
      *
      * @return Offer

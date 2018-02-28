@@ -3,12 +3,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
-use Bitrix\Sale\Delivery\CalculationResult;
 use FourPaws\App\Application;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\DeliveryBundle\Entity\CalculationResult;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\SaleBundle\Entity\OrderStorage;
@@ -26,14 +25,12 @@ $partialPickup = $arResult['PARTIAL_PICKUP'];
 
 /** @var DeliveryService $deliveryService */
 $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
-/** @var StockResultCollection $stockResult */
-$stockResult = $pickup->getData()['STOCK_RESULT'];
 /** @var OrderStorage $storage */
 $storage = $arResult['STORAGE'];
 
 /** @var Store $selectedShop */
 $selectedShop = $arResult['SELECTED_SHOP'];
-$stockResultByShop = $stockResult->filterByStore($selectedShop);
+$stockResultByShop = $pickup->getStockResult()->filterByStore($selectedShop);
 $available = $stockResultByShop->getAvailable();
 $delayed = $stockResultByShop->getDelayed();
 

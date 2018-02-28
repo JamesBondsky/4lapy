@@ -10,8 +10,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var CalculationResult $delivery
  */
 
-use Bitrix\Sale\Delivery\CalculationResult;
 use FourPaws\Decorators\SvgDecorator;
+use FourPaws\DeliveryBundle\Entity\CalculationResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\PersonalBundle\Entity\Address;
@@ -220,9 +220,9 @@ if (!$addresses || $addresses->isEmpty()) {
         </select>
     </div>
 </div>
-<?php if (!empty($delivery->getData()['INTERVALS'])) {
+<?php if (!$delivery->getIntervals()->isEmpty()) {
     /** @var IntervalCollection $intervals */
-    $intervals = $delivery->getData()['INTERVALS'];
+    $intervals = $delivery->getIntervals();
     ?>
     <div class="b-input-line b-input-line--interval">
         <div class="b-input-line__label-wrapper b-input-line__label-wrapper--interval">

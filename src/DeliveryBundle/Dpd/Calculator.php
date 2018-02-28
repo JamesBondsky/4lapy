@@ -8,6 +8,7 @@ namespace FourPaws\DeliveryBundle\Dpd;
 
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Event;
+use Bitrix\Main\EventManager;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\Loader;
 
@@ -41,6 +42,7 @@ class Calculator extends DPD
         return [__CLASS__, $method];
     }
 
+    /** @noinspection MoreThanThreeArgumentsInspection */
     public function Calculate($profile, $arConfig, $arOrder, $STEP, $TEMP = false)
     {
         $serviceContainer = Application::getInstance()->getContainer();
@@ -118,7 +120,7 @@ class Calculator extends DPD
 
         $interval = explode('-', Option::get(IPOLH_DPD_MODULE, 'DELIVERY_TIME_PERIOD'));
         /* по ТЗ - дата доставки DPD для зоны 4 рассчитывается как "то, что вернуло DPD" + 1 день */
-        if ($profileCode == DeliveryService::DPD_DELIVERY_CODE &&
+        if ($profileCode === DeliveryService::DPD_DELIVERY_CODE &&
             $deliveryService->getDeliveryZoneCodeByLocation(
                 $arOrder['LOCATION_TO'],
                 $deliveryId
@@ -179,19 +181,18 @@ class Calculator extends DPD
         }
         $shipment = self::makeShipment($arOrder);
 
+        $profiles = [];
         if ($shipment->isPossibileSelfDelivery()) {
             $profiles = ['COURIER', 'PICKUP'];
         } elseif ($shipment->isPossibileDelivery()) {
             $profiles = ['COURIER'];
-        } else {
-            $profiles = [];
         }
 
         $event = new Event(IPOLH_DPD_MODULE, 'onCompabilityBefore', [$profiles, $arOrder, $arConfig]);
         $event->send();
 
         foreach ($event->getResults() as $eventResult) {
-            if ($eventResult->getType() != EventResult::SUCCESS) {
+            if ((int)$eventResult->getType() !== EventResult::SUCCESS) {
                 continue;
             }
 
@@ -203,7 +204,7 @@ class Calculator extends DPD
 }
 
 DPD::$needIncludeComponent = false;
-$eventManager = \Bitrix\Main\EventManager::getInstance();
+$eventManager = EventManager::getInstance();
 $events = [
     'OnSaleComponentOrderOneStepDelivery',
     'OnSaleComponentOrderOneStepPaySystem',
@@ -213,7 +214,7 @@ $events = [
 foreach ($events as $event) {
     $handlers = $eventManager->findEventHandlers('sale', $event);
     foreach ($handlers as $i => $handler) {
-        if (in_array('\\' . DPD::class, $handler['CALLBACK'], true)) {
+        if (\in_array('\\' . DPD::class, $handler['CALLBACK'], true)) {
             $eventManager->removeEventHandler('sale', $event, $i);
         }
     }

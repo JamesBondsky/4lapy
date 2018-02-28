@@ -10,13 +10,13 @@ use Bitrix\Sale\BasketBase;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\Services\Base;
 use Bitrix\Sale\Shipment;
-use Bitrix\Sale\Delivery\CalculationResult;
 use FourPaws\App\Application;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\StockResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Service\IntervalService;
 use FourPaws\Location\LocationService;
@@ -156,10 +156,10 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
             $hour = (int)$pickupDate->format('H');
             $totalSchedule = $storesAvailable->getTotalSchedule();
             if ($hour < $totalSchedule['from']) {
-                $pickupDate->setTime($totalSchedule['from'] + 1, 0, 0);
+                $pickupDate->setTime($totalSchedule['from'] + 1, 0);
             } elseif ($hour > $totalSchedule['to']) {
                 $pickupDate->modify('+1 day');
-                $pickupDate->setTime($totalSchedule['from'] + 1, 0, 0);
+                $pickupDate->setTime($totalSchedule['from'] + 1, 0);
             } else {
                 $pickupDate->modify('+1 hour');
             }
@@ -170,7 +170,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
             $basketItem = null;
             /** @var BasketItem $item */
             foreach ($basket as $item) {
-                if ($item->getProductId() == $offer->getId()) {
+                if ((int)$item->getProductId() === $offer->getId()) {
                     $basketItem = $item;
                     break;
                 }
@@ -243,7 +243,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
     /**
      * @return bool
      */
-    public function isCalculatePriceImmediately()
+    public function isCalculatePriceImmediately(): bool
     {
         return static::$isCalculatePriceImmediately;
     }
@@ -281,12 +281,19 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
         return $result;
     }
 
+    /**
+     * @param Shipment $shipment
+     *
+     * @return CalculationResult
+     */
     protected function calculateConcrete(Shipment $shipment)
     {
         $result = new CalculationResult();
 
-        if (!$this->deliveryService->getDeliveryZoneCode($shipment)) {
+        if (!$zone = $this->deliveryService->getDeliveryZoneCode($shipment)) {
             $result->addError(new Error('Не указано местоположение доставки'));
+        } else {
+            $result->setDeliveryName($zone);
         }
 
         return $result;

@@ -3,15 +3,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+use Bitrix\Sale\Basket;
 use FourPaws\App\Application;
 use FourPaws\Location\LocationService;
+use FourPaws\DeliveryBundle\Entity\CalculationResult;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\StoreBundle\Entity\Store;
-use Bitrix\Sale\Delivery\CalculationResult;
-use Bitrix\Sale\Basket;
 
 /**
  * @var array $arParams
@@ -41,7 +41,7 @@ $storage = $arResult['STORAGE'];
 
 $selectedShopCode = '';
 $isPickup = false;
-if ($pickup && $selectedDelivery->getData()['DELIVERY_CODE'] == $pickup->getData()['DELIVERY_CODE']) {
+if ($pickup && $selectedDelivery->getDeliveryCode() == $pickup->getDeliveryCode()) {
     $selectedShopCode = $arResult['SELECTED_SHOP']->getXmlId();
     $isPickup = true;
 }
@@ -96,7 +96,7 @@ if ($pickup && $selectedDelivery->getData()['DELIVERY_CODE'] == $pickup->getData
                                        type="radio"
                                        name="deliveryId"
                                     <?= $deliveryService->isDelivery($selectedDelivery) ? 'checked="checked"' : '' ?>
-                                       value="<?= $delivery->getData()['DELIVERY_ID'] ?>"
+                                       value="<?= $delivery->getDeliveryId() ?>"
                                        data-delivery="<?= $delivery->getPrice() ?>"
                                        data-full="<?= $basket->getPrice() ?>"
                                        data-check="js-list-orders-static"/>
@@ -135,7 +135,7 @@ if ($pickup && $selectedDelivery->getData()['DELIVERY_CODE'] == $pickup->getData
                                        type="radio"
                                        name="deliveryId"
                                     <?= $deliveryService->isPickup($selectedDelivery) ? 'checked="checked"' : '' ?>
-                                       value="<?= $pickup->getData()['DELIVERY_ID'] ?>"
+                                       value="<?= $pickup->getDeliveryId() ?>"
                                        data-delivery="<?= $pickup->getPrice() ?>"
                                        data-full="<?= $price ?>"
                                        data-check="js-list-orders-cont"/>
@@ -174,15 +174,15 @@ if ($pickup && $selectedDelivery->getData()['DELIVERY_CODE'] == $pickup->getData
                         <ul class="b-radio-tab js-myself-shop">
                             <?php if ($delivery) { ?>
                                 <li class="b-radio-tab__tab js-telephone-recovery"
-                                    <?= $selectedDeliveryId !== (int)$delivery->getData(
-                                    )['DELIVERY_ID'] ? 'style="display:none"' : '' ?>>
+                                    <?= $selectedDeliveryId !== $delivery->getDeliveryId(
+                                    ) ? 'style="display:none"' : '' ?>>
                                     <?php include 'include/delivery.php' ?>
                                 </li>
                             <?php } ?>
                             <?php if ($pickup) { ?>
                                 <li class="b-radio-tab__tab js-email-recovery"
-                                    <?= $selectedDeliveryId !== (int)$pickup->getData(
-                                    )['DELIVERY_ID'] ? 'style="display:none"' : '' ?>>
+                                    <?= $selectedDeliveryId !== $pickup->getDeliveryId(
+                                    ) ? 'style="display:none"' : '' ?>>
                                     <?php include 'include/pickup.php' ?>
                                 </li>
                             <?php } ?>

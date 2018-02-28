@@ -15,7 +15,6 @@ use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\BasketItem;
-use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PropertyValue;
@@ -23,6 +22,7 @@ use Bitrix\Sale\Shipment;
 use Bitrix\Sale\ShipmentCollection;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\DeliveryBundle\Entity\CalculationResult;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundEXception;
 use FourPaws\PersonalBundle\Entity\Address;
@@ -32,7 +32,6 @@ use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\StoreBundle\Collection\StoreCollection;
-use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\UserBundle\Entity\User;
@@ -256,7 +255,7 @@ class OrderService
         $selectedDelivery = null;
         /** @var CalculationResult $delivery */
         foreach ($deliveries as $delivery) {
-            if ($storage->getDeliveryId() === (int)$delivery->getData()['DELIVERY_ID']) {
+            if ($storage->getDeliveryId() === $delivery->getDeliveryId()) {
                 $selectedDelivery = $delivery;
             }
         }
@@ -294,8 +293,8 @@ class OrderService
 
             $shipment->setFields(
                 [
-                    'DELIVERY_ID'   => $selectedDelivery->getData()['DELIVERY_ID'],
-                    'DELIVERY_NAME' => $selectedDelivery->getData()['DELIVERY_NAME'],
+                    'DELIVERY_ID'   => $selectedDelivery->getDeliveryId(),
+                    'DELIVERY_NAME' => $selectedDelivery->getDeliveryName(),
                     'CURRENCY'      => $order->getCurrency(),
                 ]
             );
@@ -344,7 +343,7 @@ class OrderService
                             if (($index = $storage->getDeliveryInterval() - 1) < 0) {
                                 continue 2;
                             }
-                            if (!$interval = $selectedDelivery->getData()['INTERVALS'][$index]) {
+                            if (!$interval = $selectedDelivery->getIntervals()[$index]) {
                                 continue 2;
                             }
 

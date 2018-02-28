@@ -59,7 +59,7 @@ class OrderDeliveryValidator extends ConstraintValidator
         $deliveryMethods = $this->orderService->getDeliveries();
         $delivery = null;
         foreach ($deliveryMethods as $deliveryMethod) {
-            if ($deliveryId === (int)$deliveryMethod->getData()['DELIVERY_ID']) {
+            if ($deliveryId === $deliveryMethod->getDeliveryId()) {
                 $delivery = $deliveryMethod;
                 break;
             }
@@ -85,9 +85,9 @@ class OrderDeliveryValidator extends ConstraintValidator
             }
 
             $intervalIndex = $entity->getDeliveryInterval();
-            $intervals = $delivery->getData()['DELIVERY_INTERVALS'];
+            $intervals = $delivery->getIntervals();
             if (!empty($intervals)) {
-                if (($intervalIndex < 1) || $intervalIndex > \count($intervals)) {
+                if (($intervalIndex < 1) || $intervalIndex > $intervals->count()) {
                     $this->context->addViolation($constraint->deliveryIntervalMessage);
                 }
             }

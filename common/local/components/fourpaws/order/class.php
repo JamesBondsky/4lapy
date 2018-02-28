@@ -9,9 +9,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use Bitrix\Sale\Delivery\CalculationResult;
 use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\DeliveryBundle\Entity\CalculationResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
@@ -144,6 +144,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             LocalRedirect('/cart');
         }
 
+        /** @noinspection PhpUndefinedVariableInspection */
         $basket = $order->getBasket()->getOrderableItems();
 
         $this->arResult['URL'] = [
@@ -162,6 +163,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             'PAYMENT_VALIDATION'  => 'fourpaws_sale_ajax_order_validatepayment',
         ];
         foreach ($routes as $key => $name) {
+            /** @noinspection NullPointerExceptionInspection */
             if (!$route = $routeCollection->get($name)) {
                 continue;
             }
@@ -198,7 +200,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $selectedDelivery = null;
             $selectedDeliveryId = $storage->getDeliveryId();
             foreach ($deliveries as $calculationResult) {
-                $deliveryId = $calculationResult->getData()['DELIVERY_ID'];
+                $deliveryId = $calculationResult->getDeliveryId();
                 if (!$selectedDeliveryId) {
                     $selectedDeliveryId = $deliveryId;
                 }
@@ -216,7 +218,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
             if (!$selectedDelivery) {
                 $selectedDelivery = reset($deliveries);
-                $selectedDeliveryId = (int)$selectedDelivery->getData()['DELIVERY_ID'];
+                $selectedDeliveryId = (int)$selectedDelivery->getDeliveryId();
             }
 
             $this->arResult['PICKUP'] = $pickup;
@@ -230,7 +232,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $selectedDelivery = null;
             /** @var CalculationResult $delivery */
             foreach ($deliveries as $delivery) {
-                if ((int)$delivery->getData()['DELIVERY_ID'] !== $storage->getDeliveryId()) {
+                if ($delivery->getDeliveryId() !== $storage->getDeliveryId()) {
                     continue;
                 }
 
