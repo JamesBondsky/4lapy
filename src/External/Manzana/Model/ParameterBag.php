@@ -12,6 +12,10 @@ final class ParameterBag
     public function __construct(array $parameters)
     {
         foreach ($parameters as $k => $v) {
+            if (!$v) {
+                continue;
+            }
+            
             $this->parameters[] = $v instanceof Parameter ? $v : new Parameter($k, $v);
         }
     }

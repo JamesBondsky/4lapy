@@ -21,10 +21,11 @@ class ManzanaContactConsumer extends ManzanaConsumerBase
     {
         try {
             $contact = $this->serializer->deserialize($message->getBody(), Client::class, 'json');
-            $this->manzanaService->updateContact($contact);
+            $contact->contactId = $this->manzanaService->getContactIdByPhone($contact->phone);
+            $contact = $this->manzanaService->updateContact($contact);
             $this->manzanaService->updateUserCardByClient($contact);
         } catch (ContactUpdateException $e) {
-            $this->log()->error(sprintf('contact update error: %s',
+            $this->log()->error(sprintf('Contact update error: %s',
                                         $e->getMessage()));
         } catch (ManzanaServiceException $e) {
             $this->log()->error(sprintf('Manzana error: %s',
