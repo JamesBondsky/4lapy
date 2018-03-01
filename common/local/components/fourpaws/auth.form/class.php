@@ -169,6 +169,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             return $this->ajaxMess->getEmptyPasswordError();
         }
         $checkedCaptcha = true;
+        $_SESSION['COUNT_AUTH_AUTHORIZE'] = 2;
         if ((int)$_SESSION['COUNT_AUTH_AUTHORIZE'] > 3) {
             try {
                 $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
