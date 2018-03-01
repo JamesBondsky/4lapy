@@ -490,6 +490,7 @@ class OrderService
 
                     /* @todo вынести из сессии? */
                     /* нужно для expertsender */
+                    /** пароль еще нужен для смс быстрого заказа */
                     $_SESSION['NEW_USER'] = [
                         'LOGIN'    => $storage->getPhone(),
                         'PASSWORD' => $password,
