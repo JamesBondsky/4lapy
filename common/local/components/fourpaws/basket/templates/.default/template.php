@@ -297,7 +297,7 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                             <div class="b-price b-price--information-order">
                                 <span class="b-price__current">
                                     - <?= number_format(
-                                        $basket->getBasePrice() - $basket->getPrice(),
+                                        $arResult['TOTAL_DISCOUNT'],
                                         2,
                                         '.',
                                         ' '
@@ -324,7 +324,7 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                         <div class="b-price b-price--information-order b-price--total-price">
                             <span class="b-price__current">
                                 <?= number_format(
-                                    $basket->getPrice(),
+                                    $arResult['TOTAL_PRICE'],
                                     2,
                                     '.',
                                     ' '
