@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Service\Materials;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
@@ -24,23 +28,23 @@ use RuntimeException;
 class OfferService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
-    
+
     /**
      * @var ReferenceService
      */
     private $referenceService;
-    
+
     /**
      * @var OfferRepository
      */
     private $offerRepository;
-    
+
     public function __construct(ReferenceService $referenceService, OfferRepository $offerRepository)
     {
         $this->referenceService = $referenceService;
         $this->offerRepository = $offerRepository;
     }
-    
+
     /**
      * @param Material $material
      *
@@ -56,10 +60,10 @@ class OfferService implements LoggerAwareInterface
     {
         $offer = $this->findByMaterial($material) ?: new Offer();
         $this->fillFromMaterial($offer, $material);
-        
+
         return $offer;
     }
-    
+
     /**
      * @param Offer $offer
      *
@@ -69,7 +73,7 @@ class OfferService implements LoggerAwareInterface
     {
         return $this->offerRepository->create($offer);
     }
-    
+
     /**
      * @param Offer $offer
      *
@@ -79,7 +83,7 @@ class OfferService implements LoggerAwareInterface
     {
         return $this->offerRepository->update($offer);
     }
-    
+
     /**
      * @param string $xmlId
      *
@@ -97,7 +101,7 @@ class OfferService implements LoggerAwareInterface
         }
         return true;
     }
-    
+
     /**
      * @param Material $material
      *
@@ -107,7 +111,7 @@ class OfferService implements LoggerAwareInterface
     {
         return $this->offerRepository->findByXmlId($material->getOfferXmlId());
     }
-    
+
     /**
      * @param Offer    $offer
      * @param Material $material
@@ -124,7 +128,7 @@ class OfferService implements LoggerAwareInterface
         $this->fillFields($offer, $material);
         $this->fillProperties($offer, $material);
     }
-    
+
     /**
      * @param Offer    $offer
      * @param Material $material
@@ -136,7 +140,7 @@ class OfferService implements LoggerAwareInterface
             ->withName($material->getOfferName())
             ->withXmlId($material->getOfferXmlId());
     }
-    
+
     /**
      * @param Offer    $offer
      * @param Material $material
@@ -155,13 +159,18 @@ class OfferService implements LoggerAwareInterface
          *
          * $offer->withFlavourCombination($material->getProperties()->getProperty('COLOUR_COMBINATION')->getValues()->first()->getName());
          */
-        $offer->withColourCombination($material->getProperties()->getProperty('FLAVOUR_COMBINATION')->getValues()->first()->getName());
+        $offer->withColourCombination(
+            (string)$material->getProperties()->getPropertyValues(
+                SapOfferProperty::FLAVOUR_COMBINATION,
+                ['']
+            )->first()
+        );
         $offer->withMultiplicity($material->getCountInPack());
         $this->fillReferenceProperties($offer, $material);
         $this->fillBarCodes($offer, $material);
         $this->fillVolume($offer, $material);
     }
-    
+
     /**
      * @param Offer    $offer
      * @param Material $material
@@ -172,8 +181,8 @@ class OfferService implements LoggerAwareInterface
     {
         $offer->withVolume($material->getBasicUnitOfMeasure()->getVolume());
     }
-    
-    
+
+
     /**
      * @param Offer    $offer
      * @param Material $material
@@ -205,7 +214,7 @@ class OfferService implements LoggerAwareInterface
                 $material
             ));
     }
-    
+
     /**
      * @param Offer    $offer
      * @param Material $material
