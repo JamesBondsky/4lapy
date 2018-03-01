@@ -5,10 +5,13 @@ namespace FourPaws\SaleBundle\Service;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
 use Bitrix\Catalog\Product\CatalogProvider;
+use Bitrix\Main\Error;
+use Bitrix\Main\EventResult;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Compatible\DiscountCompatibility;
 use Bitrix\Sale\Order;
+use Bitrix\Sale\ResultError;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
@@ -308,6 +311,61 @@ class BasketService
         }
 
         return $basketItem;
+    }
+
+    /**
+     * @param BasketItem $basketItem
+     * @param int $quantity
+     *
+     * @return EventResult
+     */
+    public function checkItemQuantity(BasketItem $basketItem, int $quantity): EventResult
+    {
+        $currentOffer = null;
+        foreach ($this->getOfferCollection() as $offer) {
+            if ($offer->getId() !== (int)$basketItem->getProductId()) {
+                continue;
+            }
+            $currentOffer = $offer;
+        }
+
+        if (!$currentOffer instanceof Offer) {
+            return (new EventResult(
+                EventResult::ERROR,
+                ResultError::create(
+                    new Error(
+                        'Товар не найден',
+                        'NO_IBLOCK_ELEMENT'
+                    )
+                )
+            ));
+        }
+
+        if (!$maxQuantity = $currentOffer->getQuantity()) {
+            return (new EventResult(
+                EventResult::ERROR,
+                ResultError::create(
+                    new Error(
+                        'Товар недоступен для покупки',
+                        'SALE_BASKET_ITEM_WRONG_AVAILABLE_QUANTITY'
+                    )
+                )
+            ));
+        }
+
+        if ($quantity > $maxQuantity) {
+            return (new EventResult(
+                EventResult::ERROR,
+                ResultError::create(
+                    new Error(
+                        'Товар недоступен в нужном количестве',
+                        'SALE_BASKET_ITEM_WRONG_AVAILABLE_QUANTITY'
+                    )
+                )
+            ));
+        }
+
+        return (new EventResult(EventResult::SUCCESS));
     }
 
     /**

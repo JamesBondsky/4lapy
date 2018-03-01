@@ -46,7 +46,7 @@ class BitrixProxyException extends \Exception implements BaseExceptionInterface
         $code = '';
         if ($error = $result->getErrors()) {
             $error = current($error);
-            $code = $error->getCode();
+            $code = (string)$error->getCode();
         }
         $intCode = self::getIntCode($code);
         parent::__construct(
