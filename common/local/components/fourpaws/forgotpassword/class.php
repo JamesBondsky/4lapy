@@ -111,14 +111,24 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
             if (!empty($emailGet) && !empty($hash)) {
                 /** @var ConfirmCodeService $confirmService */
                 $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
-                if ($confirmService::checkConfirmEmail($hash)) {
-                    if ($backUrl === static::BASKET_BACK_URL) {
-                        $this->authService->authorize($request->get('user_id'));
-                        LocalRedirect($backUrl);
+                try {
+                    if ($confirmService::checkConfirmEmail($hash)) {
+                        if ($backUrl === static::BASKET_BACK_URL) {
+                            $this->authService->authorize($request->get('user_id'));
+                            LocalRedirect($backUrl);
+                        } else {
+                            $this->arResult['EMAIL'] = $emailGet;
+                            $this->arResult['STEP'] = 'createNewPassword';
+                        }
                     } else {
-                        $this->arResult['EMAIL'] = $emailGet;
-                        $this->arResult['STEP'] = 'createNewPassword';
+                        ShowError('Ссылка для подтверждения недействительна, попробуйте восстанвоить пароль заного');
                     }
+                }
+                catch (ExpiredConfirmCodeException $e){
+                    ShowError('Срок действия ссылки истек, попробуйте восстанвоить пароль заного');
+                }
+                catch (NotFoundConfirmedCodeException $e){
+                    ShowError('Ссылка для подтверждения недействительна, попробуйте восстанвоить пароль заного');
                 }
             }
 
