@@ -16,8 +16,10 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Type\Date;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
+use Bitrix\Sale\Delivery\CalculationResult;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
@@ -173,6 +175,49 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
         return $this->basketService->getItemBonus($offer, $quantity);
     }
 
+    /**
+     * @param Offer $offer
+     *
+     * @return string
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
+     */
+    public function getDeliveryDate(Offer $offer): string
+    {
+        /** Если доставка сегодня не показываем */
+        $deliveryDate = '';
+        $deliveryService = App::getInstance()->getContainer()->get('delivery.service');
+        $res = $deliveryService->getByProduct($offer);
+        $dates = [];
+        foreach ($res as $item) {
+            $periodType = $item->getPeriodType();
+            if ($periodType === CalculationResult::PERIOD_TYPE_DAY || $periodType === CalculationResult::PERIOD_TYPE_MONTH) {
+                $periodFrom = $item->getPeriodFrom();
+                switch ($periodFrom) {
+                    case 0:
+                        $dates[0] = '';
+                        break;
+                    case 1:
+                        $dates[1] = 'Завтра';
+                        break;
+                    default:
+                        $date = Date::createFromTimestamp(time());
+                        $date->add($item->getPeriodFrom() . $periodType);
+                        $dates[$periodFrom] = $date;
+                }
+            } else {
+                $dates[0] = '';
+            }
+        }
+        if (!empty($dates)) {
+            /** @var Date $minDate */
+            $minDate = $dates[min(array_keys($dates))];
+            $deliveryDate = $minDate->format('d.m.Y');
+        }
+        return $deliveryDate;
+    }
+
     private function loadImages()
     {
         /** @var Offer $item */
@@ -199,25 +244,5 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
         }
         $this->arResult['BASKET_WEIGHT'] = $weight;
         $this->arResult['TOTAL_QUANTITY'] = $quantity;
-    }
-
-    /**
-     * @param Offer $offer
-     *
-     * @return string
-     */
-    public function getDeliveryDate(Offer $offer) : string
-    {
-        /** @todo предварительная дата доставки */
-        $deliveryDate = '';
-        try {
-            $deliveryService = App::getInstance()->getContainer()->get('delivery.service');
-            $res = $deliveryService->getByProduct($offer);
-            foreach ($res as $item) {
-                $item->getPeriodDescription();
-            }
-        } catch (ApplicationCreateException $e) {
-        }
-        return $deliveryDate;
     }
 }
