@@ -110,6 +110,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 }
             }
             $this->setSocial();
+            unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
             $this->includeComponentTemplate();
         } catch (\Exception $e) {
             try {
@@ -424,6 +425,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 $title = 'Добавление телефона';
                 break;
             case 'sendSmsCode':
+                unset($_SESSION['COUNT_AUTH_CONFIRM_CODE']);
                 $title = 'Подтверждение телефона';
                 $mess = $this->ajaxGetSendSmsCode($phone);
                 if ($mess instanceof JsonResponse) {

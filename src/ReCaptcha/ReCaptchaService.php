@@ -50,15 +50,14 @@ class ReCaptchaService implements LoggerAwareInterface
      */
     public function getCaptcha(string $additionalClass = '', bool $isAjax = false): string
     {
-        if(!$isAjax) {
-            $script= '';
+        if (!$isAjax) {
+            $script = '';
             $this->addJs();
-        }
-        else{
+        } else {
             $script = $this->getJs();
         }
 
-        return $script.'<div class="g-recaptcha' . $additionalClass . '" data-sitekey="' . $this->parameters['key']
+        return $script . '<div class="g-recaptcha' . $additionalClass . '" data-sitekey="' . $this->parameters['key']
             . '"></div>';
     }
 
