@@ -99,7 +99,6 @@ TEMPL;
                 $template
             );
         }
-        dump($result);
         return $result;
     }
 
