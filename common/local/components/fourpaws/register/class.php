@@ -59,6 +59,10 @@ use Symfony\Component\HttpFoundation\Request;
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsRegisterComponent extends \CBitrixComponent
 {
+    const BASKET_BACK_URL = '/cart/';
+
+    const PERSONAL_URL = '/personal/';
+
     const PHONE_HOT_LINE = '8 (800) 770-00-22';
 
     /**
@@ -125,12 +129,48 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         try {
             $this->arResult['STEP'] = 'begin';
 
+            $request = Application::getInstance()->getContext()->getRequest();
+
+            $emailGet = $request->get('email');
+            $hash = $request->get('hash');
+            if (!empty($emailGet) && !empty($hash)) {
+                /** @var ConfirmCodeService $confirmService */
+                $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+                if ($confirmService::checkConfirmEmail($hash)) {
+                    try {
+                        $userRepository = $this->currentUserProvider->getUserRepository();
+                        $userId = $userRepository->findIdentifierByRawLogin($emailGet);
+                        $user = $userRepository->find($userId);
+                        if ($user !== null) {
+                            $user->setEmailConfirmed(true);
+                            $this->currentUserProvider->getUserRepository()->update($user);
+                        }
+                        $this->userAuthorizationService->authorize($userId);
+                    } catch (TooManyUserFoundException $e) {
+                        ShowError('Найдено больше одного пользователя c эл. почтой ' . $emailGet . ', пожалуйста обратитесь на горячую линию');
+                        return false;
+                    } catch (UsernameNotFoundException $e) {
+                        ShowError('Не найдено пользователей c эл. почтой ' . $emailGet . ', пожалуйста обратитесь на горячую линию');
+                        return false;
+                    }
+                    if (!empty($_COOKIE['BACK_URL']) && $_COOKIE['BACK_URL'] === static::BASKET_BACK_URL) {
+                        $backUrl = $_COOKIE['BACK_URL'];
+                        unset($_COOKIE['BACK_URL']);
+                        setcookie('BACK_URL', '', time() - 5, '/');
+
+                        LocalRedirect($backUrl);
+                    } else {
+                        LocalRedirect(static::PERSONAL_URL);
+                    }
+                }
+            }
+
             if ($this->userAuthorizationService->isAuthorized()) {
                 $curUser = $this->currentUserProvider->getCurrentUser();
                 if (!empty($curUser->getExternalAuthId() && empty($curUser->getPersonalPhone()))) {
                     $this->arResult['STEP'] = 'addPhone';
                 } else {
-                    LocalRedirect('/personal/');
+                    LocalRedirect(static::PERSONAL_URL);
                 }
             }
 
@@ -226,15 +266,8 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             DeserializationContext::create()->setGroups('create')
         );
         try {
-            $regUser = $this->userRegistrationService->register($userEntity, true);
+            $regUser = $this->userRegistrationService->register($userEntity, true, !empty($data['backurl']) && $data['backurl'] === static::BASKET_BACK_URL);
             if ($regUser instanceof User && $regUser->getId() > 0) {
-                try {
-                    $expertSenderService = App::getInstance()->getContainer()->get('expertsender.service');
-                    $expertSenderService->sendEmailAfterRegister($regUser);
-                } catch (Exception $e) {
-                    $logger = LoggerFactory::create('expertsender');
-                    $logger->error(sprintf('Error send email: %s', $e->getMessage()));
-                }
 
                 $title = 'Ура, можно покупать! ';
                 /** @noinspection PhpUnusedLocalVariableInspection */
@@ -314,7 +347,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             if (!$res) {
                 if ($_SESSION['COUNT_REGISTER_CONFIRM_CODE'] === 3) {
                     $html = $this->getHtml('sendSmsCode', 'Подтверждение телефона',
-                        ['phone' => $phone, 'newAction'=>$newAction]);
+                        ['phone' => $phone, 'newAction' => $newAction]);
 
                     return JsonSuccessResponse::createWithData('',
                         ['html' => $html]);
@@ -324,7 +357,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         } catch (ExpiredConfirmCodeException $e) {
             if ($_SESSION['COUNT_REGISTER_CONFIRM_CODE'] === 3) {
                 $html = $this->getHtml('sendSmsCode', 'Подтверждение телефона',
-                    ['phone' => $phone, 'newAction'=>$newAction]);
+                    ['phone' => $phone, 'newAction' => $newAction]);
 
                 return JsonSuccessResponse::createWithData('',
                     ['html' => $html]);
@@ -335,7 +368,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         } catch (NotFoundConfirmedCodeException $e) {
             if ($_SESSION['COUNT_REGISTER_CONFIRM_CODE'] === 3) {
                 $html = $this->getHtml('sendSmsCode', 'Подтверждение телефона',
-                    ['phone' => $phone, 'newAction'=>$newAction]);
+                    ['phone' => $phone, 'newAction' => $newAction]);
 
                 return JsonSuccessResponse::createWithData('',
                     ['html' => $html]);
@@ -557,7 +590,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             if (!$res) {
                 if ($_SESSION['COUNT_REGISTER_CONFIRM_CODE'] === 3) {
                     $html = $this->getHtml('sendSmsCode', 'Подтверждение телефона',
-                        ['phone' => $phone, 'newAction'=>$newAction]);
+                        ['phone' => $phone, 'newAction' => $newAction]);
 
                     return JsonSuccessResponse::createWithData('',
                         ['html' => $html]);
@@ -567,7 +600,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         } catch (ExpiredConfirmCodeException $e) {
             if ($_SESSION['COUNT_REGISTER_CONFIRM_CODE'] === 3) {
                 $html = $this->getHtml('sendSmsCode', 'Подтверждение телефона',
-                    ['phone' => $phone, 'newAction'=>$newAction]);
+                    ['phone' => $phone, 'newAction' => $newAction]);
 
                 return JsonSuccessResponse::createWithData('',
                     ['html' => $html]);
@@ -578,7 +611,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         } catch (NotFoundConfirmedCodeException $e) {
             if ($_SESSION['COUNT_REGISTER_CONFIRM_CODE'] === 3) {
                 $html = $this->getHtml('sendSmsCode', 'Подтверждение телефона',
-                    ['phone' => $phone, 'newAction'=>$newAction]);
+                    ['phone' => $phone, 'newAction' => $newAction]);
 
                 return JsonSuccessResponse::createWithData('',
                     ['html' => $html]);

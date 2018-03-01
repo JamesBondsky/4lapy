@@ -6,6 +6,7 @@
 
 namespace FourPaws\UserBundle\Service;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Application;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Fuser;
@@ -175,6 +176,7 @@ class UserService implements
      *
      * @param User $user
      * @param bool $manzanaSave
+     * @param bool $fromBasket
      *
      * @throws \FourPaws\UserBundle\Exception\RuntimeException
      * @throws InvalidIdentifierException
@@ -183,7 +185,7 @@ class UserService implements
      * @throws BitrixRuntimeException
      * @return User
      */
-    public function register(User $user, bool $manzanaSave = true): User
+    public function register(User $user, bool $manzanaSave = true, bool $fromBasket = false): User
     {
         $validationResult = $this->userRepository->getValidator()->validate($user, null, ['create']);
         if ($validationResult->count() > 0) {
@@ -235,6 +237,19 @@ class UserService implements
         }
         Application::getConnection()->commitTransaction();
 
+        /** отправка письма о регистрации */
+        try {
+            $expertSenderService = App::getInstance()->getContainer()->get('expertsender.service');
+            $expertSenderService->sendEmailAfterRegister($registeredUser);
+            /** установка в сессии ссылки коризны если инициализирвоали из корзины */
+            if($fromBasket) {
+                setcookie('BACK_URL', '/cart/', time() + ConfirmCodeService::EMAIL_LIFE_TIME, '/');
+                $_COOKIE['BACK_URL'] = '/cart/';
+            }
+        } catch (\Exception $e) {
+            $logger = LoggerFactory::create('expertsender');
+            $logger->error(sprintf('Error send email: %s', $e->getMessage()));
+        }
 
         /**
          * @todo move manzana to events and out of here!!!
