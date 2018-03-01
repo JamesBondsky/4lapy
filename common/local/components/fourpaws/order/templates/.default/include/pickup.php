@@ -33,8 +33,8 @@ $delayed = $stockResultByShop->getDelayed();
 
 $metro = $arResult['METRO'][$selectedShop->getMetro()];
 
-$canGetPartial = !$available->isEmpty();
-$partialGet = $storage->isPartialGet();
+$canGetPartial = !$available->isEmpty() && !$delayed->isEmpty();
+$partialGet = $storage->isPartialGet() && $canGetPartial;
 $partialPickup = $arResult['PARTIAL_PICKUP'];
 
 ?>

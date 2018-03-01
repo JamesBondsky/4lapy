@@ -35,7 +35,6 @@ class DeliveryTimeHelper
             'HOUR_FORMAT' => null,
         ];
 
-        /* TODO переделать это */
         $options = array_merge($defaultOptions, $options);
 
         $result = '';
