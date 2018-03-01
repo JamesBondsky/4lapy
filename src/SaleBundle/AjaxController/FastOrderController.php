@@ -195,9 +195,8 @@ class FastOrderController extends Controller
 
                 return JsonSuccessResponse::createWithData('Быстрый заказ успешно создан', ['html' => $html]);
             }
-            else{
-                return JsonSuccessResponse::create('Быстрый заказ успешно создан', 200, [], ['redirect'=>'']);
-            }
+
+            return JsonSuccessResponse::create('Быстрый заказ успешно создан', 200, [], ['redirect'=>'/cart/successFastOrder.php']);
         }
 
         return $this->ajaxMess->getOrderCreateError();

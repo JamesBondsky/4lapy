@@ -20,6 +20,7 @@ if ($isAuth) {
 /** @var \Bitrix\Sale\Basket $basket */
 $basket = $arResult['BASKET'];
 $orderableBasket = $basket->getOrderableItems(); ?>
+<input type="hidden" name="type" value="<?=$arParams['REQUEST_TYPE'] ?? 'basket'?>">
 <p class="b-popup-one-click__description">Укажите ваше имя и телефон, мы вам перезвоним, чтобы уточнить и
     оформить заказ</p>
 <div class="b-popup-one-click__input-block">
