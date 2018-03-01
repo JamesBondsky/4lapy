@@ -17,10 +17,13 @@ use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\AppBundle\Serialization\ArrayCommaString;
 use FourPaws\AppBundle\Serialization\ArrayOrFalseHandler;
 use FourPaws\AppBundle\Serialization\BitrixBooleanHandler;
 use FourPaws\AppBundle\Serialization\BitrixDateHandler;
 use FourPaws\AppBundle\Serialization\BitrixDateTimeHandler;
+use FourPaws\AppBundle\Serialization\ManzanaDateTimeImmutableFullShortHandler;
+use FourPaws\AppBundle\Serialization\PhoneHandler;
 use FourPaws\AppBundle\Service\AjaxMess;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Exception\SmsSendErrorException;
@@ -111,10 +114,13 @@ class FourPawsRegisterComponent extends \CBitrixComponent
 
         $this->serializer = SerializerBuilder::create()->configureHandlers(
             function (HandlerRegistry $registry) {
+                $registry->registerSubscribingHandler(new ArrayCommaString());
+                $registry->registerSubscribingHandler(new ArrayOrFalseHandler());
+                $registry->registerSubscribingHandler(new BitrixBooleanHandler());
                 $registry->registerSubscribingHandler(new BitrixDateHandler());
                 $registry->registerSubscribingHandler(new BitrixDateTimeHandler());
-                $registry->registerSubscribingHandler(new BitrixBooleanHandler());
-                $registry->registerSubscribingHandler(new ArrayOrFalseHandler());
+                $registry->registerSubscribingHandler(new ManzanaDateTimeImmutableFullShortHandler());
+                $registry->registerSubscribingHandler(new PhoneHandler());
             }
         )->build();
     }
@@ -189,7 +195,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
      * @throws \RuntimeException
      * @return JsonResponse
      */
-    public function ajaxRegister($data): JsonResponse
+    public function ajaxRegister(array $data): JsonResponse
     {
         if (!empty($data['PERSONAL_PHONE'])) {
             try {
@@ -217,7 +223,14 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             return $this->ajaxMess->getHavePhoneError();
         }
 
-        $data['UF_PHONE_CONFIRMED'] = 'Y';
+        if($data['UF_CONFIRMATION'] === 'on' || $data['UF_CONFIRMATION'] === 'Y'){
+            $data['UF_CONFIRMATION'] = true;
+        }
+        else{
+            $data['UF_CONFIRMATION'] = false;
+        }
+
+        $data['UF_PHONE_CONFIRMED'] = true;
 
         /** @var User $userEntity */
         $userEntity = $this->serializer->fromArray(
