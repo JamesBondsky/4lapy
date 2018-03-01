@@ -7,7 +7,8 @@ use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\Shipment;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
-use FourPaws\DeliveryBundle\Entity\CalculationResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
@@ -60,10 +61,14 @@ class InnerPickupHandler extends DeliveryHandlerBase
 
     protected function calculateConcrete(Shipment $shipment)
     {
-        $result = parent::calculateConcrete($shipment);
-        if (!$result->isSuccess()) {
-            return $result;
+        $result = new PickupResult();
+
+        if (!$zone = $this->deliveryService->getDeliveryZoneCode($shipment)) {
+            $result->addError(new Error('Не указано местоположение доставки'));
+        } else {
+            $result->setDeliveryZone($zone);
         }
+
         $deliveryLocation = $this->deliveryService->getDeliveryLocation($shipment);
         $basket = $shipment->getParentOrder()->getBasket()->getOrderableItems();
 
@@ -97,9 +102,9 @@ class InnerPickupHandler extends DeliveryHandlerBase
         }
 
         if (!$offers = static::getOffers($deliveryLocation, $basket)) {
-            $result->setPeriodType(CalculationResult::PERIOD_TYPE_HOUR);
-            $result->setPeriodFrom(1);
-
+            /**
+             * Нужно для отображения списка доставок в хедере и на странице доставок
+             */
             return $result;
         }
 
@@ -135,17 +140,6 @@ class InnerPickupHandler extends DeliveryHandlerBase
 
                 return $result;
             }
-
-            if ($stockResult->getDelayed()->isEmpty()) {
-                $result->setPeriodFrom(1);
-                $result->setPeriodType(CalculationResult::PERIOD_TYPE_HOUR);
-            } else {
-                $result->setPeriodFrom($stockResult->getDeliveryDate()->diff(new \DateTime())->days);
-                $result->setPeriodType(CalculationResult::PERIOD_TYPE_DAY);
-            }
-        } else {
-            $result->setPeriodFrom(1);
-            $result->setPeriodType(CalculationResult::PERIOD_TYPE_HOUR);
         }
 
         return $result;

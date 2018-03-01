@@ -11,7 +11,6 @@ use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketBase;
 use Bitrix\Sale\BasketItem;
-use Bitrix\Sale\Delivery\CalculationResult as BitrixCalculationResult;
 use Bitrix\Sale\Delivery\DeliveryLocationTable;
 use Bitrix\Sale\Delivery\Services\Manager;
 use Bitrix\Sale\Delivery\Services\Table as DeliveryServiceTable;
@@ -21,7 +20,8 @@ use Bitrix\Sale\Shipment;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Dpd\TerminalTable;
-use FourPaws\DeliveryBundle\Entity\CalculationResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdResult;
 use FourPaws\DeliveryBundle\Exception\InvalidArgumentException;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\Location\LocationService;
@@ -87,7 +87,7 @@ class DeliveryService
      * @param string $locationCode
      * @param array $codes коды доставок для расчета
      *
-     * @return CalculationResult[]
+     * @return BaseResult[]
      */
     public function getByProduct(Offer $offer, string $locationCode = '', array $codes = []): array
     {
@@ -127,7 +127,7 @@ class DeliveryService
      * @param string $locationCode
      * @param array $codes коды доставок для расчета
      *
-     * @return CalculationResult[]
+     * @return BaseResult[]
      */
     public function getByLocation(string $locationCode, array $codes = []): array
     {
@@ -144,7 +144,7 @@ class DeliveryService
         $deliveries = $result['result'];
         if (!empty($codes)) {
             /**
-             * @var CalculationResult $delivery
+             * @var BaseResult $delivery
              */
             foreach ($deliveries as $i => $delivery) {
                 if (!in_array($delivery->getDeliveryCode(), $codes, true)) {
@@ -162,7 +162,7 @@ class DeliveryService
      * @param Shipment $shipment
      * @param array $codes коды доставок
      *
-     * @return CalculationResult[]
+     * @return BaseResult[]
      */
     public function calculateDeliveries(Shipment $shipment, array $codes = []): array
     {
@@ -189,10 +189,6 @@ class DeliveryService
             );
             $calculationResult = $shipment->calculateDelivery();
             if ($calculationResult->isSuccess()) {
-                if (!$calculationResult instanceof CalculationResult) {
-                    $calculationResult = new CalculationResult($calculationResult);
-                }
-
                 if (\in_array(
                     $service->getCode(),
                     [
@@ -201,11 +197,18 @@ class DeliveryService
                     ],
                     true
                 )) {
+                    $calculationResult = new DpdResult($calculationResult);
+
                     /* @todo не хранить эти данные в сессии */
                     $calculationResult->setPeriodFrom($_SESSION['DPD_DATA'][$service->getCode()]['DAYS_FROM']);
                     $calculationResult->setPeriodTo($_SESSION['DPD_DATA'][$service->getCode()]['DAYS_TO']);
                     $calculationResult->setStockResult($_SESSION['DPD_DATA'][$service->getCode()]['STOCK_RESULT']);
                     $calculationResult->setIntervals($_SESSION['DPD_DATA'][$service->getCode()]['INTERVALS']);
+                    $calculationResult->setDeliveryZone($_SESSION['DPD_DATA'][$service->getCode()]['DELIVERY_ZONE']);
+                    unset($_SESSION['DPD_DATA']);
+                } elseif (!$calculationResult instanceof BaseResult) {
+                    // непонятная доставка, мы с такими работать не обучены
+                    continue;
                 }
 
                 $calculationResult->setDeliveryId($service->getId());
@@ -365,61 +368,61 @@ class DeliveryService
     }
 
     /**
-     * @param CalculationResult $calculationResult
+     * @param BaseResult $calculationResult
      *
      * @return bool
      */
-    public function isPickup(CalculationResult $calculationResult): bool
+    public function isPickup(BaseResult $calculationResult): bool
     {
         return \in_array($calculationResult->getDeliveryCode(), static::PICKUP_CODES, true);
     }
 
     /**
-     * @param CalculationResult $calculationResult
+     * @param BaseResult $calculationResult
      *
      * @return bool
      */
-    public function isDelivery(CalculationResult $calculationResult): bool
+    public function isDelivery(BaseResult $calculationResult): bool
     {
         return \in_array($calculationResult->getDeliveryCode(), static::DELIVERY_CODES, true);
     }
 
     /**
-     * @param CalculationResult $calculationResult
+     * @param BaseResult $calculationResult
      *
      * @return bool
      */
-    public function isInnerPickup(CalculationResult $calculationResult): bool
+    public function isInnerPickup(BaseResult $calculationResult): bool
     {
         return $calculationResult->getDeliveryCode() === static::INNER_PICKUP_CODE;
     }
 
     /**
-     * @param CalculationResult $calculationResult
+     * @param BaseResult $calculationResult
      *
      * @return bool
      */
-    public function isDpdPickup(CalculationResult $calculationResult): bool
+    public function isDpdPickup(BaseResult $calculationResult): bool
     {
         return $calculationResult->getDeliveryCode() === static::DPD_PICKUP_CODE;
     }
 
     /**
-     * @param CalculationResult $calculationResult
+     * @param BaseResult $calculationResult
      *
      * @return bool
      */
-    public function isInnerDelivery(CalculationResult $calculationResult): bool
+    public function isInnerDelivery(BaseResult $calculationResult): bool
     {
         return $calculationResult->getDeliveryCode() === static::INNER_DELIVERY_CODE;
     }
 
     /**
-     * @param CalculationResult $calculationResult
+     * @param BaseResult $calculationResult
      *
      * @return bool
      */
-    public function isDpdDelivery(CalculationResult $calculationResult): bool
+    public function isDpdDelivery(BaseResult $calculationResult): bool
     {
         return $calculationResult->getDeliveryCode() === static::DPD_DELIVERY_CODE;
     }
@@ -468,11 +471,11 @@ class DeliveryService
     }
 
     /**
-     * @param CalculationResult $delivery
+     * @param BaseResult $delivery
      *
      * @return StockResultCollection
      */
-    public function getStockResultByDelivery(CalculationResult $delivery): StockResultCollection
+    public function getStockResultByDelivery(BaseResult $delivery): StockResultCollection
     {
         /** @var StockResultCollection $stockResult */
         $stockResult = $delivery->getStockResult();

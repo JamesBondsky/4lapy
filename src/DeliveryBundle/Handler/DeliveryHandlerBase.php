@@ -16,7 +16,7 @@ use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\StockResult;
-use FourPaws\DeliveryBundle\Entity\CalculationResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Service\IntervalService;
 use FourPaws\Location\LocationService;
@@ -277,24 +277,6 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                 ],
             ],
         ];
-
-        return $result;
-    }
-
-    /**
-     * @param Shipment $shipment
-     *
-     * @return CalculationResult
-     */
-    protected function calculateConcrete(Shipment $shipment)
-    {
-        $result = new CalculationResult();
-
-        if (!$zone = $this->deliveryService->getDeliveryZoneCode($shipment)) {
-            $result->addError(new Error('Не указано местоположение доставки'));
-        } else {
-            $result->setDeliveryName($zone);
-        }
 
         return $result;
     }

@@ -11,7 +11,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
-use FourPaws\DeliveryBundle\Entity\CalculationResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
@@ -230,7 +230,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $deliveries = $this->orderService->getDeliveries();
             $payments = $this->orderStorageService->getAvailablePayments($storage, true);
             $selectedDelivery = null;
-            /** @var CalculationResult $delivery */
+            /** @var BaseResult $delivery */
             foreach ($deliveries as $delivery) {
                 if ($delivery->getDeliveryId() !== $storage->getDeliveryId()) {
                     continue;
@@ -271,7 +271,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
     }
 
     /**
-     * @param CalculationResult[] $deliveries
+     * @param BaseResult[] $deliveries
      * @param OrderStorage $storage
      */
     protected function getPickupData(array $deliveries, OrderStorage $storage)

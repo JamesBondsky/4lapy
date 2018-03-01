@@ -2,7 +2,7 @@
 
 namespace FourPaws\DeliveryBundle\Entity\IntervalRule;
 
-use FourPaws\DeliveryBundle\Entity\CalculationResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 
 /**
  * Правило, добавляющее $value дней к дате доставке,
@@ -100,15 +100,14 @@ class AddDaysRule extends BaseRule implements TimeRuleInterface
         return $this;
     }
 
-    public function isSuitable(CalculationResult $result): bool
+    public function isSuitable(BaseResult $result): bool
     {
-        /* @todo брать дату из CalculationResult */
-        $hour = (new \DateTime())->format('G');
+        $hour = $result->getDeliveryDate()->format('G');
 
         return ($hour >= $this->getFrom()) && ($hour < $this->getTo());
     }
 
-    public function apply(CalculationResult $result): CalculationResult
+    public function apply(BaseResult $result): BaseResult
     {
         if (!$this->isSuitable($result)) {
             return $result;
@@ -118,9 +117,7 @@ class AddDaysRule extends BaseRule implements TimeRuleInterface
             return $result;
         }
 
-        $result->setPeriodType(CalculationResult::PERIOD_TYPE_DAY);
-        $result->setPeriodFrom($result->getPeriodFrom() + $this->getValue());
-        $result->setPeriodTo($result->getPeriodTo() + $this->getValue());
+        $result->getDeliveryDate()->modify(sprintf('+%s days', $this->getValue()));
 
         return $result;
     }

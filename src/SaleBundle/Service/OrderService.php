@@ -22,7 +22,7 @@ use Bitrix\Sale\Shipment;
 use Bitrix\Sale\ShipmentCollection;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Query\OfferQuery;
-use FourPaws\DeliveryBundle\Entity\CalculationResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundEXception;
@@ -105,7 +105,7 @@ class OrderService
     protected $deliveryService;
 
     /**
-     * @var CalculationResult[]
+     * @var BaseResult[]
      */
     protected $deliveries;
 
@@ -254,7 +254,7 @@ class OrderService
 
         $deliveries = $this->getDeliveries();
         $selectedDelivery = null;
-        /** @var CalculationResult $delivery */
+        /** @var BaseResult $delivery */
         foreach ($deliveries as $delivery) {
             if ($storage->getDeliveryId() === $delivery->getDeliveryId()) {
                 $selectedDelivery = $delivery;
@@ -524,7 +524,7 @@ class OrderService
     /**
      * @param bool $reload
      *
-     * @return CalculationResult[]
+     * @return BaseResult[]
      */
     public function getDeliveries($reload = false): array
     {

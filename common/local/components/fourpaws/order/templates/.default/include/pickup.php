@@ -7,7 +7,7 @@ use FourPaws\App\Application;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\DeliveryBundle\Entity\CalculationResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\SaleBundle\Entity\OrderStorage;
@@ -16,11 +16,11 @@ use FourPaws\StoreBundle\Entity\Store;
 /**
  * @var array $arResult
  * @var array $arParams
- * @var CalculationResult $pickup
+ * @var BaseResult $pickup
  * @var
  */
 
-/** @var CalculationResult $partialPickup */
+/** @var BaseResult $partialPickup */
 $partialPickup = $arResult['PARTIAL_PICKUP'];
 
 /** @var DeliveryService $deliveryService */

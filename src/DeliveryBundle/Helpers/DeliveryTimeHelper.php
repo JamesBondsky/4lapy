@@ -7,13 +7,13 @@
 namespace FourPaws\DeliveryBundle\Helpers;
 
 use Bitrix\Main\Grid\Declension;
-use FourPaws\DeliveryBundle\Entity\CalculationResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\Helpers\CurrencyHelper;
 
 class DeliveryTimeHelper
 {
     /**
-     * @param CalculationResult $calculationResult
+     * @param BaseResult $calculationResult
      * @param null|\DateTime $exactDate
      * @param array $options
      *                  - SHOW_TIME - отображать ли время
@@ -25,7 +25,7 @@ class DeliveryTimeHelper
      * @return string
      */
     public static function showTime(
-        CalculationResult $calculationResult,
+        BaseResult $calculationResult,
         \DateTime $exactDate = null,
         array $options = []
     ) {
@@ -48,7 +48,7 @@ class DeliveryTimeHelper
 
         $date = new \DateTime();
         switch ($delivery->getPeriodType()) {
-            case CalculationResult::PERIOD_TYPE_DAY:
+            case BaseResult::PERIOD_TYPE_DAY:
                 if (!$exactDate) {
                     $date->modify('+' . ($delivery->getPeriodFrom()) . ' days');
                 } else {
@@ -74,7 +74,7 @@ class DeliveryTimeHelper
                     $result = FormatDate($dateFormat, $date->getTimestamp());
                 }
                 break;
-            case CalculationResult::PERIOD_TYPE_HOUR:
+            case BaseResult::PERIOD_TYPE_HOUR:
                 if ($options['HOUR_FORMAT']) {
                     $date->modify('+' . ($delivery->getPeriodFrom()) . ' hours');
                     if ($options['HOUR_FORMAT'] instanceof \Closure) {
@@ -102,18 +102,18 @@ class DeliveryTimeHelper
     }
 
     /**
-     * @param CalculationResult $delivery
+     * @param BaseResult $delivery
      * @param \DateTime $deliveryDate
      */
-    public static function updateDeliveryDate(CalculationResult $delivery, \DateTime $deliveryDate)
+    public static function updateDeliveryDate(BaseResult $delivery, \DateTime $deliveryDate)
     {
         $deliveryInstance = clone $delivery;
         $date = new \DateTime();
         if ($deliveryDate->format('z') !== $date->format('z')) {
-            $deliveryInstance->setPeriodType(CalculationResult::PERIOD_TYPE_DAY);
+            $deliveryInstance->setPeriodType(BaseResult::PERIOD_TYPE_DAY);
             $deliveryInstance->setPeriodFrom($deliveryDate->format('z') - $date->format('z'));
         } else {
-            $deliveryInstance->setPeriodType(CalculationResult::PERIOD_TYPE_HOUR);
+            $deliveryInstance->setPeriodType(BaseResult::PERIOD_TYPE_HOUR);
             $deliveryInstance->setPeriodFrom($deliveryDate->format('G') - $date->format('G'));
         }
 

@@ -13,7 +13,7 @@ use FourPaws\BitrixOrm\Model\CropImageDecorator;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
-use FourPaws\DeliveryBundle\Entity\CalculationResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
@@ -65,7 +65,7 @@ class StoreService
      */
     protected $stockRepository;
 
-    /** @var  CalculationResult */
+    /** @var  BaseResult */
     protected $pickupDelivery;
 
     /** @var DeliveryService $deliveryService */
@@ -696,7 +696,7 @@ class StoreService
     }
 
     /**
-     * @return null|CalculationResult
+     * @return null|BaseResult
      */
     protected function getPickupDelivery()
     {

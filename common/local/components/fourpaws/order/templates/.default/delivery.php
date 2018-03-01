@@ -6,7 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Bitrix\Sale\Basket;
 use FourPaws\App\Application;
 use FourPaws\Location\LocationService;
-use FourPaws\DeliveryBundle\Entity\CalculationResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
@@ -19,11 +19,11 @@ use FourPaws\StoreBundle\Entity\Store;
  * @var CMain $APPLICATION
  */
 
-/** @var CalculationResult $delivery */
+/** @var BaseResult $delivery */
 $delivery = $arResult['DELIVERY'];
-/** @var CalculationResult $pickup */
+/** @var BaseResult $pickup */
 $pickup = $arResult['PICKUP'];
-/** @var CalculationResult $selectedDelivery */
+/** @var BaseResult $selectedDelivery */
 $selectedDelivery = $arResult['SELECTED_DELIVERY'];
 $selectedDeliveryId = $arResult['SELECTED_DELIVERY_ID'];
 

@@ -7,11 +7,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var array $arParams
  * @var array $arResult
  * @var OrderStorage $storage
- * @var CalculationResult $delivery
+ * @var BaseResult $delivery
  */
 
 use FourPaws\Decorators\SvgDecorator;
-use FourPaws\DeliveryBundle\Entity\CalculationResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\PersonalBundle\Entity\Address;

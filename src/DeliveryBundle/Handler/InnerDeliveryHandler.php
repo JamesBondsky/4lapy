@@ -10,7 +10,8 @@ use Bitrix\Main\Error;
 use Bitrix\Sale\Shipment;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\IntervalRuleCollection;
-use FourPaws\DeliveryBundle\Entity\CalculationResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\DeliveryResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
@@ -97,9 +98,12 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
 
     protected function calculateConcrete(Shipment $shipment)
     {
-        $result = parent::calculateConcrete($shipment);
-        if (!$result->isSuccess()) {
-            return $result;
+        $result = new DeliveryResult();
+
+        if (!$zone = $this->deliveryService->getDeliveryZoneCode($shipment)) {
+            $result->addError(new Error('Не указано местоположение доставки'));
+        } else {
+            $result->setDeliveryZone($zone);
         }
 
         $basket = $shipment->getParentOrder()->getBasket()->getOrderableItems();
@@ -119,17 +123,11 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
             $result->addError(new Error('Не задана стоимость доставки'));
         }
         $result->setIntervals($this->getIntervals($shipment));
-        $result->setPeriodType(CalculationResult::PERIOD_TYPE_DAY);
+        $result->setPeriodType(BaseResult::PERIOD_TYPE_DAY);
         if (!$offers = static::getOffers($deliveryLocation, $basket)) {
             /**
              * Нужно для отображения списка доставок в хедере и на странице доставок
              */
-            if ($this->canDeliverToday()) {
-                $result->setPeriodFrom(0);
-            } else {
-                $result->setPeriodFrom(1);
-            }
-
             return $result;
         }
 
@@ -163,16 +161,6 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
             $result->addError(new Error('Присутствуют товары не в наличии'));
 
             return $result;
-        }
-
-        if (!$stockResult->getDelayed()->isEmpty()) {
-            $result->setPeriodFrom($stockResult->getDeliveryDate()->diff(new \DateTime())->days);
-        } else {
-            if ($this->canDeliverToday()) {
-                $result->setPeriodFrom(0);
-            } else {
-                $result->setPeriodFrom(1);
-            }
         }
 
         /**
@@ -226,10 +214,5 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
         }
 
         return $result;
-    }
-
-    protected function canDeliverToday()
-    {
-        return date('H') < 14;
     }
 }

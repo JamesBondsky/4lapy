@@ -97,13 +97,6 @@ class Calculator extends DPD
                 }
 
                 /**
-                 * Если есть отложенные товары, то добавляем к дате доставки DPD
-                 * срок поставки на склад по графику
-                 */
-                if (!$stockResult->getDelayed()->isEmpty()) {
-                    $result['DPD_TARIFF']['DAYS'] += $stockResult->getDeliveryDate()->diff(new \DateTime())->days;
-                }
-                /**
                  * Получаем пункты самовывоза DPD
                  */
                 if ($profileCode === DeliveryService::DPD_PICKUP_CODE) {
@@ -119,15 +112,6 @@ class Calculator extends DPD
         }
 
         $interval = explode('-', Option::get(IPOLH_DPD_MODULE, 'DELIVERY_TIME_PERIOD'));
-        /* по ТЗ - дата доставки DPD для зоны 4 рассчитывается как "то, что вернуло DPD" + 1 день */
-        if ($profileCode === DeliveryService::DPD_DELIVERY_CODE &&
-            $deliveryService->getDeliveryZoneCodeByLocation(
-                $arOrder['LOCATION_TO'],
-                $deliveryId
-            ) === DeliveryService::ZONE_4
-        ) {
-            $result['DPD_TARIFF']['DAYS']++;
-        }
 
         $intervals = new IntervalCollection();
         $intervals->add(
@@ -140,6 +124,10 @@ class Calculator extends DPD
             'DAYS_FROM'    => $result['DPD_TARIFF']['DAYS'],
             'DAYS_TO'      => $result['DPD_TARIFF']['DAYS'] + 10,
             'STOCK_RESULT' => $stockResult ?? new StockResultCollection(),
+            'DELIVERY_ZONE' => $deliveryService->getDeliveryZoneCodeByLocation(
+                $arOrder['LOCATION_TO'],
+                $deliveryId
+            )
         ];
 
         $result['VALUE'] = floor($result['VALUE']);

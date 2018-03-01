@@ -13,7 +13,7 @@ use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
-use FourPaws\DeliveryBundle\Entity\CalculationResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
@@ -364,7 +364,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
     }
 
     /**
-     * @return null|CalculationResult
+     * @return null|BaseResult
      */
     protected function getPickupDelivery()
     {
@@ -381,14 +381,14 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
     }
 
     /**
-     * @param CalculationResult $delivery
+     * @param BaseResult $delivery
      * @param StockResultCollection $stockResult
      * @param Store $store
      *
      * @return array
      */
     protected function getStoreData(
-        CalculationResult $delivery,
+        BaseResult $delivery,
         StockResultCollection $stockResult,
         Store $store
     ): array {
