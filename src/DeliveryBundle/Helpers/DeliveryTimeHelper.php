@@ -9,6 +9,7 @@ namespace FourPaws\DeliveryBundle\Helpers;
 use Bitrix\Main\Grid\Declension;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\Helpers\CurrencyHelper;
+use FourPaws\Helpers\WordHelper;
 
 class DeliveryTimeHelper
 {
@@ -48,7 +49,7 @@ class DeliveryTimeHelper
                     $options['HOUR_FORMAT'] = $options['HOUR_FORMAT']($date);
                 }
 
-                $result = FormatDate($options['HOUR_FORMAT'], $date->getTimestamp());
+                $result = WordHelper::formatDate($options['HOUR_FORMAT'], $date->getTimestamp());
             } else {
                 $result .= 'через ';
                 $diff = $date->diff($currentDate)->h;
@@ -64,18 +65,18 @@ class DeliveryTimeHelper
                     ? $options['DAY_FORMAT']($date)
                     : $options['DAY_FORMAT'];
 
-                $result = FormatDate($options['DAY_FORMAT'], $date->getTimestamp());
+                $result = WordHelper::formatDate($options['DAY_FORMAT'], $date->getTimestamp());
             } else {
                 if ($options['SHORT']) {
                     $dateFormat = 'D, j M';
                 } else {
-                    $dateFormat = 'l, j F';
+                    $dateFormat = 'll, j F';
                 }
                 if ($options['SHOW_TIME']) {
                     $dateFormat .= ' в H:00';
                 }
 
-                $result = FormatDate($dateFormat, $date->getTimestamp());
+                $result = WordHelper::formatDate($dateFormat, $date->getTimestamp());
             }
         }
 
