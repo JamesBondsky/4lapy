@@ -2,6 +2,7 @@
 
 namespace FourPaws\External\Manzana\Consumer;
 
+use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\External\Manzana\Model\Client;
@@ -21,7 +22,19 @@ class ManzanaContactConsumer extends ManzanaConsumerBase
     {
         try {
             $contact = $this->serializer->deserialize($message->getBody(), Client::class, 'json');
-            $contact->contactId = $this->manzanaService->getContactIdByPhone($contact->phone);
+           
+            if (!$contact->phone) {
+                throw new ContactUpdateException('Неожиданное сообщение');
+            }
+            
+            try {
+                $contact->contactId = $this->manzanaService->getContactIdByPhone($contact->phone);
+            } catch (ManzanaServiceContactSearchNullException $e) {
+                /**
+                 * Создание пользователя
+                 */
+            }
+            
             $contact = $this->manzanaService->updateContact($contact);
             $this->manzanaService->updateUserCardByClient($contact);
         } catch (ContactUpdateException $e) {
