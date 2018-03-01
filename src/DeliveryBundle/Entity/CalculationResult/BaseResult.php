@@ -115,8 +115,8 @@ abstract class BaseResult extends CalculationResult
      */
     public function getDeliveryDate(): \DateTime
     {
-        if ($this->deliveryDate) {
-            $this->deliveryDate = $this->doCalculateDeliveryDate();
+        if (null === $this->deliveryDate) {
+            $this->doCalculateDeliveryDate();
         }
 
         return $this->deliveryDate;
@@ -274,12 +274,9 @@ abstract class BaseResult extends CalculationResult
         return $this;
     }
 
-    /**
-     * @return \DateTime
-     */
     protected function doCalculateDeliveryDate()
     {
-        $deliveryDate = clone $this->getCurrentDate();
+        $this->deliveryDate = clone $this->getCurrentDate();
         $modifier = 0;
 
         /**
@@ -293,10 +290,8 @@ abstract class BaseResult extends CalculationResult
         }
 
         if ($modifier > 0) {
-            $deliveryDate->modify(sprintf('+%s days', $modifier));
+            $this->deliveryDate->modify(sprintf('+%s days', $modifier));
         }
-
-        return $deliveryDate;
     }
 
     public function __clone()

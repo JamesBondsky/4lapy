@@ -471,22 +471,6 @@ class DeliveryService
     }
 
     /**
-     * @param BaseResult $delivery
-     *
-     * @return StockResultCollection
-     */
-    public function getStockResultByDelivery(BaseResult $delivery): StockResultCollection
-    {
-        /** @var StockResultCollection $stockResult */
-        $stockResult = $delivery->getStockResult();
-        if (!$stockResult instanceof StockResultCollection) {
-            throw new InvalidArgumentException('Stock result not defined');
-        }
-
-        return $stockResult;
-    }
-
-    /**
      * Получение терминалов DPD
      *
      * @param string $locationCode код местоположения

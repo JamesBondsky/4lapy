@@ -287,9 +287,6 @@ class FourPawsOrderComponent extends \CBitrixComponent
             return;
         }
 
-        $partialPickup = clone $pickup;
-        /** @var StockResultCollection $stockResult */
-        $stockResult = $this->deliveryService->getStockResultByDelivery($pickup);
         $selectedShopCode = $storage->getDeliveryPlaceCode();
 
         /**
@@ -298,7 +295,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
          * @todo реализовать обработку
          */
         try {
-            $shops = $stockResult->getStores(false);
+            $shops = $pickup->getStockResult()->getStores(false);
         } catch (NotFoundException $e) {
             $shops = new StoreCollection();
         }
@@ -307,7 +304,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         if (!$selectedShopCode || !isset($shops[$selectedShopCode])) {
             /** @var Store $shop */
             foreach ($shops as $shop) {
-                if ($stockResult->filterByStore($shop)->getDelayed()->isEmpty()) {
+                if ($pickup->getStockResult()->filterByStore($shop)->getDelayed()->isEmpty()) {
                     $selectedShop = $shop;
                     break;
                 }
@@ -320,13 +317,8 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $selectedShop = $shops[$selectedShopCode];
         }
 
-        if ($this->deliveryService->isInnerPickup($pickup)) {
-            $deliveryDate = $stockResult->getDeliveryDate();
-            $partialDeliveryDate = $stockResult->getAvailable()->getDeliveryDate();
-
-            DeliveryTimeHelper::updateDeliveryDate($pickup, $deliveryDate);
-            DeliveryTimeHelper::updateDeliveryDate($partialPickup, $partialDeliveryDate);
-        }
+        $pickup->setStockResult($pickup->getStockResult()->filterByStore($selectedShop));
+        $partialPickup = (clone $pickup)->setStockResult($pickup->getStockResult()->getAvailable());
 
         $this->arResult['SELECTED_SHOP'] = $selectedShop;
         $this->arResult['PARTIAL_PICKUP'] = $partialPickup;

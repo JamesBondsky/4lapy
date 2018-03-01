@@ -10,7 +10,7 @@ class DeliveryResult extends BaseResult
     public function doCalculateDeliveryDate()
     {
         parent::doCalculateDeliveryDate();
-        $currentDate = $this->getCurrentDate();
+        $currentDate = new \DateTime();
 
         if ($this->deliveryDate->format('z') !== $currentDate->format('z')) {
             return null;

@@ -5,7 +5,7 @@ namespace FourPaws\DeliveryBundle\Entity\IntervalRule;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 
 /**
- * Правило, добавляющее $value дней к дате доставке,
+ * Правило, добавляющее $value дней к дате доставки,
  * если время заказа лежит в промежутке между $from и $to
  *
  * Class AddDaysRule

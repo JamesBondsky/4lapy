@@ -41,7 +41,7 @@ $storage = $arResult['STORAGE'];
 
 $selectedShopCode = '';
 $isPickup = false;
-if ($pickup && $selectedDelivery->getDeliveryCode() == $pickup->getDeliveryCode()) {
+if ($pickup && $selectedDelivery->getDeliveryCode() === $pickup->getDeliveryCode()) {
     $selectedShopCode = $arResult['SELECTED_SHOP']->getXmlId();
     $isPickup = true;
 }
@@ -109,25 +109,21 @@ if ($pickup && $selectedDelivery->getDeliveryCode() == $pickup->getDeliveryCode(
                                         </span>
                                     </span>
                                     <span class="b-choice-recovery__addition-text">
-                                        <?= DeliveryTimeHelper::showTime($delivery, null) ?>
+                                        <?= DeliveryTimeHelper::showTime($delivery) ?>
                                         , <?= CurrencyHelper::formatPrice($delivery->getPrice(), false) ?>
                                     </span>
                                     <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile">
-                                        <?= DeliveryTimeHelper::showTime($delivery, null, ['SHORT' => true]) ?>
+                                        <?= DeliveryTimeHelper::showTime($delivery, ['SHORT' => true]) ?>
                                         , <?= CurrencyHelper::formatPrice($delivery->getPrice(), false) ?>
                                 </label>
                             <?php } ?>
                             <?php if ($pickup) { ?>
                                 <?php
-                                $stockResultByShop = $deliveryService->getStockResultByDelivery($pickup)
-                                                                     ->filterByStore($selectedShop);
-                                $available = $stockResultByShop->getAvailable();
+                                $available = $pickup->getStockResult()->getAvailable();
                                 if (!$available->isEmpty() && $storage->isPartialGet()) {
                                     $price = $available->getPrice();
-                                    $date = $available->getDeliveryDate();
                                 } else {
-                                    $price = $stockResultByShop->getPrice();
-                                    $date = $stockResultByShop->getDeliveryDate();
+                                    $price = $pickup->getStockResult()->getPrice();
                                 }
                                 ?>
                                 <input class="b-choice-recovery__input js-recovery-email js-myself-shop js-delivery"
@@ -146,7 +142,6 @@ if ($pickup && $selectedDelivery->getDeliveryCode() == $pickup->getDeliveryCode(
                                     <span class="b-choice-recovery__addition-text js-my-pickup js-pickup-tab">
                                         <?= DeliveryTimeHelper::showTime(
                                             $pickup,
-                                            $date,
                                             [
                                                 'SHOW_TIME' => !$deliveryService->isDpdPickup(
                                                     $pickup
@@ -158,7 +153,6 @@ if ($pickup && $selectedDelivery->getDeliveryCode() == $pickup->getDeliveryCode(
                                     <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile js-my-pickup js-pickup-tab">
                                         <?= DeliveryTimeHelper::showTime(
                                             $pickup,
-                                            $date,
                                             [
                                                 'SHORT'     => true,
                                                 'SHOW_TIME' => !$deliveryService->isDpdPickup(
@@ -195,9 +189,7 @@ if ($pickup && $selectedDelivery->getDeliveryCode() == $pickup->getDeliveryCode(
         <?php
         $basketPrice = $basket->getPrice();
         if ($isPickup) {
-            $stockResultByShop = $deliveryService->getStockResultByDelivery($selectedDelivery)->filterByStore(
-                $arResult['SELECTED_SHOP']
-            );
+            $stockResultByShop = $selectedDelivery->getStockResult();
             /* todo это нужно до тех пор, пока не реализовано разделение заказа */
             if ($storage->isPartialGet()) {
                 $basketPrice = $stockResultByShop->getAvailable()->getPrice();

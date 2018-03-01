@@ -7,18 +7,18 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var array $arParams
  * @var array $arResult
  * @var Basket $basket
- * @var CalculationResult $selectedDelivery
+ * @var BaseResult $selectedDelivery
  */
 
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
-use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Main\Grid\Declension;
 use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\Helpers\WordHelper;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\SaleBundle\Entity\OrderStorage;
@@ -47,14 +47,14 @@ $delayedItems = [];
 $delayedWeight = 0;
 $delayedPrice = 0;
 $delayedQuantity = 0;
+$selectedDelivery = $arResult['SELECTED_DELIVERY'];
 
 if ($deliveryService->isPickup($selectedDelivery)) {
     $showPickupContainer = true;
 
     /** @var Store $selectedShop */
     $selectedShop = $arResult['SELECTED_SHOP'];
-    $stockResult = $deliveryService->getStockResultByDelivery($selectedDelivery)
-                                   ->filterByStore($selectedShop);
+    $stockResult = $selectedDelivery->getStockResult()->filterByStore($selectedShop);
 
     $available = $stockResult->getAvailable();
     $availableWeight = 0;

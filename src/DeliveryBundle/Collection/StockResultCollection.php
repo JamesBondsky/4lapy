@@ -58,7 +58,7 @@ class StockResultCollection extends ArrayCollection
             function (StockResult $stockResult) use ($store) {
                 return $stockResult->getStores()->exists(
                     function ($i, Store $stockResultStore) use ($store) {
-                        return $stockResultStore->getId() === $store->getId();
+                        return $stockResultStore->getXmlId() === $store->getXmlId();
                     }
                 );
             }

@@ -257,7 +257,15 @@ class OrderService
         /** @var BaseResult $delivery */
         foreach ($deliveries as $delivery) {
             if ($storage->getDeliveryId() === $delivery->getDeliveryId()) {
-                $selectedDelivery = $delivery;
+                $selectedDelivery = clone $delivery;
+                if ($this->deliveryService->isPickup($selectedDelivery)) {
+                    $selectedDelivery->setStockResult(
+                        $selectedDelivery->getStockResult()->filterByStore(
+                            $this->storeService->getByXmlId($storage->getDeliveryPlaceCode())
+                        )
+                    );
+                }
+                break;
             }
         }
 
@@ -294,16 +302,17 @@ class OrderService
 
             $shipment->setFields(
                 [
-                    'DELIVERY_ID'   => $selectedDelivery->getDeliveryId(),
-                    'DELIVERY_NAME' => $selectedDelivery->getDeliveryName(),
-                    'CURRENCY'      => $order->getCurrency(),
+                    'DELIVERY_ID'           => $selectedDelivery->getDeliveryId(),
+                    'DELIVERY_NAME'         => $selectedDelivery->getDeliveryName(),
+                    'CURRENCY'              => $order->getCurrency(),
+                    'PRICE_DELIVERY'        => $selectedDelivery->getPrice(),
+                    'CUSTOM_PRICE_DELIVERY' => 'Y',
                 ]
             );
 
             $shipmentCollection->calculateDelivery();
 
-            $stockResult = $this->deliveryService->getStockResultByDelivery($selectedDelivery);
-            $deliveryDate = $stockResult->getDeliveryDate();
+            $deliveryDate = $selectedDelivery->getDeliveryDate();
 
             /**
              * Задание свойств заказа, связанных с доставкой
@@ -364,7 +373,7 @@ class OrderService
 
                         break;
                     case 'REGION_COURIER_FROM_DC':
-                        $value = $stockResult->getDelayed()->isEmpty()
+                        $value = $selectedDelivery->getStockResult()->getDelayed()->isEmpty()
                             ? BitrixUtils::BX_BOOL_FALSE
                             : BitrixUtils::BX_BOOL_TRUE;
                         break;

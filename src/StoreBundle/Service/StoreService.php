@@ -508,7 +508,6 @@ class StoreService
                     $item['amount'] = $amount > 5 ? 'много' : 'мало';
                     $item['pickup'] = DeliveryTimeHelper::showTime(
                         $this->pickupDelivery,
-                        $stockResultByStore->getDeliveryDate(),
                         [
                             'SHOW_TIME' => true,
                             'SHORT'     => true,

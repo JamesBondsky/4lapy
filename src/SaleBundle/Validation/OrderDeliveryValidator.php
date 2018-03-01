@@ -93,7 +93,7 @@ class OrderDeliveryValidator extends ConstraintValidator
             }
         } else {
             try {
-                $availableStores = $this->deliveryService->getStockResultByDelivery($delivery)->getStores();
+                $availableStores = $delivery->getStockResult()->getStores();
                 $storeXmlId = $entity->getDeliveryPlaceCode();
                 if (!isset($availableStores[$storeXmlId])) {
                     $this->context->addViolation($constraint->deliveryPlaceCodeMessage);

@@ -14,7 +14,6 @@ class DeliveryTimeHelper
 {
     /**
      * @param BaseResult $calculationResult
-     * @param null|\DateTime $exactDate
      * @param array $options
      *                  - SHOW_TIME - отображать ли время
      *                  - SHOW_PRICE - отображать стоимость доставки
@@ -26,7 +25,6 @@ class DeliveryTimeHelper
      */
     public static function showTime(
         BaseResult $calculationResult,
-        \DateTime $exactDate = null,
         array $options = []
     ) {
         $defaultOptions = [
@@ -37,86 +35,59 @@ class DeliveryTimeHelper
             'HOUR_FORMAT' => null,
         ];
 
+        /* TODO переделать это */
         $options = array_merge($defaultOptions, $options);
 
         $result = '';
-        if ($exactDate) {
-            $delivery = static::updateDeliveryDate($calculationResult, $exactDate);
+
+        $currentDate = new \DateTime();
+        $date = clone $calculationResult->getDeliveryDate();
+
+        if ($date->format('z') === $currentDate->format('z')) {
+            if ($options['HOUR_FORMAT']) {
+                if ($options['HOUR_FORMAT'] instanceof \Closure) {
+                    $options['HOUR_FORMAT'] = $options['HOUR_FORMAT']($date);
+                }
+
+                $result = FormatDate($options['HOUR_FORMAT'], $date->getTimestamp());
+            } else {
+                $result .= 'через ';
+                $diff = $date->diff($currentDate)->h;
+                if ($diff < 1) {
+                    $diff++;
+                }
+                $result .= ($diff === 1) ? '' : ($diff . ' ');
+                $result .= (new Declension('час', 'часа', 'часов'))->get($diff);
+            }
         } else {
-            $delivery = $calculationResult;
-        }
+            if ($options['DAY_FORMAT']) {
+                $options['DAY_FORMAT'] = ($options['DAY_FORMAT'] instanceof \Closure)
+                    ? $options['DAY_FORMAT']($date)
+                    : $options['DAY_FORMAT'];
 
-        $date = new \DateTime();
-        switch ($delivery->getPeriodType()) {
-            case BaseResult::PERIOD_TYPE_DAY:
-                if (!$exactDate) {
-                    $date->modify('+' . ($delivery->getPeriodFrom()) . ' days');
+                $result = FormatDate($options['DAY_FORMAT'], $date->getTimestamp());
+            } else {
+                if ($options['SHORT']) {
+                    $dateFormat = 'D, j M';
                 } else {
-                    $date = $exactDate;
+                    $dateFormat = 'l, j F';
+                }
+                if ($options['SHOW_TIME']) {
+                    $dateFormat .= ' в H:00';
                 }
 
-                if ($options['DAY_FORMAT']) {
-                    $options['DAY_FORMAT'] = ($options['DAY_FORMAT'] instanceof \Closure)
-                        ? $options['DAY_FORMAT']($date)
-                        : $options['DAY_FORMAT'];
-
-                    $result = FormatDate($options['DAY_FORMAT'], $date->getTimestamp());
-                } else {
-                    if ($options['SHORT']) {
-                        $dateFormat = 'D, j M';
-                    } else {
-                        $dateFormat = 'l, j F';
-                    }
-                    if ($options['SHOW_TIME']) {
-                        $dateFormat .= ' в H:00';
-                    }
-
-                    $result = FormatDate($dateFormat, $date->getTimestamp());
-                }
-                break;
-            case BaseResult::PERIOD_TYPE_HOUR:
-                if ($options['HOUR_FORMAT']) {
-                    $date->modify('+' . ($delivery->getPeriodFrom()) . ' hours');
-                    if ($options['HOUR_FORMAT'] instanceof \Closure) {
-                        $options['HOUR_FORMAT'] = $options['HOUR_FORMAT']($date);
-                    }
-
-                    $result = FormatDate($options['HOUR_FORMAT'], $date->getTimestamp());
-                } else {
-                    $result .= 'через ';
-                    $result .= ($delivery->getPeriodFrom() == 1) ? '' : ($delivery->getPeriodFrom() . ' ');
-                    $result .= (new Declension('час', 'часа', 'часов'))->get($delivery->getPeriodFrom());
-                }
-                break;
+                $result = FormatDate($dateFormat, $date->getTimestamp());
+            }
         }
 
         if ($options['SHOW_PRICE']) {
-            if ($options['SHORT'] && !$delivery->getPrice()) {
+            if ($options['SHORT'] && !$calculationResult->getPrice()) {
                 $result .= ', 0 ₽';
             } else {
-                $result .= ', ' . CurrencyHelper::formatPrice($delivery->getPrice());
+                $result .= ', ' . CurrencyHelper::formatPrice($calculationResult->getPrice());
             }
         }
 
         return mb_strtolower($result);
-    }
-
-    /**
-     * @param BaseResult $delivery
-     * @param \DateTime $deliveryDate
-     */
-    public static function updateDeliveryDate(BaseResult $delivery, \DateTime $deliveryDate)
-    {
-        $deliveryInstance = clone $delivery;
-        $date = new \DateTime();
-        if ($deliveryDate->format('z') !== $date->format('z')) {
-            $deliveryInstance->setPeriodType(BaseResult::PERIOD_TYPE_DAY);
-            $deliveryInstance->setPeriodFrom($deliveryDate->format('z') - $date->format('z'));
-        } else {
-            $deliveryInstance->setPeriodType(BaseResult::PERIOD_TYPE_HOUR);
-            $deliveryInstance->setPeriodFrom($deliveryDate->format('G') - $date->format('G'));
-        }
-
-        return $deliveryInstance;
     }
 }

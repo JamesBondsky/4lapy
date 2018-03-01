@@ -20,9 +20,6 @@ use FourPaws\StoreBundle\Entity\Store;
  * @var
  */
 
-/** @var BaseResult $partialPickup */
-$partialPickup = $arResult['PARTIAL_PICKUP'];
-
 /** @var DeliveryService $deliveryService */
 $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
 /** @var OrderStorage $storage */
@@ -38,6 +35,7 @@ $metro = $arResult['METRO'][$selectedShop->getMetro()];
 
 $canGetPartial = !$available->isEmpty();
 $partialGet = $storage->isPartialGet();
+$partialPickup = $arResult['PARTIAL_PICKUP'];
 
 ?>
 
@@ -110,10 +108,7 @@ $partialGet = $storage->isPartialGet();
                         <div class="b-order-list__order-text b-order-list__order-text--myself js-parts-price js-price-block">
                             <div class="b-order-list__clipped-text">
                                 <div class="b-order-list__text-backed js-my-pickup js-pickup-time">
-                                    Забрать <?= DeliveryTimeHelper::showTime(
-                                        $partialPickup,
-                                        $available->getDeliveryDate()
-                                    ) ?></div>
+                                    Забрать <?= DeliveryTimeHelper::showTime($partialPickup) ?></div>
                             </div>
                         </div>
                         <div class="b-order-list__order-value b-order-list__order-value--myself js-parts-price js-price-block">
@@ -163,10 +158,7 @@ $partialGet = $storage->isPartialGet();
             </div>
             <div class="b-radio__addition-text">
                 <p class="js-pickup_full js-pickup-time">
-                    <?= DeliveryTimeHelper::showTime(
-                        $pickup,
-                        $stockResultByShop->getDeliveryDate()
-                    ) ?>
+                    <?= DeliveryTimeHelper::showTime($pickup) ?>
                 </p>
             </div>
         </div>
