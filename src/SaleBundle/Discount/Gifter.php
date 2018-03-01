@@ -13,6 +13,7 @@ namespace FourPaws\SaleBundle\Discount;
 /**
  * Class Gifter
  * @package FourPaws\SaleBundle\Discount
+ * @todo переместить в соотвествующую папку и неймспейс
  */
 class Gifter extends \CGlobalCondCtrlAtoms
 {
