@@ -25,7 +25,7 @@ $orderableBasket = $basket->getOrderableItems(); ?>
     <h1 class="b-title b-title--one-click b-title--one-click-head">Быстрый заказ</h1>
 </div>
 <form class="b-popup-one-click__form js-form-validation js-phone js-popup-buy-one-click"
-      data-url="/ajax/fast-order/create/" method="get">
+      data-url="/ajax/sale/fast_order/create/" method="get">
     <input type="hidden" name="type" value="<?= $arParams['REQUEST_TYPE'] ?? 'basket' ?>">
     <p class="b-popup-one-click__description">Укажите ваше имя и телефон, мы вам перезвоним, чтобы уточнить и
         оформить заказ</p>

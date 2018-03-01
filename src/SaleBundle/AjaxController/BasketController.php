@@ -63,6 +63,9 @@ class BasketController extends Controller
     public function addAction(Request $request): JsonResponse
     {
         $offerId = (int)$request->get('offerId', 0);
+        if($offerId === 0){
+            $offerId = (int)$request->get('offerid', 0);
+        }
         $quantity = (int)$request->get('quantity', 1);
 
         try {

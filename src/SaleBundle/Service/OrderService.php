@@ -30,6 +30,7 @@ use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\PersonalBundle\Exception\NotFoundException as AddressNotFoundException;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Exception\FastOrderCreateException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\StoreBundle\Collection\StoreCollection;
@@ -200,8 +201,10 @@ class OrderService
 
     /**
      * @param OrderStorage $storage
-     * @param bool $save
+     * @param bool         $save
+     * @param bool         $fastOrder
      *
+     * @throws \FourPaws\SaleBundle\Exception\FastOrderCreateException
      * @throws \Exception
      * @throws OrderCreateException
      * @throws NotFoundException
@@ -215,7 +218,7 @@ class OrderService
      * @throws ObjectNotFoundException
      * @return Order
      */
-    public function createOrder(OrderStorage $storage, $save = true): Order
+    public function createOrder(OrderStorage $storage, $save = true, bool $fastOrder = false): Order
     {
         $order = Order::create(SITE_ID);
         $selectedCity = $this->userCityProvider->getSelectedCity();
@@ -250,15 +253,30 @@ class OrderService
             $paySystem = $extPayment->getPaySystem();
             $extPayment->setField('PAY_SYSTEM_NAME', $paySystem->getField('NAME'));
         } elseif ($save) {
-            throw new OrderCreateException('Не выбран способ оплаты');
+            if(!$fastOrder) {
+                throw new OrderCreateException('Не выбран способ оплаты');
+            }
         }
 
         $deliveries = $this->getDeliveries();
         $selectedDelivery = null;
-        /** @var CalculationResult $delivery */
-        foreach ($deliveries as $delivery) {
-            if ($storage->getDeliveryId() === (int)$delivery->getData()['DELIVERY_ID']) {
-                $selectedDelivery = $delivery;
+        $deliveryId = $storage->getDeliveryId();
+        if($fastOrder) {
+            /** устанавливаем самовывоз для быстрого заказа */
+            if(!empty($deliveries)) {
+                $selectedDelivery = current($deliveries);
+            }
+            else{
+                throw new FastOrderCreateException('Оформление быстрого заказа невозможно, пожалуйста обратить к администратору');
+                /** @todo сделать что-то при недоступности ни одной доставки */
+            }
+        }
+        if($selectedDelivery === null && !empty($deliveries)) {
+            /** @var CalculationResult $delivery */
+            foreach ($deliveries as $delivery) {
+                if ($deliveryId === (int)$delivery->getData()['DELIVERY_ID']) {
+                    $selectedDelivery = $delivery;
+                }
             }
         }
 
@@ -266,7 +284,7 @@ class OrderService
          * Задание способов доставки
          */
         $propertyValueCollection = $order->getPropertyCollection();
-        if ($storage->getDeliveryId()) {
+        if ($deliveryId) {
             $locationProp = $order->getPropertyCollection()->getDeliveryLocation();
             if (!$locationProp) {
                 throw new OrderCreateException('Отсутствует свойство привязки к местоположению');
@@ -495,7 +513,7 @@ class OrderService
              * 1) пользователь только что зарегистрирован
              * 2) авторизованный пользователь задал новый адрес
              */
-            if ($needCreateAddress && $selectedDelivery && $this->deliveryService->isDelivery($selectedDelivery)) {
+            if ($needCreateAddress && $selectedDelivery && $this->deliveryService->isDelivery($selectedDelivery) && !$fastOrder) {
                 $address = (new Address())
                     ->setCity($storage->getCity())
                     ->setCityLocation($storage->getCityCode())
