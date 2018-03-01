@@ -379,9 +379,14 @@ class ReferralService
                     try {
                         $card = $this->manzanaService->searchCardByNumber($item->cardNumber);
                         $cardInfo = $this->manzanaService->getCardInfo($item->cardNumber, $card->contactId);
-                        try {
-                            $phone = PhoneHelper::normalizePhone($card->phone);
-                        } catch (WrongPhoneNumberException $e) {
+                        if(!empty($card->phone)) {
+                            try {
+                                $phone = PhoneHelper::normalizePhone((string)$card->phone);
+                            } catch (WrongPhoneNumberException $e) {
+                                $phone = '';
+                            }
+                        }
+                        else{
                             $phone = '';
                         }
                         /** @noinspection SlowArrayOperationsInLoopInspection */

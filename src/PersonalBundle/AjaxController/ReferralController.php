@@ -104,12 +104,7 @@ class ReferralController extends Controller
                     ['card'=>$cardInfo]
                 );
         } catch (\Exception $e) {
-            echo $e->getMessage();
+            return JsonErrorResponse::create($e->getMessage());
         }
-        
-        return JsonErrorResponse::createWithData(
-            'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
-            ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
-        );
     }
 }
