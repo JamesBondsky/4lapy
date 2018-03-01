@@ -126,7 +126,7 @@ class Event implements ServiceHandlerInterface
     /**
      * @param array $auth
      */
-    public function deleteBasicAuth(&$auth)
+    public static function deleteBasicAuth(&$auth)
     {
         if (\is_array($auth) && isset($auth['basic'])) {
             unset($auth['basic']);
@@ -136,12 +136,12 @@ class Event implements ServiceHandlerInterface
     /**
      * @param $fields
      */
-    public function preventAuthorizationOnRegister(&$fields)
+    public static function preventAuthorizationOnRegister(&$fields)
     {
         $fields['ACTIVE'] = 'N';
     }
 
-    public function sendEmail($fields)
+    public static function sendEmail($fields)
     {
         if ($_SESSION['SEND_REGISTER_EMAIL'] && (int)$fields['USER_ID'] > 0 && !empty($fields['EMAIL'])) {
             /** отправка письма о регистрации */
@@ -176,7 +176,7 @@ class Event implements ServiceHandlerInterface
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
      */
-    public function updateManzana($fields)
+    public static function updateManzana($fields)
     {
         if ($_SESSION['MANZANA_UPDATE']) {
             unset($_SESSION['MANZANA_UPDATE']);
