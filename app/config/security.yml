@@ -15,4 +15,5 @@ security:
           - FourPaws\UserBundle\Security\BitrixAuthenticator
   access_control:
     - { path: ^/mobile_app_v2/start, roles: ROLE_NO_TOKEN }
+    - { path: ^/mobile_app_v2/fake, roles: ROLE_NO_TOKEN }
     - { path: ^/mobile_app_v2(?!/start|?!/fake), roles: ROLE_API }

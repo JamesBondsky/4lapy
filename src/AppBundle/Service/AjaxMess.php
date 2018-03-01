@@ -29,6 +29,14 @@ class AjaxMess
         return $this->getJsonError('wrongPhone', 'Некорректный номер телефона');
     }
 
+    /**
+     * @return JsonResponse
+     */
+    public function getNeedAuthError(): JsonResponse
+    {
+        return $this->getJsonError('needAuth', 'Необходимо авторизоваться');
+    }
+
     /** error block */
 
     /**

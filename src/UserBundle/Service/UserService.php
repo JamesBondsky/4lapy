@@ -116,7 +116,7 @@ class UserService implements
     {
         $this->bitrixUserService->Logout();
 
-        return $this->isAuthorized();
+        return !$this->isAuthorized();
     }
 
     /**
@@ -194,21 +194,29 @@ class UserService implements
 
         Application::getConnection()->startTransaction();
 
-        /** регистрируем битровым методом регистрации*/
-        $result = $this->bitrixUserService->Register(
-            $user->getLogin() ?? $user->getEmail(),
-            $user->getName() ?? '',
-            $user->getLastName() ?? '',
-            $user->getPassword(),
-            $user->getPassword(),
-            $user->getEmail()
-        );
+        $session = $_SESSION;
+        try {
+            /** регистрируем битровым методом регистрации*/
+            $result = $this->bitrixUserService->Register(
+                $user->getLogin() ?? $user->getEmail(),
+                $user->getName() ?? '',
+                $user->getLastName() ?? '',
+                $user->getPassword(),
+                $user->getPassword(),
+                $user->getEmail()
+            );
+        } catch (\Exception $e) {
+            Application::getConnection()->rollbackTransaction();
+            $_SESSION = $session;
+            throw new BitrixRuntimeException($e->getMessage(), $e->getCode());
+        }
 
         $result['ID'] = $result['ID'] ?? '';
         $id = (int)$result['ID'];
 
         if ($id <= 0) {
             Application::getConnection()->rollbackTransaction();
+            $_SESSION = $session;
             throw new BitrixRuntimeException($this->bitrixUserService->LAST_ERROR);
         }
 
@@ -217,12 +225,14 @@ class UserService implements
             ->setActive(true);
         if (!$this->userRepository->update($user)) {
             Application::getConnection()->rollbackTransaction();
+            $_SESSION = $session;
             throw new RuntimeException('Cant update registred user');
         }
 
         $registeredUser = $this->userRepository->find($id);
         if (!($registeredUser instanceof User)) {
             Application::getConnection()->rollbackTransaction();
+            $_SESSION = $session;
             throw new RuntimeException('Cant fetch registred user');
         }
         Application::getConnection()->commitTransaction();
@@ -338,8 +348,6 @@ class UserService implements
         }
 
         $client->birthDate = $user->getManzanaBirthday();
-        // в Манзане телефон хранится с семеркой
-        //$client->phone              = $user->getPersonalPhone();
         $client->phone = $user->getManzanaNormalizePersonalPhone();
         $client->firstName = $user->getName();
         $client->secondName = $user->getSecondName();

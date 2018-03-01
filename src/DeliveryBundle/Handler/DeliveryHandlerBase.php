@@ -1,6 +1,6 @@
 <?php
 
-namespace FourPaws\DeliveryBundle\Service;
+namespace FourPaws\DeliveryBundle\Handler;
 
 use Bitrix\Currency\CurrencyManager;
 use Bitrix\Main\Error;
@@ -10,22 +10,21 @@ use Bitrix\Sale\BasketBase;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\Services\Base;
 use Bitrix\Sale\Shipment;
-use Doctrine\Common\Collections\ArrayCollection;
 use Bitrix\Sale\Delivery\CalculationResult;
-use Doctrine\Common\Collections\Collection;
 use FourPaws\App\Application;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\StockResult;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\DeliveryBundle\Service\IntervalService;
 use FourPaws\Location\LocationService;
-use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 
-abstract class DeliveryServiceHandlerBase extends Base implements DeliveryServiceInterface
+abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterface
 {
     /**
      * @var bool
@@ -57,6 +56,11 @@ abstract class DeliveryServiceHandlerBase extends Base implements DeliveryServic
      */
     protected $deliveryService;
 
+    /**
+     * @var IntervalService
+     */
+    protected $intervalService;
+
     public function __construct($initParams)
     {
         $this->locationService = Application::getInstance()->getContainer()->get('location.service');
@@ -65,6 +69,7 @@ abstract class DeliveryServiceHandlerBase extends Base implements DeliveryServic
         $this->userService = Application::getInstance()
                                         ->getContainer()
                                         ->get(UserCitySelectInterface::class);
+        $this->intervalService = Application::getInstance()->getContainer()->get(IntervalService::class);
         parent::__construct($initParams);
     }
 

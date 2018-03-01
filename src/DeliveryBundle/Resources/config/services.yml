@@ -18,3 +18,7 @@ services:
     delivery.service:
        class: FourPaws\DeliveryBundle\Service\DeliveryService
        public: true
+
+    FourPaws\DeliveryBundle\Service\IntervalService:
+       class: FourPaws\DeliveryBundle\Service\IntervalService
+       public: true
