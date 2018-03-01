@@ -21,6 +21,8 @@ use FourPaws\SaleBundle\Discount\Utils\Cleaner;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
+use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
+use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 
@@ -329,23 +331,30 @@ class BasketService
      * @param int   $quantity
      *
      * @return float
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
      */
     public function getItemBonus(Offer $offer, int $quantity = 1): float
     {
         try {
-            $cardNumber = $this->currentUserProvider->getActiveCard();
-            $cheque = $this->manzanaPosService->processChequeWithoutBonus(
-                $this->manzanaPosService->buildRequestFromItem(
-                    $offer,
-                    $cardNumber,
-                    $quantity
-                )
-            );
+            $cardNumber = $this->currentUserProvider->getCurrentUser()->getDiscountCardNumber();
+            if(!empty($cardNumber)) {
+                $cheque = $this->manzanaPosService->processChequeWithoutBonus(
+                    $this->manzanaPosService->buildRequestFromItem(
+                        $offer,
+                        $cardNumber,
+                        $quantity
+                    )
+                );
 
-            return $cheque->getChargedBonus();
+                return $cheque->getChargedBonus();
+            }
+        } catch (NotAuthorizedException $e) {
+            /** Возвращаеи 0 в случае ошибки */
         } catch (ExecuteException $e) {
-            return (float)0;
+            /** Возвращаеи 0 в случае ошибки */
         }
+        return (float)0;
     }
 
     /**

@@ -267,8 +267,7 @@ class OrderService
                 $selectedDelivery = current($deliveries);
             }
             else{
-                throw new FastOrderCreateException('Оформление быстрого заказа невозможно, пожалуйста обратить к администратору');
-                /** @todo сделать что-то при недоступности ни одной доставки */
+                throw new FastOrderCreateException('Оформление быстрого заказа невозможно, пожалуйста обратить к администратору или попробуйте полный процесс оформления');
             }
         }
         if($selectedDelivery === null && !empty($deliveries)) {
@@ -393,7 +392,9 @@ class OrderService
                 $propertyValue->setValue($value);
             }
         } elseif ($save) {
-            throw new OrderCreateException('Не выбрана доставка');
+            if(!$fastOrder) {
+                throw new OrderCreateException('Не выбрана доставка');
+            }
         }
 
         /**

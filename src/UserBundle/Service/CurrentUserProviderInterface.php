@@ -63,6 +63,4 @@ interface CurrentUserProviderInterface
      * @return array
      */
     public function getUserGroups(int $id = 0): array;
-
-    public function getActiveCard(): string;
 }

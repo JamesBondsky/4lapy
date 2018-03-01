@@ -531,24 +531,4 @@ class UserService implements
         $this->setAvatarHostUserId(0);
         $this->setAvatarGuestUserId(0);
     }
-
-    public function getActiveCard():string
-    {
-        $cardNumber = '';
-        try {
-            $cards = $this->manzanaService->getCardsByContactId($this->manzanaService->getContactIdByUser());
-            foreach ($cards as $card) {
-                if ($card->isActive()) {
-                    $cardNumber = $card->cardNumber;
-                    break;
-                }
-            }
-        } catch (ApplicationCreateException $e) {
-        } catch (ManzanaServiceContactSearchMoreOneException $e) {
-        } catch (ManzanaServiceContactSearchNullException $e) {
-        } catch (ManzanaServiceException $e) {
-        } catch (NotAuthorizedException $e) {
-        }
-        return $cardNumber;
-    }
 }
