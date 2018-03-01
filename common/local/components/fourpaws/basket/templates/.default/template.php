@@ -29,7 +29,7 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
         <div class="b-preloader__spinner">
             <img class="b-preloader__image" src="/static/build/images/inhtml/spinner.svg" alt="spinner" title="">
         </div>
-    </div>k
+    </div>
     <?php
 }
 ?>
