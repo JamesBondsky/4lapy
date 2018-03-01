@@ -41,11 +41,11 @@ class DiscountFromProperty extends \CSaleActionCtrlAction
         if ($arOneCondition['Source_type'] === 'price') {
             $template = <<<'TEMPL'
             
-    foreach ($arOrder['BASKET_ITEMS'] as $row) {
+    foreach ($arOrder['BASKET_ITEMS'] as $k => $row) {
         if (
             #CONDITION#
         ) {
-            \#CLASS_FQN#::setIdForFilter($row['ID']);
+            \#CLASS_FQN#::setIdForFilter($row['ID'] ?? $row['PRODUCT_ID']);
             if (is_array($row['CATALOG']['#SOURCE#'])) {
                 $price = (float)current($row['CATALOG']['#SOURCE#']);
             } else {
@@ -71,11 +71,11 @@ TEMPL;
         } elseif ($arOneCondition['Source_type'] === 'percent') {
             $template = <<<'TEMPL'
             
-    foreach ($arOrder['BASKET_ITEMS'] as $row) {
+    foreach ($arOrder['BASKET_ITEMS'] as $k => $row) {
         if (
             #CONDITION#
         ) {
-            \#CLASS_FQN#::setIdForFilter($row['ID']);
+            \#CLASS_FQN#::setIdForFilter($row['ID'] ?? $row['PRODUCT_ID']);
             if (is_array($row['CATALOG']['#SOURCE#'])) {
                 $discount = (float)current($row['CATALOG']['#SOURCE#']);
             } else {
@@ -329,21 +329,21 @@ TEMPL;
     public static function filter(array $basketRow): bool
     {
         /** avoiding 'use' */
-        return (int)$basketRow['ID'] === self::getIdForFilter() && null !== self::getIdForFilter();
+        return (string)($basketRow['ID'] ?? $basketRow['PRODUCT_ID']) === self::getIdForFilter() && null !== self::getIdForFilter();
     }
 
     /**
-     * @return int
+     * @return string
      */
-    public static function getIdForFilter(): int
+    public static function getIdForFilter(): string
     {
         return self::$idForFilter;
     }
 
     /**
-     * @param int $idForFilter
+     * @param string $idForFilter
      */
-    public static function setIdForFilter(int $idForFilter)
+    public static function setIdForFilter(string $idForFilter)
     {
         self::$idForFilter = $idForFilter;
     }

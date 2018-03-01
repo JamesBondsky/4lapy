@@ -1,7 +1,14 @@
 <?php
+
+use Bitrix\Main\Application;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
+
+$request = Application::getInstance()->getContext()->getRequest();
+$backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
+
 /** @var string $phone */ ?>
 <div class="b-registration__content b-registration__content--moiety b-registration__content--step">
     <div class="b-step-form">Шаг <span>1</span> из <span>2</span>
@@ -12,6 +19,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
           method="post">
         <input type="hidden" name="action" value="get">
         <input type="hidden" name="step" value="sendSmsCode">
+        <input type="hidden" name="backurl" value="<?=$backUrl?>">
         <div class="b-input-line">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="mobile-number-1">Мобильный телефон</label>

@@ -481,6 +481,7 @@ class OrderService
                         ->setLogin($storage->getPhone())
                         ->setPassword($password)
                         ->setPersonalPhone($storage->getPhone());
+                    $_SESSION['MANZANA_UPDATE'] = true;
                     $user = $this->userRegistrationProvider->register($user);
 
                     $order->setFieldNoDemand('USER_ID', $user->getId());
