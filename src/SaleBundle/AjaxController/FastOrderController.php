@@ -9,15 +9,19 @@ namespace FourPaws\SaleBundle\AjaxController;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\ArgumentTypeException;
+use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\Order;
 use FourPaws\App\Application as App;
+use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
+use FourPaws\SaleBundle\Service\BasketService;
+use FourPaws\SaleBundle\Service\BasketViewService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -56,6 +60,10 @@ class FastOrderController extends Controller
     private $currentUserProvider;
     /** @var AjaxMess */
     private $ajaxMess;
+    /** @var BasketService */
+    private $basketService;
+    /** @var BasketViewService */
+    private $basketViewService;
 
     /**
      * OrderController constructor.
@@ -65,19 +73,25 @@ class FastOrderController extends Controller
      * @param UserAuthorizationInterface   $userAuthProvider
      * @param CurrentUserProviderInterface $currentUserProvider
      * @param AjaxMess                     $ajaxMess
+     * @param BasketService                $basketService
+     * @param BasketViewService            $basketViewService
      */
     public function __construct(
         OrderService $orderService,
         OrderStorageService $orderStorageService,
         UserAuthorizationInterface $userAuthProvider,
         CurrentUserProviderInterface $currentUserProvider,
-        AjaxMess $ajaxMess
+        AjaxMess $ajaxMess,
+        BasketService $basketService,
+        BasketViewService $basketViewService
     ) {
         $this->orderService = $orderService;
         $this->orderStorageService = $orderStorageService;
         $this->userAuthProvider = $userAuthProvider;
         $this->currentUserProvider = $currentUserProvider;
         $this->ajaxMess = $ajaxMess;
+        $this->basketService = $basketService;
+        $this->basketViewService = $basketViewService;
     }
 
     /**
@@ -85,20 +99,44 @@ class FastOrderController extends Controller
      * @param Request $request
      *
      * @return JsonResponse
+     * @throws \RuntimeException
+     * @throws ObjectNotFoundException
+     * @throws LoaderException
      */
     public function loadAction(Request $request): JsonResponse
     {
+        $basketData = [];
+        $requestType = $request->get('type');
+        if ($requestType === 'card') {
+            $basketController = new BasketController($this->basketService, $this->basketViewService);
+            $response = $basketController->addAction($request);
+            if ($response->isOk()) {
+                if ($response instanceof JsonErrorResponse) {
+                    return $response;
+                }
+                $basketData = json_decode($response->getContent());
+            } else {
+                return $this->ajaxMess->getSystemError();
+            }
+        }
         global $APPLICATION;
         ob_start();
         $APPLICATION->IncludeComponent(
             'fourpaws:fast.order',
             '',
-            ['TYPE' => 'innerForm'],
+            [
+                'TYPE'         => 'innerForm',
+                'REQUEST_TYPE' => $requestType,
+            ],
             null,
             ['HIDE_ICONS' => 'Y']
         );
-
-        return JsonSuccessResponse::createWithData('подгружено', ['html' => ob_get_clean()]);
+        $html = ob_get_clean();
+        $data = ['html' => $html];
+        if (!empty($basketData['miniBasket'])) {
+            $data['miniBasket'] = $basketData['miniBasket'];
+        }
+        return JsonSuccessResponse::createWithData('подгружено', $data);
     }
 
     /**
@@ -149,12 +187,17 @@ class FastOrderController extends Controller
         }
         if ($order instanceof Order && $order->getId() > 0) {
 
-            ob_start();
-            require_once App::getDocumentRoot()
-                . '/local/components/fourpaws/fast.order/templates/.default/success.php';
-            $html = ob_get_clean();
+            if($request->get('type') === 'card') {
+                ob_start();
+                require_once App::getDocumentRoot()
+                    . '/local/components/fourpaws/fast.order/templates/.default/success.php';
+                $html = ob_get_clean();
 
-            return JsonSuccessResponse::createWithData('Быстрый заказ успешно создан', ['html' => $html]);
+                return JsonSuccessResponse::createWithData('Быстрый заказ успешно создан', ['html' => $html]);
+            }
+            else{
+                return JsonSuccessResponse::create('Быстрый заказ успешно создан', 200, [], ['redirect'=>'']);
+            }
         }
 
         return $this->ajaxMess->getOrderCreateError();

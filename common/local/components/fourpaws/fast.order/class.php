@@ -149,11 +149,11 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
     }
 
     /**
-     * @param $id
+     * @param int $id
      *
      * @return Offer|null
      */
-    public function getOffer($id)
+    public function getOffer(int $id)
     {
         /** @var Offer $item */
         foreach ($this->offerCollection as $item) {
@@ -213,7 +213,12 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
         if (!empty($dates)) {
             /** @var Date $minDate */
             $minDate = $dates[min(array_keys($dates))];
-            $deliveryDate = $minDate->format('d.m.Y');
+            if($minDate instanceof Date) {
+                $deliveryDate = $minDate->format('d.m.Y');
+            }
+            else{
+                $deliveryDate = $minDate;
+            }
         }
         return $deliveryDate;
     }

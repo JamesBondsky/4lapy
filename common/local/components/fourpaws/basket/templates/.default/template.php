@@ -10,6 +10,8 @@
 
 /** @global \FourPaws\Components\BasketComponent $component */
 
+use Bitrix\Sale\BasketItem;
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
 
@@ -132,12 +134,14 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
             <section class="b-stock b-stock--shopping-cart b-stock--shopping-product js-section-remove-stock">
                 <h3 class="b-title b-title--h2-cart b-title--shopping-product">Ваш заказ</h3>
                 <?php
-                /** @var \Bitrix\Sale\BasketItem $basketItem */
+                /** @var BasketItem $basketItem */
                 foreach ($orderableBasket as $basketItem) {
                     if (isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
                         continue;
                     }
-                    $image = $component->getImage($basketItem->getProductId()); ?>
+                    $image = $component->getImage($basketItem->getProductId());
+                    $offer = $component->getOffer((int)$basketItem->getProductId());
+                    $useOffer = $offer instanceof Offer && $offer->getId() > 0;?>
                     <div class="b-item-shopping">
                         <div class="b-common-item b-common-item--shopping-cart b-common-item--shopping">
                         <span class="b-common-item__image-wrap b-common-item__image-wrap--shopping-cart">
@@ -156,8 +160,8 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                                    href="<?= $basketItem->getField('DETAIL_PAGE_URL'); ?>" title="">
                                     <span class="b-clipped-text b-clipped-text--shopping-cart">
                                         <span>
-                                            <?php if ($offer !== 'null') { ?>
-                                                <strong><?= $offer->getProduct()->getBrand() ?>  </strong>
+                                            <?php if ($useOffer) { ?>
+                                                <strong><?= $offer->getProduct()->getBrandName() ?>  </strong>
                                             <?php } ?>
                                             <?= $basketItem->getField('NAME') ?>
                                         </span>
@@ -166,7 +170,7 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                                          <span class="b-common-item__name-value">Вес: </span>
                                          <span><?= WordHelper::showWeight($basketItem->getWeight(), true) ?></span>
                                     </span>
-                                    <?php if ($offer !== null) {
+                                    <?php if ($useOffer) {
                                         $color = $offer->getColor();
                                         if ($color !== null) { ?>
                                             <span class="b-common-item__variant b-common-item__variant--shopping-cart b-common-item__variant--shopping">
@@ -183,7 +187,7 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                                         <?php }
                                     } ?>
                                 </a>
-                                <?php if ($offer !== null) {
+                                <?php if ($useOffer) {
                                     $bonus = $component->getItemBonus($offer);
                                     if ($bonus > 0) {
                                         $bonus = floor($bonus); ?>
@@ -198,7 +202,7 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                         <div class="b-item-shopping__operation">
                             <?php $offer = $component->getOffer($basketItem->getProductId());
                             $maxQuantity = 1000;
-                            if ($offer !== null) {
+                            if ($useOffer) {
                                 $maxQuantity = $offer->getQuantity();
                             } ?>
                             <div class="b-plus-minus b-plus-minus--half-mobile b-plus-minus--shopping js-plus-minus-cont">
@@ -347,7 +351,7 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                     <div class="b-information-order__one-click">
                         <a class="b-link b-link--one-click js-open-popup js-open-popup--one-click js-open-popup"
                            href="javascript:void(0)" title="Купить в 1 клик" data-popup-id="buy-one-click"
-                           data-url="/ajax/fast_order/load/">
+                           data-url="/ajax/sale/fast_order/load/">
                             <span class="b-link__text b-link__text--one-click js-open-popup">Купить в 1 клик</span>
                         </a>
                     </div>

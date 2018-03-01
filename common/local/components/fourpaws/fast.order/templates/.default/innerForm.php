@@ -3,17 +3,18 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+use Bitrix\Sale\BasketItem;
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\Decorators\SvgDecorator;
-use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\UserBundle\Entity\User;
 
 /** @global \FourPaws\Components\FourPawsFastOrderComponent $component */
 
-$isAuth = $this->arResult['IS_AUTH'];
+$isAuth = $arResult['IS_AUTH'];
 if ($isAuth) {
     /** @var User $curUser */
-    $curUser = $this->arResult['CUR_USER'];
+    $curUser = $arResult['CUR_USER'];
 }
 
 /** @var \Bitrix\Sale\Basket $basket */
@@ -46,11 +47,12 @@ $orderableBasket = $basket->getOrderableItems(); ?>
     <hr class="b-hr b-hr--one-click2"/>
     <?php $countItems = $orderableBasket->count();
     $i = 0;
-    /** @var \Bitrix\Sale\BasketItem $basketItem */
+    /** @var BasketItem $basketItem */
     foreach ($orderableBasket as $basketItem) {
         $i++;
         $image = $component->getImage($basketItem->getProductId());
-        $offer = $component->getOffer($basketItem->getProductId()); ?>
+        $offer = $component->getOffer((int)$basketItem->getProductId());
+        $useOffer = $offer instanceof Offer && $offer->getId() > 0;?>
         <div class="b-item-shopping b-item-shopping--one-click <?= $countItems === $i ? ' b-item-shopping--last' : '' ?> js-remove-shopping">
             <?php /** @todo акция
              * <div class="b-gift-order b-gift-order--shopping js-open-gift">
@@ -77,8 +79,8 @@ $orderableBasket = $basket->getOrderableItems(); ?>
                        href="<?= $basketItem->getField('DETAIL_PAGE_URL'); ?>" title="">
                         <span class="b-clipped-text b-clipped-text--shopping-cart">
                             <span>
-                                <?php if ($offer !== 'null') { ?>
-                                    <strong><?= $offer->getProduct()->getBrand() ?>  </strong>
+                                <?php if ($useOffer) { ?>
+                                    <strong><?= $offer->getProduct()->getBrandName() ?>  </strong>
                                 <?php } ?>
                                 <?= $basketItem->getField('NAME') ?>
                             </span>
@@ -87,7 +89,7 @@ $orderableBasket = $basket->getOrderableItems(); ?>
                              <span class="b-common-item__name-value">Вес: </span>
                              <span><?= WordHelper::showWeight($basketItem->getWeight(), true) ?></span>
                         </span>
-                        <?php if ($offer !== null) {
+                        <?php if ($useOffer) {
                             $color = $offer->getColor();
                             if ($color !== null) { ?>
                                 <span class="b-common-item__variant b-common-item__variant--shopping-cart b-common-item__variant--shopping">
@@ -104,7 +106,7 @@ $orderableBasket = $basket->getOrderableItems(); ?>
                             <?php }
                         } ?>
                     </a>
-                    <?php if ($offer !== null) {
+                    <?php if ($useOffer) {
                         $bonus = $component->getItemBonus($offer);
                         if ($bonus > 0) {
                             $bonus = floor($bonus); ?>
@@ -117,10 +119,10 @@ $orderableBasket = $basket->getOrderableItems(); ?>
             </div>
             <div class="b-item-shopping__operation b-item-shopping__operation--one-click">
                 <?php $maxQuantity = 1000;
-                if ($offer !== null) {
+                if ($useOffer) {
                     $maxQuantity = $offer->getQuantity();
                 } ?>
-                <div class="b-plus-minus b-plus-minus--half-mobile b-plus-minus--shopping js-plus-minus-cont">
+                <div class="b-plus-minus b-plus-minus--half-mobile b-plus-minus--shopping js-plus-minus-cont js-no-valid">
                     <a class="b-plus-minus__minus js-minus" href="javascript:void(0);"
                        data-url="/ajax/sale/basket/update/"></a>
                     <input class="b-plus-minus__count js-plus-minus-count"
@@ -131,13 +133,13 @@ $orderableBasket = $basket->getOrderableItems(); ?>
                     <a class="b-plus-minus__plus js-plus" href="javascript:void(0);"
                        data-url="/ajax/sale/basket/update/"></a>
                 </div>
-                <div class="b-select b-select--shopping-cart">
+                <div class="b-select b-select--shopping-cart js-no-valid">
                     <?php /** @todo mobile max quantity */
                     $maxMobileQuantity = 100;
                     if ($maxQuantity < $maxMobileQuantity) {
                         $maxMobileQuantity = $maxMobileQuantity;
                     } ?>
-                    <select class="b-select__block b-select__block--shopping-cart" name="one-click" title="">
+                    <select class="b-select__block b-select__block--shopping-cart js-no-valid" name="one-click" title="">
                         <option value="" disabled="disabled" selected="selected">выберите</option>
                         <?php for ($i = 0; $i < $maxMobileQuantity; $i++) { ?>
                             <option value="one-click-<?= $i ?>"><?= $i + 1 ?></option>
@@ -188,7 +190,7 @@ $orderableBasket = $basket->getOrderableItems(); ?>
                      * </a>
                      */ ?>
                 </div>
-                <?php if($offer !== null) {
+                <?php if($useOffer) {
                     $deliveryDate = $component->getDeliveryDate($offer);
                     if(!empty($deliveryDate)){ ?>
                         <div class="b-item-shopping__sale-info b-item-shopping__sale-info--width">

@@ -115,11 +115,11 @@ class BasketComponent extends \CBitrixComponent
     }
 
     /**
-     * @param $id
+     * @param int $id
      *
      * @return Offer|null
      */
-    public function getOffer($id)
+    public function getOffer(int $id)
     {
         /** @var Offer $item */
         foreach ($this->offerCollection as $item) {
