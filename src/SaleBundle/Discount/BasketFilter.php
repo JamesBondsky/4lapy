@@ -15,6 +15,7 @@ use Bitrix\Sale\Discount\Actions;
 /**
  * Class BasketFilter
  * @package FourPaws\SaleBundle\Discount
+ * @todo переместить в соотвествующую папку и неймспейс
  */
 class BasketFilter extends \CSaleCondCtrlBasketGroup
 {

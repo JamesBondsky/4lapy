@@ -43,7 +43,7 @@ $bonus = $arResult['BONUS'];
                 <div class="b-account-bonus-card__link b-account-bonus-card__link--hidden js-number-input">
                     <form class="b-account-bonus-card__form js-form-validation js-offers-query"
                           action="/"
-                          method="get"
+                          method="post"
                           data-url="/ajax/personal/bonus/card/link/">
                         <div class="b-input b-input--account-bonus js-offers">
                             <input class="b-input__input-field b-input__input-field--account-bonus js-offers"
@@ -55,16 +55,14 @@ $bonus = $arResult['BONUS'];
                             <div class="b-error"><span class="js-message"></span>
                             </div>
                         </div>
-                        <button class="b-account-bonus-card__button">Привязать
-                        </button>
+                        <button class="b-account-bonus-card__button">Привязать</button>
                     </form>
                 </div>
             </div>
         <?php } ?>
     </div>
     <div class="b-account-bonus__info">
-        <div class="b-account-bonus__title">Статистика
-        </div>
+        <div class="b-account-bonus__title">Статистика</div>
         <div class="b-account-bonus-progress">
             <progress class="b-account-bonus-progress__progress" max="100" value="<?= $bonus->getProgress() ?>">
             </progress>

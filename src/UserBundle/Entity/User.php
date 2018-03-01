@@ -133,7 +133,6 @@ class User implements UserInterface
      * @Serializer\Type("phone")
      * @Serializer\SerializedName("PERSONAL_PHONE")
      * @Serializer\Groups(groups={"dummy","create","read","update"})
-     * @PhoneNumber(defaultRegion="RU",type="mobile")
      * @Serializer\SkipWhenEmpty()
      */
     protected $personalPhone = '';

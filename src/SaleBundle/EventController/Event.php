@@ -4,10 +4,12 @@ namespace FourPaws\SaleBundle\EventController;
 
 use Bitrix\Main\Event as BitrixEvent;
 use Bitrix\Main\EventManager;
+use Bitrix\Main\EventResult;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use FourPaws\App\Application;
 use FourPaws\App\ServiceHandlerInterface;
+use FourPaws\SaleBundle\Discount\Action\Action\DiscountFromProperty;
 use FourPaws\SaleBundle\Discount\Action\Condition\BasketQuantity;
 use FourPaws\SaleBundle\Discount\BasketFilter;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
@@ -43,7 +45,9 @@ class Event implements ServiceHandlerInterface
         self::initHandler('OnCondSaleActionsControlBuildList', [Gifter::class, 'GetControlDescr']);
         self::initHandler('OnCondSaleActionsControlBuildList', [BasketFilter::class, 'GetControlDescr']);
         self::initHandler('OnCondSaleActionsControlBuildList', [BasketQuantity::class, 'GetControlDescr']);
+        self::initHandler('OnCondSaleActionsControlBuildList', [DiscountFromProperty::class, 'GetControlDescr']);
         self::initHandler('OnAfterSaleOrderFinalAction', [Manager::class, 'OnAfterSaleOrderFinalAction']);
+        self::initHandler('OnBeforeSaleBasketItemSetField', [__CLASS__, 'checkItemQuantity']);
         self::initHandler('OnSaleBasketItemRefreshData', [__CLASS__, 'updateItemAvailability']);
 
         self::initHandler('OnSaleOrderSaved', [__CLASS__, 'sendNewOrderMessage']);
@@ -89,6 +93,29 @@ class Event implements ServiceHandlerInterface
                    ->getContainer()
                    ->get(BasketService::class)
                    ->refreshItemAvailability($basketItem);
+    }
+
+    /**
+     * @param BitrixEvent $event
+     *
+     * @return null|EventResult
+     */
+    public static function checkItemQuantity(BitrixEvent $event)
+    {
+        $basketItem = $event->getParameter('ENTITY');
+        $fieldName = $event->getParameter('NAME');
+        $value = $event->getParameter('VALUE');
+
+        if ($fieldName !== 'QUANTITY') {
+            return null;
+        }
+
+        /** @var BasketService $basketService */
+        $basketService = Application::getInstance()
+                                    ->getContainer()
+                                    ->get(BasketService::class);
+
+        return $basketService->checkItemQuantity($basketItem, $value);
     }
 
     /**
