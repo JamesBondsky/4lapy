@@ -3,6 +3,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+use Bitrix\Main\Application;
 use Bitrix\Sale\BasketItem;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Decorators\SvgDecorator;
@@ -19,21 +20,50 @@ if ($isAuth) {
 
 /** @var \Bitrix\Sale\Basket $basket */
 $basket = $arResult['BASKET'];
-$orderableBasket = $basket->getOrderableItems(); ?>
+$orderableBasket = $basket->getOrderableItems();
+$request = Application::getInstance()->getContext()->getRequest();
+
+$requestType = '';
+if ($request->offsetExists('type')) {
+    $requestType = $request->get('type');
+}
+if (!empty($arParams['REQUEST_TYPE'])) {
+    $requestType = $arParams['REQUEST_TYPE'];
+}
+if (empty($type)) {
+    $requestType = 'basket';
+}
+
+$name = '';
+if ($request->offsetExists('name')) {
+    $name = $request->get('name');
+}
+if ($isAuth) {
+    $name = $curUser->getName();
+}
+
+$phone = '';
+if ($request->offsetExists('phone')) {
+    $phone = $request->get('phone');
+}
+if ($isAuth) {
+    $phone = $curUser->getPersonalPhone();
+}
+?>
 <div class="b-popup-one-click__close-bar">
     <a class="b-popup-one-click__close js-close-popup" href="javascript:void(0)" title="Закрыть"></a>
     <h1 class="b-title b-title--one-click b-title--one-click-head">Быстрый заказ</h1>
 </div>
 <form class="b-popup-one-click__form js-form-validation js-phone js-popup-buy-one-click"
       data-url="/ajax/sale/fast_order/create/" method="get">
-    <input type="hidden" name="type" value="<?= $arParams['REQUEST_TYPE'] ?? 'basket' ?>">
+    <input type="hidden" name="type" value="<?= $requestType ?>">
     <p class="b-popup-one-click__description">Укажите ваше имя и телефон, мы вам перезвоним, чтобы уточнить и
         оформить заказ</p>
     <div class="b-popup-one-click__input-block">
         <label class="b-popup-one-click__label" for="one-click-name">Имя</label>
         <div class="b-input b-input--recall">
             <input class="b-input__input-field b-input__input-field--recall" type="text" id="one-click-name"
-                   placeholder="Ваше имя" name="name" value="<?= $isAuth ? $curUser->getName() : '' ?>"/>
+                   placeholder="Ваше имя" name="name" value="<?= $name ?>"/>
             <div class="b-error"><span class="js-message"></span></div>
         </div>
         <div class="b-error"><span class="js-message"></span></div>
@@ -42,8 +72,8 @@ $orderableBasket = $basket->getOrderableItems(); ?>
         <label class="b-popup-one-click__label" for="one-click-tel">Телефон</label>
         <div class="b-input b-input--recall js-phone-mask">
             <input class="b-input__input-field b-input__input-field--recall js-phone-mask" type="tel"
-                   id="one-click-tel" placeholder="Ваш телефон" name="tel"
-                   value="<?= $isAuth ? $curUser->getPersonalPhone() : '' ?>"/>
+                   id="one-click-tel" placeholder="Ваш телефон" name="phone"
+                   value="<?= $phone ?>"/>
             <div class="b-error"><span class="js-message"></span></div>
         </div>
         <div class="b-error"><span class="js-message"></span></div>
@@ -219,7 +249,7 @@ $orderableBasket = $basket->getOrderableItems(); ?>
         </dl>
     <?php } ?>
     <div class="b-checkbox b-checkbox--one-click">
-        <input class="b-checkbox__input" type="checkbox" name="name" id="one-click-personal"
+        <input class="b-checkbox__input" type="checkbox" name="confirm_user" id="one-click-personal"
                value="Я подтверждаю, что даю согласие на обработку персональных данных"/>
         <label class="b-checkbox__name b-checkbox__name--one-click" for="one-click-personal">
             <span class="b-checkbox__text">Я подтверждаю, что даю согласие на обработку персональных данных</span>
