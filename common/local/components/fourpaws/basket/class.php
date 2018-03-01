@@ -185,12 +185,15 @@ class BasketComponent extends \CBitrixComponent
         /** @var Basket $basket */
         $basket = $this->arResult['BASKET'];
         /** @var BasketItem $basketItem */
-        foreach ($basket->getOrderableItems() as $basketItem) {
+        $orderableBasket = $basket->getOrderableItems();
+        foreach ($orderableBasket as $basketItem) {
             $weight += (float)$basketItem->getWeight();
             $quantity += (int)$basketItem->getQuantity();
         }
         $this->arResult['BASKET_WEIGHT'] = $weight;
         $this->arResult['TOTAL_QUANTITY'] = $quantity;
+        $this->arResult['TOTAL_DISCOUNT'] = $orderableBasket->getBasePrice() - $orderableBasket->getPrice();
+        $this->arResult['TOTAL_PRICE'] = $orderableBasket->getPrice();
     }
 
     /**

@@ -318,7 +318,7 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                             </div>
                             <div class="b-price b-price--information-order">
                                 <span class="b-price__current">
-                                    - <?= WordHelper::numberFormat($basket->getBasePrice() - $basket->getPrice()); ?>
+                                    - <?= WordHelper::numberFormat($arResult['TOTAL_DISCOUNT']); ?>
                                 </span><span class="b-ruble">₽</span>
                             </div>
                         </div>
@@ -341,7 +341,7 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                         </div>
                         <div class="b-price b-price--information-order b-price--total-price">
                             <span class="b-price__current">
-                                <?= WordHelper::numberFormat($basket->getPrice()); ?>
+                                <?= WordHelper::numberFormat($arResult['TOTAL_PRICE']); ?>
                             </span><span class="b-ruble">₽</span>
                         </div>
                     </div>

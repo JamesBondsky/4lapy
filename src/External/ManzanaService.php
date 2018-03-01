@@ -699,7 +699,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
             if (!$user instanceof User) {
                 throw new UsernameNotFoundException(sprintf('User with phone %s is not found', $client->phone));
             }
-
+            
             $card = $this->getActiveCardByContactId($client->contactId);
 
             $userRepository->update($user->setDiscountCardNumber($card->cardNumber));
