@@ -1,20 +1,15 @@
-<?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
+<? if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 /**
- * Блок на главной странице: популярные товары
- * @updated: 18.01.2018
+ * Блок на главной странице: популярные
  */
 
 /** @global $APPLICATION */
-
-$APPLICATION->IncludeFile(
-    'blocks/components/popular_products.php',
-    [],
-    [
-        'SHOW_BORDER' => false,
-        'NAME' => 'Блок популярных товаров',
-        'MODE' => 'php',
-    ]
-);
+$APPLICATION->IncludeComponent('fourpaws:catalog.snippet.list', '', [
+    'COUNT'        => 12,
+    'OFFER_FILTER' => [
+        '=PROPERTY_IS_POPULAR' => '1',
+    ],
+    'TITLE'        => 'Популярные товары',
+], false, ['HIDE_ICONS' => 'Y']);

@@ -63,10 +63,9 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
                     </a>
                 </div>
             <?php } ?>
-            <?php /** @todo оплата заказа */ ?>
-            <?php if (!$order->isClosed() && !$order->isPayed() && !$order->isManzana()) { ?>
+            <?php if (!$order->isClosed() && !$order->isPayed() && !$order->isManzana() && $order->getPayment()->getCode() === 'card-online') { ?>
                 <div class="b-accordion-order-item__subscribe-link b-accordion-order-item__subscribe-link--full">
-                    <a class="b-link b-link--pay-account b-link--pay-account" href="javascript:void(0)"
+                    <a class="b-link b-link--pay-account b-link--pay-account" href="/sale/payment/?ORDER_ID=<?=$order->getId()?>"
                        title="Оплатить">
                         <span class="b-link__text b-link__text--pay-account">Оплатить</span>
                     </a>
