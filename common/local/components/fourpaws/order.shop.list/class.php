@@ -170,9 +170,9 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                     : $store->getAddress();
 
                 /** @var BaseResult $partialResult */
-                $partialResult = $resultByStore[$store->getXmlId()]['PARTIAL'];
+                $partialResult = $resultByStore[$store->getXmlId()]['PARTIAL_RESULT'];
                 /** @var BaseResult $fullResult */
-                $fullResult = $resultByStore[$store->getXmlId()]['FULL'];
+                $fullResult = $resultByStore[$store->getXmlId()]['FULL_RESULT'];
                 /** @var StockResultCollection $available */
                 $available = $partialResult->getStockResult();
                 $delayed = $fullResult->getStockResult()->getDelayed();
