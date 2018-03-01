@@ -279,7 +279,12 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             DeserializationContext::create()->setGroups('create')
         );
         try {
-            $regUser = $this->userRegistrationService->register($userEntity, true, !empty($data['backurl']) && $data['backurl'] === static::BASKET_BACK_URL);
+            $isBasketBackUrl = !empty($data['backurl']) && $data['backurl'] === static::BASKET_BACK_URL;
+            if($isBasketBackUrl){
+                $_SESSION['FROM_BASKET'] = true;
+            }
+            $_SESSION['MANZANA_UPDATE'] = true;
+            $regUser = $this->userRegistrationService->register($userEntity, true);
             if ($regUser instanceof User && $regUser->getId() > 0) {
 
                 $title = 'Ура, можно покупать! ';

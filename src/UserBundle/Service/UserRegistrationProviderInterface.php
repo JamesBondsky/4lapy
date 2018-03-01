@@ -19,8 +19,6 @@ interface UserRegistrationProviderInterface
      * @todo return entity
      *
      * @param User $user
-     * @param bool $manzanaSave
-     * @param bool $fromBasket
      *
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
@@ -28,5 +26,5 @@ interface UserRegistrationProviderInterface
      * @throws BitrixRuntimeException
      * @return User
      */
-    public function register(User $user, bool $manzanaSave = true, bool $fromBasket = false): User;
+    public function register(User $user): User;
 }

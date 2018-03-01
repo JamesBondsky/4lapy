@@ -6,15 +6,13 @@
 
 namespace FourPaws\UserBundle\Service;
 
-use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Application;
+use Bitrix\Main\Db\SqlQueryException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Fuser;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Model\Client;
-use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Location\Exception\CityNotFoundException;
 use FourPaws\Location\LocationService;
@@ -61,21 +59,14 @@ class UserService implements
     private $locationService;
 
     /**
-     * @var ManzanaService
-     */
-    private $manzanaService;
-
-    /**
      * UserService constructor.
      *
      * @param UserRepository  $userRepository
      * @param LocationService $locationService
-     * @param ManzanaService  $manzanaService
      */
     public function __construct(
         UserRepository $userRepository,
-        LocationService $locationService,
-        ManzanaService $manzanaService
+        LocationService $locationService
     ) {
         /**
          * todo move to factory service
@@ -84,7 +75,6 @@ class UserService implements
         $this->bitrixUserService = $USER;
         $this->userRepository = $userRepository;
         $this->locationService = $locationService;
-        $this->manzanaService = $manzanaService;
     }
 
     /**
@@ -171,21 +161,18 @@ class UserService implements
     }
 
     /**
-     * @todo remove manzanaSave parameter
-     * @todo return entity
      *
      * @param User $user
-     * @param bool $manzanaSave
-     * @param bool $fromBasket
      *
-     * @throws \FourPaws\UserBundle\Exception\RuntimeException
+     * @return User
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
-     * @throws ValidationException
+     * @throws RuntimeException
      * @throws BitrixRuntimeException
-     * @return User
+     * @throws ValidationException
+     * @throws SqlQueryException
      */
-    public function register(User $user, bool $manzanaSave = true, bool $fromBasket = false): User
+    public function register(User $user): User
     {
         $validationResult = $this->userRepository->getValidator()->validate($user, null, ['create']);
         if ($validationResult->count() > 0) {
@@ -196,6 +183,7 @@ class UserService implements
 
         $session = $_SESSION;
         try {
+            $_SESSION['SEND_REGISTER_EMAIL'] = true;
             /** регистрируем битровым методом регистрации*/
             $result = $this->bitrixUserService->Register(
                 $user->getLogin() ?? $user->getEmail(),
@@ -205,6 +193,7 @@ class UserService implements
                 $user->getPassword(),
                 $user->getEmail()
             );
+            /** отправка письма происходи на событие after в этот момент */
         } catch (\Exception $e) {
             Application::getConnection()->rollbackTransaction();
             $_SESSION = $session;
@@ -236,39 +225,6 @@ class UserService implements
             throw new RuntimeException('Cant fetch registred user');
         }
         Application::getConnection()->commitTransaction();
-
-        /** отправка письма о регистрации */
-        try {
-            $expertSenderService = App::getInstance()->getContainer()->get('expertsender.service');
-            $expertSenderService->sendEmailAfterRegister($registeredUser);
-            /** установка в сессии ссылки коризны если инициализирвоали из корзины */
-            if($fromBasket) {
-                setcookie('BACK_URL', '/cart/', time() + ConfirmCodeService::EMAIL_LIFE_TIME, '/');
-                $_COOKIE['BACK_URL'] = '/cart/';
-            }
-        } catch (\Exception $e) {
-            $logger = LoggerFactory::create('expertsender');
-            $logger->error(sprintf('Error send email: %s', $e->getMessage()));
-        }
-
-        /**
-         * @todo move manzana to events and out of here!!!
-         * @todo async update!!! we totaly dont need get contactId right here
-         */
-        if ($manzanaSave) {
-            $client = null;
-            try {
-                $contactId = $this->manzanaService->getContactIdByPhone($registeredUser->getManzanaNormalizePersonalPhone());
-                $client = new Client();
-                $client->contactId = $contactId;
-            } catch (ManzanaServiceException $e) {
-                $client = new Client();
-            }
-
-            if ($client instanceof Client) {
-                $this->manzanaService->updateContactAsync($client);
-            }
-        }
 
         return $registeredUser;
     }
