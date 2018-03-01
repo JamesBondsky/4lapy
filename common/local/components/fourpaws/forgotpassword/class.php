@@ -88,10 +88,11 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
             }
             $this->arResult['STEP'] = 'begin';
 
-            /** авторизация и показ сообщения об успешной смене */
             $request = Application::getInstance()->getContext()->getRequest();
-            $confirmAuth = $request->get('confirm_auth');
             $backUrl = $request->get('backurl');
+
+            /** авторизация и показ сообщения об успешной смене */
+            $confirmAuth = $request->get('confirm_auth');
             if (!empty($confirmAuth)) {
                 /** @var ConfirmCodeService $confirmService */
                 $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);

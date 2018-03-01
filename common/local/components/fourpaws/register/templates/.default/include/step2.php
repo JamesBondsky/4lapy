@@ -4,8 +4,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+use Bitrix\Main\Application;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\External\Manzana\Model\Client;
+
+$request = Application::getInstance()->getContext()->getRequest();
+$backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
 
 /** @var Client $manzanaItem
  * @var string $phone
@@ -19,6 +23,7 @@ use FourPaws\External\Manzana\Model\Client;
           method="post">
         <input type="hidden" name="action" value="register">
         <input type="hidden" name="PERSONAL_PHONE" value="<?= $phone ?>">
+        <input type="hidden" name="backurl" value="<?=$backUrl?>">
         <div class="b-input-line b-input-line--user-data js-hidden-valid-fields js-small-input-two">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-surname">Фамилия</label>
