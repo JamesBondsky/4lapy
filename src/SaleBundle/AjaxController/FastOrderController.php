@@ -193,7 +193,10 @@ class FastOrderController extends Controller
                     . '/local/components/fourpaws/fast.order/templates/.default/success.php';
                 $html = ob_get_clean();
 
-                return JsonSuccessResponse::createWithData('Быстрый заказ успешно создан', ['html' => $html]);
+                return JsonSuccessResponse::createWithData('Быстрый заказ успешно создан', [
+                    'html' => $html,
+                    'miniBasket'=>$this->basketViewService->getMiniBasketHtml()
+                ]);
             }
 
             return JsonSuccessResponse::create('Быстрый заказ успешно создан', 200, [], ['redirect'=>'/cart/successFastOrder.php']);
