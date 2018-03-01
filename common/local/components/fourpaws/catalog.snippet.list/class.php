@@ -25,11 +25,7 @@ class CatalogSaleListComponent extends CBitrixComponent
      */
     public function onPrepareComponentParams($params): array
     {
-        $params['CACHE_TYPE'] = 'N';
-        if (!isset($params['CACHE_TIME'])) {
-            $params['CACHE_TIME'] = 36000;
-        }
-        
+        $params['CACHE_TIME'] = $params['CACHE_TIME'] ?? 36000;
         $params['SECTION_CODE'] = $params['SECTION_CODE'] ?? '';
         $params['SECTION_CODE'] = $params['SECTION_CODE'] ?? '';
         $params['COUNT'] = (int)$params['COUNT'] ?: 12;

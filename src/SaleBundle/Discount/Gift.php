@@ -20,6 +20,7 @@ use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 /**
  * Class Gift
  * @package FourPaws\SaleBundle\Discount
+ * @todo переместить в соотвествующую папку и неймспейс
  */
 class Gift extends \CSaleActionGiftCtrlGroup
 {
@@ -68,6 +69,10 @@ class Gift extends \CSaleActionGiftCtrlGroup
 //        dump($description, $arAtoms);
         $description['label'] = 'Предоставить выбор подарка';
         $description['containsOneAction'] = false;
+        $description['mess'] = [
+            'ADD_CONTROL' => 'Добавить условие',
+            'SELECT_CONTROL' => 'Выбрать условие'
+        ];
 //        $description['defaultText'] = 'Список подарков';
 //        $description['control'] = [
 //            'Предоствить',

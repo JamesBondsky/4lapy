@@ -14,7 +14,7 @@ class UserCest
 
     public function _before(ApiTester $I)
     {
-        $I->deleteDummyUser();
+        $I->deleteDummyUsers();
         $this->token = $I->createToken();
         $this->user = $I->createDummyUser();
     }
@@ -23,8 +23,77 @@ class UserCest
     {
         $I->deleteToken($this->token);
         $this->token = '';
-        $I->deleteDummyUser();
-        $this->user = [];
+        if ($dummyUserId = (int)$this->user['ID']) {
+            $I->deleteDummyUser($dummyUserId);
+            $this->user = [];
+        }
+    }
+
+    /**
+     * @param ApiTester $I
+     * @param Example   $example
+     *
+     * @dataprovider goodRegistrationProvider
+     */
+    public function testRegister(ApiTester $I, Example $example)
+    {
+        $I->wantTo('Test registration process');
+        $I->haveHttpHeader('Content-type', 'application/json');
+        $data = $example['callback']();
+        $I->sendPOST('/user_login/', [
+            'token'           => $this->token,
+            'user_login_info' => $data,
+        ]);
+
+        $I->seeResponseCodeIs(HttpCode::OK);
+        $I->seeResponseIsJson();
+        $I->seeResponseMatchesJsonType([
+            'data'  => [
+                'user' => [
+                    'email'     => 'string:empty',
+                    'firstname' => 'string:empty',
+                    'lastname'  => 'string:empty',
+                    'phone'     => 'string:!empty',
+                ],
+            ],
+            'error' => 'array:empty',
+        ]);
+        $I->seeResponseContainsJson([
+            'data' => [
+                'user' => [
+                    'phone' => $data['login'],
+                ],
+            ],
+        ]);
+        $fUserId = $I->grabFromDatabase('api_user_session', 'FUSER_ID', [
+            'TOKEN' => $this->token,
+        ]);
+        $userId = (int)$I->grabFromDatabase('b_sale_fuser', 'USER_ID', [
+            'ID' => $fUserId,
+        ]);
+        if (!$userId) {
+            throw new RuntimeException('No user for token ' . $this->token);
+        }
+        $I->seeInDatabase('b_user', [
+            'ID'             => $userId,
+            'LOGIN'          => $data['login'],
+            'PERSONAL_PHONE' => $data['login'],
+        ]);
+        $I->deleteUser($userId);
+    }
+
+    public function goodRegistrationProvider()
+    {
+        return [
+            [
+                'callback' => function () {
+                    return [
+                        'login'    => random_int(9160000000, 9179999999),
+                        'password' => md5(random_bytes(1024)),
+                    ];
+                },
+            ],
+        ];
     }
 
     /**
@@ -71,29 +140,14 @@ class UserCest
         }
     }
 
+
     public function goodAuthProvider()
     {
         return [
             [
                 'callback' => function () {
                     return [
-                        'login'    => $this->user['EMAIL'],
-                        'password' => $this->user['PASSWORD'],
-                    ];
-                },
-            ],
-            [
-                'callback' => function () {
-                    return [
                         'login'    => $this->user['PERSONAL_PHONE'],
-                        'password' => $this->user['PASSWORD'],
-                    ];
-                },
-            ],
-            [
-                'callback' => function () {
-                    return [
-                        'login'    => $this->user['LOGIN'],
                         'password' => $this->user['PASSWORD'],
                     ];
                 },
@@ -126,23 +180,14 @@ class UserCest
         ]);
     }
 
-
     public function wrongAuthProvider()
     {
         return [
             [
                 'callback' => function () {
                     return [
-                        'login'    => $this->user['LOGIN'],
-                        'password' => md5(random_bytes(32)),
-                    ];
-                },
-            ],
-            [
-                'callback' => function () {
-                    return [
                         'login'    => $this->user['EMAIL'],
-                        'password' => md5(random_bytes(32)),
+                        'password' => $this->user['PASSWORD'],
                     ];
                 },
             ],
@@ -197,6 +242,7 @@ class UserCest
         ];
     }
 
+
     public function testLogout(ApiTester $I)
     {
         $I->wantTo('Test logout');
@@ -208,7 +254,7 @@ class UserCest
             'USER_ID' => null,
         ]);
 
-        $I->login($this->token, $this->user['LOGIN'], $this->user['PASSWORD']);
+        $I->login($this->token, $this->user['PERSONAL_PHONE'], $this->user['PASSWORD']);
 
         $fUserId = $I->grabFromDatabase('api_user_session', 'FUSER_ID', [
             'TOKEN' => $this->token,
@@ -241,7 +287,6 @@ class UserCest
             'FUSER_ID' => $fUserId,
         ]);
     }
-
 
     /**
      * @param ApiTester $I
@@ -322,7 +367,7 @@ class UserCest
     public function testUpdateUserInfo(ApiTester $I, Example $example)
     {
         $I->wantTo('Test updating exist user');
-        $I->login($this->token, $this->user['LOGIN'], $this->user['PASSWORD']);
+        $I->login($this->token, $this->user['PERSONAL_PHONE'], $this->user['PASSWORD']);
         $I->haveHttpHeader('Content-type', 'application/json');
 
         $data = $example['data'];
@@ -366,7 +411,7 @@ class UserCest
                         str_pad(random_int(1, 12), 2, '0', STR_PAD_LEFT),
                         random_int(1900, 2017),
                     ]),
-                    'phone'     => random_int(70000000000, 79000000000),
+                    'phone'     => random_int(9160000000, 9169999999),
                 ],
             ],
             [
@@ -380,7 +425,7 @@ class UserCest
                         str_pad(random_int(1, 12), 2, '0', STR_PAD_LEFT),
                         random_int(1900, 2017),
                     ]),
-                    'phone'     => random_int(70000000000, 79000000000),
+                    'phone'     => random_int(9160000000, 9169999999),
                 ],
             ],
             [
@@ -394,20 +439,74 @@ class UserCest
                         str_pad(random_int(1, 12), 2, '0', STR_PAD_LEFT),
                         random_int(1900, 2017),
                     ]),
-                    'phone'     => random_int(70000000000, 79000000000),
+                    'phone'     => random_int(9160000000, 9169999999),
                 ],
             ],
             [
                 'data' => [
                     'email' => md5(random_bytes(1024)) . '@' . md5(random_bytes(1024)) . '.ru',
-                    'phone' => random_int(70000000000, 79000000000),
+                    'phone' => random_int(9160000000, 9169999999),
                 ],
             ],
             [
                 'data' => [
-                    'phone' => random_int(70000000000, 79000000000),
+                    'phone' => random_int(9160000000, 9169999999),
                 ],
             ],
         ];
+    }
+
+    public function testUserInfoGet(ApiTester $I)
+    {
+        $I->wantTo('Test get user info');
+        $I->login($this->token, $this->user['PERSONAL_PHONE'], $this->user['PASSWORD']);
+        $I->haveHttpHeader('Content-type', 'application/json');
+        $I->sendGET('/user_info/', [
+            'token' => $this->token,
+        ]);
+
+        $I->seeResponseCodeIs(HttpCode::OK);
+        $I->seeResponseIsJson();
+        $I->seeResponseMatchesJsonType([
+            'data'  => [
+                'user' => 'array:!empty',
+            ],
+            'error' => 'array:empty',
+        ]);
+        $I->seeResponseContainsJson([
+            'data' => [
+                'user' => [
+                    'email'     => (string)$this->user['EMAIL'],
+                    'firstname' => (string)$this->user['NAME'],
+                    'lastname'  => (string)$this->user['LAST_NAME'],
+                    'midname'   => (string)$this->user['SECOND_NAME'],
+                    'phone'     => (string)$this->user['PERSONAL_PHONE'],
+                    'birthdate' => (string)$this->user['PERSONAL_BIRTHDAY'],
+                ],
+            ],
+        ]);
+    }
+
+    public function testUserInfoGetUnauthorized(ApiTester $I)
+    {
+        $I->wantTo('Test get user info unauthorized');
+        $I->haveHttpHeader('Content-type', 'application/json');
+        $I->sendGET('/user_info/', [
+            'token' => $this->token,
+        ]);
+
+        $I->seeResponseCodeIs(HttpCode::OK);
+        $I->seeResponseIsJson();
+        $I->seeResponseMatchesJsonType([
+            'data'  => 'array:empty',
+            'error' => 'array:!empty',
+        ]);
+        $I->seeResponseContainsJson([
+            'error' => [
+                [
+                    'code' => 9,
+                ],
+            ],
+        ]);
     }
 }

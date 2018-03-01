@@ -7,5 +7,5 @@ FourPaws\UserBundle\Entity\User:
     name: <ru_RU:word()>
     lastname: <ru_RU:word()>
     secondName: 'fixture'
-    personalPhone: '<numberBetween(70000000000, 79990000000)>'
+    personalPhone (unique): '<numberBetween(9160000000, 9179999999)>'
 

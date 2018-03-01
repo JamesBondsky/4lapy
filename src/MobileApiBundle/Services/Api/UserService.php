@@ -17,6 +17,8 @@ use FourPaws\MobileApiBundle\Dto\Request\PostUserInfoRequest;
 use FourPaws\MobileApiBundle\Dto\Response\PostUserInfoResponse;
 use FourPaws\MobileApiBundle\Dto\Response\UserLoginResponse;
 use FourPaws\MobileApiBundle\Exception\RuntimeException;
+use FourPaws\UserBundle\Entity\User as AppUser;
+use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Service\UserService as UserBundleService;
 
 class UserService
@@ -43,9 +45,18 @@ class UserService
      * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
      * @return UserLoginResponse
      */
-    public function login(LoginRequest $loginRequest): UserLoginResponse
+    public function loginOrRegister(LoginRequest $loginRequest): UserLoginResponse
     {
-        $this->userBundleService->login($loginRequest->getLogin(), $loginRequest->getPassword());
+        try {
+            $this->userBundleService->login($loginRequest->getLogin(), $loginRequest->getPassword());
+        } catch (UsernameNotFoundException $exception) {
+            $user = new AppUser();
+            $user
+                ->setPersonalPhone($loginRequest->getLogin())
+                ->setLogin($user->getPersonalPhone())
+                ->setPassword($loginRequest->getPassword());
+            $this->userBundleService->register($user);
+        }
         return new UserLoginResponse($this->getCurrentApiUser());
     }
 
@@ -125,7 +136,7 @@ class UserService
      * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
      * @return User
      */
-    protected function getCurrentApiUser(): User
+    public function getCurrentApiUser(): User
     {
         $user = $this->userBundleService->getCurrentUser();
         $apiUser = new User();

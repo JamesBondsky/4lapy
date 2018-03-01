@@ -12,6 +12,7 @@ use FourPaws\MobileApiBundle\Exception\ValidationException;
 use FourPaws\MobileApiBundle\Exception\WrongTransformerResultException;
 use FourPaws\MobileApiBundle\Repository\ApiUserSessionRepository;
 use FourPaws\MobileApiBundle\Security\ApiToken;
+use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -47,7 +48,7 @@ class SessionHandler implements SessionHandlerInterface
     }
 
     /**
-     * Update toket and session after login
+     * Update token and session after login
      *
      * @throws WrongTransformerResultException
      * @throws ValidationException
@@ -95,6 +96,39 @@ class SessionHandler implements SessionHandlerInterface
             $token->setApiUserSession($session);
             $this->sessionRepository->update($session);
             $token->setUser('');
+            $this->tokenStorage->setToken($token);
+        }
+    }
+
+    /**
+     * Update user
+     *
+     * @param int $id
+     *
+     * @throws \InvalidArgumentException
+     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
+     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
+     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
+     */
+    public function update(int $id)
+    {
+        /**
+         * @var ApiToken $token | null
+         */
+        $token = $this->tokenStorage->getToken();
+        if (!$token) {
+            return;
+        }
+        if (!($token instanceof ApiToken)) {
+            return;
+        }
+        if (!$token->getUser()) {
+            return;
+        }
+
+        $user = $token->getUser();
+        if ($user instanceof User && $user->getId() === $this->userService->getCurrentUserId()) {
+            $token->setUser($this->userService->getCurrentUser());
             $this->tokenStorage->setToken($token);
         }
     }

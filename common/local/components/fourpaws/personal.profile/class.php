@@ -345,7 +345,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                 //Посылаем смс о смененном номере телефона
                 $text = 'Номер телефона в Личном кабинете изменен на ' . $phone . '. Если это не вы, обратитесь по тел. 8(800)7700022';
                 $smsService = $container->get('sms.service');
-                $smsService->send($text, $oldPhone);
+                $smsService->sendSms($text, $oldPhone);
             }
 
             $mess = 'Телефон обновлен';
