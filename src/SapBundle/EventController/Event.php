@@ -25,7 +25,7 @@ class Event implements ServiceHandlerInterface
      * @var EventManager
      */
     protected static $eventManager;
-
+    
     /**
      * @param EventManager $eventManager
      *
@@ -34,39 +34,34 @@ class Event implements ServiceHandlerInterface
     public static function initHandlers(EventManager $eventManager)
     {
         self::$eventManager = $eventManager;
-
-        self::initHandler('OnSaleOrderSaved', 'consumeOrderAfterSaveOrder');
-        self::initHandler('OnSalePaymentEntitySaved', 'consumeOrderAfterSavePayment');
+        
+        self::initHandler('OnSaleOrderSaved', [__CLASS__, 'consumeOrderAfterSaveOrder']);
+        self::initHandler('OnSalePaymentEntitySaved', [__CLASS__, 'consumeOrderAfterSavePayment']);
     }
-
+    
     /**
      * @param string $eventName
-     * @param string $method
+     * @param array  $method
      * @param string $module
      */
-    public static function initHandler(string $eventName, string $method, string $module = 'sale')
+    public static function initHandler(string $eventName, array $method, string $module = 'sale')
     {
         self::$eventManager->addEventHandler(
             $module,
             $eventName,
-            [
-                self::class,
-                $method,
-            ]
+            $method
         );
     }
-
+    
     /**
      * @param BitrixEvent $event
      */
     public static function consumeOrderAfterSave(BitrixEvent $event)
     {
-        $isNew = $event->getParameter('IS_NEW');
-
-        if ($isNew) {
+        if ($event->getParameter('IS_NEW')) {
             /** @var Order $order */
             $order = $event->getParameter('ENTITY');
-
+            dump($order);
             /**
              * Если новый заказ и оплата не онлайн, отправляем в SAP
              *
@@ -74,7 +69,7 @@ class Event implements ServiceHandlerInterface
              */
         }
     }
-
+    
     /**
      * @param BitrixEvent $event
      */
@@ -83,7 +78,7 @@ class Event implements ServiceHandlerInterface
         /** @var Payment $payment */
         $oldFields = $event->getParameter('VALUES');
         $payment = $event->getParameter('ENTITY');
-
+        dump($event);
         if ($payment->getPaymentSystemId() === 3 && $payment->isPaid()) {
             /**
              * Если оплата онлайн и статус меняется на оплачено, то выгружаем в SAP
