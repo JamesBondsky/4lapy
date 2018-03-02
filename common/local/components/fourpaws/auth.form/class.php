@@ -110,6 +110,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 }
             }
             $this->setSocial();
+            unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
             $this->includeComponentTemplate();
         } catch (\Exception $e) {
             try {
@@ -168,6 +169,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             return $this->ajaxMess->getEmptyPasswordError();
         }
         $checkedCaptcha = true;
+        $_SESSION['COUNT_AUTH_AUTHORIZE'] = 2;
         if ((int)$_SESSION['COUNT_AUTH_AUTHORIZE'] > 3) {
             try {
                 $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
@@ -217,26 +219,6 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             return $this->ajaxMess->getTooManyUserFoundException($this->getSitePhone(), $rawLogin);
         } catch (\Exception $e) {
             return $this->ajaxMess->getSystemError();
-        }
-
-        /** обновление флага подтвержденности email */
-        $curUser = $this->currentUserProvider->getCurrentUser();
-        if (!$curUser->isEmailConfirmed() && !empty($curUser->getEmail())) {
-            $expertSenderService = App::getInstance()->getContainer()->get('expertsender.service');
-            if ($expertSenderService->checkConfirmEmail($curUser->getEmail())) {
-                try {
-                    if (!$this->currentUserProvider->getUserRepository()->updateData($curUser->getId(),
-                        ['UF_EMAIL_CONFIRMED' => true])) {
-                        return $this->ajaxMess->getUpdateError();
-                    }
-                } catch (BitrixRuntimeException $e) {
-                    return $this->ajaxMess->getUpdateError($e->getMessage());
-                } catch (InvalidIdentifierException $e) {
-                    return $this->ajaxMess->getSystemError();
-                } catch (ConstraintDefinitionException $e) {
-                    return $this->ajaxMess->getSystemError();
-                }
-            }
         }
 
         unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
@@ -424,6 +406,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 $title = 'Добавление телефона';
                 break;
             case 'sendSmsCode':
+                unset($_SESSION['COUNT_AUTH_CONFIRM_CODE']);
                 $title = 'Подтверждение телефона';
                 $mess = $this->ajaxGetSendSmsCode($phone);
                 if ($mess instanceof JsonResponse) {

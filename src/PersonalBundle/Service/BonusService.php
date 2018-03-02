@@ -140,8 +140,10 @@ class BonusService
 
     /**
      * @param string $bonusCard
+     * @param User|null $user
      *
      * @return bool
+     *
      * @throws ServiceNotFoundException
      * @throws InvalidIdentifierException
      * @throws ApplicationCreateException
@@ -157,8 +159,16 @@ class BonusService
 
         $contact = new Client();
         $contact->cardnumber = $bonusCard;
+        
         try {
-            $contact->contactId = $this->manzanaService->getContactByUser($user);
+            $client = $this->manzanaService->getContactByUser($user);
+            
+            if ($client instanceof Client) {
+                $contact->contactId = $client->contactId;
+            } else {
+                throw new ManzanaServiceException('Контакт не найден');
+            }
+            
             $this->manzanaService->updateContact($contact);
 
             return true;
@@ -171,9 +181,11 @@ class BonusService
             $this->logger->info(
                 'Не найдено пользователей в манзане по телефону ' . $user->getPersonalPhone()
             );
-        } /** глушим остальные ошибки по манзане и обрабытываем в контроллере - финальный return */
+        }
         catch (ManzanaServiceException $e) {
+            /** глушим остальные ошибки по манзане и обрабытываем в контроллере - финальный return */
         } catch (ManzanaException $e) {
+            /** глушим остальные ошибки по манзане и обрабытываем в контроллере - финальный return */
         }
 
         return false;
