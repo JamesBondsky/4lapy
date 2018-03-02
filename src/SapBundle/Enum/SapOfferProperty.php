@@ -47,4 +47,9 @@ final class SapOfferProperty
      * Комбинация по вкусу
      */
     const FLAVOUR_COMBINATION = 'FLAVOUR_COMBINATION';
+
+    /**
+     * Комбинация по цвету
+     */
+    const COLOUR_COMBINATION = 'COLOUR_COMBINATION';
 }
