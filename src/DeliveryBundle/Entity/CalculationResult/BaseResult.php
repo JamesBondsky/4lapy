@@ -5,6 +5,7 @@ namespace FourPaws\DeliveryBundle\Entity\CalculationResult;
 use Bitrix\Sale\Delivery\CalculationResult;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\DeliveryBundle\Entity\Interval;
 
 abstract class BaseResult extends CalculationResult
 {
@@ -52,6 +53,11 @@ abstract class BaseResult extends CalculationResult
      * @var \DateTime
      */
     protected $deliveryDate;
+
+    /**
+     * @var Interval
+     */
+    protected $selectedInterval;
 
     /**
      * BaseResult constructor.
@@ -270,6 +276,27 @@ abstract class BaseResult extends CalculationResult
     {
         $this->deliveryDate = null;
         $this->deliveryZone = $deliveryZone;
+
+        return $this;
+    }
+
+    /**
+     * @return Interval
+     */
+    public function getSelectedInterval(): Interval
+    {
+        return $this->selectedInterval;
+    }
+
+    /**
+     * @param Interval $selectedInterval
+     *
+     * @return BaseResult
+     */
+    public function setSelectedInterval(Interval $selectedInterval): BaseResult
+    {
+        $this->deliveryDate = null;
+        $this->selectedInterval = $selectedInterval;
 
         return $this;
     }

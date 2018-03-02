@@ -11,6 +11,9 @@ use Bitrix\Sale\Payment;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\DeliveryBundle\Entity\Interval;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\DeliveryBundle\Service\IntervalService;
 use FourPaws\ReCaptcha\ReCaptchaService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
@@ -53,6 +56,15 @@ class OrderController extends Controller
     private $storeService;
 
     /**
+     * @var DeliveryService
+     */
+    private $deliveryService;
+
+    /**
+     * @var IntervalService
+     */
+    private $intervalService;
+    /**
      * @var ReCaptchaService
      */
     private $recaptcha;
@@ -68,6 +80,9 @@ class OrderController extends Controller
      * OrderController constructor.
      *
      * @param OrderService $orderService
+     * @param StoreService $storeService
+     * @param DeliveryService $deliveryService
+     * @param IntervalService $intervalService
      * @param OrderStorageService $orderStorageService
      * @param UserAuthorizationInterface $userAuthProvider
      * @param ReCaptchaService $recaptcha
@@ -75,12 +90,16 @@ class OrderController extends Controller
     public function __construct(
         OrderService $orderService,
         StoreService $storeService,
+        DeliveryService $deliveryService,
+        IntervalService $intervalService,
         OrderStorageService $orderStorageService,
         UserAuthorizationInterface $userAuthProvider,
         ReCaptchaService $recaptcha
     ) {
         $this->orderService = $orderService;
         $this->storeService = $storeService;
+        $this->deliveryService = $deliveryService;
+        $this->intervalService = $intervalService;
         $this->orderStorageService = $orderStorageService;
         $this->userAuthProvider = $userAuthProvider;
         $this->recaptcha = $recaptcha;
@@ -106,6 +125,48 @@ class OrderController extends Controller
                     'order'  => $this->storeService->getOrderByRequest($request),
                 ]
             )
+        );
+    }
+
+    /**
+     * @Route("/delivery-intervals/", methods={"POST"})
+     * @param Request $request
+     *
+     * @return JsonResponse
+     */
+    public function deliveryIntervalsAction(Request $request): JsonResponse
+    {
+        $result = [];
+        $date = (int)$request->get('deliveryDate', 0);
+        $deliveries = $this->orderService->getDeliveries();
+        $delivery = null;
+        foreach ($deliveries as $deliveryItem) {
+            if (!$this->deliveryService->isDelivery($deliveryItem)) {
+                continue;
+            }
+
+            $delivery = $deliveryItem;
+        }
+
+        if (null === $delivery) {
+            return JsonSuccessResponse::createWithData(
+                '',
+                $result
+            );
+        }
+
+        $intervals = $this->intervalService->getIntervalsByDate($delivery, $date);
+        /** @var Interval $interval */
+        foreach ($intervals as $i => $interval) {
+            $result[] = [
+                'name' => $interval->toString(),
+                'value' => $i
+            ];
+        }
+
+        return JsonSuccessResponse::createWithData(
+            '',
+            $result
         );
     }
 

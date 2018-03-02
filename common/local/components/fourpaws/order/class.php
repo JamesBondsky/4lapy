@@ -161,6 +161,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             'AUTH_VALIDATION'     => 'fourpaws_sale_ajax_order_validateauth',
             'DELIVERY_VALIDATION' => 'fourpaws_sale_ajax_order_validatedelivery',
             'PAYMENT_VALIDATION'  => 'fourpaws_sale_ajax_order_validatepayment',
+            'DELIVERY_INTERVALS'  => 'fourpaws_sale_ajax_order_deliveryintervals',
         ];
         foreach ($routes as $key => $name) {
             /** @noinspection NullPointerExceptionInspection */

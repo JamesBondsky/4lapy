@@ -195,12 +195,12 @@ if (!$addresses || $addresses->isEmpty()) {
         </div>
     </div>
 </div>
-<div class="b-input-line b-input-line--desired-date">
+<div class="b-input-line b-input-line--desired-date" data-url="<?= $arResult['URL']['DELIVERY_INTERVALS'] ?>">
     <div class="b-input-line__label-wrapper">
         <span class="b-input-line__label">Желаемая дата доставки</span>
     </div>
     <div class="b-select b-select--recall b-select--feedback-page">
-        <select class="b-select__block b-select__block--recall b-select__block--feedback-page js-select-recovery"
+        <select class="b-select__block b-select__block--recall b-select__block--feedback-page js-select-recovery js-change-date"
                 name="deliveryDate">
             <option value="" disabled="disabled" selected="selected">выберите
             </option>
