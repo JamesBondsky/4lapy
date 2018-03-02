@@ -10,7 +10,11 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\AppBundle\Service\AjaxMess;
+use FourPaws\External\Exception\ManzanaServiceException;
+use FourPaws\PersonalBundle\Exception\CardNotValidException;
 use FourPaws\PersonalBundle\Service\BonusService;
+use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -32,12 +36,16 @@ class BonusController extends Controller
      * @var BonusService
      */
     private $bonusService;
-    
+    /** @var AjaxMess  */
+    private $ajaxMess;
+
     public function __construct(
-        BonusService $bonusService
+        BonusService $bonusService,
+        AjaxMess $ajaxMess
     )
     {
         $this->bonusService = $bonusService;
+        $this->ajaxMess = $ajaxMess;
     }
     
     /**
@@ -48,17 +56,17 @@ class BonusController extends Controller
      * @throws ServiceNotFoundException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
-     * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
      */
     public function addAction(Request $request) : JsonResponse
     {
         $card = $request->get('card', '');
         if (empty($card)) {
-            return JsonErrorResponse::createWithData(
-                'Не указан номер карты',
-                ['errors' => ['emptyData' => 'Не указан номер карты']]
-            );
+            return $this->ajaxMess->getEmptyCardNumber();
+        }
+
+        if($card){
+            $card = preg_replace("/\D/", '', $card);
         }
     
         try {
@@ -71,15 +79,17 @@ class BonusController extends Controller
                 );
             }
         } catch (NotAuthorizedException $e) {
-            return JsonErrorResponse::createWithData(
-                'Необходимо авторизоваться',
-                ['errors' => ['notAuthorized' => 'Не указан номер карты']]
-            );
+            return $this->ajaxMess->getNeedAuthError();
+        } catch (ApplicationCreateException $e) {
+            /** показываем общую ошибку */
+        } catch (ManzanaServiceException $e) {
+            /** показываем общую ошибку */
+        } catch (CardNotValidException $e) {
+            return $this->ajaxMess->getCardNotValidError();
+        } catch (BitrixRuntimeException $e) {
+            return $this->ajaxMess->getUpdateError($e->getMessage());
         }
-    
-        return JsonErrorResponse::createWithData(
-            'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
-            ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
-        );
+
+        return $this->ajaxMess->getSystemError();
     }
 }

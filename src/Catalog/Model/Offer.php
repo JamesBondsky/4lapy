@@ -6,8 +6,10 @@
 
 namespace FourPaws\Catalog\Model;
 
-use CCatalogDiscountSave;
-use CCatalogProduct;
+use Bitrix\Catalog\Product\CatalogProvider;
+use Bitrix\Sale\Basket;
+use Bitrix\Sale\Fuser;
+use Bitrix\Sale\Order;
 use DateTimeImmutable;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\App\Application;
@@ -306,14 +308,14 @@ class Offer extends IblockElement
      * @Groups({"elastic"})
      */
     protected $PROPERTY_IS_NEW = false;
-    
+
     /**
      * @var bool
      * @Type("bool")
      * @Groups({"elastic"})
      */
     protected $PROPERTY_IS_SALE = false;
-    
+
     /**
      * @var bool
      * @Type("bool")
@@ -895,7 +897,7 @@ class Offer extends IblockElement
 
         return $this;
     }
-    
+
     /**
      * @return bool
      */
@@ -903,7 +905,7 @@ class Offer extends IblockElement
     {
         return $this->PROPERTY_IS_POPULAR;
     }
-    
+
     /**
      * @param bool $PROPERTY_IS_POPULAR
      *
@@ -912,34 +914,49 @@ class Offer extends IblockElement
     public function setPropertyPopular(bool $PROPERTY_IS_POPULAR)
     {
         $this->PROPERTY_IS_POPULAR = $PROPERTY_IS_POPULAR;
-        
+
         return $this;
     }
-    
+
+    /**
+     *
+     *
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\NotSupportedException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     */
     protected function checkOptimalPrice()
     {
-        CCatalogDiscountSave::Disable();
-        $optimalPrice = CCatalogProduct::GetOptimalPrice($this->getId());
-        CCatalogDiscountSave::Enable();
-
-        if (\is_array($optimalPrice)) {
-            /**
-             * @var array $optimalPrice
-             */
-            $resultPrice = $optimalPrice['RESULT_PRICE'] ?? [
-                    'PERCENT'        => 0,
-                    'BASE_PRICE'     => $this->price,
-                    'DISCOUNT_PRICE' => $this->price,
-                ];
-            $this->withDiscount(floor($resultPrice['PERCENT']));
-            if ($this->discount > 0) {
-                $this->withOldPrice($resultPrice['BASE_PRICE']);
-                $this->withPrice($resultPrice['DISCOUNT_PRICE']);
+        global $USER;
+        $order = Order::create(SITE_ID);
+        /** @var Basket $basket */
+        $basket = Basket::create(SITE_ID);
+        $basket->setFUserId((int)Fuser::getId());
+        $fields = [
+            'PRODUCT_ID' => $this->getId(),
+            'QUANTITY' => 1,
+            'MODULE' => 'catalog',
+            'PRODUCT_PROVIDER_CLASS' => CatalogProvider::class,
+        ];
+        \Bitrix\Catalog\Product\Basket::addProductToBasket($basket, $fields, ['USER_ID' => $USER->GetID()]);
+        $order->setBasket($basket);
+        /** @var \Bitrix\Sale\BasketItem $basketItem */
+        foreach ($basket->getBasketItems() as $basketItem) {
+            if (
+                (int)$basketItem->getProductId() === $this->getId()
+                &&
+                $discountPercent = round(100 * ($basketItem->getDiscountPrice() / $basketItem->getBasePrice()))
+            ) {
+                $this
+                    ->withDiscount($discountPercent)
+                    ->withOldPrice($basketItem->getBasePrice())
+                    ->withPrice($basketItem->getPrice());
             }
         }
     }
 
     /**
+     * размер скидки в процентах
      * @param int $discount
      *
      * @return static
