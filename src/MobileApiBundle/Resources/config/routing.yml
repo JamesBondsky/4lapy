@@ -1,4 +1,4 @@
 FourPawsMobileApiBundle:
     resource: "@FourPawsMobileApiBundle/Controller/"
     type: rest
-    prefix: /mobile_app_v2
+    prefix: /api

@@ -337,6 +337,18 @@ class OrderStorage
     }
 
     /**
+     * @param int $userId
+     *
+     * @return OrderStorage
+     */
+    public function setUserId(int $userId): OrderStorage
+    {
+        $this->userId = $userId;
+
+        return $this;
+    }
+
+    /**
      * @return bool
      */
     public function isCaptchaFilled(): bool

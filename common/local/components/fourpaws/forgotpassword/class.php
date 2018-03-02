@@ -88,10 +88,11 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
             }
             $this->arResult['STEP'] = 'begin';
 
-            /** авторизация и показ сообщения об успешной смене */
             $request = Application::getInstance()->getContext()->getRequest();
-            $confirmAuth = $request->get('confirm_auth');
             $backUrl = $request->get('backurl');
+
+            /** авторизация и показ сообщения об успешной смене */
+            $confirmAuth = $request->get('confirm_auth');
             if (!empty($confirmAuth)) {
                 /** @var ConfirmCodeService $confirmService */
                 $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
@@ -110,14 +111,24 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
             if (!empty($emailGet) && !empty($hash)) {
                 /** @var ConfirmCodeService $confirmService */
                 $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
-                if ($confirmService::checkConfirmEmail($hash)) {
-                    if ($backUrl === static::BASKET_BACK_URL) {
-                        $this->authService->authorize($request->get('user_id'));
-                        LocalRedirect($backUrl);
+                try {
+                    if ($confirmService::checkConfirmEmail($hash)) {
+                        if ($backUrl === static::BASKET_BACK_URL) {
+                            $this->authService->authorize($request->get('user_id'));
+                            LocalRedirect($backUrl);
+                        } else {
+                            $this->arResult['EMAIL'] = $emailGet;
+                            $this->arResult['STEP'] = 'createNewPassword';
+                        }
                     } else {
-                        $this->arResult['EMAIL'] = $emailGet;
-                        $this->arResult['STEP'] = 'createNewPassword';
+                        ShowError('Ссылка для подтверждения недействительна, попробуйте восстанвоить пароль заново');
                     }
+                }
+                catch (ExpiredConfirmCodeException $e){
+                    ShowError('Срок действия ссылки истек, попробуйте восстанвоить пароль заново');
+                }
+                catch (NotFoundConfirmedCodeException $e){
+                    ShowError('Ссылка для подтверждения недействительна, попробуйте восстанвоить пароль заново');
                 }
             }
 

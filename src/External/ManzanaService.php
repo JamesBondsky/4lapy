@@ -34,6 +34,7 @@ use FourPaws\External\Manzana\Model\Contacts;
 use FourPaws\External\Manzana\Model\ParameterBag;
 use FourPaws\External\Manzana\Model\ReferralParams;
 use FourPaws\External\Manzana\Model\Referrals;
+use FourPaws\External\Manzana\Model\Result;
 use FourPaws\External\Manzana\Model\ResultXmlFactory;
 use FourPaws\External\Traits\ManzanaServiceTrait;
 use FourPaws\UserBundle\Entity\User;
@@ -67,7 +68,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
 
     const CONTRACT_CARDS = 'cards';
 
-    const CONTRACT_CHANGE_CARD = 'change_card';
+    const CONTRACT_CHANGE_CARD = 'contact_card_update';
 
     const CONTRACT_CLIENT_SEARCH = 'client_search';
 
@@ -574,7 +575,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     /**
      * @param $contactId
      *
-     * @return array|CardByContractCards[]|CardsByContractCards
+     * @return array|CardByContractCards[]
      * @throws ManzanaServiceException
      */
     public function getCardsByContactId($contactId): array
@@ -709,7 +710,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
             $this->logger->error(sprintf('Manzana user card update error: %s', $e->getMessage()));
         }
     }
-    
+
     /**
      * @param string $contactId
      * @return CardByContractCards
@@ -734,5 +735,30 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
         }
 
         throw new ManzanaCardIsNotFound(sprintf('Card is not found to user with contact id: %s', $contactId));
+    }
+
+    /**
+     * @param string $card_from
+     * @param string $card_to
+     *
+     * @return bool
+     * @throws ManzanaServiceException
+     */
+    public function changeCard(string $card_from, string $card_to)
+    {
+        try {
+            $bag = new ParameterBag(['card_from' => $card_from, 'card_to' => $card_to]);
+            $rawResult = $this->execute(self::CONTRACT_CHANGE_CARD, $bag->getParameters());
+            /** @var Result $result */
+            preg_match_all("/<result>(.+?)<\/result>/is", $rawResult, $matches);
+            $result = end($matches);
+            if(\is_array($result)){
+                $result=end($result);
+            }
+            $res = preg_match("/.*успешно.*/isu", $result);
+            return $res !== false && $res > 0;
+        } catch (Exception $e) {
+            throw new ManzanaServiceException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 }

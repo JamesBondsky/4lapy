@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Enum;
 
 /**
@@ -38,4 +42,14 @@ final class SapOfferProperty
      * Единственный выбор из справочника «Сезонность».
      */
     const SEASON_YEAR = 'SEASON_YEAR';
+
+    /**
+     * Комбинация по вкусу
+     */
+    const FLAVOUR_COMBINATION = 'FLAVOUR_COMBINATION';
+
+    /**
+     * Комбинация по цвету
+     */
+    const COLOUR_COMBINATION = 'COLOUR_COMBINATION';
 }

@@ -92,7 +92,7 @@ class ProductService
                 SapProductProperty::PACKING_COMBINATION
             )->first()
         );
-        return $product ?: $this->findByOffer($material->getOfferXmlId());
+        return $product ?: $this->findByOfferWithoutCombination($material->getOfferXmlId());
     }
 
     /**
@@ -117,23 +117,36 @@ class ProductService
      * @throws IblockNotFoundException
      * @return null|IblockElement|Product
      */
-    protected function findByOffer(string $xmlId)
+    protected function findByOfferWithoutCombination(string $xmlId)
     {
-        $dbResult = \CIBlockElement::GetList([], [
-            '!PROPERTY_CML2_LINK' => false,
-            'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
-            'XML_ID' => $xmlId,
-        ], false, false, ['PROPERTY_CML2_LINK']);
+        $dbResult = \CIBlockElement::GetList(
+            [],
+            [
+                '!PROPERTY_CML2_LINK' => false,
+                'IBLOCK_ID'           => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
+                'XML_ID'              => $xmlId,
+            ],
+            false,
+            false,
+            [
+                'PROPERTY_CML2_LINK',
+                'PROPERTY_CML2_LINK.PROPERTY_PACKING_COMBINATION',
+            ]
+        );
         $data = $dbResult->Fetch();
         $id = $data['PROPERTY_CML2_LINK_VALUE'] ?? 0;
-        if ($id) {
-            return $this->productRepository->find($id);
+        /**
+         * Если найденный товар уже привязан к комбинации - игнорируем его
+         * Поиск по комбинации осуществляется отдельно
+         */
+        if (!$id || $data['PROPERTY_CML2_LINK_PROPERTY_PACKING_COMBINATION_VALUE'] ?? 0) {
+            return null;
         }
-        return null;
+        return $this->productRepository->find($id);
     }
 
     /**
-     * @param Product $product
+     * @param Product  $product
      * @param Material $material
      *
      * @throws \RuntimeException
@@ -149,7 +162,7 @@ class ProductService
     }
 
     /**
-     * @param Product $product
+     * @param Product  $product
      * @param Material $material
      */
     protected function fillFields(Product $product, Material $material)
@@ -172,7 +185,7 @@ class ProductService
     }
 
     /**
-     * @param Product $product
+     * @param Product  $product
      * @param Material $material
      *
      * @throws \RuntimeException
@@ -222,7 +235,7 @@ class ProductService
     }
 
     /**
-     * @param Product $product
+     * @param Product  $product
      * @param Material $material
      *
      * @throws \RuntimeException
@@ -324,7 +337,7 @@ class ProductService
     }
 
     /**
-     * @param Product $product
+     * @param Product  $product
      * @param Material $material
      *
      * @throws \RuntimeException
