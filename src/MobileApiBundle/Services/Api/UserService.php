@@ -55,6 +55,7 @@ class UserService
                 ->setPersonalPhone($loginRequest->getLogin())
                 ->setLogin($user->getPersonalPhone())
                 ->setPassword($loginRequest->getPassword());
+            $_SESSION['MANZANA_UPDATE'] = true;
             $this->userBundleService->register($user);
         }
         return new UserLoginResponse($this->getCurrentApiUser());

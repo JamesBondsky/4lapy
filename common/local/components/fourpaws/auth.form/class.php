@@ -110,6 +110,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 }
             }
             $this->setSocial();
+            unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
             $this->includeComponentTemplate();
         } catch (\Exception $e) {
             try {
@@ -168,6 +169,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             return $this->ajaxMess->getEmptyPasswordError();
         }
         $checkedCaptcha = true;
+        $_SESSION['COUNT_AUTH_AUTHORIZE'] = 2;
         if ((int)$_SESSION['COUNT_AUTH_AUTHORIZE'] > 3) {
             try {
                 $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
@@ -424,6 +426,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 $title = 'Добавление телефона';
                 break;
             case 'sendSmsCode':
+                unset($_SESSION['COUNT_AUTH_CONFIRM_CODE']);
                 $title = 'Подтверждение телефона';
                 $mess = $this->ajaxGetSendSmsCode($phone);
                 if ($mess instanceof JsonResponse) {
