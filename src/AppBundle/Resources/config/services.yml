@@ -32,6 +32,10 @@ services:
         class: FourPaws\AppBundle\Service\AjaxMess
         public: true
 
+    userfield_enum.service:
+        class: FourPaws\AppBundle\Service\UserFieldEnumService
+        public: true
+
     FourPaws\AppBundle\Serialization\:
         resource: '../../Serialization/*'
         tags: ['jms_serializer.subscribing_handler']

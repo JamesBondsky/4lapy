@@ -4,6 +4,7 @@ use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\Error;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\AppBundle\Entity\UserFieldEnumValue;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
@@ -310,11 +311,13 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
 
         $fieldName = 'deliveryFrequency';
         $value = $this->arResult['FIELD_VALUES'][$fieldName] ?? '';
-        if ($value === '') {
+        $value = (int)$value;
+        if ($value === 0) {
             $this->setFieldError($fieldName, 'Значение не задано', 'empty');
         } else {
             $success = false;
             $deliveryFrequency = $this->getFrequencyVariants();
+
             foreach ($deliveryFrequency as $variant) {
                 if ($variant['VALUE'] === $value) {
                     $success = true;
@@ -484,11 +487,12 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
     {
         if (!isset($this->data['FREQUENCY_VARIANTS'])) {
             $this->data['FREQUENCY_VARIANTS'] = [];
-            $enum = $this->getOrderSubscribeService()->getFrequencyEnum();
-            foreach ($enum as $item) {
+            $collection = $this->getOrderSubscribeService()->getFrequencyEnum();
+            foreach ($collection as $item) {
+                /** @var UserFieldEnumValue $item */
                 $this->data['FREQUENCY_VARIANTS'][] = [
-                    'VALUE' => $item['ID'],
-                    'TEXT' => $item['VALUE'],
+                    'VALUE' => $item->getId(),
+                    'TEXT' => $item->getValue(),
                 ];
             }
         }

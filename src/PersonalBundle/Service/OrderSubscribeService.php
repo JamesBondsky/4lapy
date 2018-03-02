@@ -19,6 +19,8 @@ use Bitrix\Sale\Shipment;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\AppBundle\Collection\UserFieldEnumCollection;
+use FourPaws\AppBundle\Service\UserFieldEnumService;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
@@ -46,6 +48,8 @@ class OrderSubscribeService
     private $orderService;
     /** @var DeliveryService $deliveryService */
     private $deliveryService;
+    /** @var UserFieldEnumService $userFieldEnumService */
+    private $userFieldEnumService;
     /** @var array $miscData */
     private $miscData = [];
 
@@ -114,63 +118,41 @@ class OrderSubscribeService
     }
 
     /**
-     * @return array
+     * @return UserFieldEnumService
+     * @throws ApplicationCreateException
+     */
+    protected function getUserFieldEnumService() : UserFieldEnumService
+    {
+        if (!$this->userFieldEnumService) {
+            $appCont = Application::getInstance()->getContainer();
+            $this->userFieldEnumService = $appCont->get('userfield_enum.service');
+        }
+
+        return $this->userFieldEnumService;
+    }
+
+    /**
+     * @return UserFieldEnumCollection
+     * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws SystemException
      * @throws \Exception
      */
-    public function getFrequencyEnum(): array
+    public function getFrequencyEnum(): UserFieldEnumCollection
     {
         if (!isset($this->miscData['FREQUENCY_ENUM'])) {
-            $this->miscData['FREQUENCY_ENUM'] = [];
+            $this->miscData['FREQUENCY_ENUM'] = new UserFieldEnumCollection();
             $hlBlockEntityFields = $this->orderSubscribeRepository->getHlBlockEntityFields();
             if (isset($hlBlockEntityFields['UF_FREQUENCY'])) {
                 if ($hlBlockEntityFields['UF_FREQUENCY']['USER_TYPE_ID'] === 'enumeration') {
-                    // результат выборки кешируется внутри метода
-                    $enumItems = (new \CUserFieldEnum())->GetList(
-                        [
-                            'SORT' => 'ASC'
-                        ],
-                        [
-                            'USER_FIELD_ID' => $hlBlockEntityFields['UF_FREQUENCY']['ID']
-                        ]
+                    $this->miscData['FREQUENCY_ENUM'] = $this->getUserFieldEnumService()->getEnumValueCollection(
+                        $hlBlockEntityFields['UF_FREQUENCY']['ID']
                     );
-                    while ($item = $enumItems->Fetch()) {
-                        $this->miscData['FREQUENCY_ENUM'][$item['ID']] = $item;
-                    }
                 }
             }
         }
 
         return $this->miscData['FREQUENCY_ENUM'];
-    }
-
-    /**
-     * @param int $enumId
-     * @return string
-     * @throws ArgumentException
-     * @throws SystemException
-     * @throws \Exception
-     */
-    public function getFrequencyXmlId(int $enumId): string
-    {
-        $enum = $this->getFrequencyEnum();
-
-        return isset($enum[$enumId]) ? $enum[$enumId]['XML_ID'] : '';
-    }
-
-    /**
-     * @param int $enumId
-     * @return string
-     * @throws ArgumentException
-     * @throws SystemException
-     * @throws \Exception
-     */
-    public function getFrequencyValue(int $enumId): string
-    {
-        $enum = $this->getFrequencyEnum();
-
-        return isset($enum[$enumId]) ? $enum[$enumId]['VALUE'] : '';
     }
 
     /**

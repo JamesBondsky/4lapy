@@ -125,7 +125,7 @@ if ($order) {
         $formattedTime = $orderSubscribe->getDeliveryTimeFormattedRu(true);
         $subscribeParamsText = '';
         $subscribeParamsText .= 'по '.$orderSubscribe->getDateStartWeekdayRu(true, DateHelper::DATIVE_PLURAL);
-        $subscribeParamsText .= ', '.ToLower($orderSubscribe->getDeliveryFrequencyValue());
+        $subscribeParamsText .= ', '.ToLower($orderSubscribe->getDeliveryFrequencyEntity()->getValue());
         $subscribeParamsText .= $formattedTime === '' ? '.' : ', '.$formattedTime.'.';
 
         $subscribeStartDateText = '';

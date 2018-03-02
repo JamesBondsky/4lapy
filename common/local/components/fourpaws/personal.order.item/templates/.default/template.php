@@ -88,7 +88,11 @@ if ($orderSubscribe) {
                 if ($orderSubscribe) {
                     ?>
                     <span class="b-accordion-order-item__number-order">
-                        <?=($orderSubscribe->getDeliveryFrequencyValue().', '.$orderSubscribe->getDateStartWeekdayRu())?>
+                        <?php
+                        echo $orderSubscribe->getDeliveryFrequencyEntity()->getValue();
+                        echo ', ';
+                        echo $orderSubscribe->getDateStartWeekdayRu();
+                        ?>
                     </span>
                     <?php
                 } else {

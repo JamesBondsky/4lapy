@@ -9,6 +9,8 @@ use Bitrix\Main\Type\DateTime;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Entity\BaseEntity;
+use FourPaws\AppBundle\Entity\UserFieldEnumValue;
+use FourPaws\AppBundle\Service\UserFieldEnumService;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use JMS\Serializer\Annotation as Serializer;
@@ -87,12 +89,12 @@ class OrderSubscribe extends BaseEntity
 
     /** @var OrderSubscribeService */
     private $orderSubscribeService;
-    /** @var string */
-    private $deliveryFrequencyXmlId;
-    /** @var string */
-    private $deliveryFrequencyValue;
-    /** @var Order */
+    /** @var UserFieldEnumService */
+    private $userFieldEnumService;
+    /** @var null|Order */
     private $order;
+    /** @var UserFieldEnumValue */
+    private $deliveryFrequencyEntity;
 
     /**
      * @return int
@@ -110,6 +112,9 @@ class OrderSubscribe extends BaseEntity
     public function setOrderId(int $orderId) : self
     {
         $this->orderId = $orderId;
+        if (isset($this->order)) {
+            unset($this->order);
+        }
 
         return $this;
     }
@@ -190,7 +195,9 @@ class OrderSubscribe extends BaseEntity
     public function setDeliveryFrequency(int $deliveryFrequency) : self
     {
         $this->deliveryFrequency = (int)$deliveryFrequency;
-        unset($this->deliveryFrequencyXmlId);
+        if (isset($this->deliveryFrequencyEntity)) {
+            unset($this->deliveryFrequencyEntity);
+        }
 
         return $this;
     }
@@ -277,8 +284,7 @@ class OrderSubscribe extends BaseEntity
                 $result = $dateStart;
             } else {
                 $periodIntervalSpec = '';
-
-                $frequencyXmlId = $this->getDeliveryFrequencyXmlId();
+                $frequencyXmlId = $this->getDeliveryFrequencyEntity()->getXmlId();
                 switch ($frequencyXmlId) {
                     case 'WEEK_1':
                         // раз в неделю
@@ -348,6 +354,20 @@ class OrderSubscribe extends BaseEntity
     }
 
     /**
+     * @return UserFieldEnumService
+     * @throws ApplicationCreateException
+     */
+    protected function getUserFieldEnumService() : UserFieldEnumService
+    {
+        if (!$this->userFieldEnumService) {
+            $appCont = Application::getInstance()->getContainer();
+            $this->userFieldEnumService = $appCont->get('userfield_enum.service');
+        }
+
+        return $this->userFieldEnumService;
+    }
+
+    /**
      * @return Order|null
      * @throws ApplicationCreateException
      * @throws \Exception
@@ -361,6 +381,22 @@ class OrderSubscribe extends BaseEntity
         }
 
         return $this->order;
+    }
+
+    /**
+     * @return UserFieldEnumValue
+     * @throws ApplicationCreateException
+     * @throws \Exception
+     */
+    public function getDeliveryFrequencyEntity()
+    {
+        if (!isset($this->deliveryFrequencyEntity)) {
+            $this->deliveryFrequencyEntity = $this->getUserFieldEnumService()->getEnumValueEntity(
+                $this->getDeliveryFrequency()
+            );
+        }
+
+        return $this->deliveryFrequencyEntity;
     }
 
     /**
@@ -434,50 +470,6 @@ class OrderSubscribe extends BaseEntity
         $result = $weekDay ? DateHelper::replaceRuDayOfWeek('#'.$weekDay.'#', $case) : '';
 
         return $lower ? ToLower($result) : $result;
-    }
-
-    /**
-     * @deprecated
-     *
-     * @return string
-     * @throws ArgumentException
-     * @throws SystemException
-     * @throws \Exception
-     * @throws ApplicationCreateException
-     */
-    public function getDeliveryFrequencyXmlId() : string
-    {
-        if (!isset($this->deliveryFrequencyXmlId)) {
-            /** @var OrderSubscribeService $orderSubscribeService */
-            $orderSubscribeService = $this->getOrderSubscribeService();
-            $this->deliveryFrequencyXmlId = $orderSubscribeService->getFrequencyXmlId(
-                $this->getDeliveryFrequency()
-            );
-        }
-
-        return $this->deliveryFrequencyXmlId;
-    }
-
-    /**
-     * @deprecated
-     *
-     * @return string
-     * @throws ArgumentException
-     * @throws SystemException
-     * @throws \Exception
-     * @throws ApplicationCreateException
-     */
-    public function getDeliveryFrequencyValue() : string
-    {
-        if (!isset($this->deliveryFrequencyValue)) {
-            /** @var OrderSubscribeService $orderSubscribeService */
-            $orderSubscribeService = $this->getOrderSubscribeService();
-            $this->deliveryFrequencyValue = $orderSubscribeService->getFrequencyValue(
-                $this->getDeliveryFrequency()
-            );
-        }
-
-        return $this->deliveryFrequencyValue;
     }
 
     /**
