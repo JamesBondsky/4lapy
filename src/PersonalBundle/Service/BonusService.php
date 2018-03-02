@@ -19,6 +19,7 @@ use FourPaws\External\Manzana\Model\Contact;
 use FourPaws\External\ManzanaService;
 use FourPaws\PersonalBundle\Entity\CardBonus;
 use FourPaws\PersonalBundle\Entity\UserBonus;
+use FourPaws\PersonalBundle\Exception\CardNotValidException;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
@@ -45,14 +46,14 @@ class BonusService
      * @var CurrentUserProviderInterface
      */
     public $currentUserProvider;
-    
+
     /** @var LoggerInterface */
     private $logger;
 
     /**
      * ReferralService constructor.
      *
-     * @param ManzanaService $manzanaService
+     * @param ManzanaService               $manzanaService
      * @param CurrentUserProviderInterface $currentUserProvider
      *
      * @throws \RuntimeException
@@ -78,7 +79,7 @@ class BonusService
      */
     public function getUserBonusInfo(User $user = null): UserBonus
     {
-        if (!$user) {
+        if ($user === null) {
             $user = $this->currentUserProvider->getCurrentUser();
         }
 
@@ -89,40 +90,57 @@ class BonusService
             $contact = $this->manzanaService->getContactByUser($user);
 
             if ($contact->isLoyaltyProgramContact()) {
-                /** @var ArrayCollection $cards */
-                $cards = $contact->cards;
-                if (!$cards->isEmpty()) {
-                    /** @var CardByContractCards $card */
-                    $cardBonus = new CardBonus();
-                    $cardBonus->setEmpty(true);
-                    foreach ($cards as $userCard) {
-                        $card = $this->manzanaService->getCardInfo($userCard->cardNumber, $contact->contactId);
-                        if ($card !== null && $card->isActive()) {
-                            $cardBonus->setCardId($card->cardId);
-                            $cardBonus->setCardNumber($card->cardNumber);
-                            $cardBonus->setSum((float)$card->sum);
-                            $cardBonus->setDebit((float)$card->debit);
-                            $cardBonus->setCredit((float)$card->credit);
-                            $cardBonus->setActiveBalance((float)$card->activeBalance);
-                            $cardBonus->setBalance((float)$card->balance);
-                            $cardBonus->setDiscount((float)$card->discount);
-                            $cardBonus->setReal((int)substr($card->cardNumber, 0, 2) === 26);
-                            $cardBonus->setEmpty(false);
-                            break;
+                /** @var CardByContractCards $card */
+                $cardBonus = new CardBonus();
+                $cardBonus->setEmpty(true);
+                if (!empty($user->getDiscountCardNumber())) {
+                    $card = $this->manzanaService->getCardInfo($user->getDiscountCardNumber(), $contact->contactId);
+                    if ($card !== null && $card->isActive()) {
+                        $cardBonus->setCardId($card->cardId);
+                        $cardBonus->setCardNumber($card->cardNumber);
+                        $cardBonus->setSum((float)$card->sum);
+                        $cardBonus->setDebit((float)$card->debit);
+                        $cardBonus->setCredit((float)$card->credit);
+                        $cardBonus->setActiveBalance((float)$card->activeBalance);
+                        $cardBonus->setBalance((float)$card->balance);
+                        $cardBonus->setDiscount((float)$card->discount);
+                        $cardBonus->setReal((int)substr($card->cardNumber, 0, 2) === 26);
+                        $cardBonus->setEmpty(false);
+                    }
+                } else {
+                    /** @var ArrayCollection $cards */
+                    $cards = $contact->cards;
+                    if (!$cards->isEmpty()) {
+                        foreach ($cards as $userCard) {
+                            $card = $this->manzanaService->getCardInfo($userCard->cardNumber, $contact->contactId);
+                            if ($card !== null && $card->isActive()) {
+                                $cardBonus->setCardId($card->cardId);
+                                $cardBonus->setCardNumber($card->cardNumber);
+                                $cardBonus->setSum((float)$card->sum);
+                                $cardBonus->setDebit((float)$card->debit);
+                                $cardBonus->setCredit((float)$card->credit);
+                                $cardBonus->setActiveBalance((float)$card->activeBalance);
+                                $cardBonus->setBalance((float)$card->balance);
+                                $cardBonus->setDiscount((float)$card->discount);
+                                $cardBonus->setReal((int)substr($card->cardNumber, 0, 2) === 26);
+                                $cardBonus->setEmpty(false);
+                                break;
+                            }
                         }
-                    }
-                    if (!$cardBonus->isEmpty()) {
-                        $bonus->setActiveBonus((float)$contact->plActiveBalance);
-                        $bonus->setAllBonus((float)$contact->plBalance);
-                        $bonus->setCredit((float)$contact->plCredit);
-                        $bonus->setDebit((float)$contact->plDebet);
-                        $bonus->setSum((float)$contact->plSumm);
-                        $bonus->setDiscount((float)$contact->plDiscount);
 
-                        $bonus->setCard($cardBonus);
-
-                        $bonus->setEmpty(false);
                     }
+                }
+                if (!$cardBonus->isEmpty()) {
+                    $bonus->setActiveBonus((float)$contact->plActiveBalance);
+                    $bonus->setAllBonus((float)$contact->plBalance);
+                    $bonus->setCredit((float)$contact->plCredit);
+                    $bonus->setDebit((float)$contact->plDebet);
+                    $bonus->setSum((float)$contact->plSumm);
+                    $bonus->setDiscount((float)$contact->plDiscount);
+
+                    $bonus->setCard($cardBonus);
+
+                    $bonus->setEmpty(false);
                 }
             }
         } catch (ManzanaServiceContactSearchMoreOneException $e) {
@@ -139,17 +157,20 @@ class BonusService
     }
 
     /**
-     * @param string $bonusCard
+     * @param string    $bonusCard
      * @param User|null $user
      *
      * @return bool
      *
+     * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
      * @throws ServiceNotFoundException
      * @throws InvalidIdentifierException
      * @throws ApplicationCreateException
      * @throws ConstraintDefinitionException
      * @throws ServiceCircularReferenceException
      * @throws NotAuthorizedException
+     * @throws CardNotValidException
+     * @throws ManzanaServiceException
      */
     public function activateBonusCard(string $bonusCard, User $user = null): bool
     {
@@ -157,21 +178,57 @@ class BonusService
             $user = $this->currentUserProvider->getCurrentUser();
         }
 
+        $validCardResult = $this->manzanaService->validateCardByNumberRaw($bonusCard);
+        if (!$validCardResult->isValid) {
+            throw new CardNotValidException('карта не валидна');
+        }
+
+        $bonusCardId = $validCardResult->cardId;
+
         $contact = new Client();
         $contact->cardnumber = $bonusCard;
-        
+        /** для регистрации из ЛК покупателя */
+        $contact->shopRegistration = 'Ishop';
+        $contact->shopOfActivation = 'UpdatedByСlient';
+
         try {
             $client = $this->manzanaService->getContactByUser($user);
-            
+
             if ($client instanceof Client) {
                 $contact->contactId = $client->contactId;
             } else {
                 throw new ManzanaServiceException('Контакт не найден');
             }
-            
-            $this->manzanaService->updateContact($contact);
 
-            return true;
+            /** @var ArrayCollection $cards */
+            $oldCardId = '';
+            $cards = $client->cards;
+            if (!$cards->isEmpty()) {
+                foreach ($cards as $userCard) {
+                    $card = $this->manzanaService->getCardInfo($userCard->cardNumber, $client->contactId);
+                    if ($card !== null && $card->isActive()) {
+                        $oldCardId = $card->cardId;
+                        break;
+                    }
+                }
+            }
+
+            $isChange = false;
+            if(!empty($oldCardId) && !empty($bonusCardId)) {
+                $isChange = $this->manzanaService->changeCard($oldCardId, $bonusCardId);
+            }
+            elseif (empty($oldCardId)){
+                $this->manzanaService->updateContact($contact);
+                $isChange = true;
+            }
+
+            if($isChange) {
+                $this->currentUserProvider->getUserRepository()->updateData($user->getId(),
+                    ['UF_DISCOUNT_CARD' => $bonusCard]);
+
+            }
+
+            return $isChange;
             /** сбрасываем исключения связанные с маназной если не найден пользователь или ошибка сервиса и возвращаем пустой объект */
         } catch (ManzanaServiceContactSearchMoreOneException $e) {
             $this->logger->info(
@@ -181,8 +238,7 @@ class BonusService
             $this->logger->info(
                 'Не найдено пользователей в манзане по телефону ' . $user->getPersonalPhone()
             );
-        }
-        catch (ManzanaServiceException $e) {
+        } catch (ManzanaServiceException $e) {
             /** глушим остальные ошибки по манзане и обрабытываем в контроллере - финальный return */
         } catch (ManzanaException $e) {
             /** глушим остальные ошибки по манзане и обрабытываем в контроллере - финальный return */

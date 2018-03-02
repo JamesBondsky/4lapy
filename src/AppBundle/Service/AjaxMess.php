@@ -280,6 +280,22 @@ class AjaxMess
     }
 
     /**
+     * @return JsonResponse
+     */
+    public function getEmptyCardNumber(): JsonResponse
+    {
+        return $this->getJsonError('emptyCardNumber', 'Не указан номер карты');
+    }
+
+    /**
+     * @return JsonResponse
+     */
+    public function getCardNotValidError(): JsonResponse
+    {
+        return $this->getJsonError('cardNotValid', 'Карта не валидна');
+    }
+
+    /**
      * @param string $code
      * @param string $mes
      *
