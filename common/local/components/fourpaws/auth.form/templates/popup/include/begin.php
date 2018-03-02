@@ -7,6 +7,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
+global $APPLICATION;
 /** @var Cmain $APPLICATION */
 ?>
 <?php if ((isset($isAjax) && $isAjax) || $component->getMode() === FourPawsAuthFormComponent::MODE_FORM) {
@@ -82,7 +83,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             ); ?>
             <div class="b-registration__new-user">Я новый покупатель.
                 <a class="b-link b-link--authorization b-link--authorization"
-                   href="/personal/register/"
+                   href="/personal/register/?backurl=<?= $backUrl ?>"
                    title="Зарегистрироваться"><span
                             class="b-link__text b-link__text--authorization">Зарегистрироваться</span></a>
             </div>

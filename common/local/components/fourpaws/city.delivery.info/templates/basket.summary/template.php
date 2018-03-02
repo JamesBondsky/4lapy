@@ -6,12 +6,15 @@
  * @author      Makeev Ilya
  * @copyright   ADV/web-engineering co.
  */
+
+use FourPaws\Helpers\WordHelper;
+
 if ($arResult['CURRENT']['DELIVERY']['FREE_FROM']) {
     $diff = (float)$arResult['CURRENT']['DELIVERY']['FREE_FROM'] - (float)$arParams['BASKET_PRICE'];
     if ($diff > 0.01) {
         ?>
         <p class="b-information-order__additional-info">
-            До бесплатной доставки осталось <?= number_format($diff, 2, '.', ' '); ?> ₽
+            До бесплатной доставки осталось <?= WordHelper::numberFormat($diff); ?> ₽
         </p>
         <?php
     } else {

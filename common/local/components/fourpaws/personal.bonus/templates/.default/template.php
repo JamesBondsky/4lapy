@@ -14,23 +14,19 @@ $bonus = $arResult['BONUS'];
         <div class="b-account-bonus-card__colored-block">
             <div class="b-account-bonus-card__line">
                 <div class="b-account-bonus-card__column">
-                    <div class="b-account-bonus-card__title">Баланс
-                    </div>
+                    <div class="b-account-bonus-card__title">Баланс</div>
                     <div class="b-account-bonus-card__number"><?= $bonus->getActiveBonus() ?>
                     </div>
                 </div>
                 <div class="b-account-bonus-card__column b-account-bonus-card__column--bonus">
-                    <div class="b-account-bonus-card__title">Бонус
-                    </div>
+                    <div class="b-account-bonus-card__title">Бонус</div>
                     <div class="b-account-bonus-card__number"><?= $bonus->getRealDiscount() ?>%
                     </div>
                 </div>
             </div>
             <div class="b-account-bonus-card__column b-account-bonus-card__column--number">
-                <div class="b-account-bonus-card__title">Номер карты
-                </div>
-                <div class="b-account-bonus-card__number"><?= $bonus->getCard()->getFormatedCardNumber() ?>
-                </div>
+                <div class="b-account-bonus-card__title">Номер карты</div>
+                <div class="b-account-bonus-card__number"><?= $bonus->getCard()->getFormatedCardNumber() ?></div>
             </div>
         </div>
         <?php if (!$bonus->getCard()->isReal()) { ?>
@@ -43,7 +39,7 @@ $bonus = $arResult['BONUS'];
                 <div class="b-account-bonus-card__link b-account-bonus-card__link--hidden js-number-input">
                     <form class="b-account-bonus-card__form js-form-validation js-offers-query"
                           action="/"
-                          method="get"
+                          method="post"
                           data-url="/ajax/personal/bonus/card/link/">
                         <div class="b-input b-input--account-bonus js-offers">
                             <input class="b-input__input-field b-input__input-field--account-bonus js-offers"
@@ -55,16 +51,14 @@ $bonus = $arResult['BONUS'];
                             <div class="b-error"><span class="js-message"></span>
                             </div>
                         </div>
-                        <button class="b-account-bonus-card__button">Привязать
-                        </button>
+                        <button class="b-account-bonus-card__button">Привязать</button>
                     </form>
                 </div>
             </div>
         <?php } ?>
     </div>
     <div class="b-account-bonus__info">
-        <div class="b-account-bonus__title">Статистика
-        </div>
+        <div class="b-account-bonus__title">Статистика</div>
         <div class="b-account-bonus-progress">
             <progress class="b-account-bonus-progress__progress" max="100" value="<?= $bonus->getProgress() ?>">
             </progress>
@@ -101,50 +95,32 @@ $bonus = $arResult['BONUS'];
 
         <ul class="b-account-bonus__list-info">
             <li class="b-account-bonus__item-info">
-                <div class="b-account-bonus__title-info">Осталось до <?= $bonus->getNextDiscount() ?>% —
-                </div>
+                <div class="b-account-bonus__title-info">Осталось до <?= $bonus->getNextDiscount() ?>% —</div>
                 <div class="b-account-bonus__text"><?= $bonus->getSumToNext() ?>
                     <span class="b-ruble b-ruble--bonus">₽</span>
                 </div>
             </li>
             <li class="b-account-bonus__item-info">
-                <div class="b-account-bonus__title-info">Всего потрачено бонусов —
-                </div>
-                <div class="b-account-bonus__text"><?= $bonus->getCredit() ?>
-                </div>
+                <div class="b-account-bonus__title-info">Всего потрачено бонусов —</div>
+                <div class="b-account-bonus__text"><?= $bonus->getCredit() ?></div>
             </li>
         </ul>
         <?php if (!$bonus->getCard()->isReal()) { ?>
-            <div class="b-account-bonus__title b-account-bonus__title--bonus">Зачем бонусная карта, если есть
-                                                                              виртуальная?
-            </div>
+            <div class="b-account-bonus__title b-account-bonus__title--bonus">Зачем бонусная карта, если есть виртуальная?</div>
             <ul class="b-account-bonus__list-bonus">
-                <li class="b-account-bonus__item">Не надо записывать номер виртуальной карты, чтобы предъявить ее в
-                                                  магазине
-                </li>
-                <li class="b-account-bonus__item">Вы можете передавать друзьям и родственникам
-                </li>
-                <li class="b-account-bonus__item">После привязки, баланс и размер бонуса с виртуальной карты добавляются
-                                                  к
-                                                  физической
-                </li>
-                <li class="b-account-bonus__item">Ее можно потрогать
-                </li>
+                <li class="b-account-bonus__item">Не надо записывать номер виртуальной карты, чтобы предъявить ее в магазине</li>
+                <li class="b-account-bonus__item">Вы можете передавать друзьям и родственникам</li>
+                <li class="b-account-bonus__item">После привязки, баланс и размер бонуса с виртуальной карты добавляются к физической</li>
+                <li class="b-account-bonus__item">Ее можно потрогать</li>
             </ul>
         <?php } ?>
-        <div class="b-account-bonus__title b-account-bonus__title--bonus">Не забывайте!
-        </div>
+        <div class="b-account-bonus__title b-account-bonus__title--bonus">Не забывайте!</div>
         <ul class="b-account-bonus__list-bonus">
-            <li class="b-account-bonus__item">1 бонус = 1 ₽
-            </li>
-            <li class="b-account-bonus__item">Вы можете передавать друзьям и родственникам
-            </li>
-            <li class="b-account-bonus__item">Оплатить можно до 90% стоимости заказа
-            </li>
+            <li class="b-account-bonus__item">1 бонус = 1 ₽</li>
+            <li class="b-account-bonus__item">Вы можете передавать друзьям и родственникам</li>
+            <li class="b-account-bonus__item">Оплатить можно до 90% стоимости заказа</li>
         </ul>
-        <a class="b-link b-link--bonus-info b-link--bonus-info"
-           href="/customer/bonus-program/"
-           title="Подробнее о бонусной программе">
+        <a class="b-link b-link--bonus-info b-link--bonus-info" href="/customer/bonus-program/" title="Подробнее о бонусной программе">
             <span class="b-link__text b-link__text--bonus-info">Подробнее о бонусной программе</span>
         </a>
     </div>
