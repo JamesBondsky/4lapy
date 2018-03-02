@@ -40,12 +40,15 @@ class Event implements ServiceHandlerInterface
     public static function initHandlers(EventManager $eventManager)
     {
         self::$eventManager = $eventManager;
+        /** Инициализация кастомных правил работы с корзиной */
         self::initHandler('OnCondSaleActionsControlBuildList', [Gift::class, 'GetControlDescr']);
         self::initHandler('OnCondSaleActionsControlBuildList', [Gifter::class, 'GetControlDescr']);
         self::initHandler('OnCondSaleActionsControlBuildList', [BasketFilter::class, 'GetControlDescr']);
         self::initHandler('OnCondSaleActionsControlBuildList', [BasketQuantity::class, 'GetControlDescr']);
         self::initHandler('OnCondSaleActionsControlBuildList', [DiscountFromProperty::class, 'GetControlDescr']);
+        /** Здесь дополнительная обработка подарочных акций */
         self::initHandler('OnAfterSaleOrderFinalAction', [Manager::class, 'OnAfterSaleOrderFinalAction']);
+
         self::initHandler('OnSaleBasketItemRefreshData', [__CLASS__, 'updateItemAvailability']);
 
         self::initHandler('OnSaleOrderSaved', [__CLASS__, 'sendNewOrderMessage']);
@@ -75,6 +78,12 @@ class Event implements ServiceHandlerInterface
         );
     }
 
+    /**
+     *
+     *
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\SaleBundle\Exception\ValidationException
+     */
     public static function updateUserAccountBalance()
     {
         /* @todo по ТЗ должно выполняться в фоновом режиме */
@@ -83,6 +92,13 @@ class Event implements ServiceHandlerInterface
 
     /**
      * @param BitrixEvent $event
+     *
+     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \Exception
      */
     public static function updateItemAvailability(BitrixEvent $event)
     {
@@ -95,6 +111,8 @@ class Event implements ServiceHandlerInterface
 
     /**
      * @param BitrixEvent $event
+     *
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
     public static function sendNewOrderMessage(BitrixEvent $event)
     {
@@ -115,6 +133,8 @@ class Event implements ServiceHandlerInterface
 
     /**
      * @param BitrixEvent $event
+     *
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
     public static function sendOrderPaymentMessage(BitrixEvent $event)
     {
@@ -131,6 +151,8 @@ class Event implements ServiceHandlerInterface
 
     /**
      * @param BitrixEvent $event
+     *
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
     public static function sendOrderCancelMessage(BitrixEvent $event)
     {
@@ -147,6 +169,8 @@ class Event implements ServiceHandlerInterface
 
     /**
      * @param BitrixEvent $event
+     *
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
     public static function sendOrderStatusMessage(BitrixEvent $event)
     {

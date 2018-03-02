@@ -285,7 +285,17 @@ class BasketService
     }
 
     /**
+     *
      * @param BasketItem $basketItem
+     *
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Exception
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     *
+     * @return BasketItem
      */
     public function refreshItemAvailability(BasketItem $basketItem): BasketItem
     {
