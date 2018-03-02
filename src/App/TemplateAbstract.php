@@ -72,6 +72,11 @@ abstract class TemplateAbstract
     {
         return $this->path === $page;
     }
+
+    public function isPartitionPage(string $src) : bool
+    {
+        return preg_match(sprintf('~%s~', $src), $this->getPath()) > 0;
+    }
     
     /**
      * @return string

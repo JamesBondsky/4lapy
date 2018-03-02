@@ -88,10 +88,11 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
             }
             $this->arResult['STEP'] = 'begin';
 
-            /** авторизация и показ сообщения об успешной смене */
             $request = Application::getInstance()->getContext()->getRequest();
-            $confirmAuth = $request->get('confirm_auth');
             $backUrl = $request->get('backurl');
+
+            /** авторизация и показ сообщения об успешной смене */
+            $confirmAuth = $request->get('confirm_auth');
             if (!empty($confirmAuth)) {
                 /** @var ConfirmCodeService $confirmService */
                 $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
@@ -110,8 +111,7 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
             if (!empty($emailGet) && !empty($hash)) {
                 /** @var ConfirmCodeService $confirmService */
                 $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
-                $siteHash = $confirmService::getGeneratedCode('email');
-                if ($siteHash === $hash) {
+                if ($confirmService::checkConfirmEmail($hash)) {
                     if ($backUrl === static::BASKET_BACK_URL) {
                         $this->authService->authorize($request->get('user_id'));
                         LocalRedirect($backUrl);
@@ -290,7 +290,7 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
 
                 $phone = $res;
             } elseif ($recovery === 'email') {
-                $title = 'Создание нового пароля';
+                $title = 'Восстановление пароля';
                 $res = $this->ajaxGetSendEmailCode($email, $backUrl);
                 if ($res instanceof JsonResponse) {
                     return $res;
@@ -426,11 +426,11 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
             $expertSenderService = App::getInstance()->getContainer()->get('expertsender.service');
             return $expertSenderService->sendForgotPassword($curUser, $backUrl);
         } catch (ExpertsenderServiceException $e) {
-            /** скипаем для показа системной ошибки */
+            /** скипаем для показа системной ошибки в вызвавшем методе */
         } catch (ApplicationCreateException $e) {
-            /** скипаем для показа системной ошибки */
+            /** скипаем для показа системной ошибки в вызвавшем методе */
         }
-        return $this->ajaxMess->getSystemError();
+        return false;
     }
 
     /**

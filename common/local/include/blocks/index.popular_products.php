@@ -9,7 +9,7 @@
 $APPLICATION->IncludeComponent('fourpaws:catalog.snippet.list', '', [
     'COUNT'        => 12,
     'OFFER_FILTER' => [
-        '!PROPERTY_IS_POPULAR' => false,
+        '=PROPERTY_IS_POPULAR' => '1',
     ],
     'TITLE'        => 'Популярные товары',
 ], false, ['HIDE_ICONS' => 'Y']);

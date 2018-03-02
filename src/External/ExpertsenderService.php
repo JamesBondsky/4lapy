@@ -159,25 +159,27 @@ class ExpertsenderService implements LoggerAwareInterface
                 /** хеш строка для подтверждения мыла */
                 /** @var ConfirmCodeService $confirmService */
                 $confirmService = Application::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
-                $generatedHash = $confirmService::getConfirmHash($user->getEmail());
+                $time = time();
+                $confirmService::setGeneratedHash($user->getEmail(), 'email', $time);
+                $generatedHash = $confirmService::getConfirmHash($user->getEmail(), $time);
                 $receiver = new Receiver($user->getEmail());
-                $backUrlText = !empty($backUrl) ? '&backurl=' . $backUrl : '';
+                $backUrlText = !empty($backUrl) ? '&backurl=' . $backUrl.'&user_id='.$user->getId() : '';
                 $snippets = [
-                    'user_name' => $user->getName(),
-                    'link'      => (new FullHrefDecorator('/forgot-password/?hash=' . $generatedHash . '&email=' . $user->getEmail() . $backUrlText))->getFullPublicPath(),
+                    new Snippet('user_name', $user->getName(), true),
+                    new Snippet('link', (new FullHrefDecorator('/personal/forgot-password/?hash=' . $generatedHash . '&email=' . $user->getEmail() . $backUrlText))->getFullPublicPath(),true),
                 ];
                 $apiResult = $this->client->sendTransactional(7072, $receiver, $snippets);
                 if ($apiResult->isOk()) {
                     return true;
                 }
             } catch (ExpertSenderException $e) {
-                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
+                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
             } catch (GuzzleException $e) {
-                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
+                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
             } catch (ApplicationCreateException $e) {
-                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
+                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
             } catch (\Exception $e) {
-                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
+                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
             }
         }
         return false;
@@ -392,39 +394,6 @@ class ExpertsenderService implements LoggerAwareInterface
                 throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
             }
         }
-        return false;
-    }
-
-    /**
-     * @param string $email
-     *
-     * @return bool
-     */
-    public function checkConfirmEmail(string $email): bool
-    {
-        //Проверяем статус активного или неподписанного в списке
-        try {
-            $response = $this->guzzleClient->get($this->url . '/Api/Subscribers?apiKey=' . $this->key . '&email=' . $email . '&option=Short');
-            $activeLists = [];
-            if ($response->getStatusCode() === 200) {
-                $xml = new \SimpleXMLElement($response->getBody()->getContents());
-                if (!(bool)$xml->Data->BlackList) {
-                    foreach ((array)$xml->Data->StateOnLists as $StateOnList) {
-                        if ((string)$StateOnList->Status === 'Active' || (string)$StateOnList->Status === 'Unsubscribed') {
-                            $activeLists[] = (int)$StateOnList->ListId;
-                        }
-                    }
-                }
-                unset($xml);
-            }
-
-            if (\in_array(178, $activeLists, true)) {
-                return true;
-            }
-        } catch (GuzzleException $e) {
-            $this->logger->critical('Переписать нахер. Так делатть НЕЛЬЗЯ.');
-        }
-
         return false;
     }
 
