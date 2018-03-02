@@ -30,6 +30,7 @@ services:
 
     ajax.mess:
         class: FourPaws\AppBundle\Service\AjaxMess
+        public: true
 
     FourPaws\AppBundle\Serialization\:
         resource: '../../Serialization/*'

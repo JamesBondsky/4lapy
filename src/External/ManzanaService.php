@@ -574,7 +574,7 @@ class ManzanaService implements LoggerAwareInterface, ManzanaServiceInterface
     /**
      * @param $contactId
      *
-     * @return array|CardByContractCards[]|CardsByContractCards
+     * @return array|CardByContractCards[]
      * @throws ManzanaServiceException
      */
     public function getCardsByContactId($contactId): array

@@ -402,39 +402,6 @@ class ExpertsenderService implements LoggerAwareInterface
      *
      * @return bool
      */
-    public function checkConfirmEmail(string $email): bool
-    {
-        //Проверяем статус активного или неподписанного в списке
-        try {
-            $response = $this->guzzleClient->get($this->url . '/Api/Subscribers?apiKey=' . $this->key . '&email=' . $email . '&option=Short');
-            $activeLists = [];
-            if ($response->getStatusCode() === 200) {
-                $xml = new \SimpleXMLElement($response->getBody()->getContents());
-                if (!(bool)$xml->Data->BlackList) {
-                    foreach ((array)$xml->Data->StateOnLists as $StateOnList) {
-                        if ((string)$StateOnList->Status === 'Active' || (string)$StateOnList->Status === 'Unsubscribed') {
-                            $activeLists[] = (int)$StateOnList->ListId;
-                        }
-                    }
-                }
-                unset($xml);
-            }
-
-            if (\in_array(178, $activeLists, true)) {
-                return true;
-            }
-        } catch (GuzzleException $e) {
-            $this->logger->critical('Переписать нахер. Так делатть НЕЛЬЗЯ.');
-        }
-
-        return false;
-    }
-
-    /**
-     * @param string $email
-     *
-     * @return bool
-     */
     public function checkConfirmEmailSubscribe(string $email): bool
     {
         $response = $this->guzzleClient->get($this->url.'/Api/Subscribers?apiKey='.$this->key.'&email='.$email.'&option=Short');

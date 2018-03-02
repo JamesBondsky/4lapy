@@ -30,6 +30,7 @@ use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\PersonalBundle\Exception\NotFoundException as AddressNotFoundException;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Exception\FastOrderCreateException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\StoreBundle\Collection\StoreCollection;
@@ -200,7 +201,9 @@ class OrderService
     /**
      * @param OrderStorage $storage
      * @param bool $save
+     * @param bool $fastOrder
      *
+     * @throws \FourPaws\SaleBundle\Exception\FastOrderCreateException
      * @throws \Exception
      * @throws OrderCreateException
      * @throws NotFoundException
@@ -214,7 +217,7 @@ class OrderService
      * @throws ObjectNotFoundException
      * @return Order
      */
-    public function createOrder(OrderStorage $storage, $save = true): Order
+    public function createOrder(OrderStorage $storage, $save = true, bool $fastOrder = false): Order
     {
         $order = Order::create(SITE_ID);
         $selectedCity = $this->userCityProvider->getSelectedCity();
@@ -249,23 +252,36 @@ class OrderService
             $paySystem = $extPayment->getPaySystem();
             $extPayment->setField('PAY_SYSTEM_NAME', $paySystem->getField('NAME'));
         } elseif ($save) {
-            throw new OrderCreateException('Не выбран способ оплаты');
+            if (!$fastOrder) {
+                throw new OrderCreateException('Не выбран способ оплаты');
+            }
         }
 
         $deliveries = $this->getDeliveries();
         $selectedDelivery = null;
-        /** @var BaseResult $delivery */
-        foreach ($deliveries as $delivery) {
-            if ($storage->getDeliveryId() === $delivery->getDeliveryId()) {
-                $selectedDelivery = clone $delivery;
-                if ($this->deliveryService->isPickup($selectedDelivery)) {
-                    $selectedDelivery->setStockResult(
-                        $selectedDelivery->getStockResult()->filterByStore(
-                            $this->storeService->getByXmlId($storage->getDeliveryPlaceCode())
-                        )
-                    );
+        if ($fastOrder) {
+            /** устанавливаем самовывоз для быстрого заказа */
+            if (!empty($deliveries)) {
+                $selectedDelivery = current($deliveries);
+            } else {
+                throw new FastOrderCreateException(
+                    'Оформление быстрого заказа невозможно, пожалуйста обратить к администратору или попробуйте полный процесс оформления'
+                );
+            }
+        } else {
+            /** @var BaseResult $delivery */
+            foreach ($deliveries as $delivery) {
+                if ($storage->getDeliveryId() === $delivery->getDeliveryId()) {
+                    $selectedDelivery = clone $delivery;
+                    if ($this->deliveryService->isPickup($selectedDelivery)) {
+                        $selectedDelivery->setStockResult(
+                            $selectedDelivery->getStockResult()->filterByStore(
+                                $this->storeService->getByXmlId($storage->getDeliveryPlaceCode())
+                            )
+                        );
+                    }
+                    break;
                 }
-                break;
             }
         }
 
@@ -296,7 +312,7 @@ class OrderService
                 throw new OrderCreateException('Не выбрана доставка');
             }
 
-            if ($this->deliveryService->isDelivery($delivery)) {
+            if ($this->deliveryService->isDelivery($selectedDelivery)) {
                 $order->setFieldNoDemand('STATUS_ID', static::STATUS_NEW_COURIER);
             }
 
@@ -384,7 +400,9 @@ class OrderService
                 $propertyValue->setValue($value);
             }
         } elseif ($save) {
-            throw new OrderCreateException('Не выбрана доставка');
+            if (!$fastOrder) {
+                throw new OrderCreateException('Не выбрана доставка');
+            }
         }
 
         /**
@@ -471,6 +489,7 @@ class OrderService
                         ->setLogin($storage->getPhone())
                         ->setPassword($password)
                         ->setPersonalPhone($storage->getPhone());
+                    $_SESSION['MANZANA_UPDATE'] = true;
                     $user = $this->userRegistrationProvider->register($user);
 
                     $order->setFieldNoDemand('USER_ID', $user->getId());
@@ -480,6 +499,7 @@ class OrderService
 
                     /* @todo вынести из сессии? */
                     /* нужно для expertsender */
+                    /** пароль еще нужен для смс быстрого заказа */
                     $_SESSION['NEW_USER'] = [
                         'LOGIN'    => $storage->getPhone(),
                         'PASSWORD' => $password,
@@ -504,7 +524,11 @@ class OrderService
              * 1) пользователь только что зарегистрирован
              * 2) авторизованный пользователь задал новый адрес
              */
-            if ($needCreateAddress && $selectedDelivery && $this->deliveryService->isDelivery($selectedDelivery)) {
+            if ($needCreateAddress &&
+                $selectedDelivery &&
+                $this->deliveryService->isDelivery($selectedDelivery) &&
+                !$fastOrder
+            ) {
                 $address = (new Address())
                     ->setCity($storage->getCity())
                     ->setCityLocation($storage->getCityCode())
