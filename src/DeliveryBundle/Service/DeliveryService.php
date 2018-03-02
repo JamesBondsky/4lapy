@@ -160,8 +160,10 @@ class DeliveryService
      *
      * @param Shipment $shipment
      * @param array $codes коды доставок
-     *
-     * @return CalculationResult[]
+     * @return array
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\NotSupportedException
+     * @throws \Exception
      */
     public function calculateDeliveries(Shipment $shipment, array $codes = []): array
     {

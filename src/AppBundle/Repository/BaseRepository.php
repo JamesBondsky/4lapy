@@ -86,6 +86,8 @@ class BaseRepository
         }
 
         $data = $this->arrayTransformer->toArray($this->entity, SerializationContext::create()->setGroups(['create']));
+        $data = $this->afterCreateArrayTransformer($data);
+
         $this->fixFileData($data);
 
         $res = $this->dataManager::add(
@@ -147,6 +149,7 @@ class BaseRepository
         }
 
         $data = $this->arrayTransformer->toArray($this->entity, SerializationContext::create()->setGroups(['update']));
+        $data = $this->afterUpdateArrayTransformer($data);
         $this->fixFileData($data);
 
         $res = $this->dataManager::update(
@@ -475,5 +478,29 @@ class BaseRepository
                 }
             }
         }
+    }
+
+    /**
+     * Дополнительная обработка массива перед отправкой в базу
+     * методом create
+     *
+     * @param array $data
+     * @return array
+     */
+    protected function afterCreateArrayTransformer(array $data): array
+    {
+        return $data;
+    }
+
+    /**
+     * Дополнительная обработка массива перед отправкой в базу
+     * методом update
+     *
+     * @param array $data
+     * @return array
+     */
+    protected function afterUpdateArrayTransformer(array $data): array
+    {
+        return $data;
     }
 }

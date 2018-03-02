@@ -51,14 +51,22 @@ class OrderSubscribeController extends Controller
             $result = $component->arResult;
             $actionResult = $result['SUBSCRIBE_ACTION'] ?? [];
             if ($actionResult && $actionResult['SUCCESS'] === 'Y') {
-                $isCreate = $actionResult['TYPE'] === 'CREATE';
+                $message = 'Подписка на доставку оформлена';
+                $redirectUrl = '/personal/subscribe/';
+                if ($actionResult['TYPE'] === 'UPDATE') {
+                    $message = 'Подписка на доставку возобновлена';
+                    if ($actionResult['RESUMED'] !== 'Y') {
+                        $redirectUrl = '';
+                        $message = 'Подписка на доставку изменена';
+                    }
+                }
                 $return = JsonSuccessResponse::create(
-                    $isCreate ? 'Подписка на доставку оформлена' : 'Подписка на доставку изменена',
+                    $message,
                     200,
                     [],
                     [
-                        'reload' => $isCreate ? false : true,
-                        'redirect' => $isCreate ? '/personal/subscribe/' : ''
+                        'reload' => $redirectUrl !== '' ? false : true,
+                        'redirect' => $redirectUrl,
                     ]
                 );
             } else {

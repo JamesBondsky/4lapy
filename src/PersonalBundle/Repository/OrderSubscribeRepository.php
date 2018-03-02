@@ -2,6 +2,8 @@
 
 namespace FourPaws\PersonalBundle\Repository;
 
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Entity\DataManager;
 use Bitrix\Highloadblock\HighloadBlockTable;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\Entity\AddResult;
@@ -10,10 +12,13 @@ use Bitrix\Main\Entity\DeleteResult;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Entity\UpdateResult;
 use Bitrix\Main\Error;
+use Bitrix\Main\SystemException;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Internals\OrderTable;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\AppBundle\Repository\BaseHlRepository;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
+use FourPaws\PersonalBundle\Exception\InvalidArgumentException;
 use JMS\Serializer\ArrayTransformerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -44,8 +49,8 @@ class OrderSubscribeRepository extends BaseHlRepository
 
     /**
      * @return array
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\SystemException
+     * @throws ArgumentException
+     * @throws SystemException
      * @throws \Exception
      */
     protected function getHlBlock(): array
@@ -69,8 +74,8 @@ class OrderSubscribeRepository extends BaseHlRepository
 
     /**
      * @return int
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\SystemException
+     * @throws ArgumentException
+     * @throws SystemException
      * @throws \Exception
      */
     public function getHlBlockId(): int
@@ -80,8 +85,8 @@ class OrderSubscribeRepository extends BaseHlRepository
 
     /**
      * @return string
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\SystemException
+     * @throws ArgumentException
+     * @throws SystemException
      * @throws \Exception
      */
     public function getHlBlockTableName(): string
@@ -91,8 +96,8 @@ class OrderSubscribeRepository extends BaseHlRepository
 
     /**
      * @return Base
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\SystemException
+     * @throws ArgumentException
+     * @throws SystemException
      * @throws \Exception
      */
     public function getHlBlockEntity(): Base
@@ -107,8 +112,8 @@ class OrderSubscribeRepository extends BaseHlRepository
 
     /**
      * @return string
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\SystemException
+     * @throws ArgumentException
+     * @throws SystemException
      * @throws \Exception
      */
     public function getHlBlockEntityClass(): string
@@ -123,8 +128,8 @@ class OrderSubscribeRepository extends BaseHlRepository
 
     /**
      * @return array
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\SystemException
+     * @throws ArgumentException
+     * @throws SystemException
      * @throws \Exception
      */
     public function getHlBlockEntityFields(): array
@@ -201,6 +206,30 @@ class OrderSubscribeRepository extends BaseHlRepository
     }
 
     /**
+     * @return AddResult
+     * @throws ArgumentException
+     * @throws InvalidArgumentException
+     * @throws SystemException
+     * @throws \Exception
+     */
+    public function createEx(): AddResult
+    {
+        $args = func_get_args();
+
+        $entityClass = $this->getEntityClass();
+        if (count($args) === 1 && ($args[0] instanceof $entityClass)) {
+            $this->setEntity($args[0]);
+            $result = $this->doCreateByEntity();
+        } elseif (count($args) === 1 && is_array($args[0])) {
+            $result = $this->doCreateByArray($args[0]);
+        } else {
+            throw new InvalidArgumentException('Wrong arguments');
+        }
+
+        return $result;
+    }
+
+    /**
      * @return bool
      * @throws ArgumentNullException
      * @throws \Exception
@@ -210,40 +239,60 @@ class OrderSubscribeRepository extends BaseHlRepository
         if ((int)$this->entity->getOrderId() <= 0) {
             throw new ArgumentNullException('Order id not defined');
         }
-
-        // явная установка значения - по умолчанию может быть null
-        if (!$this->entity->isActive()) {
-            $this->entity->setActive(false);
-        }
-
-        // дата создания всегда текущая
-        $this->entity->setDateCreate('');
-        // дата изменения всегда текущая
-        $this->entity->setDateEdit('');
-
         if (!$this->entity->getDateStart()) {
             throw new ArgumentNullException('Start date not defined');
         }
-
         if (!$this->entity->getDeliveryFrequency()) {
             throw new ArgumentNullException('Delivery frequency not defined');
+        }
+
+        // дата создания всегда текущая
+        $this->entity->setDateCreate((new DateTime()));
+        // дата изменения всегда текущая
+        $this->entity->setDateEdit((new DateTime()));
+
+        // явная установка значения (по умолчанию null)
+        if (!$this->entity->isActive()) {
+            $this->entity->setActive(false);
         }
 
         return parent::create();
     }
 
     /**
-     * @param array $data
+     * @param array $fields
      * @return AddResult
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws \Exception
      */
-    public function createEx(array $data): AddResult
+    protected function doCreateByArray(array $fields): AddResult
     {
         $result = new AddResult();
 
+        // дата создания всегда текущая
+        $fields['UF_DATE_CREATE'] = new DateTime();
+        // дата изменения всегда текущая
+        $fields['UF_DATE_EDIT'] = new DateTime();
+
+        $fields['UF_ACTIVE'] = isset($fields['UF_ACTIVE']) && $fields['UF_ACTIVE'] ? 1 : 0;
+
         try {
-            $this->setEntity(
-                $this->dataToEntity($data, $this->getEntityClass(), 'create')
-            );
+            /** @var OrderSubscribe $tmpEntity */
+            $tmpEntity = $this->dataToEntity($fields, $this->getEntityClass(), 'create');
+            if ($tmpEntity->getOrderId() <= 0) {
+                $result->addError(
+                    new Error('Order id not defined', 'argumentNullException')
+                );
+            } elseif (!$tmpEntity->getDateStart()) {
+                $result->addError(
+                    new Error('Start date not defined', 'argumentNullException')
+                );
+            } elseif (!$tmpEntity->getDeliveryFrequency()) {
+                $result->addError(
+                    new Error('Delivery frequency not defined', 'argumentNullException')
+                );
+            }
         } catch(\Exception $exception) {
             $result->addError(
                 new Error($exception->getMessage(), 'setEntityException')
@@ -251,20 +300,66 @@ class OrderSubscribeRepository extends BaseHlRepository
         }
 
         if ($result->isSuccess()) {
-            try {
-                $res = $this->create();
-                if ($res) {
-                    $result->setId($this->entity->getId());
-                }
-            } catch(ArgumentNullException $exception) {
+            /** @var DataManager $entityClass */
+            $entityClass = $this->getHlBlockEntityClass();
+            $addResult = $entityClass::add(
+                $fields
+            );
+            if ($addResult->isSuccess()) {
+                $result->setId($addResult->getId());
+            } else {
+                $result->addErrors($addResult->getErrors());
+            }
+        }
+
+        return $result;
+    }
+
+    protected function doCreateByEntity(): AddResult
+    {
+        $result = new AddResult();
+
+        try {
+            $res = $this->create();
+            if ($res) {
+                $result->setId($this->entity->getId());
+            } else {
                 $result->addError(
-                    new Error($exception->getMessage(), 'argumentNullException')
-                );
-            } catch(\Exception $exception) {
-                $result->addError(
-                    new Error($exception->getMessage(), $exception->getCode())
+                    new Error('Неизвестная ошибка', 'createUnknownError')
                 );
             }
+        } catch(ArgumentNullException $exception) {
+            $result->addError(
+                new Error($exception->getMessage(), 'argumentNullException')
+            );
+        } catch(\Exception $exception) {
+            $result->addError(
+                new Error($exception->getMessage(), $exception->getCode())
+            );
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return UpdateResult
+     * @throws ArgumentException
+     * @throws InvalidArgumentException
+     * @throws SystemException
+     * @throws \Exception
+     */
+    public function updateEx(): UpdateResult
+    {
+        $args = func_get_args();
+
+        $entityClass = $this->getEntityClass();
+        if (count($args) === 1 && ($args[0] instanceof $entityClass)) {
+            $this->setEntity($args[0]);
+            $result = $this->doUpdateByEntity();
+        } elseif (count($args) === 2 && (int)$args[0] > 0 && is_array($args[1])) {
+            $result = $this->doUpdateByArray((int)$args[0], $args[1]);
+        } else {
+            throw new InvalidArgumentException('Wrong arguments');
         }
 
         return $result;
@@ -276,34 +371,42 @@ class OrderSubscribeRepository extends BaseHlRepository
      */
     public function update(): bool
     {
-        // явная установка значения - по умолчанию может быть null
+        // дата создания не обновляется
+        $this->entity->setDateCreate(null);
+        // дата изменения всегда текущая
+        $this->entity->setDateEdit((new DateTime()));
+
+        // явная установка значения (по умолчанию null)
         if (!$this->entity->isActive()) {
             $this->entity->setActive(false);
         }
-
-        // дата создания не обновляется
-        $this->entity->setDateCreate(null);
 
         return parent::update();
     }
 
     /**
-     * @param array $data
+     * @param int $id
+     * @param array $fields
      * @return UpdateResult
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws \Exception
      */
-    public function updateEx(array $data): UpdateResult
+    protected function doUpdateByArray(int $id, array $fields): UpdateResult
     {
         $result = new UpdateResult();
 
+        // дата создания не обновляется
+        if (array_key_exists('UF_DATE_CREATE', $fields)) {
+            unset($fields['UF_DATE_CREATE']);
+        }
         // если дата изменения не задана, то устанавливаем текущую дату автоматически
-        if (!isset($data['UF_DATE_EDIT'])) {
-            $data['UF_DATE_EDIT'] = '';
+        if (!isset($fields['UF_DATE_EDIT'])) {
+            $fields['UF_DATE_EDIT'] = new DateTime();
         }
 
         try {
-            $this->setEntity(
-                $this->dataToEntity($data, $this->getEntityClass(), 'update')
-            );
+            $this->dataToEntity($fields, $this->getEntityClass(), 'read');
         } catch(\Exception $exception) {
             $result->addError(
                 new Error($exception->getMessage(), 'setEntityException')
@@ -311,17 +414,41 @@ class OrderSubscribeRepository extends BaseHlRepository
         }
 
         if ($result->isSuccess()) {
-            try {
-                $this->update();
-            } catch(ArgumentNullException $exception) {
+            /** @var DataManager $entityClass */
+            $entityClass = $this->getHlBlockEntityClass();
+            $updateResult = $entityClass::update(
+                $id,
+                $fields
+            );
+            if (!$updateResult->isSuccess()) {
+                $result->addErrors($updateResult->getErrors());
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return UpdateResult
+     */
+    protected function doUpdateByEntity(): UpdateResult
+    {
+        $result = new UpdateResult();
+        try {
+            $res = $this->update();
+            if (!$res) {
                 $result->addError(
-                    new Error($exception->getMessage(), 'argumentNullException')
-                );
-            } catch(\Exception $exception) {
-                $result->addError(
-                    new Error($exception->getMessage(), $exception->getCode())
+                    new Error('Неизвестная ошибка', 'updateUnknownError')
                 );
             }
+        } catch(ArgumentNullException $exception) {
+            $result->addError(
+                new Error($exception->getMessage(), 'argumentNullException')
+            );
+        } catch(\Exception $exception) {
+            $result->addError(
+                new Error($exception->getMessage(), $exception->getCode())
+            );
         }
 
         return $result;

@@ -167,13 +167,13 @@ if ($order) {
                         <?= $errorBlock ?>
                     </div>
                 </div>
-                <label class="b-registration__label b-registration__label--subscribe-delivery">
-                    Интервал
-                </label>
                 <?php
                 if ($arResult['TIME_VARIANTS']) {
                     $curValue = $orderSubscribe ? $orderSubscribe->getDeliveryTime() : '';
                     ?>
+                    <label class="b-registration__label b-registration__label--subscribe-delivery">
+                        Интервал
+                    </label>
                     <div class="b-select b-select--subscribe-delivery js-delivery-interval">
                         <select name="deliveryInterval"
                                 class="b-select__block b-select__block--subscribe-delivery js-delivery-interval"

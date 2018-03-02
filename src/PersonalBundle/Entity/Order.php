@@ -859,13 +859,13 @@ $result = true;
     }
 
     /**
-     * @return \Bitrix\Sale\Order
+     * @return \Bitrix\Sale\Order|null
      * @throws \Bitrix\Main\ArgumentNullException
      * @throws \Bitrix\Main\NotImplementedException
      */
     public function getBitrixOrder(): \Bitrix\Sale\Order
     {
-        if (!$this->bitrixOrder) {
+        if (!isset($this->bitrixOrder)) {
             $this->bitrixOrder = \Bitrix\Sale\Order::load($this->getId());
         }
 

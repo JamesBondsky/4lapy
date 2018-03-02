@@ -3,18 +3,28 @@
 namespace FourPaws\PersonalBundle\Service;
 
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Entity\AddResult;
 use Bitrix\Main\Entity\DeleteResult;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Entity\UpdateResult;
 use Bitrix\Main\Error;
+use Bitrix\Main\NotImplementedException;
+use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\Result;
+use Bitrix\Main\SystemException;
+use Bitrix\Sale\Delivery\CalculationResult;
+use Bitrix\Sale\Shipment;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
+use FourPaws\PersonalBundle\Exception\InvalidArgumentException;
+use FourPaws\PersonalBundle\Exception\NotFoundException;
+use FourPaws\PersonalBundle\Exception\RuntimeException;
 use FourPaws\PersonalBundle\Repository\OrderSubscribeRepository;
 use FourPaws\SaleBundle\Helper\OrderCopy;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -106,7 +116,7 @@ class OrderSubscribeService
     /**
      * @return array
      * @throws ArgumentException
-     * @throws \Bitrix\Main\SystemException
+     * @throws SystemException
      * @throws \Exception
      */
     public function getFrequencyEnum(): array
@@ -139,7 +149,7 @@ class OrderSubscribeService
      * @param int $enumId
      * @return string
      * @throws ArgumentException
-     * @throws \Bitrix\Main\SystemException
+     * @throws SystemException
      * @throws \Exception
      */
     public function getFrequencyXmlId(int $enumId): string
@@ -153,7 +163,7 @@ class OrderSubscribeService
      * @param int $enumId
      * @return string
      * @throws ArgumentException
-     * @throws \Bitrix\Main\SystemException
+     * @throws SystemException
      * @throws \Exception
      */
     public function getFrequencyValue(int $enumId): string
@@ -169,7 +179,7 @@ class OrderSubscribeService
      * @return ArrayCollection
      * @throws \Exception
      */
-    public function getSubscriptionsByOrder($orderId, $filterActive = true)
+    public function getSubscriptionsByOrder($orderId, bool $filterActive = true)
     {
         $params = [];
         if ($filterActive) {
@@ -177,6 +187,20 @@ class OrderSubscribeService
         }
 
         return $this->orderSubscribeRepository->findByOrder($orderId, $params);
+    }
+
+    /**
+     * @param int $orderId
+     * @param bool $filterActive
+     * @return OrderSubscribe|null
+     * @throws \Exception
+     */
+    public function getSubscribeByOrderId(int $orderId, bool $filterActive = true)
+    {
+        $subscriptionsCollect = $this->getSubscriptionsByOrder($orderId, $filterActive);
+        $orderSubscribe = $subscriptionsCollect->count() ? $subscriptionsCollect->first() : null;
+
+        return $orderSubscribe;
     }
 
     /**
@@ -236,23 +260,29 @@ class OrderSubscribeService
     }
 
     /**
-     * @param array $data
      * @return AddResult
+     * @throws ArgumentException
+     * @throws InvalidArgumentException
+     * @throws SystemException
+     * @throws \Exception
      */
-    public function add(array $data): AddResult
+    public function add(): AddResult
     {
-        $addResult = $this->orderSubscribeRepository->createEx($data);
+        $addResult = call_user_func_array([$this->orderSubscribeRepository, 'createEx'], func_get_args());
 
         return $addResult;
     }
 
     /**
-     * @param array $data
      * @return UpdateResult
+     * @throws ArgumentException
+     * @throws InvalidArgumentException
+     * @throws SystemException
+     * @throws \Exception
      */
-    public function update(array $data): UpdateResult
+    public function update(): UpdateResult
     {
-        $updateResult = $this->orderSubscribeRepository->updateEx($data);
+        $updateResult = call_user_func_array([$this->orderSubscribeRepository, 'updateEx'], func_get_args());
 
         return $updateResult;
     }
@@ -269,30 +299,155 @@ class OrderSubscribeService
     }
 
     /**
+     * @param $periodValue
+     * @param string $periodType
+     * @return int
+     */
+    protected function convertCalcResultPeriodValue($periodValue, string $periodType)
+    {
+        $result = 0;
+        $periodValue = (float)$periodValue;
+        switch ($periodType) {
+            case CalculationResult::PERIOD_TYPE_MONTH:
+                $result = $periodValue * 30;
+                break;
+
+            case CalculationResult::PERIOD_TYPE_DAY:
+                $result = ceil($periodValue);
+                break;
+
+            case CalculationResult::PERIOD_TYPE_HOUR:
+                $result = ceil($periodValue / 24);
+                break;
+
+            case CalculationResult::PERIOD_TYPE_MIN:
+                $result = ceil($periodValue / 86400);
+                break;
+        }
+
+        return (int)$result;
+    }
+
+    /**
+     * Возвращает CalculationResult для уже созданного заказа
+     *
+     * @param \Bitrix\Sale\Order $bitrixOrder
+     * @return CalculationResult|null
+     * @throws ApplicationCreateException
+     * @throws ArgumentOutOfRangeException
+     * @throws NotSupportedException
+     * @throws \Exception
+     */
+    public function getDeliveryCalculationResult(\Bitrix\Sale\Order $bitrixOrder)
+    {
+        $calculationResult = null;
+        if ($bitrixOrder->getId() && !$bitrixOrder->isClone()) {
+            // делаем клон заказа, чтобы методы расчета доставки не изменили оригинальный заказ
+            $bitrixOrderCloned = $bitrixOrder->createClone();
+
+            $deliveryService = $this->getDeliveryService();
+            $shipmentCollect = $bitrixOrderCloned->getShipmentCollection();
+            foreach ($shipmentCollect as $shipment) {
+                /** @var Shipment $shipment */
+                if ($shipment->isSystem()) {
+                    continue;
+                }
+
+                /** @todo В идеале нужно получать результат непосредственно от обработчика службы доставки, а не через сервис */
+                $calcResultList = $deliveryService->calculateDeliveries(
+                    $shipment,
+                    [
+                        $shipment->getDelivery()->getCode(),
+                    ]
+                );
+                if ($calcResultList) {
+                    $calculationResult = reset($calcResultList);
+                    break;
+                }
+            }
+        } else {
+            throw new InvalidArgumentException('Передан некорректный заказ', 100);
+        }
+
+        return $calculationResult;
+    }
+
+    /**
+     * Возвращает дату, когда следует создать заказ,
+     * чтобы его доставили к заданному сроку
+     *
+     * @param OrderSubscribe $orderSubscribe
+     * @param \DateTime $deliveryDate
+     * @return \DateTime
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     * @throws NotImplementedException
+     * @throws NotSupportedException
+     * @throws SystemException
+     * @throws \Exception
+     */
+    public function getOrderNextCreateDate(OrderSubscribe $orderSubscribe, \DateTime $deliveryDate)
+    {
+        $order = $orderSubscribe->getOrder();
+        $bitrixOrder = $order ? $order->getBitrixOrder() : null;
+        if (!$bitrixOrder) {
+            throw new NotFoundException('Заказ не найден', 100);
+        }
+
+        $calculationResult = $this->getDeliveryCalculationResult($bitrixOrder);
+        if (!$calculationResult || !$calculationResult->isSuccess()) {
+            throw new RuntimeException('Не удалось рассчитать дату доставки', 200);
+        }
+
+        $tmpVal = $this->convertCalcResultPeriodValue(
+            $calculationResult->getPeriodFrom(),
+            $calculationResult->getPeriodType()
+        );
+        $minDays = $tmpVal > 0 ? $tmpVal : 1;
+        /*
+        $tmpVal = $this->convertCalcResultPeriodValue(
+            $calcResult->getPeriodTo(),
+            $calcResult->getPeriodType()
+        );
+        $maxDays = $tmpVal > 0 ? $tmpVal : 1;
+        */
+
+        // для подстраховки прибавляем еще один день к минимальному сроку доставки
+        $subDays = $minDays + 1;
+        $resultDate = clone $deliveryDate;
+        $resultDate->sub(new \DateInterval('P'.$subDays.'D'));
+
+        return $resultDate;
+    }
+
+    /**
      * @param int $copyOrderId
      * @param bool $checkActiveSubscribe
      * @return Result
+     * @throws NotFoundException
+     * @throws \Exception
      */
-    public function copyOrder(int $copyOrderId, bool $checkActiveSubscribe = true)
+    public function copyOrderById(int $copyOrderId, bool $checkActiveSubscribe = true)
+    {
+        $orderSubscribe = $this->getSubscribeByOrderId($copyOrderId, $checkActiveSubscribe);
+        if (!$orderSubscribe) {
+            throw new NotFoundException('Подписка на заказ не найдена', 100);
+        }
+
+        return $this->copyOrder($orderSubscribe);
+    }
+
+    /**
+     * @param OrderSubscribe $orderSubscribe
+     * @return Result
+     */
+    public function copyOrder(OrderSubscribe $orderSubscribe)
     {
         $result = new Result();
 
-        /** @var OrderSubscribe $orderSubscribe */
-        $orderSubscribe = null;
-        try {
-            $subscriptionsCollect = $this->getSubscriptionsByOrder($copyOrderId, $checkActiveSubscribe);
-            $orderSubscribe = $subscriptionsCollect->first();
-            if (!$orderSubscribe) {
-                $result->addError(
-                    new Error('Подписка на заказ не найдена', 'orderSubscribeNotFound')
-                );
-            }
-        } catch (\Exception $exception) {
-            $result->addError(
-                new Error($exception->getMessage(), 'orderSubscribeException')
-            );
-        }
-
+        $copyOrderId = $orderSubscribe->getOrderId();
         if ($result->isSuccess()) {
             try {
                 $orderCopyHelper = new OrderCopy($copyOrderId);

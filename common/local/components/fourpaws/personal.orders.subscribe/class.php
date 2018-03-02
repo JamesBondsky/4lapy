@@ -1,7 +1,6 @@
 <?php
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
-use Bitrix\Main\Error;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -161,6 +160,7 @@ class FourPawsPersonalCabinetOrdersSubscribeComponent extends CBitrixComponent
     {
         $orderSubscribeService = $this->getOrderSubscribeService();
         $filterActive = true;
+        /** $this->arResult['ORDERS'] ArrayCollection */
         $this->arResult['ORDERS'] = $orderSubscribeService->getUserSubscribedOrders(
             $this->arParams['USER_ID'],
             $filterActive
@@ -168,14 +168,17 @@ class FourPawsPersonalCabinetOrdersSubscribeComponent extends CBitrixComponent
 
         // в коллекции значения с неправильными ключами,
         // костыляем, чтобы в шаблоне не гонять filter
-        $tmpCollection = $orderSubscribeService->getSubscriptionsByUser(
-            $this->arParams['USER_ID'],
-            $filterActive
-        );
         $subscriptions = new ArrayCollection();
-        foreach ($tmpCollection as $collectionItem) {
-            /** @var OrderSubscribe $collectionItem */
-            $subscriptions->offsetSet($collectionItem->getOrderId(), $collectionItem);
+        if ($this->arResult['ORDERS'] && count($this->arResult['ORDERS'])) {
+            $tmpCollection = $orderSubscribeService->getSubscriptionsByUser(
+                $this->arParams['USER_ID'],
+                $filterActive
+            );
+
+            foreach ($tmpCollection as $collectionItem) {
+                /** @var OrderSubscribe $collectionItem */
+                $subscriptions->offsetSet($collectionItem->getOrderId(), $collectionItem);
+            }
         }
         $this->arResult['SUBSCRIPTIONS'] = $subscriptions;
 

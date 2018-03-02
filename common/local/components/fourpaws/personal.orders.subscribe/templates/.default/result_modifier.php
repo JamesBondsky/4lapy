@@ -15,6 +15,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 // Запрашиваемое представление страницы
 $arResult['CURRENT_STAGE'] = 'intro';
-if ($arResult['ORDERS']) {
+/** $arResult['ORDERS'] ArrayCollection */
+if (count($arResult['ORDERS'])) {
     $arResult['CURRENT_STAGE'] = 'list';
 }

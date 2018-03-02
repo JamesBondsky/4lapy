@@ -4,7 +4,8 @@ use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\Error;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\DeliveryBundle\Service\DeliveryServiceInterface;
+use FourPaws\DeliveryBundle\Collection\IntervalCollection;
+use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use FourPaws\PersonalBundle\Entity\Order;
@@ -201,13 +202,22 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                     // подписка уже есть, обновляем
                     $this->arResult['SUBSCRIBE_ACTION']['SUBSCRIPTION_ID'] = $orderSubscribe->getId();
                     $this->arResult['SUBSCRIBE_ACTION']['TYPE'] = 'UPDATE';
-                    $fields['ID'] = $orderSubscribe->getId();
-                    $updateResult = $orderSubscribeService->update($fields);
-                    if ($updateResult->isSuccess()) {
-                        $this->arResult['SUBSCRIBE_ACTION']['SUCCESS'] = 'Y';
-                        $this->flushOrderSubscribe();
-                    } else {
-                        $this->setExecError('subscribeAction', $updateResult->getErrors(), 'subscriptionUpdate');
+                    $this->arResult['SUBSCRIBE_ACTION']['RESUMED'] = $orderSubscribe->isActive() ? 'N' : 'Y';
+                    // сбрасываем дату последней проверки необходимости создания заказа
+                    $fields['UF_LAST_CHECK'] = '';
+                    try {
+                        $updateResult = $orderSubscribeService->update(
+                            $orderSubscribe->getId(),
+                            $fields
+                        );
+                        if ($updateResult->isSuccess()) {
+                            $this->arResult['SUBSCRIBE_ACTION']['SUCCESS'] = 'Y';
+                            $this->flushOrderSubscribe();
+                        } else {
+                            $this->setExecError('subscribeAction', $updateResult->getErrors(), 'subscriptionUpdate');
+                        }
+                    } catch (\Exception $exception) {
+                        $this->setExecError('subscribeAction', $exception->getMessage(), 'subscriptionUpdateException');
                     }
                 } else {
                     // создание новой подписки
@@ -241,12 +251,22 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
             $orderSubscribe = $this->getOrderSubscribe();
             if ($orderSubscribe) {
                 $this->arResult['UNSUBSCRIBE_ACTION']['SUBSCRIPTION_ID'] = $orderSubscribe->getId();
-                $deleteResult = $orderSubscribeService->delete($orderSubscribe->getId());
-                if ($deleteResult->isSuccess()) {
-                    $this->arResult['UNSUBSCRIBE_ACTION']['SUCCESS'] = 'Y';
-                    $this->flushOrderSubscribe();
-                } else {
-                    $this->setExecError('unsubscribeAction', $deleteResult->getErrors(), 'subscriptionDelete');
+                // не удаляем запись, а деактивируем
+                try {
+                    $updateResult = $orderSubscribeService->update(
+                        $orderSubscribe->getId(),
+                        [
+                            'UF_ACTIVE' => 0,
+                        ]
+                    );
+                    if ($updateResult->isSuccess()) {
+                        $this->arResult['UNSUBSCRIBE_ACTION']['SUCCESS'] = 'Y';
+                        $this->flushOrderSubscribe();
+                    } else {
+                        $this->setExecError('unsubscribeAction', $updateResult->getErrors(), 'subscriptionUpdate');
+                    }
+                } catch (\Exception $exception) {
+                    $this->setExecError('subscribeAction', $exception->getMessage(), 'subscriptionUpdateException');
                 }
             } else {
                 $this->setExecError('unsubscribeAction', 'Подписка на заказ не найдена', 'subscriptionNotFound');
@@ -340,7 +360,11 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
     {
         if (!isset($this->data['ORDER'])) {
             $this->data['ORDER'] = null;
-            if ($this->arParams['ORDER_ID'] > 0 && $this->arParams['USER_ID'] > 0) {
+            if ($this->arParams['ORDER_ID'] <= 0) {
+                $this->setExecError('getOrder', 'Некорректный идентификатор заказа', 'incorrectOrderId');
+            } elseif ($this->arParams['USER_ID'] <= 0) {
+                $this->setExecError('getOrder', 'Некорректный идентификатор пользователя', 'incorrectUserId');
+            } else {
                 $orderSubscribeService = $this->getOrderSubscribeService();
                 /** @var Order $order */
                 $order = $orderSubscribeService->getOrderById($this->arParams['ORDER_ID']);
@@ -356,12 +380,6 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
                     }
                 } else {
                     $this->setExecError('getOrder', 'Заказ не найден', 'orderNotFound');
-                }
-            } else {
-                if ($this->arParams['ORDER_ID'] <= 0) {
-                    $this->setExecError('getOrder', 'Некорректный идентификатор заказа', 'incorrectOrderId');
-                } elseif ($this->arParams['USER_ID'] <= 0) {
-                    $this->setExecError('getOrder', 'Некорректный идентификатор пользователя', 'incorrectUserId');
                 }
             }
         }
@@ -415,29 +433,38 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
 
             /** @var Order $order */
             $order = $this->getOrder();
-            if ($order) {
-                $bitrixOrder = $order->getBitrixOrder();
-                foreach ($bitrixOrder->getShipmentCollection() as $shipment) {
-                    /** @var \Bitrix\Sale\Shipment $shipment */
-                    if ($shipment->isSystem()) {
-                        continue;
-                    }
-                    $deliveryService = $shipment->getDelivery();
-                    if ($deliveryService instanceof DeliveryServiceInterface) {
-                        $intervals = $deliveryService->getIntervals($shipment);
-                        if ($intervals) {
-                            foreach($intervals as $interval) {
-                                $from = str_pad($interval['FROM'], 2, 0, STR_PAD_LEFT).':00';
-                                $to = str_pad($interval['TO'], 2, 0, STR_PAD_LEFT).':00';
-                                $val = $from.'—'.$to;
-                                $this->data['TIME_VARIANTS'][] = [
-                                    'VALUE' => $val,
-                                    'TEXT' => $val,
-                                ];
-                            }
+            $bitrixOrder = $order ? $order->getBitrixOrder() : null;
+            if ($bitrixOrder) {
+                try {
+                    $subscribeService = $this->getOrderSubscribeService();
+                    $calculationResult = $subscribeService->getDeliveryCalculationResult(
+                        $bitrixOrder
+                    );
+                    $data = $calculationResult ? $calculationResult->getData() : [];
+                    $intervals = $data['INTERVALS'] ?? null;
+                    if ($intervals && $intervals instanceof IntervalCollection) {
+                        foreach ($intervals as $interval) {
+                            /** @var Interval $interval */
+                            $val = $interval->toString();
+                            $this->data['TIME_VARIANTS'][] = [
+                                'VALUE' => $val,
+                                'TEXT' => $val,
+                            ];
                         }
                     }
+                } catch (\Exception $exception) {
+                    $this->setExecError(
+                        'getTimeVariants',
+                        $exception->getMessage(),
+                        'calculationResultException'
+                    );
                 }
+            } else {
+                $this->setExecError(
+                    'getTimeVariants',
+                    'Заказ не найден',
+                    'orderNotFound'
+                );
             }
         }
 

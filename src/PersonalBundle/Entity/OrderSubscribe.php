@@ -21,35 +21,35 @@ class OrderSubscribe extends BaseEntity
      * @Serializer\Type("integer")
      * @Serializer\SerializedName("UF_ORDER_ID")
      * @Serializer\Groups(groups={"create","read"})
-     * @Assert\NotBlank(groups={"create","read"})
      * @Serializer\SkipWhenEmpty()
+     * @Assert\NotBlank(groups={"create","read"})
      */
     protected $orderId;
     /**
      * @var DateTime
-     * @Serializer\Type("bitrix_date_time")
+     * @Serializer\Type("bitrix_date_time_ex")
      * @Serializer\SerializedName("UF_DATE_CREATE")
      * @Serializer\Groups(groups={"create","read"})
-     * @Assert\NotBlank(groups={"create","read"})
      * @Serializer\SkipWhenEmpty()
+     * @Assert\NotBlank(groups={"create","read"})
      */
     protected $dateCreate;
     /**
      * @var DateTime
-     * @Serializer\Type("bitrix_date_time")
+     * @Serializer\Type("bitrix_date_time_ex")
      * @Serializer\SerializedName("UF_DATE_EDIT")
      * @Serializer\Groups(groups={"create","read","update"})
-     * @Assert\NotBlank(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
+     * @Assert\NotBlank(groups={"create","read","update"})
      */
     protected $dateEdit;
     /**
      * @var Date
-     * @Serializer\Type("bitrix_date")
+     * @Serializer\Type("bitrix_date_ex")
      * @Serializer\SerializedName("UF_DATE_START")
      * @Serializer\Groups(groups={"create","read","update"})
-     * @Assert\NotBlank(groups={"create","read"})
      * @Serializer\SkipWhenEmpty()
+     * @Assert\NotBlank(groups={"create","read"})
      */
     protected $dateStart;
     /**
@@ -57,8 +57,8 @@ class OrderSubscribe extends BaseEntity
      * @Serializer\Type("integer")
      * @Serializer\SerializedName("UF_FREQUENCY")
      * @Serializer\Groups(groups={"create","read","update"})
-     * @Assert\NotBlank(groups={"create","read"})
      * @Serializer\SkipWhenEmpty()
+     * @Assert\NotBlank(groups={"create","read","update"})
      */
     protected $deliveryFrequency;
     /**
@@ -79,33 +79,20 @@ class OrderSubscribe extends BaseEntity
     protected $active;
     /**
      * @var DateTime
-     * @Serializer\Type("bitrix_date_time")
-     * @Serializer\SerializedName("UF_NEXT_CHECK")
+     * @Serializer\Type("bitrix_date_time_ex")
+     * @Serializer\SerializedName("UF_LAST_CHECK")
      * @Serializer\Groups(groups={"create","read","update"})
-     * @Serializer\SkipWhenEmpty()
      */
-    protected $nextCheck;
+    public $lastCheck;
 
-    /** @var  OrderSubscribeService */
+    /** @var OrderSubscribeService */
     private $orderSubscribeService;
-    /** @var  string */
+    /** @var string */
     private $deliveryFrequencyXmlId;
-    /** @var  string */
+    /** @var string */
     private $deliveryFrequencyValue;
-
-    /**
-     * @return OrderSubscribeService
-     * @throws ApplicationCreateException
-     */
-    protected function getOrderSubscribeService() : OrderSubscribeService
-    {
-        if (!$this->orderSubscribeService) {
-            $appCont = Application::getInstance()->getContainer();
-            $this->orderSubscribeService = $appCont->get('order_subscribe.service');
-        }
-
-        return $this->orderSubscribeService;
-    }
+    /** @var Order */
+    private $order;
 
     /**
      * @return int
@@ -142,15 +129,7 @@ class OrderSubscribe extends BaseEntity
      */
     public function setDateCreate($dateCreate) : self
     {
-        if ($dateCreate instanceof DateTime) {
-            $this->dateCreate = $dateCreate;
-        } else {
-            if (is_scalar($dateCreate)) {
-                $this->dateCreate = new DateTime($dateCreate, 'd.m.Y H:i:s');
-            } elseif($dateCreate === null) {
-                $this->dateCreate = null;
-            }
-        }
+        $this->dateCreate = $this->processDateTimeValue($dateCreate);
 
         return $this;
     }
@@ -170,15 +149,7 @@ class OrderSubscribe extends BaseEntity
      */
     public function setDateEdit($dateEdit) : self
     {
-        if ($dateEdit instanceof DateTime) {
-            $this->dateEdit = $dateEdit;
-        } else {
-            if (is_scalar($dateEdit)) {
-                $this->dateEdit = new DateTime($dateEdit, 'd.m.Y H:i:s');
-            } elseif($dateEdit === null) {
-                $this->dateEdit = null;
-            }
-        }
+        $this->dateEdit = $this->processDateTimeValue($dateEdit);
 
         return $this;
     }
@@ -192,55 +163,13 @@ class OrderSubscribe extends BaseEntity
     }
 
     /**
-     * @param string $format
-     * @return string
-     */
-    public function getDateStartFormatted(string $format = 'd.m.Y') : string
-    {
-        $date =  $this->getDateStart();
-
-        return $date ? $date->format($format) : '';
-    }
-
-    /**
-     * @return int
-     */
-    public function getDateStartWeekday() : int
-    {
-        $dateStart = $this->getDateStart();
-        return $dateStart ? (int)$dateStart->format('N') : 0;
-    }
-
-    /**
-     * @param bool $lower
-     * @param string $case
-     * @return string
-     */
-    public function getDateStartWeekdayRu(bool $lower = true, string $case = '') : string
-    {
-        $case = $case === '' ? DateHelper::NOMINATIVE : $case;
-        $weekDay = $this->getDateStartWeekday();
-        $result = $weekDay ? DateHelper::replaceRuDayOfWeek('#'.$weekDay.'#', $case) : '';
-
-        return $lower ? ToLower($result) : $result;
-    }
-
-    /**
      * @param null|Date|string $dateStart
      *
      * @return self
      */
     public function setDateStart($dateStart) : self
     {
-        if ($dateStart instanceof Date) {
-            $this->dateStart = $dateStart;
-        } else {
-            if (is_scalar($dateStart)) {
-                $this->dateStart = new Date($dateStart, 'd.m.Y');
-            } else {
-                $this->dateStart = null;
-            }
-        }
+        $this->dateStart = $this->processDateValue($dateStart);
 
         return $this;
     }
@@ -268,6 +197,249 @@ class OrderSubscribe extends BaseEntity
 
     /**
      * @return string
+     */
+    public function getDeliveryTime() : string
+    {
+        return $this->deliveryTime ?? '';
+    }
+
+    /**
+     * @param string $deliveryTime
+     *
+     * @return self
+     */
+    public function setDeliveryTime(string $deliveryTime) : self
+    {
+        $this->deliveryTime = $deliveryTime;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isActive() : bool
+    {
+        return $this->active ?? true;
+    }
+
+    /**
+     * @param bool $active
+     *
+     * @return self
+     */
+    public function setActive(bool $active) : self
+    {
+        $this->active = $active;
+
+        return $this;
+    }
+
+    /**
+     * @return null|DateTime
+     */
+    public function getLastCheck()
+    {
+        return $this->lastCheck ?? null;
+    }
+
+    /**
+     * @param null|DateTime|string $lastCheckDate
+     *
+     * @return self
+     */
+    public function setLastCheck($lastCheckDate) : self
+    {
+        $this->lastCheck = $this->processDateTimeValue($lastCheckDate);
+
+        return $this;
+    }
+
+    /**
+     * @param string $baseDateValue базовая дата для расчета в формате d.m.Y
+     * @return \DateTime|null
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws SystemException
+     * @throws \Exception
+     */
+    public function getNextDeliveryDate(string $baseDateValue = '')
+    {
+        $result = null;
+
+        $dateStartRaw = $this->getDateStart();
+        if ($dateStartRaw) {
+            $dateStart = new \DateTime($dateStartRaw);
+            $baseDate = new \DateTime($baseDateValue);
+            $intervalPassed = $dateStart->diff($baseDate);
+            if ($intervalPassed->invert) {
+                // если заданная дата первой доставки является будущей, то она и будет ближайшей датой
+                $result = $dateStart;
+            } else {
+                $periodIntervalSpec = '';
+
+                $frequencyXmlId = $this->getDeliveryFrequencyXmlId();
+                switch ($frequencyXmlId) {
+                    case 'WEEK_1':
+                        // раз в неделю
+                        $periodIntervalSpec = 'P1W';
+                        break;
+
+                    case 'WEEK_2':
+                        // раз в две недели
+                        $periodIntervalSpec = 'P2W';
+                        break;
+
+                    case 'WEEK_3':
+                        // раз в три недели
+                        $periodIntervalSpec = 'P3W';
+                        break;
+
+                    case 'MONTH_1':
+                        // раз в месяц (каждые 4 недели)
+                        $periodIntervalSpec = 'P4W';
+                        break;
+
+                    case 'MONTH_2':
+                        // раз в два месяца (каждые 8 недель)
+                        $periodIntervalSpec = 'P8W';
+                        break;
+
+                    case 'MONTH_3':
+                        // раз в три месяца (каждые 12 недель)
+                        $periodIntervalSpec = 'P12W';
+                        break;
+                }
+
+                if ($periodIntervalSpec) {
+                    $periodStart = $dateStart;
+                    $periodEnd = clone $baseDate;
+                    $periodInterval = new \DateInterval($periodIntervalSpec);
+                    // конечная дата периода: +два интервала
+                    $periodEnd->add($periodInterval);
+                    $periodEnd->add($periodInterval);
+
+                    $period = new \DatePeriod($periodStart, $periodInterval, $periodEnd);
+                    foreach($period as $periodDate) {
+                        if ($periodDate > $baseDate) {
+                            $result = $periodDate;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return OrderSubscribeService
+     * @throws ApplicationCreateException
+     */
+    protected function getOrderSubscribeService() : OrderSubscribeService
+    {
+        if (!$this->orderSubscribeService) {
+            $appCont = Application::getInstance()->getContainer();
+            $this->orderSubscribeService = $appCont->get('order_subscribe.service');
+        }
+
+        return $this->orderSubscribeService;
+    }
+
+    /**
+     * @return Order|null
+     * @throws ApplicationCreateException
+     * @throws \Exception
+     */
+    public function getOrder()
+    {
+        if (!isset($this->order)) {
+            $this->order = $this->getOrderSubscribeService()->getOrderById(
+                $this->getOrderId()
+            );
+        }
+
+        return $this->order;
+    }
+
+    /**
+     * @param $value
+     * @return Date|null|string
+     */
+    protected function processDateValue($value)
+    {
+        if (!($value instanceof Date)) {
+            if (is_scalar($value) && $value !== '') {
+                $value = new Date($value, 'd.m.Y');
+            } elseif ($value === '' || $value === false) {
+                $value = '';
+            } else {
+                $value = null;
+            }
+        }
+
+        return $value;
+    }
+
+    /**
+     * @param $value
+     * @return DateTime|null|string
+     */
+    protected function processDateTimeValue($value)
+    {
+        if (!($value instanceof DateTime)) {
+            if ($value === '' || $value === false) {
+                $value = '';
+            } elseif (is_string($value) && $value !== '') {
+                $value = new DateTime($value, 'd.m.Y H:i:s');
+            } else {
+                $value = null;
+            }
+        }
+
+        return $value;
+    }
+
+    /**
+     * @param string $format
+     * @return string
+     */
+    public function getDateStartFormatted(string $format = 'd.m.Y') : string
+    {
+        $date =  $this->getDateStart();
+
+        return $date ? $date->format($format) : '';
+    }
+
+    /**
+     * @return int
+     */
+    public function getDateStartWeekday() : int
+    {
+        $dateStart = $this->getDateStart();
+
+        return $dateStart ? (int)$dateStart->format('N') : 0;
+    }
+
+    /**
+     * @param bool $lower
+     * @param string $case
+     * @return string
+     */
+    public function getDateStartWeekdayRu(bool $lower = true, string $case = '') : string
+    {
+        $case = $case === '' ? DateHelper::NOMINATIVE : $case;
+        $weekDay = $this->getDateStartWeekday();
+        $result = $weekDay ? DateHelper::replaceRuDayOfWeek('#'.$weekDay.'#', $case) : '';
+
+        return $lower ? ToLower($result) : $result;
+    }
+
+    /**
+     * @deprecated
+     *
+     * @return string
      * @throws ArgumentException
      * @throws SystemException
      * @throws \Exception
@@ -287,6 +459,8 @@ class OrderSubscribe extends BaseEntity
     }
 
     /**
+     * @deprecated
+     *
      * @return string
      * @throws ArgumentException
      * @throws SystemException
@@ -304,26 +478,6 @@ class OrderSubscribe extends BaseEntity
         }
 
         return $this->deliveryFrequencyValue;
-    }
-
-    /**
-     * @return string
-     */
-    public function getDeliveryTime() : string
-    {
-        return $this->deliveryTime ?? '';
-    }
-
-    /**
-     * @param string $deliveryTime
-     *
-     * @return self
-     */
-    public function setDeliveryTime(string $deliveryTime) : self
-    {
-        $this->deliveryTime = $deliveryTime;
-
-        return $this;
     }
 
     /**
@@ -371,131 +525,4 @@ class OrderSubscribe extends BaseEntity
 
         return $result;
     }
-
-    /**
-     * @return bool
-     */
-    public function isActive() : bool
-    {
-        return $this->active ?? true;
-    }
-
-    /**
-     * @param bool $active
-     *
-     * @return self
-     */
-    public function setActive(bool $active) : self
-    {
-        $this->active = $active;
-
-        return $this;
-    }
-
-    /**
-     * @return null|DateTime
-     */
-    public function getNextCheck()
-    {
-        return $this->nextCheck ?? null;
-    }
-
-    /**
-     * @param null|DateTime|string $nextCheckDate
-     *
-     * @return self
-     */
-    public function setNextCheck($nextCheckDate) : self
-    {
-        if ($nextCheckDate instanceof DateTime) {
-            $this->nextCheck = $nextCheckDate;
-        } else {
-            if (is_scalar($nextCheckDate)) {
-                $this->nextCheck = new DateTime($nextCheckDate, 'd.m.Y H:i:s');
-            } elseif($nextCheckDate === null) {
-                $this->nextCheck = null;
-            }
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return \DateTime|null
-     * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws SystemException
-     * @throws \Exception
-     */
-    public function getNextDeliveryDate()
-    {
-        $result = null;
-        $baseDateRaw = '';
-
-        $dateStartRaw = $this->getDateStart();
-        if ($dateStartRaw) {
-            $dateStart = new \DateTime($dateStartRaw);
-            $baseDate = new \DateTime($baseDateRaw);
-            $intervalPassed = $dateStart->diff($baseDate);
-            if ($intervalPassed->invert) {
-                // если заданная дата первой доставки является будущей, то она и будет ближайшей датой
-                $result = $dateStart;
-            } else {
-                $periodIntervalSpec = '';
-
-                $frequencyXmlId = $this->getDeliveryFrequencyXmlId();
-                switch ($frequencyXmlId) {
-                    case 'WEEK_1':
-                        // раз в неделю
-                        $periodIntervalSpec = 'P1W';
-                        break;
-
-                    case 'WEEK_2':
-                        // раз в две недели
-                        $periodIntervalSpec = 'P2W';
-                        break;
-
-                    case 'WEEK_3':
-                        // раз в три недели
-                        $periodIntervalSpec = 'P3W';
-                        break;
-
-                    case 'MONTH_1':
-                        // раз в месяц
-                        $periodIntervalSpec = 'P1M';
-                        break;
-
-                    case 'MONTH_2':
-                        // раз в два месяца
-                        $periodIntervalSpec = 'P2M';
-                        break;
-
-                    case 'MONTH_3':
-                        // раз в три месяца
-                        $periodIntervalSpec = 'P3M';
-                        break;
-                }
-
-                if ($periodIntervalSpec) {
-                    $periodStart = $dateStart;
-                    $periodEnd = clone $baseDate;
-                    $periodInterval = new \DateInterval($periodIntervalSpec);
-                    // конечная дата периода: +два интервала
-                    $periodEnd->add($periodInterval);
-                    $periodEnd->add($periodInterval);
-
-                    $period = new \DatePeriod($periodStart, $periodInterval, $periodEnd);
-                    foreach($period as $periodDate) {
-                        if ($periodDate > $baseDate) {
-                            $result = $periodDate;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        return $result;
-    }
-
 }
