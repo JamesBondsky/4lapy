@@ -65,15 +65,16 @@ $bonus = $arResult['BONUS'];
             <ul class="b-account-bonus-progress__progress-list">
                 <?php $i = 0;
                 $steps   = [
-                    'one active',
-                    'second active',
-                    'third active mobile',
+                    'one',
+                    'second',
+                    'third mobile',
                     'four mobile',
                     'five',
+                    'six',
                 ];
                 foreach (UserBonus::$discountTable as $discountPercent => $discountSum) {
                     $i++; ?>
-                    <li class="b-account-bonus-progress__progress-value b-account-bonus-progress__progress-value--step-<?= $steps[$i] ?>">
+                    <li class="b-account-bonus-progress__progress-value b-account-bonus-progress__progress-value--step-<?= $steps[$i] ?><?=$i<=$bonus->getDiscount() ? ' active' : ''?>">
                         <div class="b-account-bonus-progress__percent"><?= $discountPercent ?>%
                         </div>
                         <div class="b-account-bonus-progress__number">
