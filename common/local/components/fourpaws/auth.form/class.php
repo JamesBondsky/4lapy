@@ -221,26 +221,6 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             return $this->ajaxMess->getSystemError();
         }
 
-        /** обновление флага подтвержденности email */
-        $curUser = $this->currentUserProvider->getCurrentUser();
-        if (!$curUser->isEmailConfirmed() && !empty($curUser->getEmail())) {
-            $expertSenderService = App::getInstance()->getContainer()->get('expertsender.service');
-            if ($expertSenderService->checkConfirmEmail($curUser->getEmail())) {
-                try {
-                    if (!$this->currentUserProvider->getUserRepository()->updateData($curUser->getId(),
-                        ['UF_EMAIL_CONFIRMED' => true])) {
-                        return $this->ajaxMess->getUpdateError();
-                    }
-                } catch (BitrixRuntimeException $e) {
-                    return $this->ajaxMess->getUpdateError($e->getMessage());
-                } catch (InvalidIdentifierException $e) {
-                    return $this->ajaxMess->getSystemError();
-                } catch (ConstraintDefinitionException $e) {
-                    return $this->ajaxMess->getSystemError();
-                }
-            }
-        }
-
         unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
         if (!$needWritePhone) {
             return JsonSuccessResponse::create('Вы успешно авторизованы.', 200, [], ['reload' => true]);
