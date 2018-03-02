@@ -459,6 +459,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 }
                 break;
             case 'sendSmsCode':
+                unset($_SESSION['COUNT_REGISTER_CONFIRM_CODE']);
                 /** @noinspection PhpUnusedLocalVariableInspection */
                 $newAction = $request->get('newAction');
                 $res = $this->ajaxGetSendSmsCode($phone);
@@ -600,7 +601,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             try {
                 $res = $confirmService::checkConfirmSms(
                     $phone,
-                    (string)$confirmCode
+                    $confirmCode
                 );
             } catch (ServiceNotFoundException $e) {
                 return $this->ajaxMess->getSystemError();
@@ -744,7 +745,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             <?php
         }
         require_once App::getDocumentRoot()
-            . '/local/components/fourpaws/auth.form/templates/popup/include/' . $page . '.php';
+            . '/local/components/fourpaws/register/templates/.default/include/' . $page . '.php';
         $html = ob_get_clean();
 
         return $html;
