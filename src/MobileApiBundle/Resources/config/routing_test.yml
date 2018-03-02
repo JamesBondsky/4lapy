@@ -1,4 +1,4 @@
 FourPawsMobileApiBundle:
     resource: "@FourPawsMobileApiBundle/TestController/"
     type: rest
-    prefix: /mobile_app_v2/fake/
+    prefix: /api/fake

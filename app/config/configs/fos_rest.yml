@@ -8,10 +8,10 @@ fos_rest:
       serialize_null: true
   format_listener:
     rules:
-      - { path: '^/mobile_app_v2',  priorities: ['json'], fallback_format: json, prefer_extension: false }
+      - { path: '^/api',  priorities: ['json'], fallback_format: json, prefer_extension: false }
       - { path: '^/', stop: true }
   zone:
-    - { path: '^/mobile_app_v2' }
+    - { path: '^/api' }
   exception:
     enabled: true
     exception_controller: FourPaws\MobileApiBundle\Controller\ExceptionController::showAction
