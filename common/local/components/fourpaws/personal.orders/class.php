@@ -140,7 +140,7 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
         if ($this->startResultCache($this->arParams['CACHE_TIME'],
             ['manzanaOrders' => $manzanaOrders->getKeys(), 'USER_ID' => $userId])) {
             try {
-                $this->arResult['ACTIVE_ORDERS'] = $this->orderService->getActiveSiteOrders();
+                $this->arResult['ACTIVE_ORDERS'] = $activeOrders =  $this->orderService->getActiveSiteOrders();
                 $allClosedOrders = $this->orderService->mergeAllClosedOrders($this->orderService->getClosedSiteOrders()->toArray(),
                     $manzanaOrders->toArray());
                 /** Сортировка по дате и статусу общих заказов */
@@ -150,7 +150,7 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
                 $nav = new PageNavigation('nav-orders');
                 $nav->allowAllRecords(false)->setPageSize($this->arParams['PAGE_COUNT'])->initFromUri();
                 $nav->setRecordCount($allClosedOrders->count());
-                $this->arResult['CLOSED_ORDERS'] = new ArrayCollection(array_slice($allClosedOrdersList,
+                $this->arResult['CLOSED_ORDERS'] = $closedOrders = new ArrayCollection(array_slice($allClosedOrdersList,
                     $nav->getOffset(), $nav->getPageSize(), true));
             } catch (NotAuthorizedException $e) {
                 /** запрашиваем авторизацию */
@@ -163,7 +163,12 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
             $storeService = App::getInstance()->getContainer()->get('store.service');
             $this->arResult['METRO'] = new ArrayCollection($storeService->getMetroInfo());
 
-            $this->includeComponentTemplate();
+            $page= '';
+            if($activeOrders->isEmpty() && $closedOrders->isEmpty()){
+                $page = 'notOrders';
+            }
+
+            $this->includeComponentTemplate($page);
         }
 
         return true;
