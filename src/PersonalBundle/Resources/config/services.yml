@@ -39,6 +39,10 @@ services:
         class: FourPaws\PersonalBundle\Service\OrderSubscribeService
         public: true
 
+    order_subscribe_history.service:
+        class: FourPaws\PersonalBundle\Service\OrderSubscribeHistoryService
+        public: true
+
     FourPaws\PersonalBundle\AjaxController\:
         resource: '../../AjaxController'
         public: true

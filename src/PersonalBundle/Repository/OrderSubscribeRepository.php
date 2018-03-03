@@ -4,7 +4,6 @@ namespace FourPaws\PersonalBundle\Repository;
 
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\DataManager;
-use Bitrix\Highloadblock\HighloadBlockTable;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\Entity\AddResult;
 use Bitrix\Main\Entity\Base;
@@ -16,6 +15,7 @@ use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Internals\OrderTable;
 use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\App\Application;
 use FourPaws\AppBundle\Repository\BaseHlRepository;
 use FourPaws\PersonalBundle\Entity\OrderSubscribe;
 use FourPaws\PersonalBundle\Exception\InvalidArgumentException;
@@ -33,6 +33,12 @@ class OrderSubscribeRepository extends BaseHlRepository
 
     /** @var OrderSubscribe $entity */
     protected $entity;
+    /** @var array */
+    private $hlBlockData;
+    /** @var Base */
+    private $hlEntity;
+    /** @var array */
+    private $hlEntityFields;
 
     /**
      * ReferralRepository constructor.
@@ -43,6 +49,16 @@ class OrderSubscribeRepository extends BaseHlRepository
         ValidatorInterface $validator,
         ArrayTransformerInterface $arrayTransformer
     ) {
+        try {
+            $serviceName = 'bx.hlblock.'.strtolower(static::HL_NAME);
+            $dataManager = Application::getHlBlockDataManager($serviceName);
+            if ($dataManager) {
+                $this->setDataManager($dataManager);
+            }
+        } catch (\Exception $exception) {
+            // попытка получить DataManager через сервис не удалась,
+            // тогда пусть создается обычным способом
+        }
         parent::__construct($validator, $arrayTransformer);
         $this->setEntityClass(OrderSubscribe::class);
     }
@@ -55,21 +71,18 @@ class OrderSubscribeRepository extends BaseHlRepository
      */
     protected function getHlBlock(): array
     {
-        static $hlBlock = [];
-        if (!$hlBlock) {
-            $hlBlock = HighloadBlockTable::getList(
-                array(
-                    'filter' => array(
-                        '=NAME' => static::HL_NAME
-                    )
-                )
-            )->fetch();
-            if(!$hlBlock) {
+        if (!$this->hlBlockData) {
+            $dataManager = $this->getDataManager();
+            if(!$dataManager) {
                 throw new \Exception('Highloadblock '.static::HL_NAME.' not found');
             }
+            if(!method_exists($dataManager, 'getHighloadBlock')) {
+                throw new \Exception('It is not highloadblock entity');
+            }
+            $this->hlBlockData = $dataManager->getHighloadBlock();
         }
 
-        return $hlBlock;
+        return $this->hlBlockData;
     }
 
     /**
@@ -102,12 +115,15 @@ class OrderSubscribeRepository extends BaseHlRepository
      */
     public function getHlBlockEntity(): Base
     {
-        static $hlEntity = null;
-        if (!$hlEntity) {
-            $hlEntity = HighloadBlockTable::compileEntity($this->getHlBlock());
+        if (!$this->hlEntity) {
+            $dataManager = $this->getDataManager();
+            if(!$dataManager) {
+                throw new \Exception('Highloadblock '.static::HL_NAME.' not found');
+            }
+            $this->hlEntity = $dataManager::getEntity();
         }
 
-        return $hlEntity;
+        return $this->hlEntity;
     }
 
     /**
@@ -118,12 +134,7 @@ class OrderSubscribeRepository extends BaseHlRepository
      */
     public function getHlBlockEntityClass(): string
     {
-        static $hlEntityClass = '';
-        if (!$hlEntityClass) {
-            $hlEntityClass = $this->getHlBlockEntity()->getDataClass();
-        }
-
-        return $hlEntityClass;
+        return $this->getHlBlockEntity()->getDataClass();
     }
 
     /**
@@ -134,12 +145,11 @@ class OrderSubscribeRepository extends BaseHlRepository
      */
     public function getHlBlockEntityFields(): array
     {
-        static $hlEntityFields = [];
-        if (!$hlEntityFields) {
-            $hlEntityFields = $GLOBALS['USER_FIELD_MANAGER']->GetUserFields('HLBLOCK_'.$this->getHlBlockId());
+        if (!$this->hlEntityFields) {
+            $this->hlEntityFields = $GLOBALS['USER_FIELD_MANAGER']->GetUserFields('HLBLOCK_'.$this->getHlBlockId());
         }
 
-        return $hlEntityFields;
+        return $this->hlEntityFields;
     }
 
     /**

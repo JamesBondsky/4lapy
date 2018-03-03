@@ -14,6 +14,7 @@ use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\Result;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Shipment;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -50,6 +51,8 @@ class OrderSubscribeService
     private $deliveryService;
     /** @var UserFieldEnumService $userFieldEnumService */
     private $userFieldEnumService;
+    /** @var OrderSubscribeHistoryService $orderSubscribeHistoryService */
+    private $orderSubscribeHistoryService;
     /** @var array $miscData */
     private $miscData = [];
 
@@ -85,7 +88,9 @@ class OrderSubscribeService
     public function getOrderService(): OrderService
     {
         if (!isset($this->orderService)) {
-            $this->orderService = Application::getInstance()->getContainer()->get('order.service');
+            $this->orderService = Application::getInstance()->getContainer()->get(
+                'order.service'
+            );
         }
 
         return $this->orderService;
@@ -98,7 +103,9 @@ class OrderSubscribeService
     public function getCurrentUserService(): CurrentUserProviderInterface
     {
         if (!isset($this->currentUser)) {
-            $this->currentUser = Application::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
+            $this->currentUser = Application::getInstance()->getContainer()->get(
+                CurrentUserProviderInterface::class
+            );
         }
 
         return $this->currentUser;
@@ -111,7 +118,9 @@ class OrderSubscribeService
     public function getDeliveryService(): DeliveryService
     {
         if (!isset($this->deliveryService)) {
-            $this->deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+            $this->deliveryService = Application::getInstance()->getContainer()->get(
+                'delivery.service'
+            );
         }
 
         return $this->deliveryService;
@@ -121,14 +130,30 @@ class OrderSubscribeService
      * @return UserFieldEnumService
      * @throws ApplicationCreateException
      */
-    protected function getUserFieldEnumService() : UserFieldEnumService
+    protected function getUserFieldEnumService(): UserFieldEnumService
     {
         if (!$this->userFieldEnumService) {
-            $appCont = Application::getInstance()->getContainer();
-            $this->userFieldEnumService = $appCont->get('userfield_enum.service');
+            $this->userFieldEnumService = Application::getInstance()->getContainer()->get(
+                'userfield_enum.service'
+            );
         }
 
         return $this->userFieldEnumService;
+    }
+
+    /**
+     * @return OrderSubscribeHistoryService
+     * @throws ApplicationCreateException
+     */
+    protected function getOrderSubscribeHistoryService(): OrderSubscribeHistoryService
+    {
+        if (!$this->orderSubscribeHistoryService) {
+            $this->orderSubscribeHistoryService = Application::getInstance()->getContainer()->get(
+                'order_subscribe_history.service'
+            );
+        }
+
+        return $this->orderSubscribeHistoryService;
     }
 
     /**
@@ -195,7 +220,7 @@ class OrderSubscribeService
     {
         $params = [];
         if ($filterActive) {
-            $params['=UF_ACTIVE'] = 1;
+            $params['filter']['=UF_ACTIVE'] = 1;
         }
 
         return $this->orderSubscribeRepository->findByUser($userId, $params);
@@ -398,7 +423,8 @@ class OrderSubscribeService
 
         // для подстраховки прибавляем еще один день к минимальному сроку доставки
         $subDays = $minDays + 1;
-        $resultDate = clone $deliveryDate;
+        // принудительно отбрасываем время
+        $resultDate = new \DateTime($deliveryDate->format('d.m.Y')) ;
         $resultDate->sub(new \DateInterval('P'.$subDays.'D'));
 
         return $resultDate;
@@ -423,9 +449,10 @@ class OrderSubscribeService
 
     /**
      * @param OrderSubscribe $orderSubscribe
+     * @param \DateTime|null $deliveryDate
      * @return Result
      */
-    public function copyOrder(OrderSubscribe $orderSubscribe)
+    public function copyOrder(OrderSubscribe $orderSubscribe, \DateTime $deliveryDate = null)
     {
         $result = new Result();
 
@@ -445,19 +472,190 @@ class OrderSubscribeService
                     'DELIVERY_INTERVAL',
                     $orderSubscribe->getDeliveryTime()
                 );
-                $deliveryDate = $orderSubscribe->getNextDeliveryDate();
-                /** @todo: Если дата не определилась, то нужно ли создавать такой заказ? */
+                if (!$deliveryDate) {
+                    $deliveryDate = $orderSubscribe->getNextDeliveryDate();
+                }
                 $orderCopyHelper->setPropValueByCode(
                     'DELIVERY_DATE',
-                    $deliveryDate ? $deliveryDate->format('d.m.Y') : ''
+                    $deliveryDate->format('d.m.Y')
                 );
-                $orderCopyHelper->save();
+                $saveResult = $orderCopyHelper->save();
+                if (!$saveResult->isSuccess()) {
+                    $result->addErrors(
+                        $saveResult->getErrors()
+                    );
+                }
+                $result->setData(
+                    [
+                        'NEW_ORDER_ID' => $saveResult->getId()
+                    ]
+                );
             } catch (\Exception $exception) {
                 $result->addError(
                     new Error($exception->getMessage(), 'orderCopyException')
                 );
             }
         }
+
+        return $result;
+    }
+
+    /**
+     * Обход подписок и генерация заказов
+     *
+     * @param int $limit Лимит подписок за шаг
+     * @param int $checkIntervalHours Время, вычитаемое от текущей даты, для запроса подписок
+     * @param string $baseDateValue
+     * @return Result
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws \Bitrix\Main\Db\SqlQueryException
+     * @throws \Exception
+     */
+    public function sendOrders(int $limit = 50, int $checkIntervalHours = 3, string $baseDateValue = ''): Result
+    {
+        $result = new Result();
+        $resultData = [];
+
+        $connection = \Bitrix\Main\Application::getConnection();
+        $orderSubscribeHistoryService = $this->getOrderSubscribeHistoryService();
+
+        // принудительное приведение к требуемому формату - время нам здесь не нужно
+        $baseDateValue = (new \DateTime($baseDateValue))->format('d.m.Y');
+        $baseDate = new \DateTime($baseDateValue);
+        $baseDateValue = $baseDate->format('d.m.Y');
+
+        // запрашиваем подписки с последней датой проверки меньше $checkIntervalHours часов назад
+        $lastCheckDateTime = (new \DateTime())->sub((new \DateInterval('PT'.$checkIntervalHours.'H')));
+
+        $params = [];
+        $params['limit'] = $limit;
+        $params['filter']['=UF_ACTIVE'] = 1;
+        $params['filter'][] = [
+            'LOGIC' => 'OR',
+            [
+                'UF_LAST_CHECK' => false
+            ],
+            [
+                '<UF_LAST_CHECK' => new DateTime($lastCheckDateTime->format('d.m.Y H:i:s'), 'd.m.Y H:i:s')
+            ]
+        ];
+        $params['order'] = [
+            'UF_LAST_CHECK' => 'ASC',
+            'ID' => 'ASC',
+        ];
+
+        $checkOrdersList = $this->orderSubscribeRepository->findBy($params);
+        foreach ($checkOrdersList as $orderSubscribe) {
+            /** @var OrderSubscribe $orderSubscribe */
+            $curResult = new Result();
+            $curData = [];
+            $curData['SUBSCRIBE_ID'] = $orderSubscribe->getId();
+            $curData['OLD_ORDER_ID'] = $orderSubscribe->getOrderId();
+
+            if ($curResult->isSuccess()) {
+                try {
+                    // сохраняем текущую дату и время проверки
+                    $orderSubscribe->setLastCheck((new DateTime()));
+                    $updateResult = $this->update($orderSubscribe);
+                    if (!$updateResult->isSuccess()) {
+                        $curResult->addErrors(
+                            $updateResult->getErrors()
+                        );
+                    }
+                } catch (\Exception $exception) {
+                    $curResult->addError(
+                        new Error(
+                            $exception->getMessage(),
+                            'orderSubscribeUpdateException'
+                        )
+                    );
+                }
+            }
+
+            $curData['canCopyOrder'] = false;
+            if ($curResult->isSuccess()) {
+                try {
+                    // следующая дата, на которую необходимо доставить заказ
+                    $curData['deliveryDate'] = $orderSubscribe->getNextDeliveryDate($baseDateValue);
+                    // дата, когда нужно создать заказ, чтобы доставить его к сроку
+                    $curData['orderCreateDate'] = $this->getOrderNextCreateDate($orderSubscribe, $curData['deliveryDate']);
+                    if ($curData['orderCreateDate'] == $baseDate) {
+                        // наступила дата создания заказа
+                        $curData['canCopyOrder'] = true;
+                    }
+                } catch (\Exception $exception) {
+                    $curResult->addError(
+                        new Error(
+                            $exception->getMessage(),
+                            'orderDatesException'
+                        )
+                    );
+                }
+            }
+
+            if ($curResult->isSuccess()) {
+                if ($curData['canCopyOrder']) {
+                    // проверим, не создавался ли уже заказ для этой даты
+                    /** @noinspection PhpUndefinedVariableInspection */
+                    $curData['alreadyCreated'] = $orderSubscribeHistoryService->wasOrderCreated(
+                        $orderSubscribe->getOrderId(),
+                        $curData['deliveryDate']
+                    );
+                    if (!$curData['alreadyCreated']) {
+                        /** @todo Уточнить насчет транзакций, есть подозрение, что их для заказов нельзя использовать из-за различных интеграций */
+                        // открываем транзакцию, на случай неуспешного сохранения истории
+                        $connection->startTransaction();
+                        $copyOrderResult = $this->copyOrder($orderSubscribe);
+                        if ($copyOrderResult->isSuccess()) {
+                            $curData['NEW_ORDER_ID'] = $copyOrderResult->getData()['NEW_ORDER_ID'];
+                            try {
+                                $addResult = $orderSubscribeHistoryService->add(
+                                    $orderSubscribe,
+                                    $curData['NEW_ORDER_ID'],
+                                    $curData['deliveryDate']
+                                );
+                                if (!$addResult->isSuccess()) {
+                                    $curResult->addErrors(
+                                        $copyOrderResult->getErrors()
+                                    );
+                                }
+                            } catch (\Exception $exception) {
+                                $curResult->addError(
+                                    new Error(
+                                        'Не удалось создать запись в истории заказов по подписке',
+                                        'orderSubscribeHistoryAddException'
+                                    )
+                                );
+                            }
+                        } else {
+                            $curResult->addErrors(
+                                $copyOrderResult->getErrors()
+                            );
+                        }
+                        // закрываем транзакцию
+                        if ($curResult->isSuccess()) {
+                            $connection->commitTransaction();
+                        } else {
+                            $connection->rollbackTransaction();
+                        }
+                    }
+                }
+            }
+
+            $curResult->setData($curData);
+            $resultData[] = $curResult;
+            if ($result->isSuccess() && !$curResult->isSuccess()) {
+                $result->addError(
+                    new Error(
+                        'Имеются подписки с ошибками',
+                        'errorItem'
+                    )
+                );
+            }
+        }
+
+        $result->setData($resultData);
 
         return $result;
     }

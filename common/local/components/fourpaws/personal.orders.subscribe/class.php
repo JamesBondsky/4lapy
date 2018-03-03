@@ -78,8 +78,9 @@ class FourPawsPersonalCabinetOrdersSubscribeComponent extends CBitrixComponent
     public function getUserService()
     {
         if (!$this->userCurrentUserService) {
-            $appCont = Application::getInstance()->getContainer();
-            $this->userCurrentUserService = $appCont->get(CurrentUserProviderInterface::class);
+            $this->userCurrentUserService = Application::getInstance()->getContainer()->get(
+                CurrentUserProviderInterface::class
+            );
         }
 
         return $this->userCurrentUserService;
@@ -101,8 +102,9 @@ class FourPawsPersonalCabinetOrdersSubscribeComponent extends CBitrixComponent
     public function getOrderSubscribeService()
     {
         if (!$this->orderSubscribeService) {
-            $appCont = Application::getInstance()->getContainer();
-            $this->orderSubscribeService = $appCont->get('order_subscribe.service');
+            $this->orderSubscribeService = Application::getInstance()->getContainer()->get(
+                'order_subscribe.service'
+            );
         }
 
         return $this->orderSubscribeService;

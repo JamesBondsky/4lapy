@@ -312,14 +312,14 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         $fieldName = 'deliveryFrequency';
         $value = $this->arResult['FIELD_VALUES'][$fieldName] ?? '';
         $value = (int)$value;
-        if ($value === 0) {
+        if ($value == 0) {
             $this->setFieldError($fieldName, 'Значение не задано', 'empty');
         } else {
             $success = false;
             $deliveryFrequency = $this->getFrequencyVariants();
 
             foreach ($deliveryFrequency as $variant) {
-                if ($variant['VALUE'] === $value) {
+                if ($variant['VALUE'] == $value) {
                     $success = true;
                     break;
                 }
@@ -337,7 +337,7 @@ class FourPawsPersonalCabinetOrdersSubscribeFormComponent extends CBitrixCompone
         } elseif ($value !== '') {
             $success = false;
             foreach ($timeIntervals as $variant) {
-                if ($variant['VALUE'] === $value) {
+                if ($variant['VALUE'] == $value) {
                     $success = true;
                     break;
                 }

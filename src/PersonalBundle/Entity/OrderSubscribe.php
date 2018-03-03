@@ -2,8 +2,6 @@
 
 namespace FourPaws\PersonalBundle\Entity;
 
-use Bitrix\Main\ArgumentException;
-use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 use FourPaws\App\Application;
@@ -12,6 +10,7 @@ use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\AppBundle\Entity\UserFieldEnumValue;
 use FourPaws\AppBundle\Service\UserFieldEnumService;
 use FourPaws\Helpers\DateHelper;
+use FourPaws\PersonalBundle\Exception\RuntimeException;
 use FourPaws\PersonalBundle\Service\OrderSubscribeService;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -85,7 +84,7 @@ class OrderSubscribe extends BaseEntity
      * @Serializer\SerializedName("UF_LAST_CHECK")
      * @Serializer\Groups(groups={"create","read","update"})
      */
-    public $lastCheck;
+    protected $lastCheck;
 
     /** @var OrderSubscribeService */
     private $orderSubscribeService;
@@ -95,6 +94,26 @@ class OrderSubscribe extends BaseEntity
     private $order;
     /** @var UserFieldEnumValue */
     private $deliveryFrequencyEntity;
+
+    /**
+     * @return array
+     */
+    public function getAllFields() : array
+    {
+        $fields = [
+            'ID' => $this->getId(),
+            'UF_ORDER_ID' => $this->getOrderId(),
+            'UF_DATE_CREATE' => $this->getDateCreate(),
+            'UF_DATE_EDIT' => $this->getDateEdit(),
+            'UF_DATE_START' => $this->getDateStart(),
+            'UF_FREQUENCY' => $this->getDeliveryFrequency(),
+            'UF_DELIVERY_TIME' => $this->getDeliveryTime(),
+            'UF_ACTIVE' => $this->isActive(),
+            'UF_LAST_CHECK' => $this->getLastCheck(),
+        ];
+
+        return $fields;
+    }
 
     /**
      * @return int
@@ -263,77 +282,88 @@ class OrderSubscribe extends BaseEntity
     }
 
     /**
-     * @param string $baseDateValue базовая дата для расчета в формате d.m.Y
-     * @return \DateTime|null
+     * @param string $baseDateValue Базовая дата для расчета в формате d.m.Y
+     * @return \DateTime
      * @throws ApplicationCreateException
-     * @throws ArgumentException
-     * @throws SystemException
+     * @throws RuntimeException
      * @throws \Exception
      */
-    public function getNextDeliveryDate(string $baseDateValue = '')
+    public function getNextDeliveryDate(string $baseDateValue = '') : \DateTime
     {
+        $dateStartRaw = $this->getDateStart();
+        if (!$dateStartRaw) {
+            throw new RuntimeException('Дата первой поставки не задана', 100);
+        }
+
         $result = null;
 
-        $dateStartRaw = $this->getDateStart();
-        if ($dateStartRaw) {
-            $dateStart = new \DateTime($dateStartRaw);
-            $baseDate = new \DateTime($baseDateValue);
-            $intervalPassed = $dateStart->diff($baseDate);
-            if ($intervalPassed->invert) {
-                // если заданная дата первой доставки является будущей, то она и будет ближайшей датой
-                $result = $dateStart;
-            } else {
-                $periodIntervalSpec = '';
-                $frequencyXmlId = $this->getDeliveryFrequencyEntity()->getXmlId();
-                switch ($frequencyXmlId) {
-                    case 'WEEK_1':
-                        // раз в неделю
-                        $periodIntervalSpec = 'P1W';
-                        break;
+        // принудительное приведение к требуемому формату - время нам здесь не нужно
+        $baseDateValue = (new \DateTime($baseDateValue))->format('d.m.Y');
 
-                    case 'WEEK_2':
-                        // раз в две недели
-                        $periodIntervalSpec = 'P2W';
-                        break;
+        $dateStart = new \DateTime($dateStartRaw->format('d.m.Y'));
+        $baseDate = new \DateTime($baseDateValue);
+        $intervalPassed = $dateStart->diff($baseDate);
+        if ($intervalPassed->invert) {
+            // если заданная дата первой доставки еще не наступила, то она и будет ближайшей датой
+            $result = $dateStart;
+        } else {
+            $periodIntervalSpec = '';
+            $frequencyXmlId = $this->getDeliveryFrequencyEntity()->getXmlId();
+            switch ($frequencyXmlId) {
+                case 'WEEK_1':
+                    // раз в неделю
+                    $periodIntervalSpec = 'P1W';
+                    break;
 
-                    case 'WEEK_3':
-                        // раз в три недели
-                        $periodIntervalSpec = 'P3W';
-                        break;
+                case 'WEEK_2':
+                    // раз в две недели
+                    $periodIntervalSpec = 'P2W';
+                    break;
 
-                    case 'MONTH_1':
-                        // раз в месяц (каждые 4 недели)
-                        $periodIntervalSpec = 'P4W';
-                        break;
+                case 'WEEK_3':
+                    // раз в три недели
+                    $periodIntervalSpec = 'P3W';
+                    break;
 
-                    case 'MONTH_2':
-                        // раз в два месяца (каждые 8 недель)
-                        $periodIntervalSpec = 'P8W';
-                        break;
+                case 'MONTH_1':
+                    // раз в месяц (каждые 4 недели)
+                    $periodIntervalSpec = 'P4W';
+                    break;
 
-                    case 'MONTH_3':
-                        // раз в три месяца (каждые 12 недель)
-                        $periodIntervalSpec = 'P12W';
-                        break;
-                }
+                case 'MONTH_2':
+                    // раз в два месяца (каждые 8 недель)
+                    $periodIntervalSpec = 'P8W';
+                    break;
 
-                if ($periodIntervalSpec) {
-                    $periodStart = $dateStart;
-                    $periodEnd = clone $baseDate;
-                    $periodInterval = new \DateInterval($periodIntervalSpec);
-                    // конечная дата периода: +два интервала
-                    $periodEnd->add($periodInterval);
-                    $periodEnd->add($periodInterval);
+                case 'MONTH_3':
+                    // раз в три месяца (каждые 12 недель)
+                    $periodIntervalSpec = 'P12W';
+                    break;
+            }
 
-                    $period = new \DatePeriod($periodStart, $periodInterval, $periodEnd);
-                    foreach($period as $periodDate) {
-                        if ($periodDate > $baseDate) {
-                            $result = $periodDate;
-                            break;
-                        }
-                    }
+            if (!$periodIntervalSpec) {
+                throw new RuntimeException('Не удалось определить периодичность доставки', 200);
+            }
+
+            $periodStart = $dateStart;
+            $periodEnd = clone $baseDate;
+            $periodInterval = new \DateInterval($periodIntervalSpec);
+            // конечная дата периода: +два интервала
+            $periodEnd->add($periodInterval);
+            $periodEnd->add($periodInterval);
+
+            $period = new \DatePeriod($periodStart, $periodInterval, $periodEnd);
+            foreach($period as $periodDate) {
+                /** @var \DateTime $periodDate */
+                if ($periodDate >= $baseDate) {
+                    $result = new \DateTime($periodDate->format('d.m.Y'));
+                    break;
                 }
             }
+        }
+
+        if (!$result) {
+            throw new RuntimeException('Не удалось определить дату доставки', 300);
         }
 
         return $result;

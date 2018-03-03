@@ -314,6 +314,14 @@ class BaseRepository
     }
 
     /**
+     * @return null|DataManager
+     */
+    public function getDataManager()
+    {
+        return $this->dataManager;
+    }
+
+    /**
      * @param array  $data
      * @param string $entityClass
      *

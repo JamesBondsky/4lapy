@@ -410,6 +410,8 @@ class OrderCopy
         if (!$tmpResult->isSuccess()) {
             throw new OrderCreateException(implode("\n", $tmpResult->getErrorMessages()), 900);
         }
+
+        return $tmpResult;
     }
 
     /**
