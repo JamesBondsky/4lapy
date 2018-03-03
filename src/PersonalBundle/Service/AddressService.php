@@ -100,9 +100,7 @@ class AddressService
      */
     public function addFromArray(array $data): bool
     {
-        $address = $this->addressRepository->dataToEntity($data, Address::class);
-
-        return $this->add($address);
+        return $this->add($this->addressRepository->dataToEntity($data, Address::class));
     }
 
     /**
@@ -154,7 +152,7 @@ class AddressService
                 [
                     'filter'      => [
                         'UF_USER_ID' => $this->currentUser->getCurrentUserId(),
-                        'UF_MAIN'    => 'Y',
+                        'UF_MAIN'    => true,
                     ],
                     'entityClass' => Address::class,
                 ]
@@ -233,12 +231,16 @@ class AddressService
      */
     public function update(array $data): bool
     {
-        if ($data['UF_MAIN'] === 'Y') {
+        /** @var Address $entity */
+        $entity = $this->addressRepository->dataToEntity($data, Address::class);
+
+        if ($entity->isMain()) {
             $this->disableMainItem();
         }
 
-        /** @var Address $entity */
-        $entity = $this->addressRepository->dataToEntity($data, Address::class);
+        if(!$entity->getUserId()){
+            $entity->setUserId($this->currentUser->getCurrentUserId());
+        }
         $entity->setCityLocationByEntity();
         $res = $this->addressRepository->setEntity($entity)->update();
         if ($res && $data['UF_MAIN'] === 'Y') {
