@@ -152,8 +152,7 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
                     $cheque = $this->manzanaPosService->processChequeWithoutBonus(
                         $this->manzanaPosService->buildRequestFromBasket(
                             $order->getBasket(),
-                            $user->getDiscountCardNumber(),
-                            $order->getPaymentCollection()->getInnerPayment()->getSum()
+                            $user->getDiscountCardNumber()
                         )
                     );
 
