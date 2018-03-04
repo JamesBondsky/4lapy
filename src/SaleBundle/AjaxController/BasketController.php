@@ -84,10 +84,10 @@ class BasketController extends Controller
             );
 
         } catch (BaseExceptionInterface $e) {
-            $response = JsonErrorResponse::create(
+            $response = JsonErrorResponse::createWithData(
                 $e->getMessage(),
-                200,
                 [],
+                200,
                 ['reload' => true]
             );
         }
