@@ -111,7 +111,7 @@ class BasketQuantity extends \CCatalogCondCtrlIBlockProps
             . '(' . PHP_EOL
             . self::class . '::getBasketQuantity(' . PHP_EOL
             . '$row[\'PRODUCT_ID\'],' . PHP_EOL
-            . '(is_object($this) ? $this->orderData[\'BASKET_ITEMS\'] : null)' . PHP_EOL . ')'
+            . '(isset($this) ? $this->orderData[\'BASKET_ITEMS\'] : null)' . PHP_EOL . ')'
             . $operator . PHP_EOL
             . '(is_array(' . $strProp . ')' . PHP_EOL
             . '? (int)current(' . $strProp . ')' . PHP_EOL
