@@ -67,7 +67,7 @@ class PetService
      *
      * @return bool
      * @throws EmptyEntityClass
-     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
+     * @throws NotAuthorizedException
      * @throws ConstraintDefinitionException
      * @throws ServiceNotFoundException
      * @throws InvalidIdentifierException
@@ -83,13 +83,13 @@ class PetService
         if (empty($data['UF_USER_ID'])) {
             $data['UF_USER_ID'] = $this->currentUser->getCurrentUserId();
         }
-        $this->petRepository->setEntityFromData($data, Pet::class);
         if (!empty($data['UF_PHOTO_TMP'])) {
             $this->petRepository->addFileList(['UF_PHOTO' => $data['UF_PHOTO_TMP']]);
         }
         else{
             unset($data['UF_PHOTO']);
         }
+        $this->petRepository->setEntityFromData($data, Pet::class);
         $res = $this->petRepository->create();
         if ($res) {
             $this->updateManzanaPets();
@@ -113,7 +113,7 @@ class PetService
 
         try {
             $pets = $this->getCurUserPets();
-            if (\is_array($pets) && !empty($pets)) {
+            if (!$pets->isEmpty()) {
                 /** @var Pet $pet */
                 foreach ($pets as $pet) {
                     $types[] = $pet->getCodeType();
@@ -139,7 +139,7 @@ class PetService
     }
 
     /**
-     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
+     * @throws NotAuthorizedException
      * @throws InvalidIdentifierException
      * @throws ServiceNotFoundException
      * @throws \Exception
@@ -188,6 +188,7 @@ class PetService
     /**
      * @param array $data
      *
+     * @throws NotAuthorizedException
      * @throws EmptyEntityClass
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
@@ -202,13 +203,16 @@ class PetService
      */
     public function update(array $data) : bool
     {
-        $this->petRepository->setEntityFromData($data, Pet::class);
+        if (empty($data['UF_USER_ID'])) {
+            $data['UF_USER_ID'] = $this->currentUser->getCurrentUserId();
+        }
         if (!empty($data['UF_PHOTO_TMP'])) {
             $this->petRepository->addFileList(['UF_PHOTO' => $data['UF_PHOTO_TMP']]);
         }
         else{
             unset($data['UF_PHOTO']);
         }
+        $this->petRepository->setEntityFromData($data, Pet::class);
         $res = $this->petRepository->update();
         if ($res) {
             $this->updateManzanaPets();

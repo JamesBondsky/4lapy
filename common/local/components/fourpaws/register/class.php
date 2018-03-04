@@ -287,6 +287,8 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             $regUser = $this->userRegistrationService->register($userEntity, true);
             if ($regUser instanceof User && $regUser->getId() > 0) {
 
+                $this->userAuthorizationService->authorize($regUser->getId());
+
                 $title = 'Ура, можно покупать! ';
                 /** @noinspection PhpUnusedLocalVariableInspection */
                 $name = $userEntity->getName();
@@ -453,10 +455,12 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         $title = 'Регистрация';
         switch ($step) {
             case 'step2':
-                $mess = $this->ajaxGetStep2($request->get('confirmCode', ''), $phone);
-                if ($mess instanceof JsonResponse) {
-                    return $mess;
+                $res = $this->ajaxGetStep2($request->get('confirmCode', ''), $phone);
+                if ($res instanceof JsonResponse) {
+                    return $res;
                 }
+                /** @noinspection PhpUnusedLocalVariableInspection */
+                list($mess, $manzanaItem) = $res;
                 break;
             case 'sendSmsCode':
                 unset($_SESSION['COUNT_REGISTER_CONFIRM_CODE']);
@@ -566,7 +570,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
      * @throws \RuntimeException
      * @throws GuzzleException
      * @throws Exception
-     * @return JsonResponse|string
+     * @return JsonResponse|array
      */
     private function ajaxGetStep2(string $confirmCode, string $phone, string $newAction = '')
     {
@@ -656,7 +660,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             return $this->ajaxMess->getWrongPhoneNumberException();
         }
 
-        return $mess;
+        return [$mess, $manzanaItem];
     }
 
     /**
