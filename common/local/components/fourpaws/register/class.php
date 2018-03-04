@@ -287,6 +287,8 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             $regUser = $this->userRegistrationService->register($userEntity, true);
             if ($regUser instanceof User && $regUser->getId() > 0) {
 
+                $this->userAuthorizationService->authorize($regUser->getId());
+
                 $title = 'Ура, можно покупать! ';
                 /** @noinspection PhpUnusedLocalVariableInspection */
                 $name = $userEntity->getName();

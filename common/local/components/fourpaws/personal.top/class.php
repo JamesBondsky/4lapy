@@ -251,8 +251,12 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
             }
             //Устанавливаем финализирвоанный сортирвоанный массив
             $this->setResults($this->sortItems, $this->allProducts);
-            
-            $this->includeComponentTemplate();
+
+            $page= '';
+            if(empty($this->arResult['PRODUCTS'])){
+                $page = 'notItems';
+            }
+            $this->includeComponentTemplate($page);
         }
         
         return true;

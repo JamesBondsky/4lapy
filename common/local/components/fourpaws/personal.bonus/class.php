@@ -120,8 +120,10 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
         if ($this->startResultCache($this->arParams['CACHE_TIME'], [
             'userId' => $user->getId(),
             'cardNumber'  => $bonus->getCard()->getCardNumber(),
+            'bonus'  => $bonus->getActiveBonus(),
             'sum'         => $bonus->getSum(),
             'paidByBonus' => $bonus->getCredit(),
+            'realDiscount' => $bonus->getRealDiscount(),
         ])) {
             $this->includeComponentTemplate();
         }
