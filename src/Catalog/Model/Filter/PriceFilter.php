@@ -1,7 +1,15 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\Catalog\Model\Filter;
 
+use Elastica\Aggregation\Nested;
+use Elastica\Query\AbstractQuery;
+use Elastica\Query\Nested as NestedQuery;
+use FourPaws\Catalog\Collection\AggCollection;
 use FourPaws\Catalog\Model\Filter\Abstraction\RangeFilterBase;
 use WebArch\BitrixCache\BitrixCache;
 
@@ -39,11 +47,43 @@ class PriceFilter extends RangeFilterBase
         foreach ([$this->getMinFilterCode(), $this->getMaxFilterCode()] as $subAggName) {
             if (
                 array_key_exists($subAggName, $aggResult)
-                && is_array($aggResult[$subAggName])
+                && \is_array($aggResult[$subAggName])
             ) {
                 parent::collapse($subAggName, $aggResult[$subAggName]);
             }
         }
+    }
+
+    public function getAggs(): AggCollection
+    {
+        return new AggCollection([
+            (new Nested($this->getMinNestedAggName(), $this->getNestedPath()))->addAggregation($this->getMinAggRule()),
+            (new Nested($this->getMaxNestedAggName(), $this->getNestedPath()))->addAggregation($this->getMaxAggRule()),
+        ]);
+    }
+
+    /**
+     * @return string
+     */
+    protected function getNestedPath()
+    {
+        return 'offers';
+    }
+
+    /**
+     * @return string
+     */
+    protected function getMinNestedAggName()
+    {
+        return $this->getMinFilterCode() . 'Nested';
+    }
+
+    /**
+     * @return string
+     */
+    protected function getMaxNestedAggName()
+    {
+        return $this->getMaxFilterCode() . 'Nested';
     }
 
     /**
@@ -57,5 +97,13 @@ class PriceFilter extends RangeFilterBase
         return (new BitrixCache())
             ->withId(__METHOD__)
             ->resultOf($callDoGetRange);
+    }
+
+    public function getFilterRule(): AbstractQuery
+    {
+        $query = new NestedQuery();
+        $query->setPath($this->getNestedPath());
+
+        return $query->setQuery(parent::getFilterRule());
     }
 }

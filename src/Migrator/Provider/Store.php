@@ -2,9 +2,9 @@
 
 namespace FourPaws\Migrator\Provider;
 
+use FourPaws\Migrator\Converter\GpsSeparator;
 use FourPaws\Migrator\Converter\MetroToReference;
 use FourPaws\Migrator\Converter\PhoneBuilder;
-use FourPaws\Migrator\Converter\StoreGpsSeparator;
 use FourPaws\Migrator\Converter\StoreNameBuilder;
 use FourPaws\Migrator\Converter\StringToLocation;
 use FourPaws\Migrator\Converter\StringToNotEmptyString;
@@ -54,7 +54,7 @@ class Store extends ProviderAbstract
     {
         $nameBuilder          = new StoreNameBuilder('TITLE');
         $phoneBuilder         = new PhoneBuilder('PHONE');
-        $gpsSeparator         = new StoreGpsSeparator('GPS');
+        $gpsSeparator         = new GpsSeparator('GPS');
         $addressConverter     = new StringToNotEmptyString('ADDRESS');
         $descriptionConverter = new TextHtmlToString('DESCRIPTION');
         

@@ -243,7 +243,7 @@ class Iblock_food_selection20180122230845 extends SprintMigrationBase
                 'SEARCHABLE'         => 'N',
                 'FILTRABLE'          => 'N',
                 'IS_REQUIRED'        => 'N',
-                'VERSION'            => '1',
+                'VERSION'            => '2',
                 'USER_TYPE'          => 'EAutocomplete',
                 'USER_TYPE_SETTINGS' => [
                     'VIEW'          => 'A',

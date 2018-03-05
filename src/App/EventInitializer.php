@@ -7,6 +7,7 @@ use FourPaws\DeliveryBundle\Event as DeliveryEvent;
 use FourPaws\IblockProps\Event as IblockPropsEvent;
 use FourPaws\ProductAutoSort\Event as ProductAutoSortEvent;
 use FourPaws\SaleBundle\EventController\Event as SaleEvent;
+use FourPaws\SapBundle\EventController\Event as SapEvent;
 use FourPaws\SapBundle\Subscriber\BitrixEvents;
 use FourPaws\Search\EventHandlers as SearchEventHandlers;
 use FourPaws\UserBundle\EventController\Event as UserEvent;
@@ -26,6 +27,7 @@ final class EventInitializer
         IblockPropsEvent::class,
         ProductAutoSortEvent::class,
         SaleEvent::class,
+        SapEvent::class,
         SearchEventHandlers::class,
         UserEvent::class,
         UserPropLocationEvent::class,

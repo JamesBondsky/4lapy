@@ -24,12 +24,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 /** @var ArrayCollection $items */
 $items = $arResult['ITEMS'];
+
 if($items->isEmpty())
 {
     return;
-}
-
-$frame = $this->createFrame(); ?>
+} ?>
 <dl class="b-catalog-filter__row">
     <dt class="b-catalog-filter__label">Часто ищут:</dt>
     <dd class="b-catalog-filter__block">
@@ -41,3 +40,4 @@ $frame = $this->createFrame(); ?>
         <?php } ?>
     </dd>
 </dl>
+<div class="b-line b-line--sort-desktop"></div>

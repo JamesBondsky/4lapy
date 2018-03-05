@@ -34,6 +34,7 @@ class AuthController extends Controller
      * @Route("/login/", methods={"GET", "POST"})
      * @param Request $request
      *
+     * @throws SystemException
      * @throws ValidationException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
@@ -45,6 +46,7 @@ class AuthController extends Controller
      * @throws ServiceCircularReferenceException
      * @throws \Exception
      * @return JsonResponse
+     * @throws GuzzleException
      */
     public function loginAction(Request $request) : JsonResponse
     {
@@ -54,7 +56,7 @@ class AuthController extends Controller
         $loginClass = new \FourPawsAuthFormComponent();
         switch ($action) {
             case 'login':
-                return $loginClass->ajaxLogin($request->get('login', ''), $request->get('password', ''));
+                return $loginClass->ajaxLogin($request->get('login', ''), $request->get('password', ''), $request->get('backurl', ''));
                 break;
             case 'resendSms':
                 return $loginClass->ajaxResendSms($request->get('phone', ''));
