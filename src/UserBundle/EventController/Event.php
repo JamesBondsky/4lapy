@@ -144,6 +144,11 @@ class Event implements ServiceHandlerInterface
         $fields['ACTIVE'] = 'N';
     }
 
+    /**
+     * @param $fields
+     *
+     * @throws \RuntimeException
+     */
     public static function sendEmail($fields)
     {
         if ($_SESSION['SEND_REGISTER_EMAIL'] && (int)$fields['USER_ID'] > 0 && !empty($fields['EMAIL'])) {
@@ -206,6 +211,14 @@ class Event implements ServiceHandlerInterface
         }
     }
 
+    /**
+     * @param $fields
+     *
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     */
     public static function replaceLoginOnUpdate(&$fields)
     {
         if (!empty($fields['PERSONAL_PHONE']) || !empty($fields['EMAIL'])) {
@@ -217,10 +230,21 @@ class Event implements ServiceHandlerInterface
                     $oldEmail = $user->getEmail();
                     $oldPhone = $user->getPersonalPhone();
                     $oldLogin = $user->getLogin();
-                    if ($oldEmail === $oldLogin && $oldEmail !== $fields['EMAIL']) {
-                        $fields['LOGIN'] = $fields['EMAIL'];
-                    } elseif ($oldPhone === $oldLogin && $oldPhone !== $fields['PERSONAL_PHONE']) {
-                        $fields['LOGIN'] = $fields['PERSONAL_PHONE'];
+                    if(!empty($fields['PERSONAL_PHONE'])){
+                        if ($oldPhone !== $fields['PERSONAL_PHONE'] || $fields['PERSONAL_PHONE'] !== $oldLogin) {
+                            $fields['LOGIN'] = $fields['PERSONAL_PHONE'];
+                        }
+                    }
+                    else{
+                        if(!empty($oldPhone)) {
+                            $fields['LOGIN'] = $oldPhone;
+                        }
+                        elseif(!empty($fields['EMAIL'])){
+                            $fields['LOGIN'] = $fields['EMAIL'];
+                        }
+                        elseif(!empty($oldEmail)){
+                            $fields['LOGIN'] = $oldEmail;
+                        }
                     }
                 }
             } catch (ApplicationCreateException $e) {
