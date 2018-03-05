@@ -101,14 +101,6 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
 
         $curUser = $this->currentUserProvider->getCurrentUser();
 
-        /** обновление флага подтвержденности email */
-        if (!$curUser->isEmailConfirmed() && !empty($curUser->getEmail())) {
-            $expertSenderService = App::getInstance()->getContainer()->get('expertsender.service');
-            if ($expertSenderService->checkConfirmEmail($curUser->getEmail())) {
-                $this->currentUserProvider->getUserRepository()->updateData($curUser->getId(), ['UF_EMAIL_CONFIRMED' => true]);
-            }
-        }
-
         $curBirthday = $curUser->getBirthday();
         if ($curBirthday instanceof Date) {
             try {
@@ -345,7 +337,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                 //Посылаем смс о смененном номере телефона
                 $text = 'Номер телефона в Личном кабинете изменен на ' . $phone . '. Если это не вы, обратитесь по тел. 8(800)7700022';
                 $smsService = $container->get('sms.service');
-                $smsService->send($text, $oldPhone);
+                $smsService->sendSms($text, $oldPhone);
             }
 
             $mess = 'Телефон обновлен';

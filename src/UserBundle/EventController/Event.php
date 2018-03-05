@@ -6,10 +6,21 @@
 
 namespace FourPaws\UserBundle\EventController;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\EventManager;
 use FourPaws\App\Application;
+use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\ServiceHandlerInterface;
+use FourPaws\External\Exception\ManzanaServiceException;
+use FourPaws\External\Manzana\Model\Client;
+use FourPaws\Helpers\Exception\WrongPhoneNumberException;
+use FourPaws\Helpers\PhoneHelper;
+use FourPaws\UserBundle\Entity\User;
+use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
+use FourPaws\UserBundle\Exception\InvalidIdentifierException;
+use FourPaws\UserBundle\Service\ConfirmCodeService;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -39,9 +50,18 @@ class Event implements ServiceHandlerInterface
 
         self::initHandler('OnBeforeUserAdd', 'checkSocserviseRegisterHandler');
 
+        /**
+         * События форматирования телефона
+         */
+        self::initHandler('OnBeforeUserAdd', 'checkPhoneFormat');
+        self::initHandler('OnBeforeUserUpdate', 'checkPhoneFormat');
+
         self::initHandler('OnBeforeUserLogon', 'replaceLogin');
 
         self::initHandler('onBeforeUserLoginByHttpAuth', 'deleteBasicAuth');
+        self::initHandler('OnBeforeUserRegister', 'preventAuthorizationOnRegister');
+        self::initHandler('OnAfterUserRegister', 'sendEmail');
+        self::initHandler('OnAfterUserUpdate', 'updateManzana');
     }
 
     /**
@@ -59,6 +79,17 @@ class Event implements ServiceHandlerInterface
                 $method,
             ]
         );
+    }
+
+    public static function checkPhoneFormat(array &$fields)
+    {
+        if ($fields['PERSONAL_PHONE'] ?? '') {
+            try {
+                $fields['PERSONAL_PHONE'] = PhoneHelper::normalizePhone($fields['PERSONAL_PHONE']);
+            } catch (WrongPhoneNumberException $e) {
+                unset($fields['PERSONAL_PHONE']);
+            }
+        }
     }
 
     /**
@@ -95,10 +126,80 @@ class Event implements ServiceHandlerInterface
     /**
      * @param array $auth
      */
-    public function deleteBasicAuth(&$auth)
+    public static function deleteBasicAuth(&$auth)
     {
-        if(\is_array($auth) && isset($auth['basic'])) {
+        if (\is_array($auth) && isset($auth['basic'])) {
             unset($auth['basic']);
+        }
+    }
+
+    /**
+     * @param $fields
+     */
+    public static function preventAuthorizationOnRegister(&$fields)
+    {
+        $fields['ACTIVE'] = 'N';
+    }
+
+    public static function sendEmail($fields)
+    {
+        if ($_SESSION['SEND_REGISTER_EMAIL'] && (int)$fields['USER_ID'] > 0 && !empty($fields['EMAIL'])) {
+            /** отправка письма о регистрации */
+            try {
+                $container = App::getInstance()->getContainer();
+                $userService = $container->get(CurrentUserProviderInterface::class);
+                $user = $userService->getUserRepository()->find((int)$fields['USER_ID']);
+                if ($user instanceof User) {
+                    $expertSenderService = $container->get('expertsender.service');
+                    $expertSenderService->sendEmailAfterRegister($user);
+                    /** установка в сессии ссылки коризны если инициализирвоали из корзины */
+                    if ($_SESSION['FROM_BASKET']) {
+                        setcookie('BACK_URL', '/cart/', time() + ConfirmCodeService::EMAIL_LIFE_TIME, '/');
+                        $_COOKIE['BACK_URL'] = '/cart/';
+                        unset($_SESSION['FROM_BASKET']);
+                    }
+                }
+            } catch (\Exception $e) {
+                $logger = LoggerFactory::create('expertsender');
+                $logger->error(sprintf('Error send email: %s', $e->getMessage()));
+            }
+            unset($_SESSION['SEND_REGISTER_EMAIL']);
+        }
+    }
+
+    /**
+     * @param $fields
+     *
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
+     */
+    public static function updateManzana($fields)
+    {
+        if ($_SESSION['MANZANA_UPDATE']) {
+            unset($_SESSION['MANZANA_UPDATE']);
+            $client = null;
+            try {
+                $container = App::getInstance()->getContainer();
+                $userService = $container->get(CurrentUserProviderInterface::class);
+                $user = $userService->getUserRepository()->find((int)$fields['ID']);
+                if($user instanceof User) {
+                    $manzanaService = $container->get('manzana.service');
+                    $contactId = $manzanaService->getContactIdByPhone($user->getManzanaNormalizePersonalPhone());
+                    $client = new Client();
+                    $client->contactId = $contactId;
+                }
+            } catch (ManzanaServiceException $e) {
+                $client = new Client();
+            } catch (ApplicationCreateException $e) {
+                /** если вызывается эта ошибка вероятно умерло все */
+            }
+
+            if ($client instanceof Client) {
+                $manzanaService->updateContactAsync($client);
+            }
         }
     }
 }

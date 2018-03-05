@@ -143,7 +143,9 @@ if (!($offer instanceof Offer)) {
                             <div class="b-tab-content__container js-tab-content" data-tab-content="composition">
                                 <div class="b-description-tab b-description-tab--full">
                                     <div class="b-description-tab__column b-description-tab__column--full">
-                                        <?= $product->getComposition()->getText() ?>
+                                        <h2>Состав</h2>
+                                        <p><?= $product->getComposition()->getText() ?></p>
+                                    </div>
                                 </div>
                             </div>
                         <?php }
@@ -152,7 +154,7 @@ if (!($offer instanceof Offer)) {
                             <div class="b-tab-content__container js-tab-content" data-tab-content="recommendations">
                                 <div class="b-description-tab b-description-tab--full">
                                     <div class="b-description-tab__column b-description-tab__column--full">
-                                        <?= $product->getNormsOfUse()->getText() ?>
+                                        <p><?= $product->getNormsOfUse()->getText() ?></p>
                                     </div>
                                 </div>
                             </div>

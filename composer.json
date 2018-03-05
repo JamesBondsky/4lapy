@@ -23,9 +23,6 @@
     }
   },
   "autoload-dev": {
-    "psr-4": {
-      "FourPaws\\Test\\": "tests"
-    },
     "files": [
       "vendor/symfony/symfony/src/Symfony/Component/VarDumper/Resources/functions/dump.php"
     ]
@@ -49,13 +46,24 @@
         "common/bitrix": "web/bitrix",
         "common/upload": "web/upload",
         "common/static": "web/static",
-        "common/local/.settings.php": "common/bitrix/.settings.php",
-        "common/local/php_interface/dbconn.php": "common/bitrix/php_interface/dbconn.php",
-        "common/local/php_interface/after_connect.php": "common/bitrix/php_interface/after_connect.php",
-        "common/local/php_interface/after_connect_d7.php": "common/bitrix/php_interface/after_connect_d7.php"
+        "common/local/.settings.php": {
+          "link": "common/bitrix/.settings.php",
+          "absolute-path": true
+        },
+        "common/local/php_interface/dbconn.php": {
+          "link": "common/bitrix/php_interface/dbconn.php",
+          "absolute-path": true
+        },
+        "common/local/php_interface/after_connect.php": {
+          "link": "common/bitrix/php_interface/after_connect.php",
+          "absolute-path": true
+        },
+        "common/local/php_interface/after_connect_d7.php": {
+          "link": "common/bitrix/php_interface/after_connect_d7.php",
+          "absolute-path": true
+        }
       },
-      "skip-missing-target": true,
-      "absolute-path": true
+      "skip-missing-target": true
     },
     "installer-paths": {
       "common/local/modules/{$name}/": [
@@ -68,7 +76,6 @@
     "andreyryabin/sprint.migration": "^2.3",
     "ci/restclientbundle": "~2.0.2",
     "cocur/slugify": "^3.0",
-    "codeception/codeception": "~2.3.5",
     "doctrine/collections": "^1.4",
     "friendsofsymfony/rest-bundle": "^2.2",
     "incenteev/composer-parameter-handler": "^2.1",
@@ -90,7 +97,10 @@
     "webarchitect609/bitrix-neverinclude": "^0.4.2"
   },
   "require-dev": {
+    "codeception/codeception": "^2.3",
+    "flow/jsonpath": "^0.3.4",
     "friendsofphp/php-cs-fixer": "@stable",
+    "nelmio/alice": "^3.1",
     "phpunit/phpunit": "^6.5",
     "sensio/distribution-bundle": "^5.0"
   },

@@ -6,11 +6,18 @@
 
 namespace FourPaws\SapBundle\EventController;
 
+use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\Event as BitrixEvent;
 use Bitrix\Main\EventManager;
+use Bitrix\Main\NotImplementedException;
+use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
+use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\ServiceHandlerInterface;
+use FourPaws\SapBundle\Consumer\ConsumerRegistry;
+use FourPaws\SapBundle\Enum\SapOrderEnum;
 
 /**
  * Class Event
@@ -25,7 +32,7 @@ class Event implements ServiceHandlerInterface
      * @var EventManager
      */
     protected static $eventManager;
-
+    
     /**
      * @param EventManager $eventManager
      *
@@ -34,11 +41,11 @@ class Event implements ServiceHandlerInterface
     public static function initHandlers(EventManager $eventManager)
     {
         self::$eventManager = $eventManager;
-
+        
         self::initHandler('OnSaleOrderSaved', 'consumeOrderAfterSaveOrder');
         self::initHandler('OnSalePaymentEntitySaved', 'consumeOrderAfterSavePayment');
     }
-
+    
     /**
      * @param string $eventName
      * @param string $method
@@ -49,47 +56,72 @@ class Event implements ServiceHandlerInterface
         self::$eventManager->addEventHandler(
             $module,
             $eventName,
-            [
-                self::class,
-                $method,
-            ]
+            [self::class, $method]
         );
     }
-
+    
     /**
      * @param BitrixEvent $event
+     *
+     * @throws ObjectNotFoundException
+     * @throws ApplicationCreateException
      */
-    public static function consumeOrderAfterSave(BitrixEvent $event)
+    public static function consumeOrderAfterSaveOrder(BitrixEvent $event)
     {
-        $isNew = $event->getParameter('IS_NEW');
-
-        if ($isNew) {
+        /**
+         * Если заказ новый...
+         */
+        if ($event->getParameter('IS_NEW')) {
             /** @var Order $order */
             $order = $event->getParameter('ENTITY');
-
             /**
-             * Если новый заказ и оплата не онлайн, отправляем в SAP
-             *
-             * @todo implement
+             * ...и оплата не онлайн, отправляем в SAP
              */
+            if ($order->getPaymentSystemId() === SapOrderEnum::PAYMENT_SYSTEM_ONLINE_ID) {
+                return;
+            }
+            
+            self::getConsumerRegistry()->consume($order);
         }
     }
-
+    
     /**
      * @param BitrixEvent $event
+     *
+     * @throws ArgumentNullException
+     * @throws NotImplementedException
+     * @throws ApplicationCreateException
      */
     public static function consumeOrderAfterSavePayment(BitrixEvent $event)
     {
         /** @var Payment $payment */
         $oldFields = $event->getParameter('VALUES');
         $payment = $event->getParameter('ENTITY');
-
-        if ($payment->getPaymentSystemId() === 3 && $payment->isPaid()) {
+        
+        if (
+            $oldFields['PAID'] !== 'Y'
+            && (int)$payment->getPaymentSystemId() === SapOrderEnum::PAYMENT_SYSTEM_ONLINE_ID
+            && $payment->getOrderId() > 0
+            && $payment->isPaid()
+        ) {
             /**
              * Если оплата онлайн и статус меняется на оплачено, то выгружаем в SAP
              *
-             * @todo implement
+             * @var ConsumerRegistry $consumerRegistry
              */
+            
+            $order = Order::load($payment->getOrderId());
+            self::getConsumerRegistry()->consume($order);
         }
+    }
+    
+    /**
+     * @return ConsumerRegistry
+     *
+     * @throws ApplicationCreateException
+     */
+    public static function getConsumerRegistry(): ConsumerRegistry
+    {
+        return Application::getInstance()->getContainer()->get(ConsumerRegistry::class);
     }
 }

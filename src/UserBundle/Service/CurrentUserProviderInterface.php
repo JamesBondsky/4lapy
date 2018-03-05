@@ -62,5 +62,5 @@ interface CurrentUserProviderInterface
      * @throws NotAuthorizedException
      * @return array
      */
-    public function getUserGroups(int $id = 0) : array;
+    public function getUserGroups(int $id = 0): array;
 }

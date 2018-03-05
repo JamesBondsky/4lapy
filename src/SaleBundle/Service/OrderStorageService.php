@@ -59,6 +59,11 @@ class OrderStorageService
     protected $storageRepository;
 
     /**
+     * @var UserAccountService
+     */
+    protected $userAccountService;
+
+    /**
      * OrderStorageService constructor.
      *
      * @param BasketService $basketService
@@ -68,11 +73,13 @@ class OrderStorageService
     public function __construct(
         BasketService $basketService,
         CurrentUserProviderInterface $currentUserProvider,
-        DatabaseStorageRepository $storageRepository
+        DatabaseStorageRepository $storageRepository,
+        UserAccountService $userAccountService
     ) {
         $this->basketService = $basketService;
         $this->currentUserProvider = $currentUserProvider;
         $this->storageRepository = $storageRepository;
+        $this->userAccountService = $userAccountService;
     }
 
     /**
@@ -307,6 +314,32 @@ class OrderStorageService
         }
 
         return $payments;
+    }
+
+    /**
+     * Получение максимального кол-ва бонусов, которыми можно оплатить заказ
+     *
+     * @param OrderStorage $storage
+     *
+     * @return float
+     */
+    public function getMaxBonusesForPayment(OrderStorage $storage): float
+    {
+        if (!$storage->getUserId()) {
+            return 0;
+        }
+
+        $bonuses = 0;
+        try {
+            $this->userAccountService->refreshUserBalance();
+            $bonuses = $this->userAccountService->findAccountByUser($this->currentUserProvider->getCurrentUser())
+                                                ->getCurrentBudget();
+        } catch (NotFoundException $e) {
+        }
+
+        $basket = $this->basketService->getBasket()->getOrderableItems();
+
+        return floor(min($basket->getPrice() * OrderService::MAX_BONUS_PAYMENT, $bonuses));
     }
 
     /**

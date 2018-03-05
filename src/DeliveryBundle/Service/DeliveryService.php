@@ -186,7 +186,6 @@ class DeliveryService
                     'DELIVERY_NAME' => $name,
                 ]
             );
-
             $calculationResult = $shipment->calculateDelivery();
             if ($calculationResult->isSuccess()) {
                 if (\in_array(

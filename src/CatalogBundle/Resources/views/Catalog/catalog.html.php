@@ -17,16 +17,12 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
             <?= $view->render(
                 'FourPawsCatalogBundle:Catalog:catalog.filter.container.html.php',
                 [
-                    'catalogRequest'      => $catalogRequest,
+                    'catalogRequest' => $catalogRequest,
                     'productSearchResult' => $productSearchResult,
                 ]
             ) ?>
-        </div><?php
-
-        /**
-         * Просмотренные товары
-         */
-        $APPLICATION->IncludeComponent(
+        </div>
+        <?php $APPLICATION->IncludeComponent(
             'bitrix:main.include',
             '',
             [
@@ -38,9 +34,8 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
             [
                 'HIDE_ICONS' => 'Y',
             ]
-        );
-
-        ?><div class="b-preloader b-preloader--catalog">
+        ); ?>
+        <div class="b-preloader b-preloader--catalog">
             <div class="b-preloader__spinner">
                 <img class="b-preloader__image" src="/static/build/images/inhtml/spinner.svg" alt="spinner" title=""/>
             </div>

@@ -28,7 +28,7 @@ class User implements UserInterface
      * @var int
      * @Serializer\Type("integer")
      * @Serializer\SerializedName("ID")
-     * @Serializer\Groups(groups={"read","delete"})
+     * @Serializer\Groups(groups={"dummy","read","delete"})
      * @Assert\NotBlank(groups={"read","delete"})
      * @Assert\GreaterThanOrEqual(value="1",groups={"read","update","delete"})
      */
@@ -38,7 +38,7 @@ class User implements UserInterface
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("EXTERNAL_AUTH_ID")
-     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $externalAuthId = '';
@@ -47,7 +47,7 @@ class User implements UserInterface
      * @var bool
      * @Serializer\Type("bitrix_bool")
      * @Serializer\SerializedName("ACTIVE")
-     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $active = false;
@@ -56,7 +56,7 @@ class User implements UserInterface
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("XML_ID")
-     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $xmlId = '';
@@ -65,7 +65,7 @@ class User implements UserInterface
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("LOGIN")
-     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
      * @Assert\NotBlank(groups={"create","read"})
      * @Serializer\SkipWhenEmpty()
      */
@@ -75,7 +75,7 @@ class User implements UserInterface
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("PASSWORD")
-     * @Serializer\Groups(groups={"create"})
+     * @Serializer\Groups(groups={"dummy","create"})
      * @Serializer\SkipWhenEmpty()
      * @Assert\NotBlank(groups={"create"})
      */
@@ -95,7 +95,7 @@ class User implements UserInterface
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("NAME")
-     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $name = '';
@@ -104,7 +104,7 @@ class User implements UserInterface
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("SECOND_NAME")
-     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $secondName = '';
@@ -113,7 +113,7 @@ class User implements UserInterface
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("LAST_NAME")
-     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $lastName = '';
@@ -122,7 +122,7 @@ class User implements UserInterface
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("EMAIL")
-     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
      * @Assert\Email(groups={"create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
@@ -130,10 +130,9 @@ class User implements UserInterface
 
     /**
      * @var string
-     * @Serializer\Type("string")
+     * @Serializer\Type("phone")
      * @Serializer\SerializedName("PERSONAL_PHONE")
-     * @Serializer\Groups(groups={"create","read","update"})
-     * @PhoneNumber(defaultRegion="RU",type="mobile")
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $personalPhone = '';
@@ -142,7 +141,7 @@ class User implements UserInterface
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("CHECKWORD")
-     * @Serializer\Groups(groups={"create","read"})
+     * @Serializer\Groups(groups={"dummy","create","read"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $checkWord = '';
@@ -151,7 +150,7 @@ class User implements UserInterface
      * @var bool
      * @Serializer\Type("boolean")
      * @Serializer\SerializedName("UF_CONFIRMATION")
-     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $personalDataConfirmed = false;
@@ -160,7 +159,7 @@ class User implements UserInterface
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_LOCATION")
-     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $location = '';
@@ -169,7 +168,7 @@ class User implements UserInterface
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("PERSONAL_GENDER")
-     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $gender = '';
@@ -178,7 +177,7 @@ class User implements UserInterface
      * @var null|Date
      * @Serializer\Type("bitrix_date")
      * @Serializer\SerializedName("PERSONAL_BIRTHDAY")
-     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $birthday;
@@ -186,7 +185,7 @@ class User implements UserInterface
     /** @var bool
      * @Serializer\Type("boolean")
      * @Serializer\SerializedName("UF_EMAIL_CONFIRMED")
-     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $emailConfirmed = false;
@@ -195,7 +194,7 @@ class User implements UserInterface
      * @var bool
      * @Serializer\Type("boolean")
      * @Serializer\SerializedName("UF_PHONE_CONFIRMED")
-     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $phoneConfirmed = false;
@@ -204,7 +203,7 @@ class User implements UserInterface
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_SHOP")
-     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $shopCode = '';
@@ -213,7 +212,7 @@ class User implements UserInterface
      * @var null|DateTime
      * @Serializer\Type("bitrix_date_time")
      * @Serializer\SerializedName("DATE_REGISTER")
-     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $dateRegister;
@@ -232,7 +231,7 @@ class User implements UserInterface
      * @var string
      * @Serializer\Type("string")
      * @Serializer\SerializedName("UF_DISCOUNT_CARD")
-     * @Serializer\Groups(groups={"create","read","update"})
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
     protected $discountCardNumber = '';
@@ -345,7 +344,7 @@ class User implements UserInterface
     {
         $value = $this->getNormalizePersonalPhone();
 
-        return strlen($value) ? '7'.$value : '';
+        return '' !== $value ? '7' . $value : '';
     }
 
     /**
@@ -363,7 +362,11 @@ class User implements UserInterface
      */
     public function setPersonalPhone(string $personalPhone): User
     {
-        $this->personalPhone = $personalPhone;
+        try {
+            $this->personalPhone = PhoneHelper::normalizePhone($personalPhone);
+        } catch (WrongPhoneNumberException $e) {
+            $this->personalPhone = '';
+        }
 
         return $this;
     }
@@ -677,7 +680,7 @@ class User implements UserInterface
      *
      * @return User
      */
-    public function setBirthday(Date $birthday): User
+    public function setBirthday(Date $birthday = null): User
     {
         $this->birthday = $birthday;
 
@@ -750,7 +753,7 @@ class User implements UserInterface
     public function getManzanaDateRegister(): \DateTimeImmutable
     {
         $dateRegister = $this->getDateRegister();
-        if($dateRegister instanceof DateTime) {
+        if ($dateRegister instanceof DateTime) {
             return new \DateTimeImmutable($dateRegister->format('Y-m-d\TH:i:s'));
         }
         return null;
@@ -822,26 +825,6 @@ class User implements UserInterface
     }
 
     /**
-     * @param Role $role
-     *
-     * @return bool
-     */
-    public function addRole(Role $role)
-    {
-        return $this->getRolesCollection()->add($role);
-    }
-
-    /**
-     * @param Role $role
-     *
-     * @return bool
-     */
-    public function removeRole(Role $role)
-    {
-        return $this->getRolesCollection()->removeElement($role);
-    }
-
-    /**
      * @param Role[] $roles
      *
      * @return $this
@@ -865,6 +848,26 @@ class User implements UserInterface
                 return $role;
             });
         return $this;
+    }
+
+    /**
+     * @param Role $role
+     *
+     * @return bool
+     */
+    public function addRole(Role $role)
+    {
+        return $this->getRolesCollection()->add($role);
+    }
+
+    /**
+     * @param Role $role
+     *
+     * @return bool
+     */
+    public function removeRole(Role $role)
+    {
+        return $this->getRolesCollection()->removeElement($role);
     }
 
     /**
@@ -924,7 +927,7 @@ class User implements UserInterface
     /**
      * @return string
      */
-    public function getDiscountCardNumber() : string
+    public function getDiscountCardNumber(): string
     {
         return $this->discountCardNumber ?? '';
     }
@@ -934,7 +937,7 @@ class User implements UserInterface
      *
      * @return User
      */
-    public function setDiscountCardNumber(string $discountCardNumber) : User
+    public function setDiscountCardNumber(string $discountCardNumber): User
     {
         $this->discountCardNumber = $discountCardNumber;
 
@@ -944,7 +947,7 @@ class User implements UserInterface
     /**
      * @return bool
      */
-    public function isFastOrderUser() : bool
+    public function isFastOrderUser(): bool
     {
         return (strpos($this->getEmail(), '@fastorder.ru') !== false);
     }
@@ -952,7 +955,7 @@ class User implements UserInterface
     /**
      * @return string
      */
-    public function getShopCode() : string
+    public function getShopCode(): string
     {
         return $this->shopCode ?? '';
     }
@@ -962,7 +965,7 @@ class User implements UserInterface
      *
      * @return User
      */
-    public function setShopCode(string $shopCode) : User
+    public function setShopCode(string $shopCode): User
     {
         $this->shopCode = $shopCode;
 

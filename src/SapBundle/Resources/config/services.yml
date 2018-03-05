@@ -19,16 +19,16 @@ services:
         resource: '../../Serialization/*'
         tags: ['jms_serializer.subscribing_handler']
 
-    # todo: remove after development!
+    # Необходимо для битровых событий
     FourPaws\SapBundle\Consumer\ConsumerRegistry:
         public: true
 
     FourPaws\SapBundle\Pipeline\PipelineRegistry:
-        public: true
+        public: false
 
     # todo: remove after development!
     FourPaws\SapBundle\Source\SourceRegistry:
-        public: true
+        public: false
         lazy: true
 
     # Получить репозиторий напрямую нельзя
