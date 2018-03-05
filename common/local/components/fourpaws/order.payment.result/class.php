@@ -109,7 +109,7 @@ class FourPawsOrderPaymentResultComponent extends \CBitrixComponent
             }
         } catch (\Exception $e) {
             try {
-                $logger = LoggerFactory::create('component');
+                $logger = LoggerFactory::create('component_order_payment_result');
                 $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
             } catch (\RuntimeException $e) {
             }

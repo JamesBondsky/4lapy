@@ -15,6 +15,11 @@ use FourPaws\Catalog\Model\Offer;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
 
+/** @var \FourPaws\UserBundle\Entity\User $user */
+$user = $arResult['USER'];
+/** @var \FourPaws\SaleBundle\Entity\UserAccount $userAccount */
+$userAccount = $arResult['USER_ACCOUNT'];
+
 /** @var \Bitrix\Sale\Basket $basket */
 $basket = $arResult['BASKET'];
 $orderableBasket = $basket->getOrderableItems();
@@ -267,12 +272,12 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
         <aside class="b-shopping-cart__aside">
             <div class="b-information-order">
                 <div class="b-information-order__client">
-                    <?php
-                    /** @todo available user bonus */ ?>
-                    <!-- <span class="b-information-order__pay-points">
-                        <span class="b-information-order__name">Константин, </span>
-                        вы можете оплатить этот заказ баллами (до 299).
+                    <?php if ($user && $userAccount) { ?>
+                     <span class="b-information-order__pay-points">
+                        <span class="b-information-order__name"><?= $user->getName() ?>, </span>
+                        вы можете оплатить этот заказ баллами (до <?= WordHelper::numberFormat($userAccount->getCurrentBudget()) ?>).
                     </span> -->
+                    <?php } ?>
                     <?php
                     $APPLICATION->IncludeComponent(
                         'fourpaws:city.selector',
@@ -306,7 +311,7 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                         </div>
                         <div class="b-price b-price--information-order">
                             <span class="b-price__current">
-                                <?= WordHelper::numberFormat($basket->getBasePrice()); ?>
+                                <?= WordHelper::numberFormat($arResult['TOTAL_BASE_PRICE']); ?>
                             </span><span class="b-ruble">₽</span>
                         </div>
                     </div>

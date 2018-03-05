@@ -68,7 +68,7 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
             if ($this->arParams['SET_TITLE'] === 'Y') {
                 $APPLICATION->SetTitle(
                     sprintf(
-                        'Заказа № %s оформлен',
+                        'Заказ № %s оформлен',
                         $this->arParams['ORDER_ID']
                     )
                 );
