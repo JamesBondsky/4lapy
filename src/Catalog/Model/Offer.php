@@ -928,7 +928,10 @@ class Offer extends IblockElement
     protected function checkOptimalPrice()
     {
         global $USER;
-        $order = Order::create(SITE_ID);
+        static $order;
+        if (null === $order) {
+            $order = Order::create(SITE_ID);
+        }
         /** @var Basket $basket */
         $basket = Basket::create(SITE_ID);
         $basket->setFUserId((int)Fuser::getId());
@@ -945,7 +948,7 @@ class Offer extends IblockElement
             if (
                 (int)$basketItem->getProductId() === $this->getId()
                 &&
-                $discountPercent = (int)round(100 * ($basketItem->getDiscountPrice() / $basketItem->getBasePrice()))
+                $discountPercent = round(100 * ($basketItem->getDiscountPrice() / $basketItem->getBasePrice()))
             ) {
                 $this
                     ->withDiscount($discountPercent)
