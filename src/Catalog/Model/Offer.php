@@ -28,8 +28,8 @@ use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Service\StoreService;
 use InvalidArgumentException;
-use JMS\Serializer\Annotation as Serializer;
 use JMS\Serializer\Annotation\Accessor;
+use JMS\Serializer\Annotation as Serializer;
 use JMS\Serializer\Annotation\Groups;
 use JMS\Serializer\Annotation\Type;
 use RuntimeException;
@@ -363,9 +363,9 @@ class Offer extends IblockElement
      * @param int $width
      * @param int $height
      *
+     * @throws InvalidArgumentException
      * @return Collection|ResizeImageInterface[]
      *
-     * @throws InvalidArgumentException
      */
     public function getResizeImages(int $width = 0, int $height = 0): Collection
     {
@@ -945,7 +945,7 @@ class Offer extends IblockElement
             if (
                 (int)$basketItem->getProductId() === $this->getId()
                 &&
-                $discountPercent = round(100 * ($basketItem->getDiscountPrice() / $basketItem->getBasePrice()))
+                $discountPercent = (int)round(100 * ($basketItem->getDiscountPrice() / $basketItem->getBasePrice()))
             ) {
                 $this
                     ->withDiscount($discountPercent)
@@ -957,11 +957,11 @@ class Offer extends IblockElement
 
     /**
      * размер скидки в процентах
-     * @param int $discount
+     * @param float $discount
      *
      * @return static
      */
-    public function withDiscount(int $discount)
+    public function withDiscount(float $discount)
     {
         $this->discount = $discount;
 
@@ -1043,9 +1043,9 @@ class Offer extends IblockElement
     }
 
     /**
-     * @return int
+     * @return float
      */
-    public function getDiscount(): int
+    public function getDiscount(): float
     {
         $this->checkOptimalPrice();
 

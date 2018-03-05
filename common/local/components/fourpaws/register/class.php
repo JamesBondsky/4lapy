@@ -262,6 +262,9 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         if ($haveUsers['phone']) {
             return $this->ajaxMess->getHavePhoneError();
         }
+        if ($haveUsers['login']) {
+            return $this->ajaxMess->getHaveLoginError();
+        }
 
         if($data['UF_CONFIRMATION'] === 'on' || $data['UF_CONFIRMATION'] === 'Y'){
             $data['UF_CONFIRMATION'] = true;
@@ -348,6 +351,20 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             return $this->ajaxMess->getWrongPhoneNumberException();
         }
 
+        /** @var UserRepository $userRepository */
+        $userRepository = $this->currentUserProvider->getUserRepository();
+        $haveUsers = $userRepository->havePhoneAndEmailByUsers(
+            [
+                'PERSONAL_PHONE' => $phone,
+            ]
+        );
+        if ($haveUsers['phone']) {
+            return $this->ajaxMess->getHavePhoneError();
+        }
+        if ($haveUsers['login']) {
+            return $this->ajaxMess->getHaveLoginError();
+        }
+
         $checkedCaptcha = true;
         if ($_SESSION['COUNT_REGISTER_CONFIRM_CODE'] > 3) {
             $recaptchaService = $container->get('recaptcha.service');
@@ -402,7 +419,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             'UF_PHONE_CONFIRMED' => true,
             'PERSONAL_PHONE'     => $phone,
         ];
-        if ($this->currentUserProvider->getUserRepository()->updateData(
+        if ($userRepository->updateData(
             $this->currentUserProvider->getCurrentUserId(),
             $data
         )) {
@@ -455,10 +472,12 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         $title = 'Регистрация';
         switch ($step) {
             case 'step2':
-                $mess = $this->ajaxGetStep2($request->get('confirmCode', ''), $phone);
-                if ($mess instanceof JsonResponse) {
-                    return $mess;
+                $res = $this->ajaxGetStep2($request->get('confirmCode', ''), $phone);
+                if ($res instanceof JsonResponse) {
+                    return $res;
                 }
+                /** @noinspection PhpUnusedLocalVariableInspection */
+                list($mess, $manzanaItem) = $res;
                 break;
             case 'sendSmsCode':
                 unset($_SESSION['COUNT_REGISTER_CONFIRM_CODE']);
@@ -568,7 +587,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
      * @throws \RuntimeException
      * @throws GuzzleException
      * @throws Exception
-     * @return JsonResponse|string
+     * @return JsonResponse|array
      */
     private function ajaxGetStep2(string $confirmCode, string $phone, string $newAction = '')
     {
@@ -576,6 +595,20 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             $container = App::getInstance()->getContainer();
         } catch (ApplicationCreateException $e) {
             return $this->ajaxMess->getSystemError();
+        }
+
+        /** @var UserRepository $userRepository */
+        $userRepository = $this->currentUserProvider->getUserRepository();
+        $haveUsers = $userRepository->havePhoneAndEmailByUsers(
+            [
+                'PERSONAL_PHONE' => $phone,
+            ]
+        );
+        if ($haveUsers['phone']) {
+            return $this->ajaxMess->getHavePhoneError();
+        }
+        if ($haveUsers['login']) {
+            return $this->ajaxMess->getHaveLoginError();
         }
 
         $checkedCaptcha = true;
@@ -658,7 +691,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             return $this->ajaxMess->getWrongPhoneNumberException();
         }
 
-        return $mess;
+        return [$mess, $manzanaItem];
     }
 
     /**
@@ -699,6 +732,25 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             $step = 'authByPhone';
         } else {
             /** @noinspection PhpUnusedLocalVariableInspection */
+
+            /** второй чек на совпадение полей */
+            /** @var UserRepository $userRepository */
+            $userRepository = $this->currentUserProvider->getUserRepository();
+            $haveUsers = $userRepository->havePhoneAndEmailByUsers(
+                [
+                    'PERSONAL_PHONE' => $data['PERSONAL_PHONE'],
+                    'EMAIL'          => $data['EMAIL'],
+                ]
+            );
+            if ($haveUsers['email']) {
+                return $this->ajaxMess->getHaveEmailError();
+            }
+            if ($haveUsers['phone']) {
+                return $this->ajaxMess->getHavePhoneError();
+            }
+            if ($haveUsers['login']) {
+                return $this->ajaxMess->getHaveLoginError();
+            }
 
             try {
                 /** @var ConfirmCodeService $confirmService */

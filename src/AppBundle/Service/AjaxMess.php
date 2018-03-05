@@ -124,6 +124,14 @@ class AjaxMess
     }
 
     /**
+     * @return JsonResponse
+     */
+    public function getHaveLoginError(): JsonResponse
+    {
+        return $this->getJsonError('haveLogin', 'Такой логин уже существует');
+    }
+
+    /**
      * @param string $additionalMes
      *
      * @return JsonResponse
