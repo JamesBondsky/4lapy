@@ -109,7 +109,7 @@ class FourPawsOrderPaymentComponent extends \CBitrixComponent
                     } else {
                         $this->arResult['ERRORS'] = $result->getErrorMessages();
                     }
-                } catch (PaymentException $e) {
+                } /** @noinspection PhpRedundantCatchClauseInspection */ catch (PaymentException $e) {
                     $this->arResult['ERRORS'][] = $e->getMessage();
                 }
             }
@@ -117,7 +117,7 @@ class FourPawsOrderPaymentComponent extends \CBitrixComponent
             $this->includeComponentTemplate();
         } catch (\Exception $e) {
             try {
-                $logger = LoggerFactory::create('component');
+                $logger = LoggerFactory::create('component_order_payment');
                 $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
             } catch (\RuntimeException $e) {
             }
