@@ -22,7 +22,7 @@ parameters:
     key: ivaacmVjzakOzRLeYjKy
 
   manzana.guzzle.curl.timeout: 3
-  recaptcha.guzzle.curl.timeout: 3
+  recaptcha.guzzle.curl.timeout: 5
   callback.guzzle.curl.timeout: 3
 
   # See \Elastica\Client::$_config for more options
