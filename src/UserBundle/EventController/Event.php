@@ -62,6 +62,9 @@ class Event implements ServiceHandlerInterface
         self::initHandler('OnBeforeUserRegister', 'preventAuthorizationOnRegister');
         self::initHandler('OnAfterUserRegister', 'sendEmail');
         self::initHandler('OnAfterUserUpdate', 'updateManzana');
+
+        /** обновляем логин если он равняется телефону или email */
+        self::initHandler('OnBeforeUserUpdate', 'replaceLoginOnUpdate');
     }
 
     /**
@@ -185,7 +188,7 @@ class Event implements ServiceHandlerInterface
                 $container = App::getInstance()->getContainer();
                 $userService = $container->get(CurrentUserProviderInterface::class);
                 $user = $userService->getUserRepository()->find((int)$fields['ID']);
-                if($user instanceof User) {
+                if ($user instanceof User) {
                     $manzanaService = $container->get('manzana.service');
                     $contactId = $manzanaService->getContactIdByPhone($user->getManzanaNormalizePersonalPhone());
                     $client = new Client();
@@ -199,6 +202,29 @@ class Event implements ServiceHandlerInterface
 
             if ($client instanceof Client) {
                 $manzanaService->updateContactAsync($client);
+            }
+        }
+    }
+
+    public static function replaceLoginOnUpdate(&$fields)
+    {
+        if (!empty($fields['PERSONAL_PHONE']) || !empty($fields['EMAIL'])) {
+            try {
+                $container = App::getInstance()->getContainer();
+                $userService = $container->get(CurrentUserProviderInterface::class);
+                $user = $userService->getUserRepository()->find((int)$fields['ID']);
+                if($user instanceof User) {
+                    $oldEmail = $user->getEmail();
+                    $oldPhone = $user->getPersonalPhone();
+                    $oldLogin = $user->getLogin();
+                    if ($oldEmail === $oldLogin && $oldEmail !== $fields['EMAIL']) {
+                        $fields['LOGIN'] = $fields['EMAIL'];
+                    } elseif ($oldPhone === $oldLogin && $oldPhone !== $fields['PERSONAL_PHONE']) {
+                        $fields['LOGIN'] = $fields['PERSONAL_PHONE'];
+                    }
+                }
+            } catch (ApplicationCreateException $e) {
+                /** если вызывается эта ошибка вероятно умерло все */
             }
         }
     }
