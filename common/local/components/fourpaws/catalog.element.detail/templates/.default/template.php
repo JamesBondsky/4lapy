@@ -1,12 +1,12 @@
 <?php
 /**
- * @var CBitrixComponentTemplate      $this
- * @var CMain                         $APPLICATION
- * @var array                         $arParams
- * @var array                         $arResult
+ * @var CBitrixComponentTemplate $this
+ * @var CMain $APPLICATION
+ * @var array $arParams
+ * @var array $arResult
  * @var CatalogElementDetailComponent $component
- * @var Product                       $product
- * @var Offer                         $currentOffer
+ * @var Product $product
+ * @var Offer $currentOffer
  */
 
 use FourPaws\App\Application;
@@ -145,6 +145,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
 
                     foreach ($offers as $offer) {
                         $isCurrentOffer = !$isCurrentOffer && $currentOffer->getId() === $offer->getId();
+                        $isAvailable = !$offer->getStocks()->isEmpty();
 
                         $value = null;
                         if ($mainCombinationType === 'SIZE') {
@@ -164,7 +165,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
                         }
                         ?>
                         <li class="b -weight-container__item b-weight-container__item--product<?= $isCurrentOffer ? ' active' : '' ?>">
-                            <a class="b-weight-container__link b-weight-container__link--product js-price-product<?= $isCurrentOffer ? ' active-link' : '' ?>"
+                            <a class="b-weight-container__link b-weight-container__link--product js-price-product<?= $isCurrentOffer ? ' active-link' : '' ?><?= $isAvailable ? '' : ' unavailable-link' ?>"
                                href="<?= $offer->getLink() ?>"
                                data-weight=" <?= $value ?>"
                                data-price="<?= $offer->getPrice() ?>"
@@ -177,11 +178,17 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
                                         <?= $offer->getPrice() ?> <span class="b-ruble b-ruble--weight">₽</span>
                                     </span>
                                 </span>
-                                <span class="b-weight-container__line">
-                                    <?php /** @todo впилить акцию
-                                     * <span class="b-weight-container__action">Акция</span>
-                                     */ ?>
-                                </span>
+                                <?php if ($isAvailable) { ?>
+                                    <span class="b-weight-container__line">
+                                        <?php /** @todo впилить акцию
+                                         * <span class="b-weight-container__action">Акция</span>
+                                         */ ?>
+                                    </span>
+                                <?php } else { ?>
+                                    <span class="b-weight-container__line">
+                                        <span class="b-weight-container__not">Нет в наличии</span>
+                                    </span>
+                                <?php } ?>
                             </a>
                         </li>
                     <?php } ?>
@@ -255,7 +262,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                 <?php $APPLICATION->IncludeComponent('fourpaws:catalog.product.delivery.info',
                     'detail',
                     [
-                        'OFFER'         => $currentOffer,
+                        'OFFER' => $currentOffer,
                         'LOCATION_CODE' => $locationService->getCurrentLocation(),
                     ],
                     false,
@@ -274,8 +281,8 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                                         <?php /** @var Offer $unionOffer */
                                         foreach ($unionOffers as $unionOffer) {
                                             ?>
-                                            <option value="<?=$unionOffer->getDetailPageUrl()?>" <?= $unionOffer->getId() === $currentOffer->getId() ? ' selected' : '' ?>>
-                                                <?=$unionOffer->getName()?>
+                                            <option value="<?= $unionOffer->getDetailPageUrl() ?>" <?= $unionOffer->getId() === $currentOffer->getId() ? ' selected' : '' ?>>
+                                                <?= $unionOffer->getName() ?>
                                             </option>
                                         <?php } ?>
                                     </select>
@@ -296,8 +303,8 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                                         <?php /** @var Offer $unionOffer */
                                         foreach ($unionOffers as $unionOffer) {
                                             ?>
-                                            <option value="<?=$unionOffer->getDetailPageUrl()?>" <?= $unionOffer->getId() === $currentOffer->getId() ? ' selected' : '' ?>>
-                                                <?=$unionOffer->getName()?>
+                                            <option value="<?= $unionOffer->getDetailPageUrl() ?>" <?= $unionOffer->getId() === $currentOffer->getId() ? ' selected' : '' ?>>
+                                                <?= $unionOffer->getName() ?>
                                             </option>
                                         <?php } ?>
                                     </select>
@@ -310,44 +317,46 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
             </ul>
         </div>
         <div class="b-counter-basket">
-            <div class="b-plus-minus b-plus-minus--half-mobile js-buy1click-ps js-plus-minus-cont">
-                <a class="b-plus-minus__minus js-minus" href="javascript:void(0);"></a>
-                <input class="b-plus-minus__count js-plus-minus-count" value="1" type="text"/>
-                <a class="b-plus-minus__plus js-plus" href="javascript:void(0);"></a>
-                <span class="b-plus-minus__by-line">Количество</span>
-            </div>
-            <?php if ($currentOffer->getMultiplicity() && ($currentOffer->getMultiplicity() > 1)) { ?>
-                <a class="b-counter-basket__add-set js-add-set" href="javascript:void(0)" title=""
-                   data-count="<?= $currentOffer->getMultiplicity() ?>">
-                    Округлить до упаковки (<?= $currentOffer->getMultiplicity() ?> шт.)
-                    <span>— скидка 3%</span>
+            <?php if (!$currentOffer->getStocks()->isEmpty()) { ?>
+                <div class="b-plus-minus b-plus-minus--half-mobile js-buy1click-ps js-plus-minus-cont">
+                    <a class="b-plus-minus__minus js-minus" href="javascript:void(0);"></a>
+                    <input class="b-plus-minus__count js-plus-minus-count" value="1" type="text"/>
+                    <a class="b-plus-minus__plus js-plus" href="javascript:void(0);"></a>
+                    <span class="b-plus-minus__by-line">Количество</span>
+                </div>
+                <?php if ($currentOffer->getMultiplicity() && ($currentOffer->getMultiplicity() > 1)) { ?>
+                    <a class="b-counter-basket__add-set js-add-set" href="javascript:void(0)" title=""
+                       data-count="<?= $currentOffer->getMultiplicity() ?>">
+                        Округлить до упаковки (<?= $currentOffer->getMultiplicity() ?> шт.)
+                        <span>— скидка 3%</span>
+                    </a>
+                <?php } ?>
+                <a class="b-counter-basket__basket-link js-basket-add js-this-product"
+                   href="javascript:void(0)"
+                   title=""
+                   data-offerId="<?= $currentOffer->getId(); ?>"
+                   data-url="/ajax/sale/basket/add/">
+                    <span class="b-counter-basket__basket-text">Добавить в корзину</span>
+                    <span class="b-icon b-icon--advice"><?= new SvgDecorator('icon-cart', 20, 20) ?></span>
                 </a>
+                <a class="b-link b-link--one-click js-open-popup js-open-popup--one-click" href="javascript:void(0)"
+                   title="Купить в 1 клик" data-popup-id="buy-one-click" data-url="/ajax/sale/fast_order/load/"
+                   data-offerId="<?= $currentOffer->getId() ?>" data-type="card">
+                    <span class="b-link__text b-link__text--one-click js-open-popup">Купить в 1 клик</span>
+                </a>
+                <hr class="b-counter-basket__hr"/>
+                <?php
+                /**
+                 * @todo Акции
+                 */
+                ?>
+                <p class="b-counter-basket__text b-counter-basket__text--red">Акция. 4+1 подарок при
+                    покупке</p>
+                <p class="b-counter-basket__text">При покупке четырех кормов, пятый вы получите
+                    бесплатно</p>
+                <p class="b-counter-basket__text">5 июня — 25 августа 2017</p>
+                <?php ?>
             <?php } ?>
-            <a class="b-counter-basket__basket-link js-basket-add js-this-product"
-               href="javascript:void(0)"
-               title=""
-               data-offerId="<?= $currentOffer->getId(); ?>"
-               data-url="/ajax/sale/basket/add/">
-                <span class="b-counter-basket__basket-text">Добавить в корзину</span>
-                <span class="b-icon b-icon--advice"><?= new SvgDecorator('icon-cart', 20, 20) ?></span>
-            </a>
-            <a class="b-link b-link--one-click js-open-popup js-open-popup--one-click" href="javascript:void(0)"
-               title="Купить в 1 клик" data-popup-id="buy-one-click" data-url="/ajax/sale/fast_order/load/"
-               data-offerId="<?= $currentOffer->getId() ?>" data-type="card">
-                <span class="b-link__text b-link__text--one-click js-open-popup">Купить в 1 клик</span>
-            </a>
-            <hr class="b-counter-basket__hr"/>
-            <?php
-            /**
-             * @todo Акции
-             */
-            ?>
-            <p class="b-counter-basket__text b-counter-basket__text--red">Акция. 4+1 подарок при
-                покупке</p>
-            <p class="b-counter-basket__text">При покупке четырех кормов, пятый вы получите
-                бесплатно</p>
-            <p class="b-counter-basket__text">5 июня — 25 августа 2017</p>
-            <?php ?>
         </div>
         <div class="b-preloader">
             <div class="b-preloader__spinner">

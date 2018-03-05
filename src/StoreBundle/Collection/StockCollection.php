@@ -23,7 +23,7 @@ class StockCollection extends BaseCollection
 
         return $this->filter(
             function (Stock $stock) use ($ids) {
-                return in_array($stock->getStoreId(), $ids, true);
+                return \in_array($stock->getStoreId(), $ids, true);
             }
         );
     }
@@ -51,7 +51,7 @@ class StockCollection extends BaseCollection
     {
         return $this->filter(
             function (Stock $stock) use ($offerId) {
-                return $stock->getProductId() == $offerId;
+                return $stock->getProductId() === $offerId;
             }
         );
     }
