@@ -311,7 +311,7 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                         </div>
                         <div class="b-price b-price--information-order">
                             <span class="b-price__current">
-                                <?= WordHelper::numberFormat($basket->getBasePrice()); ?>
+                                <?= WordHelper::numberFormat($arResult['TOTAL_BASE_PRICE']); ?>
                             </span><span class="b-ruble">₽</span>
                         </div>
                     </div>

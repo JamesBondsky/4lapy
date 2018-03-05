@@ -211,6 +211,7 @@ class BasketComponent extends \CBitrixComponent
         $this->arResult['TOTAL_QUANTITY'] = $quantity;
         $this->arResult['TOTAL_DISCOUNT'] = $orderableBasket->getBasePrice() - $orderableBasket->getPrice();
         $this->arResult['TOTAL_PRICE'] = $orderableBasket->getPrice();
+        $this->arResult['TOTAL_BASE_PRICE'] = $orderableBasket->getBasePrice();
     }
 
     /**
