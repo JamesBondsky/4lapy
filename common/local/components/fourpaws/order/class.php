@@ -16,6 +16,7 @@ use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\ManzanaPosService;
+use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
@@ -29,6 +30,7 @@ use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
+use Psr\Log\LoggerInterface;
 
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsOrderComponent extends \CBitrixComponent
@@ -70,9 +72,13 @@ class FourPawsOrderComponent extends \CBitrixComponent
     /** @var ManzanaPosService */
     protected $manzanaPosService;
 
+    /** @var LoggerInterface  */
+    protected $logger;
+
     public function __construct($component = null)
     {
         $serviceContainer = Application::getInstance()->getContainer();
+        /** @noinspection PhpUndefinedMethodInspection */
         $this->orderService = $serviceContainer->get(OrderService::class);
         $this->orderStorageService = $serviceContainer->get(OrderStorageService::class);
         $this->deliveryService = $serviceContainer->get('delivery.service');
@@ -82,6 +88,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $this->basketService = $serviceContainer->get(BasketService::class);
         $this->userAccountService = $serviceContainer->get(UserAccountService::class);
         $this->manzanaPosService = $serviceContainer->get('manzana.pos.service');
+        $this->logger = LoggerFactory::create('component_order');
 
         parent::__construct($component);
     }
@@ -117,8 +124,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->includeComponentTemplate($componentPage);
         } catch (\Exception $e) {
             try {
-                $logger = LoggerFactory::create('component');
-                $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
+                $this->logger->error(sprintf('Component execute error: %s', $e->getMessage()));
             } catch (\RuntimeException $e) {
             }
         }
@@ -135,7 +141,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         }
 
         if (!$storage = $this->orderStorageService->getStorage()) {
-            throw new Exception('Failed to initialize storage');
+            throw new OrderCreateException('Failed to initialize storage');
         }
 
         try {
@@ -144,6 +150,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             LocalRedirect('/cart');
         }
 
+        /** @noinspection PhpUndefinedVariableInspection */
         $basket = $order->getBasket()->getOrderableItems();
 
         $this->arResult['URL'] = [
@@ -162,6 +169,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             'PAYMENT_VALIDATION'  => 'fourpaws_sale_ajax_order_validatepayment',
         ];
         foreach ($routes as $key => $name) {
+            /** @noinspection NullPointerExceptionInspection */
             if (!$route = $routeCollection->get($name)) {
                 continue;
             }
@@ -246,13 +254,18 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
             $this->arResult['MAX_BONUS_SUM'] = 0;
             if ($user) {
-                $cheque = $this->manzanaPosService->processCheque(
-                    $this->manzanaPosService->buildRequestFromBasket(
-                        $basket,
-                        $user->getDiscountCardNumber()
-                    )
-                );
-                $this->arResult['MAX_BONUS_SUM'] = floor($cheque->getCardActiveBalance());
+                try {
+                    $cheque = $this->manzanaPosService->processCheque(
+                        $this->manzanaPosService->buildRequestFromBasket(
+                            $basket,
+                            $user->getDiscountCardNumber()
+                        )
+                    );
+                    $this->arResult['MAX_BONUS_SUM'] = floor($cheque->getCardActiveBalance());
+                } catch (ExecuteException $e) {
+                    /* @todo выводить клиенту сообщение о невозможности оплаты бонусами? */
+                    $this->logger->error($e->getMessage());
+                }
             }
         }
 
