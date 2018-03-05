@@ -20,7 +20,10 @@ use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\SaleBundle\Discount\Gift;
+use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Service\BasketService;
+use FourPaws\SaleBundle\Service\UserAccountService;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService;
 
@@ -39,6 +42,10 @@ class BasketComponent extends \CBitrixComponent
      * @var UserService
      */
     private $currentUserService;
+    /**
+     * @var UserAccountService
+     */
+    private $userAccountService;
     /** @var array $images */
     private $images;
 
@@ -58,6 +65,7 @@ class BasketComponent extends \CBitrixComponent
 
         $this->basketService = $container->get(BasketService::class);
         $this->currentUserService = $container->get(CurrentUserProviderInterface::class);
+        $this->userAccountService = $container->get(UserAccountService::class);
     }
 
     /** @noinspection PhpMissingParentCallCommonInspection */
@@ -83,6 +91,15 @@ class BasketComponent extends \CBitrixComponent
         if (null === $order = $basket->getOrder()) {
             $order = Order::create(SITE_ID);
             $order->setBasket($basket);
+        }
+
+        $this->arResult['USER'] = null;
+        $this->arResult['USER_ACCOUNT'] = null;
+        try {
+            $this->arResult['USER'] = $this->currentUserService->getCurrentUser();
+            $this->arResult['USER_ACCOUNT'] = $this->userAccountService->findAccountByUser($this->arResult['USER']);
+        } catch (NotAuthorizedException $e) {
+        } catch (NotFoundException $e) {
         }
         $this->arResult['BASKET'] = $basket;
         $this->arResult['POSSIBLE_GIFT_GROUPS'] = Gift::getPossibleGiftGroups($order);
