@@ -44,5 +44,6 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.synced_folder ".", "/home/vagrant/project", owner: "vagrant", group: "vagrant", create: true
+  #config.vm.synced_folder ".", "/home/vagrant/project", create: true, type: "nfs"
 
 end
