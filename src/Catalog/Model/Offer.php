@@ -957,11 +957,11 @@ class Offer extends IblockElement
 
     /**
      * размер скидки в процентах
-     * @param int $discount
+     * @param float $discount
      *
      * @return static
      */
-    public function withDiscount(int $discount)
+    public function withDiscount(float $discount)
     {
         $this->discount = $discount;
 
@@ -1043,9 +1043,9 @@ class Offer extends IblockElement
     }
 
     /**
-     * @return int
+     * @return float
      */
-    public function getDiscount(): int
+    public function getDiscount(): float
     {
         $this->checkOptimalPrice();
 
