@@ -356,6 +356,7 @@ class UserRepository
         $return = [
             'phone' => false,
             'email' => false,
+            'login' => false
         ];
 
         if (empty($params)) {
@@ -394,6 +395,9 @@ class UserRepository
                 }
                 if (!$return['email'] && $user->getEmail() === $params['EMAIL']) {
                     $return['email'] = true;
+                }
+                if (!$return['login'] && ($user->getLogin() === $params['EMAIL'] || $user->getLogin() === $params['PERSONAL_PHONE'])) {
+                    $return['login'] = true;
                 }
             }
         }

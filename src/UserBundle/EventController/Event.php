@@ -62,6 +62,9 @@ class Event implements ServiceHandlerInterface
         self::initHandler('OnBeforeUserRegister', 'preventAuthorizationOnRegister');
         self::initHandler('OnAfterUserRegister', 'sendEmail');
         self::initHandler('OnAfterUserUpdate', 'updateManzana');
+
+        /** обновляем логин если он равняется телефону или email */
+        self::initHandler('OnBeforeUserUpdate', 'replaceLoginOnUpdate');
     }
 
     /**
@@ -141,6 +144,11 @@ class Event implements ServiceHandlerInterface
         $fields['ACTIVE'] = 'N';
     }
 
+    /**
+     * @param $fields
+     *
+     * @throws \RuntimeException
+     */
     public static function sendEmail($fields)
     {
         if ($_SESSION['SEND_REGISTER_EMAIL'] && (int)$fields['USER_ID'] > 0 && !empty($fields['EMAIL'])) {
@@ -185,7 +193,7 @@ class Event implements ServiceHandlerInterface
                 $container = App::getInstance()->getContainer();
                 $userService = $container->get(CurrentUserProviderInterface::class);
                 $user = $userService->getUserRepository()->find((int)$fields['ID']);
-                if($user instanceof User) {
+                if ($user instanceof User) {
                     $manzanaService = $container->get('manzana.service');
                     $contactId = $manzanaService->getContactIdByPhone($user->getManzanaNormalizePersonalPhone());
                     $client = new Client();
@@ -199,6 +207,48 @@ class Event implements ServiceHandlerInterface
 
             if ($client instanceof Client) {
                 $manzanaService->updateContactAsync($client);
+            }
+        }
+    }
+
+    /**
+     * @param $fields
+     *
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     */
+    public static function replaceLoginOnUpdate(&$fields)
+    {
+        if (!empty($fields['PERSONAL_PHONE']) || !empty($fields['EMAIL'])) {
+            try {
+                $container = App::getInstance()->getContainer();
+                $userService = $container->get(CurrentUserProviderInterface::class);
+                $user = $userService->getUserRepository()->find((int)$fields['ID']);
+                if($user instanceof User) {
+                    $oldEmail = $user->getEmail();
+                    $oldPhone = $user->getPersonalPhone();
+                    $oldLogin = $user->getLogin();
+                    if(!empty($fields['PERSONAL_PHONE'])){
+                        if ($oldPhone !== $fields['PERSONAL_PHONE'] || $fields['PERSONAL_PHONE'] !== $oldLogin) {
+                            $fields['LOGIN'] = $fields['PERSONAL_PHONE'];
+                        }
+                    }
+                    else{
+                        if(!empty($oldPhone)) {
+                            $fields['LOGIN'] = $oldPhone;
+                        }
+                        elseif(!empty($fields['EMAIL'])){
+                            $fields['LOGIN'] = $fields['EMAIL'];
+                        }
+                        elseif(!empty($oldEmail)){
+                            $fields['LOGIN'] = $oldEmail;
+                        }
+                    }
+                }
+            } catch (ApplicationCreateException $e) {
+                /** если вызывается эта ошибка вероятно умерло все */
             }
         }
     }

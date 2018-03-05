@@ -122,7 +122,7 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
 
         $this->setFrameMode(true);
 
-        /** @todo добавить кеширвоание */
+        /** @todo добавить кеширование */
         /** получаем заказы из манзаны, кешируем на сутки */
         try {
             $userId = $this->currentUserProvider->getCurrentUserId();
