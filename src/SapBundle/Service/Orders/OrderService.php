@@ -52,15 +52,18 @@ class OrderService implements LoggerAwareInterface
      * @param BaseOrderService          $baseOrderService
      * @param ArrayTransformerInterface $arrayTransformer
      * @param SerializerInterface       $serializer
+     * @param Filesystem                $filesystem
      */
     public function __construct(
         BaseOrderService $baseOrderService,
         ArrayTransformerInterface $arrayTransformer,
-        SerializerInterface $serializer
+        SerializerInterface $serializer,
+        Filesystem $filesystem
     ) {
         $this->baseOrderService = $baseOrderService;
         $this->arrayTransformer = $arrayTransformer;
         $this->serializer = $serializer;
+        $this->filesystem = $filesystem;
     }
     
     public function out(Order $order)
@@ -112,6 +115,20 @@ class OrderService implements LoggerAwareInterface
          */
         
         return $order;
+    }
+    
+    /**
+     * @param Order $order
+     *
+     * @return OrderDtoOut
+     */
+    public function transformOrderToDto(Order $order)
+    {
+        $dto = new OrderDtoOut();
+        
+        $dto->setId($order->getId());
+        
+        return $dto;
     }
     
     /**
