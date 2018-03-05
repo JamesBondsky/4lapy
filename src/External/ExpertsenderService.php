@@ -460,7 +460,8 @@ class ExpertsenderService implements LoggerAwareInterface
             new Snippet('delivery_date', $properties['DELIVERY_DATE']),
             new Snippet('tel_number', PhoneHelper::formatPhone($properties['PHONE'])),
             new Snippet('delivery_cost', $order->getDeliveryPrice()),
-            new Snippet('total_bonuses', (int)$properties['BONUS_COUNT'])
+            new Snippet('total_bonuses', (int)$properties['BONUS_COUNT']),
+            new Snippet('order_date', $order->getDateInsert()->format('d.m.Y'))
         ];
 
         $isOnlinePayment = false;
