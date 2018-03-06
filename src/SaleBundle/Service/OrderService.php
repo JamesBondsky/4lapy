@@ -469,10 +469,21 @@ class OrderService
                 }
             } else {
                 $users = $this->currentUserProvider->getUserRepository()->findBy(
-                    ['PERSONAL_PHONE' => $storage->getPhone()]
+                    ['LOGIC' => 'OR', ['=PERSONAL_PHONE' => $storage->getPhone()], ['=EMAIL' => $storage->getEmail()]]
                 );
-                if ($user = reset($users)) {
-                    $order->setFieldNoDemand('USER_ID', $user->getId());
+
+                $foundUser = null;
+                /** @var User $user */
+                foreach ($users as $user) {
+                    if ($user->getEmail() === $storage->getEmail()) {
+                        $foundUser = $user;
+                    } elseif ($user->getPersonalPhone() === $storage->getPhone()) {
+                        $foundUser = $user;
+                    }
+                }
+
+                if ($foundUser) {
+                    $order->setFieldNoDemand('USER_ID', $foundUser->getId());
                 } else {
                     $password = randString(6);
                     $user = (new User())
@@ -482,6 +493,7 @@ class OrderService
                         ->setPassword($password)
                         ->setPersonalPhone($storage->getPhone());
                     $_SESSION['MANZANA_UPDATE'] = true;
+                    $_SESSION['SEND_REGISTER_EMAIL'] = true;
                     $user = $this->userRegistrationProvider->register($user);
 
                     $order->setFieldNoDemand('USER_ID', $user->getId());
