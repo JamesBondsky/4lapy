@@ -121,16 +121,16 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                             $this->arResult['STEP'] = 'createNewPassword';
                         }
                     } else {
-                        $this->arResult['ERROR'] = 'Ссылка для подтверждения недействительна, попробуйте восстанвоить пароль заново';
+                        $this->arResult['ERROR'] = 'Ссылка для подтверждения недействительна, попробуйте восстановить пароль заново';
                         $this->arResult['STEP'] = 'error';
                     }
                 }
                 catch (ExpiredConfirmCodeException $e){
-                    $this->arResult['ERROR'] = 'Срок действия ссылки истек, попробуйте восстанвоить пароль заново';
+                    $this->arResult['ERROR'] = 'Срок действия ссылки истек, попробуйте восстановить пароль заново';
                     $this->arResult['STEP'] = 'error';
                 }
                 catch (NotFoundConfirmedCodeException $e){
-                    $this->arResult['ERROR'] = 'Ссылка для подтверждения недействительна, попробуйте восстанвоить пароль заново';
+                    $this->arResult['ERROR'] = 'Ссылка для подтверждения недействительна, попробуйте восстановить пароль заново';
                     $this->arResult['STEP'] = 'error';
                 }
             }

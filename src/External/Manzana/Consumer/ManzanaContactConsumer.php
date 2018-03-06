@@ -25,6 +25,7 @@ class ManzanaContactConsumer extends ManzanaConsumerBase
     public function execute(AMQPMessage $message): bool
     {
         try {
+            /** @var Client $contact */
             $contact = $this->serializer->deserialize($message->getBody(), Client::class, 'json');
 
             if (null === $contact || (!$contact->phone && !$contact->contactId)) {
