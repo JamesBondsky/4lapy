@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\Console\Command;
 
 use FourPaws\App\Application;
@@ -13,6 +17,7 @@ class IndexerReindex extends Command
 {
     const OPT_FORCE = 'force';
     const OPT_NO_FILTER = 'no-filter';
+    const OPT_BATCH_SIZE = 'batch';
     private $searchService;
 
     /**
@@ -48,6 +53,13 @@ class IndexerReindex extends Command
                 'nf',
                 InputOption::VALUE_NONE,
                 'Index without any filter'
+            )
+            ->addOption(
+                static::OPT_BATCH_SIZE,
+                'b',
+                InputOption::VALUE_OPTIONAL,
+                'Batch size',
+                500
             );
     }
 
@@ -81,6 +93,8 @@ class IndexerReindex extends Command
         }
         $noFilter = $input->getOption(self::OPT_NO_FILTER) ?: false;
 
+        $batchSize = $input->getOption(self::OPT_BATCH_SIZE) ?: 500;
+
         if ($this->searchService->getIndexHelper()->createCatalogIndex($force)) {
             $output->writeln(
                 sprintf(
@@ -90,7 +104,7 @@ class IndexerReindex extends Command
                 )
             );
         }
-        $this->searchService->getIndexHelper()->indexAll($noFilter);
+        $this->searchService->getIndexHelper()->indexAll($noFilter, $batchSize);
         $this->searchService->getIndexHelper()->cleanup($noFilter);
     }
 }
