@@ -493,6 +493,7 @@ class OrderService
                         ->setPassword($password)
                         ->setPersonalPhone($storage->getPhone());
                     $_SESSION['MANZANA_UPDATE'] = true;
+                    $_SESSION['SEND_REGISTER_EMAIL'] = true;
                     $user = $this->userRegistrationProvider->register($user);
 
                     $order->setFieldNoDemand('USER_ID', $user->getId());
