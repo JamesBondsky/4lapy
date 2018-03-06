@@ -201,8 +201,8 @@ class OrderService
 
     /**
      * @param OrderStorage $storage
-     * @param bool         $save
-     * @param bool         $fastOrder
+     * @param bool $save
+     * @param bool $fastOrder
      *
      * @throws \FourPaws\SaleBundle\Exception\FastOrderCreateException
      * @throws \Exception
@@ -232,45 +232,18 @@ class OrderService
             throw new OrderCreateException('Корзина пуста');
         }
 
-        /**
-         * Задание способов оплаты
-         */
-        if ($storage->getPaymentId()) {
-            $paymentCollection = $order->getPaymentCollection();
-            $sum = $order->getBasket()->getOrderableItems()->getPrice();
-
-            if ($storage->getBonus()) {
-                $innerPayment = $paymentCollection->getInnerPayment();
-                $innerPayment->setField('SUM', $storage->getBonus());
-                $sum -= $storage->getBonus();
-            }
-
-            $extPayment = $paymentCollection->createItem();
-            $extPayment->setField('SUM', $sum);
-            $extPayment->setField('PAY_SYSTEM_ID', $storage->getPaymentId());
-
-            /** @var \Bitrix\Sale\PaySystem\Service $paySystem */
-            $paySystem = $extPayment->getPaySystem();
-            $extPayment->setField('PAY_SYSTEM_NAME', $paySystem->getField('NAME'));
-        } elseif ($save) {
-            if(!$fastOrder) {
-                throw new OrderCreateException('Не выбран способ оплаты');
-            }
-        }
-
         $deliveries = $this->getDeliveries();
         $selectedDelivery = null;
         $deliveryId = $storage->getDeliveryId();
-        if($fastOrder) {
+        if ($fastOrder) {
             /** устанавливаем самовывоз для быстрого заказа */
-            if(!empty($deliveries)) {
+            if (!empty($deliveries)) {
                 $selectedDelivery = current($deliveries);
-            }
-            else{
+            } else {
                 throw new FastOrderCreateException('Оформление быстрого заказа невозможно, пожалуйста обратить к администратору или попробуйте полный процесс оформления');
             }
         }
-        if($selectedDelivery === null && !empty($deliveries)) {
+        if ($selectedDelivery === null && !empty($deliveries)) {
             /** @var CalculationResult $delivery */
             foreach ($deliveries as $delivery) {
                 if ($deliveryId === (int)$delivery->getData()['DELIVERY_ID']) {
@@ -312,9 +285,9 @@ class OrderService
 
             $shipment->setFields(
                 [
-                    'DELIVERY_ID'   => $selectedDelivery->getData()['DELIVERY_ID'],
+                    'DELIVERY_ID' => $selectedDelivery->getData()['DELIVERY_ID'],
                     'DELIVERY_NAME' => $selectedDelivery->getData()['DELIVERY_NAME'],
-                    'CURRENCY'      => $order->getCurrency(),
+                    'CURRENCY' => $order->getCurrency(),
                 ]
             );
 
@@ -392,8 +365,35 @@ class OrderService
                 $propertyValue->setValue($value);
             }
         } elseif ($save) {
-            if(!$fastOrder) {
+            if (!$fastOrder) {
                 throw new OrderCreateException('Не выбрана доставка');
+            }
+        }
+
+        /**
+         * Задание способов оплаты
+         */
+        if ($storage->getPaymentId()) {
+            $paymentCollection = $order->getPaymentCollection();
+            $sum = $order->getBasket()->getOrderableItems()->getPrice();
+            $sum += $order->getDeliveryPrice();
+
+            if ($storage->getBonus()) {
+                $innerPayment = $paymentCollection->getInnerPayment();
+                $innerPayment->setField('SUM', $storage->getBonus());
+                $sum -= $storage->getBonus();
+            }
+
+            $extPayment = $paymentCollection->createItem();
+            $extPayment->setField('SUM', $sum);
+            $extPayment->setField('PAY_SYSTEM_ID', $storage->getPaymentId());
+
+            /** @var \Bitrix\Sale\PaySystem\Service $paySystem */
+            $paySystem = $extPayment->getPaySystem();
+            $extPayment->setField('PAY_SYSTEM_NAME', $paySystem->getField('NAME'));
+        } elseif ($save) {
+            if (!$fastOrder) {
+                throw new OrderCreateException('Не выбран способ оплаты');
             }
         }
 
@@ -469,10 +469,21 @@ class OrderService
                 }
             } else {
                 $users = $this->currentUserProvider->getUserRepository()->findBy(
-                    ['PERSONAL_PHONE' => $storage->getPhone()]
+                    ['LOGIC' => 'OR', ['=PERSONAL_PHONE' => $storage->getPhone()], ['=EMAIL' => $storage->getEmail()]]
                 );
-                if ($user = reset($users)) {
-                    $order->setFieldNoDemand('USER_ID', $user->getId());
+
+                $foundUser = null;
+                /** @var User $user */
+                foreach ($users as $user) {
+                    if ($user->getEmail() === $storage->getEmail()) {
+                        $foundUser = $user;
+                    } elseif ($user->getPersonalPhone() === $storage->getPhone()) {
+                        $foundUser = $user;
+                    }
+                }
+
+                if ($foundUser) {
+                    $order->setFieldNoDemand('USER_ID', $foundUser->getId());
                 } else {
                     $password = randString(6);
                     $user = (new User())
@@ -482,6 +493,7 @@ class OrderService
                         ->setPassword($password)
                         ->setPersonalPhone($storage->getPhone());
                     $_SESSION['MANZANA_UPDATE'] = true;
+                    $_SESSION['SEND_REGISTER_EMAIL'] = true;
                     $user = $this->userRegistrationProvider->register($user);
 
                     $order->setFieldNoDemand('USER_ID', $user->getId());

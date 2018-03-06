@@ -1,12 +1,14 @@
 #!/usr/bin/env php
 <?php
 
+define('NO_KEEP_STATISTIC', true);
+define('NOT_CHECK_PERMISSIONS', true);
+define('BX_WITH_ON_AFTER_EPILOG', true);
+define('BX_NO_ACCELERATOR_RESET', true);
+
 use FourPaws\App\Application;
 use Symfony\Bundle\FrameworkBundle\Console\Application as BundleConsoleApplication;
 use Symfony\Component\Console\Input\ArgvInput;
-
-umask(0000);
-set_time_limit(0);
 
 $_SERVER['DOCUMENT_ROOT'] = dirname(__DIR__) . '/web';
 require_once dirname(__DIR__) . '/vendor/autoload.php';
@@ -21,6 +23,16 @@ if ($env) {
 require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/php_interface/local.env.php';
 
+@set_time_limit(0);
+@umask(0000);
+
+CMain::PrologActions();
+
+
+/** @noinspection PhpUnhandledExceptionInspection */
 $fourPawsApp = Application::getInstance();
 $application = new BundleConsoleApplication($fourPawsApp);
+/** @noinspection PhpUnhandledExceptionInspection */
 $application->run($input);
+
+CMain::FinalActions();

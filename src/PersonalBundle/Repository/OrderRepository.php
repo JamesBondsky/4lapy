@@ -160,9 +160,8 @@ class OrderRepository extends BaseRepository
                         if ($res->getSelectedRowsCount() > 0) {
                             $item['PROPERTY_SELECTED'] = $res->fetch()['UF_NAME'];
                             $item['PROPERTY_SELECTED_NAME'] = 'Размер';
-                        }
-                        else{
-                            $item['PROPERTY_SELECTED'] =$item['PROPERTY_SIZE'];
+                        } else {
+                            $item['PROPERTY_SELECTED'] = $item['PROPERTY_SIZE'];
                             $item['PROPERTY_SELECTED_NAME'] = 'Размер';
                         }
                     } elseif (!empty($item['PROPERTY_VOLUME'])) {
@@ -174,9 +173,8 @@ class OrderRepository extends BaseRepository
                         if ($res->getSelectedRowsCount() > 0) {
                             $item['PROPERTY_SELECTED'] = $res->fetch()['UF_NAME'];
                             $item['PROPERTY_SELECTED_NAME'] = 'Вариант фасовки';
-                        }
-                        else{
-                            $item['PROPERTY_SELECTED'] =$item['PROPERTY_VOLUME'];
+                        } else {
+                            $item['PROPERTY_SELECTED'] = $item['PROPERTY_VOLUME'];
                             $item['PROPERTY_SELECTED_NAME'] = 'Вариант фасовки';
                         }
                     }
@@ -194,9 +192,9 @@ class OrderRepository extends BaseRepository
                     }
                 }
 
-                if(!empty($item['PRODUCT_XML_ID'])){
+                if (!empty($item['PRODUCT_XML_ID'])) {
                     $explode = explode('#', $item['PRODUCT_XML_ID']);
-                    if(\is_array($explode)){
+                    if (\is_array($explode)) {
                         $item['PRODUCT_XML_ID'] = end($explode);
                     }
                 }
@@ -225,16 +223,20 @@ class OrderRepository extends BaseRepository
      */
     public function getPayment(int $paySystemId): OrderPayment
     {
-        return $this->dataToEntity(
-            PaySystemActionTable::query()
-                ->where('PAY_SYSTEM_ID', $paySystemId)
-                ->setCacheTtl(360000)
-                ->setLimit(1)
-                ->setSelect([
-                    'ID',
-                    'NAME',
-                ])->exec()->fetch(),
-            OrderPayment::class);
+        $payment = PaySystemActionTable::query()
+            ->where('PAY_SYSTEM_ID', $paySystemId)
+            ->setCacheTtl(360000)
+            ->setLimit(1)
+            ->setSelect([
+                'ID',
+                'NAME',
+            ])->exec()->fetch();
+        if (\is_array($payment)) {
+            return $this->dataToEntity(
+                $payment,
+                OrderPayment::class);
+        }
+        return new OrderPayment();
     }
 
     /**
@@ -245,18 +247,23 @@ class OrderRepository extends BaseRepository
      */
     public function getDelivery(int $orderId): OrderDelivery
     {
-        return $this->dataToEntity(
-            ShipmentTable::query()
-                ->where('ORDER_ID', $orderId)
-                ->where('SYSTEM', 'N')
-                ->where('EXTERNAL_DELIVERY', 'N')
-                ->setLimit(1)
-                ->setCacheTtl(360000)
-                ->setSelect([
-                    'ID',
-                    'DELIVERY_NAME',
-                ])->exec()->fetch(),
-            OrderDelivery::class);
+        $shipment = ShipmentTable::query()
+            ->where('ORDER_ID', $orderId)
+            ->where('SYSTEM', 'N')
+            ->where('EXTERNAL_DELIVERY', 'N')
+            ->setLimit(1)
+            ->setCacheTtl(360000)
+            ->setSelect([
+                'ID',
+                'DELIVERY_NAME',
+            ])->exec()->fetch();
+        if (\is_array($shipment)) {
+            return $this->dataToEntity(
+                $shipment,
+                OrderDelivery::class);
+        }
+
+        return new OrderDelivery();
     }
 
     /**

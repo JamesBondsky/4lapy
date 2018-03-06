@@ -13,20 +13,21 @@ if (!$sberbankOrderId = $_REQUEST['orderId']) {
     throw new PaymentException('Заказ не найден');
 }
 
-$order = new CSaleOrder();
-$arOrder = $order->GetByID($orderId);
+$order = \Bitrix\Sale\Order::load($orderId);
 
+/** @noinspection PhpDeprecationInspection */
 $paysystem = new CSalePaySystemAction();
-$paysystem->InitParamArrays($arOrder);
-
+$paysystem->InitParamArrays(null, $orderId);
 /**
  * Подключение файла настроек
  */
+/** @noinspection PhpIncludeInspection */
 require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sberbank.ecom/config.php');
 
 /**
  * Подключение класса RBS
  */
+/** @noinspection PhpIncludeInspection */
 require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sberbank.ecom/payment/rbs.php');
 
 $testMode = false;
@@ -50,27 +51,37 @@ $rbs = new RBS(
     $testMode,
     $logging
 );
+
 $response = $rbs->get_order_status_by_orderId($sberbankOrderId);
-
 if ((int)$response['errorCode'] === 0) {
-    $arOrderFields = [
-        'PS_SUM'                => $response['amount'] / 100,
-        'PS_CURRENCY'           => $response['currency'],
-        'PS_RESPONSE_DATE'      => Date(CDatabase::DateFormatToPHP(CLang::GetDateFormat('FULL', LANG))),
-        'PS_STATUS'             => 'Y',
-        'PS_STATUS_DESCRIPTION' => $response['cardAuthInfo']['pan'] . ';' . $response['cardAuthInfo']['cardholderName'],
-        'PS_STATUS_MESSAGE'     => $response['paymentAmountInfo']['paymentState'],
-        'PS_STATUS_CODE'        => 'Y',
-    ];
+    /** @var \Bitrix\Sale\Payment $payment */
+    $onlinePayment = null;
+    foreach ($order->getPaymentCollection() as $payment) {
+        if ($payment->isInner()) {
+            continue;
+        }
 
-    $order->PayOrder($orderId, 'Y', true, true);
-    if ($paysystem->GetParamValue('SHIPMENT_ENABLE') === 'Y') {
-        $order->DeliverOrder($orderId, 'Y');
+        if ($payment->getPaySystem()->getField('CODE') === OrderService::PAYMENT_ONLINE) {
+            $onlinePayment = $payment;
+        }
     }
 
-    $orderNumberPrint = $paysystem->GetParamValue('ORDER_NUMBER');
+    if (!$onlinePayment) {
+        throw new PaymentException('Неверный тип оплаты у заказа');
+    }
 
-    $order->Update($orderId, $arOrderFields);
+    $onlinePayment->setPaid('Y');
+    $onlinePayment->setField('PS_SUM', $response['amount'] / 100);
+    $onlinePayment->setField('PS_CURRENCY', $response['currency']);
+    $onlinePayment->setField('PS_RESPONSE_DATE', new \Bitrix\Main\Type\Date());
+    $onlinePayment->setField('PS_STATUS', 'Y');
+    $onlinePayment->setField('PS_STATUS_DESCRIPTION',
+        $response['cardAuthInfo']['pan'] . ';' . $response['cardAuthInfo']['cardholderName']);
+    $onlinePayment->setField('PS_STATUS_MESSAGE', response['paymentAmountInfo']['paymentState']);
+    $onlinePayment->setField('PS_STATUS_CODE', 'Y');
+    $onlinePayment->save();
+
+    $order->save();
 } else {
     throw new PaymentException($response['errorMessage'], $response['errorCode']);
 }
