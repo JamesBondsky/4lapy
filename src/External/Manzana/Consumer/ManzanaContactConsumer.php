@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\External\Manzana\Consumer;
 
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
@@ -24,7 +28,11 @@ class ManzanaContactConsumer extends ManzanaConsumerBase
             /** @var Client $contact */
             $contact = $this->serializer->deserialize($message->getBody(), Client::class, 'json');
 
-            if (!empty($contact->phone) && empty($contact->contactId)) {
+            if (null === $contact || (!$contact->phone && !$contact->contactId)) {
+                throw new ContactUpdateException('Неожиданное сообщение');
+            }
+
+            if (!$contact->contactId) {
                 try {
                     $contact->contactId = $this->manzanaService->getContactIdByPhone($contact->phone);
                 } catch (ManzanaServiceContactSearchNullException $e) {
@@ -37,11 +45,15 @@ class ManzanaContactConsumer extends ManzanaConsumerBase
             $contact = $this->manzanaService->updateContact($contact);
             $this->manzanaService->updateUserCardByClient($contact);
         } catch (ContactUpdateException $e) {
-            $this->log()->error(sprintf('Contact update error: %s',
-                $e->getMessage()));
+            $this->log()->error(sprintf(
+                'Contact update error: %s',
+                $e->getMessage()
+            ));
         } catch (ManzanaServiceException $e) {
-            $this->log()->error(sprintf('Manzana error: %s',
-                $e->getMessage()));
+            $this->log()->error(sprintf(
+                'Manzana error: %s',
+                $e->getMessage()
+            ));
 
             return false;
         }
