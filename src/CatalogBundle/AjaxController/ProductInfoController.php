@@ -2,6 +2,7 @@
 
 namespace FourPaws\CatalogBundle\AjaxController;
 
+use FourPaws\App\Application;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
@@ -16,6 +17,7 @@ use FourPaws\Search\SearchService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Templating\DelegatingEngine;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
@@ -39,6 +41,11 @@ class ProductInfoController extends Controller
     protected $searchService;
 
     /**
+     * @var DelegatingEngine
+     */
+    protected $renderer;
+
+    /**
      * ProductInfoController constructor.
      * @param ValidatorInterface $validator
      * @param SearchService $searchService
@@ -47,39 +54,15 @@ class ProductInfoController extends Controller
     {
         $this->validator = $validator;
         $this->searchService = $searchService;
-    }
 
-    /**
-     * @Route("/detail/", methods={"GET"})
-     *
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function detailAction(Request $request): JsonResponse
-    {
-        /** @todo доделать ответ */
-        $offerId = $request->query->get('offerId', 0);
-
-        /** @var Offer $offer */
-        $offer = (new OfferQuery())->withFilterParameter('ID', $offerId)->exec()->first();
-        if (!$offer) {
-            return JsonErrorResponse::create('Товар не найден');
+        $container = Application::getInstance()->getContainer();
+        if ($container->has('templating')) {
+            $this->renderer = $container->get('templating');
+        } elseif ($container->has('twig')) {
+            $this->renderer = $container->get('twig');
+        } else {
+            throw new \LogicException('You can not use the "render" method if the Templating Component or the Twig Bundle are not available.');
         }
-
-        /**
-        return JsonSuccessResponse::createWithData('', [
-            'deliveryHtml' => $this->render(
-                'FourPawsCatalogBundle:Catalog:ajax.productDetail.info.html.php',
-                ['offer' => $offer]
-            ),
-            'variantsHtml' => $this->render(
-                'FourPawsCatalogBundle:Catalog:ajax.productDetail.info.html.php',
-
-                'FourPawsCatalogBundle:Catalog:productDetail.variants.html.php',
-                ['product' => $offer->getProduct()]),
-            'isAvailable' => !$offer->getStocks()->isEmpty()
-        ]);
-         **/
     }
 
     /**
@@ -88,9 +71,14 @@ class ProductInfoController extends Controller
      * @param ProductListRequest $productListRequest
      * @return JsonResponse
      */
-    public function snippetsAction(ProductListRequest $productListRequest): JsonResponse
+    public function infoAction(Request $request, ProductListRequest $productListRequest): JsonResponse
     {
-        $result = [];
+        $response = [
+            'products' => []
+        ];
+
+        $offerId = (int)$request->query->get('offer', 0);
+        $currentOffer = null;
 
         if (!$this->validator->validate($productListRequest)->count()) {
             /** @var ProductSearchResult $result */
@@ -104,14 +92,22 @@ class ProductInfoController extends Controller
             foreach ($searchResult->getProductCollection() as $product) {
                 /** @var Offer $offer */
                 foreach ($product->getOffers() as $offer) {
-                    $result[$product->getId()][$offer->getId()] = [
+                    if ($offerId && $offer->getId() === $offerId) {
+                        $currentOffer = $offer;
+                    }
+                    $response['products'][$product->getId()][$offer->getId()] = [
                         'available' => !$offer->getStocks()->isEmpty()
                     ];
                 }
             }
+
+            if ($currentOffer) {
+                $response['deliveryHtml'] = $this->renderer->render(
+                    'FourPawsCatalogBundle:Catalog:ajax.productDetail.info.html.php',
+                    ['offer' => $offer]
+                );
+            }
         }
-        return JsonSuccessResponse::createWithData('', [
-            'products' => $result
-        ]);
+        return JsonSuccessResponse::createWithData('', $response);
     }
 }

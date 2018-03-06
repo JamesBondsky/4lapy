@@ -18,7 +18,7 @@ class ProductIdFilter extends FilterBase
      */
     public function getFilterCode(): string
     {
-        return 'products';
+        return 'product';
     }
 
     /**

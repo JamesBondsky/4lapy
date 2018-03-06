@@ -31,7 +31,7 @@ class ProductListRequestConverter implements ParamConverterInterface
      */
     public function apply(Request $request, ParamConverter $configuration): bool
     {
-        $productIds = array_filter((array)$request->get('products', []));
+        $productIds = array_filter((array)$request->get('product', []));
 
         $idFilter = new ProductIdFilter();
         $idFilter->initState($request);
