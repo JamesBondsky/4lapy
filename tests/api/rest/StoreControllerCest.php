@@ -35,6 +35,7 @@ class StoreControllerCest
      *
      * @dataprovider validDataProvider
      * @throws \_generated\Exception
+     * @throws Exception
      */
     public function testValidGet(ApiTester $I, \Codeception\Example $example)
     {
@@ -69,6 +70,9 @@ class StoreControllerCest
             'image' => 'string',
             'title' => 'string:!empty',
         ], '$.data.shops[0].service[0]');
+        if (null !== $example['count'] ?? null) {
+            $I->assertCount($example['count'], $I->grabDataFromResponseByJsonPath('$.data.shops[*]'));
+        }
     }
 
     public function validDataProvider()
@@ -80,15 +84,18 @@ class StoreControllerCest
             ],
             [
                 'params' => ['city_id' => ''],
+                'count'  => null,
             ],
             [
                 'params' => [],
+                'count'  => null,
             ],
             [
                 'params' => [
                     'city_id'       => '0000073738',
                     'metro_station' => [1, 16, 5],
                 ],
+                'count'  => null,
             ],
             [
                 'params' => [
@@ -107,6 +114,7 @@ class StoreControllerCest
      *
      * @dataprovider invalidDataProvider
      * @throws \_generated\Exception
+     * @throws Exception
      */
     public function testInvalidGet(ApiTester $I, \Codeception\Example $example)
     {
@@ -118,10 +126,15 @@ class StoreControllerCest
         $I->sendGET('/shop_list/', $params);
         $I->seeResponseCodeIs(HttpCode::OK);
         $I->seeResponseIsJson();
-        $I->seeResponseMatchesJsonType(['data' => 'array', 'error' => 'array']);
         $I->seeResponseMatchesJsonType([
-            'code' => 'string:=44',
-        ], '$.error[0]');
+            'data'  => [
+                'shops' => 'array:!empty',
+            ],
+            'error' => 'array:empty',
+        ]);
+        if (null !== $example['count'] ?? null) {
+            $I->assertCount($example['count'], $I->grabDataFromResponseByJsonPath('$.data.shops[*]'));
+        }
     }
 
     public function invalidDataProvider()
@@ -132,6 +145,7 @@ class StoreControllerCest
                     'city_id'       => '0000230626',
                     'metro_station' => [1, 16, 5],
                 ],
+                'count'  => 2,
             ],
         ];
     }

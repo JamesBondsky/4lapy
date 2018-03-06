@@ -15,3 +15,4 @@ modules:
         - REST:
             url: http://4lapy.vag/api
             depends: PhpBrowser
+        - Asserts

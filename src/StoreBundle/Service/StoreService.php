@@ -394,7 +394,7 @@ class StoreService
     /**
      * @param array $params
      *
-     * @throws \Exception
+     * @throws \Bitrix\Main\ArgumentException
      * @return StoreCollection
      */
     public function getStoreCollection(array $params = []): StoreCollection
