@@ -248,17 +248,6 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                         <?php } ?>
                     </div>
                 </li>
-                <?php if ($currentOffer->isByRequest()) {
-                    /**
-                     * @todo наличие по зоне
-                     */
-                    ?>
-                    <li class="b-product-information__item">
-                        <div class="b-product-information__title-info">Наличие</div>
-                        <div class="b-product-information__value">Только под заказ</div>
-                    </li>
-                <?php } ?>
-                <?php /* @todo сделать подгрузку инфо о доставках через ajax */ ?>
                 <?php $APPLICATION->IncludeComponent('fourpaws:catalog.product.delivery.info',
                     'detail',
                     [
