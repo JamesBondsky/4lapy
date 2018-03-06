@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Service\Orders;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
@@ -14,6 +18,7 @@ use JMS\Serializer\ArrayTransformerInterface;
 use JMS\Serializer\SerializerInterface;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Filesystem\Exception\IOException;
 
 /**
  * Class OrderService
@@ -23,7 +28,7 @@ use Symfony\Component\Filesystem\Filesystem;
 class OrderService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
-    
+
     /**
      * @var BaseOrderService
      */
@@ -43,16 +48,19 @@ class OrderService implements LoggerAwareInterface
     /**
      * @var string
      */
-    private $path;
+    private $outPath;
+    /**
+     * @var string
+     */
     private $messageId;
-    
+
     /**
      * OrderService constructor.
      *
-     * @param BaseOrderService          $baseOrderService
+     * @param BaseOrderService $baseOrderService
      * @param ArrayTransformerInterface $arrayTransformer
-     * @param SerializerInterface       $serializer
-     * @param Filesystem                $filesystem
+     * @param SerializerInterface $serializer
+     * @param Filesystem $filesystem
      */
     public function __construct(
         BaseOrderService $baseOrderService,
@@ -65,7 +73,7 @@ class OrderService implements LoggerAwareInterface
         $this->serializer = $serializer;
         $this->filesystem = $filesystem;
     }
-    
+
     public function out(Order $order)
     {
         $message = $this->transformOrderToMessage($order);
@@ -74,7 +82,7 @@ class OrderService implements LoggerAwareInterface
          * Получаем из настроек ftp и выгружаем по ftp
          */
     }
-    
+
     /**
      * @param Order $order
      *
@@ -88,86 +96,87 @@ class OrderService implements LoggerAwareInterface
          * Do some magic with order
          */
         $orderArray = [];
-        
+
         $dto = $this->arrayTransformer->fromArray($orderArray, OrderDtoOut::class);
         $xml = $this->serializer->serialize($dto, 'xml');
-        
+
         return new SourceMessage($this->getMessageId($order), OrderDtoOut::class, $xml);
     }
-    
+
     /**
      * @param OrderDtoIn $orderDto
      *
-     * @return Order
      * @throws ArgumentNullException
      * @throws NotImplementedException
+     * @return Order
      */
     public function transformDtoToOrder(OrderDtoIn $orderDto): Order
     {
         $orderArray = $this->arrayTransformer->toArray($orderDto);
-        
+
         $order = Order::load($orderArray['id']);
-        
+
         /**
          * @todo
          *
          * Do some magic with order
          */
-        
+
         return $order;
     }
-    
+
     /**
      * @param Order $order
      *
      * @return OrderDtoOut
      */
-    public function transformOrderToDto(Order $order)
+    public function transformOrderToDto(Order $order): OrderDtoOut
     {
         $dto = new OrderDtoOut();
-        
+
         $dto->setId($order->getId());
-        
+
         return $dto;
     }
-    
+
     /**
      * @param Order $order
      *
      * @return string
      */
-    public function getMessageId(Order $order)
+    public function getMessageId(Order $order): string
     {
         if (null === $this->messageId) {
             $this->messageId = sprintf('order_%s_%s', $order->getId(), time());
         }
-        
+
         return $this->messageId;
     }
-    
+
     /**
      * @param Order $order
      *
      * @return string
      */
-    public function getFileName(Order $order)
+    public function getFileName(Order $order): string
     {
         return sprintf('%s-%s.xml', $order->getDateInsert()->format('Ymd'), $order->getId());
     }
-    
+
     /**
-     * @param string $path
+     * @param string $outPath
      *
      * @return OrderService
+     * @throws IOException
      */
-    public function setPath(string $path): OrderService
+    public function setOutPath(string $outPath): OrderService
     {
-        if (!$this->filesystem->exists($path)) {
-            $this->filesystem->mkdir($path, '0775');
+        if (!$this->filesystem->exists($outPath)) {
+            $this->filesystem->mkdir($outPath, '0775');
         }
-        
-        $this->path = $path;
-        
+
+        $this->outPath = $outPath;
+
         return $this;
     }
 }

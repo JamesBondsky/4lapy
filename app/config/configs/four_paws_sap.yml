@@ -43,6 +43,8 @@ four_paws_sap:
       error: '%sap.shop.directory.error%'
       filemask: 'sapbi_balance_*'
       filetype: 'csv'
+  out_path:
+    order: '%sap.directory.out%'
   pipelines:
     catalog:
       - FourPaws\SapBundle\Dto\In\Offers\Materials
