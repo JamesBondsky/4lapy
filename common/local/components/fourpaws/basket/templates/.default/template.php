@@ -273,12 +273,18 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
             <div class="b-information-order">
                 <div class="b-information-order__client">
                     <?php if ($user && $userAccount) { ?>
-                     <span class="b-information-order__pay-points">
-                        <span class="b-information-order__name"><?= $user->getName() ?>, </span>
-                        вы можете оплатить этот заказ баллами (до <?= WordHelper::numberFormat($userAccount->getCurrentBudget()) ?>).
-                    </span> -->
-                    <?php } ?>
-                    <?php
+                        <span class="b-information-order__pay-points">
+                            <span class="b-information-order__name"><?= $user->getName() ?>, </span>
+                            вы можете оплатить этот заказ баллами (до <?= WordHelper::numberFormat($userAccount->getCurrentBudget()) ?>).
+                        </span>
+                    <?php } else { ?>
+                        <span class="b-information-order__pay-points b-information-order__pay-points--flex">
+                            Уже покупали у нас?
+                            <a class="b-link-gift b-link-gift--shopping-aside js-open-popup" href="javascript:void(0);" data-popup-id="authorization">
+                                <span class="b-link-gift__text">Войти</span>
+                            </a>
+                        </span>
+                    <?php }
                     $APPLICATION->IncludeComponent(
                         'fourpaws:city.selector',
                         'basket.summary',
