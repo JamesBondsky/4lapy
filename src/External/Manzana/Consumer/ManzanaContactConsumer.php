@@ -18,35 +18,34 @@ class ManzanaContactConsumer extends ManzanaConsumerBase
     /**
      * @inheritdoc
      */
-    public function execute(AMQPMessage $message) : bool
+    public function execute(AMQPMessage $message): bool
     {
         try {
+            /** @var Client $contact */
             $contact = $this->serializer->deserialize($message->getBody(), Client::class, 'json');
-           
-            if (!$contact->phone) {
-                throw new ContactUpdateException('Неожиданное сообщение');
+
+            if (!empty($contact->phone) && empty($contact->contactId)) {
+                try {
+                    $contact->contactId = $this->manzanaService->getContactIdByPhone($contact->phone);
+                } catch (ManzanaServiceContactSearchNullException $e) {
+                    /**
+                     * Создание пользователя
+                     */
+                }
             }
-            
-            try {
-                $contact->contactId = $this->manzanaService->getContactIdByPhone($contact->phone);
-            } catch (ManzanaServiceContactSearchNullException $e) {
-                /**
-                 * Создание пользователя
-                 */
-            }
-            
+
             $contact = $this->manzanaService->updateContact($contact);
             $this->manzanaService->updateUserCardByClient($contact);
         } catch (ContactUpdateException $e) {
             $this->log()->error(sprintf('Contact update error: %s',
-                                        $e->getMessage()));
+                $e->getMessage()));
         } catch (ManzanaServiceException $e) {
             $this->log()->error(sprintf('Manzana error: %s',
-                                        $e->getMessage()));
-    
+                $e->getMessage()));
+
             return false;
         }
-    
+
         return true;
     }
 }
