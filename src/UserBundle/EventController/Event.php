@@ -178,37 +178,50 @@ class Event implements ServiceHandlerInterface
     /**
      * @param $fields
      *
+     * @return bool
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
      */
-    public static function updateManzana($fields)
+    public static function updateManzana($fields): bool
     {
         if ($_SESSION['MANZANA_UPDATE']) {
-            unset($_SESSION['MANZANA_UPDATE']);
-            $client = null;
             try {
                 $container = App::getInstance()->getContainer();
-                $userService = $container->get(CurrentUserProviderInterface::class);
-                $user = $userService->getUserRepository()->find((int)$fields['ID']);
-                if ($user instanceof User) {
-                    $manzanaService = $container->get('manzana.service');
-                    $contactId = $manzanaService->getContactIdByPhone($user->getManzanaNormalizePersonalPhone());
-                    $client = new Client();
-                    $client->contactId = $contactId;
-                }
-            } catch (ManzanaServiceException $e) {
-                $client = new Client();
             } catch (ApplicationCreateException $e) {
                 /** если вызывается эта ошибка вероятно умерло все */
             }
+            unset($_SESSION['MANZANA_UPDATE']);
+            $client = null;
 
-            if ($client instanceof Client) {
+            $userService = $container->get(CurrentUserProviderInterface::class);
+            $user = $userService->getUserRepository()->find((int)$fields['ID']);
+            if (!($user instanceof User)) {
+                return false;
+            }
+
+            try {
+                $manzanaService = $container->get('manzana.service');
+                $client = new Client();
+                if (!empty($user->getManzanaNormalizePersonalPhone())) {
+                    $contactId = $manzanaService->getContactIdByPhone($user->getManzanaNormalizePersonalPhone());
+                    $client->contactId = $contactId;
+                }
+                unset($_SESSION['IS_REGISTER']);
+            } catch (ManzanaServiceException $e) {
+                $client = new Client();
+            }
+
+            if ($client instanceof Client && $user instanceof User) {
+                /** устанавливаем всегда все поля для передачи - что на обновление что на регистарцию */
+                $userService->setClientPersonalDataByCurUser($client, $user);
+
                 $manzanaService->updateContactAsync($client);
             }
         }
+        return true;
     }
 
     /**
@@ -226,23 +239,20 @@ class Event implements ServiceHandlerInterface
                 $container = App::getInstance()->getContainer();
                 $userService = $container->get(CurrentUserProviderInterface::class);
                 $user = $userService->getUserRepository()->find((int)$fields['ID']);
-                if($user instanceof User) {
+                if ($user instanceof User) {
                     $oldEmail = $user->getEmail();
                     $oldPhone = $user->getPersonalPhone();
                     $oldLogin = $user->getLogin();
-                    if(!empty($fields['PERSONAL_PHONE'])){
+                    if (!empty($fields['PERSONAL_PHONE'])) {
                         if ($oldPhone !== $fields['PERSONAL_PHONE'] || $fields['PERSONAL_PHONE'] !== $oldLogin) {
                             $fields['LOGIN'] = $fields['PERSONAL_PHONE'];
                         }
-                    }
-                    else{
-                        if(!empty($oldPhone)) {
+                    } else {
+                        if (!empty($oldPhone)) {
                             $fields['LOGIN'] = $oldPhone;
-                        }
-                        elseif(!empty($fields['EMAIL'])){
+                        } elseif (!empty($fields['EMAIL'])) {
                             $fields['LOGIN'] = $fields['EMAIL'];
-                        }
-                        elseif(!empty($oldEmail)){
+                        } elseif (!empty($oldEmail)) {
                             $fields['LOGIN'] = $oldEmail;
                         }
                     }
