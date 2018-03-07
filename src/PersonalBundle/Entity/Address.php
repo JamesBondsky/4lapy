@@ -215,7 +215,7 @@ class Address extends BaseEntity
         $house = ', д. ' . $this->getHouse();
         
         $res =
-            $this->getStreet() . ' ул.' . $house . $housing . $entrance . $floor . $flat . $intercomCode . ' '
+            $this->getStreet() . ' ул.' . $house . $housing . $entrance . $floor . $flat . $intercomCode . ', '
             . $this->getCity();
         
         return $res;

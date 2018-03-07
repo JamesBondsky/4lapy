@@ -155,7 +155,7 @@ $items = $arResult['ITEMS'];
                         <a class="b-account-referal__link-phone"
                            href="tel:<?= preg_replace('~[^+\d]~', '', tplvar('phone_main')) ?>"
                        title="позвони"><?= tplvar('phone_main') ?></a> или
-                        <a class="b-account-referal__link" href="javascript:void(0);"
+                        <a class="b-account-referal__link" href="/company/partnership/"
                            title="сайт">на сайте.</a>
                     </p>
                 </div>

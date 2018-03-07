@@ -15,6 +15,7 @@ use FourPaws\External\Exception\ExpertsenderServiceException;
 use FourPaws\External\ExpertsenderService;
 use FourPaws\External\SmsService;
 use FourPaws\SaleBundle\Exception\NotFoundException;
+use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
@@ -206,9 +207,13 @@ class NotificationService implements LoggerAwareInterface
         if ($sendCompleteEmail && $this->orderService->getOrderPropertyByCode(
                 $order,
                 'COMPLETE_MESSAGE_SENT'
-            )->getValue() !== BitrixUtils::BX_BOOL_TRUE) {
+            )->getValue() !== BitrixUtils::BX_BOOL_TRUE
+        ) {
             try {
-                $this->emailService->sendOrderCompleteEmail($order);
+                if ($this->emailService->sendOrderCompleteEmail($order)) {
+                    $this->orderService->setOrderPropertyByCode($order, 'COMPLETE_MESSAGE_SENT', 'Y');
+                    $order->save();
+                }
             } catch (ExpertsenderServiceException $e) {
                 $this->logger->error($e->getMessage());
             }
@@ -284,6 +289,9 @@ class NotificationService implements LoggerAwareInterface
             }
         } catch (NotFoundException $e) {
             $this->logger->error($e->getMessage());
+        } catch (StoreNotFoundException $e) {
+            $this->logger->error($e->getMessage());
+            return [];
         }
 
         return $result;

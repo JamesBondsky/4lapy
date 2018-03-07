@@ -114,7 +114,7 @@ class Gift extends \CSaleActionGiftCtrlGroup
                 }
             }
             $subs = \json_encode($subs);
-            $result .= static::class . '::applyGift(' . $arParams['ORDER'] . ', \'' . $subs . '\', $this, $applyCount);$arOrder = $originalOrder;';
+            $result .= static::class . '::applyGift(' . $arParams['ORDER'] . ', \'' . $subs . '\', (isset($this) ? $this : null), $applyCount);$arOrder = $originalOrder;';
         }
 
         return $result;

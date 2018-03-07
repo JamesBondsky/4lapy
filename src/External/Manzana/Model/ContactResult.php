@@ -17,7 +17,6 @@ class ContactResult extends Result
      * @Serializer\Type("string")
      * @Serializer\SerializedName("contactid")
      * @Serializer\XmlElement(cdata=false)
-     * @Serializer\Accessor(getter="getContactId", setter="setContactId")
      */
     protected $contactId = '';
     

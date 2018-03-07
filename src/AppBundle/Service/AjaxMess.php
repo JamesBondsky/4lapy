@@ -8,6 +8,20 @@ use FourPaws\App\Response\JsonResponse;
 class AjaxMess
 {
     /**
+     * @param string $text
+     *
+     * @return JsonResponse
+     */
+    public function getOrderCreateError(string $text = ''): JsonResponse
+    {
+        $mess = 'Ошибка при создании заказа';
+        if(!empty($text)){
+            $mess.=' - '.$text;
+        }
+        return $this->getJsonError('orderCreateError', $mess);
+    }
+
+    /**
      * @return JsonResponse
      */
     public function getWrongPhoneNumberException(): JsonResponse
@@ -107,6 +121,14 @@ class AjaxMess
     public function getHavePhoneError(): JsonResponse
     {
         return $this->getJsonError('havePhone', 'Такой телефон уже существует');
+    }
+
+    /**
+     * @return JsonResponse
+     */
+    public function getHaveLoginError(): JsonResponse
+    {
+        return $this->getJsonError('haveLogin', 'Такой логин уже существует');
     }
 
     /**
@@ -263,6 +285,22 @@ class AjaxMess
     public function getVerificationError(): JsonResponse
     {
         return $this->getJsonError('verificationError', 'Ошибка верификации');
+    }
+
+    /**
+     * @return JsonResponse
+     */
+    public function getEmptyCardNumber(): JsonResponse
+    {
+        return $this->getJsonError('emptyCardNumber', 'Не указан номер карты');
+    }
+
+    /**
+     * @return JsonResponse
+     */
+    public function getCardNotValidError(): JsonResponse
+    {
+        return $this->getJsonError('cardNotValid', 'Карта не валидна');
     }
 
     /**

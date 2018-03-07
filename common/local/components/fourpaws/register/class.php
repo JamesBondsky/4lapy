@@ -17,10 +17,13 @@ use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\AppBundle\Serialization\ArrayCommaString;
 use FourPaws\AppBundle\Serialization\ArrayOrFalseHandler;
 use FourPaws\AppBundle\Serialization\BitrixBooleanHandler;
 use FourPaws\AppBundle\Serialization\BitrixDateHandler;
 use FourPaws\AppBundle\Serialization\BitrixDateTimeHandler;
+use FourPaws\AppBundle\Serialization\ManzanaDateTimeImmutableFullShortHandler;
+use FourPaws\AppBundle\Serialization\PhoneHandler;
 use FourPaws\AppBundle\Service\AjaxMess;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Exception\SmsSendErrorException;
@@ -59,6 +62,10 @@ use Symfony\Component\HttpFoundation\Request;
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsRegisterComponent extends \CBitrixComponent
 {
+    const BASKET_BACK_URL = '/cart/';
+
+    const PERSONAL_URL = '/personal/';
+
     const PHONE_HOT_LINE = '8 (800) 770-00-22';
 
     /**
@@ -111,10 +118,13 @@ class FourPawsRegisterComponent extends \CBitrixComponent
 
         $this->serializer = SerializerBuilder::create()->configureHandlers(
             function (HandlerRegistry $registry) {
+                $registry->registerSubscribingHandler(new ArrayCommaString());
+                $registry->registerSubscribingHandler(new ArrayOrFalseHandler());
+                $registry->registerSubscribingHandler(new BitrixBooleanHandler());
                 $registry->registerSubscribingHandler(new BitrixDateHandler());
                 $registry->registerSubscribingHandler(new BitrixDateTimeHandler());
-                $registry->registerSubscribingHandler(new BitrixBooleanHandler());
-                $registry->registerSubscribingHandler(new ArrayOrFalseHandler());
+                $registry->registerSubscribingHandler(new ManzanaDateTimeImmutableFullShortHandler());
+                $registry->registerSubscribingHandler(new PhoneHandler());
             }
         )->build();
     }
@@ -125,12 +135,48 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         try {
             $this->arResult['STEP'] = 'begin';
 
+            $request = Application::getInstance()->getContext()->getRequest();
+
+            $emailGet = $request->get('email');
+            $hash = $request->get('hash');
+            if (!empty($emailGet) && !empty($hash)) {
+                /** @var ConfirmCodeService $confirmService */
+                $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+                if ($confirmService::checkConfirmEmail($hash)) {
+                    try {
+                        $userRepository = $this->currentUserProvider->getUserRepository();
+                        $userId = $userRepository->findIdentifierByRawLogin($emailGet);
+                        $user = $userRepository->find($userId);
+                        if ($user !== null) {
+                            $user->setEmailConfirmed(true);
+                            $this->currentUserProvider->getUserRepository()->update($user);
+                        }
+                        $this->userAuthorizationService->authorize($userId);
+                    } catch (TooManyUserFoundException $e) {
+                        ShowError('Найдено больше одного пользователя c эл. почтой ' . $emailGet . ', пожалуйста обратитесь на горячую линию');
+                        return false;
+                    } catch (UsernameNotFoundException $e) {
+                        ShowError('Не найдено пользователей c эл. почтой ' . $emailGet . ', пожалуйста обратитесь на горячую линию');
+                        return false;
+                    }
+                    if (!empty($_COOKIE['BACK_URL']) && $_COOKIE['BACK_URL'] === static::BASKET_BACK_URL) {
+                        $backUrl = $_COOKIE['BACK_URL'];
+                        unset($_COOKIE['BACK_URL']);
+                        setcookie('BACK_URL', '', time() - 5, '/');
+
+                        LocalRedirect($backUrl);
+                    } else {
+                        LocalRedirect(static::PERSONAL_URL);
+                    }
+                }
+            }
+
             if ($this->userAuthorizationService->isAuthorized()) {
                 $curUser = $this->currentUserProvider->getCurrentUser();
                 if (!empty($curUser->getExternalAuthId() && empty($curUser->getPersonalPhone()))) {
                     $this->arResult['STEP'] = 'addPhone';
                 } else {
-                    LocalRedirect('/personal/');
+                    LocalRedirect(static::PERSONAL_URL);
                 }
             }
 
@@ -189,7 +235,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
      * @throws \RuntimeException
      * @return JsonResponse
      */
-    public function ajaxRegister($data): JsonResponse
+    public function ajaxRegister(array $data): JsonResponse
     {
         if (!empty($data['PERSONAL_PHONE'])) {
             try {
@@ -216,8 +262,18 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         if ($haveUsers['phone']) {
             return $this->ajaxMess->getHavePhoneError();
         }
+        if ($haveUsers['login']) {
+            return $this->ajaxMess->getHaveLoginError();
+        }
 
-        $data['UF_PHONE_CONFIRMED'] = 'Y';
+        if($data['UF_CONFIRMATION'] === 'on' || $data['UF_CONFIRMATION'] === 'Y'){
+            $data['UF_CONFIRMATION'] = true;
+        }
+        else{
+            $data['UF_CONFIRMATION'] = false;
+        }
+
+        $data['UF_PHONE_CONFIRMED'] = true;
 
         /** @var User $userEntity */
         $userEntity = $this->serializer->fromArray(
@@ -226,15 +282,15 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             DeserializationContext::create()->setGroups('create')
         );
         try {
+            $isBasketBackUrl = !empty($data['backurl']) && $data['backurl'] === static::BASKET_BACK_URL;
+            if($isBasketBackUrl){
+                $_SESSION['FROM_BASKET'] = true;
+            }
+            $_SESSION['MANZANA_UPDATE'] = true;
             $regUser = $this->userRegistrationService->register($userEntity, true);
             if ($regUser instanceof User && $regUser->getId() > 0) {
-                try {
-                    $expertSenderService = App::getInstance()->getContainer()->get('expertsender.service');
-                    $expertSenderService->sendEmailAfterRegister($regUser);
-                } catch (Exception $e) {
-                    $logger = LoggerFactory::create('expertsender');
-                    $logger->error(sprintf('Error send email: %s', $e->getMessage()));
-                }
+
+                $this->userAuthorizationService->authorize($regUser->getId());
 
                 $title = 'Ура, можно покупать! ';
                 /** @noinspection PhpUnusedLocalVariableInspection */
@@ -295,6 +351,20 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             return $this->ajaxMess->getWrongPhoneNumberException();
         }
 
+        /** @var UserRepository $userRepository */
+        $userRepository = $this->currentUserProvider->getUserRepository();
+        $haveUsers = $userRepository->havePhoneAndEmailByUsers(
+            [
+                'PERSONAL_PHONE' => $phone,
+            ]
+        );
+        if ($haveUsers['phone']) {
+            return $this->ajaxMess->getHavePhoneError();
+        }
+        if ($haveUsers['login']) {
+            return $this->ajaxMess->getHaveLoginError();
+        }
+
         $checkedCaptcha = true;
         if ($_SESSION['COUNT_REGISTER_CONFIRM_CODE'] > 3) {
             $recaptchaService = $container->get('recaptcha.service');
@@ -314,7 +384,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             if (!$res) {
                 if ($_SESSION['COUNT_REGISTER_CONFIRM_CODE'] === 3) {
                     $html = $this->getHtml('sendSmsCode', 'Подтверждение телефона',
-                        ['phone' => $phone, 'newAction'=>$newAction]);
+                        ['phone' => $phone, 'newAction' => $newAction]);
 
                     return JsonSuccessResponse::createWithData('',
                         ['html' => $html]);
@@ -324,7 +394,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         } catch (ExpiredConfirmCodeException $e) {
             if ($_SESSION['COUNT_REGISTER_CONFIRM_CODE'] === 3) {
                 $html = $this->getHtml('sendSmsCode', 'Подтверждение телефона',
-                    ['phone' => $phone, 'newAction'=>$newAction]);
+                    ['phone' => $phone, 'newAction' => $newAction]);
 
                 return JsonSuccessResponse::createWithData('',
                     ['html' => $html]);
@@ -335,7 +405,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         } catch (NotFoundConfirmedCodeException $e) {
             if ($_SESSION['COUNT_REGISTER_CONFIRM_CODE'] === 3) {
                 $html = $this->getHtml('sendSmsCode', 'Подтверждение телефона',
-                    ['phone' => $phone, 'newAction'=>$newAction]);
+                    ['phone' => $phone, 'newAction' => $newAction]);
 
                 return JsonSuccessResponse::createWithData('',
                     ['html' => $html]);
@@ -349,7 +419,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             'UF_PHONE_CONFIRMED' => true,
             'PERSONAL_PHONE'     => $phone,
         ];
-        if ($this->currentUserProvider->getUserRepository()->updateData(
+        if ($userRepository->updateData(
             $this->currentUserProvider->getCurrentUserId(),
             $data
         )) {
@@ -402,12 +472,15 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         $title = 'Регистрация';
         switch ($step) {
             case 'step2':
-                $mess = $this->ajaxGetStep2($request->get('confirmCode', ''), $phone);
-                if ($mess instanceof JsonResponse) {
-                    return $mess;
+                $res = $this->ajaxGetStep2($request->get('confirmCode', ''), $phone);
+                if ($res instanceof JsonResponse) {
+                    return $res;
                 }
+                /** @noinspection PhpUnusedLocalVariableInspection */
+                list($mess, $manzanaItem) = $res;
                 break;
             case 'sendSmsCode':
+                unset($_SESSION['COUNT_REGISTER_CONFIRM_CODE']);
                 /** @noinspection PhpUnusedLocalVariableInspection */
                 $newAction = $request->get('newAction');
                 $res = $this->ajaxGetSendSmsCode($phone);
@@ -514,7 +587,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
      * @throws \RuntimeException
      * @throws GuzzleException
      * @throws Exception
-     * @return JsonResponse|string
+     * @return JsonResponse|array
      */
     private function ajaxGetStep2(string $confirmCode, string $phone, string $newAction = '')
     {
@@ -522,6 +595,20 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             $container = App::getInstance()->getContainer();
         } catch (ApplicationCreateException $e) {
             return $this->ajaxMess->getSystemError();
+        }
+
+        /** @var UserRepository $userRepository */
+        $userRepository = $this->currentUserProvider->getUserRepository();
+        $haveUsers = $userRepository->havePhoneAndEmailByUsers(
+            [
+                'PERSONAL_PHONE' => $phone,
+            ]
+        );
+        if ($haveUsers['phone']) {
+            return $this->ajaxMess->getHavePhoneError();
+        }
+        if ($haveUsers['login']) {
+            return $this->ajaxMess->getHaveLoginError();
         }
 
         $checkedCaptcha = true;
@@ -549,7 +636,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             try {
                 $res = $confirmService::checkConfirmSms(
                     $phone,
-                    (string)$confirmCode
+                    $confirmCode
                 );
             } catch (ServiceNotFoundException $e) {
                 return $this->ajaxMess->getSystemError();
@@ -557,7 +644,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             if (!$res) {
                 if ($_SESSION['COUNT_REGISTER_CONFIRM_CODE'] === 3) {
                     $html = $this->getHtml('sendSmsCode', 'Подтверждение телефона',
-                        ['phone' => $phone, 'newAction'=>$newAction]);
+                        ['phone' => $phone, 'newAction' => $newAction]);
 
                     return JsonSuccessResponse::createWithData('',
                         ['html' => $html]);
@@ -567,7 +654,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         } catch (ExpiredConfirmCodeException $e) {
             if ($_SESSION['COUNT_REGISTER_CONFIRM_CODE'] === 3) {
                 $html = $this->getHtml('sendSmsCode', 'Подтверждение телефона',
-                    ['phone' => $phone, 'newAction'=>$newAction]);
+                    ['phone' => $phone, 'newAction' => $newAction]);
 
                 return JsonSuccessResponse::createWithData('',
                     ['html' => $html]);
@@ -578,7 +665,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         } catch (NotFoundConfirmedCodeException $e) {
             if ($_SESSION['COUNT_REGISTER_CONFIRM_CODE'] === 3) {
                 $html = $this->getHtml('sendSmsCode', 'Подтверждение телефона',
-                    ['phone' => $phone, 'newAction'=>$newAction]);
+                    ['phone' => $phone, 'newAction' => $newAction]);
 
                 return JsonSuccessResponse::createWithData('',
                     ['html' => $html]);
@@ -604,7 +691,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             return $this->ajaxMess->getWrongPhoneNumberException();
         }
 
-        return $mess;
+        return [$mess, $manzanaItem];
     }
 
     /**
@@ -645,6 +732,25 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             $step = 'authByPhone';
         } else {
             /** @noinspection PhpUnusedLocalVariableInspection */
+
+            /** второй чек на совпадение полей */
+            /** @var UserRepository $userRepository */
+            $userRepository = $this->currentUserProvider->getUserRepository();
+            $haveUsers = $userRepository->havePhoneAndEmailByUsers(
+                [
+                    'PERSONAL_PHONE' => $data['PERSONAL_PHONE'],
+                    'EMAIL'          => $data['EMAIL'],
+                ]
+            );
+            if ($haveUsers['email']) {
+                return $this->ajaxMess->getHaveEmailError();
+            }
+            if ($haveUsers['phone']) {
+                return $this->ajaxMess->getHavePhoneError();
+            }
+            if ($haveUsers['login']) {
+                return $this->ajaxMess->getHaveLoginError();
+            }
 
             try {
                 /** @var ConfirmCodeService $confirmService */
@@ -693,7 +799,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             <?php
         }
         require_once App::getDocumentRoot()
-            . '/local/components/fourpaws/auth.form/templates/popup/include/' . $page . '.php';
+            . '/local/components/fourpaws/register/templates/.default/include/' . $page . '.php';
         $html = ob_get_clean();
 
         return $html;

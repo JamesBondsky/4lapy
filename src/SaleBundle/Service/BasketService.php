@@ -5,19 +5,27 @@ namespace FourPaws\SaleBundle\Service;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
 use Bitrix\Catalog\Product\CatalogProvider;
+use Bitrix\Main\Error;
+use Bitrix\Main\EventResult;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Compatible\DiscountCompatibility;
 use Bitrix\Sale\Order;
+use Bitrix\Sale\ResultError;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\External\Manzana\Exception\ExecuteException;
+use FourPaws\External\ManzanaPosService;
+use FourPaws\External\ManzanaService;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Utils\Adder;
 use FourPaws\SaleBundle\Discount\Utils\Cleaner;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
+use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
+use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 
@@ -35,26 +43,37 @@ class BasketService
 
     /** @var OfferCollection */
     private $offerCollection = null;
+    /** @var ManzanaPosService */
+    private $manzanaPosService;
+    /** @var ManzanaService */
+    private $manzanaService;
 
     /**
      * BasketService constructor.
      *
      * @param CurrentUserProviderInterface $currentUserProvider
+     * @param ManzanaPosService            $manzanaPosService
+     * @param ManzanaService               $manzanaService
      */
-    public function __construct(CurrentUserProviderInterface $currentUserProvider)
-    {
+    public function __construct(
+        CurrentUserProviderInterface $currentUserProvider,
+        ManzanaPosService $manzanaPosService,
+        ManzanaService $manzanaService
+    ) {
         $this->currentUserProvider = $currentUserProvider;
+        $this->manzanaPosService = $manzanaPosService;
+        $this->manzanaService = $manzanaService;
     }
 
 
     /**
      *
      *
-     * @param int $offerId
+     * @param int      $offerId
      * @param int|null $quantity
-     * @param array $rewriteFields
+     * @param array    $rewriteFields
      *
-     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
+     * @throws InvalidArgumentException
      * @throws BitrixProxyException
      * @throws \Bitrix\Main\LoaderException
      * @throws \Bitrix\Main\ObjectNotFoundException
@@ -68,7 +87,7 @@ class BasketService
         if ($offerId < 1 || null === $quantity) {
             throw new InvalidArgumentException('Wrong $offerId');
         }
-        if(!$quantity) {
+        if (!$quantity) {
             $quantity = 1;
         }
         $fields = [
@@ -77,7 +96,7 @@ class BasketService
             'MODULE' => 'catalog',
             'PRODUCT_PROVIDER_CLASS' => CatalogProvider::class,
         ];
-        if($rewriteFields) {
+        if ($rewriteFields) {
             /** @noinspection AdditionOperationOnArraysInspection */
             $fields = $rewriteFields + $fields;
         }
@@ -189,7 +208,7 @@ class BasketService
             $order->setBasket($basket);
         }
         if ($giftGroups = Gift::getPossibleGiftGroups($order, $discountId)) {
-            if(\count($giftGroups[$discountId]) === 1) {
+            if (\count($giftGroups[$discountId]) === 1) {
                 $giftGroup = current($giftGroups[$discountId]);
             } else {
                 throw new \RuntimeException('todo');
@@ -243,7 +262,7 @@ class BasketService
     /**
      * Возвращает OfferCollection содержащих товары корзины и возможные подарки
      *
-     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
+     * @throws InvalidArgumentException
      *
      * @return OfferCollection
      */
@@ -321,13 +340,69 @@ class BasketService
     }
 
     /**
+     * @param BasketItem $basketItem
+     * @param int $quantity
+     *
+     * @return EventResult
+     */
+    public function checkItemQuantity(BasketItem $basketItem, int $quantity): EventResult
+    {
+        $currentOffer = null;
+        foreach ($this->getOfferCollection() as $offer) {
+            if ($offer->getId() !== (int)$basketItem->getProductId()) {
+                continue;
+            }
+            $currentOffer = $offer;
+        }
+
+        if (!$currentOffer instanceof Offer) {
+            return (new EventResult(
+                EventResult::ERROR,
+                ResultError::create(
+                    new Error(
+                        'Товар не найден',
+                        'NO_IBLOCK_ELEMENT'
+                    )
+                )
+            ));
+        }
+
+        if (!$maxQuantity = $currentOffer->getQuantity()) {
+            return (new EventResult(
+                EventResult::ERROR,
+                ResultError::create(
+                    new Error(
+                        'Товар недоступен для покупки',
+                        'SALE_BASKET_ITEM_WRONG_AVAILABLE_QUANTITY'
+                    )
+                )
+            ));
+        }
+
+        if ($quantity > $maxQuantity) {
+            return (new EventResult(
+                EventResult::ERROR,
+                ResultError::create(
+                    new Error(
+                        'Товар недоступен в нужном количестве',
+                        'SALE_BASKET_ITEM_WRONG_AVAILABLE_QUANTITY'
+                    )
+                )
+            ));
+        }
+
+        return (new EventResult(EventResult::SUCCESS));
+    }
+
+    /**
      *
      *
      * @throws \Bitrix\Main\NotSupportedException
      * @throws \Bitrix\Main\ObjectNotFoundException
      * @return Adder
      */
-    public function getAdder(): Adder {
+    public function getAdder(): Adder
+    {
         if (null === $order = $this->getBasket()->getOrder()) {
             $order = Order::create(SITE_ID);
             $order->setBasket($this->getBasket());
@@ -342,11 +417,63 @@ class BasketService
      * @throws \Bitrix\Main\ObjectNotFoundException
      * @return Cleaner
      */
-    public function getCleaner(): Cleaner {
+    public function getCleaner(): Cleaner
+    {
         if (null === $order = $this->getBasket()->getOrder()) {
             $order = Order::create(SITE_ID);
             $order->setBasket($this->getBasket());
         }
         return new Cleaner($order, $this);
+    }
+
+    /**
+     * @param Offer $offer
+     * @param int   $quantity
+     *
+     * @return float
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     */
+    public function getItemBonus(Offer $offer, int $quantity = 1): float
+    {
+        try {
+            $cardNumber = $this->currentUserProvider->getCurrentUser()->getDiscountCardNumber();
+            if(!empty($cardNumber)) {
+                $cheque = $this->manzanaPosService->processChequeWithoutBonus(
+                    $this->manzanaPosService->buildRequestFromItem(
+                        $offer,
+                        $cardNumber,
+                        $quantity
+                    )
+                );
+
+                return $cheque->getChargedBonus();
+            }
+        } catch (NotAuthorizedException $e) {
+            /** Возвращаеи 0 в случае ошибки */
+        } catch (ExecuteException $e) {
+            /** Возвращаеи 0 в случае ошибки */
+        }
+        return (float)0;
+    }
+
+    /**
+     * @return float
+     */
+    public function getBasketBonus(): float
+    {
+        try {
+            $cardNumber = $this->currentUserProvider->getActiveCard();
+            $cheque = $this->manzanaPosService->processChequeWithoutBonus(
+                $this->manzanaPosService->buildRequestFromBasket(
+                    $this->getBasket(),
+                    $cardNumber
+                )
+            );
+
+            return $cheque->getChargedBonus();
+        } catch (ExecuteException $e) {
+            return (float)0;
+        }
     }
 }

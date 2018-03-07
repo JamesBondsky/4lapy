@@ -12,7 +12,7 @@ class CatalogFilterAddPurposeFilter20180227125133 extends SprintMigrationBase
 {
     const FILTER_HL_BLOCK_SERVICE = 'bx.hlblock.filter';
 
-    protected $description = 'Фильтра "Назначение (функциональность)" в HL-блок с фильтрами';
+    protected $description = 'Добавление фильтра "Назначение (функциональность)" в HL-блок с фильтрами';
     protected $filters = [
         [
             'UF_NAME' => 'Фармакологическая группа',

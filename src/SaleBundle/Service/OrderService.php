@@ -30,6 +30,7 @@ use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\PersonalBundle\Exception\NotFoundException as AddressNotFoundException;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
+use FourPaws\SaleBundle\Exception\FastOrderCreateException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\StoreBundle\Collection\StoreCollection;
@@ -201,7 +202,9 @@ class OrderService
     /**
      * @param OrderStorage $storage
      * @param bool $save
+     * @param bool $fastOrder
      *
+     * @throws \FourPaws\SaleBundle\Exception\FastOrderCreateException
      * @throws \Exception
      * @throws OrderCreateException
      * @throws NotFoundException
@@ -215,7 +218,7 @@ class OrderService
      * @throws ObjectNotFoundException
      * @return Order
      */
-    public function createOrder(OrderStorage $storage, $save = true): Order
+    public function createOrder(OrderStorage $storage, $save = true, bool $fastOrder = false): Order
     {
         $order = Order::create(SITE_ID);
         $selectedCity = $this->userCityProvider->getSelectedCity();
@@ -229,36 +232,23 @@ class OrderService
             throw new OrderCreateException('Корзина пуста');
         }
 
-        /**
-         * Задание способов оплаты
-         */
-        if ($storage->getPaymentId()) {
-            $paymentCollection = $order->getPaymentCollection();
-            $sum = $order->getBasket()->getOrderableItems()->getPrice();
-
-            if ($storage->getBonus()) {
-                $innerPayment = $paymentCollection->getInnerPayment();
-                $innerPayment->setField('SUM', $storage->getBonus());
-                $sum -= $storage->getBonus();
-            }
-
-            $extPayment = $paymentCollection->createItem();
-            $extPayment->setField('SUM', $sum);
-            $extPayment->setField('PAY_SYSTEM_ID', $storage->getPaymentId());
-
-            /** @var \Bitrix\Sale\PaySystem\Service $paySystem */
-            $paySystem = $extPayment->getPaySystem();
-            $extPayment->setField('PAY_SYSTEM_NAME', $paySystem->getField('NAME'));
-        } elseif ($save) {
-            throw new OrderCreateException('Не выбран способ оплаты');
-        }
-
         $deliveries = $this->getDeliveries();
         $selectedDelivery = null;
-        /** @var CalculationResult $delivery */
-        foreach ($deliveries as $delivery) {
-            if ($storage->getDeliveryId() === (int)$delivery->getData()['DELIVERY_ID']) {
-                $selectedDelivery = $delivery;
+        $deliveryId = $storage->getDeliveryId();
+        if ($fastOrder) {
+            /** устанавливаем самовывоз для быстрого заказа */
+            if (!empty($deliveries)) {
+                $selectedDelivery = current($deliveries);
+            } else {
+                throw new FastOrderCreateException('Оформление быстрого заказа невозможно, пожалуйста обратить к администратору или попробуйте полный процесс оформления');
+            }
+        }
+        if ($selectedDelivery === null && !empty($deliveries)) {
+            /** @var CalculationResult $delivery */
+            foreach ($deliveries as $delivery) {
+                if ($deliveryId === (int)$delivery->getData()['DELIVERY_ID']) {
+                    $selectedDelivery = $delivery;
+                }
             }
         }
 
@@ -266,7 +256,7 @@ class OrderService
          * Задание способов доставки
          */
         $propertyValueCollection = $order->getPropertyCollection();
-        if ($storage->getDeliveryId()) {
+        if ($deliveryId) {
             $locationProp = $order->getPropertyCollection()->getDeliveryLocation();
             if (!$locationProp) {
                 throw new OrderCreateException('Отсутствует свойство привязки к местоположению');
@@ -295,9 +285,9 @@ class OrderService
 
             $shipment->setFields(
                 [
-                    'DELIVERY_ID'   => $selectedDelivery->getData()['DELIVERY_ID'],
+                    'DELIVERY_ID' => $selectedDelivery->getData()['DELIVERY_ID'],
                     'DELIVERY_NAME' => $selectedDelivery->getData()['DELIVERY_NAME'],
-                    'CURRENCY'      => $order->getCurrency(),
+                    'CURRENCY' => $order->getCurrency(),
                 ]
             );
 
@@ -375,7 +365,36 @@ class OrderService
                 $propertyValue->setValue($value);
             }
         } elseif ($save) {
-            throw new OrderCreateException('Не выбрана доставка');
+            if (!$fastOrder) {
+                throw new OrderCreateException('Не выбрана доставка');
+            }
+        }
+
+        /**
+         * Задание способов оплаты
+         */
+        if ($storage->getPaymentId()) {
+            $paymentCollection = $order->getPaymentCollection();
+            $sum = $order->getBasket()->getOrderableItems()->getPrice();
+            $sum += $order->getDeliveryPrice();
+
+            if ($storage->getBonus()) {
+                $innerPayment = $paymentCollection->getInnerPayment();
+                $innerPayment->setField('SUM', $storage->getBonus());
+                $sum -= $storage->getBonus();
+            }
+
+            $extPayment = $paymentCollection->createItem();
+            $extPayment->setField('SUM', $sum);
+            $extPayment->setField('PAY_SYSTEM_ID', $storage->getPaymentId());
+
+            /** @var \Bitrix\Sale\PaySystem\Service $paySystem */
+            $paySystem = $extPayment->getPaySystem();
+            $extPayment->setField('PAY_SYSTEM_NAME', $paySystem->getField('NAME'));
+        } elseif ($save) {
+            if (!$fastOrder) {
+                throw new OrderCreateException('Не выбран способ оплаты');
+            }
         }
 
         /**
@@ -462,6 +481,7 @@ class OrderService
                         ->setLogin($storage->getPhone())
                         ->setPassword($password)
                         ->setPersonalPhone($storage->getPhone());
+                    $_SESSION['MANZANA_UPDATE'] = true;
                     $user = $this->userRegistrationProvider->register($user);
 
                     $order->setFieldNoDemand('USER_ID', $user->getId());
@@ -471,6 +491,7 @@ class OrderService
 
                     /* @todo вынести из сессии? */
                     /* нужно для expertsender */
+                    /** пароль еще нужен для смс быстрого заказа */
                     $_SESSION['NEW_USER'] = [
                         'LOGIN'    => $storage->getPhone(),
                         'PASSWORD' => $password,
@@ -495,7 +516,7 @@ class OrderService
              * 1) пользователь только что зарегистрирован
              * 2) авторизованный пользователь задал новый адрес
              */
-            if ($needCreateAddress && $selectedDelivery && $this->deliveryService->isDelivery($selectedDelivery)) {
+            if ($needCreateAddress && $selectedDelivery && $this->deliveryService->isDelivery($selectedDelivery) && !$fastOrder) {
                 $address = (new Address())
                     ->setCity($storage->getCity())
                     ->setCityLocation($storage->getCityCode())

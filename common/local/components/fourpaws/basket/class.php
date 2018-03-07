@@ -20,7 +20,10 @@ use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\SaleBundle\Discount\Gift;
+use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Service\BasketService;
+use FourPaws\SaleBundle\Service\UserAccountService;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService;
 
@@ -32,17 +35,19 @@ use FourPaws\UserBundle\Service\UserService;
  */
 class BasketComponent extends \CBitrixComponent
 {
+    public $basketService;
+    /** @var OfferCollection */
+    public $offerCollection;
     /**
      * @var UserService
      */
     private $currentUserService;
-
-    public $basketService;
-
+    /**
+     * @var UserAccountService
+     */
+    private $userAccountService;
     /** @var array $images */
     private $images;
-    /** @var OfferCollection */
-    public $offerCollection;
 
     /**
      * BasketComponent constructor.
@@ -60,6 +65,7 @@ class BasketComponent extends \CBitrixComponent
 
         $this->basketService = $container->get(BasketService::class);
         $this->currentUserService = $container->get(CurrentUserProviderInterface::class);
+        $this->userAccountService = $container->get(UserAccountService::class);
     }
 
     /** @noinspection PhpMissingParentCallCommonInspection */
@@ -86,6 +92,15 @@ class BasketComponent extends \CBitrixComponent
             $order = Order::create(SITE_ID);
             $order->setBasket($basket);
         }
+
+        $this->arResult['USER'] = null;
+        $this->arResult['USER_ACCOUNT'] = null;
+        try {
+            $this->arResult['USER'] = $this->currentUserService->getCurrentUser();
+            $this->arResult['USER_ACCOUNT'] = $this->userAccountService->findAccountByUser($this->arResult['USER']);
+        } catch (NotAuthorizedException $e) {
+        } catch (NotFoundException $e) {
+        }
         $this->arResult['BASKET'] = $basket;
         $this->arResult['POSSIBLE_GIFT_GROUPS'] = Gift::getPossibleGiftGroups($order);
         $this->arResult['POSSIBLE_GIFTS'] = Gift::getPossibleGifts($order);
@@ -94,6 +109,53 @@ class BasketComponent extends \CBitrixComponent
         $this->loadImages();
         $this->checkSelectedGifts();
         $this->includeComponentTemplate($this->getPage());
+    }
+
+    /**
+     *
+     *
+     * @param $offerId
+     *
+     * @return ResizeImageDecorator|null
+     */
+    public function getImage($offerId)
+    {
+        return $this->images[$offerId] ?? null;
+    }
+
+    /**
+     * @return UserService
+     */
+    public function getCurrentUserService(): UserService
+    {
+        return $this->currentUserService;
+    }
+
+    /**
+     * @param int $id
+     *
+     * @return Offer|null
+     */
+    public function getOffer(int $id)
+    {
+        /** @var Offer $item */
+        foreach ($this->offerCollection as $item) {
+            if ($item->getId() === $id) {
+                return $item;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * @param Offer $offer
+     * @param int   $quantity
+     *
+     * @return float
+     */
+    public function getItemBonus(Offer $offer, int $quantity = 1): float
+    {
+        return $this->basketService->getItemBonus($offer, $quantity);
     }
 
     /**
@@ -140,24 +202,16 @@ class BasketComponent extends \CBitrixComponent
         /** @var Basket $basket */
         $basket = $this->arResult['BASKET'];
         /** @var BasketItem $basketItem */
-        foreach ($basket->getOrderableItems() as $basketItem) {
+        $orderableBasket = $basket->getOrderableItems();
+        foreach ($orderableBasket as $basketItem) {
             $weight += (float)$basketItem->getWeight();
             $quantity += (int)$basketItem->getQuantity();
         }
-        $this->arResult['BASKET_WEIGHT'] = number_format($weight / 1000, 2);
+        $this->arResult['BASKET_WEIGHT'] = $weight;
         $this->arResult['TOTAL_QUANTITY'] = $quantity;
-    }
-
-    /**
-     *
-     *
-     * @param $offerId
-     *
-     * @return ResizeImageDecorator|null
-     */
-    public function getImage($offerId)
-    {
-        return $this->images[$offerId] ?? null;
+        $this->arResult['TOTAL_DISCOUNT'] = $orderableBasket->getBasePrice() - $orderableBasket->getPrice();
+        $this->arResult['TOTAL_PRICE'] = $orderableBasket->getPrice();
+        $this->arResult['TOTAL_BASE_PRICE'] = $orderableBasket->getBasePrice();
     }
 
     /**
@@ -174,13 +228,5 @@ class BasketComponent extends \CBitrixComponent
             $page = 'empty';
         }
         return $page;
-    }
-
-    /**
-     * @return UserService
-     */
-    public function getCurrentUserService(): UserService
-    {
-        return $this->currentUserService;
     }
 }

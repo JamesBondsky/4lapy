@@ -128,7 +128,7 @@ class ExpertsenderService implements LoggerAwareInterface
      */
     public function sendChangePasswordByProfile(string $email): bool
     {
-        if(!empty($email)) {
+        if (!empty($email)) {
             try {
                 $receiver = new Receiver($email);
                 $apiResult = $this->client->sendTransactional(7073, $receiver);
@@ -146,7 +146,7 @@ class ExpertsenderService implements LoggerAwareInterface
     }
 
     /**
-     * @param User   $user
+     * @param User $user
      * @param string $backUrl
      *
      * @return bool
@@ -163,10 +163,12 @@ class ExpertsenderService implements LoggerAwareInterface
                 $confirmService::setGeneratedHash($user->getEmail(), 'email', $time);
                 $generatedHash = $confirmService::getConfirmHash($user->getEmail(), $time);
                 $receiver = new Receiver($user->getEmail());
-                $backUrlText = !empty($backUrl) ? '&backurl=' . $backUrl.'&user_id='.$user->getId() : '';
+                $backUrlText = !empty($backUrl) ? '&backurl=' . $backUrl . '&user_id=' . $user->getId() : '';
                 $snippets = [
                     new Snippet('user_name', $user->getName(), true),
-                    new Snippet('link', (new FullHrefDecorator('/personal/forgot-password/?hash=' . $generatedHash . '&email=' . $user->getEmail() . $backUrlText))->getFullPublicPath(),true),
+                    new Snippet('link',
+                        (new FullHrefDecorator('/personal/forgot-password/?hash=' . $generatedHash . '&email=' . $user->getEmail() . $backUrlText))->getFullPublicPath(),
+                        true),
                 ];
                 $apiResult = $this->client->sendTransactional(7072, $receiver, $snippets);
                 if ($apiResult->isOk()) {
@@ -196,7 +198,7 @@ class ExpertsenderService implements LoggerAwareInterface
      */
     public function sendChangeEmail(User $oldUser, User $curUser): bool
     {
-        if(!empty($oldUser->getEmail()) && !empty($curUser->getEmail())) {
+        if (!empty($oldUser->getEmail()) && !empty($curUser->getEmail())) {
             try {
                 $expertSenderId = 0;
                 $userIdResult = $this->client->getUserId($oldUser->getEmail());
@@ -294,7 +296,7 @@ class ExpertsenderService implements LoggerAwareInterface
                     /** флаг подписки на новости */
                     $addUserToList->addProperty(new Property(23, 'boolean', true));
 
-                    /** @todo првоерить надо или нет - будет ли подтверждеине подписки или нет*/
+                    /** @todo првоерить надо или нет - будет ли подтверждеине подписки или нет */
                     /** хеш строка для подтверждения мыла */
                     /** @var ConfirmCodeService $confirmService */
 //                    $confirmService = Application::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
@@ -382,8 +384,7 @@ class ExpertsenderService implements LoggerAwareInterface
                         return true;
                     }
 
-                }
-                else{
+                } else {
                     return true;
                 }
             } catch (SystemException $e) {
@@ -402,46 +403,13 @@ class ExpertsenderService implements LoggerAwareInterface
      *
      * @return bool
      */
-    public function checkConfirmEmail(string $email): bool
-    {
-        //Проверяем статус активного или неподписанного в списке
-        try {
-            $response = $this->guzzleClient->get($this->url . '/Api/Subscribers?apiKey=' . $this->key . '&email=' . $email . '&option=Short');
-            $activeLists = [];
-            if ($response->getStatusCode() === 200) {
-                $xml = new \SimpleXMLElement($response->getBody()->getContents());
-                if (!(bool)$xml->Data->BlackList) {
-                    foreach ((array)$xml->Data->StateOnLists as $StateOnList) {
-                        if ((string)$StateOnList->Status === 'Active' || (string)$StateOnList->Status === 'Unsubscribed') {
-                            $activeLists[] = (int)$StateOnList->ListId;
-                        }
-                    }
-                }
-                unset($xml);
-            }
-
-            if (\in_array(178, $activeLists, true)) {
-                return true;
-            }
-        } catch (GuzzleException $e) {
-            $this->logger->critical('Переписать нахер. Так делатть НЕЛЬЗЯ.');
-        }
-
-        return false;
-    }
-
-    /**
-     * @param string $email
-     *
-     * @return bool
-     */
     public function checkConfirmEmailSubscribe(string $email): bool
     {
-        $response = $this->guzzleClient->get($this->url.'/Api/Subscribers?apiKey='.$this->key.'&email='.$email.'&option=Short');
+        $response = $this->guzzleClient->get($this->url . '/Api/Subscribers?apiKey=' . $this->key . '&email=' . $email . '&option=Short');
         $activeLists = [];
-        if($response->getStatusCode() === 200){
+        if ($response->getStatusCode() === 200) {
             $xml = new \SimpleXMLElement($response->getBody()->getContents());
-            if(!(bool)$xml->Data->BlackList) {
+            if (!(bool)$xml->Data->BlackList) {
                 foreach ((array)$xml->Data->StateOnLists as $StateOnList) {
                     if ((string)$StateOnList->Status === 'Active') {
                         $activeLists[] = (int)$StateOnList->ListId;
@@ -451,7 +419,7 @@ class ExpertsenderService implements LoggerAwareInterface
             unset($xml);
         }
 
-        if(\in_array(178, $activeLists, true)){
+        if (\in_array(178, $activeLists, true)) {
             return true;
         }
         return false;
@@ -461,6 +429,7 @@ class ExpertsenderService implements LoggerAwareInterface
      * @param Order $order
      *
      * @return bool
+     * @throws ApplicationCreateException
      * @throws ExpertsenderServiceException
      */
     public function sendOrderNewEmail(Order $order): bool
@@ -491,7 +460,8 @@ class ExpertsenderService implements LoggerAwareInterface
             new Snippet('delivery_date', $properties['DELIVERY_DATE']),
             new Snippet('tel_number', PhoneHelper::formatPhone($properties['PHONE'])),
             new Snippet('delivery_cost', $order->getDeliveryPrice()),
-            new Snippet('total_bonuses', (int)$properties['BONUS_COUNT'])
+            new Snippet('total_bonuses', (int)$properties['BONUS_COUNT']),
+            new Snippet('order_date', $order->getDateInsert()->format('d.m.Y'))
         ];
 
         $isOnlinePayment = false;
@@ -564,8 +534,6 @@ class ExpertsenderService implements LoggerAwareInterface
 
                 return true;
             }
-        } catch (SystemException $e) {
-            throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
         } catch (GuzzleException $e) {
             throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
         } catch (\Exception $e) {
@@ -578,12 +546,14 @@ class ExpertsenderService implements LoggerAwareInterface
      * @param Order $order
      *
      * @return bool
+     * @throws ApplicationCreateException
      * @throws ExpertsenderServiceException
      */
     public function sendOrderCompleteEmail(Order $order): bool
     {
         /** @var OrderService $orderService */
         $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
+
         if (!$email = $orderService->getOrderPropertyByCode($order, 'EMAIL')->getValue()) {
             return false;
         }
@@ -591,22 +561,23 @@ class ExpertsenderService implements LoggerAwareInterface
         $snippets = [
             new Snippet('Order_number', $order->getField('ACCOUNT_NUMBER')),
             new Snippet(
-                'user_name', $orderService->getOrderPropertyByCode(
-                $order,
-                'NAME'
-            )->getValue()
+                'user_name',
+                $orderService->getOrderPropertyByCode(
+                    $order,
+                    'NAME'
+                )->getValue()
             ),
+            new Snippet(
+                'delivery_address',
+                $orderService->getOrderDeliveryAddress($order)
+            )
         ];
 
         try {
             $apiResult = $this->client->sendTransactional(7122, new Receiver($email), $snippets);
             if ($apiResult->isOk()) {
-                $orderService->setOrderPropertyByCode($order, 'COMPLETE_MESSAGE_SENT', 'Y');
-                $order->save();
                 return true;
             }
-        } catch (SystemException $e) {
-            throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
         } catch (GuzzleException $e) {
             throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
         } catch (\Exception $e) {
