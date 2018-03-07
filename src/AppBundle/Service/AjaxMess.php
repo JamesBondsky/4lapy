@@ -304,6 +304,14 @@ class AjaxMess
     }
 
     /**
+     * @return JsonResponse
+     */
+    public function getNotAllowedEASendError(): JsonResponse
+    {
+        return $this->getJsonError('notAllowedEASend', 'Отправка писем недоступна - необходимо подтвердить почту');
+    }
+
+    /**
      * @param string $code
      * @param string $mes
      *

@@ -38,7 +38,7 @@ class TestUserController extends FOSRestController
      * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
      * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
      */
-    public function createDummyUserAction()
+    public function createDummyUserAction(): array
     {
         $users = $this->fixtureService->get(User::class, 10);
         /**

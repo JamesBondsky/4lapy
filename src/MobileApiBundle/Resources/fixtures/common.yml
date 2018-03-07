@@ -8,4 +8,5 @@ FourPaws\UserBundle\Entity\User:
     lastname: <ru_RU:word()>
     secondName: 'fixture'
     personalPhone (unique): '<numberBetween(9160000000, 9179999999)>'
+    discountCardNumber (unique): '26<numberBetween(12345678900, 98765432100)>'
 

@@ -6,7 +6,11 @@
 
 namespace FourPaws\Catalog\Model;
 
+use Bitrix\Catalog\Product\Basket as BitrixBasket;
 use Bitrix\Catalog\Product\CatalogProvider;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\Fuser;
 use Bitrix\Sale\Order;
@@ -332,6 +336,11 @@ class Offer extends IblockElement
      * @var StockCollection
      */
     protected $stocks;
+
+    /**
+     * @var bool
+     */
+    protected $isCounted = false;
 
     public function __construct(array $fields = [])
     {
@@ -919,16 +928,28 @@ class Offer extends IblockElement
     }
 
     /**
+     * Check and set optimal price, discount, old price with bitrix discount
      *
-     *
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\NotSupportedException
-     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws LoaderException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
      */
     protected function checkOptimalPrice()
     {
+        if ($this->isCounted) {
+            return;
+        }
+
         global $USER;
-        $order = Order::create(SITE_ID);
+
+        static $order;
+        if (null === $order) {
+            $order = Order::create(SITE_ID);
+        }
+        $shipmentCollection = $order->getShipmentCollection();
+        foreach ($shipmentCollection as $i => $shipment) {
+            unset($shipmentCollection[$i]);
+        }
         /** @var Basket $basket */
         $basket = Basket::create(SITE_ID);
         $basket->setFUserId((int)Fuser::getId());
@@ -938,14 +959,16 @@ class Offer extends IblockElement
             'MODULE' => 'catalog',
             'PRODUCT_PROVIDER_CLASS' => CatalogProvider::class,
         ];
-        \Bitrix\Catalog\Product\Basket::addProductToBasket($basket, $fields, ['USER_ID' => $USER->GetID()]);
+
+        BitrixBasket::addProductToBasket($basket, $fields, ['USER_ID' => $USER->GetID()]);
+
         $order->setBasket($basket);
         /** @var \Bitrix\Sale\BasketItem $basketItem */
         foreach ($basket->getBasketItems() as $basketItem) {
             if (
                 (int)$basketItem->getProductId() === $this->getId()
                 &&
-                $discountPercent = (int)round(100 * ($basketItem->getDiscountPrice() / $basketItem->getBasePrice()))
+                $discountPercent = round(100 * ($basketItem->getDiscountPrice() / $basketItem->getBasePrice()))
             ) {
                 $this
                     ->withDiscount($discountPercent)
@@ -953,6 +976,8 @@ class Offer extends IblockElement
                     ->withPrice($basketItem->getPrice());
             }
         }
+
+        $this->isCounted = true;
     }
 
     /**
