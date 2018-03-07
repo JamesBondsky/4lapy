@@ -122,7 +122,7 @@ class OrderController extends Controller
             $shopListClass->getStores(
                 [
                     'filter' => $this->storeService->getFilterByRequest($request),
-                    'order'  => $this->storeService->getOrderByRequest($request),
+                    'order' => $this->storeService->getOrderByRequest($request),
                 ]
             )
         );
@@ -219,7 +219,7 @@ class OrderController extends Controller
 
         $validationErrors = $this->fillStorage($storage, $request, $currentStep);
         if (!empty($validationErrors)) {
-            return JsonErrorResponse::createWithData('', ['errors' => $validationErrors]);
+            return JsonErrorResponse::createWithData('', ['errors' => $validationErrors], 200, ['reload' => true]);
         }
 
         return JsonSuccessResponse::create(

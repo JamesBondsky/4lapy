@@ -36,9 +36,9 @@ use Psr\Log\LoggerInterface;
 class FourPawsOrderComponent extends \CBitrixComponent
 {
     const DEFAULT_TEMPLATES_404 = [
-        OrderStorageService::AUTH_STEP     => 'index.php',
+        OrderStorageService::AUTH_STEP => 'index.php',
         OrderStorageService::DELIVERY_STEP => 'delivery/',
-        OrderStorageService::PAYMENT_STEP  => 'payment/',
+        OrderStorageService::PAYMENT_STEP => 'payment/',
         OrderStorageService::COMPLETE_STEP => 'complete/#ORDER_ID#',
     ];
 
@@ -72,7 +72,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
     /** @var ManzanaPosService */
     protected $manzanaPosService;
 
-    /** @var LoggerInterface  */
+    /** @var LoggerInterface */
     protected $logger;
 
     public function __construct($component = null)
@@ -154,9 +154,9 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $basket = $order->getBasket()->getOrderableItems();
 
         $this->arResult['URL'] = [
-            'AUTH'     => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderStorageService::AUTH_STEP],
+            'AUTH' => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderStorageService::AUTH_STEP],
             'DELIVERY' => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderStorageService::DELIVERY_STEP],
-            'PAYMENT'  => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderStorageService::PAYMENT_STEP],
+            'PAYMENT' => $this->arParams['SEF_FOLDER'] . self::DEFAULT_TEMPLATES_404[OrderStorageService::PAYMENT_STEP],
         ];
 
         /** @var \Symfony\Bundle\FrameworkBundle\Routing\Router $router */
@@ -164,10 +164,10 @@ class FourPawsOrderComponent extends \CBitrixComponent
         /** @var Symfony\Component\Routing\RouteCollection $routeCollection */
         $routeCollection = $router->getRouteCollection();
         $routes = [
-            'AUTH_VALIDATION'     => 'fourpaws_sale_ajax_order_validateauth',
+            'AUTH_VALIDATION' => 'fourpaws_sale_ajax_order_validateauth',
             'DELIVERY_VALIDATION' => 'fourpaws_sale_ajax_order_validatedelivery',
-            'PAYMENT_VALIDATION'  => 'fourpaws_sale_ajax_order_validatepayment',
-            'DELIVERY_INTERVALS'  => 'fourpaws_sale_ajax_order_deliveryintervals',
+            'PAYMENT_VALIDATION' => 'fourpaws_sale_ajax_order_validatepayment',
+            'DELIVERY_INTERVALS' => 'fourpaws_sale_ajax_order_deliveryintervals',
         ];
         foreach ($routes as $key => $name) {
             /** @noinspection NullPointerExceptionInspection */
@@ -185,8 +185,6 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $selectedCity = $this->userCityProvider->getSelectedCity();
 
         $payments = null;
-        $deliveries = $this->orderService->getDeliveries();
-        $this->getPickupData($deliveries, $storage);
 
         $user = null;
         try {
@@ -195,6 +193,12 @@ class FourPawsOrderComponent extends \CBitrixComponent
         }
 
         if ($this->currentStep === OrderStorageService::DELIVERY_STEP) {
+            $deliveries = $this->orderService->getDeliveries();
+            foreach ($deliveries as $delivery) {
+                $delivery->setCurrentDate($storage->getCurrentDate());
+            }
+            $this->getPickupData($deliveries, $storage);
+
             $addresses = null;
             if ($storage->getUserId()) {
                 /** @var AddressService $addressService */
@@ -212,7 +216,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
                     $selectedDeliveryId = $deliveryId;
                 }
 
-                if ($selectedDeliveryId === (int)$deliveryId) {
+                if ($selectedDeliveryId === $deliveryId) {
                     $selectedDelivery = $calculationResult;
                 }
 
@@ -235,6 +239,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->arResult['SELECTED_DELIVERY_ID'] = $selectedDeliveryId;
         } elseif ($this->currentStep === OrderStorageService::PAYMENT_STEP) {
             $deliveries = $this->orderService->getDeliveries();
+            $this->getPickupData($deliveries, $storage);
             $payments = $this->orderStorageService->getAvailablePayments($storage, true);
             $selectedDelivery = null;
             /** @var BaseResult $delivery */
@@ -286,7 +291,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
      * @param BaseResult[] $deliveries
      * @param OrderStorage $storage
      */
-    protected function getPickupData(array $deliveries, OrderStorage $storage)
+    protected function getPickupData(array $deliveries, OrderStorage $storage): void
     {
         $pickup = null;
         foreach ($deliveries as $calculationResult) {
@@ -301,15 +306,14 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
         $selectedShopCode = $storage->getDeliveryPlaceCode();
 
-        /**
-         * @hotfix
-         *
-         * @todo реализовать обработку
-         */
         try {
             $shops = $pickup->getStockResult()->getStores(false);
         } catch (NotFoundException $e) {
-            $shops = new StoreCollection();
+            $this->logger->error(sprintf(
+                    'Order has pickup delivery with no shops available. Delivery location: %s',
+                    $storage->getCityCode())
+            );
+            return;
         }
 
         $selectedShop = null;

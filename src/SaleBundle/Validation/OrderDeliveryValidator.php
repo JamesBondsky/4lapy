@@ -17,6 +17,12 @@ use Symfony\Component\Validator\ConstraintValidator;
 class OrderDeliveryValidator extends ConstraintValidator
 {
     /**
+     * Максимальное время хранения даты перехода пользователя на 2й шаг оформления заказа
+     */
+    const MAX_DATE_DIFF = 1800;
+
+
+    /**
      * @var OrderService
      */
     protected $orderService;
@@ -42,6 +48,11 @@ class OrderDeliveryValidator extends ConstraintValidator
     {
         if (!$entity instanceof OrderStorage || !$constraint instanceof OrderDelivery) {
             return;
+        }
+
+        $dateDiff = $entity->getCurrentDate()->getTimestamp() - (new \DateTime())->getTimestamp();
+        if (abs($dateDiff) > static::MAX_DATE_DIFF) {
+            $this->context->addViolation($constraint->deliveryDateExpiredMessage);
         }
 
         /**

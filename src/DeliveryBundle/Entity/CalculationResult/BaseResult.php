@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\DeliveryBundle\Entity\CalculationResult;
 
 use Bitrix\Sale\Delivery\CalculationResult;
@@ -62,7 +66,7 @@ abstract class BaseResult extends CalculationResult
     /**
      * BaseResult constructor.
      *
-     * @param CalculationResult|null $result
+     * @param null|CalculationResult $result
      */
     public function __construct(CalculationResult $result = null)
     {
@@ -301,19 +305,19 @@ abstract class BaseResult extends CalculationResult
         return $this;
     }
 
-    protected function doCalculateDeliveryDate()
+    protected function doCalculateDeliveryDate(): void
     {
         $this->deliveryDate = clone $this->getCurrentDate();
         $modifier = 0;
 
         /**
-         * Если есть отложенные товары, то добавляем к дате доставки DPD
+         * Если есть отложенные товары, то добавляем к дате доставки
          * срок поставки на склад по графику
          */
         if (!$this->getStockResult()->getDelayed()->isEmpty()) {
             $modifier += $this->getStockResult()
-                              ->getDeliveryDate()
-                              ->diff($this->getCurrentDate())->days;
+                ->getDeliveryDate()
+                ->diff($this->getCurrentDate())->days;
         }
 
         if ($modifier > 0) {

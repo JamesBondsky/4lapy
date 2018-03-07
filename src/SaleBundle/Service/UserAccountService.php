@@ -43,6 +43,7 @@ class UserAccountService
 
     /**
      * @param null|User $user
+     * @param null|float $newBudget
      *
      * @throws ValidationException
      * @return bool
