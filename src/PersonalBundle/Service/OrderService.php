@@ -20,6 +20,7 @@ use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Entity\OrderDelivery;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\PersonalBundle\Entity\OrderPayment;
+use FourPaws\PersonalBundle\Entity\OrderProp;
 use FourPaws\PersonalBundle\Repository\OrderRepository;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
@@ -179,7 +180,7 @@ class OrderService
                             if ((int)$chequeItem->number < 2000000) {
                                 $item = new OrderItem();
                                 if ((int)$chequeItem->number > 1000000) {
-                                    $item->setXmlId($chequeItem->number);
+                                    $item->setArticle($chequeItem->number);
                                 }
                                 $item->setBonus($chequeItem->bonus);
                                 $item->setPrice($chequeItem->price);
@@ -188,7 +189,7 @@ class OrderService
                                 $item->setName($chequeItem->name);
                                 $item->setHaveStock(false);
                                 $item->setWeight(0);
-                                $items[!empty($item->getXmlId()) ? $item->getXmlId() : $i] = $item;
+                                $items[!empty($item->getArticle()) ? $item->getArticle() : $i] = $item;
                             }
                         }
                     }
@@ -338,27 +339,56 @@ class OrderService
      */
     public function getStore(Order $order): Store
     {
-        //
+        /** @var OrderProp $prop */
         //CITY_CODE
         /** @todo может что сделать с dpd */
-        $storeXmlId = $order->getProps()->get('DELIVERY_PLACE_CODE')->getValue();
-        if (!empty($storeXmlId)) {
-            $storeService = App::getInstance()->getContainer()->get('store.service');
-            return $storeService->getByXmlId($storeXmlId);
+        $props = $order->getProps();
+        if (!$props->isEmpty()) {
+            $prop = $props->get('DELIVERY_PLACE_CODE');
+            if ($prop instanceof OrderProp) {
+                $storeXmlId = $prop->getValue();
+                if (!empty($storeXmlId)) {
+                    $storeService = App::getInstance()->getContainer()->get('store.service');
+                    return $storeService->getByXmlId($storeXmlId);
+                }
+            }
         }
 
         $store = new Store();
-        $props = $order->getProps();
-        $street = $props->get('STREET')->getValue() . ' ул.';
-        $house = ', д.' . $props->get('HOUSE')->getValue();
-        $building = !empty($props->get('BUILDING')->getValue()) ? ', корпус/строение ' . $props->get('BUILDING')->getValue() : '';
-        $porch = !empty($props->get('PORCH')->getValue()) ? ', подъезд. ' . $props->get('PORCH')->getValue() : '';
-        $apartment = !empty($props->get('APARTMENT')->getValue()) ? ', кв. ' . $props->get('APARTMENT')->getValue() : '';
-        $floor = !empty($props->get('FLOOR')->getValue()) ? ', этаж ' . $props->get('FLOOR')->getValue() : '';
-        $city = ', г. ' . $props->get('CITY')->getValue();
-        $store->setAddress($street . $house . $building . $porch . $apartment . $floor . $city);
-        $store->setActive(true);
-        $store->setIsShop(false);
+
+        if (!$props->isEmpty()) {
+            $prop = $props->get('STREET');
+            if ($prop instanceof OrderProp) {
+                $street = $prop->getValue() . ' ул.';
+            }
+            $prop = $props->get('HOUSE');
+            if ($prop instanceof OrderProp) {
+                $house = ', д.' . $prop->getValue();
+            }
+            $prop = $props->get('BUILDING');
+            if ($prop instanceof OrderProp) {
+                $building = !empty($prop->getValue()) ? ', корпус/строение ' . $prop->getValue() : '';
+            }
+            $prop = $props->get('PORCH');
+            if ($prop instanceof OrderProp) {
+                $porch = !empty($prop->getValue()) ? ', подъезд. ' . $prop->getValue() : '';
+            }
+            $prop = $props->get('APARTMENT');
+            if ($prop instanceof OrderProp) {
+                $apartment = !empty($prop->getValue()) ? ', кв. ' . $prop->getValue() : '';
+            }
+            $prop = $props->get('FLOOR');
+            if ($prop instanceof OrderProp) {
+                $floor = !empty($prop->getValue()) ? ', этаж ' . $prop->getValue() : '';
+            }
+            $prop = $props->get('CITY');
+            if ($prop instanceof OrderProp) {
+                $city = ', г. ' . $prop->getValue();
+            }
+            $store->setAddress($street . $house . $building . $porch . $apartment . $floor . $city);
+            $store->setActive(true);
+            $store->setIsShop(false);
+        }
         return $store;
     }
 }
