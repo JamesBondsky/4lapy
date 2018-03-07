@@ -271,8 +271,10 @@ class UserBonus
         if ($this->realDiscount <= 0) {
             $this->realDiscount = $this->getGeneratedRealDiscount();
         }
-        
-        return $this->realDiscount ?? 0;
+
+        $discountTable = static::$discountTable;
+        reset($discountTable);
+        return $this->realDiscount ?? key($discountTable);
     }
     
     /**
