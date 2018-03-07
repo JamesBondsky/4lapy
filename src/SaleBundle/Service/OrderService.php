@@ -378,9 +378,17 @@ class OrderService
             $sum = $order->getBasket()->getOrderableItems()->getPrice();
             $sum += $order->getDeliveryPrice();
 
+            /**
+             * Нужно для оплаты бонусами
+             */
+            if ($storage->getUserId()) {
+                $order->setFieldNoDemand('USER_ID', $storage->getUserId());
+            }
+
             if ($storage->getBonus()) {
                 $innerPayment = $paymentCollection->getInnerPayment();
                 $innerPayment->setField('SUM', $storage->getBonus());
+                $innerPayment->setPaid('Y');
                 $sum -= $storage->getBonus();
             }
 
@@ -409,11 +417,11 @@ class OrderService
             try {
                 $address = $this->addressService->getById($storage->getAddressId());
                 $storage->setStreet($address->getStreet())
-                        ->setHouse($address->getHouse())
-                        ->setBuilding($address->getHousing())
-                        ->setFloor($address->getFloor())
-                        ->setApartment($address->getFlat())
-                        ->setPorch($address->getEntrance());
+                    ->setHouse($address->getHouse())
+                    ->setBuilding($address->getHousing())
+                    ->setFloor($address->getFloor())
+                    ->setApartment($address->getFlat())
+                    ->setPorch($address->getEntrance());
             } catch (AddressNotFoundException $e) {
             }
         }
