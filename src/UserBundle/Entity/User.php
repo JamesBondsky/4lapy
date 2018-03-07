@@ -323,6 +323,14 @@ class User implements UserInterface
     }
 
     /**
+     * @return bool
+     */
+    public function hasEmail(): bool
+    {
+        return !empty($this->getEmail());
+    }
+
+    /**
      * @return string
      */
     public function getNormalizePersonalPhone(): string
@@ -970,5 +978,13 @@ class User implements UserInterface
         $this->shopCode = $shopCode;
 
         return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function allowedEASend(): bool
+    {
+        return $this->hasEmail() && $this->isEmailConfirmed();
     }
 }

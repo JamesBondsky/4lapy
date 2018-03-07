@@ -7,7 +7,6 @@
 namespace FourPaws\PersonalBundle\AjaxController;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use Bitrix\Main\DB\Exception;
 use Bitrix\Main\Type\Date;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -152,16 +151,25 @@ class ProfileController extends Controller
 
             $expertSenderService = App::getInstance()->getContainer()->get('expertsender.service');
             $user = $this->currentUserProvider->getUserRepository()->find($id);
-            if($user !== null) {
-                $expertSenderService->sendChangePasswordByProfile($user->getEmail());
+            if ($user instanceof User && $user->allowedEASend()) {
+                if(!$expertSenderService->sendChangePasswordByProfile($user)) {
+                    $logger = LoggerFactory::create('expertSender');
+                    $logger->error('Произошла ошибка при отправке письма - смена пароля');
+                }
+            }
+            elseif(!$user->allowedEASend()){
+                $logger = LoggerFactory::create('expertSender');
+                $logger->info('email '.$user->getEmail().' не подтвержден');
             }
 
             return JsonSuccessResponse::create('Пароль обновлен');
         } catch (BitrixRuntimeException $e) {
             return $this->ajaxMess->getUpdateError($e->getMessage());
-        } catch (ConstraintDefinitionException $e) {
+        } catch (ConstraintDefinitionException|ApplicationCreateException $e) {
+            /** скипаем для показа системной ошибки */
         } catch (ExpertsenderServiceException $e) {
-        } catch (ApplicationCreateException $e) {
+            $logger = LoggerFactory::create('expertSender');
+            $logger->error('EA don`t work - '.$e->getMessage());
         }
 
         return $this->ajaxMess->getSystemError();
@@ -223,14 +231,20 @@ class ProfileController extends Controller
                 return $this->ajaxMess->getUpdateError();
             }
 
-            if($user->getEmail() !== $curUser->getEmail()) {
-                try {
-                    $expertSenderService = $container->get('expertsender.service');
-                    $expertSenderService->sendChangeEmail($curUser, $user);
-                } catch (ExpertsenderServiceException $e) {
-                    $logger = LoggerFactory::create('expersender');
-                    $logger->error('expersender error:'.$e->getMessage());
+            if($user->allowedEASend()) {
+                if ($user->getEmail() !== $curUser->getEmail()) {
+                    try {
+                        $expertSenderService = $container->get('expertsender.service');
+                        $expertSenderService->sendChangeEmail($curUser, $user);
+                    } catch (ExpertsenderServiceException $e) {
+                        $logger = LoggerFactory::create('expertsender');
+                        $logger->error('expertsender error:' . $e->getMessage());
+                    }
                 }
+            }
+            else{
+                $logger = LoggerFactory::create('expertsender');
+                $logger->info('email '.$curUser->getEmail().' не подтвержден');
             }
 
             /** @var ManzanaService $manzanaService */
