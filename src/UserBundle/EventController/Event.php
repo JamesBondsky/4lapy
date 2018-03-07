@@ -34,6 +34,8 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  */
 class Event implements ServiceHandlerInterface
 {
+    const GROUP_ADMIN = 1;
+    const GROUP_TECHNICAL_USERS = 8;
     /**
      * @var EventManager
      */
@@ -227,15 +229,14 @@ class Event implements ServiceHandlerInterface
     /**
      * @param $fields
      *
-     * @return bool
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      */
-    public static function replaceLoginOnUpdate(&$fields): bool
+    public static function replaceLoginOnUpdate(&$fields)
     {
-        $notReplacedGroups= [1, 4, 29, 26, 28, 25, 36, 27, 24, 8];
+        $notReplacedGroups= [static::GROUP_ADMIN, static::GROUP_TECHNICAL_USERS];
         if (!empty($fields['PERSONAL_PHONE']) || !empty($fields['EMAIL'])) {
             try {
                 $container = App::getInstance()->getContainer();
@@ -245,7 +246,7 @@ class Event implements ServiceHandlerInterface
                     foreach($notReplacedGroups as $groupId){
                         foreach ($user->getGroups() as $group) {
                             if($group->getId() === $groupId){
-                                return true;
+                                return;
                             }
                         }
                     }
@@ -270,6 +271,5 @@ class Event implements ServiceHandlerInterface
                 /** если вызывается эта ошибка вероятно умерло все */
             }
         }
-        return true;
     }
 }
