@@ -123,46 +123,54 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             if (!empty($emailGet) && !empty($hash)) {
                 /** @var ConfirmCodeService $confirmService */
                 $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
-                if ($confirmService::checkConfirmEmail($hash)) {
-                    try {
-                        $userRepository = $this->currentUserProvider->getUserRepository();
-                        $userId = $userRepository->findIdentifierByRawLogin($emailGet);
-                        if($userId > 0) {
-                            $user = $userRepository->find($userId);
-                            if ($user instanceof User) {
-                                $user->setEmailConfirmed(true);
-                                $res = $this->currentUserProvider->getUserRepository()->update($user);
-                                if ($res) {
-                                    $this->userAuthorizationService->authorize($userId);
+                try {
+                    if ($confirmService::checkConfirmEmail($hash)) {
+                        try {
+                            $userRepository = $this->currentUserProvider->getUserRepository();
+                            $userId = $userRepository->findIdentifierByRawLogin($emailGet);
+                            if ($userId > 0) {
+                                $user = $userRepository->find($userId);
+                                if ($user instanceof User) {
+                                    $user->setEmailConfirmed(true);
+                                    $res = $this->currentUserProvider->getUserRepository()->update($user);
+                                    if ($res) {
+                                        $this->userAuthorizationService->authorize($userId);
+                                    } else {
+                                        ShowError('Не удалось подтвердить эл. почту');
+                                        return false;
+                                    }
                                 } else {
-                                    ShowError('Не удалось подтвердить эл. почту');
+                                    ShowError('Не найден пользователь');
                                     return false;
                                 }
                             } else {
-                                ShowError('Не найден пользователь');
+                                ShowError('Не найден активный пользователь c эл. почтой ' . $emailGet);
                                 return false;
                             }
-                        }
-                        else {
-                            ShowError('Не найден активный пользователь c эл. почтой '.$emailGet);
+                        } catch (TooManyUserFoundException $e) {
+                            ShowError('Найдено больше одного пользователя c эл. почтой ' . $emailGet . ', пожалуйста обратитесь на горячую линию');
+                            return false;
+                        } catch (UsernameNotFoundException $e) {
+                            ShowError('Не найдено пользователей c эл. почтой ' . $emailGet . ', пожалуйста обратитесь на горячую линию');
                             return false;
                         }
-                    } catch (TooManyUserFoundException $e) {
-                        ShowError('Найдено больше одного пользователя c эл. почтой ' . $emailGet . ', пожалуйста обратитесь на горячую линию');
-                        return false;
-                    } catch (UsernameNotFoundException $e) {
-                        ShowError('Не найдено пользователей c эл. почтой ' . $emailGet . ', пожалуйста обратитесь на горячую линию');
-                        return false;
-                    }
-                    if (!empty($_COOKIE['BACK_URL']) && $_COOKIE['BACK_URL'] === static::BASKET_BACK_URL) {
-                        $backUrl = $_COOKIE['BACK_URL'];
-                        unset($_COOKIE['BACK_URL']);
-                        setcookie('BACK_URL', '', time() - 5, '/');
+                        if (!empty($_COOKIE['BACK_URL']) && $_COOKIE['BACK_URL'] === static::BASKET_BACK_URL) {
+                            $backUrl = $_COOKIE['BACK_URL'];
+                            unset($_COOKIE['BACK_URL']);
+                            setcookie('BACK_URL', '', time() - 5, '/');
 
-                        LocalRedirect($backUrl);
+                            LocalRedirect($backUrl);
+                        } else {
+                            LocalRedirect(static::PERSONAL_URL);
+                        }
                     } else {
-                        LocalRedirect(static::PERSONAL_URL);
+                        ShowError('Проверка не пройдена, попробуйте восстановить пароль еще раз');
+                        return false;
                     }
+                }
+                catch (ExpiredConfirmCodeException|NotFoundConfirmedCodeException $e){
+                    ShowError('Проверка не пройдена, попробуйте восстановить пароль еще раз');
+                    return false;
                 }
             }
 
@@ -733,13 +741,9 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             $userRepository = $this->currentUserProvider->getUserRepository();
             $haveUsers = $userRepository->havePhoneAndEmailByUsers(
                 [
-                    'PERSONAL_PHONE' => $data['PERSONAL_PHONE'],
-                    'EMAIL'          => $data['EMAIL'],
+                    'PERSONAL_PHONE' => $phone
                 ]
             );
-            if ($haveUsers['email']) {
-                return $this->ajaxMess->getHaveEmailError();
-            }
             if ($haveUsers['phone']) {
                 return $this->ajaxMess->getHavePhoneError();
             }
