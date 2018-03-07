@@ -946,6 +946,10 @@ class Offer extends IblockElement
         if (null === $order) {
             $order = Order::create(SITE_ID);
         }
+        $shipmentCollection = $order->getShipmentCollection();
+        foreach ($shipmentCollection as $i => $shipment) {
+            unset($shipmentCollection[$i]);
+        }
         /** @var Basket $basket */
         $basket = Basket::create(SITE_ID);
         $basket->setFUserId((int)Fuser::getId());
@@ -972,8 +976,6 @@ class Offer extends IblockElement
                     ->withPrice($basketItem->getPrice());
             }
         }
-        $order->clearChanged();
-        $order->clearStartField();
 
         $this->isCounted = true;
     }
