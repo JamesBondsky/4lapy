@@ -14,10 +14,9 @@ use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Service\BasketService;
 
-
 /**
  * Class Cleaner
- * @package FourPaws\SaleBundle\Discount\Cleaner
+ * @package FourPaws\SaleBundle\Discount\Utils
  */
 class Cleaner
 {

@@ -166,21 +166,7 @@ class Gift extends \CSaleActionGiftCtrlGroup
             $rowActionDescription = $actionDescription;
             $rowActionDescription['BASKET_CODE'] = $basketRow['ID'];
             Actions::setActionResult(Actions::RESULT_ENTITY_BASKET, $rowActionDescription);
-//            /** @var BasketItem $ifItem */
-//            if($basket && $ifItem = $basket->getItemByBasketCode($basketRow['ID'])) {
-//                dump($ifItem->getField('NAME'), $ifItem->getQuantity());
-//            }
         }
-
-        // пытаемся получить корзину, чтобы добавить подарков
-        /** @noinspection NullPointerExceptionInspection */
-//        if (
-//            \is_object($callerObject)
-//            && $callerObject instanceof Discount
-//            && $basket = $callerObject->getOrder()->getBasket() && false
-//        ) {
-//
-//        }
     }
 
     /**

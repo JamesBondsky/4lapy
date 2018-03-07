@@ -7,7 +7,7 @@
  * @copyright   ADV/web-engineering co.
  */
 
-namespace FourPaws\SaleBundle\Discount;
+namespace FourPaws\SaleBundle\Discount\Action\Condition;
 
 use Bitrix\Sale\Discount\Actions;
 
@@ -15,7 +15,6 @@ use Bitrix\Sale\Discount\Actions;
 /**
  * Class BasketFilter
  * @package FourPaws\SaleBundle\Discount
- * @todo переместить в соотвествующую папку и неймспейс
  */
 class BasketFilter extends \CSaleCondCtrlBasketGroup
 {
@@ -71,7 +70,6 @@ class BasketFilter extends \CSaleCondCtrlBasketGroup
             }
         }
 
-//        dump($arOneCondition, $arParams, $arControl, $arSubs, $mxResult);
         return (!$boolError ? $mxResult : false);
     }
 
@@ -103,8 +101,6 @@ class BasketFilter extends \CSaleCondCtrlBasketGroup
                 . var_export($arValues['Value'], true) . ');';
         }
 
-//        dump($arValues, $arParams, $arSubs, $strFunc, $result);
-
         return $result;
     }
 
@@ -116,9 +112,9 @@ class BasketFilter extends \CSaleCondCtrlBasketGroup
      * @param callable $filter
      * @param float $limitValue
      *
-     * @return float
+     * @return int
      */
-    public static function sumFilter(array &$order, string $field, callable $filter, float $limitValue): float
+    public static function sumFilter(array &$order, string $field, callable $filter, float $limitValue): int
     {
         $sum = 0.0;
         $clearBasket = [];
@@ -140,6 +136,6 @@ class BasketFilter extends \CSaleCondCtrlBasketGroup
             }
             $order['BASKET_ITEMS'] = $clearBasket;
         }
-        return intdiv($sum, $limitValue);
+        return intdiv($sum, (int)$limitValue);
     }
 }

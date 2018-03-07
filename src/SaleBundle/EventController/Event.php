@@ -11,7 +11,7 @@ use FourPaws\App\Application;
 use FourPaws\App\ServiceHandlerInterface;
 use FourPaws\SaleBundle\Discount\Action\Action\DiscountFromProperty;
 use FourPaws\SaleBundle\Discount\Action\Condition\BasketQuantity;
-use FourPaws\SaleBundle\Discount\BasketFilter;
+use FourPaws\SaleBundle\Discount\Action\Condition\BasketFilter;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Gifter;
