@@ -43,13 +43,11 @@ class UserController extends FOSRestController
      * )
      * @param LoginRequest $loginRequest
      *
-     * @throws \FourPaws\UserBundle\Exception\UsernameNotFoundException
-     * @throws \FourPaws\UserBundle\Exception\TooManyUserFoundException
-     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
      * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
-     * @throws \FourPaws\UserBundle\Exception\InvalidCredentialException
      * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
+     * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
      * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
+     * @throws \Bitrix\Main\DB\SqlQueryException
      * @return ApiResponse
      * @internal param Request $request
      *

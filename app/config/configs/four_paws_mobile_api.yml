@@ -25,6 +25,11 @@ four_paws_mobile_api:
       code: 44
       message: 'Данные о станциях метро для этого города отсутствуют'
       status_code: 200
+    FourPaws\Catalog\Exception\CategoryNotFoundException:
+      code: 404
+      message: 'Категория не найдена'
+      status_code: 200
     FourPaws\MobileApiBundle\Exception\InvalidSignRequestException:
       code: 401
       status_code: 401
+
