@@ -1,7 +1,12 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\MobileApiBundle\Dto\Response;
 
+use Doctrine\Common\Collections\Collection;
 use FourPaws\MobileApiBundle\Dto\Object\CatalogCategory;
 use JMS\Serializer\Annotation as Serializer;
 
@@ -9,23 +14,28 @@ class CategoriesResponse
 {
     /**
      * @Serializer\SerializedName("categories")
-     * @Serializer\Type("array<FourPaws\MobileApiBundle\Dto\Object\CatalogCategory>")
+     * @Serializer\Type("ArrayCollection<FourPaws\MobileApiBundle\Dto\Object\CatalogCategory>")
      * @var CatalogCategory[]
      */
-    protected $categories = [];
+    protected $categories;
+
+    public function __construct(Collection $categories)
+    {
+        $this->categories = $categories;
+    }
 
     /**
-     * @return CatalogCategory[]
+     * @return CatalogCategory[]|Collection
      */
-    public function getCategories(): array
+    public function getCategories(): Collection
     {
         return $this->categories;
     }
 
     /**
-     * @param CatalogCategory[] $categories
+     * @param CatalogCategory[]|Collection $categories
      */
-    public function setCategories(array $categories)
+    public function setCategories(Collection $categories)
     {
         $this->categories = $categories;
     }
@@ -33,27 +43,20 @@ class CategoriesResponse
     /**
      * @param CatalogCategory $catalogCategory
      *
-     * @return CategoriesResponse
+     * @return bool
      */
-    public function addCategory(CatalogCategory $catalogCategory): CategoriesResponse
+    public function addCategory(CatalogCategory $catalogCategory): bool
     {
-        if (!\in_array($catalogCategory, $this->categories, true)) {
-            $this->categories[] = $catalogCategory;
-        }
-        return $this;
+        return $this->categories->add($catalogCategory);
     }
 
     /**
      * @param CatalogCategory $catalogCategory
      *
-     * @return CategoriesResponse
+     * @return bool
      */
-    public function removeCategory(CatalogCategory $catalogCategory): CategoriesResponse
+    public function removeCategory(CatalogCategory $catalogCategory): bool
     {
-        $key = array_search($catalogCategory, $this->categories, true);
-        if ($key !== false) {
-            unset($this->categories[$key]);
-        }
-        return $this;
+        return $this->categories->removeElement($catalogCategory);
     }
 }

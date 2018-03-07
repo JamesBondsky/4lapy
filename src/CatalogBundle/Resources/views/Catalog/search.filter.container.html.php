@@ -27,6 +27,7 @@ global $APPLICATION;
 $category = $catalogRequest->getCategory();
 
 $filterCollection = $catalogRequest->getCategory()->getFilters();
+$count = $productSearchResult->getResultSet()->getTotalHits();
 
 $queryUrl = new Uri($APPLICATION->GetCurDir());
 $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalogRequest->getSearchString()]);
@@ -46,9 +47,6 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
             Фильтры
         </div>
     </div>
-    
-    
-    
     <div class="b-filter__wrapper b-filter__wrapper--scroll">
         <form class="b-form js-filter-form" action="<?= $APPLICATION->GetCurDir() ?>">
             <div class="b-filter__block b-filter__block--reset js-reset-link-block"
@@ -77,7 +75,7 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
         </form>
     </div>
     <div class="b-filter__bottom"><a class="b-filter__button" href="javascript:void(0);" title="">
-            Показать 300 товаров
+            Показать <?= $count . ' ' . WordHelper::declension($count, ['товар', 'товара', 'товаров']) ?>
         </a>
     </div>
 </aside>
@@ -100,14 +98,7 @@ $queryUrl->addParams([AbstractCatalogRequestConverter::SEARCH_STRING => $catalog
             </div>
             <div class="b-catalog-filter__row b-catalog-filter__row--sort">
                 <div class="b-catalog-filter__sort-part js-permutation-mobile-here">
-                    <?php
-
-                    $totalString = $productSearchResult->getResultSet()->getTotalHits();
-                    $totalString .= (new Declension(' товар', ' товара', ' товаров'))->get(
-                        $productSearchResult->getResultSet()->getTotalHits()
-                    );
-                    ?>
-                    <span class="b-catalog-filter__label b-catalog-filter__label--amount"><?= $totalString ?></span>
+                    <span class="b-catalog-filter__label b-catalog-filter__label--amount"><?= $count . (new Declension(' товар', ' товара', ' товаров'))->get($count) ?></span>
                     <?= $view->render(
                         'FourPawsCatalogBundle:Catalog:catalog.filter.sorts.html.php',
                         [

@@ -24,7 +24,7 @@ class StoreRepository extends BaseRepository
      * @param null|int $limit
      * @param null|int $offset
      *
-     * @throws \Exception
+     * @throws \Bitrix\Main\ArgumentException
      * @return StoreCollection
      */
     public function findBy(

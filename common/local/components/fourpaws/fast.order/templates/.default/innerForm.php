@@ -62,7 +62,7 @@ if ($isAuth) {
     <div class="b-popup-one-click__input-block">
         <label class="b-popup-one-click__label" for="one-click-name">Имя</label>
         <div class="b-input b-input--recall">
-            <input class="b-input__input-field b-input__input-field--recall" type="text" id="one-click-name"
+            <input class="b-input__input-field b-input__input-field--recall js-small-input-two" type="text" id="one-click-name"
                    placeholder="Ваше имя" name="name" value="<?= $name ?>"/>
             <div class="b-error"><span class="js-message"></span></div>
         </div>
@@ -255,5 +255,13 @@ if ($isAuth) {
             <span class="b-checkbox__text">Я подтверждаю, что даю согласие на обработку персональных данных</span>
         </label>
     </div>
+    <div class="b-error b-error--error">
+        <span class="js-message"></span>
+    </div>
     <button class="b-button b-button--one-click">Отправить</button>
 </form>
+<div class="b-preloader b-preloader--fixed">
+    <div class="b-preloader__spinner">
+        <img class="b-preloader__image" src="/static/build/images/inhtml/spinner.svg" alt="spinner" title=""/>
+    </div>
+</div>
