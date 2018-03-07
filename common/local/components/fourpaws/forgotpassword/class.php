@@ -111,14 +111,27 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
             if (!empty($emailGet) && !empty($hash)) {
                 /** @var ConfirmCodeService $confirmService */
                 $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
-                if ($confirmService::checkConfirmEmail($hash)) {
-                    if ($backUrl === static::BASKET_BACK_URL) {
-                        $this->authService->authorize($request->get('user_id'));
-                        LocalRedirect($backUrl);
+                try {
+                    if ($confirmService::checkConfirmEmail($hash)) {
+                        if ($backUrl === static::BASKET_BACK_URL) {
+                            $this->authService->authorize($request->get('user_id'));
+                            LocalRedirect($backUrl);
+                        } else {
+                            $this->arResult['EMAIL'] = $emailGet;
+                            $this->arResult['STEP'] = 'createNewPassword';
+                        }
                     } else {
-                        $this->arResult['EMAIL'] = $emailGet;
-                        $this->arResult['STEP'] = 'createNewPassword';
+                        $this->arResult['ERROR'] = 'Ссылка для подтверждения недействительна, попробуйте восстановить пароль заново';
+                        $this->arResult['STEP'] = 'error';
                     }
+                }
+                catch (ExpiredConfirmCodeException $e){
+                    $this->arResult['ERROR'] = 'Срок действия ссылки истек, попробуйте восстановить пароль заново';
+                    $this->arResult['STEP'] = 'error';
+                }
+                catch (NotFoundConfirmedCodeException $e){
+                    $this->arResult['ERROR'] = 'Ссылка для подтверждения недействительна, попробуйте восстановить пароль заново';
+                    $this->arResult['STEP'] = 'error';
                 }
             }
 

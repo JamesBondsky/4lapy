@@ -20,6 +20,7 @@ use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
 use FourPaws\External\SmsService;
+use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\FastOrderCreateException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\SaleBundle\Service\BasketService;
@@ -156,18 +157,19 @@ class FastOrderController extends Controller
      */
     public function createAction(Request $request): JsonResponse
     {
-        $orderStorage = $this->orderStorageService->getStorage();
+        $orderStorage = new OrderStorage();
         $phone = $request->get('phone', '');
         $name = $request->get('name', '');
 
-        $orderStorage->setPhone($phone);
-        $orderStorage->setName($name);
-        $orderStorage->setFuserId($this->currentUserProvider->getCurrentFUserId());
+        $orderStorage->setPhone($phone)
+                     ->setName($name)
+                     ->setFuserId($this->currentUserProvider->getCurrentFUserId());
 
         if ($this->userAuthProvider->isAuthorized()) {
             try {
                 $user = $this->currentUserProvider->getCurrentUser();
                 $orderStorage->setEmail($user->getEmail());
+                $orderStorage->setUserId($user->getId());
             } catch (NotAuthorizedException $e) {
                 /** никогда не сработает */
             }

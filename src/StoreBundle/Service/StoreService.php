@@ -19,7 +19,6 @@ use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundExcep
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Location\LocationService;
-use FourPaws\MobileApiBundle\Dto\Request\StoreListRequest;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Base as BaseEntity;
@@ -156,7 +155,7 @@ class StoreService
      *
      * @param string $locationCode
      * @param string $type
-     * @param bool $strict
+     * @param bool   $strict
      *
      * @return StoreCollection
      */
@@ -313,7 +312,7 @@ class StoreService
     /**
      * Получить наличие офферов на указанных складах
      *
-     * @param Collection $offers
+     * @param Collection      $offers
      * @param StoreCollection $stores
      *
      * @throws \Exception
@@ -323,7 +322,7 @@ class StoreService
         foreach ($offers as $offer) {
             $offer->withStocks(
                 $this->getStocksByOffer($offer)
-                     ->filterByStores($stores)
+                    ->filterByStores($stores)
             );
         }
     }
@@ -393,7 +392,7 @@ class StoreService
     /**
      * @param array $params
      *
-     * @throws \Exception
+     * @throws \Bitrix\Main\ArgumentException
      * @return StoreCollection
      */
     public function getStoreCollection(array $params = []): StoreCollection
@@ -430,11 +429,11 @@ class StoreService
             if ($this->pickupDelivery) {
                 $stockResult = $this->pickupDelivery->getStockResult();
                 $storeAmount = reset($this->offers)->getStocks()
-                                                   ->filterByStores(
-                                                       $this->getByCurrentLocation(
-                                                           static::TYPE_STORE
-                                                       )
-                                                   )->getTotalAmount();
+                    ->filterByStores(
+                        $this->getByCurrentLocation(
+                            static::TYPE_STORE
+                        )
+                    )->getTotalAmount();
             }
 
             /** @var Store $store */
@@ -502,9 +501,9 @@ class StoreService
                     /** @var StockResult $stockResultByStore */
                     $stockResultByStore = $stockResult->filterByStore($store)->first();
                     $amount = $storeAmount + $stockResultByStore->getOffer()
-                                                                ->getStocks()
-                                                                ->filterByStore($store)
-                                                                ->getTotalAmount();
+                            ->getStocks()
+                            ->filterByStore($store)
+                            ->getTotalAmount();
                     $item['amount'] = $amount > 5 ? 'много' : 'мало';
                     $item['pickup'] = DeliveryTimeHelper::showTime(
                         $this->pickupDelivery,
@@ -642,41 +641,6 @@ class StoreService
         return $result;
     }
 
-    /**
-     * @param StoreListRequest $storeListRequest
-     *
-     * @return array
-     */
-    public function getMobileFilterByRequest(StoreListRequest $storeListRequest): array
-    {
-        $result = [];
-        if (!empty($storeListRequest->getMetroStation())) {
-            $result['UF_METRO'] = $storeListRequest->getMetroStation();
-        }
-        if (!empty($storeListRequest->getCityId())) {
-            $result['UF_LOCATION'] = $storeListRequest->getCityId();
-        }
-
-        return $result;
-    }
-
-    /**
-     * @param StoreListRequest $storeListRequest
-     *
-     * @return array
-     */
-    public function getMobileOrderByRequest(StoreListRequest $storeListRequest): array
-    {
-        $result = [];
-        //Сортировка по приближенности к текущему местоположению
-        $longitude = $storeListRequest->getLongitude();
-        $latitude = $storeListRequest->getLatitude();
-        if ($longitude > 0 && $latitude > 0) {
-            $result['DISTANCE_' . (string)$latitude . '_' . (string)$longitude] = 'ASC';
-        }
-
-        return $result;
-    }
 
     /**
      * @param int $offerId

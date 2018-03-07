@@ -13,5 +13,6 @@ modules:
             password: 'bitrix'
         - \Helper\Api
         - REST:
-            url: http://4lapy.vag/mobile_app_v2
+            url: http://4lapy.vag/api
             depends: PhpBrowser
+        - Asserts

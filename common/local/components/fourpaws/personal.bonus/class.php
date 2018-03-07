@@ -92,18 +92,20 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
             return null;
         }
 
-        if(!$user->havePersonalPhone()){
+        if (!$user->havePersonalPhone()) {
             $this->includeComponentTemplate('notPhone');
             return false;
         }
 
+        $cardNumber = $user->getDiscountCardNumber();
         $cache = Cache::createInstance();
-        if ($cache->initCache($this->arParams['MANZANA_CACHE_TIME'], ['userId' => $user->getId()])) {
+        if ($cache->initCache($this->arParams['MANZANA_CACHE_TIME'],
+            serialize(['userId' => $user->getId(), 'card' => $cardNumber]))) {
             $result = $cache->getVars();
             $this->arResult['BONUS'] = $bonus = $result['bonus'];
         } elseif ($cache->startDataCache()) {
             try {
-                $this->arResult['BONUS'] = $bonus = $this->bonusService->getUserBonusInfo();
+                $this->arResult['BONUS'] = $bonus = $this->bonusService->getUserBonusInfo($user);
             } catch (NotAuthorizedException $e) {
                 /** запрашиваем авторизацию */
                 \define('NEED_AUTH', true);
@@ -116,9 +118,12 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
         $this->setFrameMode(true);
 
         if ($this->startResultCache($this->arParams['CACHE_TIME'], [
+            'userId' => $user->getId(),
             'cardNumber'  => $bonus->getCard()->getCardNumber(),
+            'bonus'  => $bonus->getActiveBonus(),
             'sum'         => $bonus->getSum(),
             'paidByBonus' => $bonus->getCredit(),
+            'realDiscount' => $bonus->getRealDiscount(),
         ])) {
             $this->includeComponentTemplate();
         }

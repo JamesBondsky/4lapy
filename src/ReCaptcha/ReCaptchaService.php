@@ -50,15 +50,14 @@ class ReCaptchaService implements LoggerAwareInterface
      */
     public function getCaptcha(string $additionalClass = '', bool $isAjax = false): string
     {
-        if(!$isAjax) {
-            $script= '';
+        if (!$isAjax) {
+            $script = '';
             $this->addJs();
-        }
-        else{
+        } else {
             $script = $this->getJs();
         }
 
-        return $script.'<div class="g-recaptcha' . $additionalClass . '" data-sitekey="' . $this->parameters['key']
+        return $script . '<div class="g-recaptcha' . $additionalClass . '" data-sitekey="' . $this->parameters['key']
             . '"></div>';
     }
 
@@ -80,7 +79,6 @@ class ReCaptchaService implements LoggerAwareInterface
      *
      * @throws \RuntimeException
      * @throws SystemException
-     * @throws GuzzleException
      * @return bool
      */
     public function checkCaptcha(string $recaptcha = ''): bool
@@ -99,7 +97,11 @@ class ReCaptchaService implements LoggerAwareInterface
             ]
         );
         if (!empty($recaptcha)) {
-            $res = $this->guzzle->request('get', $uri->getUri());
+            try {
+                $res = $this->guzzle->request('get', $uri->getUri());
+            } catch (GuzzleException $e) {
+                return false;
+            }
             if ($res->getStatusCode() === 200) {
                 $data = json_decode($res->getBody()->getContents());
                 if ($data && $data->success) {

@@ -68,7 +68,7 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
             if ($this->arParams['SET_TITLE'] === 'Y') {
                 $APPLICATION->SetTitle(
                     sprintf(
-                        'Заказа № %s оформлен',
+                        'Заказ № %s оформлен',
                         $this->arParams['ORDER_ID']
                     )
                 );
@@ -152,8 +152,7 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
                     $cheque = $this->manzanaPosService->processChequeWithoutBonus(
                         $this->manzanaPosService->buildRequestFromBasket(
                             $order->getBasket(),
-                            $user->getDiscountCardNumber(),
-                            $order->getPaymentCollection()->getInnerPayment()->getSum()
+                            $user->getDiscountCardNumber()
                         )
                     );
 

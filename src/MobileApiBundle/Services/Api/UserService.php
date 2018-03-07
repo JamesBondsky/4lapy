@@ -36,12 +36,10 @@ class UserService
     /**
      * @param LoginRequest $loginRequest
      *
-     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
-     * @throws \FourPaws\UserBundle\Exception\UsernameNotFoundException
      * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
-     * @throws \FourPaws\UserBundle\Exception\TooManyUserFoundException
      * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
-     * @throws \FourPaws\UserBundle\Exception\InvalidCredentialException
+     * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
+     * @throws \Bitrix\Main\Db\SqlQueryException
      * @throws \FourPaws\Helpers\Exception\WrongPhoneNumberException
      * @return UserLoginResponse
      */
@@ -56,7 +54,8 @@ class UserService
                 ->setLogin($user->getPersonalPhone())
                 ->setPassword($loginRequest->getPassword());
             $_SESSION['MANZANA_UPDATE'] = true;
-            $this->userBundleService->register($user);
+            $user = $this->userBundleService->register($user);
+            $this->userBundleService->authorize($user->getId());
         }
         return new UserLoginResponse($this->getCurrentApiUser());
     }

@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\MobileApiBundle\Dto;
 
 use Doctrine\Common\Collections\ArrayCollection;
@@ -21,9 +25,10 @@ class Response
      */
     protected $errors;
 
-    public function __construct()
+    public function __construct($data = null)
     {
         $this->errors = new ArrayCollection();
+        $this->data = $data;
     }
 
     /**
@@ -36,6 +41,7 @@ class Response
 
     /**
      * @param Collection|Error[] $errors
+     *
      * @return Response
      */
     public function setErrors(Collection $errors): Response
@@ -46,6 +52,7 @@ class Response
 
     /**
      * @param Error $error
+     *
      * @return bool
      */
     public function addError(Error $error): bool
@@ -55,6 +62,7 @@ class Response
 
     /**
      * @param Error $error
+     *
      * @return bool
      */
     public function removeError(Error $error): bool
@@ -72,6 +80,7 @@ class Response
 
     /**
      * @param mixed $data
+     *
      * @return Response
      */
     public function setData($data): Response

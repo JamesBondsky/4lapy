@@ -124,6 +124,14 @@ class AjaxMess
     }
 
     /**
+     * @return JsonResponse
+     */
+    public function getHaveLoginError(): JsonResponse
+    {
+        return $this->getJsonError('haveLogin', 'Такой логин уже существует');
+    }
+
+    /**
      * @param string $additionalMes
      *
      * @return JsonResponse
@@ -277,6 +285,22 @@ class AjaxMess
     public function getVerificationError(): JsonResponse
     {
         return $this->getJsonError('verificationError', 'Ошибка верификации');
+    }
+
+    /**
+     * @return JsonResponse
+     */
+    public function getEmptyCardNumber(): JsonResponse
+    {
+        return $this->getJsonError('emptyCardNumber', 'Не указан номер карты');
+    }
+
+    /**
+     * @return JsonResponse
+     */
+    public function getCardNotValidError(): JsonResponse
+    {
+        return $this->getJsonError('cardNotValid', 'Карта не валидна');
     }
 
     /**

@@ -231,32 +231,6 @@ class OrderService
             throw new OrderCreateException('Корзина пуста');
         }
 
-        /**
-         * Задание способов оплаты
-         */
-        if ($storage->getPaymentId()) {
-            $paymentCollection = $order->getPaymentCollection();
-            $sum = $order->getBasket()->getOrderableItems()->getPrice();
-
-            if ($storage->getBonus()) {
-                $innerPayment = $paymentCollection->getInnerPayment();
-                $innerPayment->setField('SUM', $storage->getBonus());
-                $sum -= $storage->getBonus();
-            }
-
-            $extPayment = $paymentCollection->createItem();
-            $extPayment->setField('SUM', $sum);
-            $extPayment->setField('PAY_SYSTEM_ID', $storage->getPaymentId());
-
-            /** @var \Bitrix\Sale\PaySystem\Service $paySystem */
-            $paySystem = $extPayment->getPaySystem();
-            $extPayment->setField('PAY_SYSTEM_NAME', $paySystem->getField('NAME'));
-        } elseif ($save) {
-            if (!$fastOrder) {
-                throw new OrderCreateException('Не выбран способ оплаты');
-            }
-        }
-
         $deliveries = $this->getDeliveries();
         $selectedDelivery = null;
         if ($fastOrder) {
@@ -264,11 +238,10 @@ class OrderService
             if (!empty($deliveries)) {
                 $selectedDelivery = current($deliveries);
             } else {
-                throw new FastOrderCreateException(
-                    'Оформление быстрого заказа невозможно, пожалуйста обратить к администратору или попробуйте полный процесс оформления'
-                );
+                throw new FastOrderCreateException('Оформление быстрого заказа невозможно, пожалуйста обратитесь к администратору или попробуйте полный процесс оформления');
             }
-        } else {
+        }
+        if ($selectedDelivery === null && !empty($deliveries)) {
             /** @var BaseResult $delivery */
             foreach ($deliveries as $delivery) {
                 if ($storage->getDeliveryId() === $delivery->getDeliveryId()) {
@@ -406,6 +379,33 @@ class OrderService
         }
 
         /**
+         * Задание способов оплаты
+         */
+        if ($storage->getPaymentId()) {
+            $paymentCollection = $order->getPaymentCollection();
+            $sum = $order->getBasket()->getOrderableItems()->getPrice();
+            $sum += $order->getDeliveryPrice();
+
+            if ($storage->getBonus()) {
+                $innerPayment = $paymentCollection->getInnerPayment();
+                $innerPayment->setField('SUM', $storage->getBonus());
+                $sum -= $storage->getBonus();
+            }
+
+            $extPayment = $paymentCollection->createItem();
+            $extPayment->setField('SUM', $sum);
+            $extPayment->setField('PAY_SYSTEM_ID', $storage->getPaymentId());
+
+            /** @var \Bitrix\Sale\PaySystem\Service $paySystem */
+            $paySystem = $extPayment->getPaySystem();
+            $extPayment->setField('PAY_SYSTEM_NAME', $paySystem->getField('NAME'));
+        } elseif ($save) {
+            if (!$fastOrder) {
+                throw new OrderCreateException('Не выбран способ оплаты');
+            }
+        }
+
+        /**
          * Обработка полей заказа
          */
         if ($storage->getComment()) {
@@ -477,10 +477,21 @@ class OrderService
                 }
             } else {
                 $users = $this->currentUserProvider->getUserRepository()->findBy(
-                    ['PERSONAL_PHONE' => $storage->getPhone()]
+                    ['LOGIC' => 'OR', ['=PERSONAL_PHONE' => $storage->getPhone()], ['=EMAIL' => $storage->getEmail()]]
                 );
-                if ($user = reset($users)) {
-                    $order->setFieldNoDemand('USER_ID', $user->getId());
+
+                $foundUser = null;
+                /** @var User $user */
+                foreach ($users as $user) {
+                    if ($user->getEmail() === $storage->getEmail()) {
+                        $foundUser = $user;
+                    } elseif ($user->getPersonalPhone() === $storage->getPhone()) {
+                        $foundUser = $user;
+                    }
+                }
+
+                if ($foundUser) {
+                    $order->setFieldNoDemand('USER_ID', $foundUser->getId());
                 } else {
                     $password = randString(6);
                     $user = (new User())
@@ -490,6 +501,7 @@ class OrderService
                         ->setPassword($password)
                         ->setPersonalPhone($storage->getPhone());
                     $_SESSION['MANZANA_UPDATE'] = true;
+                    $_SESSION['SEND_REGISTER_EMAIL'] = true;
                     $user = $this->userRegistrationProvider->register($user);
 
                     $order->setFieldNoDemand('USER_ID', $user->getId());

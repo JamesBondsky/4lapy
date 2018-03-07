@@ -84,7 +84,7 @@ nelmio_api_doc:
   models: { use_jms: true }
   routes:
     path_patterns:
-      - ^/mobile_app_v2
+      - ^/api
   documentation:
     info:
       title: 4lapy
