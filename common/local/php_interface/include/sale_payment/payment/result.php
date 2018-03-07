@@ -73,7 +73,8 @@ if ((int)$response['errorCode'] === 0) {
     $onlinePayment->setPaid('Y');
     $onlinePayment->setField('PS_SUM', $response['amount'] / 100);
     $onlinePayment->setField('PS_CURRENCY', $response['currency']);
-    $onlinePayment->setField('PS_RESPONSE_DATE', new \Bitrix\Main\Type\Date());
+    $onlinePayment->setField('PS_RESPONSE_DATE', new \Bitrix\Main\Type\DateTime());
+    $onlinePayment->setField('PS_INVOICE_ID', $sberbankOrderId);
     $onlinePayment->setField('PS_STATUS', 'Y');
     $onlinePayment->setField('PS_STATUS_DESCRIPTION',
         $response['cardAuthInfo']['pan'] . ';' . $response['cardAuthInfo']['cardholderName']);
