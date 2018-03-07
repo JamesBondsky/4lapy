@@ -21,6 +21,7 @@ use FourPaws\UserBundle\Service\UserService;
 use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\Serializer;
+use JMS\Serializer\SerializerInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -294,7 +295,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
                 throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
             }
 
-            $this->serializer = $container->get('jms_serializer');
+            $this->serializer = $container->get(SerializerInterface::class);
         }
         return $this->serializer;
     }

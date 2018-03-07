@@ -46,6 +46,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\Exception\RuntimeException;
 use JMS\Serializer\Serializer;
+use JMS\Serializer\SerializerInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
@@ -107,7 +108,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         $this->userRegistrationService = $container->get(UserRegistrationProviderInterface::class);
         $this->ajaxMess = $container->get('ajax.mess');
 
-        $this->serializer = $container->get('jms_serializer');
+        $this->serializer = $container->get(SerializerInterface::class);
     }
 
     /** {@inheritdoc} */
