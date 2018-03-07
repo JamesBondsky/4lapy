@@ -17,13 +17,6 @@ use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
-use FourPaws\AppBundle\Serialization\ArrayCommaString;
-use FourPaws\AppBundle\Serialization\ArrayOrFalseHandler;
-use FourPaws\AppBundle\Serialization\BitrixBooleanHandler;
-use FourPaws\AppBundle\Serialization\BitrixDateHandler;
-use FourPaws\AppBundle\Serialization\BitrixDateTimeHandler;
-use FourPaws\AppBundle\Serialization\ManzanaDateTimeImmutableFullShortHandler;
-use FourPaws\AppBundle\Serialization\PhoneHandler;
 use FourPaws\AppBundle\Service\AjaxMess;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Exception\SmsSendErrorException;
@@ -31,7 +24,6 @@ use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
-use FourPaws\Helpers\SerializerHelper;
 use FourPaws\Location\Model\City;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
@@ -53,9 +45,7 @@ use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
 use GuzzleHttp\Exception\GuzzleException;
 use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\Exception\RuntimeException;
-use JMS\Serializer\Handler\HandlerRegistry;
 use JMS\Serializer\Serializer;
-use JMS\Serializer\SerializerBuilder;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
@@ -117,7 +107,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         $this->userRegistrationService = $container->get(UserRegistrationProviderInterface::class);
         $this->ajaxMess = $container->get('ajax.mess');
 
-        $this->serializer = SerializerHelper::get();
+        $this->serializer = $container->get('jms_serializer');
     }
 
     /** {@inheritdoc} */
@@ -137,12 +127,26 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                     try {
                         $userRepository = $this->currentUserProvider->getUserRepository();
                         $userId = $userRepository->findIdentifierByRawLogin($emailGet);
-                        $user = $userRepository->find($userId);
-                        if ($user !== null) {
-                            $user->setEmailConfirmed(true);
-                            $this->currentUserProvider->getUserRepository()->update($user);
+                        if($userId > 0) {
+                            $user = $userRepository->find($userId);
+                            if ($user instanceof User) {
+                                $user->setEmailConfirmed(true);
+                                $res = $this->currentUserProvider->getUserRepository()->update($user);
+                                if ($res) {
+                                    $this->userAuthorizationService->authorize($userId);
+                                } else {
+                                    ShowError('Не удалось подтвердить эл. почту');
+                                    return false;
+                                }
+                            } else {
+                                ShowError('Не найден пользователь');
+                                return false;
+                            }
                         }
-                        $this->userAuthorizationService->authorize($userId);
+                        else {
+                            ShowError('Не найден активный пользователь c эл. почтой '.$emailGet);
+                            return false;
+                        }
                     } catch (TooManyUserFoundException $e) {
                         ShowError('Найдено больше одного пользователя c эл. почтой ' . $emailGet . ', пожалуйста обратитесь на горячую линию');
                         return false;
@@ -781,7 +785,6 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         if (!empty($params)) {
             extract($params, EXTR_OVERWRITE);
         }
-        $html = '';
         ob_start();
         if (!empty($title)) { ?>
             <header class="b-registration__header">
@@ -789,10 +792,10 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             </header>
             <?php
         }
+        /** @noinspection PhpIncludeInspection */
         require_once App::getDocumentRoot()
             . '/local/components/fourpaws/register/templates/.default/include/' . $page . '.php';
-        $html = ob_get_clean();
 
-        return $html;
+        return ob_get_clean();
     }
 }

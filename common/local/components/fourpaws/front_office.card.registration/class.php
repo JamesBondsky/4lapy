@@ -1,31 +1,28 @@
 <?php
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Adv\Bitrixtools\Tools\Main\UserGroupUtils;
 use Bitrix\Main\DB\Connection;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
+use Bitrix\Main\SystemException;
 use FourPaws\App\Application;
-use FourPaws\AppBundle\Serialization\ArrayOrFalseHandler;
-use FourPaws\AppBundle\Serialization\BitrixBooleanHandler;
-use FourPaws\AppBundle\Serialization\BitrixDateHandler;
-use FourPaws\AppBundle\Serialization\BitrixDateTimeHandler;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Manzana\Exception\CardNotFoundException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
-use FourPaws\External\SmsService;
 use FourPaws\Helpers\PhoneHelper;
-use FourPaws\Helpers\SerializerHelper;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService;
 use JMS\Serializer\DeserializationContext;
-use JMS\Serializer\Handler\HandlerRegistry;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\Serializer;
-use JMS\Serializer\SerializerBuilder;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -281,11 +278,23 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
 
     /**
      * @return Serializer
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws SystemException
      */
-    public function getSerializer()
+    public function getSerializer(): Serializer
     {
         if (!$this->serializer) {
-            $this->serializer = SerializerHelper::get();
+            try {
+                $container = Application::getInstance()->getContainer();
+            } catch (ApplicationCreateException $e) {
+                $logger = LoggerFactory::create('component');
+                $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
+                /** @noinspection PhpUnhandledExceptionInspection */
+                throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
+            }
+
+            $this->serializer = $container->get('jms_serializer');
         }
         return $this->serializer;
     }
