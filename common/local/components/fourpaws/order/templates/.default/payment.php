@@ -46,9 +46,9 @@ foreach ($arResult['PAYMENTS'] as $payment) {
 $basketPrice = $basket->getPrice();
 if ($deliveryService->isPickup($selectedDelivery) && $storage->isPartialGet()) {
     $basketPrice = $deliveryService->getStockResultByDelivery($selectedDelivery)
-                                   ->filterByStore($arResult['SELECTED_SHOP'])
-                                   ->getAvailable()
-                                   ->getPrice();
+        ->filterByStore($arResult['SELECTED_SHOP'])
+        ->getAvailable()
+        ->getPrice();
 }
 
 $payments = $arResult['PAYMENTS'];
@@ -134,12 +134,13 @@ $user = $arResult['USER'];
                           action="/">
                         <?php if ($user && $user->getDiscountCardNumber()) {
                             if ($arResult['MAX_BONUS_SUM']) {
+                                $active = $storage->getBonus() > 0;
                                 ?>
                                 <label class="b-order-contacts__label" for="point-pay">
                                     <b>Оплатить часть заказа бонусными баллами </b>
                                     (до <?= $arResult['MAX_BONUS_SUM'] ?>)
                                 </label>
-                                <div class="b-input b-input--order-line js-pointspay-input">
+                                <div class="b-input b-input--order-line js-pointspay-input<?= $active ? ' active' : '' ?>">
                                     <input class="b-input__input-field b-input__input-field--order-line js-pointspay-input js-only-number js-no-valid"
                                            id="point-pay"
                                            type="text"
@@ -149,13 +150,15 @@ $user = $arResult['USER'];
                                     <div class="b-error">
                                         <span class="js-message"></span>
                                     </div>
-                                    <a class="b-input__close-points js-pointspay-close"
+                                    <a class="b-input__close-points js-pointspay-close<?= $active ? ' active' : '' ?>"
                                        href="javascript:void(0)"
                                        title=""
-                                       style="display: none;">
+                                        <?= $active ? 'style="display:inline"' : '' ?>>
                                     </a>
                                 </div>
-                                <button class="b-button b-button--order-line js-pointspay-button" style="">Подтвердить
+                                <button class="b-button b-button--order-line js-pointspay-button<?= $active ? ' hide' : '' ?>"
+                                    <?= $active ? 'style="display:none"' : '' ?>>
+                                    Подтвердить
                                 </button>
                             <?php } ?>
                         <?php } else { ?>
@@ -232,7 +235,11 @@ $user = $arResult['USER'];
             </div>
         </div>
         <button class="b-button b-button--order-step-3 b-button--next b-button--fixed-bottom js-order-next js-order-step-3-submit">
-            Перейти к оплате
+            <?php if ($selectedPayment['CODE'] === OrderService::PAYMENT_ONLINE) { ?>
+                Перейти к оплате
+            <?php } else { ?>
+                Заказать
+            <?php } ?>
         </button>
     </div>
 </div>

@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\DeliveryBundle\Handler;
 
 use Bitrix\Main\Error;
@@ -127,6 +131,7 @@ class InnerPickupHandler extends DeliveryHandlerBase
         }
 
         $data['STOCK_RESULT'] = $stockResult;
+        $data['DELIVERY_ZONE'] = $this->deliveryService->getDeliveryZoneCode($shipment);
         $result->setData($data);
 
         if ($shopCode) {
