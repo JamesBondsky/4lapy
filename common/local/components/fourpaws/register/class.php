@@ -31,6 +31,7 @@ use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\Helpers\SerializerHelper;
 use FourPaws\Location\Model\City;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
@@ -116,17 +117,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         $this->userRegistrationService = $container->get(UserRegistrationProviderInterface::class);
         $this->ajaxMess = $container->get('ajax.mess');
 
-        $this->serializer = SerializerBuilder::create()->configureHandlers(
-            function (HandlerRegistry $registry) {
-                $registry->registerSubscribingHandler(new ArrayCommaString());
-                $registry->registerSubscribingHandler(new ArrayOrFalseHandler());
-                $registry->registerSubscribingHandler(new BitrixBooleanHandler());
-                $registry->registerSubscribingHandler(new BitrixDateHandler());
-                $registry->registerSubscribingHandler(new BitrixDateTimeHandler());
-                $registry->registerSubscribingHandler(new ManzanaDateTimeImmutableFullShortHandler());
-                $registry->registerSubscribingHandler(new PhoneHandler());
-            }
-        )->build();
+        $this->serializer = SerializerHelper::get();
     }
 
     /** {@inheritdoc} */

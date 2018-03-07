@@ -16,6 +16,7 @@ use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
 use FourPaws\External\SmsService;
 use FourPaws\Helpers\PhoneHelper;
+use FourPaws\Helpers\SerializerHelper;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -284,14 +285,7 @@ class FourPawsFrontOfficeCardRegistrationComponent extends \CBitrixComponent
     public function getSerializer()
     {
         if (!$this->serializer) {
-            $this->serializer = SerializerBuilder::create()->configureHandlers(
-                function (HandlerRegistry $registry) {
-                    $registry->registerSubscribingHandler(new BitrixDateHandler());
-                    $registry->registerSubscribingHandler(new BitrixDateTimeHandler());
-                    $registry->registerSubscribingHandler(new BitrixBooleanHandler());
-                    $registry->registerSubscribingHandler(new ArrayOrFalseHandler());
-                }
-            )->build();
+            $this->serializer = SerializerHelper::get();
         }
         return $this->serializer;
     }
