@@ -15,6 +15,9 @@ class Order
 {
     const DEFAULT_CONTRACTOR_CODE = '0000802070';
 
+    const ORDER_SOURCE_MOBILE_APP = 'MOBI';
+    const ORDER_SOURCE_SITE = 'DFUE';
+
     /**
      * Содержит номер заказа в Системе.
      * Если заказ создан в мобильном приложении (атрибут BSARK имеет значение «MOBI»),
@@ -258,7 +261,7 @@ class Order
     protected $payHoldTransaction = '';
 
     /**
-     * Транзакция холдирования денежных средств
+     * Дата холдирования денежных средств
      * Поле должно быть заполнено, если выбран способ оплаты 05
      *
      *

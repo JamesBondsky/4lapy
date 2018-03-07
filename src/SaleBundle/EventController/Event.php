@@ -36,9 +36,8 @@ class Event implements ServiceHandlerInterface
     /**
      * @param \Bitrix\Main\EventManager $eventManager
      *
-     * @return mixed|void
      */
-    public static function initHandlers(EventManager $eventManager)
+    public static function initHandlers(EventManager $eventManager): void
     {
         self::$eventManager = $eventManager;
         self::initHandler('OnCondSaleActionsControlBuildList', [Gift::class, 'GetControlDescr']);
