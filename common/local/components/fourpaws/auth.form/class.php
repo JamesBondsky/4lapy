@@ -169,7 +169,6 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             return $this->ajaxMess->getEmptyPasswordError();
         }
         $checkedCaptcha = true;
-        $_SESSION['COUNT_AUTH_AUTHORIZE'] = 2;
         if ((int)$_SESSION['COUNT_AUTH_AUTHORIZE'] > 3) {
             try {
                 $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
@@ -194,7 +193,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         } catch (UsernameNotFoundException $e) {
             if ($_SESSION['COUNT_AUTH_AUTHORIZE'] === 3) {
                 $this->setSocial();
-                $html = $this->getHtml('begin', 'Авторизация',
+                $html = $this->getHtml('begin', '',
                     ['isAjax' => true, 'backurl' => $backUrl, 'arResult' => $this->arResult]);
 
                 return JsonSuccessResponse::createWithData('',
@@ -204,7 +203,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         } catch (InvalidCredentialException $e) {
             if ($_SESSION['COUNT_AUTH_AUTHORIZE'] === 3) {
                 $this->setSocial();
-                $html = $this->getHtml('begin', 'Авторизация',
+                $html = $this->getHtml('begin', '',
                     ['isAjax' => true, 'backurl' => $backUrl, 'arResult' => $this->arResult]);
 
                 return JsonSuccessResponse::createWithData('', ['html' => $html]);
@@ -415,7 +414,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 break;
         }
         $phone = PhoneHelper::formatPhone($phone, '+7 (%s%s%s) %s%s%s-%s%s-%s%s');
-        $html = $this->getHtml($step, $title);
+        $html = $this->getHtml($step, $title, ['phone'=>$phone, 'step'=>$step]);
 
         return JsonSuccessResponse::createWithData(
             $mess,

@@ -32,8 +32,8 @@ use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Service\StoreService;
 use InvalidArgumentException;
-use JMS\Serializer\Annotation as Serializer;
 use JMS\Serializer\Annotation\Accessor;
+use JMS\Serializer\Annotation as Serializer;
 use JMS\Serializer\Annotation\Groups;
 use JMS\Serializer\Annotation\Type;
 use RuntimeException;
@@ -336,6 +336,10 @@ class Offer extends IblockElement
      * @var StockCollection
      */
     protected $stocks;
+
+    /**
+     * @var bool
+     */
     protected $isCounted = false;
 
     public function __construct(array $fields = [])
@@ -941,6 +945,10 @@ class Offer extends IblockElement
         static $order;
         if (null === $order) {
             $order = Order::create(SITE_ID);
+        }
+        $shipmentCollection = $order->getShipmentCollection();
+        foreach ($shipmentCollection as $i => $shipment) {
+            unset($shipmentCollection[$i]);
         }
         /** @var Basket $basket */
         $basket = Basket::create(SITE_ID);
