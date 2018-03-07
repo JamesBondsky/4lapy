@@ -24,8 +24,8 @@ use Bitrix\Sale\ShipmentCollection;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Entity\Interval;
-use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundEXception;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\PersonalBundle\Exception\NotFoundException as AddressNotFoundException;
 use FourPaws\PersonalBundle\Service\AddressService;
@@ -34,9 +34,8 @@ use FourPaws\SaleBundle\Exception\FastOrderCreateException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\StoreBundle\Collection\StoreCollection;
-use FourPaws\StoreBundle\Entity\Store;
-use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
+use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ValidationException;
@@ -436,8 +435,38 @@ class OrderService
             $code = $propertyValue->getProperty()['CODE'];
             $key = 'PROPERTY_' . $code;
 
-            if (!empty($arrayStorage[$key])) {
-                $propertyValue->setValue($arrayStorage[$key]);
+            $value = $arrayStorage[$key] ?? null;
+
+            /**
+             * Если у заказа самовывоз из магазина или курьерская доставка из зоны 2,
+             * и в наличии более 90% от суммы заказа, при этом в случае курьерской доставки имеются отложенные товары,
+             * то способ коммуникации изменяется на "Телефонный звонок (анализ)"
+             */
+            if ($selectedDelivery &&
+                $code === 'COM_WAY' &&
+                ($this->deliveryService->isInnerPickup($selectedDelivery) || $this->deliveryService->isInnerDelivery($selectedDelivery))
+            ) {
+                $changeCommunicationWay = false;
+                $stockResult = $this->deliveryService->getStockResultByDelivery($selectedDelivery);
+                if ($this->deliveryService->isInnerPickup($selectedDelivery)) {
+                    $changeCommunicationWay = true;
+                } elseif ($this->deliveryService->isInnerDelivery($selectedDelivery)) {
+                    if (($selectedDelivery->getData()['DELIVERY_ZONE'] === DeliveryService::ZONE_2) &&
+                        !$stockResult->getDelayed()->isEmpty()
+                    ) {
+                        $changeCommunicationWay = true;
+                    }
+                }
+                if ($changeCommunicationWay) {
+                    $totalPrice = $order->getBasket()->getOrderableItems()->getPrice();
+                    $availablePrice = $stockResult->getAvailable()->getPrice();
+                    if ($availablePrice > $totalPrice * 0.9) {
+                        $value = OrderPropertyService::COMMUNICATION_PHONE_ANALYSIS;
+                    }
+                }
+            }
+            if (null !== $value) {
+                $propertyValue->setValue($value);
             }
         }
 
@@ -513,7 +542,7 @@ class OrderService
                     /* нужно для expertsender */
                     /** пароль еще нужен для смс быстрого заказа */
                     $_SESSION['NEW_USER'] = [
-                        'LOGIN'    => $storage->getPhone(),
+                        'LOGIN' => $storage->getPhone(),
                         'PASSWORD' => $password,
                     ];
                 }
@@ -581,8 +610,8 @@ class OrderService
     /**
      * @param Order $order
      *
-     * @return Payment
      * @throws NotFoundException
+     * @return Payment
      */
     public function getOnlinePayment(Order $order): Payment
     {
@@ -604,8 +633,8 @@ class OrderService
      * @param Order $order
      * @param string $code
      *
-     * @return PropertyValue
      * @throws NotFoundException
+     * @return PropertyValue
      */
     public function getOrderPropertyByCode(Order $order, string $code): PropertyValue
     {
@@ -657,8 +686,8 @@ class OrderService
     /**
      * @param Order $order
      *
-     * @return string
      * @throws NotFoundException
+     * @return string
      */
     public function getOrderDeliveryCode(Order $order): string
     {
@@ -707,7 +736,7 @@ class OrderService
 
                 if ($store->getMetro()) {
                     /** @noinspection PhpUnusedLocalVariableInspection */
-                    list ($services, $metro) = $this->storeService->getFullStoreInfo(new StoreCollection([$store]));
+                    list($services, $metro) = $this->storeService->getFullStoreInfo(new StoreCollection([$store]));
 
                     if ($metro[$store->getMetro()]) {
                         $address = 'м. ' . $metro[$store->getMetro()]['UF_NAME'] . ', ' . $address;
@@ -749,8 +778,8 @@ class OrderService
     /**
      * @param Order $order
      *
-     * @return OfferCollection
      * @throws NotFoundException
+     * @return OfferCollection
      */
     public function getOrderProducts(Order $order): OfferCollection
     {
