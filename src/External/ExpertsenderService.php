@@ -13,6 +13,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Decorators\FullHrefDecorator;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\External\Exception\ExpertsenderNotAllowedException;
 use FourPaws\External\Exception\ExpertsenderServiceException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\SaleBundle\Exception\NotFoundException;
@@ -109,51 +110,51 @@ class ExpertsenderService implements LoggerAwareInterface
                 if ($apiResult->isOk()) {
                     return true;
                 }
-            } catch (SystemException $e) {
-                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
-            } catch (GuzzleException $e) {
-                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
-            } catch (\Exception $e) {
+            } catch (SystemException|GuzzleException|\Exception $e) {
                 throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
             }
         }
-        return false;
-    }
-
-    /**
-     * @param string $email
-     *
-     * @return bool
-     * @throws ExpertsenderServiceException
-     */
-    public function sendChangePasswordByProfile(string $email): bool
-    {
-        if (!empty($email)) {
-            try {
-                $receiver = new Receiver($email);
-                $apiResult = $this->client->sendTransactional(7073, $receiver);
-                if ($apiResult->isOk()) {
-                    return true;
-                }
-            } catch (ExpertSenderException $e) {
-                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
-            } catch (GuzzleException $e) {
-                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
-            }
-        }
-
         return false;
     }
 
     /**
      * @param User $user
+     *
+     * @return bool
+     * @throws ExpertsenderNotAllowedException
+     * @throws ExpertsenderServiceException
+     */
+    public function sendChangePasswordByProfile(User $user): bool
+    {
+        if (!$user->allowedEASend()) {
+            throw new ExpertsenderNotAllowedException('эл. почта не подтверждена, отправка писем не возможна');
+        }
+        try {
+            $receiver = new Receiver($user->getEmail());
+            $apiResult = $this->client->sendTransactional(7073, $receiver);
+            if ($apiResult->isOk()) {
+                return true;
+            }
+        } catch (ExpertSenderException|GuzzleException $e) {
+            throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
+        }
+
+        return false;
+    }
+
+    /**
+     * @param User   $user
      * @param string $backUrl
      *
      * @return bool
+     * @throws ExpertsenderNotAllowedException
      * @throws ExpertsenderServiceException
      */
     public function sendForgotPassword(User $user, string $backUrl = ''): bool
     {
+        if (!$user->allowedEASend()) {
+            throw new ExpertsenderNotAllowedException('эл. почта не подтверждена, отправка писем не возможна');
+        }
         if (!empty($user->getEmail())) {
             try {
                 /** хеш строка для подтверждения мыла */
@@ -174,13 +175,7 @@ class ExpertsenderService implements LoggerAwareInterface
                 if ($apiResult->isOk()) {
                     return true;
                 }
-            } catch (ExpertSenderException $e) {
-                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
-            } catch (GuzzleException $e) {
-                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
-            } catch (ApplicationCreateException $e) {
-                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
-            } catch (\Exception $e) {
+            } catch (ExpertSenderException|GuzzleException|ApplicationCreateException|\Exception $e) {
                 throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
             }
         }
@@ -192,14 +187,25 @@ class ExpertsenderService implements LoggerAwareInterface
      * @param User $curUser
      *
      * @return bool
+     * @throws ExpertsenderNotAllowedException
      * @throws \InvalidArgumentException
      * @throws \BadMethodCallException
      * @throws ExpertsenderServiceException
      */
     public function sendChangeEmail(User $oldUser, User $curUser): bool
     {
+        if (!$oldUser->allowedEASend()) {
+            throw new ExpertsenderNotAllowedException('эл. почта не подтверждена, отправка писем не возможна');
+        }
         if (!empty($oldUser->getEmail()) && !empty($curUser->getEmail())) {
             try {
+                /** отправка почты на старый email */
+                $receiver = new Receiver($oldUser->getEmail());
+                $apiResult = $this->client->sendTransactional(7070, $receiver);
+                if ($apiResult->isOk()) {
+                    return true;
+                }
+
                 $expertSenderId = 0;
                 $userIdResult = $this->client->getUserId($oldUser->getEmail());
                 if ($userIdResult->isOk()) {
@@ -249,15 +255,14 @@ class ExpertsenderService implements LoggerAwareInterface
                 }
 
                 if ($continue) {
+                    /** отправка почты на новый email */
                     $receiver = new Receiver($curUser->getEmail());
                     $apiResult = $this->client->sendTransactional(7071, $receiver);
                     if ($apiResult->isOk()) {
                         return true;
                     }
                 }
-            } catch (GuzzleException $e) {
-                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
-            } catch (\Exception $e) {
+            } catch (GuzzleException|\Exception $e) {
                 throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
             }
         }
@@ -286,7 +291,6 @@ class ExpertsenderService implements LoggerAwareInterface
                 }
 
                 if ($expertSenderId > 0) {
-                    /** @todo должно быть письмо с верификацией мыла - под него подогнать проверку */
                     $addUserToList = new AddUserToList();
                     $addUserToList->setForce(true);
                     $addUserToList->setMode('AddAndUpdate');
@@ -296,21 +300,12 @@ class ExpertsenderService implements LoggerAwareInterface
                     /** флаг подписки на новости */
                     $addUserToList->addProperty(new Property(23, 'boolean', true));
 
-                    /** @todo првоерить надо или нет - будет ли подтверждеине подписки или нет */
-                    /** хеш строка для подтверждения мыла */
-                    /** @var ConfirmCodeService $confirmService */
-//                    $confirmService = Application::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
-//                    $generatedHash = $confirmService::getConfirmHash($user->getEmail());
-//                    $confirmService::setGeneratedCode($generatedHash, 'email');
-//                    $addUserToList->addProperty(new Property(10, 'string', $generatedHash));
-
                     $apiResult = $this->client->addUserToList($addUserToList);
                     if ($apiResult->isOk()) {
                         return true;
                     }
 
                 } else {
-                    /** @todo должно быть письмо с верификацией мыла - под него подогнать проверку */
                     $addUserToList = new AddUserToList();
                     $addUserToList->setForce(true);
                     $addUserToList->setMode('AddAndUpdate');
@@ -338,12 +333,8 @@ class ExpertsenderService implements LoggerAwareInterface
                         return true;
                     }
                 }
-            } catch (SystemException $e) {
-                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
-            } catch (GuzzleException $e) {
-                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
-            } catch (\Exception $e) {
-                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
+            } catch (SystemException|GuzzleException|\Exception $e) {
+                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
             }
         }
         return false;
@@ -387,12 +378,8 @@ class ExpertsenderService implements LoggerAwareInterface
                 } else {
                     return true;
                 }
-            } catch (SystemException $e) {
-                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
-            } catch (GuzzleException $e) {
-                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
-            } catch (\Exception $e) {
-                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
+            } catch (SystemException|GuzzleException|\Exception $e) {
+                throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
             }
         }
         return false;
@@ -461,7 +448,7 @@ class ExpertsenderService implements LoggerAwareInterface
             new Snippet('tel_number', PhoneHelper::formatPhone($properties['PHONE'])),
             new Snippet('delivery_cost', $order->getDeliveryPrice()),
             new Snippet('total_bonuses', (int)$properties['BONUS_COUNT']),
-            new Snippet('order_date', $order->getDateInsert()->format('d.m.Y'))
+            new Snippet('order_date', $order->getDateInsert()->format('d.m.Y')),
         ];
 
         $isOnlinePayment = false;
@@ -534,10 +521,8 @@ class ExpertsenderService implements LoggerAwareInterface
 
                 return true;
             }
-        } catch (GuzzleException $e) {
-            throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
-        } catch (\Exception $e) {
-            throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
+        } catch (GuzzleException|\Exception $e) {
+            throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
         }
         return false;
     }
@@ -551,6 +536,7 @@ class ExpertsenderService implements LoggerAwareInterface
      */
     public function sendOrderCompleteEmail(Order $order): bool
     {
+        /** @todo нужно юзануть проверку доступности отправки писем в ES(если письмо недоступно без конфирма мыла) - метод юзера - allowedEASend */
         /** @var OrderService $orderService */
         $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
 
@@ -570,7 +556,7 @@ class ExpertsenderService implements LoggerAwareInterface
             new Snippet(
                 'delivery_address',
                 $orderService->getOrderDeliveryAddress($order)
-            )
+            ),
         ];
 
         try {
@@ -578,9 +564,7 @@ class ExpertsenderService implements LoggerAwareInterface
             if ($apiResult->isOk()) {
                 return true;
             }
-        } catch (GuzzleException $e) {
-            throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
-        } catch (\Exception $e) {
+        } catch (GuzzleException|\Exception $e) {
             throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
         }
 

@@ -17,13 +17,6 @@ use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
-use FourPaws\AppBundle\Serialization\ArrayCommaString;
-use FourPaws\AppBundle\Serialization\ArrayOrFalseHandler;
-use FourPaws\AppBundle\Serialization\BitrixBooleanHandler;
-use FourPaws\AppBundle\Serialization\BitrixDateHandler;
-use FourPaws\AppBundle\Serialization\BitrixDateTimeHandler;
-use FourPaws\AppBundle\Serialization\ManzanaDateTimeImmutableFullShortHandler;
-use FourPaws\AppBundle\Serialization\PhoneHandler;
 use FourPaws\AppBundle\Service\AjaxMess;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Exception\SmsSendErrorException;
@@ -52,9 +45,8 @@ use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
 use GuzzleHttp\Exception\GuzzleException;
 use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\Exception\RuntimeException;
-use JMS\Serializer\Handler\HandlerRegistry;
 use JMS\Serializer\Serializer;
-use JMS\Serializer\SerializerBuilder;
+use JMS\Serializer\SerializerInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
@@ -116,17 +108,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         $this->userRegistrationService = $container->get(UserRegistrationProviderInterface::class);
         $this->ajaxMess = $container->get('ajax.mess');
 
-        $this->serializer = SerializerBuilder::create()->configureHandlers(
-            function (HandlerRegistry $registry) {
-                $registry->registerSubscribingHandler(new ArrayCommaString());
-                $registry->registerSubscribingHandler(new ArrayOrFalseHandler());
-                $registry->registerSubscribingHandler(new BitrixBooleanHandler());
-                $registry->registerSubscribingHandler(new BitrixDateHandler());
-                $registry->registerSubscribingHandler(new BitrixDateTimeHandler());
-                $registry->registerSubscribingHandler(new ManzanaDateTimeImmutableFullShortHandler());
-                $registry->registerSubscribingHandler(new PhoneHandler());
-            }
-        )->build();
+        $this->serializer = $container->get(SerializerInterface::class);
     }
 
     /** {@inheritdoc} */
@@ -142,32 +124,54 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             if (!empty($emailGet) && !empty($hash)) {
                 /** @var ConfirmCodeService $confirmService */
                 $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
-                if ($confirmService::checkConfirmEmail($hash)) {
-                    try {
-                        $userRepository = $this->currentUserProvider->getUserRepository();
-                        $userId = $userRepository->findIdentifierByRawLogin($emailGet);
-                        $user = $userRepository->find($userId);
-                        if ($user !== null) {
-                            $user->setEmailConfirmed(true);
-                            $this->currentUserProvider->getUserRepository()->update($user);
+                try {
+                    if ($confirmService::checkConfirmEmail($hash)) {
+                        try {
+                            $userRepository = $this->currentUserProvider->getUserRepository();
+                            $userId = $userRepository->findIdentifierByRawLogin($emailGet);
+                            if ($userId > 0) {
+                                $user = $userRepository->find($userId);
+                                if ($user instanceof User) {
+                                    $user->setEmailConfirmed(true);
+                                    $res = $this->currentUserProvider->getUserRepository()->update($user);
+                                    if ($res) {
+                                        $this->userAuthorizationService->authorize($userId);
+                                    } else {
+                                        ShowError('Не удалось подтвердить эл. почту');
+                                        return false;
+                                    }
+                                } else {
+                                    ShowError('Не найден пользователь');
+                                    return false;
+                                }
+                            } else {
+                                ShowError('Не найден активный пользователь c эл. почтой ' . $emailGet);
+                                return false;
+                            }
+                        } catch (TooManyUserFoundException $e) {
+                            ShowError('Найдено больше одного пользователя c эл. почтой ' . $emailGet . ', пожалуйста обратитесь на горячую линию');
+                            return false;
+                        } catch (UsernameNotFoundException $e) {
+                            ShowError('Не найдено пользователей c эл. почтой ' . $emailGet . ', пожалуйста обратитесь на горячую линию');
+                            return false;
                         }
-                        $this->userAuthorizationService->authorize($userId);
-                    } catch (TooManyUserFoundException $e) {
-                        ShowError('Найдено больше одного пользователя c эл. почтой ' . $emailGet . ', пожалуйста обратитесь на горячую линию');
-                        return false;
-                    } catch (UsernameNotFoundException $e) {
-                        ShowError('Не найдено пользователей c эл. почтой ' . $emailGet . ', пожалуйста обратитесь на горячую линию');
-                        return false;
-                    }
-                    if (!empty($_COOKIE['BACK_URL']) && $_COOKIE['BACK_URL'] === static::BASKET_BACK_URL) {
-                        $backUrl = $_COOKIE['BACK_URL'];
-                        unset($_COOKIE['BACK_URL']);
-                        setcookie('BACK_URL', '', time() - 5, '/');
+                        if (!empty($_COOKIE['BACK_URL']) && $_COOKIE['BACK_URL'] === static::BASKET_BACK_URL) {
+                            $backUrl = $_COOKIE['BACK_URL'];
+                            unset($_COOKIE['BACK_URL']);
+                            setcookie('BACK_URL', '', time() - 5, '/');
 
-                        LocalRedirect($backUrl);
+                            LocalRedirect($backUrl);
+                        } else {
+                            LocalRedirect(static::PERSONAL_URL);
+                        }
                     } else {
-                        LocalRedirect(static::PERSONAL_URL);
+                        ShowError('Проверка не пройдена, попробуйте восстановить пароль еще раз');
+                        return false;
                     }
+                }
+                catch (ExpiredConfirmCodeException|NotFoundConfirmedCodeException $e){
+                    ShowError('Проверка не пройдена, попробуйте восстановить пароль еще раз');
+                    return false;
                 }
             }
 
@@ -738,13 +742,9 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             $userRepository = $this->currentUserProvider->getUserRepository();
             $haveUsers = $userRepository->havePhoneAndEmailByUsers(
                 [
-                    'PERSONAL_PHONE' => $data['PERSONAL_PHONE'],
-                    'EMAIL'          => $data['EMAIL'],
+                    'PERSONAL_PHONE' => $phone
                 ]
             );
-            if ($haveUsers['email']) {
-                return $this->ajaxMess->getHaveEmailError();
-            }
             if ($haveUsers['phone']) {
                 return $this->ajaxMess->getHavePhoneError();
             }
@@ -790,7 +790,6 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         if (!empty($params)) {
             extract($params, EXTR_OVERWRITE);
         }
-        $html = '';
         ob_start();
         if (!empty($title)) { ?>
             <header class="b-registration__header">
@@ -798,10 +797,10 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             </header>
             <?php
         }
+        /** @noinspection PhpIncludeInspection */
         require_once App::getDocumentRoot()
             . '/local/components/fourpaws/register/templates/.default/include/' . $page . '.php';
-        $html = ob_get_clean();
 
-        return $html;
+        return ob_get_clean();
     }
 }
