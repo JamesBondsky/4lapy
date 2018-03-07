@@ -1,6 +1,9 @@
 parameters:
     jms_serializer.json_serialization_visitor.class: FourPaws\MobileApiBundle\SerializationVisitor\BlankSerializationVisitor
 
+services:
+    JMS\Serializer\SerializerInterface: '@jms_serializer'
+
 jms_serializer:
   property_naming:
     id: jms_serialized_name_annotation_strategy
