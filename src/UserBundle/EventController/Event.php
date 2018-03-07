@@ -227,19 +227,28 @@ class Event implements ServiceHandlerInterface
     /**
      * @param $fields
      *
+     * @return bool
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      */
-    public static function replaceLoginOnUpdate(&$fields)
+    public static function replaceLoginOnUpdate(&$fields): bool
     {
+        $notReplacedGroups= [1, 4, 29, 26, 28, 25, 36, 27, 24, 8];
         if (!empty($fields['PERSONAL_PHONE']) || !empty($fields['EMAIL'])) {
             try {
                 $container = App::getInstance()->getContainer();
                 $userService = $container->get(CurrentUserProviderInterface::class);
                 $user = $userService->getUserRepository()->find((int)$fields['ID']);
-                if ($user instanceof User) {
+                if ($user instanceof User && $user->getActive()) {
+                    foreach($notReplacedGroups as $groupId){
+                        foreach ($user->getGroups() as $group) {
+                            if($group->getId() === $groupId){
+                                return true;
+                            }
+                        }
+                    }
                     $oldEmail = $user->getEmail();
                     $oldPhone = $user->getPersonalPhone();
                     $oldLogin = $user->getLogin();
@@ -261,5 +270,6 @@ class Event implements ServiceHandlerInterface
                 /** если вызывается эта ошибка вероятно умерло все */
             }
         }
+        return true;
     }
 }
