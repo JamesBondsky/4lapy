@@ -10,9 +10,11 @@ use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaymentCollection;
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\BxCollection;
 use FourPaws\Helpers\DateHelper;
@@ -20,6 +22,7 @@ use FourPaws\SaleBundle\Service\OrderService as BaseOrderService;
 use FourPaws\SapBundle\Dto\In\Orders\Order as OrderDtoIn;
 use FourPaws\SapBundle\Dto\Out\Orders\DeliveryAddress;
 use FourPaws\SapBundle\Dto\Out\Orders\Order as OrderDtoOut;
+use FourPaws\SapBundle\Dto\Out\Orders\OrderOffer;
 use FourPaws\SapBundle\Exception\NotFoundOrderPaySystemException;
 use FourPaws\SapBundle\Exception\NotFoundOrderShipmentException;
 use FourPaws\SapBundle\Exception\NotFoundOrderUserException;
@@ -108,10 +111,12 @@ class OrderService implements LoggerAwareInterface
         $this->userRepository = $userRepository;
         $this->deliveryService = $deliveryService;
     }
-
+    
     /**
      * @param Order $order
+     *
      * @throws IOException
+     * @throws ObjectNotFoundException
      */
     public function out(Order $order)
     {
@@ -172,6 +177,7 @@ class OrderService implements LoggerAwareInterface
 
         $this->populateOrderDtoPayment($orderDto, $order->getPaymentCollection());
         $this->populateOrderDtoDelivery($orderDto, $order);
+        $this->populateOrderDtoProducts($orderDto, $order);
 
         dump($orderDto);
         die;
@@ -367,5 +373,40 @@ class OrderService implements LoggerAwareInterface
              **/
             $orderDto->setContractorCode('');
         }
+    }
+    
+    /**
+     * @param OrderDtoOut $orderDto
+     * @param Order       $order
+     */
+    private function populateOrderDtoProducts(OrderDtoOut $orderDto, Order $order)
+    {
+        $position = 1;
+        $collection = new ArrayCollection();
+    
+        /**
+         * @var BasketItem $basketItem
+         */
+        foreach ($order->getBasket() as $basketItem) {
+            $xmlId = $basketItem->getField('PRODUCT_XML_ID');
+    
+            if (strpos($xmlId, '#')) {
+                $xmlId = explode('#', $xmlId)[1];
+            }
+            
+            $offer = (new OrderOffer())
+                ->setPosition($position)
+                ->setOfferXmlId($xmlId)
+                ->setUnitPrice($basketItem->getBasePrice())
+                ->setQuantity($basketItem->getQuantity())
+                ->setChargeBonus(true)
+                ->setDeliveryFromPoint('')
+                ->setDeliveryShipmentPoint('');
+            
+            $collection->add($offer);
+            $position++;
+        }
+        
+        $orderDto->setProducts($collection);
     }
 }
