@@ -152,7 +152,9 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         $oldPhone = $request->get('oldPhone', '');
         try {
             $phone = PhoneHelper::normalizePhone($phone);
-            $oldPhone = PhoneHelper::normalizePhone($oldPhone);
+            if(!empty($oldPhone)){
+                $oldPhone = PhoneHelper::normalizePhone($oldPhone);
+            }
         } catch (WrongPhoneNumberException $e) {
             return $this->ajaxMess->getWrongPhoneNumberException();
         }
@@ -182,18 +184,21 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
                 $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
                 $client = null;
                 if (empty($oldPhone)) {
-                    return $this->ajaxMess->getNotOldPhoneError();
-                }
-                try {
-                    $contactId = $manzanaService->getContactIdByPhone(PhoneHelper::getManzanaPhone($oldPhone));
-                    $client = new Client();
-                    $client->contactId = $contactId;
-                    $client->phone = $phone;
-                } catch (ManzanaServiceException $e) {
                     $client = new Client();
                     $this->currentUserProvider->setClientPersonalDataByCurUser($client);
-                } catch (WrongPhoneNumberException $e) {
-                    return $this->ajaxMess->getWrongPhoneNumberException();
+                }
+                else {
+                    try {
+                        $contactId = $manzanaService->getContactIdByPhone(PhoneHelper::getManzanaPhone($oldPhone));
+                        $client = new Client();
+                        $client->contactId = $contactId;
+                        $client->phone = $phone;
+                    } catch (ManzanaServiceException $e) {
+                        $client = new Client();
+                        $this->currentUserProvider->setClientPersonalDataByCurUser($client);
+                    } catch (WrongPhoneNumberException $e) {
+                        return $this->ajaxMess->getWrongPhoneNumberException();
+                    }
                 }
 
                 if ($client instanceof Client) {
