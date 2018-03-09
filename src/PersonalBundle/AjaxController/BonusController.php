@@ -80,9 +80,7 @@ class BonusController extends Controller
             }
         } catch (NotAuthorizedException $e) {
             return $this->ajaxMess->getNeedAuthError();
-        } catch (ApplicationCreateException $e) {
-            /** показываем общую ошибку */
-        } catch (ManzanaServiceException $e) {
+        } catch (ApplicationCreateException|ManzanaServiceException $e) {
             /** показываем общую ошибку */
         } catch (CardNotValidException $e) {
             return $this->ajaxMess->getCardNotValidError();
