@@ -18,11 +18,13 @@ use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\BxCollection;
 use FourPaws\Helpers\DateHelper;
+use FourPaws\Location\LocationService;
 use FourPaws\SaleBundle\Service\OrderService as BaseOrderService;
 use FourPaws\SapBundle\Dto\In\Orders\Order as OrderDtoIn;
-use FourPaws\SapBundle\Dto\Out\Orders\DeliveryAddress;
+use FourPaws\SapBundle\Dto\Out\Orders\DeliveryAddress as OutDeliveryAddress;
 use FourPaws\SapBundle\Dto\Out\Orders\Order as OrderDtoOut;
 use FourPaws\SapBundle\Dto\Out\Orders\OrderOffer;
+use FourPaws\SapBundle\Exception\NotFoundOrderDeliveryException;
 use FourPaws\SapBundle\Exception\NotFoundOrderPaySystemException;
 use FourPaws\SapBundle\Exception\NotFoundOrderShipmentException;
 use FourPaws\SapBundle\Exception\NotFoundOrderUserException;
@@ -44,14 +46,41 @@ use Symfony\Component\Filesystem\Filesystem;
 class OrderService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
-
-    const ORDER_CONTRACTOR_CODE = '07';
+    
+    /**
+     * Способ получения заказа
+     *
+     * 01 – Курьерская доставка из РЦ;
+     * 02 – Самовывоз из магазина;
+     * 06 – Курьерская доставка из магазина;
+     * 07 – Доставка внешним подрядчиком (курьер или самовывоз из пункта выдачи заказов);
+     * 08 – РЦ – магазин – домой.
+     */
+    const DELIVERY_TYPE_COURIER_RC = '01';
+    const DELIVERY_TYPE_PICKUP = '02';
+    const DELIVERY_TYPE_COURIER_SHOP = '06';
+    const DELIVERY_TYPE_CONTRACTOR = '07';
+    const DELIVERY_TYPE_ROUTE = '08';
+    
+    /**
+     * Тип доставки подрядчиком
+     * Поле должно быть заполнено, если выбран способ получения заказа 07.
+     *
+     * ТД – от терминала до двери покупателя;
+     * ТТ – от терминала до пункта выдачи заказов.
+     */
+    const DELIVERY_TYPE_CONTRACTOR_DELIVERY = 'ТД';
+    const DELIVERY_TYPE_CONTRACTOR_PICKUP = 'ТТ';
+    const DELIVERY_CONTRACTOR_CODE = '0000802070';
+    
     const ORDER_PAYMENT_ONLINE_MERCHANT_ID = '850000314610';
     const ORDER_PAYMENT_ONLINE_CODE = '05';
     const ORDER_PAYMENT_STATUS_PAYED = '01';
     const ORDER_PAYMENT_STATUS_NOT_PAYED = '02';
     const ORDER_PAYMENT_STATUS_PRE_PAYED = '03';
-
+    
+    const UNIT_PTC_CODE = 'ST';
+    
     /**
      * @var BaseOrderService
      */
@@ -84,32 +113,38 @@ class OrderService implements LoggerAwareInterface
      * @var DeliveryService
      */
     private $deliveryService;
-
+    /**
+     * @var LocationService
+     */
+    private $locationService;
+    
     /**
      * OrderService constructor.
      *
-     * @param BaseOrderService $baseOrderService
-     * @param DeliveryService $deliveryService
+     * @param BaseOrderService          $baseOrderService
+     * @param DeliveryService           $deliveryService
+     * @param LocationService           $locationService
      * @param ArrayTransformerInterface $arrayTransformer
-     * @param SerializerInterface $serializer
-     * @param Filesystem $filesystem
-     * @param UserRepository $userRepository
+     * @param SerializerInterface       $serializer
+     * @param Filesystem                $filesystem
+     * @param UserRepository            $userRepository
      */
     public function __construct(
         BaseOrderService $baseOrderService,
         DeliveryService $deliveryService,
+        LocationService $locationService,
         ArrayTransformerInterface $arrayTransformer,
         SerializerInterface $serializer,
         Filesystem $filesystem,
         UserRepository $userRepository
-    )
-    {
+    ) {
         $this->baseOrderService = $baseOrderService;
         $this->arrayTransformer = $arrayTransformer;
         $this->serializer = $serializer;
         $this->filesystem = $filesystem;
         $this->userRepository = $userRepository;
         $this->deliveryService = $deliveryService;
+        $this->locationService = $locationService;
     }
     
     /**
@@ -123,7 +158,7 @@ class OrderService implements LoggerAwareInterface
         $message = $this->transformOrderToMessage($order);
         $this->filesystem->dumpFile($this->getFileName($order), $message->getData());
     }
-
+    
     /**
      * @param Order $order
      *
@@ -135,13 +170,13 @@ class OrderService implements LoggerAwareInterface
     public function transformOrderToMessage(Order $order): SourceMessage
     {
         $orderDto = new OrderDtoOut();
-
+        
         try {
             $orderUser = $this->userRepository->find($order->getUserId());
         } catch (ConstraintDefinitionException | InvalidIdentifierException $e) {
             $orderUser = null;
         }
-
+        
         if (null === $orderUser) {
             throw new NotFoundOrderUserException(sprintf(
                 'Пользователь с id %s не найден, заказ #%s',
@@ -149,43 +184,38 @@ class OrderService implements LoggerAwareInterface
                 $order->getId()
             ));
         }
-
+        
         /**
          * Источник заказа
          *
          * DFUE – заказ создан на Сайте;
          * MOBI – заказ создан в мобильном приложении;
          */
-        $orderSource = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), 'FROM_APP')->getValue() === 'Y'
+        $orderSource = $this->getPropertyValueByCode($order, 'FROM_APP') === 'Y'
             ? OrderDtoOut::ORDER_SOURCE_MOBILE_APP
             : OrderDtoOut::ORDER_SOURCE_SITE;
-
+        
         $orderDto
             ->setId($order->getId())
             ->setDateInsert(DateHelper::convertToDateTime($order->getDateInsert()->toUserTime()))
             ->setClientId($order->getId())
             ->setClientFio(BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), 'NAME')->getValue())
             ->setClientPhone(BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), 'PHONE')->getValue())
-            ->setClientOrderPhone(BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), 'PHONE_ALT')->getValue())
+            ->setClientOrderPhone(BxCollection::getOrderPropertyByCode($order->getPropertyCollection(),
+                'PHONE_ALT')->getValue())
             ->setClientComment($order->getField('USER_DESCRIPTION'))
             ->setOrderSource($orderSource)
-            ->setBonusCard($orderUser->getDiscountCardNumber())
-            /**
-             * Товары в заказе
-             */
-            ->setProducts([]);
-
+            ->setBonusCard($orderUser->getDiscountCardNumber());
+        
         $this->populateOrderDtoPayment($orderDto, $order->getPaymentCollection());
         $this->populateOrderDtoDelivery($orderDto, $order);
         $this->populateOrderDtoProducts($orderDto, $order);
-
-        dump($orderDto);
-        die;
+        
         $xml = $this->serializer->serialize($orderDto, 'xml');
-
+        
         return new SourceMessage($this->getMessageId($order), OrderDtoOut::class, $xml);
     }
-
+    
     /**
      * @param OrderDtoIn $orderDto
      *
@@ -196,18 +226,18 @@ class OrderService implements LoggerAwareInterface
     public function transformDtoToOrder(OrderDtoIn $orderDto): Order
     {
         $orderArray = $this->arrayTransformer->toArray($orderDto);
-
+        
         $order = Order::load($orderArray['id']);
-
+        
         /**
          * @todo
          *
          * Do some magic with order
          */
-
+        
         return $order;
     }
-
+    
     /**
      * @param Order $order
      *
@@ -218,10 +248,10 @@ class OrderService implements LoggerAwareInterface
         if (null === $this->messageId) {
             $this->messageId = sprintf('order_%s_%s', $order->getId(), time());
         }
-
+        
         return $this->messageId;
     }
-
+    
     /**
      * @param Order $order
      *
@@ -229,9 +259,10 @@ class OrderService implements LoggerAwareInterface
      */
     public function getFileName(Order $order): string
     {
-        return sprintf('%s/%s-%s.xml', trim($this->outPath, '/'), $order->getDateInsert()->format('Ymd'), $order->getId());
+        return sprintf('%s/%s-%s.xml', trim($this->outPath, '/'), $order->getDateInsert()->format('Ymd'),
+            $order->getId());
     }
-
+    
     /**
      * @param string $outPath
      *
@@ -243,14 +274,14 @@ class OrderService implements LoggerAwareInterface
         if (!$this->filesystem->exists($outPath)) {
             $this->filesystem->mkdir($outPath, '0775');
         }
-
+        
         $this->outPath = $outPath;
-
+        
         return $this;
     }
-
+    
     /**
-     * @param OrderDtoOut $dto
+     * @param OrderDtoOut       $dto
      * @param PaymentCollection $paymentCollection
      *
      * @throws ObjectNotFoundException
@@ -263,24 +294,24 @@ class OrderService implements LoggerAwareInterface
          */
         $externalPayment = null;
         $internalPayment = $paymentCollection->getInnerPayment();
-
+        
         foreach ($paymentCollection as $paySystem) {
             if (!$paySystem->isInner()) {
                 $externalPayment = $paySystem;
-
+                
                 break;
             }
         }
-
+        
         if (null === $externalPayment) {
             throw new NotFoundOrderPaySystemException('Не найдена платежная система');
         }
-
+        
         /**
          * Сумма оплаты бонусами
          */
         $dto->setBonusPayedCount(($internalPayment && $internalPayment->getSum()) ? $internalPayment->getSum() : 0.0);
-
+        
         /**
          * Способ оплаты
          *
@@ -307,72 +338,50 @@ class OrderService implements LoggerAwareInterface
                 ->setPayStatus(self::ORDER_PAYMENT_STATUS_NOT_PAYED);
         }
     }
-
+    
+    /**
+     * @param OrderDtoOut $orderDto
+     * @param Order       $order
+     */
     private function populateOrderDtoDelivery(OrderDtoOut $orderDto, Order $order): void
     {
         $shipment = BxCollection::getOrderExternalShipment($order->getShipmentCollection());
-
+        
         if (null === $shipment) {
             throw new NotFoundOrderShipmentException('Не найдена отгрузка у заказа');
         }
-
-
-        $orderDto
-            /**
-             * @todo - после Димы
-             */
-            ->setCommunicationType('')
-            /**
-             * @todo deliveries start
-             *
-             * Способ получения заказа
-             *
-             * 01 – Курьерская доставка из РЦ;
-             * 02 – Самовывоз из магазина;
-             * 03 – Самовывоз из магазина (значение не передается Сайтом);
-             * 04 – Отложить в магазине (значение не передается Сайтом);
-             * 06 – Курьерская доставка из магазина;
-             * 07 – Доставка внешним подрядчиком (курьер или самовывоз из пункта выдачи заказов);
-             * 08 – РЦ – магазин – домой.
-             */
-            ->setDeliveryType($deliveryTypeCode)
-            /**
-             * Тип доставки подрядчиком
-             * Поле должно быть заполнено, если выбран способ получения заказа 07.
-             * ТД – от терминала до двери покупателя;
-             * ТТ – от терминала до пункта выдачи заказов.
-             */
-            ->setContractorDeliveryType($this->setContractorDeliveryTypeCodeByOrder($order->getShipmentCollection()))
-            ->setDeliveryDate(new \DateTime())
-            /**
-             * Интервал доставки
-             * 1    (09:00 – 18:00);
-             * 2    (18:00 – 24:00);
-             * 3    (08:00 – 12:00);
-             * 4    (12:00 – 16:00);
-             * 5    (16:00 – 20:00);
-             * 6    (20:00 – 24:00).
-             */
-            ->setDeliveryTimeInterval('')
-            /**
-             * Адрес доставки для:
-             * 01 – Курьерская доставка из РЦ;
-             * 06 – Курьерская доставка из магазина;
-             * 07 – Курьерская доставка внешним подрядчиком;
-             * 08 – РЦ – магазин - домой
-             */
-            ->setDeliveryAddress(new DeliveryAddress())
-            ->setDeliveryAddressOrPoint('');
-
-        if ($deliveryTypeCode !== self::ORDER_CONTRACTOR_CODE) {
-            /**
-             * Код подрядчика
-             * Содержит код подрядчика в SAP
-             * Поле должно быть заполнено, если выбран способ получения заказа 07.
-             * Значение по умолчанию 0000802070
-             **/
-            $orderDto->setContractorCode('');
+    
+        $deliveryTypeCode = $this->getDeliveryTypeCode($order);
+        $contractorDeliveryTypeCode = '';
+    
+        if (strpos($deliveryTypeCode, '_')) {
+            $deliveryType = explode('_', $deliveryTypeCode);
+            $deliveryTypeCode = $deliveryType[0];
+            $contractorDeliveryTypeCode = $deliveryType[1];
         }
+        
+        $deliveryPoint = '';
+        
+        $shopCode = $this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE');
+        $terminalCode = $this->getPropertyValueByCode($order, 'DPD_TERMINAL_CODE');
+        
+        if ($shopCode) {
+            $deliveryPoint = $shopCode;
+        }
+        
+        if ($terminalCode) {
+            $deliveryPoint = $terminalCode;
+        }
+        
+        $orderDto
+            ->setCommunicationType($this->getPropertyValueByCode($order, 'COM_WAY'))
+            ->setDeliveryType($deliveryTypeCode)
+            ->setContractorDeliveryType($contractorDeliveryTypeCode)
+            ->setDeliveryDate(DateHelper::convertToDateTime($this->getPropertyValueByCode()))
+            ->setDeliveryTimeInterval($this->getDeliveryInterval($order))
+            ->setDeliveryAddress($this->getDeliveryAddress($order, $terminalCode))
+            ->setDeliveryAddressOrPoint($deliveryPoint)
+            ->setContractorCode($deliveryTypeCode === self::DELIVERY_TYPE_CONTRACTOR ? self::DELIVERY_CONTRACTOR_CODE : '');
     }
     
     /**
@@ -383,13 +392,13 @@ class OrderService implements LoggerAwareInterface
     {
         $position = 1;
         $collection = new ArrayCollection();
-    
+        
         /**
          * @var BasketItem $basketItem
          */
         foreach ($order->getBasket() as $basketItem) {
             $xmlId = $basketItem->getField('PRODUCT_XML_ID');
-    
+            
             if (strpos($xmlId, '#')) {
                 $xmlId = explode('#', $xmlId)[1];
             }
@@ -399,14 +408,111 @@ class OrderService implements LoggerAwareInterface
                 ->setOfferXmlId($xmlId)
                 ->setUnitPrice($basketItem->getBasePrice())
                 ->setQuantity($basketItem->getQuantity())
+                /**
+                 * Только штуки
+                 */
+                ->setUnitOfMeasureCode(self::UNIT_PTC_CODE)
                 ->setChargeBonus(true)
-                ->setDeliveryFromPoint('')
-                ->setDeliveryShipmentPoint('');
+                ->setDeliveryFromPoint($this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE'))
+                ->setDeliveryShipmentPoint($this->getPropertyValueByCode($order, 'SHIPMENT_PLACE_CODE'));
             
             $collection->add($offer);
             $position++;
         }
         
         $orderDto->setProducts($collection);
+    }
+    
+    /**
+     * @param Order  $order
+     * @param string $point
+     *
+     * @return OutDeliveryAddress
+     */
+    private function getDeliveryAddress(Order $order, string $point = ''): OutDeliveryAddress
+    {
+        $city = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), 'CITY_CODE')->getValue();
+        $regionCode = preg_match('~\D~', '', $this->locationService->getRegionCode($city));
+        
+        $address = (new OutDeliveryAddress())
+            ->setRegionCode($regionCode)
+            ->setPostCode('')
+            ->setCityName($this->getPropertyValueByCode($order, 'CITY'))
+            ->setStreetName($this->getPropertyValueByCode($order, 'STREET'))
+            ->setStreetPrefix('')
+            ->setHouse($this->getPropertyValueByCode($order, 'HOUSE'))
+            ->setHousing('')
+            ->setBuilding($this->getPropertyValueByCode($order, 'BUILDING'))
+            ->setOwnerShip('')
+            ->setFloor($this->getPropertyValueByCode($order, 'FLOOR'))
+            ->setRoomNumber($this->getPropertyValueByCode($order, 'APARTMENT'))
+            ->setDeliveryPointCode($point);
+        
+        return $address;
+    }
+    
+    /**
+     * @param Order $order
+     *
+     * @return string
+     */
+    private function getDeliveryTypeCode(Order $order)
+    {
+        if ($this->getPropertyValueByCode($order, 'REGION_COURIER_FROM_DC')) {
+            return self::DELIVERY_TYPE_ROUTE;
+        }
+        
+        $shipment = BxCollection::getOrderExternalShipment($order->getShipmentCollection());
+        
+        switch ($shipment->getDelivery()->getCode()) {
+            case DeliveryService::INNER_DELIVERY_CODE:
+                $location = $this->getPropertyValueByCode($order, 'CITY_CODE');
+                $deliveryId = $shipment->getDeliveryId();
+                $deliveryZone = $this->deliveryService->getDeliveryZoneCodeByLocation($location, $deliveryId);
+                
+                switch ($deliveryZone) {
+                    case DeliveryService::ZONE_1:
+                        return self::DELIVERY_TYPE_COURIER_RC;
+                    case DeliveryService::ZONE_2:
+                        return self::DELIVERY_TYPE_PICKUP;
+                }
+                
+                break;
+            case DeliveryService::INNER_PICKUP_CODE:
+                return self::DELIVERY_TYPE_PICKUP;
+                break;
+            case DeliveryService::DPD_DELIVERY_CODE:
+                return self::DELIVERY_TYPE_CONTRACTOR . '_' . self::DELIVERY_TYPE_CONTRACTOR_DELIVERY;
+                break;
+            case DeliveryService::DPD_PICKUP_CODE:
+                return self::DELIVERY_TYPE_CONTRACTOR . '_' . self::DELIVERY_TYPE_CONTRACTOR_PICKUP;
+                break;
+        }
+        
+        throw new NotFoundOrderDeliveryException('Не найден тип доставки');
+    }
+    
+    /**
+     * @param Order $order
+     *
+     * @return string
+     */
+    private function getDeliveryInterval(Order $order): string
+    {
+        $interval = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(),
+            'DELIVERY_INTERVAL')->getValue();
+        
+        return array_flip(DeliveryService::DELIVERY_CODES)[$interval] ?? '';
+    }
+    
+    /**
+     * @param Order  $order
+     * @param string $code
+     *
+     * @return mixed
+     */
+    private function getPropertyValueByCode(Order $order, string $code)
+    {
+        return BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), $code)->getValue() ?? '';
     }
 }
