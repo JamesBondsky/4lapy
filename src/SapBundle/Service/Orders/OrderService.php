@@ -79,7 +79,7 @@ class OrderService implements LoggerAwareInterface
     const ORDER_PAYMENT_STATUS_NOT_PAYED = '02';
     const ORDER_PAYMENT_STATUS_PRE_PAYED = '03';
     
-    const UNIT_PTC_CODE = 'ST';
+    const UNIT_PTC_CODE = 'PCE';
     
     /**
      * @var BaseOrderService
