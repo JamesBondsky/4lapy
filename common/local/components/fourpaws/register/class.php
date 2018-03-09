@@ -615,6 +615,11 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             return $this->ajaxMess->getHaveLoginError();
         }
 
+        if (!isset($_SESSION['COUNT_REGISTER_CONFIRM_CODE'])) {
+            $_SESSION['COUNT_REGISTER_CONFIRM_CODE'] = 0;
+        }
+        $_SESSION['COUNT_REGISTER_CONFIRM_CODE']++;
+
         $checkedCaptcha = true;
         if ($_SESSION['COUNT_REGISTER_CONFIRM_CODE'] > 3) {
             $recaptchaService = $container->get('recaptcha.service');
@@ -627,10 +632,6 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         try {
             /** @var ConfirmCodeService $confirmService */
             try {
-                if (!isset($_SESSION['COUNT_REGISTER_CONFIRM_CODE'])) {
-                    $_SESSION['COUNT_REGISTER_CONFIRM_CODE'] = 0;
-                }
-                $_SESSION['COUNT_REGISTER_CONFIRM_CODE']++;
                 $confirmService = $container->get(ConfirmCodeInterface::class);
             } catch (ServiceNotFoundException $e) {
                 return $this->ajaxMess->getSystemError();
