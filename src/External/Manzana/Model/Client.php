@@ -505,4 +505,16 @@ class Client
     {
         return $this->cards;
     }
+
+    /**
+     * @return string
+     */
+    public function getBirthDateFormated(): string
+    {
+        $date = '';
+        if($this->birthDate instanceof \DateTimeImmutable){
+            $date = $this->birthDate->format('d.m.Y');
+        }
+        return $date;
+    }
 }
