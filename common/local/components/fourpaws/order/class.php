@@ -261,13 +261,14 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->arResult['MAX_BONUS_SUM'] = 0;
             if ($user) {
                 try {
-                    $cheque = $this->manzanaPosService->processCheque(
-                        $this->manzanaPosService->buildRequestFromBasket(
-                            $basket,
-                            $user->getDiscountCardNumber()
-                        )
+                    $chequeRequest = $this->manzanaPosService->buildRequestFromBasket(
+                        $basket,
+                        $user->getDiscountCardNumber()
                     );
-                    $this->arResult['MAX_BONUS_SUM'] = floor($cheque->getCardActiveBalance());
+                    $chequeRequest->setPaidByBonus($basket->getPrice());
+
+                    $cheque = $this->manzanaPosService->processCheque($chequeRequest);
+                    $this->arResult['MAX_BONUS_SUM'] = $cheque->getAvailablePayment();
                 } catch (ExecuteException $e) {
                     /* @todo выводить клиенту сообщение о невозможности оплаты бонусами? */
                     $this->logger->error($e->getMessage());
