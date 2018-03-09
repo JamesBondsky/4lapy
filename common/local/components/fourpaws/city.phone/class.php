@@ -6,6 +6,7 @@ use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use FourPaws\App\Application;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Location\Exception\CityNotFoundException;
+use FourPaws\UserBundle\Service\UserCitySelectInterface;
 
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsCityPhoneComponent extends \CBitrixComponent
@@ -19,10 +20,10 @@ class FourPawsCityPhoneComponent extends \CBitrixComponent
         }
 
         if (empty($params['LOCATION_CODE'])) {
-            /** @var \FourPaws\UserBundle\Service\UserService $userService */
+            /** @var UserCitySelectInterface $userService */
             $userService = Application::getInstance()
                                       ->getContainer()
-                                      ->get('FourPaws\UserBundle\Service\UserCitySelectInterface');
+                                      ->get(FourPaws\UserBundle\Service\UserCitySelectInterface::class);
             $params['LOCATION_CODE'] = $userService->getSelectedCity()['CODE'];
         }
 
@@ -49,30 +50,37 @@ class FourPawsCityPhoneComponent extends \CBitrixComponent
 
     /**
      * @return $this
+     * @throws CityNotFoundException
      */
     protected function prepareResult()
     {
         /** @var \FourPaws\Location\LocationService $locationService */
         $locationService = Application::getInstance()->getContainer()->get('location.service');
-        $defaultCity = $locationService->getDefaultCity();
-
-        $city = null;
-        if ($this->arParams['LOCATION_CODE']) {
-            $city = $locationService->getCity($this->arParams['LOCATION_CODE']);
-        }
-
-        if (!$defaultCity) {
+        if ($defaultCity = $locationService->getDefaultCity()) {
+            $defaultLocation = $locationService->getDefaultLocation();
+            $defaultCity->withName($defaultLocation['NAME']);
+        } else {
             $this->abortResultCache();
             throw new CityNotFoundException('Default city not found');
         }
 
+        $city = null;
+        if ($this->arParams['LOCATION_CODE'] &&
+            ($city = $locationService->getCity($this->arParams['LOCATION_CODE']))
+        ) {
+            $location = $locationService->findLocationCityByCode($this->arParams['LOCATION_CODE']);
+            $city->withName($location['NAME']);
+        }
+
         if (!$city) {
             $city = $defaultCity;
+            $location = $defaultLocation;
         }
 
         /** @var \FourPaws\Location\Model\City $city */
         $phone = $city->getPhone();
         $this->arResult['CITY_NAME'] = $city->getName();
+        $this->arResult['LOCATION'] = $location;
         $this->arResult['WORKING_HOURS'] = $city->getWorkingHours();
         $this->arResult['PHONE'] = PhoneHelper::formatPhone($phone);
         $this->arResult['PHONE_FOR_URL'] = PhoneHelper::formatPhone($phone, PhoneHelper::FORMAT_URL);
@@ -80,6 +88,7 @@ class FourPawsCityPhoneComponent extends \CBitrixComponent
         /** @var \FourPaws\Location\Model\City $defaultCity */
         $defaultPhone = $defaultCity->getPhone();
         $this->arResult['DEFAULT_CITY_NAME'] = $defaultCity->getName();
+        $this->arResult['DEFAULT_LOCATION'] = $defaultLocation;
         $this->arResult['DEFAULT_WORKING_HOURS'] = $defaultCity->getWorkingHours();
         $this->arResult['DEFAULT_PHONE'] = PhoneHelper::formatPhone($defaultPhone);
         $this->arResult['DEFAULT_PHONE_FOR_URL'] = PhoneHelper::formatPhone(
