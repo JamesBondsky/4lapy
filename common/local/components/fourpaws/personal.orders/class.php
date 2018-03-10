@@ -12,6 +12,7 @@ use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Data\Cache;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\SystemException;
@@ -23,6 +24,7 @@ use FourPaws\AppBundle\Exception\EmptyEntityClass;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Service\OrderService;
+use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -85,11 +87,14 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
         /** @noinspection SummerTimeUnsafeTimeManipulationInspection */
         /** кешируем на сутки, можно будет увеличить если обновления будут не очень частые - чтобы лишний кеш не хранился */
         $params['CACHE_TIME'] = 24 * 60 * 60;
+        /** кешируем запросы к манзане на 2 часа - можно будет увеличить, если по статистике обращений в день к странице заказов у разных пользователей будет небольшое */
+        $params['MANZANA_CACHE_TIME'] = 2 * 60 * 60;
         return $params;
     }
 
     /**
      * {@inheritdoc}
+     * @throws \FourPaws\UserBundle\Exception\NotAuthorizedException
      * @throws \RuntimeException
      * @throws EmptyEntityClass
      * @throws SystemException
@@ -122,23 +127,33 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
 
         $this->setFrameMode(true);
 
-        /** @todo добавить кеширование */
-        /** получаем заказы из манзаны, кешируем на сутки */
         try {
             $userId = $this->currentUserProvider->getCurrentUserId();
-            $manzanaOrders = $this->orderService->getManzanaOrders();
         } catch (NotAuthorizedException $e) {
             /** запрашиваем авторизацию */
             \define('NEED_AUTH', true);
             return null;
-        } catch (ManzanaServiceException $e) {
-            $manzanaOrders = new ArrayCollection();
+        }
+
+        $cache = Cache::createInstance();
+        if ($cache->initCache($this->arParams['MANZANA_CACHE_TIME'],
+            serialize(['userId' => $userId]))) {
+            $result = $cache->getVars();
+            $manzanaOrders = $result['manzanaOrders'];
+        } elseif ($cache->startDataCache()) {
+            try {
+                $manzanaOrders = $this->orderService->getManzanaOrders();
+            } catch (ManzanaServiceException $e) {
+                $manzanaOrders = new ArrayCollection();
+            }
+            $cache->endDataCache(['manzanaOrders' => $manzanaOrders]);
         }
 
         // кешируем шаблон по номерам чеков из манзаны, ибо инфа в манзану должна передаваться всегда
         /** @noinspection PhpUndefinedVariableInspection */
         if ($this->startResultCache($this->arParams['CACHE_TIME'],
             ['manzanaOrders' => $manzanaOrders->getKeys(), 'USER_ID' => $userId])) {
+            $activeOrders = $closedOrders = new ArrayCollection();
             try {
                 $this->arResult['ACTIVE_ORDERS'] = $activeOrders =  $this->orderService->getActiveSiteOrders();
                 $allClosedOrders = $this->orderService->mergeAllClosedOrders($this->orderService->getClosedSiteOrders()->toArray(),
@@ -152,20 +167,26 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
                 $nav->setRecordCount($allClosedOrders->count());
                 $this->arResult['CLOSED_ORDERS'] = $closedOrders = new ArrayCollection(array_slice($allClosedOrdersList,
                     $nav->getOffset(), $nav->getPageSize(), true));
+                if ($nav instanceof PageNavigation) {
+                    $this->arResult['NAV'] = $nav;
+                }
             } catch (NotAuthorizedException $e) {
                 /** запрашиваем авторизацию */
                 \define('NEED_AUTH', true);
                 return null;
+            } catch (\Exception $e) {
+                $logger = LoggerFactory::create('my_orders');
+                $logger->error('error - '.$e->getMessage());
+                /** Показываем пустую страницу с заказами */
             }
-            if ($nav instanceof PageNavigation) {
-                $this->arResult['NAV'] = $nav;
-            }
-            $storeService = App::getInstance()->getContainer()->get('store.service');
-            $this->arResult['METRO'] = new ArrayCollection($storeService->getMetroInfo());
 
             $page= '';
             if($activeOrders->isEmpty() && $closedOrders->isEmpty()){
                 $page = 'notOrders';
+            }
+            else{
+                $storeService = App::getInstance()->getContainer()->get('store.service');
+                $this->arResult['METRO'] = new ArrayCollection($storeService->getMetroInfo());
             }
 
             $this->includeComponentTemplate($page);
@@ -210,7 +231,7 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
      * @return void
      * @throws Exception
      */
-    protected function copyOrder2CustomerBasket(int $id)
+    protected function copyOrder2CustomerBasket(int $id): void
     {
         $result = new Main\Result();
 
@@ -229,45 +250,47 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
 
             $oldOrder = Sale\Order::load($id);
 
-            $oldBasket = $oldOrder->getBasket();
-            $oldBasketItems = $oldBasket->getBasketItems();
+            if($oldOrder instanceof Order) {
+                $oldBasket = $oldOrder->getBasket();
+                $oldBasketItems = $oldBasket->getBasketItems();
 
-            /** @var Sale\BasketItem $oldBasketItem*/
-            foreach ($oldBasketItems as $oldBasketItem)
-            {
-                $propertyList = array();
-                if ($oldPropertyCollection = $oldBasketItem->getPropertyCollection())
+                /** @var Sale\BasketItem $oldBasketItem*/
+                foreach ($oldBasketItems as $oldBasketItem)
                 {
-                    $propertyList = $oldPropertyCollection->getPropertyValues();
-                }
-
-                $item = $basket->getExistsItem($oldBasketItem->getField('MODULE'), $oldBasketItem->getField('PRODUCT_ID'), $propertyList);
-
-                if ($item)
-                {
-                    $resultItem = $item->setField('QUANTITY', $item->getQuantity() + $oldBasketItem->getQuantity());
-                }
-                else
-                {
-                    $item = $basket->createItem($oldBasketItem->getField('MODULE'), $oldBasketItem->getField('PRODUCT_ID'));
-                    $oldBasketValues = array_intersect_key($oldBasketItem->getFieldValues(), $filterFields);
-                    $item->setField('NAME', $oldBasketValues['NAME']);
-                    $resultItem = $item->setFields($oldBasketValues);
-                    $newPropertyCollection = $item->getPropertyCollection();
-
-                    /** @var Sale\BasketPropertyItem $oldProperty*/
-                    foreach ($propertyList as $oldPropertyFields)
+                    $propertyList = array();
+                    if ($oldPropertyCollection = $oldBasketItem->getPropertyCollection())
                     {
-                        $propertyItem = $newPropertyCollection->createItem();
-                        unset($oldPropertyFields['ID'], $oldPropertyFields['BASKET_ID']);
-
-                        /** @var Sale\BasketPropertyItem $propertyItem*/
-                        $propertyItem->setFields($oldPropertyFields);
+                        $propertyList = $oldPropertyCollection->getPropertyValues();
                     }
-                }
-                if (!$resultItem->isSuccess())
-                {
-                    $result->addErrors($resultItem->getErrors());
+
+                    $item = $basket->getExistsItem($oldBasketItem->getField('MODULE'), $oldBasketItem->getField('PRODUCT_ID'), $propertyList);
+
+                    if ($item)
+                    {
+                        $resultItem = $item->setField('QUANTITY', $item->getQuantity() + $oldBasketItem->getQuantity());
+                    }
+                    else
+                    {
+                        $item = $basket->createItem($oldBasketItem->getField('MODULE'), $oldBasketItem->getField('PRODUCT_ID'));
+                        $oldBasketValues = array_intersect_key($oldBasketItem->getFieldValues(), $filterFields);
+                        $item->setField('NAME', $oldBasketValues['NAME']);
+                        $resultItem = $item->setFields($oldBasketValues);
+                        $newPropertyCollection = $item->getPropertyCollection();
+
+                        /** @var Sale\BasketPropertyItem $oldProperty*/
+                        foreach ($propertyList as $oldPropertyFields)
+                        {
+                            $propertyItem = $newPropertyCollection->createItem([]);
+                            unset($oldPropertyFields['ID'], $oldPropertyFields['BASKET_ID']);
+
+                            /** @var Sale\BasketPropertyItem $propertyItem*/
+                            $propertyItem->setFields($oldPropertyFields);
+                        }
+                    }
+                    if (!$resultItem->isSuccess())
+                    {
+                        $result->addErrors($resultItem->getErrors());
+                    }
                 }
             }
 

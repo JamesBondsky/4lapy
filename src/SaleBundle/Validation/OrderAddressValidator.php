@@ -4,7 +4,7 @@ namespace FourPaws\SaleBundle\Validation;
 
 use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\PersonalBundle\Exception\NotFoundException;
+use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Service\OrderService;

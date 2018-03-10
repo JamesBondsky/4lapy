@@ -6,6 +6,7 @@
 
 namespace FourPaws\AppBundle\Callback;
 
+use Bitrix\Main\ObjectException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\Uri;
 use FourPaws\App\Application as App;
@@ -33,7 +34,7 @@ class CallbackService
     {
         $this->parameters = $parameters;
     }
-    
+
     /**
      * @param string $phone
      * @param string $curDate
@@ -42,8 +43,9 @@ class CallbackService
      * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
+     * @throws ObjectException
      */
-    public function send(string $phone, string $curDate = '', int $timeout = 0)
+    public function send(string $phone, string $curDate = '', int $timeout = 0): void
     {
         if (empty($curDate)) {
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */

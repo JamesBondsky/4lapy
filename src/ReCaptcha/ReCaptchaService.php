@@ -46,6 +46,8 @@ class ReCaptchaService implements LoggerAwareInterface
     /**
      * @param string $additionalClass
      *
+     * @param bool   $isAjax
+     *
      * @return string
      */
     public function getCaptcha(string $additionalClass = '', bool $isAjax = false): string

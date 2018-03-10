@@ -68,17 +68,16 @@ class CatalogOftenSeekComponent extends CBitrixComponent
         if ($this->arParams['SECTION_ID'] <= 0) {
             return null;
         }
+        
+        /** из-за рандомной сортирвоки кеширвоать нельзя совсем */
+        $this->arResult['ITEMS'] = $this->oftenSeekService->getItems(
+            $this->arParams['SECTION_ID'],
+            $this->arParams['LEFT_MARGIN'],
+            $this->arParams['RIGHT_MARGIN'],
+            $this->arParams['DEPTH_LEVEL']
+        );
 
-        //if ($this->startResultCache()) {
-            $this->arResult['ITEMS'] = $this->oftenSeekService->getItems(
-                $this->arParams['SECTION_ID'],
-                $this->arParams['LEFT_MARGIN'],
-                $this->arParams['RIGHT_MARGIN'],
-                $this->arParams['DEPTH_LEVEL']
-            );
-
-            $this->includeComponentTemplate();
-        //}
+        $this->includeComponentTemplate();
 
         return true;
     }

@@ -22,6 +22,7 @@ use FourPaws\PersonalBundle\Service\PetService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -36,6 +37,9 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
 
     /** @var UserAuthorizationInterface */
     private $authUserProvider;
+
+    /** @var CurrentUserProviderInterface */
+    private $currentUserProvider;
 
     /**
      * AutoloadingIssuesInspection constructor.
@@ -60,10 +64,19 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
         }
         $this->petService = $container->get('pet.service');
         $this->authUserProvider = $container->get(UserAuthorizationInterface::class);
+        $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
+    }
+
+    public function onPrepareComponentParams($params): array
+    {
+        $params['CACHE_TIME'] = 360000;
+
+        return parent::onPrepareComponentParams($params);
     }
 
     /**
      * {@inheritdoc}
+     * @throws \Bitrix\Main\ObjectPropertyException
      * @throws ArgumentException
      * @throws \Exception
      * @throws ServiceNotFoundException
@@ -85,7 +98,7 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
         $this->setFrameMode(true);
 
         /** @todo проверить кеширование - возможно его надо будет сбрасывать по тегу */
-        if ($this->startResultCache()) {
+        if ($this->startResultCache($this->arParams['CACHE_TIME'], ['user_id'=>$this->currentUserProvider->getCurrentUserId()])) {
             $this->arResult['ITEMS'] = $this->petService->getCurUserPets();
             /** получение пола */
             $this->setGenderVals();

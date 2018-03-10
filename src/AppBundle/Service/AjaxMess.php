@@ -37,6 +37,24 @@ class AjaxMess
         return $this->getJsonError('needAuth', 'Необходимо авторизоваться');
     }
 
+    /**
+     * @return JsonResponse
+     */
+    public function getSecurityError(): JsonResponse
+    {
+        return $this->getJsonError('securityError', 'Ошибка безопасности');
+    }
+
+    /**
+     * @param string $mess
+     *
+     * @return JsonResponse
+     */
+    public function getNotIdError(string $mess = ''): JsonResponse
+    {
+        return $this->getJsonError('notIdError', 'Не указан ID'.$mess);
+    }
+
     /** error block */
 
     /**
@@ -165,7 +183,7 @@ class AjaxMess
      */
     public function getEmptyDataError(): JsonResponse
     {
-        return $this->getJsonError('emptyData', 'Должны быть заполнены все поля');
+        return $this->getJsonError('emptyData', 'Должны быть заполнены все обязательные поля');
     }
 
     /**
@@ -221,6 +239,28 @@ class AjaxMess
     {
         $errorText = !empty($error) ? ' - ' . $error : '';
         return $this->getJsonError('errorUpdate', 'Произошла ошибка при обновлении' . $errorText);
+    }
+
+    /**
+     * @param string $error
+     *
+     * @return JsonResponse
+     */
+    public function getDeleteError(string $error = ''): JsonResponse
+    {
+        $errorText = !empty($error) ? ' - ' . $error : '';
+        return $this->getJsonError('errorUpdate', 'Произошла ошибка при удалении' . $errorText);
+    }
+
+    /**
+     * @param string $error
+     *
+     * @return JsonResponse
+     */
+    public function getAddError(string $error = ''): JsonResponse
+    {
+        $errorText = !empty($error) ? ' - ' . $error : '';
+        return $this->getJsonError('errorUpdate', 'Произошла ошибка при добавлении' . $errorText);
     }
 
     /**
@@ -309,6 +349,26 @@ class AjaxMess
     public function getNotAllowedEASendError(): JsonResponse
     {
         return $this->getJsonError('notAllowedEASend', 'Отправка писем недоступна - необходимо подтвердить почту');
+    }
+
+    /**
+     * @param int $size
+     *
+     * @return JsonResponse
+     */
+    public function getFileSizeError(int $size): JsonResponse
+    {
+        return $this->getJsonError('fileSizeError', 'Превышен максимально допустимый размер файла в '.$size.'Мб');
+    }
+
+    /**
+     * @param array $valid_types
+     *
+     * @return JsonResponse
+     */
+    public function getFileTypeError(array $valid_types): JsonResponse
+    {
+        return $this->getJsonError('filetTypeError', 'Неверный формат файла, допусимые форматы: ' . implode(', ', $valid_types));
     }
 
     /**

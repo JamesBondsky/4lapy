@@ -17,6 +17,7 @@ use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
@@ -31,6 +32,8 @@ class FourPawsPersonalCabinetAddressComponent extends CBitrixComponent
 
     /** @var UserAuthorizationInterface */
     private $authUserProvider;
+    /** @var CurrentUserProviderInterface */
+    private $currentUserProvider;
 
     /**
      * AutoloadingIssuesInspection constructor.
@@ -55,11 +58,20 @@ class FourPawsPersonalCabinetAddressComponent extends CBitrixComponent
         }
         $this->addressService = $container->get('address.service');
         $this->authUserProvider = $container->get(UserAuthorizationInterface::class);
+        $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
+    }
+
+    /** @inheritdoc */
+    public function onPrepareComponentParams($params): array
+    {
+        $params['CACHE_TIME'] = 360000;
+
+        return parent::onPrepareComponentParams($params);
     }
 
     /**
      * {@inheritdoc}
-     * @throws \Exception
+     * @throws \Bitrix\Main\ObjectPropertyException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
@@ -79,7 +91,8 @@ class FourPawsPersonalCabinetAddressComponent extends CBitrixComponent
         $this->setFrameMode(true);
 
         /** @todo проверить кеширование - возможно его надо будет сбрасывать по тегу */
-        if ($this->startResultCache()) {
+        if ($this->startResultCache($this->arParams['CACHE_TIME'],
+            ['USER_ID' => $this->currentUserProvider->getCurrentUserId()])) {
             $this->arResult['ITEMS'] = $this->addressService->getAddressesByUser();
             $this->includeComponentTemplate();
         }

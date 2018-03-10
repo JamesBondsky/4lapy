@@ -6,9 +6,13 @@
 
 namespace FourPaws\PersonalBundle\Service;
 
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\Security\SecurityException;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
+use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
@@ -75,8 +79,9 @@ class PetService
      * @throws \RuntimeException
      * @throws ApplicationCreateException
      * @throws ValidationException
-     * @throws \Exception
      * @throws BitrixRuntimeException
+     * @throws ObjectPropertyException
+     * @throws \Exception
      */
     public function add(array $data) : bool
     {
@@ -97,52 +102,50 @@ class PetService
         
         return $res;
     }
-    
+
     /**
+     * @throws NotAuthorizedException
      * @throws ConstraintDefinitionException
      * @throws ServiceNotFoundException
      * @throws InvalidIdentifierException
-     * @throws \Exception
      * @throws ApplicationCreateException
      * @throws \RuntimeException
      * @throws ServiceCircularReferenceException
+     * @throws ObjectPropertyException
      */
-    protected function updateManzanaPets()
+    protected function updateManzanaPets(): void
     {
         $types     = [];
 
+        $pets = $this->getCurUserPets();
+        if (!$pets->isEmpty()) {
+            /** @var Pet $pet */
+            foreach ($pets as $pet) {
+                $types[] = $pet->getCodeType();
+            }
+        }
+
+        $client = null;
         try {
-            $pets = $this->getCurUserPets();
-            if (!$pets->isEmpty()) {
-                /** @var Pet $pet */
-                foreach ($pets as $pet) {
-                    $types[] = $pet->getCodeType();
-                }
-            }
-            
-            $client = null;
-            try {
-                $contactId         = $this->manzanaService->getContactIdByUser();
-                $client            = new Client();
-                $client->contactId = $contactId;
-            } catch (ManzanaServiceException $e) {
-                $client = new Client();
-                $this->currentUser->setClientPersonalDataByCurUser($client);
-            }
-    
-            if ($client instanceof Client) {
-                $this->setClientPets($client, $types);
-                $this->manzanaService->updateContactAsync($client);
-            }
-        } catch (NotAuthorizedException $e) {
+            $contactId = $this->manzanaService->getContactIdByUser();
+            $client = new Client();
+            $client->contactId = $contactId;
+        } catch (ManzanaServiceException $e) {
+            $client = new Client();
+            $this->currentUser->setClientPersonalDataByCurUser($client);
+        }
+
+        if ($client instanceof Client) {
+            $this->setClientPets($client, $types);
+            $this->manzanaService->updateContactAsync($client);
         }
     }
 
     /**
+     * @throws ObjectPropertyException
      * @throws NotAuthorizedException
      * @throws InvalidIdentifierException
      * @throws ServiceNotFoundException
-     * @throws \Exception
      * @throws ServiceCircularReferenceException
      * @return ArrayCollection
      */
@@ -155,7 +158,7 @@ class PetService
      * @param Client $client
      * @param array  $types
      */
-    public function setClientPets(&$client, array $types)
+    public function setClientPets(&$client, array $types): void
     {
         /** @todo set actual types */
         $baseTypes        = [
@@ -188,6 +191,8 @@ class PetService
     /**
      * @param array $data
      *
+     * @throws SecurityException
+     * @throws NotFoundException
      * @throws NotAuthorizedException
      * @throws EmptyEntityClass
      * @throws ServiceNotFoundException
@@ -196,13 +201,22 @@ class PetService
      * @throws ApplicationCreateException
      * @throws ValidationException
      * @throws InvalidIdentifierException
-     * @throws \Exception
      * @throws BitrixRuntimeException
      * @throws ConstraintDefinitionException
      * @return bool
+     * @throws ObjectPropertyException
+     * @throws \Exception
      */
     public function update(array $data) : bool
     {
+        /** @var Pet $entity */
+        $entity = $this->petRepository->dataToEntity($data, Pet::class);
+
+        $updateEntity = $this->getById($entity->getId());
+        if ($updateEntity->getUserId() !== $this->currentUser->getCurrentUserId()) {
+            throw new SecurityException('не хватает прав доступа для совершения данной операции');
+        }
+
         if (empty($data['UF_USER_ID'])) {
             $data['UF_USER_ID'] = $this->currentUser->getCurrentUserId();
         }
@@ -212,35 +226,57 @@ class PetService
         else{
             unset($data['UF_PHOTO']);
         }
-        $this->petRepository->setEntityFromData($data, Pet::class);
-        $res = $this->petRepository->update();
+
+        $res = $this->petRepository->setEntity($entity)->update();
         if ($res) {
             $this->updateManzanaPets();
         }
         
         return $res;
     }
-    
+
     /**
      * @param int $id
      *
+     * @throws NotFoundException
+     * @throws NotAuthorizedException
+     * @throws SecurityException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws \RuntimeException
      * @throws ApplicationCreateException
      * @throws InvalidIdentifierException
-     * @throws \Exception
      * @throws BitrixRuntimeException
      * @throws ConstraintDefinitionException
      * @return bool
+     * @throws ObjectPropertyException
+     * @throws \Exception
      */
     public function delete(int $id) : bool
     {
+        $deleteEntity = $this->getById($id);
+        if ($deleteEntity->getUserId() !== $this->currentUser->getCurrentUserId()) {
+            throw new SecurityException('не хватает прав доступа для совершения данной операции');
+        }
+
         $res = $this->petRepository->delete($id);
         if ($res) {
             $this->updateManzanaPets();
         }
         
         return $res;
+    }
+
+    /**
+     * @param int $id
+     *
+     * @return Pet|BaseEntity
+     * @throws ObjectPropertyException
+     * @throws \Exception
+     * @throws NotFoundException
+     */
+    public function getById(int $id): Pet
+    {
+        return $this->petRepository->findById($id);
     }
 }

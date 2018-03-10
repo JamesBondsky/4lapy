@@ -43,7 +43,13 @@ class CFourPawsFoodSelectionComponent extends CBitrixComponent
         
         $this->foodSelectionService = $container->get('food_selection.service');
     }
-    
+
+    public function onPrepareComponentParams($params)
+    {
+        $params['CACHE_TIME'] = 360000;
+        return parent::onPrepareComponentParams($params);
+    }
+
     /**
      * {@inheritdoc}
      * @throws \RuntimeException
@@ -52,7 +58,7 @@ class CFourPawsFoodSelectionComponent extends CBitrixComponent
     {
         $this->setFrameMode(true);
         
-        if ($this->startResultCache()) {
+        if ($this->startResultCache($this->arParams['CACHE_TIME'])) {
             $this->arResult['PET_TYPES'] = $this->foodSelectionService->getSectionsByParentSectionId(
                     $this->foodSelectionService->getSectionIdByXmlId('pet_type', 1)
                 );

@@ -67,7 +67,7 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
     public function onPrepareComponentParams($params): array
     {
         $params['CACHE_TIME'] = 360000;
-        $params['MANZANA_CACHE_TIME'] = 8 * 60 * 60;
+        $params['MANZANA_CACHE_TIME'] = 2 * 60 * 60;
         return $params;
     }
 

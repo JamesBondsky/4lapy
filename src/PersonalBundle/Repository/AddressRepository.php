@@ -2,10 +2,10 @@
 
 namespace FourPaws\PersonalBundle\Repository;
 
+use Bitrix\Main\ObjectPropertyException;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\AppBundle\Repository\BaseHlRepository;
 use FourPaws\PersonalBundle\Entity\Address;
-use FourPaws\PersonalBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\ValidationException;
@@ -23,7 +23,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
  */
 class AddressRepository extends BaseHlRepository
 {
-    const HL_NAME = 'Address';
+    public const HL_NAME = 'Address';
     /**
      * @var UserService
      */
@@ -70,29 +70,12 @@ class AddressRepository extends BaseHlRepository
     }
 
     /**
-     * @param int $id
-     *
-     * @return Address
-     * @throws NotFoundException
-     * @throws \Exception
-     */
-    public function findById(int $id): Address
-    {
-        $result = parent::findBy(['filter' => ['ID' => $id]]);
-        if ($result->isEmpty()) {
-            throw new NotFoundException('Address not found');
-        }
-
-        return $result->first();
-    }
-
-    /**
      * @param int    $userId
      * @param string $locationCode
      *
-     * @return ArrayCollection
+     * @return ArrayCollection|Address[]
+     * @throws ObjectPropertyException
      * @throws NotAuthorizedException
-     * @throws \Exception
      */
     public function findByUser(int $userId = 0, string $locationCode = ''): ArrayCollection
     {

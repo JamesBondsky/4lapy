@@ -6,13 +6,27 @@
 
 namespace FourPaws\PersonalBundle\AjaxController;
 
-use FourPaws\App\Response\JsonErrorResponse;
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\AppBundle\Exception\EmptyEntityClass;
+use FourPaws\AppBundle\Service\AjaxMess;
+use FourPaws\External\Exception\ManzanaServiceException;
+use FourPaws\External\Manzana\Exception\CardNotFoundException;
+use FourPaws\External\Manzana\Exception\ContactUpdateException;
 use FourPaws\External\Manzana\Model\Card;
 use FourPaws\PersonalBundle\Service\ReferralService;
+use FourPaws\UserBundle\Exception\BitrixRuntimeException;
+use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
+use FourPaws\UserBundle\Exception\InvalidIdentifierException;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Exception\ValidationException;
+use FourPaws\UserBundle\Service\UserAuthorizationInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -27,29 +41,38 @@ class ReferralController extends Controller
      * @var ReferralService
      */
     private $referralService;
-    
+
+    /** @var AjaxMess */
+    private $ajaxMess;
+    /** @var UserAuthorizationInterface */
+    private $userAuthorization;
+
     public function __construct(
-        ReferralService $referralService
+        ReferralService $referralService,
+        UserAuthorizationInterface $userAuthorization,
+        AjaxMess $ajaxMess
     ) {
         $this->referralService = $referralService;
+        $this->userAuthorization = $userAuthorization;
+        $this->ajaxMess = $ajaxMess;
     }
-    
+
     /**
      * @Route("/add/", methods={"POST"})
      * @param Request $request
      *
      * @return JsonResponse
      */
-    public function addAction(Request $request) : JsonResponse
+    public function addAction(Request $request): JsonResponse
     {
+        if (!$this->userAuthorization->isAuthorized()) {
+            return $this->ajaxMess->getNeedAuthError();
+        }
         $data = $request->request->all();
         if (empty($data)) {
-            return JsonErrorResponse::createWithData(
-                'Не указаны данные для добавления',
-                ['errors' => ['emptyData' => 'Не указаны данные для добавления']]
-            );
+            return $this->ajaxMess->getEmptyDataError();
         }
-        if(!empty($data['UF_CARD'])){
+        if (!empty($data['UF_CARD'])) {
             $data['UF_CARD'] = preg_replace("/\D/", '', $data['UF_CARD']);
         }
         $data['UF_MODERATED'] = 'Y';
@@ -62,49 +85,60 @@ class ReferralController extends Controller
                     ['reload' => true]
                 );
             }
-        } catch (\Exception $e) {
+        } catch (ManzanaServiceException|ContactUpdateException $e) {
+            $logger = LoggerFactory::create('manzana');
+            $logger->error('Ошибка манзаны - ' . $e->getMessage());
+        } catch (BitrixRuntimeException $e) {
+            return $this->ajaxMess->getAddError($e->getMessage());
+        } catch (EmptyEntityClass $e) {
+            return $this->ajaxMess->getAddError();
+        } catch (NotAuthorizedException $e) {
+            return $this->ajaxMess->getNeedAuthError();
+        } catch (ValidationException|InvalidIdentifierException|ConstraintDefinitionException $e) {
+            $logger = LoggerFactory::create('params');
+            $logger->error('Ошибка параметров - ' . $e->getMessage());
+        } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
+            $logger = LoggerFactory::create('system');
+            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
         }
-        
-        return JsonErrorResponse::createWithData(
-            'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
-            ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
-        );
+
+        return $this->ajaxMess->getSystemError();
     }
-    
+
     /**
      * @Route("/get_user_info/", methods={"POST"})
      * @param Request $request
      *
      * @return JsonResponse
+     * @throws \RuntimeException
      */
-    public function getUserInfoAction(Request $request) : JsonResponse
+    public function getUserInfoAction(Request $request): JsonResponse
     {
         $card = $request->get('card');
-        if(!empty($card)){
+        if (!empty($card)) {
             $card = preg_replace("/\D/", '', $card);
         }
         if (empty($card)) {
-            return JsonErrorResponse::createWithData(
-                'Не указан код карты',
-                ['errors' => ['emptyData' => 'Не указан код карты']]
-            );
+            return $this->ajaxMess->getEmptyCardNumber();
         }
+        /** @var Card $currentCard */
         try {
-            /** @var Card $currentCard */
             $currentCard = $this->referralService->manzanaService->searchCardByNumber($card);
-                $cardInfo    = [
-                    'last_name'=>$currentCard->lastName,
-                    'name'=>$currentCard->firstName,
-                    'second_name'=>$currentCard->secondName,
-                    'phone'=>$currentCard->phone,
-                    'email'=>$currentCard->email
-                ];
-                return JsonSuccessResponse::createWithData(
-                    'Информация о карте получена',
-                    ['card'=>$cardInfo]
-                );
-        } catch (\Exception $e) {
-            return JsonErrorResponse::create($e->getMessage());
+            $cardInfo = [
+                'last_name'   => $currentCard->lastName,
+                'name'        => $currentCard->firstName,
+                'second_name' => $currentCard->secondName,
+                'phone'       => $currentCard->phone,
+                'email'       => $currentCard->email,
+            ];
+            return JsonSuccessResponse::createWithData(
+                'Информация о карте получена',
+                ['card' => $cardInfo]
+            );
+        } catch (ManzanaServiceException|CardNotFoundException $e) {
+            $logger = LoggerFactory::create('manzana');
+            $logger->error('Ошибка манзаны - ' . $e->getMessage());
         }
+        return $this->ajaxMess->getSystemError();
     }
 }

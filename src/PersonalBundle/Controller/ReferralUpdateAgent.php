@@ -20,7 +20,11 @@ use FourPaws\External\Manzana\Model\Referral as ManzanaReferral;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\PersonalBundle\Service\ReferralService;
+use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
+use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /**
  * Class ReferralUpdateAgent
@@ -31,16 +35,13 @@ class ReferralUpdateAgent
 {
     /**
      * @return string
-     * @throws \RuntimeException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
      */
     public static function updateModerateReferrals(): string
     {
         $loggerManzana = LoggerFactory::create('manzana');
         $loggerReferal = LoggerFactory::create('referal');
+        $loggerSystem = LoggerFactory::create('system');
+        $loggerParams = LoggerFactory::create('params');
         /** @var ReferralService $referralService */
         try {
             $referralService = App::getInstance()->getContainer()->get('referral.service');
@@ -69,7 +70,11 @@ class ReferralUpdateAgent
                         /** глушим так как продолжения все равно нет, а фатал делать нельзя */
                     } catch (NotAuthorizedException $e) {
                         /** эксепшн никогда не выбьется */
-                    } catch (ApplicationCreateException $e) {
+                    } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException $e) {
+                        $loggerSystem->error('Ошибка загрузки сервисов');
+                    }
+                    catch (ConstraintDefinitionException|InvalidIdentifierException $e) {
+                        $loggerParams->error('Ошибка параметров');
                     }
                 }
                 if (\is_array($manzanaReferrals[$userId])
@@ -126,6 +131,7 @@ class ReferralUpdateAgent
                                     try {
                                         $referralService->referralRepository->delete($referral->getId());
                                     } catch (\Exception $e) {
+                                        $loggerSystem->error('произошла ошибка удаления реферала '.$e->getMessage());
                                     }
                                 }
                             }

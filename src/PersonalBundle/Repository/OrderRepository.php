@@ -81,8 +81,8 @@ class OrderRepository extends BaseRepository
      *      'countTotal'=>bool
      * ]
      *
-     * @return ArrayCollection
-     * @throws \Exception
+     * @return ArrayCollection|Order[]
+     * @throws ArgumentException
      */
     public function getUserOrders(array $params = []): ArrayCollection
     {
@@ -269,7 +269,7 @@ class OrderRepository extends BaseRepository
     /**
      * @param int $orderId
      *
-     * @return ArrayCollection
+     * @return ArrayCollection|OrderProp[]
      * @throws EmptyEntityClass
      */
     public function getOrderProps(int $orderId): ArrayCollection
