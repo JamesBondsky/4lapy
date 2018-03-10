@@ -519,6 +519,6 @@ class OrderService implements LoggerAwareInterface
     {
         $propertyValue = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), $code);
         
-        return $propertyValue ? $propertyValue->getValue() : '';
+        return $propertyValue ? ($propertyValue->getValue() ?? '') : '';
     }
 }
