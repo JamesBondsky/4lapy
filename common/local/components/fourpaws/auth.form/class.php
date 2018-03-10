@@ -168,6 +168,12 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         if (empty($password)) {
             return $this->ajaxMess->getEmptyPasswordError();
         }
+
+        if (!isset($_SESSION['COUNT_AUTH_AUTHORIZE'])) {
+            $_SESSION['COUNT_AUTH_AUTHORIZE'] = 0;
+        }
+        $_SESSION['COUNT_AUTH_AUTHORIZE']++;
+
         $checkedCaptcha = true;
         if ((int)$_SESSION['COUNT_AUTH_AUTHORIZE'] > 3) {
             try {
@@ -181,10 +187,6 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             return $this->ajaxMess->getFailCaptchaCheckError();
         }
         try {
-            if (!isset($_SESSION['COUNT_AUTH_AUTHORIZE'])) {
-                $_SESSION['COUNT_AUTH_AUTHORIZE'] = 0;
-            }
-            $_SESSION['COUNT_AUTH_AUTHORIZE']++;
             $this->userAuthorizationService->login($rawLogin, $password);
             if ($this->userAuthorizationService->isAuthorized()
                 && !$this->currentUserProvider->getCurrentUser()->havePersonalPhone()) {
@@ -295,6 +297,11 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             return $this->ajaxMess->getWrongPhoneNumberException();
         }
 
+        if (!isset($_SESSION['COUNT_AUTH_CONFIRM_CODE'])) {
+            $_SESSION['COUNT_AUTH_CONFIRM_CODE'] = 0;
+        }
+        $_SESSION['COUNT_AUTH_CONFIRM_CODE']++;
+
         $checkedCaptcha = true;
         if ($_SESSION['COUNT_AUTH_CONFIRM_CODE'] > 3) {
             $recaptchaService = $container->get('recaptcha.service');
@@ -305,10 +312,6 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         }
 
         try {
-            if (!isset($_SESSION['COUNT_AUTH_CONFIRM_CODE'])) {
-                $_SESSION['COUNT_AUTH_CONFIRM_CODE'] = 0;
-            }
-            $_SESSION['COUNT_AUTH_CONFIRM_CODE']++;
             /** @var ConfirmCodeService $confirmService */
             $confirmService = $container->get(ConfirmCodeInterface::class);
             $res = $confirmService::checkConfirmSms(
