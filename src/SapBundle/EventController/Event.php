@@ -82,7 +82,7 @@ class Event implements ServiceHandlerInterface
             /**
              * ...и оплата не онлайн, отправляем в SAP
              */
-            if ($order->getPaymentSystemId() === SapOrderEnum::PAYMENT_SYSTEM_ONLINE_ID) {
+            if (in_array(SapOrderEnum::PAYMENT_SYSTEM_ONLINE_ID, $order->getPaymentSystemId(), false)) {
                 return;
             }
 
