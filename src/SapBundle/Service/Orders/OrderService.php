@@ -15,7 +15,9 @@ use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaymentCollection;
 use Doctrine\Common\Collections\ArrayCollection;
+use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\DeliveryBundle\Service\IntervalService;
 use FourPaws\Helpers\BxCollection;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Location\LocationService;
@@ -117,6 +119,10 @@ class OrderService implements LoggerAwareInterface
      * @var LocationService
      */
     private $locationService;
+    /**
+     * @var IntervalService
+     */
+    private $intervalService;
     
     /**
      * OrderService constructor.
@@ -128,6 +134,7 @@ class OrderService implements LoggerAwareInterface
      * @param SerializerInterface       $serializer
      * @param Filesystem                $filesystem
      * @param UserRepository            $userRepository
+     * @param IntervalService           $intervalService
      */
     public function __construct(
         BaseOrderService $baseOrderService,
@@ -136,7 +143,8 @@ class OrderService implements LoggerAwareInterface
         ArrayTransformerInterface $arrayTransformer,
         SerializerInterface $serializer,
         Filesystem $filesystem,
-        UserRepository $userRepository
+        UserRepository $userRepository,
+        IntervalService $intervalService
     ) {
         $this->baseOrderService = $baseOrderService;
         $this->arrayTransformer = $arrayTransformer;
@@ -145,6 +153,7 @@ class OrderService implements LoggerAwareInterface
         $this->userRepository = $userRepository;
         $this->deliveryService = $deliveryService;
         $this->locationService = $locationService;
+        $this->intervalService = $intervalService;
     }
     
     /**
@@ -342,6 +351,8 @@ class OrderService implements LoggerAwareInterface
     /**
      * @param OrderDtoOut $orderDto
      * @param Order       $order
+     *
+     * @throws NotFoundException
      */
     private function populateOrderDtoDelivery(OrderDtoOut $orderDto, Order $order): void
     {
@@ -350,10 +361,10 @@ class OrderService implements LoggerAwareInterface
         if (null === $shipment) {
             throw new NotFoundOrderShipmentException('Не найдена отгрузка у заказа');
         }
-    
+        
         $deliveryTypeCode = $this->getDeliveryTypeCode($order);
         $contractorDeliveryTypeCode = '';
-    
+        
         if (strpos($deliveryTypeCode, '_')) {
             $deliveryType = explode('_', $deliveryTypeCode);
             $deliveryTypeCode = $deliveryType[0];
@@ -377,8 +388,8 @@ class OrderService implements LoggerAwareInterface
             ->setCommunicationType($this->getPropertyValueByCode($order, 'COM_WAY'))
             ->setDeliveryType($deliveryTypeCode)
             ->setContractorDeliveryType($contractorDeliveryTypeCode)
-            ->setDeliveryDate(DateHelper::convertToDateTime($this->getPropertyValueByCode()))
-            ->setDeliveryTimeInterval($this->getDeliveryInterval($order))
+            ->setDeliveryDate(DateHelper::convertToDateTime($this->getPropertyValueByCode($order, 'DELIVERY_DATE')))
+            ->setDeliveryTimeInterval($this->intervalService->getIntervalCode($this->getPropertyValueByCode($order,'DELIVERY_INTERVAL')))
             ->setDeliveryAddress($this->getDeliveryAddress($order, $terminalCode))
             ->setDeliveryAddressOrPoint($deliveryPoint)
             ->setContractorCode($deliveryTypeCode === self::DELIVERY_TYPE_CONTRACTOR ? self::DELIVERY_CONTRACTOR_CODE : '');
@@ -490,19 +501,6 @@ class OrderService implements LoggerAwareInterface
         }
         
         throw new NotFoundOrderDeliveryException('Не найден тип доставки');
-    }
-    
-    /**
-     * @param Order $order
-     *
-     * @return string
-     */
-    private function getDeliveryInterval(Order $order): string
-    {
-        $interval = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(),
-            'DELIVERY_INTERVAL')->getValue();
-        
-        return array_flip(DeliveryService::DELIVERY_CODES)[$interval] ?? '';
     }
     
     /**
