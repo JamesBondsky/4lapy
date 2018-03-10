@@ -219,9 +219,8 @@ class OrderService implements LoggerAwareInterface
         $this->populateOrderDtoPayment($orderDto, $order->getPaymentCollection());
         $this->populateOrderDtoDelivery($orderDto, $order);
         $this->populateOrderDtoProducts($orderDto, $order);
-        
+
         $xml = $this->serializer->serialize($orderDto, 'xml');
-        
         return new SourceMessage($this->getMessageId($order), OrderDtoOut::class, $xml);
     }
     
@@ -268,7 +267,7 @@ class OrderService implements LoggerAwareInterface
      */
     public function getFileName(Order $order): string
     {
-        return sprintf('%s/%s-%s.xml', trim($this->outPath, '/'), $order->getDateInsert()->format('Ymd'),
+        return sprintf('/%s/%s-%s.xml', trim($this->outPath, '/'), $order->getDateInsert()->format('Ymd'),
             $order->getId());
     }
     
@@ -351,8 +350,6 @@ class OrderService implements LoggerAwareInterface
     /**
      * @param OrderDtoOut $orderDto
      * @param Order       $order
-     *
-     * @throws NotFoundException
      */
     private function populateOrderDtoDelivery(OrderDtoOut $orderDto, Order $order): void
     {
@@ -384,12 +381,21 @@ class OrderService implements LoggerAwareInterface
             $deliveryPoint = $terminalCode;
         }
         
+        try {
+            $interval = $this->intervalService->getIntervalCode($this->getPropertyValueByCode($order,'DELIVERY_INTERVAL'));
+        } catch (NotFoundException $e) {
+            /**
+             * Значит, такого интервала нет
+             */
+            $interval = '';
+        }
+
         $orderDto
             ->setCommunicationType($this->getPropertyValueByCode($order, 'COM_WAY'))
             ->setDeliveryType($deliveryTypeCode)
             ->setContractorDeliveryType($contractorDeliveryTypeCode)
-            ->setDeliveryDate(DateHelper::convertToDateTime($this->getPropertyValueByCode($order, 'DELIVERY_DATE')))
-            ->setDeliveryTimeInterval($this->intervalService->getIntervalCode($this->getPropertyValueByCode($order,'DELIVERY_INTERVAL')))
+            ->setDeliveryDate(\DateTime::createFromFormat('d.m.Y', $this->getPropertyValueByCode($order, 'DELIVERY_DATE')))
+            ->setDeliveryTimeInterval($interval)
             ->setDeliveryAddress($this->getDeliveryAddress($order, $terminalCode))
             ->setDeliveryAddressOrPoint($deliveryPoint)
             ->setContractorCode($deliveryTypeCode === self::DELIVERY_TYPE_CONTRACTOR ? self::DELIVERY_CONTRACTOR_CODE : '');
@@ -507,10 +513,12 @@ class OrderService implements LoggerAwareInterface
      * @param Order  $order
      * @param string $code
      *
-     * @return mixed
+     * @return string
      */
-    private function getPropertyValueByCode(Order $order, string $code)
+    private function getPropertyValueByCode(Order $order, string $code): string
     {
-        return BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), $code)->getValue() ?? '';
+        $propertyValue = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), $code);
+        
+        return $propertyValue ? $propertyValue->getValue() : '';
     }
 }

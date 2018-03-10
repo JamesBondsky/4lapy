@@ -33,7 +33,7 @@ class BxCollection
      *
      * @return PropertyValue
      */
-    public static function getOrderPropertyByCode(CollectionBase $collection, string $code): PropertyValue
+    public static function getOrderPropertyByCode(CollectionBase $collection, string $code): ?PropertyValue
     {
         $filtered = self::filterCollection($collection, function ($value) use ($code) {
             /**
@@ -41,8 +41,8 @@ class BxCollection
              */
             return $value->getField('CODE') === $code;
         });
-
-        return current($filtered);
+        
+        return current($filtered) ?: null;
     }
 
     /**

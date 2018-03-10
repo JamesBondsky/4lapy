@@ -51,10 +51,7 @@ class OrderOutConsumer implements ConsumerInterface, LoggerAwareInterface
             $success = true;
 
             $this->orderService->out($orderInfo);
-
-            dump($orderInfo);die;
         } catch (\Exception $e) {
-            dump($e);die;
             $success = false;
             
             $this->log()->log(LogLevel::CRITICAL, sprintf('Ошибка экспорта заказа: %s', $e->getMessage()));
