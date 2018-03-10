@@ -52,10 +52,10 @@ class NotificationService implements LoggerAwareInterface
 
     /**
      * NotificationService constructor.
-     *
      * @param OrderService $orderService
      * @param SmsService $smsService
      * @param StoreService $storeService
+     * @param ExpertsenderService $emailService
      */
     public function __construct(
         OrderService $orderService,
@@ -85,7 +85,7 @@ class NotificationService implements LoggerAwareInterface
     /**
      * @param Order $order
      */
-    public function sendNewOrderMessage(Order $order)
+    public function sendNewOrderMessage(Order $order): void
     {
         try {
             $this->orderService->getOnlinePayment($order);
@@ -128,7 +128,7 @@ class NotificationService implements LoggerAwareInterface
     /**
      * @param Order $order
      */
-    public function sendOrderPaymentMessage(Order $order)
+    public function sendOrderPaymentMessage(Order $order): void
     {
         try {
             $payment = $this->orderService->getOnlinePayment($order);
@@ -152,7 +152,7 @@ class NotificationService implements LoggerAwareInterface
     /**
      * @param Order $order
      */
-    public function sendOrderCancelMessage(Order $order)
+    public function sendOrderCancelMessage(Order $order): void
     {
         if (!$order->isCanceled()) {
             return;
@@ -169,7 +169,7 @@ class NotificationService implements LoggerAwareInterface
     /**
      * @param Order $order
      */
-    public function sendOrderStatusMessage(Order $order)
+    public function sendOrderStatusMessage(Order $order): void
     {
         if ($order->isCanceled()) {
             return;
@@ -232,9 +232,9 @@ class NotificationService implements LoggerAwareInterface
      * @param array $parameters
      * @param bool $immediate
      */
-    protected function sendSms(string $tpl, array $parameters, bool $immediate = false)
+    protected function sendSms(string $tpl, array $parameters, bool $immediate = false): void
     {
-        if (empty($parameters)) {
+        if (empty($parameters) || !$parameters['phone']) {
             return;
         }
 
