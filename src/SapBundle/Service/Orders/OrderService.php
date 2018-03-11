@@ -7,6 +7,7 @@
 namespace FourPaws\SapBundle\Service\Orders;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ObjectNotFoundException;
@@ -14,6 +15,7 @@ use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaymentCollection;
+use Bitrix\Sale\PropertyValueCollection;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
@@ -35,7 +37,6 @@ use FourPaws\SapBundle\Source\SourceMessage;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Repository\UserRepository;
-use JMS\Serializer\ArrayTransformerInterface;
 use JMS\Serializer\SerializerInterface;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Component\Filesystem\Exception\IOException;
@@ -54,10 +55,6 @@ class OrderService implements LoggerAwareInterface
      * @var BaseOrderService
      */
     private $baseOrderService;
-    /**
-     * @var ArrayTransformerInterface
-     */
-    private $arrayTransformer;
     /**
      * @var SerializerInterface
      */
@@ -94,27 +91,24 @@ class OrderService implements LoggerAwareInterface
     /**
      * OrderService constructor.
      *
-     * @param BaseOrderService          $baseOrderService
-     * @param DeliveryService           $deliveryService
-     * @param LocationService           $locationService
-     * @param ArrayTransformerInterface $arrayTransformer
-     * @param SerializerInterface       $serializer
-     * @param Filesystem                $filesystem
-     * @param UserRepository            $userRepository
-     * @param IntervalService           $intervalService
+     * @param BaseOrderService    $baseOrderService
+     * @param DeliveryService     $deliveryService
+     * @param LocationService     $locationService
+     * @param SerializerInterface $serializer
+     * @param Filesystem          $filesystem
+     * @param UserRepository      $userRepository
+     * @param IntervalService     $intervalService
      */
     public function __construct(
         BaseOrderService $baseOrderService,
         DeliveryService $deliveryService,
         LocationService $locationService,
-        ArrayTransformerInterface $arrayTransformer,
         SerializerInterface $serializer,
         Filesystem $filesystem,
         UserRepository $userRepository,
         IntervalService $intervalService
     ) {
         $this->baseOrderService = $baseOrderService;
-        $this->arrayTransformer = $arrayTransformer;
         $this->serializer = $serializer;
         $this->filesystem = $filesystem;
         $this->userRepository = $userRepository;
@@ -186,7 +180,7 @@ class OrderService implements LoggerAwareInterface
         $this->populateOrderDtoPayment($orderDto, $order->getPaymentCollection());
         $this->populateOrderDtoDelivery($orderDto, $order);
         $this->populateOrderDtoProducts($orderDto, $order);
-
+        
         $xml = $this->serializer->serialize($orderDto, 'xml');
         return new SourceMessage($this->getMessageId($order), OrderDtoOut::class, $xml);
     }
@@ -196,19 +190,25 @@ class OrderService implements LoggerAwareInterface
      *
      * @throws ArgumentNullException
      * @throws NotImplementedException
+     * @throws ArgumentException
+     *
      * @return Order
      */
     public function transformDtoToOrder(OrderDtoIn $orderDto): Order
     {
-        $orderArray = $this->arrayTransformer->toArray($orderDto);
-        
-        $order = Order::load($orderArray['id']);
-        
+        $order = Order::load($orderDto->getId());
+
+        $this->setPropertiesFromDto($order, $orderDto);
+        $this->setPaymentFromDto($order, $orderDto);
+        $this->setDeliveryFromDto($order, $orderDto);
+        $this->setBasketFromDto($order, $orderDto);
+    
         /**
          * @todo
          *
-         * Do some magic with order
+         * Установка статуса заказа из DTO. Необходимо выяснить сопоставление статусов статусам в SAP
          */
+        $order->setField('STATUS_ID', $orderDto->getStatus());
         
         return $order;
     }
@@ -349,19 +349,21 @@ class OrderService implements LoggerAwareInterface
         }
         
         try {
-            $interval = $this->intervalService->getIntervalCode($this->getPropertyValueByCode($order,'DELIVERY_INTERVAL'));
+            $interval = $this->intervalService->getIntervalCode($this->getPropertyValueByCode($order,
+                'DELIVERY_INTERVAL'));
         } catch (NotFoundException $e) {
             /**
              * Значит, такого интервала нет
              */
             $interval = '';
         }
-
+        
         $orderDto
             ->setCommunicationType($this->getPropertyValueByCode($order, 'COM_WAY'))
             ->setDeliveryType($deliveryTypeCode)
             ->setContractorDeliveryType($contractorDeliveryTypeCode)
-            ->setDeliveryDate(\DateTime::createFromFormat('d.m.Y', $this->getPropertyValueByCode($order, 'DELIVERY_DATE')))
+            ->setDeliveryDate(\DateTime::createFromFormat('d.m.Y',
+                $this->getPropertyValueByCode($order, 'DELIVERY_DATE')))
             ->setDeliveryTimeInterval($interval)
             ->setDeliveryAddress($this->getDeliveryAddress($order, $terminalCode))
             ->setDeliveryAddressOrPoint($deliveryPoint)
@@ -487,5 +489,91 @@ class OrderService implements LoggerAwareInterface
         $propertyValue = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), $code);
         
         return $propertyValue ? ($propertyValue->getValue() ?? '') : '';
+    }
+    
+    /**
+     * @param Order      $order
+     * @param OrderDtoIn $orderDto
+     */
+    private function setPropertiesFromDto(Order $order, OrderDtoIn $orderDto): void
+    {
+        $propertyCollection = $order->getPropertyCollection();
+        
+        $this->setPropertyValue($propertyCollection, 'NAME', $orderDto->getClientFio());
+        $this->setPropertyValue($propertyCollection, 'PHONE', $orderDto->getClientPhone());
+        $this->setPropertyValue($propertyCollection, 'PHONE_ALT', $orderDto->getClientOrderPhone());
+        $this->setPropertyValue($propertyCollection, 'DELIVERY_DATE', $orderDto->getDeliveryDate()->format('dmY'));
+        try {
+            $this->setPropertyValue(
+                $propertyCollection,
+                'DELIVERY_INTERVAL',
+                $this->intervalService->getIntervalByCode($orderDto->getDeliveryTimeInterval())
+            );
+        } catch (NotFoundException $e) {
+            $this->log()->error(sprintf(
+                'Интервал %s не найден для заказа %s',
+                $orderDto->getDeliveryTimeInterval(),
+                $orderDto->getId()
+            ));
+        }
+        $this->setPropertyValue($propertyCollection, 'CITY', $orderDto->getDeliveryAddress()->getCityName());
+        $this->setPropertyValue($propertyCollection, 'STREET', $orderDto->getDeliveryAddress()->getStreetName());
+        $this->setPropertyValue($propertyCollection, 'HOUSE', $orderDto->getDeliveryAddress()->getHouse());
+        $this->setPropertyValue($propertyCollection, 'BUILDING', $orderDto->getDeliveryAddress()->getBuilding());
+        $this->setPropertyValue($propertyCollection, 'FLOOR', $orderDto->getDeliveryAddress()->getFloor());
+        $this->setPropertyValue($propertyCollection, 'APARTMENT', $orderDto->getDeliveryAddress()->getRoomNumber());
+    }
+    
+    /**
+     * @param PropertyValueCollection $collection
+     * @param string                  $code
+     * @param string                  $value
+     */
+    private function setPropertyValue(PropertyValueCollection $collection, string $code, string $value): void
+    {
+        $propertyValue = BxCollection::getOrderPropertyByCode($collection, $code);
+        
+        if ($propertyValue) {
+            $propertyValue->setValue($value);
+        }
+    }
+    
+    /**
+     * @param Order      $order
+     * @param OrderDtoIn $orderDto
+     */
+    private function setPaymentFromDto(Order $order, OrderDtoIn $orderDto): void
+    {
+        /**
+         * @todo
+         *
+         * Change payment method from DTO
+         */
+    }
+    
+    /**
+     * @param Order      $order
+     * @param OrderDtoIn $orderDto
+     */
+    private function setDeliveryFromDto(Order $order, OrderDtoIn $orderDto): void
+    {
+        /**
+         * @todo
+         *
+         * Set order shipments from DTO
+         */
+    }
+    
+    /**
+     * @param Order      $order
+     * @param OrderDtoIn $orderDto
+     */
+    private function setBasketFromDto(Order $order, OrderDtoIn $orderDto): void
+    {
+        /**
+         * @todo
+         *
+         * Set order basket from DTO
+         */
     }
 }

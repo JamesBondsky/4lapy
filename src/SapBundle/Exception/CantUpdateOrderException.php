@@ -3,10 +3,10 @@
 namespace FourPaws\SapBundle\Exception;
 
 /**
- * Class CantCreateReferenceItem
+ * Class CantCreateOrderException
  *
  * @package FourPaws\SapBundle\Exception
  */
-class CantCreateReferenceItem extends RuntimeException
+class CantUpdateOrderException extends RuntimeException
 {
 }

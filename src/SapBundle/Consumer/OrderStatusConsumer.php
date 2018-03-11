@@ -4,6 +4,7 @@ namespace FourPaws\SapBundle\Consumer;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use FourPaws\SapBundle\Dto\In\Orders\Order;
+use FourPaws\SapBundle\Exception\CantUpdateOrderException;
 use FourPaws\SapBundle\Service\Orders\OrderService;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LogLevel;
@@ -50,7 +51,16 @@ class OrderStatusConsumer implements ConsumerInterface, LoggerAwareInterface
         try {
             $success = true;
             
-            $this->orderService->transformDtoToOrder($orderInfo);
+            $order = $this->orderService->transformDtoToOrder($orderInfo);
+            $result = $order->save();
+            
+            if (!$result->isSuccess()) {
+                throw new CantUpdateOrderException(sprintf(
+                    'Не удалось обновить заказ #%s: %s',
+                    $order->getId(),
+                    implode(', ', $result->getErrorMessages())
+                ));
+            }
         } catch (\Exception $e) {
             $success = false;
             
