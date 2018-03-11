@@ -3,33 +3,28 @@
 namespace FourPaws\SapBundle\Consumer;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
-use Bitrix\Sale\Order;
-use FourPaws\SapBundle\Service\Orders\OrderService;
+use FourPaws\SapBundle\Dto\In\ConfirmPayment\Order;
+use FourPaws\SapBundle\Service\Orders\PaymentService;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LogLevel;
 
 /**
- * Class OrderOutConsumer
+ * Class PaymentConsumer
  *
  * @package FourPaws\SapBundle\Consumer
  */
-class OrderOutConsumer implements ConsumerInterface, LoggerAwareInterface
+class PaymentConsumer implements ConsumerInterface, LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
     
     /**
-     * @var OrderService
+     * @var PaymentService
      */
-    private $orderService;
+    private $paymentService;
     
-    /**
-     * OrderStatusConsumer constructor.
-     *
-     * @param OrderService $orderService
-     */
-    public function __construct(OrderService $orderService)
+    public function __construct(PaymentService $paymentService)
     {
-        $this->orderService = $orderService;
+        $this->paymentService = $paymentService;
     }
     
     /**
@@ -45,16 +40,16 @@ class OrderOutConsumer implements ConsumerInterface, LoggerAwareInterface
             return false;
         }
         
-        $this->log()->log(LogLevel::INFO, 'Экспортируется заказ');
+        $this->log()->log(LogLevel::INFO, 'Обработка задания на оплату');
         
         try {
             $success = true;
-
-            $this->orderService->out($paymentInfo);
+            
+            $this->paymentService->paymentTaskPerform($paymentInfo);
         } catch (\Exception $e) {
             $success = false;
             
-            $this->log()->log(LogLevel::CRITICAL, sprintf('Ошибка экспорта заказа: %s', $e->getMessage()));
+            $this->log()->log(LogLevel::CRITICAL, sprintf('Ошибка обработки задания на оплату: %s', $e->getMessage()));
         }
         
         return $success;

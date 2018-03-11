@@ -36,13 +36,13 @@ class OrderStatusConsumer implements ConsumerInterface, LoggerAwareInterface
     /**
      * Consume order info (save sap order`s change)
      *
-     * @param $orderInfo
+     * @param $paymentInfo
      *
      * @return bool
      */
-    public function consume($orderInfo): bool
+    public function consume($paymentInfo): bool
     {
-        if (!$this->support($orderInfo)) {
+        if (!$this->support($paymentInfo)) {
             return false;
         }
         
@@ -51,7 +51,7 @@ class OrderStatusConsumer implements ConsumerInterface, LoggerAwareInterface
         try {
             $success = true;
             
-            $order = $this->orderService->transformDtoToOrder($orderInfo);
+            $order = $this->orderService->transformDtoToOrder($paymentInfo);
             $result = $order->save();
             
             if (!$result->isSuccess()) {
