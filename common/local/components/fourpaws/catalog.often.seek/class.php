@@ -56,6 +56,9 @@ class CatalogOftenSeekComponent extends CBitrixComponent
         $params['RIGHT_MARGIN'] = (int)$params['RIGHT_MARGIN'];
         $params['DEPTH_LEVEL'] = (int)$params['DEPTH_LEVEL'];
 
+        /** кешируем на минуту - чтобы снизить нагрузку при оновременных запросах и в тоже время сохранить рандомную сортировку */
+        $params['CACHE_TIME'] = $params['CACHE_TIME'] ?: 60;
+
         return $params;
     }
 
@@ -68,16 +71,17 @@ class CatalogOftenSeekComponent extends CBitrixComponent
         if ($this->arParams['SECTION_ID'] <= 0) {
             return null;
         }
-        
-        /** из-за рандомной сортирвоки кеширвоать нельзя совсем */
-        $this->arResult['ITEMS'] = $this->oftenSeekService->getItems(
-            $this->arParams['SECTION_ID'],
-            $this->arParams['LEFT_MARGIN'],
-            $this->arParams['RIGHT_MARGIN'],
-            $this->arParams['DEPTH_LEVEL']
-        );
 
-        $this->includeComponentTemplate();
+        if ($this->startResultCache($this->arParams['CACHE_TIME'])) {
+            $this->arResult['ITEMS'] = $this->oftenSeekService->getItems(
+                $this->arParams['SECTION_ID'],
+                $this->arParams['LEFT_MARGIN'],
+                $this->arParams['RIGHT_MARGIN'],
+                $this->arParams['DEPTH_LEVEL']
+            );
+
+            $this->includeComponentTemplate();
+        }
 
         return true;
     }

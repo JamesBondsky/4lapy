@@ -12,6 +12,7 @@ use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\LoaderException;
+use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\UserFieldTable;
 use FourPaws\App\Application as App;
@@ -69,14 +70,14 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
 
     public function onPrepareComponentParams($params): array
     {
-        $params['CACHE_TIME'] = 360000;
+        $params['CACHE_TIME'] = $params['CACHE_TIME'] ?: 360000;
 
         return parent::onPrepareComponentParams($params);
     }
 
     /**
      * {@inheritdoc}
-     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws ObjectPropertyException
      * @throws ArgumentException
      * @throws \Exception
      * @throws ServiceNotFoundException
@@ -116,7 +117,7 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
      * @throws ArgumentException
      * @throws LoaderException
      */
-    private function setGenderVals()
+    private function setGenderVals(): void
     {
         $this->arResult['GENDER'] = [];
         $userFieldId = UserFieldTable::query()->setSelect(['ID', 'XML_ID'])->setFilter(
@@ -135,7 +136,7 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
     /**
      * @throws \Exception
      */
-    private function setPetTypes()
+    private function setPetTypes(): void
     {
         $this->arResult['PET_TYPES'] = [];
         $res =

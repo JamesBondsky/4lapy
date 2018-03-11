@@ -442,7 +442,7 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                 return $expertSenderService->sendForgotPassword($curUser, $backUrl);
             } catch (ExpertsenderServiceException $e) {
                 $logger = LoggerFactory::create('expertSender');
-                $logger->critical('EA error - ' . $e->getMessage());
+                $logger->critical('ES error - ' . $e->getMessage());
             } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
                 $logger = LoggerFactory::create('system');
                 $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());

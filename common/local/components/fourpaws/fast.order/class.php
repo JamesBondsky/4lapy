@@ -90,7 +90,7 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
     {
         $params['PATH_TO_CATALOG'] = '/catalog/';
         $params['TYPE'] = !empty($params['TYPE']) ? $params['TYPE'] : '';
-        $params['CACHE_TIME'] = 360000;
+        $params['CACHE_TIME'] = $params['CACHE_TIME'] ?: 360000;
         return $params;
     }
 

@@ -16,6 +16,7 @@ use FourPaws\AppBundle\Service\AjaxMess;
 use FourPaws\External\Exception\ExpertsenderServiceException;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
+use FourPaws\UserBundle\Exception\InvalidArgumentException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -47,10 +48,6 @@ class SubscribeController extends Controller
      * @param Request $request
      *
      * @return JsonErrorResponse
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws \InvalidArgumentException
-     * @throws \BadMethodCallException
      */
     public function subscribeAction(Request $request): JsonResponse
     {
@@ -97,9 +94,16 @@ class SubscribeController extends Controller
             } catch (ExpertsenderServiceException $e) {
                 $success = false;
                 $logger = LoggerFactory::create('expertSender');
-                $logger->critical('EA error - ' . $e->getMessage());
-            }
-            catch (ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
+                $logger->critical('ES error - ' . $e->getMessage());
+            } catch (ServiceNotFoundException|ServiceCircularReferenceException $e) {
+                $success = false;
+                $logger = LoggerFactory::create('system');
+                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            } catch (\BadMethodCallException|InvalidIdentifierException|ConstraintDefinitionException|\InvalidArgumentException $e) {
+                $success = false;
+                $logger = LoggerFactory::create('params');
+                $logger->error('Ошибка параметров - ' . $e->getMessage());
+            } catch (\RuntimeException|\Exception $e) {
                 $success = false;
                 $logger = LoggerFactory::create('system');
                 $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
@@ -118,9 +122,16 @@ class SubscribeController extends Controller
             } catch (ExpertsenderServiceException $e) {
                 $success = false;
                 $logger = LoggerFactory::create('expertSender');
-                $logger->critical('EA error - ' . $e->getMessage());
-            }
-            catch (ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
+                $logger->critical('ES error - ' . $e->getMessage());
+            } catch (ServiceNotFoundException|ServiceCircularReferenceException $e) {
+                $success = false;
+                $logger = LoggerFactory::create('system');
+                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            } catch (\BadMethodCallException|InvalidIdentifierException|ConstraintDefinitionException|\InvalidArgumentException $e) {
+                $success = false;
+                $logger = LoggerFactory::create('params');
+                $logger->error('Ошибка параметров - ' . $e->getMessage());
+            } catch (\RuntimeException|\Exception $e) {
                 $success = false;
                 $logger = LoggerFactory::create('system');
                 $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());

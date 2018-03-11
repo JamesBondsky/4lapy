@@ -10,6 +10,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\LoaderException;
+use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -64,14 +65,14 @@ class FourPawsPersonalCabinetAddressComponent extends CBitrixComponent
     /** @inheritdoc */
     public function onPrepareComponentParams($params): array
     {
-        $params['CACHE_TIME'] = 360000;
+        $params['CACHE_TIME'] = $params['CACHE_TIME'] ?: 360000;
 
         return parent::onPrepareComponentParams($params);
     }
 
     /**
      * {@inheritdoc}
-     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws ObjectPropertyException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException

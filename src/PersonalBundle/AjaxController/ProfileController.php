@@ -164,7 +164,7 @@ class ProfileController extends Controller
             }
             catch (ExpertsenderServiceException $e) {
                 $logger = LoggerFactory::create('expertSender');
-                $logger->error('EA don`t work - ' . $e->getMessage());
+                $logger->error('ES don`t work - ' . $e->getMessage());
             }
             catch (ValidationException|InvalidIdentifierException|ConstraintDefinitionException $e) {
                 $logger = LoggerFactory::create('params');
