@@ -252,7 +252,7 @@ class Order
     /**
      * Товары в заказе
      *
-     * @Serializer\XmlList(inline=true, entry="Item")
+     * @Serializer\XmlList(inline=true, entry="Pos")
      * @Serializer\Type("ArrayCollection<FourPaws\SapBundle\Dto\In\Orders\OrderOffer>")
      *
      * @var Collection|OrderOffer[]

@@ -7,16 +7,22 @@
 namespace FourPaws\SapBundle\Service\Orders;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Catalog\Product\Basket as CatalogBasket;
+use Bitrix\Catalog\Product\CatalogProvider;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaymentCollection;
 use Bitrix\Sale\PropertyValueCollection;
 use Doctrine\Common\Collections\ArrayCollection;
+use Exception;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Service\IntervalService;
@@ -25,10 +31,12 @@ use FourPaws\Helpers\DateHelper;
 use FourPaws\Location\LocationService;
 use FourPaws\SaleBundle\Service\OrderService as BaseOrderService;
 use FourPaws\SapBundle\Dto\In\Orders\Order as OrderDtoIn;
+use FourPaws\SapBundle\Dto\In\Orders\OrderOffer as OrderOfferIn;
 use FourPaws\SapBundle\Dto\Out\Orders\DeliveryAddress as OutDeliveryAddress;
 use FourPaws\SapBundle\Dto\Out\Orders\Order as OrderDtoOut;
 use FourPaws\SapBundle\Dto\Out\Orders\OrderOffer;
 use FourPaws\SapBundle\Enum\SapOrderEnum;
+use FourPaws\SapBundle\Exception\CantCreateBasketItem;
 use FourPaws\SapBundle\Exception\NotFoundOrderDeliveryException;
 use FourPaws\SapBundle\Exception\NotFoundOrderPaySystemException;
 use FourPaws\SapBundle\Exception\NotFoundOrderShipmentException;
@@ -209,7 +217,7 @@ class OrderService implements LoggerAwareInterface
          * Установка статуса заказа из DTO. Необходимо выяснить сопоставление статусов статусам в SAP
          */
         $order->setField('STATUS_ID', $orderDto->getStatus());
-        
+        dump([$order, $orderDto]);die;
         return $order;
     }
     
@@ -570,10 +578,83 @@ class OrderService implements LoggerAwareInterface
      */
     private function setBasketFromDto(Order $order, OrderDtoIn $orderDto): void
     {
+        $externalItems = $orderDto->getProducts();
+        
         /**
-         * @todo
-         *
-         * Set order basket from DTO
+         * @var BasketItem $basketItem
          */
+        foreach ($basketCollection = $order->getBasket()->getBasketItems() as $basketItem) {
+            $article = substr($basketItem->getField('PRODUCT_XML_ID'), strpos($basketItem->getField('PRODUCT_XML_ID'), '#') ?: 0);
+            
+            $externalItem = $externalItems->filter(
+                function ($item) use ($article) {
+                    /**
+                     * @var OrderOfferIn $item
+                     */
+                    return (string)$article === ltrim((string)$item->getOfferXmlId());
+                }
+            )->first();
+            
+            if ($externalItem) {
+                $this->renewBasketItem($basketItem, $externalItem);
+                $externalItems->removeElement($externalItem);
+            } else {
+                try {
+                    $basketItem->delete();
+                } catch (ObjectNotFoundException $e) {
+                    /**
+                     * Объект найден, он точно удалится.
+                     */
+                }
+            }
+        }
+        
+        foreach ($externalItems as $item) {
+            $this->addBasketItem($order->getBasket(), $item);
+        }
+    }
+    
+    /**
+     * @param BasketItem   $basketItem
+     * @param OrderOfferIn $externalItem
+     */
+    private function renewBasketItem(BasketItem $basketItem, OrderOfferIn $externalItem): void
+    {
+        $basketItem->setPrice($externalItem->getUnitPrice(), true);
+        try {
+            $basketItem->setField('QUANTITY', (int)$externalItem->getQuantity());
+        } catch (ArgumentOutOfRangeException | Exception $e) {
+            $this->log()->error(sprintf('Ошибка обновления товара в корзине: %s', $e->getMessage()));
+        }
+    }
+    
+    private function addBasketItem(Basket $basket, OrderOfferIn $externalItem): void
+    {
+        $context = [
+            'SITE_ID' => SITE_ID,
+            'USER_ID' => $basket->getOrder()->getUserId(),
+            'ORDER_ID' => $basket->getOrderId(),
+        ];
+        
+        $fields = [
+            'PRODUCT_ID' => '',
+            'QUANTITY'=> $externalItem->getQuantity(),
+            'MODULE'                 => 'catalog',
+            'PRODUCT_PROVIDER_CLASS' => CatalogProvider::class
+        ];
+    
+        try {
+            $result = CatalogBasket::addProductToBasket($basket, $fields, $context);
+            
+            if (!$result->isSuccess()) {
+                throw new CantCreateBasketItem(implode(', ', $result->getErrorMessages()));
+            }
+        } catch (CantCreateBasketItem | LoaderException | ObjectNotFoundException $e) {
+            $this->log()->error(sprintf(
+                'Ошибка добавления товара в корзину заказа #%s: %s',
+                $basket->getOrderId(),
+                $e->getMessage()
+            ));
+        }
     }
 }
