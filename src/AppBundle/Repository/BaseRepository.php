@@ -12,6 +12,7 @@ use Bitrix\Main\UI\PageNavigation;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
+use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
@@ -71,9 +72,9 @@ class BaseRepository
 
     /**
      * @throws ValidationException
-     * @throws \Exception
      * @throws BitrixRuntimeException
      * @return bool
+     * @throws \Exception
      */
     public function create(): bool
     {
@@ -110,13 +111,13 @@ class BaseRepository
     }
 
     /**
-     * @param array $filelist
+     * @param array $fileList
      *
      * @return BaseRepository
      */
-    public function setFileList(array $filelist): BaseRepository
+    public function setFileList(array $fileList): BaseRepository
     {
-        $this->fileList = $filelist;
+        $this->fileList = $fileList;
 
         return $this;
     }
@@ -124,10 +125,10 @@ class BaseRepository
     /**
      * @throws InvalidIdentifierException
      * @throws ValidationException
-     * @throws \Exception
      * @throws BitrixRuntimeException
      * @throws ConstraintDefinitionException
      * @return bool
+     * @throws \Exception
      */
     public function update(): bool
     {
@@ -164,10 +165,10 @@ class BaseRepository
      * @param int $id
      *
      * @throws InvalidIdentifierException
-     * @throws \Exception
      * @throws BitrixRuntimeException
      * @throws ConstraintDefinitionException
      * @return bool
+     * @throws \Exception
      */
     public function delete(int $id): bool
     {
@@ -194,10 +195,10 @@ class BaseRepository
      *      'countTotal'=>bool
      * ]
      *
-     * @param array $params
+     * @param array|DataManager $params
      *
-     * @throws \Exception
      * @return ArrayCollection
+     * @throws ObjectPropertyException
      */
     public function findBy($params): ArrayCollection
     {
@@ -279,6 +280,23 @@ class BaseRepository
         }
 
         return new ArrayCollection($allItems);
+    }
+
+    /**
+     * @param int $id
+     *
+     * @return BaseEntity
+     * @throws ObjectPropertyException
+     * @throws NotFoundException
+     */
+    public function findById(int $id): BaseEntity
+    {
+        $result = $this->findBy(['filter' => ['ID' => $id]]);
+        if ($result->isEmpty()) {
+            throw new NotFoundException('Entity not found');
+        }
+
+        return $result->first();
     }
 
     /**
@@ -378,7 +396,7 @@ class BaseRepository
     /**
      * @return null|PageNavigation
      */
-    public function getNav()
+    public function getNav(): ?PageNavigation
     {
         return $this->nav;
     }
@@ -386,7 +404,7 @@ class BaseRepository
     /**
      * @param PageNavigation $nav
      */
-    public function setNav(PageNavigation $nav)
+    public function setNav(PageNavigation $nav): void
     {
         $this->nav = $nav;
     }
@@ -394,7 +412,7 @@ class BaseRepository
     /**
      *
      */
-    public function clearNav()
+    public function clearNav(): void
     {
         $this->nav = null;
     }
@@ -411,7 +429,7 @@ class BaseRepository
         return $this;
     }
 
-    public function clearFileList()
+    public function clearFileList(): void
     {
         $this->fileList = null;
     }
@@ -427,7 +445,7 @@ class BaseRepository
     /**
      * @param string $entityClass
      */
-    public function setEntityClass(string $entityClass)
+    public function setEntityClass(string $entityClass): void
     {
         $this->entityClass = $entityClass;
     }
@@ -438,7 +456,7 @@ class BaseRepository
      * @throws ConstraintDefinitionException
      * @throws InvalidIdentifierException
      */
-    protected function checkIdentifier(int $id)
+    protected function checkIdentifier(int $id): void
     {
         try {
             $result = $this->validator->validate(
@@ -465,7 +483,7 @@ class BaseRepository
      *
      * @param $data
      */
-    private function fixFileData(&$data)
+    private function fixFileData(&$data): void
     {
         $fileList = $this->getFileList();
         if (!empty($fileList)) {
