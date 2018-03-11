@@ -1,8 +1,15 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\External\Manzana\Consumer;
 
-use FourPaws\External\Manzana\Model\Contact;
+use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
+use FourPaws\External\Exception\ManzanaServiceException;
+use FourPaws\External\Manzana\Exception\ContactUpdateException;
+use FourPaws\External\Manzana\Model\Client;
 use PhpAmqpLib\Message\AMQPMessage;
 
 /**
@@ -15,15 +22,42 @@ class ManzanaContactConsumer extends ManzanaConsumerBase
     /**
      * @inheritdoc
      */
-    public function execute(AMQPMessage $message) : bool
+    public function execute(AMQPMessage $message): bool
     {
         try {
-            $contact = $this->serializer->deserialize($message->getBody(), Contact::class, 'json');
-            $this->manzanaService->updateContact($contact);
-            
-            return true;
-        } catch (\Exception $e) {
+            /** @var Client $contact */
+            $contact = $this->serializer->deserialize($message->getBody(), Client::class, 'json');
+
+            if (null === $contact || (!$contact->phone && !$contact->contactId)) {
+                throw new ContactUpdateException('Неожиданное сообщение');
+            }
+
+            if (!$contact->contactId) {
+                try {
+                    $contact->contactId = $this->manzanaService->getContactIdByPhone($contact->phone);
+                } catch (ManzanaServiceContactSearchNullException $e) {
+                    /**
+                     * Создание пользователя
+                     */
+                }
+            }
+
+            $contact = $this->manzanaService->updateContact($contact);
+            $this->manzanaService->updateUserCardByClient($contact);
+        } catch (ContactUpdateException $e) {
+            $this->log()->error(sprintf(
+                'Contact update error: %s',
+                $e->getMessage()
+            ));
+        } catch (ManzanaServiceException $e) {
+            $this->log()->error(sprintf(
+                'Manzana error: %s',
+                $e->getMessage()
+            ));
+
             return false;
         }
+
+        return true;
     }
 }

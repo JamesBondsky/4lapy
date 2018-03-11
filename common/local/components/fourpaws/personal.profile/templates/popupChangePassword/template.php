@@ -42,6 +42,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                            id="registration-password-first-popup"
                            name="password"
                            data-password="1"
+                           data-type="password"
                            placeholder="" />
                     <div class="b-error"><span class="js-message"></span>
                     </div>

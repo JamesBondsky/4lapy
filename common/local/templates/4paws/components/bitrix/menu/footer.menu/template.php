@@ -19,7 +19,7 @@ $drawMenuLevel1 = function ($menu = [], $title = '') use ($oMenu) {
     foreach ($menu as $index => $item) {
         $outString .= '<div class="b-footer-nav__list">';
         $outString .= '<h4 class="b-footer-nav__header">';
-        $outString .= '<a href="' . $item['LINK'] . '"class="b-footer-nav__header-link" title="' . $item['TEXT'] . '">';
+        $outString .= '<a href="' . $item['LINK'] . '" class="b-footer-nav__header-link" title="' . $item['TEXT'] . '">';
         $outString .= $item['TEXT'];
         $outString .= '</a>';
         $outString .= '</h4>';
@@ -38,8 +38,10 @@ $drawMenuLevel2 = function ($menu = [], $title = '') use ($oMenu) {
     
     $outString = '<ul class="b-footer-nav__list-inner">';
     foreach ($menu as $index => $item) {
+        $target = preg_match('~^http~', $item['LINK']) > 0 ? ' target="_blank"' : '';
+        
         $outString .= '<li class="b-footer-nav__item">';
-        $outString .= '<a href="' . $item['LINK'] . '" class="b-footer-nav__link" title="' . $item['TEXT'] . '">';
+        $outString .= '<a href="' . $item['LINK'] . '" class="b-footer-nav__link" title="' . $item['TEXT'] . '"' . $target . '>';
         $outString .= $item['TEXT'];
         $outString .= '</a>';
         $outString .= '</li>';

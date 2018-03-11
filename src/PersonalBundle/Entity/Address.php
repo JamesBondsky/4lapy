@@ -6,8 +6,10 @@
 
 namespace FourPaws\PersonalBundle\Entity;
 
-use Bitrix\Sale\Location\LocationTable;
+use FourPaws\App\Application;
 use FourPaws\AppBundle\Entity\BaseEntity;
+use FourPaws\Location\Exception\CityNotFoundException;
+use FourPaws\Location\LocationService;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -192,15 +194,15 @@ class Address extends BaseEntity
     {
         $housing = '';
         if (!empty($this->getHousing())) {
-            $housing .= ', корпус' . $this->getHousing();
+            $housing .= ', корпус ' . $this->getHousing();
         }
         $entrance = '';
         if (!empty($this->getEntrance())) {
-            $entrance .= ', подъезд' . $this->getEntrance();
+            $entrance .= ', подъезд ' . $this->getEntrance();
         }
         $floor = '';
         if (!empty($this->getFloor())) {
-            $floor .= ', этаж' . $this->getFloor();
+            $floor .= ', этаж ' . $this->getFloor();
         }
         $flat = '';
         if (!empty($this->getFlat())) {
@@ -208,12 +210,12 @@ class Address extends BaseEntity
         }
         $intercomCode = '';
         if (!empty($this->getIntercomCode())) {
-            $intercomCode .= ', код домофона' . $this->getIntercomCode();
+            $intercomCode .= ', код домофона ' . $this->getIntercomCode();
         }
-        $house = ',д. ' . $this->getHouse();
+        $house = ', д. ' . $this->getHouse();
         
         $res =
-            $this->getStreet() . ' ул.' . $house . $housing . $entrance . $floor . $flat . $intercomCode . ' '
+            $this->getStreet() . ' ул.' . $house . $housing . $entrance . $floor . $flat . $intercomCode . ', '
             . $this->getCity();
         
         return $res;
@@ -401,50 +403,13 @@ class Address extends BaseEntity
     
     public function setCityLocationByEntity()
     {
-        $street = $this->getStreet();
-        $city   = $this->getCity();
-        $query  = LocationTable::query();
-        $continue = false;
-        if (!empty($street)) {
-            $continue = true;
-            $query->where(
-                [
-                    [
-                        'NAME.NAME',
-                        'like',
-                        $street . '%'
-                    ],
-                    [
-                        'PARENT.NAME.NAME',
-                        'like',
-                        $city . '%'
-                    ],
-                    [
-                        'DEPTH_LEVEL',
-                        '=',
-                        5
-                    ]
-                ]
-            );
-        } elseif (!empty($city)) {
-            $continue = true;
-            $query->where(
-                [
-                    [
-                        'NAME.NAME',
-                        'like',
-                        $city . '%',
-                    ],
-                    [
-                        'DEPTH_LEVEL',
-                        '=',
-                        4
-                    ]
-                ]
-            );
-        }
-        if($continue) {
-            $this->setCityLocation((string)$query->setSelect(['CODE'])->exec()->fetch()['CODE']);
+        /** @var LocationService $locationService */
+        $locationService = Application::getInstance()->getContainer()->get('location.service');
+        try {
+            $cities = $locationService->findLocationCity($this->getCity(), '', 1, true);
+            $city = reset($cities);
+            $this->setCityLocation($city['CODE']);
+        } catch (CityNotFoundException $e) {
         }
     }
 }

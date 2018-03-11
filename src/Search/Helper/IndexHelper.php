@@ -1,8 +1,11 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\Search\Helper;
 
-use Adv\Bitrixtools\Tools\EnvType;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Elastica\Client;
 use Elastica\Document;
@@ -11,6 +14,7 @@ use Elastica\Index;
 use Elastica\Query;
 use Elastica\Search;
 use Exception;
+use FourPaws\App\Env;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Search\Enum\DocumentType;
@@ -130,7 +134,7 @@ class IndexHelper implements LoggerAwareInterface
     {
         $qwertyRu = mb_split('\s', 'й ц у к е н г ш щ з х ъ ф ы в а п р о л д ж э я ч с м и т ь б ю');
         $qwertyEn = mb_split('\s', 'q w e r t y u i o p [ ] a s d f g h j k l ; \' z x c v b n m , .');
-        $characterMap = function($value1, $value2) {
+        $characterMap = function ($value1, $value2) {
             return $value1 . ' => ' . $value2;
         };
         $enToRuMapping = array_map($characterMap, $qwertyEn, $qwertyRu);
@@ -141,7 +145,7 @@ class IndexHelper implements LoggerAwareInterface
                 'number_of_shards' => 1,
                 'analysis'         =>
                     [
-                        'analyzer' => [
+                        'analyzer'    => [
                             'default'          => [
                                 'type'      => 'custom',
                                 'tokenizer' => 'standard',
@@ -180,7 +184,7 @@ class IndexHelper implements LoggerAwareInterface
                                 ],
                             ],
                         ],
-                        'filter'   => [
+                        'filter'      => [
                             'autocomplete_filter' => [
                                 'type'     => 'edge_ngram',
                                 'min_gram' => 1,
@@ -209,14 +213,14 @@ class IndexHelper implements LoggerAwareInterface
                         ],
                         'char_filter' => [
                             'ru_en' => [
-                                'type' => 'mapping',
-                                'mappings' => $ruToEnMapping
+                                'type'     => 'mapping',
+                                'mappings' => $ruToEnMapping,
                             ],
                             'en_ru' => [
-                                'type' => 'mapping',
-                                'mappings' => $enToRuMapping
-                            ]
-                        ]
+                                'type'     => 'mapping',
+                                'mappings' => $enToRuMapping,
+                            ],
+                        ],
                     ],
             ],
             'mappings' => [
@@ -330,7 +334,7 @@ class IndexHelper implements LoggerAwareInterface
                         'PROPERTY_FEED_SPECIFICATION'      => ['type' => 'keyword'],
                         'PROPERTY_PHARMA_GROUP'            => ['type' => 'keyword'],
                         'hasActions'                       => ['type' => 'boolean'],
-                        'deliveryAvailability'             => ['type' => 'keyword']
+                        'deliveryAvailability'             => ['type' => 'keyword'],
                     ],
                 ],
             ],
@@ -345,15 +349,30 @@ class IndexHelper implements LoggerAwareInterface
      */
     public function indexProduct(Product $product): bool
     {
-        $responseSet = $this->getCatalogIndex()->addDocuments(
-            [$this->factory->makeProductDocument($product)]
-        );
+        return $this->indexProducts([$product]);
+    }
+
+    public function indexProducts(array $products): bool
+    {
+        $products = array_filter($products, function ($data) {
+            return $data && $data instanceof Product;
+        });
+        $documents = array_map(function (Product $product) {
+            return $this->factory->makeProductDocument($product);
+        }, $products);
+
+        if (!$products) {
+            return true;
+        }
+        $responseSet = $this->getCatalogIndex()->addDocuments($documents);
 
         if (!$responseSet->isOk()) {
             $this->log()->error(
                 $responseSet->getError(),
                 [
-                    'productId' => $product->getId(),
+                    'products' => array_map(function (Product $product) {
+                        return $product->getId();
+                    }, $products),
                 ]
             );
 
@@ -368,9 +387,9 @@ class IndexHelper implements LoggerAwareInterface
      *
      * @param bool $flushBaseFilter
      *
-     * @throws \RuntimeException
+     * @param int  $batchSize
      */
-    public function indexAll(bool $flushBaseFilter = false)
+    public function indexAll(bool $flushBaseFilter = false, int $batchSize = 500)
     {
         $query = (new ProductQuery())
             ->withOrder(['ID' => 'DESC']);
@@ -378,12 +397,12 @@ class IndexHelper implements LoggerAwareInterface
         if ($flushBaseFilter) {
             $query->withFilter([]);
         }
-        $dbAllProducts = $query->doExec();
 
+        $allProducts = $query->exec();
 
         $indexOk = 0;
         $indexError = 0;
-        $indexTotal = $dbAllProducts->SelectedRowsCount();
+        $indexTotal = $allProducts->count();
 
         $this->log()->info(
             sprintf(
@@ -392,15 +411,21 @@ class IndexHelper implements LoggerAwareInterface
             )
         );
 
-        while ($productFields = $dbAllProducts->GetNext()) {
-            if ($this->indexProduct(new Product($productFields))) {
-                $indexOk++;
+        $allProductsChunked = array_chunk($allProducts->toArray(), $batchSize);
+        unset($allProducts);
+        unset($query);
+
+        $this->log()->debug(sprintf('memory: %s, memory_pick_usage: %s', memory_get_usage(true), memory_get_peak_usage(true)));
+        foreach ($allProductsChunked as $i => $allProductsChunk) {
+            if ($this->indexProducts($allProductsChunk)) {
+                $indexOk += \count($allProductsChunk);
             } else {
-                $indexError++;
+                $indexError +=\count($allProductsChunk);
             }
-            if ($indexOk % 500 === 0) {
-                $this->log()->info(sprintf('Индексировано товаров %d...', $indexOk));
-            }
+            unset($allProductsChunked[$i]);
+
+            $this->log()->info(sprintf('Индексировано товаров %d...', $indexOk));
+            $this->log()->debug(sprintf('memory: %s, memory_pick_usage: %s', memory_get_usage(true), memory_get_peak_usage(true)));
         }
 
         $this->log()->info(
@@ -608,8 +633,8 @@ class IndexHelper implements LoggerAwareInterface
     private function getIndexName(string $indexName): string
     {
         $prefix = '';
-        if (EnvType::isDev()) {
-            $prefix = EnvType::DEV . '-';
+        if (!Env::isProd()) {
+            $prefix = Env::getServerType() . '-';
         }
 
         return $prefix . $indexName;

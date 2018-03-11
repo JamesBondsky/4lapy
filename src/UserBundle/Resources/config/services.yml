@@ -13,7 +13,7 @@ services:
         resource: '../../*'
         # you can exclude directories or files
         # but if a service is unused, it's removed anyway
-        exclude: '../../{Entity,Tests}'
+        exclude: '../../{Entity,Tests,EventController}'
 
     FourPaws\UserBundle\Service\CurrentUserProviderInterface:
         class: FourPaws\UserBundle\Service\UserService

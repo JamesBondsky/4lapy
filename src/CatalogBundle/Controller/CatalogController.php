@@ -2,14 +2,20 @@
 
 namespace FourPaws\CatalogBundle\Controller;
 
-use FourPaws\App\Application;
+use Exception;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\CatalogBundle\Dto\ChildCategoryRequest;
 use FourPaws\CatalogBundle\Dto\RootCategoryRequest;
 use FourPaws\CatalogBundle\Dto\SearchRequest;
+use FourPaws\CatalogBundle\Exception\RuntimeException as CatalogRuntimeException;
 use FourPaws\Search\Model\ProductSearchResult;
+use FourPaws\Search\SearchService;
+use RuntimeException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -29,17 +35,26 @@ class CatalogController extends Controller
         return $this->redirect('/');
     }
 
-    /**
+    /** @noinspection MoreThanThreeArgumentsInspection
+     *
      * @Route("/search/")
+     *
+     * @param Request $request
+     * @param SearchRequest $searchRequest
+     * @param SearchService $searchService
+     *
+     * @param ValidatorInterface $validator
+     * @return Response
+     * @throws Exception
+     * @throws RuntimeException
      */
-    public function searchAction(Request $request, SearchRequest $searchRequest): Response
+    public function searchAction(Request $request, SearchRequest $searchRequest, SearchService $searchService, ValidatorInterface $validator): Response
     {
         $result = null;
-        /** @var ValidatorInterface $validator */
-        $validator = $this->container->get('validator');
+
         if (!$validator->validate($searchRequest)->count()) {
             /** @var ProductSearchResult $result */
-            $result = Application::getInstance()->getContainer()->get('search.service')->searchProducts(
+            $result = $searchService->searchProducts(
                 $searchRequest->getCategory()->getFilters(),
                 $searchRequest->getSorts()->getSelected(),
                 $searchRequest->getNavigation(),
@@ -51,17 +66,17 @@ class CatalogController extends Controller
             ->withFilterParameter('SECTION_ID', false)
             ->exec();
 
+        $tpl = 'FourPawsCatalogBundle:Catalog:search.html.php';
+
         if ($request->query->get('partial') === 'Y') {
             $tpl = 'FourPawsCatalogBundle:Catalog:search.filter.container.html.php';
-        } else {
-            $tpl = 'FourPawsCatalogBundle:Catalog:search.html.php';
         }
 
         return $this->render($tpl, [
-            'request'             => $request,
+            'request' => $request,
             'productSearchResult' => $result,
-            'catalogRequest'      => $searchRequest,
-            'categories'      => $categories,
+            'catalogRequest' => $searchRequest,
+            'categories' => $categories,
         ]);
     }
 
@@ -69,48 +84,66 @@ class CatalogController extends Controller
      * @Route("/{path}/")
      *
      * @param RootCategoryRequest $rootCategoryRequest
+     * @param Request $request
      *
+     * @param SearchService $searchService
      * @return Response
+     * @throws Exception
+     * @throws RuntimeException
      */
-    public function rootCategoryAction(RootCategoryRequest $rootCategoryRequest)
+    public function rootCategoryAction(RootCategoryRequest $rootCategoryRequest, Request $request, SearchService $searchService): Response
     {
-        return $this->render('FourPawsCatalogBundle:Catalog:rootCategory.html.php', [
-            'rootCategoryRequest' => $rootCategoryRequest,
-        ]);
+        $result = $searchService->searchProducts(
+            $rootCategoryRequest->getCategory()->getFilters(),
+            $rootCategoryRequest->getSorts()->getSelected(),
+            $rootCategoryRequest->getNavigation(),
+            $rootCategoryRequest->getSearchString()
+        );
+
+        return $this->render(
+            'FourPawsCatalogBundle:Catalog:rootCategory.html.php',
+            [
+                'rootCategoryRequest' => $rootCategoryRequest,
+                'request' => $request,
+                'result' => $result,
+            ]
+        );
     }
 
     /**
      * @Route("/{path}/", requirements={"path"="[^\.]+(?!\.html)$" })
-     * @param Request              $request
+     * @param Request $request
      * @param ChildCategoryRequest $categoryRequest
+     * @param SearchService $searchService
      *
-     * @throws \FourPaws\CatalogBundle\Exception\RuntimeException
-     * @throws \RuntimeException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws \Exception
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws CatalogRuntimeException
+     * @throws RuntimeException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws Exception
+     * @throws ApplicationCreateException
+     *
      * @return Response
      */
-    public function childCategoryAction(Request $request, ChildCategoryRequest $categoryRequest): Response
+    public function childCategoryAction(Request $request, ChildCategoryRequest $categoryRequest, SearchService $searchService): Response
     {
-        $result = Application::getInstance()->getContainer()->get('search.service')->searchProducts(
+        $result = $searchService->searchProducts(
             $categoryRequest->getCategory()->getFilters(),
             $categoryRequest->getSorts()->getSelected(),
             $categoryRequest->getNavigation(),
             $categoryRequest->getSearchString()
         );
 
+        $tpl = 'FourPawsCatalogBundle:Catalog:catalog.html.php';
+
         if ($request->query->get('partial') === 'Y') {
             $tpl = 'FourPawsCatalogBundle:Catalog:catalog.filter.container.html.php';
-        } else {
-            $tpl = 'FourPawsCatalogBundle:Catalog:catalog.html.php';
         }
 
         return $this->render($tpl, [
-            'request'             => $request,
+            'request' => $request,
             'productSearchResult' => $result,
-            'catalogRequest'      => $categoryRequest,
+            'catalogRequest' => $categoryRequest,
         ]);
     }
 }

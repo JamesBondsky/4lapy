@@ -9,6 +9,7 @@ namespace FourPaws\FoodSelectionBundle\Service;
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Main\SystemException;
+use FourPaws\BitrixOrm\Model\IblockSect;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\FoodSelectionBundle\Repository\FoodSelectionRepository;
@@ -55,24 +56,15 @@ class FoodSelectionService
     }
     
     /**
-     * @param string $xmlId
-     * @param int    $parentSectionID
-     * @param int    $depthLvl
+     * @param int $parentSectionID
      *
      * @return array
      */
-    public function getSectionsByXmlIdAndParentSection(
-        string $xmlId,
-        int $parentSectionID = 0,
-        int $depthLvl = 0
-    ) : array {
-        $filter = ['=XML_ID' => $xmlId];
-        if ($parentSectionID > 0) {
-            $filter['=SECTION_ID'] = $parentSectionID;
-        }
-        if ($depthLvl > 0) {
-            $filter['=DEPTH_LEVEL'] = $depthLvl;
-        }
+    public function getSectionsByParentSectionId(
+        int $parentSectionID
+    ) : array
+    {
+        $filter = ['=SECTION_ID' => $parentSectionID];
         
         return $this->getSections(['filter' => $filter]);
     }
@@ -91,16 +83,34 @@ class FoodSelectionService
         return $this->foodSelectionRepository->getSections($params);
     }
     
+    public function getSectionIdByXmlId(string $xmlId, int $depthLvl = 0) : int
+    {
+        $filter = ['XML_ID' => $xmlId];
+        if($depthLvl > 0){
+            $filter['DEPTH_LEVEL'] = $depthLvl;
+        }
+        $items = $this->getSections(['filter' => $filter]);
+        if (!empty($items)) {
+            /** @var IblockSect $item */
+            $item = current($items);
+            
+            return $item->getId();
+        }
+        
+        return 0;
+    }
+
     /**
      * @param array $sections
      *
-     * @param int   $mainSect
+     * @param array $exceptionItems
      *
-     * @throws SystemException
      * @return array
+     * @throws SystemException
+     * @throws \Bitrix\Main\ArgumentException
      */
-    public function getProductsBySections(array $sections, int $mainSect) : array
+    public function getProductsBySections(array $sections, array $exceptionItems = []) : array
     {
-        return $this->foodSelectionRepository->getProductsBySections($sections, $mainSect, $this->iblockId);
+        return $this->foodSelectionRepository->getProductsBySections($sections, $this->iblockId, $exceptionItems);
     }
 }

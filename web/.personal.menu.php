@@ -1,46 +1,73 @@
 <?
-$aMenuLinks = Array(
-	Array(
-		"Мои заказы", 
-		"/personal/orders/", 
-		Array(), 
-		Array("icon"=>"icon-order"), 
-		"\$USER->IsAuthorized()" 
-	),
-	Array(
-		"Адреса доставки", 
-		"/personal/address/", 
-		Array(), 
-		Array("icon"=>"icon-delivery-header"), 
-		"\$USER->IsAuthorized()" 
-	),
-	Array(
-		"Мои питомцы", 
-		"/personal/pets/", 
-		Array(), 
-		Array("icon"=>"icon-pet"), 
-		"\$USER->IsAuthorized()" 
-	),
-	Array(
-		"Бонусы", 
-		"/personal/bonus/", 
-		Array(), 
-		Array("icon"=>"icon-bonus"), 
-		"\$USER->IsAuthorized()" 
-	),
-	Array(
-		"Профиль", 
-		"/personal/", 
-		Array(), 
-		Array("icon"=>"icon-profile"), 
-		"\$USER->IsAuthorized()" 
-	),
-	Array(
-		"Выход", 
-		"?logout=yes", 
-		Array(), 
-		Array("icon"=>"icon-exit"), 
-		"\$USER->IsAuthorized()" 
-	)
-);
-?>
+$aMenuLinks = [
+    [
+        'Мои заказы',
+        '/personal/orders/',
+        [],
+        ['icon' => 'icon-order'],
+        "\$USER->IsAuthorized() && !\FourPaws\App\Application::getInstance()->getContainer()->get(\FourPaws\UserBundle\Service\CurrentUserProviderInterface::class)->isAvatarAuthorized()",
+    ],
+    [
+        'Адреса доставки',
+        '/personal/address/',
+        [],
+        ['icon' => 'icon-delivery-header'],
+        "\$USER->IsAuthorized() && !\FourPaws\App\Application::getInstance()->getContainer()->get(\FourPaws\UserBundle\Service\CurrentUserProviderInterface::class)->isAvatarAuthorized()",
+    ],
+    [
+        'Подписка на доставку',
+        '/personal/subscribe/',
+        [],
+        ['icon' => 'icon-delivery-menu'],
+        "\$USER->IsAuthorized() && !\FourPaws\App\Application::getInstance()->getContainer()->get(\FourPaws\UserBundle\Service\CurrentUserProviderInterface::class)->isAvatarAuthorized()",
+    ],
+    [
+        'Мои питомцы',
+        '/personal/pets/',
+        [],
+        ['icon' => 'icon-pet'],
+        "\$USER->IsAuthorized() && !\FourPaws\App\Application::getInstance()->getContainer()->get(\FourPaws\UserBundle\Service\CurrentUserProviderInterface::class)->isAvatarAuthorized()",
+    ],
+    [
+        'Бонусы',
+        '/personal/bonus/',
+        [],
+        ['icon' => 'icon-bonus'],
+        "\$USER->IsAuthorized() && !\FourPaws\App\Application::getInstance()->getContainer()->get(\FourPaws\UserBundle\Service\CurrentUserProviderInterface::class)->isAvatarAuthorized()",
+    ],
+    [
+        'Реферальная программа',
+        '/personal/referral/',
+        [],
+        ['icon' => 'icon-menu-referal'],
+        "\$USER->IsAuthorized() && \\in_array(30, \$USER->GetUserGroupArray()) && !\FourPaws\App\Application::getInstance()->getContainer()->get(\FourPaws\UserBundle\Service\CurrentUserProviderInterface::class)->isAvatarAuthorized()",
+    ],
+    [
+        'Профиль',
+        '/personal/',
+        [],
+        ['icon' => 'icon-profile'],
+        "\$USER->IsAuthorized() && !\FourPaws\App\Application::getInstance()->getContainer()->get(\FourPaws\UserBundle\Service\CurrentUserProviderInterface::class)->isAvatarAuthorized()",
+    ],
+    [
+        'Топ 10 товаров',
+        '/personal/top/',
+        [],
+        ['icon' => 'icon-empty-star'],
+        "\$USER->IsAuthorized() && !\FourPaws\App\Application::getInstance()->getContainer()->get(\FourPaws\UserBundle\Service\CurrentUserProviderInterface::class)->isAvatarAuthorized()",
+    ],
+    [
+        'Выход',
+        '?logout=yes',
+        [],
+        ['icon' => 'icon-exit'],
+        "\$USER->IsAuthorized() && !\FourPaws\App\Application::getInstance()->getContainer()->get(\FourPaws\UserBundle\Service\CurrentUserProviderInterface::class)->isAvatarAuthorized()",
+    ],
+    [
+        'Вернуться',
+        '/front-office/avatar/logout.php',
+        [],
+        ['icon' => 'icon-exit'],
+        "\$USER->IsAuthorized() && \FourPaws\App\Application::getInstance()->getContainer()->get(\FourPaws\UserBundle\Service\CurrentUserProviderInterface::class)->isAvatarAuthorized()",
+    ],
+];

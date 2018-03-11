@@ -1,8 +1,13 @@
 imports:
+  - { resource: parameters.yml }
   - { resource: config_dev.yml }
+  - { resource: services_test.yml }
 
 framework:
-  test: ~
+    test: ~
+    router:
+        resource: '%kernel.project_dir%/app/config/routes/routes_test.yml'
+        strict_requirements: true
 
 services:
     FourPaws\MobileApiBundle\Services\Security\TokenGeneratorInterface:

@@ -6,16 +6,15 @@
 
 namespace FourPaws\PersonalBundle\AjaxController;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Type\Date;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
-use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
-use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
+use FourPaws\AppBundle\Service\AjaxMess;
+use FourPaws\External\Exception\ExpertsenderServiceException;
 use FourPaws\External\Exception\ManzanaServiceException;
-use FourPaws\External\Manzana\Exception\ManzanaException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\DateHelper;
@@ -29,7 +28,7 @@ use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
-use JMS\Serializer\SerializerBuilder;
+use JMS\Serializer\Serializer;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -48,15 +47,22 @@ class ProfileController extends Controller
      * @var CurrentUserProviderInterface
      */
     private $currentUserProvider;
-    
+
+    /** @var AjaxMess */
+    private $ajaxMess;
+    /** @var UserAuthorizationInterface  */
+    private $userAuthorization;
+
     public function __construct(
         UserAuthorizationInterface $userAuthorization,
-        CurrentUserProviderInterface $currentUserProvider
-    )
-    {
+        CurrentUserProviderInterface $currentUserProvider,
+        AjaxMess $ajaxMess
+    ) {
+        $this->userAuthorization = $userAuthorization;
         $this->currentUserProvider = $currentUserProvider;
+        $this->ajaxMess = $ajaxMess;
     }
-    
+
     /**
      * @Route("/changePhone/", methods={"POST","GET"})
      * @param Request $request
@@ -66,18 +72,20 @@ class ProfileController extends Controller
      * @throws ValidationException
      * @throws InvalidIdentifierException
      * @throws \Exception
-     * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
      * @return JsonResponse
      */
-    public function changePhoneAction(Request $request) : JsonResponse
+    public function changePhoneAction(Request $request): JsonResponse
     {
+        if(!$this->userAuthorization->isAuthorized()){
+            return $this->ajaxMess->getNeedAuthError();
+        }
         $action = $request->get('action', '');
-        
+
         \CBitrixComponent::includeComponentClass('fourpaws:personal.profile');
         /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
         $profileClass = new \FourPawsPersonalCabinetProfileComponent();
-        
+
         switch ($action) {
             case 'confirmPhone':
                 return $profileClass->ajaxConfirmPhone($request);
@@ -89,163 +97,176 @@ class ProfileController extends Controller
                 return $profileClass->ajaxGet($request);
                 break;
         }
-        
-        return JsonErrorResponse::createWithData(
-            'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
-            ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
-        );
+        return $this->ajaxMess->getSystemError();
     }
-    
+
     /**
      * @Route("/changePassword/", methods={"POST"})
      * @param Request $request
      *
+     * @throws NotAuthorizedException
+     * @throws ConstraintDefinitionException
+     * @throws ServiceCircularReferenceException
      * @throws ServiceNotFoundException
      * @throws ValidationException
      * @throws InvalidIdentifierException
      * @return JsonResponse
      */
-    public function changePasswordAction(Request $request) : JsonResponse
+    public function changePasswordAction(Request $request): JsonResponse
     {
-        $id               = (int)$request->get('ID', 0);
-        $old_password     = $request->get('old_password', '');
-        $password         = $request->get('password', '');
+        if(!$this->userAuthorization->isAuthorized()){
+            return $this->ajaxMess->getNeedAuthError();
+        }
+        $id = (int)$request->get('ID', 0);
+        $old_password = $request->get('old_password', '');
+        $password = $request->get('password', '');
         $confirm_password = $request->get('confirm_password', '');
-        
+
         if (empty($old_password) || empty($password) || empty($confirm_password)) {
-            return JsonErrorResponse::createWithData(
-                'Должны быть заполнены все поля',
-                ['errors' => ['emptyData' => 'Должны быть заполнены все поля']]
-            );
+            return $this->ajaxMess->getEmptyDataError();
         }
-        
+
         if (\strlen($password) < 6) {
-            return JsonErrorResponse::createWithData(
-                'Пароль должен содержать минимум 6 символов',
-                ['errors' => ['notValidPasswordLength' => 'Пароль должен содержать минимум 6 символов']]
-            );
+            return $this->ajaxMess->getPasswordLengthError(6);
         }
-        
+
         if (!$this->currentUserProvider->getCurrentUser()->equalPassword($old_password)) {
-            return JsonErrorResponse::createWithData(
-                'Текущий пароль не соответствует введенному',
-                ['errors' => ['notEqualOldPassword' => 'Текущий пароль не соответствует введенному']]
-            );
+            return $this->ajaxMess->getNotEqualOldPasswordError();
         }
-        
+
         if ($password !== $confirm_password) {
-            return JsonErrorResponse::createWithData(
-                'Пароли не соответсвуют',
-                ['errors' => ['notEqualPasswords' => 'Пароли не соответсвуют']]
-            );
+            return $this->ajaxMess->getNotEqualPasswordError();
         }
-        
+
         if ($old_password === $password) {
-            return JsonErrorResponse::createWithData(
-                'Пароль не может быть таким же, как и текущий',
-                ['errors' => ['equalWithOldPassword' => 'Пароль не может быть таким же, как и текущий']]
-            );
+            return $this->ajaxMess->getNotEqualOldPasswordError();
         }
-        
+
         try {
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             $res = $this->currentUserProvider->getUserRepository()->updatePassword($id, $password);
             if (!$res) {
-                return JsonErrorResponse::createWithData(
-                    'Произошла ошибка при обновлении',
-                    ['errors' => ['updateError' => 'Произошла ошибка при обновлении']]
-                );
+                return $this->ajaxMess->getUpdateError();
             }
-            
+
+            $expertSenderService = App::getInstance()->getContainer()->get('expertsender.service');
+            $user = $this->currentUserProvider->getUserRepository()->find($id);
+            if ($user instanceof User && $user->allowedEASend()) {
+                if(!$expertSenderService->sendChangePasswordByProfile($user)) {
+                    $logger = LoggerFactory::create('expertSender');
+                    $logger->error('Произошла ошибка при отправке письма - смена пароля');
+                }
+            }
+            elseif(!$user->allowedEASend()){
+                $logger = LoggerFactory::create('expertSender');
+                $logger->info('email '.$user->getEmail().' не подтвержден');
+            }
+
             return JsonSuccessResponse::create('Пароль обновлен');
         } catch (BitrixRuntimeException $e) {
-            return JsonErrorResponse::createWithData(
-                'Произошла ошибка при обновлении ' . $e->getMessage(),
-                ['errors' => ['updateError' => 'Произошла ошибка при обновлении ' . $e->getMessage()]]
-            );
-        } catch (ConstraintDefinitionException $e) {
+            return $this->ajaxMess->getUpdateError($e->getMessage());
+        } catch (ConstraintDefinitionException|ApplicationCreateException $e) {
+            /** скипаем для показа системной ошибки */
+        } catch (ExpertsenderServiceException $e) {
+            $logger = LoggerFactory::create('expertSender');
+            $logger->error('EA don`t work - '.$e->getMessage());
         }
-        
-        return JsonErrorResponse::createWithData(
-            'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
-            ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
-        );
+
+        return $this->ajaxMess->getSystemError();
     }
-    
+
     /**
      * @Route("/changeData/", methods={"POST"})
-     * @param Request $request
+     * @param Request    $request
      *
-     * @throws ServiceCircularReferenceException
-     * @throws ApplicationCreateException
-     * @throws ServiceNotFoundException
-     * @throws ValidationException
-     * @throws InvalidIdentifierException
+     * @param Serializer $serializer
+     *
      * @return JsonResponse
      */
-    public function changeDataAction(Request $request) : JsonResponse
+    public function changeDataAction(Request $request, Serializer $serializer): JsonResponse
     {
+        if(!$this->userAuthorization->isAuthorized()){
+            return $this->ajaxMess->getNeedAuthError();
+        }
         /** @var UserRepository $userRepository */
         $userRepository = $this->currentUserProvider->getUserRepository();
-        $data           = $request->request->getIterator()->getArrayCopy();
-        if (!empty($data['EMAIL'])) {
-            if (filter_var($data['EMAIL'], FILTER_VALIDATE_EMAIL) === false) {
-                return JsonErrorResponse::createWithData(
-                    'Некорректный email',
-                    ['errors' => ['wrongEmail' => 'Некорректный email']]
-                );
-            }
+        $data = $request->request->all();
+        if (!empty($data['EMAIL']) && filter_var($data['EMAIL'], FILTER_VALIDATE_EMAIL) === false) {
+            return $this->ajaxMess->getWrongEmailError();
         }
-        
+
+        if (!empty($data['ID'])) {
+            $data['ID'] = (int)$data['ID'];
+        }
+        /** @var User $user */
+        $user = $serializer->fromArray($data, User::class);
+
         $haveUsers = $userRepository->havePhoneAndEmailByUsers(
             [
-                'EMAIL'          => $data['EMAIL']
+                'EMAIL' => $user->getEmail(),
+                'ID'    => $user->getId(),
             ]
         );
-        if($haveUsers['email']){
-            return JsonErrorResponse::createWithData(
-                'Такой email уже существует',
-                ['errors' => ['haveEmail' => 'Такой email уже существует']]
-            );
+        if ($haveUsers['email']) {
+            return $this->ajaxMess->getHaveEmailError();
         }
-        
-        /** @var User $user */
-        $user = SerializerBuilder::create()->build()->fromArray($data, User::class);
-        
+
         try {
-            /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-            $res = $userRepository->updateData($user->getId(), $userRepository->prepareData($data));
-            if (!$res) {
-                return JsonErrorResponse::createWithData(
-                    'Произошла ошибка при обновлении',
-                    ['errors' => ['updateError' => 'Произошла ошибка при обновлении']]
-                );
-            }
-            
-            /** @var ManzanaService $manzanaService */
-            $manzanaService = App::getInstance()->getContainer()->get('manzana.service');
-            $client         = null;
             try {
-                $contactId         = $manzanaService->getContactIdByCurUser();
-                $client            = new Client();
-                $client->contactId = $contactId;
-            } catch (ManzanaServiceContactSearchNullException $e) {
-                $client = new Client();
-            } catch (ManzanaServiceException $e) {
-            } catch (NotAuthorizedException $e) {
+                $container = App::getInstance()->getContainer();
+            } catch (ApplicationCreateException $e) {
+                return $this->ajaxMess->getSystemError();
             }
-            if ($client instanceof Client) {
-                try {
-                    $this->currentUserProvider->setClientPersonalDataByCurUser($client, $user);
-                } catch (NotAuthorizedException $e) {
+            $curUser = $userRepository->find($user->getId());
+            if ($curUser !== null && $curUser->getEmail() !== $user->getEmail()) {
+                $data['UF_EMAIL_CONFIRMED'] = false;
+            }
+            try {
+                $res = $userRepository->updateData($user->getId(), $userRepository->prepareData($data));
+                if (!$res) {
+                    return $this->ajaxMess->getUpdateError();
                 }
+            }
+            catch (\Exception $e){
+                return $this->ajaxMess->getUpdateError();
+            }
+
+            if($user->allowedEASend()) {
+                if ($user->getEmail() !== $curUser->getEmail()) {
+                    try {
+                        $expertSenderService = $container->get('expertsender.service');
+                        $expertSenderService->sendChangeEmail($curUser, $user);
+                    } catch (ExpertsenderServiceException $e) {
+                        $logger = LoggerFactory::create('expertsender');
+                        $logger->error('expertsender error:' . $e->getMessage());
+                    }
+                }
+            }
+            else{
+                $logger = LoggerFactory::create('expertsender');
+                $logger->info('email '.$curUser->getEmail().' не подтвержден');
+            }
+
+            /** @var ManzanaService $manzanaService */
+            try {
+                $manzanaService = $container->get('manzana.service');
+                $client = null;
                 try {
-                    $manzanaService->updateContact($client);
+                    $contactId = $manzanaService->getContactIdByUser();
+                    $client = new Client();
+                    $client->contactId = $contactId;
                 } catch (ManzanaServiceException $e) {
-                } catch (ManzanaException $e) {
+                    $client = new Client();
                 }
+
+                if ($client instanceof Client) {
+                    $this->currentUserProvider->setClientPersonalDataByCurUser($client);
+                    $manzanaService->updateContactAsync($client);
+                }
+            } catch (ApplicationCreateException $e) {
+                return $this->ajaxMess->getSystemError();
             }
-            
+
             try {
                 $curBirthday = $user->getBirthday();
                 if ($curBirthday instanceof Date) {
@@ -256,7 +277,7 @@ class ProfileController extends Controller
             } catch (EmptyDateException $e) {
                 $birthday = '';
             }
-            
+
             return JsonSuccessResponse::createWithData(
                 'Данные обновлены',
                 [
@@ -267,16 +288,7 @@ class ProfileController extends Controller
                 ]
             );
         } catch (BitrixRuntimeException $e) {
-            return JsonErrorResponse::createWithData(
-                'Произошла ошибка при обновлении ' . $e->getMessage(),
-                ['errors' => ['updateError' => 'Произошла ошибка при обновлении ' . $e->getMessage()]]
-            );
-        } catch (ConstraintDefinitionException $e) {
+            return $this->ajaxMess->getUpdateError($e->getMessage());
         }
-        
-        return JsonErrorResponse::createWithData(
-            'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
-            ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
-        );
     }
 }

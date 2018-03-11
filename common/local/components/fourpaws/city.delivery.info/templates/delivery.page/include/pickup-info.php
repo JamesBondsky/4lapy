@@ -31,29 +31,17 @@ use FourPaws\Helpers\WordHelper;
             <span>Через 1 час после оформления заказа при наличии товара в магазине</span>
         <?php } else { ?>
             <span>
-                В течение <?= $pickup['PERIOD_FROM'] ?> <?= WordHelper::declension(
+                Через <?= $pickup['PERIOD_FROM'] ?> <?= WordHelper::declension(
                     $pickup['PERIOD_FROM'],
                     ['день', 'дня', 'дней']
                 ) ?>
             </span>
         <?php } ?>
     </div>
-    <div class="b-delivery__delivery-type-row__time">
-        <p>Время</p>
-        <?php if ($pickup['CODE'] == DeliveryService::INNER_PICKUP_CODE) { ?>
+    <?php if ($pickup['CODE'] == DeliveryService::INNER_PICKUP_CODE) { ?>
+        <div class="b-delivery__delivery-type-row__time">
+            <p>Время</p>
             <span>В рабочие часы магазина</span>
-        <?php } else { ?>
-            <?php if (!empty($delivery['INTERVALS'])) { ?>
-                <?php $lastKey = end(array_keys($delivery['INTERVALS'])) ?>
-                <?php foreach ($delivery['INTERVALS'] as $i => $interval) { ?>
-                    <span>
-                        <?= date('H:00', mktime($interval['FROM'])) . ' - ' . date(
-                            'H:00',
-                            mktime($interval['TO'])
-                        ) . ($i !== $lastKey ? ',' : '') ?>
-                    </span>
-                <?php } ?>
-            <?php } ?>
-        <?php } ?>
-    </div>
+        </div>
+    <?php } ?>
 </div>

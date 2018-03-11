@@ -4,7 +4,7 @@ namespace Sprint\Migration;
 
 use Adv\Bitrixtools\Migration\SprintMigrationBase;
 use Bitrix\Main\Application;
-use FourPaws\MobileApiBundle\Tables\UserSessionTable;
+use FourPaws\MobileApiBundle\Tables\ApiUserSessionTable;
 
 class UserSession20171110145721 extends SprintMigrationBase
 {
@@ -16,7 +16,7 @@ class UserSession20171110145721 extends SprintMigrationBase
 
     public function up()
     {
-        $tableName = UserSessionTable::getTableName();
+        $tableName = ApiUserSessionTable::getTableName();
         /**
          * Compile from d7 DataManager will return only not null table fields structure
          */
@@ -54,7 +54,7 @@ SQL;
 
     public function down()
     {
-        $tableName = UserSessionTable::getTableName();
+        $tableName = ApiUserSessionTable::getTableName();
         Application::getConnection()->dropTable($tableName);
     }
 }

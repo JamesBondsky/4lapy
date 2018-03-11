@@ -1,0 +1,35 @@
+four_paws_mobile_api:
+  debug: '%kernel.debug%'
+  exceptions:
+    FourPaws\MobileApiBundle\Exception\InvalidTokenException:
+      code: 1
+      message: 'Неверный токен'
+      status_code: 200
+    FourPaws\MobileApiBundle\Exception\ValidationException:
+      code: 3
+      message: 'Пропущен обязательный параметр'
+      status_code: 200
+    FourPaws\UserBundle\Exception\UsernameNotFoundException:
+      code: 5
+      message: 'Пользователь с таким логином не найден'
+      status_code: 200
+    FourPaws\UserBundle\Exception\InvalidCredentialException:
+      code: 6
+      message: 'Пароль указан неверно'
+      status_code: 200
+    Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException:
+      code: 9
+      status_code: 200
+      message: 'Пользователь не авторизован'
+    FourPaws\MobileApiBundle\Exception\MetroByNoneMetroCityException:
+      code: 44
+      message: 'Данные о станциях метро для этого города отсутствуют'
+      status_code: 200
+    FourPaws\Catalog\Exception\CategoryNotFoundException:
+      code: 404
+      message: 'Категория не найдена'
+      status_code: 200
+    FourPaws\MobileApiBundle\Exception\InvalidSignRequestException:
+      code: 401
+      status_code: 401
+

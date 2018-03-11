@@ -4,7 +4,8 @@ namespace FourPaws\MobileApiBundle\Services\Security;
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
-use FourPaws\MobileApiBundle\Entity\Session;
+use Bitrix\Sale\Fuser;
+use FourPaws\MobileApiBundle\Entity\ApiUserSession;
 use FourPaws\MobileApiBundle\Exception\BitrixException;
 use FourPaws\MobileApiBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -15,6 +16,7 @@ class SessionFactory
      * @var TokenGeneratorInterface
      */
     private $tokenGenerator;
+
     /**
      * @var CurrentUserProviderInterface
      */
@@ -33,11 +35,11 @@ class SessionFactory
 
     /**
      * @throws \FourPaws\MobileApiBundle\Exception\InvalidIdentifierException
-     * @return Session
+     * @return ApiUserSession
      */
-    public function create(): Session
+    public function create(): ApiUserSession
     {
-        $session = (new Session())
+        $session = (new ApiUserSession())
             ->setUserAgent($this->getUserAgent())
             ->setFUserId($this->getBasketUserId())
             ->setToken($this->tokenGenerator->generate());
@@ -46,11 +48,11 @@ class SessionFactory
     }
 
     /**
-     * @param Session $session
+     * @param ApiUserSession $session
      *
-     * @return Session
+     * @return ApiUserSession
      */
-    public function update(Session $session): Session
+    public function update(ApiUserSession $session): ApiUserSession
     {
         $session
             ->setUserAgent($this->getUserAgent());
@@ -72,18 +74,18 @@ class SessionFactory
      */
     protected function getBasketUserId(): int
     {
-        if ($basketId = \CSaleBasket::GetBasketUserID()) {
+        if ($basketId = Fuser::getId()) {
             return $basketId;
         }
         throw new InvalidIdentifierException('Cant create basket user id');
     }
 
     /**
-     * @param Session $session
+     * @param ApiUserSession $session
      *
-     * @return Session
+     * @return ApiUserSession
      */
-    protected function configIp(Session $session): Session
+    protected function configIp(ApiUserSession $session): ApiUserSession
     {
         return $session
             ->setRemoteAddress($_SERVER['REMOTE_ADDR'] ?: '')

@@ -2,6 +2,49 @@
 
 imports:
   - { resource: parameters.yml }
+  - { resource: security.yml }
+  - { resource: configs/fos_rest.yml }
+  - { resource: configs/old_sound_rabbit_mq.yml }
+  - { resource: configs/four_paws_sap.yml }
+  - { resource: configs/four_paws_mobile_api.yml }
+  - { resource: configs/env.parameters.yml }
+  - { resource: configs/jms_serializer.yml }
+
+parameters:
+  manzana.guzzle.curl:
+    !php/const:CURLOPT_CONNECTTIMEOUT: '%manzana.guzzle.curl.timeout%'
+  recaptcha.guzzle.curl:
+    !php/const:CURLOPT_CONNECTTIMEOUT: '%recaptcha.guzzle.curl.timeout%'
+  callback.guzzle.curl:
+    !php/const:CURLOPT_CONNECTTIMEOUT: '%callback.guzzle.curl.timeout%'
+
+  callback:
+    baseUri: '%env(CALLBACK_URI)%'
+    login: '%env(CALLBACK_LOGIN)%'
+    pass: '%env(CALLBACK_PASS)%'
+
+  recaptcha:
+    key: '%env(RECAPTCHA_KEY)%'
+    secretKey: '%env(RECAPTCHA_SECRET_KEY)%'
+    serviceUri: '%env(RECAPTCHA_URI)%'
+
+  manzana:
+    login: '%env(MANZANA_LOGIN)%'
+    password: '%env(MANZANA_PASSWORD)%'
+    wdsl: '%env(MANZANA_HOST)%'
+    pos: kuvi_pos
+    business_unit: kuvi_shop
+  manzana.wdsl: '%env(MANZANA_HOST)%'
+  manzana.pos.wdsl: '%env(MANZANA_HOST_POS)%'
+
+  sms:
+    login: '%env(SMS_LOGIN)%'
+    password: '%env(SMS_PASSWORD)%'
+    login.immediate: '%env(SMS_LOGIN_IMMEDIATE)%'
+    password.immediate: '%env(SMS_PASSWORD_IMMEDIATE)%'
+    start_messaging: '%sms.start_messaging%'
+    stop_messaging: '%sms.stop_messaging%'
+    originator: '%sms.originator%'
 
 framework:
   esi: { enabled: true }
@@ -19,25 +62,13 @@ framework:
   session:
     # https://symfony.com/doc/current/reference/configuration/framework.html#handler-id
     storage_id: session.storage.php_bridge
-    handler_id: ~
+    handler_id: FourPaws\AppBundle\Session\BitrixSessionBridge
   fragments: ~
   http_method_override: true
   php_errors:
     log: true
   templating:
     engines: ['php', 'twig']
-
-security:
-  providers:
-    bitrix:
-      id: FourPaws\UserBundle\Security\BitrixUserProvider
-  firewalls:
-    main:
-      anonymous: ~
-      logout: ~
-      guard:
-        authenticators:
-          - FourPaws\UserBundle\Security\BitrixAuthenticator
 
 circle_rest_client:
   curl:
@@ -48,25 +79,12 @@ circle_rest_client:
       CURLOPT_FRESH_CONNECT: true
       CURLOPT_USERPWD: old4lapy:8J7tQHPpN9
 
-fos_rest:
-  body_listener: true
-  body_converter:
-    enabled: true
-  view:
-    view_response_listener: true
-  serializer:
-      serialize_null: true
-  format_listener:
-    rules:
-      - { path: '^/mobile_app_v2',  priorities: ['json'], fallback_format: json, prefer_extension: true }
-      - { path: '^/', priorities: [ 'html', '*/*'], fallback_format: html, prefer_extension: true }
-  disable_csrf_role:    null
 
 nelmio_api_doc:
   models: { use_jms: true }
   routes:
     path_patterns:
-      - ^/mobile_app_v2
+      - ^/api
   documentation:
     info:
       title: 4lapy
@@ -77,75 +95,11 @@ twig:
     debug: '%kernel.debug%'
     strict_variables: '%kernel.debug%'
 
-old_sound_rabbit_mq:
-    connections:
-        default:
-            host:     "%env(AMQP_HOST)%"
-            port:     "%env(AMQP_PORT)%"
-            user:     "%env(AMQP_USER)%"
-            password: "%env(AMQP_PASSWORD)%"
-            vhost:    '%env(AMQP_VHOST)%'
-            lazy:     true
-            connection_timeout: 3
-            read_write_timeout: 3
-            keepalive: false
-            heartbeat: 0
-            #Использование сокета быстрее, но он не работает из-за бага "Error reading data. Received 0 instead of expected 7 bytes"
-            #See https://github.com/php-amqplib/php-amqplib/issues/72
-            #See https://github.com/php-amqplib/RabbitMqBundle/issues/447
-            use_socket: false
-
-    producers:
-      callback_set:
-        connection:       default
-        exchange_options: { name: "callback_set", type: direct }
-
-      catalog_sync:
-        connection: default
-        exchange_options: {name: "catalog_sync", type: "direct"}
-
-    consumers:
-      callback_set:
-        connection:       default
-        exchange_options: { name: "callback_set", type: direct}
-        queue_options:    { name: "callback_set" }
-        callback:         callback_set.consumer
-
-      catalog_sync:
-        connection: default
-        exchange_options: {name: "catalog_sync", type: "direct"}
-        queue_options: {name: "catalog_sync"}
-        callback: search.sync_consumer
-
-jms_serializer:
-  property_naming:
-    id: jms_serialized_name_annotation_strategy
-    enable_cache: true
-
 sensio_framework_extra:
   request:
     converters: true
     auto_convert: true
     disable: ['doctrine.orm']
-
-four_paws_sap:
-  directory_sources:
-    product_info:
-      entity: FourPaws\SapBundle\Dto\In\Offers\Materials
-      in: '%sap.product.directory.in%'
-      out: '%sap.product.directory.out%'
-      error: '%sap.product.directory.error%'
-      filemask: 'Mat_*'
-  pipelines:
-    catalog:
-      - FourPaws\SapBundle\Consumer\OffersInfoConsumer
-      - FourPaws\SapBundle\Consumer\PriceConsumer
-      - FourPaws\SapBundle\Consumer\StockRemainConsumer
-      - FourPaws\SapBundle\Consumer\ShopRemainConsumer
-    order_status:
-      - FourPaws\SapBundle\Consumer\OrderStatusConsumer
-    delivery_schedule:
-      - FourPaws\SapBundle\Consumer\DeliveryScheduleConsumer
 
 cocur_slugify:
     lowercase: true

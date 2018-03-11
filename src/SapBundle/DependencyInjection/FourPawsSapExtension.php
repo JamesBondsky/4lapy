@@ -3,12 +3,15 @@
 namespace FourPaws\SapBundle\DependencyInjection;
 
 use FourPaws\SapBundle\Consumer\ConsumerInterface;
-use FourPaws\SapBundle\Pipeline\PipelineInterface;
+use FourPaws\SapBundle\Pipeline\Pipeline;
 use FourPaws\SapBundle\Service\DirectorySourceFinderBuilder;
-use FourPaws\SapBundle\Source\DirectorySource;
+use FourPaws\SapBundle\Source\CsvDirectorySource;
+use FourPaws\SapBundle\Source\SerializerDirectorySource;
 use FourPaws\SapBundle\Source\SourceInterface;
+use JMS\Serializer\SerializerInterface;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\Finder\Finder;
@@ -19,7 +22,7 @@ class FourPawsSapExtension extends ConfigurableExtension
     /**
      * Configures the passed container according to the merged configuration.
      *
-     * @param array            $mergedConfig
+     * @param array $mergedConfig
      * @param ContainerBuilder $container
      *
      * @throws \Exception
@@ -28,34 +31,25 @@ class FourPawsSapExtension extends ConfigurableExtension
     {
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
         $loader->load('services.yml');
+
+        $this->configDirectoryFinder($mergedConfig['directory_sources'], $container);
         $this->registerConsumerTags($container);
         $this->registerSourceTags($container);
-        $this->registerPipelineTags($container);
-        $this->configDirectoryFinder($mergedConfig['directory_sources'], $container);
-        $this->configPipelines($mergedConfig['pipelines'], $mergedConfig['directory_sources'], $container);
+        $this->configPipelines($mergedConfig['pipelines'], $container);
     }
 
     protected function registerConsumerTags(ContainerBuilder $container)
     {
-        $container
-            ->registerForAutoconfiguration(ConsumerInterface::class)
-            ->addTag('sap.consumer');
+        $container->registerForAutoconfiguration(ConsumerInterface::class)->addTag('sap.consumer');
     }
 
     protected function registerSourceTags(ContainerBuilder $container)
     {
-        $container
-            ->registerForAutoconfiguration(SourceInterface::class)
-            ->addTag('sap.source');
-    }
-    
-    protected function registerPipelineTags(ContainerBuilder $container)
-    {
-        $container->registerForAutoconfiguration(PipelineInterface::class)->addTag('sap.pipeline');
+        $container->registerForAutoconfiguration(SourceInterface::class)->addTag('sap.source');
     }
 
     /**
-     * @param array            $directorySources
+     * @param array $directorySources
      * @param ContainerBuilder $container
      *
      * @throws \Exception
@@ -63,9 +57,9 @@ class FourPawsSapExtension extends ConfigurableExtension
     protected function configDirectoryFinder(array $directorySources, ContainerBuilder $container)
     {
         foreach ($directorySources as $name => $source) {
-            $container
-                ->register('sap.source.finder.' . $name)
+            $container->register('sap.source.finder.' . $name)
                 ->setClass(Finder::class)
+                ->addArgument($source['filemask'])
                 ->addArgument($source['in'])
                 ->addArgument($source['filetype'])
                 ->setFactory([
@@ -73,23 +67,59 @@ class FourPawsSapExtension extends ConfigurableExtension
                     'build',
                 ]);
 
-            $container
-                ->register('sap.source.' . $name)
-                ->setClass(DirectorySource::class)
-                ->addArgument(new Reference('sap.source.finder.' . $name))
-                ->addArgument($source['out'])
-                ->addArgument($source['error'])
-                ->addTag('sap.source', ['type' => $source['entity']]);
+            if ($source['filetype'] === 'csv') {
+                $container->register('sap.source.' . $name)
+                    ->setClass(CsvDirectorySource::class)
+                    ->addArgument(new Reference('sap.source.finder.' . $name))
+                    ->addArgument($source['entity'])
+                    ->addArgument($source['out'])
+                    ->addArgument($source['error'])
+                    ->addTag('sap.source', ['type' => $source['entity']]);
+            } else {
+                $container->register('sap.source.' . $name)
+                    ->setClass(SerializerDirectorySource::class)
+                    ->addArgument(new Reference('sap.source.finder.' . $name))
+                    ->addArgument($source['entity'])
+                    ->addArgument($source['out'])
+                    ->addArgument($source['error'])
+                    ->addArgument(new Reference(SerializerInterface::class))
+                    ->addArgument($source['filetype'])
+                    ->addTag('sap.source', ['type' => $source['entity']]);
+            }
         }
     }
-    
-    /**-
-     * @param array            $pipelines
-     * @param array            $directorySources
+
+    /**
+     *
+     * @param array $pipelines
      * @param ContainerBuilder $container
+     * @throws InvalidArgumentException
      */
-    protected function configPipelines(array $pipelines, array $directorySources, ContainerBuilder $container)
+    protected function configPipelines(array $pipelines, ContainerBuilder $container)
     {
-    
+        $allSources = $container->findTaggedServiceIds('sap.source');
+
+        foreach ($pipelines as $name => $pipeline) {
+            $definition =
+                $container->register('sap.pipeline.' . $name)
+                    ->setClass(Pipeline::class)
+                    ->addTag('sap.pipeline', ['name' => $name]);
+
+            foreach ($pipeline as $pipelineSource) {
+                $source = array_filter(
+                    $allSources,
+                    function ($value) use ($pipelineSource) {
+                        return $pipelineSource === $value[0]['type'];
+                    },
+                    ARRAY_FILTER_USE_BOTH
+                );
+
+                if (\is_array($source)) {
+                    foreach ($source as $serviceId => $serviceContext) {
+                        $definition->addMethodCall('add', [new Reference($serviceId)]);
+                    }
+                }
+            }
+        }
     }
 }

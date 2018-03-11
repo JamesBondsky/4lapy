@@ -41,7 +41,7 @@ class PetController extends Controller
      */
     public function addAction(Request $request) : JsonResponse
     {
-        $data = $request->request->getIterator()->getArrayCopy();
+        $data = $request->request->all();
         if (empty($data)) {
             return JsonErrorResponse::createWithData(
                 'Не указаны данные для добавления',
@@ -49,9 +49,12 @@ class PetController extends Controller
             );
         }
     
-        if(!empty($_FILES['UF_PHOTO'])){
+        if(!empty($_FILES['UF_PHOTO']) && $_FILES['UF_PHOTO']['error'] === 0){
             $data['UF_PHOTO'] = 1;
             $data['UF_PHOTO_TMP'] = $_FILES['UF_PHOTO'];
+        }
+        else{
+            unset($data['UF_PHOTO']);
         }
         
         try {
@@ -80,7 +83,7 @@ class PetController extends Controller
      */
     public function updateAction(Request $request) : JsonResponse
     {
-        $data = $request->request->getIterator()->getArrayCopy();
+        $data = $request->request->all();
         if (empty($data)) {
             return JsonErrorResponse::createWithData(
                 'Не указаны данные для обновления',
@@ -94,9 +97,12 @@ class PetController extends Controller
             );
         }
     
-        if(!empty($_FILES['UF_PHOTO'])){
+        if(!empty($_FILES['UF_PHOTO']) && $_FILES['UF_PHOTO']['error'] === 0){
             $data['UF_PHOTO'] = 1;
             $data['UF_PHOTO_TMP'] = $_FILES['UF_PHOTO'];
+        }
+        else{
+            unset($data['UF_PHOTO']);
         }
         
         try {

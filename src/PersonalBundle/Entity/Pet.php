@@ -18,7 +18,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 class Pet extends BaseEntity
 {
     const PET_TYPE = 'ForWho';
-    
+
     /**
      * @var string
      * @Serializer\Type("string")
@@ -27,7 +27,7 @@ class Pet extends BaseEntity
      * @Serializer\SkipWhenEmpty()
      */
     protected $name;
-    
+
     /**
      * @var int
      * @Serializer\Type("integer")
@@ -37,7 +37,7 @@ class Pet extends BaseEntity
      * @Serializer\SkipWhenEmpty()
      */
     protected $userId;
-    
+
     /**
      * @var int
      * @Serializer\Type("int")
@@ -46,7 +46,7 @@ class Pet extends BaseEntity
      * @Serializer\SkipWhenEmpty()
      */
     protected $photo;
-    
+
     /**
      * @var int
      * @Serializer\Type("int")
@@ -56,7 +56,7 @@ class Pet extends BaseEntity
      * @Serializer\SkipWhenEmpty()
      */
     protected $type;
-    
+
     /**
      * @var string
      * @Serializer\Type("string")
@@ -66,7 +66,7 @@ class Pet extends BaseEntity
      * @Serializer\SkipWhenEmpty()
      */
     protected $breed;
-    
+
     /**
      * @var Date|null
      * @Serializer\Type("bitrix_date")
@@ -75,7 +75,7 @@ class Pet extends BaseEntity
      * @Serializer\SkipWhenEmpty()
      */
     protected $birthday;
-    
+
     /**
      * @var int
      * @Serializer\Type("int")
@@ -84,13 +84,13 @@ class Pet extends BaseEntity
      * @Serializer\SkipWhenEmpty()
      */
     protected $gender;
-    
+
     protected $stringType   = '';
-    
+
     protected $stringGender = '';
-    
+
     protected $codeType     = '';
-    
+
     /**
      * @return string
      */
@@ -98,7 +98,7 @@ class Pet extends BaseEntity
     {
         return $this->name;
     }
-    
+
     /**
      * @param string $name
      *
@@ -107,10 +107,10 @@ class Pet extends BaseEntity
     public function setName(string $name) : Pet
     {
         $this->name = $name;
-        
+
         return $this;
     }
-    
+
     /**
      * @return int
      */
@@ -118,7 +118,7 @@ class Pet extends BaseEntity
     {
         return $this->userId;
     }
-    
+
     /**
      * @param int $userId
      *
@@ -127,10 +127,10 @@ class Pet extends BaseEntity
     public function setUserId(int $userId) : Pet
     {
         $this->userId = $userId;
-        
+
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -140,10 +140,10 @@ class Pet extends BaseEntity
         if ($photo > 0) {
             return \CFile::GetPath($photo);
         }
-        
+
         return '';
     }
-    
+
     /**
      * @return int
      */
@@ -151,7 +151,7 @@ class Pet extends BaseEntity
     {
         return $this->photo ?? 0;
     }
-    
+
     /**
      * @param int $photo
      *
@@ -160,10 +160,10 @@ class Pet extends BaseEntity
     public function setPhoto(int $photo) : Pet
     {
         $this->photo = $photo;
-        
+
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -176,10 +176,26 @@ class Pet extends BaseEntity
             } catch (FileNotFoundException $e) {
             }
         }
-        
-        return '';
+
+        return (new CropImageDecorator(['src'=>'/static/build/images/inhtml/no_image.png']))->setCropWidth(110)->setCropHeight(110)->getSrc();
     }
-    
+
+    /**
+     * @return string
+     */
+    public function getResizePopupImgPath() : string
+    {
+        $photo = $this->getPhoto();
+        if ($photo > 0) {
+            try {
+                return CropImageDecorator::createFromPrimary($photo)->setCropWidth(180)->setCropHeight(180)->getSrc();
+            } catch (FileNotFoundException $e) {
+            }
+        }
+
+        return (new CropImageDecorator(['src'=>'/static/build/images/inhtml/no_image.png']))->setCropWidth(180)->setCropHeight(180)->getSrc();
+    }
+
     /**
      * @return string
      */
@@ -191,10 +207,10 @@ class Pet extends BaseEntity
             } catch (\Exception $e) {
             }
         }
-        
+
         return $this->stringType;
     }
-    
+
     /**
      * @param int $type
      *
@@ -216,7 +232,7 @@ class Pet extends BaseEntity
         $this->stringType = $item['UF_NAME'];
         $this->codeType   = $item['UF_CODE'];
     }
-    
+
     /**
      * @return int
      */
@@ -224,7 +240,7 @@ class Pet extends BaseEntity
     {
         return $this->type;
     }
-    
+
     /**
      * @param int $type
      *
@@ -237,10 +253,10 @@ class Pet extends BaseEntity
         if ($type > 0) {
             $this->setStringType($type);
         }
-        
+
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -252,10 +268,10 @@ class Pet extends BaseEntity
             } catch (\Exception $e) {
             }
         }
-        
+
         return $this->codeType;
     }
-    
+
     /**
      * @return string
      */
@@ -263,7 +279,7 @@ class Pet extends BaseEntity
     {
         return $this->breed;
     }
-    
+
     /**
      * @param string $breed
      *
@@ -272,47 +288,67 @@ class Pet extends BaseEntity
     public function setBreed(string $breed) : Pet
     {
         $this->breed = $breed;
-        
+
         return $this;
     }
-    
-    public function getYearsString()
-    {
-        $years = $this->getYears();
-        if ($years === 0) {
-            return '';
-        }
-        
-        $ost         = $years - floor($years);
-        $yearsByWord = (int)$ost > 0 ? $ost : $years;
-        
-        return $years . ' ' . WordHelper::declension(
-                $yearsByWord,
-                [
-                    'год',
-                    'года',
-                    'лет',
-                ]
-            );
-    }
-    
+
     /**
-     * @return float
+     * @return string
      */
-    public function getYears() : float
+    public function getAgeString(): string
+    {
+        list($years, $months, $days) = $this->getAge();
+
+        $return = '';
+        if($years > 0) {
+            $return .= $years . ' ' . WordHelper::declension(
+                    $years,
+                    [
+                        'год',
+                        'года',
+                        'лет',
+                    ]
+                );
+        }
+        if ($months > 0) {
+            $return .= ' ' . $months . ' ' . WordHelper::declension(
+                    $months,
+                    [
+                        'месяц',
+                        'месяца',
+                        'месяцев',
+                    ]
+                );
+        }
+        if($days > 0 && $years === 0 && $months === 0){
+            $return = 'меньше месяца';
+        }
+
+        return $return;
+    }
+
+    /**
+     * @return array
+     */
+    public function getAge() : array
     {
         $birthday = $this->getBirthday();
         if (!($birthday instanceof Date)) {
-            return 0;
+            return [
+                0,
+                0,
+            ];
         }
         $date     = new \DateTime($this->getBirthday()->format('Y-m-d'));
         $interval = $date->diff(new \DateTime(date('Y-m-d')));
-        
-        $years = (float)$interval->format('%Y') + ((float)$interval->format('%m') / 12);
-        
-        return floor($years * 10) / 10;
+
+        return [
+            (int)$interval->format('%Y'),
+            (int)$interval->format('%m'),
+            (int)$interval->format('%d'),
+        ];
     }
-    
+
     /**
      * @return Date
      */
@@ -321,10 +357,10 @@ class Pet extends BaseEntity
         if (!($this->birthday instanceof Date)) {
             return null;
         }
-        
+
         return $this->birthday;
     }
-    
+
     /**
      * @param null|string|Date $birthday
      *
@@ -340,10 +376,10 @@ class Pet extends BaseEntity
         } else {
             $this->birthday = null;
         }
-        
+
         return $this;
     }
-    
+
     /**
      * @return string
      */
@@ -352,10 +388,10 @@ class Pet extends BaseEntity
         if (empty($this->stringGender) && $this->getGender() > 0) {
             $this->setStringGender($this->getGender());
         }
-        
+
         return $this->stringGender;
     }
-    
+
     /**
      * @param int $gender
      */
@@ -364,7 +400,7 @@ class Pet extends BaseEntity
         $userFieldEnum      = new \CUserFieldEnum();
         $this->stringGender = $userFieldEnum->GetList([], ['ID' => $gender])->Fetch()['VALUE'];
     }
-    
+
     /**
      * @return int
      */
@@ -372,7 +408,7 @@ class Pet extends BaseEntity
     {
         return $this->gender;
     }
-    
+
     /**
      * @param int $gender
      *
@@ -384,7 +420,7 @@ class Pet extends BaseEntity
         if ($gender > 0) {
             $this->setStringGender($gender);
         }
-        
+
         return $this;
     }
 }

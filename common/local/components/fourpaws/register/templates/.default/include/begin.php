@@ -1,11 +1,18 @@
 <?php
+
+use Bitrix\Main\Application;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 /** @var Cmain $APPLICATION
  * @var array                     $arResult
  * @var \CBitrixComponentTemplate $component
- */ ?>
+ */
+
+$request = Application::getInstance()->getContext()->getRequest();
+$backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
+?>
 <div class="b-registration__content b-registration__content--moiety">
     <a class="b-button b-button--social b-button--full-width js-reg-by-phone"
        href="javascript:void(0)"
@@ -13,6 +20,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
        data-url="/ajax/user/auth/register/"
        data-method="post"
        data-action="get"
+       data-backurl="<?=$backUrl?>"
        data-step="step1">Регистрация по телефону</a>
     <span class="b-registration__else">или</span>
     <?php

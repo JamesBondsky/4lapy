@@ -7,6 +7,7 @@ if (!\is_array($arResult['QUESTIONS']) || empty($arResult['QUESTIONS'])) {
 }
 
 use FourPaws\App\Application as App;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 
 ?>
 <h2 class="b-title b-title--feedback-form"><?= $arResult['FORM_DESCRIPTION'] ?></h2>
@@ -16,7 +17,7 @@ use FourPaws\App\Application as App;
       enctype="multipart/form-data">
     <?= bitrix_sessid_post() ?>
     <input name="WEB_FORM_ID" value="<?= $arResult['arForm']['ID'] ?>" type="hidden">
-    
+
     <?php
     foreach ($arResult['QUESTIONS'] as $fieldSid => $question) {
         if ($question['STRUCTURE'][0]['FIELD_TYPE'] === 'hidden') {
@@ -44,7 +45,7 @@ use FourPaws\App\Application as App;
                                    id="feedback-<?= $fieldSid ?>"
                                    placeholder=""
                                    name="<?= $fieldName ?>" <?= $question['REQUIRED'] === 'Y' ? ' required' : '' ?>
-                                   value="<?= $arResult['CUR_USER'][$fieldSid] ?>" />
+                                   value="<?= $arResult['CUR_USER'][$fieldSid] ?>"/>
                             <div class="b-error"><span class="js-message" title=""></span></div>
                         </div>
                     </div>
@@ -88,8 +89,9 @@ use FourPaws\App\Application as App;
                                    for="feedback-<?= $fieldSid ?>"><?= $question['CAPTION'] ?></label>
                         </div>
                         <div class="b-input b-input--registration-form">
-                            <textarea class="b-input__input-field b-input__input-field--textarea b-input__input-field--registration-form"
-                                      id="feedback-<?= $fieldSid ?>" name="<?= $fieldName ?>"></textarea>
+                            <textarea
+                                    class="b-input__input-field b-input__input-field--textarea b-input__input-field--registration-form"
+                                    id="feedback-<?= $fieldSid ?>" name="<?= $fieldName ?>"></textarea>
                             <div class="b-error"><span class="js-message" title=""></span></div>
                         </div>
                     </div>
@@ -102,12 +104,12 @@ use FourPaws\App\Application as App;
                     <div class="b-input-line b-input-line--file">
                         <div class="b-input-line__comment-block">
                             <div class="b-input b-input--feedback-page js-no-valid">
-                                <input type="hidden" name="MAX_FILE_SIZE" value="<?= 2 * 1024 * 1024 ?>" />
+                                <input type="hidden" name="MAX_FILE_SIZE" value="<?= 2 * 1024 * 1024 ?>"/>
                                 <input class="b-input__input-field b-input__input-field--feedback-page js-no-valid"
                                        type="file"
                                        id="feedback-<?= $fieldSid ?>"
                                        placeholder=""
-                                       name="<?= $fieldName ?>" />
+                                       name="<?= $fieldName ?>"/>
                             </div>
                             <label class="b-input-line__label b-input-line__label--feedback-page"
                                    for="feedback-<?= $fieldSid ?>">
@@ -115,7 +117,7 @@ use FourPaws\App\Application as App;
                             </label>
                             <div class="b-error"><span class="js-message" title=""></span></div>
                             <span class="b-input-line__comment b-input-line__comment--feedback-page">
-                                Объем файла не более 2 Мб.<br /> Допустимые форматы файла: jpg, png, doc, docx
+                                Объем файла не более 2 Мб.<br/> Допустимые форматы файла: jpg, png, doc, docx
                             </span>
                         </div>
                     </div>
@@ -128,8 +130,10 @@ use FourPaws\App\Application as App;
     if ($arResult['isUseCaptcha']) {
         ?>
         <div class="b-feedback-page__capcha">
-            <?= /** @noinspection PhpUnhandledExceptionInspection */
-            App::getInstance()->getContainer()->get('recaptcha.service')->getCaptcha(); ?>
+            <?php try {
+                echo App::getInstance()->getContainer()->get('recaptcha.service')->getCaptcha();
+            } catch (ApplicationCreateException $e) {
+            } ?>
         </div>
         <?php
     }

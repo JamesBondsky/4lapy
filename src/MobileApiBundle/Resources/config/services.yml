@@ -13,15 +13,37 @@ services:
         resource: '../../*'
         # you can exclude directories or files
         # but if a service is unused, it's removed anyway
-        exclude: '../../{Entity,Tests}'
+        exclude: '../../{Entity,Tests,EventController}'
 
     FourPaws\MobileApiBundle\Controller\:
         resource: '../../Controller'
         public: true
         tags: ['controller.service_arguments']
 
+    FourPaws\MobileApiBundle\TestController\:
+        resource: '../../TestController'
+        public: true
+        tags: ['controller.service_arguments']
+
+    FourPaws\MobileApiBundle\Serialization\:
+        resource: '../../Serialization/*'
+        tags: ['jms_serializer.subscribing_handler']
+
     FourPaws\MobileApiBundle\Services\Security\TokenGeneratorInterface:
         class: FourPaws\MobileApiBundle\Services\Security\Md5TokenGenerator
 
     FourPaws\MobileApiBundle\Services\CaptchaServiceInterface:
         class: FourPaws\MobileApiBundle\Services\BitrixCaptchaService
+
+
+    # Security
+    FourPaws\MobileApiBundle\Security\SignCheckerInterface:
+        class: FourPaws\MobileApiBundle\Security\SignChecker
+
+    FourPaws\MobileApiBundle\Security\ApiTokenListener:
+        arguments: ['@security.token_storage', '@security.authentication.manager']
+        public: false
+
+    FourPaws\MobileApiBundle\Services\Session\SessionHandlerInterface:
+        class: FourPaws\MobileApiBundle\Services\Session\SessionHandler
+        public: true

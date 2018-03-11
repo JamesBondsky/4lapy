@@ -20,7 +20,8 @@ if (!\is_array($sections) || empty($sections)) {
                 name="food_spec"
                 data-select="<?= ++$_SESSION['SELECT_NUMBER'] ?>"
                 data-url="<?=$nextUrl?>">
-            <option selected="selected">Любой</option>
+            <option disabled="disabled" selected="selected">--Не выбрано--</option>
+            <option value="0">Любой</option>
             <?php /** @var IblockSect $item */
             foreach ($sections as $key => $item) {
                 ?>

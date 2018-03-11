@@ -58,7 +58,7 @@ abstract class TemplateAbstract
         
         $uri        = $this->getUri();
         $this->path = $uri->getPath();
-        $this->dir = $context->getRequest()->getRequestedPageDirectory();
+        $this->dir  = $context->getRequest()->getRequestedPageDirectory();
     }
     
     /**
@@ -71,6 +71,19 @@ abstract class TemplateAbstract
     public function isPage(string $page) : bool
     {
         return $this->path === $page;
+    }
+
+    public function isPartitionPage(string $src) : bool
+    {
+        return preg_match(sprintf('~%s~', $src), $this->getPath()) > 0;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getPath() : string
+    {
+        return $this->path;
     }
     
     /**

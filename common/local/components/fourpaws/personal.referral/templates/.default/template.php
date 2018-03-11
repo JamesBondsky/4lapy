@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Main\UI\PageNavigation;
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\PersonalBundle\Entity\Referral;
 
@@ -9,6 +11,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 /**
  * @global CMain $APPLICATION
  */
+
+/** @var ArrayCollection $items */
+$items = $arResult['ITEMS'];
 ?>
 <div class="b-account-referal">
     <div class="b-account-referal-top">
@@ -23,7 +28,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                                                      успешной проверки данных
             </div>
         </div>
-        <?php if (\is_array($arResult['ITEMS']) && !empty($arResult['ITEMS'])) { ?>
+        <?php if (!$items->isEmpty()) { ?>
             <div class="b-account-referal-top__search">
                 <div class="b-form-inline b-form-inline--search-referal">
                     <form class="b-form-inline__form b-form-inline__form--search-referal js-referal-search"
@@ -47,7 +52,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         <?php } ?>
     </div>
     <div class="b-account-referal__bottom">
-        <?php if (\is_array($arResult['ITEMS']) && !empty($arResult['ITEMS'])) { ?>
+        <?php if (!$items->isEmpty()) { ?>
             <div class="b-account-referal__bottom">
                 <div class="b-account-referal__title">Список рефералов</div>
                 <div class="b-account-referal__link-block">
@@ -78,7 +83,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                     </div>
                     <ul class="b-account-referal__list js-referal-list">
                         <?php /** @var Referral $item */
-                        foreach ($arResult['ITEMS'] as $item) { ?>
+                        foreach ($items as $item) { ?>
                             <li class="b-account-referal-item js-item-referal"
                                 data-referal="<?= $item->isModerate() ? 'moderate' : 'active-referal' ?>">
                                 <div class="b-account-referal-item__wrapper">
@@ -124,7 +129,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                         ?>
                     </ul>
                 </div>
-                <?php if (!empty($arResult['NAV'])) { ?>
+                <?php if ($arResult['NAV'] instanceof PageNavigation) { ?>
                     <div class="b-pagination b-pagination--referal">
                         <?php
                         $APPLICATION->IncludeComponent(
@@ -132,7 +137,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                             'pagination',
                             [
                                 'NAV_OBJECT' => $arResult['NAV'],
-                                'SEF_MODE'   => 'Y',
+                                'SEF_MODE'   => 'N',
+                                'AJAX_MODE'   => 'N',
                             ],
                             false
                         );
@@ -147,9 +153,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                        возможности зарабатывать баллы с его покупок.</p>
                     <p>Подробнее о реферальной программе вы можете узнать по телефону
                         <a class="b-account-referal__link-phone"
-                           href="tel:<?= preg_replace('~[^+\d]~', '', tplvar('phone_main')) ?>""
+                           href="tel:<?= preg_replace('~[^+\d]~', '', tplvar('phone_main')) ?>"
                        title="позвони"><?= tplvar('phone_main') ?></a> или
-                        <a class="b-account-referal__link" href="javascript:void(0);"
+                        <a class="b-account-referal__link" href="/company/partnership/"
                            title="сайт">на сайте.</a>
                     </p>
                 </div>

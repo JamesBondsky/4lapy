@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Repository;
 
 use Bitrix\Iblock\ElementTable;
@@ -90,7 +94,7 @@ abstract class IblockElementRepository
     public function findIdByXmlId(string $xmlId)
     {
         $data = $this->getQuery()
-            ->withFilterParameter('=XML_ID', $xmlId)
+            ->withFilter(['=XML_ID' => $xmlId])
             ->withSelect(['ID'])
             ->withNav(['nTopCount' => 1])
             ->doExec()

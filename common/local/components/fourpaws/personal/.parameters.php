@@ -30,11 +30,6 @@ $arComponentParameters = [
                 'DEFAULT'   => 'orders/',
                 'VARIABLES' => [],
             ],
-            'order_detail' => [
-                'NAME'      => 'Детальный заказ',
-                'DEFAULT'   => 'orders/#ID#/',
-                'VARIABLES' => ['ID'],
-            ],
             'pets'         => [
                 'NAME'      => 'Мои питомцы',
                 'DEFAULT'   => 'pets/',

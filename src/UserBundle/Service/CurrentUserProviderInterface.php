@@ -19,11 +19,15 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 interface CurrentUserProviderInterface
 {
     /**
+     * @throws NotAuthorizedException
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
      * @return User
      */
     public function getCurrentUser(): User;
 
     /**
+     * @throws NotAuthorizedException
      * @return int
      */
     public function getCurrentUserId(): int;
@@ -34,31 +38,29 @@ interface CurrentUserProviderInterface
     public function getUserRepository(): UserRepository;
 
     /**
-     * @param Client $client
-     * @param User|null $user
+     * @param Client    $client
+     * @param null|User $user
      *
+     * @throws NotAuthorizedException
+     * @throws ConstraintDefinitionException
      * @throws InvalidIdentifierException
      * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
-     * @throws ConstraintDefinitionException
-     * @throws NotAuthorizedException
      * @throws ServiceCircularReferenceException
      */
     public function setClientPersonalDataByCurUser(&$client, User $user = null);
 
     /**
-     *
-     *
      * @return int
      */
     public function getCurrentFUserId(): int;
-    
+
     /**
      * @param int $id
      *
-     * @return array
      * @throws InvalidIdentifierException
      * @throws NotAuthorizedException
+     * @return array
      */
-    public function getUserGroups(int $id = 0) : array;
+    public function getUserGroups(int $id = 0): array;
 }

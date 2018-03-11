@@ -5,11 +5,11 @@
        title="Закрыть"></a>
     <div class="b-registration b-registration--add-pet">
         <header class="b-registration__header">
-            <h1 class="b-title b-title--h1 b-title--registration">Дэймон</h1>
+            <h1 class="b-title b-title--h1 b-title--registration"></h1>
         </header>
         <form class="b-registration__form js-form-validation js-add-pet-query"
               method="post"
-              data-url="/ajax/personal/pets/add"
+              data-url="/ajax/personal/pets/add/"
               enctype="multipart/form-data">
             <input class="js-data-id js-no-valid" name="ID" value="" type="hidden">
             <div class="b-registration__wrapper-avatar">
@@ -26,14 +26,13 @@
                                                                                    файла
                     </div>
                 </div>
-                <a class="b-registration__link-pet js-drop-edit" href="javascript:void(0);" title="Дэймон">
+                <a class="b-registration__link-pet js-drop-edit" href="javascript:void(0);" title="">
                     <span class="b-icon b-icon--pet-edit">
                         <?= new SvgDecorator('icon-edit', 25, 25) ?>
                     </span>
-                    <img
-                            class="b-registration__image js-image-wrapper"
-                            src="/static/build/images/content/dog.jpg"
-                            alt="Дэймон"
+                    <img class="b-registration__image js-image-wrapper"
+                            src=""
+                            alt=""
                             title="" />
                 </a>
             </div>
@@ -52,16 +51,14 @@
                     </div>
                 </div>
             </div>
-            <label class="b-registration__label b-registration__label--subscribe-delivery" for="type-pet">Вид
-                                                                                                          питомца</label>
+            <label class="b-registration__label b-registration__label--subscribe-delivery" for="type-pet">Вид животного</label>
             <div class="b-select b-select--subscribe-delivery js-pet-view">
                 <select class="b-select__block b-select__block--subscribe-delivery js-pet-view"
                         id="type-pet"
                         name="UF_TYPE">
-                    <option value="" disabled="disabled" selected="selected">выберите</option>
+                    <option value="" disabled="disabled" selected="selected">Выберите вид</option>
                     <?php if (\is_array($arResult['PET_TYPES']) && !empty($arResult['PET_TYPES'])) {
-                        foreach ($arResult['PET_TYPES'] as $item) {
-                            ?>
+                        foreach ($arResult['PET_TYPES'] as $item) {?>
                             <option value="<?= $item['ID'] ?>"><?= $item['UF_NAME'] ?></option>
                             <?php
                         }

@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\DeliveryBundle\Dpd;
 
 use Bitrix\Main\Loader;
@@ -13,9 +17,10 @@ if (!Loader::includeModule('ipol.dpd')) {
 }
 
 use Bitrix\Sale\Location\LocationTable as BitrixLocationTable;
+use Ipolh\DPD\DB\Location\Table;
 use WebArch\BitrixCache\BitrixCache;
 
-class LocationTable extends \Ipolh\DPD\DB\Location\Table
+class LocationTable extends Table
 {
     /**
      * Возвращает запись по местоположению битрикса
@@ -28,6 +33,12 @@ class LocationTable extends \Ipolh\DPD\DB\Location\Table
     public static function getByLocationId($locationId)
     {
         $getDpdLocation = function () use ($locationId) {
+            $location = BitrixLocationTable::getList(
+                [
+                    'filter' => ['ID' => $locationId],
+                ]
+            )->fetch();
+
             $ret = static::getList(
                 array_filter(
                     [
@@ -38,12 +49,15 @@ class LocationTable extends \Ipolh\DPD\DB\Location\Table
 
             $ret->addReplacedAliases(['LOCATION_ID' => 'ID']);
 
-            return $ret->fetch();
+            $result = $ret->fetch();
+            $result['CODE'] = $location['CODE'];
+
+            return ['result' => $result];
         };
 
         return (new BitrixCache())
             ->withId(__METHOD__ . $locationId)
-            ->resultOf($getDpdLocation);
+            ->resultOf($getDpdLocation)['result'];
     }
 
     /**
@@ -76,12 +90,14 @@ class LocationTable extends \Ipolh\DPD\DB\Location\Table
             );
 
             $ret->addReplacedAliases(['LOCATION_ID' => 'ID']);
+            $result = $ret->fetch();
+            $result['CODE'] = $locationCode;
 
-            return $ret->fetch();
+            return ['result' => $result];
         };
 
         return (new BitrixCache())
             ->withId(__METHOD__ . $locationCode)
-            ->resultOf($getDpdLocation);
+            ->resultOf($getDpdLocation)['result'];
     }
 }

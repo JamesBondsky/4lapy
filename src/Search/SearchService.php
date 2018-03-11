@@ -339,7 +339,7 @@ class SearchService implements LoggerAwareInterface
      */
     public function getAggsHelper(): AggsHelper
     {
-        if (is_null($this->aggsHelper)) {
+        if (null === $this->aggsHelper) {
             $this->aggsHelper = new AggsHelper();
         }
 

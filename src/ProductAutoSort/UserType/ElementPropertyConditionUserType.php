@@ -25,7 +25,7 @@ class ElementPropertyConditionUserType extends CUserTypeString
     /**
      * @var array
      */
-    protected static $jsEngaged = [];
+    private static $jsEngaged = [];
 
     /**
      * @var ProductAutoSortService
@@ -37,11 +37,11 @@ class ElementPropertyConditionUserType extends CUserTypeString
      *
      * @internal Из-за статичности пользовательского свойства приходится делать вот такой ленивый getter.
      *
-     * @return ProductAutoSortService|object
+     * @return object|ProductAutoSortService
      */
     protected static function getAutosortService()
     {
-        if (is_null(self::$autosortService)) {
+        if (null === self::$autosortService) {
             self::$autosortService = Application::getInstance()->getContainer()->get('product.autosort.service');
         }
 
@@ -65,12 +65,12 @@ class ElementPropertyConditionUserType extends CUserTypeString
     public function getUserTypeDescription()
     {
         return [
-            "USER_TYPE_ID"  => static::USER_TYPE_ID,
-            "CLASS_NAME"    => __CLASS__,
-            "DESCRIPTION"   => "Условие для свойств элемента",
-            "BASE_TYPE"     => \CUserTypeManager::BASE_TYPE_STRING,
-            "EDIT_CALLBACK" => [__CLASS__, 'GetPublicEdit'],
-            "VIEW_CALLBACK" => [__CLASS__, 'GetPublicView'],
+            'USER_TYPE_ID'  => static::USER_TYPE_ID,
+            'CLASS_NAME'    => __CLASS__,
+            'DESCRIPTION'   => 'Условие для свойств элемента',
+            'BASE_TYPE'     => \CUserTypeManager::BASE_TYPE_STRING,
+            'EDIT_CALLBACK' => [__CLASS__, 'GetPublicEdit'],
+            'VIEW_CALLBACK' => [__CLASS__, 'GetPublicView'],
             //Можно задать компонент для отображения значений свойства в публичной части.
             //"VIEW_COMPONENT_NAME" => "my:system.field.view",
             //"VIEW_COMPONENT_TEMPLATE" => "string",
@@ -128,12 +128,11 @@ class ElementPropertyConditionUserType extends CUserTypeString
      * @param array $arUserField Массив описывающий поле.
      * @param mixed $value Значение.
      *
-     * @return string|null значение для вставки в БД.
+     * @return null|string значение для вставки в БД.
      * @static
      */
-    public function onBeforeSave($arUserField, $value)
+    public static function onBeforeSave($arUserField, $value)
     {
-
         if (
             !isset($value[self::VALUE_PROP_ID], $value[self::VALUE_PROP_VALUE])
             || $value[self::VALUE_PROP_ID] <= 0
@@ -151,14 +150,12 @@ class ElementPropertyConditionUserType extends CUserTypeString
 
         //Только если не множественное
         if ($arUserField['MULTIPLE'] == 'N') {
-
             self::getAutosortService()->syncValue(
                 (int)$arUserField['ID'],
                 (int)$arUserField['VALUE_ID'],
                 (int)$realValue[self::VALUE_PROP_ID],
                 $realValue[self::VALUE_PROP_VALUE]
             );
-
         }
 
         return serialize($realValue);
@@ -173,9 +170,9 @@ class ElementPropertyConditionUserType extends CUserTypeString
     {
         $realValue = self::getDefaultValue();
 
-        if (!is_null($rawValue) && $rawValue != '') {
-            $value = unserialize(html_entity_decode($rawValue));
-            if (is_array($value)) {
+        if (null !== $rawValue && $rawValue != '') {
+            $value = unserialize(html_entity_decode($rawValue), ['allowed_classes' => false]);
+            if (\is_array($value)) {
                 $realValue = array_merge($realValue, $value);
             }
         }
@@ -191,6 +188,7 @@ class ElementPropertyConditionUserType extends CUserTypeString
         $productsIblockId = self::getIblockId($arUserField);
         $offersIblockId = self::getOffersIblockId($productsIblockId);
 
+
         $currentValue = self::normalizeValue($arHtmlControl['VALUE']);
         $propertyId = $currentValue[self::VALUE_PROP_ID];
         $propertyValue = $currentValue[self::VALUE_PROP_VALUE];
@@ -205,7 +203,7 @@ class ElementPropertyConditionUserType extends CUserTypeString
 
         $optListHtml = '<option value="0" >(не выбрано)</option>' . $optListHtml;
 
-        $uniqId = uniqid('propCond_');
+        $uniqId = uniqid('propCond_', true);
 
         $selectHtml = sprintf(
             '<select class="PropertySelect" data-input-id="%s" name="%s[%s]" data-uf-id="%s" >%s</select>',
@@ -219,7 +217,7 @@ class ElementPropertyConditionUserType extends CUserTypeString
         $valueInput = sprintf(
             '<input class="PropertyValue" id="%s" title="значение свойства" type="text" name="%s[%s]" size="20"  maxlength="225" value="%s" >',
             $uniqId,
-            $arHtmlControl["NAME"],
+            $arHtmlControl['NAME'],
             self::VALUE_PROP_VALUE,
             htmlspecialcharsbx($propertyValue)
         );
@@ -256,7 +254,6 @@ class ElementPropertyConditionUserType extends CUserTypeString
 
         $dbPropList = CIBlockProperty::GetList(['SORT' => 'ASC'], ['ACTIVE' => 'Y', 'IBLOCK_ID' => (int)$iblockId]);
         while ($arProp = $dbPropList->Fetch()) {
-
             $html .= sprintf(
                 '<option %s value="%d" data-user-type="%s" data-property-type="%s" > %s [%s]</option>',
                 ($selectedId == $arProp['ID']) ? ' selected="selected" ' : '',
@@ -292,7 +289,6 @@ class ElementPropertyConditionUserType extends CUserTypeString
         }
 
         return 0;
-
     }
 
     /**
@@ -329,7 +325,5 @@ class ElementPropertyConditionUserType extends CUserTypeString
         Asset::getInstance()->addJs('/local/include/js/element-property-condition-user-type.js');
 
         return '';
-
     }
-
 }

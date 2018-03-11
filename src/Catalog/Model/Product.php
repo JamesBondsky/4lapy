@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\Catalog\Model;
 
 use DateTimeImmutable;
@@ -358,13 +362,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     protected $PROPERTY_LOW_TEMPERATURE = false;
 
     /**
-     * @var bool
-     * @Type("bool")
-     * @Groups({"elastic"})
-     */
-    protected $PROPERTY_REFRIGERATED = false;
-
-    /**
      * @var string
      * @Type("string")
      * @Groups({"elastic"})
@@ -514,7 +511,27 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      * @var TextContent
      */
     protected $specifications;
-
+    
+    /**
+     * @var array
+     */
+    protected $PROPERTY_COMPOSITION = [];
+    
+    /**
+     * @var TextContent
+     */
+    protected $composition;
+    
+    /**
+     * @var array
+     */
+    protected $PROPERTY_NORMS_OF_USE = [];
+    
+    /**
+     * @var TextContent
+     */
+    protected $normsOfUse;
+    
     /**
      * @var Collection
      * @Type("ArrayCollection<FourPaws\Catalog\Model\Offer>")
@@ -583,18 +600,19 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 
     public function __construct(array $fields = [])
     {
-        parent::__construct($fields);
-        /**
-         * Если свойство не заполнено, битрикс для его значения возвращает bool false. А если это заполненное свойство
-         * типа "HTML/текст", то его значение - массив из двух строк. Однако, mapping для Elasticsearch не может
-         * одновременно относиться к свойству и как к boolean и как к объекту.
-         */
-        if (false === $this->PROPERTY_SPECIFICATIONS) {
-            $this->PROPERTY_SPECIFICATIONS = [
+        $fields['PROPERTY_SPECIFICATIONS_VALUE'] = $fields['~PROPERTY_SPECIFICATIONS_VALUE'] ?? [
                 'TYPE' => '',
                 'TEXT' => '',
             ];
-        }
+        $fields['PROPERTY_COMPOSITION_VALUE'] = $fields['~PROPERTY_COMPOSITION_VALUE'] ?? [
+                'TYPE' => '',
+                'TEXT' => '',
+            ];
+        $fields['PROPERTY_NORMS_OF_USE_VALUE'] = $fields['~PROPERTY_NORMS_OF_USE_VALUE'] ?? [
+                'TYPE' => '',
+                'TEXT' => '',
+            ];
+        parent::__construct($fields);
     }
 
     /**
@@ -1324,16 +1342,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
-     * Возвращает признак "Перевозить в холодильнике"
-     *
-     * @return bool
-     */
-    public function isRefrigerated()
-    {
-        return (bool)(int)$this->PROPERTY_REFRIGERATED;
-    }
-
-    /**
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
@@ -1663,7 +1671,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return string
      */
-    public function getYmlName()
+    public function getYmlName() : string
     {
         return $this->PROPERTY_YML_NAME;
     }
@@ -1673,7 +1681,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return string
      */
-    public function getSalesNotes()
+    public function getSalesNotes() : string
     {
         return $this->PROPERTY_SALES_NOTES;
     }
@@ -1685,7 +1693,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return string
      */
-    public function getGroupId()
+    public function getGroupId() : string
     {
         return $this->PROPERTY_GROUP;
     }
@@ -1697,7 +1705,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return string
      */
-    public function getGroupName()
+    public function getGroupName() : string
     {
         return $this->PROPERTY_GROUP_NAME;
     }
@@ -1707,7 +1715,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return bool
      */
-    public function isProducedByHolderRequest()
+    public function isProducedByHolderRequest() : bool
     {
         return (bool)(int)$this->PROPERTY_PRODUCED_BY_HOLDER;
     }
@@ -1717,13 +1725,41 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
      *
      * @return TextContent
      */
-    public function getSpecifications()
+    public function getSpecifications() : TextContent
     {
         if (!($this->specifications instanceof TextContent)) {
             $this->specifications = new TextContent($this->PROPERTY_SPECIFICATIONS);
         }
 
         return $this->specifications;
+    }
+    
+    /**
+     * Возвращает состав товара.
+     *
+     * @return TextContent
+     */
+    public function getComposition() : TextContent
+    {
+        if (!($this->composition instanceof TextContent)) {
+            $this->composition = new TextContent($this->PROPERTY_COMPOSITION);
+        }
+        
+        return $this->composition;
+    }
+    
+    /**
+     * Возвращает нормы.
+     *
+     * @return TextContent
+     */
+    public function getNormsOfUse() : TextContent
+    {
+        if (!($this->normsOfUse instanceof TextContent)) {
+            $this->normsOfUse = new TextContent($this->PROPERTY_NORMS_OF_USE);
+        }
+        
+        return $this->normsOfUse;
     }
 
     /**
@@ -1781,8 +1817,8 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 
         return $result;
     }
-
-    /*
+    
+    /**
      * @internal Специально для Elasitcsearch храним коллецию без ключей, т.к. ассоциативный массив с торговыми
      * предложениями туда передавать нельзя: это будет объект, а не массив объектов.
      *
@@ -1799,9 +1835,33 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
                         ->toArray()
                 )
             );
+    
+            /**
+             * @var Offer $offer
+             */
+            foreach ($this->offers as $offer) {
+                try {
+                    $offer->setProduct($this);
+                } catch (\InvalidArgumentException $e) {
+                    /**
+                     * Никогда не должна возникнуть такая ситуация
+                     */
+                }
+            }
         }
 
         return $this->offers;
+    }
+    
+    /**
+     * @param array|ArrayCollection $offers
+     */
+    public function setOffers($offers)
+    {
+        if (!($offers instanceof ArrayCollection) && \is_array($offers)) {
+            $offers = new ArrayCollection($offers);
+        }
+        $this->offers = $offers;
     }
 
     /**
@@ -1848,7 +1908,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     {
         // @todo учитывать региональные ограничения
         $result = [self::AVAILABILITY_PICKUP];
-        if (!($this->isLowTemperatureRequired() || $this->isRefrigerated())) {
+        if (!($this->isLowTemperatureRequired() || $this->isTransportOnlyRefrigerator())) {
             $result[] = self::AVAILABILITY_DELIVERY;
         }
         if ($this->isByRequest()) {
@@ -1856,6 +1916,30 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         }
 
         return $result;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isDeliveryAvailable(): bool
+    {
+        return in_array(
+            self::AVAILABILITY_DELIVERY,
+            $this->getDeliveryAvailability(),
+            true
+        );
+    }
+
+    /**
+     * @return bool
+     */
+    public function isPickupAvailable(): bool
+    {
+        return in_array(
+            self::AVAILABILITY_PICKUP,
+            $this->getDeliveryAvailability(),
+            true
+        );
     }
 
     /**

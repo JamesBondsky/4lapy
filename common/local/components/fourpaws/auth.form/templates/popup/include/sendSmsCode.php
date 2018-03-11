@@ -4,6 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use FourPaws\App\Application as App;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\ReCaptcha\ReCaptchaService;
 
 /** @var string $phone */ ?>
@@ -30,7 +31,7 @@ use FourPaws\ReCaptcha\ReCaptchaService;
                        type="text"
                        id="sms-code-3"
                        placeholder=""
-                       name="confirmCode" />
+                       name="confirmCode"/>
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
@@ -42,10 +43,14 @@ use FourPaws\ReCaptcha\ReCaptchaService;
                data-action="resendSms"
                title="Отправить снова">Отправить снова</a>
         </div>
-        <?php /** @var ReCaptchaService $recaptchaService */
-        /** @noinspection PhpUnhandledExceptionInspection */
-        $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
-        echo $recaptchaService->getCaptcha(' b-registration__captcha') ?>
+        <?php
+        if($_SESSION['COUNT_AUTH_CONFIRM_CODE'] >= 3) {
+            try {
+                $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
+                echo $recaptchaService->getCaptcha('', true);
+            } catch (ApplicationCreateException $e) {
+            }
+        }?>
         <div><span class="b-registration__auth-error"></span></div>
         <button class="b-button b-button--social b-button--full-width">Подтвердить</button>
     </form>

@@ -38,6 +38,7 @@ class Configuration implements ConfigurationInterface
         $treeBuilder = new TreeBuilder();
         $node = $treeBuilder->root('directory_sources');
 
+        /** @noinspection NullPointerExceptionInspection */
         $node
             ->useAttributeAsKey('name')
             ->arrayPrototype()
@@ -76,6 +77,7 @@ class Configuration implements ConfigurationInterface
         $treeBuilder = new TreeBuilder();
         
         $node = $treeBuilder->root('pipelines');
+        /** @noinspection NullPointerExceptionInspection */
         $node->arrayPrototype()->scalarPrototype()->end()->end();
         
         return $node;

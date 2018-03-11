@@ -53,14 +53,9 @@ class CFourPawsFoodSelectionComponent extends CBitrixComponent
         $this->setFrameMode(true);
         
         if ($this->startResultCache()) {
-            try {
-                $this->arResult['PET_TYPES'] =
-                    $this->foodSelectionService->getSections(['filter' => ['=DEPTH_LEVEL' => 1]]);
-            } catch (IblockNotFoundException $e) {
-                $logger = LoggerFactory::create('component');
-                $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
-                $this->abortResultCache();
-            }
+            $this->arResult['PET_TYPES'] = $this->foodSelectionService->getSectionsByParentSectionId(
+                    $this->foodSelectionService->getSectionIdByXmlId('pet_type', 1)
+                );
             $this->includeComponentTemplate();
         }
         

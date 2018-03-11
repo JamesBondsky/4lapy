@@ -9,11 +9,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 /** @var MainTemplate $template */
+/** @var CMain $APPLICATION */
 /** @noinspection PhpUnhandledExceptionInspection */
 $template = MainTemplate::getInstance(Application::getInstance()->getContext()); ?>
 <div class="b-popup-wrapper js-popup-wrapper">
-    <?php $APPLICATION->IncludeComponent('fourpaws:city.selector', 'popup', [], false, ['HIDE_ICONS' => 'Y']);
-    $APPLICATION->IncludeComponent('fourpaws:auth.form', 'popup', [], false, ['HIDE_ICONS' => 'Y']); ?>
+    <?php $APPLICATION->IncludeComponent('fourpaws:city.selector', 'popup', [], null, ['HIDE_ICONS' => 'Y']);
+    $APPLICATION->IncludeComponent('fourpaws:auth.form', 'popup', [], null, ['HIDE_ICONS' => 'Y']); ?>
     <section class="b-popup-pick-city b-popup-pick-city--subscribe-delivery js-popup-section"
              data-popup="subscribe-delivery">
         <a class="b-popup-pick-city__close b-popup-pick-city__close--subscribe-delivery js-close-popup"
@@ -87,120 +88,29 @@ $template = MainTemplate::getInstance(Application::getInstance()->getContext());
         </div>
     </section>
     <?php if ($template->hasPersonalReferral()) {
-        $APPLICATION->IncludeComponent('fourpaws:personal.referral', 'popup', [], $component, ['HIDE_ICONS' => 'Y']);
+        $APPLICATION->IncludeComponent('fourpaws:personal.referral', 'popup', [], null, ['HIDE_ICONS' => 'Y']);
     }
     if ($template->hasPersonalAddress()) {
-        $APPLICATION->IncludeComponent('fourpaws:personal.address', 'popup', [], $component, ['HIDE_ICONS' => 'Y']);
+        $APPLICATION->IncludeComponent('fourpaws:personal.address', 'popup', [], null, ['HIDE_ICONS' => 'Y']);
     }
     if ($template->hasPersonalPet()) {
-        $APPLICATION->IncludeComponent('fourpaws:personal.pets', 'popup', [], $component, ['HIDE_ICONS' => 'Y']);
+        $APPLICATION->IncludeComponent('fourpaws:personal.pets', 'popup', [], null, ['HIDE_ICONS' => 'Y']);
     }
     if ($template->hasPersonalProfile()) {
-        $APPLICATION->IncludeComponent('fourpaws:personal.profile', 'popupChangePassword', [], $component,
+        $APPLICATION->IncludeComponent('fourpaws:personal.profile', 'popupChangePassword', [], null,
                                        ['HIDE_ICONS' => 'Y']);
-        $APPLICATION->IncludeComponent('fourpaws:personal.profile', 'popupChangeData', [], $component,
+        $APPLICATION->IncludeComponent('fourpaws:personal.profile', 'popupChangeData', [], null,
                                        ['HIDE_ICONS' => 'Y']);
-        $APPLICATION->IncludeComponent('fourpaws:personal.profile', 'popupChangePhone', [], $component,
+        $APPLICATION->IncludeComponent('fourpaws:personal.profile', 'popupChangePhone', [], null,
                                        ['HIDE_ICONS' => 'Y']);
-    } ?>
-    <div class="b-popup-wrapper__wrapper-modal">
-        <section class="b-popup-pick-city b-popup-pick-city--choose-gift js-popup-section"
-                 data-popup="popup-choose-gift">
-            <a class="b-popup-pick-city__close b-popup-pick-city__close--choose-gift js-close-popup"
-               href="javascript:void(0);"
-               title="Закрыть"></a>
-            <header class="b-popup-pick-city__header-popup b-popup-pick-city__header-popup--choose-gift">
-                <h1 class="b-title b-title--h1 b-title--choose-gift">Выберите 2 подарка</h1>
-            </header>
-            <div class="b-common-item b-common-item--popup-gift">
-                <span class="b-common-item__image-wrap b-common-item__image-wrap--popup-gift"><img class="b-common-item__image b-common-item__image--popup-gift"
-                                                                                                   src="/static/build/images/content/hills-cat.jpg"
-                                                                                                   alt="для щенков с ягненком и рисом"
-                                                                                                   title="" /></span>
-                <div
-                        class="b-common-item__info-center-block b-common-item__info-center-block--popup-gift">
-                    <a class="b-common-item__description-wrap"
-                       href="javascript:void(0);"
-                       title=""><span class="b-clipped-text b-clipped-text--popup-gift"><span><strong>Хиллс</strong> для щенков с ягненком и рисом</span></span><span
-                                class="b-common-item__variant b-common-item__variant--shopping b-common-item__variant--choose-gift"><span
-                                    class="b-common-item__name-value">100 г</span></span></a>
-                </div>
-                <div class="b-choose-radio">
-                    <input class="b-choose-radio__input" type="checkbox" name="hills-1" id="id-hills-gift-1" />
-                    <label class="b-choose-radio__label" for="id-hills-gift-1"></label>
-                </div>
-            </div>
-            <div class="b-common-item b-common-item--popup-gift">
-                <span class="b-common-item__image-wrap b-common-item__image-wrap--popup-gift"><img class="b-common-item__image b-common-item__image--popup-gift"
-                                                                                                   src="/static/build/images/content/clean-cat.jpg"
-                                                                                                   alt="собак мелкие и миниатюрные породы Лайт"
-                                                                                                   title="" /></span>
-                <div
-                        class="b-common-item__info-center-block b-common-item__info-center-block--popup-gift">
-                    <a class="b-common-item__description-wrap"
-                       href="javascript:void(0);"
-                       title=""><span class="b-clipped-text b-clipped-text--popup-gift"><span><strong>Хиллс</strong> собак мелкие и миниатюрные породы Лайт</span></span><span
-                                class="b-common-item__variant b-common-item__variant--shopping b-common-item__variant--choose-gift"><span
-                                    class="b-common-item__name-value">1 кг</span></span></a>
-                </div>
-                <div class="b-choose-radio">
-                    <input class="b-choose-radio__input" type="checkbox" name="hills-2" id="id-hills-gift-2" />
-                    <label class="b-choose-radio__label" for="id-hills-gift-2"></label>
-                </div>
-            </div>
-            <div class="b-common-item b-common-item--popup-gift">
-                <span class="b-common-item__image-wrap b-common-item__image-wrap--popup-gift"><img class="b-common-item__image b-common-item__image--popup-gift"
-                                                                                                   src="/static/build/images/content/royal-canin-2.jpg"
-                                                                                                   alt="для собак мини пород Сеньор"
-                                                                                                   title="" /></span>
-                <div class="b-common-item__info-center-block b-common-item__info-center-block--popup-gift">
-                    <a class="b-common-item__description-wrap"
-                       href="javascript:void(0);"
-                       title=""><span class="b-clipped-text b-clipped-text--popup-gift"><span><strong>Хиллс</strong> для собак мини пород Сеньор</span></span><span
-                                class="b-common-item__variant b-common-item__variant--shopping b-common-item__variant--choose-gift"><span
-                                    class="b-common-item__name-value">100 г</span></span></a>
-                </div>
-                <div class="b-choose-radio">
-                    <input class="b-choose-radio__input" type="checkbox" name="hills-3" id="id-hills-gift-3" />
-                    <label class="b-choose-radio__label" for="id-hills-gift-3"></label>
-                </div>
-            </div>
-            <div class="b-common-item b-common-item--popup-gift">
-                <span class="b-common-item__image-wrap b-common-item__image-wrap--popup-gift"><img class="b-common-item__image b-common-item__image--popup-gift"
-                                                                                                   src="/static/build/images/content/hills-cat.jpg"
-                                                                                                   alt="ля собак идеальный вес состоит"
-                                                                                                   title="" /></span>
-                <div class="b-common-item__info-center-block b-common-item__info-center-block--popup-gift">
-                    <a class="b-common-item__description-wrap"
-                       href="javascript:void(0);"
-                       title=""><span class="b-clipped-text b-clipped-text--popup-gift"><span><strong>Хиллс</strong> ля собак идеальный вес состоит</span></span><span
-                                class="b-common-item__variant b-common-item__variant--shopping b-common-item__variant--choose-gift"><span
-                                    class="b-common-item__name-value">100 г</span></span></a>
-                </div>
-                <div class="b-choose-radio">
-                    <input class="b-choose-radio__input" type="checkbox" name="hills-4" id="id-hills-gift-4" />
-                    <label class="b-choose-radio__label" for="id-hills-gift-4"></label>
-                </div>
-            </div>
-            <div class="b-common-item b-common-item--popup-gift">
-                <span class="b-common-item__image-wrap b-common-item__image-wrap--popup-gift"><img class="b-common-item__image b-common-item__image--popup-gift"
-                                                                                                   src="/static/build/images/content/royal-canin-2.jpg"
-                                                                                                   alt="для собак миниатюрных пород с ягненком вкусным"
-                                                                                                   title="" /></span>
-                <div
-                        class="b-common-item__info-center-block b-common-item__info-center-block--popup-gift">
-                    <a class="b-common-item__description-wrap"
-                       href="javascript:void(0);"
-                       title=""><span class="b-clipped-text b-clipped-text--popup-gift"><span><strong>Хиллс</strong> для собак миниатюрных пород с ягненком вкусным</span></span><span
-                                class="b-common-item__variant b-common-item__variant--shopping b-common-item__variant--choose-gift"><span
-                                    class="b-common-item__name-value">100 г</span></span></a>
-                </div>
-                <div class="b-choose-radio">
-                    <input class="b-choose-radio__input" type="checkbox" name="hills-5" id="id-hills-gift-5" />
-                    <label class="b-choose-radio__label" for="id-hills-gift-5"></label>
-                </div>
-            </div>
-        </section>
-    </div>
+    }
+    if ($template->hasOrderDeliveryPage()) {
+        $APPLICATION->IncludeComponent('fourpaws:order.shop.list', 'popup', [], null, ['HIDE_ICONS' => 'Y']);
+    }
+    if ($template->hasFastOrder()) {
+        $APPLICATION->IncludeComponent('fourpaws:fast.order', '', [], null, ['HIDE_ICONS' => 'Y']);
+    }
+    ?>
+    <?php include 'tmp_gifts_popup.php' ?>
     <?php include 'modal_popup.php' ?>
 </div>

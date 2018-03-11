@@ -13,11 +13,32 @@ services:
         resource: '../../*'
         # you can exclude directories or files
         # but if a service is unused, it's removed anyway
-        exclude: '../../{Entity,Tests}'
+        exclude: '../../{Entity,Tests,EventController}'
 
     FourPaws\SaleBundle\Service\BasketService:
         class: FourPaws\SaleBundle\Service\BasketService
         public: true
 
     FourPaws\SaleBundle\Service\BasketViewService:
+        public: true
+        arguments: ['@FourPaws\SaleBundle\Service\BasketService']
+
+    FourPaws\SaleBundle\Service\NotificationService:
+        class: FourPaws\SaleBundle\Service\NotificationService
+        public: true
+
+    FourPaws\SaleBundle\Service\OrderService:
+        class: FourPaws\SaleBundle\Service\OrderService
+        public: true
+
+    FourPaws\SaleBundle\Service\OrderPropertyService:
+        class: FourPaws\SaleBundle\Service\OrderPropertyService
+        public: true
+
+    FourPaws\SaleBundle\Service\OrderStorageService:
+        class: FourPaws\SaleBundle\Service\OrderStorageService
+        public: true
+
+    FourPaws\SaleBundle\Service\UserAccountService:
+        class: FourPaws\SaleBundle\Service\UserAccountService
         public: true

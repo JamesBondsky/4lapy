@@ -14,68 +14,88 @@ use FourPaws\App\MainTemplate;
 
 $markup = PawsApplication::markup();
 /** @var MainTemplate $template */
-if(!isset($template) || !($template instanceof MainTemplate)) {
+if (!isset($template) || !($template instanceof MainTemplate)) {
     $template = MainTemplate::getInstance(Application::getInstance()->getContext());
 }
 
 if ($template->hasMainWrapper()) {
     if ($template->hasHeaderPublicationListContainer()) {
-    ?>
+        ?>
         </div>
-    </div>
-<?php }
+        </div>
+    <?php }
 
-if ($template->hasHeaderBlockShopList()) { ?>
+    if ($template->hasHeaderBlockShopList()) { ?>
         </div>
-    </div>
-<?php }
+        </div>
+    <?php }
 
-if ($template->hasHeaderPersonalContainer()) { ?>
-            </main>
+    if ($template->hasHeaderPersonalContainer()) { ?>
+        </main>
         </div>
-    </div>
-<?php }
-} ?>
-</main>
-<footer class="b-footer">
-    <div class="b-footer__communication">
-        <div class="b-container">
-            <div class="b-footer__inner">
-                <div class="b-footer-communication">
-                    <?php require_once 'blocks/footer/communication_area.php' ?>
-                </div>
-                <?php require_once 'blocks/footer/social_links.php' ?>
+        <div class="b-preloader b-preloader--fixed">
+            <div class="b-preloader__spinner">
+                <img class="b-preloader__image" src="/static/build/images/inhtml/spinner.svg" alt="spinner" title=""/>
             </div>
         </div>
+        </div>
+    <?php }
+    /** Основной прелоадер из gui */?>
+    <div class="b-preloader b-preloader--fixed">
+        <div class="b-preloader__spinner">
+            <img class="b-preloader__image" src="/static/build/images/inhtml/spinner.svg" alt="spinner" title=""/>
+        </div>
     </div>
+<?php } ?>
+</main>
+<footer class="b-footer <?= $template->getFooterClass() ?>">
+    <?php if (!$template->hasShortHeaderFooter()) { ?>
+        <div class="b-footer__communication">
+            <div class="b-container">
+                <div class="b-footer__inner">
+                    <div class="b-footer-communication">
+                        <?php require_once 'blocks/footer/communication_area.php' ?>
+                    </div>
+                    <?php require_once 'blocks/footer/social_links.php' ?>
+                </div>
+            </div>
+        </div>
+    <?php } ?>
     <div class="b-footer__nav">
         <div class="b-container">
-            <div class="b-footer__line">
-                <div class="b-footer__column js-here-permutantion">
-                    <?php $APPLICATION->IncludeComponent('bitrix:menu',
-                                                         'footer.menu',
-                                                         [
-                                                             'COMPONENT_TEMPLATE'    => 'footer.menu',
-                                                             'ROOT_MENU_TYPE'        => 'top',
-                                                             'MENU_CACHE_TYPE'       => 'A',
-                                                             'MENU_CACHE_TIME'       => '360000',
-                                                             'MENU_CACHE_USE_GROUPS' => 'N',
-                                                             'MENU_CACHE_GET_VARS'   => [],
-                                                             'MAX_LEVEL'             => '2',
-                                                             'CHILD_MENU_TYPE'       => 'left',
-                                                             'USE_EXT'               => 'N',
-                                                             'DELAY'                 => 'N',
-                                                             'ALLOW_MULTI_SELECT'    => 'N',
-                                                         ],
-                                                         false); ?>
-                    <?php $APPLICATION->IncludeComponent('fourpaws:expertsender.form',
-                                                         '',
-                                                         [],
-                                                         false,
-                                                         ['HIDE_ICONS' => 'Y']); ?>
+            <?php if (!$template->hasShortHeaderFooter()) { ?>
+                <div class="b-footer__line">
+                    <div class="b-footer__column js-here-permutantion">
+                        <?php $APPLICATION->IncludeComponent(
+                            'bitrix:menu',
+                            'footer.menu',
+                            [
+                                'COMPONENT_TEMPLATE'   => 'footer.menu',
+                                'ROOT_MENU_TYPE'       => 'top',
+                                'MENU_CACHE_TYPE'      => 'A',
+                                'MENU_CACHE_TIME'      => '360000',
+                                'CACHE_SELECTED_ITEMS' => 'N',
+                                'TEMPLATE_NO_CACHE'    => 'N',
+                                'MENU_CACHE_GET_VARS'  => [],
+                                'MAX_LEVEL'            => '2',
+                                'CHILD_MENU_TYPE'      => 'left',
+                                'USE_EXT'              => 'N',
+                                'DELAY'                => 'N',
+                                'ALLOW_MULTI_SELECT'   => 'N',
+                            ],
+                            false
+                        ); ?>
+                        <?php $APPLICATION->IncludeComponent(
+                            'fourpaws:expertsender.form',
+                            '',
+                            [],
+                            false,
+                            ['HIDE_ICONS' => 'Y']
+                        ); ?>
+                    </div>
+                    <?php require_once 'blocks/footer/application_links.php'; ?>
                 </div>
-                <?php require_once 'blocks/footer/application_links.php'; ?>
-            </div>
+            <?php } ?>
             <div class="b-footer__line">
                 <div class="b-footer__column">
                     <?php require_once 'blocks/footer/copyright.php' ?>

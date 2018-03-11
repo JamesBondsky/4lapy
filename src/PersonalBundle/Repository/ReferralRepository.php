@@ -1,9 +1,12 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\PersonalBundle\Repository;
 
-use FourPaws\App\Application as App;
-use FourPaws\App\Exceptions\ApplicationCreateException;
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\AppBundle\Repository\BaseHlRepository;
 use FourPaws\PersonalBundle\Entity\Referral;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
@@ -12,8 +15,7 @@ use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService;
-use JMS\Serializer\Exception\RuntimeException;
-use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use JMS\Serializer\ArrayTransformerInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -25,83 +27,65 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 class ReferralRepository extends BaseHlRepository
 {
     const HL_NAME = 'Referral';
-    
+
     /**
      * @var UserService
      */
     public $curUserService;
-    
+
     /** @var Referral $entity */
     protected $entity;
-    
+
     /**
      * ReferralRepository constructor.
      *
-     * @param ValidatorInterface $validator
+     * @inheritdoc
      *
-     * @throws RuntimeException
-     * @throws ServiceNotFoundException
-     * @throws \Exception
-     * @throws ApplicationCreateException
-     * @throws ServiceCircularReferenceException
+     * @param CurrentUserProviderInterface $currentUserProvider
      */
     public function __construct(
-        ValidatorInterface $validator
-    )
-    {
-        parent::__construct($validator);
-        $this->curUserService = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
+        ValidatorInterface $validator,
+        ArrayTransformerInterface $arrayTransformer,
+        CurrentUserProviderInterface $currentUserProvider
+    ) {
+        parent::__construct($validator, $arrayTransformer);
+        $this->setEntityClass(Referral::class);
+        $this->curUserService = $currentUserProvider;
     }
-    
+
     /**
-     * @return bool
      * @throws ServiceNotFoundException
      * @throws ValidationException
      * @throws \Exception
      * @throws BitrixRuntimeException
      * @throws NotAuthorizedException
+     * @return bool
      */
-    public function create() : bool
+    public function create(): bool
     {
         if ($this->entity->getUserId() === 0) {
             $this->entity->setUserId($this->curUserService->getCurrentUserId());
         }
-        
+
         return parent::create();
     }
-    
+
     /**
-     * @return Referral[]|array
      * @throws InvalidIdentifierException
      * @throws ServiceNotFoundException
      * @throws \Exception
      * @throws NotAuthorizedException
+     * @return ArrayCollection
      */
-    public function findByCurUser() : array
+    public function findByCurUser(): ArrayCollection
     {
-        
         $referrals = $this->findBy(
             [
                 'filter' => ['UF_USER_ID' => $this->curUserService->getCurrentUserId()],
                 'ttl'    => 360000,
             ]
         );
-        
+
         return $referrals;
-    }
-    
-    /**
-     * @param array $params
-     *
-     * @return Referral[]|array
-     * @throws \Exception
-     */
-    public function findBy(array $params = []) : array
-    {
-        if (empty($params['entityClass'])) {
-            $params['entityClass'] = Referral::class;
-        }
-        
-        return parent::findBy($params);
     }
 }

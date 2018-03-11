@@ -1,20 +1,31 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\DeliveryBundle\Service;
 
 use Bitrix\Currency\CurrencyManager;
+use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Sale\Basket;
+use Bitrix\Sale\BasketBase;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Delivery\DeliveryLocationTable;
 use Bitrix\Sale\Delivery\Services\Manager;
+use Bitrix\Sale\Delivery\Services\Table as DeliveryServiceTable;
 use Bitrix\Sale\Location\LocationTable;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Shipment;
 use FourPaws\Catalog\Model\Offer;
+use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\DeliveryBundle\Dpd\TerminalTable;
+use FourPaws\DeliveryBundle\Exception\InvalidArgumentException;
+use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\Location\LocationService;
-use FourPaws\StoreBundle\Service\StoreService;
-use FourPaws\UserBundle\Service\UserService;
+use FourPaws\StoreBundle\Collection\StoreCollection;
+use FourPaws\StoreBundle\Entity\Store;
 use WebArch\BitrixCache\BitrixCache;
 
 class DeliveryService
@@ -43,6 +54,16 @@ class DeliveryService
 
     const ZONE_4 = 'ZONE_4';
 
+    const DELIVERY_INTERVALS = [
+        1 => '09:00-18:00',
+        2 => '18:00-24:00',
+        3 => '08:00-12:00',
+        4 => '12:00-16:00',
+        5 => '16:00-20:00',
+        6 => '20:00-24:00',
+        7 => '15:00-21:00',
+    ];
+
     const PICKUP_CODES = [
         DeliveryService::INNER_PICKUP_CODE,
         DeliveryService::DPD_PICKUP_CODE,
@@ -59,20 +80,13 @@ class DeliveryService
     protected $locationService;
 
     /**
-     * @var UserService $userService
+     * DeliveryService constructor.
+     *
+     * @param LocationService $locationServic
      */
-    protected $userService;
-
-    /**
-     * @var StoreService
-     */
-    protected $storeService;
-
-    public function __construct(LocationService $locationService, UserService $userService, StoreService $storeService)
+    public function __construct(LocationService $locationService)
     {
         $this->locationService = $locationService;
-        $this->userService = $userService;
-        $this->storeService = $storeService;
     }
 
     /**
@@ -82,15 +96,36 @@ class DeliveryService
      * @param string $locationCode
      * @param array $codes коды доставок для расчета
      *
+     * @return CalculationResult[]
+     */
+    public function getByProduct(Offer $offer, string $locationCode = '', array $codes = []): array
+    {
+        $basket = Basket::createFromRequest([]);
+        $basketItem = BasketItem::create($basket, 'sale', $offer->getId());
+        $basketItem->setFieldNoDemand('CAN_BUY', 'Y');
+        $basketItem->setFieldNoDemand('PRICE', $offer->getPrice());
+        $basketItem->setFieldNoDemand('QUANTITY', 1);
+        $basket->addItem($basketItem);
+
+        return $this->getByBasket($basket, $locationCode, $codes);
+    }
+
+    /**
+     * Получение доставок для корзины
+     *
+     * @param Basket $basket
+     * @param string $locationCode
+     * @param array $codes коды доставок для расчета
+     *
      * @return array
      */
-    public function getByProduct(Offer $offer, string $locationCode = null, array $codes = []): array
+    public function getByBasket(BasketBase $basket, string $locationCode = '', array $codes = []): array
     {
         if (!$locationCode) {
-            $locationCode = $this->getCurrentLocation();
+            $locationCode = $this->locationService->getCurrentLocation();
         }
 
-        $shipment = $this->generateShipment($locationCode, $offer);
+        $shipment = $this->generateShipment($locationCode, $basket);
 
         return $this->calculateDeliveries($shipment, $codes);
     }
@@ -101,17 +136,33 @@ class DeliveryService
      * @param string $locationCode
      * @param array $codes коды доставок для расчета
      *
-     * @return array
+     * @return CalculationResult[]
      */
-    public function getByLocation(string $locationCode = null, array $codes = []): array
+    public function getByLocation(string $locationCode, array $codes = []): array
     {
-        if (!$locationCode) {
-            $locationCode = $this->getCurrentLocation();
+        $getDeliveries = function () use ($locationCode) {
+            $shipment = $this->generateShipment($locationCode);
+
+            return ['result' => $this->calculateDeliveries($shipment)];
+        };
+
+        $result = (new BitrixCache())
+            ->withId(__METHOD__ . $locationCode)
+            ->resultOf($getDeliveries);
+
+        $deliveries = $result['result'];
+        if (!empty($codes)) {
+            /**
+             * @var CalculationResult $delivery
+             */
+            foreach ($deliveries as $i => $delivery) {
+                if (!in_array($delivery->getData()['DELIVERY_CODE'], $codes, true)) {
+                    unset($deliveries[$i]);
+                }
+            }
         }
 
-        $shipment = $this->generateShipment($locationCode);
-
-        return $this->calculateDeliveries($shipment, $codes);
+        return $deliveries;
     }
 
     /**
@@ -122,18 +173,18 @@ class DeliveryService
      *
      * @return CalculationResult[]
      */
-    public function calculateDeliveries(Shipment $shipment, array $codes = [])
+    public function calculateDeliveries(Shipment $shipment, array $codes = []): array
     {
         $availableServices = Manager::getRestrictedObjectsList($shipment);
 
         $result = [];
 
         foreach ($availableServices as $service) {
-            if ($codes && !in_array($service->getCode(), $codes)) {
+            if ($codes && !\in_array($service->getCode(), $codes, true)) {
                 continue;
             }
 
-            if ($service->isProfile()) {
+            if ($service::isProfile()) {
                 $name = $service->getNameWithParent();
             } else {
                 $name = $service->getName();
@@ -145,23 +196,25 @@ class DeliveryService
                     'DELIVERY_NAME' => $name,
                 ]
             );
-
             $calculationResult = $shipment->calculateDelivery();
             if ($calculationResult->isSuccess()) {
-                if (in_array(
+                if (\in_array(
                     $service->getCode(),
                     [
-                        DeliveryService::DPD_DELIVERY_CODE,
-                        DeliveryService::DPD_PICKUP_CODE,
+                        self::DPD_DELIVERY_CODE,
+                        self::DPD_PICKUP_CODE,
                     ],
                     true
                 )) {
-                    $calculationResult->setPeriodFrom($_SESSION['DPD_DATA'][$service->getCode()]['DAYS']);
+                    /* @todo не хранить эти данные в сессии */
+                    $calculationResult->setPeriodFrom($_SESSION['DPD_DATA'][$service->getCode()]['DAYS_FROM']);
+                    $calculationResult->setPeriodTo($_SESSION['DPD_DATA'][$service->getCode()]['DAYS_TO']);
                     $calculationResult->setData(
                         array_merge(
                             $calculationResult->getData(),
                             [
-                                'INTERVALS' => $_SESSION['DPD_DATA'][$service->getCode()]['INTERVALS'],
+                                'INTERVALS'    => $_SESSION['DPD_DATA'][$service->getCode()]['INTERVALS'],
+                                'STOCK_RESULT' => $_SESSION['DPD_DATA'][$service->getCode()]['STOCK_RESULT'],
                             ]
                         )
                     );
@@ -270,7 +323,7 @@ class DeliveryService
      */
     public function getAvailableZones(int $deliveryId): array
     {
-        $allZones = $this->getAllZones(true);
+        $allZones = $this->getAllZones();
 
         $getZones = function () use ($allZones, $deliveryId) {
             $result = [];
@@ -305,7 +358,7 @@ class DeliveryService
                     ]
                 );
 
-                while ($location = $locations->Fetch()) {
+                while ($location = $locations->fetch()) {
                     // сделано, чтобы отдельные местоположения были впереди групп,
                     // т.к. группы могут их включать
                     $result = [
@@ -331,29 +384,250 @@ class DeliveryService
     }
 
     /**
-     * @return string
+     * @param CalculationResult $calculationResult
+     *
+     * @return bool
      */
-    protected function getCurrentLocation()
+    public function isPickup(CalculationResult $calculationResult): bool
     {
-        return $this->locationService->getCurrentLocation();
+        return \in_array($calculationResult->getData()['DELIVERY_CODE'], static::PICKUP_CODES, true);
     }
 
-    protected function generateShipment(string $locationCode, Offer $offer = null): Shipment
+    /**
+     * @param CalculationResult $calculationResult
+     *
+     * @return bool
+     */
+    public function isDelivery(CalculationResult $calculationResult): bool
+    {
+        return \in_array($calculationResult->getData()['DELIVERY_CODE'], static::DELIVERY_CODES, true);
+    }
+
+    /**
+     * @param CalculationResult $calculationResult
+     *
+     * @return bool
+     */
+    public function isInnerPickup(CalculationResult $calculationResult): bool
+    {
+        return $calculationResult->getData()['DELIVERY_CODE'] === static::INNER_PICKUP_CODE;
+    }
+
+    /**
+     * @param CalculationResult $calculationResult
+     *
+     * @return bool
+     */
+    public function isDpdPickup(CalculationResult $calculationResult): bool
+    {
+        return $calculationResult->getData()['DELIVERY_CODE'] === static::DPD_PICKUP_CODE;
+    }
+
+    /**
+     * @param CalculationResult $calculationResult
+     *
+     * @return bool
+     */
+    public function isInnerDelivery(CalculationResult $calculationResult): bool
+    {
+        return $calculationResult->getData()['DELIVERY_CODE'] === static::INNER_DELIVERY_CODE;
+    }
+
+    /**
+     * @param CalculationResult $calculationResult
+     *
+     * @return bool
+     */
+    public function isDpdDelivery(CalculationResult $calculationResult): bool
+    {
+        return $calculationResult->getData()['DELIVERY_CODE'] === static::DPD_DELIVERY_CODE;
+    }
+
+    /**
+     * @param string $code
+     *
+     * @throws NotFoundException
+     * @return int
+     */
+    public function getDeliveryIdByCode(string $code): int
+    {
+        return (int)$this->getDeliveryByCode($code)['ID'];
+    }
+
+    /**
+     * @param string $code
+     *
+     * @throws NotFoundException
+     * @return array
+     */
+    public function getDeliveryByCode(string $code): array
+    {
+        $delivery = DeliveryServiceTable::getList(['filter' => ['CODE' => $code]])->fetch();
+        if (!$delivery) {
+            throw new NotFoundException('Delivery service not found');
+        }
+
+        return $delivery;
+    }
+
+    /**
+     * @param int $id
+     *
+     * @throws NotFoundException
+     * @return string
+     */
+    public function getDeliveryCodeById(int $id): string
+    {
+        $delivery = DeliveryServiceTable::getList(['filter' => ['ID' => $id]])->fetch();
+        if (!$delivery) {
+            throw new NotFoundException('Delivery service not found');
+        }
+
+        return $delivery['CODE'];
+    }
+
+    /**
+     * @param CalculationResult $delivery
+     *
+     * @return StockResultCollection
+     */
+    public function getStockResultByDelivery(CalculationResult $delivery): StockResultCollection
+    {
+        /** @var StockResultCollection $stockResult */
+        $stockResult = $delivery->getData()['STOCK_RESULT'];
+        if (!$stockResult instanceof StockResultCollection) {
+            throw new InvalidArgumentException('Stock result not defined');
+        }
+
+        return $stockResult;
+    }
+
+    /**
+     * Получение терминалов DPD
+     *
+     * @param string $locationCode код местоположения
+     * @param bool $withCod только те, где возможен наложенный платеж
+     * @param float $sum сумма наложенного платежа
+     *
+     * @return StoreCollection
+     */
+    public function getDpdTerminalsByLocation(
+        string $locationCode,
+        bool $withCod = true,
+        float $sum = 0
+    ): StoreCollection {
+        $result = new StoreCollection();
+
+        $getTerminals = function () use ($locationCode) {
+            $terminals = TerminalTable::query()
+                                      ->setSelect(['*'])
+                                      ->setFilter(['LOCATION.CODE' => $locationCode])
+                                      ->registerRuntimeField(
+                                          new ReferenceField(
+                                              'LOCATION',
+                                              LocationTable::class,
+                                              ['=this.LOCATION_ID' => 'ref.ID'],
+                                              ['join_type' => 'INNER']
+                                          )
+                                      )
+                                      ->exec();
+
+            return ['result' => $terminals->fetchAll()];
+        };
+
+        /** @var array $terminals */
+        $terminals = (new BitrixCache())
+            ->withId(__METHOD__ . $locationCode)
+            ->resultOf($getTerminals)['result'];
+
+        if ($withCod) {
+            $terminals = array_filter(
+                $terminals,
+                function ($item) use ($sum) {
+                    return ($item['NPP_AVAILABLE'] === 'Y') && ($item['NPP_AMOUNT'] >= $sum);
+                }
+            );
+        }
+
+        foreach ($terminals as $terminal) {
+            $store = new Store();
+            $store->setTitle((string)$terminal['NAME'])
+                  ->setLocation($locationCode)
+                  ->setAddress((string)$terminal['ADDRESS_SHORT'])
+                  ->setCode((string)$terminal['CODE'])
+                  ->setXmlId((string)$terminal['CODE'])
+                  ->setLatitude((float)$terminal['LATITUDE'])
+                  ->setLongitude((float)$terminal['LONGITUDE'])
+                  ->setLocationId((int)$terminal['LOCATION_ID'])
+                  ->setSchedule((string)$terminal['SCHEDULE_SELF_DELIVERY'])
+                  ->setDescription((string)$terminal['ADDRESS_DESCR']);
+            $result[$store->getXmlId()] = $store;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param $code
+     *
+     * @throws NotFoundException
+     * @return Store
+     */
+    public function getDpdTerminalByCode($code): Store
+    {
+        $getTerminal = function () use ($code) {
+            $terminal = TerminalTable::query()->setSelect(['*', 'LOCATION.CODE'])
+                                     ->setFilter(['CODE' => $code])
+                                     ->registerRuntimeField(
+                                         new ReferenceField(
+                                             'LOCATION',
+                                             LocationTable::class,
+                                             ['=this.LOCATION_ID' => 'ref.ID'],
+                                             ['join_type' => 'INNER']
+                                         )
+                                     )
+                                     ->exec()->fetch();
+            if (!$terminal) {
+                throw new NotFoundException('Терминал не найден');
+            }
+
+            return ['result' => $terminal];
+        };
+
+        /** @var array $terminals */
+        $terminal = (new BitrixCache())
+            ->withId(__METHOD__ . $code)
+            ->resultOf($getTerminal)['result'];
+
+        $store = new Store();
+        $store->setTitle($terminal['NAME'])
+              ->setLocation($terminal['FOURPAWS_DELIVERYBUNDLE_DPD_TERMINAL_LOCATION_CODE'])
+              ->setAddress($terminal['ADDRESS_SHORT'])
+              ->setCode($terminal['CODE'])
+              ->setXmlId($terminal['CODE'])
+              ->setLatitude($terminal['LATITUDE'])
+              ->setLongitude($terminal['LONGITUDE'])
+              ->setLocationId($terminal['LOCATION_ID'])
+              ->setSchedule($terminal['SCHEDULE_SELF_DELIVERY'])
+              ->setDescription($terminal['ADDRESS_DESCR']);
+
+        return $store;
+    }
+
+    protected function generateShipment(string $locationCode, BasketBase $basket = null): Shipment
     {
         $order = Order::create(
             SITE_ID,
-            $this->userService->getAnonymousUserId(),
+            null,
             CurrencyManager::getBaseCurrency()
         );
 
-        $basket = Basket::createFromRequest([]);
-        if ($offer) {
-            $basketItem = BasketItem::create($basket, 'sale', $offer->getId());
-            $basketItem->setFieldNoDemand('CAN_BUY', 'Y');
-            $basketItem->setFieldNoDemand('PRICE', $offer->getPrice());
-            $basketItem->setFieldNoDemand('QUANTITY', 1);
-            $basket->addItem($basketItem);
+        $order->setMathActionOnly(true);
+
+        if (!$basket) {
+            $basket = Basket::createFromRequest([]);
         }
+
         $order->setBasket($basket);
 
         $propertyCollection = $order->getPropertyCollection();

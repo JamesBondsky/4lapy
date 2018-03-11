@@ -3,8 +3,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+use Bitrix\Main\Application;
 use FourPaws\App\Application as App;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\ReCaptcha\ReCaptchaService;
+
+$request = Application::getInstance()->getContext()->getRequest();
+$backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
 
 /** @var string $phone
  * @var string $newAction
@@ -22,7 +27,7 @@ use FourPaws\ReCaptcha\ReCaptchaService;
        title="Сменить номер"
        data-url="/ajax/user/auth/register/"
        data-action="get"
-       data-step="step1"
+       data-step="<?= !empty($newAction) ? 'addPhone' : 'step1' ?>"
        data-phone="<?= $phone ?>">Сменить номер</a>
     <form class="b-registration__form js-form-validation js-registration-form"
           id="reg-step3-form"
@@ -30,6 +35,7 @@ use FourPaws\ReCaptcha\ReCaptchaService;
           method="post">
         <input type="hidden" name="action" value="<?= !empty($newAction) ? $newAction : 'get' ?>">
         <input type="hidden" name="step" value="step2">
+        <input type="hidden" name="backurl" value="<?=$backUrl?>">
         <input type="hidden" name="phone" value="<?= $phone ?>">
         <div class="b-input-line b-input-line--add-number js-phone3-resend js-resend">
             <div class="b-input-line__label-wrapper">
@@ -40,7 +46,7 @@ use FourPaws\ReCaptcha\ReCaptchaService;
                        type="text"
                        id="sms-code-3"
                        placeholder=""
-                       name="confirmCode" />
+                       name="confirmCode"/>
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
@@ -51,10 +57,14 @@ use FourPaws\ReCaptcha\ReCaptchaService;
                data-action="resendSms"
                title="Отправить снова">Отправить снова</a>
         </div>
-        <?php /** @var ReCaptchaService $recaptchaService */
-        /** @noinspection PhpUnhandledExceptionInspection */
-        $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
-        echo $recaptchaService->getCaptcha(' b-registration__captcha') ?>
+        <?php
+        if($_SESSION['COUNT_REGISTER_CONFIRM_CODE'] >= 3) {
+            try {
+                $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
+                echo $recaptchaService->getCaptcha('', true);
+            } catch (ApplicationCreateException $e) {
+            }
+        }?>
         <button class="b-button b-button--social b-button--full-width">Подтвердить</button>
     </form>
 </div>

@@ -13,7 +13,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
-
 $frame = $this->createFrame(); ?>
 <div class="b-stores__block">
     <h2 class="b-title b-title--stores">Ваш город</h2>
@@ -25,10 +24,10 @@ $frame = $this->createFrame(); ?>
        data-popup-id="pick-city"><?= $arResult['CITY'] ?></a>
     <div class="b-stores-sort">
         <?php if (\is_array($arResult['SERVICES']) && !empty($arResult['SERVICES'])) {
-            ?>
+    ?>
             <div class="b-stores-sort__checkbox-block" data-url="/ajax/store/list/checkboxFilter/">
                 <?php foreach ($arResult['SERVICES'] as $key => $service) {
-                    ?>
+        ?>
                     <div class="b-checkbox b-checkbox--stores">
                         <input class="b-checkbox__input"
                                type="checkbox"
@@ -42,10 +41,10 @@ $frame = $this->createFrame(); ?>
                         </label>
                     </div>
                     <?php
-                } ?>
+    } ?>
             </div>
             <?php
-        } ?>
+} ?>
         <div class="b-form-inline b-form-inline--stores-search">
             <form class="b-form-inline__form" data-url="/ajax/store/list/search/">
                 <div class="b-input b-input--stores-search js-stores-search">
@@ -82,10 +81,13 @@ $frame = $this->createFrame(); ?>
                         <select class="b-select__block b-select__block--stores"
                                 name="sort"
                                 data-url="/ajax/store/list/order/" title="Сортировать">
-                            <option value="city">по городу</option>
+                            <option value="" disabled="disabled">выберите</option>
                             <option value="address">по адресу</option>
-                            <option value="metro"<?= (!isset($arResult['METRO'])
-                                                      || empty($arResult['METRO'])) ? ' style="display:none"' : '' ?>>по метро</option>
+                            <?php if (!empty($arResult['METRO'])) {
+                        ?>
+                                <option value="metro">по метро</option>
+                            <?php
+                    } ?>
                         </select>
                         <span class="b-select__arrow"></span>
                     </span>
@@ -116,7 +118,7 @@ $frame = $this->createFrame(); ?>
                    href="javascript:void(0);">Выберите магазин</a>
                 <div class="b-tab-delivery-map__map"
                      id="map"
-                     data-url="/ajax/store/list/chooseCity/"></div>
+                     data-url="/ajax/store/list/chooseCity/<?=!empty($arResult['ACTIVE_STORE_ID']) ? '?active_store_id='.$arResult['ACTIVE_STORE_ID'] : ''?>"></div>
                 <a class="b-link b-link--close-baloon js-product-list"
                    href="javascript:void(0);"
                    title="">

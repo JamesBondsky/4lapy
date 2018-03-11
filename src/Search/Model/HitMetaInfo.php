@@ -26,7 +26,7 @@ class HitMetaInfo
         $self = new self();
 
         $hit = $result->getHit();
-        if (isset($hit['matched_queries']) && is_array($hit['matched_queries'])) {
+        if (isset($hit['matched_queries']) && \is_array($hit['matched_queries'])) {
             $self->withMatchedQueries($hit['matched_queries']);
         }
 
@@ -77,5 +77,4 @@ class HitMetaInfo
 
         return $this;
     }
-
 }

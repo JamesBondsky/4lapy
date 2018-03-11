@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Service\Materials;
 
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
@@ -13,7 +17,6 @@ use FourPaws\Enum\IblockType;
 use FourPaws\SapBundle\Dto\In\Offers\Material;
 use FourPaws\SapBundle\Enum\SapProductField;
 use FourPaws\SapBundle\Enum\SapProductProperty;
-use FourPaws\SapBundle\Repository\BrandRepository;
 use FourPaws\SapBundle\Repository\ProductRepository;
 use FourPaws\SapBundle\Service\ReferenceService;
 
@@ -25,25 +28,29 @@ class ProductService
     private $referenceService;
 
     /**
-     * @var BrandRepository
-     */
-    private $brandRepository;
-
-    /**
      * @var ProductRepository
      */
     private $productRepository;
 
     public function __construct(
         ReferenceService $referenceService,
-        BrandRepository $brandRepository,
         ProductRepository $productRepository
     ) {
         $this->referenceService = $referenceService;
-        $this->brandRepository = $brandRepository;
         $this->productRepository = $productRepository;
     }
 
+    /**
+     * @param Material $material
+     *
+     * @throws \RuntimeException
+     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
+     * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
+     * @throws \FourPaws\SapBundle\Exception\LogicException
+     * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
+     * @throws IblockNotFoundException
+     * @return Product
+     */
     public function processMaterial(Material $material): Product
     {
         $product = $this->findByMaterial($material) ?: new Product();
@@ -80,29 +87,12 @@ class ProductService
      */
     protected function findByMaterial(Material $material)
     {
-        $product = $this->findByOffer($material->getOfferXmlId());
-        $product = $product ?: $this->findByCombination(
+        $product = $this->findByCombination(
             $material->getProperties()->getPropertyValues(
                 SapProductProperty::PACKING_COMBINATION
             )->first()
         );
-        return $product;
-    }
-
-    /**
-     * @param Product  $product
-     * @param Material $material
-     *
-     * @throws \RuntimeException
-     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
-     * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
-     * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
-     * @throws \FourPaws\SapBundle\Exception\LogicException
-     */
-    protected function fillProduct(Product $product, Material $material)
-    {
-        $this->fillFields($product, $material);
-        $this->fillProperties($product, $material);
+        return $product ?: $this->findByOfferWithoutCombination($material->getOfferXmlId());
     }
 
     /**
@@ -127,19 +117,48 @@ class ProductService
      * @throws IblockNotFoundException
      * @return null|IblockElement|Product
      */
-    protected function findByOffer(string $xmlId)
+    protected function findByOfferWithoutCombination(string $xmlId)
     {
-        $dbResult = \CIBlockElement::GetList([], [
-            '!PROPERTY_CML2_LINK' => false,
-            'IBLOCK_ID'           => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
-            'XML_ID'              => $xmlId,
-        ], false, false, ['PROPERTY_CML2_LINK']);
+        $dbResult = \CIBlockElement::GetList(
+            [],
+            [
+                '!PROPERTY_CML2_LINK' => false,
+                'IBLOCK_ID'           => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
+                'XML_ID'              => $xmlId,
+            ],
+            false,
+            false,
+            [
+                'PROPERTY_CML2_LINK',
+                'PROPERTY_CML2_LINK.PROPERTY_PACKING_COMBINATION',
+            ]
+        );
         $data = $dbResult->Fetch();
         $id = $data['PROPERTY_CML2_LINK_VALUE'] ?? 0;
-        if ($id) {
-            return $this->productRepository->find($id);
+        /**
+         * Если найденный товар уже привязан к комбинации - игнорируем его
+         * Поиск по комбинации осуществляется отдельно
+         */
+        if (!$id || $data['PROPERTY_CML2_LINK_PROPERTY_PACKING_COMBINATION_VALUE'] ?? 0) {
+            return null;
         }
-        return null;
+        return $this->productRepository->find($id);
+    }
+
+    /**
+     * @param Product  $product
+     * @param Material $material
+     *
+     * @throws \RuntimeException
+     * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
+     * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
+     * @throws \FourPaws\SapBundle\Exception\CantCreateReferenceItem
+     * @throws \FourPaws\SapBundle\Exception\LogicException
+     */
+    protected function fillProduct(Product $product, Material $material)
+    {
+        $this->fillFields($product, $material);
+        $this->fillProperties($product, $material);
     }
 
     /**
@@ -148,8 +167,21 @@ class ProductService
      */
     protected function fillFields(Product $product, Material $material)
     {
-        $product
-            ->withName($material->getProductName() ?: $material->getOfferName());
+        if ($material->getProductName()) {
+            $product->withName($material->getProductName());
+        }
+        if (!$product->getName()) {
+            $product->withName($material->getProductName() ?: $material->getOfferName());
+        }
+
+        if (!$product->getId()) {
+            /**
+             * По умолчанию создающиеся товары должны быть деактивированными
+             */
+            $product->withActive(false);
+        } else {
+            $product->withActive(!$material->isNotUploadToIm());
+        }
     }
 
     /**
@@ -308,6 +340,7 @@ class ProductService
      * @param Product  $product
      * @param Material $material
      *
+     * @throws \RuntimeException
      * @throws \FourPaws\SapBundle\Exception\NotFoundReferenceRepositoryException
      * @throws \FourPaws\SapBundle\Exception\NotFoundDataManagerException
      * @throws \FourPaws\SapBundle\Exception\LogicException

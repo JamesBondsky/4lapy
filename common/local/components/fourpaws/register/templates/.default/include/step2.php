@@ -4,8 +4,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+use Bitrix\Main\Application;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\External\Manzana\Model\Client;
+
+$request = Application::getInstance()->getContext()->getRequest();
+$backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
 
 /** @var Client $manzanaItem
  * @var string $phone
@@ -19,7 +23,8 @@ use FourPaws\External\Manzana\Model\Client;
           method="post">
         <input type="hidden" name="action" value="register">
         <input type="hidden" name="PERSONAL_PHONE" value="<?= $phone ?>">
-        <div class="b-input-line b-input-line--user-data js-no-valid">
+        <input type="hidden" name="backurl" value="<?=$backUrl?>">
+        <div class="b-input-line b-input-line--user-data js-hidden-valid-fields js-small-input-two">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-surname">Фамилия</label>
             </div>
@@ -30,12 +35,12 @@ use FourPaws\External\Manzana\Model\Client;
                        name="LAST_NAME"
                        data-text="0"
                        type="text"
-                       value="<?= $manzanaItem instanceof Client ? $manzanaItem->lastName : '' ?>" />
+                       value="<?= $manzanaItem instanceof Client ? $manzanaItem->lastName : '' ?>"/>
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
         </div>
-        <div class="b-input-line b-input-line--user-data js-small-input">
+        <div class="b-input-line b-input-line--user-data js-small-input-two">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-name">Имя</label>
                 <span class="b-input-line__require">(обязательно)</span>
@@ -47,7 +52,7 @@ use FourPaws\External\Manzana\Model\Client;
                        name="NAME"
                        data-text="1"
                        placeholder=""
-                       value="<?= $manzanaItem instanceof Client ? $manzanaItem->firstName : '' ?>" />
+                       value="<?= $manzanaItem instanceof Client ? $manzanaItem->firstName : '' ?>"/>
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
@@ -63,7 +68,7 @@ use FourPaws\External\Manzana\Model\Client;
                        name="SECOND_NAME"
                        data-text="2"
                        placeholder=""
-                       value="<?= $manzanaItem instanceof Client ? $manzanaItem->secondName : '' ?>" />
+                       value="<?= $manzanaItem instanceof Client ? $manzanaItem->secondName : '' ?>"/>
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
@@ -79,14 +84,15 @@ use FourPaws\External\Manzana\Model\Client;
                        name="PERSONAL_BIRTHDAY"
                        data-text="3"
                        placeholder=""
-                       value="<?= $manzanaItem instanceof Client ? $manzanaItem->birthDate : '' ?>" />
+                       value="<?= $manzanaItem instanceof Client ? $manzanaItem->getBirthDateFormated() : '' ?>"/>
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
         </div>
-        <div class="b-input-line b-input-line--user-data js-small-input">
+        <div class="b-input-line b-input-line--user-data">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-email">Эл. почта</label>
+                <span class="b-input-line__require">(обязательно)</span>
             </div>
             <div class="b-input b-input--registration-form">
                 <input class="b-input__input-field b-input__input-field--registration-form"
@@ -94,12 +100,12 @@ use FourPaws\External\Manzana\Model\Client;
                        id="registration-email"
                        name="EMAIL"
                        placeholder=""
-                       value="<?= $manzanaItem instanceof Client ? $manzanaItem->email : '' ?>" />
+                       value="<?= $manzanaItem instanceof Client ? $manzanaItem->email : '' ?>"/>
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
         </div>
-        <div class="b-input-line b-input-line--user-data js-small-input">
+        <div class="b-input-line b-input-line--user-data">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-password-5">Пароль</label>
                 <span class="b-input-line__require">(обязательно)</span>
@@ -109,7 +115,7 @@ use FourPaws\External\Manzana\Model\Client;
                        type="password"
                        id="registration-password-5"
                        name="PASSWORD"
-                       placeholder="" />
+                       placeholder=""/>
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
@@ -125,7 +131,7 @@ use FourPaws\External\Manzana\Model\Client;
                        id="registration-male"
                        value="M"
                        data-radio="0"
-                       checked="checked" />
+                       <?=$manzanaItem instanceof Client && (int)$manzanaItem->genderCode === 1 ? 'checked="checked"' : ''?>/>
                 <label class="b-radio__label" for="registration-male"><span class="b-radio__text-label">мужской</span>
                 </label>
             </div>
@@ -135,33 +141,39 @@ use FourPaws\External\Manzana\Model\Client;
                        name="PERSONAL_GENDER"
                        id="registration-female"
                        value="F"
-                       data-radio="1" />
+                       data-radio="1"
+                    <?=$manzanaItem instanceof Client && (int)$manzanaItem->genderCode === 2 ? 'checked="checked"' : ''?>
+                />
                 <label class="b-radio__label" for="registration-female"><span class="b-radio__text-label">женский</span>
                 </label>
             </div>
         </div>
         <div class="b-checkbox b-checkbox--agree">
-            <input class="b-checkbox__input" type="checkbox" name="UF_CONFIRMATION" id="registration-agree" required />
+            <input class="b-checkbox__input" type="checkbox" name="UF_CONFIRMATION" id="registration-agree" required/>
             <label class="b-checkbox__name b-checkbox__name--agree" for="registration-agree">
                 <span class="b-checkbox__text-agree">Я ознакомлен(а) и соглашаюсь с условиями
                     <a class="b-checkbox__link-agree"
                        href="/company/user-agreement/"
-                       title="пользовательского соглашения">пользовательского соглашения.</a>
+                       title="пользовательского соглашения"
+                       target="_blank">пользовательского соглашения.</a>
                 </span>
                 <span class="b-checkbox__text-agree">Я даю согласие на
                     <a class="b-checkbox__link-agree"
                        href="/company/privacy-policy/"
-                       title="обработку персональных данных">обработку персональных данных.</a>
+                       title="обработку персональных данных"
+                       target="_blank">обработку персональных данных.</a>
                 </span>
             </label>
         </div>
         <button class="b-button b-button--social b-button--full-width">Зарегистрироваться</button>
     </form>
-    <a class="b-registration__back" href="javascript:void(0);" title="Назад" data-action="get"
+    <a class="b-registration__back js-reg3-back" href="javascript:void(0);" title="Назад"
+       data-url="/ajax/user/auth/register/"
+       data-action="get"
        data-step="step1"
        data-phone="<?= $phone ?>">
         <span class="b-icon b-icon--back-long">
-            <?= new SvgDecorator('icon-back-form', 13, 21) ?>
+            <?= new SvgDecorator('icon-back-form', 13, 11) ?>
         </span>Назад
     </a>
 </div>

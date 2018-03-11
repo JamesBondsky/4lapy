@@ -27,6 +27,14 @@ services:
         class: FourPaws\PersonalBundle\Service\ReferralService
         public: true
 
+    bonus.service:
+        class: FourPaws\PersonalBundle\Service\BonusService
+        public: true
+
+    order.service:
+        class: FourPaws\PersonalBundle\Service\OrderService
+        public: true
+
     FourPaws\PersonalBundle\AjaxController\:
         resource: '../../AjaxController'
         public: true

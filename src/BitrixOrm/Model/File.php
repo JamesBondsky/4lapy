@@ -38,6 +38,10 @@ class File implements FileInterface
      */
     public function __construct(array $fields = [])
     {
+        if ($fields['src']) {
+            $this->setSrc($fields['src']);
+        }
+        
         $this->fields = $fields;
     }
 

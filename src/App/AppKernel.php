@@ -1,15 +1,18 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\App;
 
 use Circle\RestClientBundle\CircleRestClientBundle;
 use Cocur\Slugify\Bridge\Symfony\CocurSlugifyBundle;
 use FOS\RestBundle\FOSRestBundle;
-
-use FourPaws\FoodSelectionBundle\FourPawsFoodSelectionBundle;
 use FourPaws\AppBundle\FourPawsAppBundle;
 use FourPaws\CatalogBundle\FourPawsCatalogBundle;
 use FourPaws\DeliveryBundle\FourPawsDeliveryBundle;
+use FourPaws\FoodSelectionBundle\FourPawsFoodSelectionBundle;
 use FourPaws\MobileApiBundle\FourPawsMobileApiBundle;
 use FourPaws\PersonalBundle\FourPawsPersonalBundle;
 use FourPaws\SaleBundle\FourPawsSaleBundle;
@@ -132,9 +135,10 @@ class AppKernel extends Kernel
         /**
          * Ввиду использования вагранта симфони не может очистить директорию, которая используется по умолчанию
          */
-        if ($this->getEnvironment() === 'dev') {
+        if (is_dir('/home/vagrant') || is_dir('/vagrant')) {
             return '/tmp/sfcache/' . $this->getEnvironment();
         }
+    
         return $this->getRootDir() . static::CACHE_DIR . '/' . $this->getEnvironment();
     }
 

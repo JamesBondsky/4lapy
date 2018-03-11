@@ -28,10 +28,10 @@ class FourPawsPersonalCabinetAddressComponent extends CBitrixComponent
      * @var AddressService
      */
     private $addressService;
-    
+
     /** @var UserAuthorizationInterface */
     private $authUserProvider;
-    
+
     /**
      * AutoloadingIssuesInspection constructor.
      *
@@ -53,10 +53,10 @@ class FourPawsPersonalCabinetAddressComponent extends CBitrixComponent
             /** @noinspection PhpUnhandledExceptionInspection */
             throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
         }
-        $this->addressService   = $container->get('address.service');
+        $this->addressService = $container->get('address.service');
         $this->authUserProvider = $container->get(UserAuthorizationInterface::class);
     }
-    
+
     /**
      * {@inheritdoc}
      * @throws \Exception
@@ -72,17 +72,18 @@ class FourPawsPersonalCabinetAddressComponent extends CBitrixComponent
     {
         if (!$this->authUserProvider->isAuthorized()) {
             define('NEED_AUTH', true);
-            
+
             return null;
         }
-        
+
         $this->setFrameMode(true);
-        
+
+        /** @todo проверить кеширование - возможно его надо будет сбрасывать по тегу */
         if ($this->startResultCache()) {
-            $this->arResult['ITEMS'] = $this->addressService->getCurUserAddresses();
+            $this->arResult['ITEMS'] = $this->addressService->getAddressesByUser();
             $this->includeComponentTemplate();
         }
-        
+
         return true;
     }
 }

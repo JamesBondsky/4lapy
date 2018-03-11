@@ -3,47 +3,58 @@
 namespace FourPaws\SapBundle\Service;
 
 use FourPaws\SapBundle\Consumer\ConsumerRegistryInterface;
-use FourPaws\SapBundle\Dto\In\Offers\Materials;
-use FourPaws\SapBundle\Model\SourceMessageInterface;
+use FourPaws\SapBundle\Exception\NotFoundPipelineException;
+use FourPaws\SapBundle\Pipeline\PipelineRegistry;
 use FourPaws\SapBundle\Source\SourceRegistryInterface;
 
+/**
+ * Class SapService
+ *
+ * @package FourPaws\SapBundle\Service
+ */
 class SapService
 {
     /**
      * @var ConsumerRegistryInterface
      */
     private $consumerRegistry;
+
     /**
      * @var SourceRegistryInterface
      */
     private $sourceRegistry;
 
-    public function __construct(ConsumerRegistryInterface $consumerRegistry, SourceRegistryInterface $sourceRegistry)
+    /**
+     * @var PipelineRegistry
+     */
+    private $pipelineRegistry;
+
+    public function __construct(
+        ConsumerRegistryInterface $consumerRegistry,
+        SourceRegistryInterface $sourceRegistry,
+        PipelineRegistry $pipelineRegistry
+    )
     {
         $this->consumerRegistry = $consumerRegistry;
         $this->sourceRegistry = $sourceRegistry;
-    }
-
-    public function processIn()
-    {
-        foreach ($this->inPipeLine() as $sourceMessage) {
-            if ($this->consumerRegistry->consume($sourceMessage->getData())) {
-                $this->sourceRegistry->ack($sourceMessage);
-                continue;
-            }
-            $this->sourceRegistry->noAck($sourceMessage);
-        }
+        $this->pipelineRegistry = $pipelineRegistry;
     }
 
     /**
-     * @return \Generator|SourceMessageInterface[]
+     *
+     * @param string $pipelineCode
+     * @throws NotFoundPipelineException
      */
-    protected function inPipeLine()
+    public function execute(string $pipelineCode)
     {
-        yield from $this->sourceRegistry->generator(Materials::class);
-//        yield from $this->sourceRegistry->generator(Prices::class);
-        //yield from $this->source->get(Remains::class);
-        //yield from $this->source->get(Actions::class);
-        //
+        foreach ($this->pipelineRegistry->generator($pipelineCode) as $sourceMessage) {
+            if ($this->consumerRegistry->consume($sourceMessage->getData())) {
+                $this->sourceRegistry->ack($sourceMessage);
+
+                continue;
+            }
+
+            $this->sourceRegistry->noAck($sourceMessage);
+        }
     }
 }

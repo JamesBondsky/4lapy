@@ -2,21 +2,21 @@
 $aMenuLinks = Array(
 	Array(
 		"Клубы и питомники", 
-		"/services/breeders/", 
+		"https://breeders.4lapy.ru/catalog/?owners=clubs",
 		Array(), 
 		Array(), 
 		"" 
 	),
 	Array(
 		"Доска объявлений", 
-		"/services/advertisements/", 
+		"https://breeders.4lapy.ru/advertisements/",
 		Array(), 
 		Array(), 
 		"" 
 	),
 	Array(
 		"Зоогостиницы", 
-		"", 
+		"https://breeders.4lapy.ru/catalog/?owners=hotels",
 		Array(), 
 		Array(), 
 		"" 

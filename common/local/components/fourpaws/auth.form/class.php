@@ -15,14 +15,11 @@ use Bitrix\Main\LoaderException;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
-use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
-use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
+use FourPaws\AppBundle\Service\AjaxMess;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Exception\SmsSendErrorException;
-use FourPaws\External\Manzana\Exception\ManzanaException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
@@ -50,22 +47,25 @@ use Symfony\Component\HttpFoundation\Request;
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsAuthFormComponent extends \CBitrixComponent
 {
-    const MODE_PROFILE   = 0;
-    
-    const MODE_FORM      = 1;
-    
+    const MODE_PROFILE = 0;
+
+    const MODE_FORM = 1;
+
     const PHONE_HOT_LINE = '8 (800) 770-00-22';
-    
+
     /**
      * @var CurrentUserProviderInterface
      */
     private $currentUserProvider;
-    
+
     /**
      * @var UserAuthorizationInterface
      */
     private $userAuthorizationService;
-    
+
+    /** @var AjaxMess */
+    private $ajaxMess;
+
     /**
      * FourPawsAuthFormComponent constructor.
      *
@@ -87,10 +87,11 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             /** @noinspection PhpUnhandledExceptionInspection */
             throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
         }
-        $this->currentUserProvider      = $container->get(CurrentUserProviderInterface::class);
+        $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
         $this->userAuthorizationService = $container->get(UserAuthorizationInterface::class);
+        $this->ajaxMess = $container->get('ajax.mess');
     }
-    
+
     /** {@inheritdoc} */
     public function executeComponent()
     {
@@ -99,7 +100,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             if ($this->getMode() === static::MODE_FORM) {
                 $this->arResult['STEP'] = 'begin';
             }
-            
+
             if ($this->userAuthorizationService->isAuthorized()) {
                 $curUser = $this->currentUserProvider->getCurrentUser();
                 if (!empty($curUser->getExternalAuthId() && empty($curUser->getPersonalPhone()))) {
@@ -109,6 +110,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 }
             }
             $this->setSocial();
+            unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
             $this->includeComponentTemplate();
         } catch (\Exception $e) {
             try {
@@ -118,23 +120,312 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             }
         }
     }
-    
+
     /**
      * @return int
      */
-    public function getMode() : int
+    public function getMode(): int
     {
         return $this->getUserAuthorizationService()->isAuthorized() ? static::MODE_PROFILE : static::MODE_FORM;
     }
-    
+
     /**
      * @return UserAuthorizationInterface
      */
-    public function getUserAuthorizationService() : UserAuthorizationInterface
+    public function getUserAuthorizationService(): UserAuthorizationInterface
     {
         return $this->userAuthorizationService;
     }
-    
+
+    /**
+     * @return CurrentUserProviderInterface
+     */
+    public function getCurrentUserProvider(): CurrentUserProviderInterface
+    {
+        return $this->currentUserProvider;
+    }
+
+    /**
+     * @param string $rawLogin
+     * @param string $password
+     * @param string $backUrl
+     *
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \Bitrix\Main\SystemException
+     * @throws ServiceNotFoundException
+     * @throws ApplicationCreateException
+     * @throws \RuntimeException
+     * @throws ServiceCircularReferenceException
+     * @return JsonResponse
+     * @throws LoaderException
+     */
+    public function ajaxLogin(string $rawLogin, string $password, string $backUrl = ''): JsonResponse
+    {
+        $needWritePhone = false;
+        if (empty($rawLogin)) {
+            return $this->ajaxMess->getEmptyDataError();
+        }
+        if (empty($password)) {
+            return $this->ajaxMess->getEmptyPasswordError();
+        }
+        $checkedCaptcha = true;
+        if ((int)$_SESSION['COUNT_AUTH_AUTHORIZE'] > 3) {
+            try {
+                $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
+                $checkedCaptcha = $recaptchaService->checkCaptcha();
+            } catch (ApplicationCreateException $e) {
+                return $this->ajaxMess->getSystemError();
+            }
+        }
+        if (!$checkedCaptcha) {
+            return $this->ajaxMess->getFailCaptchaCheckError();
+        }
+        try {
+            if (!isset($_SESSION['COUNT_AUTH_AUTHORIZE'])) {
+                $_SESSION['COUNT_AUTH_AUTHORIZE'] = 0;
+            }
+            $_SESSION['COUNT_AUTH_AUTHORIZE']++;
+            $this->userAuthorizationService->login($rawLogin, $password);
+            if ($this->userAuthorizationService->isAuthorized()
+                && !$this->currentUserProvider->getCurrentUser()->havePersonalPhone()) {
+                $needWritePhone = true;
+            }
+        } catch (UsernameNotFoundException $e) {
+            if ($_SESSION['COUNT_AUTH_AUTHORIZE'] === 3) {
+                $this->setSocial();
+                $html = $this->getHtml('begin', '',
+                    ['isAjax' => true, 'backurl' => $backUrl, 'arResult' => $this->arResult]);
+
+                return JsonSuccessResponse::createWithData('',
+                    ['html' => $html]);
+            }
+            return $this->ajaxMess->getWrongPasswordError();
+        } catch (InvalidCredentialException $e) {
+            if ($_SESSION['COUNT_AUTH_AUTHORIZE'] === 3) {
+                $this->setSocial();
+                $html = $this->getHtml('begin', '',
+                    ['isAjax' => true, 'backurl' => $backUrl, 'arResult' => $this->arResult]);
+
+                return JsonSuccessResponse::createWithData('', ['html' => $html]);
+            }
+            return $this->ajaxMess->getWrongPasswordError();
+        } catch (TooManyUserFoundException $e) {
+            /** @noinspection PhpUnhandledExceptionInspection */
+            /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+            $logger = LoggerFactory::create('auth');
+            $logger->critical('Найдено больше одного совпадения по логину/email/телефону ' . $rawLogin);
+
+            return $this->ajaxMess->getTooManyUserFoundException($this->getSitePhone(), $rawLogin);
+        } catch (\Exception $e) {
+            return $this->ajaxMess->getSystemError();
+        }
+
+        unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
+        if (!$needWritePhone) {
+            return JsonSuccessResponse::create('Вы успешно авторизованы.', 200, [], ['reload' => true]);
+        }
+
+        $html = $this->getHtml('addPhone', 'Добавление телефона');
+
+        return JsonSuccessResponse::createWithData('Необходимо заполнить номер телефона', ['html' => $html]);
+    }
+
+    /**
+     * @param string $phone
+     *
+     * @throws ServiceNotFoundException
+     * @return JsonResponse
+     */
+    public function ajaxResendSms($phone): JsonResponse
+    {
+        try {
+            $phone = PhoneHelper::normalizePhone($phone);
+        } catch (WrongPhoneNumberException $e) {
+            return $this->ajaxMess->getWrongPhoneNumberException();
+        }
+
+        try {
+            /** @var ConfirmCodeService $confirmService */
+            $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+            $res = $confirmService::sendConfirmSms($phone);
+            if (!$res) {
+                return $this->ajaxMess->getSmsSendErrorException();
+            }
+        } catch (SmsSendErrorException $e) {
+            return $this->ajaxMess->getSmsSendErrorException();
+        } catch (WrongPhoneNumberException $e) {
+            return $this->ajaxMess->getWrongPhoneNumberException();
+        } catch (\RuntimeException $e) {
+            return $this->ajaxMess->getSystemError();
+        } catch (\Exception $e) {
+            return $this->ajaxMess->getSystemError();
+        }
+
+        return JsonSuccessResponse::create('Смс успешно отправлено');
+    }
+
+    /**
+     * @param string $phone
+     *
+     * @param string $confirmCode
+     *
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \Bitrix\Main\SystemException
+     * @throws \RuntimeException
+     * @throws ValidationException
+     * @throws InvalidIdentifierException
+     * @throws ServiceNotFoundException
+     * @throws \Exception
+     * @throws ApplicationCreateException
+     * @throws BitrixRuntimeException
+     * @throws ConstraintDefinitionException
+     * @throws ServiceCircularReferenceException
+     * @return JsonResponse
+     */
+    public function ajaxSavePhone(string $phone, string $confirmCode): JsonResponse
+    {
+        try {
+            $container = App::getInstance()->getContainer();
+        } catch (ApplicationCreateException $e) {
+            return $this->ajaxMess->getSystemError();
+        }
+        try {
+            $phone = PhoneHelper::normalizePhone($phone);
+        } catch (WrongPhoneNumberException $e) {
+            return $this->ajaxMess->getWrongPhoneNumberException();
+        }
+
+        $checkedCaptcha = true;
+        if ($_SESSION['COUNT_AUTH_CONFIRM_CODE'] > 3) {
+            $recaptchaService = $container->get('recaptcha.service');
+            $checkedCaptcha = $recaptchaService->checkCaptcha();
+        }
+        if (!$checkedCaptcha) {
+            return $this->ajaxMess->getFailCaptchaCheckError();
+        }
+
+        try {
+            if (!isset($_SESSION['COUNT_AUTH_CONFIRM_CODE'])) {
+                $_SESSION['COUNT_AUTH_CONFIRM_CODE'] = 0;
+            }
+            $_SESSION['COUNT_AUTH_CONFIRM_CODE']++;
+            /** @var ConfirmCodeService $confirmService */
+            $confirmService = $container->get(ConfirmCodeInterface::class);
+            $res = $confirmService::checkConfirmSms(
+                $phone,
+                $confirmCode
+            );
+            if (!$res) {
+                if ($_SESSION['COUNT_AUTH_CONFIRM_CODE'] === 3) {
+                    $html = $this->getHtml('sendSmsCode', 'Подтверждение телефона',
+                        ['phone' => $phone]);
+
+                    return JsonSuccessResponse::createWithData('',
+                        ['html' => $html]);
+                }
+                return $this->ajaxMess->getWrongConfirmCode();
+            }
+        } catch (ExpiredConfirmCodeException $e) {
+            if ($_SESSION['COUNT_AUTH_CONFIRM_CODE'] === 3) {
+                $html = $this->getHtml('sendSmsCode', 'Подтверждение телефона',
+                    ['phone' => $phone]);
+
+                return JsonSuccessResponse::createWithData('',
+                    ['html' => $html]);
+            }
+            return $this->ajaxMess->getExpiredConfirmCodeException();
+        } catch (NotFoundConfirmedCodeException $e) {
+            if ($_SESSION['COUNT_AUTH_CONFIRM_CODE'] === 3) {
+                $html = $this->getHtml('sendSmsCode', 'Подтверждение телефона',
+                    ['phone' => $phone]);
+
+                return JsonSuccessResponse::createWithData('',
+                    ['html' => $html]);
+            }
+            return $this->ajaxMess->getNotFoundConfirmedCodeException();
+        } catch (WrongPhoneNumberException $e) {
+            return $this->ajaxMess->getWrongPhoneNumberException();
+        }
+
+        unset($_SESSION['COUNT_AUTH_CONFIRM_CODE']);
+        $data = [
+            'UF_PHONE_CONFIRMED' => true,
+        ];
+
+        if ($this->currentUserProvider->getUserRepository()->updateData(
+            $this->currentUserProvider->getCurrentUserId(),
+            $data
+        )) {
+            /** @var ManzanaService $manzanaService */
+            $manzanaService = $container->get('manzana.service');
+            $client = null;
+            try {
+                $contactId = $manzanaService->getContactIdByPhone(PhoneHelper::getManzanaPhone($phone));
+                $client = new Client();
+                $client->contactId = $contactId;
+                $client->phone = PhoneHelper::getManzanaPhone($phone);
+            } catch (ManzanaServiceException $e) {
+                $client = new Client();
+
+                try {
+                    $this->currentUserProvider->setClientPersonalDataByCurUser($client);
+                } catch (NotAuthorizedException $e) {
+                }
+            } catch (WrongPhoneNumberException $e) {
+                return $this->ajaxMess->getWrongPhoneNumberException();
+            }
+
+            if ($client instanceof Client) {
+                $manzanaService->updateContactAsync($client);
+            }
+        }
+
+        return JsonSuccessResponse::create('Телефон сохранен', 200, [], ['reload' => true]);
+    }
+
+    /**
+     * @param Request $request
+     *
+     * @throws ServiceNotFoundException
+     * @return JsonResponse
+     */
+    public function ajaxGet($request): JsonResponse
+    {
+        $mess = '';
+        $step = $request->get('step', '');
+        $phone = $request->get('phone', '');
+        try {
+            $phone = PhoneHelper::normalizePhone($phone);
+        } catch (WrongPhoneNumberException $e) {
+            return $this->ajaxMess->getWrongPhoneNumberException();
+        }
+        $title = 'Авторизация';
+        switch ($step) {
+            case 'addPhone':
+                $title = 'Добавление телефона';
+                break;
+            case 'sendSmsCode':
+                unset($_SESSION['COUNT_AUTH_CONFIRM_CODE']);
+                $title = 'Подтверждение телефона';
+                $mess = $this->ajaxGetSendSmsCode($phone);
+                if ($mess instanceof JsonResponse) {
+                    return $mess;
+                }
+                break;
+        }
+        $phone = PhoneHelper::formatPhone($phone, '+7 (%s%s%s) %s%s%s-%s%s-%s%s');
+        $html = $this->getHtml($step, $title, ['phone'=>$phone, 'step'=>$step]);
+
+        return JsonSuccessResponse::createWithData(
+            $mess,
+            [
+                'html'  => $html,
+                'step'  => $step,
+                'phone' => $phone ?? '',
+            ]
+        );
+    }
+
     /**
      * @throws LoaderException
      * @throws SystemException
@@ -142,20 +433,20 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
     protected function setSocial()
     {
         if (Loader::includeModule('socialservices')) {
-            $authManager                    = new \CSocServAuthManager();
-            $startParams['AUTH_SERVICES']   = false;
+            $authManager = new \CSocServAuthManager();
+            $startParams['AUTH_SERVICES'] = false;
             $startParams['CURRENT_SERVICE'] = false;
-            $startParams['FORM_TYPE']       = 'login';
-            $services                       = $authManager->GetActiveAuthServices($startParams);
-            
+            $startParams['FORM_TYPE'] = 'login';
+            $services = $authManager->GetActiveAuthServices($startParams);
+
             if (!empty($services)) {
                 $this->arResult['AUTH_SERVICES'] = $services;
-                $authServiceId                   =
+                $authServiceId =
                     Application::getInstance()->getContext()->getRequest()->get('auth_service_id');
                 if ($authServiceId !== ''
                     && isset($authServiceId, $this->arResult['AUTH_SERVICES'][$authServiceId])) {
                     $this->arResult['CURRENT_SERVICE'] = $authServiceId;
-                    $authServiceError                  =
+                    $authServiceError =
                         Application::getInstance()->getContext()->getRequest()->get('auth_service_error');
                     if (!empty($authServiceError)) {
                         $this->arResult['ERROR_MESSAGE'] = $authManager->GetError(
@@ -173,100 +464,14 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             }
         }
     }
-    
-    /**
-     * @return CurrentUserProviderInterface
-     */
-    public function getCurrentUserProvider() : CurrentUserProviderInterface
-    {
-        return $this->currentUserProvider;
-    }
-    
-    /**
-     * @param string $rawLogin
-     * @param string $password
-     *
-     * @throws ServiceNotFoundException
-     * @throws ApplicationCreateException
-     * @throws \RuntimeException
-     * @throws ServiceCircularReferenceException
-     * @return JsonResponse
-     */
-    public function ajaxLogin(string $rawLogin, string $password) : JsonResponse
-    {
-        $needWritePhone = false;
-        if (empty($rawLogin)) {
-            return JsonErrorResponse::createWithData(
-                'Не указан телефон или email',
-                ['errors' => ['emptyData' => 'Не указан телефон или email']]
-            );
-        }
-        if (empty($password)) {
-            return JsonErrorResponse::createWithData(
-                'Не указан пароль',
-                ['errors' => ['emptyPassword' => 'Не указан пароль']]
-            );
-        }
-        try {
-            $this->userAuthorizationService->login($rawLogin, $password);
-            if ($this->userAuthorizationService->isAuthorized()
-                && !$this->currentUserProvider->getCurrentUser()->havePersonalPhone()) {
-                $needWritePhone = true;
-            }
-        } catch (UsernameNotFoundException $e) {
-            return JsonErrorResponse::createWithData(
-                'Неверный логин или пароль',
-                ['errors' => ['wrongPassword' => 'Неверный логин или пароль']]
-            );
-        } catch (InvalidCredentialException $e) {
-            return JsonErrorResponse::createWithData(
-                'Неверный логин или пароль',
-                ['errors' => ['wrongPassword' => 'Неверный логин или пароль']]
-            );
-        } catch (TooManyUserFoundException $e) {
-            /** @noinspection PhpUnhandledExceptionInspection */
-            /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-            $logger = LoggerFactory::create('auth');
-            $logger->critical('Найдено больше одного совпадения по логину/email/телефону ' . $rawLogin);
-            
-            return JsonErrorResponse::createWithData(
-                'Найдено больше одного совпадения, обратитесь на горячую линию по телефону ' . $this->getSitePhone(),
-                [
-                    'errors' => [
-                        'moreOneUser' => 'Найдено больше одного совпадения, обратитесь на горячую линию по телефону'
-                                         . $this->getSitePhone(),
-                    ],
-                ]
-            );
-        } catch (\Exception $e) {
-            return JsonErrorResponse::createWithData(
-                'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
-                ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
-            );
-        }
-        
-        if (!$needWritePhone) {
-            return JsonSuccessResponse::create('Вы успешно авторизованы.', 200, [], ['reload' => true]);
-        }
-        
-        ob_start(); ?>
-        <header class="b-registration__header">
-            <h1 class="b-title b-title--h1 b-title--registration">Добавление телефона</h1>
-        </header>
-        <?php require_once App::getDocumentRoot()
-                           . '/local/components/fourpaws/auth.form/templates/popup/include/addPhone.php';
-        $html = ob_get_clean();
-        
-        return JsonSuccessResponse::createWithData('Необходимо заполнить номер телефона', ['html' => $html]);
-    }
-    
+
     /**
      * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
      * @return string
      */
-    protected function getSitePhone() : string
+    protected function getSitePhone(): string
     {
         $defCity = App::getInstance()->getContainer()->get('location.service')->getDefaultCity();
         if ($defCity instanceof City) {
@@ -274,212 +479,43 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         } else {
             $phone = static::PHONE_HOT_LINE;
         }
-        
+
         return $phone;
     }
-    
+
     /**
-     * @param string $phone
+     * @param string $page
+     * @param string $title
+     * @param array  $params
      *
-     * @throws ServiceNotFoundException
-     * @return JsonResponse
+     * @return string
      */
-    public function ajaxResendSms($phone) : JsonResponse
+    private function getHtml(string $page, string $title = '', array $params = []): string
     {
-        try {
-            $phone = PhoneHelper::normalizePhone($phone);
-        } catch (WrongPhoneNumberException $e) {
-            return JsonErrorResponse::createWithData(
-                'Некорректный номер телефона',
-                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
-            );
+        if (!empty($params)) {
+            extract($params, EXTR_OVERWRITE);
         }
-        
-        try {
-            /** @var ConfirmCodeService $confirmService */
-            $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
-            $res            = $confirmService::sendConfirmSms($phone);
-            if (!$res) {
-                return JsonErrorResponse::createWithData(
-                    'Ошибка при отправке смс, попробуйте позднее',
-                    ['errors' => ['errorSmsSend' => 'Ошибка отправки смс, попробуйте позднее']]
-                );
-            }
-        } catch (SmsSendErrorException $e) {
-            return JsonErrorResponse::createWithData(
-                'Ошибка отправки смс, попробуйте позднее',
-                ['errors' => ['errorSmsSend' => 'Ошибка отправки смс, попробуйте позднее']]
-            );
-        } catch (WrongPhoneNumberException $e) {
-            return JsonErrorResponse::createWithData(
-                $e->getMessage(),
-                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
-            );
-        } catch (\RuntimeException $e) {
-            return JsonErrorResponse::createWithData(
-                'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
-                ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
-            );
-        } catch (\Exception $e) {
-            return JsonErrorResponse::createWithData(
-                'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
-                ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
-            );
+        $html = '';
+        ob_start();
+        if (!empty($title)) { ?>
+            <header class="b-registration__header">
+                <h1 class="b-title b-title--h1 b-title--registration"><?= $title ?></h1>
+            </header>
+            <?php
         }
-        
-        return JsonSuccessResponse::create('Смс успешно отправлено');
-    }
-    
-    /**
-     * @param string $phone
-     *
-     * @param string $confirmCode
-     *
-     * @throws ValidationException
-     * @throws InvalidIdentifierException
-     * @throws ServiceNotFoundException
-     * @throws \Exception
-     * @throws ApplicationCreateException
-     * @throws BitrixRuntimeException
-     * @throws ConstraintDefinitionException
-     * @throws ServiceCircularReferenceException
-     * @return JsonResponse
-     */
-    public function ajaxSavePhone(string $phone, string $confirmCode) : JsonResponse
-    {
-        $container = App::getInstance()->getContainer();
-        try {
-            $phone = PhoneHelper::normalizePhone($phone);
-        } catch (WrongPhoneNumberException $e) {
-            return JsonErrorResponse::createWithData(
-                $e->getMessage(),
-                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
-            );
-        }
-        try {
-            /** @var ConfirmCodeService $confirmService */
-            $confirmService = $container->get(ConfirmCodeInterface::class);
-            $res            = $confirmService::checkConfirmSms(
-                $phone,
-                $confirmCode
-            );
-            if (!$res) {
-                return JsonErrorResponse::createWithData(
-                    'Код подтверждения не соответствует',
-                    ['errors' => ['wrongConfirmCode' => 'Код подтверждения не соответствует']]
-                );
-            }
-        } catch (ExpiredConfirmCodeException $e) {
-            return JsonErrorResponse::createWithData(
-                $e->getMessage(),
-                ['errors' => ['expiredConfirmCode' => $e->getMessage()]]
-            );
-        } catch (NotFoundConfirmedCodeException $e) {
-            return JsonErrorResponse::createWithData(
-                $e->getMessage(),
-                ['errors' => ['notFoundConfirmCode' => $e->getMessage()]]
-            );
-        } catch (WrongPhoneNumberException $e) {
-            return JsonErrorResponse::createWithData(
-                $e->getMessage(),
-                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
-            );
-        }
-        
-        $data = [
-            'PERSONAL_PHONE'     => $phone,
-            'UF_PHONE_CONFIRMED' => 'Y',
-        ];
-        
-        if ($this->currentUserProvider->getUserRepository()->updateData(
-            $this->currentUserProvider->getCurrentUserId(),
-            $data
-        )) {
-            /** @var ManzanaService $manzanaService */
-            $manzanaService = $container->get('manzana.service');
-            $client         = null;
-            try {
-                $contactId         = $manzanaService->getContactIdByPhone($phone);
-                $client            = new Client();
-                $client->contactId = $contactId;
-                $client->phone     = $phone;
-            } catch (ManzanaServiceContactSearchMoreOneException $e) {
-            } catch (ManzanaServiceContactSearchNullException $e) {
-                $client = new Client();
-                try {
-                    $this->currentUserProvider->setClientPersonalDataByCurUser($client);
-                } catch (NotAuthorizedException $e) {
-                }
-            } catch (ManzanaServiceException $e) {
-            }
-            if ($client instanceof Client) {
-                try {
-                    $manzanaService->updateContact($client);
-                } catch (ManzanaServiceException $e) {
-                } catch (ManzanaException $e) {
-                }
-            }
-        }
-        
-        return JsonSuccessResponse::create('Телефон сохранен', 200, [], ['reload' => true]);
-    }
-    
-    /**
-     * @param Request $request
-     *
-     * @throws ServiceNotFoundException
-     * @return JsonResponse
-     */
-    public function ajaxGet($request) : JsonResponse
-    {
-        $mess  = '';
-        $step  = $request->get('step', '');
-        $phone = $request->get('phone', '');
-        try {
-            $phone = PhoneHelper::normalizePhone($phone);
-        } catch (WrongPhoneNumberException $e) {
-            return JsonErrorResponse::createWithData(
-                $e->getMessage(),
-                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
-            );
-        }
-        $title = 'Авторизация';
-        switch ($step) {
-            case 'addPhone':
-                $title = 'Добавление телефона';
-                break;
-            case 'sendSmsCode':
-                $title = 'Подтверждение телефона';
-                $mess  = $this->ajaxGetSendSmsCode($phone);
-                if ($mess instanceof JsonResponse) {
-                    return $mess;
-                }
-                break;
-        }
-        $phone = PhoneHelper::formatPhone($phone, '+7 (%s%s%s) %s%s%s-%s%s-%s%s');
-        ob_start(); ?>
-        <header class="b-registration__header">
-            <h1 class="b-title b-title--h1 b-title--registration"><?= $title ?></h1>
-        </header>
-        <?php
-        /** @noinspection PhpIncludeInspection */
-        include_once App::getDocumentRoot() . '/local/components/fourpaws/auth.form/templates/popup/include/' . $step
-                     . '.php';
+        require_once App::getDocumentRoot()
+            . '/local/components/fourpaws/auth.form/templates/popup/include/' . $page . '.php';
         $html = ob_get_clean();
-        
-        return JsonSuccessResponse::createWithData(
-            $mess,
-            [
-                'html'  => $html,
-                'step'  => $step,
-                'phone' => $phone ?? '',
-            ]
-        );
+
+        return $html;
     }
-    
+
     /**
      * @param string $phone
      *
+     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
+     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
+     * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
      * @throws ServiceNotFoundException
      * @return JsonResponse|string
      */
@@ -492,47 +528,41 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 'PERSONAL_PHONE' => $phone,
             ]
         );
-        if($haveUsers['phone']){
-            return JsonErrorResponse::createWithData(
-                'Такой телефон уже существует',
-                ['errors' => ['havePhone' => 'Такой телефон уже существует']]
-            );
+        if ($haveUsers['phone']) {
+            return $this->ajaxMess->getHavePhoneError();
         }
-        
+
         try {
             /** @var ConfirmCodeService $confirmService */
             $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
-            $res            = $confirmService::sendConfirmSms($phone);
+            $res = $confirmService::sendConfirmSms($phone);
             if ($res) {
                 $mess = 'Смс успешно отправлено';
             } else {
-                return JsonErrorResponse::createWithData(
-                    'Ошибка отправки смс, попробуйте позднее',
-                    ['errors' => ['errorSmsSend' => 'Ошибка отправки смс, попробуйте позднее']]
-                );
+                return $this->ajaxMess->getSmsSendErrorException();
             }
         } catch (SmsSendErrorException $e) {
-            return JsonErrorResponse::createWithData(
-                'Ошибка отправки смс, попробуйте позднее',
-                ['errors' => ['errorSmsSend' => 'Ошибка отправки смс, попробуйте позднее']]
-            );
+            return $this->ajaxMess->getSmsSendErrorException();
         } catch (WrongPhoneNumberException $e) {
-            return JsonErrorResponse::createWithData(
-                $e->getMessage(),
-                ['errors' => ['wrongPhone' => 'Некорректный номер телефона']]
-            );
+            return $this->ajaxMess->getWrongPhoneNumberException();
         } catch (\RuntimeException $e) {
-            return JsonErrorResponse::createWithData(
-                'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
-                ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
-            );
+            return $this->ajaxMess->getSystemError();
         } catch (\Exception $e) {
-            return JsonErrorResponse::createWithData(
-                'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта',
-                ['errors' => ['systemError' => 'Непредвиденная ошибка. Пожалуйста, обратитесь к администратору сайта']]
-            );
+            return $this->ajaxMess->getSystemError();
         }
-        
+
+        $data = [
+            'PERSONAL_PHONE'     => $phone,
+            'UF_PHONE_CONFIRMED' => false,
+        ];
+
+        if (!$this->currentUserProvider->getUserRepository()->updateData(
+            $this->currentUserProvider->getCurrentUserId(),
+            $data
+        )) {
+            return $this->ajaxMess->getSystemError();
+        }
+
         return $mess;
     }
 }

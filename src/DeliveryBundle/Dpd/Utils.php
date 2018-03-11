@@ -2,6 +2,7 @@
 
 namespace FourPaws\DeliveryBundle\Dpd;
 
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Sale\Location\LocationTable;
 
@@ -17,8 +18,8 @@ class Utils extends \Ipolh\DPD\Utils
 {
     public static function getSaleLocationId()
     {
-        $defaultLocation = \Bitrix\Main\Config\Option::get('sale', 'location', '', ADMIN_SECTION ? 's1' : false);
-        $currentLocation = \Bitrix\Main\Config\Option::get(IPOLH_DPD_MODULE, 'SENDER_LOCATION', $defaultLocation);
+        $defaultLocation = Option::get('sale', 'location', '', ADMIN_SECTION ? 's1' : false);
+        $currentLocation = Option::get(IPOLH_DPD_MODULE, 'SENDER_LOCATION', $defaultLocation);
 
         $location = LocationTable::getList(
             [

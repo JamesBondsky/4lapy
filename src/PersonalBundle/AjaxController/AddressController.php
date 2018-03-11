@@ -41,7 +41,7 @@ class AddressController extends Controller
      */
     public function addAction(Request $request) : JsonResponse
     {
-        $data = $request->request->getIterator()->getArrayCopy();
+        $data = $request->request->all();
         if (empty($data)) {
             return JsonErrorResponse::createWithData(
                 'Не указаны данные для добавления',
@@ -49,9 +49,9 @@ class AddressController extends Controller
             );
         }
         try {
-            if ($this->addressService->add($data)) {
+            if ($this->addressService->addFromArray($data)) {
                 return JsonSuccessResponse::create(
-                    'Адресс доставки добавлен',
+                    'Адрес доставки добавлен',
                     200,
                     [],
                     ['reload' => true]
@@ -78,7 +78,7 @@ class AddressController extends Controller
      */
     public function updateAction(Request $request) : JsonResponse
     {
-        $data = $request->request->getIterator()->getArrayCopy();
+        $data = $request->request->all();
         if (empty($data)) {
             return JsonErrorResponse::createWithData(
                 'Не указаны данные для обновления',
@@ -94,7 +94,7 @@ class AddressController extends Controller
         try {
             if ($this->addressService->update($data)) {
                 return JsonSuccessResponse::create(
-                    'Адресс доставки обновлен',
+                    'Адрес доставки обновлен',
                     200,
                     [],
                     ['reload' => true]

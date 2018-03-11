@@ -6,7 +6,7 @@
 
 namespace FourPaws\ReCaptcha;
 
-use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Main\Application;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\SystemException;
@@ -14,29 +14,22 @@ use Bitrix\Main\Web\Uri;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
 use Psr\Log\LoggerAwareInterface;
-use Psr\Log\LoggerAwareTrait;
-use Psr\Log\LoggerInterface;
 
 class ReCaptchaService implements LoggerAwareInterface
 {
-    use LoggerAwareTrait;
-    
+    use LazyLoggerAwareTrait;
+
     /**
      * @var ClientInterface
      */
     protected $guzzle;
-    
-    /**
-     * @var LoggerInterface
-     */
-    protected $logger;
-    
+
     private $parameters;
-    
+
     /** @noinspection SpellCheckingInspection */
-    
+
     /**
-     * CallbackConsumerBase constructor.
+     * ReCaptchaService constructor.
      *
      * @param ClientInterface $guzzle
      *
@@ -47,39 +40,48 @@ class ReCaptchaService implements LoggerAwareInterface
     public function __construct(ClientInterface $guzzle, array $parameters)
     {
         $this->guzzle = $guzzle;
-        /** @noinspection PhpUnhandledExceptionInspection */
-        $this->logger = LoggerFactory::create('recaptcha');
-        
         $this->parameters = $parameters;
     }
-    
+
     /**
      * @param string $additionalClass
      *
      * @return string
      */
-    public function getCaptcha(string $additionalClass = '') : string
+    public function getCaptcha(string $additionalClass = '', bool $isAjax = false): string
     {
-        $this->addJs();
-        
-        return '<div class="g-recaptcha' . $additionalClass . '" data-sitekey="' . $this->parameters['key']
-               . '"></div>';
+        if (!$isAjax) {
+            $script = '';
+            $this->addJs();
+        } else {
+            $script = $this->getJs();
+        }
+
+        return $script . '<div class="g-recaptcha' . $additionalClass . '" data-sitekey="' . $this->parameters['key']
+            . '"></div>';
     }
-    
+
     public function addJs()
     {
         Asset::getInstance()->addJs('https://www.google.com/recaptcha/api.js');
     }
-    
+
+    /**
+     * @return string
+     */
+    public function getJs(): string
+    {
+        return '<script data-skip-moving=true async src="https://www.google.com/recaptcha/api.js"></script>';
+    }
+
     /**
      * @param string $recaptcha
      *
      * @throws \RuntimeException
      * @throws SystemException
-     * @throws GuzzleException
      * @return bool
      */
-    public function checkCaptcha(string $recaptcha = '') : bool
+    public function checkCaptcha(string $recaptcha = ''): bool
     {
         /** @noinspection PhpUnhandledExceptionInspection */
         $context = Application::getInstance()->getContext();
@@ -95,15 +97,19 @@ class ReCaptchaService implements LoggerAwareInterface
             ]
         );
         if (!empty($recaptcha)) {
-            $res = $this->guzzle->request('get', $uri->getUri());
+            try {
+                $res = $this->guzzle->request('get', $uri->getUri());
+            } catch (GuzzleException $e) {
+                return false;
+            }
             if ($res->getStatusCode() === 200) {
                 $data = json_decode($res->getBody()->getContents());
-                if ($data->success) {
+                if ($data && $data->success) {
                     return true;
                 }
             }
         }
-        
+
         return false;
     }
 }

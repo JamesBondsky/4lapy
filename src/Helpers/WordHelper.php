@@ -7,8 +7,8 @@ class WordHelper
     /**
      * Возвращает нужную форму существительного, стоящего после числительного
      *
-     * @param int $number числительное
-     * @param array $forms формы слова для 1, 2, 5. Напр. ['дверь', 'двери', 'дверей']
+     * @param int   $number числительное
+     * @param array $forms  формы слова для 1, 2, 5. Напр. ['дверь', 'двери', 'дверей']
      *
      * @return mixed
      */
@@ -20,20 +20,41 @@ class WordHelper
         return $forms[$key];
     }
 
-    public static function showWeight(float $weight)
+    /**
+     * @param float $weight
+     * @param bool  $short
+     *
+     * @return string
+     */
+    public static function showWeight(float $weight, $short = false): string
     {
-        $result = '';
+        if ($short) {
+            return static::numberFormat($weight / 1000) . ' кг';
+        }
+
+        $parts = [];
 
         $kg = floor($weight / 1000);
         if ($kg) {
-            $result = $kg . ' кг';
+            $parts[] = static::numberFormat($kg, 0) . ' кг';
         }
 
         $g = $weight % 1000;
         if ($g) {
-            $result = $g . ' г';
+            $parts[] = $g . ' г';
         }
 
-        return $result;
+        return implode(' ', $parts);
+    }
+
+    /**
+     * @param     $number
+     * @param int $decimals
+     *
+     * @return string
+     */
+    public static function numberFormat($number, int $decimals = 2): string
+    {
+        return number_format($number, $decimals, '.', ' ');
     }
 }

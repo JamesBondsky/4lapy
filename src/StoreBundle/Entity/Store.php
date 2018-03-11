@@ -1,7 +1,13 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\StoreBundle\Entity;
 
+use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
+use FourPaws\BitrixOrm\Model\Image;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -127,7 +133,7 @@ class Store extends Base
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
     protected $schedule = '';
-    
+
     /**
      * @var string
      * @Serializer\Type("string")
@@ -392,6 +398,21 @@ class Store extends Base
     public function getImageId(): int
     {
         return $this->imageId ?? 0;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSrcImage(): string
+    {
+        if ($this->getImageId() > 0) {
+            try {
+                $image = Image::createFromPrimary($this->getImageId());
+                return $image->getSrc();
+            } catch (FileNotFoundException $e) {
+            }
+        }
+        return '';
     }
 
     /**
@@ -671,7 +692,7 @@ class Store extends Base
      */
     public function isShop(): bool
     {
-        return $this->isShop;
+        return (bool)$this->isShop;
     }
 
     /**
@@ -785,20 +806,36 @@ class Store extends Base
 
         return $this;
     }
-    
+
     /**
      * @return string
      */
-    public function getPhone() : string
+    public function getPhone(): string
     {
         return $this->phone ?? '';
     }
-    
+
     /**
      * @param string $phone
      */
     public function setPhone(string $phone)
     {
         $this->phone = $phone;
+    }
+
+    /**
+     * @return array
+     */
+    public function getFormattedSchedule(): array
+    {
+        preg_match('~(\d+):00 - (\d+):00~', $this->getSchedule(), $matches);
+        if (!empty($matches)) {
+            return [
+                'from' => (int)$matches[1],
+                'to'   => (int)$matches[2],
+            ];
+        }
+
+        return [];
     }
 }

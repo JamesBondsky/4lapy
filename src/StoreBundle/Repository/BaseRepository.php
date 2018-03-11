@@ -123,9 +123,7 @@ abstract class BaseRepository implements RepositoryInterface
             $orderBy = $this->getDefaultOrder();
         }
 
-        if (empty($criteria)) {
-            $criteria = $this->getDefaultFilter();
-        }
+        $criteria = array_merge($this->getDefaultFilter(), $criteria);
 
         $entities = ($this->table)::query()
                                   ->setSelect(['*', 'UF_*'])

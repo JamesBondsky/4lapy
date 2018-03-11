@@ -1,9 +1,15 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\DeliveryBundle\Dpd;
 
 use Bitrix\Main\Loader;
-use WebArch\BitrixCache\BitrixCache;
+use FourPaws\App\Application;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\StoreBundle\Collection\StoreCollection;
 
 if (!Loader::includeModule('ipol.dpd')) {
     class Shipment
@@ -15,18 +21,22 @@ if (!Loader::includeModule('ipol.dpd')) {
 
 class Shipment extends \Ipolh\DPD\Shipment
 {
+    protected $locationTo;
+
+    protected $locationFrom;
+
     /**
      * Устанавливает местоположение отправителя
      *
-     * @param mixed $locationId ID местоположения
+     * @param array|string $locationCode код местоположения
      *
-     * @return self
+     * @return $this
      */
-    public function setSender($locationId)
+    public function setSender($locationCode)
     {
-        $this->locationFrom = is_array($locationId)
-            ? $locationId
-            : LocationTable::getByLocationId($locationId);
+        $this->locationFrom = \is_array($locationCode)
+            ? $locationCode
+            : LocationTable::getByLocationCode($locationCode);
 
         return $this;
     }
@@ -34,11 +44,13 @@ class Shipment extends \Ipolh\DPD\Shipment
     /**
      * Устанавливает местоположение получателя
      *
-     * @param mixed $locationId код местоположения
+     * @param array|string $locationCode код местоположения
+     *
+     * @return $this
      */
     public function setReceiver($locationCode)
     {
-        $this->locationTo = is_array($locationCode)
+        $this->locationTo = \is_array($locationCode)
             ? $locationCode
             : LocationTable::getByLocationCode($locationCode);
 
@@ -56,36 +68,27 @@ class Shipment extends \Ipolh\DPD\Shipment
             return false;
         }
 
-        $isPaymentOnDelivery = is_null($isPaymentOnDelivery) ? $this->isPaymentOnDelivery() : $isPaymentOnDelivery;
-        $locationId = $this->locationTo['ID'];
-        $getPickupPointsCount = function () use ($isPaymentOnDelivery, $locationId) {
-            return \Ipolh\DPD\DB\Terminal\Table::getList(
-                [
-                    'select' => ['CNT'],
+        return $this->getDpdTerminals($isPaymentOnDelivery)->count() > 0;
+    }
 
-                    'filter' => array_filter(
-                        array_merge(
-                            [
-                                'LOCATION_ID' => $locationId,
-                            ],
+    public function getDpdTerminals($isPaymentOnDelivery = null): StoreCollection
+    {
+        /** @var DeliveryService $deliveryService */
+        $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
+        $isPaymentOnDelivery = null === $isPaymentOnDelivery ? $this->isPaymentOnDelivery() : $isPaymentOnDelivery;
 
-                            $isPaymentOnDelivery
-                                ? ['NPP_AVAILABLE' => 'Y', '>=NPP_AMOUNT' => $this->getPrice()]
-                                : []
-                        )
-                    ),
+        return $deliveryService->getDpdTerminalsByLocation(
+            $this->locationTo['CODE'],
+            $isPaymentOnDelivery,
+            $this->getPrice()
+        );
+    }
 
-                    'runtime' => [
-                        new \Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(*)'),
-                    ],
-                ]
-            )->fetch();
-        };
-
-        $result = (new BitrixCache())
-            ->withId(__METHOD__ . $locationId)
-            ->resultOf($getPickupPointsCount);
-
-        return $result['CNT'] > 0;
+    public function isPaymentOnDelivery()
+    {
+        /**
+         * У пунктов самовывоза DPD должна быть возможность оплаты на месте
+         */
+        return true;
     }
 }

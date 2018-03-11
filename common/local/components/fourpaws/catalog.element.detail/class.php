@@ -10,34 +10,42 @@ use Bitrix\Main\Analytics\Counter;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Text\JsExpression;
+use FourPaws\Catalog\Collection\OfferCollection;
+use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
-use FourPaws\Catalog\Model\Category;
-use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Catalog\Query\CategoryQuery;
+use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\Catalog\Query\ProductQuery;
 
 /** @noinspection AutoloadingIssuesInspection */
 class CatalogElementDetailComponent extends \CBitrixComponent
 {
     const EXPAND_CLOSURES = 'EXPAND_CLOSURES';
 
+    protected $unionOffers = [];
+
+    /**
+     * @param $params
+     *
+     * @return array
+     */
     public function onPrepareComponentParams($params): array
     {
         if (!isset($params['CACHE_TIME'])) {
             $params['CACHE_TIME'] = 36000000;
         }
-        $params['CODE'] = $params['CODE'] ?? '';
-        $params['SET_TITLE'] = ($params['SET_TITLE'] === 'Y') ? $params['SET_TITLE'] : 'N';
 
-        $params['SET_VIEWED_IN_COMPONENT'] = isset($params['SET_VIEWED_IN_COMPONENT']) ? $params['SET_VIEWED_IN_COMPONENT'] : 'Y';
+        $params['CODE']                    = $params['CODE'] ?? '';
+        $params['OFFER_ID']                = $params['OFFER_ID'] ?? 0;
+        $params['SET_TITLE']               = ($params['SET_TITLE'] === 'Y') ? $params['SET_TITLE'] : 'N';
+        $params['SET_VIEWED_IN_COMPONENT'] = $params['SET_VIEWED_IN_COMPONENT'] ?? 'Y';
 
         return parent::onPrepareComponentParams($params);
     }
 
     public function executeComponent()
     {
-        global $APPLICATION;
-
         if (!$this->arParams['CODE']) {
             Tools::process404([], true, true, true);
         }
@@ -46,22 +54,23 @@ class CatalogElementDetailComponent extends \CBitrixComponent
             parent::executeComponent();
 
             /** @var Product $product */
-            $product = $this->getProduct($this->arParams['CODE']);
+            $product      = $this->getProduct($this->arParams['CODE']);
+            $currentOffer = $this->getCurrentOffer($product);
 
             if (!$product) {
                 $this->abortResultCache();
                 Tools::process404([], true, true, true);
             }
 
-            if ($this->arParams['SET_TITLE'] === 'Y') {
-                $APPLICATION->SetTitle($product->getName());
-            }
-
-            $sectionId = intval(reset($product->getSectionsIdList()));
+            $sectionId = (int)reset($product->getSectionsIdList());
 
             $this->arResult = [
-                'PRODUCT' => $product,
+                'PRODUCT'       => $product,
+                'CURRENT_OFFER' => $currentOffer,
                 'SECTION_CHAIN' => $this->getSectionChain($sectionId),
+                /**
+                 * @todo впилить seo
+                 */
                 // возможно, понадобится в будущем
                 //'SECTION' => $this->getSection($sectionId),
             ];
@@ -72,7 +81,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
         // bigdata
         $this->obtainCounterData();
         $this->sendCounters();
-
+        $this->setMeta();
         $this->saveViewedProduct();
 
         return $this->arResult['PRODUCT'];
@@ -81,9 +90,9 @@ class CatalogElementDetailComponent extends \CBitrixComponent
     /**
      * @param string $code
      *
-     * @return null|Offer
+     * @return Product
      */
-    protected function getProduct(string $code)
+    protected function getProduct(string $code) : Product
     {
         return (new ProductQuery())
             ->withFilterParameter('CODE', $code)
@@ -182,9 +191,8 @@ class CatalogElementDetailComponent extends \CBitrixComponent
             'category' => $categoryPath
         );
 
-        $offers = $product->getOffers();
-        $currentOffer = $offers ? $offers->first() : null;
-        $counterData['price'] = $currentOffer ? $currentOffer->getPrice() : 0;
+        $currentOffer            = $this->getCurrentOffer($product);
+        $counterData['price']    = $currentOffer ? $currentOffer->getPrice() : 0;
         $counterData['currency'] = $currentOffer ? $currentOffer->getCurrency() : '';
 
         // make sure it is in utf8
@@ -240,5 +248,60 @@ class CatalogElementDetailComponent extends \CBitrixComponent
         if (isset($this->arResult['counterData']) && Catalog::isOn())  {
             Counter::sendData('ct', $this->arResult['counterData']);
         }
+    }
+
+    /**
+     * @todo from inheritedProperties
+     */
+    protected function setMeta()
+    {
+        global $APPLICATION;
+
+        if ($this->arParams['SET_TITLE'] === 'Y') {
+            $APPLICATION->SetTitle($this->arResult['PRODUCT']->getName());
+        }
+    }
+
+    /**
+     * @param Product $product
+     *
+     * @return Offer
+     */
+    protected function getCurrentOffer(Product $product) : Offer
+    {
+        $offerId = (int)$this->arParams['OFFER_ID'];
+
+        if ($offerId) {
+            foreach ($product->getOffers() as $offer) {
+                if ($offer->getId() === $offerId) {
+                    return $offer;
+                }
+            }
+        }
+
+        return $product->getOffers()->first();
+    }
+
+    /**
+     * @param string $type
+     * @param string $val
+     *
+     * @return OfferCollection
+     */
+    public function getOffersByUnion(string $type, string $val) : OfferCollection
+    {
+        if(!isset($this->unionOffers[$type][$val])) {
+            switch ($type) {
+                case 'color':
+                    $offerCollection = (new OfferQuery())->withFilter(['PROPERTY_COLOUR_COMBINATION' => $val])->exec();
+                    break;
+                case 'flavour':
+                    $offerCollection = (new OfferQuery())->withFilter(['PROPERTY_FLAVOUR_COMBINATION' => $val])->exec();
+                    break;
+            }
+            $this->unionOffers[$type][$val] = $offerCollection;
+
+        }
+        return $this->unionOffers[$type][$val];
     }
 }

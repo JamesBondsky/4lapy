@@ -63,12 +63,15 @@ class Card
     public $genderCode;
     
     /**
-     * @Type("DateTimeImmutable<'Y-m-d\TH:i:s'>")
+     * @Type("manzana_date_time_short")
      * @SerializedName("BirthDate")
      */
     public $birthDate;
     
     /**
+     * Поле familystatuscode отвечает за участие контакта в бонусной программе
+     * 2 - контакт участвует в бонусной программе
+     *
      * @XmlElement(cdata=false)
      * @Type("string")
      * @SerializedName("FamilyStatusCode")
@@ -153,7 +156,7 @@ class Card
     public $plAddressFlat;
     
     /**
-     * @Type("DateTimeImmutable<'Y-m-d\TH:i:s'>")
+     * @Type("manzana_date_time_short")
      * @SerializedName("pl_registration_date")
      */
     public $plRegistrationDate;
@@ -221,6 +224,9 @@ class Card
     public $plQuantity;
     
     /**
+     * Поле haschildrencode отвечает за актуальность контакта
+     * 200000 - контакт актуален
+     *
      * @XmlElement(cdata=false)
      * @Type("string")
      * @SerializedName("haschildrencode")
@@ -263,4 +269,29 @@ class Card
      * @SerializedName("EmployeeBreeder")
      */
     public $employeeBreeder;
+    
+    /**
+     * @return bool
+     */
+    public function isActualContact() : bool
+    {
+        return (int)$this->hashChildrenCode === 200000;
+    }
+    
+    /**
+     * @return bool
+     */
+    public function isLoyaltyProgramContact() : bool
+    {
+        return (int)$this->familyStatusCode === 2;
+    }
+    
+    /**
+     * @return bool
+     */
+    public function isBonusCard() : bool
+    {
+        // товарищи из манзаны гарантируют: ненулевой pl_debet <=> карта бонусная
+        return (double)$this->plDebet > 0;
+    }
 }
