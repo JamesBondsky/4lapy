@@ -6,12 +6,16 @@
 
 namespace FourPaws\SapBundle\Service\Orders;
 
+use Adv\Bitrixtools\Exception\IblockNotFoundException;
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Catalog\Product\Basket as CatalogBasket;
 use Bitrix\Catalog\Product\CatalogProvider;
+use Bitrix\Iblock\ElementTable;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\Entity\Query;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ObjectNotFoundException;
@@ -26,6 +30,8 @@ use Exception;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Service\IntervalService;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\BxCollection;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Location\LocationService;
@@ -41,6 +47,7 @@ use FourPaws\SapBundle\Exception\NotFoundOrderDeliveryException;
 use FourPaws\SapBundle\Exception\NotFoundOrderPaySystemException;
 use FourPaws\SapBundle\Exception\NotFoundOrderShipmentException;
 use FourPaws\SapBundle\Exception\NotFoundOrderUserException;
+use FourPaws\SapBundle\Exception\NotFoundProductException;
 use FourPaws\SapBundle\Source\SourceMessage;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
@@ -205,19 +212,20 @@ class OrderService implements LoggerAwareInterface
     public function transformDtoToOrder(OrderDtoIn $orderDto): Order
     {
         $order = Order::load($orderDto->getId());
-
+        
         $this->setPropertiesFromDto($order, $orderDto);
         $this->setPaymentFromDto($order, $orderDto);
         $this->setDeliveryFromDto($order, $orderDto);
         $this->setBasketFromDto($order, $orderDto);
-    
+        
         /**
          * @todo
          *
          * Установка статуса заказа из DTO. Необходимо выяснить сопоставление статусов статусам в SAP
          */
         $order->setField('STATUS_ID', $orderDto->getStatus());
-        dump([$order, $orderDto]);die;
+        dump([$order, $orderDto]);
+        die;
         return $order;
     }
     
@@ -584,7 +592,8 @@ class OrderService implements LoggerAwareInterface
          * @var BasketItem $basketItem
          */
         foreach ($basketCollection = $order->getBasket()->getBasketItems() as $basketItem) {
-            $article = substr($basketItem->getField('PRODUCT_XML_ID'), strpos($basketItem->getField('PRODUCT_XML_ID'), '#') ?: 0);
+            $article = substr($basketItem->getField('PRODUCT_XML_ID'),
+                strpos($basketItem->getField('PRODUCT_XML_ID'), '#') ?: 0);
             
             $externalItem = $externalItems->filter(
                 function ($item) use ($article) {
@@ -630,19 +639,49 @@ class OrderService implements LoggerAwareInterface
     
     private function addBasketItem(Basket $basket, OrderOfferIn $externalItem): void
     {
+        /**
+         * @todo
+         *
+         * Сделать это нормально
+         */
+        $itemId = 0;
+        
+        try {
+            $element = (new Query(ElementTable::class))
+                ->setFilter([
+                    'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
+                    'XML_ID'    => $externalItem->getOfferXmlId(),
+                ])
+                ->setLimit(1)
+                ->setSelect(['XML_ID', 'ID'])
+                ->exec()
+                ->fetch();
+            
+            $itemId = $element['ID'];
+            
+            if (!$itemId) {
+                throw new NotFoundProductException(sprintf(
+                    'Продукт с внешним кодом %s не найден.',
+                    $externalItem->getOfferXmlId()
+                ));
+            }
+        } catch (IblockNotFoundException | ArgumentException $e) {
+            $this->log()->error(sprintf('Ошибка добавления продукта: %s', $e->getMessage()));
+        }
+        
         $context = [
-            'SITE_ID' => SITE_ID,
-            'USER_ID' => $basket->getOrder()->getUserId(),
+            'SITE_ID'  => SITE_ID,
+            'USER_ID'  => $basket->getOrder()->getUserId(),
             'ORDER_ID' => $basket->getOrderId(),
         ];
         
         $fields = [
-            'PRODUCT_ID' => '',
-            'QUANTITY'=> $externalItem->getQuantity(),
+            'PRODUCT_ID'             => $itemId,
+            'QUANTITY'               => $externalItem->getQuantity(),
             'MODULE'                 => 'catalog',
-            'PRODUCT_PROVIDER_CLASS' => CatalogProvider::class
+            'PRODUCT_PROVIDER_CLASS' => CatalogProvider::class,
         ];
-    
+        
         try {
             $result = CatalogBasket::addProductToBasket($basket, $fields, $context);
             
