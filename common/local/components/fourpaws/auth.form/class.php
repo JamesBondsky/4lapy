@@ -14,6 +14,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\SystemException;
+use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Internals\FuserTable;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -199,23 +200,34 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
             return $this->ajaxMess->getSystemError();
         }
-        $oldBasket = $basketService->getBasket();
-        $basket = null;
+        $curBasket = $basketService->getBasket();
+        $userBasket = null;
         $delBasketIds = [];
+        $basketPrice = 0;
+        $curFuserId = \Bitrix\Sale\Fuser::getId();
 
-        try {
-            $userId = $this->currentUserProvider->getUserRepository()->findIdentifierByRawLogin($rawLogin);
-            $fUserId = FuserTable::query()->setFilter(['USER_ID' => $userId])->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
-            $basket = $basketService->getBasket(null, $fUserId);
-            if (!$oldBasket->isEmpty() && !$basket->isEmpty()) {
-                $needConfirmBasket = true;
-                $delBasketIds = [];
-                foreach ($basket->getBasketItems() as $item) {
-                    $delBasketIds[] = $item['ID'];
+        if (!$curBasket->isEmpty()) {
+            try {
+                $userId = $this->currentUserProvider->getUserRepository()->findIdentifierByRawLogin($rawLogin);
+                if ($userId > 0) {
+                    $fUserId = (int)FuserTable::query()->setFilter(['USER_ID' => $userId])->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
+                    if ($fUserId > 0) {
+                        $userBasket = $basketService->getBasket(true, $fUserId);
+                        if (!$curBasket->isEmpty() && !$userBasket->isEmpty()) {
+                            $needConfirmBasket = true;
+                            $delBasketIds = [];
+                            /** @var BasketItem $item */
+                            foreach ($userBasket->getBasketItems() as $item) {
+                                $delBasketIds[] = $item->getId();
+                            }
+                            /** @todo сумма корзины со скидкой */
+                            $basketPrice = $userBasket->getPrice();
+                        }
+                    }
                 }
+            } catch (WrongPhoneNumberException|TooManyUserFoundException|UsernameNotFoundException $e) {
+                /** обработка ниже, поэтому скипаем */
             }
-        } catch (WrongPhoneNumberException|TooManyUserFoundException|UsernameNotFoundException $e) {
-            /** обработка ниже, поэтому скипаем */
         }
 
         try {
@@ -274,9 +286,11 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
         if ($needConfirmBasket) {
             $html = $this->getHtml('unionBasket', 'Объединение корзины',
-                ['backurl'      => $backUrl,
-                 'needAddPhone' => $needWritePhone ? 'Y' : 'N',
-                 'delBasketIds' => $delBasketIds,
+                [
+                    'backurl'      => $backUrl,
+                    'needAddPhone' => $needWritePhone ? 'Y' : 'N',
+                    'delBasketIds' => $delBasketIds,
+                    'sum'          => $basketPrice,
                 ]);
 
             return JsonSuccessResponse::createWithData('Необходимо заполнить номер телефона', ['html' => $html]);
@@ -325,9 +339,11 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      *
      * @param string $confirmCode
      *
+     * @param string $backUrl
+     *
      * @return JsonResponse
      */
-    public function ajaxSavePhone(string $phone, string $confirmCode): JsonResponse
+    public function ajaxSavePhone(string $phone, string $confirmCode, string $backUrl): JsonResponse
     {
         try {
             $container = App::getInstance()->getContainer();
@@ -502,18 +518,8 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
 
     public function ajaxUnionBasket(Request $request): JsonResponse
     {
-        try {
-            $container = App::getInstance()->getContainer();
-        } catch (ApplicationCreateException $e) {
-            $logger = LoggerFactory::create('system');
-            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
-            return $this->ajaxMess->getSystemError();
-        }
-
         $backUrl = $request->get('backurl', '');
-        $needAddPhone = $request->get('needAddPhone', 'N');
-        $delBasketItems = $request->get('del_basket_items', []);
-        $type = $request->get('confirm_no', 'U') !== 'Y' ? 'N' : 'Y';
+        $needAddPhone = $request->get('need_add_hone', 'N');
 
         $data = [];
         $options = [];
@@ -528,29 +534,59 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             }
         }
 
-        if ($type === 'N') {
-            if (\is_array($delBasketItems) && !empty($delBasketItems)) {
-                foreach ($delBasketItems as $id) {
-                    try {
-                        $basketService = $container->get(BasketService::class);
-                        $basketService->deleteOfferFromBasket($id);
-                    } catch (ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException $e) {
-                        $logger = LoggerFactory::create('system');
-                        $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
-                        return $this->ajaxMess->getSystemError();
-                    } catch (ObjectNotFoundException|BitrixProxyException|Exception $e) {
-                        $logger = LoggerFactory::create('basket');
-                        $logger->critical('Ошибка удаления - ' . $e->getMessage());
-                        return $this->ajaxMess->getSystemError();
-                    }
-                }
-            }
-            $mess = 'Сохранена текущая корзина';
-        } else {
-            $mess = 'Корзины объединены';
+        return JsonSuccessResponse::createWithData('Корзины объединены', $data, 200, $options);
+    }
+
+    public function ajaxNotUnionBasket(Request $request): JsonResponse
+    {
+        try {
+            $container = App::getInstance()->getContainer();
+        } catch (ApplicationCreateException $e) {
+            $logger = LoggerFactory::create('system');
+            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            return $this->ajaxMess->getSystemError();
         }
 
-        return JsonSuccessResponse::createWithData($mess, $data, 200, $options);
+        $backUrl = $request->get('backurl', '');
+        $needAddPhone = $request->get('need_add_hone', 'N');
+        $delBasketItems = $request->get('del_basket_items', []);
+        if (!empty($delBasketItems)) {
+            $delBasketItems = explode(',', $delBasketItems);
+        }
+
+        $data = [];
+        $options = [];
+
+        if ($needAddPhone === 'Y') {
+            $data = ['html' => $this->getHtml('addPhone', 'Добавление телефона'), ['backurl' => $backUrl]];
+        } else {
+            if (!empty($backUrl)) {
+                $options = ['redirect' => $backUrl];
+            } else {
+                $options = ['reload' => true];
+            }
+        }
+
+        if (\is_array($delBasketItems) && !empty($delBasketItems)) {
+            try {
+                $basketService = $container->get(BasketService::class);
+            } catch (ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException $e) {
+                $logger = LoggerFactory::create('system');
+                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+                return $this->ajaxMess->getSystemError();
+            }
+            foreach ($delBasketItems as $id) {
+                try {
+                    $basketService->deleteOfferFromBasket($id);
+                } catch (ObjectNotFoundException|BitrixProxyException|Exception $e) {
+                    $logger = LoggerFactory::create('basket');
+                    $logger->critical('Ошибка удаления - ' . $e->getMessage());
+                    return $this->ajaxMess->getSystemError();
+                }
+            }
+        }
+
+        return JsonSuccessResponse::createWithData('Сохранена текущая корзина', $data, 200, $options);
     }
 
     /**
