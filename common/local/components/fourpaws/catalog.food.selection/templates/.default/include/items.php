@@ -4,7 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 /** @var array $recommendedItems */
 /** @var array $alsoItems */
-if ((!\is_array($recommendedItems) || empty($recommendedItems)) || (!\is_array($alsoItems) || empty($alsoItems))) {
+if (!\is_array($recommendedItems) || empty($recommendedItems)) {
     return;
 }
 global $APPLICATION; ?>
@@ -16,8 +16,7 @@ global $APPLICATION; ?>
             'fourpaws:catalog.element.snippet',
             '',
             [
-                'PRODUCT'    => $product,
-                'CACHE_TIME' => 0,
+                'PRODUCT'    => $product
             ]
         );
     } ?>
@@ -35,8 +34,7 @@ global $APPLICATION; ?>
                 'fourpaws:catalog.element.snippet',
                 '',
                 [
-                    'PRODUCT'    => $product,
-                    'CACHE_TIME' => 0,
+                    'PRODUCT'    => $product
                 ]
             );
         } ?>
