@@ -167,14 +167,14 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
                             <a class="b-weight-container__link b-weight-container__link--product js-price-product<?= $isCurrentOffer ? ' active-link' : '' ?>"
                                href="<?= $offer->getLink() ?>"
                                data-weight=" <?= $value ?>"
-                               data-price="<?= $offer->getPrice() ?>"
+                               data-price="<?= ceil($offer->getPrice()) ?>"
                                data-image="<?= $mainImageIndex[$offer->getId()] ?>"
                                data-url="<?= $offer->getLink() ?>"
                                data-offerid="<?= $offer->getId() ?>">
                                 <span class="b-weight-container__line">
                                     <span class="b-weight-container__weight"><?= $value ?></span>
                                     <span class="b-weight-container__price">
-                                        <?= $offer->getPrice() ?> <span class="b-ruble b-ruble--weight">₽</span>
+                                        <?= ceil($offer->getPrice()) ?> <span class="b-ruble b-ruble--weight">₽</span>
                                     </span>
                                 </span>
                                 <span class="b-weight-container__line">
@@ -222,11 +222,11 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                     <div class="b-product-information__title-info">Цена</div>
                     <div class="b-product-information__value b-product-information__value--price">
                         <?php if ($currentOffer->getOldPrice() > $currentOffer->getPrice()) { ?>
-                            <span class="b-product-information__old-price"><?= $currentOffer->getOldPrice() ?> </span>
+                            <span class="b-product-information__old-price"><?= ceil($currentOffer->getOldPrice()) ?> </span>
                             <span class="b-ruble b-ruble--old-price">₽</span>
                         <?php } ?>
                         <span class="b-product-information__price js-price-product">
-                            <?= $currentOffer->getPrice() ?>
+                            <?= ceil($currentOffer->getPrice()) ?>
                         </span>
                         <span class="b-ruble b-ruble--product-information">&nbsp;₽</span>
                         <?php if ($currentOffer->getBonuses()) { ?>
