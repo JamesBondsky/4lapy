@@ -9,8 +9,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Data\Cache;
+use Bitrix\Main\Data\TaggedCache;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\SystemException;
 use FourPaws\App\Application as App;
@@ -112,6 +114,15 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
                 $cache->abortDataCache();
                 return null;
             }
+
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                $instance = Application::getInstance();
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->startTagCache($instance->getContext()->getRequest()->getRequestedPageDirectory());
+                $tagCache->registerTag(sprintf('bonus_%s', $user->getId()));
+                $tagCache->endTagCache();
+            }
+
             $cache->endDataCache(['bonus' => $bonus]);
         }
 

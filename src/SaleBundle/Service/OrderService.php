@@ -7,6 +7,7 @@
 namespace FourPaws\SaleBundle\Service;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
+use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
@@ -583,6 +584,14 @@ class OrderService
             $result = $order->save();
             if (!$result->isSuccess()) {
                 throw new OrderCreateException(implode(', ', $result->getErrorMessages()));
+            }
+            else{
+                if (\defined('BX_COMP_MANAGED_CACHE')) {
+                    /** Очистка кеша бонусов */
+                    $instance = Application::getInstance();
+                    $tagCache = $instance->getTaggedCache();
+                    $tagCache->clearByTag('bonus_' . $order->getField('USER_ID'));
+                }
             }
 
             $this->orderStorageService->clearStorage($storage);
