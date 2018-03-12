@@ -38,16 +38,16 @@
         },
         {
             "name": "andreyryabin/sprint.migration",
-            "version": "2.5.2",
+            "version": "2.5.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/andreyryabin/sprint.migration.git",
-                "reference": "0a411515a83b400e7acebc59aefeb4950034d2cb"
+                "reference": "4a04cda9cc9593128bd1c4b282bb78c251d75f55"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/andreyryabin/sprint.migration/zipball/0a411515a83b400e7acebc59aefeb4950034d2cb",
-                "reference": "0a411515a83b400e7acebc59aefeb4950034d2cb",
+                "url": "https://api.github.com/repos/andreyryabin/sprint.migration/zipball/4a04cda9cc9593128bd1c4b282bb78c251d75f55",
+                "reference": "4a04cda9cc9593128bd1c4b282bb78c251d75f55",
                 "shasum": ""
             },
             "require": {
@@ -65,7 +65,7 @@
                 "bitrix",
                 "migration"
             ],
-            "time": "2017-11-07T19:11:59+00:00"
+            "time": "2018-03-05T11:38:00+00:00"
         },
         {
             "name": "ci/restclientbundle",
