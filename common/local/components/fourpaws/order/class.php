@@ -10,10 +10,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use FourPaws\App\Application;
-use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
-use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\ManzanaPosService;
 use FourPaws\External\Manzana\Exception\ExecuteException;
@@ -24,8 +22,6 @@ use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\SaleBundle\Service\UserAccountService;
-use FourPaws\StoreBundle\Collection\StoreCollection;
-use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -35,7 +31,7 @@ use Psr\Log\LoggerInterface;
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsOrderComponent extends \CBitrixComponent
 {
-    const DEFAULT_TEMPLATES_404 = [
+    protected const DEFAULT_TEMPLATES_404 = [
         OrderStorageService::AUTH_STEP => 'index.php',
         OrderStorageService::DELIVERY_STEP => 'delivery/',
         OrderStorageService::PAYMENT_STEP => 'payment/',
@@ -131,13 +127,21 @@ class FourPawsOrderComponent extends \CBitrixComponent
     }
 
     /**
-     * @throws Exception
-     * @return $this
+     * @throws OrderCreateException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\ArgumentTypeException
+     * @throws \Bitrix\Main\NotImplementedException
+     * @throws \Bitrix\Main\NotSupportedException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\SaleBundle\Exception\FastOrderCreateException
      */
-    protected function prepareResult()
+    protected function prepareResult(): void
     {
         if ($this->currentStep === OrderStorageService::COMPLETE_STEP) {
-            return $this;
+            return;
         }
 
         if (!$storage = $this->orderStorageService->getStorage()) {
@@ -284,8 +288,6 @@ class FourPawsOrderComponent extends \CBitrixComponent
         $this->arResult['BASKET'] = $basket;
         $this->arResult['STORAGE'] = $storage;
         $this->arResult['STEP'] = $this->currentStep;
-
-        return $this;
     }
 
     /**
@@ -305,10 +307,16 @@ class FourPawsOrderComponent extends \CBitrixComponent
             return;
         }
 
-        $selectedShopCode = $storage->getDeliveryPlaceCode();
 
         try {
+            $selectedShopCode = $storage->getDeliveryPlaceCode();
             $shops = $pickup->getStockResult()->getStores(false);
+            if ($selectedShopCode && isset($shops[$selectedShopCode])) {
+                $pickup->setSelectedStore($shops[$selectedShopCode]);
+            }
+
+            $this->arResult['SELECTED_SHOP'] = $pickup->getSelectedStore();
+            $pickup->setStockResult($pickup->getStockResult()->filterByStore($pickup->getSelectedStore()));
         } catch (NotFoundException $e) {
             $this->logger->error(sprintf(
                     'Order has pickup delivery with no shops available. Delivery location: %s',
@@ -317,27 +325,11 @@ class FourPawsOrderComponent extends \CBitrixComponent
             return;
         }
 
-        $selectedShop = null;
-        if (!$selectedShopCode || !isset($shops[$selectedShopCode])) {
-            /** @var Store $shop */
-            foreach ($shops as $shop) {
-                if ($pickup->getStockResult()->filterByStore($shop)->getDelayed()->isEmpty()) {
-                    $selectedShop = $shop;
-                    break;
-                }
-            }
+        $available = $pickup->getStockResult()->getAvailable();
 
-            if (!$selectedShop) {
-                $selectedShop = $shops->first();
-            }
-        } else {
-            $selectedShop = $shops[$selectedShopCode];
-        }
-
-        $pickup->setStockResult($pickup->getStockResult()->filterByStore($selectedShop));
-        $partialPickup = (clone $pickup)->setStockResult($pickup->getStockResult()->getAvailable());
-
-        $this->arResult['SELECTED_SHOP'] = $selectedShop;
-        $this->arResult['PARTIAL_PICKUP'] = $partialPickup;
+        $partialPickup = (clone $pickup);
+        $this->arResult['PARTIAL_PICKUP'] = $available->isEmpty()
+            ? $partialPickup
+            : $partialPickup->setStockResult($pickup->getStockResult()->getAvailable());
     }
 }

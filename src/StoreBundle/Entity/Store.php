@@ -944,6 +944,10 @@ class Store extends Base
      */
     public function getScheduleString(): string
     {
+        if (!$this->scheduleString) {
+            $this->scheduleString = (string)$this->schedule;
+        }
+
         return $this->scheduleString;
     }
 

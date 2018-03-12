@@ -343,17 +343,12 @@ abstract class BaseResult extends CalculationResult
     protected function doCalculateDeliveryDate(): void
     {
         $this->deliveryDate = clone $this->getCurrentDate();
-        $modifier = 0;
 
         /**
          * Если есть отложенные товары, то добавляем к дате доставки
          * срок поставки на склад по графику
          */
-        $modifier += $this->getStoreShipmentDate($this->getSelectedStore())->diff($this->currentDate)->days;
-
-        if ($modifier > 0) {
-            $this->deliveryDate->modify(sprintf('+%s days', $modifier));
-        }
+        $this->deliveryDate = $this->getStoreShipmentDate($this->getSelectedStore());
     }
 
     /**
@@ -379,8 +374,12 @@ abstract class BaseResult extends CalculationResult
             $shipmentDay++;
         } else {
             /* @todo поиск в графике поставок */
-            $shipmentDay = 0;
+            $shipmentDay = 3;
         }
+        /**
+         * Добавляем "срок поставки" к дате доставки
+         */
+        $shipmentDay += $store->getDeliveryTime();
         $date = clone $this->getCurrentDate();
         $date->modify(sprintf('+%s days', $shipmentDay));
 
@@ -389,11 +388,13 @@ abstract class BaseResult extends CalculationResult
          */
         if ($store->isShop()) {
             $schedule = $store->getSchedule();
-            $hour = (int)$date->format('G');
+            $hour = (int)$date->format('G') + 1;
             if ($hour < $schedule->getFrom()) {
                 $date->setTime($schedule->getFrom() + 1, 0);
             } elseif ($hour > $schedule->getTo()) {
                 $date->modify('+1 day');
+                $date->setTime($schedule->getFrom() + 1, 0);
+            } elseif ($date->format('z') !== $this->getCurrentDate()->format('z')) {
                 $date->setTime($schedule->getFrom() + 1, 0);
             } else {
                 $date->modify('+1 hour');

@@ -73,7 +73,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
      */
-    protected function prepareResult(array $city = [])
+    protected function prepareResult(array $city = []): void
     {
         if (!$pickupDelivery = $this->getPickupDelivery()) {
             return;
@@ -108,7 +108,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
 
         $stores = $this->getStoreList($params['filter'] ?? [], $params['order'] ?? []);
         if (!$stores->isEmpty()) {
-            list($servicesList, $metroList) = $this->getFullStoreInfo($stores);
+            [$servicesList, $metroList] = $this->getFullStoreInfo($stores);
 
             $avgGpsN = 0;
             $avgGpsS = 0;
@@ -128,6 +128,11 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
              * 1) По убыванию % от суммы товаров заказа в наличии в магазине или на складе
              * 2) По возрастанию даты готовности заказа к выдаче
              * 3) По адресу магазина в алфавитном порядке
+             */
+            /**
+             * @param Store $shop1
+             * @param Store $shop2
+             * @return int
              */
             $sortFunc = function (Store $shop1, Store $shop2) use ($resultByStore) {
                 $shopData1 = $resultByStore[$shop1->getXmlId()];
@@ -181,10 +186,10 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                 /** @var StockResult $item */
                 foreach ($delayed as $item) {
                     $partsDelayed[] = [
-                        'name'     => $item->getOffer()->getName(),
+                        'name' => $item->getOffer()->getName(),
                         'quantity' => $item->getAmount(),
-                        'price'    => $item->getPrice(),
-                        'weight'   => $item->getOffer()->getCatalogProduct()->getWeight(),
+                        'price' => $item->getPrice(),
+                        'weight' => $item->getOffer()->getCatalogProduct()->getWeight(),
                     ];
                 }
 
@@ -192,10 +197,10 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                 /** @var StockResult $item */
                 foreach ($available as $item) {
                     $partsAvailable[] = [
-                        'name'     => $item->getOffer()->getName(),
+                        'name' => $item->getOffer()->getName(),
                         'quantity' => $item->getAmount(),
-                        'price'    => $item->getPrice(),
-                        'weight'   => $item->getOffer()->getCatalogProduct()->getWeight(),
+                        'price' => $item->getPrice(),
+                        'weight' => $item->getOffer()->getCatalogProduct()->getWeight(),
                     ];
                 }
 
@@ -207,19 +212,19 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                 }
 
                 $result['items'][] = [
-                    'id'                => $store->getXmlId(),
-                    'adress'            => $address,
-                    'phone'             => $store->getPhone(),
-                    'schedule'          => $store->getScheduleString(),
-                    'pickup'            => DeliveryTimeHelper::showTime(
+                    'id' => $store->getXmlId(),
+                    'adress' => $address,
+                    'phone' => $store->getPhone(),
+                    'schedule' => $store->getScheduleString(),
+                    'pickup' => DeliveryTimeHelper::showTime(
                         $resultByStore[$store->getXmlId()]['PARTIAL_RESULT'],
                         ['SHORT' => false, 'SHOW_TIME' => $showTime]
                     ),
-                    'pickup_full'       => DeliveryTimeHelper::showTime(
+                    'pickup_full' => DeliveryTimeHelper::showTime(
                         $resultByStore[$store->getXmlId()]['FULL_RESULT'],
                         ['SHORT' => false, 'SHOW_TIME' => $showTime]
                     ),
-                    'pickup_short'      => DeliveryTimeHelper::showTime(
+                    'pickup_short' => DeliveryTimeHelper::showTime(
                         $resultByStore[$store->getXmlId()]['PARTIAL_RESULT'],
                         ['SHORT' => true, 'SHOW_TIME' => $showTime]
                     ),
@@ -227,18 +232,18 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                         $resultByStore[$store->getXmlId()]['FULL_RESULT'],
                         ['SHORT' => true, 'SHOW_TIME' => $showTime]
                     ),
-                    'metroClass'        => !empty($metro) ? '--' . $metroList[$metro]['BRANCH']['UF_CLASS'] : '',
-                    'order'             => $orderType,
-                    'parts_available'   => $partsAvailable,
-                    'parts_delayed'     => $partsDelayed,
-                    'services'          => $services,
-                    'price'             => $available->isEmpty() ?
+                    'metroClass' => !empty($metro) ? '--' . $metroList[$metro]['BRANCH']['UF_CLASS'] : '',
+                    'order' => $orderType,
+                    'parts_available' => $partsAvailable,
+                    'parts_delayed' => $partsDelayed,
+                    'services' => $services,
+                    'price' => $available->isEmpty() ?
                         $fullResult->getStockResult()->getPrice() :
                         $available->getPrice(),
-                    'full_price'        => $fullResult->getStockResult()->getPrice(),
+                    'full_price' => $fullResult->getStockResult()->getPrice(),
                     /* @todo поменять местами gps_s и gps_n */
-                    'gps_n'             => $store->getLongitude(),
-                    'gps_s'             => $store->getLatitude(),
+                    'gps_n' => $store->getLongitude(),
+                    'gps_s' => $store->getLatitude(),
                 ];
                 $avgGpsN += $store->getLongitude();
                 $avgGpsS += $store->getLatitude();
@@ -318,7 +323,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
             }
 
             return $this->storeService->getRepository()->findBy(array_merge($filter, $defaultFilter), $order);
-        } catch (\FourPaws\StoreBundle\Exception\NotFoundException $e) {
+        } catch (\FourPaws\DeliveryBundle\Exception\NotFoundException $e) {
             return new StoreCollection();
         }
     }
@@ -326,7 +331,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
     /**
      * @return null|BaseResult
      */
-    protected function getPickupDelivery()
+    protected function getPickupDelivery(): ?BaseResult
     {
         $pickupDelivery = null;
         $deliveries = $this->orderService->getDeliveries();
@@ -358,7 +363,10 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
         $result['AVAILABLE_AMOUNT'] = $available->isEmpty() ? 0 : $available->getAmount();
         $result['DELAYED_AMOUNT'] = $delayed->isEmpty() ? 0 : $delayed->getAmount();
         $result['FULL_RESULT'] = (clone $delivery)->setStockResult($stockResultByStore);
-        $result['PARTIAL_RESULT'] = (clone $delivery)->setStockResult($available);
+        $result['PARTIAL_RESULT'] = $result['FULL_RESULT'];
+        if (!$available->isEmpty()) {
+            $result['PARTIAL_RESULT'] = (clone $delivery)->setStockResult($available);
+        }
 
         return $result;
     }

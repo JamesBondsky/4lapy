@@ -27,7 +27,7 @@ class DeliveryTimeHelper
     public static function showTime(
         BaseResult $calculationResult,
         array $options = []
-    ) {
+    ): string {
         $defaultOptions = [
             'SHOW_TIME'   => false,
             'SHORT'       => false,
@@ -38,12 +38,10 @@ class DeliveryTimeHelper
 
         $options = array_merge($defaultOptions, $options);
 
-        $result = '';
-
         $currentDate = new \DateTime();
         $date = clone $calculationResult->getDeliveryDate();
 
-        if ($date->format('z') === $currentDate->format('z')) {
+        if (abs($date->getTimestamp() - $currentDate->getTimestamp()) < 2 * 3600) {
             if ($options['HOUR_FORMAT']) {
                 if ($options['HOUR_FORMAT'] instanceof \Closure) {
                     $options['HOUR_FORMAT'] = $options['HOUR_FORMAT']($date);
@@ -51,6 +49,13 @@ class DeliveryTimeHelper
 
                 $result = WordHelper::formatDate($options['HOUR_FORMAT'], $date->getTimestamp());
             } else {
+                $result = 'через час';
+                /*
+                if (abs($date->format('G') - $currentDate->format('G')) <= 1) {
+                    $result = 'через час';
+                } else {
+
+                }
                 $result .= 'через ';
                 $diff = $date->diff($currentDate)->h;
                 if ($diff < 1) {
@@ -58,6 +63,7 @@ class DeliveryTimeHelper
                 }
                 $result .= ($diff === 1) ? '' : ($diff . ' ');
                 $result .= (new Declension('час', 'часа', 'часов'))->get($diff);
+                */
             }
         } else {
             if ($options['DAY_FORMAT']) {
@@ -84,7 +90,7 @@ class DeliveryTimeHelper
             if ($options['SHORT'] && !$calculationResult->getPrice()) {
                 $result .= ', 0 ₽';
             } else {
-                $result .= ', ' . CurrencyHelper::formatPrice($calculationResult->getPrice());
+                $result .= ', ' . CurrencyHelper::formatPrice($calculationResult->getPrice(), true);
             }
         }
 
