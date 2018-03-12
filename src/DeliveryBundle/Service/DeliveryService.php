@@ -30,36 +30,36 @@ use WebArch\BitrixCache\BitrixCache;
 
 class DeliveryService
 {
-    const INNER_DELIVERY_CODE = '4lapy_delivery';
+    public const INNER_DELIVERY_CODE = '4lapy_delivery';
 
-    const INNER_PICKUP_CODE = '4lapy_pickup';
+    public const INNER_PICKUP_CODE = '4lapy_pickup';
 
-    const DPD_DELIVERY_GROUP_CODE = 'ipolh_dpd';
+    public const DPD_DELIVERY_GROUP_CODE = 'ipolh_dpd';
 
-    const DPD_DELIVERY_CODE = 'ipolh_dpd:COURIER';
+    public const DPD_DELIVERY_CODE = self::DPD_DELIVERY_GROUP_CODE . ':COURIER';
 
-    const DPD_PICKUP_CODE = 'ipolh_dpd:PICKUP';
+    public const DPD_PICKUP_CODE = self::DPD_DELIVERY_GROUP_CODE . ':PICKUP';
 
-    const ORDER_LOCATION_PROP_CODE = 'CITY_CODE';
+    public const ORDER_LOCATION_PROP_CODE = 'CITY_CODE';
 
-    const LOCATION_RESTRICTION_TYPE_LOCATION = 'L';
+    public const LOCATION_RESTRICTION_TYPE_LOCATION = 'L';
 
-    const LOCATION_RESTRICTION_TYPE_GROUP = 'G';
+    public const LOCATION_RESTRICTION_TYPE_GROUP = 'G';
 
-    const ZONE_1 = 'ZONE_1';
+    public const ZONE_1 = 'ZONE_1';
 
-    const ZONE_2 = 'ZONE_2';
+    public const ZONE_2 = 'ZONE_2';
 
-    const ZONE_3 = 'ZONE_3';
+    public const ZONE_3 = 'ZONE_3';
 
-    const ZONE_4 = 'ZONE_4';
+    public const ZONE_4 = 'ZONE_4';
 
-    const PICKUP_CODES = [
+    public const PICKUP_CODES = [
         DeliveryService::INNER_PICKUP_CODE,
         DeliveryService::DPD_PICKUP_CODE,
     ];
 
-    const DELIVERY_CODES = [
+    public const DELIVERY_CODES = [
         DeliveryService::INNER_DELIVERY_CODE,
         DeliveryService::DPD_DELIVERY_CODE,
     ];
@@ -70,9 +70,9 @@ class DeliveryService
     protected $locationService;
 
     /**
-     * DeliveryService constructor.
+     * DeliveryService public constructor.
      *
-     * @param LocationService $locationServic
+     * @param LocationService $locationService
      */
     public function __construct(LocationService $locationService)
     {

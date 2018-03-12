@@ -10,6 +10,7 @@ $APPLICATION->SetPageProperty('title', 'Зоомагазин Четыре лап
 $APPLICATION->SetPageProperty('NOT_SHOW_NAV_CHAIN', 'Y');
 $APPLICATION->SetTitle('Главная страница');
 
+
 $APPLICATION->IncludeComponent('bitrix:news.list',
     'index.slider',
     [

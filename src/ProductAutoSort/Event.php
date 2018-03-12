@@ -19,10 +19,9 @@ abstract class Event implements ServiceHandlerInterface
 {
     /**
      * @param EventManager $eventManager
-     *
      * @return void
      */
-    public static function initHandlers(EventManager $eventManager)
+    public static function initHandlers(EventManager $eventManager): void
     {
         $eventManager->addEventHandler(
             'main',
