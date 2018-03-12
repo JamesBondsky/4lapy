@@ -35,8 +35,8 @@ parameters:
     - retryOnConflict: 0
 
   # Sap directories
-  sap.directory: '/home/vagrant/project/common/upload/sap-exchange'
-  sap.directory.out: '/home/vagrant/project/common/upload/sap-exchange/out/'
+  sap.directory: ''
+  sap.directory.out: ''
 
   sap.product.directory.in: '%sap.directory%'
   sap.product.directory.out: '%sap.directory%/ArchMat/'
