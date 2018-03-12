@@ -36,6 +36,9 @@ abstract class BaseRepository implements RepositoryInterface
      */
     protected $table;
 
+    private $entity;
+    private $collection;
+
     abstract protected function getDataClass(): string;
 
     abstract protected function getCollectionClass(): string;
@@ -51,8 +54,6 @@ abstract class BaseRepository implements RepositoryInterface
      *
      * @param ArrayTransformerInterface $arrayTransformer
      * @param ValidatorInterface $validator
-     *
-     * @throws TableClassNotDefinedException
      */
     public function __construct(ArrayTransformerInterface $arrayTransformer, ValidatorInterface $validator)
     {
@@ -65,6 +66,14 @@ abstract class BaseRepository implements RepositoryInterface
         $this->collection = $this->getCollectionClass();
     }
 
+    /**
+     * @param BaseEntity $entity
+     *
+     * @return bool
+     * @throws BitrixRuntimeException
+     * @throws ValidationException
+     * @throws \Exception
+     */
     public function create(BaseEntity $entity): bool
     {
         $validationResult = $this->validator->validate($entity, null, ['create']);
@@ -93,7 +102,7 @@ abstract class BaseRepository implements RepositoryInterface
      * @throws ConstraintDefinitionException
      * @return null|BaseEntity
      */
-    public function find(int $id)
+    public function find(int $id): ?BaseEntity
     {
         $this->checkIdentifier($id);
 
@@ -125,7 +134,7 @@ abstract class BaseRepository implements RepositoryInterface
 
         $criteria = array_merge($this->getDefaultFilter(), $criteria);
 
-        $entities = ($this->table)::query()
+        $entities = $this->table::query()
                                   ->setSelect(['*', 'UF_*'])
                                   ->setFilter($criteria)
                                   ->setOrder($orderBy)
@@ -155,6 +164,7 @@ abstract class BaseRepository implements RepositoryInterface
     /**
      * @param BaseEntity $entity
      *
+     * @throws \Exception
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws ValidationException
@@ -168,7 +178,7 @@ abstract class BaseRepository implements RepositoryInterface
         if ($validationResult->count() > 0) {
             throw new ValidationException('Wrong entity passed to update');
         }
-        $result = ($this->table)::update(
+        $result = $this->table::update(
             $entity->getId(),
             $this->arrayTransformer->toArray($entity, SerializationContext::create()->setGroups(['update']))
         );
@@ -183,6 +193,7 @@ abstract class BaseRepository implements RepositoryInterface
     /**
      * @param int $id
      *
+     * @throws \Exception
      * @throws ConstraintDefinitionException
      * @throws InvalidIdentifierException
      * @throws BitrixRuntimeException
@@ -191,7 +202,7 @@ abstract class BaseRepository implements RepositoryInterface
     public function delete(int $id): bool
     {
         $this->checkIdentifier($id);
-        $result = ($this->table)::delete($id);
+        $result = $this->table::delete($id);
         if ($result->isSuccess()) {
             return true;
         }
@@ -205,7 +216,7 @@ abstract class BaseRepository implements RepositoryInterface
      * @throws ConstraintDefinitionException
      * @throws InvalidIdentifierException
      */
-    protected function checkIdentifier(int $id)
+    protected function checkIdentifier(int $id): void
     {
         try {
             $result = $this->validator->validate(

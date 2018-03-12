@@ -301,6 +301,12 @@ class UserBonus
                 }
             }
         }
+        /** установка скидки если есть карта и она учавствует в бонусной программе*/
+        if($discount === 0 && !$this->isEmpty() && !$this->getCard()->isEmpty()) {
+            $discountTable = static::$discountTable;
+            reset($discountTable);
+            $discount = key($discountTable);
+        }
         
         return $discount;
     }
