@@ -36,6 +36,7 @@ use FourPaws\Helpers\BxCollection;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\Location\LocationService;
 use FourPaws\SaleBundle\Service\OrderService as BaseOrderService;
+use FourPaws\SapBundle\Dto\Base\Orders\DeliveryAddress;
 use FourPaws\SapBundle\Dto\In\Orders\Order as OrderDtoIn;
 use FourPaws\SapBundle\Dto\In\Orders\OrderOffer as OrderOfferIn;
 use FourPaws\SapBundle\Dto\Out\Orders\DeliveryAddress as OutDeliveryAddress;
@@ -44,6 +45,7 @@ use FourPaws\SapBundle\Dto\Out\Orders\OrderOffer;
 use FourPaws\SapBundle\Enum\SapOrderEnum;
 use FourPaws\SapBundle\Exception\CantCreateBasketItem;
 use FourPaws\SapBundle\Exception\NotFoundOrderDeliveryException;
+use FourPaws\SapBundle\Exception\NotFoundOrderException;
 use FourPaws\SapBundle\Exception\NotFoundOrderPaySystemException;
 use FourPaws\SapBundle\Exception\NotFoundOrderShipmentException;
 use FourPaws\SapBundle\Exception\NotFoundOrderUserException;
@@ -54,6 +56,7 @@ use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Repository\UserRepository;
 use JMS\Serializer\SerializerInterface;
 use Psr\Log\LoggerAwareInterface;
+use RuntimeException;
 use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -65,7 +68,7 @@ use Symfony\Component\Filesystem\Filesystem;
 class OrderService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
-    
+
     /**
      * @var BaseOrderService
      */
@@ -102,17 +105,17 @@ class OrderService implements LoggerAwareInterface
      * @var IntervalService
      */
     private $intervalService;
-    
+
     /**
      * OrderService constructor.
      *
-     * @param BaseOrderService    $baseOrderService
-     * @param DeliveryService     $deliveryService
-     * @param LocationService     $locationService
+     * @param BaseOrderService $baseOrderService
+     * @param DeliveryService $deliveryService
+     * @param LocationService $locationService
      * @param SerializerInterface $serializer
-     * @param Filesystem          $filesystem
-     * @param UserRepository      $userRepository
-     * @param IntervalService     $intervalService
+     * @param Filesystem $filesystem
+     * @param UserRepository $userRepository
+     * @param IntervalService $intervalService
      */
     public function __construct(
         BaseOrderService $baseOrderService,
@@ -122,7 +125,8 @@ class OrderService implements LoggerAwareInterface
         Filesystem $filesystem,
         UserRepository $userRepository,
         IntervalService $intervalService
-    ) {
+    )
+    {
         $this->baseOrderService = $baseOrderService;
         $this->serializer = $serializer;
         $this->filesystem = $filesystem;
@@ -131,23 +135,29 @@ class OrderService implements LoggerAwareInterface
         $this->locationService = $locationService;
         $this->intervalService = $intervalService;
     }
-    
+
     /**
      * @param Order $order
      *
      * @throws IOException
      * @throws ObjectNotFoundException
+     * @throws NotFoundOrderDeliveryException
+     * @throws NotFoundOrderPaySystemException
+     * @throws NotFoundOrderShipmentException
+     * @throws NotFoundOrderUserException
      */
     public function out(Order $order)
     {
         $message = $this->transformOrderToMessage($order);
         $this->filesystem->dumpFile($this->getFileName($order), $message->getData());
     }
-    
+
     /**
      * @param Order $order
      *
      * @return SourceMessage
+     * @throws NotFoundOrderShipmentException
+     * @throws NotFoundOrderDeliveryException
      * @throws NotFoundOrderPaySystemException
      * @throws ObjectNotFoundException
      * @throws NotFoundOrderUserException
@@ -155,13 +165,13 @@ class OrderService implements LoggerAwareInterface
     public function transformOrderToMessage(Order $order): SourceMessage
     {
         $orderDto = new OrderDtoOut();
-        
+
         try {
             $orderUser = $this->userRepository->find($order->getUserId());
         } catch (ConstraintDefinitionException | InvalidIdentifierException $e) {
             $orderUser = null;
         }
-        
+
         if (null === $orderUser) {
             throw new NotFoundOrderUserException(sprintf(
                 'Пользователь с id %s не найден, заказ #%s',
@@ -169,7 +179,7 @@ class OrderService implements LoggerAwareInterface
                 $order->getId()
             ));
         }
-        
+
         /**
          * Источник заказа
          *
@@ -179,56 +189,63 @@ class OrderService implements LoggerAwareInterface
         $orderSource = $this->getPropertyValueByCode($order, 'FROM_APP') === 'Y'
             ? OrderDtoOut::ORDER_SOURCE_MOBILE_APP
             : OrderDtoOut::ORDER_SOURCE_SITE;
-        
+
         $orderDto
             ->setId($order->getId())
             ->setDateInsert(DateHelper::convertToDateTime($order->getDateInsert()->toUserTime()))
             ->setClientId($order->getId())
-            ->setClientFio(BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), 'NAME')->getValue())
-            ->setClientPhone(BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), 'PHONE')->getValue())
-            ->setClientOrderPhone(BxCollection::getOrderPropertyByCode($order->getPropertyCollection(),
-                'PHONE_ALT')->getValue())
+            ->setClientFio($this->getPropertyValueByCode($order, 'NAME'))
+            ->setClientPhone($this->getPropertyValueByCode($order, 'PHONE'))
+            ->setClientOrderPhone($this->getPropertyValueByCode($order, 'PHONE_ALT'))
             ->setClientComment($order->getField('USER_DESCRIPTION'))
             ->setOrderSource($orderSource)
             ->setBonusCard($orderUser->getDiscountCardNumber());
-        
+
         $this->populateOrderDtoPayment($orderDto, $order->getPaymentCollection());
         $this->populateOrderDtoDelivery($orderDto, $order);
         $this->populateOrderDtoProducts($orderDto, $order);
-        
+
         $xml = $this->serializer->serialize($orderDto, 'xml');
         return new SourceMessage($this->getMessageId($order), OrderDtoOut::class, $xml);
     }
-    
+
     /**
      * @param OrderDtoIn $orderDto
      *
      * @throws ArgumentNullException
      * @throws NotImplementedException
      * @throws ArgumentException
+     * @throws NotFoundOrderException
+     * @throws RuntimeException
      *
      * @return Order
      */
     public function transformDtoToOrder(OrderDtoIn $orderDto): Order
     {
         $order = Order::load($orderDto->getId());
-        
+
+        if (null === $order) {
+            throw new NotFoundOrderException(sprintf(
+                'Заказ #%s не найден',
+                $orderDto->getId()
+            ));
+        }
+
         $this->setPropertiesFromDto($order, $orderDto);
         $this->setPaymentFromDto($order, $orderDto);
         $this->setDeliveryFromDto($order, $orderDto);
         $this->setBasketFromDto($order, $orderDto);
-        
+
         /**
          * @todo
          *
          * Установка статуса заказа из DTO. Необходимо выяснить сопоставление статусов статусам в SAP
          */
         $order->setField('STATUS_ID', $orderDto->getStatus());
-        dump([$order, $orderDto]);
-        die;
+
         return $order;
     }
-    
+
     /**
      * @param Order $order
      *
@@ -239,10 +256,10 @@ class OrderService implements LoggerAwareInterface
         if (null === $this->messageId) {
             $this->messageId = sprintf('order_%s_%s', $order->getId(), time());
         }
-        
+
         return $this->messageId;
     }
-    
+
     /**
      * @param Order $order
      *
@@ -253,7 +270,7 @@ class OrderService implements LoggerAwareInterface
         return sprintf('/%s/%s-%s.xml', trim($this->outPath, '/'), $order->getDateInsert()->format('Ymd'),
             $order->getId());
     }
-    
+
     /**
      * @param string $outPath
      *
@@ -265,14 +282,14 @@ class OrderService implements LoggerAwareInterface
         if (!$this->filesystem->exists($outPath)) {
             $this->filesystem->mkdir($outPath, '0775');
         }
-        
+
         $this->outPath = $outPath;
-        
+
         return $this;
     }
-    
+
     /**
-     * @param OrderDtoOut       $dto
+     * @param OrderDtoOut $dto
      * @param PaymentCollection $paymentCollection
      *
      * @throws ObjectNotFoundException
@@ -285,24 +302,24 @@ class OrderService implements LoggerAwareInterface
          */
         $externalPayment = null;
         $internalPayment = $paymentCollection->getInnerPayment();
-        
+
         foreach ($paymentCollection as $paySystem) {
             if (!$paySystem->isInner()) {
                 $externalPayment = $paySystem;
-                
+
                 break;
             }
         }
-        
+
         if (null === $externalPayment) {
             throw new NotFoundOrderPaySystemException('Не найдена платежная система');
         }
-        
+
         /**
          * Сумма оплаты бонусами
          */
         $dto->setBonusPayedCount(($internalPayment && $internalPayment->getSum()) ? $internalPayment->getSum() : 0.0);
-        
+
         /**
          * Способ оплаты
          *
@@ -329,41 +346,36 @@ class OrderService implements LoggerAwareInterface
                 ->setPayStatus(SapOrderEnum::ORDER_PAYMENT_STATUS_NOT_PAYED);
         }
     }
-    
+
     /**
      * @param OrderDtoOut $orderDto
-     * @param Order       $order
+     * @param Order $order
+     *
+     * @throws NotFoundOrderShipmentException
+     * @throws NotFoundOrderDeliveryException
      */
     private function populateOrderDtoDelivery(OrderDtoOut $orderDto, Order $order): void
     {
-        $shipment = BxCollection::getOrderExternalShipment($order->getShipmentCollection());
-        
-        if (null === $shipment) {
-            throw new NotFoundOrderShipmentException('Не найдена отгрузка у заказа');
-        }
-        
         $deliveryTypeCode = $this->getDeliveryTypeCode($order);
         $contractorDeliveryTypeCode = '';
-        
+
         if (strpos($deliveryTypeCode, '_')) {
-            $deliveryType = explode('_', $deliveryTypeCode);
-            $deliveryTypeCode = $deliveryType[0];
-            $contractorDeliveryTypeCode = $deliveryType[1];
+            [$deliveryTypeCode, $contractorDeliveryTypeCode] = explode('_', $deliveryTypeCode);
         }
-        
+
         $deliveryPoint = '';
-        
+
         $shopCode = $this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE');
         $terminalCode = $this->getPropertyValueByCode($order, 'DPD_TERMINAL_CODE');
-        
+
         if ($shopCode) {
             $deliveryPoint = $shopCode;
         }
-        
+
         if ($terminalCode) {
             $deliveryPoint = $terminalCode;
         }
-        
+
         try {
             $interval = $this->intervalService->getIntervalCode($this->getPropertyValueByCode($order,
                 'DELIVERY_INTERVAL'));
@@ -373,7 +385,7 @@ class OrderService implements LoggerAwareInterface
              */
             $interval = '';
         }
-        
+
         $orderDto
             ->setCommunicationType($this->getPropertyValueByCode($order, 'COM_WAY'))
             ->setDeliveryType($deliveryTypeCode)
@@ -385,26 +397,26 @@ class OrderService implements LoggerAwareInterface
             ->setDeliveryAddressOrPoint($deliveryPoint)
             ->setContractorCode($deliveryTypeCode === SapOrderEnum::DELIVERY_TYPE_CONTRACTOR ? SapOrderEnum::DELIVERY_CONTRACTOR_CODE : '');
     }
-    
+
     /**
      * @param OrderDtoOut $orderDto
-     * @param Order       $order
+     * @param Order $order
      */
     private function populateOrderDtoProducts(OrderDtoOut $orderDto, Order $order)
     {
         $position = 1;
         $collection = new ArrayCollection();
-        
+
         /**
          * @var BasketItem $basketItem
          */
         foreach ($order->getBasket() as $basketItem) {
             $xmlId = $basketItem->getField('PRODUCT_XML_ID');
-            
+
             if (strpos($xmlId, '#')) {
                 $xmlId = explode('#', $xmlId)[1];
             }
-            
+
             $offer = (new OrderOffer())
                 ->setPosition($position)
                 ->setOfferXmlId($xmlId)
@@ -417,26 +429,27 @@ class OrderService implements LoggerAwareInterface
                 ->setChargeBonus(true)
                 ->setDeliveryFromPoint($this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE'))
                 ->setDeliveryShipmentPoint($this->getPropertyValueByCode($order, 'SHIPMENT_PLACE_CODE'));
-            
+
             $collection->add($offer);
             $position++;
         }
-        
+
         $orderDto->setProducts($collection);
     }
-    
+
     /**
-     * @param Order  $order
+     * @param Order $order
      * @param string $point
      *
-     * @return OutDeliveryAddress
+     * @return DeliveryAddress|OutDeliveryAddress
      */
-    private function getDeliveryAddress(Order $order, string $point = ''): OutDeliveryAddress
+    private function getDeliveryAddress(Order $order, string $point = '')
     {
-        $city = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), 'CITY_CODE')->getValue();
-        $regionCode = preg_match('~\D~', '', $this->locationService->getRegionCode($city));
-        
-        $address = (new OutDeliveryAddress())
+        $city = $this->getPropertyValueByCode($order, 'CITY_CODE');
+        $regionCode = $this->locationService->getRegionCode($city);
+        $regionCode = preg_match('~\D~', '', $regionCode);
+
+        return (new OutDeliveryAddress())
             ->setRegionCode($regionCode)
             ->setPostCode('')
             ->setCityName($this->getPropertyValueByCode($order, 'CITY'))
@@ -449,36 +462,45 @@ class OrderService implements LoggerAwareInterface
             ->setFloor($this->getPropertyValueByCode($order, 'FLOOR'))
             ->setRoomNumber($this->getPropertyValueByCode($order, 'APARTMENT'))
             ->setDeliveryPointCode($point);
-        
-        return $address;
     }
-    
+
     /**
      * @param Order $order
      *
      * @return string
+     * @throws NotFoundOrderDeliveryException
+     * @throws NotFoundOrderShipmentException
      */
-    private function getDeliveryTypeCode(Order $order)
+    private function getDeliveryTypeCode(Order $order): string
     {
         if ($this->getPropertyValueByCode($order, 'REGION_COURIER_FROM_DC')) {
             return SapOrderEnum::DELIVERY_TYPE_ROUTE;
         }
-        
+
         $shipment = BxCollection::getOrderExternalShipment($order->getShipmentCollection());
-        
+
+        if (null === $shipment) {
+            throw new NotFoundOrderShipmentException(
+                sprintf(
+                    'Отгрузка для заказа #%s не найдена',
+                    $order->getId()
+                )
+            );
+        }
+
         switch ($shipment->getDelivery()->getCode()) {
             case DeliveryService::INNER_DELIVERY_CODE:
                 $location = $this->getPropertyValueByCode($order, 'CITY_CODE');
                 $deliveryId = $shipment->getDeliveryId();
                 $deliveryZone = $this->deliveryService->getDeliveryZoneCodeByLocation($location, $deliveryId);
-                
+
                 switch ($deliveryZone) {
                     case DeliveryService::ZONE_1:
                         return SapOrderEnum::DELIVERY_TYPE_COURIER_RC;
                     case DeliveryService::ZONE_2:
                         return SapOrderEnum::DELIVERY_TYPE_PICKUP;
                 }
-                
+
                 break;
             case DeliveryService::INNER_PICKUP_CODE:
                 return SapOrderEnum::DELIVERY_TYPE_PICKUP;
@@ -490,12 +512,12 @@ class OrderService implements LoggerAwareInterface
                 return SapOrderEnum::DELIVERY_TYPE_CONTRACTOR . '_' . SapOrderEnum::DELIVERY_TYPE_CONTRACTOR_PICKUP;
                 break;
         }
-        
+
         throw new NotFoundOrderDeliveryException('Не найден тип доставки');
     }
-    
+
     /**
-     * @param Order  $order
+     * @param Order $order
      * @param string $code
      *
      * @return string
@@ -503,22 +525,26 @@ class OrderService implements LoggerAwareInterface
     private function getPropertyValueByCode(Order $order, string $code): string
     {
         $propertyValue = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), $code);
-        
+
         return $propertyValue ? ($propertyValue->getValue() ?? '') : '';
     }
-    
+
     /**
-     * @param Order      $order
+     * @param Order $order
      * @param OrderDtoIn $orderDto
+     *
+     * @throws RuntimeException
      */
     private function setPropertiesFromDto(Order $order, OrderDtoIn $orderDto): void
     {
         $propertyCollection = $order->getPropertyCollection();
-        
+        $deliveryAddress = $orderDto->getDeliveryAddress();
+
         $this->setPropertyValue($propertyCollection, 'NAME', $orderDto->getClientFio());
         $this->setPropertyValue($propertyCollection, 'PHONE', $orderDto->getClientPhone());
         $this->setPropertyValue($propertyCollection, 'PHONE_ALT', $orderDto->getClientOrderPhone());
         $this->setPropertyValue($propertyCollection, 'DELIVERY_DATE', $orderDto->getDeliveryDate()->format('dmY'));
+
         try {
             $this->setPropertyValue(
                 $propertyCollection,
@@ -532,30 +558,33 @@ class OrderService implements LoggerAwareInterface
                 $orderDto->getId()
             ));
         }
-        $this->setPropertyValue($propertyCollection, 'CITY', $orderDto->getDeliveryAddress()->getCityName());
-        $this->setPropertyValue($propertyCollection, 'STREET', $orderDto->getDeliveryAddress()->getStreetName());
-        $this->setPropertyValue($propertyCollection, 'HOUSE', $orderDto->getDeliveryAddress()->getHouse());
-        $this->setPropertyValue($propertyCollection, 'BUILDING', $orderDto->getDeliveryAddress()->getBuilding());
-        $this->setPropertyValue($propertyCollection, 'FLOOR', $orderDto->getDeliveryAddress()->getFloor());
-        $this->setPropertyValue($propertyCollection, 'APARTMENT', $orderDto->getDeliveryAddress()->getRoomNumber());
+
+        if ($deliveryAddress) {
+            $this->setPropertyValue($propertyCollection, 'CITY', $deliveryAddress->getCityName());
+            $this->setPropertyValue($propertyCollection, 'STREET', $deliveryAddress->getStreetName());
+            $this->setPropertyValue($propertyCollection, 'HOUSE', $deliveryAddress->getHouse());
+            $this->setPropertyValue($propertyCollection, 'BUILDING', $deliveryAddress->getBuilding());
+            $this->setPropertyValue($propertyCollection, 'FLOOR', $deliveryAddress->getFloor());
+            $this->setPropertyValue($propertyCollection, 'APARTMENT', $deliveryAddress->getRoomNumber());
+        }
     }
-    
+
     /**
      * @param PropertyValueCollection $collection
-     * @param string                  $code
-     * @param string                  $value
+     * @param string $code
+     * @param string $value
      */
     private function setPropertyValue(PropertyValueCollection $collection, string $code, string $value): void
     {
         $propertyValue = BxCollection::getOrderPropertyByCode($collection, $code);
-        
+
         if ($propertyValue) {
             $propertyValue->setValue($value);
         }
     }
-    
+
     /**
-     * @param Order      $order
+     * @param Order $order
      * @param OrderDtoIn $orderDto
      */
     private function setPaymentFromDto(Order $order, OrderDtoIn $orderDto): void
@@ -566,9 +595,9 @@ class OrderService implements LoggerAwareInterface
          * Change payment method from DTO
          */
     }
-    
+
     /**
-     * @param Order      $order
+     * @param Order $order
      * @param OrderDtoIn $orderDto
      */
     private function setDeliveryFromDto(Order $order, OrderDtoIn $orderDto): void
@@ -579,31 +608,33 @@ class OrderService implements LoggerAwareInterface
          * Set order shipments from DTO
          */
     }
-    
+
     /**
-     * @param Order      $order
+     * @param Order $order
      * @param OrderDtoIn $orderDto
+     *
+     * @throws RuntimeException
      */
     private function setBasketFromDto(Order $order, OrderDtoIn $orderDto): void
     {
         $externalItems = $orderDto->getProducts();
-        
+
         /**
          * @var BasketItem $basketItem
          */
         foreach ($basketCollection = $order->getBasket()->getBasketItems() as $basketItem) {
             $article = substr($basketItem->getField('PRODUCT_XML_ID'),
                 strpos($basketItem->getField('PRODUCT_XML_ID'), '#') ?: 0);
-            
+
             $externalItem = $externalItems->filter(
                 function ($item) use ($article) {
                     /**
                      * @var OrderOfferIn $item
                      */
-                    return (string)$article === ltrim((string)$item->getOfferXmlId());
+                    return (string)$article === ltrim($item->getOfferXmlId());
                 }
             )->first();
-            
+
             if ($externalItem) {
                 $this->renewBasketItem($basketItem, $externalItem);
                 $externalItems->removeElement($externalItem);
@@ -617,26 +648,35 @@ class OrderService implements LoggerAwareInterface
                 }
             }
         }
-        
+
         foreach ($externalItems as $item) {
             $this->addBasketItem($order->getBasket(), $item);
         }
     }
-    
+
     /**
-     * @param BasketItem   $basketItem
+     * @param BasketItem $basketItem
      * @param OrderOfferIn $externalItem
+     *
+     * @throws RuntimeException
      */
     private function renewBasketItem(BasketItem $basketItem, OrderOfferIn $externalItem): void
     {
         $basketItem->setPrice($externalItem->getUnitPrice(), true);
         try {
-            $basketItem->setField('QUANTITY', (int)$externalItem->getQuantity());
+            $basketItem->setField('QUANTITY', $externalItem->getQuantity());
         } catch (ArgumentOutOfRangeException | Exception $e) {
             $this->log()->error(sprintf('Ошибка обновления товара в корзине: %s', $e->getMessage()));
         }
     }
-    
+
+    /**
+     * @param Basket $basket
+     * @param OrderOfferIn $externalItem
+     *
+     * @throws NotFoundProductException
+     * @throws RuntimeException
+     */
     private function addBasketItem(Basket $basket, OrderOfferIn $externalItem): void
     {
         /**
@@ -645,20 +685,20 @@ class OrderService implements LoggerAwareInterface
          * Сделать это нормально
          */
         $itemId = 0;
-        
+
         try {
             $element = (new Query(ElementTable::class))
                 ->setFilter([
                     'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
-                    'XML_ID'    => $externalItem->getOfferXmlId(),
+                    'XML_ID' => $externalItem->getOfferXmlId(),
                 ])
                 ->setLimit(1)
                 ->setSelect(['XML_ID', 'ID'])
                 ->exec()
                 ->fetch();
-            
+
             $itemId = $element['ID'];
-            
+
             if (!$itemId) {
                 throw new NotFoundProductException(sprintf(
                     'Продукт с внешним кодом %s не найден.',
@@ -668,23 +708,23 @@ class OrderService implements LoggerAwareInterface
         } catch (IblockNotFoundException | ArgumentException $e) {
             $this->log()->error(sprintf('Ошибка добавления продукта: %s', $e->getMessage()));
         }
-        
+
         $context = [
-            'SITE_ID'  => SITE_ID,
-            'USER_ID'  => $basket->getOrder()->getUserId(),
+            'SITE_ID' => SITE_ID,
+            'USER_ID' => $basket->getOrder()->getUserId(),
             'ORDER_ID' => $basket->getOrderId(),
         ];
-        
+
         $fields = [
-            'PRODUCT_ID'             => $itemId,
-            'QUANTITY'               => $externalItem->getQuantity(),
-            'MODULE'                 => 'catalog',
+            'PRODUCT_ID' => $itemId,
+            'QUANTITY' => $externalItem->getQuantity(),
+            'MODULE' => 'catalog',
             'PRODUCT_PROVIDER_CLASS' => CatalogProvider::class,
         ];
-        
+
         try {
             $result = CatalogBasket::addProductToBasket($basket, $fields, $context);
-            
+
             if (!$result->isSuccess()) {
                 throw new CantCreateBasketItem(implode(', ', $result->getErrorMessages()));
             }

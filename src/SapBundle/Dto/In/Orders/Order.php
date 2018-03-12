@@ -648,7 +648,7 @@ class Order
      *
      * @return Order
      */
-    public function setProducts($products)
+    public function setProducts($products): Order
     {
         $this->products = $products;
         return $this;
@@ -657,7 +657,7 @@ class Order
     /**
      * @return DeliveryAddress|null
      */
-    public function getDeliveryAddress(): DeliveryAddress
+    public function getDeliveryAddress(): ?DeliveryAddress
     {
         return $this->deliveryAddress;
     }
