@@ -146,6 +146,15 @@ class StoreService
     }
 
     /**
+     * @return StoreCollection
+     * @throws ArgumentException
+     */
+    public function getSupplierStores(): StoreCollection
+    {
+        return $this->storeRepository->findBy($this->getTypeFilter(self::TYPE_SUPPLIER));
+    }
+
+    /**
      * Получить склады в текущем местоположении
      *
      * @param string $type

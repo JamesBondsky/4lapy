@@ -8,7 +8,6 @@ use FourPaws\StoreBundle\Entity\Base as BaseEntity;
 use FourPaws\StoreBundle\Exception\ConstraintDefinitionException;
 use FourPaws\StoreBundle\Exception\InvalidIdentifierException;
 use FourPaws\StoreBundle\Exception\BitrixRuntimeException;
-use FourPaws\StoreBundle\Exception\TableClassNotDefinedException;
 use FourPaws\StoreBundle\Exception\ValidationException;
 use JMS\Serializer\DeserializationContext;
 use Symfony\Component\Validator\Constraints\GreaterThanOrEqual;
@@ -62,8 +61,6 @@ abstract class BaseRepository implements RepositoryInterface
 
         $dataClass = $this->getDataClass();
         $this->table = new $dataClass();
-        $this->entity = $this->getEntityClass();
-        $this->collection = $this->getCollectionClass();
     }
 
     /**
@@ -112,7 +109,7 @@ abstract class BaseRepository implements RepositoryInterface
         }
 
         return $result;
-    }
+    }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
      * @param array $criteria

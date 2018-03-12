@@ -7,11 +7,14 @@
 namespace FourPaws\DeliveryBundle\Entity\CalculationResult;
 
 use Bitrix\Sale\Delivery\CalculationResult;
+use FourPaws\App\Application;
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Entity\Store;
+use FourPaws\StoreBundle\Service\DeliveryScheduleService;
 
 abstract class BaseResult extends CalculationResult
 {
@@ -360,28 +363,75 @@ abstract class BaseResult extends CalculationResult
     protected function getStoreShipmentDate(Store $store): \DateTime
     {
         $stockResult = $this->getStockResult()->filterByStore($store);
+
+        /**
+         * Все товары в наличии
+         */
         if ($stockResult->getDelayed()->isEmpty()) {
             return $this->getCurrentDate();
         }
 
-        $shipmentDay = $this->getShipmentDay($store, $this->getCurrentDate());
+        $date = clone $this->getCurrentDate();
+        $modifier = 0;
+
+        /** @var DeliveryScheduleService $deliveryScheduleService */
+        $deliveryScheduleService = Application::getInstance()->getContainer()->get(DeliveryScheduleService::class);
 
         /**
-         * Если день поставки нашелся, то выполняем расчет,
-         * иначе ищем по графику поставок
+         * Если есть товары под заказ, то рассчитывается дата поставки на склад по графику
          */
-        if (null !== $shipmentDay) {
-            $shipmentDay++;
-        } else {
-            /* @todo поиск в графике поставок */
-            $shipmentDay = 3;
+        $scheduleDays = [0];
+        $hasRegularOffers = false;
+        /** @var Offer $offer */
+        foreach ($stockResult->getOffers() as $offer) {
+            if (!$offer->isByRequest()) {
+                $hasRegularOffers = true;
+                continue;
+            }
+
+            /**
+             * Для товаров под заказ добавляем +2 ко дню доставки
+             */
+            $scheduleDay = 2;
+
+            /* @todo поиск в графике поставок с учетом складов поставщика */
+//            $scheduleDay += $deliveryScheduleService->getByReceiver($this->getSelectedStore())->getMinDays($date);
+            $scheduleDays[] = $scheduleDay;
         }
+        $scheduleDay = max($scheduleDays);
+
+        /**
+         * Если есть товары из регулярного ассортимента, то рассчитываем их дату поставки
+         */
+        $shipmentDay = 0;
+        if ($hasRegularOffers) {
+            $day = $this->getShipmentDay($store, $date);
+            /**
+             * Если день поставки нашелся, то выполняем расчет,
+             * иначе ищем по графику поставок
+             */
+            if (null !== $day) {
+                /**
+                 * По ТЗ мы должны добавить еще один день
+                 */
+                $shipmentDay += $day + 1;
+            } else {
+                /* @todo поиск в графике поставок */
+                $shipmentDay += 3;
+            }
+        }
+
+        $modifier += max([$shipmentDay, $scheduleDay]);
+
         /**
          * Добавляем "срок поставки" к дате доставки
          */
-        $shipmentDay += $store->getDeliveryTime();
-        $date = clone $this->getCurrentDate();
-        $date->modify(sprintf('+%s days', $shipmentDay));
+        $modifier += $store->getDeliveryTime();
+
+        /**
+         * Вычисляем день доставки
+         */
+        $date->modify(sprintf('+%s days', $modifier));
 
         /**
          * Если склад является магазином, то учитываем его график работы
@@ -400,17 +450,6 @@ abstract class BaseResult extends CalculationResult
                 $date->modify('+1 hour');
             }
         }
-
-        /**
-         * Если товар под заказ, то рассчитывается дата поставки на склад по графику
-         */
-        /* @todo расчет даты для товаров под заказ
-         * if ($offer->isByRequest()) {
-         * $stockResult->setType(StockResult::TYPE_DELAYED)
-         * ->setDeliveryDate((new \DateTime())->modify('+10 days'));
-         * continue;
-         * }
-         */
 
         return $date;
     }

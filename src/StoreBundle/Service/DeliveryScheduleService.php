@@ -15,4 +15,9 @@ class DeliveryScheduleService
     {
         $this->repository = $repository;
     }
+
+    public function getByReceiver(Store $store)
+    {
+        $this->repository->findByReceiver($store->getXmlId());
+    }
 }

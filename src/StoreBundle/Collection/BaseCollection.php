@@ -4,7 +4,7 @@ namespace FourPaws\StoreBundle\Collection;
 
 use Doctrine\Common\Collections\ArrayCollection;
 
-abstract class BaseCollection extends ArrayCollection
+abstract class BaseCollection extends ArrayCollection implements BaseCollectionInterface
 {
 
 }
