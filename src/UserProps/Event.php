@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\UserProps;
 
 use Bitrix\Main\EventManager;
@@ -29,6 +33,15 @@ class Event implements ServiceHandlerInterface
             'OnUserTypeBuildList',
             [
                 UserPropLocation::class,
+                'getUserTypeDescription',
+            ]
+        );
+
+        $eventManager->addEventHandler(
+            'main',
+            'OnUserTypeBuildList',
+            [
+                UserPropWeekDay::class,
                 'getUserTypeDescription',
             ]
         );
