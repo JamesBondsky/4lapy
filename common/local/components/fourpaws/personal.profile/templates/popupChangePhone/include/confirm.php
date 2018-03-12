@@ -12,7 +12,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     <input type="hidden" name="action" value="confirmPhone">
     <input type="hidden" name="oldPhone" value="<?= $oldPhone ?>">
     <input type="hidden" name="phone" value="<?= $phone ?>">
-    <div class="b-registration__step b-registration__step--two js-two">
+    <div class="b-registration__step js-two">
         <div class="b-registration__text b-registration__text--phone" id="js-resend"
              data-url="/ajax/personal/profile/changePhone/"
              data-phone="<?= $phone ?>"
