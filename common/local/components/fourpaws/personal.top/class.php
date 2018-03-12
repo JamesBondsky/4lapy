@@ -11,6 +11,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Adv\Bitrixtools\Exception\IblockNotFoundException;
 use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Data\Cache;
@@ -124,6 +125,8 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
         if (empty($this->arParams)) {
             return null;
         }
+
+        $instance = Application::getInstance();
         
         $this->setFrameMode(true);
         
@@ -204,6 +207,14 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
                     $this->sortItems += $sortItems;
                 }
             }
+
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->startTagCache($this->getPath());
+                $tagCache->registerTag(sprintf('top_%s', $userId));
+                $tagCache->registerTag(sprintf('order_%s', $userId));
+                $tagCache->endTagCache();
+            }
             
             $cache->endDataCache(
                 [
@@ -257,6 +268,15 @@ class FourPawsPersonalCabinetTopComponent extends CBitrixComponent
                 $page = 'notItems';
             }
             $this->includeComponentTemplate($page);
+
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->startTagCache($this->getPath());
+                $tagCache->registerTag(sprintf('top_%s', $userId));
+                $tagCache->registerTag(sprintf('order_%s', $userId));
+                $tagCache->registerTag(sprintf('user_%s', $userId));
+                $tagCache->endTagCache();
+            }
         }
         
         return true;

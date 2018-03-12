@@ -45,7 +45,7 @@ class ReferralUpdateAgent
         /** @var ReferralService $referralService */
         try {
             $referralService = App::getInstance()->getContainer()->get('referral.service');
-            $referrals = $referralService->referralRepository->findBy(['filter' => ['UF_MODERATED' => 1]]);
+            $referrals = $referralService->getModeratedReferrals();
         } catch (ApplicationCreateException $e) {
             $referrals = new ArrayCollection();
         } catch (\Exception $e) {
@@ -129,7 +129,7 @@ class ReferralUpdateAgent
                                 } catch (CardNotFoundException $e) {
                                     /** Если не нашли такой карты в манзане то удалим из сайта */
                                     try {
-                                        $referralService->referralRepository->delete($referral->getId());
+                                        $referralService->delete($referral->getId(), $referral->getUserId());
                                     } catch (\Exception $e) {
                                         $loggerSystem->error('произошла ошибка удаления реферала '.$e->getMessage());
                                     }

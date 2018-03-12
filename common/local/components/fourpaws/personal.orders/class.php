@@ -117,6 +117,8 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
             return null;
         }
 
+        $instance = Application::getInstance();
+
         $request = Application::getInstance()->getContext()->getRequest();
         if($request->get('reply_order') === 'Y'){
             $orderId = (int)$request->get('id');
@@ -146,6 +148,15 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
             } catch (ManzanaServiceException $e) {
                 $manzanaOrders = new ArrayCollection();
             }
+
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->startTagCache($this->getPath());
+                $tagCache->registerTag(sprintf('user_order_%s', $userId));
+                $tagCache->registerTag(sprintf('order_%s', $userId));
+                $tagCache->endTagCache();
+            }
+
             $cache->endDataCache(['manzanaOrders' => $manzanaOrders]);
         }
 
@@ -190,6 +201,15 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
             }
 
             $this->includeComponentTemplate($page);
+
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->startTagCache($this->getPath());
+                $tagCache->registerTag(sprintf('user_order_%s', $userId));
+                $tagCache->registerTag(sprintf('order_%s', $userId));
+                $tagCache->registerTag(sprintf('user_%s', $userId));
+                $tagCache->endTagCache();
+            }
         }
 
         return true;

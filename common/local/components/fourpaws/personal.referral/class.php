@@ -9,6 +9,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\Application;
 use Bitrix\Main\Data\Cache;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectException;
@@ -112,6 +113,8 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
             return null;
         }
 
+        $instance = Application::getInstance();
+
         try {
             $curUser = $this->currentUserProvider->getCurrentUser();
             if (!\in_array((int)static::$accessUserGroup, $this->currentUserProvider->getUserGroups(), true)) {
@@ -171,6 +174,13 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
                 $this->arResult['NAV'] = $nav;
             }
 
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->startTagCache($this->getPath());
+                $tagCache->registerTag(sprintf('referral_%s', $curUser->getId()));
+                $tagCache->endTagCache();
+            }
+
             $cache->endDataCache([
                 'NAV'            => $this->arResult['NAV'],
                 'BONUS' => $this->arResult['BONUS'],
@@ -194,6 +204,14 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
             $this->arResult['FORMATED_BONUS'] = \number_format($this->arResult['BONUS'], 0, '.', ' ');
 
             $this->includeComponentTemplate();
+
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->startTagCache($this->getPath());
+                $tagCache->registerTag(sprintf('referral_%s', $curUser->getId()));
+                $tagCache->registerTag(sprintf('user_%s', $curUser->getId()));
+                $tagCache->endTagCache();
+            }
         }
 
         return true;
