@@ -69,7 +69,7 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
     public function onPrepareComponentParams($params): array
     {
         $params['CACHE_TIME'] = 360000;
-        $params['MANZANA_CACHE_TIME'] = 2 * 60 * 60;
+        $params['MANZANA_CACHE_TIME'] = 10 * 60;
         return $params;
     }
 
@@ -86,6 +86,8 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
      */
     public function executeComponent()
     {
+        $instance = Application::getInstance();
+
         try {
             $user = $this->currentUserProvider->getCurrentUser();
         } catch (NotAuthorizedException $e) {
@@ -102,7 +104,7 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
         $cardNumber = $user->getDiscountCardNumber();
         $cache = Cache::createInstance();
         if ($cache->initCache($this->arParams['MANZANA_CACHE_TIME'],
-            serialize(['userId' => $user->getId(), 'card' => $cardNumber]))) {
+            serialize(['userId' => $user->getId(), 'card' => $cardNumber]), $this->getPath())) {
             $result = $cache->getVars();
             $this->arResult['BONUS'] = $bonus = $result['bonus'];
         } elseif ($cache->startDataCache()) {
@@ -116,10 +118,10 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
             }
 
             if (\defined('BX_COMP_MANAGED_CACHE')) {
-                $instance = Application::getInstance();
                 $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($instance->getContext()->getRequest()->getRequestedPageDirectory());
+                $tagCache->startTagCache($this->getPath());
                 $tagCache->registerTag(sprintf('bonus_%s', $user->getId()));
+                $tagCache->registerTag(sprintf('order_%s', $user->getId()));
                 $tagCache->endTagCache();
             }
 
@@ -135,8 +137,17 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
             'sum'         => $bonus->getSum(),
             'paidByBonus' => $bonus->getCredit(),
             'realDiscount' => $bonus->getRealDiscount(),
-        ])) {
+        ], $this->getPath())) {
             $this->includeComponentTemplate();
+
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->startTagCache($this->getPath());
+                $tagCache->registerTag(sprintf('bonus_%s', $user->getId()));
+                $tagCache->registerTag(sprintf('order_%s', $user->getId()));
+                $tagCache->registerTag(sprintf('user_%s', $user->getId()));
+                $tagCache->endTagCache();
+            }
         }
 
         return true;

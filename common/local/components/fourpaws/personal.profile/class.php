@@ -9,6 +9,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\Application;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
@@ -28,6 +29,7 @@ use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException;
 use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Repository\UserRepository;
@@ -99,38 +101,52 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             return null;
         }
 
-        $curUser = $this->currentUserProvider->getCurrentUser();
+        $instance = Application::getInstance();
 
-        $curBirthday = $curUser->getBirthday();
-        if ($curBirthday instanceof Date) {
-            try {
-                $birthday = DateHelper::replaceRuMonth($curBirthday->format('j #n# Y'), DateHelper::GENITIVE);
-            } catch (\Exception $e) {
+        if ($this->startResultCache($this->arParams['CACHE_TIME'],
+            ['USER_ID' => $this->currentUserProvider->getCurrentUserId()])) {
+            $curUser = $this->currentUserProvider->getCurrentUser();
+
+            $curBirthday = $curUser->getBirthday();
+            if ($curBirthday instanceof Date) {
+                try {
+                    $birthday = DateHelper::replaceRuMonth($curBirthday->format('j #n# Y'), DateHelper::GENITIVE);
+                } catch (\Exception $e) {
+                    $birthday = '';
+                }
+            } else {
                 $birthday = '';
             }
-        } else {
-            $birthday = '';
+
+            $this->arResult['CUR_USER'] = [
+                'ID'              => $curUser->getId(),
+                'PERSONAL_PHONE'  => PhoneHelper::formatPhone($curUser->getPersonalPhone(),
+                    '+7 (%s%s%s) %s%s%s-%s%s-%s%s'),
+                'EMAIL'           => $curUser->getEmail(),
+                'FULL_NAME'       => $curUser->getFullName(),
+                'LAST_NAME'       => $curUser->getLastName(),
+                'NAME'            => $curUser->getName(),
+                'SECOND_NAME'     => $curUser->getSecondName(),
+                'GENDER'          => $curUser->getGender(),
+                'GENDER_TEXT'     => $curUser->getGenderText(),
+                'BIRTHDAY'        => $birthday,
+                'BIRTHDAY_POPUP'  => ($curBirthday instanceof Date) ? $curBirthday->format(
+                    'd.m.Y'
+                ) : '',
+                'EMAIL_CONFIRMED' => $curUser->isEmailConfirmed(),
+                'PHONE_CONFIRMED' => $curUser->isPhoneConfirmed(),
+            ];
+
+            $this->includeComponentTemplate();
+
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->startTagCache($this->getPath());
+                $tagCache->registerTag(sprintf('profile_%s', $curUser->getId()));
+                $tagCache->registerTag(sprintf('user_%s', $curUser->getId()));
+                $tagCache->endTagCache();
+            }
         }
-
-        $this->arResult['CUR_USER'] = [
-            'ID'              => $curUser->getId(),
-            'PERSONAL_PHONE'  => PhoneHelper::formatPhone($curUser->getPersonalPhone(), '+7 (%s%s%s) %s%s%s-%s%s-%s%s'),
-            'EMAIL'           => $curUser->getEmail(),
-            'FULL_NAME'       => $curUser->getFullName(),
-            'LAST_NAME'       => $curUser->getLastName(),
-            'NAME'            => $curUser->getName(),
-            'SECOND_NAME'     => $curUser->getSecondName(),
-            'GENDER'          => $curUser->getGender(),
-            'GENDER_TEXT'     => $curUser->getGenderText(),
-            'BIRTHDAY'        => $birthday,
-            'BIRTHDAY_POPUP'  => ($curBirthday instanceof Date) ? $curBirthday->format(
-                'd.m.Y'
-            ) : '',
-            'EMAIL_CONFIRMED' => $curUser->isEmailConfirmed(),
-            'PHONE_CONFIRMED' => $curUser->isPhoneConfirmed(),
-        ];
-
-        $this->includeComponentTemplate();
 
         return true;
     }
@@ -142,6 +158,23 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
      */
     public function ajaxConfirmPhone(Request $request): JsonResponse
     {
+        $userId = (int)$request->get('ID', 0);
+
+        try {
+            $curUser = $this->currentUserProvider->getCurrentUser();
+        }
+        catch (NotAuthorizedException $e){
+            return $this->ajaxMess->getNeedAuthError();
+        } catch (InvalidIdentifierException|ConstraintDefinitionException $e) {
+            $logger = LoggerFactory::create('params');
+            $logger->error('Ошибка параметров - ' . $e->getMessage());
+            return $this->ajaxMess->getSystemError();
+        }
+
+        if($userId !== $curUser->getId()){
+            return $this->ajaxMess->getSecurityError();
+        }
+
         try {
             $container = App::getInstance()->getContainer();
         } catch (ApplicationCreateException $e) {
@@ -180,7 +213,14 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             'UF_PHONE_CONFIRMED' => true,
         ];
         try {
-            if ($this->currentUserProvider->getUserRepository()->updateData((int)$request->get('ID', 0), $data)) {
+            if ($this->currentUserProvider->getUserRepository()->updateData($userId, $data)) {
+                if (\defined('BX_COMP_MANAGED_CACHE')) {
+                    /** Очистка кеша */
+                    $instance = Application::getInstance();
+                    $tagCache = $instance->getTaggedCache();
+                    $tagCache->clearByTag('profile_' . $userId);
+                }
+
                 try {
                     /** @var ManzanaService $manzanaService */
                     $manzanaService = $container->get('manzana.service');
@@ -309,6 +349,21 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
      */
     private function ajaxGetConfirm(string $phone, int $id)
     {
+        try {
+            $curUser = $this->currentUserProvider->getCurrentUser();
+        }
+        catch (NotAuthorizedException $e){
+            return $this->ajaxMess->getNeedAuthError();
+        } catch (InvalidIdentifierException|ConstraintDefinitionException $e) {
+            $logger = LoggerFactory::create('params');
+            $logger->error('Ошибка параметров - ' . $e->getMessage());
+            return $this->ajaxMess->getSystemError();
+        }
+
+        if($id !== $curUser->getId()){
+            return $this->ajaxMess->getSecurityError();
+        }
+
         /** @var UserRepository $userRepository */
         $userRepository = $this->currentUserProvider->getUserRepository();
         $haveUsers = $userRepository->havePhoneAndEmailByUsers(
@@ -324,11 +379,12 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         try {
             $container = App::getInstance()->getContainer();
             /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-            $curUser = $userRepository->find($id);
+            $user = $userRepository->find($id);
+
             $data = ['PERSONAL_PHONE' => $phone];
             $oldPhone = '';
-            if ($curUser !== null) {
-                $oldPhone = $curUser->getPersonalPhone();
+            if ($user !== null) {
+                $oldPhone = $user->getPersonalPhone();
             }
             if ($oldPhone !== $phone) {
                 $data['UF_PHONE_CONFIRMED'] = false;
@@ -336,6 +392,13 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
             $res = $userRepository->updateData($id, $data);
             if (!$res) {
                 return $this->ajaxMess->getUpdateError();
+            }
+
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                /** Очистка кеша */
+                $instance = Application::getInstance();
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->clearByTag('profile_' . $id);
             }
 
             if (!empty($oldPhone)) {

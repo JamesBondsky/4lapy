@@ -6,6 +6,8 @@
 
 namespace FourPaws\UserBundle\Repository;
 
+use Bitrix\Main\Application;
+use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UserGroupTable;
 use Bitrix\Main\UserTable;
@@ -35,7 +37,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class UserRepository
 {
-    const FIELD_ID = 'ID';
+    public const FIELD_ID = 'ID';
 
     /** @var Serializer $builder */
     protected $serializer;
@@ -100,8 +102,9 @@ class UserRepository
         $result = $this->cuser->Add(
             $this->serializer->toArray($user, SerializationContext::create()->setGroups(['create']))
         );
-        if ((int)$result > 0) {
-            $user->setId((int)$result);
+        $userId = (int)$result;
+        if ($userId > 0) {
+            $user->setId($userId);
 
             return true;
         }
@@ -116,7 +119,7 @@ class UserRepository
      * @throws ConstraintDefinitionException
      * @return null|User
      */
-    public function find(int $id)
+    public function find(int $id): ?User
     {
         $this->checkIdentifier($id);
         $result = $this->findBy([static::FIELD_ID => $id], [], 1);
@@ -232,6 +235,7 @@ class UserRepository
      * @throws ValidationException
      * @throws BitrixRuntimeException
      * @return bool
+     * @throws SystemException
      */
     public function update(User $user): bool
     {
@@ -254,6 +258,7 @@ class UserRepository
      * @throws BitrixRuntimeException
      * @throws ConstraintDefinitionException
      * @return bool
+     * @throws SystemException
      */
     public function updateData(int $id, array $data): bool
     {
@@ -262,6 +267,13 @@ class UserRepository
             $id,
             $data
         )) {
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                /** Очистка кеша */
+                $instance = Application::getInstance();
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->clearByTag('profile_' . $id);
+            }
+
             return true;
         }
         throw new BitrixRuntimeException($this->cuser->LAST_ERROR);
@@ -275,6 +287,7 @@ class UserRepository
      * @throws BitrixRuntimeException
      * @throws ConstraintDefinitionException
      * @return bool
+     * @throws SystemException
      */
     public function updatePassword(int $id, string $password): bool
     {
@@ -289,6 +302,7 @@ class UserRepository
      * @throws ConstraintDefinitionException
      * @throws BitrixRuntimeException
      * @return bool
+     * @throws SystemException
      */
     public function updatePhone(int $id, string $phone): bool
     {
@@ -303,6 +317,7 @@ class UserRepository
      * @throws ConstraintDefinitionException
      * @throws BitrixRuntimeException
      * @return bool
+     * @throws SystemException
      */
     public function updateEmail(int $id, string $email): bool
     {
@@ -311,9 +326,13 @@ class UserRepository
 
     /**
      * @param int    $id
-     * @param string $email
+     * @param string $discountCardNumber
      *
      * @return bool
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws BitrixRuntimeException
+     * @throws SystemException
      */
     public function updateDiscountCard(int $id, string $discountCardNumber): bool
     {
@@ -554,7 +573,7 @@ class UserRepository
      * @throws ConstraintDefinitionException
      * @throws InvalidIdentifierException
      */
-    protected function checkIdentifier(int $id)
+    protected function checkIdentifier(int $id): void
     {
         try {
             $result = $this->validator->validate($id, [

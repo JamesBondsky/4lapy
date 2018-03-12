@@ -6,6 +6,7 @@
 
 namespace FourPaws\PersonalBundle\Service;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Security\SecurityException;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -94,10 +95,19 @@ class PetService
         else{
             unset($data['UF_PHOTO']);
         }
-        $this->petRepository->setEntityFromData($data, Pet::class);
+        /** @var Pet $entity */
+        $entity = $this->petRepository->dataToEntity($data, Pet::class);
+        $this->petRepository->setEntity($entity);
         $res = $this->petRepository->create();
         if ($res) {
             $this->updateManzanaPets();
+
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                /** Очистка кеша */
+                $instance = Application::getInstance();
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->clearByTag('pet_' . $entity->getUserId());
+            }
         }
         
         return $res;
@@ -230,6 +240,13 @@ class PetService
         $res = $this->petRepository->setEntity($entity)->update();
         if ($res) {
             $this->updateManzanaPets();
+
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                /** Очистка кеша */
+                $instance = Application::getInstance();
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->clearByTag('pet_' . $updateEntity->getUserId());
+            }
         }
         
         return $res;
@@ -262,6 +279,13 @@ class PetService
         $res = $this->petRepository->delete($id);
         if ($res) {
             $this->updateManzanaPets();
+
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                /** Очистка кеша */
+                $instance = Application::getInstance();
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->clearByTag('pet_' . $deleteEntity->getUserId());
+            }
         }
         
         return $res;

@@ -585,13 +585,12 @@ class OrderService
             if (!$result->isSuccess()) {
                 throw new OrderCreateException(implode(', ', $result->getErrorMessages()));
             }
-            else{
-                if (\defined('BX_COMP_MANAGED_CACHE')) {
-                    /** Очистка кеша бонусов */
-                    $instance = Application::getInstance();
-                    $tagCache = $instance->getTaggedCache();
-                    $tagCache->clearByTag('bonus_' . $order->getField('USER_ID'));
-                }
+
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                /** Очистка кеша */
+                $instance = Application::getInstance();
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->clearByTag('order_' . $order->getField('USER_ID'));
             }
 
             $this->orderStorageService->clearStorage($storage);
