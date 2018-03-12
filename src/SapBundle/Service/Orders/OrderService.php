@@ -48,6 +48,7 @@ use FourPaws\SapBundle\Exception\NotFoundOrderDeliveryException;
 use FourPaws\SapBundle\Exception\NotFoundOrderException;
 use FourPaws\SapBundle\Exception\NotFoundOrderPaySystemException;
 use FourPaws\SapBundle\Exception\NotFoundOrderShipmentException;
+use FourPaws\SapBundle\Exception\NotFoundOrderStatusException;
 use FourPaws\SapBundle\Exception\NotFoundOrderUserException;
 use FourPaws\SapBundle\Exception\NotFoundProductException;
 use FourPaws\SapBundle\Source\SourceMessage;
@@ -105,6 +106,10 @@ class OrderService implements LoggerAwareInterface
      * @var IntervalService
      */
     private $intervalService;
+    /**
+     * @var StatusService
+     */
+    private $statusService;
 
     /**
      * OrderService constructor.
@@ -124,7 +129,8 @@ class OrderService implements LoggerAwareInterface
         SerializerInterface $serializer,
         Filesystem $filesystem,
         UserRepository $userRepository,
-        IntervalService $intervalService
+        IntervalService $intervalService,
+        StatusService $statusService
     )
     {
         $this->baseOrderService = $baseOrderService;
@@ -134,6 +140,7 @@ class OrderService implements LoggerAwareInterface
         $this->deliveryService = $deliveryService;
         $this->locationService = $locationService;
         $this->intervalService = $intervalService;
+        $this->statusService = $statusService;
     }
 
     /**
@@ -216,6 +223,8 @@ class OrderService implements LoggerAwareInterface
      * @throws NotImplementedException
      * @throws ArgumentException
      * @throws NotFoundOrderException
+     * @throws NotFoundOrderShipmentException
+     * @throws NotFoundOrderStatusException
      * @throws RuntimeException
      *
      * @return Order
@@ -235,13 +244,7 @@ class OrderService implements LoggerAwareInterface
         $this->setPaymentFromDto($order, $orderDto);
         $this->setDeliveryFromDto($order, $orderDto);
         $this->setBasketFromDto($order, $orderDto);
-
-        /**
-         * @todo
-         *
-         * Установка статуса заказа из DTO. Необходимо выяснить сопоставление статусов статусам в SAP
-         */
-        $order->setField('STATUS_ID', $orderDto->getStatus());
+        $this->setStatusFromDto($order, $orderDto);
 
         return $order;
     }
@@ -377,8 +380,7 @@ class OrderService implements LoggerAwareInterface
         }
 
         try {
-            $interval = $this->intervalService->getIntervalCode($this->getPropertyValueByCode($order,
-                'DELIVERY_INTERVAL'));
+            $interval = $this->intervalService->getIntervalCode($this->getPropertyValueByCode($order, 'DELIVERY_INTERVAL'));
         } catch (NotFoundException $e) {
             /**
              * Значит, такого интервала нет
@@ -390,8 +392,7 @@ class OrderService implements LoggerAwareInterface
             ->setCommunicationType($this->getPropertyValueByCode($order, 'COM_WAY'))
             ->setDeliveryType($deliveryTypeCode)
             ->setContractorDeliveryType($contractorDeliveryTypeCode)
-            ->setDeliveryDate(\DateTime::createFromFormat('d.m.Y',
-                $this->getPropertyValueByCode($order, 'DELIVERY_DATE')))
+            ->setDeliveryDate(\DateTime::createFromFormat('d.m.Y', $this->getPropertyValueByCode($order, 'DELIVERY_DATE')))
             ->setDeliveryTimeInterval($interval)
             ->setDeliveryAddress($this->getDeliveryAddress($order, $terminalCode))
             ->setDeliveryAddressOrPoint($deliveryPoint)
@@ -735,5 +736,30 @@ class OrderService implements LoggerAwareInterface
                 $e->getMessage()
             ));
         }
+    }
+
+    /**
+     * @param Order $order
+     * @param OrderDtoIn $orderDto
+     *
+     * @throws NotFoundOrderShipmentException
+     * @throws NotFoundOrderStatusException
+     * @throws ArgumentException
+     */
+    private function setStatusFromDto(Order $order, OrderDtoIn $orderDto)
+    {
+        $shipment = BxCollection::getOrderExternalShipment($order->getShipmentCollection());
+
+        if (null === $shipment) {
+            throw new NotFoundOrderShipmentException(
+                sprintf(
+                    'Отгрузка для заказа #%s не найдена',
+                    $order->getId()
+                )
+            );
+        }
+
+        $deliveryCode = $shipment->getDelivery()->getCode();
+        $order->setField('STATUS_ID', $this->statusService->getStatusBySapStatus($deliveryCode, $orderDto->getStatus()));
     }
 }
