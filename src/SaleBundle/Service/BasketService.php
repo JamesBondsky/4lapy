@@ -229,15 +229,20 @@ class BasketService
      *
      * @param bool|null $reload
      *
+     * @param int       $fuserId
+     *
      * @return Basket
      */
-    public function getBasket(bool $reload = null): Basket
+    public function getBasket(bool $reload = null, int $fuserId = 0): Basket
     {
         if (null === $this->basket || $reload) {
             /** @var Basket $basket */
             /** @noinspection PhpInternalEntityUsedInspection */
             DiscountCompatibility::stopUsageCompatible();
-            $this->basket = Basket::loadItemsForFUser($this->currentUserProvider->getCurrentFUserId(), SITE_ID);
+            if($fuserId === 0){
+                $fuserId = $this->currentUserProvider->getCurrentFUserId();
+            }
+            $this->basket = Basket::loadItemsForFUser($fuserId, SITE_ID);
         }
         return $this->basket;
     }

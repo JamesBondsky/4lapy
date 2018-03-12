@@ -34,7 +34,12 @@ $isInnerDelivery = $deliveryService->isInnerDelivery($selectedDelivery) ||
     $deliveryService->isInnerPickup($selectedDelivery);
 
 $selectedPayment = null;
-foreach ($arResult['PAYMENTS'] as $payment) {
+/** @var array $payments */
+$payments = $arResult['PAYMENTS'];
+foreach ($payments as $i => $payment) {
+    if ((int)PaySystemManager::getInnerPaySystemId() === (int)$payment['ID']) {
+       unset($payments[$i]);
+    }
     if ((int)$payment['ID'] === $storage->getPaymentId()) {
         $selectedPayment = $payment;
     }
@@ -50,8 +55,6 @@ if ($deliveryService->isPickup($selectedDelivery) && $storage->isPartialGet()) {
         ->getAvailable()
         ->getPrice();
 }
-
-$payments = $arResult['PAYMENTS'];
 
 /** @var User $user */
 $user = $arResult['USER'];
@@ -101,19 +104,21 @@ $user = $arResult['USER'];
                           data-url="<?= $arResult['URL']['PAYMENT_VALIDATION'] ?>"
                           id="order-step">
                         <div class="b-choice-recovery b-choice-recovery--flex">
-                            <?php /** @var array $payment */ ?>
-                            <?php foreach ($payments as $payment) { ?>
-                                <?php
-                                if ((int)PaySystemManager::getInnerPaySystemId() === (int)$payment['ID']) {
-                                    continue;
-                                }
-
+                            <?php /** @var array $payment */
+                            $i = 0;
+                            $max = count($payments);
+                            foreach ($payments as $payment) {
                                 if ($isInnerDelivery && $payment['CODE'] === OrderService::PAYMENT_CASH) {
                                     $displayName = 'Наличными или картой при получении';
                                 } else {
                                     $displayName = $payment['NAME'];
                                 }
-
+                                $labelClass = $i % 2 !== 0
+                                    ? ' b-choice-recovery__label--right'
+                                    : ' b-choice-recovery__label--left';
+                                if ($i === $max - 1) {
+                                    $labelClass .= ' b-choice-recovery__label--right';
+                                }
                                 ?>
                                 <input class="b-choice-recovery__input"
                                        id="order-payment-<?= $payment['ID'] ?>"
@@ -122,11 +127,12 @@ $user = $arResult['USER'];
                                        data-pay="<?= $payment['CODE'] === OrderService::PAYMENT_ONLINE ? 'online' : 'cashe' ?>"
                                        value="<?= $payment['ID'] ?>"
                                     <?= (int)$payment['ID'] === $storage->getPaymentId() ? 'checked="checked"' : '' ?>/>
-                                <label class="b-choice-recovery__label b-choice-recovery__label--left b-choice-recovery__label--order-step b-choice-recovery__label--radio-mobile"
+                                <label class="b-choice-recovery__label<?= $labelClass ?> b-choice-recovery__label--order-step b-choice-recovery__label--radio-mobile"
                                        for="order-payment-<?= $payment['ID'] ?>">
                                     <span class="b-choice-recovery__main-text"><?= $displayName ?></span>
                                 </label>
                                 <?php
+                                $i++;
                             } ?>
                         </div>
                     </form>

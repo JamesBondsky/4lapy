@@ -9,6 +9,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\Application;
+use Bitrix\Main\Data\Cache;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\SystemException;
@@ -17,7 +19,6 @@ use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
-use FourPaws\External\Manzana\Exception\CardNotFoundException;
 use FourPaws\PersonalBundle\Entity\Referral;
 use FourPaws\PersonalBundle\Service\ReferralService;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
@@ -85,6 +86,7 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
         /** @noinspection SummerTimeUnsafeTimeManipulationInspection */
         /** кешируем на сутки, можно будет увеличить если обновления будут не очень частые - чтобы лишний кеш не хранился */
         $params['CACHE_TIME'] = 24 * 60 * 60;
+        $params['MANZANA_CACHE_TIME'] = 1 * 60 * 60;
         return $params;
     }
 
@@ -111,8 +113,10 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
             return null;
         }
 
-        /** @todo Добавить кеширование запроса в манзану с тегом - напрмиер на 30минут - 1час, + сбрасывать кеш по тегу при добавлении рефералла с сайта */
+        $instance = Application::getInstance();
+
         try {
+            $curUser = $this->currentUserProvider->getCurrentUser();
             if (!\in_array((int)static::$accessUserGroup, $this->currentUserProvider->getUserGroups(), true)) {
                 LocalRedirect('/personal');
             }
@@ -121,54 +125,93 @@ class FourPawsPersonalCabinetReferralComponent extends CBitrixComponent
 
             return null;
         }
+
         $this->setFrameMode(true);
 
         $this->arResult['ITEMS'] = $items = new ArrayCollection();
 
         $nav = null;
-        try {
-            $nav = new PageNavigation('nav-referral');
-            $nav->allowAllRecords(false)->setPageSize($this->arParams['PAGE_COUNT'])->initFromUri();
 
-            $this->arResult['ITEMS'] = $items = $this->referralService->getCurUserReferrals(true, $nav);
-        } catch (NotAuthorizedException $e) {
-        } catch (CardNotFoundException $e) {
-        }
-        $this->arResult['COUNT'] = $this->referralService->getAllCountByUser();
-        $this->arResult['COUNT_ACTIVE'] = $this->referralService->getActiveCountByUser();
-        $this->arResult['COUNT_MODERATE'] = $this->referralService->getModeratedCountByUser();
-        $this->arResult['BONUS'] = 0;
-        $cacheItems = [];
-        $this->arResult['referral_type'] = $this->referralService->getReferralType();
-        if (!$items->isEmpty()) {
-            /** @var Referral $item */
-            /** @noinspection ForeachSourceInspection */
-            foreach ($items as $item) {
-                if ($item instanceof Referral) {
-                    $this->arResult['BONUS'] += $item->getBonus();
-                    $cardId = $item->getCard();
-                    $cacheItems[$cardId] = [
-                        'bonus'         => $item->getBonus(),
-                        'card'          => $cardId,
-                        'moderated'     => $item->isModerate(),
-                        'dateEndActive' => $item->getDateEndActive(),
-                    ];
+        /** @todo Добавить кеширование запроса в манзану с тегом - напрмиер на 30минут - 1час, + сбрасывать кеш по тегу при добавлении рефералла с сайта */
+        $cache = Cache::createInstance();
+        if ($cache->initCache($this->arParams['MANZANA_CACHE_TIME'],
+            serialize(['userId' => $curUser->getId()]))) {
+            $result = $cache->getVars();
+            $this->arResult['NAV'] = $result['NAV'];
+            $this->arResult['BONUS'] = $result['BONUS'];
+            $cacheItems = $result['cacheItems'];
+        } elseif ($cache->startDataCache()) {
+            try {
+                $nav = new PageNavigation('nav-referral');
+                $nav->allowAllRecords(false)->setPageSize($this->arParams['PAGE_COUNT'])->initFromUri();
+
+                $this->arResult['ITEMS'] = $items = $this->referralService->getCurUserReferrals(true, $nav);
+            } catch (NotAuthorizedException $e) {
+                define('NEED_AUTH', true);
+
+                return null;
+            }
+
+            $cacheItems = [];
+            if (!$items->isEmpty()) {
+                /** @var Referral $item */
+                /** @noinspection ForeachSourceInspection */
+                foreach ($items as $item) {
+                    if ($item instanceof Referral) {
+                        $this->arResult['BONUS'] += $item->getBonus();
+                        $cardId = $item->getCard();
+                        $cacheItems[$cardId] = [
+                            'bonus'         => $item->getBonus(),
+                            'card'          => $cardId,
+                            'moderated'     => $item->isModerate(),
+                            'dateEndActive' => $item->getDateEndActive(),
+                        ];
+                    }
                 }
+                if ($this->arResult['BONUS'] > 0) {
+                    $this->arResult['BONUS'] = floor($this->arResult['BONUS']);
+                }
+                $this->arResult['NAV'] = $nav;
             }
-            if ($this->arResult['BONUS'] > 0) {
-                $this->arResult['BONUS'] = floor($this->arResult['BONUS']);
+
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->startTagCache($this->getPath());
+                $tagCache->registerTag(sprintf('referral_%s', $curUser->getId()));
+                $tagCache->endTagCache();
             }
-            $this->arResult['FORMATED_BONUS'] = \number_format($this->arResult['BONUS'], 0, '.', ' ');
-            $this->arResult['NAV'] = $nav;
+
+            $cache->endDataCache([
+                'NAV'            => $this->arResult['NAV'],
+                'BONUS' => $this->arResult['BONUS'],
+                'cacheItems' => $cacheItems,
+            ]);
         }
+
         if ($this->startResultCache(
             $this->arParams['CACHE_TIME'],
             [
-                'items' => $cacheItems,
-                'bonus' => $this->arResult['BONUS'],
+                'cacheItems' => $cacheItems,
+                'count'=>$nav->getRecordCount(),
+                'page'=>$nav->getCurrentPage(),
+                'bonus' => $this->arResult['BONUS']
             ]
         )) {
+            $this->arResult['COUNT'] = $this->referralService->getAllCountByUser();
+            $this->arResult['COUNT_ACTIVE'] = $this->referralService->getActiveCountByUser();
+            $this->arResult['COUNT_MODERATE'] = $this->referralService->getModeratedCountByUser();
+            $this->arResult['referral_type'] = $this->referralService->getReferralType();
+            $this->arResult['FORMATED_BONUS'] = \number_format($this->arResult['BONUS'], 0, '.', ' ');
+
             $this->includeComponentTemplate();
+
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->startTagCache($this->getPath());
+                $tagCache->registerTag(sprintf('referral_%s', $curUser->getId()));
+                $tagCache->registerTag(sprintf('user_%s', $curUser->getId()));
+                $tagCache->endTagCache();
+            }
         }
 
         return true;

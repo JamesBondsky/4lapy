@@ -7,9 +7,11 @@ use Bitrix\Iblock\PropertyTable;
 use Bitrix\Iblock\SectionTable;
 use Bitrix\Main\Entity\Query\Join;
 use Bitrix\Main\Entity\ReferenceField;
+use Bitrix\Main\Type\DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\BitrixOrm\Utils\EntityConstructor;
 use FourPaws\BitrixOrm\Utils\IblockPropEntityConstructor;
+use FourPaws\Catalog\Model\OftenSeek;
 use FourPaws\Catalog\Model\OftenSeekSection;
 use FourPaws\CatalogBundle\Repository\OftenSeekRepository;
 use FourPaws\CatalogBundle\Repository\OftenSeekSectionRepository;
@@ -35,7 +37,7 @@ class OftenSeekService implements OftenSeekInterface
      *
      * @param int $countItems
      *
-     * @return ArrayCollection
+     * @return ArrayCollection|OftenSeek[]
      */
     public function getItemsBySection(int $sectionId, int $countItems): ArrayCollection
     {
@@ -48,7 +50,7 @@ class OftenSeekService implements OftenSeekInterface
             ])->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
             $orderDirectionList = ['ASC', 'DESC'];
             $orderFieldList = ['ID', 'NAME', 'SORT'];
-            /** @todo может можно по другому сделать рандомную сортирвоку в d7 */
+            /** @todo может можно по другому сделать рандомную сортировку в d7 */
             shuffle($orderDirectionList);
             shuffle($orderFieldList);
 
@@ -59,12 +61,12 @@ class OftenSeekService implements OftenSeekInterface
                     '=ACTIVE'            => 'Y',
                     [
                         'LOGIC'       => 'OR',
-                        '>=ACTIVE_TO' => new \Bitrix\Main\Type\DateTime(),
+                        '>=ACTIVE_TO' => new DateTime(),
                         'ACTIVE_TO'   => null,
                     ],
                     [
                         'LOGIC'         => 'OR',
-                        '<=ACTIVE_FROM' => new \Bitrix\Main\Type\DateTime(),
+                        '<=ACTIVE_FROM' => new DateTime(),
                         'ACTIVE_FROM'   => null,
                     ],
                 ],
@@ -91,7 +93,7 @@ class OftenSeekService implements OftenSeekInterface
      *
      * @param int $depthLevel
      *
-     * @return ArrayCollection
+     * @return ArrayCollection|OftenSeekSection[]
      */
     public function getSectionsByCatalogSection(
         int $sectionId,
@@ -194,7 +196,7 @@ class OftenSeekService implements OftenSeekInterface
      *
      * @param int $depthLevel
      *
-     * @return ArrayCollection
+     * @return ArrayCollection|OftenSeek[]
      */
     public function getItems(
         int $sectionId,

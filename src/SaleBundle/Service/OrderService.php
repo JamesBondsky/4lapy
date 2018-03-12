@@ -7,6 +7,7 @@
 namespace FourPaws\SaleBundle\Service;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
+use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
@@ -27,7 +28,7 @@ use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundEXception;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\PersonalBundle\Entity\Address;
-use FourPaws\PersonalBundle\Exception\NotFoundException as AddressNotFoundException;
+use FourPaws\AppBundle\Exception\NotFoundException as AddressNotFoundException;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\FastOrderCreateException;
@@ -583,6 +584,13 @@ class OrderService
             $result = $order->save();
             if (!$result->isSuccess()) {
                 throw new OrderCreateException(implode(', ', $result->getErrorMessages()));
+            }
+
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                /** Очистка кеша */
+                $instance = Application::getInstance();
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->clearByTag('order_' . $order->getField('USER_ID'));
             }
 
             $this->orderStorageService->clearStorage($storage);

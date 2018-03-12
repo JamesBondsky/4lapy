@@ -7,6 +7,7 @@
 namespace FourPaws\PersonalBundle\Service;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\Application;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
@@ -21,6 +22,7 @@ use FourPaws\PersonalBundle\Entity\CardBonus;
 use FourPaws\PersonalBundle\Entity\UserBonus;
 use FourPaws\PersonalBundle\Exception\CardNotValidException;
 use FourPaws\UserBundle\Entity\User;
+use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -151,6 +153,7 @@ class BonusService
             $this->logger->info('Не найдено пользователей в манзане по телефону ' . $user->getPersonalPhone());
         } /** сбрасываем исключения связанные с ошибкой сервиса и возвращаем пустой объект */
         catch (ManzanaServiceException $e) {
+            $this->logger->error('Ошибка манзаны - '.$e->getMessage());
         }
 
         return $bonus;
@@ -162,7 +165,7 @@ class BonusService
      *
      * @return bool
      *
-     * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
+     * @throws BitrixRuntimeException
      * @throws ServiceNotFoundException
      * @throws InvalidIdentifierException
      * @throws ApplicationCreateException
@@ -226,6 +229,13 @@ class BonusService
                 $this->currentUserProvider->getUserRepository()->updateData($user->getId(),
                     ['UF_DISCOUNT_CARD' => $bonusCard]);
 
+                if (\defined('BX_COMP_MANAGED_CACHE')) {
+                    /** Очистка кеша */
+                    $instance = Application::getInstance();
+                    $tagCache = $instance->getTaggedCache();
+                    $tagCache->clearByTag('bonus_' . $user->getId());
+                }
+
             }
 
             return $isChange;
@@ -238,9 +248,8 @@ class BonusService
             $this->logger->info(
                 'Не найдено пользователей в манзане по телефону ' . $user->getPersonalPhone()
             );
-        } catch (ManzanaServiceException $e) {
-            /** глушим остальные ошибки по манзане и обрабытываем в контроллере - финальный return */
-        } catch (ManzanaException $e) {
+        } catch (ManzanaServiceException|ManzanaException $e) {
+            $this->logger->error('Ошибка манзаны - '.$e->getMessage());
             /** глушим остальные ошибки по манзане и обрабытываем в контроллере - финальный return */
         }
 
