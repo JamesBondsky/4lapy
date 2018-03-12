@@ -7,6 +7,7 @@
 namespace FourPaws\PersonalBundle\AjaxController;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -50,7 +51,7 @@ class ProfileController extends Controller
 
     /** @var AjaxMess */
     private $ajaxMess;
-    /** @var UserAuthorizationInterface  */
+    /** @var UserAuthorizationInterface */
     private $userAuthorization;
 
     public function __construct(
@@ -67,24 +68,22 @@ class ProfileController extends Controller
      * @Route("/changePhone/", methods={"POST","GET"})
      * @param Request $request
      *
-     * @throws ConstraintDefinitionException
-     * @throws ServiceNotFoundException
-     * @throws ValidationException
-     * @throws InvalidIdentifierException
-     * @throws \Exception
-     * @throws ServiceCircularReferenceException
      * @return JsonResponse
      */
     public function changePhoneAction(Request $request): JsonResponse
     {
-        if(!$this->userAuthorization->isAuthorized()){
+        if (!$this->userAuthorization->isAuthorized()) {
             return $this->ajaxMess->getNeedAuthError();
         }
         $action = $request->get('action', '');
 
         \CBitrixComponent::includeComponentClass('fourpaws:personal.profile');
         /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-        $profileClass = new \FourPawsPersonalCabinetProfileComponent();
+        try {
+            $profileClass = new \FourPawsPersonalCabinetProfileComponent();
+        } catch (SystemException|\RuntimeException|ServiceNotFoundException $e) {
+            return $this->ajaxMess->getSystemError();
+        }
 
         switch ($action) {
             case 'confirmPhone':
@@ -104,17 +103,11 @@ class ProfileController extends Controller
      * @Route("/changePassword/", methods={"POST"})
      * @param Request $request
      *
-     * @throws NotAuthorizedException
-     * @throws ConstraintDefinitionException
-     * @throws ServiceCircularReferenceException
-     * @throws ServiceNotFoundException
-     * @throws ValidationException
-     * @throws InvalidIdentifierException
      * @return JsonResponse
      */
     public function changePasswordAction(Request $request): JsonResponse
     {
-        if(!$this->userAuthorization->isAuthorized()){
+        if (!$this->userAuthorization->isAuthorized()) {
             return $this->ajaxMess->getNeedAuthError();
         }
         $id = (int)$request->get('ID', 0);
@@ -130,8 +123,15 @@ class ProfileController extends Controller
             return $this->ajaxMess->getPasswordLengthError(6);
         }
 
-        if (!$this->currentUserProvider->getCurrentUser()->equalPassword($old_password)) {
-            return $this->ajaxMess->getNotEqualOldPasswordError();
+        try {
+            if (!$this->currentUserProvider->getCurrentUser()->equalPassword($old_password)) {
+                return $this->ajaxMess->getNotEqualOldPasswordError();
+            }
+        }catch (NotAuthorizedException $e) {
+            return $this->ajaxMess->getNeedAuthError();
+        } catch (InvalidIdentifierException|ConstraintDefinitionException $e) {
+            $logger = LoggerFactory::create('params');
+            $logger->error('Ошибка параметров - ' . $e->getMessage());
         }
 
         if ($password !== $confirm_password) {
@@ -149,27 +149,39 @@ class ProfileController extends Controller
                 return $this->ajaxMess->getUpdateError();
             }
 
-            $expertSenderService = App::getInstance()->getContainer()->get('expertsender.service');
-            $user = $this->currentUserProvider->getUserRepository()->find($id);
-            if ($user instanceof User && $user->allowedEASend()) {
-                if(!$expertSenderService->sendChangePasswordByProfile($user)) {
+            try {
+                $expertSenderService = App::getInstance()->getContainer()->get('expertsender.service');
+                $user = $this->currentUserProvider->getUserRepository()->find($id);
+                if ($user instanceof User && $user->allowedEASend()) {
+                    if (!$expertSenderService->sendChangePasswordByProfile($user)) {
+                        $logger = LoggerFactory::create('expertSender');
+                        $logger->error('Произошла ошибка при отправке письма - смена пароля');
+                    }
+                } elseif (!$user->allowedEASend()) {
                     $logger = LoggerFactory::create('expertSender');
-                    $logger->error('Произошла ошибка при отправке письма - смена пароля');
+                    $logger->info('email ' . $user->getEmail() . ' не подтвержден');
                 }
             }
-            elseif(!$user->allowedEASend()){
+            catch (ExpertsenderServiceException $e) {
                 $logger = LoggerFactory::create('expertSender');
-                $logger->info('email '.$user->getEmail().' не подтвержден');
+                $logger->error('ES don`t work - ' . $e->getMessage());
             }
+            catch (ValidationException|InvalidIdentifierException|ConstraintDefinitionException $e) {
+                $logger = LoggerFactory::create('params');
+                $logger->error('Ошибка параметров - ' . $e->getMessage());
+            } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
+                $logger = LoggerFactory::create('system');
+                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            }
+
 
             return JsonSuccessResponse::create('Пароль обновлен');
         } catch (BitrixRuntimeException $e) {
             return $this->ajaxMess->getUpdateError($e->getMessage());
-        } catch (ConstraintDefinitionException|ApplicationCreateException $e) {
+        } catch (ConstraintDefinitionException $e) {
+            $logger = LoggerFactory::create('params');
+            $logger->error('Ошибка параметров - ' . $e->getMessage());
             /** скипаем для показа системной ошибки */
-        } catch (ExpertsenderServiceException $e) {
-            $logger = LoggerFactory::create('expertSender');
-            $logger->error('EA don`t work - '.$e->getMessage());
         }
 
         return $this->ajaxMess->getSystemError();
@@ -182,10 +194,11 @@ class ProfileController extends Controller
      * @param Serializer $serializer
      *
      * @return JsonResponse
+
      */
     public function changeDataAction(Request $request, Serializer $serializer): JsonResponse
     {
-        if(!$this->userAuthorization->isAuthorized()){
+        if (!$this->userAuthorization->isAuthorized()) {
             return $this->ajaxMess->getNeedAuthError();
         }
         /** @var UserRepository $userRepository */
@@ -217,21 +230,30 @@ class ProfileController extends Controller
             } catch (ApplicationCreateException $e) {
                 return $this->ajaxMess->getSystemError();
             }
-            $curUser = $userRepository->find($user->getId());
-            if ($curUser !== null && $curUser->getEmail() !== $user->getEmail()) {
-                $data['UF_EMAIL_CONFIRMED'] = false;
+            try {
+                $curUser = $userRepository->find($user->getId());
+                if ($curUser !== null && $curUser->getEmail() !== $user->getEmail()) {
+                    $data['UF_EMAIL_CONFIRMED'] = false;
+                }
+            }
+            catch (ValidationException|InvalidIdentifierException|ConstraintDefinitionException $e) {
+                $logger = LoggerFactory::create('params');
+                $logger->error('Ошибка параметров - ' . $e->getMessage());
+                return $this->ajaxMess->getSystemError();
             }
             try {
                 $res = $userRepository->updateData($user->getId(), $userRepository->prepareData($data));
                 if (!$res) {
                     return $this->ajaxMess->getUpdateError();
                 }
-            }
-            catch (\Exception $e){
-                return $this->ajaxMess->getUpdateError();
+            } catch (BitrixRuntimeException $e) {
+                return $this->ajaxMess->getUpdateError($e->getMessage());
+            } catch (ValidationException|InvalidIdentifierException|ConstraintDefinitionException $e) {
+                $logger = LoggerFactory::create('params');
+                $logger->error('Ошибка параметров - ' . $e->getMessage());
             }
 
-            if($user->allowedEASend()) {
+            if ($user->allowedEASend()) {
                 if ($user->getEmail() !== $curUser->getEmail()) {
                     try {
                         $expertSenderService = $container->get('expertsender.service');
@@ -241,10 +263,9 @@ class ProfileController extends Controller
                         $logger->error('expertsender error:' . $e->getMessage());
                     }
                 }
-            }
-            else{
+            } else {
                 $logger = LoggerFactory::create('expertsender');
-                $logger->info('email '.$curUser->getEmail().' не подтвержден');
+                $logger->info('email ' . $curUser->getEmail() . ' не подтвержден');
             }
 
             /** @var ManzanaService $manzanaService */

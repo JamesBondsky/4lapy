@@ -20,7 +20,7 @@ if ($closedOrders->isEmpty() && $activeOrders->isEmpty()) {
         <div class="b-account__title">Текущие</div>
         <ul class="b-account__accordion-order-list">
             <?php foreach ($activeOrders as $order) {
-                require_once 'include/order.php';
+                require 'include/order.php';
             } ?>
         </ul>
     </div>
@@ -30,7 +30,7 @@ if ($closedOrders->isEmpty() && $activeOrders->isEmpty()) {
         <div class="b-account__title">Завершенные</div>
         <ul class="b-account__accordion-order-list">
             <?php foreach ($closedOrders as $order) {
-                require_once 'include/order.php';
+                require 'include/order.php';
             } ?>
         </ul>
     </div>

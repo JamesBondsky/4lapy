@@ -84,7 +84,7 @@ $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
                        name="PERSONAL_BIRTHDAY"
                        data-text="3"
                        placeholder=""
-                       value="<?= $manzanaItem instanceof Client ? $manzanaItem->birthDate : '' ?>"/>
+                       value="<?= $manzanaItem instanceof Client ? $manzanaItem->getBirthDateFormated() : '' ?>"/>
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
@@ -131,7 +131,7 @@ $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
                        id="registration-male"
                        value="M"
                        data-radio="0"
-                       checked="checked"/>
+                       <?=$manzanaItem instanceof Client && (int)$manzanaItem->genderCode === 1 ? 'checked="checked"' : ''?>/>
                 <label class="b-radio__label" for="registration-male"><span class="b-radio__text-label">мужской</span>
                 </label>
             </div>
@@ -141,7 +141,9 @@ $backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
                        name="PERSONAL_GENDER"
                        id="registration-female"
                        value="F"
-                       data-radio="1"/>
+                       data-radio="1"
+                    <?=$manzanaItem instanceof Client && (int)$manzanaItem->genderCode === 2 ? 'checked="checked"' : ''?>
+                />
                 <label class="b-radio__label" for="registration-female"><span class="b-radio__text-label">женский</span>
                 </label>
             </div>

@@ -34,7 +34,6 @@ use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
-use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\ConfirmCodeInterface;
 use FourPaws\UserBundle\Service\ConfirmCodeService;
@@ -47,11 +46,11 @@ use Symfony\Component\HttpFoundation\Request;
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsAuthFormComponent extends \CBitrixComponent
 {
-    const MODE_PROFILE = 0;
+    public const MODE_PROFILE = 0;
 
-    const MODE_FORM = 1;
+    public const MODE_FORM = 1;
 
-    const PHONE_HOT_LINE = '8 (800) 770-00-22';
+    public const PHONE_HOT_LINE = '8 (800) 770-00-22';
 
     /**
      * @var CurrentUserProviderInterface
@@ -150,14 +149,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      * @param string $password
      * @param string $backUrl
      *
-     * @throws \GuzzleHttp\Exception\GuzzleException
-     * @throws \Bitrix\Main\SystemException
-     * @throws ServiceNotFoundException
-     * @throws ApplicationCreateException
-     * @throws \RuntimeException
-     * @throws ServiceCircularReferenceException
      * @return JsonResponse
-     * @throws LoaderException
      */
     public function ajaxLogin(string $rawLogin, string $password, string $backUrl = ''): JsonResponse
     {
@@ -168,12 +160,20 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         if (empty($password)) {
             return $this->ajaxMess->getEmptyPasswordError();
         }
+
+        if (!isset($_SESSION['COUNT_AUTH_AUTHORIZE'])) {
+            $_SESSION['COUNT_AUTH_AUTHORIZE'] = 0;
+        }
+        $_SESSION['COUNT_AUTH_AUTHORIZE']++;
+
         $checkedCaptcha = true;
-        if ((int)$_SESSION['COUNT_AUTH_AUTHORIZE'] > 3) {
+        if ($_SESSION['COUNT_AUTH_AUTHORIZE'] > 3) {
             try {
                 $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
                 $checkedCaptcha = $recaptchaService->checkCaptcha();
-            } catch (ApplicationCreateException $e) {
+            } catch (ApplicationCreateException|SystemException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException $e) {
+                $logger = LoggerFactory::create('system');
+                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
                 return $this->ajaxMess->getSystemError();
             }
         }
@@ -181,10 +181,6 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             return $this->ajaxMess->getFailCaptchaCheckError();
         }
         try {
-            if (!isset($_SESSION['COUNT_AUTH_AUTHORIZE'])) {
-                $_SESSION['COUNT_AUTH_AUTHORIZE'] = 0;
-            }
-            $_SESSION['COUNT_AUTH_AUTHORIZE']++;
             $this->userAuthorizationService->login($rawLogin, $password);
             if ($this->userAuthorizationService->isAuthorized()
                 && !$this->currentUserProvider->getCurrentUser()->havePersonalPhone()) {
@@ -192,21 +188,34 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             }
         } catch (UsernameNotFoundException $e) {
             if ($_SESSION['COUNT_AUTH_AUTHORIZE'] === 3) {
-                $this->setSocial();
-                $html = $this->getHtml('begin', '',
-                    ['isAjax' => true, 'backurl' => $backUrl, 'arResult' => $this->arResult]);
+                try {
+                    $this->setSocial();
+                    $html = $this->getHtml('begin', '',
+                        ['isAjax' => true, 'backurl' => $backUrl, 'arResult' => $this->arResult]);
 
-                return JsonSuccessResponse::createWithData('',
-                    ['html' => $html]);
+                    return JsonSuccessResponse::createWithData('',
+                        ['html' => $html]);
+                }
+                catch (SystemException|LoaderException $e){
+                    $logger = LoggerFactory::create('system');
+                    $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+                    return $this->ajaxMess->getSystemError();
+                }
             }
             return $this->ajaxMess->getWrongPasswordError();
         } catch (InvalidCredentialException $e) {
             if ($_SESSION['COUNT_AUTH_AUTHORIZE'] === 3) {
-                $this->setSocial();
-                $html = $this->getHtml('begin', '',
-                    ['isAjax' => true, 'backurl' => $backUrl, 'arResult' => $this->arResult]);
+                try {
+                    $this->setSocial();
+                    $html = $this->getHtml('begin', '',
+                        ['isAjax' => true, 'backurl' => $backUrl, 'arResult' => $this->arResult]);
 
-                return JsonSuccessResponse::createWithData('', ['html' => $html]);
+                    return JsonSuccessResponse::createWithData('', ['html' => $html]);
+                }catch (SystemException|LoaderException $e){
+                    $logger = LoggerFactory::create('system');
+                    $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+                    return $this->ajaxMess->getSystemError();
+                    }
             }
             return $this->ajaxMess->getWrongPasswordError();
         } catch (TooManyUserFoundException $e) {
@@ -215,9 +224,13 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             $logger = LoggerFactory::create('auth');
             $logger->critical('Найдено больше одного совпадения по логину/email/телефону ' . $rawLogin);
 
-            return $this->ajaxMess->getTooManyUserFoundException($this->getSitePhone(), $rawLogin);
-        } catch (\Exception $e) {
-            return $this->ajaxMess->getSystemError();
+            try {
+                return $this->ajaxMess->getTooManyUserFoundException($this->getSitePhone(), $rawLogin);
+            } catch (ApplicationCreateException $e) {
+                $logger = LoggerFactory::create('system');
+                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+                return $this->ajaxMess->getSystemError();
+            }
         }
 
         unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
@@ -233,7 +246,6 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
     /**
      * @param string $phone
      *
-     * @throws ServiceNotFoundException
      * @return JsonResponse
      */
     public function ajaxResendSms($phone): JsonResponse
@@ -251,13 +263,11 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             if (!$res) {
                 return $this->ajaxMess->getSmsSendErrorException();
             }
-        } catch (SmsSendErrorException $e) {
-            return $this->ajaxMess->getSmsSendErrorException();
         } catch (WrongPhoneNumberException $e) {
             return $this->ajaxMess->getWrongPhoneNumberException();
-        } catch (\RuntimeException $e) {
-            return $this->ajaxMess->getSystemError();
-        } catch (\Exception $e) {
+        } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
+            $logger = LoggerFactory::create('system');
+            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
             return $this->ajaxMess->getSystemError();
         }
 
@@ -269,17 +279,6 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
      *
      * @param string $confirmCode
      *
-     * @throws \GuzzleHttp\Exception\GuzzleException
-     * @throws \Bitrix\Main\SystemException
-     * @throws \RuntimeException
-     * @throws ValidationException
-     * @throws InvalidIdentifierException
-     * @throws ServiceNotFoundException
-     * @throws \Exception
-     * @throws ApplicationCreateException
-     * @throws BitrixRuntimeException
-     * @throws ConstraintDefinitionException
-     * @throws ServiceCircularReferenceException
      * @return JsonResponse
      */
     public function ajaxSavePhone(string $phone, string $confirmCode): JsonResponse
@@ -287,6 +286,8 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         try {
             $container = App::getInstance()->getContainer();
         } catch (ApplicationCreateException $e) {
+            $logger = LoggerFactory::create('system');
+            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
             return $this->ajaxMess->getSystemError();
         }
         try {
@@ -295,20 +296,27 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             return $this->ajaxMess->getWrongPhoneNumberException();
         }
 
+        if (!isset($_SESSION['COUNT_AUTH_CONFIRM_CODE'])) {
+            $_SESSION['COUNT_AUTH_CONFIRM_CODE'] = 0;
+        }
+        $_SESSION['COUNT_AUTH_CONFIRM_CODE']++;
+
         $checkedCaptcha = true;
         if ($_SESSION['COUNT_AUTH_CONFIRM_CODE'] > 3) {
-            $recaptchaService = $container->get('recaptcha.service');
-            $checkedCaptcha = $recaptchaService->checkCaptcha();
+            try {
+                $recaptchaService = $container->get('recaptcha.service');
+                $checkedCaptcha = $recaptchaService->checkCaptcha();
+            } catch (ServiceNotFoundException|ServiceCircularReferenceException|SystemException|\RuntimeException|\Exception $e) {
+                $logger = LoggerFactory::create('system');
+                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+                return $this->ajaxMess->getFailCaptchaCheckError();
+            }
         }
         if (!$checkedCaptcha) {
             return $this->ajaxMess->getFailCaptchaCheckError();
         }
 
         try {
-            if (!isset($_SESSION['COUNT_AUTH_CONFIRM_CODE'])) {
-                $_SESSION['COUNT_AUTH_CONFIRM_CODE'] = 0;
-            }
-            $_SESSION['COUNT_AUTH_CONFIRM_CODE']++;
             /** @var ConfirmCodeService $confirmService */
             $confirmService = $container->get(ConfirmCodeInterface::class);
             $res = $confirmService::checkConfirmSms(
@@ -346,38 +354,62 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         } catch (WrongPhoneNumberException $e) {
             return $this->ajaxMess->getWrongPhoneNumberException();
         }
+        catch (ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
+            $logger = LoggerFactory::create('system');
+            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+        }
 
         unset($_SESSION['COUNT_AUTH_CONFIRM_CODE']);
         $data = [
             'UF_PHONE_CONFIRMED' => true,
         ];
 
-        if ($this->currentUserProvider->getUserRepository()->updateData(
-            $this->currentUserProvider->getCurrentUserId(),
-            $data
-        )) {
-            /** @var ManzanaService $manzanaService */
-            $manzanaService = $container->get('manzana.service');
-            $client = null;
-            try {
-                $contactId = $manzanaService->getContactIdByPhone(PhoneHelper::getManzanaPhone($phone));
-                $client = new Client();
-                $client->contactId = $contactId;
-                $client->phone = PhoneHelper::getManzanaPhone($phone);
-            } catch (ManzanaServiceException $e) {
-                $client = new Client();
-
+        try {
+            if ($this->currentUserProvider->getUserRepository()->updateData(
+                $this->currentUserProvider->getCurrentUserId(),
+                $data
+            )) {
+                /** @var ManzanaService $manzanaService */
+                $manzanaService = $container->get('manzana.service');
+                $client = null;
                 try {
-                    $this->currentUserProvider->setClientPersonalDataByCurUser($client);
-                } catch (NotAuthorizedException $e) {
-                }
-            } catch (WrongPhoneNumberException $e) {
-                return $this->ajaxMess->getWrongPhoneNumberException();
-            }
+                    $contactId = $manzanaService->getContactIdByPhone(PhoneHelper::getManzanaPhone($phone));
+                    $client = new Client();
+                    $client->contactId = $contactId;
+                    $client->phone = PhoneHelper::getManzanaPhone($phone);
+                } catch (ManzanaServiceException $e) {
+                    $client = new Client();
 
-            if ($client instanceof Client) {
-                $manzanaService->updateContactAsync($client);
+                    try {
+                        $this->currentUserProvider->setClientPersonalDataByCurUser($client);
+                    } catch (NotAuthorizedException $e) {
+                        /** не должна быть вызвана */
+                        $this->ajaxMess->getNeedAuthError();
+                    }
+                } catch (WrongPhoneNumberException $e) {
+                    return $this->ajaxMess->getWrongPhoneNumberException();
+                }
+
+                if ($client instanceof Client) {
+                    try {
+                        $manzanaService->updateContactAsync($client);
+                    } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException $e) {
+                        $logger = LoggerFactory::create('system');
+                        $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+                    }
+                }
             }
+        }
+        catch (BitrixRuntimeException $e){
+            return $this->ajaxMess->getUpdateError($e->getMessage());
+        }
+        catch (InvalidIdentifierException|ConstraintDefinitionException $e) {
+            $logger = LoggerFactory::create('params');
+            $logger->error('Ошибка параметров - ' . $e->getMessage());
+        }
+        catch (ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
+            $logger = LoggerFactory::create('system');
+            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
         }
 
         return JsonSuccessResponse::create('Телефон сохранен', 200, [], ['reload' => true]);
@@ -386,7 +418,6 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
     /**
      * @param Request $request
      *
-     * @throws ServiceNotFoundException
      * @return JsonResponse
      */
     public function ajaxGet($request): JsonResponse
@@ -414,7 +445,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 break;
         }
         $phone = PhoneHelper::formatPhone($phone, '+7 (%s%s%s) %s%s%s-%s%s-%s%s');
-        $html = $this->getHtml($step, $title, ['phone'=>$phone, 'step'=>$step]);
+        $html = $this->getHtml($step, $title, ['phone' => $phone, 'step' => $step]);
 
         return JsonSuccessResponse::createWithData(
             $mess,
@@ -424,45 +455,6 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                 'phone' => $phone ?? '',
             ]
         );
-    }
-
-    /**
-     * @throws LoaderException
-     * @throws SystemException
-     */
-    protected function setSocial()
-    {
-        if (Loader::includeModule('socialservices')) {
-            $authManager = new \CSocServAuthManager();
-            $startParams['AUTH_SERVICES'] = false;
-            $startParams['CURRENT_SERVICE'] = false;
-            $startParams['FORM_TYPE'] = 'login';
-            $services = $authManager->GetActiveAuthServices($startParams);
-
-            if (!empty($services)) {
-                $this->arResult['AUTH_SERVICES'] = $services;
-                $authServiceId =
-                    Application::getInstance()->getContext()->getRequest()->get('auth_service_id');
-                if ($authServiceId !== ''
-                    && isset($authServiceId, $this->arResult['AUTH_SERVICES'][$authServiceId])) {
-                    $this->arResult['CURRENT_SERVICE'] = $authServiceId;
-                    $authServiceError =
-                        Application::getInstance()->getContext()->getRequest()->get('auth_service_error');
-                    if (!empty($authServiceError)) {
-                        $this->arResult['ERROR_MESSAGE'] = $authManager->GetError(
-                            $this->arResult['CURRENT_SERVICE'],
-                            $authServiceError
-                        );
-                    } elseif (!$authManager->Authorize($authServiceId)) {
-                        global $APPLICATION;
-                        $ex = $APPLICATION->GetException();
-                        if ($ex) {
-                            $this->arResult['ERROR_MESSAGE'] = $ex->GetString();
-                        }
-                    }
-                }
-            }
-        }
     }
 
     /**
@@ -495,7 +487,6 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         if (!empty($params)) {
             extract($params, EXTR_OVERWRITE);
         }
-        $html = '';
         ob_start();
         if (!empty($title)) { ?>
             <header class="b-registration__header">
@@ -505,18 +496,13 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         }
         require_once App::getDocumentRoot()
             . '/local/components/fourpaws/auth.form/templates/popup/include/' . $page . '.php';
-        $html = ob_get_clean();
 
-        return $html;
+        return ob_get_clean();
     }
 
     /**
      * @param string $phone
      *
-     * @throws \FourPaws\UserBundle\Exception\InvalidIdentifierException
-     * @throws \FourPaws\UserBundle\Exception\ConstraintDefinitionException
-     * @throws \FourPaws\UserBundle\Exception\BitrixRuntimeException
-     * @throws ServiceNotFoundException
      * @return JsonResponse|string
      */
     private function ajaxGetSendSmsCode($phone)
@@ -541,13 +527,11 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             } else {
                 return $this->ajaxMess->getSmsSendErrorException();
             }
-        } catch (SmsSendErrorException $e) {
-            return $this->ajaxMess->getSmsSendErrorException();
         } catch (WrongPhoneNumberException $e) {
             return $this->ajaxMess->getWrongPhoneNumberException();
-        } catch (\RuntimeException $e) {
-            return $this->ajaxMess->getSystemError();
-        } catch (\Exception $e) {
+        } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
+            $logger = LoggerFactory::create('system');
+            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
             return $this->ajaxMess->getSystemError();
         }
 
@@ -564,5 +548,44 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         }
 
         return $mess;
+    }
+
+    /**
+     * @throws LoaderException
+     * @throws SystemException
+     */
+    protected function setSocial(): void
+    {
+        if (Loader::includeModule('socialservices')) {
+            $authManager = new \CSocServAuthManager();
+            $startParams['AUTH_SERVICES'] = false;
+            $startParams['CURRENT_SERVICE'] = false;
+            $startParams['FORM_TYPE'] = 'login';
+            $services = $authManager->GetActiveAuthServices($startParams);
+
+            if (!empty($services)) {
+                $this->arResult['AUTH_SERVICES'] = $services;
+                $authServiceId =
+                    Application::getInstance()->getContext()->getRequest()->get('auth_service_id');
+                if ($authServiceId !== ''
+                    && isset($authServiceId, $this->arResult['AUTH_SERVICES'][$authServiceId])) {
+                    $this->arResult['CURRENT_SERVICE'] = $authServiceId;
+                    $authServiceError =
+                        Application::getInstance()->getContext()->getRequest()->get('auth_service_error');
+                    if (!empty($authServiceError)) {
+                        $this->arResult['ERROR_MESSAGE'] = $authManager->GetError(
+                            $this->arResult['CURRENT_SERVICE'],
+                            $authServiceError
+                        );
+                    } elseif (!$authManager->Authorize($authServiceId)) {
+                        global $APPLICATION;
+                        $ex = $APPLICATION->GetException();
+                        if ($ex) {
+                            $this->arResult['ERROR_MESSAGE'] = $ex->GetString();
+                        }
+                    }
+                }
+            }
+        }
     }
 }

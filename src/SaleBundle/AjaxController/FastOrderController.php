@@ -6,6 +6,7 @@
 
 namespace FourPaws\SaleBundle\AjaxController;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\ArgumentTypeException;
@@ -50,11 +51,6 @@ class FastOrderController extends Controller
     private $orderService;
 
     /**
-     * @var OrderStorageService
-     */
-    private $orderStorageService;
-
-    /**
      * @var UserAuthorizationInterface
      */
     private $userAuthProvider;
@@ -74,7 +70,6 @@ class FastOrderController extends Controller
      * OrderController constructor.
      *
      * @param OrderService                 $orderService
-     * @param OrderStorageService          $orderStorageService
      * @param UserAuthorizationInterface   $userAuthProvider
      * @param CurrentUserProviderInterface $currentUserProvider
      * @param AjaxMess                     $ajaxMess
@@ -84,7 +79,6 @@ class FastOrderController extends Controller
      */
     public function __construct(
         OrderService $orderService,
-        OrderStorageService $orderStorageService,
         UserAuthorizationInterface $userAuthProvider,
         CurrentUserProviderInterface $currentUserProvider,
         AjaxMess $ajaxMess,
@@ -93,7 +87,6 @@ class FastOrderController extends Controller
         SmsService $smsService
     ) {
         $this->orderService = $orderService;
-        $this->orderStorageService = $orderStorageService;
         $this->userAuthProvider = $userAuthProvider;
         $this->currentUserProvider = $currentUserProvider;
         $this->ajaxMess = $ajaxMess;
@@ -107,9 +100,6 @@ class FastOrderController extends Controller
      * @param Request $request
      *
      * @return JsonResponse
-     * @throws \RuntimeException
-     * @throws ObjectNotFoundException
-     * @throws LoaderException
      */
     public function loadAction(Request $request): JsonResponse
     {
@@ -117,15 +107,22 @@ class FastOrderController extends Controller
         $requestType = $request->get('type', 'basket');
         if ($requestType === 'card') {
             $basketController = new BasketController($this->basketService, $this->basketViewService);
-            $response = $basketController->addAction($request);
-            if ($response->isOk()) {
-                if ($response instanceof JsonErrorResponse) {
-                    return $response;
+            try {
+                $response = $basketController->addAction($request);
+                if ($response->isOk()) {
+                    if ($response instanceof JsonErrorResponse) {
+                        return $response;
+                    }
+                    $basketData = json_decode($response->getContent());
+                } else {
+                    return $this->ajaxMess->getSystemError();
                 }
-                $basketData = json_decode($response->getContent());
-            } else {
+            } catch (LoaderException|ObjectNotFoundException|\RuntimeException $e) {
+                $logger = LoggerFactory::create('system');
+                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
                 return $this->ajaxMess->getSystemError();
             }
+
         }
         global $APPLICATION;
         ob_start();
@@ -152,8 +149,6 @@ class FastOrderController extends Controller
      * @param Request $request
      *
      * @return JsonResponse
-     * @throws InvalidIdentifierException
-     * @throws ConstraintDefinitionException
      */
     public function createAction(Request $request): JsonResponse
     {
@@ -172,6 +167,10 @@ class FastOrderController extends Controller
                 $orderStorage->setUserId($user->getId());
             } catch (NotAuthorizedException $e) {
                 /** никогда не сработает */
+            }
+            catch (InvalidIdentifierException|ConstraintDefinitionException $e) {
+                $logger = LoggerFactory::create('params');
+                $logger->error('Ошибка параметров - ' . $e->getMessage());
             }
         }
 
@@ -198,23 +197,15 @@ class FastOrderController extends Controller
                 return JsonSuccessResponse::create('Быстрый заказ успешно создан', 200, [],
                     ['redirect' => '/cart/successFastOrder.php']);
             }
-        } catch (ArgumentOutOfRangeException $e) {
+        } catch (ArgumentOutOfRangeException|ArgumentTypeException|ArgumentException $e) {
+            $logger = LoggerFactory::create('params');
+            $logger->error('Ошибка параметров - ' . $e->getMessage());
             return $this->ajaxMess->getSystemError();
-        } catch (ArgumentTypeException $e) {
-            return $this->ajaxMess->getSystemError();
-        } catch (ArgumentException $e) {
-            return $this->ajaxMess->getSystemError();
-        } catch (NotImplementedException $e) {
-            return $this->ajaxMess->getSystemError();
-        } catch (NotSupportedException $e) {
-            return $this->ajaxMess->getSystemError();
-        } catch (ObjectNotFoundException $e) {
-            return $this->ajaxMess->getSystemError();
-        } catch (OrderCreateException $e) {
+        } catch (OrderCreateException|FastOrderCreateException $e) {
             return $this->ajaxMess->getOrderCreateError($e->getMessage());
-        } catch (FastOrderCreateException $e) {
-            return $this->ajaxMess->getOrderCreateError($e->getMessage());
-        } catch (\Exception $e) {
+        } catch (NotImplementedException|NotSupportedException|ObjectNotFoundException|\Exception $e) {
+            $logger = LoggerFactory::create('system');
+            $logger->error('Системная ошибка - ' . $e->getMessage());
             return $this->ajaxMess->getSystemError();
         }
 

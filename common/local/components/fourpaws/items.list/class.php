@@ -168,13 +168,15 @@ class CItemsListComponent extends CBitrixComponent
         
         if ($this->startResultCache(
             
-            false,
+            $this->arParams['CACHE_TIME'],
             [
                 $this->arParams['CACHE_GROUPS'] === 'N' ? false : $USER->GetGroups(),
                 $userHaveAccess,
                 $navigation,
                 $this->externalFilter,
                 $this->pagerParameters,
+                'IBLOCK_ID'=>$this->arParams['IBLOCK_ID'],
+                'IBLOCK_TYPE'=>$this->arParams['IBLOCK_TYPE']
             ]
         
         )) {

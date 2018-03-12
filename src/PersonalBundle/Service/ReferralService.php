@@ -464,6 +464,7 @@ class ReferralService
                 if ($haveAdd && $redirectIfAdd) {
                     /** обновляем если добавилась инфа, чтобы была актуальная постраничка, табы и поиск */
                     LocalRedirect($request->getRequestUri());
+                    die();
                 }
             }
         }

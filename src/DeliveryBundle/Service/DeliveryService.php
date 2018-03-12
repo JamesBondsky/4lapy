@@ -54,16 +54,6 @@ class DeliveryService
 
     const ZONE_4 = 'ZONE_4';
 
-    const DELIVERY_INTERVALS = [
-        1 => '09:00-18:00',
-        2 => '18:00-24:00',
-        3 => '08:00-12:00',
-        4 => '12:00-16:00',
-        5 => '16:00-20:00',
-        6 => '20:00-24:00',
-        7 => '15:00-21:00',
-    ];
-
     const PICKUP_CODES = [
         DeliveryService::INNER_PICKUP_CODE,
         DeliveryService::DPD_PICKUP_CODE,
