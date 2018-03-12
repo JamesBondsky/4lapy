@@ -139,7 +139,7 @@ class ProfileController extends Controller
         }
 
         if ($old_password === $password) {
-            return $this->ajaxMess->getNotEqualOldPasswordError();
+            return $this->ajaxMess->getEqualWithOldPasswordError();
         }
 
         try {
