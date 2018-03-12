@@ -62,6 +62,9 @@ class AuthController extends Controller
             case 'savePhone':
                 return $loginClass->ajaxSavePhone($request->get('phone', ''), $request->get('confirmCode', ''));
                 break;
+            case 'unionBasket':
+                return $loginClass->ajaxUnionBasket($request);
+                break;
             case 'get':
                 return $loginClass->ajaxGet($request);
                 break;

@@ -8,6 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     <form class="b-registration__form js-form-validation js-ajax-form" data-url="/ajax/user/auth/login/" method="post">
         <input type="hidden" name="action" value="get">
         <input type="hidden" name="step" value="sendSmsCode">
+        <input type="hidden" name="backurl" value="<?=$backUrl?>" class="js-no-valid">
         <div class="b-input-line">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="mobile-number-5">Мобильный телефон</label>
