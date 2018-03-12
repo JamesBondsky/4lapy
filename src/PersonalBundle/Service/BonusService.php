@@ -7,6 +7,7 @@
 namespace FourPaws\PersonalBundle\Service;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\Application;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
@@ -227,6 +228,13 @@ class BonusService
             if($isChange) {
                 $this->currentUserProvider->getUserRepository()->updateData($user->getId(),
                     ['UF_DISCOUNT_CARD' => $bonusCard]);
+
+                if (\defined('BX_COMP_MANAGED_CACHE')) {
+                    /** Очистка кеша */
+                    $instance = Application::getInstance();
+                    $tagCache = $instance->getTaggedCache();
+                    $tagCache->clearByTag('bonus_' . $user->getId());
+                }
 
             }
 

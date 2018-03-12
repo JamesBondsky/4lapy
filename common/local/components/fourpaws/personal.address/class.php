@@ -9,6 +9,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\Application;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
@@ -89,6 +90,8 @@ class FourPawsPersonalCabinetAddressComponent extends CBitrixComponent
             return null;
         }
 
+        $instance = Application::getInstance();
+
         $this->setFrameMode(true);
 
         /** @todo проверить кеширование - возможно его надо будет сбрасывать по тегу */
@@ -96,6 +99,14 @@ class FourPawsPersonalCabinetAddressComponent extends CBitrixComponent
             ['USER_ID' => $this->currentUserProvider->getCurrentUserId()])) {
             $this->arResult['ITEMS'] = $this->addressService->getAddressesByUser();
             $this->includeComponentTemplate();
+
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->startTagCache($this->getPath());
+                $tagCache->registerTag(sprintf('address_%s', $this->currentUserProvider->getCurrentUserId()));
+                $tagCache->registerTag(sprintf('user_%s', $this->currentUserProvider->getCurrentUserId()));
+                $tagCache->endTagCache();
+            }
         }
 
         return true;

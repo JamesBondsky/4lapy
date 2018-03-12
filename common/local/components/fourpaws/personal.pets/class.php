@@ -10,6 +10,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectPropertyException;
@@ -96,6 +97,8 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
             return null;
         }
 
+        $instance = Application::getInstance();
+
         $this->setFrameMode(true);
 
         /** @todo проверить кеширование - возможно его надо будет сбрасывать по тегу */
@@ -108,6 +111,14 @@ class FourPawsPersonalCabinetPetsComponent extends CBitrixComponent
             $this->setPetTypes();
 
             $this->includeComponentTemplate();
+
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->startTagCache($this->getPath());
+                $tagCache->registerTag(sprintf('pet_%s', $this->currentUserProvider->getCurrentUserId()));
+                $tagCache->registerTag(sprintf('user_%s', $this->currentUserProvider->getCurrentUserId()));
+                $tagCache->endTagCache();
+            }
         }
 
         return true;

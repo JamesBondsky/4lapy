@@ -7,6 +7,7 @@
 namespace FourPaws\PersonalBundle\Service;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\Application;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Security\SecurityException;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -140,9 +141,18 @@ class AddressService
 
         $address->setCityLocationByEntity();
         $res = $this->addressRepository->setEntity($address)->create();
-        if ($res && $address->isMain()) {
-            /** @noinspection PhpParamsInspection */
-            $this->updateManzanaAddress($address);
+        if ($res) {
+            if ($address->isMain()
+            ) {
+                /** @noinspection PhpParamsInspection */
+                $this->updateManzanaAddress($address);
+            }
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                /** Очистка кеша */
+                $instance = Application::getInstance();
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->clearByTag('address_' . $address->getUserId());
+            }
         }
 
         return $res;
@@ -168,7 +178,7 @@ class AddressService
         } catch (ObjectPropertyException|\Exception $e) {
             /** Ошибка не должна возникать */
             $logger = LoggerFactory::create('params');
-            $logger->error('Ошибка снятии базового адреса доставки - '.$e->getMessage());
+            $logger->error('Ошибка снятии базового адреса доставки - ' . $e->getMessage());
         }
     }
 
@@ -222,9 +232,18 @@ class AddressService
 
         $entity->setCityLocationByEntity();
         $res = $this->addressRepository->setEntity($entity)->update();
-        if ($res && $entity->isMain()) {
-            /** @noinspection PhpParamsInspection */
-            $this->updateManzanaAddress($entity);
+        if ($res) {
+            if ($entity->isMain()
+            ) {
+                /** @noinspection PhpParamsInspection */
+                $this->updateManzanaAddress($entity);
+            }
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                /** Очистка кеша */
+                $instance = Application::getInstance();
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->clearByTag('address_' . $updateEntity->getUserId());
+            }
         }
 
         return $res;
@@ -255,9 +274,17 @@ class AddressService
         }
 
         $res = $this->addressRepository->delete($id);
-        if ($res && $deleteEntity->isMain()) {
-            /** @noinspection PhpParamsInspection */
-            $this->updateManzanaAddress(new Address());
+        if ($res) {
+            if ($deleteEntity->isMain()) {
+                /** @noinspection PhpParamsInspection */
+                $this->updateManzanaAddress(new Address());
+            }
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                /** Очистка кеша */
+                $instance = Application::getInstance();
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->clearByTag('address_' . $deleteEntity->getUserId());
+            }
         }
         return $res;
     }
