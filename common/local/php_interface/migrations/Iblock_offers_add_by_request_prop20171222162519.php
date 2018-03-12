@@ -54,22 +54,10 @@ class Iblock_offers_add_by_request_prop20171222162519 extends SprintMigrationBas
         }
         $iblockHelper = $this->getHelper()->Iblock();
 
-        if ($iblockHelper->deletePropertyIfExists(
-            $iblockId,
-            [
-
-                'NAME'          => 'Под заказ',
-                'ACTIVE'        => 'Y',
-                'SORT'          => '500',
-                'CODE'          => self::PROPERTY_CODE,
-                'DEFAULT_VALUE' => '0',
-                'PROPERTY_TYPE' => 'N',
-                'USER_TYPE'     => 'YesNoPropertyType',
-            ]
-        )) {
-            $this->log()->info('Добавлено свойство ' . self::PROPERTY_CODE . ' в ИБ офферов');
+        if ($iblockHelper->deletePropertyIfExists($iblockId, self::PROPERTY_CODE)) {
+            $this->log()->info('Удалено свойство ' . self::PROPERTY_CODE . ' в ИБ офферов');
         } else {
-            $this->log()->error('Ошибка при добавлении свойства ' . self::PROPERTY_CODE . ' в ИБ офферов');
+            $this->log()->error('Ошибка при удалении свойства ' . self::PROPERTY_CODE . ' в ИБ офферов');
         }
 
         return true;

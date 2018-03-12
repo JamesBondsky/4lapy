@@ -253,6 +253,14 @@ class Store extends Base
     protected $isBase = false;
 
     /**
+     * @var bool
+     * @Serializer\Type("bool")
+     * @Serializer\SerializedName("UF_IS_SUPPLIER")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $isSupplier = false;
+
+    /**
      * Срок поставки
      *
      * @var int
@@ -844,6 +852,24 @@ class Store extends Base
     {
         $this->isBase = $isBase;
 
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSupplier(): bool
+    {
+        return $this->isSupplier;
+    }
+
+    /**
+     * @param bool $isSupplier
+     * @return Store
+     */
+    public function setIsSupplier(bool $isSupplier): Store
+    {
+        $this->isSupplier = $isSupplier;
         return $this;
     }
 

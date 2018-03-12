@@ -36,12 +36,17 @@ use WebArch\BitrixCache\BitrixCache;
 class StoreService
 {
     /**
-     * Все склады
+     * Все склады, исключая склады поставщиков
      */
     public const TYPE_ALL = 'TYPE_ALL';
 
     /**
-     * Склады, не являющиеся магазинами
+     * Все склады
+     */
+    public const TYPE_ALL_WITH_SUPPLIERS = 'TYPE_ALL_WITH_SUPPLIERS';
+
+    /**
+     * Склады, не являющиеся магазинами, исключая склады поставщиков
      */
     public const TYPE_STORE = 'TYPE_STORE';
 
@@ -49,6 +54,11 @@ class StoreService
      * Склады, являющиеся магазинами
      */
     public const TYPE_SHOP = 'TYPE_SHOP';
+
+    /**
+     * Склады поставщиков
+     */
+    public const TYPE_SUPPLIER = 'TYPE_SUPPLIER';
 
     /**
      * @var LocationService
@@ -156,7 +166,7 @@ class StoreService
      *
      * @param string $locationCode
      * @param string $type
-     * @param bool   $strict
+     * @param bool $strict
      *
      * @return StoreCollection
      * @throws ArgumentException
@@ -208,9 +218,13 @@ class StoreService
     {
         switch ($type) {
             case self::TYPE_SHOP:
-                return ['UF_IS_SHOP' => 1];
+                return ['UF_IS_SHOP' => 1, 'UF_IS_SUPPLIER' => 0];
             case self::TYPE_STORE:
-                return ['UF_IS_SHOP' => 0];
+                return ['UF_IS_SHOP' => 0, 'UF_IS_SUPPLIER' => 0];
+            case self::TYPE_ALL:
+                return ['UF_IS_SUPPLIER' => 0];
+            case self::TYPE_SUPPLIER:
+                return ['UF_IS_SUPPLIER' => 1];
         }
 
         return [];
@@ -315,7 +329,7 @@ class StoreService
     /**
      * Получить наличие офферов на указанных складах
      *
-     * @param Collection      $offers
+     * @param Collection $offers
      * @param StoreCollection $stores
      *
      * @throws \Exception
@@ -333,7 +347,6 @@ class StoreService
     /**
      * @param Offer $offer
      *
-     * @throws \Exception
      * @return StockCollection
      */
     public function getStocksByOffer(Offer $offer): StockCollection
@@ -384,11 +397,11 @@ class StoreService
 
         return $this->getFormatedStoreByCollection(
             [
-                'storeCollection'      => $storeCollection,
+                'storeCollection' => $storeCollection,
                 'returnActiveServices' => $params['returnActiveServices'],
-                'returnSort'           => $params['returnSort'],
-                'sortVal'              => $params['sortVal'],
-                'activeStoreId'        => $params['activeStoreId'],
+                'returnSort' => $params['returnSort'],
+                'sortVal' => $params['sortVal'],
+                'activeStoreId' => $params['activeStoreId'],
             ]
         );
     }
@@ -485,17 +498,17 @@ class StoreService
                 }
 
                 $item = [
-                    'id'         => $store->getXmlId(),
-                    'addr'       => $address,
-                    'adress'     => $store->getDescription(),
-                    'phone'      => $store->getPhone(),
-                    'schedule'   => $store->getScheduleString(),
-                    'photo'      => $imageSrc,
-                    'metro'      => !empty($metro) ? 'м. ' . $metroList[$metro]['UF_NAME'] : '',
+                    'id' => $store->getXmlId(),
+                    'addr' => $address,
+                    'adress' => $store->getDescription(),
+                    'phone' => $store->getPhone(),
+                    'schedule' => $store->getScheduleString(),
+                    'photo' => $imageSrc,
+                    'metro' => !empty($metro) ? 'м. ' . $metroList[$metro]['UF_NAME'] : '',
                     'metroClass' => !empty($metro) ? '--' . $metroList[$metro]['BRANCH']['UF_CLASS'] : '',
-                    'services'   => $services,
-                    'gps_s'      => $gpsN, //revert $gpsS
-                    'gps_n'      => $gpsS, //revert $gpsN
+                    'services' => $services,
+                    'gps_s' => $gpsN, //revert $gpsS
+                    'gps_n' => $gpsS, //revert $gpsN
                 ];
 
                 if ($store->getId() === (int)$params['activeStoreId']) {
@@ -514,7 +527,7 @@ class StoreService
                         $this->pickupDelivery,
                         [
                             'SHOW_TIME' => true,
-                            'SHORT'     => true,
+                            'SHORT' => true,
                         ]
                     );
                 }
@@ -611,8 +624,8 @@ class StoreService
         $search = $request->get('search');
         if (!empty($search)) {
             $result[] = [
-                'LOGIC'          => 'OR',
-                '%ADDRESS'       => $search,
+                'LOGIC' => 'OR',
+                '%ADDRESS' => $search,
                 '%METRO.UF_NAME' => $search,
             ];
         }

@@ -232,11 +232,6 @@ class Offer extends IblockElement
     protected $PROPERTY_OLD_URL = '';
 
     /**
-     * @var int
-     */
-    protected $PROPERTY_BY_REQUEST = 0;
-
-    /**
      * Цена по акции - простая акция из SAP
      *
      * @var float
@@ -267,6 +262,11 @@ class Offer extends IblockElement
      * @var float
      */
     protected $oldPrice = 0;
+
+    /**
+     * @var bool
+     */
+    protected $isByRequest;
 
     /**
      * @Type("string")
@@ -336,6 +336,11 @@ class Offer extends IblockElement
      * @var StockCollection
      */
     protected $stocks;
+
+    /**
+     * @var StockCollection
+     */
+    protected $allStocks;
 
     /**
      * @var bool
@@ -816,15 +821,24 @@ class Offer extends IblockElement
 
     /**
      * @return bool
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
      */
     public function isByRequest(): bool
     {
-        return (bool)$this->PROPERTY_BY_REQUEST;
+        if (null === $this->isByRequest) {
+            /** @var StoreService $storeService */
+            $storeService = Application::getInstance()->getContainer()->get('store.service');
+            $stores = $storeService->getSupplierStores();
+            $this->isByRequest = !$this->getAllStocks()->filterByStores($stores)->isEmpty();
+        }
+
+        return $this->isByRequest;
     }
 
     public function withByRequest(bool $byRequest)
     {
-        $this->PROPERTY_BY_REQUEST = $byRequest;
+        $this->isByRequest = $byRequest;
 
         return $this;
     }
@@ -1149,6 +1163,32 @@ class Offer extends IblockElement
     }
 
     /**
+     * @return StockCollection
+     * @throws ApplicationCreateException
+     */
+    public function getAllStocks(): StockCollection
+    {
+        if (!$this->allStocks) {
+            /** @var StoreService $storeService */
+            $storeService = Application::getInstance()->getContainer()->get('store.service');
+            $this->withAllStocks($storeService->getStocksByOffer($this));
+        }
+
+        return $this->allStocks;
+    }
+
+    /**
+     * @param StockCollection $allStocks
+     * @return Offer
+     */
+    public function withAllStocks(StockCollection $allStocks): Offer
+    {
+        $this->allStocks = $allStocks;
+
+        return $this;
+    }
+
+    /**
      * @throws ServiceNotFoundException
      * @throws \Exception
      * @throws ApplicationCreateException
@@ -1160,9 +1200,8 @@ class Offer extends IblockElement
         if (!$this->stocks) {
             /** @var StoreService $storeService */
             $storeService = Application::getInstance()->getContainer()->get('store.service');
-            $allStocks = $storeService->getStocksByOffer($this);
             $stores = $storeService->getByCurrentLocation();
-            $this->withStocks($allStocks->filterByStores($stores));
+            $this->withStocks($this->getAllStocks()->filterByStores($stores));
         }
 
         return $this->stocks;
