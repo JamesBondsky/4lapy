@@ -2,6 +2,7 @@
 
 namespace FourPaws\StoreBundle\Collection;
 
+use FourPaws\StoreBundle\Entity\Schedule;
 use FourPaws\StoreBundle\Entity\Store;
 
 class StoreCollection extends BaseCollection
@@ -43,26 +44,24 @@ class StoreCollection extends BaseCollection
     }
 
     /**
-     * @return array
+     * @return Schedule
      */
-    public function getTotalSchedule(): array
+    public function getTotalSchedule(): Schedule
     {
-        /** @var Store $item */
         $from = null;
         $to = null;
+
+        /** @var Store $item */
         foreach ($this->getIterator() as $item) {
-            $formattedSchedule = $item->getFormattedSchedule();
-            if ((null === $from) || ($formattedSchedule['from'] < $from)) {
-                $from = $formattedSchedule['from'];
+            $schedule = $item->getScheduleString();
+            if ((null === $from) || ($schedule->getFrom() < $from)) {
+                $from = $schedule->getFrom();
             }
-            if ((null === $to) || ($formattedSchedule['to'] > $to)) {
-                $to = $formattedSchedule['to'];
+            if ((null === $to) || ($schedule->getTo() > $to)) {
+                $to = $schedule->getTo();
             }
         }
 
-        return [
-            'from' => $from,
-            'to'   => $to,
-        ];
+        return (new Schedule())->setFrom($from)->setTo($to);
     }
 }

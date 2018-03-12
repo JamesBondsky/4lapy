@@ -58,7 +58,7 @@ $partialPickup = $arResult['PARTIAL_PICKUP'];
             <span class="b-input-line__label">Время работы</span>
         </div>
         <div class="b-input-line__text-line b-input-line__text-line--myself">
-            <?= $selectedShop->getSchedule() ?>
+            <?= $selectedShop->getScheduleString() ?>
         </div>
     </div>
     <div class="b-input-line b-input-line--myself">

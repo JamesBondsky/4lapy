@@ -18,11 +18,9 @@ use Bitrix\Sale\Location\LocationTable;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Shipment;
 use FourPaws\Catalog\Model\Offer;
-use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Dpd\TerminalTable;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdResult;
-use FourPaws\DeliveryBundle\Exception\InvalidArgumentException;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\Location\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
@@ -183,7 +181,7 @@ class DeliveryService
             $service->getCode();
             $shipment->setFields(
                 [
-                    'DELIVERY_ID'   => $service->getId(),
+                    'DELIVERY_ID' => $service->getId(),
                     'DELIVERY_NAME' => $name,
                 ]
             );
@@ -347,11 +345,11 @@ class DeliveryService
                     // т.к. группы могут их включать
                     $result = [
                             $location['CODE'] => [
-                                'CODE'      => $location['CODE'],
-                                'NAME'      => $location['SALE_LOCATION_LOCATION_NAME_NAME'],
-                                'ID'        => $location['ID'],
+                                'CODE' => $location['CODE'],
+                                'NAME' => $location['SALE_LOCATION_LOCATION_NAME_NAME'],
+                                'ID' => $location['ID'],
                                 'LOCATIONS' => [$location['CODE']],
-                                'TYPE'      => static::LOCATION_RESTRICTION_TYPE_LOCATION,
+                                'TYPE' => static::LOCATION_RESTRICTION_TYPE_LOCATION,
                             ],
                         ] + $result;
                 }
@@ -488,17 +486,17 @@ class DeliveryService
 
         $getTerminals = function () use ($locationCode) {
             $terminals = TerminalTable::query()
-                                      ->setSelect(['*'])
-                                      ->setFilter(['LOCATION.CODE' => $locationCode])
-                                      ->registerRuntimeField(
-                                          new ReferenceField(
-                                              'LOCATION',
-                                              LocationTable::class,
-                                              ['=this.LOCATION_ID' => 'ref.ID'],
-                                              ['join_type' => 'INNER']
-                                          )
-                                      )
-                                      ->exec();
+                ->setSelect(['*'])
+                ->setFilter(['LOCATION.CODE' => $locationCode])
+                ->registerRuntimeField(
+                    new ReferenceField(
+                        'LOCATION',
+                        LocationTable::class,
+                        ['=this.LOCATION_ID' => 'ref.ID'],
+                        ['join_type' => 'INNER']
+                    )
+                )
+                ->exec();
 
             return ['result' => $terminals->fetchAll()];
         };
@@ -518,17 +516,7 @@ class DeliveryService
         }
 
         foreach ($terminals as $terminal) {
-            $store = new Store();
-            $store->setTitle((string)$terminal['NAME'])
-                  ->setLocation($locationCode)
-                  ->setAddress((string)$terminal['ADDRESS_SHORT'])
-                  ->setCode((string)$terminal['CODE'])
-                  ->setXmlId((string)$terminal['CODE'])
-                  ->setLatitude((float)$terminal['LATITUDE'])
-                  ->setLongitude((float)$terminal['LONGITUDE'])
-                  ->setLocationId((int)$terminal['LOCATION_ID'])
-                  ->setSchedule((string)$terminal['SCHEDULE_SELF_DELIVERY'])
-                  ->setDescription((string)$terminal['ADDRESS_DESCR']);
+            $store = $this->dpdTerminalToStore($terminal, $locationCode);
             $result[$store->getXmlId()] = $store;
         }
 
@@ -545,16 +533,16 @@ class DeliveryService
     {
         $getTerminal = function () use ($code) {
             $terminal = TerminalTable::query()->setSelect(['*', 'LOCATION.CODE'])
-                                     ->setFilter(['CODE' => $code])
-                                     ->registerRuntimeField(
-                                         new ReferenceField(
-                                             'LOCATION',
-                                             LocationTable::class,
-                                             ['=this.LOCATION_ID' => 'ref.ID'],
-                                             ['join_type' => 'INNER']
-                                         )
-                                     )
-                                     ->exec()->fetch();
+                ->setFilter(['CODE' => $code])
+                ->registerRuntimeField(
+                    new ReferenceField(
+                        'LOCATION',
+                        LocationTable::class,
+                        ['=this.LOCATION_ID' => 'ref.ID'],
+                        ['join_type' => 'INNER']
+                    )
+                )
+                ->exec()->fetch();
             if (!$terminal) {
                 throw new NotFoundException('Терминал не найден');
             }
@@ -567,19 +555,7 @@ class DeliveryService
             ->withId(__METHOD__ . $code)
             ->resultOf($getTerminal)['result'];
 
-        $store = new Store();
-        $store->setTitle($terminal['NAME'])
-              ->setLocation($terminal['FOURPAWS_DELIVERYBUNDLE_DPD_TERMINAL_LOCATION_CODE'])
-              ->setAddress($terminal['ADDRESS_SHORT'])
-              ->setCode($terminal['CODE'])
-              ->setXmlId($terminal['CODE'])
-              ->setLatitude($terminal['LATITUDE'])
-              ->setLongitude($terminal['LONGITUDE'])
-              ->setLocationId($terminal['LOCATION_ID'])
-              ->setSchedule($terminal['SCHEDULE_SELF_DELIVERY'])
-              ->setDescription($terminal['ADDRESS_DESCR']);
-
-        return $store;
+        return $this->dpdTerminalToStore($terminal, $terminal['FOURPAWS_DELIVERYBUNDLE_DPD_TERMINAL_LOCATION_CODE']);
     }
 
     protected function generateShipment(string $locationCode, BasketBase $basket = null): Shipment
@@ -614,5 +590,29 @@ class DeliveryService
         }
 
         return $shipment;
+    }
+
+    /**
+     * @param array $terminal
+     * @param string $locationCode
+     * @return Store
+     */
+    protected function dpdTerminalToStore(array $terminal, string $locationCode = ''): Store
+    {
+        $schedule = str_replace('<br>', '. ', $terminal['SCHEDULE_SELF_DELIVERY']);
+
+        $store = new Store();
+        $store->setTitle($terminal['NAME'])
+            ->setLocation($locationCode)
+            ->setAddress($terminal['ADDRESS_SHORT'])
+            ->setCode($terminal['CODE'])
+            ->setXmlId($terminal['CODE'])
+            ->setLatitude($terminal['LATITUDE'])
+            ->setLongitude($terminal['LONGITUDE'])
+            ->setLocationId($terminal['LOCATION_ID'])
+            ->setScheduleString($schedule)
+            ->setDescription($terminal['ADDRESS_DESCR']);
+
+        return $store;
     }
 }

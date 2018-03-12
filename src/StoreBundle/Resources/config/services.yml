@@ -24,3 +24,7 @@ services:
         resource: '../../AjaxController'
         public: true
         tags: ['controller.service_arguments']
+
+    FourPaws\StoreBundle\Serialization\:
+        resource: '../../Serialization/*'
+        tags: ['jms_serializer.subscribing_handler']

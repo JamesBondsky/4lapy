@@ -10,7 +10,7 @@ use FourPaws\DeliveryBundle\Service\IntervalService;
 
 class DeliveryResult extends BaseResult
 {
-    public function doCalculateDeliveryDate()
+    public function doCalculateDeliveryDate(): void
     {
         parent::doCalculateDeliveryDate();
 
@@ -19,7 +19,7 @@ class DeliveryResult extends BaseResult
 
         if (!$this->getStockResult()->getDelayed()->isEmpty()) {
             /* @todo для зоны 2 должен в этом случае добавляться срок поставки в базовый магазин */
-            return null;
+            return;
         }
 
         /**
@@ -32,18 +32,18 @@ class DeliveryResult extends BaseResult
                     $this->getIntervals()
                 );
             } catch (NotFoundException $e) {
-                return null;
+                return;
             }
         }
 
         $currentDate = new \DateTime();
 
         if ($this->deliveryDate->format('z') !== $currentDate->format('z')) {
-            return null;
+            return;
         }
 
         if ($this->getIntervals()->isEmpty()) {
-            return null;
+            return;
         }
 
         /**

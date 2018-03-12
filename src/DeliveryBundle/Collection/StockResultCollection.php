@@ -94,21 +94,6 @@ class StockResultCollection extends ArrayCollection
     }
 
     /**
-     * @return \DateTime
-     */
-    public function getDeliveryDate(): \DateTime
-    {
-        $deliveryDate = new \DateTime();
-
-        /** @var StockResult $item */
-        foreach ($this->getIterator() as $item) {
-            $deliveryDate = \max($deliveryDate, $item->getDeliveryDate());
-        }
-
-        return $deliveryDate;
-    }
-
-    /**
      * @param bool $skipUnavailable
      *
      * @return StoreCollection

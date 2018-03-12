@@ -61,15 +61,24 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
      */
     protected $intervalService;
 
+    /** @noinspection PhpDocMissingThrowsInspection */
+
+    /**
+     * DeliveryHandlerBase constructor.
+     * @param $initParams
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentTypeException
+     * @throws \Bitrix\Main\SystemException
+     */
     public function __construct($initParams)
     {
-        $this->locationService = Application::getInstance()->getContainer()->get('location.service');
-        $this->storeService = Application::getInstance()->getContainer()->get('store.service');
-        $this->deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
-        $this->userService = Application::getInstance()
-                                        ->getContainer()
-                                        ->get(UserCitySelectInterface::class);
-        $this->intervalService = Application::getInstance()->getContainer()->get(IntervalService::class);
+        /** @noinspection PhpUnhandledExceptionInspection */
+        $serviceContainer = Application::getInstance()->getContainer();
+        $this->locationService = $serviceContainer->get('location.service');
+        $this->storeService = $serviceContainer->get('store.service');
+        $this->deliveryService = $serviceContainer->get('delivery.service');
+        $this->userService = $serviceContainer->get(UserCitySelectInterface::class);
+        $this->intervalService = $serviceContainer->get(IntervalService::class);
         parent::__construct($initParams);
     }
 
@@ -111,6 +120,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
         }
 
         /** @var StoreService $storeService */
+        /** @noinspection PhpUnhandledExceptionInspection */
         $storeService = Application::getInstance()->getContainer()->get('store.service');
         $stores = $storeService->getByLocation($locationCode);
         if ($stores->isEmpty()) {
@@ -148,23 +158,6 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
             $stockResultCollection = new StockResultCollection();
         }
 
-        /**
-         * Рассчитывается дата доставки в соответствии с графиком работы магазинов/складов
-         */
-        $pickupDate = new \DateTime();
-        if (!$storesAvailable->isEmpty()) {
-            $hour = (int)$pickupDate->format('H');
-            $totalSchedule = $storesAvailable->getTotalSchedule();
-            if ($hour < $totalSchedule['from']) {
-                $pickupDate->setTime($totalSchedule['from'] + 1, 0);
-            } elseif ($hour > $totalSchedule['to']) {
-                $pickupDate->modify('+1 day');
-                $pickupDate->setTime($totalSchedule['from'] + 1, 0);
-            } else {
-                $pickupDate->modify('+1 hour');
-            }
-        }
-
         /** @var Offer $offer */
         foreach ($offers as $offer) {
             $basketItem = null;
@@ -182,21 +175,9 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
 
             $stockResult = new StockResult();
             $stockResult->setAmount($neededAmount)
-                        ->setOffer($offer)
-                        ->setStores($storesAvailable)
-                        ->setPrice($basketItem->getPrice());
-
-            $stockResult->setDeliveryDate($pickupDate);
-
-            /**
-             * Если товар под заказ, то рассчитывается дата поставки на склад по графику
-             */
-            if ($offer->isByRequest()) {
-                $stockResult->setType(StockResult::TYPE_DELAYED)
-                    /* @todo расчет по графику поставок */
-                            ->setDeliveryDate((new \DateTime())->modify('+10 days'));
-                continue;
-            }
+                ->setOffer($offer)
+                ->setStores($storesAvailable)
+                ->setPrice($basketItem->getPrice());
 
             $stocks = $offer->getStocks();
             if ($availableAmount = $stocks->filterByStores($storesAvailable)->getTotalAmount()) {
@@ -216,10 +197,8 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                 if ($delayedAmount = $stocks->filterByStores($storesDelay)->getTotalAmount()) {
                     $delayedStockResult = clone $stockResult;
                     $delayedStockResult->setType(StockResult::TYPE_DELAYED)
-                                       ->setAmount($delayedAmount >= $neededAmount ? $neededAmount : $delayedAmount)
-                                       ->setDelayStores($storesDelay)
-                        /* @todo расчет по графику поставок */
-                                       ->setDeliveryDate((new \DateTime())->modify('+10 days'));
+                        ->setAmount($delayedAmount >= $neededAmount ? $neededAmount : $delayedAmount)
+                        ->setDelayStores($storesDelay);
                     $stockResultCollection->add($delayedStockResult);
 
                     $neededAmount = ($delayedAmount >= $neededAmount) ? 0 : $neededAmount - $delayedAmount;
@@ -231,7 +210,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
                 if ($neededAmount) {
                     $unavailableStockResult = clone $stockResult;
                     $unavailableStockResult->setType(StockResult::TYPE_UNAVAILABLE)
-                                           ->setAmount($neededAmount);
+                        ->setAmount($neededAmount);
                     $stockResultCollection->add($unavailableStockResult);
                 }
             }
@@ -250,28 +229,27 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
 
     /**
      * @return array
+     * @throws \Bitrix\Main\ArgumentException
      */
     protected function getConfigStructure()
     {
         $currency = $this->currency;
 
-        if (Loader::includeModule('currency')) {
-            $currencyList = CurrencyManager::getCurrencyList();
-            if (isset($currencyList[$this->currency])) {
-                $currency = $currencyList[$this->currency];
-            }
-            unset($currencyList);
+        $currencyList = CurrencyManager::getCurrencyList();
+        if (isset($currencyList[$this->currency])) {
+            $currency = $currencyList[$this->currency];
         }
+        unset($currencyList);
 
         $result = [
             'MAIN' => [
-                'TITLE'       => Loc::getMessage('SALE_DLVR_HANDL_SMPL_TAB_MAIN'),
+                'TITLE' => Loc::getMessage('SALE_DLVR_HANDL_SMPL_TAB_MAIN'),
                 'DESCRIPTION' => Loc::getMessage('SALE_DLVR_HANDL_SMPL_TAB_MAIN_DESCR'),
-                'ITEMS'       => [
+                'ITEMS' => [
                     'CURRENCY' => [
-                        'TYPE'       => 'DELIVERY_READ_ONLY',
-                        'NAME'       => Loc::getMessage('SALE_DLVR_HANDL_SMPL_CURRENCY'),
-                        'VALUE'      => $this->currency,
+                        'TYPE' => 'DELIVERY_READ_ONLY',
+                        'NAME' => Loc::getMessage('SALE_DLVR_HANDL_SMPL_CURRENCY'),
+                        'VALUE' => $this->currency,
                         'VALUE_VIEW' => $currency,
                     ],
                 ],

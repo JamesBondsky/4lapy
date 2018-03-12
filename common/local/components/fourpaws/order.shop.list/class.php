@@ -210,7 +210,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                     'id'                => $store->getXmlId(),
                     'adress'            => $address,
                     'phone'             => $store->getPhone(),
-                    'schedule'          => $store->getSchedule(),
+                    'schedule'          => $store->getScheduleString(),
                     'pickup'            => DeliveryTimeHelper::showTime(
                         $resultByStore[$store->getXmlId()]['PARTIAL_RESULT'],
                         ['SHORT' => false, 'SHOW_TIME' => $showTime]

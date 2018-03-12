@@ -6,7 +6,7 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 
 class DpdResult extends BaseResult
 {
-    public function doCalculateDeliveryDate()
+    public function doCalculateDeliveryDate(): void
     {
         parent::doCalculateDeliveryDate();
         $modifier = (int)$this->getPeriodFrom();

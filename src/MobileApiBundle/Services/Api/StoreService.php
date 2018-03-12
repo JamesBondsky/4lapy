@@ -146,7 +146,7 @@ class StoreService
         $uri = new Uri('http://' . SITE_SERVER_NAME . '/company/shops/');
         $uri->addParams(['city' => $store->getLocation(), 'id' => $store->getId()]);
         $result->setUrl($uri->getUri());
-        $result->setWorkTime($store->getSchedule());
+        $result->setWorkTime($store->getScheduleString());
         return $result;
     }
 }

@@ -484,7 +484,7 @@ class StoreService
                     'addr'       => $address,
                     'adress'     => $store->getDescription(),
                     'phone'      => $store->getPhone(),
-                    'schedule'   => $store->getSchedule(),
+                    'schedule'   => $store->getScheduleString(),
                     'photo'      => $imageSrc,
                     'metro'      => !empty($metro) ? 'м. ' . $metroList[$metro]['UF_NAME'] : '',
                     'metroClass' => !empty($metro) ? '--' . $metroList[$metro]['BRANCH']['UF_CLASS'] : '',

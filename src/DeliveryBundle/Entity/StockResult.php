@@ -49,11 +49,6 @@ class StockResult
     protected $type = self::TYPE_AVAILABLE;
 
     /**
-     * @var null|DateTime
-     */
-    protected $deliveryDate;
-
-    /**
      * @return int
      */
     public function getAmount(): int
@@ -133,26 +128,6 @@ class StockResult
     public function setType(string $type): StockResult
     {
         $this->type = $type;
-
-        return $this;
-    }
-
-    /**
-     * @return DateTime
-     */
-    public function getDeliveryDate(): DateTime
-    {
-        return $this->deliveryDate;
-    }
-
-    /**
-     * @param DateTime $deliveryDate
-     *
-     * @return StockResult
-     */
-    public function setDeliveryDate(DateTime $deliveryDate): StockResult
-    {
-        $this->deliveryDate = $deliveryDate;
 
         return $this;
     }

@@ -2,11 +2,18 @@
 
 namespace FourPaws\DeliveryBundle\Entity\CalculationResult;
 
+use FourPaws\StoreBundle\Entity\Store;
+
 class PickupResult extends BaseResult
 {
-    public function doCalculateDeliveryDate()
+    public function doCalculateDeliveryDate(): void
     {
-        /* @todo расчет отгрузок/поставок */
+        $shops = $this->getStockResult()->getStores();
+        /** @var Store $shop */
+        foreach ($shops as $shop) {
+
+        }
+
         parent::doCalculateDeliveryDate();
     }
 }

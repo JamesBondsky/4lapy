@@ -127,8 +127,8 @@ class Store extends Base
     protected $modifiedBy = 0;
 
     /**
-     * @var string
-     * @Serializer\Type("string")
+     * @var Schedule
+     * @Serializer\Type("store_schedule")
      * @Serializer\SerializedName("SCHEDULE")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
@@ -253,12 +253,51 @@ class Store extends Base
     protected $isBase = false;
 
     /**
+     * Срок поставки
+     *
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("UF_DELIVERY_TIME")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $deliveryTime = 1;
+
+    /**
+     * @var array
+     * @Serializer\Type("array_or_false")
+     * @Serializer\SerializedName("UF_SHIPMENT_TILL_11")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $shipmentTill11;
+
+    /**
+     * @var array
+     * @Serializer\Type("array_or_false")
+     * @Serializer\SerializedName("UF_SHIPMENT_TILL_13")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $shipmentTill13;
+
+    /**
+     * @var array
+     * @Serializer\Type("array_or_false")
+     * @Serializer\SerializedName("UF_SHIPMENT_TILL_18")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $shipmentTill18;
+
+    /**
+     * @var string
+     */
+    protected $scheduleString;
+
+    /**
      * @return int
      */
     public function getId(): int
     {
         return $this->id ?? 0;
-    }
+    }/** @noinspection SenselessMethodDuplicationInspection */
 
     /**
      * @param int $id
@@ -528,21 +567,22 @@ class Store extends Base
     }
 
     /**
-     * @return string
+     * @return Schedule
      */
-    public function getSchedule(): string
+    public function getSchedule(): Schedule
     {
-        return $this->schedule ?? '';
+        return $this->schedule;
     }
 
     /**
-     * @param string $schedule
+     * @param Schedule $schedule
      *
      * @return Store
      */
-    public function setSchedule(string $schedule): Store
+    public function setSchedule(Schedule $schedule): Store
     {
         $this->schedule = $schedule;
+        $this->scheduleString = (string)$schedule;
 
         return $this;
     }
@@ -817,25 +857,103 @@ class Store extends Base
 
     /**
      * @param string $phone
+     * @return $this
      */
-    public function setPhone(string $phone)
+    public function setPhone(string $phone): Store
     {
         $this->phone = $phone;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getDeliveryTime(): int
+    {
+        return $this->deliveryTime ?? 0;
+    }
+
+    /**
+     * @param int $deliveryTime
+     * @return Store
+     */
+    public function setDeliveryTime(int $deliveryTime): Store
+    {
+        $this->deliveryTime = $deliveryTime;
+        return $this;
     }
 
     /**
      * @return array
      */
-    public function getFormattedSchedule(): array
+    public function getShipmentTill11(): array
     {
-        preg_match('~(\d+):00 - (\d+):00~', $this->getSchedule(), $matches);
-        if (!empty($matches)) {
-            return [
-                'from' => (int)$matches[1],
-                'to'   => (int)$matches[2],
-            ];
-        }
+        return $this->shipmentTill11 ?? [];
+    }
 
-        return [];
+    /**
+     * @param array $shipmentTill11
+     * @return Store
+     */
+    public function setShipmentTill11(array $shipmentTill11): Store
+    {
+        $this->shipmentTill11 = $shipmentTill11;
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getShipmentTill13(): array
+    {
+        return $this->shipmentTill13 ?? [];
+    }
+
+    /**
+     * @param array $shipmentTill13
+     * @return Store
+     */
+    public function setShipmentTill13(array $shipmentTill13): Store
+    {
+        $this->shipmentTill13 = $shipmentTill13;
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getShipmentTill18(): array
+    {
+        return $this->shipmentTill18 ?? [];
+    }
+
+    /**
+     * @param array $shipmentTill18
+     * @return Store
+     */
+    public function setShipmentTill18(array $shipmentTill18): Store
+    {
+        $this->shipmentTill18 = $shipmentTill18;
+        return $this;
+    }
+
+    /**
+     * @todo убрать этот метод. Сейчас нужен для работы с терминалами DPD, где график работы в произвольном формате
+     *
+     * @return string
+     */
+    public function getScheduleString(): string
+    {
+        return $this->scheduleString;
+    }
+
+    /**
+     * @param string $scheduleString
+     * @return Store
+     */
+    public function setScheduleString(string $scheduleString): Store
+    {
+        $this->scheduleString = $scheduleString;
+        return $this;
     }
 }

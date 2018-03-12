@@ -10,6 +10,8 @@ use Bitrix\Sale\Delivery\CalculationResult;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\Interval;
+use FourPaws\DeliveryBundle\Exception\NotFoundException;
+use FourPaws\StoreBundle\Entity\Store;
 
 abstract class BaseResult extends CalculationResult
 {
@@ -62,6 +64,11 @@ abstract class BaseResult extends CalculationResult
      * @var Interval
      */
     protected $selectedInterval;
+
+    /**
+     * @var Store
+     */
+    protected $selectedStore;
 
     /**
      * BaseResult constructor.
@@ -305,6 +312,34 @@ abstract class BaseResult extends CalculationResult
         return $this;
     }
 
+    /**
+     * @return Store
+     * @throws NotFoundException
+     */
+    public function getSelectedStore(): Store
+    {
+        if (!$this->selectedStore instanceof Store) {
+            /* @todo выбор наиболее подходящего склада/магазина */
+            $this->selectedStore = $this->getStockResult()->getStores()->first();
+        }
+
+        return $this->selectedStore;
+    }
+
+    /**
+     * @param Store $selectedStore
+     * @return BaseResult
+     */
+    public function setSelectedStore(Store $selectedStore): BaseResult
+    {
+        $this->deliveryDate = null;
+        $this->selectedStore = $selectedStore;
+        return $this;
+    }
+
+    /**
+     * @throws NotFoundException
+     */
     protected function doCalculateDeliveryDate(): void
     {
         $this->deliveryDate = clone $this->getCurrentDate();
@@ -314,15 +349,119 @@ abstract class BaseResult extends CalculationResult
          * Если есть отложенные товары, то добавляем к дате доставки
          * срок поставки на склад по графику
          */
-        if (!$this->getStockResult()->getDelayed()->isEmpty()) {
-            $modifier += $this->getStockResult()
-                ->getDeliveryDate()
-                ->diff($this->getCurrentDate())->days;
-        }
+        $modifier += $this->getStoreShipmentDate($this->getSelectedStore())->diff($this->currentDate)->days;
 
         if ($modifier > 0) {
             $this->deliveryDate->modify(sprintf('+%s days', $modifier));
         }
+    }
+
+    /**
+     * Получение даты возможной доставки для указанного склада
+     *
+     * @param Store $store
+     * @return \DateTime
+     */
+    protected function getStoreShipmentDate(Store $store): \DateTime
+    {
+        $stockResult = $this->getStockResult()->filterByStore($store);
+        if ($stockResult->getDelayed()->isEmpty()) {
+            return $this->getCurrentDate();
+        }
+
+        $shipmentDay = $this->getShipmentDay($store, $this->getCurrentDate());
+
+        /**
+         * Если день поставки нашелся, то выполняем расчет,
+         * иначе ищем по графику поставок
+         */
+        if (null !== $shipmentDay) {
+            $shipmentDay++;
+        } else {
+            /* @todo поиск в графике поставок */
+            $shipmentDay = 0;
+        }
+        $date = clone $this->getCurrentDate();
+        $date->modify(sprintf('+%s days', $shipmentDay));
+
+        /**
+         * Если склад является магазином, то учитываем его график работы
+         */
+        if ($store->isShop()) {
+            $schedule = $store->getSchedule();
+            $hour = (int)$date->format('G');
+            if ($hour < $schedule->getFrom()) {
+                $date->setTime($schedule->getFrom() + 1, 0);
+            } elseif ($hour > $schedule->getTo()) {
+                $date->modify('+1 day');
+                $date->setTime($schedule->getFrom() + 1, 0);
+            } else {
+                $date->modify('+1 hour');
+            }
+        }
+
+        /**
+         * Если товар под заказ, то рассчитывается дата поставки на склад по графику
+         */
+        /* @todo расчет даты для товаров под заказ
+         * if ($offer->isByRequest()) {
+         * $stockResult->setType(StockResult::TYPE_DELAYED)
+         * ->setDeliveryDate((new \DateTime())->modify('+10 days'));
+         * continue;
+         * }
+         */
+
+        return $date;
+    }
+
+    /**
+     * Поиск ближайшего дня поставки по дням отгрузки в магазин
+     * Возвращает кол-во дней до отгрузки
+     *
+     * @param Store $store
+     * @param \DateTime $date
+     * @return int|null
+     */
+    protected function getShipmentDay(Store $store, \DateTime $date): ?int
+    {
+        $items = [
+            11 => $store->getShipmentTill11(),
+            13 => $store->getShipmentTill13(),
+            18 => $store->getShipmentTill18()
+        ];
+
+        $currentDay = (int)$date->format('w');
+        $currentHour = (int)$date->format('G');
+        $results = [];
+
+        /**
+         * @var int $maxHour
+         * @var array $days
+         */
+        foreach ($items as $maxHour => $days) {
+            if (empty($days)) {
+                continue;
+            }
+
+            $res = [];
+            foreach ($days as $day) {
+                if ($day === $currentDay) {
+                    if ($currentHour < $maxHour) {
+                        $results[] = 0;
+                    } else {
+                        $results[] = 7;
+                    }
+                    continue;
+                }
+
+                $diff = $day - $currentDay;
+                $results[] = ($diff > 0) ? $diff : $diff + 7;
+            }
+
+            $results[] = min($res);
+        }
+
+        return empty($results) ? null : min($results);
     }
 
     public function __clone()
