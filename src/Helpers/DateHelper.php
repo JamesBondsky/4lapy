@@ -6,6 +6,9 @@
 
 namespace FourPaws\Helpers;
 
+use Bitrix\Main\Type\DateTime;
+use DateTime as NormalDateTime;
+
 /**
  * Class DateHelper
  *
@@ -160,5 +163,15 @@ class DateHelper
                 'pattern' => '|#\d{1}#|',
             ]
         );
+    }
+
+    /**
+     * @param DateTime $bxDatetime
+     *
+     * @return NormalDateTime
+     */
+    public static function convertToDateTime(DateTime $bxDatetime): NormalDateTime
+    {
+        return (new NormalDateTime())->setTimestamp($bxDatetime->getTimestamp());
     }
 }

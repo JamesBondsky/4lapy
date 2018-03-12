@@ -3,18 +3,17 @@
 namespace FourPaws\SapBundle\Consumer;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
-use FourPaws\SapBundle\Dto\In\Orders\Order;
-use FourPaws\SapBundle\Exception\CantUpdateOrderException;
+use Bitrix\Sale\Order;
 use FourPaws\SapBundle\Service\Orders\OrderService;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LogLevel;
 
 /**
- * Class OrderStatusConsumer
+ * Class OrderOutConsumer
  *
  * @package FourPaws\SapBundle\Consumer
  */
-class OrderStatusConsumer implements ConsumerInterface, LoggerAwareInterface
+class OrderOutConsumer implements ConsumerInterface, LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
     
@@ -34,7 +33,7 @@ class OrderStatusConsumer implements ConsumerInterface, LoggerAwareInterface
     }
     
     /**
-     * Consume order info (save sap order`s change)
+     * Consume order
      *
      * @param $paymentInfo
      *
@@ -46,25 +45,16 @@ class OrderStatusConsumer implements ConsumerInterface, LoggerAwareInterface
             return false;
         }
         
-        $this->log()->log(LogLevel::INFO, 'Импортируется статус заказа');
+        $this->log()->log(LogLevel::INFO, 'Экспортируется заказ');
         
         try {
             $success = true;
-            
-            $order = $this->orderService->transformDtoToOrder($paymentInfo);
-            $result = $order->save();
-            
-            if (!$result->isSuccess()) {
-                throw new CantUpdateOrderException(sprintf(
-                    'Не удалось обновить заказ #%s: %s',
-                    $order->getId(),
-                    implode(', ', $result->getErrorMessages())
-                ));
-            }
+
+            $this->orderService->out($paymentInfo);
         } catch (\Exception $e) {
             $success = false;
             
-            $this->log()->log(LogLevel::ERROR, sprintf('Ошибка импорта статуса заказа: %s', $e->getMessage()));
+            $this->log()->log(LogLevel::CRITICAL, sprintf('Ошибка экспорта заказа: %s', $e->getMessage()));
         }
         
         return $success;

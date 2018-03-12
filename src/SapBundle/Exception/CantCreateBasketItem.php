@@ -3,10 +3,10 @@
 namespace FourPaws\SapBundle\Exception;
 
 /**
- * Class CantCreateReferenceItem
+ * Class CantCreateBasketItem
  *
  * @package FourPaws\SapBundle\Exception
  */
-class CantCreateReferenceItem extends RuntimeException
+class CantCreateBasketItem extends RuntimeException
 {
 }

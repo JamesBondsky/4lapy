@@ -15,6 +15,9 @@ class Order
 {
     const DEFAULT_CONTRACTOR_CODE = '0000802070';
 
+    const ORDER_SOURCE_MOBILE_APP = 'MOBI';
+    const ORDER_SOURCE_SITE = 'DFUE';
+
     /**
      * Содержит номер заказа в Системе.
      * Если заказ создан в мобильном приложении (атрибут BSARK имеет значение «MOBI»),
@@ -258,7 +261,7 @@ class Order
     protected $payHoldTransaction = '';
 
     /**
-     * Транзакция холдирования денежных средств
+     * Дата холдирования денежных средств
      * Поле должно быть заполнено, если выбран способ оплаты 05
      *
      *
@@ -341,4 +344,479 @@ class Order
      * @var null|DeliveryAddress
      */
     protected $deliveryAddress;
+    
+    /**
+     * @return string
+     */
+    public function getId(): string
+    {
+        return $this->id;
+    }
+    
+    /**
+     * @param string $id
+     *
+     * @return Order
+     */
+    public function setId(string $id): Order
+    {
+        $this->id = $id;
+        return $this;
+    }
+    
+    /**
+     * @return \DateTime
+     */
+    public function getDateInsert(): \DateTime
+    {
+        return $this->dateInsert;
+    }
+    
+    /**
+     * @param \DateTime $dateInsert
+     *
+     * @return Order
+     */
+    public function setDateInsert(\DateTime $dateInsert): Order
+    {
+        $this->dateInsert = $dateInsert;
+        return $this;
+    }
+    
+    /**
+     * @return int
+     */
+    public function getClientId(): int
+    {
+        return $this->clientId;
+    }
+    
+    /**
+     * @param int $clientId
+     *
+     * @return Order
+     */
+    public function setClientId(int $clientId): Order
+    {
+        $this->clientId = $clientId;
+        return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getClientFio(): string
+    {
+        return $this->clientFio;
+    }
+    
+    /**
+     * @param string $clientFio
+     *
+     * @return Order
+     */
+    public function setClientFio(string $clientFio): Order
+    {
+        $this->clientFio = $clientFio;
+        return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getClientPhone(): string
+    {
+        return $this->clientPhone;
+    }
+    
+    /**
+     * @param string $clientPhone
+     *
+     * @return Order
+     */
+    public function setClientPhone(string $clientPhone): Order
+    {
+        $this->clientPhone = $clientPhone;
+        return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getClientOrderPhone(): string
+    {
+        return $this->clientOrderPhone;
+    }
+    
+    /**
+     * @param string $clientOrderPhone
+     *
+     * @return Order
+     */
+    public function setClientOrderPhone(string $clientOrderPhone): Order
+    {
+        $this->clientOrderPhone = $clientOrderPhone;
+        return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getDeliveryAddressOrPoint(): string
+    {
+        return $this->deliveryAddressOrPoint;
+    }
+    
+    /**
+     * @param string $deliveryAddressOrPoint
+     *
+     * @return Order
+     */
+    public function setDeliveryAddressOrPoint(string $deliveryAddressOrPoint): Order
+    {
+        $this->deliveryAddressOrPoint = $deliveryAddressOrPoint;
+        return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getClientComment(): string
+    {
+        return $this->clientComment;
+    }
+    
+    /**
+     * @param string $clientComment
+     *
+     * @return Order
+     */
+    public function setClientComment(string $clientComment): Order
+    {
+        $this->clientComment = $clientComment;
+        return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getOrderSource(): string
+    {
+        return $this->orderSource;
+    }
+    
+    /**
+     * @param string $orderSource
+     *
+     * @return Order
+     */
+    public function setOrderSource(string $orderSource): Order
+    {
+        $this->orderSource = $orderSource;
+        return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getCommunicationType(): string
+    {
+        return $this->communicationType;
+    }
+    
+    /**
+     * @param string $communicationType
+     *
+     * @return Order
+     */
+    public function setCommunicationType(string $communicationType): Order
+    {
+        $this->communicationType = $communicationType;
+        return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getDeliveryType(): string
+    {
+        return $this->deliveryType;
+    }
+    
+    /**
+     * @param string $deliveryType
+     *
+     * @return Order
+     */
+    public function setDeliveryType(string $deliveryType): Order
+    {
+        $this->deliveryType = $deliveryType;
+        return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getContractorDeliveryType(): string
+    {
+        return $this->contractorDeliveryType;
+    }
+    
+    /**
+     * @param string $contractorDeliveryType
+     *
+     * @return Order
+     */
+    public function setContractorDeliveryType(string $contractorDeliveryType): Order
+    {
+        $this->contractorDeliveryType = $contractorDeliveryType;
+        return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getContractorCode(): string
+    {
+        return $this->contractorCode;
+    }
+    
+    /**
+     * @param string $contractorCode
+     *
+     * @return Order
+     */
+    public function setContractorCode(string $contractorCode): Order
+    {
+        $this->contractorCode = $contractorCode;
+        return $this;
+    }
+    
+    /**
+     * @return \DateTime
+     */
+    public function getDeliveryDate(): \DateTime
+    {
+        return $this->deliveryDate;
+    }
+    
+    /**
+     * @param \DateTime $deliveryDate
+     *
+     * @return Order
+     */
+    public function setDeliveryDate(\DateTime $deliveryDate): Order
+    {
+        $this->deliveryDate = $deliveryDate;
+        return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getDeliveryTimeInterval(): string
+    {
+        return $this->deliveryTimeInterval;
+    }
+    
+    /**
+     * @param string $deliveryTimeInterval
+     *
+     * @return Order
+     */
+    public function setDeliveryTimeInterval(string $deliveryTimeInterval): Order
+    {
+        $this->deliveryTimeInterval = $deliveryTimeInterval;
+        return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getPayType(): string
+    {
+        return $this->payType;
+    }
+    
+    /**
+     * @param string $payType
+     *
+     * @return Order
+     */
+    public function setPayType(string $payType): Order
+    {
+        $this->payType = $payType;
+        return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getPayStatus(): string
+    {
+        return $this->payStatus;
+    }
+    
+    /**
+     * @param string $payStatus
+     *
+     * @return Order
+     */
+    public function setPayStatus(string $payStatus): Order
+    {
+        $this->payStatus = $payStatus;
+        return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getPayHoldTransaction(): string
+    {
+        return $this->payHoldTransaction;
+    }
+    
+    /**
+     * @param string $payHoldTransaction
+     *
+     * @return Order
+     */
+    public function setPayHoldTransaction(string $payHoldTransaction): Order
+    {
+        $this->payHoldTransaction = $payHoldTransaction;
+        return $this;
+    }
+    
+    /**
+     * @return \DateTime|null
+     */
+    public function getPayHoldDate(): \DateTime
+    {
+        return $this->payHoldDate;
+    }
+    
+    /**
+     * @param \DateTime|null $payHoldDate
+     *
+     * @return Order
+     */
+    public function setPayHoldDate(\DateTime $payHoldDate): Order
+    {
+        $this->payHoldDate = $payHoldDate;
+        return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getPayMerchantCode(): string
+    {
+        return $this->payMerchantCode;
+    }
+    
+    /**
+     * @param string $payMerchantCode
+     *
+     * @return Order
+     */
+    public function setPayMerchantCode(string $payMerchantCode): Order
+    {
+        $this->payMerchantCode = $payMerchantCode;
+        return $this;
+    }
+    
+    /**
+     * @return float
+     */
+    public function getPrePayedSum(): float
+    {
+        return $this->prePayedSum;
+    }
+    
+    /**
+     * @param float $prePayedSum
+     *
+     * @return Order
+     */
+    public function setPrePayedSum(float $prePayedSum): Order
+    {
+        $this->prePayedSum = $prePayedSum;
+        return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getBonusCard(): string
+    {
+        return $this->bonusCard;
+    }
+    
+    /**
+     * @param string $bonusCard
+     *
+     * @return Order
+     */
+    public function setBonusCard(string $bonusCard): Order
+    {
+        $this->bonusCard = $bonusCard;
+        return $this;
+    }
+    
+    /**
+     * @return float
+     */
+    public function getBonusPayedCount(): float
+    {
+        return $this->bonusPayedCount;
+    }
+    
+    /**
+     * @param float $bonusPayedCount
+     *
+     * @return Order
+     */
+    public function setBonusPayedCount(float $bonusPayedCount): Order
+    {
+        $this->bonusPayedCount = $bonusPayedCount;
+        return $this;
+    }
+    
+    /**
+     * @return Collection|OrderOffer[]
+     */
+    public function getProducts()
+    {
+        return $this->products;
+    }
+    
+    /**
+     * @param Collection|OrderOffer[] $products
+     *
+     * @return Order
+     */
+    public function setProducts($products)
+    {
+        $this->products = $products;
+        return $this;
+    }
+    
+    /**
+     * @return DeliveryAddress|null
+     */
+    public function getDeliveryAddress(): DeliveryAddress
+    {
+        return $this->deliveryAddress;
+    }
+    
+    /**
+     * @param DeliveryAddress|null $deliveryAddress
+     *
+     * @return Order
+     */
+    public function setDeliveryAddress(DeliveryAddress $deliveryAddress): Order
+    {
+        $this->deliveryAddress = $deliveryAddress;
+        return $this;
+    }
 }
