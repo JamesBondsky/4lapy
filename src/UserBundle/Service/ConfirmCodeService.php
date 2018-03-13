@@ -9,6 +9,7 @@ namespace FourPaws\UserBundle\Service;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Db\SqlQueryException;
+use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Type\DateTime;
 use FourPaws\App\Application;
 use FourPaws\BitrixOrm\Utils\MysqlBatchOperations;
@@ -29,33 +30,27 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterface
 {
     /** смс коды храним 30 минут */
-    const SMS_LIFE_TIME = 30 * 60;
+    public const SMS_LIFE_TIME = 30 * 60;
     /** Email коды храним неделю */
-    const EMAIL_LIFE_TIME = 7 * 24 * 60 * 60;
+    public const EMAIL_LIFE_TIME = 7 * 24 * 60 * 60;
 
     /**
      *
      * @throws ArgumentException
      * @throws SqlQueryException
      */
-    public static function delExpiredCodes()
+    public static function delExpiredCodes(): void
     {
         $time = time();
         $query = ConfirmCodeTable::query();
-        $query->setFilter([
-            [
-                'LOGIC' => 'OR',
-                [
-                    '<DATE' => DateTime::createFromTimestamp($time - static::SMS_LIFE_TIME),
-                    '=TYPE'  => 'sms',
-                ],
-                [
-                    '<DATE' => DateTime::createFromTimestamp($time - static::EMAIL_LIFE_TIME),
-                    '=TYPE'  => 'email',
-                ],
-            ],
-
-        ]);
+        $query->where(Query::filter()->logic('or')->where([
+            Query::filter()->where('DATE', '<',
+                DateTime::createFromTimestamp($time - static::SMS_LIFE_TIME))
+                ->where('TYPE', 'sms'),
+            Query::filter()->where('DATE', '<',
+                DateTime::createFromTimestamp($time - static::EMAIL_LIFE_TIME))
+                ->whereLike('TYPE', 'email_%'),
+        ]));
         (new MysqlBatchOperations($query))->batchDelete();
     }
 
@@ -63,6 +58,7 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
      * @param string $phone
      *
      * @return bool
+     * @throws ArgumentException
      * @throws \RuntimeException
      * @throws WrongPhoneNumberException
      * @throws \Exception
@@ -96,21 +92,26 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
      *
      * @return bool|string
      */
-    public static function generateCode(string $text)
+    public static function generateCode(string $text): ?string
     {
-        return empty($text) ? false : str_pad((string)hexdec(substr(static::getConfirmHash($text), 7, 5)), 5, random_int(0, 9));
+        return empty($text) ? false : str_pad((string)hexdec(substr(static::getConfirmHash($text), 7, 5)), 5,
+            random_int(0, 9));
     }
 
     /**
      * @param string $text
      * @param string $type
      *
+     * @param int    $time
+     *
+     * @throws \RuntimeException
+     * @throws ArgumentException
      * @throws \Exception
      */
-    public static function setGeneratedCode(string $text, string $type = 'sms', int $time = 0)
+    public static function setGeneratedCode(string $text, string $type = 'sms', int $time = 0): void
     {
         if (!empty($text)) {
-            if($time === 0){
+            if ($time === 0) {
                 $time = time();
             }
             if (!empty($_COOKIE[ToUpper($type) . '_ID'])) {
@@ -138,7 +139,7 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
      *
      * @throws \Exception
      */
-    public static function delCurrentCode(string $type = 'sms')
+    public static function delCurrentCode(string $type = 'sms'): void
     {
         if (!empty($_COOKIE[ToUpper($type) . '_ID'])) {
             setcookie(ToUpper($type) . '_ID', '', time() - 5, '/');
@@ -234,14 +235,16 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
     /**
      * @param string $text
      *
+     * @param int    $time
+     *
      * @return string
      */
     public static function getConfirmHash(string $text, int $time = 0): string
     {
-        if($time === 0){
+        if ($time === 0) {
             $time = time();
         }
-        return md5('confirm'.$text.$time);
+        return md5('confirm' . $text . $time);
     }
 
 
@@ -264,13 +267,14 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
      *
      * @param int    $time
      *
+     * @throws \RuntimeException
      * @throws ArgumentException
      * @throws \Exception
      */
-    public static function setGeneratedHash(string $text, string $type = 'sms', int $time = 0)
+    public static function setGeneratedHash(string $text, string $type = 'sms', int $time = 0): void
     {
         if (!empty($text)) {
-            if($time === 0){
+            if ($time === 0) {
                 $time = time();
             }
             if (!empty($_COOKIE[ToUpper($type) . '_ID'])) {
