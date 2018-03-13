@@ -35,9 +35,6 @@ abstract class BaseRepository implements RepositoryInterface
      */
     protected $table;
 
-    private $entity;
-    private $collection;
-
     abstract protected function getDataClass(): string;
 
     abstract protected function getCollectionClass(): string;

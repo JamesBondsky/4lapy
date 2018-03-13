@@ -6,6 +6,7 @@
 
 namespace FourPaws\DeliveryBundle\Entity\CalculationResult;
 
+use Bitrix\Main\Error;
 use Bitrix\Sale\Delivery\CalculationResult;
 use FourPaws\App\Application;
 use FourPaws\Catalog\Model\Offer;
@@ -132,6 +133,10 @@ abstract class BaseResult extends CalculationResult
 
     /**
      * @return \DateTime
+     * @throws NotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
     public function getDeliveryDate(): \DateTime
     {
@@ -323,7 +328,7 @@ abstract class BaseResult extends CalculationResult
     {
         if (!$this->selectedStore instanceof Store) {
             /* @todo выбор наиболее подходящего склада/магазина */
-            $this->selectedStore = $this->getStockResult()->getStores()->first();
+            $this->setSelectedStore($this->getStockResult()->getStores()->first());
         }
 
         return $this->selectedStore;
@@ -342,36 +347,48 @@ abstract class BaseResult extends CalculationResult
 
     /**
      * @throws NotFoundException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
     protected function doCalculateDeliveryDate(): void
     {
-        $this->deliveryDate = clone $this->getCurrentDate();
-
-        /**
-         * Если есть отложенные товары, то добавляем к дате доставки
-         * срок поставки на склад по графику
-         */
-        $this->deliveryDate = $this->getStoreShipmentDate($this->getSelectedStore());
-    }
-
-    /**
-     * Получение даты возможной доставки для указанного склада
-     *
-     * @param Store $store
-     * @return \DateTime
-     */
-    protected function getStoreShipmentDate(Store $store): \DateTime
-    {
+        $store = $this->getSelectedStore();
         $stockResult = $this->getStockResult()->filterByStore($store);
 
         /**
          * Все товары в наличии
          */
         if ($stockResult->getDelayed()->isEmpty()) {
-            return $this->getCurrentDate();
+            $date = clone $this->getCurrentDate();
+        } else {
+            /**
+             * Если есть отложенные товары, то добавляем к дате доставки
+             * срок поставки на склад по графику
+             */
+            $date = $this->getStoreShipmentDate($store, $stockResult);
         }
 
+        /**
+         * Если склад является магазином, то учитываем его график работы
+         */
+        if ($store->isShop()) {
+            $this->calculateWithStoreSchedule($date, $store);
+        }
+
+        $this->deliveryDate = $date;
+    }
+
+    /**
+     * @param Store $store
+     * @param StockResultCollection $stockResult
+     * @return \DateTime
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     */
+    protected function getStoreShipmentDate(Store $store, StockResultCollection $stockResult): \DateTime
+    {
         $date = clone $this->getCurrentDate();
+
         $modifier = 0;
 
         /** @var DeliveryScheduleService $deliveryScheduleService */
@@ -395,7 +412,7 @@ abstract class BaseResult extends CalculationResult
             $scheduleDay = 2;
 
             /* @todo поиск в графике поставок с учетом складов поставщика */
-//            $scheduleDay += $deliveryScheduleService->getByReceiver($this->getSelectedStore())->getMinDays($date);
+//            $scheduleDay = $deliveryScheduleService->findByReceiver($this->getSelectedStore())->getNextDelivery($date);
             $scheduleDays[] = $scheduleDay;
         }
         $scheduleDay = max($scheduleDays);
@@ -416,8 +433,13 @@ abstract class BaseResult extends CalculationResult
                  */
                 $shipmentDay += $day + 1;
             } else {
-                /* @todo поиск в графике поставок */
-                $shipmentDay += 3;
+                if (($schedule = $deliveryScheduleService->findByReceiver($store)->getNextDelivery($date)) &&
+                    ($scheduleDate = $schedule->getNextDelivery($date))
+                ) {
+                    $shipmentDay = $scheduleDate->diff($date)->days;
+                } else {
+                    $this->addError(new Error('Нет доступных графиков поставок'));
+                }
             }
         }
 
@@ -432,24 +454,6 @@ abstract class BaseResult extends CalculationResult
          * Вычисляем день доставки
          */
         $date->modify(sprintf('+%s days', $modifier));
-
-        /**
-         * Если склад является магазином, то учитываем его график работы
-         */
-        if ($store->isShop()) {
-            $schedule = $store->getSchedule();
-            $hour = (int)$date->format('G') + 1;
-            if ($hour < $schedule->getFrom()) {
-                $date->setTime($schedule->getFrom() + 1, 0);
-            } elseif ($hour > $schedule->getTo()) {
-                $date->modify('+1 day');
-                $date->setTime($schedule->getFrom() + 1, 0);
-            } elseif ($date->format('z') !== $this->getCurrentDate()->format('z')) {
-                $date->setTime($schedule->getFrom() + 1, 0);
-            } else {
-                $date->modify('+1 hour');
-            }
-        }
 
         return $date;
     }
@@ -502,6 +506,28 @@ abstract class BaseResult extends CalculationResult
         }
 
         return empty($results) ? null : min($results);
+    }
+
+    /**
+     * Изменяет дату доставки в соответствии с графиком работы магазина
+     *
+     * @param \DateTime $date
+     * @param Store $store
+     */
+    protected function calculateWithStoreSchedule(\DateTime $date, Store $store): void
+    {
+        $schedule = $store->getSchedule();
+        $hour = (int)$date->format('G') + 1;
+        if ($hour < $schedule->getFrom()) {
+            $date->setTime($schedule->getFrom() + 1, 0);
+        } elseif ($hour > $schedule->getTo()) {
+            $date->modify('+1 day');
+            $date->setTime($schedule->getFrom() + 1, 0);
+        } elseif ($date->format('z') !== $this->getCurrentDate()->format('z')) {
+            $date->setTime($schedule->getFrom() + 1, 0);
+        } else {
+            $date->modify('+1 hour');
+        }
     }
 
     public function __clone()

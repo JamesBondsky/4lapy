@@ -2,6 +2,10 @@
 
 namespace FourPaws\StoreBundle\Service;
 
+use FourPaws\StoreBundle\Collection\DeliveryScheduleCollection;
+use FourPaws\StoreBundle\Collection\StoreCollection;
+use FourPaws\StoreBundle\Entity\Store;
+use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Repository\DeliveryScheduleRepository;
 
 class DeliveryScheduleService
@@ -16,8 +20,14 @@ class DeliveryScheduleService
         $this->repository = $repository;
     }
 
-    public function getByReceiver(Store $store)
+    /**
+     * @param Store $receiver
+     * @param StoreCollection|null $senders
+     * @return DeliveryScheduleCollection
+     * @throws NotFoundException
+     */
+    public function findByReceiver(Store $receiver, StoreCollection $senders = null): DeliveryScheduleCollection
     {
-        $this->repository->findByReceiver($store->getXmlId());
+        return $this->repository->findByReceiver($receiver, $senders);
     }
 }

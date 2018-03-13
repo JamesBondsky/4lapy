@@ -55,11 +55,12 @@ class Stock extends Base
      */
     public function getId(): int
     {
-        return (int)$this->id;
+        return $this->id;
     }
 
     /**
      * @param int $id
+     * @return Stock
      */
     public function setId(int $id): Stock
     {
@@ -78,6 +79,7 @@ class Stock extends Base
 
     /**
      * @param int $productId
+     * @return Stock
      */
     public function setProductId(int $productId): Stock
     {
@@ -95,7 +97,8 @@ class Stock extends Base
     }
 
     /**
-     * @param int $amount
+     * @param float $amount
+     * @return Stock
      */
     public function setAmount(float $amount): Stock
     {
@@ -114,6 +117,7 @@ class Stock extends Base
 
     /**
      * @param int $storeId
+     * @return Stock
      */
     public function setStoreId(int $storeId): Stock
     {

@@ -1,18 +1,28 @@
 <?php
 
-namespace FourPaws\StoreBundle\Entity;
+namespace FourPaws\StoreBundle\Entity\DeliverySchedule;
 
+use FourPaws\StoreBundle\Entity\Base;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 use DateTime;
 
-class DeliverySchedule extends Base
+abstract class DeliveryScheduleBase extends Base
 {
-    const TYPE_WEEKLY = '1';
+    /**
+     * Еженедельный
+     */
+    public const TYPE_WEEKLY = '1';
 
-    const TYPE_BY_WEEK = '2';
+    /**
+     * По определенным неделям
+     */
+    public const TYPE_BY_WEEK = '2';
 
-    const TYPE_MANUAL = '8';
+    /**
+     * Ручной
+     */
+    public const TYPE_MANUAL = '8';
 
     /**
      * @var int
@@ -74,14 +84,6 @@ class DeliverySchedule extends Base
     protected $active = true;
 
     /**
-     * @var string
-     * @Serializer\SerializedName("UF_TYPE")
-     * @Serializer\Type("string")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
-     */
-    protected $type = '';
-
-    /**
      * @var int
      * @Serializer\SerializedName("UF_WEEK_NUMBER")
      * @Serializer\Type("string")
@@ -90,12 +92,12 @@ class DeliverySchedule extends Base
     protected $weekNumber = 0;
 
     /**
-     * @var string
+     * @var array
      * @Serializer\SerializedName("UF_DAY_OF_WEEK")
-     * @Serializer\Type("string")
+     * @Serializer\Type("array<int>")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
-    protected $dayOfWeek;
+    protected $daysOfWeek;
 
     /**
      * @var string
@@ -106,12 +108,17 @@ class DeliverySchedule extends Base
     protected $deliveryNumber;
 
     /**
-     * @var DateTime
+     * @var DateTime[]
      * @Serializer\SerializedName("UF_DELIVERY_DATE")
-     * @Serializer\Type("DateTime<'d.m.Y'>")
+     * @Serializer\Type("array<DateTime<'d.m.Y'>>")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
-    protected $deliveryDate;
+    protected $deliveryDates;
+
+    /**
+     * @var string
+     */
+    protected $type = '';
 
     /**
      * @return int
@@ -124,9 +131,9 @@ class DeliverySchedule extends Base
     /**
      * @param int $id
      *
-     * @return DeliverySchedule
+     * @return DeliveryScheduleBase
      */
-    public function setId(int $id): DeliverySchedule
+    public function setId(int $id): DeliveryScheduleBase
     {
         $this->id = $id;
 
@@ -144,9 +151,9 @@ class DeliverySchedule extends Base
     /**
      * @param string $name
      *
-     * @return DeliverySchedule
+     * @return DeliveryScheduleBase
      */
-    public function setName(string $name): DeliverySchedule
+    public function setName(string $name): DeliveryScheduleBase
     {
         $this->name = $name;
 
@@ -164,9 +171,9 @@ class DeliverySchedule extends Base
     /**
      * @param string $sender
      *
-     * @return DeliverySchedule
+     * @return DeliveryScheduleBase
      */
-    public function setSender(string $sender): DeliverySchedule
+    public function setSender(string $sender): DeliveryScheduleBase
     {
         $this->sender = $sender;
 
@@ -184,9 +191,9 @@ class DeliverySchedule extends Base
     /**
      * @param string $receiver
      *
-     * @return DeliverySchedule
+     * @return DeliveryScheduleBase
      */
-    public function setReceiver(string $receiver): DeliverySchedule
+    public function setReceiver(string $receiver): DeliveryScheduleBase
     {
         $this->receiver = $receiver;
 
@@ -204,9 +211,9 @@ class DeliverySchedule extends Base
     /**
      * @param DateTime $activeFrom
      *
-     * @return DeliverySchedule
+     * @return DeliveryScheduleBase
      */
-    public function setActiveFrom(DateTime $activeFrom): DeliverySchedule
+    public function setActiveFrom(DateTime $activeFrom): DeliveryScheduleBase
     {
         $this->activeFrom = $activeFrom;
 
@@ -224,9 +231,9 @@ class DeliverySchedule extends Base
     /**
      * @param DateTime $activeTo
      *
-     * @return DeliverySchedule
+     * @return DeliveryScheduleBase
      */
-    public function setActiveTo(DateTime $activeTo): DeliverySchedule
+    public function setActiveTo(DateTime $activeTo): DeliveryScheduleBase
     {
         $this->activeTo = $activeTo;
 
@@ -244,9 +251,9 @@ class DeliverySchedule extends Base
     /**
      * @param bool $active
      *
-     * @return DeliverySchedule
+     * @return DeliveryScheduleBase
      */
-    public function setActive(bool $active): DeliverySchedule
+    public function setActive(bool $active): DeliveryScheduleBase
     {
         $this->active = $active;
 
@@ -262,18 +269,6 @@ class DeliverySchedule extends Base
     }
 
     /**
-     * @param string $type
-     *
-     * @return DeliverySchedule
-     */
-    public function setType(string $type): DeliverySchedule
-    {
-        $this->type = $type;
-
-        return $this;
-    }
-
-    /**
      * @return int
      */
     public function getWeekNumber(): int
@@ -284,9 +279,9 @@ class DeliverySchedule extends Base
     /**
      * @param int $weekNumber
      *
-     * @return DeliverySchedule
+     * @return DeliveryScheduleBase
      */
-    public function setWeekNumber(int $weekNumber): DeliverySchedule
+    public function setWeekNumber(int $weekNumber): DeliveryScheduleBase
     {
         $this->weekNumber = $weekNumber;
 
@@ -294,21 +289,21 @@ class DeliverySchedule extends Base
     }
 
     /**
-     * @return string
+     * @return array
      */
-    public function getDayOfWeek(): string
+    public function getDaysOfWeek(): array
     {
-        return $this->dayOfWeek;
+        return $this->daysOfWeek ?? [];
     }
 
     /**
-     * @param string $dayOfWeek
+     * @param array $daysOfWeek
      *
-     * @return DeliverySchedule
+     * @return DeliveryScheduleBase
      */
-    public function setDayOfWeek(string $dayOfWeek): DeliverySchedule
+    public function setDaysOfWeek(array $daysOfWeek): DeliveryScheduleBase
     {
-        $this->dayOfWeek = $dayOfWeek;
+        $this->daysOfWeek = $daysOfWeek;
 
         return $this;
     }
@@ -324,9 +319,9 @@ class DeliverySchedule extends Base
     /**
      * @param string $deliveryNumber
      *
-     * @return DeliverySchedule
+     * @return DeliveryScheduleBase
      */
-    public function setDeliveryNumber(string $deliveryNumber): DeliverySchedule
+    public function setDeliveryNumber(string $deliveryNumber): DeliveryScheduleBase
     {
         $this->deliveryNumber = $deliveryNumber;
 
@@ -334,22 +329,66 @@ class DeliverySchedule extends Base
     }
 
     /**
-     * @return DateTime
+     * @return DateTime[]
      */
-    public function getDeliveryDate(): DateTime
+    public function getDeliveryDates(): array
     {
-        return $this->deliveryDate;
+        return $this->deliveryDates ?? [];
     }
 
     /**
-     * @param DateTime $deliveryDate
+     * @param DateTime[] $deliveryDates
      *
-     * @return DeliverySchedule
+     * @return DeliveryScheduleBase
      */
-    public function setDeliveryDate(DateTime $deliveryDate): DeliverySchedule
+    public function setDeliveryDates(array $deliveryDates): DeliveryScheduleBase
     {
-        $this->deliveryDate = $deliveryDate;
+        $this->deliveryDates = $deliveryDates;
 
         return $this;
     }
+
+    /**
+     * @param DateTime $date
+     * @return bool
+     */
+    public function isActiveForDate(DateTime $date): bool
+    {
+        if (!$this->isActive()) {
+            return false;
+        }
+
+        if ($this->activeFrom && $this->activeFrom > $date) {
+            return false;
+        }
+
+        if ($this->activeTo && $this->activeTo < $date) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @param DateTime $from
+     * @return DateTime|null
+     */
+    public function getNextDelivery(DateTime $from = null): ?DateTime
+    {
+        if (!$from instanceof DateTime) {
+            $from = new DateTime();
+        }
+
+        if (!$this->isActiveForDate($from)) {
+            return null;
+        }
+
+        return $this->doGetNextDelivery($from);
+    }
+
+    /**
+     * @param DateTime $from
+     * @return DateTime|null
+     */
+    abstract protected function doGetNextDelivery(DateTime $from): ?DateTime;
 }
