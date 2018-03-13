@@ -73,16 +73,20 @@ $elementId = $APPLICATION->IncludeComponent(
  * Распродажа
  */
 if (isset($arParams['SHOW_PRODUCTS_SALE']) && $arParams['SHOW_PRODUCTS_SALE'] === 'Y') {
-    global $params, $elId;
-    $elId = $elementId;
-    $params = $arParams;
-    $APPLICATION->IncludeFile(
-        'blocks/components/sale_products.php',
-        [],
+    $APPLICATION->IncludeComponent(
+        'fourpaws:products.by.prop',
+        '',
         [
-            'SHOW_BORDER' => false,
-            'NAME'        => 'Блок распродажи товаров',
-            'MODE'        => 'php',
+            'IBLOCK_ID'     => $arParams['IBLOCK_ID'],
+            'ITEM_ID'       => $elementId,
+            'TITLE'         => 'Распродажа',
+            'COUNT_ON_PAGE' => 20,
+            'PROPERTY_CODE' => 'PRODUCTS',
+            'FILTER_FIELD'  => 'XML_ID',
+        ],
+        $component,
+        [
+            'HIDE_ICONS' => 'Y',
         ]
     );
 }
