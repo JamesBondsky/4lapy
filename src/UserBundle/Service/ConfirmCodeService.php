@@ -27,7 +27,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  *
  * @package FourPaws\ConfirmCode
  */
-class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterface
+class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterface, ConfirmCodeEmailInterface
 {
     /** смс коды храним 30 минут */
     public const SMS_LIFE_TIME = 30 * 60;
@@ -35,7 +35,6 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
     public const EMAIL_LIFE_TIME = 7 * 24 * 60 * 60;
 
     /**
-     *
      * @throws ArgumentException
      * @throws SqlQueryException
      */
@@ -90,11 +89,11 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
     /**
      * @param string $text
      *
-     * @return bool|string
+     * @return string
      */
-    public static function generateCode(string $text): ?string
+    public static function generateCode(string $text): string
     {
-        return empty($text) ? false : str_pad((string)hexdec(substr(static::getConfirmHash($text), 7, 5)), 5,
+        return empty($text) ? '' : str_pad((string)hexdec(substr(static::getConfirmHash($text), 7, 5)), 5,
             random_int(0, 9));
     }
 
@@ -194,7 +193,6 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
     }
 
     /**
-     *
      * @param string $type
      *
      * @return string
