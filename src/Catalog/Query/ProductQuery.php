@@ -93,6 +93,7 @@ class ProductQuery extends IblockElementQuery
 
     /**
      * @inheritdoc
+     * @return ProductCollection|CollectionBase
      */
     public function exec(): CollectionBase
     {
