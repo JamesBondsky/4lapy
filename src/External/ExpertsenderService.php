@@ -159,15 +159,13 @@ class ExpertsenderService implements LoggerAwareInterface
                 /** хеш строка для подтверждения мыла */
                 /** @var ConfirmCodeService $confirmService */
                 $confirmService = Application::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
-                $time = time();
-                $confirmService::setGeneratedHash($user->getEmail(), 'email', $time);
-                $generatedHash = $confirmService::getConfirmHash($user->getEmail(), $time);
+                $confirmService::setGeneratedHash($user->getEmail(), 'email');
                 $receiver = new Receiver($user->getEmail());
                 $backUrlText = !empty($backUrl) ? '&backurl=' . $backUrl . '&user_id=' . $user->getId() : '';
                 $snippets = [
                     new Snippet('user_name', $user->getName(), true),
                     new Snippet('link',
-                        (new FullHrefDecorator('/personal/forgot-password/?hash=' . $generatedHash . '&email=' . $user->getEmail() . $backUrlText))->getFullPublicPath(),
+                        (new FullHrefDecorator('/personal/forgot-password/?hash=' . $confirmService::getGeneratedCode('email') . '&email=' . $user->getEmail() . $backUrlText))->getFullPublicPath(),
                         true),
                 ];
                 $apiResult = $this->client->sendTransactional(7072, $receiver, $snippets);
@@ -246,9 +244,8 @@ class ExpertsenderService implements LoggerAwareInterface
                     /** хеш строка для подтверждения мыла */
                     /** @var ConfirmCodeService $confirmService */
                     $confirmService = Application::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
-                    $generatedHash = $confirmService::getConfirmHash($curUser->getEmail());
-                    $confirmService::setGeneratedCode($generatedHash, 'email');
-                    $addUserToList->addProperty(new Property(10, 'string', $generatedHash));
+                    $confirmService::setGeneratedHash($curUser->getEmail(), 'email');
+                    $addUserToList->addProperty(new Property(10, 'string', $confirmService::getGeneratedCode('email')));
                     /** ip юзверя */
                     $addUserToList->addProperty(new Property(48, 'string',
                         BitrixApplication::getInstance()->getContext()->getServer()->get('REMOTE_ADDR')));
@@ -331,9 +328,8 @@ class ExpertsenderService implements LoggerAwareInterface
                 /** хеш строка для подтверждения мыла */
                 /** @var ConfirmCodeService $confirmService */
                 $confirmService = Application::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
-                $generatedHash = $confirmService::getConfirmHash($user->getEmail());
-                $confirmService::setGeneratedCode($generatedHash, 'email');
-                $addUserToList->addProperty(new Property(10, 'string', $generatedHash));
+                $confirmService::setGeneratedCode($user->getEmail(), 'email');
+                $addUserToList->addProperty(new Property(10, 'string', $confirmService::getGeneratedCode('email')));
                 /** ip юзверя */
                 $addUserToList->addProperty(new Property(48, 'string',
                     BitrixApplication::getInstance()->getContext()->getServer()->get('REMOTE_ADDR')));
