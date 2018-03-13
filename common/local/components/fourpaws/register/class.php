@@ -441,7 +441,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             $logger = LoggerFactory::create('params');
             $logger->error('Ошибка параметров - ' . $e->getMessage());
             return $this->ajaxMess->getSystemError();
-        } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException $e) {
+        } catch (SystemException|ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException $e) {
             $logger = LoggerFactory::create('system');
             $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
             return $this->ajaxMess->getSystemError();
