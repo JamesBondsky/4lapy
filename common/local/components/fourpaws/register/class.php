@@ -13,6 +13,7 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Web\Uri;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
@@ -172,16 +173,44 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 }
             }
 
-            if ($this->userAuthorizationService->isAuthorized()) {
-                $curUser = $this->currentUserProvider->getCurrentUser();
-                if (!empty($curUser->getExternalAuthId() && empty($curUser->getPersonalPhone()))) {
-                    $this->arResult['STEP'] = 'addPhone';
-                } else {
-                    LocalRedirect(static::PERSONAL_URL);
+            $code = $request->get('code');
+            $user_id = (int)$request->get('user_id');
+            if ($user_id > 0 && !empty($code)) {
+                if (!$this->userAuthorizationService->isAuthorized()) {
+                    $this->userAuthorizationService->authorize($user_id);
+                }
+
+                /** @var ConfirmCodeService $confirmService */
+                $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+                try {
+                    if ($confirmService::checkCode($code, 'confirm_register')) {
+                        $this->arResult['STEP'] = 'confirm';
+                        $curUser = $this->currentUserProvider->getCurrentUser();
+                        $this->arResult['USER_NAME'] = $curUser->getName();
+                        global $APPLICATION;
+                        $APPLICATION->SetTitle('Ура, можно покупать!');
+                    } else {
+                        ShowError('Проверка не пройдена');
+                        return false;
+                    }
+                } catch (ExpiredConfirmCodeException|NotFoundConfirmedCodeException $e) {
+                    ShowError('Проверка не пройдена');
+                    return false;
+                }
+            } else {
+                if ($this->userAuthorizationService->isAuthorized()) {
+                    $curUser = $this->currentUserProvider->getCurrentUser();
+                    if (!empty($curUser->getExternalAuthId()) && empty($curUser->getPersonalPhone())) {
+                        $this->arResult['STEP'] = 'addPhone';
+                    } else {
+                        LocalRedirect(static::PERSONAL_URL);
+                    }
                 }
             }
 
-            $this->setSocial();
+            if ($this->arResult['STEP'] === 'begin') {
+                $this->setSocial();
+            }
 
             $this->includeComponentTemplate();
         } catch (\Exception $e) {
@@ -286,24 +315,23 @@ class FourPawsRegisterComponent extends \CBitrixComponent
 
                 $this->userAuthorizationService->authorize($regUser->getId());
 
-                $title = 'Ура, можно покупать! ';
-                /** @noinspection PhpUnusedLocalVariableInspection */
-                $name = $userEntity->getName();
-                ob_start(); ?>
-                <header class="b-registration__header">
-                    <h1 class="b-title b-title--h1 b-title--registration"><?= $title ?></h1>
-                </header>
-                <?php /** @noinspection PhpIncludeInspection */
-                include_once App::getDocumentRoot()
-                    . '/local/components/fourpaws/register/templates/.default/include/confirm.php';
-                $html = ob_get_clean();
+                try {
+                    $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+                    $confirmService::setGeneratedCode('confirm_'.$regUser->getId(), 'confirm_register');
+                    $uri = new Uri(Application::getInstance()->getContext()->getRequest()->getRequestedPage());
+                    $uri->addParams([
+                        'user_id' => $regUser->getId(),
+                        'code'    => $confirmService::getGeneratedCode('confirm_register'),
+                    ]);
 
-                return JsonSuccessResponse::createWithData(
-                    'Регистрация прошла успешно',
-                    [
-                        'html' => $html,
-                    ]
-                );
+                    return JsonSuccessResponse::create(
+                        '',
+                        200,
+                        ['redirect' => $uri->getUri()]
+                    );
+                } catch (\Exception $e) {
+                    return $this->ajaxMess->getSystemError();
+                }
             }
         } catch (UserRuntimeException $exception) {
             return $this->ajaxMess->getRegisterError($exception->getMessage());
@@ -510,8 +538,8 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         return JsonSuccessResponse::createWithData(
             $mess,
             [
-                'html'  => $html,
-                'step'  => $step,
+                'html' => $html,
+                'step' => $step,
                 'phone' => $phone ?? '',
             ]
         );
