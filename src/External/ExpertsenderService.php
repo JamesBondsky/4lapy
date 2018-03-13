@@ -415,16 +415,16 @@ class ExpertsenderService implements LoggerAwareInterface
     /**
      * @param Order $order
      *
-     * @return bool
+     * @return int
      * @throws ApplicationCreateException
      * @throws ExpertsenderServiceException
      */
-    public function sendOrderNewEmail(Order $order): bool
+    public function sendOrderNewEmail(Order $order): int
     {
         /** @var OrderService $orderService */
         $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
         if (!$email = $orderService->getOrderPropertyByCode($order, 'EMAIL')->getValue()) {
-            return false;
+            throw new ExpertsenderServiceException('order email is empty');
         }
 
         $properties = $orderService->getOrderPropertiesByCode($order, [
@@ -516,32 +516,31 @@ class ExpertsenderService implements LoggerAwareInterface
 
         try {
             $apiResult = $this->client->sendTransactional($transactionId, new Receiver($email), $snippets);
-            if ($apiResult->isOk()) {
-                unset($_SESSION['NEW_USER']);
-
-                return true;
+            if (!$apiResult->isOk()) {
+                throw new ExpertsenderServiceException($apiResult->getErrorMessage(), $apiResult->getErrorCode());
             }
+            unset($_SESSION['NEW_USER']);
+            return $transactionId;
         } catch (GuzzleException|\Exception $e) {
             throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
         }
-        return false;
     }
 
     /**
      * @param Order $order
      *
-     * @return bool
+     * @return int
      * @throws ApplicationCreateException
      * @throws ExpertsenderServiceException
      */
-    public function sendOrderCompleteEmail(Order $order): bool
+    public function sendOrderCompleteEmail(Order $order): int
     {
         /** @todo нужно юзануть проверку доступности отправки писем в ES(если письмо недоступно без конфирма мыла) - метод юзера - allowedEASend */
         /** @var OrderService $orderService */
         $orderService = Application::getInstance()->getContainer()->get(OrderService::class);
 
         if (!$email = $orderService->getOrderPropertyByCode($order, 'EMAIL')->getValue()) {
-            return false;
+            throw new ExpertsenderServiceException('order email is empty');
         }
 
         $snippets = [
@@ -559,15 +558,17 @@ class ExpertsenderService implements LoggerAwareInterface
             ),
         ];
 
+        $transactionId = 7122;
+
         try {
-            $apiResult = $this->client->sendTransactional(7122, new Receiver($email), $snippets);
-            if ($apiResult->isOk()) {
-                return true;
+            $apiResult = $this->client->sendTransactional($transactionId, new Receiver($email), $snippets);
+            if (!$apiResult->isOk()) {
+                throw new ExpertsenderServiceException($apiResult->getErrorMessage(), $apiResult->getErrorCode());
             }
+
+            return $transactionId;
         } catch (GuzzleException|\Exception $e) {
             throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
         }
-
-        return false;
     }
 }

@@ -7,7 +7,7 @@ use FourPaws\App\ServiceHandlerInterface;
 
 class Event implements ServiceHandlerInterface
 {
-    public static function initHandlers(EventManager $eventManager)
+    public static function initHandlers(EventManager $eventManager): void
     {
         $eventManager->addEventHandler(
             'iblock',
