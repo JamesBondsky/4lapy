@@ -146,15 +146,6 @@ class StoreService
     }
 
     /**
-     * @return StoreCollection
-     * @throws ArgumentException
-     */
-    public function getSupplierStores(): StoreCollection
-    {
-        return $this->storeRepository->findBy($this->getTypeFilter(self::TYPE_SUPPLIER));
-    }
-
-    /**
      * Получить склады в текущем местоположении
      *
      * @param string $type
@@ -219,6 +210,15 @@ class StoreService
     }
 
     /**
+     * @return StoreCollection
+     * @throws ArgumentException
+     */
+    public function getSupplierStores(): StoreCollection
+    {
+        return $this->storeRepository->findBy($this->getTypeFilter(self::TYPE_SUPPLIER));
+    }
+
+    /**
      * @param $type
      *
      * @return array
@@ -237,19 +237,6 @@ class StoreService
         }
 
         return [];
-    }
-
-    /**
-     * Получить склады по массиву XML_ID
-     *
-     * @param array $codes
-     *
-     * @throws \Exception
-     * @return StoreCollection
-     */
-    public function getMultipleByXmlId(array $codes): StoreCollection
-    {
-        return $this->storeRepository->findBy(['XML_ID' => $codes]);
     }
 
     /**
@@ -296,14 +283,6 @@ class StoreService
     }
 
     /**
-     * @return LocationService
-     */
-    public function getLocationService(): LocationService
-    {
-        return $this->locationService;
-    }
-
-    /**
      * @param array $filter
      * @param array $select
      *
@@ -333,48 +312,6 @@ class StoreService
     public function getRepository(): StoreRepository
     {
         return $this->storeRepository;
-    }
-
-    /**
-     * Получить наличие офферов на указанных складах
-     *
-     * @param Collection $offers
-     * @param StoreCollection $stores
-     *
-     * @throws \Exception
-     */
-    public function getStocks(Collection $offers, StoreCollection $stores): void
-    {
-        foreach ($offers as $offer) {
-            $offer->withStocks(
-                $this->getStocksByOffer($offer)
-                    ->filterByStores($stores)
-            );
-        }
-    }
-
-    /**
-     * @param Offer $offer
-     *
-     * @return StockCollection
-     */
-    public function getStocksByOffer(Offer $offer): StockCollection
-    {
-        $getStocks = function () use ($offer) {
-            return $this->stockRepository->findBy(
-                [
-                    'PRODUCT_ID' => $offer->getId(),
-                ]
-            );
-        };
-
-        $data = (new BitrixCache())
-            ->withId(__METHOD__ . '__' . $offer->getId())
-            ->withTag('catalog:stocks')
-            ->withTag('catalog:stocks:' . $offer->getId())
-            ->resultOf($getStocks);
-
-        return $data['result'];
     }
 
     /**

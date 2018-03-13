@@ -21,6 +21,7 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Service\IntervalService;
 use FourPaws\Location\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
+use FourPaws\StoreBundle\Service\StockService;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 
@@ -119,9 +120,11 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
             return false;
         }
 
-        /** @var StoreService $storeService */
         /** @noinspection PhpUnhandledExceptionInspection */
+        /** @var StoreService $storeService */
         $storeService = Application::getInstance()->getContainer()->get('store.service');
+        /** @var StockService $stockService */
+        $stockService = Application::getInstance()->getContainer()->get(StockService::class);
         $stores = $storeService->getByLocation($locationCode);
         if ($stores->isEmpty()) {
             return false;
@@ -133,7 +136,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
             return false;
         }
 
-        $storeService->getStocks($offers, $stores);
+        $stockService->getStocks($offers, $stores);
 
         return $offers;
     }

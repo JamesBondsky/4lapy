@@ -30,6 +30,7 @@ use FourPaws\BitrixOrm\Query\CatalogProductQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\StoreBundle\Collection\StockCollection;
+use FourPaws\StoreBundle\Service\StockService;
 use FourPaws\StoreBundle\Service\StoreService;
 use InvalidArgumentException;
 use JMS\Serializer\Annotation\Accessor;
@@ -1169,9 +1170,9 @@ class Offer extends IblockElement
     public function getAllStocks(): StockCollection
     {
         if (!$this->allStocks) {
-            /** @var StoreService $storeService */
-            $storeService = Application::getInstance()->getContainer()->get('store.service');
-            $this->withAllStocks($storeService->getStocksByOffer($this));
+            /** @var StockService $stockService */
+            $stockService = Application::getInstance()->getContainer()->get(StockService::class);
+            $this->withAllStocks($stockService->getStocksByOffer($this));
         }
 
         return $this->allStocks;
