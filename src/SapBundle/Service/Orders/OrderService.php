@@ -121,6 +121,7 @@ class OrderService implements LoggerAwareInterface
      * @param Filesystem $filesystem
      * @param UserRepository $userRepository
      * @param IntervalService $intervalService
+     * @param StatusService $statusService
      */
     public function __construct(
         BaseOrderService $baseOrderService,
@@ -415,7 +416,8 @@ class OrderService implements LoggerAwareInterface
             $xmlId = $basketItem->getField('PRODUCT_XML_ID');
 
             if (strpos($xmlId, '#')) {
-                $xmlId = explode('#', $xmlId)[1];
+                /** @noinspection ShortListSyntaxCanBeUsedInspection */
+                list(, $xmlId) = explode('#', $xmlId);
             }
 
             $offer = (new OrderOffer())
@@ -523,7 +525,7 @@ class OrderService implements LoggerAwareInterface
      *
      * @return string
      */
-    private function getPropertyValueByCode(Order $order, string $code): string
+    public function getPropertyValueByCode(Order $order, string $code): string
     {
         $propertyValue = BxCollection::getOrderPropertyByCode($order->getPropertyCollection(), $code);
 
@@ -541,10 +543,12 @@ class OrderService implements LoggerAwareInterface
         $propertyCollection = $order->getPropertyCollection();
         $deliveryAddress = $orderDto->getDeliveryAddress();
 
-        $this->setPropertyValue($propertyCollection, 'NAME', $orderDto->getClientFio());
+        if ($orderDto->getClientFio()) {
+            $this->setPropertyValue($propertyCollection, 'NAME', $orderDto->getClientFio());
+        }
         $this->setPropertyValue($propertyCollection, 'PHONE', $orderDto->getClientPhone());
         $this->setPropertyValue($propertyCollection, 'PHONE_ALT', $orderDto->getClientOrderPhone());
-        $this->setPropertyValue($propertyCollection, 'DELIVERY_DATE', $orderDto->getDeliveryDate()->format('dmY'));
+        $this->setPropertyValue($propertyCollection, 'DELIVERY_DATE', $orderDto->getDeliveryDate()->format('d.m.Y'));
 
         try {
             $this->setPropertyValue(
@@ -575,7 +579,7 @@ class OrderService implements LoggerAwareInterface
      * @param string $code
      * @param string $value
      */
-    private function setPropertyValue(PropertyValueCollection $collection, string $code, string $value): void
+    public function setPropertyValue(PropertyValueCollection $collection, string $code, string $value): void
     {
         $propertyValue = BxCollection::getOrderPropertyByCode($collection, $code);
 
@@ -624,8 +628,8 @@ class OrderService implements LoggerAwareInterface
          * @var BasketItem $basketItem
          */
         foreach ($basketCollection = $order->getBasket()->getBasketItems() as $basketItem) {
-            $article = substr($basketItem->getField('PRODUCT_XML_ID'),
-                strpos($basketItem->getField('PRODUCT_XML_ID'), '#') ?: 0);
+            $article = substr($basketItem->getField('PRODUCT_XML_ID'), (strpos($basketItem->getField('PRODUCT_XML_ID'), '#') + 1) ?: 0);
+            $article = ltrim($article, '0');
 
             $externalItem = $externalItems->filter(
                 function ($item) use ($article) {
@@ -686,15 +690,16 @@ class OrderService implements LoggerAwareInterface
          * Сделать это нормально
          */
         $itemId = 0;
+        $element = [];
 
         try {
             $element = (new Query(ElementTable::class))
                 ->setFilter([
                     'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
-                    'XML_ID' => $externalItem->getOfferXmlId(),
+                    'XML_ID' => ltrim($externalItem->getOfferXmlId(), '0'),
                 ])
                 ->setLimit(1)
-                ->setSelect(['XML_ID', 'ID'])
+                ->setSelect(['XML_ID', 'ID', 'NAME'])
                 ->exec()
                 ->fetch();
 
@@ -720,6 +725,9 @@ class OrderService implements LoggerAwareInterface
             'PRODUCT_ID' => $itemId,
             'QUANTITY' => $externalItem->getQuantity(),
             'MODULE' => 'catalog',
+            'CURRENCY' => 'RUB',
+            'PRICE' => $externalItem->getUnitPrice(),
+            'NAME' => $element['NAME'],
             'PRODUCT_PROVIDER_CLASS' => CatalogProvider::class,
         ];
 
