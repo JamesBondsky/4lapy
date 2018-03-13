@@ -7,6 +7,7 @@ use Bitrix\Sale\Order;
 use FourPaws\SapBundle\Service\Orders\OrderService;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LogLevel;
+use RuntimeException;
 
 /**
  * Class OrderOutConsumer
@@ -31,17 +32,18 @@ class OrderOutConsumer implements ConsumerInterface, LoggerAwareInterface
     {
         $this->orderService = $orderService;
     }
-    
+
     /**
      * Consume order
      *
-     * @param $paymentInfo
+     * @param Order $order
      *
      * @return bool
+     * @throws RuntimeException
      */
-    public function consume($paymentInfo): bool
+    public function consume($order): bool
     {
-        if (!$this->support($paymentInfo)) {
+        if (!$this->support($order)) {
             return false;
         }
         
@@ -50,7 +52,9 @@ class OrderOutConsumer implements ConsumerInterface, LoggerAwareInterface
         try {
             $success = true;
 
-            $this->orderService->out($paymentInfo);
+            $this->orderService->out($order);
+            $this->orderService->setPropertyValue($order->getPropertyCollection(), 'IS_EXPORTED', 'Y');
+            $order->save();
         } catch (\Exception $e) {
             $success = false;
             
