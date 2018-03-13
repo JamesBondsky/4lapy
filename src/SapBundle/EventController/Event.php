@@ -17,7 +17,7 @@ use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\ServiceHandlerInterface;
 use FourPaws\SapBundle\Consumer\ConsumerRegistry;
-use FourPaws\SapBundle\Enum\SapOrderEnum;
+use FourPaws\SapBundle\Enum\SapOrder;
 use FourPaws\SapBundle\Exception\LogicException;
 use FourPaws\SapBundle\Exception\UnexpectedValueException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -82,7 +82,7 @@ class Event implements ServiceHandlerInterface
             /**
              * ...и оплата не онлайн, отправляем в SAP
              */
-            if (in_array(SapOrderEnum::PAYMENT_SYSTEM_ONLINE_ID, $order->getPaymentSystemId(), false)) {
+            if (in_array(SapOrder::PAYMENT_SYSTEM_ONLINE_ID, $order->getPaymentSystemId(), false)) {
                 return;
             }
 
@@ -107,7 +107,7 @@ class Event implements ServiceHandlerInterface
 
         if (
             $oldFields['PAID'] !== 'Y'
-            && (int)$payment->getPaymentSystemId() === SapOrderEnum::PAYMENT_SYSTEM_ONLINE_ID
+            && (int)$payment->getPaymentSystemId() === SapOrder::PAYMENT_SYSTEM_ONLINE_ID
             && $payment->getOrderId() > 0
             && $payment->isPaid()
         ) {

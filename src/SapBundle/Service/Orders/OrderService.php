@@ -42,7 +42,7 @@ use FourPaws\SapBundle\Dto\In\Orders\OrderOffer as OrderOfferIn;
 use FourPaws\SapBundle\Dto\Out\Orders\DeliveryAddress as OutDeliveryAddress;
 use FourPaws\SapBundle\Dto\Out\Orders\Order as OrderDtoOut;
 use FourPaws\SapBundle\Dto\Out\Orders\OrderOffer;
-use FourPaws\SapBundle\Enum\SapOrderEnum;
+use FourPaws\SapBundle\Enum\SapOrder;
 use FourPaws\SapBundle\Exception\CantCreateBasketItem;
 use FourPaws\SapBundle\Exception\NotFoundOrderDeliveryException;
 use FourPaws\SapBundle\Exception\NotFoundOrderException;
@@ -339,15 +339,15 @@ class OrderService implements LoggerAwareInterface
         if ($externalPayment->getField('CODE') === $this->baseOrderService::PAYMENT_ONLINE) {
             /** @noinspection PhpParamsInspection */
             $dto
-                ->setPayType(SapOrderEnum::ORDER_PAYMENT_ONLINE_CODE)
-                ->setPayStatus(SapOrderEnum::ORDER_PAYMENT_STATUS_PRE_PAYED)
+                ->setPayType(SapOrder::ORDER_PAYMENT_ONLINE_CODE)
+                ->setPayStatus(SapOrder::ORDER_PAYMENT_STATUS_PRE_PAYED)
                 ->setPayHoldTransaction($externalPayment->getField('PS_INVOICE_ID'))
                 ->setPayHoldDate(DateHelper::convertToDateTime($externalPayment->getField('PS_RESPONSE_DATE')))
                 ->setPrePayedSum($externalPayment->getSum())
-                ->setPayMerchantCode(SapOrderEnum::ORDER_PAYMENT_ONLINE_MERCHANT_ID);
+                ->setPayMerchantCode(SapOrder::ORDER_PAYMENT_ONLINE_MERCHANT_ID);
         } else {
             $dto->setPayType('')
-                ->setPayStatus(SapOrderEnum::ORDER_PAYMENT_STATUS_NOT_PAYED);
+                ->setPayStatus(SapOrder::ORDER_PAYMENT_STATUS_NOT_PAYED);
         }
     }
 
@@ -397,7 +397,7 @@ class OrderService implements LoggerAwareInterface
             ->setDeliveryTimeInterval($interval)
             ->setDeliveryAddress($this->getDeliveryAddress($order, $terminalCode))
             ->setDeliveryAddressOrPoint($deliveryPoint)
-            ->setContractorCode($deliveryTypeCode === SapOrderEnum::DELIVERY_TYPE_CONTRACTOR ? SapOrderEnum::DELIVERY_CONTRACTOR_CODE : '');
+            ->setContractorCode($deliveryTypeCode === SapOrder::DELIVERY_TYPE_CONTRACTOR ? SapOrder::DELIVERY_CONTRACTOR_CODE : '');
     }
 
     /**
@@ -428,7 +428,7 @@ class OrderService implements LoggerAwareInterface
                 /**
                  * Только штуки
                  */
-                ->setUnitOfMeasureCode(SapOrderEnum::UNIT_PTC_CODE)
+                ->setUnitOfMeasureCode(SapOrder::UNIT_PTC_CODE)
                 ->setChargeBonus(true)
                 ->setDeliveryFromPoint($this->getPropertyValueByCode($order, 'DELIVERY_PLACE_CODE'))
                 ->setDeliveryShipmentPoint($this->getPropertyValueByCode($order, 'SHIPMENT_PLACE_CODE'));
@@ -477,7 +477,7 @@ class OrderService implements LoggerAwareInterface
     private function getDeliveryTypeCode(Order $order): string
     {
         if ($this->getPropertyValueByCode($order, 'REGION_COURIER_FROM_DC')) {
-            return SapOrderEnum::DELIVERY_TYPE_ROUTE;
+            return SapOrder::DELIVERY_TYPE_ROUTE;
         }
 
         $shipment = BxCollection::getOrderExternalShipment($order->getShipmentCollection());
@@ -499,20 +499,20 @@ class OrderService implements LoggerAwareInterface
 
                 switch ($deliveryZone) {
                     case DeliveryService::ZONE_1:
-                        return SapOrderEnum::DELIVERY_TYPE_COURIER_RC;
+                        return SapOrder::DELIVERY_TYPE_COURIER_RC;
                     case DeliveryService::ZONE_2:
-                        return SapOrderEnum::DELIVERY_TYPE_PICKUP;
+                        return SapOrder::DELIVERY_TYPE_PICKUP;
                 }
 
                 break;
             case DeliveryService::INNER_PICKUP_CODE:
-                return SapOrderEnum::DELIVERY_TYPE_PICKUP;
+                return SapOrder::DELIVERY_TYPE_PICKUP;
                 break;
             case DeliveryService::DPD_DELIVERY_CODE:
-                return SapOrderEnum::DELIVERY_TYPE_CONTRACTOR . '_' . SapOrderEnum::DELIVERY_TYPE_CONTRACTOR_DELIVERY;
+                return SapOrder::DELIVERY_TYPE_CONTRACTOR . '_' . SapOrder::DELIVERY_TYPE_CONTRACTOR_DELIVERY;
                 break;
             case DeliveryService::DPD_PICKUP_CODE:
-                return SapOrderEnum::DELIVERY_TYPE_CONTRACTOR . '_' . SapOrderEnum::DELIVERY_TYPE_CONTRACTOR_PICKUP;
+                return SapOrder::DELIVERY_TYPE_CONTRACTOR . '_' . SapOrder::DELIVERY_TYPE_CONTRACTOR_PICKUP;
                 break;
         }
 
@@ -591,14 +591,41 @@ class OrderService implements LoggerAwareInterface
     /**
      * @param Order $order
      * @param OrderDtoIn $orderDto
+     *
+     * @throws ArgumentOutOfRangeException
+     * @throws NotImplementedException
+     * @throws Exception
+     * @throws ObjectNotFoundException
+     * @throws NotFoundOrderPaySystemException
      */
     private function setPaymentFromDto(Order $order, OrderDtoIn $orderDto): void
     {
+        $statusPayed = SapOrder::ORDER_PAYMENT_STATUS_NOT_PAYED === $orderDto->getPayStatus() ? 'N' : 'Y';
+        $innerPayment = $order->getPaymentCollection()->getInnerPayment();
+        $externalPayment = null;
+
+        if ($innerPayment) {
+            $innerPayment->setPaid($statusPayed);
+            $innerPayment->setField('SUM', $orderDto->getBonusPayedCount());
+        }
+
         /**
-         * @todo
-         *
-         * Change payment method from DTO
+         * @var Payment $payment
          */
+        foreach ($order->getPaymentCollection() as $payment) {
+            if ($payment->isInner()) {
+                continue;
+            }
+
+            $externalPayment = $payment;
+        }
+
+        if (null === $externalPayment) {
+            throw new NotFoundOrderPaySystemException('Не найдена платежная система');
+        }
+
+        $externalPayment->setPaid($statusPayed);
+        $externalPayment->setField('SUM', $orderDto->getTotalSum() - $orderDto->getBonusPayedCount());
     }
 
     /**
