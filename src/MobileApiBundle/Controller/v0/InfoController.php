@@ -4,7 +4,7 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
-namespace FourPaws\MobileApiBundle\Controller;
+namespace FourPaws\MobileApiBundle\Controller\v0;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
