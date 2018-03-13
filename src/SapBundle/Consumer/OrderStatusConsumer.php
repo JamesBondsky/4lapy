@@ -2,12 +2,72 @@
 
 namespace FourPaws\SapBundle\Consumer;
 
-class OrderStatusConsumer implements ConsumerInterface
+use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use FourPaws\SapBundle\Dto\In\Orders\Order;
+use FourPaws\SapBundle\Exception\CantUpdateOrderException;
+use FourPaws\SapBundle\Service\Orders\OrderService;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LogLevel;
+
+/**
+ * Class OrderStatusConsumer
+ *
+ * @package FourPaws\SapBundle\Consumer
+ */
+class OrderStatusConsumer implements ConsumerInterface, LoggerAwareInterface
 {
-    public function consume($orderInfo) : bool
+    use LazyLoggerAwareTrait;
+    
+    /**
+     * @var OrderService
+     */
+    private $orderService;
+    
+    /**
+     * OrderStatusConsumer constructor.
+     *
+     * @param OrderService $orderService
+     */
+    public function __construct(OrderService $orderService)
     {
-        dump($orderInfo);
-        die();
+        $this->orderService = $orderService;
+    }
+    
+    /**
+     * Consume order info (save sap order`s change)
+     *
+     * @param $paymentInfo
+     *
+     * @return bool
+     */
+    public function consume($paymentInfo): bool
+    {
+        if (!$this->support($paymentInfo)) {
+            return false;
+        }
+        
+        $this->log()->log(LogLevel::INFO, 'Импортируется статус заказа');
+        
+        try {
+            $success = true;
+            
+            $order = $this->orderService->transformDtoToOrder($paymentInfo);
+            $result = $order->save();
+            
+            if (!$result->isSuccess()) {
+                throw new CantUpdateOrderException(sprintf(
+                    'Не удалось обновить заказ #%s: %s',
+                    $order->getId(),
+                    implode(', ', $result->getErrorMessages())
+                ));
+            }
+        } catch (\Exception $e) {
+            $success = false;
+            
+            $this->log()->log(LogLevel::ERROR, sprintf('Ошибка импорта статуса заказа: %s', $e->getMessage()));
+        }
+        
+        return $success;
     }
     
     /**
@@ -15,11 +75,8 @@ class OrderStatusConsumer implements ConsumerInterface
      *
      * @return bool
      */
-    public function support($data) : bool
+    public function support($data): bool
     {
-        /**
-         * @todo implement
-         */
-        return false;
+        return \is_object($data) && $data instanceof Order;
     }
 }

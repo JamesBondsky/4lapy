@@ -128,7 +128,7 @@ if (!$arParams['ITEM_ATTR_ID']) {
                             }
                             $isOffersPrinted = true;
                             $addAttr = '';
-                            $addAttr .= ' data-price="' . $offer->getPrice() . '"';
+                            $addAttr .= ' data-price="' . ceil($offer->getPrice()) . '"';
                             $addAttr .= ' data-offerid="' . $offer->getId() . '"';
                             $addAttr .= ' data-image="' . $offer->getResizeImages(240, 240)->first() . '"';
                             $addAttr .= ' data-name="' . $offer->getName() . '"';
@@ -163,7 +163,7 @@ if (!$arParams['ITEM_ATTR_ID']) {
                         echo new SvgDecorator('icon-cart', 16, 16);
                         ?></span>
                 </span>
-                <span class="b-common-item__price js-price-block"><?= $currentOffer->getPrice() ?></span>
+                <span class="b-common-item__price js-price-block"><?= ceil($currentOffer->getPrice()) ?></span>
                 <span class="b-common-item__currency"><span class="b-ruble">₽</span></span>
             </span>
             </a><?php

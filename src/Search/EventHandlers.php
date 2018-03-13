@@ -36,7 +36,7 @@ class EventHandlers implements ServiceHandlerInterface, LoggerAwareInterface
         $this->setLogger(LoggerFactory::create('CatalogEvent'));
     }
 
-    public static function initHandlers(EventManager $eventManager)
+    public static function initHandlers(EventManager $eventManager): void
     {
         $myself = new self;
 

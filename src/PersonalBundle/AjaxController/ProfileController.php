@@ -75,6 +75,7 @@ class ProfileController extends Controller
         if (!$this->userAuthorization->isAuthorized()) {
             return $this->ajaxMess->getNeedAuthError();
         }
+
         $action = $request->get('action', '');
 
         \CBitrixComponent::includeComponentClass('fourpaws:personal.profile');
@@ -110,10 +111,26 @@ class ProfileController extends Controller
         if (!$this->userAuthorization->isAuthorized()) {
             return $this->ajaxMess->getNeedAuthError();
         }
+
         $id = (int)$request->get('ID', 0);
         $old_password = $request->get('old_password', '');
         $password = $request->get('password', '');
         $confirm_password = $request->get('confirm_password', '');
+
+        try {
+            $curUser = $this->currentUserProvider->getCurrentUser();
+        }
+        catch (NotAuthorizedException $e){
+            return $this->ajaxMess->getNeedAuthError();
+        } catch (InvalidIdentifierException|ConstraintDefinitionException $e) {
+            $logger = LoggerFactory::create('params');
+            $logger->error('Ошибка параметров - ' . $e->getMessage());
+            return $this->ajaxMess->getSystemError();
+        }
+
+        if($id !== $curUser->getId()){
+            return $this->ajaxMess->getSecurityError();
+        }
 
         if (empty($old_password) || empty($password) || empty($confirm_password)) {
             return $this->ajaxMess->getEmptyDataError();
@@ -139,7 +156,7 @@ class ProfileController extends Controller
         }
 
         if ($old_password === $password) {
-            return $this->ajaxMess->getNotEqualOldPasswordError();
+            return $this->ajaxMess->getEqualWithOldPasswordError();
         }
 
         try {
@@ -203,9 +220,15 @@ class ProfileController extends Controller
         }
         /** @var UserRepository $userRepository */
         $userRepository = $this->currentUserProvider->getUserRepository();
-        $data = $request->request->all();
-        if (!empty($data['EMAIL']) && filter_var($data['EMAIL'], FILTER_VALIDATE_EMAIL) === false) {
-            return $this->ajaxMess->getWrongEmailError();
+
+        try{
+            $curUser = $this->currentUserProvider->getCurrentUser();
+        } catch (NotAuthorizedException $e){
+            return $this->ajaxMess->getNeedAuthError();
+        } catch (InvalidIdentifierException|ConstraintDefinitionException $e) {
+            $logger = LoggerFactory::create('params');
+            $logger->error('Ошибка параметров - ' . $e->getMessage());
+            return $this->ajaxMess->getSystemError();
         }
 
         if (!empty($data['ID'])) {
@@ -213,6 +236,15 @@ class ProfileController extends Controller
         }
         /** @var User $user */
         $user = $serializer->fromArray($data, User::class);
+
+        if($user->getId() !== $curUser->getId()){
+            return $this->ajaxMess->getSecurityError();
+        }
+
+        $data = $request->request->all();
+        if (!empty($data['EMAIL']) && filter_var($data['EMAIL'], FILTER_VALIDATE_EMAIL) === false) {
+            return $this->ajaxMess->getWrongEmailError();
+        }
 
         $haveUsers = $userRepository->havePhoneAndEmailByUsers(
             [

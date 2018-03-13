@@ -252,7 +252,6 @@ class OrderService
                 /** @todo вынести все получения из цикла и сделать по феншую без запросов в цикле */
                 if (!$order->isManzana() && $order->getId() > 0) {
                     list($items, $allWeight, $itemsSum) = $this->getOrderItems($order->getId());
-                    var_dump($allWeight);
                     $order->setItems($items);
                     $order->setAllWeight((float)$allWeight);
                     $order->setItemsSum((float)$itemsSum);

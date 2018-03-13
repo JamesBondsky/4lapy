@@ -242,7 +242,7 @@ if ($isAuth) {
         <hr class="b-hr b-hr--one-click3"/>
         <dl class="b-popup-one-click__result">
             <dt class="b-popup-one-click__result-dt">
-                Итого <?= WordHelper::numberFormat($arResult['TOTAL_QUANTITY'], 0) ?> <?= WordHelper::declension(1,
+                Итого <?= WordHelper::numberFormat($arResult['TOTAL_QUANTITY'], 0) ?> <?= WordHelper::declension($arResult['TOTAL_QUANTITY'],
                     ['товар', 'товара', 'товаров']) ?> (<?= WordHelper::showWeight($arResult['BASKET_WEIGHT'], true) ?>)
             </dt>
             <dd class="b-popup-one-click__result-dd"><?= WordHelper::numberFormat($basket->getPrice()) ?> ₽</dd>

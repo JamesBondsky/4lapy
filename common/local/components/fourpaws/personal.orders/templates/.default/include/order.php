@@ -24,13 +24,17 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
             </a>
             <?php $countItems = $order->getItems()->count(); ?>
             <div class="b-accordion-order-item__info-order"><?= $countItems ?> <?= WordHelper::declension($countItems,
-                    ['товар', 'товара', 'товаров']) ?> (<?= $order->getFormatedAllWeight() ?> кг)
+                    [
+                        'товар',
+                        'товара',
+                        'товаров',
+                    ]) ?> <?= $order->getAllWeight() > 0 ? '(' . $order->getFormatedAllWeight() . ' кг)' : ''; ?>
             </div>
         </div>
         <div class="b-accordion-order-item__adress">
             <div class="b-accordion-order-item__date b-accordion-order-item__date--new">
                 <?= $order->getStatus() ?>
-                <span>с <?= $order->getFormatedDateStatus() ?></span>
+                <span><?= $order->getStatus() !== 'Y' ? 'с ' : '' ?><?= $order->getFormatedDateStatus() ?></span>
             </div>
             <div class="b-accordion-order-item__date b-accordion-order-item__date--pickup">
                 <?= $order->getDelivery()->getDeliveryName() ?>
@@ -65,7 +69,8 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
             <?php } ?>
             <?php if (!$order->isClosed() && !$order->isPayed() && !$order->isManzana() && $order->getPayment()->getCode() === 'card-online') { ?>
                 <div class="b-accordion-order-item__subscribe-link b-accordion-order-item__subscribe-link--full">
-                    <a class="b-link b-link--pay-account b-link--pay-account" href="/sale/payment/?ORDER_ID=<?=$order->getId()?>"
+                    <a class="b-link b-link--pay-account b-link--pay-account"
+                       href="/sale/payment/?ORDER_ID=<?= $order->getId() ?>"
                        title="Оплатить">
                         <span class="b-link__text b-link__text--pay-account">Оплатить</span>
                     </a>
@@ -108,6 +113,12 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
                                 </span>
                             </div>
                             <div class="b-list-order__option">
+                                <?php if (!empty($item->getFlavour())) { ?>
+                                    <div class="b-list-order__option-text">
+                                        Вкус:
+                                        <span><?= $item->getFlavour() ?></span>
+                                    </div>
+                                <?php } ?>
                                 <?php if (!empty($item->getOfferSelectedProp())) { ?>
                                     <div class="b-list-order__option-text">
                                         <?= $item->getOfferSelectedPropName() ?>:
@@ -156,7 +167,7 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
                         </div>
                     </div>
                     <div class="b-characteristics-tab__characteristics-value b-characteristics-tab__characteristics-value--account">
-                        <?= $order->getFormatedItemsSum() ?><span
+                        <?= $order->getFormattedItemsSum() ?><span
                                 class="b-ruble b-ruble--calculation-account">&nbsp;₽</span>
                     </div>
                 </li>

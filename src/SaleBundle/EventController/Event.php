@@ -12,9 +12,9 @@ use FourPaws\App\ServiceHandlerInterface;
 use FourPaws\SaleBundle\Discount\Action\Action\DiscountFromProperty;
 use FourPaws\SaleBundle\Discount\Action\Condition\BasketQuantity;
 use FourPaws\SaleBundle\Discount\BasketFilter;
-use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Gifter;
+use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\NotificationService;
 use FourPaws\SaleBundle\Service\UserAccountService;
@@ -38,7 +38,7 @@ class Event implements ServiceHandlerInterface
      *
      * @return mixed|void
      */
-    public static function initHandlers(EventManager $eventManager)
+    public static function initHandlers(EventManager $eventManager): void
     {
         self::$eventManager = $eventManager;
         self::initHandler('OnCondSaleActionsControlBuildList', [Gift::class, 'GetControlDescr']);
