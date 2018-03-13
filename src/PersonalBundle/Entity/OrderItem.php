@@ -66,6 +66,13 @@ class OrderItem extends BaseEntity
      */
     protected $offerSelectedPropName = '';
 
+    /** @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("PROPERTY_FLAVOUR")
+     * @Serializer\Groups(groups={"read"})
+     */
+    protected $flavour = '';
+
     /** @var float
      * @Serializer\Type("float")
      * @Serializer\SerializedName("BONUS")
@@ -294,12 +301,27 @@ class OrderItem extends BaseEntity
     public function getImagePath(): string
     {
         $path = '';
-        if (!empty($this->getImage()) && is_numeric($this->getImage())) {
-            try {
-                $path = ResizeImageDecorator::createFromPrimary($this->getImage())
-                    ->setResizeHeight(80)
-                    ->setResizeWidth(80);
-            } catch (FileNotFoundException $e) {
+        $image = $this->getImage();
+        if (!empty($image)){
+            if(is_numeric($image)) {
+                try {
+                    $path = ResizeImageDecorator::createFromPrimary($image)
+                        ->setResizeHeight(120)
+                        ->setResizeWidth(80);
+                } catch (FileNotFoundException $e) {
+                }
+            }else{
+                /** установка второго аргумента все ломает */
+                $unserializeImage = unserialize($image);
+                if(\is_array($unserializeImage['VALUE']) && !empty($unserializeImage['VALUE'])){
+                    $image = current($unserializeImage['VALUE']);
+                    try {
+                        $path = ResizeImageDecorator::createFromPrimary($image)
+                            ->setResizeHeight(120)
+                            ->setResizeWidth(80);
+                    } catch (FileNotFoundException $e) {
+                    }
+                }
             }
         }
         return $path;
@@ -338,5 +360,21 @@ class OrderItem extends BaseEntity
     public function setOfferSelectedPropName(string $offerSelectedPropName)
     {
         $this->offerSelectedPropName = $offerSelectedPropName;
+    }
+
+    /**
+     * @return string
+     */
+    public function getFlavour(): string
+    {
+        return $this->flavour;
+    }
+
+    /**
+     * @param string $flavour
+     */
+    public function setFlavour(string $flavour): void
+    {
+        $this->flavour = $flavour;
     }
 }

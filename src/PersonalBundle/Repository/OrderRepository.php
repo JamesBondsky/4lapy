@@ -24,6 +24,7 @@ use FourPaws\AppBundle\Repository\BaseRepository;
 use FourPaws\BitrixOrm\Utils\IblockPropEntityConstructor;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
+use FourPaws\Helpers\WordHelper;
 use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Entity\OrderDelivery;
 use FourPaws\PersonalBundle\Entity\OrderItem;
@@ -117,23 +118,29 @@ class OrderRepository extends BaseRepository
             IblockCode::PRODUCTS);
 
         $volumePropId = PropertyTable::query()->where('IBLOCK_ID', $iblockId)->where('CODE',
-            'VOLUME')->setCacheTtl($queryCacheTtl)->setSelect(['ID'])->exec()->fetch()['ID'];
+            'VOLUME_REFERENCE')->setCacheTtl($queryCacheTtl)->setSelect(['ID'])->exec()->fetch()['ID'];
         $sizePropId = PropertyTable::query()->where('IBLOCK_ID', $iblockId)->where('CODE',
             'CLOTHING_SIZE')->setCacheTtl($queryCacheTtl)->setSelect(['ID'])->exec()->fetch()['ID'];
         $cml2LinkPropId = PropertyTable::query()->where('IBLOCK_ID', $iblockId)->where('CODE',
             'CML2_LINK')->setCacheTtl($queryCacheTtl)->setSelect(['ID'])->exec()->fetch()['ID'];
         $imgPropId = PropertyTable::query()->where('IBLOCK_ID', $iblockId)->where('CODE',
             'IMG')->setCacheTtl($queryCacheTtl)->setSelect(['ID'])->exec()->fetch()['ID'];
+
         $brandPropId = PropertyTable::query()->where('IBLOCK_ID', $productIblockId)->where('CODE',
             'BRAND')->setCacheTtl($queryCacheTtl)->setSelect(['ID'])->exec()->fetch()['ID'];
+        $flavourPropId = PropertyTable::query()->where('IBLOCK_ID', $productIblockId)->where('CODE',
+            'FLAVOUR')->setCacheTtl($queryCacheTtl)->setSelect(['ID'])->exec()->fetch()['ID'];
         $basketRes = BasketTable::query()
             ->setSelect([
                 '*',
                 'SUMMARY_PRICE',
+
                 'PROPERTY_IMG'    => 'OFFER_PROPS.PROPERTY_' . $imgPropId,
                 'PROPERTY_VOLUME' => 'OFFER_PROPS.PROPERTY_' . $volumePropId,
                 'PROPERTY_SIZE'   => 'OFFER_PROPS.PROPERTY_' . $sizePropId,
-                'PROPERTY_BRAND'  => 'PRODUCT_PROPS.PROPERTY_' . $brandPropId,
+
+                'PROPERTY_BRAND'   => 'PRODUCT_PROPS.PROPERTY_' . $brandPropId,
+                'PROPERTY_FLAVOUR' => 'PRODUCT_PROPS.PROPERTY_' . $flavourPropId,
             ])
             ->where('ORDER_ID', $orderId)
             ->registerRuntimeField(new ReferenceField('OFFER_PROPS',
@@ -161,7 +168,7 @@ class OrderRepository extends BaseRepository
                             $item['PROPERTY_SELECTED'] = $res->fetch()['UF_NAME'];
                             $item['PROPERTY_SELECTED_NAME'] = 'Размер';
                         } else {
-                            $item['PROPERTY_SELECTED'] = $item['PROPERTY_SIZE'];
+                            $item['PROPERTY_SELECTED'] = '';
                             $item['PROPERTY_SELECTED_NAME'] = 'Размер';
                         }
                     } elseif (!empty($item['PROPERTY_VOLUME'])) {
@@ -174,13 +181,39 @@ class OrderRepository extends BaseRepository
                             $item['PROPERTY_SELECTED'] = $res->fetch()['UF_NAME'];
                             $item['PROPERTY_SELECTED_NAME'] = 'Вариант фасовки';
                         } else {
-                            $item['PROPERTY_SELECTED'] = $item['PROPERTY_VOLUME'];
+                            $item['PROPERTY_SELECTED'] = '';
                             $item['PROPERTY_SELECTED_NAME'] = 'Вариант фасовки';
                         }
+                    } else {
+                        $item['PROPERTY_SELECTED'] = WordHelper::showWeight((float)$item['WEIGHT']);
+                        $item['PROPERTY_SELECTED_NAME'] = 'Вариант фасовки';
                     }
                 }
 
                 unset($item['PROPERTY_SIZE'], $item['PROPERTY_VOLUME']);
+
+                if (!empty($item['PROPERTY_FLAVOUR'])) {
+                    $unserialize = unserialize($item['PROPERTY_FLAVOUR']);
+                    if (\is_array($unserialize['VALUE']) && !empty($unserialize['VALUE'])) {
+                        $res = HLBlockFactory::createTableObject('Flavour')::query()
+                            ->setSelect(['UF_NAME'])
+                            ->whereIn('UF_XML_ID', $unserialize['VALUE'])
+                            ->setCacheTtl($queryCacheTtl)
+                            ->exec();
+                        if ($res->getSelectedRowsCount() > 0) {
+                            $vals = [];
+                            while ($hlItem = $res->fetch()) {
+                                $vals[] = $hlItem['UF_NAME'];
+                            }
+                            $item['PROPERTY_FLAVOUR'] = implode(', ', $vals);
+                        } else {
+                            $item['PROPERTY_FLAVOUR'] = '';
+                        }
+                    } else {
+                        $item['PROPERTY_FLAVOUR'] = '';
+                    }
+                }
+
                 if (!empty($item['PROPERTY_BRAND'])) {
                     $res = ElementTable::query()
                         ->setSelect(['NAME'])
@@ -199,8 +232,8 @@ class OrderRepository extends BaseRepository
                     }
                 }
 
-                $allWeight += $item['WEIGHT'] * $item['QUANTITY'];
-                $allSum += $item['SUMMARY_PRICE'];
+                $allWeight += (float)$item['WEIGHT'] * (float)$item['QUANTITY'];
+                $allSum += (float)$item['SUMMARY_PRICE'];
                 $key = !empty($item['PRODUCT_XML_ID']) ? $item['PRODUCT_XML_ID'] : '';
                 if (\mb_strlen($key) <= 1) {
                     $key = $item['PRODUCT_ID'];
@@ -230,6 +263,7 @@ class OrderRepository extends BaseRepository
             ->setSelect([
                 'ID',
                 'NAME',
+                'CODE',
             ])->exec()->fetch();
         if (\is_array($payment)) {
             return $this->dataToEntity(
@@ -256,6 +290,9 @@ class OrderRepository extends BaseRepository
             ->setSelect([
                 'ID',
                 'DELIVERY_NAME',
+                'PRICE_DELIVERY',
+                'DEDUCTED',
+                'DATE_DEDUCTED',
             ])->exec()->fetch();
         if (\is_array($shipment)) {
             return $this->dataToEntity(

@@ -14,10 +14,12 @@ use Bitrix\Sale\BasketItem;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
+use FourPaws\SaleBundle\Entity\UserAccount;
+use FourPaws\UserBundle\Entity\User;
 
-/** @var \FourPaws\UserBundle\Entity\User $user */
+/** @var User $user */
 $user = $arResult['USER'];
-/** @var \FourPaws\SaleBundle\Entity\UserAccount $userAccount */
+/** @var UserAccount $userAccount */
 $userAccount = $arResult['USER_ACCOUNT'];
 
 /** @var \Bitrix\Sale\Basket $basket */
@@ -146,7 +148,7 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                     }
                     $image = $component->getImage($basketItem->getProductId());
                     $offer = $component->getOffer((int)$basketItem->getProductId());
-                    $useOffer = $offer instanceof Offer && $offer->getId() > 0;?>
+                    $useOffer = $offer instanceof Offer && $offer->getId() > 0; ?>
                     <div class="b-item-shopping">
                         <div class="b-common-item b-common-item--shopping-cart b-common-item--shopping">
                         <span class="b-common-item__image-wrap b-common-item__image-wrap--shopping-cart">
@@ -272,15 +274,19 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
         <aside class="b-shopping-cart__aside">
             <div class="b-information-order">
                 <div class="b-information-order__client">
-                    <?php if ($user && $userAccount) { ?>
-                        <span class="b-information-order__pay-points">
-                            <span class="b-information-order__name"><?= $user->getName() ?>, </span>
-                            вы можете оплатить этот заказ баллами (до <?= WordHelper::numberFormat($userAccount->getCurrentBudget()) ?>).
-                        </span>
-                    <?php } else { ?>
+                    <?php if ($user) { ?>
+                        <?php if (!empty($userAccount)) { ?>
+                            <span class="b-information-order__pay-points">
+                                <span class="b-information-order__name"><?= $user->getName() ?>, </span>
+                                вы можете оплатить этот заказ баллами (до <?= WordHelper::numberFormat($userAccount->getCurrentBudget()) ?>
+                                    ).
+                            </span>
+                        <?php }
+                    } else { ?>
                         <span class="b-information-order__pay-points b-information-order__pay-points--flex">
                             Уже покупали у нас?
-                            <a class="b-link-gift b-link-gift--shopping-aside js-open-popup" href="javascript:void(0);" data-popup-id="authorization">
+                            <a class="b-link-gift b-link-gift--shopping-aside js-open-popup" href="javascript:void(0);"
+                               data-popup-id="authorization">
                                 <span class="b-link-gift__text">Войти</span>
                             </a>
                         </span>

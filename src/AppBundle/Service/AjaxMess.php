@@ -284,7 +284,7 @@ class AjaxMess
      */
     public function getEmailSendError(): JsonResponse
     {
-        return $this->getJsonError('errorEmailSend', 'Отправка письма не удалась, пожалуйста попробуйте позднее');
+        return $this->getJsonError('errorEmailSend', 'Отправка письма не удалась, пожалуйста, попробуйте позднее');
     }
 
     /**

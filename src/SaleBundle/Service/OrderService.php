@@ -411,6 +411,9 @@ class OrderService
         if ($storage->getComment()) {
             $order->setField('USER_DESCRIPTION', $storage->getComment());
         }
+        else{
+            $order->setField('USER_DESCRIPTION', '');
+        }
 
         $address = null;
         if ($storage->getAddressId()) {

@@ -491,9 +491,9 @@ class Order
      *
      * @return Order
      */
-    public function setClientComment(string $clientComment): Order
+    public function setClientComment(string $clientComment = null): Order
     {
-        $this->clientComment = $clientComment;
+        $this->clientComment = $clientComment ?? '';
         return $this;
     }
     
