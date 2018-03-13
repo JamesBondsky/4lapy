@@ -204,7 +204,7 @@ class OrderService implements LoggerAwareInterface
             ->setClientFio($this->getPropertyValueByCode($order, 'NAME'))
             ->setClientPhone($this->getPropertyValueByCode($order, 'PHONE'))
             ->setClientOrderPhone($this->getPropertyValueByCode($order, 'PHONE_ALT'))
-            ->setClientComment($order->getField('USER_DESCRIPTION'))
+            ->setClientComment($order->getField('USER_DESCRIPTION') ?? '')
             ->setOrderSource($orderSource)
             ->setBonusCard($orderUser->getDiscountCardNumber());
 
