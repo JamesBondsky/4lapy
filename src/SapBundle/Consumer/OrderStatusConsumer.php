@@ -55,7 +55,7 @@ class OrderStatusConsumer implements ConsumerInterface, LoggerAwareInterface
 
             $order = $this->orderService->transformDtoToOrder($order);
             $result = $order->save();
-            
+
             if (!$result->isSuccess()) {
                 throw new CantUpdateOrderException(sprintf(
                     'Не удалось обновить заказ #%s: %s',
@@ -66,7 +66,7 @@ class OrderStatusConsumer implements ConsumerInterface, LoggerAwareInterface
 
             if ($warnings = $result->getWarningMessages()) {
                 $this->log()->error(sprintf(
-                    'Ошибки обновлении заказа #%s произошли ошибки: %s',
+                    'Ошибки обновлении заказа #%s: %s',
                     $order->getId(),
                     implode(', ', $warnings)
                 ));

@@ -51,6 +51,7 @@ use FourPaws\SapBundle\Exception\NotFoundOrderShipmentException;
 use FourPaws\SapBundle\Exception\NotFoundOrderStatusException;
 use FourPaws\SapBundle\Exception\NotFoundOrderUserException;
 use FourPaws\SapBundle\Exception\NotFoundProductException;
+use FourPaws\SapBundle\Service\SapOutInterface;
 use FourPaws\SapBundle\Source\SourceMessage;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
@@ -66,7 +67,7 @@ use Symfony\Component\Filesystem\Filesystem;
  *
  * @package FourPaws\SapBundle\Service\Orders
  */
-class OrderService implements LoggerAwareInterface
+class OrderService implements LoggerAwareInterface, SapOutInterface
 {
     use LazyLoggerAwareTrait;
 
@@ -86,6 +87,10 @@ class OrderService implements LoggerAwareInterface
      * @var string
      */
     private $outPath;
+    /**
+     * @var string
+     */
+    private $outPrefix;
     /**
      * @var string
      */
@@ -229,6 +234,10 @@ class OrderService implements LoggerAwareInterface
      * @throws RuntimeException
      *
      * @return Order
+     * @throws NotFoundOrderPaySystemException
+     * @throws Exception
+     * @throws ObjectNotFoundException
+     * @throws ArgumentOutOfRangeException
      */
     public function transformDtoToOrder(OrderDtoIn $orderDto): Order
     {
@@ -269,27 +278,29 @@ class OrderService implements LoggerAwareInterface
      *
      * @return string
      */
-    public function getFileName(Order $order): string
+    public function getFileName($order): string
     {
-        return sprintf('/%s/%s-%s.xml', trim($this->outPath, '/'), $order->getDateInsert()->format('Ymd'),
-            $order->getId());
+        return sprintf(
+            '/%s/%s-%s%s.xml',
+            trim($this->outPath, '/'),
+            $order->getDateInsert()->format('Ymd'),
+            $this->outPrefix,
+            $order->getId()
+        );
     }
 
     /**
      * @param string $outPath
      *
      * @throws IOException
-     * @return OrderService
      */
-    public function setOutPath(string $outPath): OrderService
+    public function setOutPath(string $outPath): void
     {
         if (!$this->filesystem->exists($outPath)) {
             $this->filesystem->mkdir($outPath, '0775');
         }
 
         $this->outPath = $outPath;
-
-        return $this;
     }
 
     /**
@@ -601,12 +612,14 @@ class OrderService implements LoggerAwareInterface
     private function setPaymentFromDto(Order $order, OrderDtoIn $orderDto): void
     {
         $statusPayed = SapOrder::ORDER_PAYMENT_STATUS_NOT_PAYED === $orderDto->getPayStatus() ? 'N' : 'Y';
+        $bonusPayedCount = $orderDto->getBonusPayedCount();
         $innerPayment = $order->getPaymentCollection()->getInnerPayment();
         $externalPayment = null;
 
-        if ($innerPayment) {
+        if ($innerPayment && $bonusPayedCount) {
             $innerPayment->setPaid($statusPayed);
-            $innerPayment->setField('SUM', $orderDto->getBonusPayedCount());
+            $innerPayment->setField('PS_SUM', $bonusPayedCount);
+            $innerPayment->setFieldNoDemand('SUM', $bonusPayedCount);
         }
 
         /**
@@ -625,7 +638,8 @@ class OrderService implements LoggerAwareInterface
         }
 
         $externalPayment->setPaid($statusPayed);
-        $externalPayment->setField('SUM', $orderDto->getTotalSum() - $orderDto->getBonusPayedCount());
+        $externalPayment->setField('PS_SUM', $orderDto->getTotalSum() - $bonusPayedCount);
+        $externalPayment->setFieldNoDemand('SUM', $orderDto->getTotalSum() - $bonusPayedCount);
     }
 
     /**
@@ -796,5 +810,13 @@ class OrderService implements LoggerAwareInterface
 
         $deliveryCode = $shipment->getDelivery()->getCode();
         $order->setField('STATUS_ID', $this->statusService->getStatusBySapStatus($deliveryCode, $orderDto->getStatus()));
+    }
+
+    /**
+     * @param string $outPrefix
+     */
+    public function setOutPrefix(string $outPrefix): void
+    {
+        $this->outPrefix = $outPrefix;
     }
 }
