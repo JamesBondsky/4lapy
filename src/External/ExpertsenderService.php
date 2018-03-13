@@ -99,8 +99,8 @@ class ExpertsenderService implements LoggerAwareInterface
                 /** хеш строка для подтверждения мыла */
                 /** @var ConfirmCodeService $confirmService */
                 $confirmService = Application::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
-                $confirmService::setGeneratedHash($user->getEmail(), 'email');
-                $addUserToList->addProperty(new Property(10, 'string', $confirmService::getGeneratedCode('email')));
+                $confirmService::setGeneratedHash($user->getEmail(), 'email_register');
+                $addUserToList->addProperty(new Property(10, 'string', $confirmService::getGeneratedCode('email_register')));
                 unset($generatedHash, $confirmService);
                 /** ip юзверя */
                 $addUserToList->addProperty(new Property(48, 'string',
@@ -159,13 +159,13 @@ class ExpertsenderService implements LoggerAwareInterface
                 /** хеш строка для подтверждения мыла */
                 /** @var ConfirmCodeService $confirmService */
                 $confirmService = Application::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
-                $confirmService::setGeneratedHash($user->getEmail(), 'email');
+                $confirmService::setGeneratedHash($user->getEmail(), 'email_forgot');
                 $receiver = new Receiver($user->getEmail());
                 $backUrlText = !empty($backUrl) ? '&backurl=' . $backUrl . '&user_id=' . $user->getId() : '';
                 $snippets = [
                     new Snippet('user_name', $user->getName(), true),
                     new Snippet('link',
-                        (new FullHrefDecorator('/personal/forgot-password/?hash=' . $confirmService::getGeneratedCode('email') . '&email=' . $user->getEmail() . $backUrlText))->getFullPublicPath(),
+                        (new FullHrefDecorator('/personal/forgot-password/?hash=' . $confirmService::getGeneratedCode('email_forgot') . '&email=' . $user->getEmail() . $backUrlText))->getFullPublicPath(),
                         true),
                 ];
                 $apiResult = $this->client->sendTransactional(7072, $receiver, $snippets);
@@ -244,8 +244,8 @@ class ExpertsenderService implements LoggerAwareInterface
                     /** хеш строка для подтверждения мыла */
                     /** @var ConfirmCodeService $confirmService */
                     $confirmService = Application::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
-                    $confirmService::setGeneratedHash($curUser->getEmail(), 'email');
-                    $addUserToList->addProperty(new Property(10, 'string', $confirmService::getGeneratedCode('email')));
+                    $confirmService::setGeneratedHash($curUser->getEmail(), 'email_change_email');
+                    $addUserToList->addProperty(new Property(10, 'string', $confirmService::getGeneratedCode('email_change_email')));
                     /** ip юзверя */
                     $addUserToList->addProperty(new Property(48, 'string',
                         BitrixApplication::getInstance()->getContext()->getServer()->get('REMOTE_ADDR')));
@@ -328,8 +328,8 @@ class ExpertsenderService implements LoggerAwareInterface
                 /** хеш строка для подтверждения мыла */
                 /** @var ConfirmCodeService $confirmService */
                 $confirmService = Application::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
-                $confirmService::setGeneratedCode($user->getEmail(), 'email');
-                $addUserToList->addProperty(new Property(10, 'string', $confirmService::getGeneratedCode('email')));
+                $confirmService::setGeneratedHash($user->getEmail(), 'email_subscribe');
+                $addUserToList->addProperty(new Property(10, 'string', $confirmService::getGeneratedCode('email_subscribe')));
                 /** ip юзверя */
                 $addUserToList->addProperty(new Property(48, 'string',
                     BitrixApplication::getInstance()->getContext()->getServer()->get('REMOTE_ADDR')));

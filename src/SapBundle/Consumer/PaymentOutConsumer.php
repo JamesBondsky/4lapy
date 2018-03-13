@@ -3,10 +3,11 @@
 namespace FourPaws\SapBundle\Consumer;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
-use Bitrix\Sale\Payment;
+use FourPaws\SapBundle\Dto\In\ConfirmPayment\Debit;
 use FourPaws\SapBundle\Service\Orders\PaymentService;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LogLevel;
+use RuntimeException;
 
 /**
  * Class PaymentOutConsumer
@@ -26,17 +27,19 @@ class PaymentOutConsumer implements ConsumerInterface, LoggerAwareInterface
     {
         $this->paymentService = $paymentService;
     }
-    
+
     /**
      * Consume order
      *
-     * @param $orderInfo
+     * @param $debit
      *
      * @return bool
+     *
+     * @throws RuntimeException
      */
-    public function consume($orderInfo): bool
+    public function consume($debit): bool
     {
-        if (!$this->support($orderInfo)) {
+        if (!$this->support($debit)) {
             return false;
         }
         
@@ -45,7 +48,7 @@ class PaymentOutConsumer implements ConsumerInterface, LoggerAwareInterface
         try {
             $success = true;
 
-            $this->paymentService->out($orderInfo);
+            $this->paymentService->out($debit);
         } catch (\Exception $e) {
             $success = false;
             
@@ -62,9 +65,6 @@ class PaymentOutConsumer implements ConsumerInterface, LoggerAwareInterface
      */
     public function support($data): bool
     {
-        /**
-         * @todo support... dto?
-         */
-        return \is_object($data) && $data instanceof Payment;
+        return \is_object($data) && $data instanceof Debit;
     }
 }

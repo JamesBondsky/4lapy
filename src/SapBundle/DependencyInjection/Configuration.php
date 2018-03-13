@@ -93,9 +93,9 @@ class Configuration implements ConfigurationInterface
     {
         $treeBuilder = new TreeBuilder();
 
-        $node = $treeBuilder->root('out_path');
+        $node = $treeBuilder->root('out');
         /** @noinspection NullPointerExceptionInspection */
-        $node->scalarPrototype()->end();
+        $node->arrayPrototype()->scalarPrototype()->end()->end();
 
         return $node;
     }
