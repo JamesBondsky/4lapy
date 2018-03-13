@@ -8,6 +8,7 @@ use FourPaws\SapBundle\Exception\CantUpdateOrderException;
 use FourPaws\SapBundle\Service\Orders\OrderService;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LogLevel;
+use RuntimeException;
 
 /**
  * Class OrderStatusConsumer
@@ -32,17 +33,18 @@ class OrderStatusConsumer implements ConsumerInterface, LoggerAwareInterface
     {
         $this->orderService = $orderService;
     }
-    
+
     /**
      * Consume order info (save sap order`s change)
      *
-     * @param $paymentInfo
+     * @param $order
      *
      * @return bool
+     * @throws RuntimeException
      */
-    public function consume($paymentInfo): bool
+    public function consume($order): bool
     {
-        if (!$this->support($paymentInfo)) {
+        if (!$this->support($order)) {
             return false;
         }
         
@@ -50,10 +52,10 @@ class OrderStatusConsumer implements ConsumerInterface, LoggerAwareInterface
         
         try {
             $success = true;
-            
-            $order = $this->orderService->transformDtoToOrder($paymentInfo);
+
+            $order = $this->orderService->transformDtoToOrder($order);
             $result = $order->save();
-            
+
             if (!$result->isSuccess()) {
                 throw new CantUpdateOrderException(sprintf(
                     'Не удалось обновить заказ #%s: %s',
@@ -61,9 +63,17 @@ class OrderStatusConsumer implements ConsumerInterface, LoggerAwareInterface
                     implode(', ', $result->getErrorMessages())
                 ));
             }
+
+            if ($warnings = $result->getWarningMessages()) {
+                $this->log()->error(sprintf(
+                    'Ошибки обновлении заказа #%s: %s',
+                    $order->getId(),
+                    implode(', ', $warnings)
+                ));
+            }
         } catch (\Exception $e) {
             $success = false;
-            
+
             $this->log()->log(LogLevel::ERROR, sprintf('Ошибка импорта статуса заказа: %s', $e->getMessage()));
         }
         

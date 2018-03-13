@@ -7,6 +7,7 @@ use FourPaws\SapBundle\Dto\In\ConfirmPayment\Order;
 use FourPaws\SapBundle\Service\Orders\PaymentService;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LogLevel;
+use RuntimeException;
 
 /**
  * Class PaymentConsumer
@@ -26,13 +27,14 @@ class PaymentConsumer implements ConsumerInterface, LoggerAwareInterface
     {
         $this->paymentService = $paymentService;
     }
-    
+
     /**
-     * Consume order
+     * Consume payment info
      *
      * @param $paymentInfo
      *
      * @return bool
+     * @throws RuntimeException
      */
     public function consume($paymentInfo): bool
     {

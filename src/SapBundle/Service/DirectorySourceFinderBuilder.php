@@ -27,7 +27,11 @@ class DirectorySourceFinderBuilder
         $this->checkPath($path);
 
         return (new Finder())
-            ->in($path)->name($nameMask . '.' . $fileType)
+            ->in($path)->name(sprintf(
+                '~%s\.%s$~i',
+                $nameMask,
+                $fileType
+            ))
             ->depth(0)
             ->files()
             ->ignoreDotFiles(true)->sortByName()
