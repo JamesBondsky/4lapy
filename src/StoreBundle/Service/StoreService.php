@@ -21,7 +21,6 @@ use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Location\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
-use FourPaws\StoreBundle\Entity\Base as BaseEntity;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\BaseException;
 use FourPaws\StoreBundle\Exception\NotFoundException;
@@ -105,17 +104,25 @@ class StoreService implements LoggerAwareInterface
      * @param int $id
      *
      * @throws NotFoundException
-     * @return BaseEntity|bool|Store
+     * @return Store
      */
-    public function getById(int $id)
+    public function getById(int $id): Store
     {
-        $store = false;
+        $store = null;
+
+        $getStore = function () use ($id) {
+            return ['result' => $this->storeRepository->find($id)];
+        };
+
         try {
-            $store = $this->storeRepository->find($id);
-        } catch (BaseException $e) {
+            $store = (new BitrixCache())->withId(__METHOD__ . $id)->resultOf($getStore)['result'];
+        } catch (\Exception $e) {
+            $this->logger->error(
+                sprintf('failed to get store with id %s: %s', $id, $e->getMessage())
+            );
         }
 
-        if (!$store) {
+        if (!$store || !$store instanceof Store) {
             throw new NotFoundException('Склад с ID=' . $id . ' не найден');
         }
 

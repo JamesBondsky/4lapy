@@ -8,7 +8,7 @@ class BaseException extends \Exception
 {
     public function __construct($message = "", int $code = 0, Throwable $previous = null)
     {
-        if (is_array($message)) {
+        if (\is_array($message)) {
             $message = implode('. ', $message);
         }
         

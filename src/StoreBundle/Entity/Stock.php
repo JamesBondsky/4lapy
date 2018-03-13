@@ -2,6 +2,11 @@
 
 namespace FourPaws\StoreBundle\Entity;
 
+use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Catalog\Model\Offer;
+use FourPaws\StoreBundle\Exception\NotFoundException;
+use FourPaws\StoreBundle\Service\StoreService;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -49,6 +54,9 @@ class Stock extends Base
      * @Assert\Blank(groups={"create"})
      */
     protected $storeId = 0;
+
+    /** @var Store */
+    protected $store;
 
     /**
      * @return int
@@ -123,6 +131,32 @@ class Stock extends Base
     {
         $this->storeId = $storeId;
 
+        return $this;
+    }
+
+    /**
+     * @return Store
+     * @throws ApplicationCreateException
+     * @throws NotFoundException
+     */
+    public function getStore(): Store
+    {
+        if (null === $this->store) {
+            /** @var StoreService $storeService */
+            $storeService = Application::getInstance()->getContainer()->get('store.service');
+            $this->store = $storeService->getById($this->getId());
+        }
+
+        return $this->store;
+    }
+
+    /**
+     * @param Store $store
+     * @return Stock
+     */
+    public function setStore(Store $store): Stock
+    {
+        $this->store = $store;
         return $this;
     }
 }
