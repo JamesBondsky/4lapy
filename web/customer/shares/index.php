@@ -1,5 +1,6 @@
 <?
 
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 
@@ -42,7 +43,10 @@ $APPLICATION->SetTitle("Акции");
         'DISPLAY_BOTTOM_PAGER' => 'Y',
         'FILE_404' => '',
         'HIDE_LINK_WHEN_NO_DETAIL' => 'N',
-        'IBLOCK_ID' => IblockCode::SHARES,
+        'IBLOCK_ID' => IblockUtils::getIblockId(
+            IblockType::PUBLICATION,
+            IblockCode::SHARES
+        ),
         'IBLOCK_TYPE' => IblockType::PUBLICATION,
         'INCLUDE_IBLOCK_INTO_CHAIN' => 'N',
         'LIST_ACTIVE_DATE_FORMAT' => 'j F Y',

@@ -94,7 +94,7 @@ if ($cache->initCache(
     $vars     = $cache->getVars();
     $products = $vars['products'];
 } else {
-    $res      = \CIBlockElement::GetProperty($arParams['IBLOCK_ID'], $elementID, [], ['CODE' => 'PRODUCTS']);
+    $res      = \CIBlockElement::GetProperty($arParams['IBLOCK_ID'], $elementID, '','', ['CODE' => 'PRODUCTS']);
     $products = [];
     while ($item = $res->Fetch()) {
         if(!empty($item['VALUE']) && !in_array($item['VALUE'], $products)) {
