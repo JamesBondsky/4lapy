@@ -7,8 +7,8 @@
 namespace FourPaws\StoreBundle\Service;
 
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
-use Doctrine\Common\Collections\Collection;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Model\CropImageDecorator;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
@@ -20,7 +20,6 @@ use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundExcep
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Location\LocationService;
-use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Base as BaseEntity;
 use FourPaws\StoreBundle\Entity\Store;
@@ -28,13 +27,16 @@ use FourPaws\StoreBundle\Exception\BaseException;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Repository\StockRepository;
 use FourPaws\StoreBundle\Repository\StoreRepository;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 use WebArch\BitrixCache\BitrixCache;
 
-class StoreService
+class StoreService implements LoggerAwareInterface
 {
+    use LoggerAwareTrait;
     /**
      * Все склады, исключая склады поставщиков
      */
@@ -94,6 +96,7 @@ class StoreService
         $this->storeRepository = $storeRepository;
         $this->stockRepository = $stockRepository;
         $this->deliveryService = $deliveryService;
+        $this->setLogger(LoggerFactory::create('StoreService'));
     }
 
     /**
@@ -151,7 +154,6 @@ class StoreService
      * @param string $type
      *
      * @return StoreCollection
-     * @throws \Exception
      * @throws ArgumentException
      */
     public function getByCurrentLocation($type = self::TYPE_ALL): StoreCollection
@@ -170,7 +172,6 @@ class StoreService
      *
      * @return StoreCollection
      * @throws ArgumentException
-     * @throws \Exception
      */
     public function getByLocation(
         string $locationCode,
@@ -189,11 +190,22 @@ class StoreService
             return ['result' => $storeCollection];
         };
 
-        $result = (new BitrixCache())->withId(__METHOD__ . $locationCode . $type)->resultOf($getStores);
+        try {
+            $result = (new BitrixCache())->withId(__METHOD__ . $locationCode . $type)->resultOf($getStores);
 
-        /** @var StoreCollection $stores */
-        $stores = $result['result'];
-
+            /** @var StoreCollection $stores */
+            $stores = $result['result'];
+        } catch (\Exception $e) {
+            $this->logger->error(
+                sprintf(
+                    'failed to get stores with type %s for location %s: %s',
+                    $type,
+                    $locationCode,
+                    $e->getMessage()
+                )
+            );
+            $stores = new StoreCollection();
+        }
         /**
          * Если не нашлось ничего с типом "склад" для данного местоположения, то добавляем склады для Москвы
          */
@@ -211,11 +223,27 @@ class StoreService
 
     /**
      * @return StoreCollection
-     * @throws ArgumentException
      */
     public function getSupplierStores(): StoreCollection
     {
-        return $this->storeRepository->findBy($this->getTypeFilter(self::TYPE_SUPPLIER));
+        $getStores = function () {
+            $storeCollection = $this->storeRepository->findBy(
+                $this->getTypeFilter(self::TYPE_SUPPLIER)
+            );
+
+            return ['result' => $storeCollection];
+        };
+
+        try {
+            $result = (new BitrixCache())->withId(__METHOD__)->resultOf($getStores);
+            return $result['result'];
+        } catch (\Exception $e) {
+            $this->logger->error(
+                sprintf('failed to get supplier stores: %s', $e->getMessage())
+            );
+        }
+
+        return new StoreCollection();
     }
 
     /**

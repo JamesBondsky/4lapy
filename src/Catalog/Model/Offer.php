@@ -823,7 +823,6 @@ class Offer extends IblockElement
     /**
      * @return bool
      * @throws ApplicationCreateException
-     * @throws \Bitrix\Main\ArgumentException
      */
     public function isByRequest(): bool
     {
@@ -1190,18 +1189,20 @@ class Offer extends IblockElement
     }
 
     /**
-     * @throws ServiceNotFoundException
-     * @throws \Exception
-     * @throws ApplicationCreateException
-     * @throws ServiceCircularReferenceException
      * @return StockCollection
+     * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentException
      */
     public function getStocks(): StockCollection
     {
         if (!$this->stocks) {
             /** @var StoreService $storeService */
             $storeService = Application::getInstance()->getContainer()->get('store.service');
-            $stores = $storeService->getByCurrentLocation();
+            if ($this->isByRequest()) {
+                $stores = $storeService->getSupplierStores();
+            } else {
+                $stores = $storeService->getByCurrentLocation();
+            }
             $this->withStocks($this->getAllStocks()->filterByStores($stores));
         }
 
