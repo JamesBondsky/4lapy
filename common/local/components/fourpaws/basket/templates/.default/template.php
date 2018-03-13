@@ -261,14 +261,16 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
                             </span><span class="b-ruble">₽</span>
                         </div>
                     </div>
-                    <a class="b-button b-button--start-order" href="/sale/order/"
+                    <a class="b-button b-button--start-order"
+                       href="<?= (int)$arResult['TOTAL_PRICE'] === 0 ? 'javascript:void(0)' : '/sale/order/' ?>"
                        title="Начать оформление" <?= (int)$arResult['TOTAL_PRICE'] === 0 ? ' disabled' : '' ?>>
                         Начать оформление
                     </a>
                     <div class="b-information-order__one-click">
-                        <a class="b-link b-link--one-click js-open-popup js-open-popup--one-click js-open-popup"
-                           href="javascript:void(0)" title="Купить в 1 клик" data-popup-id="buy-one-click"
-                           data-url="/ajax/sale/fast_order/load/" <?= (int)$arResult['TOTAL_PRICE'] === 0 ? ' disabled' : '' ?>>
+                        <a class="b-link b-link--one-click <?= (int)$arResult['TOTAL_PRICE'] === 0 ? '' : ' js-open-popup js-open-popup--one-click' ?>"
+                           href="javascript:void(0)" title="Купить в 1 клик"
+                            <?= (int)$arResult['TOTAL_PRICE'] === 0 ? '' : ' data-popup-id="buy-one-click" data-url="/ajax/sale/fast_order/load/"' ?>
+                            <?= (int)$arResult['TOTAL_PRICE'] === 0 ? ' disabled' : '' ?>>
                             <span class="b-link__text b-link__text--one-click js-open-popup">Купить в 1 клик</span>
                         </a>
                     </div>
