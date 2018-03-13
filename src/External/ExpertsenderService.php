@@ -110,6 +110,7 @@ class ExpertsenderService implements LoggerAwareInterface
                 if ($apiResult->isOk()) {
                     return true;
                 }
+                throw new ExpertsenderServiceException($apiResult->getErrorMessage(), $apiResult->getErrorCode());
             } catch (SystemException|GuzzleException|\Exception $e) {
                 throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
             }
@@ -135,11 +136,10 @@ class ExpertsenderService implements LoggerAwareInterface
             if ($apiResult->isOk()) {
                 return true;
             }
+            throw new ExpertsenderServiceException($apiResult->getErrorMessage(), $apiResult->getErrorCode());
         } catch (ExpertSenderException|GuzzleException $e) {
             throw new ExpertsenderServiceException($e->getMessage(), $e->getCode());
         }
-
-        return false;
     }
 
     /**
@@ -175,6 +175,7 @@ class ExpertsenderService implements LoggerAwareInterface
                 if ($apiResult->isOk()) {
                     return true;
                 }
+                throw new ExpertsenderServiceException($apiResult->getErrorMessage(), $apiResult->getErrorCode());
             } catch (ExpertSenderException|GuzzleException|ApplicationCreateException|\Exception $e) {
                 throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
             }
@@ -225,6 +226,10 @@ class ExpertsenderService implements LoggerAwareInterface
                     if ($apiResult->isOk()) {
                         $continue = true;
                     }
+                    else {
+                        throw new ExpertsenderServiceException($apiResult->getErrorMessage(),
+                            $apiResult->getErrorCode());
+                    }
                 } else {
                     $addUserToList = new AddUserToList();
                     $addUserToList->setForce(true);
@@ -252,6 +257,9 @@ class ExpertsenderService implements LoggerAwareInterface
                     if ($apiResult->isOk()) {
                         $continue = true;
                     }
+                    else{
+                        throw new ExpertsenderServiceException($apiResult->getErrorMessage(), $apiResult->getErrorCode());
+                    }
                 }
 
                 if ($continue) {
@@ -261,6 +269,7 @@ class ExpertsenderService implements LoggerAwareInterface
                     if ($apiResult->isOk()) {
                         return true;
                     }
+                    throw new ExpertsenderServiceException($apiResult->getErrorMessage(), $apiResult->getErrorCode());
                 }
             } catch (GuzzleException|\Exception $e) {
                 throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
@@ -304,35 +313,36 @@ class ExpertsenderService implements LoggerAwareInterface
                     if ($apiResult->isOk()) {
                         return true;
                     }
-
-                } else {
-                    $addUserToList = new AddUserToList();
-                    $addUserToList->setForce(true);
-                    $addUserToList->setMode('AddAndUpdate');
-                    $addUserToList->setTrackingCode('all_popup');
-                    $addUserToList->setListId(178);
-                    $addUserToList->setEmail($user->getEmail());
-                    $addUserToList->setFirstName($user->getName());
-                    $addUserToList->setLastName($user->getLastName());
-                    /** флаг подписки на новости */
-                    $addUserToList->addProperty(new Property(23, 'boolean', true));
-                    /** флаг регистрации */
-                    $addUserToList->addProperty(new Property(47, 'boolean', 0));
-
-                    /** хеш строка для подтверждения мыла */
-                    /** @var ConfirmCodeService $confirmService */
-                    $confirmService = Application::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
-                    $generatedHash = $confirmService::getConfirmHash($user->getEmail());
-                    $confirmService::setGeneratedCode($generatedHash, 'email');
-                    $addUserToList->addProperty(new Property(10, 'string', $generatedHash));
-                    /** ip юзверя */
-                    $addUserToList->addProperty(new Property(48, 'string',
-                        BitrixApplication::getInstance()->getContext()->getServer()->get('REMOTE_ADDR')));
-                    $apiResult = $this->client->addUserToList($addUserToList);
-                    if ($apiResult->isOk()) {
-                        return true;
-                    }
+                    throw new ExpertsenderServiceException($apiResult->getErrorMessage(), $apiResult->getErrorCode());
                 }
+
+                $addUserToList = new AddUserToList();
+                $addUserToList->setForce(true);
+                $addUserToList->setMode('AddAndUpdate');
+                $addUserToList->setTrackingCode('all_popup');
+                $addUserToList->setListId(178);
+                $addUserToList->setEmail($user->getEmail());
+                $addUserToList->setFirstName($user->getName());
+                $addUserToList->setLastName($user->getLastName());
+                /** флаг подписки на новости */
+                $addUserToList->addProperty(new Property(23, 'boolean', true));
+                /** флаг регистрации */
+                $addUserToList->addProperty(new Property(47, 'boolean', 0));
+
+                /** хеш строка для подтверждения мыла */
+                /** @var ConfirmCodeService $confirmService */
+                $confirmService = Application::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+                $generatedHash = $confirmService::getConfirmHash($user->getEmail());
+                $confirmService::setGeneratedCode($generatedHash, 'email');
+                $addUserToList->addProperty(new Property(10, 'string', $generatedHash));
+                /** ip юзверя */
+                $addUserToList->addProperty(new Property(48, 'string',
+                    BitrixApplication::getInstance()->getContext()->getServer()->get('REMOTE_ADDR')));
+                $apiResult = $this->client->addUserToList($addUserToList);
+                if ($apiResult->isOk()) {
+                    return true;
+                }
+                throw new ExpertsenderServiceException($apiResult->getErrorMessage(), $apiResult->getErrorCode());
             } catch (SystemException|GuzzleException|\Exception $e) {
                 throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
             }
@@ -375,9 +385,9 @@ class ExpertsenderService implements LoggerAwareInterface
                         return true;
                     }
 
-                } else {
-                    return true;
+                    throw new ExpertsenderServiceException($apiResult->getErrorMessage(), $apiResult->getErrorCode());
                 }
+                return true;
             } catch (SystemException|GuzzleException|\Exception $e) {
                 throw new ExpertsenderServiceException($e->getMessage(), $e->getCode(), $e);
             }
