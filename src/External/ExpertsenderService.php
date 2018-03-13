@@ -99,10 +99,9 @@ class ExpertsenderService implements LoggerAwareInterface
                 /** хеш строка для подтверждения мыла */
                 /** @var ConfirmCodeService $confirmService */
                 $confirmService = Application::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
-                $generatedHash = $confirmService::getConfirmHash($user->getEmail());
-                $confirmService::setGeneratedCode($generatedHash, 'email');
-                $addUserToList->addProperty(new Property(10, 'string', $generatedHash));
-                unset($generatedHash, $confirmService, $user);
+                $confirmService::setGeneratedHash($user->getEmail(), 'email');
+                $addUserToList->addProperty(new Property(10, 'string', $confirmService::getGeneratedCode('email')));
+                unset($generatedHash, $confirmService);
                 /** ip юзверя */
                 $addUserToList->addProperty(new Property(48, 'string',
                     BitrixApplication::getInstance()->getContext()->getServer()->get('REMOTE_ADDR')));
