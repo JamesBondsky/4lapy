@@ -23,6 +23,8 @@ if ($bonuses > 0) {
                 'бонусов',
             ]) ?>
     <script type="text/javascript">
-        $('.js-bonus-<?=$currentOffer->getId()?>').html(<?=$bonus?>);
+        $(function() {
+            $('.js-bonus-<?=$currentOffer->getId()?>').html('<?=$bonus?>');
+        });
     </script>
 <?php }
