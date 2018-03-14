@@ -15,4 +15,9 @@ fos_rest:
   exception:
     enabled: true
     exception_controller: FourPaws\MobileApiBundle\Controller\ExceptionController::showAction
+  versioning:
+    enabled: true
+    default_version: v0
+    resolvers:
+      custom_header: true
   #todo: param_fetcher_listener, service
