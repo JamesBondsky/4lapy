@@ -30,7 +30,9 @@ if(\is_array($offers) && !empty($offers)){
                         'бонусов',
                     ])?>
             <script type="text/javascript">
-                $('.js-bonus-<?=$offer->getId()?>').html(<?=$bonus?>);
+                $(function(){
+                    $('.js-bonus-<?=$offer->getId()?>').html('<?=$bonus?>');
+                });
             </script>
         <?php }
     }
