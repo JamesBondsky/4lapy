@@ -95,7 +95,7 @@ class ProductsByProp extends CBitrixComponent
             }
             if (!empty($products)) {
                 $query = new ProductQuery();
-                if($this->arParams['COUNT_ON_PAGE'] > 0) {
+                if($this->arParams['SLIDER'] !== 'Y' && $this->arParams['COUNT_ON_PAGE'] > 0) {
                     $query->withNav(['nPageSize' => $this->arParams['COUNT_ON_PAGE'], 'iNumPage' => $this->arParams['CURRENT_PAGE']]);
                 }
                 $this->arResult['PRODUCTS'] = $query->withFilter(['=' . $this->arParams['FILTER_FIELD'] => $products])->exec();
