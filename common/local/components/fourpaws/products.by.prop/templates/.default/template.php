@@ -5,21 +5,21 @@
  *
  * @var ProductsByProp    $component
  *
- * @var Product           $product
- * @var ProductCollection $products
+ * @var Offer           $offer
+ * @var OfferCollection $offers
  *
  * @global \CMain         $APPLICATION
  */
 
-use FourPaws\Catalog\Collection\ProductCollection;
-use FourPaws\Catalog\Model\Product;
+use FourPaws\Catalog\Collection\OfferCollection;
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\Components\ProductsByProp;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
-$products = $arResult['PRODUCTS'];
-if (!($products instanceof ProductCollection) || $products->isEmpty()) {
+$offers = $arResult['OFFERS'];
+if (!($offers instanceof OfferCollection) || $offers->isEmpty()) {
     return;
 } ?>
 <div class="b-container">
@@ -28,8 +28,8 @@ if (!($products instanceof ProductCollection) || $products->isEmpty()) {
             <h2 class="b-title b-title--sale"><?=$arParams['TITLE']?></h2>
         </div>
         <div class="<?=$arParams['SLIDER'] === 'Y' ? 'b-common-section__content b-common-section__content--sale js-popular-product' : 'b-common-wrapper b-common-wrapper--visible js-catalog-wrapper'?>">
-            <?php foreach ($products as $product) {
-                $params = ['PRODUCT' => $product];
+            <?php foreach ($offers as $offer) {
+                $params = ['PRODUCT' => $offer->getProduct(), 'CURRENT_OFFER' => $offer];
                 if ($arParams['SLIDER']) {
                     $params['NOT_CATALOG_ITEM_CLASS'] = 'Y';
                 }
@@ -49,7 +49,7 @@ if($arParams['SLIDER'] !== 'Y') {
         'pagination',
         [
             'NAV_TITLE'      => '',
-            'NAV_RESULT'     => $products->getCdbResult(),
+            'NAV_RESULT'     => $offers->getCdbResult(),
             'SHOW_ALWAYS'    => false,
             'PAGE_PARAMETER' => 'page',
             'AJAX_MODE'      => 'N',
