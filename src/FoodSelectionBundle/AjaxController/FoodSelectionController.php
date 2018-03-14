@@ -299,12 +299,11 @@ class FoodSelectionController extends Controller
         /** @noinspection PhpIncludeInspection */
         include_once App::getDocumentRoot()
                      . '/local/components/fourpaws/catalog.food.selection/templates/.default/include/' . $step . '.php';
-        $html = ob_get_clean();
         
         return JsonSuccessResponse::createWithData(
             'Успешный аякс',
             [
-                'html'      => $html,
+                'html'      => ob_get_clean(),
                 'showItems' => true,
                 'food'      => [
                     'next_step_url' => '',

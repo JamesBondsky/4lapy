@@ -229,15 +229,20 @@ class BasketService
      *
      * @param bool|null $reload
      *
+     * @param int       $fuserId
+     *
      * @return Basket
      */
-    public function getBasket(bool $reload = null): Basket
+    public function getBasket(bool $reload = null, int $fuserId = 0): Basket
     {
         if (null === $this->basket || $reload) {
             /** @var Basket $basket */
             /** @noinspection PhpInternalEntityUsedInspection */
             DiscountCompatibility::stopUsageCompatible();
-            $this->basket = Basket::loadItemsForFUser($this->currentUserProvider->getCurrentFUserId(), SITE_ID);
+            if($fuserId === 0){
+                $fuserId = $this->currentUserProvider->getCurrentFUserId();
+            }
+            $this->basket = Basket::loadItemsForFUser($fuserId, SITE_ID);
         }
         return $this->basket;
     }
@@ -325,7 +330,7 @@ class BasketService
                 continue;
             }
 
-            $delay = $offer->getStocks()->isEmpty();
+            $delay = $offer->getStocks()->isEmpty() || $offer->isByRequest();
             if ($basketItem->isDelay() !== $delay) {
                 $basketItem->setField(
                     'DELAY',
@@ -337,61 +342,6 @@ class BasketService
         }
 
         return $basketItem;
-    }
-
-    /**
-     * @param BasketItem $basketItem
-     * @param int $quantity
-     *
-     * @return EventResult
-     */
-    public function checkItemQuantity(BasketItem $basketItem, int $quantity): EventResult
-    {
-        $currentOffer = null;
-        foreach ($this->getOfferCollection() as $offer) {
-            if ($offer->getId() !== (int)$basketItem->getProductId()) {
-                continue;
-            }
-            $currentOffer = $offer;
-        }
-
-        if (!$currentOffer instanceof Offer) {
-            return (new EventResult(
-                EventResult::ERROR,
-                ResultError::create(
-                    new Error(
-                        'Товар не найден',
-                        'NO_IBLOCK_ELEMENT'
-                    )
-                )
-            ));
-        }
-
-        if (!$maxQuantity = $currentOffer->getQuantity()) {
-            return (new EventResult(
-                EventResult::ERROR,
-                ResultError::create(
-                    new Error(
-                        'Товар недоступен для покупки',
-                        'SALE_BASKET_ITEM_WRONG_AVAILABLE_QUANTITY'
-                    )
-                )
-            ));
-        }
-
-        if ($quantity > $maxQuantity) {
-            return (new EventResult(
-                EventResult::ERROR,
-                ResultError::create(
-                    new Error(
-                        'Товар недоступен в нужном количестве',
-                        'SALE_BASKET_ITEM_WRONG_AVAILABLE_QUANTITY'
-                    )
-                )
-            ));
-        }
-
-        return (new EventResult(EventResult::SUCCESS));
     }
 
     /**

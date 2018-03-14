@@ -16,7 +16,7 @@ class Event implements ServiceHandlerInterface
     /**
      * @param EventManager $eventManager
      */
-    public static function initHandlers(EventManager $eventManager)
+    public static function initHandlers(EventManager $eventManager): void
     {
         $eventManager->addEventHandler(
             'sale',

@@ -120,6 +120,7 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
             $result->addError(new Error('Не задана стоимость доставки'));
         }
         $data['INTERVALS'] = $this->getIntervals($shipment);
+        $data['DELIVERY_ZONE'] = $this->deliveryService->getDeliveryZoneCode($shipment);
 
         $result->setPeriodType(CalculationResult::PERIOD_TYPE_DAY);
         if (!$offers = static::getOffers($deliveryLocation, $basket)) {

@@ -13,7 +13,6 @@ use Bitrix\Main\Entity\Query;
 
 class ExtendsBitrixQuery extends Query
 {
-    private $selectInicialized = false;
     /** @noinspection MagicMethodsValidityInspection */
     /** @noinspection PhpMissingParentConstructorInspection */
     /** @inheritdoc */
@@ -33,6 +32,7 @@ class ExtendsBitrixQuery extends Query
             $this->setOrder($source->getOrder());
             $this->setLimit($source->getLimit());
         }
+        $this->buildBaseQuery();
     }
 
     /**
@@ -40,7 +40,6 @@ class ExtendsBitrixQuery extends Query
      */
     public function getBuildWhere(): string
     {
-        $this->buildBaseQuery();
         $where = $this->query_build_parts['WHERE'];
 
         return !empty($where) ? ' WHERE ' . $where : '';
@@ -51,13 +50,12 @@ class ExtendsBitrixQuery extends Query
      */
     public function getBuildOrder(): string
     {
-        $this->buildBaseQuery();
         $order = $this->query_build_parts['ORDER'];
 
         return !empty($order) ? ' ORDER BY ' . $order : '';
     }
 
-    private function buildBaseQuery()
+    private function buildBaseQuery(): void
     {
         if (empty($this->query_build_parts)) {
             $this->setCustomBaseTableAlias($this->getEntity()->getDBTableName())->buildQuery();

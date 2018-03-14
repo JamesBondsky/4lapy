@@ -17,9 +17,7 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
-use FourPaws\External\Exception\ExpertsenderNotAllowedException;
 use FourPaws\External\Exception\ExpertsenderServiceException;
-use FourPaws\External\Exception\SmsSendErrorException;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\UserBundle\Entity\User;
@@ -97,12 +95,18 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
             if (!empty($confirmAuth)) {
                 /** @var ConfirmCodeService $confirmService */
                 $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
-                if ($confirmService::getGeneratedCode() === $confirmAuth) {
-                    $this->authService->authorize($request->get('user_id'));
-                    if (!empty($backUrl)) {
-                        LocalRedirect($backUrl);
+                if ($confirmService::checkCode($confirmAuth, 'confirm_forgot_phone')) {
+                    $userId = (int)$request->get('user_id');
+                    if ($userId > 0) {
+                        $this->authService->authorize($userId);
+                        if (!empty($backUrl)) {
+                            LocalRedirect($backUrl);
+                        } else {
+                            $this->arResult['STEP'] = 'confirmPhone';
+                        }
                     } else {
-                        $this->arResult['STEP'] = 'confirmPhone';
+                        $this->arResult['ERROR'] = 'Произошла ошибка, попробуйте позднее';
+                        $this->arResult['STEP'] = 'error';
                     }
                 }
             }
@@ -125,12 +129,10 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                         $this->arResult['ERROR'] = 'Ссылка для подтверждения недействительна, попробуйте восстановить пароль заново';
                         $this->arResult['STEP'] = 'error';
                     }
-                }
-                catch (ExpiredConfirmCodeException $e){
+                } catch (ExpiredConfirmCodeException $e) {
                     $this->arResult['ERROR'] = 'Срок действия ссылки истек, попробуйте восстановить пароль заново';
                     $this->arResult['STEP'] = 'error';
-                }
-                catch (NotFoundConfirmedCodeException $e){
+                } catch (NotFoundConfirmedCodeException $e) {
                     $this->arResult['ERROR'] = 'Ссылка для подтверждения недействительна, попробуйте восстановить пароль заново';
                     $this->arResult['STEP'] = 'error';
                 }
@@ -165,7 +167,7 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
             $userId = 0;
             try {
                 $userId = $this->currentUserProvider->getUserRepository()->findIdentifierByRawLogin($login, false);
-                if($userId > 0) {
+                if ($userId > 0) {
                     return $this->ajaxMess->getNotActiveUserError();
                 }
             } catch (UsernameNotFoundException|TooManyUserFoundException $e) {
@@ -207,13 +209,13 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
 
             /** @var ConfirmCodeService $confirmService */
             $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
-            $confirmService::setGeneratedCode('user_' . $userId);
+            $confirmService::setGeneratedCode('user_' . $userId, 'confirm_forgot_phone');
 
             $backUrl = $request->get('backurl', '');
             $uri = new Uri(static::PERSONAL_URL . 'forgot-password/');
             $uri->addParams(
                 [
-                    'confirm_auth' => $confirmService::getGeneratedCode(),
+                    'confirm_auth' => $confirmService::getGeneratedCode('confirm_forgot_phone'),
                     'user_id'      => $userId,
                     'backurl'      => $backUrl,
                 ]
@@ -230,6 +232,8 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
         } catch (BitrixRuntimeException $e) {
             return $this->ajaxMess->getUpdateError($e->getMessage());
         } catch (\Exception $e) {
+            $logger = LoggerFactory::create('system');
+            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
             /** скипаем для показа системной ошибки */
         }
 
@@ -256,11 +260,11 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
             if (!$res) {
                 return $this->ajaxMess->getSmsSendErrorException();
             }
-        } catch (SmsSendErrorException $e) {
-            return $this->ajaxMess->getSmsSendErrorException();
         } catch (WrongPhoneNumberException $e) {
             return $this->ajaxMess->getWrongPhoneNumberException();
         } catch (\RuntimeException|\Exception $e) {
+            $logger = LoggerFactory::create('system');
+            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
             return $this->ajaxMess->getSystemError();
         }
 
@@ -270,10 +274,6 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
     /**
      * @param Request $request
      *
-     * @throws ServiceNotFoundException
-     * @throws ApplicationCreateException
-     * @throws ServiceCircularReferenceException
-     * @throws \Exception
      * @return JsonResponse
      */
     public function ajaxGet($request): JsonResponse
@@ -327,11 +327,13 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                 if (!empty($phone)) {
                     try {
                         /** @var ConfirmCodeService $confirmService */
+
                         $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
                         $res = $confirmService::checkConfirmSms(
                             $phone,
                             $request->get('confirmCode')
                         );
+
                         if (!$res) {
                             return $this->ajaxMess->getWrongConfirmCode();
                         }
@@ -345,6 +347,9 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                         return $this->ajaxMess->getWrongPhoneNumberException();
                     } catch (NotFoundConfirmedCodeException $e) {
                         return $this->ajaxMess->getNotFoundConfirmedCodeException();
+                    } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
+                        $logger = LoggerFactory::create('system');
+                        $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
                     }
                 }
 
@@ -394,12 +399,11 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
             /** @var ConfirmCodeService $confirmService */
             $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
             $confirmService::sendConfirmSms($phone);
-        } catch (SmsSendErrorException $e) {
-            return $this->ajaxMess->getSmsSendErrorException();
         } catch (WrongPhoneNumberException $e) {
             return $this->ajaxMess->getWrongPhoneNumberException();
-        } catch (\RuntimeException|\Exception $e) {
-            return $this->ajaxMess->getSystemError();
+        } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
+            $logger = LoggerFactory::create('system');
+            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
         }
 
         return $phone;
@@ -410,9 +414,6 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
      * @param string $backUrl
      *
      * @return bool|JsonResponse
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
-     * @throws ExpertsenderNotAllowedException
      */
     private function ajaxGetSendEmailCode(string $email, string $backUrl = '')
     {
@@ -436,12 +437,16 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
         /** @var User $curUser */
         $curUser = current($users);
 
-        if($curUser->allowedEASend()) {
+        if ($curUser->allowedEASend()) {
             try {
                 $expertSenderService = App::getInstance()->getContainer()->get('expertsender.service');
                 return $expertSenderService->sendForgotPassword($curUser, $backUrl);
-            } catch (ExpertsenderServiceException|ApplicationCreateException $e) {
-                /** скипаем для показа системной ошибки в вызвавшем методе */
+            } catch (ExpertsenderServiceException $e) {
+                $logger = LoggerFactory::create('expertSender');
+                $logger->critical('ES error - ' . $e->getMessage());
+            } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
+                $logger = LoggerFactory::create('system');
+                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
             }
             return false;
         }
@@ -453,15 +458,17 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
      * @param string $login
      *
      * @return JsonResponse
-     * @throws \Exception
-     * @throws ServiceNotFoundException
-     * @throws ApplicationCreateException
-     * @throws ServiceCircularReferenceException
      */
     private function redirectByBasket(string $backUrl, string $login): JsonResponse
     {
-        /** @var ConfirmCodeService $confirmService */
-        $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+        try {
+            /** @var ConfirmCodeService $confirmService */
+            $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
+        } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
+            $logger = LoggerFactory::create('system');
+            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            return $this->ajaxMess->getSystemError();
+        }
 
         try {
             $userId = $this->currentUserProvider->getUserRepository()->findIdentifierByRawLogin($login);
@@ -482,11 +489,12 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
             }
             return $this->ajaxMess->getUsernameNotFoundException($login);
         }
-        $confirmService::setGeneratedCode('user_' . $userId);
         try {
+            $confirmService::setGeneratedCode('user_' . $userId);
             $generatedCode = $confirmService::getGeneratedCode();
-        } catch (Exception $e) {
+        } catch (ExpiredConfirmCodeException|NotFoundConfirmedCodeException|\Exception $e) {
             $generatedCode = '';
+            $this->ajaxMess->getSystemError();
         }
 
         $uri = new Uri(static::PERSONAL_URL . 'forgot-password/');

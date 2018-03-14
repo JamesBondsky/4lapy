@@ -6,6 +6,7 @@
 
 namespace FourPaws\UserBundle\Service;
 
+use Bitrix\Main\ArgumentException;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
 use FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException;
@@ -17,6 +18,7 @@ interface ConfirmCodeSmsInterface
      * @param string $phone
      *
      * @return bool
+     * @throws ArgumentException
      * @throws \RuntimeException
      * @throws WrongPhoneNumberException
      * @throws \Exception

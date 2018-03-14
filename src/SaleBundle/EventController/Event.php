@@ -39,7 +39,7 @@ class Event implements ServiceHandlerInterface
      *
      * @return mixed|void
      */
-    public static function initHandlers(EventManager $eventManager)
+    public static function initHandlers(EventManager $eventManager): void
     {
         self::$eventManager = $eventManager;
         /** Инициализация кастомных правил работы с корзиной */
@@ -51,18 +51,16 @@ class Event implements ServiceHandlerInterface
         self::initHandler('OnCondSaleActionsControlBuildList', [DetachedRowDiscount::class, 'GetControlDescr']);
         /** Здесь дополнительная обработка подарочных акций */
         self::initHandler('OnAfterSaleOrderFinalAction', [Manager::class, 'OnAfterSaleOrderFinalAction']);
+        self::initHandler('OnSaleBasketItemRefreshData', [static::class, 'updateItemAvailability']);
 
-        self::initHandler('OnBeforeSaleBasketItemSetField', [__CLASS__, 'checkItemQuantity']);
-        self::initHandler('OnSaleBasketItemRefreshData', [__CLASS__, 'updateItemAvailability']);
+        self::initHandler('OnSaleOrderSaved', [static::class, 'sendNewOrderMessage']);
+        self::initHandler('OnSaleOrderPaid', [static::class, 'sendOrderPaymentMessage']);
+        self::initHandler('OnSaleOrderCanceled', [static::class, 'sendOrderCancelMessage']);
+        self::initHandler('OnSaleStatusOrderChange', [static::class, 'sendOrderStatusMessage']);
 
-        self::initHandler('OnSaleOrderSaved', [__CLASS__, 'sendNewOrderMessage']);
-        self::initHandler('OnSaleOrderPaid', [__CLASS__, 'sendOrderPaymentMessage']);
-        self::initHandler('OnSaleOrderCanceled', [__CLASS__, 'sendOrderCancelMessage']);
-        self::initHandler('OnSaleStatusOrderChange', [__CLASS__, 'sendOrderStatusMessage']);
-
-        self::initHandler('OnAfterUserLogin', [__CLASS__, 'updateUserAccountBalance'], 'main');
-        self::initHandler('OnAfterUserAuthorize', [__CLASS__, 'updateUserAccountBalance'], 'main');
-        self::initHandler('OnAfterUserLoginByHash', [__CLASS__, 'updateUserAccountBalance'], 'main');
+        self::initHandler('OnAfterUserLogin', [static::class, 'updateUserAccountBalance'], 'main');
+        self::initHandler('OnAfterUserAuthorize', [static::class, 'updateUserAccountBalance'], 'main');
+        self::initHandler('OnAfterUserLoginByHash', [static::class, 'updateUserAccountBalance'], 'main');
     }
 
     /**
@@ -111,29 +109,6 @@ class Event implements ServiceHandlerInterface
                    ->getContainer()
                    ->get(BasketService::class)
                    ->refreshItemAvailability($basketItem);
-    }
-
-    /**
-     * @param BitrixEvent $event
-     *
-     * @return null|EventResult
-     */
-    public static function checkItemQuantity(BitrixEvent $event)
-    {
-        $basketItem = $event->getParameter('ENTITY');
-        $fieldName = $event->getParameter('NAME');
-        $value = $event->getParameter('VALUE');
-
-        if ($fieldName !== 'QUANTITY') {
-            return null;
-        }
-
-        /** @var BasketService $basketService */
-        $basketService = Application::getInstance()
-                                    ->getContainer()
-                                    ->get(BasketService::class);
-
-        return $basketService->checkItemQuantity($basketItem, $value);
     }
 
     /**

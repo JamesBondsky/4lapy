@@ -1,6 +1,10 @@
 <?php
 
-namespace FourPaws\MobileApiBundle\Controller;
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
+namespace FourPaws\MobileApiBundle\Controller\v0;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
@@ -38,7 +42,6 @@ class UserDeliveryController extends FOSRestController
      */
     public function createAction()
     {
-
     }
 
     /**

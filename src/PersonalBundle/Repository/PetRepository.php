@@ -2,6 +2,7 @@
 
 namespace FourPaws\PersonalBundle\Repository;
 
+use Bitrix\Main\ObjectPropertyException;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\AppBundle\Repository\BaseHlRepository;
 use FourPaws\PersonalBundle\Entity\Pet;
@@ -23,7 +24,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
  */
 class PetRepository extends BaseHlRepository
 {
-    const HL_NAME = 'Pet';
+    public const HL_NAME = 'Pet';
     /**
      * @var UserService
      */
@@ -71,12 +72,12 @@ class PetRepository extends BaseHlRepository
     }
 
     /**
-     * @return ArrayCollection
+     * @return ArrayCollection|Pet[]
      * @throws InvalidIdentifierException
      * @throws ServiceNotFoundException
      * @throws NotAuthorizedException
      * @throws ServiceCircularReferenceException
-     * @throws \Exception
+     * @throws ObjectPropertyException
      */
     public function findByCurUser(): ArrayCollection
     {

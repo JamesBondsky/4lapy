@@ -98,7 +98,7 @@ class ReferralService
      * @throws ConstraintDefinitionException
      * @throws NotAuthorizedException
      * @throws ServiceCircularReferenceException
-     * @return ArrayCollection
+     * @return ArrayCollection|Referral[]
      */
     public function getCurUserReferrals(bool $redirectIfAdd = false, PageNavigation &$nav = null): ArrayCollection
     {
@@ -211,6 +211,13 @@ class ReferralService
                     ]
                 );
             }
+        }
+
+        if (\defined('BX_COMP_MANAGED_CACHE')) {
+            /** Очистка кеша */
+            $instance = Application::getInstance();
+            $tagCache = $instance->getTaggedCache();
+            $tagCache->clearByTag('referral_' . $entity->getUserId());
         }
 
         return $res;
@@ -464,9 +471,38 @@ class ReferralService
                 if ($haveAdd && $redirectIfAdd) {
                     /** обновляем если добавилась инфа, чтобы была актуальная постраничка, табы и поиск */
                     LocalRedirect($request->getRequestUri());
+                    die();
                 }
             }
         }
         return true;
+    }
+
+    /**
+     * @return ArrayCollection|Referral[]
+     * @throws ObjectPropertyException
+     */
+    public function getModeratedReferrals(): ArrayCollection
+    {
+        return $this->referralRepository->findBy(['filter' => ['UF_MODERATED' => 1]]);
+    }
+
+    /**
+     * @param int $id
+     * @param int $userId
+     *
+     * @return bool
+     * @throws \Exception
+     */
+    public function delete(int $id, int $userId = 0): bool
+    {
+        $res = $this->referralRepository->delete($id);
+        if($res && $userId > 0 && \defined('BX_COMP_MANAGED_CACHE')) {
+            /** Очистка кеша */
+            $instance = Application::getInstance();
+            $tagCache = $instance->getTaggedCache();
+            $tagCache->clearByTag('referral_' . $userId);
+        }
+        return $res;
     }
 }

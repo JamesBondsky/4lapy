@@ -7,6 +7,7 @@
 namespace FourPaws\StoreBundle\Service;
 
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Sale\Delivery\CalculationResult;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -38,17 +39,17 @@ class StoreService
     /**
      * Все склады
      */
-    const TYPE_ALL = 'TYPE_ALL';
+    public const TYPE_ALL = 'TYPE_ALL';
 
     /**
      * Склады, не являющиеся магазинами
      */
-    const TYPE_STORE = 'TYPE_STORE';
+    public const TYPE_STORE = 'TYPE_STORE';
 
     /**
      * Склады, являющиеся магазинами
      */
-    const TYPE_SHOP = 'TYPE_SHOP';
+    public const TYPE_SHOP = 'TYPE_SHOP';
 
     /**
      * @var LocationService
@@ -92,7 +93,6 @@ class StoreService
      * @param int $id
      *
      * @throws NotFoundException
-     * @throws \Exception
      * @return BaseEntity|bool|Store
      */
     public function getById(int $id)
@@ -116,8 +116,8 @@ class StoreService
      * @param $xmlId
      *
      * @throws NotFoundException
-     * @throws \Exception
      * @return Store
+     * @throws ArgumentException
      */
     public function getByXmlId($xmlId): Store
     {
@@ -141,8 +141,9 @@ class StoreService
      *
      * @param string $type
      *
-     * @throws \Exception
      * @return StoreCollection
+     * @throws \Exception
+     * @throws ArgumentException
      */
     public function getByCurrentLocation($type = self::TYPE_ALL): StoreCollection
     {
@@ -159,6 +160,8 @@ class StoreService
      * @param bool   $strict
      *
      * @return StoreCollection
+     * @throws ArgumentException
+     * @throws \Exception
      */
     public function getByLocation(
         string $locationCode,
@@ -232,8 +235,8 @@ class StoreService
      *
      * @param array $select
      *
-     * @throws \Exception
      * @return array
+     * @throws \Exception
      */
     public function getMetroInfo(array $filter = [], array $select = ['*']): array
     {
@@ -282,8 +285,8 @@ class StoreService
      * @param array $filter
      * @param array $select
      *
-     * @throws \Exception
      * @return array
+     * @throws \Exception
      */
     public function getServicesInfo(array $filter = [], array $select = ['*']): array
     {
@@ -318,7 +321,7 @@ class StoreService
      *
      * @throws \Exception
      */
-    public function getStocks(Collection $offers, StoreCollection $stores)
+    public function getStocks(Collection $offers, StoreCollection $stores): void
     {
         foreach ($offers as $offer) {
             $offer->withStocks(
@@ -356,6 +359,7 @@ class StoreService
     /**
      * @param array $params
      *
+     * @throws ArgumentException
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
      * @throws FileNotFoundException
@@ -393,7 +397,7 @@ class StoreService
     /**
      * @param array $params
      *
-     * @throws \Bitrix\Main\ArgumentException
+     * @throws ArgumentException
      * @return StoreCollection
      */
     public function getStoreCollection(array $params = []): StoreCollection
@@ -409,6 +413,7 @@ class StoreService
     /**
      * @param array $params
      *
+     * @throws ArgumentException
      * @throws ApplicationCreateException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
@@ -673,7 +678,7 @@ class StoreService
     /**
      * @return null|CalculationResult
      */
-    protected function getPickupDelivery()
+    protected function getPickupDelivery(): ?CalculationResult
     {
         if (!$this->pickupDelivery) {
             $deliveries = $this->deliveryService->getByProduct(reset($this->offers));

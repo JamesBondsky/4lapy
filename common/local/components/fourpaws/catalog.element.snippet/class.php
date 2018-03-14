@@ -45,6 +45,8 @@ class CatalogElementSnippet extends CBitrixComponent
         $params['PRODUCT'] = $params['PRODUCT'] ?? null;
         $params['PRODUCT'] = $params['PRODUCT'] instanceof Product ? $params['PRODUCT'] : null;
 
+        $params['NOT_CATALOG_ITEM_CLASS'] = $params['NOT_CATALOG_ITEM_CLASS'] ?? 'N';
+
         $params['CACHE_TIME'] = $params['CACHE_TIME'] ?? 360000;
         $params['CACHE_TYPE'] = $params['CACHE_TIME'] === 0 ? 'N' : $params['CACHE_TYPE'];
 

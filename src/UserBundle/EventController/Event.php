@@ -34,6 +34,8 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  */
 class Event implements ServiceHandlerInterface
 {
+    const GROUP_ADMIN = 1;
+    const GROUP_TECHNICAL_USERS = 8;
     /**
      * @var EventManager
      */
@@ -42,9 +44,8 @@ class Event implements ServiceHandlerInterface
     /**
      * @param EventManager $eventManager
      *
-     * @return mixed|void
      */
-    public static function initHandlers(EventManager $eventManager)
+    public static function initHandlers(EventManager $eventManager): void
     {
         self::$eventManager = $eventManager;
 
@@ -234,12 +235,20 @@ class Event implements ServiceHandlerInterface
      */
     public static function replaceLoginOnUpdate(&$fields)
     {
+        $notReplacedGroups= [static::GROUP_ADMIN, static::GROUP_TECHNICAL_USERS];
         if (!empty($fields['PERSONAL_PHONE']) || !empty($fields['EMAIL'])) {
             try {
                 $container = App::getInstance()->getContainer();
                 $userService = $container->get(CurrentUserProviderInterface::class);
                 $user = $userService->getUserRepository()->find((int)$fields['ID']);
-                if ($user instanceof User) {
+                if ($user instanceof User && $user->getActive()) {
+                    foreach($notReplacedGroups as $groupId){
+                        foreach ($user->getGroups() as $group) {
+                            if($group->getId() === $groupId){
+                                return;
+                            }
+                        }
+                    }
                     $oldEmail = $user->getEmail();
                     $oldPhone = $user->getPersonalPhone();
                     $oldLogin = $user->getLogin();

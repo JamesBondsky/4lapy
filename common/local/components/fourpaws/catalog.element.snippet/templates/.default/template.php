@@ -46,7 +46,7 @@ if (!empty($arParams['CURRENT_OFFER']) && $arParams['CURRENT_OFFER'] instanceof 
     }
 } ?>
 
-<div class="b-common-item b-common-item--catalog-item js-product-item">
+<div class="b-common-item <?=$arParams['NOT_CATALOG_ITEM_CLASS'] !== 'Y' ? ' b-common-item--catalog-item' : ''?> js-product-item">
     <?= $component->getMarkService()->getMark($currentOffer) ?>
     <? if ($currentOffer->getImages()->count() > 0) { ?>
         <span class="b-common-item__image-wrap">
@@ -141,7 +141,7 @@ if (!empty($arParams['CURRENT_OFFER']) && $arParams['CURRENT_OFFER'] instanceof 
                             <a href="javascript:void(0)"
                                class="b-weight-container__link js-price<?= $currentOffer->getId() === $offer->getId(
                                ) ? ' active-link' : '' ?><?= $i >= 4 ? ' mobile-hidden' : '' ?>"
-                               data-price="<?= $offer->getPrice() ?>" data-offerid="<?= $offer->getId() ?>"
+                               data-price="<?= ceil($offer->getPrice()) ?>" data-offerid="<?= $offer->getId() ?>"
                                data-image="<?= $offer->getResizeImages(240, 240)->first() ?>"
                                data-link="<?= $offer->getLink() ?>"><?= $value ?></a>
                         </li>
@@ -199,20 +199,19 @@ if (!empty($arParams['CURRENT_OFFER']) && $arParams['CURRENT_OFFER'] instanceof 
                     <span class="b-cart">
                         <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 12, 12) ?></span>
                     </span>
-                    <span class="b-common-item__price js-price-block"><?= $currentOffer->getPrice() ?></span>
+                    <span class="b-common-item__price js-price-block"><?= ceil($currentOffer->getPrice()) ?></span>
                     <span class="b-common-item__currency">
                         <span class="b-ruble">₽</span>
                     </span>
                 </span>
             </a>
         <?php } else { ?>
-            <a class="b-common-item__add-to-cart" href="javascript:void(0);"
-               title="">
+            <a class="b-common-item__add-to-cart" href="javascript:void(0);" title="">
                 <span class="b-common-item__wrapper-link">
                     <span class="b-cart">
                         <span class="b-icon b-icon--cart"><?= new SvgDecorator('icon-cart', 12, 12) ?></span>
                     </span>
-                    <span class="b-common-item__price js-price-block"><?= $currentOffer->getPrice() ?></span>
+                    <span class="b-common-item__price js-price-block"><?= ceil($currentOffer->getPrice()) ?></span>
                     <span class="b-common-item__currency">
                         <span class="b-ruble">₽</span>
                     </span>

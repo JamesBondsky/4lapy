@@ -1,10 +1,10 @@
 <?php
 /**
- * @var Request $request
+ * @var Request                               $request
  * @var CatalogCategorySearchRequestInterface $catalogRequest
- * @var ProductSearchResult $productSearchResult
- * @var PhpEngine $view
- * @var CMain $APPLICATION
+ * @var ProductSearchResult                   $productSearchResult
+ * @var PhpEngine                             $view
+ * @var CMain                                 $APPLICATION
  */
 
 use Bitrix\Main\Grid\Declension;
@@ -13,6 +13,7 @@ use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
 use FourPaws\Catalog\Model\Filter\ActionsFilter;
 use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
 use FourPaws\Decorators\SvgDecorator;
+use FourPaws\Helpers\WordHelper;
 use FourPaws\Search\Model\ProductSearchResult;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Templating\PhpEngine;
@@ -35,7 +36,7 @@ $category = $APPLICATION->IncludeComponent(
 );
 
 $filterCollection = $catalogRequest->getCategory()->getFilters();
-?>
+$count = $productSearchResult->getResultSet()->getTotalHits(); ?>
 <div class="b-catalog__wrapper-title b-catalog__wrapper-title--filter">
     <?php
     $APPLICATION->IncludeComponent(
@@ -55,9 +56,7 @@ $filterCollection = $catalogRequest->getCategory()->getFilters();
 <aside class="b-filter b-filter--popup js-filter-popup">
     <div class="b-filter__top">
         <a class="b-filter__close js-close-filter" href="javascript:void(0);" title=""></a>
-        <div class="b-filter__title">
-            Фильтры
-        </div>
+        <div class="b-filter__title">Фильтры</div>
     </div>
     <div class="b-filter__wrapper b-filter__wrapper--scroll">
         <form class="b-form js-filter-form" action="<?= $APPLICATION->GetCurDir() ?>">
@@ -82,15 +81,16 @@ $filterCollection = $catalogRequest->getCategory()->getFilters();
             <?= $view->render(
                 'FourPawsCatalogBundle:Catalog:catalog.filter.list.html.php',
                 [
-                    'filters' => $filterCollection->getVisibleFilters()
+                    'filters' => $filterCollection->getVisibleFilters(),
                 ]
             ) ?>
             <div class="b-filter__block b-filter__block--discount js-discount-mobile-here">
             </div>
         </form>
     </div>
-    <div class="b-filter__bottom"><a class="b-filter__button" href="javascript:void(0);" title="">
-            Показать 300 товаров
+    <div class="b-filter__bottom">
+        <a class="b-filter__button" href="javascript:void(0);" title="">
+            Показать <?= $count . ' ' . WordHelper::declension($count, ['товар', 'товара', 'товаров']) ?>
         </a>
     </div>
 </aside>
@@ -108,26 +108,19 @@ $filterCollection = $catalogRequest->getCategory()->getFilters();
                 'fourpaws:catalog.often.seek',
                 '',
                 [
-                    'SECTION_ID' => $category->getId(),
-                    'LEFT_MARGIN' => $category->getLeftMargin(),
+                    'SECTION_ID'   => $category->getId(),
+                    'LEFT_MARGIN'  => $category->getLeftMargin(),
                     'RIGHT_MARGIN' => $category->getRightMargin(),
-                    'DEPTH_LEVEL' => $category->getDepthLevel(),
+                    'DEPTH_LEVEL'  => $category->getDepthLevel(),
                 ], false, ['HIDE_ICONS' => 'Y']
             ); ?>
             <div class="b-catalog-filter__row b-catalog-filter__row--sort">
                 <div class="b-catalog-filter__sort-part js-permutation-mobile-here">
-                    <?php
-
-                    $totalString = $productSearchResult->getResultSet()->getTotalHits();
-                    $totalString .= (new Declension(' товар', ' товара', ' товаров'))->get(
-                        $productSearchResult->getResultSet()->getTotalHits()
-                    );
-                    ?>
-                    <span class="b-catalog-filter__label b-catalog-filter__label--amount"><?= $totalString ?></span>
+                    <span class="b-catalog-filter__label b-catalog-filter__label--amount"><?= $count . (new Declension(' товар', ' товара', ' товаров'))->get($count) ?></span>
                     <?= $view->render(
                         'FourPawsCatalogBundle:Catalog:catalog.filter.sorts.html.php',
                         [
-                            'sorts' => $catalogRequest->getSorts()
+                            'sorts' => $catalogRequest->getSorts(),
                         ]
                     ) ?>
                     <?php
@@ -152,7 +145,7 @@ $filterCollection = $catalogRequest->getCategory()->getFilters();
                                                    name="<?= $filter->getFilterCode() ?>"
                                                    value="<?= $variant->getValue() ?>"
                                                    id="<?= $filter->getFilterCode() ?>-<?= $id ?>"
-                                                   <?= $variant->isChecked() ? 'checked' : '' ?>/>
+                                                <?= $variant->isChecked() ? 'checked' : '' ?>/>
                                             <a class="b-filter-link-list__link b-filter-link-list__link--checkbox"
                                                href="javascript:void(0);"
                                                title="<?= $filter->getName() ?>">
@@ -166,16 +159,15 @@ $filterCollection = $catalogRequest->getCategory()->getFilters();
                     <?php } ?>
                 </div>
                 <div class="b-catalog-filter__type-part">
-                    <a class="b-link b-link--type active js-link-type-normal"
-                       href="javascript:void(0);" title="">
-                            <span class="b-icon b-icon--type">
-                                <?= new SvgDecorator('icon-catalog-normal', 20, 20) ?>
-                            </span>
+                    <a class="b-link b-link--type active js-link-type-normal" href="javascript:void(0);" title="">
+                        <span class="b-icon b-icon--type">
+                            <?= new SvgDecorator('icon-catalog-normal', 20, 20) ?>
+                        </span>
                     </a>
                     <a class="b-link b-link--type js-link-type-line" href="javascript:void(0);" title="">
-                            <span class="b-icon b-icon--type">
-                                <?= new SvgDecorator('icon-catalog-line', 20, 20) ?>
-                            </span>
+                        <span class="b-icon b-icon--type">
+                            <?= new SvgDecorator('icon-catalog-line', 20, 20) ?>
+                        </span>
                     </a>
                 </div>
             </div>
@@ -183,15 +175,15 @@ $filterCollection = $catalogRequest->getCategory()->getFilters();
         </div>
     </div>
     <div class="b-common-wrapper b-common-wrapper--visible js-catalog-wrapper">
-        <?php
-        foreach ($productSearchResult->getProductCollection() as $product) {
+        <?php foreach ($productSearchResult->getProductCollection() as $product) {
             $APPLICATION->IncludeComponent(
                 'fourpaws:catalog.element.snippet',
                 '',
-                ['PRODUCT' => $product]
+                ['PRODUCT' => $product],
+                null,
+                ['HIDE_ICONS' => 'Y']
             );
-        }
-        ?>
+        } ?>
     </div>
     <div class="b-line b-line--catalog-filter"></div>
     <?php $APPLICATION->IncludeComponent(
@@ -202,9 +194,9 @@ $filterCollection = $catalogRequest->getCategory()->getFilters();
             'NAV_RESULT'     => $productSearchResult->getProductCollection()->getCdbResult(),
             'SHOW_ALWAYS'    => false,
             'PAGE_PARAMETER' => 'page',
-            'AJAX_MODE'      => 'Y'
+            'AJAX_MODE'      => 'Y',
         ],
-        $component,
+        null,
         [
             'HIDE_ICONS' => 'Y',
         ]
