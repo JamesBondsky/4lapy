@@ -6,16 +6,23 @@
 
 namespace FourPaws\UserBundle\Service;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Application;
 use Bitrix\Main\Db\SqlQueryException;
+use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Fuser;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\External\Exception\ManzanaServiceContactSearchMoreOneException;
+use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
+use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Location\Exception\CityNotFoundException;
 use FourPaws\Location\LocationService;
+use FourPaws\PersonalBundle\Entity\UserBonus;
+use FourPaws\PersonalBundle\Service\BonusService;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\AvatarSelfAuthorizationException;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
@@ -43,6 +50,8 @@ class UserService implements
     UserCitySelectInterface,
     UserAvatarAuthorizationInterface
 {
+
+    public const BASE_DISCOUNT = 3;
     /**
      * @var \CAllUser|\CUser
      */
@@ -171,6 +180,7 @@ class UserService implements
      * @throws BitrixRuntimeException
      * @throws ValidationException
      * @throws SqlQueryException
+     * @throws SystemException
      */
     public function register(User $user): User
     {
@@ -241,6 +251,7 @@ class UserService implements
      * @throws NotAuthorizedException
      * @throws BitrixRuntimeException
      * @return array|bool
+     * @throws SystemException
      */
     public function setSelectedCity(string $code = '', string $name = '', string $parentName = '')
     {
@@ -465,6 +476,119 @@ class UserService implements
         }
 
         return $isLoggedByHostUser;
+    }
+
+    /**
+     * @return int
+     */
+    public function getDiscount(): int
+    {
+        if ($this->isAuthorized()) {
+            return $this->getCurrentUserDiscount();
+        }
+        return static::BASE_DISCOUNT;
+    }
+
+    /**
+     * @param User           $user
+     *
+     * @param UserBonus|null $userBonus
+     *
+     * @return int
+     */
+    public function getUserDiscount(User $user, ?UserBonus $userBonus = null): int
+    {
+        if(!($userBonus instanceof UserBonus)) {
+            try {
+                $userBonus = BonusService::getManzanaBonusInfo($user);
+            } catch (ManzanaServiceContactSearchMoreOneException $e) {
+                $logger = LoggerFactory::create('manzana');
+                $logger->info(
+                    'Найдено больше одного пользователя в манзане по телефону ' . $user->getPersonalPhone()
+                );
+            } catch (ManzanaServiceContactSearchNullException $e) {
+                $logger = LoggerFactory::create('manzana');
+                $logger->info('Не найдено пользователей в манзане по телефону ' . $user->getPersonalPhone());
+            } catch (ManzanaServiceException $e) {
+                $logger = LoggerFactory::create('manzana');
+                $logger->error('Ошибка манзаны - ' . $e->getMessage());
+            } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException $e) {
+                $logger = LoggerFactory::create('system');
+                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            } catch (NotAuthorizedException $e) {
+                /** показываем базовую скидку если не авторизованы */
+            } catch (ConstraintDefinitionException|InvalidIdentifierException $e) {
+                $logger = LoggerFactory::create('params');
+                $logger->error('Ошибка парамеров - ' . $e->getMessage());
+            }
+        }
+        if ($userBonus instanceof UserBonus && !$userBonus->isEmpty()) {
+            return $userBonus->getRealDiscount();
+        }
+        return static::BASE_DISCOUNT;
+    }
+
+    /**
+     * @return int
+     */
+    public function getCurrentUserDiscount(): int
+    {
+        try {
+            $curUser = $this->getCurrentUser();
+            return $this->getUserDiscount($curUser);
+        } catch (NotAuthorizedException $e) {
+            /** показываем базовую скидку если не авторизованы */
+        } catch (ConstraintDefinitionException|InvalidIdentifierException $e) {
+            $logger = LoggerFactory::create('params');
+            $logger->error('Ошибка парамеров - ' . $e->getMessage());
+        }
+        return static::BASE_DISCOUNT;
+    }
+
+    /**
+     * @param User|null $user
+     * @param UserBonus|null $bonus
+     *
+     * @return bool
+     */
+    public function refreshUserDiscount(?User $user = null, ?UserBonus $bonus=null): bool
+    {
+        if (!$user) {
+            try {
+                $user = $this->getCurrentUser();
+            } catch (NotAuthorizedException $e) {
+                return false;
+            } catch (ConstraintDefinitionException|InvalidIdentifierException $e) {
+                $logger = LoggerFactory::create('params');
+                $logger->error('Ошибка парамеров - ' . $e->getMessage());
+                return false;
+            }
+        }
+
+        if (!$user->getDiscountCardNumber()) {
+            return false;
+        }
+
+        $newDiscount = (float)$this->getUserDiscount($user, $bonus);
+
+        if ($user->getDiscount() !== $newDiscount) {
+            try {
+                return $this->getUserRepository()->updateData($user->getId(), ['UF_DISCOUNT' => $newDiscount]);
+            } catch (SystemException $e) {
+                $logger = LoggerFactory::create('system');
+                $logger->error('Системная ошибка - ' . $e->getMessage());
+                return false;
+            } catch (ConstraintDefinitionException|InvalidIdentifierException $e) {
+                $logger = LoggerFactory::create('params');
+                $logger->error('Ошибка парамеров - ' . $e->getMessage());
+                return false;
+            } catch (BitrixRuntimeException $e) {
+                $logger = LoggerFactory::create('user');
+                $logger->error('update error - ' . $e->getMessage());
+                return false;
+            }
+        }
+        return true;
     }
 
     /**

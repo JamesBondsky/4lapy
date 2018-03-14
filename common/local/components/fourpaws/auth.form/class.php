@@ -519,7 +519,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
     public function ajaxUnionBasket(Request $request): JsonResponse
     {
         $backUrl = $request->get('backurl', '');
-        $needAddPhone = $request->get('need_add_hone', 'N');
+        $needAddPhone = $request->get('need_add_phone', 'N');
 
         $data = [];
         $options = [];
@@ -548,7 +548,7 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
         }
 
         $backUrl = $request->get('backurl', '');
-        $needAddPhone = $request->get('need_add_hone', 'N');
+        $needAddPhone = $request->get('need_add_phone', 'N');
         $delBasketItems = $request->get('del_basket_items', []);
         if (!empty($delBasketItems)) {
             $delBasketItems = explode(',', $delBasketItems);

@@ -22,17 +22,22 @@ class ExtendsBitrixQuery extends Query
         if ($source instanceof Query) {
             $this->entity = clone $source->getEntity();
 
-            /** clear */
-            $this->filterHandler = static::filter();
-            $this->whereHandler = static::filter();
-            $this->havingHandler = static::filter();
+            /** сброс алиасов */
+            $this->setCustomBaseTableAlias($this->entity->getDBTableName());
 
-            /** set */
+            /** set old array filter*/
             $this->setFilter($source->getFilter());
+
+            /** set order and limit */
             $this->setOrder($source->getOrder());
             $this->setLimit($source->getLimit());
+
+            /** set filter by query - new filter where */
+            $this->filterHandler = $source->filterHandler;
+            $this->whereHandler = $source->whereHandler;
+            $this->havingHandler = $source->havingHandler;
         }
-        $this->buildBaseQuery();
+        $this->buildQuery();
     }
 
     /**
@@ -40,9 +45,9 @@ class ExtendsBitrixQuery extends Query
      */
     public function getBuildWhere(): string
     {
-        $where = $this->query_build_parts['WHERE'];
+        $sql = $this->query_build_parts['WHERE'];
 
-        return !empty($where) ? ' WHERE ' . $where : '';
+        return !empty($sql) ? ' WHERE ' . $sql : '';
     }
 
     /**
@@ -50,15 +55,8 @@ class ExtendsBitrixQuery extends Query
      */
     public function getBuildOrder(): string
     {
-        $order = $this->query_build_parts['ORDER'];
+        $sql = $this->query_build_parts['ORDER'];
 
-        return !empty($order) ? ' ORDER BY ' . $order : '';
-    }
-
-    private function buildBaseQuery(): void
-    {
-        if (empty($this->query_build_parts)) {
-            $this->setCustomBaseTableAlias($this->getEntity()->getDBTableName())->buildQuery();
-        }
+        return !empty($sql) ? ' ORDER BY ' . $sql : '';
     }
 }

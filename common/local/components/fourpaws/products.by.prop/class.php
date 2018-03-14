@@ -9,7 +9,8 @@ use Bitrix\Main\LoaderException;
 use Bitrix\Main\SystemException;
 use CBitrixComponent;
 use FourPaws\Catalog\Collection\ProductCollection;
-use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\Catalog\Model\Offer;
+use FourPaws\Catalog\Query\OfferQuery;
 
 /** @noinspection AutoloadingIssuesInspection
  *
@@ -81,7 +82,7 @@ class ProductsByProp extends CBitrixComponent
             $this->arParams['CURRENT_PAGE'] = 1;
         }
 
-        $this->arResult['PRODUCTS'] = new ProductCollection(new \CDBResult());
+        $this->arResult['OFFERS'] = new ProductCollection(new \CDBResult());
         if ($this->startResultCache($this->arParams['CACHE_TIME'])) {
             parent::executeComponent();
 
@@ -94,11 +95,20 @@ class ProductsByProp extends CBitrixComponent
                 }
             }
             if (!empty($products)) {
-                $query = new ProductQuery();
-                if($this->arParams['SLIDER'] !== 'Y' && $this->arParams['COUNT_ON_PAGE'] > 0) {
-                    $query->withNav(['nPageSize' => $this->arParams['COUNT_ON_PAGE'], 'iNumPage' => $this->arParams['CURRENT_PAGE']]);
+                $query = new OfferQuery();
+                if ($this->arParams['COUNT_ON_PAGE'] > 0) {
+                    if ($this->arParams['SLIDER'] !== 'Y') {
+                        $query->withNav([
+                            'nPageSize' => $this->arParams['COUNT_ON_PAGE'],
+                            'iNumPage'  => $this->arParams['CURRENT_PAGE'],
+                        ]);
+                    } else {
+                        $query->withNav([
+                            'nTopCount' => $this->arParams['COUNT_ON_PAGE'],
+                        ]);
+                    }
                 }
-                $this->arResult['PRODUCTS'] = $query->withFilter(['=' . $this->arParams['FILTER_FIELD'] => $products])->exec();
+                $this->arResult['OFFERS'] = $query->withFilter(['=' . $this->arParams['FILTER_FIELD'] => $products])->exec();
             }
             $this->includeComponentTemplate();
 
