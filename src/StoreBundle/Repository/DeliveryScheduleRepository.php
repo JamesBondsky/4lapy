@@ -3,6 +3,7 @@
 namespace FourPaws\StoreBundle\Repository;
 
 use Bitrix\Main\Entity\DataManager;
+use Bitrix\Main\Entity\ReferenceField;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\StoreBundle\Collection\DeliveryScheduleCollection;
@@ -39,54 +40,55 @@ class DeliveryScheduleRepository extends BaseRepository
     /**
      * @param Store $receiver
      * @param StoreCollection $senders
-     * @param array $filter
+     * @param int $maxTransitions
      * @return DeliveryScheduleCollection
      * @throws NotFoundException
+     * @throws \Bitrix\Main\ArgumentException
      */
     public function findByReceiver(
         Store $receiver,
         StoreCollection $senders = null,
-        array $filter = []
+        int $maxTransitions
     ): DeliveryScheduleCollection {
-        $filter = array_merge(['UF_RECEIVER' => $receiver->getXmlId()], $filter);
+        $criteria = ['=UF_RECEIVER' => $receiver->getXmlId()];
 
+        $query = $this->table::query();
+
+        $senderXmlIds = [];
         if ($senders && !$senders->isEmpty()) {
-            $filter['UF_SENDER'] = [];
+            $filter['=UF_SENDER'] = [];
             /** @var Store $sender */
             foreach ($senders as $sender) {
-                $filter['UF_SENDER'][] = $sender->getXmlId();
+                $senderXmlIds[] = $sender->getXmlId();
             }
         }
 
-        return $this->findBy($filter);
-    }/** @noinspection MoreThanThreeArgumentsInspection */
-
-    /**
-     * @param array $criteria
-     * @param array $orderBy
-     * @param int|null $limit
-     * @param int|null $offset
-     * @return DeliveryScheduleCollection
-     * @throws NotFoundException
-     */
-    public function findBy(
-        array $criteria = [],
-        array $orderBy = [],
-        int $limit = null,
-        int $offset = null
-    ): DeliveryScheduleCollection {
-        if (empty($orderBy)) {
-            $orderBy = $this->getDefaultOrder();
+        if ($maxTransitions === 0) {
+            if (!empty($senderXmlIds)) {
+                $filter['=UF_SENDER'] = $senderXmlIds;
+            }
+        } elseif ($maxTransitions === 1) {
+            $reference = ['=this.UF_SENDER' => '=ref.UF_RECEIVER'];
+            if ($senderXmlIds) {
+                $reference['=ref.UF_RECEIVER'] = $senderXmlIds;
+            }
+            $query->registerRuntimeField(
+                new ReferenceField(
+                    'SENDER',
+                    $this->getDataClass(),
+                    $reference,
+                    ['join_type' => 'INNER']
+            ));
+        } else {
+            /* @todo обработка случаев, когда в маршруте более одного промежуточного склада (пока не требуется) */
+            return new DeliveryScheduleCollection();
         }
 
         $criteria = array_merge($this->getDefaultFilter(), $criteria);
 
-        $entities = $this->table::query()
+        $entities = $query
             ->setSelect(['*', 'UF_*'])
             ->setFilter($criteria)
-            ->setOrder($orderBy)
-            ->setLimit($limit)
-            ->setOffset($offset)
             ->exec();
 
         $result = [];
@@ -100,7 +102,7 @@ class DeliveryScheduleRepository extends BaseRepository
         $collectionClass = $this->getCollectionClass();
 
         return new $collectionClass($result);
-    }
+    }/** @noinspection MoreThanThreeArgumentsInspection */
 
     protected function getDataClass(): string
     {
@@ -124,7 +126,7 @@ class DeliveryScheduleRepository extends BaseRepository
 
     protected function getDefaultFilter(): array
     {
-        return ['UF_ACTIVE' => true];
+        return [];
     }
 
     /**
