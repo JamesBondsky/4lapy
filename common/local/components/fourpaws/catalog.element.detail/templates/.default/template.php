@@ -37,12 +37,7 @@ $offers = $product->getOffers();
 $brand = $product->getBrand();
 $currentOffer = $arResult['CURRENT_OFFER'];
 
-$mainCombinationType = '';
-if ($currentOffer->getClothingSize()) {
-    $mainCombinationType = 'SIZE';
-} else {
-    $mainCombinationType = 'VOLUME';
-}
+$mainCombinationType = $currentOffer->getClothingSize() ? 'SIZE' : 'VOLUME';
 
 $this->setFrameMode(true);
 
@@ -261,7 +256,6 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                     false,
                     ['HIDE_ICONS' => 'Y']); ?>
 
-                <?php /* todo вывод связанных товаров по цвету и вкусу  */ ?>
                 <?php if (!empty($currentOffer->getFlavourCombination())) {
                     $unionOffers = $component->getOffersByUnion('flavour', $currentOffer->getFlavourCombination());
                     if (!$unionOffers->isEmpty()) {
