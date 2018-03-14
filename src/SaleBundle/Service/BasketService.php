@@ -288,7 +288,7 @@ class BasketService
                 continue;
             }
 
-            $delay = $offer->getStocks()->isEmpty();
+            $delay = $offer->getStocks()->isEmpty() || $offer->isByRequest();
             if ($basketItem->isDelay() !== $delay) {
                 $basketItem->setField(
                     'DELAY',
