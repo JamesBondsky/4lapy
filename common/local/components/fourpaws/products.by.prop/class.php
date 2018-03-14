@@ -49,6 +49,7 @@ class ProductsByProp extends CBitrixComponent
     {
         $params['IBLOCK_ID'] = (int)$params['IBLOCK_ID'];
         $params['ITEM_ID'] = (int)$params['ITEM_ID'];
+        $params['SLIDER'] = $params['SLIDER'] ?? 'N';
         $params['COUNT_ON_PAGE'] = (int)$params['COUNT_ON_PAGE'];
         if ($params['COUNT_ON_PAGE'] === 0) {
             $params['COUNT_ON_PAGE'] = 20;
