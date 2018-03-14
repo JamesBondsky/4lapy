@@ -13,22 +13,22 @@ services:
         resource: '../../*'
         # you can exclude directories or files
         # but if a service is unused, it's removed anyway
-        exclude: '../../{Entity,Tests,Dto,Model}'
+        exclude: '../../{Entity,Tests,Dto,Model,EventController}'
 
     FourPaws\SapBundle\Serialization\:
         resource: '../../Serialization/*'
         tags: ['jms_serializer.subscribing_handler']
 
-    # todo: remove after development!
+    # Необходимо для битровых событий
     FourPaws\SapBundle\Consumer\ConsumerRegistry:
         public: true
 
     FourPaws\SapBundle\Pipeline\PipelineRegistry:
-        public: true
+        public: false
 
     # todo: remove after development!
     FourPaws\SapBundle\Source\SourceRegistry:
-        public: true
+        public: false
         lazy: true
 
     # Получить репозиторий напрямую нельзя

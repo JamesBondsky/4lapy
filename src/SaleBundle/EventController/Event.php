@@ -12,9 +12,9 @@ use FourPaws\App\ServiceHandlerInterface;
 use FourPaws\SaleBundle\Discount\Action\Action\DiscountFromProperty;
 use FourPaws\SaleBundle\Discount\Action\Condition\BasketQuantity;
 use FourPaws\SaleBundle\Discount\BasketFilter;
-use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Gifter;
+use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\NotificationService;
 use FourPaws\SaleBundle\Service\UserAccountService;
@@ -38,7 +38,7 @@ class Event implements ServiceHandlerInterface
      *
      * @return mixed|void
      */
-    public static function initHandlers(EventManager $eventManager)
+    public static function initHandlers(EventManager $eventManager): void
     {
         self::$eventManager = $eventManager;
         self::initHandler('OnCondSaleActionsControlBuildList', [Gift::class, 'GetControlDescr']);
@@ -47,17 +47,16 @@ class Event implements ServiceHandlerInterface
         self::initHandler('OnCondSaleActionsControlBuildList', [BasketQuantity::class, 'GetControlDescr']);
         self::initHandler('OnCondSaleActionsControlBuildList', [DiscountFromProperty::class, 'GetControlDescr']);
         self::initHandler('OnAfterSaleOrderFinalAction', [Manager::class, 'OnAfterSaleOrderFinalAction']);
-        self::initHandler('OnBeforeSaleBasketItemSetField', [__CLASS__, 'checkItemQuantity']);
-        self::initHandler('OnSaleBasketItemRefreshData', [__CLASS__, 'updateItemAvailability']);
+        self::initHandler('OnSaleBasketItemRefreshData', [static::class, 'updateItemAvailability']);
 
-        self::initHandler('OnSaleOrderSaved', [__CLASS__, 'sendNewOrderMessage']);
-        self::initHandler('OnSaleOrderPaid', [__CLASS__, 'sendOrderPaymentMessage']);
-        self::initHandler('OnSaleOrderCanceled', [__CLASS__, 'sendOrderCancelMessage']);
-        self::initHandler('OnSaleStatusOrderChange', [__CLASS__, 'sendOrderStatusMessage']);
+        self::initHandler('OnSaleOrderSaved', [static::class, 'sendNewOrderMessage']);
+        self::initHandler('OnSaleOrderPaid', [static::class, 'sendOrderPaymentMessage']);
+        self::initHandler('OnSaleOrderCanceled', [static::class, 'sendOrderCancelMessage']);
+        self::initHandler('OnSaleStatusOrderChange', [static::class, 'sendOrderStatusMessage']);
 
-        self::initHandler('OnAfterUserLogin', [__CLASS__, 'updateUserAccountBalance'], 'main');
-        self::initHandler('OnAfterUserAuthorize', [__CLASS__, 'updateUserAccountBalance'], 'main');
-        self::initHandler('OnAfterUserLoginByHash', [__CLASS__, 'updateUserAccountBalance'], 'main');
+        self::initHandler('OnAfterUserLogin', [static::class, 'updateUserAccountBalance'], 'main');
+        self::initHandler('OnAfterUserAuthorize', [static::class, 'updateUserAccountBalance'], 'main');
+        self::initHandler('OnAfterUserLoginByHash', [static::class, 'updateUserAccountBalance'], 'main');
     }
 
     /**
@@ -93,29 +92,6 @@ class Event implements ServiceHandlerInterface
                    ->getContainer()
                    ->get(BasketService::class)
                    ->refreshItemAvailability($basketItem);
-    }
-
-    /**
-     * @param BitrixEvent $event
-     *
-     * @return null|EventResult
-     */
-    public static function checkItemQuantity(BitrixEvent $event)
-    {
-        $basketItem = $event->getParameter('ENTITY');
-        $fieldName = $event->getParameter('NAME');
-        $value = $event->getParameter('VALUE');
-
-        if ($fieldName !== 'QUANTITY') {
-            return null;
-        }
-
-        /** @var BasketService $basketService */
-        $basketService = Application::getInstance()
-                                    ->getContainer()
-                                    ->get(BasketService::class);
-
-        return $basketService->checkItemQuantity($basketItem, $value);
     }
 
     /**

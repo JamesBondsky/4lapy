@@ -15,7 +15,6 @@ use FourPaws\External\Exception\ExpertsenderServiceException;
 use FourPaws\External\ExpertsenderService;
 use FourPaws\External\SmsService;
 use FourPaws\SaleBundle\Exception\NotFoundException;
-use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
@@ -52,10 +51,11 @@ class NotificationService implements LoggerAwareInterface
 
     /**
      * NotificationService constructor.
-     *
      * @param OrderService $orderService
      * @param SmsService $smsService
      * @param StoreService $storeService
+     * @param ExpertsenderService $emailService
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
     public function __construct(
         OrderService $orderService,
@@ -70,6 +70,7 @@ class NotificationService implements LoggerAwareInterface
 
         $container = Application::getInstance()->getContainer();
         if ($container->has('templating')) {
+            /** @noinspection MissingService */
             $this->renderer = $container->get('templating');
         } elseif ($container->has('twig')) {
             $this->renderer = $container->get('twig');
@@ -84,8 +85,9 @@ class NotificationService implements LoggerAwareInterface
 
     /**
      * @param Order $order
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
-    public function sendNewOrderMessage(Order $order)
+    public function sendNewOrderMessage(Order $order): void
     {
         try {
             $this->orderService->getOnlinePayment($order);
@@ -96,7 +98,8 @@ class NotificationService implements LoggerAwareInterface
         }
 
         try {
-            $this->emailService->sendOrderNewEmail($order);
+            $transactionId = $this->emailService->sendOrderNewEmail($order);
+            $this->logMessage($order, $transactionId);
         } catch (ExpertsenderServiceException $e) {
             $this->logger->error($e->getMessage());
         }
@@ -127,8 +130,9 @@ class NotificationService implements LoggerAwareInterface
 
     /**
      * @param Order $order
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
-    public function sendOrderPaymentMessage(Order $order)
+    public function sendOrderPaymentMessage(Order $order): void
     {
         try {
             $payment = $this->orderService->getOnlinePayment($order);
@@ -141,7 +145,8 @@ class NotificationService implements LoggerAwareInterface
         }
 
         try {
-            $this->emailService->sendOrderNewEmail($order);
+            $transactionId = $this->emailService->sendOrderNewEmail($order);
+            $this->logMessage($order, $transactionId);
         } catch (ExpertsenderServiceException $e) {
             $this->logger->error($e->getMessage());
         }
@@ -152,7 +157,7 @@ class NotificationService implements LoggerAwareInterface
     /**
      * @param Order $order
      */
-    public function sendOrderCancelMessage(Order $order)
+    public function sendOrderCancelMessage(Order $order): void
     {
         if (!$order->isCanceled()) {
             return;
@@ -168,8 +173,10 @@ class NotificationService implements LoggerAwareInterface
 
     /**
      * @param Order $order
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
-    public function sendOrderStatusMessage(Order $order)
+    public function sendOrderStatusMessage(Order $order): void
     {
         if ($order->isCanceled()) {
             return;
@@ -210,10 +217,11 @@ class NotificationService implements LoggerAwareInterface
             )->getValue() !== BitrixUtils::BX_BOOL_TRUE
         ) {
             try {
-                if ($this->emailService->sendOrderCompleteEmail($order)) {
+                if ($transactionId = $this->emailService->sendOrderCompleteEmail($order)) {
                     $this->orderService->setOrderPropertyByCode($order, 'COMPLETE_MESSAGE_SENT', 'Y');
                     $order->save();
                 }
+                $this->logMessage($order, $transactionId);
             } catch (ExpertsenderServiceException $e) {
                 $this->logger->error($e->getMessage());
             }
@@ -232,9 +240,9 @@ class NotificationService implements LoggerAwareInterface
      * @param array $parameters
      * @param bool $immediate
      */
-    protected function sendSms(string $tpl, array $parameters, bool $immediate = false)
+    protected function sendSms(string $tpl, array $parameters, bool $immediate = false): void
     {
-        if (empty($parameters)) {
+        if (empty($parameters) || !$parameters['phone']) {
             return;
         }
 
@@ -268,7 +276,7 @@ class NotificationService implements LoggerAwareInterface
             );
 
             $result['accountNumber'] = $order->getField('ACCOUNT_NUMBER');
-            $result['dcDelivery'] = $properties['REGION_COURIER_FROM_DC'] === BitrixUtils::BX_BOOL_TRUE ? true : false;
+            $result['dcDelivery'] = $properties['REGION_COURIER_FROM_DC'] === BitrixUtils::BX_BOOL_TRUE;
             $result['phone'] = $properties['PHONE'];
             $result['email'] = $properties['EMAIL'];
             $result['price'] = $order->getPrice();
@@ -283,17 +291,33 @@ class NotificationService implements LoggerAwareInterface
                     $properties['DELIVERY_PLACE_CODE']
                 );
                 $result['shop'] = [
-                    'address'  => $shop->getAddress(),
+                    'address' => $shop->getAddress(),
                     'schedule' => $shop->getSchedule(),
                 ];
             }
-        } catch (NotFoundException $e) {
-            $this->logger->error($e->getMessage());
-        } catch (StoreNotFoundException $e) {
+        } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
             return [];
         }
 
         return $result;
+    }
+
+    /**
+     * @param Order $order
+     * @param int $transactionId
+     */
+    protected function logMessage(Order $order, int $transactionId): void
+    {
+        $email = $this->orderService->getOrderPropertyByCode($order, 'EMAIL')->getValue();
+
+        $this->logger->notice(
+            sprintf(
+                'message %s for order %s sent successfully to %s',
+                $transactionId,
+                $order->getId(),
+                $email
+            )
+        );
     }
 }

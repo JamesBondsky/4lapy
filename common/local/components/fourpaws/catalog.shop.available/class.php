@@ -3,7 +3,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\SystemException;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\StoreBundle\Service\StoreService;
@@ -17,12 +21,26 @@ class FourPawsCatalogShopAvailableComponent extends CBitrixComponent
      * @var StoreService
      */
     protected $storeService;
-    
+
+    /**
+     * FourPawsCatalogShopAvailableComponent constructor.
+     *
+     * @param CBitrixComponent|null $component
+     *
+     * @throws SystemException
+     */
     public function __construct(CBitrixComponent $component = null)
     {
         parent::__construct($component);
-        
-        $this->storeService = Application::getInstance()->getContainer()->get('store.service');
+
+        try {
+            $this->storeService = Application::getInstance()->getContainer()->get('store.service');
+        } catch (ApplicationCreateException $e) {
+            $logger = LoggerFactory::create('component');
+            $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
+            /** @noinspection PhpUnhandledExceptionInspection */
+            throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
+        }
     }
     
     /** {@inheritdoc} */
@@ -40,6 +58,7 @@ class FourPawsCatalogShopAvailableComponent extends CBitrixComponent
         if (empty($params['OFFER']) && $params['PRODUCT'] instanceof Product) {
             $params['OFFER'] = $params['PRODUCT']->getOffers()->first();
         }
+        $params['CACHE_TIME'] = 360000;
         
         return $params;
     }
@@ -50,8 +69,11 @@ class FourPawsCatalogShopAvailableComponent extends CBitrixComponent
     public function executeComponent()
     {
         parent::executeComponent();
-        
-        if ($this->startResultCache()) {
+
+        /** @var Offer $offer */
+        $offer = $this->arParams['OFFER'];
+        /** кешируем для каждого товара из-за того что в шаблрен подставляется id */
+        if ($this->startResultCache($this->arParams['CACHE_TIME'], ['OFFER_ID'=>$offer->getId()])) {
             $this->includeComponentTemplate();
         }
         

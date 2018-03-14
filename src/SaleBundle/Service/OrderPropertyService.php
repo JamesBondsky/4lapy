@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SaleBundle\Service;
 
 use FourPaws\SaleBundle\Collection\OrderPropertyCollection;
@@ -14,6 +18,8 @@ class OrderPropertyService
     const COMMUNICATION_SMS = '01';
 
     const COMMUNICATION_PHONE = '02';
+
+    const COMMUNICATION_PHONE_ANALYSIS = '03';
 
     /**
      * @var OrderPropertyVariantRepository

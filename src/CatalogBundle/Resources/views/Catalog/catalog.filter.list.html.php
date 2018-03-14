@@ -30,19 +30,16 @@ foreach ($filters as $filter) {
                             type="text"
                             data-min="<?= $filter->getMinValue() ?>"
                             value="<?= $filter->getFromValue() ?: $filter->getMinValue() ?>"
-                            name="<?= $filter->getFromFilterCode() ?>"
-                    />
+                            name="<?= $filter->getFromFilterCode() ?>" />
                     <span class="b-range__line-input">-</span>
                     <input
                             class="b-input__input-field b-input__input-field--price b-input__input-field--max js-price-max"
                             type="text"
                             data-max="<?= $filter->getMaxValue() ?>"
                             value="<?= $filter->getToValue() ?: $filter->getMaxValue() ?>"
-                            name="<?= $filter->getToFilterCode() ?>"
-                    />
+                            name="<?= $filter->getToFilterCode() ?>" />
                 </div>
-                <div class="b-range__line js-slider-range">
-                </div>
+                <div class="b-range__line js-slider-range"></div>
             </div>
         </div>
         <?php

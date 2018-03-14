@@ -13,7 +13,6 @@ use Doctrine\Common\Collections\Collection;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
 use JMS\Serializer\Annotation as Serializer;
-use Misd\PhoneNumberBundle\Validator\Constraints\PhoneNumber;
 use Symfony\Component\Security\Core\Role\Role;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -323,6 +322,14 @@ class User implements UserInterface
     }
 
     /**
+     * @return bool
+     */
+    public function hasEmail(): bool
+    {
+        return !empty($this->getEmail());
+    }
+
+    /**
      * @return string
      */
     public function getNormalizePersonalPhone(): string
@@ -501,7 +508,7 @@ class User implements UserInterface
         if (!empty($name)
             && !empty($secondName)
             && !empty($lastName)) {
-            $fullName = $name . ' ' . $secondName . $lastName;
+            $fullName = $lastName . ' ' . $name . ' ' . $secondName;
         } /** @noinspection NotOptimalIfConditionsInspection */ elseif (!empty($lastName)
             && !empty($name)) {
             $fullName = $lastName . ' ' . $name;
@@ -970,5 +977,13 @@ class User implements UserInterface
         $this->shopCode = $shopCode;
 
         return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function allowedEASend(): bool
+    {
+        return $this->hasEmail() && $this->isEmailConfirmed();
     }
 }

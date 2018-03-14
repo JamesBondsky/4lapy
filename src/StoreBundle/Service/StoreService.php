@@ -7,6 +7,7 @@
 namespace FourPaws\StoreBundle\Service;
 
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Sale\Delivery\CalculationResult;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -20,7 +21,6 @@ use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundExcep
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Location\LocationService;
-use FourPaws\MobileApiBundle\Dto\Request\StoreListRequest;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Base as BaseEntity;
@@ -39,17 +39,17 @@ class StoreService
     /**
      * Все склады
      */
-    const TYPE_ALL = 'TYPE_ALL';
+    public const TYPE_ALL = 'TYPE_ALL';
 
     /**
      * Склады, не являющиеся магазинами
      */
-    const TYPE_STORE = 'TYPE_STORE';
+    public const TYPE_STORE = 'TYPE_STORE';
 
     /**
      * Склады, являющиеся магазинами
      */
-    const TYPE_SHOP = 'TYPE_SHOP';
+    public const TYPE_SHOP = 'TYPE_SHOP';
 
     /**
      * @var LocationService
@@ -93,7 +93,6 @@ class StoreService
      * @param int $id
      *
      * @throws NotFoundException
-     * @throws \Exception
      * @return BaseEntity|bool|Store
      */
     public function getById(int $id)
@@ -117,8 +116,8 @@ class StoreService
      * @param $xmlId
      *
      * @throws NotFoundException
-     * @throws \Exception
      * @return Store
+     * @throws ArgumentException
      */
     public function getByXmlId($xmlId): Store
     {
@@ -142,8 +141,9 @@ class StoreService
      *
      * @param string $type
      *
-     * @throws \Exception
      * @return StoreCollection
+     * @throws \Exception
+     * @throws ArgumentException
      */
     public function getByCurrentLocation($type = self::TYPE_ALL): StoreCollection
     {
@@ -157,9 +157,11 @@ class StoreService
      *
      * @param string $locationCode
      * @param string $type
-     * @param bool $strict
+     * @param bool   $strict
      *
      * @return StoreCollection
+     * @throws ArgumentException
+     * @throws \Exception
      */
     public function getByLocation(
         string $locationCode,
@@ -233,8 +235,8 @@ class StoreService
      *
      * @param array $select
      *
-     * @throws \Exception
      * @return array
+     * @throws \Exception
      */
     public function getMetroInfo(array $filter = [], array $select = ['*']): array
     {
@@ -283,8 +285,8 @@ class StoreService
      * @param array $filter
      * @param array $select
      *
-     * @throws \Exception
      * @return array
+     * @throws \Exception
      */
     public function getServicesInfo(array $filter = [], array $select = ['*']): array
     {
@@ -314,17 +316,17 @@ class StoreService
     /**
      * Получить наличие офферов на указанных складах
      *
-     * @param Collection $offers
+     * @param Collection      $offers
      * @param StoreCollection $stores
      *
      * @throws \Exception
      */
-    public function getStocks(Collection $offers, StoreCollection $stores)
+    public function getStocks(Collection $offers, StoreCollection $stores): void
     {
         foreach ($offers as $offer) {
             $offer->withStocks(
                 $this->getStocksByOffer($offer)
-                     ->filterByStores($stores)
+                    ->filterByStores($stores)
             );
         }
     }
@@ -357,6 +359,7 @@ class StoreService
     /**
      * @param array $params
      *
+     * @throws ArgumentException
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
      * @throws FileNotFoundException
@@ -394,7 +397,7 @@ class StoreService
     /**
      * @param array $params
      *
-     * @throws \Exception
+     * @throws ArgumentException
      * @return StoreCollection
      */
     public function getStoreCollection(array $params = []): StoreCollection
@@ -410,6 +413,7 @@ class StoreService
     /**
      * @param array $params
      *
+     * @throws ArgumentException
      * @throws ApplicationCreateException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
@@ -431,11 +435,11 @@ class StoreService
             if ($this->pickupDelivery) {
                 $stockResult = $this->getStockResult($this->pickupDelivery);
                 $storeAmount = reset($this->offers)->getStocks()
-                                                   ->filterByStores(
-                                                       $this->getByCurrentLocation(
-                                                           static::TYPE_STORE
-                                                       )
-                                                   )->getTotalAmount();
+                    ->filterByStores(
+                        $this->getByCurrentLocation(
+                            static::TYPE_STORE
+                        )
+                    )->getTotalAmount();
             }
 
             /** @var Store $store */
@@ -503,9 +507,9 @@ class StoreService
                     /** @var StockResult $stockResultByStore */
                     $stockResultByStore = $stockResult->filterByStore($store)->first();
                     $amount = $storeAmount + $stockResultByStore->getOffer()
-                                                                ->getStocks()
-                                                                ->filterByStore($store)
-                                                                ->getTotalAmount();
+                            ->getStocks()
+                            ->filterByStore($store)
+                            ->getTotalAmount();
                     $item['amount'] = $amount > 5 ? 'много' : 'мало';
                     $item['pickup'] = DeliveryTimeHelper::showTime(
                         $this->pickupDelivery,
@@ -644,41 +648,6 @@ class StoreService
         return $result;
     }
 
-    /**
-     * @param StoreListRequest $storeListRequest
-     *
-     * @return array
-     */
-    public function getMobileFilterByRequest(StoreListRequest $storeListRequest): array
-    {
-        $result = [];
-        if (!empty($storeListRequest->getMetroStation())) {
-            $result['UF_METRO'] = $storeListRequest->getMetroStation();
-        }
-        if (!empty($storeListRequest->getCityId())) {
-            $result['UF_LOCATION'] = $storeListRequest->getCityId();
-        }
-
-        return $result;
-    }
-
-    /**
-     * @param StoreListRequest $storeListRequest
-     *
-     * @return array
-     */
-    public function getMobileOrderByRequest(StoreListRequest $storeListRequest): array
-    {
-        $result = [];
-        //Сортировка по приближенности к текущему местоположению
-        $longitude = $storeListRequest->getLongitude();
-        $latitude = $storeListRequest->getLatitude();
-        if ($longitude > 0 && $latitude > 0) {
-            $result['DISTANCE_' . (string)$latitude . '_' . (string)$longitude] = 'ASC';
-        }
-
-        return $result;
-    }
 
     /**
      * @param CalculationResult $delivery
@@ -709,7 +678,7 @@ class StoreService
     /**
      * @return null|CalculationResult
      */
-    protected function getPickupDelivery()
+    protected function getPickupDelivery(): ?CalculationResult
     {
         if (!$this->pickupDelivery) {
             $deliveries = $this->deliveryService->getByProduct(reset($this->offers));

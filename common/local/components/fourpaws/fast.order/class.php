@@ -90,6 +90,7 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
     {
         $params['PATH_TO_CATALOG'] = '/catalog/';
         $params['TYPE'] = !empty($params['TYPE']) ? $params['TYPE'] : '';
+        $params['CACHE_TIME'] = $params['CACHE_TIME'] ?: 360000;
         return $params;
     }
 
@@ -128,7 +129,7 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
             }
             $this->includeComponentTemplate($this->arParams['TYPE']);
         } else {
-            if ($this->startResultCache(360000)) {
+            if ($this->startResultCache($this->arParams['CACHE_TIME'])) {
                 $this->includeComponentTemplate();
             }
         }
@@ -183,7 +184,7 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
      */
-    public function getDeliveryDate(Offer $offer): string
+    public function getDeliveryDate(Offer $offer, $showToday = false): string
     {
         /** Если доставка сегодня не показываем */
         $deliveryDate = '';
@@ -196,7 +197,7 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
                 $periodFrom = $item->getPeriodFrom();
                 switch ($periodFrom) {
                     case 0:
-                        $dates[0] = '';
+                        $dates[0] = $showToday ? 'Сегодня' : '';
                         break;
                     case 1:
                         $dates[1] = 'Завтра';
@@ -207,16 +208,15 @@ class FourPawsFastOrderComponent extends \CBitrixComponent
                         $dates[$periodFrom] = $date;
                 }
             } else {
-                $dates[0] = '';
+                $dates[0] = $showToday ? 'Сегодня' : '';
             }
         }
         if (!empty($dates)) {
             /** @var Date $minDate */
             $minDate = $dates[min(array_keys($dates))];
-            if($minDate instanceof Date) {
+            if ($minDate instanceof Date) {
                 $deliveryDate = $minDate->format('d.m.Y');
-            }
-            else{
+            } else {
                 $deliveryDate = $minDate;
             }
         }
