@@ -56,14 +56,14 @@ class Manager
                     Application::getInstance()
                         ->getContainer()
                         ->get(BasketService::class)
-                        ->getAdder()
+                        ->getAdder('gift')
                         ->processOrder();
 
                     // Удаляем подарки, акции которых не выполнились
                     Application::getInstance()
                         ->getContainer()
                         ->get(BasketService::class)
-                        ->getCleaner()
+                        ->getCleaner('gift')
                         ->processOrder();
                 }
             }
