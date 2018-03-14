@@ -11,6 +11,7 @@ use Bitrix\Sale\Payment;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\ServiceHandlerInterface;
+use FourPaws\Migrator\Client\User;
 use FourPaws\SaleBundle\Discount\Action\Action\DiscountFromProperty;
 use FourPaws\SaleBundle\Discount\Action\Condition\BasketQuantity;
 use FourPaws\SaleBundle\Discount\BasketFilter;
@@ -91,19 +92,19 @@ class Event implements ServiceHandlerInterface
     public static function updateUserAccountBalance(array $user)
     {
         $userId = (int)$user['user_fields']['ID'];
-        if($userId > 0) {
+        if($userId > 1) {
             try {
                 $container = Application::getInstance()->getContainer();
                 $userService = $container->get(CurrentUserProviderInterface::class);
                 $userAccountService = $container->get(UserAccountService::class);
 
                 $userEntity = $userService->getUserRepository()->find($userId);
-
                 /* @todo по ТЗ должно выполняться в фоновом режиме */
                 list($res, $bonus) = $userAccountService->refreshUserBalance($userEntity);
 
                 /** обновление скидки
-                @todo сделать обновление через очередь, не критично если какое-то время будет старая скидка, тем более в случае неактивности манзаны она не обновится все равно*/
+                 * @todo сделать обновление через очередь, не критично если какое-то время будет старая скидка, тем более в случае неактивности манзаны она не обновится все равно
+                 */
                 $userService->refreshUserDiscount($userEntity, $bonus);
             } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException $e) {
                 $logger = LoggerFactory::create('system');

@@ -55,7 +55,7 @@ $useOffer = $offer instanceof Offer && $offer->getId() > 0; ?>
             <?php if ($useOffer) { ?>
                 <span class="b-common-item__rank-text b-common-item__rank-text--red b-common-item__rank-text--shopping js-bonus-<?=$offer->getId()?>">
                     <?php if ($arParams['IS_AJAX']) {
-                        $bonus = $offer->getBonuses($component->getCurrentUserService()->getDiscount(),
+                        $bonus = $offer->getBonuses($component->getCurrentUserService()->getCurrentUser()->getDiscount(),
                             $basketItem->getQuantity());
                         if ($bonus > 0) {
                             $bonuses = round($bonuses, 2, PHP_ROUND_HALF_DOWN);
