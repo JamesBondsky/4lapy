@@ -41,6 +41,9 @@ class Event implements ServiceHandlerInterface
     public static function initHandlers(EventManager $eventManager): void
     {
         self::$eventManager = $eventManager;
+
+        ###   Обработчики скидок       ###
+
         /** Инициализация кастомных правил работы с корзиной */
         self::initHandler('OnCondSaleActionsControlBuildList', [Gift::class, 'GetControlDescr']);
         self::initHandler('OnCondSaleActionsControlBuildList', [Gifter::class, 'GetControlDescr']);
@@ -48,8 +51,12 @@ class Event implements ServiceHandlerInterface
         self::initHandler('OnCondSaleActionsControlBuildList', [BasketQuantity::class, 'GetControlDescr']);
         self::initHandler('OnCondSaleActionsControlBuildList', [DiscountFromProperty::class, 'GetControlDescr']);
         self::initHandler('OnCondSaleActionsControlBuildList', [DetachedRowDiscount::class, 'GetControlDescr']);
-        /** Здесь дополнительная обработка подарочных акций */
+        /** Здесь дополнительная обработка акций */
         self::initHandler('OnAfterSaleOrderFinalAction', [Manager::class, 'OnAfterSaleOrderFinalAction']);
+
+        ###   Обработчики скидок EOF   ###
+
+
         self::initHandler('OnSaleBasketItemRefreshData', [static::class, 'updateItemAvailability']);
 
         self::initHandler('OnSaleOrderSaved', [static::class, 'sendNewOrderMessage']);

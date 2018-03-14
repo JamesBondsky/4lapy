@@ -7,10 +7,12 @@
  * @copyright   ADV/web-engineering co.
  */
 
-namespace FourPaws\SaleBundle\Discount\Utils;
+namespace FourPaws\SaleBundle\Discount\Utils\Gift;
 
 use Bitrix\Sale\Order;
 use FourPaws\SaleBundle\Discount\Gift;
+use FourPaws\SaleBundle\Discount\Utils\CleanerInterface;
+use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Service\BasketService;
 
@@ -18,11 +20,15 @@ use FourPaws\SaleBundle\Service\BasketService;
  * Class Cleaner
  * @package FourPaws\SaleBundle\Discount\Utils
  */
-class Cleaner
+class Cleaner implements CleanerInterface
 {
-    /** @var Order */
+    /**
+     * @var Order
+     */
     protected $order;
-    /** @var BasketService */
+    /**
+     * @var BasketService
+     */
     protected $basketService;
 
     /**
@@ -48,7 +54,7 @@ class Cleaner
      * @throws \Exception
      * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
      */
-    public function processOrder()
+    public function processOrder(): void
     {
         $possibleGiftGroups = Gift::getPossibleGiftGroups($this->order);
         $existGifts = Manager::getExistGifts($this->order);
@@ -85,7 +91,7 @@ class Cleaner
             $group = current($group);
             $sumCount = 0;
             $availCount = $group['count'];
-            foreach ($existGifts as $k=> $gift) {
+            foreach ($existGifts as $k => $gift) {
                 if ($gift['discountId'] !== $group['discountId']) {
                     continue;
                 }
@@ -104,7 +110,7 @@ class Cleaner
                     }
                 } else {
                     $availCount -= $gift['quantity'];
-                    if($availCount < 0) {
+                    if ($availCount < 0) {
                         $availCount = 0;
                     }
                 }

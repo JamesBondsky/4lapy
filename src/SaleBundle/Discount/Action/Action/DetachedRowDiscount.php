@@ -259,7 +259,7 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
 
             $actionDescription = [
                 'ACTION_TYPE' => OrderDiscountManager::DESCR_TYPE_SIMPLE,
-                'ACTION_DESCRIPTION' => json_encode(['discount_value' => $discountValue, 'apply_count' => $applyCount]),
+                'ACTION_DESCRIPTION' => json_encode(['discountType' => 'DETACH', 'params' => ['discount_value' => $discountValue, 'apply_count' => $applyCount]]),
             ];
             Actions::increaseApplyCounter();
             Actions::setActionDescription(Actions::RESULT_ENTITY_BASKET, $actionDescription);

@@ -75,7 +75,7 @@ class Manager
      *
      *
      */
-    public static function disableProcessingFinalAction()
+    public static function disableProcessingFinalAction(): void
     {
         self::$finalActionEnabled = false;
     }
@@ -84,7 +84,7 @@ class Manager
      *
      *
      */
-    public static function enableProcessingFinalAction()
+    public static function enableProcessingFinalAction(): void
     {
         self::$finalActionEnabled = true;
     }

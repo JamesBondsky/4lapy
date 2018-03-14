@@ -5,13 +5,10 @@ namespace FourPaws\SaleBundle\Service;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
 use Bitrix\Catalog\Product\CatalogProvider;
-use Bitrix\Main\Error;
-use Bitrix\Main\EventResult;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Compatible\DiscountCompatibility;
 use Bitrix\Sale\Order;
-use Bitrix\Sale\ResultError;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
@@ -19,11 +16,13 @@ use FourPaws\External\Manzana\Exception\ExecuteException;
 use FourPaws\External\ManzanaPosService;
 use FourPaws\External\ManzanaService;
 use FourPaws\SaleBundle\Discount\Gift;
-use FourPaws\SaleBundle\Discount\Utils\Adder;
-use FourPaws\SaleBundle\Discount\Utils\Cleaner;
+use FourPaws\SaleBundle\Discount\Utils\AdderInterface;
+use FourPaws\SaleBundle\Discount\Utils\CleanerInterface;
+use FourPaws\SaleBundle\Discount\Utils;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
+use FourPaws\SaleBundle\Exception\RuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -52,8 +51,8 @@ class BasketService
      * BasketService constructor.
      *
      * @param CurrentUserProviderInterface $currentUserProvider
-     * @param ManzanaPosService            $manzanaPosService
-     * @param ManzanaService               $manzanaService
+     * @param ManzanaPosService $manzanaPosService
+     * @param ManzanaService $manzanaService
      */
     public function __construct(
         CurrentUserProviderInterface $currentUserProvider,
@@ -69,9 +68,9 @@ class BasketService
     /**
      *
      *
-     * @param int      $offerId
+     * @param int $offerId
      * @param int|null $quantity
-     * @param array    $rewriteFields
+     * @param array $rewriteFields
      *
      * @throws InvalidArgumentException
      * @throws BitrixProxyException
@@ -229,7 +228,7 @@ class BasketService
      *
      * @param bool|null $reload
      *
-     * @param int       $fuserId
+     * @param int $fuserId
      *
      * @return Basket
      */
@@ -239,7 +238,7 @@ class BasketService
             /** @var Basket $basket */
             /** @noinspection PhpInternalEntityUsedInspection */
             DiscountCompatibility::stopUsageCompatible();
-            if($fuserId === 0){
+            if ($fuserId === 0) {
                 $fuserId = $this->currentUserProvider->getCurrentFUserId();
             }
             $this->basket = Basket::loadItemsForFUser($fuserId, SITE_ID);
@@ -347,38 +346,62 @@ class BasketService
     /**
      *
      *
+     * @param string $type
+     *
+     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
      * @throws \Bitrix\Main\NotSupportedException
      * @throws \Bitrix\Main\ObjectNotFoundException
-     * @return Adder
+     *
+     * @return AdderInterface
      */
-    public function getAdder(): Adder
+    public function getAdder(string $type): AdderInterface
     {
         if (null === $order = $this->getBasket()->getOrder()) {
             $order = Order::create(SITE_ID);
             $order->setBasket($this->getBasket());
         }
-        return new Adder($order, $this);
+        if ($type === 'gift') {
+            $adder = new Utils\Gift\Adder($order, $this);
+        } elseif ($type === 'detach') {
+            $adder = new Utils\Detach\Adder($order, $this);
+        } else {
+            throw new InvalidArgumentException('Передан неверный тип');
+        }
+
+        return $adder;
     }
 
     /**
      *
      *
+     * @param string $type
+     *
+     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
      * @throws \Bitrix\Main\NotSupportedException
      * @throws \Bitrix\Main\ObjectNotFoundException
-     * @return Cleaner
+     *
+     * @return CleanerInterface
      */
-    public function getCleaner(): Cleaner
+    public function getCleaner(string $type): CleanerInterface
     {
         if (null === $order = $this->getBasket()->getOrder()) {
             $order = Order::create(SITE_ID);
             $order->setBasket($this->getBasket());
         }
-        return new Cleaner($order, $this);
+        if ($type === 'gift') {
+            $cleaner = new Utils\Gift\Cleaner($order, $this);
+        } elseif ($type === 'detach') {
+            $cleaner = new Utils\Detach\Cleaner($order, $this);
+        } else {
+            throw new InvalidArgumentException('Передан неверный тип');
+        }
+
+        return $cleaner;
     }
 
     /**
      * @param Offer $offer
-     * @param int   $quantity
+     * @param int $quantity
      *
      * @return float
      * @throws InvalidIdentifierException
@@ -386,9 +409,10 @@ class BasketService
      */
     public function getItemBonus(Offer $offer, int $quantity = 1): float
     {
+        //todo Remove multiple return statements usage https://github.com/kalessil/phpinspectionsea/blob/master/docs/architecture.md#multiple-return-statements-usage
         try {
             $cardNumber = $this->currentUserProvider->getCurrentUser()->getDiscountCardNumber();
-            if(!empty($cardNumber)) {
+            if (!empty($cardNumber)) {
                 $cheque = $this->manzanaPosService->processChequeWithoutBonus(
                     $this->manzanaPosService->buildRequestFromItem(
                         $offer,
@@ -404,7 +428,7 @@ class BasketService
         } catch (ExecuteException $e) {
             /** Возвращаеи 0 в случае ошибки */
         }
-        return (float)0;
+        return 0.0;
     }
 
     /**
@@ -412,6 +436,7 @@ class BasketService
      */
     public function getBasketBonus(): float
     {
+        //todo Remove multiple return statements usage https://github.com/kalessil/phpinspectionsea/blob/master/docs/architecture.md#multiple-return-statements-usage
         try {
             $cardNumber = $this->currentUserProvider->getActiveCard();
             $cheque = $this->manzanaPosService->processChequeWithoutBonus(
@@ -423,7 +448,7 @@ class BasketService
 
             return $cheque->getChargedBonus();
         } catch (ExecuteException $e) {
-            return (float)0;
+            return 0.0;
         }
     }
 }

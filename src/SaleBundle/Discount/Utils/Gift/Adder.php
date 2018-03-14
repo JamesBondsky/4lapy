@@ -6,14 +6,15 @@
  * @author      Makeev Ilya
  * @copyright   ADV/web-engineering co.
  */
-declare(strict_types=1);
 
-namespace FourPaws\SaleBundle\Discount\Utils;
+namespace FourPaws\SaleBundle\Discount\Utils\Gift;
 
 use Bitrix\Sale\Order;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\SaleBundle\Discount\Gift;
+use FourPaws\SaleBundle\Discount\Utils\AdderInterface;
+use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Service\BasketService;
 
@@ -21,22 +22,21 @@ use FourPaws\SaleBundle\Service\BasketService;
  * Class Adder
  * @package FourPaws\SaleBundle\Discount\Utils
  */
-class Adder
+class Adder implements AdderInterface
 {
     /**
      * @var Order
      */
-    private $order;
+    protected $order;
     /**
      * @var BasketService
      */
-    private $basketService;
+    protected $basketService;
 
     /**
      * Adder constructor.
      *
      * @param Order $order
-     *
      * @param BasketService $basketService
      */
     public function __construct(Order $order, BasketService $basketService)
@@ -56,7 +56,7 @@ class Adder
      * @throws \Bitrix\Main\ObjectNotFoundException
      * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
      */
-    public function processOrder()
+    public function processOrder(): void
     {
         if (!$discount = $this->order->getDiscount()) {
             return;
@@ -211,7 +211,7 @@ class Adder
      * @throws \Exception
      * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
      */
-    public function selectGift(int $offerId, int $discountId)
+    public function selectGift(int $offerId, int $discountId): void
     {
         $possibleGiftGroups = Gift::getPossibleGiftGroups($this->order, $discountId);
         if (!isset($possibleGiftGroups[$discountId])) {
@@ -246,6 +246,4 @@ class Adder
         $this->addGift($offerId, 1, $discountId, true);
         Manager::enableProcessingFinalAction();
     }
-
-
 }
