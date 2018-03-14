@@ -2,17 +2,31 @@
 
 namespace FourPaws\StoreBundle\Entity;
 
+use FourPaws\App\Application;
+use FourPaws\StoreBundle\Collection\DeliveryScheduleCollection;
+use FourPaws\StoreBundle\Exception\NotFoundException;
+use FourPaws\StoreBundle\Service\DeliveryScheduleService;
+use FourPaws\StoreBundle\Service\StoreService;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 use DateTime;
 
 class DeliverySchedule extends Base
 {
-    const TYPE_WEEKLY = '1';
+    /**
+     * Еженедельный
+     */
+    public const TYPE_WEEKLY = '1';
 
-    const TYPE_BY_WEEK = '2';
+    /**
+     * По определенным неделям
+     */
+    public const TYPE_BY_WEEK = '2';
 
-    const TYPE_MANUAL = '8';
+    /**
+     * Ручной
+     */
+    public const TYPE_MANUAL = '8';
 
     /**
      * @var int
@@ -39,7 +53,7 @@ class DeliverySchedule extends Base
      * @Serializer\Type("string")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
-    protected $sender = '';
+    protected $senderCode = '';
 
     /**
      * @var string
@@ -47,7 +61,7 @@ class DeliverySchedule extends Base
      * @Serializer\Type("string")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
-    protected $receiver = '';
+    protected $receiverCode = '';
 
     /**
      * @var DateTime
@@ -74,28 +88,20 @@ class DeliverySchedule extends Base
     protected $active = true;
 
     /**
-     * @var string
-     * @Serializer\SerializedName("UF_TYPE")
-     * @Serializer\Type("string")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
-     */
-    protected $type = '';
-
-    /**
-     * @var int
+     * @var array
      * @Serializer\SerializedName("UF_WEEK_NUMBER")
-     * @Serializer\Type("string")
+     * @Serializer\Type("array<int>")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
-    protected $weekNumber = 0;
+    protected $weekNumbers = [];
 
     /**
-     * @var string
+     * @var array
      * @Serializer\SerializedName("UF_DAY_OF_WEEK")
-     * @Serializer\Type("string")
+     * @Serializer\Type("array<int>")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
-    protected $dayOfWeek;
+    protected $daysOfWeek;
 
     /**
      * @var string
@@ -106,12 +112,37 @@ class DeliverySchedule extends Base
     protected $deliveryNumber;
 
     /**
-     * @var DateTime
+     * @var DateTime[]
      * @Serializer\SerializedName("UF_DELIVERY_DATE")
-     * @Serializer\Type("DateTime<'d.m.Y'>")
+     * @Serializer\Type("array<DateTime<'d.m.Y'>>")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
-    protected $deliveryDate;
+    protected $deliveryDates;
+
+    /**
+     * @var Store
+     */
+    protected $sender;
+
+    /**
+     * @var Store
+     */
+    protected $receiver;
+
+    /**
+     * @var DeliveryScheduleCollection
+     */
+    protected $receiverSchedules;
+
+    /**
+     * @var DeliveryScheduleCollection
+     */
+    protected $senderSchedules;
+
+    /**
+     * @var string
+     */
+    protected $type = '';
 
     /**
      * @return int
@@ -156,19 +187,19 @@ class DeliverySchedule extends Base
     /**
      * @return string
      */
-    public function getSender(): string
+    public function getSenderCode(): string
     {
-        return $this->sender;
+        return $this->senderCode;
     }
 
     /**
-     * @param string $sender
+     * @param string $senderCode
      *
      * @return DeliverySchedule
      */
-    public function setSender(string $sender): DeliverySchedule
+    public function setSenderCode(string $senderCode): DeliverySchedule
     {
-        $this->sender = $sender;
+        $this->senderCode = $senderCode;
 
         return $this;
     }
@@ -176,19 +207,19 @@ class DeliverySchedule extends Base
     /**
      * @return string
      */
-    public function getReceiver(): string
+    public function getReceiverCode(): string
     {
-        return $this->receiver;
+        return $this->receiverCode;
     }
 
     /**
-     * @param string $receiver
+     * @param string $receiverCode
      *
      * @return DeliverySchedule
      */
-    public function setReceiver(string $receiver): DeliverySchedule
+    public function setReceiverCode(string $receiverCode): DeliverySchedule
     {
-        $this->receiver = $receiver;
+        $this->receiverCode = $receiverCode;
 
         return $this;
     }
@@ -263,52 +294,48 @@ class DeliverySchedule extends Base
 
     /**
      * @param string $type
-     *
      * @return DeliverySchedule
      */
     public function setType(string $type): DeliverySchedule
     {
         $this->type = $type;
-
         return $this;
     }
 
     /**
-     * @return int
+     * @return array
      */
-    public function getWeekNumber(): int
+    public function getWeekNumbers(): array
     {
-        return $this->weekNumber;
+        return $this->weekNumbers;
     }
 
     /**
-     * @param int $weekNumber
-     *
+     * @param array $weekNumbers
      * @return DeliverySchedule
      */
-    public function setWeekNumber(int $weekNumber): DeliverySchedule
+    public function setWeekNumbers(array $weekNumbers): DeliverySchedule
     {
-        $this->weekNumber = $weekNumber;
-
+        $this->weekNumbers = $weekNumbers;
         return $this;
     }
 
     /**
-     * @return string
+     * @return array
      */
-    public function getDayOfWeek(): string
+    public function getDaysOfWeek(): array
     {
-        return $this->dayOfWeek;
+        return $this->daysOfWeek ?? [];
     }
 
     /**
-     * @param string $dayOfWeek
+     * @param array $daysOfWeek
      *
      * @return DeliverySchedule
      */
-    public function setDayOfWeek(string $dayOfWeek): DeliverySchedule
+    public function setDaysOfWeek(array $daysOfWeek): DeliverySchedule
     {
-        $this->dayOfWeek = $dayOfWeek;
+        $this->daysOfWeek = $daysOfWeek;
 
         return $this;
     }
@@ -334,22 +361,149 @@ class DeliverySchedule extends Base
     }
 
     /**
-     * @return DateTime
+     * @return DateTime[]
      */
-    public function getDeliveryDate(): DateTime
+    public function getDeliveryDates(): array
     {
-        return $this->deliveryDate;
+        return $this->deliveryDates ?? [];
     }
 
     /**
-     * @param DateTime $deliveryDate
+     * @param DateTime[] $deliveryDates
      *
      * @return DeliverySchedule
      */
-    public function setDeliveryDate(DateTime $deliveryDate): DeliverySchedule
+    public function setDeliveryDates(array $deliveryDates): DeliverySchedule
     {
-        $this->deliveryDate = $deliveryDate;
+        $this->deliveryDates = $deliveryDates;
 
+        return $this;
+    }
+
+    /**
+     * @param DateTime $date
+     * @return bool
+     */
+    public function isActiveForDate(DateTime $date): bool
+    {
+        if (!$this->isActive()) {
+            return false;
+        }
+
+        if ($this->activeFrom && $this->activeFrom > $date) {
+            return false;
+        }
+
+        if ($this->activeTo && $this->activeTo < $date) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @return Store
+     * @throws NotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
+    public function getReceiver(): Store
+    {
+        if (null === $this->receiver) {
+            /** @var StoreService $storeService */
+            $storeService = Application::getInstance()->getContainer()->get('store.service');
+            $this->setReceiver($storeService->getByXmlId($this->getReceiverCode()));
+        }
+        return $this->receiver;
+    }
+
+    /**
+     * @param Store $receiver
+     * @return DeliverySchedule
+     */
+    public function setReceiver(Store $receiver): DeliverySchedule
+    {
+        $this->receiver = $receiver;
+        return $this;
+    }
+
+    /**
+     * @return Store
+     * @throws NotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
+    public function getSender(): Store
+    {
+        if (null === $this->receiver) {
+            /** @var StoreService $storeService */
+            $storeService = Application::getInstance()->getContainer()->get('store.service');
+            $this->setReceiver($storeService->getByXmlId($this->getSenderCode()));
+        }
+        return $this->sender;
+    }
+
+    /**
+     * @param Store $sender
+     * @return DeliverySchedule
+     */
+    public function setSender(Store $sender): DeliverySchedule
+    {
+        $this->sender = $sender;
+        return $this;
+    }
+
+
+    /**
+     * @return DeliveryScheduleCollection
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws NotFoundException
+     */
+    public function getReceiverSchedules(): DeliveryScheduleCollection
+    {
+        if (null === $this->receiverSchedules) {
+            /** @var DeliveryScheduleService $scheduleService */
+            $scheduleService = Application::getInstance()->getContainer()->get(DeliveryScheduleService::class);
+            $this->setReceiverSchedules($scheduleService->findByReceiver($this->getReceiver()));
+        }
+        return $this->receiverSchedules;
+    }
+
+    /**
+     * @param DeliveryScheduleCollection $receiverSchedules
+     * @return DeliverySchedule
+     */
+    public function setReceiverSchedules(DeliveryScheduleCollection $receiverSchedules): DeliverySchedule
+    {
+        $this->receiverSchedules = $receiverSchedules;
+        return $this;
+    }
+
+    /**
+     * @return DeliveryScheduleCollection
+     * @throws NotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
+    public function getSenderSchedules(): DeliveryScheduleCollection
+    {
+        if (null === $this->senderSchedules) {
+            /** @var DeliveryScheduleService $scheduleService */
+            $scheduleService = Application::getInstance()->getContainer()->get(DeliveryScheduleService::class);
+            $this->setSenderSchedules($scheduleService->findBySender($this->getSender()));
+        }
+
+        return $this->senderSchedules;
+    }
+
+    /**
+     * @param DeliveryScheduleCollection $senderSchedules
+     * @return DeliverySchedule
+     */
+    public function setSenderSchedules(DeliveryScheduleCollection $senderSchedules): DeliverySchedule
+    {
+        $this->senderSchedules = $senderSchedules;
         return $this;
     }
 }
