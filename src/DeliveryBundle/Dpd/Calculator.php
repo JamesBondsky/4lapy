@@ -122,7 +122,6 @@ class Calculator extends DPD
         $_SESSION['DPD_DATA'][$profileCode] = [
             'INTERVALS'    => $intervals,
             'DAYS_FROM'    => $result['DPD_TARIFF']['DAYS'],
-            'DAYS_TO'      => $result['DPD_TARIFF']['DAYS'] + 10,
             'STOCK_RESULT' => $stockResult ?? new StockResultCollection(),
             'DELIVERY_ZONE' => $deliveryService->getDeliveryZoneCodeByLocation(
                 $arOrder['LOCATION_TO'],

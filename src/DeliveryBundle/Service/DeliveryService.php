@@ -6,6 +6,7 @@
 
 namespace FourPaws\DeliveryBundle\Service;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Currency\CurrencyManager;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Sale\Basket;
@@ -25,10 +26,14 @@ use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\Location\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
 use WebArch\BitrixCache\BitrixCache;
 
-class DeliveryService
+class DeliveryService implements LoggerAwareInterface
 {
+    use LoggerAwareTrait;
+
     public const INNER_DELIVERY_CODE = '4lapy_delivery';
 
     public const INNER_PICKUP_CODE = '4lapy_pickup';
@@ -76,6 +81,7 @@ class DeliveryService
     public function __construct(LocationService $locationService)
     {
         $this->locationService = $locationService;
+        $this->setLogger(LoggerFactory::create('DeliveryService'));
     }
 
     /**
@@ -83,9 +89,9 @@ class DeliveryService
      *
      * @param Offer $offer
      * @param string $locationCode
-     * @param array $codes коды доставок для расчета
-     *
-     * @return BaseResult[]
+     * @param array $codes
+     * @return array
+     * @throws \Bitrix\Sale\UserMessageException
      */
     public function getByProduct(Offer $offer, string $locationCode = '', array $codes = []): array
     {
@@ -102,7 +108,7 @@ class DeliveryService
     /**
      * Получение доставок для корзины
      *
-     * @param Basket $basket
+     * @param BasketBase $basket
      * @param string $locationCode
      * @param array $codes коды доставок для расчета
      *
@@ -127,25 +133,30 @@ class DeliveryService
      *
      * @return BaseResult[]
      */
+
     public function getByLocation(string $locationCode, array $codes = []): array
     {
+        $deliveries = [];
         $getDeliveries = function () use ($locationCode) {
             $shipment = $this->generateShipment($locationCode);
 
             return ['result' => $this->calculateDeliveries($shipment)];
         };
 
-        $result = (new BitrixCache())
-            ->withId(__METHOD__ . $locationCode)
-            ->resultOf($getDeliveries);
-
-        $deliveries = $result['result'];
+        try {
+            $result = (new BitrixCache())
+                ->withId(__METHOD__ . $locationCode)
+                ->resultOf($getDeliveries);
+            $deliveries = $result['result'];
+        } catch (\Exception $e) {
+            $this->logger->critical('failed to get deliveries for location', ['locationCode' => $locationCode]);
+        }
         if (!empty($codes)) {
             /**
              * @var BaseResult $delivery
              */
             foreach ($deliveries as $i => $delivery) {
-                if (!in_array($delivery->getDeliveryCode(), $codes, true)) {
+                if (!\in_array($delivery->getDeliveryCode(), $codes, true)) {
                     unset($deliveries[$i]);
                 }
             }
@@ -158,9 +169,10 @@ class DeliveryService
      * Выполняет расчет всех возможных (или указанных) доставок
      *
      * @param Shipment $shipment
-     * @param array $codes коды доставок
-     *
+     * @param array $codes
      * @return BaseResult[]
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\NotSupportedException
      */
     public function calculateDeliveries(Shipment $shipment, array $codes = []): array
     {
@@ -198,7 +210,7 @@ class DeliveryService
                     $calculationResult = new DpdResult($calculationResult);
 
                     /* @todo не хранить эти данные в сессии */
-                    $calculationResult->setPeriodFrom($_SESSION['DPD_DATA'][$service->getCode()]['DAYS_FROM']);
+                    $calculationResult->setInitialPeriod($_SESSION['DPD_DATA'][$service->getCode()]['DAYS_FROM']);
                     $calculationResult->setPeriodTo($_SESSION['DPD_DATA'][$service->getCode()]['DAYS_TO']);
                     $calculationResult->setStockResult($_SESSION['DPD_DATA'][$service->getCode()]['STOCK_RESULT']);
                     $calculationResult->setIntervals($_SESSION['DPD_DATA'][$service->getCode()]['INTERVALS']);

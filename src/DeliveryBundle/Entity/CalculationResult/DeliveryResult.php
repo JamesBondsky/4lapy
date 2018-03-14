@@ -2,17 +2,22 @@
 
 namespace FourPaws\DeliveryBundle\Entity\CalculationResult;
 
+use Bitrix\Main\ArgumentException;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Entity\IntervalRule\BaseRule;
 use FourPaws\DeliveryBundle\Entity\IntervalRule\TimeRuleInterface;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\IntervalService;
+use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 
 class DeliveryResult extends BaseResult
 {
     /**
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
      * @throws NotFoundException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws StoreNotFoundException
      */
     public function doCalculateDeliveryDate(): void
     {
@@ -60,5 +65,17 @@ class DeliveryResult extends BaseResult
 
             $rule->apply($this);
         }
+    }
+
+    /**
+     * @return int
+     * @throws NotFoundException
+     * @throws ArgumentException
+     * @throws ApplicationCreateException
+     * @throws StoreNotFoundException
+     */
+    public function getPeriodTo(): int
+    {
+        return $this->getPeriodFrom() + 10;
     }
 }

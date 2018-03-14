@@ -146,6 +146,7 @@ abstract class BaseResult extends CalculationResult
     {
         if (null === $this->deliveryDate) {
             $this->doCalculateDeliveryDate();
+            $this->doCalculatePeriod();
         }
 
         return $this->deliveryDate;
@@ -331,7 +332,6 @@ abstract class BaseResult extends CalculationResult
     public function getSelectedStore(): Store
     {
         if (!$this->selectedStore instanceof Store) {
-            /* @todo выбор наиболее подходящего склада/магазина */
             $this->setSelectedStore($this->getStockResult()->getStores()->first());
         }
 
@@ -381,6 +381,12 @@ abstract class BaseResult extends CalculationResult
         }
 
         $this->deliveryDate = $date;
+    }
+
+    protected function doCalculatePeriod(): void
+    {
+        $this->setPeriodFrom($this->deliveryDate->diff($this->getCurrentDate())->days);
+        $this->setPeriodType(self::PERIOD_TYPE_DAY);
     }
 
     /**
@@ -482,6 +488,32 @@ abstract class BaseResult extends CalculationResult
         $date->modify(sprintf('+%s days', $modifier));
 
         return $date;
+    }
+
+    /**
+     * @return int
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws StoreNotFoundException
+     */
+    public function getPeriodFrom(): int
+    {
+        $this->getDeliveryDate();
+        return parent::getPeriodFrom();
+    }
+
+    /**
+     * @return string
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws StoreNotFoundException
+     */
+    public function getPeriodType(): string
+    {
+        $this->getDeliveryDate();
+        return parent::getPeriodType();
     }
 
     /**
