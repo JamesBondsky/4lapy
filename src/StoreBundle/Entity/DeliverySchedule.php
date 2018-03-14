@@ -2,9 +2,9 @@
 
 namespace FourPaws\StoreBundle\Entity;
 
+use DateTime;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
-use DateTime;
 
 class DeliverySchedule extends Base
 {
@@ -13,12 +13,13 @@ class DeliverySchedule extends Base
     const TYPE_BY_WEEK = '2';
 
     const TYPE_MANUAL = '8';
-
     /**
      * @var int
+     *
      * @Serializer\Type("integer")
      * @Serializer\SerializedName("ID")
      * @Serializer\Groups(groups={"read","update","delete"})
+     *
      * @Assert\NotBlank(groups={"read","update","delete"})
      * @Assert\GreaterThanOrEqual(value="1",groups={"read","update","delete"})
      * @Assert\Blank(groups={"create"})
@@ -32,6 +33,14 @@ class DeliverySchedule extends Base
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
     protected $name = '';
+
+    /**
+     * @var string
+     * @Serializer\SerializedName("UF_XML_ID")
+     * @Serializer\Type("string")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $xmlId = '';
 
     /**
      * @var string
@@ -349,6 +358,26 @@ class DeliverySchedule extends Base
     public function setDeliveryDate(DateTime $deliveryDate): DeliverySchedule
     {
         $this->deliveryDate = $deliveryDate;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getXmlId(): string
+    {
+        return $this->xmlId;
+    }
+
+    /**
+     * @param string $xmlId
+     *
+     * @return DeliverySchedule
+     */
+    public function setXmlId(string $xmlId): DeliverySchedule
+    {
+        $this->xmlId = $xmlId;
 
         return $this;
     }

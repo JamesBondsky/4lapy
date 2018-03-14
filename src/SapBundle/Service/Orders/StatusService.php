@@ -33,6 +33,8 @@ class StatusService implements LoggerAwareInterface
         'B' => 'Y',
         'P' => 'J',
         'K' => '',
+        'E' => '',
+        'V' => 'A'
     ];
 
     private const STATUS_PICKUP_MAP = [
@@ -47,7 +49,8 @@ class StatusService implements LoggerAwareInterface
         'B' => 'G',
         'P' => 'J',
         'K' => '',
-
+        'E' => '',
+        'V' => 'K'
     ];
 
     private const STATUS_MAP = [
