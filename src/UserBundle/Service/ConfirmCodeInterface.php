@@ -15,33 +15,36 @@ use FourPaws\UserBundle\Model\ConfirmCode;
 interface ConfirmCodeInterface
 {
     /**
-     *
      * @throws ArgumentException
      * @throws SqlQueryException
      */
-    public static function delExpiredCodes();
+    public static function delExpiredCodes(): void;
 
     /**
      * @param string $text
      *
-     * @return bool|string
+     * @return string
      */
-    public static function generateCode(string $text);
+    public static function generateCode(string $text): string;
 
     /**
      * @param string $text
      * @param string $type
      *
+     * @param int    $time
+     *
+     * @throws \RuntimeException
+     * @throws ArgumentException
      * @throws \Exception
      */
-    public static function setGeneratedCode(string $text, string $type = 'sms');
+    public static function setGeneratedCode(string $text, string $type = 'sms', int $time = 0): void;
 
     /**
      * @param string $type
      *
      * @throws \Exception
      */
-    public static function delCurrentCode(string $type = 'sms');
+    public static function delCurrentCode(string $type = 'sms'): void;
 
     /**
      * @param string $confirmCode
@@ -56,7 +59,6 @@ interface ConfirmCodeInterface
     public static function checkCode(string $confirmCode, string $type = 'sms'): bool;
 
     /**
-     *
      * @param string $type
      *
      * @return string
@@ -78,7 +80,9 @@ interface ConfirmCodeInterface
     /**
      * @param string $text
      *
+     * @param int    $time
+     *
      * @return string
      */
-    public static function getConfirmHash(string $text): string;
+    public static function getConfirmHash(string $text, int $time = 0): string;
 }

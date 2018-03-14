@@ -254,8 +254,8 @@ class UserPropWeekDay extends TypeBase
      */
     protected static function getDay(int $value): string
     {
-        $dayofweek = date('w', strtotime(new \DateTime()));
-        return FormatDate('l', strtotime(($value - $dayofweek) . ' day', strtotime(new \DateTime())));
+        $dayOfWeek = date('N');
+        return FormatDate('l', strtotime(($value - $dayOfWeek) . ' day', (new \DateTime())->getTimestamp()));
     }
 
     /**
@@ -267,7 +267,7 @@ class UserPropWeekDay extends TypeBase
     protected static function getSelectHTML($name, $current = null, $multiple = false): string
     {
         if (empty(static::$days)) {
-            for ($i = 0; $i < 7; $i++) {
+            for ($i = 1; $i < 8; $i++) {
                 static::$days[$i] = static::getDay($i);
             }
         }

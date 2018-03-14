@@ -3,7 +3,7 @@
 namespace FourPaws\SapBundle\Enum;
 
 
-final class SapOrderEnum
+final class SapOrder
 {
     /**
      * Способ получения заказа
