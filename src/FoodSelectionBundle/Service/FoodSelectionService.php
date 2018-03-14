@@ -25,9 +25,9 @@ class FoodSelectionService
      * @var FoodSelectionRepository
      */
     private $foodSelectionRepository;
-    
+
     private $iblockId;
-    
+
     /**
      * FoodSelectionService constructor.
      *
@@ -38,23 +38,23 @@ class FoodSelectionService
     public function __construct(FoodSelectionRepository $foodSelectionRepository)
     {
         $this->foodSelectionRepository = $foodSelectionRepository;
-        $this->iblockId                = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::FOOD_SELECTION);
+        $this->iblockId = IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::FOOD_SELECTION);
     }
-    
+
     /**
      * @param array $params
      *
      * @return array
      */
-    public function getItems(array $params = []) : array
+    public function getItems(array $params = []): array
     {
         if (!isset($params['filter']['IBLOCK_ID'])) {
             $params['filter']['IBLOCK_ID'] = $this->iblockId;
         }
-        
+
         return $this->foodSelectionRepository->getItems($params);
     }
-    
+
     /**
      * @param int $parentSectionID
      *
@@ -62,41 +62,41 @@ class FoodSelectionService
      */
     public function getSectionsByParentSectionId(
         int $parentSectionID
-    ) : array
-    {
+    ): array {
         $filter = ['=SECTION_ID' => $parentSectionID];
-        
+
         return $this->getSections(['filter' => $filter]);
     }
-    
+
     /**
      * @param array $params
      *
      * @return array
      */
-    public function getSections(array $params = []) : array
+    public function getSections(array $params = []): array
     {
         if (!isset($params['filter']['IBLOCK_ID'])) {
             $params['filter']['IBLOCK_ID'] = $this->iblockId;
         }
-        
+        $params['order'] = ['SORT' => 'asc', 'NAME' => 'asc'];
+
         return $this->foodSelectionRepository->getSections($params);
     }
-    
-    public function getSectionIdByXmlId(string $xmlId, int $depthLvl = 0) : int
+
+    public function getSectionIdByXmlId(string $xmlId, int $depthLvl = 0): int
     {
         $filter = ['XML_ID' => $xmlId];
-        if($depthLvl > 0){
+        if ($depthLvl > 0) {
             $filter['DEPTH_LEVEL'] = $depthLvl;
         }
         $items = $this->getSections(['filter' => $filter]);
         if (!empty($items)) {
             /** @var IblockSect $item */
             $item = current($items);
-            
+
             return $item->getId();
         }
-        
+
         return 0;
     }
 
@@ -109,7 +109,7 @@ class FoodSelectionService
      * @throws SystemException
      * @throws \Bitrix\Main\ArgumentException
      */
-    public function getProductsBySections(array $sections, array $exceptionItems = []) : array
+    public function getProductsBySections(array $sections, array $exceptionItems = []): array
     {
         return $this->foodSelectionRepository->getProductsBySections($sections, $this->iblockId, $exceptionItems);
     }

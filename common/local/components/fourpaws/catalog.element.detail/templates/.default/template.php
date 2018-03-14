@@ -224,16 +224,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                             <?= ceil($currentOffer->getPrice()) ?>
                         </span>
                         <span class="b-ruble b-ruble--product-information">&nbsp;₽</span>
-                        <?php if ($currentOffer->getBonuses()) { ?>
-                            <span class="b-product-information__bonus">+<?= $currentOffer->getBonuses() ?>
-                                <?= WordHelper::declension($currentOffer->getBonuses(),
-                                    [
-                                        'бонус',
-                                        'бонуса',
-                                        'бонусов',
-                                    ]) ?>
-                            </span>
-                        <?php } ?>
+                        <span class="b-product-information__bonus js-bonus-<?=$currentOffer->getId()?>"></span>
                     </div>
                 </li>
                 <?php if ($currentOffer->isByRequest()) {
@@ -461,3 +452,4 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB);
     </div>
 <?php
 $this->EndViewTarget();
+$templateData['currentOffer'] = $currentOffer;

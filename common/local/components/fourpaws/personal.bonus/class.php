@@ -102,7 +102,11 @@ class FourPawsPersonalCabinetBonusComponent extends CBitrixComponent
         }
 
         $cardNumber = $user->getDiscountCardNumber();
-        $cache = Cache::createInstance();
+        $cache = $instance->getCache();
+
+        /** @todo здесь тоже можно делать обновление динамически, так как это влияет только на товары */
+        $this->currentUserProvider->refreshUserDiscount($user);
+
         if ($cache->initCache($this->arParams['MANZANA_CACHE_TIME'],
             serialize(['userId' => $user->getId(), 'card' => $cardNumber]), $this->getPath())) {
             $result = $cache->getVars();
