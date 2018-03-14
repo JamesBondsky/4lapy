@@ -143,7 +143,7 @@ class Gift extends \CSaleActionGiftCtrlGroup
             $applyBasket = array_filter($order['BASKET_ITEMS'], [Actions::class, 'filterBasketForAction']);
         }
 
-        if (!$applyBasket and !$actionDescription) {
+        if (!$applyBasket || !$actionDescription) {
             return;
         }
 
