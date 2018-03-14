@@ -140,7 +140,6 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
 
                     foreach ($offers as $offer) {
                         $isCurrentOffer = !$isCurrentOffer && $currentOffer->getId() === $offer->getId();
-                        $isAvailable = !$offer->getStocks()->isEmpty();
 
                         $value = null;
                         if ($mainCombinationType === 'SIZE') {
@@ -160,7 +159,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
                         }
                         ?>
                         <li class="b -weight-container__item b-weight-container__item--product<?= $isCurrentOffer ? ' active' : '' ?>">
-                            <a class="b-weight-container__link b-weight-container__link--product js-price-product<?= $isCurrentOffer ? ' active-link' : '' ?><?= $isAvailable ? '' : ' unavailable-link' ?>"
+                            <a class="b-weight-container__link b-weight-container__link--product js-price-product<?= $isCurrentOffer ? ' active-link' : '' ?>"
                                href="<?= $offer->getLink() ?>"
                                data-weight=" <?= $value ?>"
                                data-price="<?= ceil($offer->getPrice()) ?>"
@@ -173,17 +172,14 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
                                         <?= ceil($offer->getPrice()) ?> <span class="b-ruble b-ruble--weight">₽</span>
                                     </span>
                                 </span>
-                                <?php if ($isAvailable) { ?>
-                                    <span class="b-weight-container__line">
-                                        <?php /** @todo впилить акцию
-                                         * <span class="b-weight-container__action">Акция</span>
-                                         */ ?>
-                                    </span>
-                                <?php } else { ?>
-                                    <span class="b-weight-container__line">
-                                        <span class="b-weight-container__not">Нет в наличии</span>
-                                    </span>
-                                <?php } ?>
+                                <span class="b-weight-container__line" style="display: none" data-action>
+                                    <?php /** @todo впилить акцию
+                                     * <span class="b-weight-container__action">Акция</span>
+                                     */ ?>
+                                </span>
+                                <span class="b-weight-container__line" style="display: none" data-not-available>
+                                    <span class="b-weight-container__not">Нет в наличии</span>
+                                </span>
                             </a>
                         </li>
                     <?php } ?>
@@ -243,15 +239,6 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                         <?php } ?>
                     </div>
                 </li>
-                <?php $APPLICATION->IncludeComponent('fourpaws:catalog.product.delivery.info',
-                    'detail',
-                    [
-                        'OFFER' => $currentOffer,
-                        'LOCATION_CODE' => $locationService->getCurrentLocation(),
-                    ],
-                    false,
-                    ['HIDE_ICONS' => 'Y']); ?>
-
                 <?php if (!empty($currentOffer->getFlavourCombination())) {
                     $unionOffers = $component->getOffersByUnion('flavour', $currentOffer->getFlavourCombination());
                     if (!$unionOffers->isEmpty()) {

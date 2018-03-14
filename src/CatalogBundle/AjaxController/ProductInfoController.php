@@ -49,6 +49,7 @@ class ProductInfoController extends Controller
      * ProductInfoController constructor.
      * @param ValidatorInterface $validator
      * @param SearchService $searchService
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
     public function __construct(ValidatorInterface $validator, SearchService $searchService)
     {
@@ -68,8 +69,10 @@ class ProductInfoController extends Controller
     /**
      * @Route("/", methods={"GET"})
      *
+     * @param Request $request
      * @param ProductListRequest $productListRequest
      * @return JsonResponse
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
     public function infoAction(Request $request, ProductListRequest $productListRequest): JsonResponse
     {

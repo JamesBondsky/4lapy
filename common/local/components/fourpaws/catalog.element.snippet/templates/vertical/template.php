@@ -50,7 +50,7 @@ $arParams['ITEM_ATTR_ID'] = isset($arParams['ITEM_ATTR_ID']) ? trim($arParams['I
 if (!$arParams['ITEM_ATTR_ID']) {
     $arParams['ITEM_ATTR_ID'] = $this->GetEditAreaId($product->getId() . '_' . md5($this->randString()));
 } ?>
-    <div class="b-common-item js-product-item" id="<?= $arParams['ITEM_ATTR_ID'] ?>">
+    <div class="b-common-item js-product-item" id="<?= $arParams['ITEM_ATTR_ID'] ?>" data-productid="<?= $product->getId() ?>">
         <?= $component->getMarkService()->getMark($currentOffer) ?>
         <span class="b-common-item__image-wrap">
             <?php if ($currentOffer->getImagesIds()) { ?>

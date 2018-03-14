@@ -46,7 +46,7 @@ if (!empty($arParams['CURRENT_OFFER']) && $arParams['CURRENT_OFFER'] instanceof 
     }
 } ?>
 
-<div class="b-common-item b-common-item--catalog-item js-product-item">
+<div class="b-common-item b-common-item--catalog-item js-product-item" data-productid="<?= $product->getId() ?>">
     <?= $component->getMarkService()->getMark($currentOffer) ?>
     <? if ($currentOffer->getImages()->count() > 0) { ?>
         <span class="b-common-item__image-wrap">
