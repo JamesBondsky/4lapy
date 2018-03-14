@@ -63,4 +63,28 @@ interface CurrentUserProviderInterface
      * @return array
      */
     public function getUserGroups(int $id = 0): array;
+
+    /**
+     * @return int
+     */
+    public function getDiscount(): int;
+
+    /**
+     * @return int
+     */
+    public function getCurrentUserDiscount(): int;
+
+    /**
+     * @param User $user
+     *
+     * @return int
+     */
+    public function getUserDiscount(User $user): int;
+
+    /**
+     * @param User|null $user
+     *
+     * @return bool
+     */
+    public function refreshUserDiscount(?User $user = null): bool;
 }

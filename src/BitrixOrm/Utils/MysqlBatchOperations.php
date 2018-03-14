@@ -244,7 +244,7 @@ class MysqlBatchOperations
     public function setQuery(Query $query): void
     {
         $this->query = new ExtendsBitrixQuery($query);
-        $this->setTable($this->query->getEntity()->getDBTableName());
+        $this->setTable($this->query->quoteTableSource($this->query->getEntity()->getDBTableName()));
     }
 
     /**

@@ -10,22 +10,30 @@ declare(strict_types=1);
 
 namespace FourPaws\Components;
 
+use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Order;
 use CBitrixComponent;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\SaleBundle\Discount\Gift;
+use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\UserAccountService;
+use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
+use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserService;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /** @noinspection AutoloadingIssuesInspection */
 
@@ -54,9 +62,9 @@ class BasketComponent extends \CBitrixComponent
      *
      * @param CBitrixComponent|null $component
      *
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws ApplicationCreateException
      */
     public function __construct(CBitrixComponent $component = null)
     {
@@ -71,16 +79,19 @@ class BasketComponent extends \CBitrixComponent
     /** @noinspection PhpMissingParentCallCommonInspection */
     /**
      *
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
+     * @throws \InvalidArgumentException
      * @throws \RuntimeException
-     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws \Bitrix\Main\NotSupportedException
-     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws InvalidArgumentException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
      *
      * @return void
      */
-    public function executeComponent()
+    public function executeComponent():void
     {
         /** @var Basket $basket */
         $basket = $this->arParams['BASKET'];
@@ -118,7 +129,7 @@ class BasketComponent extends \CBitrixComponent
      *
      * @return ResizeImageDecorator|null
      */
-    public function getImage($offerId)
+    public function getImage($offerId): ?ResizeImageDecorator
     {
         return $this->images[$offerId] ?? null;
     }
@@ -136,7 +147,7 @@ class BasketComponent extends \CBitrixComponent
      *
      * @return Offer|null
      */
-    public function getOffer(int $id)
+    public function getOffer(int $id): ?Offer
     {
         /** @var Offer $item */
         foreach ($this->offerCollection as $item) {
@@ -148,27 +159,16 @@ class BasketComponent extends \CBitrixComponent
     }
 
     /**
-     * @param Offer $offer
-     * @param int   $quantity
-     *
-     * @return float
-     */
-    public function getItemBonus(Offer $offer, int $quantity = 1): float
-    {
-        return $this->basketService->getItemBonus($offer, $quantity);
-    }
-
-    /**
      *
      *
      * @throws \RuntimeException
-     * @throws \Bitrix\Main\NotSupportedException
-     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
      */
-    private function checkSelectedGifts()
+    private function checkSelectedGifts(): void
     {
         $this->arResult['SELECTED_GIFTS'] = [];
-        if (\is_array($this->arResult['POSSIBLE_GIFT_GROUPS']) and !empty($this->arResult['POSSIBLE_GIFT_GROUPS'])) {
+        if (\is_array($this->arResult['POSSIBLE_GIFT_GROUPS']) && !empty($this->arResult['POSSIBLE_GIFT_GROUPS'])) {
             foreach ($this->arResult['POSSIBLE_GIFT_GROUPS'] as $group) {
                 if (\count($group) === 1) {
                     $group = current($group);
@@ -182,7 +182,11 @@ class BasketComponent extends \CBitrixComponent
         }
     }
 
-    private function loadImages()
+    /**
+     *
+     * @throws \InvalidArgumentException
+     */
+    private function loadImages(): void
     {
         /** @var Offer $item */
         foreach ($this->offerCollection as $item) {
@@ -195,7 +199,7 @@ class BasketComponent extends \CBitrixComponent
         }
     }
 
-    private function calcTemplateFields()
+    private function calcTemplateFields(): void
     {
         $weight = 0;
         $quantity = 0;

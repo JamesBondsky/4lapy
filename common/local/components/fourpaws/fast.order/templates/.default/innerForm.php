@@ -144,12 +144,13 @@ if ($isAuth) {
                             } ?>
                         </a>
                         <?php if ($useOffer) {
-                            $bonus = $component->getItemBonus($offer);
+                            $bonus = $offer->getBonuses($component->getCurrentUserService()->getDiscount(), $basketItem->getQuantity());
                             if ($bonus > 0) {
-                                $bonus = floor($bonus); ?>
+                                $bonuses = round($bonuses, 2, PHP_ROUND_HALF_DOWN);
+                                $ost = $bonuses - floor($bonuses) * 100;?>
                                 <span class="b-common-item__rank-text b-common-item__rank-text--red b-common-item__rank-text--shopping">+ <?= WordHelper::numberFormat($bonus,
                                         0) ?>
-                                    <?= WordHelper::declension($bonus, ['бонус', 'бонуса', 'бонусов']) ?> </span>
+                                    <?= WordHelper::declension($ost > 0 ? $ost : floor($bonuses), ['бонус', 'бонуса', 'бонусов']) ?> </span>
                             <?php }
                         } ?>
                     </div>
