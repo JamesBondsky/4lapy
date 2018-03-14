@@ -275,7 +275,6 @@ class Gift extends \CSaleActionGiftCtrlGroup
      */
     private static function parseApplyResult(array $applyResult = null): array
     {
-        dump($applyResult);
         $result = [];
         if (\is_array($applyResult) && $applyResult && \is_array($applyResult['DISCOUNT_LIST'])) {
             foreach ($applyResult['DISCOUNT_LIST'] as $discount) {

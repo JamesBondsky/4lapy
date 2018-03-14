@@ -65,6 +65,21 @@ class Manager
                         ->get(BasketService::class)
                         ->getCleaner('gift')
                         ->processOrder();
+                    ## индус
+
+                    // Автоматически добавляем подарки
+                    Application::getInstance()
+                        ->getContainer()
+                        ->get(BasketService::class)
+                        ->getAdder('detach')
+                        ->processOrder();
+
+                    // Удаляем подарки, акции которых не выполнились
+                    Application::getInstance()
+                        ->getContainer()
+                        ->get(BasketService::class)
+                        ->getCleaner('detach')
+                        ->processOrder();
                 }
             }
             $execution = false;
