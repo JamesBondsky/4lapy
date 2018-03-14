@@ -293,6 +293,16 @@ class DeliverySchedule extends Base
     }
 
     /**
+     * @param string $type
+     * @return DeliverySchedule
+     */
+    public function setType(string $type): DeliverySchedule
+    {
+        $this->type = $type;
+        return $this;
+    }
+
+    /**
      * @return array
      */
     public function getWeekNumbers(): array
