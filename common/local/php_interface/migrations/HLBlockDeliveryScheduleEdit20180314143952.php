@@ -15,17 +15,17 @@ class HLBlockDeliveryScheduleEdit20180314143952 extends SprintMigrationBase
 
     protected $fields = [
         [
-            'FIELD_NAME'        => 'UF_WEEK_NUMBER',
-            'USER_TYPE_ID'      => 'integer',
-            'XML_ID'            => 'UF_WEEK_NUMBER',
-            'SORT'              => 80,
-            'MULTIPLE'          => 'Y',
-            'MANDATORY'         => 'N',
-            'SHOW_FILTER'       => 'N',
-            'SHOW_IN_LIST'      => 'Y',
-            'EDIT_IN_LIST'      => 'Y',
-            'IS_SEARCHABLE'     => 'N',
-            'EDIT_FORM_LABEL'   => [
+            'FIELD_NAME' => 'UF_WEEK_NUMBER',
+            'USER_TYPE_ID' => 'integer',
+            'XML_ID' => 'UF_WEEK_NUMBER',
+            'SORT' => 80,
+            'MULTIPLE' => 'Y',
+            'MANDATORY' => 'N',
+            'SHOW_FILTER' => 'N',
+            'SHOW_IN_LIST' => 'Y',
+            'EDIT_IN_LIST' => 'Y',
+            'IS_SEARCHABLE' => 'N',
+            'EDIT_FORM_LABEL' => [
                 'ru' => 'Номер недели',
                 'en' => 'Week number',
             ],
@@ -38,21 +38,45 @@ class HLBlockDeliveryScheduleEdit20180314143952 extends SprintMigrationBase
                 'en' => 'Week number',
             ],
         ],
+        [
+            'FIELD_NAME' => 'UF_XML_ID',
+            'USER_TYPE_ID' => 'string',
+            'XML_ID' => 'UF_XML_ID',
+            'SORT' => 10,
+            'MULTIPLE' => 'N',
+            'MANDATORY' => 'Y',
+            'SHOW_FILTER' => 'N',
+            'SHOW_IN_LIST' => 'Y',
+            'EDIT_IN_LIST' => 'Y',
+            'IS_SEARCHABLE' => 'N',
+            'EDIT_FORM_LABEL' => [
+                'ru' => 'Внешний код',
+                'en' => 'XML ID',
+            ],
+            'LIST_COLUMN_LABEL' => [
+                'ru' => 'Внешний код',
+                'en' => 'XML ID',
+            ],
+            'LIST_FILTER_LABEL' => [
+                'ru' => 'Внешний код',
+                'en' => 'XML ID',
+            ],
+        ],
     ];
 
     protected $oldFields = [
         [
-            'FIELD_NAME'        => 'UF_WEEK_NUMBER',
-            'USER_TYPE_ID'      => 'integer',
-            'XML_ID'            => 'UF_WEEK_NUMBER',
-            'SORT'              => 80,
-            'MULTIPLE'          => 'N',
-            'MANDATORY'         => 'N',
-            'SHOW_FILTER'       => 'N',
-            'SHOW_IN_LIST'      => 'Y',
-            'EDIT_IN_LIST'      => 'Y',
-            'IS_SEARCHABLE'     => 'N',
-            'EDIT_FORM_LABEL'   => [
+            'FIELD_NAME' => 'UF_WEEK_NUMBER',
+            'USER_TYPE_ID' => 'integer',
+            'XML_ID' => 'UF_WEEK_NUMBER',
+            'SORT' => 80,
+            'MULTIPLE' => 'N',
+            'MANDATORY' => 'N',
+            'SHOW_FILTER' => 'N',
+            'SHOW_IN_LIST' => 'Y',
+            'EDIT_IN_LIST' => 'Y',
+            'IS_SEARCHABLE' => 'N',
+            'EDIT_FORM_LABEL' => [
                 'ru' => 'Номер недели',
                 'en' => 'Week number',
             ],
@@ -147,6 +171,10 @@ class HLBlockDeliveryScheduleEdit20180314143952 extends SprintMigrationBase
      */
     protected function deleteField($entityId, $fieldName): bool
     {
+        if (!$this->userTypeEntityHelper->getUserTypeEntity($entityId, $fieldName)) {
+            return true;
+        }
+
         if ($this->userTypeEntityHelper->deleteUserTypeEntityIfExists($entityId, $fieldName)) {
             $this->log()->info(sprintf(
                 'Удалено поле %s из HL-блока %s',
