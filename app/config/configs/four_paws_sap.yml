@@ -31,7 +31,7 @@ four_paws_sap:
       error: '%sap.payment.directory.error%'
       filemask: 'DP_.*'
     schedule:
-      entity: FourPaws\SapBundle\Dto\In\DeliverySchedule\DeliverySchedule
+      entity: FourPaws\SapBundle\Dto\In\DeliverySchedule\DeliverySchedules
       in: '%sap.schedule.directory.in%'
       out: '%sap.schedule.directory.out%'
       error: '%sap.schedule.directory.error%'
@@ -60,4 +60,4 @@ four_paws_sap:
     payment:
       - FourPaws\SapBundle\Dto\In\ConfirmPayment\Order
     delivery_schedule:
-      - FourPaws\SapBundle\Dto\In\DeliverySchedule\DeliverySchedule
+      - FourPaws\SapBundle\Dto\In\DeliverySchedule\DeliverySchedules
