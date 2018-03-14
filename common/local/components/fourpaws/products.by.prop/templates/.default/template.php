@@ -28,7 +28,7 @@ if (!($products instanceof ProductCollection) || $products->isEmpty()) {
         <div class="b-common-section__title-box b-common-section__title-box--sale">
             <h2 class="b-title b-title--sale"><?=$arParams['TITLE']?></h2>
         </div>
-        <div class="b-common-section__content b-common-section__content--sale js-popular-product">
+        <div class="<?=$arParams['SLDIER'] === 'Y' ? 'b-common-section__content b-common-section__content--sale js-popular-product' : 'b-common-wrapper b-common-wrapper--visible js-catalog-wrapper'?>">
             <?php foreach ($products as $product) {
                 $APPLICATION->IncludeComponent(
                     'fourpaws:catalog.element.snippet',
