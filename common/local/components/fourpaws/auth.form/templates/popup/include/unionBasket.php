@@ -11,8 +11,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var array  $delBasketIds
  */
 $ajaxUrl = '/ajax/user/auth/login/'; ?>
-<div class="b-registration__content b-registration__content--moiety b-registration__content--step"
-     style="width:100% !important;">
+<div class="b-registration__content b-registration__content--moiety b-registration__content--step b-cart-combination">
     <div class="b-registration__text-instruction">В вашей корзине есть товары на
         сумму <?= WordHelper::numberFormat($sum) ?> руб. Объединить товары в одну корзину?
     </div>

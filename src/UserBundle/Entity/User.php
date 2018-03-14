@@ -242,7 +242,7 @@ class User implements UserInterface
      * @Serializer\Groups(groups={"dummy","create","read","update"})
      * @Serializer\SkipWhenEmpty()
      */
-    protected $discount = '';
+    protected $discount = 3;
 
     public function __construct()
     {

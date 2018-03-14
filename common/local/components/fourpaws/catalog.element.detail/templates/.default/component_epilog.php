@@ -9,7 +9,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 /** @var Offer $currentOffer */
 $currentOffer = $templateData['currentOffer'];
 try {
-    $bonuses = $currentOffer->getBonuses($component->getCurrentUserService()->getDiscount());
+    $bonuses = $currentOffer->getBonuses($component->getCurrentUserService()->getCurrentUser()->getDiscount());
 } catch (\Exception $e) {
     $bonuses = 0;
 }
@@ -23,6 +23,8 @@ if ($bonuses > 0) {
                 'бонусов',
             ]) ?>
     <script type="text/javascript">
-        $('.js-bonus-<?=$currentOffer->getId()?>').html(<?=$bonus?>);
+        $(function() {
+            $('.js-bonus-<?=$currentOffer->getId()?>').html('<?=$bonus?>');
+        });
     </script>
 <?php }
