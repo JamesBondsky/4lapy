@@ -4,7 +4,6 @@ namespace FourPaws\SaleBundle\EventController;
 
 use Bitrix\Main\Event as BitrixEvent;
 use Bitrix\Main\EventManager;
-use Bitrix\Main\EventResult;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use FourPaws\App\Application;
@@ -83,6 +82,8 @@ class Event implements ServiceHandlerInterface
     /**
      *
      *
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @throws \FourPaws\SaleBundle\Exception\ValidationException
      */
@@ -114,6 +115,8 @@ class Event implements ServiceHandlerInterface
     /**
      * @param BitrixEvent $event
      *
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
     public static function sendNewOrderMessage(BitrixEvent $event)
@@ -136,6 +139,8 @@ class Event implements ServiceHandlerInterface
     /**
      * @param BitrixEvent $event
      *
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
     public static function sendOrderPaymentMessage(BitrixEvent $event)
@@ -154,6 +159,8 @@ class Event implements ServiceHandlerInterface
     /**
      * @param BitrixEvent $event
      *
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
     public static function sendOrderCancelMessage(BitrixEvent $event)
@@ -172,6 +179,9 @@ class Event implements ServiceHandlerInterface
     /**
      * @param BitrixEvent $event
      *
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
     public static function sendOrderStatusMessage(BitrixEvent $event)

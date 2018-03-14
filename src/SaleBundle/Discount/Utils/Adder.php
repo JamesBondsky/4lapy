@@ -27,7 +27,9 @@ class Adder
      * @var Order
      */
     private $order;
-
+    /**
+     * @var BasketService
+     */
     private $basketService;
 
     /**
