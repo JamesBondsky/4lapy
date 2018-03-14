@@ -16,7 +16,7 @@ if(\is_array($offers) && !empty($offers)){
         /** @var Offer $offer */
         $offer = $templateData['currentOffer'];
         try {
-            $bonuses = $offer->getBonuses($component->getCurrentUserService()->getDiscount(), $quantity);
+            $bonuses = $offer->getBonuses($component->getCurrentUserService()->getCurrentUser()->getDiscount(), $quantity);
         } catch (\Exception $e) {
             $bonuses = 0;
         }
