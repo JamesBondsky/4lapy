@@ -49,6 +49,7 @@ class ProductsByProp extends CBitrixComponent
     {
         $params['IBLOCK_ID'] = (int)$params['IBLOCK_ID'];
         $params['ITEM_ID'] = (int)$params['ITEM_ID'];
+        $params['SLIDER'] = $params['SLIDER'] ?? 'N';
         $params['COUNT_ON_PAGE'] = (int)$params['COUNT_ON_PAGE'];
         if ($params['COUNT_ON_PAGE'] === 0) {
             $params['COUNT_ON_PAGE'] = 20;
@@ -94,7 +95,7 @@ class ProductsByProp extends CBitrixComponent
             }
             if (!empty($products)) {
                 $query = new ProductQuery();
-                if($this->arParams['COUNT_ON_PAGE'] > 0) {
+                if($this->arParams['SLIDER'] !== 'Y' && $this->arParams['COUNT_ON_PAGE'] > 0) {
                     $query->withNav(['nPageSize' => $this->arParams['COUNT_ON_PAGE'], 'iNumPage' => $this->arParams['CURRENT_PAGE']]);
                 }
                 $this->arResult['PRODUCTS'] = $query->withFilter(['=' . $this->arParams['FILTER_FIELD'] => $products])->exec();

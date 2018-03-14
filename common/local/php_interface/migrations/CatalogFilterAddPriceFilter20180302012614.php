@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace Sprint\Migration;
 
 use Adv\Bitrixtools\Migration\SprintMigrationBase;
@@ -11,7 +15,7 @@ class CatalogFilterAddPriceFilter20180302012614 extends SprintMigrationBase
 {
     const FILTER_HL_BLOCK_SERVICE = 'bx.hlblock.filter';
 
-    protected $description = 'Добавление фильтра "Назначение (функциональность)" в HL-блок с фильтрами';
+    protected $description = 'Добавление фильтра "Цена" в HL-блок с фильтрами';
     protected $filters = [
         [
             'UF_NAME' => 'Цена',
