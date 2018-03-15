@@ -45,6 +45,9 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
     </div>
     <?php
 }
+if($arParams['IS_AJAX']) {
+    $user_discount = $component->getCurrentUserService()->getDiscount();
+}
 ?>
     <div class="b-container js-cart-wrapper">
         <h1 class="b-title b-title--h1 b-title--shopping-cart">Корзина</h1>
