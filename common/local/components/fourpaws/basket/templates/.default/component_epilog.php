@@ -30,14 +30,14 @@ if(\is_array($offers) && !empty($offers)){
         $quantity=(int)$explode[1];
         /** @var Offer $offer */
         try {
-            $bonuses = $offer->getBonuses($discount, $quantity);
+            $bonus = $offer->getBonuses($discount, $quantity);
         } catch (\Exception $e) {
-            $bonuses = 0;
+            $bonus = 0;
         }
-        if($bonuses > 0){
-            $bonuses = round($bonuses, 2, PHP_ROUND_HALF_DOWN);
-            $ost = $bonuses - floor($bonuses) * 100;
-            $bonus = '+'.$bonuses.' '.WordHelper::declension($ost > 0 ? $ost : floor($bonuses),
+        if($bonus > 0){
+            $bonus = round($bonus, 2, PHP_ROUND_HALF_DOWN);
+            $ost = $bonus - floor($bonus) * 100;
+            $bonus = '+'.WordHelper::numberFormat($bonus).' '.WordHelper::declension($ost > 0 ? $ost : floor($bonus),
                     [
                         'бонус',
                         'бонуса',

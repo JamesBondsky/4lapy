@@ -9,14 +9,14 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 /** @var Offer $currentOffer */
 $currentOffer = $templateData['currentOffer'];
 try {
-    $bonuses = $currentOffer->getBonuses($component->getCurrentUserService()->getDiscount());
+    $bonus = $currentOffer->getBonuses($component->getCurrentUserService()->getDiscount());
 } catch (\Exception $e) {
-    $bonuses = 0;
+    $bonus = 0;
 }
-if ($bonuses > 0) {
-    $bonuses = round($bonuses, 2, PHP_ROUND_HALF_DOWN);
-    $ost = $bonuses - floor($bonuses) * 100;
-    $bonus = '+' . $bonuses . ' ' . WordHelper::declension($ost > 0 ? $ost : floor($bonuses),
+if ($bonus > 0) {
+    $bonus = round($bonus, 2, PHP_ROUND_HALF_DOWN);
+    $ost = $bonus - floor($bonus) * 100;
+    $bonus = '+' . $bonus . ' ' . WordHelper::declension($ost > 0 ? $ost : floor($bonus),
             [
                 'бонус',
                 'бонуса',

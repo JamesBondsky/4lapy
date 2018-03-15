@@ -148,11 +148,10 @@ if ($request->offsetExists('phone')) {
                         <?php if ($useOffer) {
                             $bonus = $offer->getBonuses($userDiscount, $basketItem->getQuantity());
                             if ($bonus > 0) {
-                                $bonuses = round($bonuses, 2, PHP_ROUND_HALF_DOWN);
-                                $ost = $bonuses - floor($bonuses) * 100;?>
-                                <span class="b-common-item__rank-text b-common-item__rank-text--red b-common-item__rank-text--shopping">+ <?= WordHelper::numberFormat($bonus,
-                                        0) ?>
-                                    <?= WordHelper::declension($ost > 0 ? $ost : floor($bonuses), ['бонус', 'бонуса', 'бонусов']) ?> </span>
+                                $bonus = round($bonus, 2, PHP_ROUND_HALF_DOWN);
+                                $ost = $bonus - floor($bonus) * 100;?>
+                                <span class="b-common-item__rank-text b-common-item__rank-text--red b-common-item__rank-text--shopping">+ <?= WordHelper::numberFormat($bonus) ?>
+                                    <?= WordHelper::declension($ost > 0 ? $ost : floor($bonus), ['бонус', 'бонуса', 'бонусов']) ?> </span>
                             <?php }
                         } ?>
                     </div>

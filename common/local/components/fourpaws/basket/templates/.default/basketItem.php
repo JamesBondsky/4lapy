@@ -59,11 +59,10 @@ $useOffer = $offer instanceof Offer && $offer->getId() > 0; ?>
                     <?php if ($arParams['IS_AJAX']) {
                         $bonus = $offer->getBonuses($user_discount, $basketItem->getQuantity());
                         if ($bonus > 0) {
-                            $bonuses = round($bonuses, 2, PHP_ROUND_HALF_DOWN);
-                            $ost = $bonuses - floor($bonuses) * 100; ?>
-                            + <?= WordHelper::numberFormat($bonus,
-                                0) ?>
-                            <?= WordHelper::declension($ost > 0 ? $ost : floor($bonuses),
+                            $bonus = round($bonus, 2, PHP_ROUND_HALF_DOWN);
+                            $ost = $bonus - floor($bonus) * 100; ?>
+                            + <?= WordHelper::numberFormat($bonus) ?>
+                            <?= WordHelper::declension($ost > 0 ? $ost : floor($bonus),
                                 ['бонус', 'бонуса', 'бонусов']) ?>
                         <?php }
                     } ?>
