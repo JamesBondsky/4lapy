@@ -27,7 +27,7 @@ $userAccount = $arResult['USER_ACCOUNT'];
 
 /** @var Basket $basket */
 $basket = $arResult['BASKET'];
-$orderableBasket = $arResult['ORDERABLE_ITEMS'];
+$orderableItems = $basket->getOrderableItems();
 
 /** @var ArrayCollection $notAlowedItems */
 $notAlowedItems = $arResult['NOT_ALOWED_ITEMS'];
@@ -45,7 +45,7 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
     </div>
     <?php
 }
-if($arParams['IS_AJAX']) {
+if ($arParams['IS_AJAX']) {
     $user_discount = $component->getCurrentUserService()->getDiscount();
 }
 ?>
@@ -146,12 +146,12 @@ if($arParams['IS_AJAX']) {
                 </section>
                 <?php
             }
-            if (!$orderableBasket->isEmpty()) { ?>
+            if (!$orderableItems->isEmpty()) { ?>
                 <section class="b-stock b-stock--shopping-cart b-stock--shopping-product js-section-remove-stock">
                     <h3 class="b-title b-title--h2-cart b-title--shopping-product">Ваш заказ</h3>
                     <?php
                     /** @var BasketItem $basketItem */
-                    foreach ($orderableBasket as $basketItem) {
+                    foreach ($orderableItems as $basketItem) {
                         if (isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
                             continue;
                         }
@@ -287,7 +287,7 @@ if($arParams['IS_AJAX']) {
          * Выгодная покупка
          */
         $productsIds = [];
-        foreach ($orderableBasket as $basketItem) {
+        foreach ($orderableItems as $basketItem) {
             $pId = (int)$basketItem->getProductId();
             $productInfo = CCatalogSku::GetProductInfo($pId);
             if ($productInfo) {

@@ -11,7 +11,6 @@ declare(strict_types=1);
 namespace FourPaws\Components;
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
-use Bitrix\Main\Application as BitrixApplication;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\NotSupportedException;
@@ -109,8 +108,9 @@ class BasketComponent extends \CBitrixComponent
         if (null === $basket || !\is_object($basket) || !($basket instanceof Basket)) {
             $basket = $this->basketService->getBasket();
         }
-        $this->offerCollection = $this->basketService->getOfferCollection();
 
+        /** оставляем в малой корзине для актуализации */
+        $this->offerCollection = $this->basketService->getOfferCollection();
         $this->setItems($basket);
 
         // привязывать к заказу нужно для расчета скидок
@@ -119,20 +119,22 @@ class BasketComponent extends \CBitrixComponent
             $order->setBasket($basket);
         }
 
-        $this->arResult['USER'] = null;
-        $this->arResult['USER_ACCOUNT'] = null;
-        try {
-            $this->arResult['USER'] = $this->currentUserService->getCurrentUser();
-            $this->arResult['USER_ACCOUNT'] = $this->userAccountService->findAccountByUser($this->arResult['USER']);
-        } catch (NotAuthorizedException $e) {
-        } catch (NotFoundException $e) {
-        }
         $this->arResult['BASKET'] = $basket;
-        $this->arResult['POSSIBLE_GIFT_GROUPS'] = Gift::getPossibleGiftGroups($order);
-        $this->arResult['POSSIBLE_GIFTS'] = Gift::getPossibleGifts($order);
-        $this->calcTemplateFields();
-        $this->loadImages();
-        $this->checkSelectedGifts();
+        if(!$this->arParams['MINI_BASKET']) {
+            $this->arResult['USER'] = null;
+            $this->arResult['USER_ACCOUNT'] = null;
+            try {
+                $this->arResult['USER'] = $this->currentUserService->getCurrentUser();
+                $this->arResult['USER_ACCOUNT'] = $this->userAccountService->findAccountByUser($this->arResult['USER']);
+            } catch (NotAuthorizedException $e) {
+            } catch (NotFoundException $e) {
+            }
+            $this->arResult['POSSIBLE_GIFT_GROUPS'] = Gift::getPossibleGiftGroups($order);
+            $this->arResult['POSSIBLE_GIFTS'] = Gift::getPossibleGifts($order);
+            $this->calcTemplateFields();
+            $this->loadImages();
+            $this->checkSelectedGifts();
+        }
         $this->includeComponentTemplate($this->getPage());
     }
 
@@ -152,7 +154,6 @@ class BasketComponent extends \CBitrixComponent
     private function setItems(&$basket): void
     {
         $notAlowedItems = new ArrayCollection();
-        $orderableItems = new ArrayCollection();
         /** @var BasketItem $basketItem */
         $isUpdate = false;
 
@@ -185,8 +186,9 @@ class BasketComponent extends \CBitrixComponent
                 continue;
             }
 
+            $offerQuantity = $offer->getQuantity();
             if($basketItem->canBuy() && !$basketItem->isDelay()){
-                if ($offer->isByRequest() || $offer->getQuantity() === 0) {
+                if ($offerQuantity === 0 || $offer->isByRequest()) {
                     $basketItem->setField('DELAY', 'Y');
 
                     $notAlowedItems->add($basketItem);
@@ -197,17 +199,11 @@ class BasketComponent extends \CBitrixComponent
 
                     $isUpdate = true;
                 }
-                else{
-                    $orderableItems->add($basketItem);
-                }
             }
             else{
-                $offerQuantity = $offer->getQuantity();
                 if ($offerQuantity > 0 && $offerQuantity > $basketItem->getQuantity() && $basketItem->isDelay()
                     && !$offer->isByRequest()) {
                     $basketItem->setField('DELAY', 'N');
-
-                    $orderableItems->add($basketItem);
 
                     $isUpdate = true;
                 }
@@ -226,7 +222,6 @@ class BasketComponent extends \CBitrixComponent
         unset($isUpdate);
 
         $this->arResult['NOT_ALOWED_ITEMS'] = $notAlowedItems;
-        $this->arResult['ORDERABLE_ITEMS'] = $orderableItems;
     }
 
     /**
