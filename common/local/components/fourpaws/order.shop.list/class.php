@@ -67,16 +67,13 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
 
     /**
      * @param array $city
-     *
-     * @throws \RuntimeException
-     * @throws ServiceNotFoundException
-     * @throws ServiceCircularReferenceException
+     * @return bool
      * @throws ApplicationCreateException
      */
-    protected function prepareResult(array $city = []): void
+    protected function prepareResult(array $city = [])
     {
         if (!$pickupDelivery = $this->getPickupDelivery()) {
-            return;
+            return false;
         }
 
         /* @todo поправить метро у магазинов */
@@ -90,6 +87,8 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
         $this->arResult['DELIVERY'] = $pickupDelivery;
         $this->arResult['DELIVERY_CODE'] = $pickupDelivery->getDeliveryCode();
         $this->arResult['STORE_LIST_URL'] = $storeListUrlRoute ? $storeListUrlRoute->getPath() : '';
+
+        return true;
     }
 
     /**
