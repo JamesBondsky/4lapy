@@ -132,6 +132,14 @@ class DeliverySchedule extends Base
     protected $deliveryDates;
 
     /**
+     * @var string
+     * @Serializer\SerializedName("UF_TYPE")
+     * @Serializer\Type("string")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $type = '';
+
+    /**
      * @var Store
      */
     protected $sender;
@@ -151,10 +159,6 @@ class DeliverySchedule extends Base
      */
     protected $senderSchedules;
 
-    /**
-     * @var string
-     */
-    protected $type = '';
 
     /**
      * @var DeliveryScheduleService
@@ -172,7 +176,6 @@ class DeliverySchedule extends Base
      */
     public function __construct()
     {
-        /* @todo могут быть проблемы с сериализацией объекта */
         $this->storeService = Application::getInstance()->getContainer()->get('store.service');
         $this->scheduleService = Application::getInstance()->getContainer()->get(DeliveryScheduleService::class);
     }
@@ -461,12 +464,12 @@ class DeliverySchedule extends Base
     }
 
     /**
-    public function getXmlId(): string
-    {
-        return $this->xmlId;
-    }
-
-    /**
+     * public function getXmlId(): string
+     * {
+     * return $this->xmlId;
+     * }
+     *
+     * /**
      * @param string $xmlId
      *
      * @return DeliverySchedule
@@ -608,5 +611,49 @@ class DeliverySchedule extends Base
         }
 
         return $result;
+    }
+
+    /**
+     * @return string
+     */
+    public function serialize(): string
+    {
+        return serialize([
+            $this->id,
+            $this->name,
+            $this->xmlId,
+            $this->senderCode,
+            $this->receiverCode,
+            $this->activeFrom,
+            $this->activeTo,
+            $this->weekNumbers,
+            $this->daysOfWeek,
+            $this->deliveryNumber,
+            $this->deliveryDates,
+            $this->type
+        ]);
+    }
+
+    /**
+     * @param string $serialized
+     * @throws ApplicationCreateException
+     */
+    public function unserialize($serialized): void
+    {
+        [
+            $this->id,
+            $this->name,
+            $this->xmlId,
+            $this->senderCode,
+            $this->receiverCode,
+            $this->activeFrom,
+            $this->activeTo,
+            $this->weekNumbers,
+            $this->daysOfWeek,
+            $this->deliveryNumber,
+            $this->deliveryDates,
+            $this->type
+        ] = unserialize($serialized, ['allowed_classes' => true]);
+        $this->__construct();
     }
 }

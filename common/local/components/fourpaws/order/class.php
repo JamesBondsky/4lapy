@@ -71,6 +71,11 @@ class FourPawsOrderComponent extends \CBitrixComponent
     /** @var LoggerInterface */
     protected $logger;
 
+    /**
+     * FourPawsOrderComponent constructor.
+     * @param null $component
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
     public function __construct($component = null)
     {
         $serviceContainer = Application::getInstance()->getContainer();
@@ -127,6 +132,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
     }
 
     /**
+     * @throws Exception
      * @throws OrderCreateException
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ArgumentOutOfRangeException

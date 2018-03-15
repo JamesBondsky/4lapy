@@ -94,7 +94,6 @@ class StockCollection extends BaseCollection
      *
      * @param int $amount
      * @return StoreCollection
-     * @throws ApplicationCreateException
      * @throws NotFoundException
      */
     public function getStores(int $amount = 0): StoreCollection

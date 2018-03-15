@@ -4,7 +4,6 @@ namespace FourPaws\StoreBundle\Entity;
 
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\Catalog\Model\Offer;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
 use JMS\Serializer\Annotation as Serializer;
@@ -57,6 +56,20 @@ class Stock extends Base
 
     /** @var Store */
     protected $store;
+
+    /**
+     * @var StoreService
+     */
+    protected $storeService;
+
+    /**
+     * Stock constructor.
+     * @throws ApplicationCreateException
+     */
+    public function __construct()
+    {
+        $this->storeService = Application::getInstance()->getContainer()->get('store.service');
+    }
 
     /**
      * @return int
@@ -136,15 +149,12 @@ class Stock extends Base
 
     /**
      * @return Store
-     * @throws ApplicationCreateException
      * @throws NotFoundException
      */
     public function getStore(): Store
     {
         if (null === $this->store) {
-            /** @var StoreService $storeService */
-            $storeService = Application::getInstance()->getContainer()->get('store.service');
-            $this->store = $storeService->getById($this->getId());
+            $this->store = $this->storeService->getById($this->getStoreId());
         }
 
         return $this->store;
@@ -158,5 +168,33 @@ class Stock extends Base
     {
         $this->store = $store;
         return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function serialize(): string
+    {
+        return serialize([
+            $this->id,
+            $this->productId,
+            $this->amount,
+            $this->storeId
+        ]);
+    }
+
+    /**
+     * @param $serialized
+     * @throws ApplicationCreateException
+     */
+    public function unserialize($serialized): void
+    {
+        [
+            $this->id,
+            $this->productId,
+            $this->amount,
+            $this->storeId
+        ] = unserialize($serialized, ['allowed_classes' => false]);
+        $this->__construct();
     }
 }

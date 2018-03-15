@@ -986,4 +986,88 @@ class Store extends Base
         $this->scheduleString = $scheduleString;
         return $this;
     }
+
+    /**
+     * @return string
+     */
+    public function serialize(): string
+    {
+        return serialize([
+            $this->id,
+            $this->active,
+            $this->title,
+            $this->address,
+            $this->description,
+            $this->latitude,
+            $this->longitude,
+            $this->imageId,
+            $this->locationId,
+            $this->dateModify,
+            $this->dateCreate,
+            $this->userId,
+            $this->dateCreate,
+            $this->schedule,
+            $this->phone,
+            $this->xmlId,
+            $this->sort,
+            $this->email,
+            $this->issuingCenter,
+            $this->shippingCenter,
+            $this->siteId,
+            $this->code,
+            $this->isShop,
+            $this->location,
+            $this->metro,
+            $this->services,
+            $this->yandexShopId,
+            $this->isBase,
+            $this->isSupplier,
+            $this->deliveryTime,
+            $this->shipmentTill11,
+            $this->shipmentTill13,
+            $this->shipmentTill18
+        ]);
+    }
+
+    /**
+     * @param string $serialized
+     */
+    public function unserialize($serialized): void
+    {
+        [
+            $this->id,
+            $this->active,
+            $this->title,
+            $this->address,
+            $this->description,
+            $this->latitude,
+            $this->longitude,
+            $this->imageId,
+            $this->locationId,
+            $this->dateModify,
+            $this->dateCreate,
+            $this->userId,
+            $this->dateCreate,
+            $this->schedule,
+            $this->phone,
+            $this->xmlId,
+            $this->sort,
+            $this->email,
+            $this->issuingCenter,
+            $this->shippingCenter,
+            $this->siteId,
+            $this->code,
+            $this->isShop,
+            $this->location,
+            $this->metro,
+            $this->services,
+            $this->yandexShopId,
+            $this->isBase,
+            $this->isSupplier,
+            $this->deliveryTime,
+            $this->shipmentTill11,
+            $this->shipmentTill13,
+            $this->shipmentTill18
+        ] = unserialize($serialized, ['allowed_classes' => true]);
+    }
 }

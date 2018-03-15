@@ -416,6 +416,7 @@ abstract class BaseResult extends CalculationResult
             }
 
             $stores = $offer->getStocks()->getStores($neededAmount);
+
             if (!$offer->isByRequest()) {
                 $regularStores[$offer->getId()] = $stores;
             } else {
