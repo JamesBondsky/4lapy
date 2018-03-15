@@ -18,8 +18,8 @@ use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
-use FourPaws\StoreBundle\Service\DeliveryScheduleService;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
+use FourPaws\StoreBundle\Service\DeliveryScheduleService;
 
 abstract class BaseResult extends CalculationResult
 {
@@ -136,11 +136,11 @@ abstract class BaseResult extends CalculationResult
     }
 
     /**
-     * @return \DateTime
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws NotFoundException
      * @throws StoreNotFoundException
+     * @return \DateTime
      */
     public function getDeliveryDate(): \DateTime
     {
@@ -326,8 +326,8 @@ abstract class BaseResult extends CalculationResult
     }
 
     /**
-     * @return Store
      * @throws NotFoundException
+     * @return Store
      */
     public function getSelectedStore(): Store
     {
@@ -392,10 +392,10 @@ abstract class BaseResult extends CalculationResult
     /**
      * @param Store $store
      * @param StockResultCollection $stockResult
-     * @return \DateTime
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws StoreNotFoundException
+     * @return \DateTime
      */
     protected function getStoreShipmentDate(Store $store, StockResultCollection $stockResult): \DateTime
     {
@@ -429,18 +429,25 @@ abstract class BaseResult extends CalculationResult
          */
         $scheduleDay = 0;
         if (!empty($byRequestStores)) {
-            $stores = $this->getStoreIntersection($byRequestStores);
-            if ($stores->isEmpty()) {
+            $senderStores = $this->getStoreIntersection($byRequestStores);
+            if ($senderStores->isEmpty()) {
                 $this->addError(new Error('Не найдено складов для товаров под заказ'));
             } else {
-
                 /**
                  * Для товаров под заказ добавляем +2 ко дню доставки
                  */
-                $scheduleDay = 2;
-
-                /* @todo поиск в графике поставок с учетом складов поставщика */
-//                $scheduleDay = $scheduleService->findByReceiver($this->getSelectedStore(), $stores)->getNextDelivery($date);
+                $tmpDate = (clone $date)->modify(sprintf('+%s days', 2));
+                $scheduleResult = $scheduleService->findByReceiver($store)
+                    ->getNextDelivery(
+                        $store,
+                        $senderStores,
+                        $tmpDate
+                    );
+                if ($scheduleResult) {
+                    $scheduleDay += $scheduleResult->getDate()->diff($date)->days;
+                } else {
+                    $this->addError(new Error('Нет доступных графиков поставок'));
+                }
             }
         }
 
@@ -449,8 +456,8 @@ abstract class BaseResult extends CalculationResult
          */
         $shipmentDay = 0;
         if (!empty($regularStores)) {
-            $stores = $this->getStoreIntersection($byRequestStores);
-            if ($stores->isEmpty()) {
+            $senderStores = $this->getStoreIntersection($byRequestStores);
+            if ($senderStores->isEmpty()) {
                 $this->addError(new Error('Не найдено складов для товаров из регулярного ассортимента'));
             } else {
                 $day = $this->getShipmentDay($store, $date);
@@ -464,10 +471,13 @@ abstract class BaseResult extends CalculationResult
                      */
                     $shipmentDay += $day + 1;
                 } else {
-                    if (($schedule = $scheduleService->findByReceiver($store, $stores)->getNextDelivery($date)) &&
-                        ($scheduleDate = $schedule->getNextDelivery($date))
-                    ) {
-                        $shipmentDay = $scheduleDate->diff($date)->days;
+                    $scheduleResult = $scheduleService->findByReceiver($store)->getNextDelivery(
+                        $store,
+                        $senderStores,
+                        $date
+                    );
+                    if ($scheduleResult) {
+                        $shipmentDay = $scheduleResult->getDate()->diff($date)->days;
                     } else {
                         $this->addError(new Error('Нет доступных графиков поставок'));
                     }
@@ -491,11 +501,11 @@ abstract class BaseResult extends CalculationResult
     }
 
     /**
-     * @return int
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws NotFoundException
      * @throws StoreNotFoundException
+     * @return int
      */
     public function getPeriodFrom(): int
     {
@@ -504,11 +514,11 @@ abstract class BaseResult extends CalculationResult
     }
 
     /**
-     * @return string
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws NotFoundException
      * @throws StoreNotFoundException
+     * @return string
      */
     public function getPeriodType(): string
     {
@@ -522,14 +532,14 @@ abstract class BaseResult extends CalculationResult
      *
      * @param Store $store
      * @param \DateTime $date
-     * @return int|null
+     * @return null|int
      */
     protected function getShipmentDay(Store $store, \DateTime $date): ?int
     {
         $items = [
             11 => $store->getShipmentTill11(),
             13 => $store->getShipmentTill13(),
-            18 => $store->getShipmentTill18()
+            18 => $store->getShipmentTill18(),
         ];
 
         $currentDay = (int)$date->format('w');

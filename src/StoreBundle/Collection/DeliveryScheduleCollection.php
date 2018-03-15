@@ -1,32 +1,135 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\StoreBundle\Collection;
 
-use FourPaws\StoreBundle\Entity\DeliverySchedule\DeliveryScheduleBase;
+use FourPaws\StoreBundle\Entity\DeliverySchedule;
+use FourPaws\StoreBundle\Entity\DeliveryScheduleResult;
+use FourPaws\StoreBundle\Entity\Store;
+use FourPaws\StoreBundle\Exception\NotFoundException;
 
+/**
+ * Class DeliveryScheduleCollection
+ */
 class DeliveryScheduleCollection extends BaseCollection
 {
     /**
+     * @param StoreCollection $stores
+     * @return DeliveryScheduleCollection
+     */
+    public function filterBySenders(StoreCollection $stores): DeliveryScheduleCollection
+    {
+        $xmlIds = [];
+        /** @var Store $store */
+        foreach ($stores as $store) {
+            $xmlIds[] = $store->getXmlId();
+        }
+
+        return $this->filter(function (DeliverySchedule $schedule) use ($xmlIds) {
+            return \in_array($schedule->getSenderCode(), $xmlIds, true);
+        });
+    }
+
+    /**
+     * @param StoreCollection $stores
+     * @return DeliveryScheduleCollection
+     */
+    public function filterByReceivers(StoreCollection $stores): DeliveryScheduleCollection
+    {
+        $xmlIds = [];
+        /** @var Store $store */
+        foreach ($stores as $store) {
+            $xmlIds[] = $store->getXmlId();
+        }
+
+        return $this->filter(function (DeliverySchedule $schedule) use ($xmlIds) {
+            return \in_array($schedule->getReceiverCode(), $xmlIds, true);
+        });
+    }
+
+    /**
      * Получение ближайшего графика поставок для указанной даты
      *
-     * @param \DateTime $from
-     * @return DeliveryScheduleBase
+     * @param Store $receiver
+     * @param StoreCollection $senders
+     * @param null|\DateTime $from
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     * @return null|DeliveryScheduleResult
      */
-    public function getNextDelivery(\DateTime $from = null): ?DeliveryScheduleBase
-    {
-        $result = null;
+    public function getNextDelivery(
+        Store $receiver,
+        StoreCollection $senders,
+        \DateTime $from = null
+    ): ?DeliveryScheduleResult {
         $minDate = null;
+        if (!$from) {
+            $from = new \DateTime();
+        }
 
-        /** @var DeliveryScheduleBase $item */
-        foreach ($this->getIterator() as $item) {
-            $date = $item->getNextDelivery($from);
+        /** @var DeliveryScheduleResult $result */
+        $result = null;
+        $senderSchedules = $this->filterBySenders($senders);
 
-            if ((null === $minDate) || ($minDate > $date)) {
-                $minDate = $date;
-                $result = $item;
+        /** @var DeliverySchedule $senderSchedule */
+        foreach ($senderSchedules as $senderSchedule) {
+            if (!$date = $this->doGetNextDelivery($senderSchedule, $receiver, $from)) {
+                continue;
+            }
+
+            if (null === $result || $result->getDate() > $date) {
+                $result = (new DeliveryScheduleResult())->setDate($date)->setSchedule($senderSchedule);
             }
         }
 
         return $result;
+    }/** @noinspection MoreThanThreeArgumentsInspection */
+
+    /**
+     * @param DeliverySchedule $senderSchedule
+     * @param Store $receiver
+     * @param \DateTime $from
+     * @param int $transitionCount
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws NotFoundException
+     * @return null|\DateTime
+     */
+    protected function doGetNextDelivery(
+        DeliverySchedule $senderSchedule,
+        Store $receiver,
+        \DateTime $from,
+        int $transitionCount = 0
+    ): ?\DateTime {
+        if ($transitionCount > 3) {
+            return null;
+        }
+
+        if ($senderSchedule->getReceiverCode() === $receiver->getXmlId()) {
+            return $senderSchedule->getNextDelivery($from);
+        }
+
+        $results = [];
+
+        $children = $senderSchedule->getReceiverSchedules();
+        /** @var DeliverySchedule $child */
+        foreach ($children as $child) {
+            if ($child->getReceiverCode() === $receiver->getXmlId()) {
+                $results[] = $child->getNextDelivery($from);
+            } else {
+                if ($childFrom = $child->getNextDelivery($from)) {
+                    $results[] = $this->doGetNextDelivery(
+                        $child,
+                        $receiver,
+                        $childFrom,
+                        $transitionCount++
+                    );
+                }
+            }
+        }
+
+        return empty($results) ? null : min($results);
     }
 }

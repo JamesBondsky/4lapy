@@ -1,21 +1,20 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\StoreBundle\Repository;
 
 use Bitrix\Main\Entity\DataManager;
-use Bitrix\Main\Entity\ReferenceField;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\StoreBundle\Collection\DeliveryScheduleCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
-use FourPaws\StoreBundle\Entity\DeliverySchedule\DeliveryScheduleByWeek;
-use FourPaws\StoreBundle\Entity\DeliverySchedule\DeliveryScheduleManual;
-use FourPaws\StoreBundle\Entity\DeliverySchedule\DeliveryScheduleWeekly;
-use FourPaws\StoreBundle\Entity\DeliverySchedule\DeliveryScheduleBase;
+use FourPaws\StoreBundle\Entity\DeliverySchedule;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use JMS\Serializer\ArrayTransformerInterface;
-use JMS\Serializer\DeserializationContext;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class DeliveryScheduleRepository extends BaseRepository
@@ -38,71 +37,62 @@ class DeliveryScheduleRepository extends BaseRepository
     }
 
     /**
+     * @param string $xmlId
+     * @throws NotFoundException
+     * @return DeliverySchedule
+     */
+    public function findByXmlId(string $xmlId): DeliverySchedule
+    {
+        /** @noinspection PhpIncompatibleReturnTypeInspection */
+        $result = $this->findBy(['UF_XML_ID' => $xmlId], [], 1)->first();
+        if (!$result) {
+            throw new NotFoundException(sprintf('Schedule with xmlId %s not found', $xmlId));
+        }
+        return $result;
+    }
+
+    /**
      * @param Store $receiver
      * @param StoreCollection $senders
-     * @param int $maxTransitions
      * @return DeliveryScheduleCollection
-     * @throws NotFoundException
-     * @throws \Bitrix\Main\ArgumentException
      */
     public function findByReceiver(
         Store $receiver,
-        StoreCollection $senders = null,
-        int $maxTransitions
+        StoreCollection $senders = null
     ): DeliveryScheduleCollection {
-        $criteria = ['=UF_RECEIVER' => $receiver->getXmlId()];
-
-        $query = $this->table::query();
-
-        $senderXmlIds = [];
+        $filter = ['=UF_RECEIVER' => $receiver->getXmlId()];
         if ($senders && !$senders->isEmpty()) {
             $filter['=UF_SENDER'] = [];
             /** @var Store $sender */
             foreach ($senders as $sender) {
-                $senderXmlIds[] = $sender->getXmlId();
+                $filter['=UF_SENDER'][] = $sender->getXmlId();
             }
         }
 
-        if ($maxTransitions === 0) {
-            if (!empty($senderXmlIds)) {
-                $filter['=UF_SENDER'] = $senderXmlIds;
+        /** @noinspection PhpIncompatibleReturnTypeInspection */
+        return $this->findBy($filter);
+    }
+
+    /**
+     * @param Store $sender
+     * @param StoreCollection $receivers
+     * @return DeliveryScheduleCollection
+     */
+    public function findBySender(
+        Store $sender,
+        StoreCollection $receivers = null
+    ): DeliveryScheduleCollection {
+        $filter = ['=UF_SENDER' => $sender->getXmlId()];
+        if ($receivers && !$receivers->isEmpty()) {
+            $filter['=UF_RECEIVER'] = [];
+            /** @var Store $sender */
+            foreach ($receivers as $receiver) {
+                $filter['=UF_RECEIVER'][] = $receiver->getXmlId();
             }
-        } elseif ($maxTransitions === 1) {
-            $reference = ['=this.UF_SENDER' => '=ref.UF_RECEIVER'];
-            if ($senderXmlIds) {
-                $reference['=ref.UF_RECEIVER'] = $senderXmlIds;
-            }
-            $query->registerRuntimeField(
-                new ReferenceField(
-                    'SENDER',
-                    $this->getDataClass(),
-                    $reference,
-                    ['join_type' => 'INNER']
-            ));
-        } else {
-            /* @todo обработка случаев, когда в маршруте более одного промежуточного склада (пока не требуется) */
-            return new DeliveryScheduleCollection();
         }
-
-        $criteria = array_merge($this->getDefaultFilter(), $criteria);
-
-        $entities = $query
-            ->setSelect(['*', 'UF_*'])
-            ->setFilter($criteria)
-            ->exec();
-
-        $result = [];
-        while ($entity = $entities->fetch()) {
-            $result[$entity['ID']] = $this->fromArray($entity);
-        }
-
-        /**
-         * todo change group name to constant
-         */
-        $collectionClass = $this->getCollectionClass();
-
-        return new $collectionClass($result);
-    }/** @noinspection MoreThanThreeArgumentsInspection */
+        /** @noinspection PhpIncompatibleReturnTypeInspection */
+        return $this->findBy($filter);
+    }
 
     protected function getDataClass(): string
     {
@@ -116,7 +106,7 @@ class DeliveryScheduleRepository extends BaseRepository
 
     protected function getEntityClass(): string
     {
-        return DeliveryScheduleBase::class;
+        return DeliverySchedule::class;
     }
 
     protected function getDefaultOrder(): array
@@ -127,36 +117,5 @@ class DeliveryScheduleRepository extends BaseRepository
     protected function getDefaultFilter(): array
     {
         return [];
-    }
-
-    /**
-     * @param array $fields
-     * @return DeliveryScheduleBase
-     * @throws NotFoundException
-     */
-    protected function fromArray(array $fields): DeliveryScheduleBase
-    {
-        $class = null;
-        switch ($fields['UF_TYPE']) {
-            case DeliveryScheduleBase::TYPE_MANUAL:
-                $class = DeliveryScheduleManual::class;
-                break;
-            case DeliveryScheduleBase::TYPE_WEEKLY:
-                $class = DeliveryScheduleWeekly::class;
-                break;
-            case DeliveryScheduleBase::TYPE_BY_WEEK:
-                $class = DeliveryScheduleByWeek::class;
-                break;
-        }
-
-        if (null === $class) {
-            throw new NotFoundException(sprintf('Delivery schedule type %s is not allowed', $fields['UF_TYPE']));
-        }
-
-        return $this->arrayTransformer->fromArray(
-            $fields,
-            $class,
-            DeserializationContext::create()->setGroups(['read'])
-        );
     }
 }
