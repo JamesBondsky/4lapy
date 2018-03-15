@@ -19,7 +19,7 @@ class OrderDeliveryValidator extends ConstraintValidator
     /**
      * Максимальное время хранения даты перехода пользователя на 2й шаг оформления заказа
      */
-    const MAX_DATE_DIFF = 1800;
+    public const MAX_DATE_DIFF = 1800;
 
 
     /**
@@ -39,10 +39,12 @@ class OrderDeliveryValidator extends ConstraintValidator
     }
 
     /**
-     * @param OrderStorage $entity
+     * @param mixed $entity
      * @param Constraint $constraint
-     *
      * @throws DeliveryNotFoundException
+     * @throws NotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
     public function validate($entity, Constraint $constraint)
     {
@@ -67,7 +69,7 @@ class OrderDeliveryValidator extends ConstraintValidator
         /**
          * Проверка, что выбрана доступная доставка
          */
-        $deliveryMethods = $this->orderService->getDeliveries();
+        $deliveryMethods = $this->orderService->getDeliveries($entity);
         $delivery = null;
         foreach ($deliveryMethods as $deliveryMethod) {
             if ($deliveryId === $deliveryMethod->getDeliveryId()) {
@@ -112,7 +114,7 @@ class OrderDeliveryValidator extends ConstraintValidator
                     return;
                 }
                 /* @todo проверка частичного получения заказа */
-            } catch (NotFoundException $e) {
+            } catch (DeliveryNotFoundException $e) {
                 $this->context->addViolation($constraint->deliveryPlaceCodeMessage);
             }
         }

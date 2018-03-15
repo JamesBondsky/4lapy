@@ -83,7 +83,7 @@ class DeliveryService implements LoggerAwareInterface
     {
         $this->locationService = $locationService;
         $this->setLogger(LoggerFactory::create('DeliveryService'));
-    }
+    }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
      * Получение доставок для товара
@@ -91,11 +91,20 @@ class DeliveryService implements LoggerAwareInterface
      * @param Offer $offer
      * @param string $locationCode
      * @param array $codes
+     * @param \DateTime|null $from
      * @return array
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\NotSupportedException
+     * @throws \Bitrix\Main\ObjectNotFoundException
      * @throws \Bitrix\Sale\UserMessageException
      */
-    public function getByProduct(Offer $offer, string $locationCode = '', array $codes = []): array
-    {
+    public function getByProduct(
+        Offer $offer,
+        string $locationCode = '',
+        array $codes = [],
+        ?\DateTime $from = null
+    ): array {
         $basket = Basket::createFromRequest([]);
         $basketItem = BasketItem::create($basket, 'sale', $offer->getId());
         $basketItem->setFieldNoDemand('CAN_BUY', 'Y');
@@ -103,38 +112,42 @@ class DeliveryService implements LoggerAwareInterface
         $basketItem->setFieldNoDemand('QUANTITY', 1);
         $basket->addItem($basketItem);
 
-        return $this->getByBasket($basket, $locationCode, $codes);
-    }
+        return $this->getByBasket($basket, $locationCode, $codes, $from);
+    }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
      * Получение доставок для корзины
      *
      * @param BasketBase $basket
      * @param string $locationCode
-     * @param array $codes коды доставок для расчета
-     *
+     * @param array $codes
+     * @param \DateTime|null $from
      * @return array
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\NotSupportedException
      */
-    public function getByBasket(BasketBase $basket, string $locationCode = '', array $codes = []): array
-    {
+    public function getByBasket(
+        BasketBase $basket,
+        string $locationCode = '',
+        array $codes = [],
+        ?\DateTime $from = null
+    ): array {
         if (!$locationCode) {
             $locationCode = $this->locationService->getCurrentLocation();
         }
 
         $shipment = $this->generateShipment($locationCode, $basket);
 
-        return $this->calculateDeliveries($shipment, $codes);
+        return $this->calculateDeliveries($shipment, $codes, $from);
     }
 
     /**
      * Получение доставок для местоположения
      *
      * @param string $locationCode
-     * @param array $codes коды доставок для расчета
-     *
-     * @return BaseResult[]
+     * @param array $codes
+     * @return array
      */
-
     public function getByLocation(string $locationCode, array $codes = []): array
     {
         $deliveries = [];
@@ -150,7 +163,7 @@ class DeliveryService implements LoggerAwareInterface
                 ->resultOf($getDeliveries);
             $deliveries = $result['result'];
         } catch (\Exception $e) {
-            $this->logger->critical('failed to get deliveries for location', ['locationCode' => $locationCode]);
+            $this->logger->error('failed to get deliveries for location', ['locationCode' => $locationCode]);
         }
         if (!empty($codes)) {
             /**
@@ -171,11 +184,12 @@ class DeliveryService implements LoggerAwareInterface
      *
      * @param Shipment $shipment
      * @param array $codes
-     * @return BaseResult[]
+     * @param \DateTime|null $from
+     * @return array
      * @throws \Bitrix\Main\ArgumentOutOfRangeException
      * @throws \Bitrix\Main\NotSupportedException
      */
-    public function calculateDeliveries(Shipment $shipment, array $codes = []): array
+    public function calculateDeliveries(Shipment $shipment, array $codes = [], ?\DateTime $from = null): array
     {
         $availableServices = Manager::getRestrictedObjectsList($shipment);
 
@@ -185,6 +199,15 @@ class DeliveryService implements LoggerAwareInterface
             if ($codes && !\in_array($service->getCode(), $codes, true)) {
                 continue;
             }
+
+            $isDpd = \in_array(
+                $service->getCode(),
+                [
+                    self::DPD_DELIVERY_CODE,
+                    self::DPD_PICKUP_CODE,
+                ],
+                true
+            );
 
             if ($service::isProfile()) {
                 $name = $service->getNameWithParent();
@@ -199,35 +222,32 @@ class DeliveryService implements LoggerAwareInterface
                 ]
             );
             $calculationResult = $shipment->calculateDelivery();
-            if ($calculationResult->isSuccess()) {
-                if (\in_array(
-                    $service->getCode(),
-                    [
-                        self::DPD_DELIVERY_CODE,
-                        self::DPD_PICKUP_CODE,
-                    ],
-                    true
-                )) {
-                    $calculationResult = new DpdResult($calculationResult);
+            $from = $from ?? new \DateTime();
 
-                    /* @todo не хранить эти данные в сессии */
-                    $calculationResult->setInitialPeriod($_SESSION['DPD_DATA'][$service->getCode()]['DAYS_FROM']);
-                    $calculationResult->setPeriodTo($_SESSION['DPD_DATA'][$service->getCode()]['DAYS_TO']);
-                    if ($_SESSION['DPD_DATA'][$service->getCode()]['STOCK_RESULT'] instanceof StockResultCollection) {
-                        $calculationResult->setStockResult($_SESSION['DPD_DATA'][$service->getCode()]['STOCK_RESULT']);
-                    }
-                    $calculationResult->setIntervals($_SESSION['DPD_DATA'][$service->getCode()]['INTERVALS']);
-                    $calculationResult->setDeliveryZone($_SESSION['DPD_DATA'][$service->getCode()]['DELIVERY_ZONE']);
-                    unset($_SESSION['DPD_DATA']);
-                } elseif (!$calculationResult instanceof BaseResult) {
-                    // непонятная доставка, мы с такими работать не обучены
-                    continue;
-                }
-
-                $calculationResult->setDeliveryId($service->getId());
-                $calculationResult->setDeliveryName($name);
+            if ($isDpd) {
+                $calculationResult = new DpdResult($calculationResult);
                 $calculationResult->setDeliveryCode($service->getCode());
+                /* @todo не хранить эти данные в сессии */
+                $calculationResult->setInitialPeriod($_SESSION['DPD_DATA'][$service->getCode()]['DAYS_FROM']);
+                $calculationResult->setPeriodTo($_SESSION['DPD_DATA'][$service->getCode()]['DAYS_TO']);
+                if ($_SESSION['DPD_DATA'][$service->getCode()]['STOCK_RESULT'] instanceof StockResultCollection) {
+                    $calculationResult->setStockResult($_SESSION['DPD_DATA'][$service->getCode()]['STOCK_RESULT']);
+                }
+                $calculationResult->setIntervals($_SESSION['DPD_DATA'][$service->getCode()]['INTERVALS']);
+                $calculationResult->setDeliveryZone($_SESSION['DPD_DATA'][$service->getCode()]['DELIVERY_ZONE']);
 
+                unset($_SESSION['DPD_DATA']);
+            }
+            if (!$calculationResult instanceof BaseResult) {
+                // непонятная доставка, мы с такими работать не обучены
+                continue;
+            }
+            $calculationResult->setDeliveryId($service->getId());
+            $calculationResult->setDeliveryName($name);
+            $calculationResult->setDeliveryCode($service->getCode());
+            $calculationResult->setCurrentDate($from);
+
+            if ($calculationResult->isSuccess()) {
                 $result[] = $calculationResult;
             }
         }

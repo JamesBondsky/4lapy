@@ -203,7 +203,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
         }
 
         if ($this->currentStep === OrderStorageService::DELIVERY_STEP) {
-            $deliveries = $this->orderService->getDeliveries();
+            $deliveries = $this->orderService->getDeliveries($storage);
             foreach ($deliveries as $delivery) {
                 $delivery->setCurrentDate($storage->getCurrentDate());
             }
@@ -248,7 +248,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->arResult['SELECTED_DELIVERY'] = $selectedDelivery;
             $this->arResult['SELECTED_DELIVERY_ID'] = $selectedDeliveryId;
         } elseif ($this->currentStep === OrderStorageService::PAYMENT_STEP) {
-            $deliveries = $this->orderService->getDeliveries();
+            $deliveries = $this->orderService->getDeliveries($storage);
             $this->getPickupData($deliveries, $storage);
             $payments = $this->orderStorageService->getAvailablePayments($storage, true);
             $selectedDelivery = null;

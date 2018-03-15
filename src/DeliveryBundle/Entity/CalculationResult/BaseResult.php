@@ -105,8 +105,13 @@ abstract class BaseResult extends CalculationResult
             $this->setPeriodType($result->getPeriodType());
             $this->setPeriodTo($result->getPeriodTo());
 
-            $this->addErrors($result->getErrors());
-            $this->addWarnings($result->getWarnings());
+            if ($result->getErrors()) {
+                $this->addErrors($result->getErrors());
+            }
+
+            if ($result->getWarnings()) {
+                $this->addWarnings($result->getWarnings());
+            }
         }
     }
 
@@ -509,7 +514,11 @@ abstract class BaseResult extends CalculationResult
      */
     public function getPeriodFrom(): int
     {
-        $this->getDeliveryDate();
+        if (null === $this->periodFrom) {
+            $this->getDeliveryDate();
+            $this->doCalculatePeriod();
+        }
+
         return parent::getPeriodFrom();
     }
 
@@ -524,6 +533,25 @@ abstract class BaseResult extends CalculationResult
     {
         $this->getDeliveryDate();
         return parent::getPeriodType();
+    }
+
+    /**
+     * @param bool $internalCall
+     * @return bool
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws StoreNotFoundException
+     */
+    public function isSuccess($internalCall = false)
+    {
+        if ($this->isSuccess) {
+            /**
+             * Расчет даты доставки
+             */
+            $this->getDeliveryDate();
+        }
+        return parent::isSuccess($internalCall);
     }
 
     /**

@@ -232,7 +232,7 @@ class OrderService
             throw new OrderCreateException('Корзина пуста');
         }
 
-        $deliveries = $this->getDeliveries();
+        $deliveries = $this->getDeliveries($storage);
         $selectedDelivery = null;
         if ($fastOrder) {
             /** устанавливаем самовывоз для быстрого заказа */
@@ -616,15 +616,20 @@ class OrderService
     }
 
     /**
+     * @param OrderStorage $storage
      * @param bool $reload
-     *
      * @return BaseResult[]
+     * @throws ArgumentOutOfRangeException
+     * @throws NotSupportedException
      */
-    public function getDeliveries($reload = false): array
+    public function getDeliveries(OrderStorage $storage, $reload = false): array
     {
         if (null === $this->deliveries || $reload) {
             $this->deliveries = $this->deliveryService->getByBasket(
-                $this->basketService->getBasket()->getOrderableItems()
+                $this->basketService->getBasket()->getOrderableItems(),
+                '',
+                [],
+                $storage->getCurrentDate()
             );
         }
 
@@ -732,8 +737,8 @@ class OrderService
 
     /**
      * @param Order $order
-     *
      * @return string
+     * @throws ArgumentException
      */
     public function getOrderDeliveryAddress(Order $order): string
     {
@@ -815,9 +820,10 @@ class OrderService
         }
 
         if (empty($ids)) {
-            throw new NotFoundException('Корзина заказа пуста');
+            throw new NotFoundException('Basket is empty');
         }
 
+        /** @noinspection PhpIncompatibleReturnTypeInspection */
         return (new OfferQuery())->withFilterParameter('ID', $ids)->exec();
     }
 }

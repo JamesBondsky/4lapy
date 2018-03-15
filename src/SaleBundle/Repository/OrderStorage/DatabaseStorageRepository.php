@@ -69,8 +69,8 @@ class DatabaseStorageRepository extends StorageBaseRepository
 
     /**
      * @param int $fuserId
-     *
      * @return OrderStorage
+     * @throws OrderStorageSaveException
      */
     public function findByFuser(int $fuserId): OrderStorage
     {
@@ -122,7 +122,8 @@ class DatabaseStorageRepository extends StorageBaseRepository
         $result = Table::add($this->prepareData($data));
         if (!$result->isSuccess()) {
             throw new OrderStorageSaveException(
-                sprintf('Ошибка при сохранении данных по заказу: %s', implode(', ', $result->getErrorMessages()))
+                'Failed to save order storage',
+                ['messages' => $result->getErrorMessages(), 'fuserId' => $data['UF_FUSER_ID']]
             );
         }
 

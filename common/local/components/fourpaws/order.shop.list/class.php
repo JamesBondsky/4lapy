@@ -16,6 +16,7 @@ use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\SaleBundle\Service\OrderService;
+use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -30,6 +31,11 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
      * @var OrderService
      */
     protected $orderService;
+
+    /**
+     * @var OrderStorageService
+     */
+    protected $orderStorageService;
 
     /** @var DeliveryService $deliveryService */
     protected $deliveryService;
@@ -50,6 +56,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
         parent::__construct($component);
         $serviceContainer = Application::getInstance()->getContainer();
         $this->orderService = $serviceContainer->get(OrderService::class);
+        $this->orderStorageService = $serviceContainer->get(OrderStorageService::class);
         $this->deliveryService = $serviceContainer->get('delivery.service');
     }
 
@@ -69,6 +76,8 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
      * @param array $city
      * @return bool
      * @throws ApplicationCreateException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\NotSupportedException
      */
     protected function prepareResult(array $city = [])
     {
@@ -132,6 +141,10 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
              * @param Store $shop1
              * @param Store $shop2
              * @return int
+             * @throws ApplicationCreateException
+             * @throws \Bitrix\Main\ArgumentException
+             * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+             * @throws \FourPaws\StoreBundle\Exception\NotFoundException
              */
             $sortFunc = function (Store $shop1, Store $shop2) use ($resultByStore) {
                 $shopData1 = $resultByStore[$shop1->getXmlId()];
@@ -179,7 +192,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                 $fullResult = $resultByStore[$store->getXmlId()]['FULL_RESULT'];
                 /** @var StockResultCollection $available */
                 $available = $partialResult->getStockResult();
-                $delayed = $fullResult->getStockResult()->getDelayed();
+                $delayed = $fullResult->getStockResult()->filterByStore($fullResult->getSelectedStore())->getDelayed();
 
                 $partsDelayed = [];
                 /** @var StockResult $item */
@@ -328,12 +341,14 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
     }
 
     /**
-     * @return null|BaseResult
+     * @return BaseResult|null
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\NotSupportedException
      */
     protected function getPickupDelivery(): ?BaseResult
     {
         $pickupDelivery = null;
-        $deliveries = $this->orderService->getDeliveries();
+        $deliveries = $this->orderService->getDeliveries($this->orderStorageService->getStorage());
         foreach ($deliveries as $delivery) {
             if ($this->deliveryService->isPickup($delivery)) {
                 $pickupDelivery = $delivery;
@@ -361,10 +376,10 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
 
         $result['AVAILABLE_AMOUNT'] = $available->isEmpty() ? 0 : $available->getAmount();
         $result['DELAYED_AMOUNT'] = $delayed->isEmpty() ? 0 : $delayed->getAmount();
-        $result['FULL_RESULT'] = (clone $delivery)->setStockResult($stockResultByStore);
+        $result['FULL_RESULT'] = (clone $delivery)->setSelectedStore($store);
         $result['PARTIAL_RESULT'] = $result['FULL_RESULT'];
         if (!$available->isEmpty()) {
-            $result['PARTIAL_RESULT'] = (clone $delivery)->setStockResult($available);
+            $result['PARTIAL_RESULT'] = (clone $delivery)->setSelectedStore($store)->setStockResult($available);
         }
 
         return $result;

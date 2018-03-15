@@ -168,11 +168,6 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
             return $result;
         }
 
-        /**
-         * Расчет даты доставки
-         */
-        $result->getDeliveryDate();
-
         return $result;
     }
 

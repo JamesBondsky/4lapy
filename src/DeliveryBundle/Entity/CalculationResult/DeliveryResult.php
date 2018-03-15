@@ -26,7 +26,7 @@ class DeliveryResult extends BaseResult
         /** @var IntervalService $intervalService */
         $intervalService = Application::getInstance()->getContainer()->get(IntervalService::class);
 
-        if (!$this->getStockResult()->getDelayed()->isEmpty()) {
+        if ($this->stockResult && !$this->stockResult->getDelayed()->isEmpty()) {
             return;
         }
 
