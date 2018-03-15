@@ -34,6 +34,8 @@ class Event implements ServiceHandlerInterface
         self::initHandler('OnStoreProductAdd', [static::class, 'clearStorageCache']);
         self::initHandler('OnProductUpdate', [static::class, 'clearStorageCache']);
         self::initHandler('OnProductAdd', [static::class, 'clearStorageCache']);
+
+        /** @todo сброс кеша при изменении элементов */
     }
 
     /**
