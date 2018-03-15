@@ -9,14 +9,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 $offers = $templateData['OFFERS'];
 if(\is_array($offers) && !empty($offers)){
+    $discount = $component->getCurrentUserService()->getCurrentUser()->getDiscount();
     foreach ($offers as $key => $offer) {
         $explode = explode('_', $key);
         $id = $explode[0];
-        $quantity=$explode[1];
+        $quantity=(int)$explode[1];
         /** @var Offer $offer */
         $offer = $templateData['currentOffer'];
         try {
-            $bonuses = $offer->getBonuses($component->getCurrentUserService()->getCurrentUser()->getDiscount(), $quantity);
+            $bonuses = $offer->getBonuses($discount, $quantity);
         } catch (\Exception $e) {
             $bonuses = 0;
         }
