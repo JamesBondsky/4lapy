@@ -30,10 +30,10 @@ class Event implements ServiceHandlerInterface
     {
         self::$eventManager = $eventManager;
         /** Очистка кеша при изменении количества и оффера*/
-        self::initHandler('OnStoreProductUpdate', [static::class, 'clearStorageCache']);
-        self::initHandler('OnStoreProductAdd', [static::class, 'clearStorageCache']);
-        self::initHandler('OnProductUpdate', [static::class, 'clearStorageCache']);
-        self::initHandler('OnProductAdd', [static::class, 'clearStorageCache']);
+        self::initHandler('OnStoreProductUpdate', [static::class, 'clearProductCache']);
+        self::initHandler('OnStoreProductAdd', [static::class, 'clearProductCache']);
+        self::initHandler('OnProductUpdate', [static::class, 'clearProductCache']);
+        self::initHandler('OnProductAdd', [static::class, 'clearProductCache']);
 
         /** @todo сброс кеша при изменении элементов */
     }
@@ -46,7 +46,7 @@ class Event implements ServiceHandlerInterface
      * @param string   $module
      *
      */
-    public static function initHandler(string $eventName, callable $callback, string $module = 'sale')
+    public static function initHandler(string $eventName, callable $callback, string $module = 'catalog'): void
     {
         self::$eventManager->addEventHandler(
             $module,
