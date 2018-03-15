@@ -75,7 +75,7 @@ class DatabaseStorageRepository extends StorageBaseRepository
     public function findByFuser(int $fuserId): OrderStorage
     {
         if ($data = Table::getByPrimary($fuserId)->fetch()) {
-            $data = array_merge($data, $data['UF_DATA']);
+            $data = array_merge($data, (array)$data['UF_DATA']);
             unset($data['UF_DATA']);
             $data = $this->setInitialValues($data);
         } else {
