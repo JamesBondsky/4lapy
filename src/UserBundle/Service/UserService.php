@@ -480,11 +480,20 @@ class UserService implements
 
     /**
      * @return int
+     *
+     * получение либо скидки пользователя либо базовой
      */
     public function getDiscount(): int
     {
         if ($this->isAuthorized()) {
-            return $this->getCurrentUserDiscount();
+            try {
+                return (int)$this->getCurrentUser()->getDiscount();
+            } catch (NotAuthorizedException $e) {
+                /** показываем базовую скидку если не авторизованы */
+            } catch (ConstraintDefinitionException|InvalidIdentifierException $e) {
+                $logger = LoggerFactory::create('params');
+                $logger->error('Ошибка парамеров - ' . $e->getMessage());
+            }
         }
         return static::BASE_DISCOUNT;
     }
@@ -495,6 +504,8 @@ class UserService implements
      * @param UserBonus|null $userBonus
      *
      * @return int
+     *
+     * получение актуальной скидки пользователя(manzana)
      */
     public function getUserDiscount(User $user, ?UserBonus $userBonus = null): int
     {
@@ -530,6 +541,8 @@ class UserService implements
 
     /**
      * @return int
+     *
+     * получение актуальной скидки текущего пользователя(manzana)
      */
     public function getCurrentUserDiscount(): int
     {
@@ -550,6 +563,8 @@ class UserService implements
      * @param UserBonus|null $bonus
      *
      * @return bool
+     *
+     * обновление скидки пользователя по данным из manzana
      */
     public function refreshUserDiscount(?User $user = null, ?UserBonus $bonus=null): bool
     {

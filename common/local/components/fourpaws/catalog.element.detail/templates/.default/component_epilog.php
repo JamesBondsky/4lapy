@@ -9,7 +9,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 /** @var Offer $currentOffer */
 $currentOffer = $templateData['currentOffer'];
 try {
-    $bonuses = $currentOffer->getBonuses($component->getCurrentUserService()->getCurrentUser()->getDiscount());
+    $bonuses = $currentOffer->getBonuses($component->getCurrentUserService()->getDiscount());
 } catch (\Exception $e) {
     $bonuses = 0;
 }
