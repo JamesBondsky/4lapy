@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\PhoneHelper;
 use FourPaws\Location\Exception\CityNotFoundException;
@@ -31,6 +32,11 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
      */
     protected $deliveryService;
 
+    /**
+     * FourPawsCityDeliveryInfoComponent constructor.
+     * @param CBitrixComponent|null $component
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
     public function __construct(CBitrixComponent $component = null)
     {
         parent::__construct($component);
@@ -72,11 +78,12 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
     }
 
     /**
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws CityNotFoundException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      * @return $this
+     * @throws CityNotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
     protected function prepareResult()
     {
@@ -88,7 +95,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
             $allDeliveryCodes = array_intersect($allDeliveryCodes, $this->arParams['DELIVERY_CODES']);
         }
 
-        /** @var BaseResult[] $defaultDeliveryResult */
+        /** @var CalculationResultInterface[] $defaultDeliveryResult */
         $defaultResult = $this->getDeliveries($defaultLocation['CODE'], $allDeliveryCodes);
         $defaultDeliveryResult = $this->getDelivery($defaultResult);
         $defaultPickupResult = $this->getPickup($defaultResult);
@@ -100,7 +107,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
             $currentPickupResult = $defaultPickupResult;
             $currentCity = $defaultCity;
         } else {
-            /** @var BaseResult[] $currentDeliveryResult */
+            /** @var CalculationResultInterface[] $currentDeliveryResult */
             $currentResult = $this->getDeliveries($currentLocation['CODE'], $allDeliveryCodes);
             $currentDeliveryResult = $this->getDelivery($currentResult);
             $currentPickupResult = $this->getPickup($currentResult);
@@ -183,7 +190,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
      * @param string $locationCode
      * @param array $possibleDeliveryCodes
      *
-     * @return null|BaseResult[]
+     * @return null|CalculationResultInterface[]
      */
     protected function getDeliveries(string $locationCode, array $possibleDeliveryCodes = [])
     {
@@ -191,9 +198,9 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
     }
 
     /**
-     * @param BaseResult[] $deliveries
+     * @param CalculationResultInterface[] $deliveries
      *
-     * @return null|BaseResult
+     * @return null|CalculationResultInterface
      */
     protected function getDelivery($deliveries)
     {
@@ -203,7 +210,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
 
         $filtered = array_filter(
             $deliveries,
-            function (BaseResult $delivery) {
+            function (CalculationResultInterface $delivery) {
                 return $this->deliveryService->isDelivery($delivery);
             }
         );
@@ -212,9 +219,9 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
     }
 
     /**
-     * @param BaseResult[] $deliveries
+     * @param CalculationResultInterface[] $deliveries
      *
-     * @return null|BaseResult
+     * @return null|CalculationResultInterface
      */
     protected function getPickup($deliveries)
     {
@@ -224,7 +231,7 @@ class FourPawsCityDeliveryInfoComponent extends \CBitrixComponent
 
         $filtered = array_filter(
             $deliveries,
-            function (BaseResult $delivery) {
+            function (CalculationResultInterface $delivery) {
                 return $this->deliveryService->isPickup($delivery);
             }
         );

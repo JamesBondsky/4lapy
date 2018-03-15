@@ -11,8 +11,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Entity\StockResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\SaleBundle\Service\OrderService;
@@ -116,83 +116,49 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
 
         $stores = $this->getStoreList($params['filter'] ?? [], $params['order'] ?? []);
         if (!$stores->isEmpty()) {
-            [$servicesList, $metroList] = $this->getFullStoreInfo($stores);
+            $metroList = $this->getMetroInfo($stores);
 
             $avgGpsN = 0;
             $avgGpsS = 0;
 
-            $resultByStore = [];
-
-            $stores = $stores->toArray();
-            /** @var Store $store */
-            foreach ($stores as $store) {
-                $resultByStore[$store->getXmlId()] = $this->getStoreData(
-                    $pickupDelivery,
-                    $store
-                );
-            }
-
-            /**
-             * 1) По убыванию % от суммы товаров заказа в наличии в магазине или на складе
-             * 2) По возрастанию даты готовности заказа к выдаче
-             * 3) По адресу магазина в алфавитном порядке
-             */
-            /**
-             * @param Store $shop1
-             * @param Store $shop2
-             * @return int
-             * @throws ApplicationCreateException
-             * @throws \Bitrix\Main\ArgumentException
-             * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
-             * @throws \FourPaws\StoreBundle\Exception\NotFoundException
-             */
-            $sortFunc = function (Store $shop1, Store $shop2) use ($resultByStore) {
-                $shopData1 = $resultByStore[$shop1->getXmlId()];
-                $shopData2 = $resultByStore[$shop2->getXmlId()];
-
-                if ($shopData1['AVAILABLE_AMOUNT'] !== $shopData2['AVAILABLE_AMOUNT']) {
-                    return ($shopData1['AVAILABLE_AMOUNT'] > $shopData2['AVAILABLE_AMOUNT']) ? -1 : 1;
-                }
-
-                /** @var BaseResult $result1 */
-                $result1 = $shopData1['FULL_RESULT'];
-                /** @var BaseResult $result2 */
-                $result2 = $shopData2['FULL_RESULT'];
-                $deliveryDate1 = $result1->getDeliveryDate();
-                $deliveryDate2 = $result2->getDeliveryDate();
-
-                if ($deliveryDate1->getTimestamp() !== $deliveryDate2->getTimestamp()) {
-                    return ($deliveryDate1->getTimestamp() > $deliveryDate2->getTimestamp()) ? 1 : -1;
-                }
-
-                return $shop1->getAddress() > $shop2->getAddress() ? 1 : -1;
-            };
-
-            uasort($stores, $sortFunc);
-
             $showTime = $this->deliveryService->isInnerPickup($pickupDelivery);
-            /** @var Store $store */
-            foreach ($stores as $store) {
-                $metro = $store->getMetro();
+            $bestShops = $pickupDelivery->getBestShops();
 
-                $services = [];
-                if (\is_array($servicesList) && !empty($servicesList)) {
-                    foreach ($servicesList as $service) {
-                        $services[] = $service['UF_NAME'];
+            if (!empty($params['filter'])) {
+                /**
+                 * @var string $xmlId
+                 * @var Store $store
+                 */
+                foreach ($bestShops as $xmlId => $store) {
+                    if (!$stores->exists(function ($key, Store $store2) use ($store) {
+                        return $store2->getXmlId() === $store->getXmlId();
+                    })) {
+                        unset($bestShops[$xmlId]);
                     }
                 }
+            }
 
+            /** @var Store $store */
+            foreach ($bestShops as $store) {
+                $fullResult = (clone $pickupDelivery)->setSelectedStore($store)
+                    ->setStockResult($pickupDelivery->getStockResult()->filterByStore($store));
+                if (!$fullResult->isSuccess()) {
+                    continue;
+                }
+                if (!$fullResult->getStockResult()->getAvailable()->isEmpty()) {
+                    $partialResult = (clone $fullResult)->setStockResult($fullResult->getStockResult()->getAvailable());
+                } else {
+                    $partialResult = $fullResult;
+                }
+
+                $metro = $store->getMetro();
                 $address = !empty($metro)
                     ? 'м. ' . $metroList[$metro]['UF_NAME'] . ', ' . $store->getAddress()
                     : $store->getAddress();
 
-                /** @var BaseResult $partialResult */
-                $partialResult = $resultByStore[$store->getXmlId()]['PARTIAL_RESULT'];
-                /** @var BaseResult $fullResult */
-                $fullResult = $resultByStore[$store->getXmlId()]['FULL_RESULT'];
                 /** @var StockResultCollection $available */
                 $available = $partialResult->getStockResult();
-                $delayed = $fullResult->getStockResult()->filterByStore($fullResult->getSelectedStore())->getDelayed();
+                $delayed = $fullResult->getStockResult()->getDelayed();
 
                 $partsDelayed = [];
                 /** @var StockResult $item */
@@ -229,26 +195,25 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                     'phone' => $store->getPhone(),
                     'schedule' => $store->getScheduleString(),
                     'pickup' => DeliveryTimeHelper::showTime(
-                        $resultByStore[$store->getXmlId()]['PARTIAL_RESULT'],
+                        $partialResult,
                         ['SHORT' => false, 'SHOW_TIME' => $showTime]
                     ),
                     'pickup_full' => DeliveryTimeHelper::showTime(
-                        $resultByStore[$store->getXmlId()]['FULL_RESULT'],
+                        $fullResult,
                         ['SHORT' => false, 'SHOW_TIME' => $showTime]
                     ),
                     'pickup_short' => DeliveryTimeHelper::showTime(
-                        $resultByStore[$store->getXmlId()]['PARTIAL_RESULT'],
+                        $partialResult,
                         ['SHORT' => true, 'SHOW_TIME' => $showTime]
                     ),
                     'pickup_short_full' => DeliveryTimeHelper::showTime(
-                        $resultByStore[$store->getXmlId()]['FULL_RESULT'],
+                        $fullResult,
                         ['SHORT' => true, 'SHOW_TIME' => $showTime]
                     ),
                     'metroClass' => !empty($metro) ? '--' . $metroList[$metro]['BRANCH']['UF_CLASS'] : '',
                     'order' => $orderType,
                     'parts_available' => $partsAvailable,
                     'parts_delayed' => $partsDelayed,
-                    'services' => $services,
                     'price' => $available->isEmpty() ?
                         $fullResult->getStockResult()->getPrice() :
                         $available->getPrice(),
@@ -276,33 +241,23 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
      * @throws \Exception
      * @return array
      */
-    public function getFullStoreInfo(StoreCollection $stores): array
+    public function getMetroInfo(StoreCollection $stores): array
     {
-        $servicesIds = [];
         $metroIds = [];
         /** @var Store $store */
         foreach ($stores as $store) {
             /** @noinspection SlowArrayOperationsInLoopInspection */
-            $servicesIds = array_merge($servicesIds, $store->getServices());
             $metro = $store->getMetro();
             if ($metro > 0) {
                 $metroIds[] = $metro;
             }
         }
-        $services = [];
-        if (!empty($servicesIds)) {
-            $services = $this->storeService->getServicesInfo(['ID' => array_unique($servicesIds)]);
-        }
-
         $metro = [];
         if (!empty($metroIds)) {
             $metro = $this->storeService->getMetroInfo(['ID' => array_unique($metroIds)]);
         }
 
-        return [
-            $services,
-            $metro,
-        ];
+        return $metro;
     }
 
     /**
@@ -341,11 +296,11 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
     }
 
     /**
-     * @return BaseResult|null
+     * @return PickupResultInterface
      * @throws \Bitrix\Main\ArgumentOutOfRangeException
      * @throws \Bitrix\Main\NotSupportedException
      */
-    protected function getPickupDelivery(): ?BaseResult
+    protected function getPickupDelivery(): ?PickupResultInterface
     {
         $pickupDelivery = null;
         $deliveries = $this->orderService->getDeliveries($this->orderStorageService->getStorage());
@@ -357,31 +312,5 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
         }
 
         return $pickupDelivery;
-    }
-
-    /**
-     * @param BaseResult $delivery
-     * @param Store $store
-     *
-     * @return array
-     */
-    protected function getStoreData(
-        BaseResult $delivery,
-        Store $store
-    ): array {
-        $result = [];
-        $stockResultByStore = $delivery->getStockResult()->filterByStore($store);
-        $delayed = $stockResultByStore->getDelayed();
-        $available = $stockResultByStore->getAvailable();
-
-        $result['AVAILABLE_AMOUNT'] = $available->isEmpty() ? 0 : $available->getAmount();
-        $result['DELAYED_AMOUNT'] = $delayed->isEmpty() ? 0 : $delayed->getAmount();
-        $result['FULL_RESULT'] = (clone $delivery)->setSelectedStore($store);
-        $result['PARTIAL_RESULT'] = $result['FULL_RESULT'];
-        if (!$available->isEmpty()) {
-            $result['PARTIAL_RESULT'] = (clone $delivery)->setSelectedStore($store)->setStockResult($available);
-        }
-
-        return $result;
     }
 }

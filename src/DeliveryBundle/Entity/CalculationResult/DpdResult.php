@@ -6,9 +6,11 @@ use Bitrix\Main\ArgumentException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\StoreBundle\Collection\StoreCollection;
+use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 
-class DpdResult extends BaseResult
+class DpdResult extends BaseResult implements PickupResultInterface
 {
     /**
      * Данные по длительности доставки, пришедшие от DPD
@@ -62,12 +64,45 @@ class DpdResult extends BaseResult
     }
 
     /**
+     * @return StoreCollection
+     * @throws NotFoundException
+     */
+    public function getBestShops(): StoreCollection
+    {
+        return $this->getStockResult()->getStores();
+    }
+
+    /**
      * @param int $initialPeriod
      * @return DpdResult
      */
     public function setInitialPeriod(int $initialPeriod): DpdResult
     {
+        $this->resetResult();
         $this->initialPeriod = $initialPeriod;
         return $this;
+    }
+
+    /**
+     * @param Store $selectedStore
+     * @return CalculationResultInterface
+     */
+    public function setSelectedStore(Store $selectedStore): CalculationResultInterface
+    {
+        $this->selectedStore = $selectedStore;
+        return $this;
+    }/** @noinspection SenselessProxyMethodInspection */
+
+    /**
+     * @param bool $internalCall
+     * @return bool
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws StoreNotFoundException
+     */
+    public function isSuccess($internalCall = false)
+    {
+        return parent::isSuccess($internalCall);
     }
 }

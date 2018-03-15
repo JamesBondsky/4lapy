@@ -24,7 +24,7 @@ $deliveryService = Application::getInstance()->getContainer()->get('delivery.ser
 /** @var OrderStorage $storage */
 $storage = $arResult['STORAGE'];
 
-/** @var BaseResult $selectedDelivery */
+/** @var \FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface $selectedDelivery */
 $selectedDelivery = $arResult['SELECTED_DELIVERY'];
 
 /** @var BasketBase $basket */

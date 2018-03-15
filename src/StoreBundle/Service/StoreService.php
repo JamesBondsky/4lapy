@@ -14,7 +14,8 @@ use FourPaws\BitrixOrm\Model\CropImageDecorator;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
@@ -22,7 +23,6 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Location\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
-use FourPaws\StoreBundle\Exception\BaseException;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Repository\StockRepository;
 use FourPaws\StoreBundle\Repository\StoreRepository;
@@ -76,7 +76,7 @@ class StoreService implements LoggerAwareInterface
      */
     protected $stockRepository;
 
-    /** @var  BaseResult */
+    /** @var  CalculationResultInterface */
     protected $pickupDelivery;
 
     /** @var DeliveryService $deliveryService */
@@ -657,9 +657,9 @@ class StoreService implements LoggerAwareInterface
     }
 
     /**
-     * @return null|BaseResult
+     * @return null|PickupResultInterface
      */
-    protected function getPickupDelivery(): ?BaseResult
+    protected function getPickupDelivery(): ?PickupResultInterface
     {
         if (!$this->pickupDelivery) {
             $deliveries = $this->deliveryService->getByProduct(reset($this->offers));

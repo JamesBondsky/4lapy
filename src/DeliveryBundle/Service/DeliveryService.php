@@ -22,6 +22,7 @@ use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Dpd\TerminalTable;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\Location\LocationService;
@@ -167,7 +168,7 @@ class DeliveryService implements LoggerAwareInterface
         }
         if (!empty($codes)) {
             /**
-             * @var BaseResult $delivery
+             * @var CalculationResultInterface $delivery
              */
             foreach ($deliveries as $i => $delivery) {
                 if (!\in_array($delivery->getDeliveryCode(), $codes, true)) {
@@ -401,61 +402,61 @@ class DeliveryService implements LoggerAwareInterface
     }
 
     /**
-     * @param BaseResult $calculationResult
+     * @param CalculationResultInterface $calculationResult
      *
      * @return bool
      */
-    public function isPickup(BaseResult $calculationResult): bool
+    public function isPickup(CalculationResultInterface $calculationResult): bool
     {
         return \in_array($calculationResult->getDeliveryCode(), static::PICKUP_CODES, true);
     }
 
     /**
-     * @param BaseResult $calculationResult
+     * @param CalculationResultInterface $calculationResult
      *
      * @return bool
      */
-    public function isDelivery(BaseResult $calculationResult): bool
+    public function isDelivery(CalculationResultInterface $calculationResult): bool
     {
         return \in_array($calculationResult->getDeliveryCode(), static::DELIVERY_CODES, true);
     }
 
     /**
-     * @param BaseResult $calculationResult
+     * @param CalculationResultInterface $calculationResult
      *
      * @return bool
      */
-    public function isInnerPickup(BaseResult $calculationResult): bool
+    public function isInnerPickup(CalculationResultInterface $calculationResult): bool
     {
         return $calculationResult->getDeliveryCode() === static::INNER_PICKUP_CODE;
     }
 
     /**
-     * @param BaseResult $calculationResult
+     * @param CalculationResultInterface $calculationResult
      *
      * @return bool
      */
-    public function isDpdPickup(BaseResult $calculationResult): bool
+    public function isDpdPickup(CalculationResultInterface $calculationResult): bool
     {
         return $calculationResult->getDeliveryCode() === static::DPD_PICKUP_CODE;
     }
 
     /**
-     * @param BaseResult $calculationResult
+     * @param CalculationResultInterface $calculationResult
      *
      * @return bool
      */
-    public function isInnerDelivery(BaseResult $calculationResult): bool
+    public function isInnerDelivery(CalculationResultInterface $calculationResult): bool
     {
         return $calculationResult->getDeliveryCode() === static::INNER_DELIVERY_CODE;
     }
 
     /**
-     * @param BaseResult $calculationResult
+     * @param CalculationResultInterface $calculationResult
      *
      * @return bool
      */
-    public function isDpdDelivery(BaseResult $calculationResult): bool
+    public function isDpdDelivery(CalculationResultInterface $calculationResult): bool
     {
         return $calculationResult->getDeliveryCode() === static::DPD_DELIVERY_CODE;
     }

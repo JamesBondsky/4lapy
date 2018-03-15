@@ -21,7 +21,7 @@ use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\DeliveryScheduleService;
 
-abstract class BaseResult extends CalculationResult
+abstract class BaseResult extends CalculationResult implements CalculationResultInterface
 {
     /**
      * @var \DateTime
@@ -130,11 +130,11 @@ abstract class BaseResult extends CalculationResult
     /**
      * @param \DateTime $currentDate
      *
-     * @return BaseResult
+     * @return CalculationResultInterface
      */
-    public function setCurrentDate(\DateTime $currentDate): BaseResult
+    public function setCurrentDate(\DateTime $currentDate): CalculationResultInterface
     {
-        $this->deliveryDate = null;
+        $this->resetResult();
         $this->currentDate = $currentDate;
 
         return $this;
@@ -168,11 +168,11 @@ abstract class BaseResult extends CalculationResult
     /**
      * @param int $deliveryId
      *
-     * @return BaseResult
+     * @return CalculationResultInterface
      */
-    public function setDeliveryId(int $deliveryId): BaseResult
+    public function setDeliveryId(int $deliveryId): CalculationResultInterface
     {
-        $this->deliveryDate = null;
+        $this->resetResult();
         $this->deliveryId = $deliveryId;
 
         return $this;
@@ -189,9 +189,9 @@ abstract class BaseResult extends CalculationResult
     /**
      * @param string $deliveryCode
      *
-     * @return BaseResult
+     * @return CalculationResultInterface
      */
-    public function setDeliveryCode(string $deliveryCode): BaseResult
+    public function setDeliveryCode(string $deliveryCode): CalculationResultInterface
     {
         $this->deliveryCode = $deliveryCode;
 
@@ -213,11 +213,11 @@ abstract class BaseResult extends CalculationResult
     /**
      * @param StockResultCollection $stockResult
      *
-     * @return BaseResult
+     * @return CalculationResultInterface
      */
-    public function setStockResult(StockResultCollection $stockResult): BaseResult
+    public function setStockResult(StockResultCollection $stockResult): CalculationResultInterface
     {
-        $this->deliveryDate = null;
+        $this->resetResult();
         $this->stockResult = $stockResult;
 
         return $this;
@@ -234,9 +234,9 @@ abstract class BaseResult extends CalculationResult
     /**
      * @param string $deliveryName
      *
-     * @return BaseResult
+     * @return CalculationResultInterface
      */
-    public function setDeliveryName(string $deliveryName): BaseResult
+    public function setDeliveryName(string $deliveryName): CalculationResultInterface
     {
         $this->deliveryName = $deliveryName;
 
@@ -258,11 +258,11 @@ abstract class BaseResult extends CalculationResult
     /**
      * @param IntervalCollection $intervals
      *
-     * @return BaseResult
+     * @return CalculationResultInterface
      */
-    public function setIntervals(IntervalCollection $intervals): BaseResult
+    public function setIntervals(IntervalCollection $intervals): CalculationResultInterface
     {
-        $this->deliveryDate = null;
+        $this->resetResult();
         $this->intervals = $intervals;
 
         return $this;
@@ -279,9 +279,9 @@ abstract class BaseResult extends CalculationResult
     /**
      * @param int $freeFrom
      *
-     * @return BaseResult
+     * @return CalculationResultInterface
      */
-    public function setFreeFrom(int $freeFrom): BaseResult
+    public function setFreeFrom(int $freeFrom): CalculationResultInterface
     {
         $this->freeFrom = $freeFrom;
 
@@ -299,11 +299,11 @@ abstract class BaseResult extends CalculationResult
     /**
      * @param string $deliveryZone
      *
-     * @return BaseResult
+     * @return CalculationResultInterface
      */
-    public function setDeliveryZone(string $deliveryZone): BaseResult
+    public function setDeliveryZone(string $deliveryZone): CalculationResultInterface
     {
-        $this->deliveryDate = null;
+        $this->resetResult();
         $this->deliveryZone = $deliveryZone;
 
         return $this;
@@ -320,11 +320,11 @@ abstract class BaseResult extends CalculationResult
     /**
      * @param Interval $selectedInterval
      *
-     * @return BaseResult
+     * @return CalculationResultInterface
      */
-    public function setSelectedInterval(Interval $selectedInterval): BaseResult
+    public function setSelectedInterval(Interval $selectedInterval): CalculationResultInterface
     {
-        $this->deliveryDate = null;
+        $this->resetResult();
         $this->selectedInterval = $selectedInterval;
 
         return $this;
@@ -345,11 +345,11 @@ abstract class BaseResult extends CalculationResult
 
     /**
      * @param Store $selectedStore
-     * @return BaseResult
+     * @return CalculationResultInterface
      */
-    public function setSelectedStore(Store $selectedStore): BaseResult
+    public function setSelectedStore(Store $selectedStore): CalculationResultInterface
     {
-        $this->deliveryDate = null;
+        $this->resetResult();
         $this->selectedStore = $selectedStore;
         return $this;
     }
@@ -655,8 +655,13 @@ abstract class BaseResult extends CalculationResult
         return new StoreCollection(array_intersect_uassoc(...$storeCollections));
     }
 
-    public function __clone()
+    protected function resetResult(): void
     {
         $this->deliveryDate = null;
+    }
+
+    public function __clone()
+    {
+        $this->resetResult();
     }
 }

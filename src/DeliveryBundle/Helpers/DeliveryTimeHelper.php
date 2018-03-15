@@ -6,25 +6,28 @@
 
 namespace FourPaws\DeliveryBundle\Helpers;
 
-use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\Helpers\DateHelper;
 
 class DeliveryTimeHelper
 {
     /**
-     * @param BaseResult $calculationResult
-     * @param array $options
+     * @param CalculationResultInterface $calculationResult
+     * @param array array $options
      *                  - SHOW_TIME - отображать ли время
      *                  - SHOW_PRICE - отображать стоимость доставки
      *                  - SHORT - короткий формат вывода
      *                  - DAY_FORMAT - формат или \Closure, вызывается если тип периода доставки "день"
      *                  - HOUR_FORMAT - формат или \Closure, вызывается если тип периода доставки "час"
-     *
      * @return string
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
     public static function showTime(
-        BaseResult $calculationResult,
+        CalculationResultInterface $calculationResult,
         array $options = []
     ): string {
         $defaultOptions = [
@@ -49,20 +52,6 @@ class DeliveryTimeHelper
                 $result = DateHelper::formatDate($options['HOUR_FORMAT'], $date->getTimestamp());
             } else {
                 $result = 'через час';
-                /*
-                if (abs($date->format('G') - $currentDate->format('G')) <= 1) {
-                    $result = 'через час';
-                } else {
-
-                }
-                $result .= 'через ';
-                $diff = $date->diff($currentDate)->h;
-                if ($diff < 1) {
-                    $diff++;
-                }
-                $result .= ($diff === 1) ? '' : ($diff . ' ');
-                $result .= (new Declension('час', 'часа', 'часов'))->get($diff);
-                */
             }
         } else {
             if ($options['DAY_FORMAT']) {

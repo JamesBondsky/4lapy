@@ -23,7 +23,7 @@ use Bitrix\Sale\Shipment;
 use Bitrix\Sale\ShipmentCollection;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Query\OfferQuery;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundEXception;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
@@ -107,7 +107,7 @@ class OrderService
     protected $deliveryService;
 
     /**
-     * @var BaseResult[]
+     * @var CalculationResultInterface[]
      */
     protected $deliveries;
 
@@ -243,7 +243,7 @@ class OrderService
             }
         }
         if ($selectedDelivery === null && !empty($deliveries)) {
-            /** @var BaseResult $delivery */
+            /** @var CalculationResultInterface $delivery */
             foreach ($deliveries as $delivery) {
                 if ($storage->getDeliveryId() === $delivery->getDeliveryId()) {
                     $selectedDelivery = clone $delivery;
@@ -618,7 +618,7 @@ class OrderService
     /**
      * @param OrderStorage $storage
      * @param bool $reload
-     * @return BaseResult[]
+     * @return CalculationResultInterface[]
      * @throws ArgumentOutOfRangeException
      * @throws NotSupportedException
      */

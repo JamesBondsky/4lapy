@@ -7,7 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var array $arParams
  * @var array $arResult
  * @var OrderStorage $storage
- * @var BaseResult $delivery
+ * @var \FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface $delivery
  */
 
 use FourPaws\Decorators\SvgDecorator;

@@ -10,6 +10,7 @@ use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\IntervalRuleCollection;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Entity\IntervalRule\AddDaysRule;
 use FourPaws\DeliveryBundle\Entity\IntervalRule\BaseRule;
@@ -78,12 +79,12 @@ class IntervalService implements LoggerAwareInterface
     }
 
     /**
-     * @param BaseResult $delivery
+     * @param CalculationResultInterface $delivery
      * @param IntervalCollection $intervals
      * @return Interval
      * @throws NotFoundException
      */
-    public function getFirstInterval(BaseResult $delivery, IntervalCollection $intervals): Interval
+    public function getFirstInterval(CalculationResultInterface $delivery, IntervalCollection $intervals): Interval
     {
         $result = null;
 
@@ -106,12 +107,12 @@ class IntervalService implements LoggerAwareInterface
     }
 
     /**
-     * @param BaseResult $delivery
+     * @param CalculationResultInterface $delivery
      * @param int $dateIndex
      *
      * @return IntervalCollection
      */
-    public function getIntervalsByDate(BaseResult $delivery, int $dateIndex): IntervalCollection
+    public function getIntervalsByDate(CalculationResultInterface $delivery, int $dateIndex): IntervalCollection
     {
         $result = new IntervalCollection();
 

@@ -6,7 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 use Bitrix\Sale\Basket;
 use FourPaws\App\Application;
 use FourPaws\Location\LocationService;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
@@ -19,14 +19,15 @@ use FourPaws\StoreBundle\Entity\Store;
  * @var CMain $APPLICATION
  */
 
-/** @var BaseResult $delivery */
+/** @var CalculationResultInterface $delivery */
 $delivery = $arResult['DELIVERY'];
-/** @var BaseResult $pickup */
+/** @var CalculationResultInterface $pickup */
 $pickup = $arResult['PICKUP'];
-/** @var BaseResult $selectedDelivery */
+/** @var CalculationResultInterface $selectedDelivery */
 $selectedDelivery = $arResult['SELECTED_DELIVERY'];
 $selectedDeliveryId = $arResult['SELECTED_DELIVERY_ID'];
 
+/** @noinspection PhpUnhandledExceptionInspection */
 /** @var DeliveryService $deliveryService */
 $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
 
@@ -109,11 +110,13 @@ if ($pickup && $selectedDelivery->getDeliveryCode() === $pickup->getDeliveryCode
                                         </span>
                                     </span>
                                     <span class="b-choice-recovery__addition-text">
-                                        <?= DeliveryTimeHelper::showTime($delivery) ?>
+                                        <?= /** @noinspection PhpUnhandledExceptionInspection */
+                                        DeliveryTimeHelper::showTime($delivery) ?>
                                         , <?= CurrencyHelper::formatPrice($delivery->getPrice(), false) ?>
                                     </span>
                                     <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile">
-                                        <?= DeliveryTimeHelper::showTime($delivery, ['SHORT' => true]) ?>
+                                        <?= /** @noinspection PhpUnhandledExceptionInspection */
+                                        DeliveryTimeHelper::showTime($delivery, ['SHORT' => true]) ?>
                                         , <?= CurrencyHelper::formatPrice($delivery->getPrice(), false) ?>
                                 </label>
                             <?php } ?>
@@ -140,7 +143,8 @@ if ($pickup && $selectedDelivery->getDeliveryCode() === $pickup->getDeliveryCode
                                        data-popup-id="popup-order-stores">
                                     <span class="b-choice-recovery__main-text">Самовывоз</span>
                                     <span class="b-choice-recovery__addition-text js-my-pickup js-pickup-tab">
-                                        <?= DeliveryTimeHelper::showTime(
+                                        <?= /** @noinspection PhpUnhandledExceptionInspection */
+                                        DeliveryTimeHelper::showTime(
                                             $pickup,
                                             [
                                                 'SHOW_TIME' => !$deliveryService->isDpdPickup(
@@ -151,10 +155,11 @@ if ($pickup && $selectedDelivery->getDeliveryCode() === $pickup->getDeliveryCode
                                         , <?= CurrencyHelper::formatPrice($pickup->getPrice(), false) ?>
                                     </span>
                                     <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile js-my-pickup js-pickup-tab">
-                                        <?= DeliveryTimeHelper::showTime(
+                                        <?= /** @noinspection PhpUnhandledExceptionInspection */
+                                        DeliveryTimeHelper::showTime(
                                             $pickup,
                                             [
-                                                'SHORT'     => true,
+                                                'SHORT' => true,
                                                 'SHOW_TIME' => !$deliveryService->isDpdPickup(
                                                     $pickup
                                                 ),
@@ -168,15 +173,13 @@ if ($pickup && $selectedDelivery->getDeliveryCode() === $pickup->getDeliveryCode
                         <ul class="b-radio-tab js-myself-shop">
                             <?php if ($delivery) { ?>
                                 <li class="b-radio-tab__tab js-telephone-recovery"
-                                    <?= $selectedDeliveryId !== $delivery->getDeliveryId(
-                                    ) ? 'style="display:none"' : '' ?>>
+                                    <?= $selectedDeliveryId !== $delivery->getDeliveryId() ? 'style="display:none"' : '' ?>>
                                     <?php include 'include/delivery.php' ?>
                                 </li>
                             <?php } ?>
                             <?php if ($pickup) { ?>
                                 <li class="b-radio-tab__tab js-email-recovery"
-                                    <?= $selectedDeliveryId !== $pickup->getDeliveryId(
-                                    ) ? 'style="display:none"' : '' ?>>
+                                    <?= $selectedDeliveryId !== $pickup->getDeliveryId() ? 'style="display:none"' : '' ?>>
                                     <?php include 'include/pickup.php' ?>
                                 </li>
                             <?php } ?>

@@ -5,11 +5,15 @@ namespace FourPaws\DeliveryBundle\Entity\CalculationResult;
 use Bitrix\Main\ArgumentException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
+use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 
-class PickupResult extends BaseResult
+class PickupResult extends BaseResult implements PickupResultInterface
 {
+    /** @var StoreCollection */
+    protected $bestShops;
+
     protected function doCalculatePeriod(): void
     {
         parent::doCalculatePeriod();
@@ -40,17 +44,43 @@ class PickupResult extends BaseResult
     public function getSelectedStore(): Store
     {
         if (null === $this->selectedStore) {
-            $this->selectedStore = $this->getBestShop();
+            $this->selectedStore = $this->getBestShops()->first();
         }
 
         return $this->selectedStore;
     }
 
     /**
-     * @return Store
+     * @return StoreCollection
      * @throws NotFoundException
      */
-    protected function getBestShop(): Store
+    public function getBestShops(): StoreCollection
+    {
+        if (null === $this->bestShops) {
+            $this->bestShops = $this->doGetBestShops();
+        }
+
+        return $this->bestShops;
+    }/** @noinspection SenselessProxyMethodInspection */
+
+    /**
+     * @param bool $internalCall
+     * @return bool
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws StoreNotFoundException
+     */
+    public function isSuccess($internalCall = false)
+    {
+        return parent::isSuccess($internalCall);
+    }
+
+    /**
+     * @return StoreCollection
+     * @throws NotFoundException
+     */
+    protected function doGetBestShops(): StoreCollection
     {
         $shops = $this->getStockResult()->getStores();
         $storeData = [];
@@ -110,6 +140,13 @@ class PickupResult extends BaseResult
 
         $iterator = $shops->getIterator();
         $iterator->uasort($sortFunc);
-        return $iterator->current();
+
+        return new StoreCollection(iterator_to_array($iterator));
+    }
+
+    protected function resetResult(): void
+    {
+        $this->bestShops = null;
+        parent::resetResult();
     }
 }

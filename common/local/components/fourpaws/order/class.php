@@ -252,7 +252,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
             $this->getPickupData($deliveries, $storage);
             $payments = $this->orderStorageService->getAvailablePayments($storage, true);
             $selectedDelivery = null;
-            /** @var BaseResult $delivery */
+            /** @var \FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface $delivery */
             foreach ($deliveries as $delivery) {
                 if ($delivery->getDeliveryId() !== $storage->getDeliveryId()) {
                     continue;
@@ -297,7 +297,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
     }
 
     /**
-     * @param BaseResult[] $deliveries
+     * @param \FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface[] $deliveries
      * @param OrderStorage $storage
      */
     protected function getPickupData(array $deliveries, OrderStorage $storage): void
@@ -313,10 +313,9 @@ class FourPawsOrderComponent extends \CBitrixComponent
             return;
         }
 
-
         try {
             $selectedShopCode = $storage->getDeliveryPlaceCode();
-            $shops = $pickup->getStockResult()->getStores(false);
+            $shops = $pickup->getStockResult()->getStores();
             if ($selectedShopCode && isset($shops[$selectedShopCode])) {
                 $pickup->setSelectedStore($shops[$selectedShopCode]);
             }

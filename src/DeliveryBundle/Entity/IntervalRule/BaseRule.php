@@ -3,6 +3,7 @@
 namespace FourPaws\DeliveryBundle\Entity\IntervalRule;
 
 use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 
 abstract class BaseRule
 {
@@ -22,16 +23,16 @@ abstract class BaseRule
     }
 
     /**
-     * @param BaseResult $result
+     * @param CalculationResultInterface $result
      *
      * @return bool
      */
-    abstract public function isSuitable(BaseResult $result): bool;
+    abstract public function isSuitable(CalculationResultInterface $result): bool;
 
     /**
-     * @param BaseResult $result
+     * @param CalculationResultInterface $result
      *
-     * @return BaseResult
+     * @return CalculationResultInterface
      */
-    abstract public function apply(BaseResult $result): BaseResult;
+    abstract public function apply(CalculationResultInterface $result): CalculationResultInterface;
 }

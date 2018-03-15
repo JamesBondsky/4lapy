@@ -16,7 +16,7 @@ use FourPaws\StoreBundle\Entity\Store;
 /**
  * @var array $arResult
  * @var array $arParams
- * @var BaseResult $pickup
+ * @var \FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface $pickup
  * @var
  */
 
