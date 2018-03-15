@@ -487,7 +487,7 @@ class UserService implements
     {
         if ($this->isAuthorized()) {
             try {
-                return (int)$this->getCurrentUser()->getDiscount();
+                return $this->getCurrentUser()->getDiscount();
             } catch (NotAuthorizedException $e) {
                 /** показываем базовую скидку если не авторизованы */
             } catch (ConstraintDefinitionException|InvalidIdentifierException $e) {
