@@ -617,16 +617,16 @@ class DeliveryService implements LoggerAwareInterface
         $schedule = str_replace('<br>', '. ', $terminal['SCHEDULE_SELF_DELIVERY']);
 
         $store = new Store();
-        $store->setTitle($terminal['NAME'])
+        $store->setTitle((string)$terminal['NAME'])
             ->setLocation($locationCode)
-            ->setAddress($terminal['ADDRESS_SHORT'])
-            ->setCode($terminal['CODE'])
-            ->setXmlId($terminal['CODE'])
-            ->setLatitude($terminal['LATITUDE'])
-            ->setLongitude($terminal['LONGITUDE'])
-            ->setLocationId($terminal['LOCATION_ID'])
+            ->setAddress((string)$terminal['ADDRESS_SHORT'])
+            ->setCode((string)$terminal['CODE'])
+            ->setXmlId((string)$terminal['CODE'])
+            ->setLatitude((float)$terminal['LATITUDE'])
+            ->setLongitude((float)$terminal['LONGITUDE'])
+            ->setLocationId((int)$terminal['LOCATION_ID'])
             ->setScheduleString($schedule)
-            ->setDescription($terminal['ADDRESS_DESCR']);
+            ->setDescription((string)$terminal['ADDRESS_DESCR']);
 
         return $store;
     }

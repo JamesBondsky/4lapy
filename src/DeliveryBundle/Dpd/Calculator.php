@@ -78,6 +78,9 @@ class Calculator extends DPD
         }
 
         $arOrder['LOCATION_FROM'] = $arOrder['LOCATION_TO'];
+        /**
+         * Если есть склады в данном городе, то доставка DPD выполняется с этих складов. Иначе - с Москвы
+         */
         $storesAvailable = $storeService->getByLocation($arOrder['LOCATION_FROM'], StoreService::TYPE_STORE, true);
         if ($storesAvailable->isEmpty()) {
             $arOrder['LOCATION_FROM'] = LocationService::LOCATION_CODE_MOSCOW;

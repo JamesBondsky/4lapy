@@ -146,6 +146,11 @@ class InnerPickupHandler extends DeliveryHandlerBase
             }
         }
 
+        /**
+         * Расчет даты доставки
+         */
+        $result->getDeliveryDate();
+
         return $result;
     }
 }

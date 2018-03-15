@@ -87,8 +87,8 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
 
                 $result->add(
                     (new Interval())->setFrom($interval['FROM'])
-                                    ->setTo($interval['TO'])
-                                    ->setRules($ruleCollection)
+                        ->setTo($interval['TO'])
+                        ->setRules($ruleCollection)
                 );
             }
         }
@@ -172,9 +172,9 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
         }
 
         /**
-         * Для выбора возможной даты доставки в оформлении заказа. По ТЗ +10 дней
+         * Расчет даты доставки
          */
-        $result->setPeriodTo($result->getPeriodFrom() + 10);
+        $result->getDeliveryDate();
 
         return $result;
     }
@@ -189,34 +189,34 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
         $result['MAIN']['DESCRIPTION'] = 'Настройки интервалов';
 
         $result['MAIN']['ITEMS']['INTERVALS'] = [
-            'TYPE'    => 'DELIVERY_INTERVALS',
-            'NAME'    => 'Интервалы доставок',
+            'TYPE' => 'DELIVERY_INTERVALS',
+            'NAME' => 'Интервалы доставок',
             'DEFAULT' => [],
-            'ZONES'   => $zones,
+            'ZONES' => $zones,
         ];
 
         $result['PRICES'] = [
-            'TITLE'       => 'Стоимости доставок по зонам',
+            'TITLE' => 'Стоимости доставок по зонам',
             'DESCRIPTION' => 'Стоимости доставок по зонам',
-            'ITEMS'       => [],
+            'ITEMS' => [],
         ];
 
         $result['FREE_FROM'] = [
-            'TITLE'       => 'Пороги бесплатной доставки по зонам',
+            'TITLE' => 'Пороги бесплатной доставки по зонам',
             'DESCRIPTION' => 'Пороги бесплатной доставки по зонам',
-            'ITEMS'       => [],
+            'ITEMS' => [],
         ];
 
         foreach ($zones as $code => $zone) {
             $result['PRICES']['ITEMS'][$code] = [
-                'TYPE'    => 'NUMBER',
-                'NAME'    => 'Зона ' . $zone['NAME'],
+                'TYPE' => 'NUMBER',
+                'NAME' => 'Зона ' . $zone['NAME'],
                 'DEFAULT' => 0,
             ];
 
             $result['FREE_FROM']['ITEMS'][$code] = [
-                'TYPE'    => 'NUMBER',
-                'NAME'    => 'Зона ' . $zone['NAME'],
+                'TYPE' => 'NUMBER',
+                'NAME' => 'Зона ' . $zone['NAME'],
                 'DEFAULT' => 0,
             ];
         }
