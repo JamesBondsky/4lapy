@@ -363,25 +363,23 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     protected function doCalculateDeliveryDate(): void
     {
         $date = clone $this->getCurrentDate();
-        $store = $this->getSelectedStore();
 
-        if (null !== $this->stockResult && $store instanceof Store) {
-            $stockResult = $this->getStockResult()->filterByStore($store);
+        if (null !== $this->stockResult) {
+            $stockResult = $this->getStockResult()->filterByStore($this->getSelectedStore());
 
             /**
              * Если есть отложенные товары, то добавляем к дате доставки
              * срок поставки на склад по графику
              */
             if (!$stockResult->getDelayed()->isEmpty()) {
-
-                $date = $this->getStoreShipmentDate($store, $stockResult->getDelayed());
+                $date = $this->getStoreShipmentDate($this->getSelectedStore(), $stockResult->getDelayed());
             }
 
             /**
              * Если склад является магазином, то учитываем его график работы
              */
-            if ($store->isShop()) {
-                $this->calculateWithStoreSchedule($date, $store);
+            if ($this->getSelectedStore()->isShop()) {
+                $this->calculateWithStoreSchedule($date, $this->getSelectedStore());
             }
         }
 
@@ -410,7 +408,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
 
         /** @var DeliveryScheduleService $scheduleService */
         $scheduleService = Application::getInstance()->getContainer()->get(DeliveryScheduleService::class);
-
 
         $regularStores = [];
         $byRequestStores = [];
@@ -462,7 +459,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
          */
         $shipmentDay = 0;
         if (!empty($regularStores)) {
-            $senderStores = $this->getStoreIntersection($byRequestStores);
+            $senderStores = $this->getStoreIntersection($regularStores);
             if ($senderStores->isEmpty()) {
                 $this->addError(new Error('Не найдено складов для товаров из регулярного ассортимента'));
             } else {
@@ -588,15 +585,15 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             foreach ($days as $day) {
                 if ($day === $currentDay) {
                     if ($currentHour < $maxHour) {
-                        $results[] = 0;
+                        $res[] = 0;
                     } else {
-                        $results[] = 7;
+                        $res[] = 7;
                     }
                     continue;
                 }
 
                 $diff = $day - $currentDay;
-                $results[] = ($diff > 0) ? $diff : $diff + 7;
+                $res[] = ($diff > 0) ? $diff : $diff + 7;
             }
 
             $results[] = min($res);
