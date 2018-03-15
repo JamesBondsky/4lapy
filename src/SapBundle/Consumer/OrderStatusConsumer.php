@@ -6,6 +6,7 @@ use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use FourPaws\SapBundle\Dto\In\Orders\Order;
 use FourPaws\SapBundle\Exception\CantUpdateOrderException;
 use FourPaws\SapBundle\Service\Orders\OrderService;
+use FourPaws\SapBundle\Service\Orders\PaymentService;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LogLevel;
 use RuntimeException;
@@ -23,15 +24,21 @@ class OrderStatusConsumer implements ConsumerInterface, LoggerAwareInterface
      * @var OrderService
      */
     private $orderService;
-    
+    /**
+     * @var PaymentService
+     */
+    private $paymentService;
+
     /**
      * OrderStatusConsumer constructor.
      *
      * @param OrderService $orderService
+     * @param PaymentService $paymentService
      */
-    public function __construct(OrderService $orderService)
+    public function __construct(OrderService $orderService, PaymentService $paymentService)
     {
         $this->orderService = $orderService;
+        $this->paymentService = $paymentService;
     }
 
     /**
@@ -55,6 +62,8 @@ class OrderStatusConsumer implements ConsumerInterface, LoggerAwareInterface
 
             $order = $this->orderService->transformDtoToOrder($order);
             $result = $order->save();
+
+            $this->paymentService->tryPaymentRefund($order);
 
             if (!$result->isSuccess()) {
                 throw new CantUpdateOrderException(sprintf(

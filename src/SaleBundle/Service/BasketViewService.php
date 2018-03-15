@@ -73,9 +73,11 @@ class BasketViewService
     }
 
     /**
+     * @param bool $isAjax
+     *
      * @return string
      */
-    public function getFastOrderHtml(): string
+    public function getFastOrderHtml(bool $isAjax = false): string
     {
         global $APPLICATION;
         ob_start();
@@ -84,7 +86,7 @@ class BasketViewService
             '',
             [
                 'TYPE'    => 'innerForm',
-                'IS_AJAX' => 'Y',
+                'IS_AJAX' => $isAjax,
             ],
             null,
             ['HIDE_ICONS' => 'Y']

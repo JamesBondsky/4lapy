@@ -26,7 +26,7 @@ class StockCollection extends BaseCollection
 
         return $this->filter(
             function (Stock $stock) use ($ids) {
-                return in_array($stock->getStoreId(), $ids, true);
+                return \in_array($stock->getStoreId(), $ids, true);
             }
         );
     }
