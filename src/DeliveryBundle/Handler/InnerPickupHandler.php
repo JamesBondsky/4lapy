@@ -79,7 +79,6 @@ class InnerPickupHandler extends DeliveryHandlerBase
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\ObjectNotFoundException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
-     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
     protected function calculateConcrete(Shipment $shipment)

@@ -331,8 +331,8 @@ abstract class BaseResult extends CalculationResult
     }
 
     /**
-     * @throws NotFoundException
      * @return Store
+     * @throws NotFoundException
      */
     public function getSelectedStore(): Store
     {
@@ -363,8 +363,9 @@ abstract class BaseResult extends CalculationResult
     protected function doCalculateDeliveryDate(): void
     {
         $date = clone $this->getCurrentDate();
-        if (null !== $this->stockResult) {
-            $store = $this->getSelectedStore();
+        $store = $this->getSelectedStore();
+
+        if (null !== $this->stockResult && $store instanceof Store) {
             $stockResult = $this->getStockResult()->filterByStore($store);
 
             /**
