@@ -7,6 +7,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+if ($arParams['IS_AJAX']) {
+    return;
+}
 $offers = $templateData['OFFERS'];
 if(\is_array($offers) && !empty($offers)){
     $discount = $component->getCurrentUserService()->getDiscount();
