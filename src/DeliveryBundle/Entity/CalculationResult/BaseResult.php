@@ -357,27 +357,26 @@ abstract class BaseResult extends CalculationResult
      */
     protected function doCalculateDeliveryDate(): void
     {
-        $store = $this->getSelectedStore();
-        $stockResult = $this->getStockResult()->filterByStore($store);
+        $date = clone $this->getCurrentDate();
+        if (null !== $this->stockResult) {
+            $store = $this->getSelectedStore();
+            $stockResult = $this->getStockResult()->filterByStore($store);
 
-        /**
-         * Все товары в наличии
-         */
-        if ($stockResult->getDelayed()->isEmpty()) {
-            $date = clone $this->getCurrentDate();
-        } else {
             /**
              * Если есть отложенные товары, то добавляем к дате доставки
              * срок поставки на склад по графику
              */
-            $date = $this->getStoreShipmentDate($store, $stockResult->getDelayed());
-        }
+            if (!$stockResult->getDelayed()->isEmpty()) {
 
-        /**
-         * Если склад является магазином, то учитываем его график работы
-         */
-        if ($store->isShop()) {
-            $this->calculateWithStoreSchedule($date, $store);
+                $date = $this->getStoreShipmentDate($store, $stockResult->getDelayed());
+            }
+
+            /**
+             * Если склад является магазином, то учитываем его график работы
+             */
+            if ($store->isShop()) {
+                $this->calculateWithStoreSchedule($date, $store);
+            }
         }
 
         $this->deliveryDate = $date;

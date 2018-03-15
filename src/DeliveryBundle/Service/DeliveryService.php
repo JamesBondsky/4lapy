@@ -19,6 +19,7 @@ use Bitrix\Sale\Location\LocationTable;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Shipment;
 use FourPaws\Catalog\Model\Offer;
+use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Dpd\TerminalTable;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdResult;
@@ -212,7 +213,9 @@ class DeliveryService implements LoggerAwareInterface
                     /* @todo не хранить эти данные в сессии */
                     $calculationResult->setInitialPeriod($_SESSION['DPD_DATA'][$service->getCode()]['DAYS_FROM']);
                     $calculationResult->setPeriodTo($_SESSION['DPD_DATA'][$service->getCode()]['DAYS_TO']);
-                    $calculationResult->setStockResult($_SESSION['DPD_DATA'][$service->getCode()]['STOCK_RESULT']);
+                    if ($_SESSION['DPD_DATA'][$service->getCode()]['STOCK_RESULT'] instanceof StockResultCollection) {
+                        $calculationResult->setStockResult($_SESSION['DPD_DATA'][$service->getCode()]['STOCK_RESULT']);
+                    }
                     $calculationResult->setIntervals($_SESSION['DPD_DATA'][$service->getCode()]['INTERVALS']);
                     $calculationResult->setDeliveryZone($_SESSION['DPD_DATA'][$service->getCode()]['DELIVERY_ZONE']);
                     unset($_SESSION['DPD_DATA']);

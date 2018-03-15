@@ -70,14 +70,7 @@ class StockService implements LoggerAwareInterface
                 ->withTag('catalog:stocks:' . $offer->getId())
                 ->resultOf($getStocks);
 
-            /** @var StockCollection $stocks */
-            $stocks = $data['result'];
-            /** @var Stock $stock */
-            foreach ($stocks as $stock) {
-                $stock->setOffer($offer);
-            }
-
-            return $stocks;
+            return $data['result'];
         } catch (\Exception $e) {
             $this->logger->error(
                 sprintf('failed to get stocks for offer %s: %s', $offer->getId(), $e->getMessage())

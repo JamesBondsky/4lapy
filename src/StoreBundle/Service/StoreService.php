@@ -205,11 +205,10 @@ class StoreService implements LoggerAwareInterface
         } catch (\Exception $e) {
             $this->logger->error(
                 sprintf(
-                    'failed to get stores with type %s for location %s: %s',
-                    $type,
-                    $locationCode,
+                    'failed to get stores for location: %s',
                     $e->getMessage()
-                )
+                ),
+                ['location' => $locationCode, 'type' => $type]
             );
             $stores = new StoreCollection();
         }

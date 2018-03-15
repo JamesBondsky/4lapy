@@ -3,20 +3,16 @@
 namespace FourPaws\DeliveryBundle\Handler;
 
 use Bitrix\Currency\CurrencyManager;
-use Bitrix\Main\Error;
-use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\BasketBase;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Delivery\Services\Base;
-use Bitrix\Sale\Shipment;
 use FourPaws\App\Application;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\StockResult;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Service\IntervalService;
 use FourPaws\Location\LocationService;
@@ -84,20 +80,13 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
     }
 
     /**
-     * @return bool
-     */
-    public static function whetherAdminExtraServicesShow()
-    {
-        return static::$whetherAdminExtraServicesShow;
-    }
-
-    /**
      * Получает коллекцию офферов и проставляет им наличие
      *
      * @param string $locationCode
      * @param BasketBase $basket
-     *
      * @return bool|OfferCollection
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
     public static function getOffers(string $locationCode, BasketBase $basket)
     {
@@ -139,7 +128,7 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
         $stockService->getStocks($offers, $stores);
 
         return $offers;
-    }
+    }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
      * @param BasketBase $basket
@@ -149,6 +138,8 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
      * @param StockResultCollection $stockResultCollection
      *
      * @return StockResultCollection
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
     public static function getStocks(
         BasketBase $basket,

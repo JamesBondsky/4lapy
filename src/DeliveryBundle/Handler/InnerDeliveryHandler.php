@@ -96,6 +96,15 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
         return $result;
     }
 
+    /**
+     * @param Shipment $shipment
+     * @return \Bitrix\Sale\Delivery\CalculationResult|DeliveryResult
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\DeliveryBundle\Exception\NotFoundException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     */
     protected function calculateConcrete(Shipment $shipment)
     {
         $result = new DeliveryResult();
@@ -123,7 +132,6 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
             $result->addError(new Error('Не задана стоимость доставки'));
         }
         $result->setIntervals($this->getIntervals($shipment));
-        $result->setPeriodType(BaseResult::PERIOD_TYPE_DAY);
         if (!$offers = static::getOffers($deliveryLocation, $basket)) {
             /**
              * Нужно для отображения списка доставок в хедере и на странице доставок

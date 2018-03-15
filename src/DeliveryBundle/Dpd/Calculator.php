@@ -40,9 +40,20 @@ class Calculator extends DPD
     public static function callback($method)
     {
         return [__CLASS__, $method];
-    }
+    }/** @noinspection MoreThanThreeArgumentsInspection */
 
-    /** @noinspection MoreThanThreeArgumentsInspection */
+    /**
+     * @param string $profile
+     * @param array $arConfig
+     * @param array $arOrder
+     * @param int $STEP
+     * @param bool $TEMP
+     * @return array
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
     public function Calculate($profile, $arConfig, $arOrder, $STEP, $TEMP = false)
     {
         $serviceContainer = Application::getInstance()->getContainer();
@@ -80,6 +91,7 @@ class Calculator extends DPD
             return $result;
         }
 
+        $stockResult = null;
         if (!empty($arOrder['ITEMS'])) {
             $basket = $basketService->getBasket()->getOrderableItems();
             if ($offers = DeliveryHandlerBase::getOffers(
@@ -122,7 +134,7 @@ class Calculator extends DPD
         $_SESSION['DPD_DATA'][$profileCode] = [
             'INTERVALS'    => $intervals,
             'DAYS_FROM'    => $result['DPD_TARIFF']['DAYS'],
-            'STOCK_RESULT' => $stockResult ?? new StockResultCollection(),
+            'STOCK_RESULT' => $stockResult,
             'DELIVERY_ZONE' => $deliveryService->getDeliveryZoneCodeByLocation(
                 $arOrder['LOCATION_TO'],
                 $deliveryId
