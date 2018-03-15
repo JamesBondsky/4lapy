@@ -10,12 +10,18 @@ declare(strict_types=1);
 
 namespace FourPaws\Components;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\Application as BitrixApplication;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\SystemException;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Order;
 use CBitrixComponent;
+use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
@@ -79,6 +85,11 @@ class BasketComponent extends \CBitrixComponent
     /** @noinspection PhpMissingParentCallCommonInspection */
     /**
      *
+     * @throws ApplicationCreateException
+     * @throws \Exception
+     * @throws SystemException
+     * @throws ArgumentOutOfRangeException
+     * @throws ArgumentException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws \InvalidArgumentException
@@ -98,6 +109,10 @@ class BasketComponent extends \CBitrixComponent
         if (null === $basket || !\is_object($basket) || !($basket instanceof Basket)) {
             $basket = $this->basketService->getBasket();
         }
+        $this->offerCollection = $this->basketService->getOfferCollection();
+
+        $this->setItems($basket);
+
         // привязывать к заказу нужно для расчета скидок
         if (null === $order = $basket->getOrder()) {
             $order = Order::create(SITE_ID);
@@ -115,11 +130,103 @@ class BasketComponent extends \CBitrixComponent
         $this->arResult['BASKET'] = $basket;
         $this->arResult['POSSIBLE_GIFT_GROUPS'] = Gift::getPossibleGiftGroups($order);
         $this->arResult['POSSIBLE_GIFTS'] = Gift::getPossibleGifts($order);
-        $this->offerCollection = $this->basketService->getOfferCollection();
         $this->calcTemplateFields();
         $this->loadImages();
         $this->checkSelectedGifts();
         $this->includeComponentTemplate($this->getPage());
+    }
+
+    /**
+     * @param Basket $basket
+     *
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws \RuntimeException
+     * @throws ApplicationCreateException
+     * @throws ObjectNotFoundException
+     * @throws ArgumentException
+     * @throws ArgumentOutOfRangeException
+     * @throws SystemException
+     * @throws \Exception
+     */
+    private function setItems(&$basket): void
+    {
+        $notAlowedItems = new ArrayCollection();
+        $orderableItems = new ArrayCollection();
+        /** @var BasketItem $basketItem */
+        $isUpdate = false;
+
+        $this->arResult['OFFER_MIN_DELIVERY'] = [];
+
+        /** @todo пока берем ближайшую доставку из быстрого заказа */
+        \CBitrixComponent::includeComponentClass('fourpaws:fast.order');
+        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+        try {
+            $fastOrderClass = new FourPawsFastOrderComponent();
+        } catch (SystemException $e) {
+            $fastOrderClass = null;
+            $logger = LoggerFactory::create('system');
+            $logger->error('Ошибка загрузки компонента - ' . $e->getMessage());
+        }
+
+        foreach ($basket->getBasketItems() as $basketItem) {
+            if ($basketItem->getId() === 0 || $basketItem->getProductId() === 0) {
+                /** удаляет непонятно что в корзине */
+                $basketItem->delete();
+                $isUpdate = true;
+                continue;
+            }
+            $offer = $this->getOffer((int)$basketItem->getProductId());
+            $useOffer = $offer instanceof Offer && $offer->getId() > 0;
+            if (!$useOffer) {
+                /** если нет офера удаляем товар из корзины */
+                $basketItem->delete();
+                $isUpdate = true;
+                continue;
+            }
+
+            if($basketItem->canBuy() && !$basketItem->isDelay()){
+                if ($offer->isByRequest() || $offer->getQuantity() === 0) {
+                    $basketItem->setField('DELAY', 'Y');
+
+                    $notAlowedItems->add($basketItem);
+                    /** @todo пока берем ближайшую доставку из быстрого заказа */
+                    if ($fastOrderClass instanceof FourPawsFastOrderComponent && $offer->isByRequest()) {
+                        $this->arResult['OFFER_MIN_DELIVERY'][$basketItem->getProductId()] = $fastOrderClass->getDeliveryDate($offer, true);
+                    }
+
+                    $isUpdate = true;
+                }
+                else{
+                    $orderableItems->add($basketItem);
+                }
+            }
+            else{
+                $offerQuantity = $offer->getQuantity();
+                if ($offerQuantity > 0 && $offerQuantity > $basketItem->getQuantity() && $basketItem->isDelay()
+                    && !$offer->isByRequest()) {
+                    $basketItem->setField('DELAY', 'N');
+
+                    $orderableItems->add($basketItem);
+
+                    $isUpdate = true;
+                }
+                else{
+                    $notAlowedItems->add($basketItem);
+                    /** @todo пока берем ближайшую доставку из быстрого заказа */
+                    if ($fastOrderClass instanceof FourPawsFastOrderComponent && $offer->isByRequest()) {
+                        $this->arResult['OFFER_MIN_DELIVERY'][$basketItem->getProductId()] = $fastOrderClass->getDeliveryDate($offer, true);
+                    }
+                }
+            }
+        }
+        if ($isUpdate) {
+            $basket->save();
+        }
+        unset($isUpdate);
+
+        $this->arResult['NOT_ALOWED_ITEMS'] = $notAlowedItems;
+        $this->arResult['ORDERABLE_ITEMS'] = $orderableItems;
     }
 
     /**

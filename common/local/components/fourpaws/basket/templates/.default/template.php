@@ -27,7 +27,7 @@ $userAccount = $arResult['USER_ACCOUNT'];
 
 /** @var Basket $basket */
 $basket = $arResult['BASKET'];
-$orderableBasket = $basket->getOrderableItems();
+$orderableBasket = $arResult['ORDERABLE_ITEMS'];
 
 /** @var ArrayCollection $notAlowedItems */
 $notAlowedItems = $arResult['NOT_ALOWED_ITEMS'];
