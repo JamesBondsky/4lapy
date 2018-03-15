@@ -13,6 +13,7 @@ use FourPaws\SapBundle\Subscriber\BitrixEvents;
 use FourPaws\Search\EventHandlers as SearchEventHandlers;
 use FourPaws\UserBundle\EventController\Event as UserEvent;
 use FourPaws\UserProps\Event as UserPropLocationEvent;
+use FourPaws\CatalogBundle\EventController\Event as CatalogEvent;
 
 /**
  * Class EventInitializer
@@ -34,6 +35,7 @@ final class EventInitializer
         UserPropLocationEvent::class,
         BitrixEvents::class,
         MobileApiUserEvent::class,
+        CatalogEvent::class,
     ];
 
     /**
