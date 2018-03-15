@@ -111,13 +111,13 @@ if ($pickup && $selectedDelivery->getDeliveryCode() === $pickup->getDeliveryCode
                                     </span>
                                     <span class="b-choice-recovery__addition-text">
                                         <?= /** @noinspection PhpUnhandledExceptionInspection */
-                                        DeliveryTimeHelper::showTime($delivery) ?>
-                                        , <?= CurrencyHelper::formatPrice($delivery->getPrice(), false) ?>
+                                        DeliveryTimeHelper::showTime($delivery) ?>,
+                                        <?= mb_strtolower(CurrencyHelper::formatPrice($delivery->getPrice(), true)) ?>
                                     </span>
                                     <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile">
                                         <?= /** @noinspection PhpUnhandledExceptionInspection */
-                                        DeliveryTimeHelper::showTime($delivery, ['SHORT' => true]) ?>
-                                        , <?= CurrencyHelper::formatPrice($delivery->getPrice(), false) ?>
+                                        DeliveryTimeHelper::showTime($delivery, ['SHORT' => true]) ?>,
+                                        <?= CurrencyHelper::formatPrice($delivery->getPrice(), false) ?>
                                 </label>
                             <?php } ?>
                             <?php if ($pickup) { ?>
@@ -151,8 +151,7 @@ if ($pickup && $selectedDelivery->getDeliveryCode() === $pickup->getDeliveryCode
                                                     $pickup
                                                 ),
                                             ]
-                                        ) ?>
-                                        , <?= CurrencyHelper::formatPrice($pickup->getPrice(), false) ?>
+                                        ) ?>, <?= mb_strtolower(CurrencyHelper::formatPrice($pickup->getPrice(), true)) ?>
                                     </span>
                                     <span class="b-choice-recovery__addition-text b-choice-recovery__addition-text--mobile js-my-pickup js-pickup-tab">
                                         <?= /** @noinspection PhpUnhandledExceptionInspection */
@@ -164,8 +163,7 @@ if ($pickup && $selectedDelivery->getDeliveryCode() === $pickup->getDeliveryCode
                                                     $pickup
                                                 ),
                                             ]
-                                        ) ?>
-                                        , <?= CurrencyHelper::formatPrice($pickup->getPrice(), false) ?>
+                                        ) ?>, <?= CurrencyHelper::formatPrice($pickup->getPrice(), false) ?>
                                     </span>
                                 </label>
                             <?php } ?>

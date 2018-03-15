@@ -27,6 +27,7 @@ $storage = $arResult['STORAGE'];
 
 /** @var Store $selectedShop */
 $selectedShop = $arResult['SELECTED_SHOP'];
+
 $stockResultByShop = $pickup->getStockResult()->filterByStore($selectedShop);
 $available = $stockResultByShop->getAvailable();
 $delayed = $stockResultByShop->getDelayed();
