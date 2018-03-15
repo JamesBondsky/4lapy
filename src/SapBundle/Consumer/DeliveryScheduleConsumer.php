@@ -53,7 +53,12 @@ class DeliveryScheduleConsumer implements ConsumerInterface, LoggerAwareInterfac
         } catch (\Exception $e) {
             $success = false;
 
-            $this->log()->critical(sprintf('Ошибка импорта расписания погрузок: %s', $e->getMessage()));
+            $this->log()->critical(
+                \sprintf(
+                    'Ошибка импорта расписания погрузок: %s',
+                    $e->getMessage()
+                )
+            );
         }
 
         return $success;

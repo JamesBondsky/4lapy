@@ -13,16 +13,13 @@ use JMS\Serializer\Annotation as Serializer;
 class DeliverySchedule
 {
     /**
-     * Код файла выгрузки IDoc.
-     * Содержит номер файла выгрузки.
+     * Ключ выгрузки. Генерируется из отправителя/получателя.
      *
-     * @Serializer\XmlAttribute()
-     * @Serializer\Type("int")
-     * @Serializer\SerializedName("DN")
+     * @Serializer\Exclude()
      *
-     * @var int
+     * @var string
      */
-    protected $docId = 0;
+    protected $xmlId;
 
     /**
      * Отправитель остатка.
@@ -124,21 +121,21 @@ class DeliverySchedule
     protected $manualDays;
 
     /**
-     * @return int
+     * @return string
      */
-    public function getDocId(): int
+    public function getXmlId(): string
     {
-        return $this->docId;
-    }
+        if (null === $this->xmlId) {
+            $this->xmlId = \md5(
+                \sprintf(
+                    '%s|%s',
+                    $this->getSenderCode(),
+                    $this->getRecipientCode()
+                )
+            );
+        }
 
-    /**
-     * @param int $docId
-     * @return DeliverySchedule
-     */
-    public function setDocId(int $docId): DeliverySchedule
-    {
-        $this->docId = $docId;
-        return $this;
+        return $this->xmlId;
     }
 
     /**
