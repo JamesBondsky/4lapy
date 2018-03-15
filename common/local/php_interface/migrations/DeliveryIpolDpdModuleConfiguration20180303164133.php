@@ -1,12 +1,16 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace Sprint\Migration;
 
 use Adv\Bitrixtools\Migration\SprintMigrationBase;
 use Bitrix\Main\Config\Option;
 use Bitrix\Sale\Location\LocationTable;
 use Bitrix\Sale\Location\TypeTable;
-use FourPaws\Location\LocationService;
+use FourPaws\LocationBundle\LocationService;
 
 class DeliveryIpolDpdModuleConfiguration20180303164133 extends SprintMigrationBase
 {

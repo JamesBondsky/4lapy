@@ -1,14 +1,18 @@
 <?php
 
-namespace FourPaws\Location\Model;
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
+namespace FourPaws\LocationBundle\Model;
 
 use Bitrix\Main\Entity\DataManager;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Model\HlbItemBase;
 use FourPaws\BitrixOrm\Model\Interfaces\ActiveReadModelInterface;
-use FourPaws\Location\Exception\CityNotFoundException;
-use FourPaws\Location\Query\CityQuery;
+use FourPaws\LocationBundle\Exception\CityNotFoundException;
+use FourPaws\LocationBundle\Query\CityQuery;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 

@@ -20,7 +20,7 @@ use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\Location\LocationService;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Base as BaseEntity;
@@ -116,8 +116,8 @@ class StoreService
      * @param $xmlId
      *
      * @throws NotFoundException
-     * @return Store
      * @throws ArgumentException
+     * @return Store
      */
     public function getByXmlId($xmlId): Store
     {
@@ -141,9 +141,9 @@ class StoreService
      *
      * @param string $type
      *
-     * @return StoreCollection
      * @throws \Exception
      * @throws ArgumentException
+     * @return StoreCollection
      */
     public function getByCurrentLocation($type = self::TYPE_ALL): StoreCollection
     {
@@ -159,9 +159,9 @@ class StoreService
      * @param string $type
      * @param bool   $strict
      *
-     * @return StoreCollection
      * @throws ArgumentException
      * @throws \Exception
+     * @return StoreCollection
      */
     public function getByLocation(
         string $locationCode,
@@ -235,8 +235,8 @@ class StoreService
      *
      * @param array $select
      *
-     * @return array
      * @throws \Exception
+     * @return array
      */
     public function getMetroInfo(array $filter = [], array $select = ['*']): array
     {
@@ -285,8 +285,8 @@ class StoreService
      * @param array $filter
      * @param array $select
      *
-     * @return array
      * @throws \Exception
+     * @return array
      */
     public function getServicesInfo(array $filter = [], array $select = ['*']): array
     {
@@ -660,6 +660,7 @@ class StoreService
     }
 
     /**
+     * @todo Баг при getPickupDelivery
      * @param int $offerId
      *
      * @return Offer

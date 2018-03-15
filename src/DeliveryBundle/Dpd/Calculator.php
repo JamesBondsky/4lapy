@@ -10,19 +10,19 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\Loader;
-
 use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
-use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Handler\DeliveryHandlerBase;
-use FourPaws\Location\LocationService;
+use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Service\StoreService;
+use Ipolh\DPD\Delivery\DPD;
 
 if (!Loader::includeModule('ipol.dpd')) {
     class Calculator
@@ -31,8 +31,6 @@ if (!Loader::includeModule('ipol.dpd')) {
 
     return;
 }
-
-use Ipolh\DPD\Delivery\DPD;
 
 class Calculator extends DPD
 {

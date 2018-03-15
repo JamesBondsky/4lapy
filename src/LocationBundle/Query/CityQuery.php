@@ -1,10 +1,14 @@
 <?php
 
-namespace FourPaws\Location\Query;
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
 
-use FourPaws\Location\Collection\CityCollection;
-use FourPaws\BitrixOrm\Query\D7QueryBase;
+namespace FourPaws\LocationBundle\Query;
+
 use FourPaws\BitrixOrm\Collection\CollectionBase;
+use FourPaws\BitrixOrm\Query\D7QueryBase;
+use FourPaws\LocationBundle\Collection\CityCollection;
 
 class CityQuery extends D7QueryBase
 {

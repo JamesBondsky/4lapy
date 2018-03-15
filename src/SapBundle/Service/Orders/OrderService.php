@@ -34,7 +34,7 @@ use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\BxCollection;
 use FourPaws\Helpers\DateHelper;
-use FourPaws\Location\LocationService;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\SaleBundle\Service\OrderService as BaseOrderService;
 use FourPaws\SapBundle\Dto\Base\Orders\DeliveryAddress;
 use FourPaws\SapBundle\Dto\In\Orders\Order as OrderDtoIn;
@@ -137,8 +137,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         UserRepository $userRepository,
         IntervalService $intervalService,
         StatusService $statusService
-    )
-    {
+    ) {
         $this->baseOrderService = $baseOrderService;
         $this->serializer = $serializer;
         $this->filesystem = $filesystem;
@@ -168,12 +167,12 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     /**
      * @param Order $order
      *
-     * @return SourceMessage
      * @throws NotFoundOrderShipmentException
      * @throws NotFoundOrderDeliveryException
      * @throws NotFoundOrderPaySystemException
      * @throws ObjectNotFoundException
      * @throws NotFoundOrderUserException
+     * @return SourceMessage
      */
     public function transformOrderToMessage(Order $order): SourceMessage
     {
@@ -233,11 +232,11 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      * @throws NotFoundOrderStatusException
      * @throws RuntimeException
      *
-     * @return Order
      * @throws NotFoundOrderPaySystemException
      * @throws Exception
      * @throws ObjectNotFoundException
      * @throws ArgumentOutOfRangeException
+     * @return Order
      */
     public function transformDtoToOrder(OrderDtoIn $orderDto): Order
     {
@@ -481,9 +480,9 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     /**
      * @param Order $order
      *
-     * @return string
      * @throws NotFoundOrderDeliveryException
      * @throws NotFoundOrderShipmentException
+     * @return string
      */
     private function getDeliveryTypeCode(Order $order): string
     {
