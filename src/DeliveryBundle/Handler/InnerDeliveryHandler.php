@@ -145,16 +145,13 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
                  * условие доставки в эту зону - наличие на складе
                  */
                 $availableStores = $this->storeService->getByLocation($deliveryLocation, StoreService::TYPE_STORE);
-                $delayStores = new StoreCollection();
                 break;
             case DeliveryService::ZONE_2:
                 /**
                  * условие доставки в эту зону - наличие в базовом магазине
-                 * условие отложенной доставки в эту зону - наличие на складе
                  */
                 $stores = $this->storeService->getByLocation($deliveryLocation, StoreService::TYPE_ALL);
                 $availableStores = $stores->getBaseShops();
-                $delayStores = $stores->getStores();
                 break;
             default:
                 $result->addError(new Error('Доставка не работает для этой зоны'));
@@ -162,7 +159,7 @@ class InnerDeliveryHandler extends DeliveryHandlerBase
                 return $result;
         }
 
-        $stockResult = static::getStocks($basket, $offers, $availableStores, $delayStores);
+        $stockResult = static::getStocks($basket, $offers, $availableStores);
         $result->setStockResult($stockResult);
 
         if (!$stockResult->getUnavailable()->isEmpty()) {

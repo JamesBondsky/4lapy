@@ -17,7 +17,6 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Service\IntervalService;
 use FourPaws\Location\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
-use FourPaws\StoreBundle\Service\StockService;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 
@@ -112,8 +111,6 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
         /** @noinspection PhpUnhandledExceptionInspection */
         /** @var StoreService $storeService */
         $storeService = Application::getInstance()->getContainer()->get('store.service');
-        /** @var StockService $stockService */
-        $stockService = Application::getInstance()->getContainer()->get(StockService::class);
         $stores = $storeService->getByLocation($locationCode);
         if ($stores->isEmpty()) {
             return false;
@@ -125,7 +122,10 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
             return false;
         }
 
-        $stockService->getStocks($offers, $stores);
+        /** @var Offer $offer */
+        foreach ($offers as $offer) {
+            $offer->withStocks($offer->getAllStocks()->filterByStores($stores));
+        }
 
         return $offers;
     }/** @noinspection MoreThanThreeArgumentsInspection */
@@ -133,19 +133,17 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
     /**
      * @param BasketBase $basket
      * @param OfferCollection $offers
-     * @param StoreCollection $storesAvailable склады, где товары считается "в наличии"
-     * @param StoreCollection $storesDelay склады, с которых производится поставка на $storesAvailable
-     * @param StockResultCollection $stockResultCollection
-     *
+     * @param StoreCollection $storesAvailable
+     * @param StockResultCollection|null $stockResultCollection
      * @return StockResultCollection
      * @throws \Bitrix\Main\ArgumentException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
     public static function getStocks(
         BasketBase $basket,
         OfferCollection $offers,
         StoreCollection $storesAvailable,
-        StoreCollection $storesDelay,
         StockResultCollection $stockResultCollection = null
     ): StockResultCollection {
         if (!$stockResultCollection) {
@@ -188,11 +186,11 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
              * Товар в наличии не полностью. Часть будет отложена
              */
             if ($neededAmount) {
+                $storesDelay = $offer->getAllStocks()->getStores()->excludeStores($storesAvailable);
                 if ($delayedAmount = $stocks->filterByStores($storesDelay)->getTotalAmount()) {
                     $delayedStockResult = clone $stockResult;
                     $delayedStockResult->setType(StockResult::TYPE_DELAYED)
-                        ->setAmount($delayedAmount >= $neededAmount ? $neededAmount : $delayedAmount)
-                        ->setDelayStores($storesDelay);
+                        ->setAmount($delayedAmount >= $neededAmount ? $neededAmount : $delayedAmount);
                     $stockResultCollection->add($delayedStockResult);
 
                     $neededAmount = ($delayedAmount >= $neededAmount) ? 0 : $neededAmount - $delayedAmount;

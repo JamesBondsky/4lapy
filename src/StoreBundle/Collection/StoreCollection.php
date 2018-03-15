@@ -44,24 +44,21 @@ class StoreCollection extends BaseCollection
     }
 
     /**
-     * @return Schedule
+     * @param StoreCollection $stores
+     * @return StoreCollection
      */
-    public function getTotalSchedule(): Schedule
+    public function excludeStores(StoreCollection $stores): StoreCollection
     {
-        $from = null;
-        $to = null;
+        $result = new static();
+        /** @var Store $store */
+        foreach ($this->getIterator() as $store) {
+            if ($stores->contains($store)) {
+                continue;
+            }
 
-        /** @var Store $item */
-        foreach ($this->getIterator() as $item) {
-            $schedule = $item->getScheduleString();
-            if ((null === $from) || ($schedule->getFrom() < $from)) {
-                $from = $schedule->getFrom();
-            }
-            if ((null === $to) || ($schedule->getTo() > $to)) {
-                $to = $schedule->getTo();
-            }
+            $result[$store->getXmlId()] = $store;
         }
 
-        return (new Schedule())->setFrom($from)->setTo($to);
+        return $result;
     }
 }

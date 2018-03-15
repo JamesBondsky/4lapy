@@ -14,7 +14,6 @@ use Bitrix\Main\Loader;
 
 use FourPaws\App\Application;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
-use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
@@ -22,7 +21,6 @@ use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Handler\DeliveryHandlerBase;
 use FourPaws\Location\LocationService;
 use FourPaws\SaleBundle\Service\BasketService;
-use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Service\StoreService;
 
 if (!Loader::includeModule('ipol.dpd')) {
@@ -53,6 +51,7 @@ class Calculator extends DPD
      * @throws \Bitrix\Main\ArgumentNullException
      * @throws \Bitrix\Main\ArgumentOutOfRangeException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      */
     public function Calculate($profile, $arConfig, $arOrder, $STEP, $TEMP = false)
     {
@@ -87,8 +86,6 @@ class Calculator extends DPD
             $storesAvailable = $storeService->getByLocation($arOrder['LOCATION_FROM'], StoreService::TYPE_STORE, true);
         }
 
-        $storesDelay = new StoreCollection();
-
         $result = parent::Calculate($profile, $arConfig, $arOrder, $STEP, $TEMP);
         if ($result['RESULT'] === 'ERROR') {
             return $result;
@@ -101,7 +98,7 @@ class Calculator extends DPD
                 $arOrder['LOCATION_FROM'],
                 $basket
             )) {
-                $stockResult = DeliveryHandlerBase::getStocks($basket, $offers, $storesAvailable, $storesDelay);
+                $stockResult = DeliveryHandlerBase::getStocks($basket, $offers, $storesAvailable);
                 if (!$stockResult->getUnavailable()->isEmpty()) {
                     $result = [
                         'RESULT' => 'ERROR',
@@ -168,6 +165,13 @@ class Calculator extends DPD
         return self::$shipment;
     }
 
+    /**
+     * @param array $arOrder
+     * @param array $arConfig
+     * @return array
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     */
     public function Compability($arOrder, $arConfig)
     {
         /** @var StoreService $storeService */
