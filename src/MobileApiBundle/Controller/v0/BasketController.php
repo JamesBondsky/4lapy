@@ -4,7 +4,7 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
-namespace FourPaws\MobileApiBundle\Controller;
+namespace FourPaws\MobileApiBundle\Controller\v0;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
@@ -18,8 +18,11 @@ use FourPaws\MobileApiBundle\Dto\Response\PutUserCartResponse;
 use FourPaws\MobileApiBundle\Dto\Response\UserCartCalcResponse;
 use FourPaws\MobileApiBundle\Dto\Response\UserCartOrderResponse;
 use FourPaws\MobileApiBundle\Dto\Response\UserCartResponse;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 
+/**
+ * Class BasketController
+ * @package FourPaws\MobileApiBundle\Controller
+ */
 class BasketController extends FOSRestController
 {
     /**

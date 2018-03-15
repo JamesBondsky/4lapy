@@ -2,14 +2,19 @@
 
 namespace FourPaws\Components;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Catalog\CatalogViewedProductTable;
 use Bitrix\Catalog\Product\Basket;
 use Bitrix\Iblock\Component\Tools;
 use Bitrix\Main\Analytics\Catalog;
 use Bitrix\Main\Analytics\Counter;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\SystemException;
 use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Text\JsExpression;
+use CBitrixComponent;
+use FourPaws\App\Application as App;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Offer;
@@ -17,6 +22,11 @@ use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\CategoryQuery;
 use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use FourPaws\UserBundle\Service\UserAuthorizationInterface;
+use FourPaws\UserBundle\Service\UserService;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /** @noinspection AutoloadingIssuesInspection */
 class CatalogElementDetailComponent extends \CBitrixComponent
@@ -24,6 +34,36 @@ class CatalogElementDetailComponent extends \CBitrixComponent
     const EXPAND_CLOSURES = 'EXPAND_CLOSURES';
 
     protected $unionOffers = [];
+
+    /**
+     * @var CurrentUserProviderInterface
+     */
+    private $currentUserProvider;
+
+    /** @var UserAuthorizationInterface */
+    private $authUserProvider;
+
+    /**
+     * CatalogElementDetailComponent constructor.
+     *
+     * @param CBitrixComponent|null $component
+     *
+     * @throws SystemException
+     */
+    public function __construct(?CBitrixComponent $component = null)
+    {
+        parent::__construct($component);
+        try {
+            $container = App::getInstance()->getContainer();
+            $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
+            $this->authUserProvider = $container->get(UserAuthorizationInterface::class);
+        } catch (ApplicationCreateException|ServiceCircularReferenceException|ServiceNotFoundException $e) {
+            $logger = LoggerFactory::create('component');
+            $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
+            /** @noinspection PhpUnhandledExceptionInspection */
+            throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
+        }
+    }
 
     /**
      * @param $params
@@ -303,5 +343,13 @@ class CatalogElementDetailComponent extends \CBitrixComponent
 
         }
         return $this->unionOffers[$type][$val];
+    }
+
+    /**
+     * @return UserService
+     */
+    public function getCurrentUserService(): UserService
+    {
+        return $this->currentUserProvider;
     }
 }

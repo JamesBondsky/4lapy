@@ -84,52 +84,6 @@ class ManzanaPosService implements LoggerAwareInterface, ManzanaServiceInterface
         return $request;
     }
 
-    public function buildRequestFromItem(Offer $offer, string $card = '', int $quantity = 1)
-    {
-        $sum = $sumDiscounted = 0.0;
-
-        $request = new SoftChequeRequest();
-
-        $sum += $offer->getPrice() * $quantity;
-        $sumDiscounted += $offer->getPrice() * $quantity;
-
-        $xmlId = $offer->getXmlId();
-
-        if (strpos($xmlId, '#')) {
-            $xmlId = explode('#', $xmlId)[1];
-        }
-
-        $chequePosition =
-            (new ChequePosition())->setChequeItemNumber(1)
-                ->setSumm($offer->getPrice() * $quantity)
-                ->setQuantity($quantity)
-                ->setPrice($offer->getPrice())
-                ->setDiscount(ArithmeticHelper::getPercent($offer->getPrice(),
-                    $offer->getOldPrice()))
-                ->setSummDiscounted($offer->getPrice() * $quantity)
-                ->setArticleId($xmlId)
-                ->setChequeItemId($offer->getId());
-
-        /**
-         * @todo add SignCharge=0 (BonusBuy)
-         */
-        if ((int)$chequePosition->getDiscount() === 3) {
-            $chequePosition->setSignCharge(0);
-        }
-
-        $request->addItem($chequePosition);
-
-        $request->setSumm($sum)
-            ->setSummDiscounted($sumDiscounted)
-            ->setDiscount(ArithmeticHelper::getPercent($sumDiscounted, $sum));
-
-        if ($card) {
-            $request->setCardByNumber($card);
-        }
-
-        return $request;
-    }
-
     /**
      * Запрос на обработку мягкого чека с оплатой баллами
      *

@@ -235,6 +235,15 @@ class User implements UserInterface
      */
     protected $discountCardNumber = '';
 
+    /**
+     * @var int
+     * @Serializer\Type("int")
+     * @Serializer\SerializedName("UF_DISCOUNT")
+     * @Serializer\Groups(groups={"dummy","create","read","update"})
+     * @Serializer\SkipWhenEmpty()
+     */
+    protected $discount = 3;
+
     public function __construct()
     {
         $this->roles = new ArrayCollection();
@@ -985,5 +994,21 @@ class User implements UserInterface
     public function allowedEASend(): bool
     {
         return $this->hasEmail() && $this->isEmailConfirmed();
+    }
+
+    /**
+     * @return int
+     */
+    public function getDiscount(): int
+    {
+        return $this->discount ?? 3;
+    }
+
+    /**
+     * @param int $discount
+     */
+    public function setDiscount(int $discount): void
+    {
+        $this->discount = $discount;
     }
 }

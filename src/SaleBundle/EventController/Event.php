@@ -2,22 +2,32 @@
 
 namespace FourPaws\SaleBundle\EventController;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Event as BitrixEvent;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\EventResult;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\ServiceHandlerInterface;
+use FourPaws\Migrator\Client\User;
 use FourPaws\SaleBundle\Discount\Action\Action\DiscountFromProperty;
 use FourPaws\SaleBundle\Discount\Action\Condition\BasketQuantity;
 use FourPaws\SaleBundle\Discount\BasketFilter;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Gifter;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
+use FourPaws\SaleBundle\Exception\ValidationException;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\NotificationService;
 use FourPaws\SaleBundle\Service\UserAccountService;
+use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
+use FourPaws\UserBundle\Exception\InvalidIdentifierException;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /**
  * Class Event
@@ -76,10 +86,37 @@ class Event implements ServiceHandlerInterface
         );
     }
 
-    public static function updateUserAccountBalance()
+    /**
+     * @param array $user
+     */
+    public static function updateUserAccountBalance(array $user)
     {
-        /* @todo по ТЗ должно выполняться в фоновом режиме */
-        Application::getInstance()->getContainer()->get(UserAccountService::class)->refreshUserBalance();
+        $userId = (int)$user['user_fields']['ID'];
+        if($userId > 1) {
+            try {
+                $container = Application::getInstance()->getContainer();
+                $userService = $container->get(CurrentUserProviderInterface::class);
+                $userAccountService = $container->get(UserAccountService::class);
+
+                $userEntity = $userService->getUserRepository()->find($userId);
+                /* @todo по ТЗ должно выполняться в фоновом режиме */
+                list($res, $bonus) = $userAccountService->refreshUserBalance($userEntity);
+
+                /** обновление скидки
+                 * @todo сделать обновление через очередь, не критично если какое-то время будет старая скидка, тем более в случае неактивности манзаны она не обновится все равно
+                 */
+                $userService->refreshUserDiscount($userEntity, $bonus);
+            } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException $e) {
+                $logger = LoggerFactory::create('system');
+                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            } catch (ConstraintDefinitionException|InvalidIdentifierException|ValidationException $e) {
+                $logger = LoggerFactory::create('params');
+                $logger->critical('Ошибка параметров - ' . $e->getMessage());
+            }
+            catch (NotAuthorizedException $e){
+                /** не выскочит */
+            }
+        }
     }
 
     /**

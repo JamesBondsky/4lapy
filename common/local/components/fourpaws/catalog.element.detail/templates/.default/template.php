@@ -37,12 +37,7 @@ $offers = $product->getOffers();
 $brand = $product->getBrand();
 $currentOffer = $arResult['CURRENT_OFFER'];
 
-$mainCombinationType = '';
-if ($currentOffer->getClothingSize()) {
-    $mainCombinationType = 'SIZE';
-} else {
-    $mainCombinationType = 'VOLUME';
-}
+$mainCombinationType = $currentOffer->getClothingSize() ? 'SIZE' : 'VOLUME';
 
 $this->setFrameMode(true);
 
@@ -229,16 +224,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                             <?= ceil($currentOffer->getPrice()) ?>
                         </span>
                         <span class="b-ruble b-ruble--product-information">&nbsp;₽</span>
-                        <?php if ($currentOffer->getBonuses()) { ?>
-                            <span class="b-product-information__bonus">+<?= $currentOffer->getBonuses() ?>
-                                <?= WordHelper::declension($currentOffer->getBonuses(),
-                                    [
-                                        'бонус',
-                                        'бонуса',
-                                        'бонусов',
-                                    ]) ?>
-                            </span>
-                        <?php } ?>
+                        <span class="b-product-information__bonus js-bonus-<?=$currentOffer->getId()?>"></span>
                     </div>
                 </li>
                 <?php if ($currentOffer->isByRequest()) {
@@ -261,7 +247,6 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                     false,
                     ['HIDE_ICONS' => 'Y']); ?>
 
-                <?php /* todo вывод связанных товаров по цвету и вкусу  */ ?>
                 <?php if (!empty($currentOffer->getFlavourCombination())) {
                     $unionOffers = $component->getOffersByUnion('flavour', $currentOffer->getFlavourCombination());
                     if (!$unionOffers->isEmpty()) {
@@ -467,3 +452,4 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB);
     </div>
 <?php
 $this->EndViewTarget();
+$templateData['currentOffer'] = $currentOffer;

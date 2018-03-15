@@ -42,13 +42,14 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
     {
         $time = time();
         $query = ConfirmCodeTable::query();
+        $query->setSelect(['ID']);
         $query->where(Query::filter()->logic('or')->where([
-            Query::filter()->where('DATE', '<',
+            [Query::filter()->where('DATE', '<',
                 DateTime::createFromTimestamp($time - static::SMS_LIFE_TIME))
-                ->where('TYPE', 'sms'),
-            Query::filter()->where('DATE', '<',
+                ->where('TYPE', 'sms')],
+            [Query::filter()->where('DATE', '<',
                 DateTime::createFromTimestamp($time - static::EMAIL_LIFE_TIME))
-                ->whereLike('TYPE', 'email_%'),
+                ->whereLike('TYPE', 'email_%')],
         ]));
         (new MysqlBatchOperations($query))->batchDelete();
     }
@@ -124,11 +125,11 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
                 [
                     'ID'   => $smsId,
                     'CODE' => static::generateCode($text),
-                    'TYPE' => $type,
+                    'TYPE' => substr($type,0,50),
                 ]
             );
             if (!$res->isSuccess()) {
-                throw new ArgumentException($res->getErrorMessages());
+                throw new ArgumentException(implode(', ', $res->getErrorMessages()));
             }
         }
     }
@@ -242,7 +243,7 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
         if ($time === 0) {
             $time = time();
         }
-        return md5('confirm' . $text . $time);
+        return substr(md5('confirm' . $text . $time),0,255);
     }
 
 
@@ -286,11 +287,11 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
                 [
                     'ID'   => $smsId,
                     'CODE' => static::getConfirmHash($text, $time),
-                    'TYPE' => $type,
+                    'TYPE' => substr($type, 0, 50),
                 ]
             );
             if (!$res->isSuccess()) {
-                throw new ArgumentException($res->getErrorMessages());
+                throw new ArgumentException(implode(', ', $res->getErrorMessages()));
             }
         }
     }

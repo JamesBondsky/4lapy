@@ -82,7 +82,10 @@ class BasketViewService
         $APPLICATION->IncludeComponent(
             'fourpaws:fast.order',
             '',
-            ['TYPE' => 'innerForm'],
+            [
+                'TYPE'    => 'innerForm',
+                'IS_AJAX' => 'Y',
+            ],
             null,
             ['HIDE_ICONS' => 'Y']
         );
