@@ -236,8 +236,8 @@ class User implements UserInterface
     protected $discountCardNumber = '';
 
     /**
-     * @var float
-     * @Serializer\Type("float")
+     * @var int
+     * @Serializer\Type("int")
      * @Serializer\SerializedName("UF_DISCOUNT")
      * @Serializer\Groups(groups={"dummy","create","read","update"})
      * @Serializer\SkipWhenEmpty()
@@ -997,17 +997,17 @@ class User implements UserInterface
     }
 
     /**
-     * @return float
+     * @return int
      */
-    public function getDiscount(): float
+    public function getDiscount(): int
     {
-        return $this->discount;
+        return $this->discount ?? 3;
     }
 
     /**
-     * @param float $discount
+     * @param int $discount
      */
-    public function setDiscount(float $discount): void
+    public function setDiscount(int $discount): void
     {
         $this->discount = $discount;
     }
