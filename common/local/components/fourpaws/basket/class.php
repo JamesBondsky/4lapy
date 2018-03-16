@@ -340,7 +340,7 @@ class BasketComponent extends \CBitrixComponent
         $page = '';
         /** @var Basket $basket */
         $basket = $this->arResult['BASKET'];
-        if (!$basket->count()) {
+        if (!$basket->count() && !$this->arParams['MINI_BASKET']) {
             $page = 'empty';
         }
         return $page;
