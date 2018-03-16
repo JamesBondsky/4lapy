@@ -8,7 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 /** @var Offer $currentOffer */
 $currentOffer = $templateData['currentOffer'];
-$bonus = $currentOffer->getBonusFormattedText($component->getCurrentUserService()->getDiscount(), $quantity);
+$bonus = $currentOffer->getBonusFormattedText($component->getCurrentUserService()->getDiscount());
 if (!empty($bonus)) { ?>
     <script type="text/javascript">
         $(function() {

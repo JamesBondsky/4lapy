@@ -3,7 +3,6 @@
 namespace FourPaws\CatalogBundle\Controller;
 
 use Exception;
-use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\CatalogBundle\Dto\CatalogBrandRequest;
 use FourPaws\CatalogBundle\Exception\RuntimeException;
 use FourPaws\Search\SearchService;
@@ -24,20 +23,22 @@ class BrandController extends Controller
     /**
      * @Route("/{brand}/")
      *
-     * @param Request $request
+     * @param Request             $request
      * @param CatalogBrandRequest $catalogBrandRequest
-     * @param SearchService $searchService
+     * @param SearchService       $searchService
      *
      * @return Response
      * @throws ServiceNotFoundException
      * @throws Exception
-     * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws \RuntimeException
      * @throws ServiceCircularReferenceException
      */
-    public function detailAction(Request $request, CatalogBrandRequest $catalogBrandRequest, SearchService $searchService): Response
-    {
+    public function detailAction(
+        Request $request,
+        CatalogBrandRequest $catalogBrandRequest,
+        SearchService $searchService
+    ): Response {
         $result = $searchService->searchProducts(
             $catalogBrandRequest->getCategory()->getFilters(),
             $catalogBrandRequest->getSorts()->getSelected(),
@@ -46,9 +47,9 @@ class BrandController extends Controller
         );
 
         return $this->render('FourPawsCatalogBundle:Catalog:brand.detail.html.php', [
-            'request' => $request,
-            'catalogRequest' => $catalogBrandRequest,
-            'productSearchResult' => $result
+            'request'             => $request,
+            'catalogRequest'      => $catalogBrandRequest,
+            'productSearchResult' => $result,
         ]);
     }
 }
