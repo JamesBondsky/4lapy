@@ -13,7 +13,6 @@ use FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\MobileApiBundle\Dto\Response\MetroStationsResponse;
 use FourPaws\MobileApiBundle\Exception\NoneMetroInCityException;
 use FourPaws\MobileApiBundle\Services\Api\LocationService;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Cache;
 
 class LocationController extends FOSRestController
 {
@@ -30,7 +29,6 @@ class LocationController extends FOSRestController
     /**
      * @Rest\Get("/metro_stations/")
      * @Rest\View()
-     * @Cache(expires="+7 days")
      * @param MetroStationsRequest $metroStationsRequest
      *
      * @throws NoneMetroInCityException

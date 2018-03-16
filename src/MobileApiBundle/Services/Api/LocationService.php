@@ -8,7 +8,6 @@ namespace FourPaws\MobileApiBundle\Services\Api;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
 use Bitrix\Highloadblock\DataManager;
-use Bitrix\Main\ArgumentException;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\MobileApiBundle\Dto\Object\Location\MetroLine;
@@ -76,16 +75,11 @@ class LocationService implements LoggerAwareInterface
             $query->where('UF_CITY_LOCATION', $locationCode);
         }
         $result = $query->exec();
-        try {
-            $result->addFetchDataModifier(function (array $data) {
-                return new MetroLine((int)$data['ID'], $data['UF_NAME'], $data['UF_COLOUR_CODE'] ?? '');
-            });
-        } catch (ArgumentException $e) {
-            $this->log()->error($e->getMessage(), ['location_code' => $locationCode]);
-            return new ArrayCollection();
-        }
-
-        return new ArrayCollection($result->fetchAll());
+        return
+            (new ArrayCollection($result->fetchAll()))
+                ->map(function (array $data) {
+                    return new MetroLine((int)$data['ID'], $data['UF_NAME'], $data['UF_COLOUR_CODE'] ?? '');
+                });
     }
 
     /**
@@ -105,15 +99,10 @@ class LocationService implements LoggerAwareInterface
             ->setCacheTtl(86400)
             ->exec();
 
-        try {
-            $result->addFetchDataModifier(function (array $data) {
-                return new MetroStation((int)$data['ID'], $data['UF_NAME'], $data['UF_BRANCH']);
-            });
-        } catch (ArgumentException $e) {
-            $this->log()->error($e->getMessage(), $lines);
-            return new ArrayCollection();
-        }
-
-        return new ArrayCollection($result->fetchAll());
+        return
+            (new ArrayCollection($result->fetchAll()))
+                ->map(function (array $data) {
+                    return new MetroStation((int)$data['ID'], $data['UF_NAME'], $data['UF_BRANCH']);
+                });
     }
 }
