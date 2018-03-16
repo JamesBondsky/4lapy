@@ -10,7 +10,6 @@ use Bitrix\Sale\Payment;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\ServiceHandlerInterface;
-use FourPaws\Migrator\Client\User;
 use FourPaws\SaleBundle\Discount\Action\Action\DetachedRowDiscount;
 use FourPaws\SaleBundle\Discount\Action\Action\DiscountFromProperty;
 use FourPaws\SaleBundle\Discount\Action\Condition\BasketQuantity;
@@ -110,7 +109,7 @@ class Event implements ServiceHandlerInterface
 
                 $userEntity = $userService->getUserRepository()->find($userId);
                 /* @todo по ТЗ должно выполняться в фоновом режиме */
-                list($res, $bonus) = $userAccountService->refreshUserBalance($userEntity);
+                [$res, $bonus] = $userAccountService->refreshUserBalance($userEntity);
 
                 /** обновление скидки
                  * @todo сделать обновление через очередь, не критично если какое-то время будет старая скидка, тем более в случае неактивности манзаны она не обновится все равно

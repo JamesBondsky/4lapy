@@ -267,6 +267,7 @@ class BasketComponent extends \CBitrixComponent
                 return $item;
             }
         }
+        return null;
     }
 
     /**

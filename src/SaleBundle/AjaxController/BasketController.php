@@ -201,6 +201,7 @@ class BasketController extends Controller
      * @param Request $request
      *
      * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
+     * @throws \InvalidArgumentException
      * @throws \RuntimeException
      * @throws \Bitrix\Main\ObjectNotFoundException
      * @throws \Bitrix\Main\NotSupportedException
@@ -273,8 +274,6 @@ class BasketController extends Controller
      * @param Request $request
      *
      * @throws \RuntimeException
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
      * @throws \Bitrix\Main\NotSupportedException
      * @throws \Bitrix\Main\ObjectNotFoundException
      * @throws \Exception
