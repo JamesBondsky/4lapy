@@ -2,6 +2,8 @@
 
 namespace FourPaws\SapBundle\Dto\In\DeliverySchedule;
 
+use JMS\Serializer\Annotation as Serializer;
+
 /**
  * Class WeekDayItem
  *
@@ -15,6 +17,7 @@ class WeekDayItem
      * Содержит порядковый номер недели в году, для которой определен график поставок по дням недели.
      * Если значение типа графика поставок «2», поле должно быть заполнено.
      *
+     * @Serializer\XmlAttribute()
      * @Serializer\Type("int")
      * @Serializer\SerializedName("numweek")
      *
@@ -26,6 +29,7 @@ class WeekDayItem
      * Понедельник.
      * Если чекбокс установлен, поставка осуществляется.
      *
+     * @Serializer\XmlAttribute()
      * @Serializer\Type("sap_bool")
      * @Serializer\SerializedName("Monday")
      *
@@ -37,6 +41,7 @@ class WeekDayItem
      * Вторник.
      * Если чекбокс установлен, поставка осуществляется.
      *
+     * @Serializer\XmlAttribute()
      * @Serializer\Type("sap_bool")
      * @Serializer\SerializedName("Tuesday")
      *
@@ -48,6 +53,7 @@ class WeekDayItem
      * Среда.
      * Если чекбокс установлен, поставка осуществляется.
      *
+     * @Serializer\XmlAttribute()
      * @Serializer\Type("sap_bool")
      * @Serializer\SerializedName("Wednesday")
      *
@@ -59,6 +65,7 @@ class WeekDayItem
      * Четверг.
      * Если чекбокс установлен, поставка осуществляется.
      *
+     * @Serializer\XmlAttribute()
      * @Serializer\Type("sap_bool")
      * @Serializer\SerializedName("Thursday")
      *
@@ -70,6 +77,7 @@ class WeekDayItem
      * Пятница.
      * Если чекбокс установлен, поставка осуществляется.
      *
+     * @Serializer\XmlAttribute()
      * @Serializer\Type("sap_bool")
      * @Serializer\SerializedName("Friday")
      *
@@ -81,6 +89,7 @@ class WeekDayItem
      * Суббота.
      * Если чекбокс установлен, поставка осуществляется.
      *
+     * @Serializer\XmlAttribute()
      * @Serializer\Type("sap_bool")
      * @Serializer\SerializedName("Saturday")
      *
@@ -92,6 +101,7 @@ class WeekDayItem
      * Воскресенье.
      * Если чекбокс установлен, поставка осуществляется.
      *
+     * @Serializer\XmlAttribute()
      * @Serializer\Type("sap_bool")
      * @Serializer\SerializedName("Sunday")
      *

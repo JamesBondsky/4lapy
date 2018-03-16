@@ -3,10 +3,10 @@
 namespace FourPaws\SapBundle\Exception;
 
 /**
- * Class NotFoundOrderException
+ * Class NotFoundScheduleException
  *
  * @package FourPaws\SapBundle\Exception;
  */
-class NotFoundOrderException extends RuntimeException
+class NotFoundScheduleException extends RuntimeException
 {
 }

@@ -790,11 +790,13 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      * @param Order $order
      * @param OrderDtoIn $orderDto
      *
+     * @return string
+     *
      * @throws NotFoundOrderShipmentException
      * @throws NotFoundOrderStatusException
      * @throws ArgumentException
      */
-    private function setStatusFromDto(Order $order, OrderDtoIn $orderDto)
+    private function setStatusFromDto(Order $order, OrderDtoIn $orderDto): string
     {
         $shipment = BxCollection::getOrderExternalShipment($order->getShipmentCollection());
 
@@ -808,7 +810,13 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         }
 
         $deliveryCode = $shipment->getDelivery()->getCode();
-        $order->setField('STATUS_ID', $this->statusService->getStatusBySapStatus($deliveryCode, $orderDto->getStatus()));
+        $status = $this->statusService->getStatusBySapStatus($deliveryCode, $orderDto->getStatus());
+
+        if ($status) {
+            $order->setField('STATUS_ID', $this->statusService->getStatusBySapStatus($deliveryCode, $orderDto->getStatus()));
+        }
+
+        return $status;
     }
 
     /**

@@ -35,19 +35,19 @@ if (empty($type)) {
 }
 
 $name = '';
-if ($request->offsetExists('name')) {
-    $name = $request->get('name');
-}
 if ($isAuth) {
     $name = $curUser->getName();
 }
+if ($request->offsetExists('name')) {
+    $name = $request->get('name');
+}
 
 $phone = '';
-if ($request->offsetExists('phone')) {
-    $phone = $request->get('phone');
-}
 if ($isAuth) {
     $phone = $curUser->getPersonalPhone();
+}
+if ($request->offsetExists('phone')) {
+    $phone = $request->get('phone');
 }
 ?>
 <div class="b-popup-one-click__close-bar">

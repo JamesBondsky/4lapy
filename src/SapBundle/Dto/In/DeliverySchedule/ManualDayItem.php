@@ -2,6 +2,8 @@
 
 namespace FourPaws\SapBundle\Dto\In\DeliverySchedule;
 
+use JMS\Serializer\Annotation as Serializer;
+
 /**
  * Class ManualDayItem
  *
@@ -14,6 +16,7 @@ class ManualDayItem
      * Номер по порядку.
      * Содержит порядковый номер поставки.
      *
+     * @Serializer\XmlAttribute()
      * @Serializer\Type("int")
      * @Serializer\SerializedName("num")
      *
@@ -25,7 +28,8 @@ class ManualDayItem
      * Дата поставки.
      * Содержит дату поставки, формат: ГГГГММДД.
      *
-     * @Serializer\Type()
+     * @Serializer\XmlAttribute()
+     * @Serializer\Type("DateTime<'Ymd'>")
      * @Serializer\SerializedName("dlvdate")
      *
      * @var \DateTime
@@ -47,6 +51,7 @@ class ManualDayItem
     public function setNum(int $num): ManualDayItem
     {
         $this->num = $num;
+
         return $this;
     }
 
@@ -65,6 +70,7 @@ class ManualDayItem
     public function setDate(\DateTime $date): ManualDayItem
     {
         $this->date = $date;
+
         return $this;
     }
 }
