@@ -35,7 +35,7 @@ use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\BxCollection;
 use FourPaws\Helpers\DateHelper;
-use FourPaws\Location\LocationService;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\SaleBundle\Service\OrderService as BaseOrderService;
 use FourPaws\SapBundle\Dto\Base\Orders\DeliveryAddress;
 use FourPaws\SapBundle\Dto\In\Orders\Order as OrderDtoIn;

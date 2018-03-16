@@ -1,11 +1,17 @@
-<?php if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
+<?php
+
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use FourPaws\App\Application;
 use FourPaws\Helpers\PhoneHelper;
-use FourPaws\Location\Exception\CityNotFoundException;
+use FourPaws\LocationBundle\Exception\CityNotFoundException;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 
 /** @noinspection AutoloadingIssuesInspection */
@@ -49,12 +55,12 @@ class FourPawsCityPhoneComponent extends \CBitrixComponent
     }
 
     /**
-     * @return $this
      * @throws CityNotFoundException
+     * @return $this
      */
     protected function prepareResult()
     {
-        /** @var \FourPaws\Location\LocationService $locationService */
+        /** @var \FourPaws\LocationBundle\LocationService $locationService */
         $locationService = Application::getInstance()->getContainer()->get('location.service');
         if ($defaultCity = $locationService->getDefaultCity()) {
             $defaultLocation = $locationService->getDefaultLocation();
@@ -77,7 +83,7 @@ class FourPawsCityPhoneComponent extends \CBitrixComponent
             $location = $defaultLocation;
         }
 
-        /** @var \FourPaws\Location\Model\City $city */
+        /** @var \FourPaws\LocationBundle\Model\City $city */
         $phone = $city->getPhone();
         $this->arResult['CITY_NAME'] = $city->getName();
         $this->arResult['LOCATION'] = $location;
@@ -85,7 +91,7 @@ class FourPawsCityPhoneComponent extends \CBitrixComponent
         $this->arResult['PHONE'] = PhoneHelper::formatPhone($phone);
         $this->arResult['PHONE_FOR_URL'] = PhoneHelper::formatPhone($phone, PhoneHelper::FORMAT_URL);
 
-        /** @var \FourPaws\Location\Model\City $defaultCity */
+        /** @var \FourPaws\LocationBundle\Model\City $defaultCity */
         $defaultPhone = $defaultCity->getPhone();
         $this->arResult['DEFAULT_CITY_NAME'] = $defaultCity->getName();
         $this->arResult['DEFAULT_LOCATION'] = $defaultLocation;

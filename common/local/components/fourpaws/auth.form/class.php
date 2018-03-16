@@ -26,7 +26,7 @@ use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
 use FourPaws\Helpers\PhoneHelper;
-use FourPaws\Location\Model\City;
+use FourPaws\LocationBundle\Model\City;
 use FourPaws\SaleBundle\Exception\BitrixProxyException;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
@@ -241,11 +241,16 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             if ($_SESSION['COUNT_AUTH_AUTHORIZE'] === 3) {
                 try {
                     $this->setSocial();
-                    $html = $this->getHtml('begin', '',
-                        ['isAjax' => true, 'backurl' => $backUrl, 'arResult' => $this->arResult]);
+                    $html = $this->getHtml(
+                        'begin',
+                        '',
+                        ['isAjax' => true, 'backurl' => $backUrl, 'arResult' => $this->arResult]
+                    );
 
-                    return JsonSuccessResponse::createWithData('',
-                        ['html' => $html]);
+                    return JsonSuccessResponse::createWithData(
+                        '',
+                        ['html' => $html]
+                    );
                 } catch (SystemException|LoaderException $e) {
                     $logger = LoggerFactory::create('system');
                     $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
@@ -257,8 +262,11 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             if ($_SESSION['COUNT_AUTH_AUTHORIZE'] === 3) {
                 try {
                     $this->setSocial();
-                    $html = $this->getHtml('begin', '',
-                        ['isAjax' => true, 'backurl' => $backUrl, 'arResult' => $this->arResult]);
+                    $html = $this->getHtml(
+                        'begin',
+                        '',
+                        ['isAjax' => true, 'backurl' => $backUrl, 'arResult' => $this->arResult]
+                    );
 
                     return JsonSuccessResponse::createWithData('', ['html' => $html]);
                 } catch (SystemException|LoaderException $e) {
@@ -285,13 +293,16 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
 
         unset($_SESSION['COUNT_AUTH_AUTHORIZE']);
         if ($needConfirmBasket) {
-            $html = $this->getHtml('unionBasket', 'Объединение корзины',
+            $html = $this->getHtml(
+                'unionBasket',
+                'Объединение корзины',
                 [
                     'backurl'      => $backUrl,
                     'needAddPhone' => $needWritePhone ? 'Y' : 'N',
                     'delBasketIds' => $delBasketIds,
                     'sum'          => $basketPrice,
-                ]);
+                ]
+            );
 
             return JsonSuccessResponse::createWithData('Необходимо заполнить номер телефона', ['html' => $html]);
         }
@@ -387,30 +398,45 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             );
             if (!$res) {
                 if ($_SESSION['COUNT_AUTH_CONFIRM_CODE'] === 3) {
-                    $html = $this->getHtml('sendSmsCode', 'Подтверждение телефона',
-                        ['phone' => $phone, 'backurl' => $backUrl]);
+                    $html = $this->getHtml(
+                        'sendSmsCode',
+                        'Подтверждение телефона',
+                        ['phone' => $phone, 'backurl' => $backUrl]
+                    );
 
-                    return JsonSuccessResponse::createWithData('',
-                        ['html' => $html]);
+                    return JsonSuccessResponse::createWithData(
+                        '',
+                        ['html' => $html]
+                    );
                 }
                 return $this->ajaxMess->getWrongConfirmCode();
             }
         } catch (ExpiredConfirmCodeException $e) {
             if ($_SESSION['COUNT_AUTH_CONFIRM_CODE'] === 3) {
-                $html = $this->getHtml('sendSmsCode', 'Подтверждение телефона',
-                    ['phone' => $phone, 'backurl' => $backUrl]);
+                $html = $this->getHtml(
+                    'sendSmsCode',
+                    'Подтверждение телефона',
+                    ['phone' => $phone, 'backurl' => $backUrl]
+                );
 
-                return JsonSuccessResponse::createWithData('',
-                    ['html' => $html]);
+                return JsonSuccessResponse::createWithData(
+                    '',
+                    ['html' => $html]
+                );
             }
             return $this->ajaxMess->getExpiredConfirmCodeException();
         } catch (NotFoundConfirmedCodeException $e) {
             if ($_SESSION['COUNT_AUTH_CONFIRM_CODE'] === 3) {
-                $html = $this->getHtml('sendSmsCode', 'Подтверждение телефона',
-                    ['phone' => $phone, 'backurl' => $backUrl]);
+                $html = $this->getHtml(
+                    'sendSmsCode',
+                    'Подтверждение телефона',
+                    ['phone' => $phone, 'backurl' => $backUrl]
+                );
 
-                return JsonSuccessResponse::createWithData('',
-                    ['html' => $html]);
+                return JsonSuccessResponse::createWithData(
+                    '',
+                    ['html' => $html]
+                );
             }
             return $this->ajaxMess->getNotFoundConfirmedCodeException();
         } catch (WrongPhoneNumberException $e) {
@@ -659,7 +685,8 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
             extract($params, EXTR_OVERWRITE);
         }
         ob_start();
-        if (!empty($title)) { ?>
+        if (!empty($title)) {
+            ?>
             <header class="b-registration__header">
                 <h1 class="b-title b-title--h1 b-title--registration"><?= $title ?></h1>
             </header>

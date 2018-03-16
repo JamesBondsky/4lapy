@@ -1,16 +1,15 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\CatalogBundle\Service;
 
-use Elastica\Query\Nested;
-use Elastica\Query\Term;
 use Elastica\QueryBuilder;
 use FourPaws\Catalog\Collection\FilterCollection;
 use FourPaws\Catalog\Model\Category;
-use FourPaws\Catalog\Model\Filter\CategoryFilter;
 use FourPaws\Catalog\Model\Filter\InternalFilter;
-use FourPaws\Catalog\Model\Filter\SectionFilter;
-use FourPaws\Location\LocationService;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 

@@ -13,6 +13,7 @@ use FourPaws\AppBundle\FourPawsAppBundle;
 use FourPaws\CatalogBundle\FourPawsCatalogBundle;
 use FourPaws\DeliveryBundle\FourPawsDeliveryBundle;
 use FourPaws\FoodSelectionBundle\FourPawsFoodSelectionBundle;
+use FourPaws\LocationBundle\FourPawsLocationBundle;
 use FourPaws\MobileApiBundle\FourPawsMobileApiBundle;
 use FourPaws\PersonalBundle\FourPawsPersonalBundle;
 use FourPaws\SaleBundle\FourPawsSaleBundle;
@@ -39,12 +40,12 @@ class AppKernel extends Kernel
     /**
      * Папка с конфигами сайта
      */
-    const CONFIG_DIR = '/app/config';
+    protected const CONFIG_DIR = '/app/config';
 
     /**
      * Папка с кешем symfony
      */
-    const CACHE_DIR = '/var/cache';
+    protected const CACHE_DIR = '/var/cache';
 
     /**
      * @var string
@@ -97,6 +98,7 @@ class AppKernel extends Kernel
             new FourPawsSapBundle(),
             new FourPawsPersonalBundle(),
             new FourPawsFoodSelectionBundle(),
+            new FourPawsLocationBundle(),
         ];
 
         if (\in_array($this->getEnvironment(), ['dev', 'test'], true)) {
@@ -138,7 +140,7 @@ class AppKernel extends Kernel
         if (is_dir('/home/vagrant') || is_dir('/vagrant')) {
             return '/tmp/sfcache/' . $this->getEnvironment();
         }
-    
+
         return $this->getRootDir() . static::CACHE_DIR . '/' . $this->getEnvironment();
     }
 
