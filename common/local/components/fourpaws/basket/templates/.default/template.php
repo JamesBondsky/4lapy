@@ -161,7 +161,7 @@ if ($arParams['IS_AJAX']) {
                     ?>
                 </section>
             <?php }
-            if (!$notAlowedItems->isEmpty()) { ?>
+            if ($notAlowedItems instanceof ArrayCollection && !$notAlowedItems->isEmpty()) { ?>
                 <section class="b-stock b-stock--shopping-cart b-stock--shopping-product js-section-remove-stock">
                     <h3 class="b-title b-title--h2-cart b-title--shopping-product">Под заказ</h3>
                     <?php foreach ($notAlowedItems as $basketItem) {
