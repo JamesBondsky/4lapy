@@ -98,9 +98,9 @@ class BasketQuantity extends \CCatalogCondCtrlIBlockProps
      * @param $arControl
      * @param bool $arSubs
      *
-     * @return bool|mixed|string
+     * @return string
      */
-    public static function Generate($arOneCondition, $arParams, $arControl, $arSubs = false)
+    public static function Generate($arOneCondition, $arParams, $arControl, $arSubs = false): string
     {
         $arControl = static::GetControls($arControl);
         $arLogic = static::SearchLogic($arOneCondition['logic'], $arControl['LOGIC']);

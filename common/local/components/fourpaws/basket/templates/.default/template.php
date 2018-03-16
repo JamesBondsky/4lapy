@@ -63,7 +63,8 @@ if ($arParams['IS_AJAX']) {
                     foreach ($arResult['POSSIBLE_GIFT_GROUPS'] as $group) {
                         $group = current($group);
                         $disableClass = '';
-                        if (1 > $component->basketService->getAdder()->getExistGiftsQuantity($group, false)) {
+                        /** @noinspection PhpUndefinedMethodInspection */
+                        if (1 > $component->basketService->getAdder('gift')->getExistGiftsQuantity($group, false)) {
                             $disableClass = ' b-link-gift--disabled';
                         }
                         ?>

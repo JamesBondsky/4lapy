@@ -279,6 +279,7 @@ class BasketComponent extends \CBitrixComponent
     /**
      *
      *
+     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
      * @throws \RuntimeException
      * @throws NotSupportedException
      * @throws ObjectNotFoundException
@@ -294,8 +295,9 @@ class BasketComponent extends \CBitrixComponent
                     throw new \RuntimeException('TODO');
                 }
 
+                /** @noinspection PhpUndefinedMethodInspection */
                 $this->arResult['SELECTED_GIFTS'][$group['discountId']] = $this->basketService
-                    ->getAdder()->getExistGifts($group['discountId'], true);
+                    ->getAdder('gift')->getExistGifts($group['discountId'], true);
             }
         }
     }
