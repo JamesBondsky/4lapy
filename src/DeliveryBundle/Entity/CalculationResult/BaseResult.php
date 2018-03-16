@@ -8,6 +8,7 @@ namespace FourPaws\DeliveryBundle\Entity\CalculationResult;
 
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Error;
+use Bitrix\Main\ErrorCollection;
 use Bitrix\Sale\Delivery\CalculationResult;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
@@ -640,6 +641,14 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         }
 
         /**
+         * @var string $i
+         * @var StoreCollection $storeCollection
+         */
+        foreach ($storeCollections as $i => $storeCollection) {
+            $storeCollections[$i] = $storeCollection->toArray();
+        }
+
+        /**
          * Функция сравнения складов
          * @param Store $store1
          * @param Store $store2
@@ -649,12 +658,16 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             return $store1->getId() <=> $store2->getId();
         };
 
-        return new StoreCollection(array_intersect_uassoc(...$storeCollections));
+        return new StoreCollection(array_uintersect(...$storeCollections));
     }
 
     protected function resetResult(): void
     {
         $this->deliveryDate = null;
+        $this->errors = new ErrorCollection();
+        $this->wereErrorsChecked = false;
+        $this->isSuccess = true;
+        $this->warnings = new ErrorCollection();
     }
 
     public function __clone()

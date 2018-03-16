@@ -145,11 +145,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                 if (!$fullResult->isSuccess()) {
                     continue;
                 }
-                if (!$fullResult->getStockResult()->getAvailable()->isEmpty()) {
-                    $partialResult = (clone $fullResult)->setStockResult($fullResult->getStockResult()->getAvailable());
-                } else {
-                    $partialResult = $fullResult;
-                }
+                $partialResult = (clone $fullResult)->setStockResult($fullResult->getStockResult()->getAvailable());
 
                 $metro = $store->getMetro();
                 $address = !empty($metro)
@@ -195,7 +191,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                     'phone' => $store->getPhone(),
                     'schedule' => $store->getScheduleString(),
                     'pickup' => DeliveryTimeHelper::showTime(
-                        $partialResult,
+                        $available->isEmpty() ? $fullResult : $partialResult,
                         ['SHORT' => false, 'SHOW_TIME' => $showTime]
                     ),
                     'pickup_full' => DeliveryTimeHelper::showTime(
@@ -203,7 +199,7 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                         ['SHORT' => false, 'SHOW_TIME' => $showTime]
                     ),
                     'pickup_short' => DeliveryTimeHelper::showTime(
-                        $partialResult,
+                        $available->isEmpty() ? $fullResult : $partialResult,
                         ['SHORT' => true, 'SHOW_TIME' => $showTime]
                     ),
                     'pickup_short_full' => DeliveryTimeHelper::showTime(

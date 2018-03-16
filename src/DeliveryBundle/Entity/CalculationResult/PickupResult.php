@@ -114,10 +114,6 @@ class PickupResult extends BaseResult implements PickupResultInterface
             /** @var array $shopData2 */
             $shopData2 = $storeData[$shop2->getXmlId()];
 
-            if ($shopData1['AVAILABLE_PRICE'] !== $shopData2['AVAILABLE_PRICE']) {
-                return $shopData2['AVAILABLE_PRICE'] <=> $shopData1['AVAILABLE_PRICE'];
-            }
-
             /** @var PickupResult $result1 */
             $result1 = $shopData1['RESULT'];
             /** @var PickupResult $result2 */
@@ -126,6 +122,10 @@ class PickupResult extends BaseResult implements PickupResultInterface
             /** в начало переносим магазины с доступным самовывозом */
             if ($result1->isSuccess() !== $result2->isSuccess()) {
                 return $result2->isSuccess() <=> $result1->isSuccess();
+            }
+
+            if ($shopData1['AVAILABLE_PRICE'] !== $shopData2['AVAILABLE_PRICE']) {
+                return $shopData2['AVAILABLE_PRICE'] <=> $shopData1['AVAILABLE_PRICE'];
             }
 
             $deliveryDate1 = $result1->getDeliveryDate();
