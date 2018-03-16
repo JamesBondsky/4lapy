@@ -12,7 +12,7 @@ if ($arParams['IS_AJAX']) {
 }
 $offers = $templateData['OFFERS'];
 if(\is_array($offers) && !empty($offers)){
-    $discount = $component->getCurrentUserService()->getDiscount();
+    $userDiscount = $component->getCurrentUserService()->getDiscount();
     foreach ($offers as $key => $offer) {
         if(!($offer instanceof Offer)){
             if(\is_array($offer) && !empty($offer)){
@@ -29,20 +29,8 @@ if(\is_array($offers) && !empty($offers)){
         $id = $explode[0];
         $quantity=(int)$explode[1];
         /** @var Offer $offer */
-        try {
-            $bonus = $offer->getBonuses($discount, $quantity);
-        } catch (\Exception $e) {
-            $bonus = 0;
-        }
-        if($bonus > 0){
-            $bonus = round($bonus, 2, PHP_ROUND_HALF_DOWN);
-            $ost = $bonus - floor($bonus) * 100;
-            $bonus = '+'.WordHelper::numberFormat($bonus).' '.WordHelper::declension($ost > 0 ? $ost : floor($bonus),
-                    [
-                        'бонус',
-                        'бонуса',
-                        'бонусов',
-                    ])?>
+        $bonus = $offer->getBonusFormattedText($userDiscount, $quantity);
+        if(!empty($bonus)){?>
             <script type="text/javascript">
                 $(function(){
                     $('.js-bonus-<?=$offer->getId()?>').html('<?=$bonus?>');
