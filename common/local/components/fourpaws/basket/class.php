@@ -132,9 +132,10 @@ class BasketComponent extends \CBitrixComponent
             $this->arResult['POSSIBLE_GIFT_GROUPS'] = Gift::getPossibleGiftGroups($order);
             $this->arResult['POSSIBLE_GIFTS'] = Gift::getPossibleGifts($order);
             $this->calcTemplateFields();
-            $this->loadImages();
             $this->checkSelectedGifts();
         }
+
+        $this->loadImages();
         $this->includeComponentTemplate($this->getPage());
     }
 
