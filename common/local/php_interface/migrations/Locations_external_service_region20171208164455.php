@@ -1,14 +1,17 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace Sprint\Migration;
 
 use Adv\Bitrixtools\Migration\SprintMigrationBase;
-use Bitrix\Sale\Location\ExternalTable;
 use Bitrix\Sale\Location\ExternalServiceTable;
+use Bitrix\Sale\Location\ExternalTable;
 use Bitrix\Sale\Location\LocationTable;
 use FourPaws\App\Application;
-use FourPaws\Location\LocationService;
-use FourPaws\UserBundle\Exception\RuntimeException;
+use FourPaws\LocationBundle\LocationService;
 
 class Locations_external_service_region20171208164455 extends SprintMigrationBase
 {
@@ -445,8 +448,8 @@ class Locations_external_service_region20171208164455 extends SprintMigrationBas
         [
             'NAME' => 'Байконур',
             'CODE' => '0000000328',
-            'XML_ID' => 'IR99'
-        ]
+            'XML_ID' => 'IR99',
+        ],
     ];
 
     public function up()

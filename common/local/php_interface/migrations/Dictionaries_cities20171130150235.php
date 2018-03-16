@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace Sprint\Migration;
 
 use Adv\Bitrixtools\Migration\SprintMigrationBase;
@@ -9,7 +13,7 @@ use CUtil;
 use FourPaws\App\Application;
 use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
-use FourPaws\Enum\CitiesSectionCode;
+use FourPaws\LocationBundle\Enum\CitiesSectionCode;
 use RuntimeException;
 
 class Dictionaries_cities20171130150235 extends SprintMigrationBase
@@ -45,9 +49,9 @@ class Dictionaries_cities20171130150235 extends SprintMigrationBase
             $this->logError('Ошибка при создании инфоблока ' . IblockCode::CITIES);
 
             return false;
-        } else {
-            $this->log()->info('Создан ИБ ' . IblockCode::CITIES);
         }
+        $this->log()->info('Создан ИБ ' . IblockCode::CITIES);
+        
 
         /** @var \Sprint\Migration\Helpers\IblockHelper $iblockHelper */
         $iblockHelper = $this->getHelper()->Iblock();
@@ -57,9 +61,8 @@ class Dictionaries_cities20171130150235 extends SprintMigrationBase
                 $this->logError('Ошибка при добавлении свойства ' . $code . ' в ИБ с ID=' . $iblockId);
 
                 return false;
-            } else {
-                $this->log()->info('Создано свойство ' . $code . ' в ИБ с ID=' . $iblockId);
             }
+            $this->log()->info('Создано свойство ' . $code . ' в ИБ с ID=' . $iblockId);
         }
 
         foreach ($this->sections as $code => $fields) {
@@ -67,9 +70,9 @@ class Dictionaries_cities20171130150235 extends SprintMigrationBase
                 $this->logError('Ошибка при добавлении раздела ' . $fields['NAME'] . ' в ИБ с ID=' . $iblockId);
 
                 return false;
-            } else {
-                $this->log()->info('Создан раздел ' . $fields['CODE'] . ' в ИБ с ID=' . $iblockId);
             }
+            $this->log()->info('Создан раздел ' . $fields['CODE'] . ' в ИБ с ID=' . $iblockId);
+            
 
             $this->sections[$code]['ID'] = $sectionId;
         }
@@ -133,9 +136,9 @@ class Dictionaries_cities20171130150235 extends SprintMigrationBase
             $this->logError('Ошибка при удалении инфоблока ' . IblockCode::CITIES);
 
             return false;
-        } else {
-            $this->log()->info('Удален иб ' . IblockCode::CITIES);
         }
+        $this->log()->info('Удален иб ' . IblockCode::CITIES);
+        
 
         return true;
     }
@@ -188,5 +191,4 @@ class Dictionaries_cities20171130150235 extends SprintMigrationBase
 
         $this->log()->error($message . ': ' . $errorMessage);
     }
-
 }

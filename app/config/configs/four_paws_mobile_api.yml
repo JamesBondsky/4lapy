@@ -21,7 +21,7 @@ four_paws_mobile_api:
       code: 9
       status_code: 200
       message: 'Пользователь не авторизован'
-    FourPaws\MobileApiBundle\Exception\MetroByNoneMetroCityException:
+    FourPaws\MobileApiBundle\Exception\NoneMetroInCityException:
       code: 44
       message: 'Данные о станциях метро для этого города отсутствуют'
       status_code: 200

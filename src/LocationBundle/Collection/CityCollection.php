@@ -1,9 +1,13 @@
 <?php
 
-namespace FourPaws\Location\Collection;
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
+namespace FourPaws\LocationBundle\Collection;
 
 use FourPaws\BitrixOrm\Collection\D7CollectionBase;
-use FourPaws\Location\Model\City;
+use FourPaws\LocationBundle\Model\City;
 use Generator;
 
 class CityCollection extends D7CollectionBase

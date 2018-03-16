@@ -25,7 +25,7 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
-use FourPaws\Location\LocationService;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use Psr\Log\LoggerAwareInterface;

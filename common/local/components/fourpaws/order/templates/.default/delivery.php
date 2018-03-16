@@ -5,11 +5,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use Bitrix\Sale\Basket;
 use FourPaws\App\Application;
-use FourPaws\Location\LocationService;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\CurrencyHelper;
-use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\StoreBundle\Entity\Store;
 
@@ -91,7 +91,8 @@ if ($pickup && $selectedDelivery->getDeliveryCode() === $pickup->getDeliveryCode
                           id="order-step">
                         <input type="hidden" name="shopId" class="js-no-valid" value="<?= $selectedShopCode ?>">
                         <div class="b-choice-recovery b-choice-recovery--order-step">
-                            <?php if ($delivery) { ?>
+                            <?php if ($delivery) {
+    ?>
                                 <input class="b-choice-recovery__input js-recovery-telephone js-delivery"
                                        id="order-delivery-address"
                                        type="radio"
@@ -119,8 +120,10 @@ if ($pickup && $selectedDelivery->getDeliveryCode() === $pickup->getDeliveryCode
                                         DeliveryTimeHelper::showTime($delivery, ['SHORT' => true]) ?>,
                                         <?= CurrencyHelper::formatPrice($delivery->getPrice(), false) ?>
                                 </label>
-                            <?php } ?>
-                            <?php if ($pickup) { ?>
+                            <?php
+} ?>
+                            <?php if ($pickup) {
+        ?>
                                 <?php
                                 $available = $pickup->getStockResult()->getAvailable();
                                 if (!$available->isEmpty() && $storage->isPartialGet()) {
@@ -166,21 +169,26 @@ if ($pickup && $selectedDelivery->getDeliveryCode() === $pickup->getDeliveryCode
                                         ) ?>, <?= CurrencyHelper::formatPrice($pickup->getPrice(), false) ?>
                                     </span>
                                 </label>
-                            <?php } ?>
+                            <?php
+    } ?>
                         </div>
                         <ul class="b-radio-tab js-myself-shop">
-                            <?php if ($delivery) { ?>
+                            <?php if ($delivery) {
+        ?>
                                 <li class="b-radio-tab__tab js-telephone-recovery"
                                     <?= $selectedDeliveryId !== $delivery->getDeliveryId() ? 'style="display:none"' : '' ?>>
                                     <?php include 'include/delivery.php' ?>
                                 </li>
-                            <?php } ?>
-                            <?php if ($pickup) { ?>
+                            <?php
+    } ?>
+                            <?php if ($pickup) {
+        ?>
                                 <li class="b-radio-tab__tab js-email-recovery"
                                     <?= $selectedDeliveryId !== $pickup->getDeliveryId() ? 'style="display:none"' : '' ?>>
                                     <?php include 'include/pickup.php' ?>
                                 </li>
-                            <?php } ?>
+                            <?php
+    } ?>
                         </ul>
                     </form>
                 </article>

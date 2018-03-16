@@ -68,6 +68,7 @@ class StockService implements LoggerAwareInterface
                 ->withId(__METHOD__ . '__' . $offer->getId())
                 ->withTag('catalog:stocks')
                 ->withTag('catalog:stocks:' . $offer->getId())
+                ->withTag('catalog:offer:' . $offer->getId())
                 ->resultOf($getStocks);
 
             return $data['result'];

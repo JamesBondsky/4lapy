@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\DeliveryBundle\Handler;
 
 use Bitrix\Currency\CurrencyManager;
@@ -15,7 +19,7 @@ use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\DeliveryBundle\Service\IntervalService;
-use FourPaws\Location\LocationService;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
@@ -57,14 +61,14 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
      */
     protected $intervalService;
 
-    /** @noinspection PhpDocMissingThrowsInspection */
-
     /**
      * DeliveryHandlerBase constructor.
      * @param $initParams
+     *
      * @throws \Bitrix\Main\ArgumentNullException
      * @throws \Bitrix\Main\ArgumentTypeException
      * @throws \Bitrix\Main\SystemException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
     public function __construct($initParams)
     {
@@ -83,9 +87,11 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
      *
      * @param string $locationCode
      * @param BasketBase $basket
-     * @return bool|OfferCollection
+     *
      * @throws \Bitrix\Main\ArgumentException
+     * @throws \Exception
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @return bool|OfferCollection
      */
     public static function getOffers(string $locationCode, BasketBase $basket)
     {

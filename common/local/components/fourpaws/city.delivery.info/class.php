@@ -1,4 +1,9 @@
 <?php
+
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
@@ -9,9 +14,9 @@ use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\PhoneHelper;
-use FourPaws\Location\Exception\CityNotFoundException;
-use FourPaws\Location\LocationService;
-use FourPaws\Location\Model\City;
+use FourPaws\LocationBundle\Exception\CityNotFoundException;
+use FourPaws\LocationBundle\LocationService;
+use FourPaws\LocationBundle\Model\City;
 use FourPaws\UserBundle\Service\UserCitySelectInterface;
 
 /** @noinspection AutoloadingIssuesInspection */

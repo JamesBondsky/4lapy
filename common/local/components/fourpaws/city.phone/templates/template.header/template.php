@@ -3,7 +3,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
-use FourPaws\Location\LocationService;
+use FourPaws\LocationBundle\LocationService;
 
 /**
  * @var \CBitrixComponentTemplate $this
@@ -47,4 +47,4 @@ $this->setFrameMode(true);
     <dd class="b-phone-pair__description">Для г.<?= $arResult['DEFAULT_CITY_NAME'] ?>
         . <?= $arResult['DEFAULT_WORKING_HOURS'] ?></dd>
 </dl>
-<? $frame->end() ?>
+<?php $frame->end() ?>

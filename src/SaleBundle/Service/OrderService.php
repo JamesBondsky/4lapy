@@ -31,7 +31,6 @@ use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\AppBundle\Exception\NotFoundException as AddressNotFoundException;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
-use FourPaws\SaleBundle\Exception\FastOrderCreateException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\StoreBundle\Collection\StoreCollection;
@@ -204,7 +203,6 @@ class OrderService
      * @param bool $save
      * @param bool $fastOrder
      *
-     * @throws \FourPaws\SaleBundle\Exception\FastOrderCreateException
      * @throws \Exception
      * @throws OrderCreateException
      * @throws NotFoundException
@@ -233,16 +231,8 @@ class OrderService
         }
 
         $deliveries = $this->getDeliveries($storage);
-        $selectedDelivery = null;
-        if ($fastOrder) {
-            /** устанавливаем самовывоз для быстрого заказа */
-            if (!empty($deliveries)) {
-                $selectedDelivery = current($deliveries);
-            } else {
-                throw new FastOrderCreateException('Оформление быстрого заказа невозможно, пожалуйста обратитесь к администратору или попробуйте полный процесс оформления');
-            }
-        }
-        if ($selectedDelivery === null && !empty($deliveries)) {
+        $selectedDelivery = current($deliveries);
+        if ($deliveryId = $storage->getDeliveryId()) {
             /** @var CalculationResultInterface $delivery */
             foreach ($deliveries as $delivery) {
                 if ($storage->getDeliveryId() === $delivery->getDeliveryId()) {
@@ -257,6 +247,10 @@ class OrderService
                     break;
                 }
             }
+        }
+
+        if (!$selectedDelivery) {
+            throw new OrderCreateException('Нет доступных доставок');
         }
 
         /**
