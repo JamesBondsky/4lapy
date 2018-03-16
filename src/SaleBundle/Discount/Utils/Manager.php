@@ -29,9 +29,6 @@ class Manager
      *
      * @param Event|null $event
      *
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
-     * @throws \Bitrix\Main\LoaderException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
      * @throws \RuntimeException
@@ -42,7 +39,7 @@ class Manager
      * @throws \Bitrix\Main\ObjectNotFoundException
      * @throws \Bitrix\Main\NotSupportedException
      */
-    public static function OnAfterSaleOrderFinalAction(Event $event = null)
+    public static function OnAfterSaleOrderFinalAction(Event $event = null): void
     {
         static $execution;
         if (!$execution && self::$finalActionEnabled) {

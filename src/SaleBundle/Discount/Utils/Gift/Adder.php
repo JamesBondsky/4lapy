@@ -9,42 +9,20 @@
 
 namespace FourPaws\SaleBundle\Discount\Utils\Gift;
 
-use Bitrix\Sale\Order;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Utils\AdderInterface;
+use FourPaws\SaleBundle\Discount\Utils\BaseDiscountPostHandler;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Exception\NotFoundException;
-use FourPaws\SaleBundle\Service\BasketService;
 
 /**
  * Class Adder
  * @package FourPaws\SaleBundle\Discount\Utils
  */
-class Adder implements AdderInterface
+class Adder extends BaseDiscountPostHandler implements AdderInterface
 {
-    /**
-     * @var Order
-     */
-    protected $order;
-    /**
-     * @var BasketService
-     */
-    protected $basketService;
-
-    /**
-     * Adder constructor.
-     *
-     * @param Order $order
-     * @param BasketService $basketService
-     */
-    public function __construct(Order $order, BasketService $basketService)
-    {
-        $this->order = $order;
-        $this->basketService = $basketService;
-    }
-
     /**
      *
      *

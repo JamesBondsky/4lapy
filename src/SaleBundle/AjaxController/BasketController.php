@@ -196,6 +196,7 @@ class BasketController extends Controller
      *
      * @param Request $request
      *
+     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
      * @throws \RuntimeException
      * @throws \Bitrix\Main\ObjectNotFoundException
      * @throws \Bitrix\Main\NotSupportedException
@@ -242,7 +243,8 @@ class BasketController extends Controller
                 ];
 
             }
-            $unselectedCount = $this->basketService->getAdder()->getExistGiftsQuantity($giftGroup, false);
+            /** @noinspection PhpUndefinedMethodInspection */
+            $unselectedCount = $this->basketService->getAdder('gift')->getExistGiftsQuantity($giftGroup, false);
             $giftDeclension = new Declension('подарок', 'подарка', 'подарков');
             $data = [
                 'count' => $unselectedCount,
@@ -266,12 +268,8 @@ class BasketController extends Controller
      *
      * @param Request $request
      *
-     * @throws \RuntimeException
-     * @throws \Bitrix\Main\LoaderException
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
      * @throws \Bitrix\Main\NotSupportedException
      * @throws \Bitrix\Main\ObjectNotFoundException
-     * @throws \Exception
      *
      * @return JsonErrorResponse|JsonResponse
      */
@@ -280,7 +278,8 @@ class BasketController extends Controller
         $offerId = (int)$request->get('offerId', 0);
         $discountId = (int)$request->get('actionId', 0);
         try {
-            $this->basketService->getAdder()->selectGift($offerId, $discountId);
+            /** @noinspection PhpUndefinedMethodInspection */
+            $this->basketService->getAdder('gift')->selectGift($offerId, $discountId);
         } catch (BaseExceptionInterface $e) {
             $response = JsonErrorResponse::create(
                 $e->getMessage(),
@@ -322,7 +321,8 @@ class BasketController extends Controller
 
         /** @noinspection BadExceptionsProcessingInspection */
         try {
-            $gift = $this->basketService->getAdder()->getExistGifts(null, true);
+            /** @noinspection PhpUndefinedMethodInspection */
+            $gift = $this->basketService->getAdder('gift')->getExistGifts(null, true);
             if(!isset($gift[$giftBasketId])) {
                 throw new NotFoundException('Подарок не найден');
             }

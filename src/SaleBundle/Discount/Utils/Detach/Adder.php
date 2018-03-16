@@ -9,42 +9,92 @@
 
 namespace FourPaws\SaleBundle\Discount\Utils\Detach;
 
-
-use Bitrix\Sale\Order;
+use Bitrix\Sale\BasketItem;
 use FourPaws\SaleBundle\Discount\Utils\AdderInterface;
-use FourPaws\SaleBundle\Service\BasketService;
+use FourPaws\SaleBundle\Discount\Utils\BaseDiscountPostHandler;
+use FourPaws\SaleBundle\Exception\RuntimeException;
 
 /**
  * Class Adder
  * @package FourPaws\SaleBundle\Discount\Utils\Detach
  */
-class Adder implements AdderInterface
+class Adder extends BaseDiscountPostHandler implements AdderInterface
 {
     /**
-     * @var Order
-     */
-    protected $order;
-    /**
-     * @var BasketService
-     */
-    protected $basketService;
-
-    /**
-     * Adder constructor.
      *
-     * @param Order $order
-     * @param BasketService $basketService
+     *
+     * @throws \FourPaws\SaleBundle\Exception\RuntimeException
+     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
+     * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Exception
      */
-    public function __construct(Order $order, BasketService $basketService)
-    {
-        $this->order = $order;
-        $this->basketService = $basketService;
-    }
     public function processOrder(): void
     {
+        /**
+         * 1. количества и свойства
+         * 2. PRICE и DISCOUNT_PRICE
+         */
+        //todo Вероятно стоит сначала целиком разобрать резалт, а потом действовать
         if (!$discount = $this->order->getDiscount()) {
             return;
         }
-        dump($discount->getApplyResult());
+        $applyResult = $discount->getApplyResult(true);
+        if (is_iterable($applyResult['RESULT']['BASKET'])) {
+            foreach ($applyResult['RESULT']['BASKET'] as $basketId => $discounts) {
+                if (is_iterable($discounts)) {
+                    foreach ($discounts as $discount) {
+                        if (
+                            ($params = json_decode($discount['DESCR'], true))
+                            && \is_array($params)
+                            && isset($params['discountType'])
+                            && $params['discountType'] === 'DETACH'
+                        ) {
+
+                            $applyCount = (int)$params['params']['apply_count'];
+                            $percent = (int)$params['params']['discount_value'];
+                            /** @var BasketItem $basketItem */
+                            if ($applyCount && null !== $basketItem = $this->order->getBasket()->getItemById($basketId)) {
+                                if ((int)$basketItem->getQuantity() > $applyCount) {
+                                    //Детачим
+                                    $basketItem->setField('QUANTITY', $basketItem->getQuantity() - $applyCount);
+                                    $fields = [
+                                        'PRICE' => $price = (100 - $percent) * $basketItem->getPrice() / 100,
+                                        'DISCOUNT_PRICE' => $basketItem->getBasePrice() - $price,
+                                        'CUSTOM_PRICE' => 'Y', //надо как-то по-другому сделать
+                                        'PROPS' => [
+                                            [
+                                                'NAME' => 'DETACH',
+                                                'CODE' => 'DETACH',
+                                                'VALUE' => $applyResult['DISCOUNT_LIST'][$discount['DISCOUNT_ID']]['REAL_DISCOUNT_ID'],
+                                                'SORT' => 100,
+                                            ],
+                                        ]
+                                    ];
+                                    $this->basketService->addOfferToBasket(
+                                        $basketItem->getProductId(),
+                                        $applyCount,
+                                        $fields,
+                                        false
+                                    );
+                                } elseif ((int)$basketItem->getQuantity() === (int)$params['params']['apply_count']) {
+                                    //Просто проставляем поля
+                                    $basketItem->setFields([
+                                        'PRICE' => $price = (100 - $percent) * $basketItem->getPrice() / 100,
+                                        'DISCOUNT_PRICE' => $basketItem->getBasePrice() - $price,
+                                        'CUSTOM_PRICE' => 'Y',
+                                    ]);
+                                } else {
+                                    // todo ситуация может возникать когда на одну позицию действует несколько детач акций, пока опустим этот момент
+                                    throw new RuntimeException('TODO');
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }

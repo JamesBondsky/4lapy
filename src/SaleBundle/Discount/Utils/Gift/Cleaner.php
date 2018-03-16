@@ -9,40 +9,18 @@
 
 namespace FourPaws\SaleBundle\Discount\Utils\Gift;
 
-use Bitrix\Sale\Order;
 use FourPaws\SaleBundle\Discount\Gift;
+use FourPaws\SaleBundle\Discount\Utils\BaseDiscountPostHandler;
 use FourPaws\SaleBundle\Discount\Utils\CleanerInterface;
 use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Exception\NotFoundException;
-use FourPaws\SaleBundle\Service\BasketService;
 
 /**
  * Class Cleaner
  * @package FourPaws\SaleBundle\Discount\Utils
  */
-class Cleaner implements CleanerInterface
+class Cleaner extends BaseDiscountPostHandler implements CleanerInterface
 {
-    /**
-     * @var Order
-     */
-    protected $order;
-    /**
-     * @var BasketService
-     */
-    protected $basketService;
-
-    /**
-     * Cleaner constructor.
-     *
-     * @param Order $order
-     * @param BasketService $basketService
-     */
-    public function __construct(Order $order, BasketService $basketService)
-    {
-        $this->order = $order;
-        $this->basketService = $basketService;
-    }
-
     /**
      *
      *

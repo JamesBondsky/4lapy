@@ -71,19 +71,23 @@ class BasketService
      * @param int $offerId
      * @param int|null $quantity
      * @param array $rewriteFields
+     * @param bool $save
      *
-     * @throws InvalidArgumentException
      * @throws BitrixProxyException
      * @throws \Bitrix\Main\LoaderException
      * @throws \Bitrix\Main\ObjectNotFoundException
      * @return bool
      */
-    public function addOfferToBasket(int $offerId, int $quantity = null, array $rewriteFields = []): bool
-    {
+    public function addOfferToBasket(
+        int $offerId,
+        int $quantity = null,
+        array $rewriteFields = [],
+        bool $save = true
+    ): bool {
         if ($quantity < 0) {
             throw new InvalidArgumentException('Wrong $quantity');
         }
-        if ($offerId < 1 || null === $quantity) {
+        if ($offerId < 1) {
             throw new InvalidArgumentException('Wrong $offerId');
         }
         if (!$quantity) {
@@ -114,7 +118,9 @@ class BasketService
         if (!$result->isSuccess()) {
             throw new BitrixProxyException($result);
         }
-        $this->getBasket()->save();
+        if ($save) {
+            $this->getBasket()->save();
+        }
 
         return true;
     }

@@ -13,6 +13,7 @@ namespace FourPaws\SaleBundle\Discount\Action\Action;
 use Bitrix\Sale\Discount\Actions;
 use Bitrix\Sale\OrderDiscountManager;
 use CSaleActionCtrlAction;
+use FourPaws\SaleBundle\Discount\Utils\SortByKeyTrait;
 use FourPaws\SaleBundle\Discount\Utils\ValidateAtoms;
 
 /**
@@ -22,6 +23,7 @@ use FourPaws\SaleBundle\Discount\Utils\ValidateAtoms;
 class DetachedRowDiscount extends CSaleActionCtrlAction
 {
     use ValidateAtoms;
+    use SortByKeyTrait;
 
     /**
      *
@@ -237,7 +239,7 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
             $result = '$originalOrder = ' . $arParams['ORDER'] . ';' . PHP_EOL;
             $result .= '$applyCount = ' . current($arSubs) . PHP_EOL;
             $result .= static::class . '::apply(' . $arParams['ORDER'] . ', ';
-            $result .= var_export($arOneCondition['Value'],true) . ',$applyCount);'. PHP_EOL;
+            $result .= var_export($arOneCondition['Value'], true) . ',$applyCount);' . PHP_EOL;
             $result .= $arParams['ORDER'] . ' = $originalOrder;' . PHP_EOL;
         }
         return $result;
@@ -259,7 +261,10 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
 
             $actionDescription = [
                 'ACTION_TYPE' => OrderDiscountManager::DESCR_TYPE_SIMPLE,
-                'ACTION_DESCRIPTION' => json_encode(['discountType' => 'DETACH', 'params' => ['discount_value' => $discountValue, 'apply_count' => $applyCount]]),
+                'ACTION_DESCRIPTION' => json_encode([
+                    'discountType' => 'DETACH',
+                    'params' => ['discount_value' => $discountValue, 'apply_count' => $applyCount]
+                ]),
             ];
             Actions::increaseApplyCounter();
             Actions::setActionDescription(Actions::RESULT_ENTITY_BASKET, $actionDescription);
@@ -271,11 +276,28 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
         if (!$applyBasket || !$actionDescription) {
             return;
         }
-
+        self::sortByKey($applyBasket, 'PRICE');
         foreach ($applyBasket as $basketCode => $basketRow) {
-            $rowActionDescription = $actionDescription;
-            $rowActionDescription['BASKET_CODE'] = $basketRow['ID'];
+            $quantity = (int)$basketRow['QUANTITY'];
+            if ($quantity > $applyCount) {
+                $detachQuantity = $applyCount;
+                $applyCount = 0;
+            } else {
+                $detachQuantity = $quantity;
+                $applyCount -= $quantity;
+            }
+            $rowActionDescription = [
+                'ACTION_TYPE' => OrderDiscountManager::DESCR_TYPE_SIMPLE,
+                'ACTION_DESCRIPTION' => json_encode([
+                    'discountType' => 'DETACH',
+                    'params' => ['discount_value' => $discountValue, 'apply_count' => $detachQuantity]
+                ]),
+                'BASKET_CODE' => $basketRow['ID'],
+            ];
             Actions::setActionResult(Actions::RESULT_ENTITY_BASKET, $rowActionDescription);
+            if($applyCount < 1) {
+                break;
+            }
         }
     }
 }

@@ -280,7 +280,6 @@ class Gift extends \CSaleActionGiftCtrlGroup
             foreach ($applyResult['DISCOUNT_LIST'] as $discount) {
                 if (
                     ($data = json_decode($discount['ACTIONS_DESCR']['BASKET'], true))
-                    //&& \is_iterable($data)
                     && \is_array($data)
                     && isset($data['discountType'])
                     && $data['discountType'] === 'GIFT'

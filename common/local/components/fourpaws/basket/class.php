@@ -144,7 +144,6 @@ class BasketComponent extends \CBitrixComponent
                 return $item;
             }
         }
-        return null;
     }
 
     /**
@@ -161,6 +160,7 @@ class BasketComponent extends \CBitrixComponent
     /**
      *
      *
+     * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
      * @throws \RuntimeException
      * @throws \Bitrix\Main\NotSupportedException
      * @throws \Bitrix\Main\ObjectNotFoundException
@@ -176,8 +176,9 @@ class BasketComponent extends \CBitrixComponent
                     throw new \RuntimeException('TODO');
                 }
 
+                /** @noinspection PhpUndefinedMethodInspection */
                 $this->arResult['SELECTED_GIFTS'][$group['discountId']] = $this->basketService
-                    ->getAdder()->getExistGifts($group['discountId'], true);
+                    ->getAdder('gift')->getExistGifts($group['discountId'], true);
             }
         }
     }
