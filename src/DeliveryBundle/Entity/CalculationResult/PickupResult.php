@@ -86,7 +86,8 @@ class PickupResult extends BaseResult implements PickupResultInterface
         $storeData = [];
         /** @var Store $shop */
         foreach ($shops as $shop) {
-            $tmpPickup = (clone $this)->setStockResult($this->getStockResult()->filterByStore($shop));
+            $tmpPickup = (clone $this)->setSelectedStore($shop)
+                ->setStockResult($this->getStockResult()->filterByStore($shop));
             $storeData[$shop->getXmlId()] = [
                 'RESULT' => $tmpPickup,
                 'AVAILABLE_PRICE' => $tmpPickup->getStockResult()->getAvailable()->getPrice()
@@ -114,28 +115,27 @@ class PickupResult extends BaseResult implements PickupResultInterface
             $shopData2 = $storeData[$shop2->getXmlId()];
 
             if ($shopData1['AVAILABLE_PRICE'] !== $shopData2['AVAILABLE_PRICE']) {
-                return ($shopData1['AVAILABLE_PRICE'] > $shopData2['AVAILABLE_PRICE']) ? -1 : 1;
+                return $shopData2['AVAILABLE_PRICE'] <=> $shopData1['AVAILABLE_PRICE'];
             }
 
             /** @var PickupResult $result1 */
             $result1 = $shopData1['RESULT'];
             /** @var PickupResult $result2 */
-            $result2 = $shopData1['RESULT'];
+            $result2 = $shopData2['RESULT'];
 
             /** в начало переносим магазины с доступным самовывозом */
             if ($result1->isSuccess() !== $result2->isSuccess()) {
-                return $result1->isSuccess() > $result2->isSuccess() ? -1 : 1;
+                return $result2->isSuccess() <=> $result1->isSuccess();
             }
 
             $deliveryDate1 = $result1->getDeliveryDate();
             $deliveryDate2 = $result2->getDeliveryDate();
 
-
             if ($deliveryDate1 !== $deliveryDate2) {
-                return ($deliveryDate1 > $deliveryDate2) ? 1 : -1;
+                return $deliveryDate1 <=> $deliveryDate2;
             }
 
-            return $shop1->getAddress() > $shop2->getAddress() ? 1 : -1;
+            return $shop1->getAddress() <=> $shop2->getAddress();
         };
 
         $iterator = $shops->getIterator();
