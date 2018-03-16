@@ -14,6 +14,9 @@ use FourPaws\SapBundle\Subscriber\BitrixEvents;
 use FourPaws\Search\EventHandlers as SearchEventHandlers;
 use FourPaws\UserBundle\EventController\Event as UserEvent;
 use FourPaws\UserProps\Event as UserPropLocationEvent;
+use Generator;
+use ReflectionException;
+use RuntimeException;
 
 /**
  * Class EventInitializer
@@ -25,10 +28,10 @@ use FourPaws\UserProps\Event as UserPropLocationEvent;
 final class EventInitializer
 {
     const SERVICE_HANDLER_CLASSES = [
-        DeliveryEvent::class,
         IblockPropsEvent::class,
         ProductAutoSortEvent::class,
         SaleEvent::class,
+        DeliveryEvent::class,
         SapEvent::class,
         SearchEventHandlers::class,
         UserEvent::class,
@@ -41,10 +44,10 @@ final class EventInitializer
     /**
      * Исполняем хендлеры
      *
-     * @param \Bitrix\Main\EventManager $eventManager
+     * @param EventManager $eventManager
      *
-     * @throws \RuntimeException
-     * @throws \ReflectionException
+     * @throws RuntimeException
+     * @throws ReflectionException
      */
     public function __invoke(EventManager $eventManager)
     {
@@ -54,17 +57,17 @@ final class EventInitializer
     }
 
     /**
-     * @throws \ReflectionException
-     * @throws \RuntimeException
-     * @return \Generator
+     * @throws ReflectionException
+     * @throws RuntimeException
+     * @return Generator
      */
-    private function getServiceHandlerClassList()
+    private function getServiceHandlerClassList(): Generator
     {
         foreach (self::SERVICE_HANDLER_CLASSES as $serviceHandlerClass) {
             $interfaces = (new \ReflectionClass($serviceHandlerClass))->getInterfaceNames();
 
             if (!\in_array(ServiceHandlerInterface::class, $interfaces, true)) {
-                throw new \RuntimeException('Handler class must be an instance of ServiceHandlerInterface');
+                throw new RuntimeException('Handler class must be an instance of ServiceHandlerInterface');
             }
 
             yield $serviceHandlerClass;
