@@ -318,15 +318,17 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 try {
                     $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
                     $confirmService::setGeneratedCode('confirm_'.$regUser->getId(), 'confirm_register');
-                    $uri = new Uri(Application::getInstance()->getContext()->getRequest()->getRequestedPage());
+                    $uri = new Uri('/personal/register/');
                     $uri->addParams([
                         'user_id' => $regUser->getId(),
+                        'backurl' => $data['backurl'],
                         'code'    => $confirmService::getGeneratedCode('confirm_register'),
                     ]);
 
                     return JsonSuccessResponse::create(
                         '',
                         200,
+                        [],
                         ['redirect' => $uri->getUri()]
                     );
                 } catch (\Exception $e) {

@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace FourPaws\SaleBundle\Service;
 
 use Adv\Bitrixtools\Tools\BitrixUtils;
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Catalog\Product\CatalogProvider;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
@@ -406,49 +407,25 @@ class BasketService
     }
 
     /**
-     * @param Offer $offer
-     * @param int $quantity
-     *
-     * @return float
-     * @throws InvalidIdentifierException
-     * @throws ConstraintDefinitionException
-     */
-    public function getItemBonus(Offer $offer, int $quantity = 1): float
-    {
-        //todo Remove multiple return statements usage https://github.com/kalessil/phpinspectionsea/blob/master/docs/architecture.md#multiple-return-statements-usage
-        try {
-            $cardNumber = $this->currentUserProvider->getCurrentUser()->getDiscountCardNumber();
-            if (!empty($cardNumber)) {
-                $cheque = $this->manzanaPosService->processChequeWithoutBonus(
-                    $this->manzanaPosService->buildRequestFromItem(
-                        $offer,
-                        $cardNumber,
-                        $quantity
-                    )
-                );
-
-                return $cheque->getChargedBonus();
-            }
-        } catch (NotAuthorizedException $e) {
-            /** Возвращаеи 0 в случае ошибки */
-        } catch (ExecuteException $e) {
-            /** Возвращаеи 0 в случае ошибки */
-        }
-        return 0.0;
-    }
-
-    /**
      * @return float
      */
     public function getBasketBonus(): float
     {
         //todo Remove multiple return statements usage https://github.com/kalessil/phpinspectionsea/blob/master/docs/architecture.md#multiple-return-statements-usage
         try {
-            $cardNumber = $this->currentUserProvider->getActiveCard();
+            try {
+                $cardNumber = $this->currentUserProvider->getCurrentUser()->getDiscountCardNumber();
+            } catch (NotAuthorizedException $e){
+                /** запрашиваем без карты */
+            } catch (InvalidIdentifierException|ConstraintDefinitionException $e){
+                $logger = LoggerFactory::create('params');
+                $logger->error($e->getMessage());
+                /** запрашиваем без карты */
+            }
             $cheque = $this->manzanaPosService->processChequeWithoutBonus(
                 $this->manzanaPosService->buildRequestFromBasket(
                     $this->getBasket(),
-                    $cardNumber
+                    $cardNumber ?? ''
                 )
             );
 

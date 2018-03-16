@@ -1,5 +1,6 @@
 <?php
 /** @var BasketItem $basketItem */
+/** @var float $user_discount */
 
 /** @global \FourPaws\Components\BasketComponent $component */
 
@@ -10,58 +11,56 @@ use FourPaws\Helpers\WordHelper;
 
 $image = $component->getImage($basketItem->getProductId());
 $offer = $component->getOffer((int)$basketItem->getProductId());
+$templateData['OFFERS'][$offer->getId().'_'.$basketItem->getQuantity()] = $offer;
 $useOffer = $offer instanceof Offer && $offer->getId() > 0; ?>
 <div class="b-item-shopping js-remove-shopping">
     <div class="b-common-item b-common-item--shopping-cart b-common-item--shopping">
-        <span class="b-common-item__image-wrap b-common-item__image-wrap--shopping-cart">
-            <?php if (null !== $image) { ?>
-                <img class="b-common-item__image b-common-item__image--shopping-cart"
-                     src="<?= $image; ?>"
-                     alt="<?= $basketItem->getField('NAME') ?>" title=""/>
-            <?php } ?>
-        </span>
+    <span class="b-common-item__image-wrap b-common-item__image-wrap--shopping-cart">
+        <?php if (null !== $image) { ?>
+            <img class="b-common-item__image b-common-item__image--shopping-cart"
+                 src="<?= $image; ?>"
+                 alt="<?= $basketItem->getField('NAME') ?>" title=""/>
+        <?php } ?>
+    </span>
         <div class="b-common-item__info-center-block b-common-item__info-center-block--shopping-cart b-common-item__info-center-block--shopping">
             <a class="b-common-item__description-wrap b-common-item__description-wrap--shopping"
                href="<?= $basketItem->getField('DETAIL_PAGE_URL'); ?>" title="">
-                <span class="b-clipped-text b-clipped-text--shopping-cart">
-                    <span>
-                        <?php if ($useOffer) { ?>
-                            <strong><?= $offer->getProduct()->getBrandName() ?>  </strong>
-                        <?php } ?>
-                        <?= $basketItem->getField('NAME') ?>
-                    </span>
+            <span class="b-clipped-text b-clipped-text--shopping-cart">
+                <span>
+                    <?php if ($useOffer) { ?>
+                        <strong><?= $offer->getProduct()->getBrandName() ?>  </strong>
+                    <?php } ?>
+                    <?= $basketItem->getField('NAME') ?>
                 </span>
+            </span>
                 <span class="b-common-item__variant b-common-item__variant--shopping-cart b-common-item__variant--shopping">
-                     <span class="b-common-item__name-value">Вес: </span>
-                     <span><?= WordHelper::showWeight($basketItem->getWeight(), true) ?></span>
-                </span>
+                 <span class="b-common-item__name-value">Вес: </span>
+                 <span><?= WordHelper::showWeight($basketItem->getWeight(), true) ?></span>
+            </span>
                 <?php if ($useOffer) {
                     $color = $offer->getColor();
                     if ($color !== null) { ?>
                         <span class="b-common-item__variant b-common-item__variant--shopping-cart b-common-item__variant--shopping">
-                            <span class="b-common-item__name-value">Цвет: </span>
-                            <span><?= $color->getName() ?></span>
-                        </span>
+                        <span class="b-common-item__name-value">Цвет: </span>
+                        <span><?= $color->getName() ?></span>
+                    </span>
                     <?php }
                     $article = $offer->getXmlId();
                     if (!empty($article)) { ?>
                         <span class="b-common-item__variant b-common-item__variant--shopping-cart b-common-item__variant--shopping">
-                            <span class="b-common-item__name-value">Артикул: </span>
-                            <span class="b-common-item__name-value b-common-item__name-value--shopping-mobile">, Арт. </span><span><?= $article ?></span>
-                        </span>
+                        <span class="b-common-item__name-value">Артикул: </span>
+                        <span class="b-common-item__name-value b-common-item__name-value--shopping-mobile">, Арт. </span><span><?= $article ?></span>
+                    </span>
                     <?php }
                 } ?>
             </a>
-            <?php if ($useOffer && $offer->getQuantity() > 0) {
-                $bonus = $component->getItemBonus($offer);
-                if ($bonus > 0) {
-                    $bonus = floor($bonus); ?>
-                    <span class="b-common-item__rank-text b-common-item__rank-text--red b-common-item__rank-text--shopping">+ <?= WordHelper::numberFormat($bonus,
-                            0) ?>
-                        <?= WordHelper::declension($bonus,
-                            ['бонус', 'бонуса', 'бонусов']) ?> </span>
-                <?php }
-            } ?>
+            <?php if ($useOffer && $offer->getQuantity() > 0 && !$offer->isByRequest()) { ?>
+                <span class="b-common-item__rank-text b-common-item__rank-text--red b-common-item__rank-text--shopping js-bonus-<?=$offer->getId()?>">
+                    <?php if ($arParams['IS_AJAX']) {
+                        echo $offer->getBonusFormattedText($user_discount, $basketItem->getQuantity());
+                    } ?>
+                </span>
+            <?php } ?>
         </div>
     </div>
     <div class="b-item-shopping__operation<?= $offer->getQuantity() > 0 ? ' b-item-shopping__operation--not-available' : '' ?>">
@@ -99,15 +98,15 @@ $useOffer = $offer instanceof Offer && $offer->getId() > 0; ?>
                 </select>
             </div>
             <div class="b-price">
-                <span class="b-price__current"><?= WordHelper::numberFormat($basketItem->getPrice()
-                        * $basketItem->getQuantity()) ?>  </span>
+            <span class="b-price__current"><?= WordHelper::numberFormat($basketItem->getPrice()
+                    * $basketItem->getQuantity()) ?>  </span>
                 <span class="b-ruble">₽</span>
                 <?php if ($basketItem->getDiscountPrice() > 0) { ?>
                     <span class="b-old-price b-old-price--crossed-out">
-                        <span class="b-old-price__old"><?= WordHelper::numberFormat($basketItem->getBasePrice()
-                                * $basketItem->getQuantity()) ?>  </span>
-                        <span class="b-ruble b-ruble--old-weight-price">₽</span>
-                    </span>
+                    <span class="b-old-price__old"><?= WordHelper::numberFormat($basketItem->getBasePrice()
+                            * $basketItem->getQuantity()) ?>  </span>
+                    <span class="b-ruble b-ruble--old-weight-price">₽</span>
+                </span>
                 <?php } ?>
             </div>
         <?php } else { ?>
@@ -117,15 +116,16 @@ $useOffer = $offer instanceof Offer && $offer->getId() > 0; ?>
         <?php } ?>
         <a class="b-item-shopping__delete js-cart-delete-item" href="javascript:void(0);" title=""
            data-url="/ajax/sale/basket/delete/" data-basketId="<?= $basketItem->getId(); ?>">
-            <span class="b-icon b-icon--delete b-icon--shopping">
-                <?= new SvgDecorator('icon-delete-cart-product', 12, 14); ?>
-            </span>
+        <span class="b-icon b-icon--delete b-icon--shopping">
+            <?= new SvgDecorator('icon-delete-cart-product', 12, 14); ?>
+        </span>
         </a>
-        <?php if($offer->isByRequest() && !empty($arResult['OFFER_MIN_DELIVERY'][$basketItem->getProductId()])){
-            /** @todo пока берем ближайшую доставку из быстрого заказа */?>
+        <?php if ($offer->isByRequest() && !empty($arResult['OFFER_MIN_DELIVERY'][$basketItem->getProductId()])) {
+            /** @todo пока берем ближайшую доставку из быстрого заказа */ ?>
             <div class="b-item-shopping__sale-info b-item-shopping__sale-info--width">
-                Предварительная дата доставки: <span><?=$arResult['OFFER_MIN_DELIVERY'][$basketItem->getProductId()]?></span>
+                Предварительная дата доставки:
+                <span><?= $arResult['OFFER_MIN_DELIVERY'][$basketItem->getProductId()] ?></span>
             </div>
-        <?}?>
+        <?php } ?>
     </div>
 </div>

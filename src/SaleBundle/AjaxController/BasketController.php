@@ -63,7 +63,7 @@ class BasketController extends Controller
     public function addAction(Request $request): JsonResponse
     {
         $offerId = (int)$request->get('offerId', 0);
-        if($offerId === 0){
+        if ($offerId === 0) {
             $offerId = (int)$request->get('offerid', 0);
         }
         $quantity = (int)$request->get('quantity', 1);
@@ -111,9 +111,9 @@ class BasketController extends Controller
         try {
             $this->basketService->deleteOfferFromBasket($basketId);
             $data = [
-                'basket' => $this->basketViewService->getBasketHtml(),
+                'basket'     => $this->basketViewService->getBasketHtml(true),
                 'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
-                'fastOrder' => $this->basketViewService->getFastOrderHtml()
+                'fastOrder' => $this->basketViewService->getFastOrderHtml(true)
             ];
             $response = JsonSuccessResponse::createWithData(
                 '',
@@ -152,6 +152,10 @@ class BasketController extends Controller
     public function updateAction(Request $request)
     {
         $items = $request->get('items', []);
+        /** fix для быстрого заказа */
+        if (empty($items)) {
+            $items[] = ['basketId' => $request->get('basketId'), 'quantity' => $request->get('quantity')];
+        }
 
         /** @noinspection BadExceptionsProcessingInspection */
         try {
@@ -168,9 +172,9 @@ class BasketController extends Controller
                 $this->basketService->updateBasketQuantity((int)$item['basketId'], (int)$item['quantity']);
             }
             $data = [
-                'basket' => $this->basketViewService->getBasketHtml(),
+                'basket'     => $this->basketViewService->getBasketHtml(true),
                 'miniBasket' => $this->basketViewService->getMiniBasketHtml(true),
-                'fastOrder' => $this->basketViewService->getFastOrderHtml()
+                'fastOrder'  => $this->basketViewService->getFastOrderHtml(true),
             ];
 
             $response = JsonSuccessResponse::createWithData(
@@ -268,12 +272,17 @@ class BasketController extends Controller
      *
      * @param Request $request
      *
+     * @throws \RuntimeException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
      * @throws \Bitrix\Main\NotSupportedException
      * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws \Exception
      *
      * @return JsonErrorResponse|JsonResponse
      */
-    public function selectGiftAction(Request $request) {
+    public function selectGiftAction(Request $request)
+    {
         $response = null;
         $offerId = (int)$request->get('offerId', 0);
         $discountId = (int)$request->get('actionId', 0);
@@ -288,7 +297,7 @@ class BasketController extends Controller
                 ['reload' => true]
             );
         }
-        if(null === $response) {
+        if (null === $response) {
             $response = JsonSuccessResponse::createWithData(
                 '',
                 [
@@ -315,7 +324,8 @@ class BasketController extends Controller
      *
      * @return JsonErrorResponse|JsonResponse
      */
-    public function refuseGiftAction(Request $request) {
+    public function refuseGiftAction(Request $request)
+    {
         $response = null;
         $giftBasketId = (int)$request->get('giftId', 0);
 
@@ -327,7 +337,7 @@ class BasketController extends Controller
                 throw new NotFoundException('Подарок не найден');
             }
             $gift = $gift[$giftBasketId];
-            if($gift['quantity'] === 1) {
+            if ($gift['quantity'] === 1) {
                 $this->basketService->deleteOfferFromBasket($giftBasketId);
             } else {
                 $this->basketService->updateBasketQuantity($giftBasketId, $gift['quantity'] - 1);
@@ -340,7 +350,7 @@ class BasketController extends Controller
                 ['reload' => true]
             );
         }
-        if(null === $response) {
+        if (null === $response) {
             $response = JsonSuccessResponse::createWithData(
                 '',
                 [

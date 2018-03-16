@@ -4,13 +4,21 @@
  * @copyright Copyright (c) ADV/web-engineering co
  */
 
-namespace FourPaws\DeliveryBundle;
+namespace FourPaws\DeliveryBundle\EventController;
 
 use Bitrix\Main\EventManager;
 use Bitrix\Main\EventResult;
 use FourPaws\App\ServiceHandlerInterface;
+use FourPaws\DeliveryBundle\Handler\InnerDeliveryHandler;
+use FourPaws\DeliveryBundle\Handler\InnerPickupHandler;
 use FourPaws\DeliveryBundle\InputTypes\DeliveryInterval;
+use FourPaws\DeliveryBundle\Restrictions\LocationExceptRestriction;
 
+/**
+ * Class Event
+ *
+ * @package FourPaws\DeliveryBundle
+ */
 class Event implements ServiceHandlerInterface
 {
     /**
@@ -21,32 +29,32 @@ class Event implements ServiceHandlerInterface
         $eventManager->addEventHandler(
             'sale',
             'onSaleDeliveryHandlersClassNamesBuildList',
-            [__CLASS__, 'addCustomDeliveryServices']
+            [self::class, 'addCustomDeliveryServices']
         );
 
         $eventManager->addEventHandler(
             'sale',
             'onSaleDeliveryRestrictionsClassNamesBuildList',
-            [__CLASS__, 'addCustomRestrictions']
+            [self::class, 'addCustomRestrictions']
         );
 
         $eventManager->addEventHandler(
             'sale',
             'registerInputTypes',
-            [__CLASS__, 'addCustomTypes']
+            [self::class, 'addCustomTypes']
         );
     }
 
     /**
      * @return EventResult
      */
-    public static function addCustomDeliveryServices()
+    public static function addCustomDeliveryServices(): EventResult
     {
         $result = new EventResult(
             EventResult::SUCCESS,
             [
-                Handler\InnerDeliveryHandler::class => __DIR__ . '/Handler/InnerDeliveryHandler.php',
-                Handler\InnerPickupHandler::class   => __DIR__ . '/Handler/InnerPickupHandler.php',
+                InnerDeliveryHandler::class => __DIR__ . '/Handler/InnerDeliveryHandler.php',
+                InnerPickupHandler::class   => __DIR__ . '/Handler/InnerPickupHandler.php',
             ]
         );
 
@@ -56,12 +64,12 @@ class Event implements ServiceHandlerInterface
     /**
      * @return EventResult
      */
-    public static function addCustomRestrictions()
+    public static function addCustomRestrictions(): EventResult
     {
         return new EventResult(
             EventResult::SUCCESS,
             [
-                Restrictions\LocationExceptRestriction::class => __DIR__ . '/Restrictions/LocationExceptRestriction.php',
+                LocationExceptRestriction::class => __DIR__ . '/Restrictions/LocationExceptRestriction.php',
             ]
         );
     }
@@ -69,7 +77,7 @@ class Event implements ServiceHandlerInterface
     /**
      * @return EventResult
      */
-    public static function addCustomTypes()
+    public static function addCustomTypes(): EventResult
     {
         return new EventResult(
             EventResult::SUCCESS,
