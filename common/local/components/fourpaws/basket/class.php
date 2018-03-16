@@ -126,8 +126,8 @@ class BasketComponent extends \CBitrixComponent
             try {
                 $this->arResult['USER'] = $this->currentUserService->getCurrentUser();
                 $this->arResult['USER_ACCOUNT'] = $this->userAccountService->findAccountByUser($this->arResult['USER']);
-            } catch (NotAuthorizedException $e) {
-            } catch (NotFoundException $e) {
+            } catch (NotAuthorizedException|NotFoundException $e) {
+                /** в случае ошибки не показываем бюджет в большой корзине */
             }
             $this->arResult['POSSIBLE_GIFT_GROUPS'] = Gift::getPossibleGiftGroups($order);
             $this->arResult['POSSIBLE_GIFTS'] = Gift::getPossibleGifts($order);
@@ -153,21 +153,23 @@ class BasketComponent extends \CBitrixComponent
      */
     private function setItems(&$basket): void
     {
-        $notAlowedItems = new ArrayCollection();
-        /** @var BasketItem $basketItem */
         $isUpdate = false;
+        $notAllowedItems = new ArrayCollection();
+        $fastOrderClass = null;
+        /** @var BasketItem $basketItem */
+        if(!$this->arParams['MINI_BASKET']) {
+            $this->arResult['OFFER_MIN_DELIVERY'] = [];
 
-        $this->arResult['OFFER_MIN_DELIVERY'] = [];
-
-        /** @todo пока берем ближайшую доставку из быстрого заказа */
-        \CBitrixComponent::includeComponentClass('fourpaws:fast.order');
-        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-        try {
-            $fastOrderClass = new FourPawsFastOrderComponent();
-        } catch (SystemException $e) {
-            $fastOrderClass = null;
-            $logger = LoggerFactory::create('system');
-            $logger->error('Ошибка загрузки компонента - ' . $e->getMessage());
+            /** @todo пока берем ближайшую доставку из быстрого заказа */
+            \CBitrixComponent::includeComponentClass('fourpaws:fast.order');
+            /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+            try {
+                $fastOrderClass = new FourPawsFastOrderComponent();
+            } catch (SystemException $e) {
+                $fastOrderClass = null;
+                $logger = LoggerFactory::create('system');
+                $logger->error('Ошибка загрузки компонента - ' . $e->getMessage());
+            }
         }
 
         foreach ($basket->getBasketItems() as $basketItem) {
@@ -191,10 +193,13 @@ class BasketComponent extends \CBitrixComponent
                 if ($offerQuantity === 0 || $offer->isByRequest()) {
                     $basketItem->setField('DELAY', 'Y');
 
-                    $notAlowedItems->add($basketItem);
-                    /** @todo пока берем ближайшую доставку из быстрого заказа */
-                    if ($fastOrderClass instanceof FourPawsFastOrderComponent && $offer->isByRequest()) {
-                        $this->arResult['OFFER_MIN_DELIVERY'][$basketItem->getProductId()] = $fastOrderClass->getDeliveryDate($offer, true);
+                    if(!$this->arParams['MINI_BASKET']) {
+                        $notAllowedItems->add($basketItem);
+                        /** @todo пока берем ближайшую доставку из быстрого заказа */
+                        if ($fastOrderClass instanceof FourPawsFastOrderComponent && $offer->isByRequest()) {
+                            $this->arResult['OFFER_MIN_DELIVERY'][$basketItem->getProductId()] = $fastOrderClass->getDeliveryDate($offer,
+                                true);
+                        }
                     }
 
                     $isUpdate = true;
@@ -208,10 +213,13 @@ class BasketComponent extends \CBitrixComponent
                     $isUpdate = true;
                 }
                 else{
-                    $notAlowedItems->add($basketItem);
-                    /** @todo пока берем ближайшую доставку из быстрого заказа */
-                    if ($fastOrderClass instanceof FourPawsFastOrderComponent && $offer->isByRequest()) {
-                        $this->arResult['OFFER_MIN_DELIVERY'][$basketItem->getProductId()] = $fastOrderClass->getDeliveryDate($offer, true);
+                    if(!$this->arParams['MINI_BASKET']) {
+                        $notAllowedItems->add($basketItem);
+                        /** @todo пока берем ближайшую доставку из быстрого заказа */
+                        if ($fastOrderClass instanceof FourPawsFastOrderComponent && $offer->isByRequest()) {
+                            $this->arResult['OFFER_MIN_DELIVERY'][$basketItem->getProductId()] = $fastOrderClass->getDeliveryDate($offer,
+                                true);
+                        }
                     }
                 }
             }
@@ -221,7 +229,9 @@ class BasketComponent extends \CBitrixComponent
         }
         unset($isUpdate);
 
-        $this->arResult['NOT_ALOWED_ITEMS'] = $notAlowedItems;
+        if(!$this->arParams['MINI_BASKET']) {
+            $this->arResult['NOT_ALOWED_ITEMS'] = $notAllowedItems;
+        }
     }
 
     /**
