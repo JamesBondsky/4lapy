@@ -12,31 +12,24 @@ use FourPaws\MobileApiBundle\Dto\Request\MetroStationsRequest;
 use FourPaws\MobileApiBundle\Dto\Response;
 use FourPaws\MobileApiBundle\Dto\Response\MetroStationsResponse;
 use FourPaws\MobileApiBundle\Exception\NoneMetroInCityException;
-use FourPaws\MobileApiBundle\Services\Api\LocationService;
+use FourPaws\MobileApiBundle\Services\Api\MetroService;
 
 class LocationController extends FOSRestController
 {
     /**
-     * @var LocationService
-     */
-    private $locationService;
-
-    public function __construct(LocationService $locationService)
-    {
-        $this->locationService = $locationService;
-    }
-
-    /**
      * @Rest\Get("/metro_stations/")
      * @Rest\View()
+     * @param MetroService $metroService
      * @param MetroStationsRequest $metroStationsRequest
      *
-     * @throws NoneMetroInCityException
      * @return Response
+     * @throws \FourPaws\MobileApiBundle\Exception\NoneMetroInCityException
      */
-    public function getMetroStationsAction(MetroStationsRequest $metroStationsRequest): Response
-    {
-        $metroLines = $this->locationService->getMetroLinesWithStations($metroStationsRequest->getCityId());
+    public function getMetroStationsAction(
+        MetroService $metroService,
+        MetroStationsRequest $metroStationsRequest
+    ): Response {
+        $metroLines = $metroService->getMetroLinesWithStations($metroStationsRequest->getCityId());
         if ($metroLines->count()) {
             return new Response(
                 new MetroStationsResponse($metroLines)

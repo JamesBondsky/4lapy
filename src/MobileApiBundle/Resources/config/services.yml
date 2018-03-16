@@ -48,5 +48,5 @@ services:
         class: FourPaws\MobileApiBundle\Services\Session\SessionHandler
         public: true
 
-    FourPaws\MobileApiBundle\Services\Api\LocationService:
+    FourPaws\MobileApiBundle\Services\Api\MetroService:
         arguments: ['@bx.hlblock.metrostations', '@bx.hlblock.metroways']

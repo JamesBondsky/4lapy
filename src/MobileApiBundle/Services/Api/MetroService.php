@@ -14,7 +14,7 @@ use FourPaws\MobileApiBundle\Dto\Object\Location\MetroLine;
 use FourPaws\MobileApiBundle\Dto\Object\Location\MetroStation;
 use Psr\Log\LoggerAwareInterface;
 
-class LocationService implements LoggerAwareInterface
+class MetroService implements LoggerAwareInterface
 {
     use LazyLoggerAwareTrait;
 
