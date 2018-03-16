@@ -111,9 +111,8 @@ class BasketComponent extends \CBitrixComponent
 
         /** оставляем в малой корзине для актуализации */
         $this->offerCollection = $this->basketService->getOfferCollection();
-        $res = $this->setItems($basket);
-        if ($res instanceof Basket) {
-            $basket = $res;
+        if (!($basket->getOrder() instanceof Order)) {
+            $this->setItems($basket);
         }
 
         // привязывать к заказу нужно для расчета скидок
@@ -124,9 +123,6 @@ class BasketComponent extends \CBitrixComponent
 
         $this->arResult['BASKET'] = $basket;
         if (!$this->arParams['MINI_BASKET']) {
-            if($_SESSION['UPDATED_BASKET']){
-                unset($_SESSION['UPDATED_BASKET']);
-            }
             $this->arResult['USER'] = null;
             $this->arResult['USER_ACCOUNT'] = null;
             try {
@@ -270,11 +266,8 @@ class BasketComponent extends \CBitrixComponent
             $this->arResult['NOT_ALOWED_ITEMS'] = $notAllowedItems;
         }
 
-        if ($isUpdate && !$_SESSION['UPDATED_BASKET']) {
+        if ($isUpdate) {
             $basket->save();
-            $_SESSION['UPDATED_BASKET'] = true;
-            return $this->basketService->getBasket(true);
-
         }
         unset($isUpdate);
 
