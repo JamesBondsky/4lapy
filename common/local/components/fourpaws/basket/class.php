@@ -111,9 +111,7 @@ class BasketComponent extends \CBitrixComponent
 
         /** оставляем в малой корзине для актуализации */
         $this->offerCollection = $this->basketService->getOfferCollection();
-        if (!($basket->getOrder() instanceof Order)) {
-            $this->setItems($basket);
-        }
+        $this->setItems($basket);
 
         // привязывать к заказу нужно для расчета скидок
         if (null === $order = $basket->getOrder()) {
@@ -211,25 +209,31 @@ class BasketComponent extends \CBitrixComponent
             }
         }
 
+        $haveOrder = $basket->getOrder() instanceof Order;
+
         foreach ($basket->getBasketItems() as $basketItem) {
             if ($basketItem->getId() === 0 || $basketItem->getProductId() === 0) {
                 /** удаляет непонятно что в корзине */
-                $basketItem->delete();
-                $isUpdate = true;
+                if(!$haveOrder) {
+                    $basketItem->delete();
+                    $isUpdate = true;
+                }
                 continue;
             }
             $offer = $this->getOffer((int)$basketItem->getProductId());
             $useOffer = $offer instanceof Offer && $offer->getId() > 0;
             if (!$useOffer) {
                 /** если нет офера удаляем товар из корзины */
-                $basketItem->delete();
-                $isUpdate = true;
+                if(!$haveOrder) {
+                    $basketItem->delete();
+                    $isUpdate = true;
+                }
                 continue;
             }
 
             $offerQuantity = $offer->getQuantity();
             if ($basketItem->canBuy() && !$basketItem->isDelay()) {
-                if ($offerQuantity === 0 || $offer->isByRequest()) {
+                if (!$haveOrder && ($offerQuantity === 0 || $offer->isByRequest())) {
                     $basketItem->setField('DELAY', 'Y');
 
                     if (!$this->arParams['MINI_BASKET']) {
@@ -244,7 +248,7 @@ class BasketComponent extends \CBitrixComponent
                     $isUpdate = true;
                 }
             } else {
-                if ($offerQuantity > 0 && $offerQuantity > $basketItem->getQuantity() && $basketItem->isDelay()
+                if (!$haveOrder && $offerQuantity > 0 && $offerQuantity > $basketItem->getQuantity() && $basketItem->isDelay()
                     && !$offer->isByRequest()) {
                     $basketItem->setField('DELAY', 'N');
 
@@ -266,7 +270,7 @@ class BasketComponent extends \CBitrixComponent
             $this->arResult['NOT_ALOWED_ITEMS'] = $notAllowedItems;
         }
 
-        if ($isUpdate) {
+        if ($isUpdate && !($basket->getOrder() instanceof Order)) {
             $basket->save();
         }
         unset($isUpdate);
