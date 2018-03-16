@@ -28,7 +28,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 $product = $arResult['PRODUCT'];
 $offers = $product->getOffers();
 /** @var Offer $currentOffer */
-$currentOffer = $arResult['CURRENT_OFFFER']; ?>
+$currentOffer = $arResult['CURRENT_OFFER']; ?>
 
 <div class="b-common-item <?= $arParams['NOT_CATALOG_ITEM_CLASS'] !== 'Y' ? ' b-common-item--catalog-item' : '' ?> js-product-item">
     <?= $component->getMarkService()->getMark($currentOffer) ?>
