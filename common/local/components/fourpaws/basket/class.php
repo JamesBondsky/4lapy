@@ -151,7 +151,7 @@ class BasketComponent extends \CBitrixComponent
      * @throws SystemException
      * @throws \Exception
      */
-    private function setItems(&$basket): void
+    private function setItems($basket): void
     {
         $isUpdate = false;
         $notAllowedItems = new ArrayCollection();
