@@ -7,22 +7,31 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 <div class="b-footer__column b-footer__column--small js-here-app-permutantion">
     <div class="b-app js-app-permutation">
         <dl class="b-app__item b-app__item--app">
-            <dt class="b-app__name">Наше приложение</dt>
+            <dt class="b-app__name">Наши приложения</dt>
             <dd class="b-app__block">
-                <a class="b-app__link b-app__link--app" href="https://itunes.apple.com/us/app/%D1%87%D0%B5%D1%82%D1%8B%D1%80%D0%B5-%D0%BB%D0%B0%D0%BF%D1%8B-%D0%B7%D0%BE%D0%BE%D0%BC%D0%B0%D0%B3%D0%B0%D0%B7%D0%B8%D0%BD/id1222315361?mt=8" title="">
-                    <img src="/static/build/images/inhtml/app-store.png" title="" alt="" role="presentation" />
-                </a>
-                <a class="b-app__link b-app__link--app" href="javascript:void(0);" title="Скоро">
-                    <img src="/static/build/images/inhtml/android.png" title="" alt="" role="presentation" />
-                </a>
+                <?php if (tplvar('application_ios')) { ?>
+                    <a class="b-app__link b-app__link--app" href="<?= tplvar('application_ios') ?>" title="">
+                        <img src="/static/build/images/inhtml/app-store.png" title="" alt="" role="presentation" />
+                    </a>
+                <?php } ?>
+                <?= tplinvis('application_ios') ?>
+                <?php if (tplvar('application_android')) { ?>
+                    <a class="b-app__link b-app__link--app" href="<?= tplvar('application_android') ?>" title="Скоро">
+                        <img src="/static/build/images/inhtml/android.png" title="" alt="" role="presentation" />
+                    </a>
+                <?php } ?>
+                <?= tplinvis('application_android') ?>
             </dd>
         </dl>
         <dl class="b-app__item">
             <dt class="b-app__name">Наш рейтинг на Яндекс.Маркет</dt>
             <dd class="b-app__block">
-                <a class="b-app__link" href="https://market.yandex.ru/shop/155471/reviews" title="" target="_blank">
-                    <img src="/static/build/images/inhtml/yandex.png" title="" alt="" role="presentation" />
-                </a>
+                <?php if (tplvar('rating_yandex')) { ?>
+                    <a class="b-app__link" href="<?= tplvar('rating_yandex') ?>" title="" target="_blank">
+                        <img src="/static/build/images/inhtml/yandex.png" title="" alt="" role="presentation" />
+                    </a>
+                <?php } ?>
+                <?= tplinvis('rating_yandex') ?>
             </dd>
         </dl>
         <dl class="b-app__item">

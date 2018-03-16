@@ -54,18 +54,10 @@ $useOffer = $offer instanceof Offer && $offer->getId() > 0; ?>
                     <?php }
                 } ?>
             </a>
-            <?php if ($useOffer) { ?>
+            <?php if ($useOffer && $offer->getQuantity() > 0 && !$offer->isByRequest()) { ?>
                 <span class="b-common-item__rank-text b-common-item__rank-text--red b-common-item__rank-text--shopping js-bonus-<?=$offer->getId()?>">
                     <?php if ($arParams['IS_AJAX']) {
-                        $bonus = $offer->getBonuses($user_discount, $basketItem->getQuantity());
-                        if ($bonus > 0) {
-                            $bonuses = round($bonuses, 2, PHP_ROUND_HALF_DOWN);
-                            $ost = $bonuses - floor($bonuses) * 100; ?>
-                            + <?= WordHelper::numberFormat($bonus,
-                                0) ?>
-                            <?= WordHelper::declension($ost > 0 ? $ost : floor($bonuses),
-                                ['бонус', 'бонуса', 'бонусов']) ?>
-                        <?php }
+                        echo $offer->getBonusFormattedText($user_discount, $basketItem->getQuantity());
                     } ?>
                 </span>
             <?php } ?>

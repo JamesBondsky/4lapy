@@ -30,6 +30,7 @@ use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\BitrixOrm\Query\CatalogProductQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\Helpers\WordHelper;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Service\StoreService;
 use InvalidArgumentException;
@@ -940,60 +941,8 @@ class Offer extends IblockElement
     }
 
     /**
-     * Check and set optimal price, discount, old price with bitrix discount
-     *
-     * @throws LoaderException
-     * @throws NotSupportedException
-     * @throws ObjectNotFoundException
-     */
-    protected function checkOptimalPrice(): void
-    {
-        if ($this->isCounted) {
-            return;
-        }
-
-        global $USER;
-
-        static $order;
-        if (null === $order) {
-            $order = Order::create(SITE_ID);
-        }
-        $shipmentCollection = $order->getShipmentCollection();
-        foreach ($shipmentCollection as $i => $shipment) {
-            unset($shipmentCollection[$i]);
-        }
-        /** @var Basket $basket */
-        $basket = Basket::create(SITE_ID);
-        $basket->setFUserId((int)Fuser::getId());
-        $fields = [
-            'PRODUCT_ID' => $this->getId(),
-            'QUANTITY' => 1,
-            'MODULE' => 'catalog',
-            'PRODUCT_PROVIDER_CLASS' => CatalogProvider::class,
-        ];
-
-        BitrixBasket::addProductToBasket($basket, $fields, ['USER_ID' => $USER->GetID()]);
-
-        $order->setBasket($basket);
-        /** @var \Bitrix\Sale\BasketItem $basketItem */
-        foreach ($basket->getBasketItems() as $basketItem) {
-            if (
-                (int)$basketItem->getProductId() === $this->getId()
-                &&
-                $discountPercent = round(100 * ($basketItem->getDiscountPrice() / $basketItem->getBasePrice()))
-            ) {
-                $this
-                    ->withDiscount($discountPercent)
-                    ->withOldPrice($basketItem->getBasePrice())
-                    ->withPrice($basketItem->getPrice());
-            }
-        }
-
-        $this->isCounted = true;
-    }
-
-    /**
      * размер скидки в процентах
+     *
      * @param float $discount
      *
      * @return static
@@ -1111,6 +1060,35 @@ class Offer extends IblockElement
         }
 
         return $this->bonus;
+    }
+
+    /**
+     * @param float|int $percent
+     * @param int       $quantity
+     *
+     * @return string
+     */
+    public function getBonusFormattedText($percent = 3, int $quantity = 1): string
+    {
+        if(!\is_float($percent) && !\is_int($percent)){
+            $percent = 3;
+        }
+        $bonusText = '';
+        try {
+            $bonus = $this->getBonuses($percent, $quantity);
+        } catch (\Exception $e) {
+            $bonus = 0;
+        }
+        if ($bonus > 0) {
+            $bonus = round($bonus, 2, PHP_ROUND_HALF_DOWN);
+            $ost = $bonus - floor($bonus) * 100;
+            ob_start(); ?>
+            + <?= WordHelper::numberFormat($bonus) ?>
+            <?= WordHelper::declension($ost > 0 ? $ost : floor($bonus),
+                ['бонус', 'бонуса', 'бонусов']) ?>
+            <?php $bonusText = ob_get_clean();
+        }
+        return $bonusText;
     }
 
     /**
@@ -1258,5 +1236,58 @@ class Offer extends IblockElement
     public function isSale(): bool
     {
         return $this->getPropertyIsSale();
+    }
+
+    /**
+     * Check and set optimal price, discount, old price with bitrix discount
+     *
+     * @throws LoaderException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     */
+    protected function checkOptimalPrice(): void
+    {
+        if ($this->isCounted) {
+            return;
+        }
+
+        global $USER;
+
+        static $order;
+        if (null === $order) {
+            $order = Order::create(SITE_ID);
+        }
+        $shipmentCollection = $order->getShipmentCollection();
+        foreach ($shipmentCollection as $i => $shipment) {
+            unset($shipmentCollection[$i]);
+        }
+        /** @var Basket $basket */
+        $basket = Basket::create(SITE_ID);
+        $basket->setFUserId((int)Fuser::getId());
+        $fields = [
+            'PRODUCT_ID'             => $this->getId(),
+            'QUANTITY'               => 1,
+            'MODULE'                 => 'catalog',
+            'PRODUCT_PROVIDER_CLASS' => CatalogProvider::class,
+        ];
+
+        BitrixBasket::addProductToBasket($basket, $fields, ['USER_ID' => $USER->GetID()]);
+
+        $order->setBasket($basket);
+        /** @var \Bitrix\Sale\BasketItem $basketItem */
+        foreach ($basket->getBasketItems() as $basketItem) {
+            if (
+                (int)$basketItem->getProductId() === $this->getId()
+                &&
+                $discountPercent = round(100 * ($basketItem->getDiscountPrice() / $basketItem->getBasePrice()))
+            ) {
+                $this
+                    ->withDiscount($discountPercent)
+                    ->withOldPrice($basketItem->getBasePrice())
+                    ->withPrice($basketItem->getPrice());
+            }
+        }
+
+        $this->isCounted = true;
     }
 }

@@ -4,6 +4,11 @@ namespace FourPaws\App;
 
 use Bitrix\Main\EventManager;
 
+/**
+ * Interface ServiceHandlerInterface
+ *
+ * @package FourPaws\App
+ */
 interface ServiceHandlerInterface
 {
     /**
