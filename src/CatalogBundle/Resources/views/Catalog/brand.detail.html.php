@@ -105,13 +105,13 @@ if (!$isAjax) { ?>
         /** @var Product $product */
         foreach ($productSearchResult->getProductCollection() as $product) {
             foreach ($product->getOffers() as $offer) {
-                $ids->add($offer->getId());
+                $ids->add($offer->getXmlId());
             }
         }
         /** Акции бренда */
         if (!$ids->isEmpty() ) {
             global $filterBrandStocks;
-            $filterBrandStocks = ['=PROPERTY_PRODUCTS' => $ids->toArray()];
+            $filterBrandStocks = ['PROPERTY_PRODUCTS' => $ids->toArray()];
 
             $APPLICATION->IncludeComponent(
                 'bitrix:news.list',
@@ -180,8 +180,7 @@ if (!$isAjax) { ?>
 } ?>
     <div class="b-catalog">
     <div class="b-container b-container--catalog-filter">
-        <?
-        /** товары бренда */ ?>
+        <?php /** товары бренда */ ?>
         <?= $view->render(
             'FourPawsCatalogBundle:Catalog:brand.filter.container.html.php',
             [
