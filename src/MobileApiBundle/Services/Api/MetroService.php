@@ -89,6 +89,9 @@ class MetroService implements LoggerAwareInterface
      */
     protected function getStations(array $lines): Collection
     {
+        if (!$lines) {
+            return new ArrayCollection();
+        }
         $result = $this->metroManager::query()
             ->addSelect('ID')
             ->addSelect('UF_NAME')

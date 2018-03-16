@@ -15,6 +15,7 @@ class MetroStationsRequest implements GetRequest, SimpleUnserializeRequest
      * @Serializer\SerializedName("city_id")
      * @Serializer\Type("string")
      * @Assert\NotBlank()
+     * @Assert\GreaterThan("0")
      * @var string
      */
     protected $cityId = '';
