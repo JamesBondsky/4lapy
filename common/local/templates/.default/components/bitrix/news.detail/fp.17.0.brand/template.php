@@ -47,5 +47,3 @@ if ($arResult['DETAIL_TEXT'] || $arResult['PRINT_PICTURE']) { ?>
         } ?>
     </div>
 <?php } ?>
-
-<?/** @todo акции */?>
