@@ -26,16 +26,20 @@ $userAccount = $arResult['USER_ACCOUNT'];
 $basket = $arResult['BASKET'];
 $orderableItems = $basket->getOrderableItems();
 
+$hasItems = $orderableItems->count() > 0;
+
 if (true !== $arParams['IS_AJAX']) {
     echo '<div class="b-header-info__item b-header-info__item--cart">';
 } ?>
-    <a class="b-header-info__link js-open-popover" href="<?= $arParams['PATH_TO_BASKET'] ?>" title="Корзина">
+    <a class="b-header-info__link<?php if ($hasItems) { ?> js-open-popover<?php } ?>"
+       href="<?= $arParams['PATH_TO_BASKET'] ?>" title="Корзина">
         <span class="b-icon">
             <?= new SvgDecorator('icon-cart', 16, 16) ?>
         </span>
         <span class="b-header-info__inner">Корзина</span>
         <span class="b-header-info__number js-count-products"><?= $orderableItems->count() ?></span>
     </a>
+<?php if ($hasItems) { ?>
     <div class="b-popover b-popover--cart js-popover">
         <div class="b-cart-popover">
             <span class="b-cart-popover__amount">
@@ -45,7 +49,8 @@ if (true !== $arParams['IS_AJAX']) {
             <span class="b-cart-popover__link" style="width: 58%">
                 <a class="b-link b-link--popover-cart" href="<?= $arParams['PATH_TO_BASKET'] ?>" title="Редактировать">Редактировать</a>
             </span>
-            <a class="b-link b-link--popover-cart-mobile" href="<?= $arParams['PATH_TO_BASKET'] ?>" title="Редактировать">
+            <a class="b-link b-link--popover-cart-mobile" href="<?= $arParams['PATH_TO_BASKET'] ?>"
+               title="Редактировать">
                 Редактировать товары в корзине
             </a>
             <a class="b-button b-button--popover-cart" href="<?= $arParams['PATH_TO_ORDER'] ?>" title="Оформить заказ">
@@ -66,7 +71,7 @@ if (true !== $arParams['IS_AJAX']) {
                                 <img class="b-cart-item__image"
                                      src="<?= $image ?>"
                                      alt="<?= $basketItem->getField('NAME') ?>"
-                                     title="<?= $basketItem->getField('NAME') ?>" />
+                                     title="<?= $basketItem->getField('NAME') ?>"/>
                             <?php } ?>
                         </div>
                         <div class="b-cart-item__info">
@@ -88,7 +93,7 @@ if (true !== $arParams['IS_AJAX']) {
             } ?>
         </div>
     </div>
-<?php
+<?php }
 
 if (true !== $arParams['IS_AJAX']) {
     echo '</div>';
