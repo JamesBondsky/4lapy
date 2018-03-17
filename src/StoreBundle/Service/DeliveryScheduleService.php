@@ -20,6 +20,8 @@ class DeliveryScheduleService implements LoggerAwareInterface
 {
     use LoggerAwareTrait;
 
+    protected const TYPE_FIELD_CODE = 'UF_TYPE';
+
     /**
      * @var DeliveryScheduleRepository
      */
@@ -45,7 +47,7 @@ class DeliveryScheduleService implements LoggerAwareInterface
         try {
             /** @var DeliveryScheduleCollection $schedules */
             $schedules = (new BitrixCache())
-                ->withId(__METHOD__)
+                ->withId(__METHOD__ . $receiver->getXmlId())
                 ->withTag('delivery_schedule')
                 ->resultOf($getSchedules)['result'];
             if ($senders && !$senders->isEmpty()) {
@@ -84,7 +86,7 @@ class DeliveryScheduleService implements LoggerAwareInterface
         try {
             /** @var DeliveryScheduleCollection $schedules */
             $schedules = (new BitrixCache())
-                ->withId(__METHOD__)
+                ->withId(__METHOD__ . $sender->getXmlId())
                 ->withTag('delivery_schedule')
                 ->resultOf($getSchedules)['result'];
             if ($receivers && !$receivers->isEmpty()) {
@@ -117,5 +119,35 @@ class DeliveryScheduleService implements LoggerAwareInterface
     public function findByXmlId(string $xmlId): DeliverySchedule
     {
         return $this->repository->findByXmlId($xmlId);
+    }
+
+    /**
+     * @param int $typeId
+     * @return null|string
+     */
+    public function getTypeCode(int $typeId): ?string
+    {
+        $getTypes = function () {
+            $result = [];
+
+            if ($enums = (new \CUserFieldEnum())->GetList([], ['USER_FIELD_NAME' => static::TYPE_FIELD_CODE])) {
+                while ($enum = $enums->Fetch()) {
+                    $result[(int)$enum['ID']] = $enum['XML_ID'];
+                }
+            }
+
+            return ['result' => $result];
+        };
+
+        try {
+            $result = (new BitrixCache())
+                ->withId(__METHOD__)
+                ->withTag('delivery_schedule')
+                ->resultOf($getTypes)['result'];
+        } catch (\Exception $e) {
+            $this->logger->error(sprintf('failed to get enum list: %s', $e->getMessage()));
+            return null;
+        }
+        return $result[$typeId];
     }
 }

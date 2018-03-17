@@ -51,6 +51,20 @@ class DeliveryScheduleCollection extends BaseCollection
     }
 
     /**
+     * @param \DateTime|null $date
+     * @return DeliveryScheduleCollection
+     */
+    public function getActive(?\DateTime $date):DeliveryScheduleCollection
+    {
+        if (!$date instanceof \DateTime) {
+            $date = new \DateTime();
+        }
+        return $this->filter(function (DeliverySchedule $schedule) use ($date) {
+            return $schedule->isActiveForDate($date);
+        });
+    }
+
+    /**
      * Получение ближайшего графика поставок для указанной даты
      *
      * @param Store $receiver
@@ -65,14 +79,13 @@ class DeliveryScheduleCollection extends BaseCollection
         StoreCollection $senders,
         \DateTime $from = null
     ): ?DeliveryScheduleResult {
-        $minDate = null;
         if (!$from) {
             $from = new \DateTime();
         }
 
         /** @var DeliveryScheduleResult $result */
         $result = null;
-        $senderSchedules = $this->filterBySenders($senders);
+        $senderSchedules = $this->getActive($from)->filterBySenders($senders);
 
         /** @var DeliverySchedule $senderSchedule */
         foreach ($senderSchedules as $senderSchedule) {

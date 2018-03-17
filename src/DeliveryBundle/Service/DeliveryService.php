@@ -21,7 +21,6 @@ use Bitrix\Sale\Shipment;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Dpd\TerminalTable;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\CalculationResult\DpdResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
@@ -239,7 +238,7 @@ class DeliveryService implements LoggerAwareInterface
 
                 unset($_SESSION['DPD_DATA']);
             }
-            if (!$calculationResult instanceof BaseResult) {
+            if (!$calculationResult instanceof CalculationResultInterface) {
                 // непонятная доставка, мы с такими работать не обучены
                 continue;
             }

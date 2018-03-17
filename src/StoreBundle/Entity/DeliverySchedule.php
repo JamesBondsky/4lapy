@@ -100,17 +100,17 @@ class DeliverySchedule extends Base
     protected $activeTo;
 
     /**
-     * @var array
+     * @var int[]
      * @Serializer\SerializedName("UF_WEEK_NUMBER")
-     * @Serializer\Type("array<int>")
+     * @Serializer\Type("array_or_false<int>")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
     protected $weekNumbers = [];
 
     /**
-     * @var array
+     * @var int[]
      * @Serializer\SerializedName("UF_DAY_OF_WEEK")
-     * @Serializer\Type("array<int>")
+     * @Serializer\Type("array_or_false<int>")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
     protected $daysOfWeek;
@@ -126,7 +126,7 @@ class DeliverySchedule extends Base
     /**
      * @var DateTime[]
      * @Serializer\SerializedName("UF_DELIVERY_DATE")
-     * @Serializer\Type("array<DateTime<'d.m.Y'>>")
+     * @Serializer\Type("array_or_false<DateTime<'d.m.Y'>>")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
     protected $deliveryDates;
@@ -482,6 +482,14 @@ class DeliverySchedule extends Base
     }
 
     /**
+     * @return null|string
+     */
+    public function getTypeCode(): ?string
+    {
+        return $this->scheduleService->getTypeCode((int)$this->getType());
+    }
+
+    /**
      * @throws \Bitrix\Main\ArgumentException
      * @throws NotFoundException
      * @return DeliveryScheduleCollection
@@ -557,9 +565,7 @@ class DeliverySchedule extends Base
                 $days = ($diff >= 0) ? $diff : $diff + 7;
 
                 $date->modify(sprintf('+%s days', $days));
-                if (!$this->activeTo || $date < $this->activeTo) {
-                    $results[] = $date;
-                }
+                $results[] = $date;
             }
 
             if (!empty($results)) {
@@ -571,7 +577,7 @@ class DeliverySchedule extends Base
 
         $result = null;
         $date = clone $from;
-        switch ($this->getType()) {
+        switch ($this->getTypeCode()) {
             case self::TYPE_MANUAL:
                 $results = [];
                 $date->setTime(0, 0, 0, 0);
@@ -594,6 +600,7 @@ class DeliverySchedule extends Base
             case self::TYPE_BY_WEEK:
                 $weekNumbers = $this->getWeekNumbers();
                 $weekDates = [];
+                $weekNumbers[] = 0;
                 foreach ($weekNumbers as $weekNumber) {
                     $weekDate = clone $date;
                     $weekDate->setISODate($date->format('Y'), $weekNumber);
@@ -602,13 +609,20 @@ class DeliverySchedule extends Base
                     }
                     $weekDates[] = $weekDate;
                 }
-                if (empty($weekDates)) {
-                    return null;
-                }
-                return $getByDay(min($weekDates));
+
+                $result = !empty($weekDates) ? $getByDay(min($weekDates)) : null;
+                break;
             case self::TYPE_WEEKLY:
-                return $getByDay(min($from));
+                $result =  $getByDay($from);
+                break;
         }
+
+        /** @todo нужна ли эта проверка? */
+        /*
+        if ($result && !$this->isActiveForDate($result)) {
+            return null;
+        }
+        */
 
         return $result;
     }

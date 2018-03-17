@@ -10,7 +10,6 @@ use Doctrine\Common\Collections\Collection;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
-use FourPaws\StoreBundle\Entity\Stock;
 use FourPaws\StoreBundle\Repository\StockRepository;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
@@ -74,7 +73,8 @@ class StockService implements LoggerAwareInterface
             return $data['result'];
         } catch (\Exception $e) {
             $this->logger->error(
-                sprintf('failed to get stocks for offer %s: %s', $offer->getId(), $e->getMessage())
+                sprintf('failed to get stocks for offer: %s', $e->getMessage()),
+                ['offer' => $offer->getId()]
             );
         }
 

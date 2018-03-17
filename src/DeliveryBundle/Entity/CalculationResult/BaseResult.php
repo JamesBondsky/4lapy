@@ -655,7 +655,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
          * @return int
          */
         $storeCollections[] = function (Store $store1, Store $store2) {
-            return $store1->getId() <=> $store2->getId();
+            return $store1->getXmlId() <=> $store2->getXmlId();
         };
 
         return new StoreCollection(array_uintersect(...$storeCollections));
