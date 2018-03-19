@@ -1,20 +1,19 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\MobileApiBundle\Controller;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
+use FourPaws\MobileApiBundle\Dto\Object\Settings;
 use FourPaws\MobileApiBundle\Dto\Request\SettingsRequest;
 use FourPaws\MobileApiBundle\Dto\Response as ApiResponse;
 use FourPaws\UserBundle\Entity\User;
-use FourPaws\UserBundle\Exception\BitrixRuntimeException;
-use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
-use FourPaws\UserBundle\Exception\InvalidIdentifierException;
-use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Service\UserService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
-use Swagger\Annotations\Parameter;
-use Swagger\Annotations\Response;
 
 class SettingsController extends FOSRestController
 {
@@ -30,74 +29,28 @@ class SettingsController extends FOSRestController
 
     /**
      * @Rest\Get(path="/settings/", name="settings")
-     * @Parameter(
-     *     name="token",
-     *     in="query",
-     *     type="string",
-     *     required=true,
-     *     description="identifier token from /start/ request"
-     * )
-     * @Response(
-     *     response="200"
-     * )
-     *
+     * @Rest\View()
+     * @Security("has_role('REGISTERED_USERS')")
+     * @throws \LogicException
      * @return ApiResponse
      *
-     * @Security("has_role('REGISTERED_USERS')")
-     *
-     * @Rest\View()
-     * @throws \LogicException
      */
     public function getSettingsAction(): ApiResponse
     {
-        /**
-         * @var User $user
-         */
-        $user = $this->getUser();
-
-        $response = (new ApiResponse())->setData([
-            'settings' => [
-                'interview_messaging_enabled' => $user->isSendInterviewMsg(),
-                'bonus_messaging_enabled'     => $user->isSendBonusMsg(),
-                'feedback_messaging_enabled'  => $user->isSendFeedbackMsg(),
-                'push_order_status'           => $user->isSendOrderStatusMsg(),
-                'push_news'                   => $user->isSendNewsMsg(),
-                'push_account_change'         => $user->isSendBonusChangeMsg(),
-                'sms_messaging_enabled'       => $user->isSendSmsMsg(),
-                'email_messaging_enabled'     => $user->isSendEmailMsg(),
-                'gps_messaging_enabled'       => $user->isGpsAllowed(),
-            ],
+        return (new ApiResponse())->setData([
+            'settings' => Settings::createFromUser($this->getUser()),
         ]);
-
-        return $response;
     }
 
     /**
      * @Rest\Post(path="/settings/", name="settings")
-     * @Parameter(
-     *     name="token",
-     *     in="query",
-     *     type="string",
-     *     required=true,
-     *     description="identifier token from /start/ request"
-     * )
-     * @Response(
-     *     response="200"
-     * )
-     *
-     * @param SettingsRequest $settingsRequest
-     *
-     * @return ApiResponse
-     * @internal param Request $request
-     *
+     * @Rest\View()
      * @Security("has_role('REGISTERED_USERS')")
      *
-     * @Rest\View()
-     * @throws ValidationException
-     * @throws InvalidIdentifierException
-     * @throws ConstraintDefinitionException
-     * @throws BitrixRuntimeException
+     * @param SettingsRequest $settingsRequest
      * @throws \LogicException
+     * @throws \Bitrix\Main\SystemException
+     * @return ApiResponse
      */
     public function setSettingsAction(SettingsRequest $settingsRequest): ApiResponse
     {
@@ -107,23 +60,12 @@ class SettingsController extends FOSRestController
         $user = $this->getUser();
 
         $settings = $settingsRequest->getSettings();
-
-        $user->setSendInterviewMsg($settings->isSendInterviewMsg())
-            ->setSendBonusMsg($settings->isSendBonusMsg())
-            ->setSendFeedbackMsg($settings->isSendFeedbackMsg())
-            ->setSendOrderStatusMsg($settings->isSendOrderStatusMsg())
-            ->setSendNewsMsg($settings->isSendNewsMsg())
-            ->setSendBonusChangeMsg($settings->isSendBonusChangeMsg())
-            ->setSendSmsMsg($settings->isSendSmsMsg())
-            ->setSendEmailMsg($settings->isSendEmailMsg())
-            ->setGpsAllowed($settings->isGpsAllowed());
+        $settings->configureUser($user);
 
         $this->userService->getUserRepository()->update($user);
 
-        $response = (new ApiResponse())->setData([
+        return (new ApiResponse())->setData([
             'feedback_text' => 'Настройки приложения успешно сохранены',
         ]);
-
-        return $response;
     }
 }

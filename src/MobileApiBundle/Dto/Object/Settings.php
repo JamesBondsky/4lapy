@@ -1,7 +1,12 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\MobileApiBundle\Dto\Object;
 
+use FourPaws\UserBundle\Entity\User;
 use JMS\Serializer\Annotation as Serializer;
 
 class Settings
@@ -9,235 +14,269 @@ class Settings
     /**
      * @Serializer\Type("bool")
      * @Serializer\SerializedName("interview_messaging_enabled")
-     * @var bool
+     * @Serializer\SkipWhenEmpty()
+     * @var null|bool
      */
-    protected $sendInterviewMsg = false;
+    protected $sendInterviewMsg;
 
     /**
      * @Serializer\Type("bool")
      * @Serializer\SerializedName("bonus_messaging_enabled")
-     * @var bool
+     * @Serializer\SkipWhenEmpty()
+     * @var null|bool
      */
-    protected $sendBonusMsg = false;
+    protected $sendBonusMsg;
 
     /**
      * @Serializer\Type("bool")
      * @Serializer\SerializedName("feedback_messaging_enabled")
-     * @var bool
+     * @Serializer\SkipWhenEmpty()
+     * @var null|bool
      */
-    protected $sendFeedbackMsg = false;
+    protected $sendFeedbackMsg;
 
     /**
      * @Serializer\Type("bool")
      * @Serializer\SerializedName("push_order_status")
-     * @var bool
+     * @Serializer\SkipWhenEmpty()
+     * @var null|bool
      */
-    protected $sendOrderStatusMsg = false;
+    protected $sendOrderStatusMsg;
 
     /**
      * @Serializer\Type("bool")
      * @Serializer\SerializedName("push_news")
-     * @var bool
+     * @Serializer\SkipWhenEmpty()
+     * @var null|bool
      */
-    protected $sendNewsMsg = false;
+    protected $sendNewsMsg;
 
     /**
      * @Serializer\Type("bool")
      * @Serializer\SerializedName("push_account_change")
-     * @var bool
+     * @Serializer\SkipWhenEmpty()
+     * @var null|bool
      */
-    protected $sendBonusChangeMsg = false;
+    protected $sendBonusChangeMsg;
 
     /**
      * @Serializer\Type("bool")
      * @Serializer\SerializedName("sms_messaging_enabled")
-     * @var bool
+     * @Serializer\SkipWhenEmpty()
+     * @var null|bool
      */
-    protected $sendSmsMsg = false;
+    protected $sendSmsMsg;
 
     /**
      * @Serializer\Type("bool")
      * @Serializer\SerializedName("email_messaging_enabled")
-     * @var bool
+     * @Serializer\SkipWhenEmpty()
+     * @var null|bool
      */
-    protected $sendEmailMsg = false;
+    protected $sendEmailMsg;
 
     /**
      * @Serializer\Type("bool")
      * @Serializer\SerializedName("gps_messaging_enabled")
-     * @var bool
+     * @Serializer\SkipWhenEmpty()
+     * @var null|bool
      */
-    protected $gpsAllowed = false;
+    protected $gpsAllowed;
 
     /**
-     * @return bool
+     * @param User $user
+     * @return static
      */
-    public function isSendInterviewMsg(): bool
+    public static function createFromUser(User $user)
+    {
+        return (new static())
+            ->setSendInterviewMsg($user->isSendInterviewMsg())
+            ->setSendBonusMsg($user->isSendBonusMsg())
+            ->setSendFeedbackMsg($user->isSendFeedbackMsg())
+            ->setSendOrderStatusMsg($user->isSendOrderStatusMsg())
+            ->setSendNewsMsg($user->isSendNewsMsg())
+            ->setSendBonusChangeMsg($user->isSendBonusChangeMsg())
+            ->setSendSmsMsg($user->isSendSmsMsg())
+            ->setSendEmailMsg($user->isSendEmailMsg())
+            ->setGpsAllowed($user->isGpsAllowed());
+    }
+
+    /**
+     * @param User $user
+     */
+    public function configureUser(User $user): void
+    {
+        $user
+            ->setSendInterviewMsg($this->getSendInterviewMsg() ?? $user->isSendInterviewMsg())
+            ->setSendBonusMsg($this->getSendBonusMsg() ?? $user->isSendBonusMsg())
+            ->setSendFeedbackMsg($this->getSendFeedbackMsg() ?? $user->isSendFeedbackMsg())
+            ->setSendOrderStatusMsg($this->getSendOrderStatusMsg() ?? $user->isSendOrderStatusMsg())
+            ->setSendNewsMsg($this->getSendNewsMsg() ?? $user->isSendNewsMsg())
+            ->setSendBonusChangeMsg($this->getSendBonusChangeMsg() ?? $user->isSendBonusChangeMsg())
+            ->setSendSmsMsg($this->getSendSmsMsg() ?? $user->isSendSmsMsg())
+            ->setSendEmailMsg($this->getSendEmailMsg() ?? $user->isSendEmailMsg())
+            ->setGpsAllowed($this->getGpsAllowed() ?? $user->isGpsAllowed());
+    }
+
+    /**
+     * @return null|bool
+     */
+    public function getSendInterviewMsg(): ?bool
     {
         return $this->sendInterviewMsg;
     }
 
     /**
-     * @param bool $sendInterviewMsg
-     *
+     * @param null|bool $sendInterviewMsg
      * @return Settings
      */
-    public function setSendInterviewMsg(bool $sendInterviewMsg): Settings
+    public function setSendInterviewMsg(?bool $sendInterviewMsg): Settings
     {
         $this->sendInterviewMsg = $sendInterviewMsg;
         return $this;
     }
 
     /**
-     * @return bool
+     * @return null|bool
      */
-    public function isSendBonusMsg(): bool
+    public function getSendBonusMsg(): ?bool
     {
         return $this->sendBonusMsg;
     }
 
     /**
-     * @param bool $sendBonusMsg
-     *
+     * @param null|bool $sendBonusMsg
      * @return Settings
      */
-    public function setSendBonusMsg(bool $sendBonusMsg): Settings
+    public function setSendBonusMsg(?bool $sendBonusMsg): Settings
     {
         $this->sendBonusMsg = $sendBonusMsg;
         return $this;
     }
 
     /**
-     * @return bool
+     * @return null|bool
      */
-    public function isSendFeedbackMsg(): bool
+    public function getSendFeedbackMsg(): ?bool
     {
         return $this->sendFeedbackMsg;
     }
 
     /**
-     * @param bool $sendFeedbackMsg
-     *
+     * @param null|bool $sendFeedbackMsg
      * @return Settings
      */
-    public function setSendFeedbackMsg(bool $sendFeedbackMsg): Settings
+    public function setSendFeedbackMsg(?bool $sendFeedbackMsg): Settings
     {
         $this->sendFeedbackMsg = $sendFeedbackMsg;
         return $this;
     }
 
     /**
-     * @return bool
+     * @return null|bool
      */
-    public function isSendOrderStatusMsg(): bool
+    public function getSendOrderStatusMsg(): ?bool
     {
         return $this->sendOrderStatusMsg;
     }
 
     /**
-     * @param bool $sendOrderStatusMsg
-     *
+     * @param null|bool $sendOrderStatusMsg
      * @return Settings
      */
-    public function setSendOrderStatusMsg(bool $sendOrderStatusMsg): Settings
+    public function setSendOrderStatusMsg(?bool $sendOrderStatusMsg): Settings
     {
         $this->sendOrderStatusMsg = $sendOrderStatusMsg;
         return $this;
     }
 
     /**
-     * @return bool
+     * @return null|bool
      */
-    public function isSendNewsMsg(): bool
+    public function getSendNewsMsg(): ?bool
     {
         return $this->sendNewsMsg;
     }
 
     /**
-     * @param bool $sendNewsMsg
-     *
+     * @param null|bool $sendNewsMsg
      * @return Settings
      */
-    public function setSendNewsMsg(bool $sendNewsMsg): Settings
+    public function setSendNewsMsg(?bool $sendNewsMsg): Settings
     {
         $this->sendNewsMsg = $sendNewsMsg;
         return $this;
     }
 
     /**
-     * @return bool
+     * @return null|bool
      */
-    public function isSendBonusChangeMsg(): bool
+    public function getSendBonusChangeMsg(): ?bool
     {
         return $this->sendBonusChangeMsg;
     }
 
     /**
-     * @param bool $sendBonusChangeMsg
-     *
+     * @param null|bool $sendBonusChangeMsg
      * @return Settings
      */
-    public function setSendBonusChangeMsg(bool $sendBonusChangeMsg): Settings
+    public function setSendBonusChangeMsg(?bool $sendBonusChangeMsg): Settings
     {
         $this->sendBonusChangeMsg = $sendBonusChangeMsg;
         return $this;
     }
 
     /**
-     * @return bool
+     * @return null|bool
      */
-    public function isSendSmsMsg(): bool
+    public function getSendSmsMsg(): ?bool
     {
         return $this->sendSmsMsg;
     }
 
     /**
-     * @param bool $sendSmsMsg
-     *
+     * @param null|bool $sendSmsMsg
      * @return Settings
      */
-    public function setSendSmsMsg(bool $sendSmsMsg): Settings
+    public function setSendSmsMsg(?bool $sendSmsMsg): Settings
     {
         $this->sendSmsMsg = $sendSmsMsg;
         return $this;
     }
 
     /**
-     * @return bool
+     * @return null|bool
      */
-    public function isSendEmailMsg(): bool
+    public function getSendEmailMsg(): ?bool
     {
         return $this->sendEmailMsg;
     }
 
     /**
-     * @param bool $sendEmailMsg
-     *
+     * @param null|bool $sendEmailMsg
      * @return Settings
      */
-    public function setSendEmailMsg(bool $sendEmailMsg): Settings
+    public function setSendEmailMsg(?bool $sendEmailMsg): Settings
     {
         $this->sendEmailMsg = $sendEmailMsg;
         return $this;
     }
 
     /**
-     * @return bool
+     * @return null|bool
      */
-    public function isGpsAllowed(): bool
+    public function getGpsAllowed(): ?bool
     {
         return $this->gpsAllowed;
     }
 
     /**
-     * @param bool $gpsAllowed
-     *
+     * @param null|bool $gpsAllowed
      * @return Settings
      */
-    public function setGpsAllowed(bool $gpsAllowed): Settings
+    public function setGpsAllowed(?bool $gpsAllowed): Settings
     {
         $this->gpsAllowed = $gpsAllowed;
         return $this;
     }
-
 }
