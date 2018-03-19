@@ -10,7 +10,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use FourPaws\App\Application;
-use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\External\ManzanaPosService;
@@ -22,6 +21,7 @@ use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\OrderStorageService;
 use FourPaws\SaleBundle\Service\UserAccountService;
+use FourPaws\SaleBundle\Validation\OrderDeliveryValidator;
 use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
@@ -152,6 +152,15 @@ class FourPawsOrderComponent extends \CBitrixComponent
 
         if (!$storage = $this->orderStorageService->getStorage()) {
             throw new OrderCreateException('Failed to initialize storage');
+        }
+
+        $date = (new \DateTime());
+        if (abs(
+                $storage->getCurrentDate()->getTimestamp() - $date->getTimestamp()
+            ) > OrderDeliveryValidator::MAX_DATE_DIFF
+        ) {
+            $storage->setCurrentDate($date);
+            $this->orderStorageService->updateStorage($storage);
         }
 
         try {

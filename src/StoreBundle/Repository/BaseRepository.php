@@ -3,6 +3,7 @@
 namespace FourPaws\StoreBundle\Repository;
 
 use Bitrix\Main\Entity\DataManager;
+use FourPaws\AppBundle\Construction\UnserializeObjectConstructor;
 use FourPaws\StoreBundle\Collection\BaseCollection;
 use FourPaws\StoreBundle\Entity\Base as BaseEntity;
 use FourPaws\StoreBundle\Exception\ConstraintDefinitionException;
@@ -151,6 +152,7 @@ abstract class BaseRepository implements RepositoryInterface
                 $result,
                 sprintf('array<%s>', $this->getEntityClass()),
                 DeserializationContext::create()->setGroups(['read'])
+                    ->setAttribute(UnserializeObjectConstructor::CALL_CONSTRUCTOR, true)
             )
         );
     }
