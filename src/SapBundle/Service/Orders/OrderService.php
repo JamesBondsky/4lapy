@@ -287,10 +287,9 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      */
     public function getFileName($order): string
     {
-        return sprintf(
-            '/%s/%s-%s%s.xml',
-            trim($this->outPath, '/'),
-            $order->getDateInsert()->format('Ymd'),
+        return \sprintf(
+            '/%s/%s%s.xml',
+            \trim($this->outPath, '/'),
             $this->outPrefix,
             $order->getId()
         );

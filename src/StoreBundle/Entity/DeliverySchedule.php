@@ -100,7 +100,7 @@ class DeliverySchedule extends Base
      * @Serializer\Type("array<int>")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
-    protected $weekNumbers = [];
+    protected $weekNumbers;
 
     /**
      * @var array

@@ -13,6 +13,11 @@ use JMS\Serializer\Handler\SubscribingHandlerInterface;
 use JMS\Serializer\JsonDeserializationVisitor;
 use JMS\Serializer\JsonSerializationVisitor;
 
+/**
+ * Class BitrixDateTimeHandler
+ *
+ * @package FourPaws\AppBundle\Serialization
+ */
 class BitrixDateTimeHandler implements SubscribingHandlerInterface
 {
     /**
@@ -34,9 +39,11 @@ class BitrixDateTimeHandler implements SubscribingHandlerInterface
                 'method'    => 'serialize',
             ],
         ];
-    }/** @noinspection MoreThanThreeArgumentsInspection */
+    }
     
     /**
+     * @noinspection MoreThanThreeArgumentsInspection
+     *
      * @param JsonSerializationVisitor                 $visitor
      * @param                                          $data
      * @param array                                    $type
@@ -53,8 +60,10 @@ class BitrixDateTimeHandler implements SubscribingHandlerInterface
         return $data;
     }
 
-    /** @noinspection MoreThanThreeArgumentsInspection */
+
     /**
+     *  @noinspection MoreThanThreeArgumentsInspection
+     *
      * @param JsonDeserializationVisitor                 $visitor
      * @param                                            $data
      * @param array                                      $type
@@ -67,7 +76,7 @@ class BitrixDateTimeHandler implements SubscribingHandlerInterface
         if (!($data instanceof DateTime)) {
             if (\strlen($data) > 0) {
                 /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-                $data = new DateTime($data, 'd.m.Y H:i:s');
+                $data = new DateTime($data, 'd.m.Y H:i:s', \date_default_timezone_get());
             } else {
                 $data = null;
             }
