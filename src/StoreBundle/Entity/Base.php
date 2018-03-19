@@ -5,7 +5,7 @@ namespace FourPaws\StoreBundle\Entity;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
-abstract class Base
+abstract class Base implements \Serializable
 {
     /**
      * @var int
@@ -27,12 +27,33 @@ abstract class Base
     }
 
     /**
-     * @param mixed $id
+     * @param int $id
+     * @return $this
      */
     public function setId(int $id)
     {
         $this->id = $id;
 
         return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function serialize(): string
+    {
+        return serialize([
+            $this->id
+        ]);
+    }
+
+    /**
+     * @param string $serialized
+     */
+    public function unserialize($serialized): void
+    {
+        [
+            $this->id
+        ] = unserialize($serialized, ['allowed_classes' => false]);
     }
 }

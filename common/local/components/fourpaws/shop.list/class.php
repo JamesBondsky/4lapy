@@ -92,9 +92,10 @@ class FourPawsShopListComponent extends CBitrixComponent
             $city = $this->userService->getSelectedCity();
         }
         if ($this->startResultCache(false, ['location' => $city['CODE']])) {
-            $this->prepareResult($city);
+            if ($this->prepareResult($city)) {
 
-            $this->includeComponentTemplate();
+                $this->includeComponentTemplate();
+            }
         }
 
         return true;
@@ -102,7 +103,7 @@ class FourPawsShopListComponent extends CBitrixComponent
 
     /**
      * @param array $city
-     *
+     * @return bool
      * @throws Exception
      */
     protected function prepareResult(array $city = [])
@@ -116,5 +117,7 @@ class FourPawsShopListComponent extends CBitrixComponent
 
         $this->arResult['SERVICES'] = $this->storeService->getServicesInfo();
         $this->arResult['METRO'] = $this->storeService->getMetroInfo();
+
+        return true;
     }
 }

@@ -4,9 +4,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 }
 
 use Bitrix\Sale\BasketBase;
-use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\PaySystem\Manager as PaySystemManager;
 use FourPaws\App\Application;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\SaleBundle\Entity\OrderStorage;
@@ -24,7 +24,7 @@ $deliveryService = Application::getInstance()->getContainer()->get('delivery.ser
 /** @var OrderStorage $storage */
 $storage = $arResult['STORAGE'];
 
-/** @var CalculationResult $selectedDelivery */
+/** @var \FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface $selectedDelivery */
 $selectedDelivery = $arResult['SELECTED_DELIVERY'];
 
 /** @var BasketBase $basket */
@@ -50,10 +50,10 @@ foreach ($payments as $i => $payment) {
  */
 $basketPrice = $basket->getPrice();
 if ($deliveryService->isPickup($selectedDelivery) && $storage->isPartialGet()) {
-    $basketPrice = $deliveryService->getStockResultByDelivery($selectedDelivery)
-        ->filterByStore($arResult['SELECTED_SHOP'])
-        ->getAvailable()
-        ->getPrice();
+    $basketPrice = $selectedDelivery->getStockResult()
+                                    ->filterByStore($arResult['SELECTED_SHOP'])
+                                    ->getAvailable()
+                                    ->getPrice();
 }
 
 /** @var User $user */

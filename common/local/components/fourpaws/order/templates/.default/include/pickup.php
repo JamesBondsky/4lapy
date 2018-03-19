@@ -3,12 +3,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
-use Bitrix\Sale\Delivery\CalculationResult;
 use FourPaws\App\Application;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\CurrencyHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\SaleBundle\Entity\OrderStorage;
@@ -17,30 +16,27 @@ use FourPaws\StoreBundle\Entity\Store;
 /**
  * @var array $arResult
  * @var array $arParams
- * @var CalculationResult $pickup
+ * @var \FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface $pickup
  * @var
  */
 
-/** @var CalculationResult $partialPickup */
-$partialPickup = $arResult['PARTIAL_PICKUP'];
-
 /** @var DeliveryService $deliveryService */
 $deliveryService = Application::getInstance()->getContainer()->get('delivery.service');
-/** @var StockResultCollection $stockResult */
-$stockResult = $pickup->getData()['STOCK_RESULT'];
 /** @var OrderStorage $storage */
 $storage = $arResult['STORAGE'];
 
 /** @var Store $selectedShop */
 $selectedShop = $arResult['SELECTED_SHOP'];
-$stockResultByShop = $stockResult->filterByStore($selectedShop);
+
+$stockResultByShop = $pickup->getStockResult()->filterByStore($selectedShop);
 $available = $stockResultByShop->getAvailable();
 $delayed = $stockResultByShop->getDelayed();
 
 $metro = $arResult['METRO'][$selectedShop->getMetro()];
 
-$canGetPartial = !$available->isEmpty();
-$partialGet = $storage->isPartialGet();
+$canGetPartial = !$available->isEmpty() && !$delayed->isEmpty();
+$partialGet = $storage->isPartialGet() && $canGetPartial;
+$partialPickup = $arResult['PARTIAL_PICKUP'];
 
 ?>
 
@@ -63,7 +59,7 @@ $partialGet = $storage->isPartialGet();
             <span class="b-input-line__label">Время работы</span>
         </div>
         <div class="b-input-line__text-line b-input-line__text-line--myself">
-            <?= $selectedShop->getSchedule() ?>
+            <?= $selectedShop->getScheduleString() ?>
         </div>
     </div>
     <div class="b-input-line b-input-line--myself">
@@ -113,10 +109,7 @@ $partialGet = $storage->isPartialGet();
                         <div class="b-order-list__order-text b-order-list__order-text--myself js-parts-price js-price-block">
                             <div class="b-order-list__clipped-text">
                                 <div class="b-order-list__text-backed js-my-pickup js-pickup-time">
-                                    Забрать <?= DeliveryTimeHelper::showTime(
-                                        $partialPickup,
-                                        $available->getDeliveryDate()
-                                    ) ?></div>
+                                    Забрать <?= DeliveryTimeHelper::showTime($partialPickup) ?></div>
                             </div>
                         </div>
                         <div class="b-order-list__order-value b-order-list__order-value--myself js-parts-price js-price-block">
@@ -166,10 +159,7 @@ $partialGet = $storage->isPartialGet();
             </div>
             <div class="b-radio__addition-text">
                 <p class="js-pickup_full js-pickup-time">
-                    <?= DeliveryTimeHelper::showTime(
-                        $pickup,
-                        $stockResultByShop->getDeliveryDate()
-                    ) ?>
+                    <?= DeliveryTimeHelper::showTime($pickup) ?>
                 </p>
             </div>
         </div>

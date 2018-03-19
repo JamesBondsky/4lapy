@@ -17,6 +17,12 @@ use Symfony\Component\Validator\ConstraintValidator;
 class OrderDeliveryValidator extends ConstraintValidator
 {
     /**
+     * Максимальное время хранения даты перехода пользователя на 2й шаг оформления заказа
+     */
+    public const MAX_DATE_DIFF = 1800;
+
+
+    /**
      * @var OrderService
      */
     protected $orderService;
@@ -33,15 +39,22 @@ class OrderDeliveryValidator extends ConstraintValidator
     }
 
     /**
-     * @param OrderStorage $entity
+     * @param mixed $entity
      * @param Constraint $constraint
-     *
      * @throws DeliveryNotFoundException
+     * @throws NotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
     public function validate($entity, Constraint $constraint)
     {
         if (!$entity instanceof OrderStorage || !$constraint instanceof OrderDelivery) {
             return;
+        }
+
+        $dateDiff = $entity->getCurrentDate()->getTimestamp() - (new \DateTime())->getTimestamp();
+        if (abs($dateDiff) > static::MAX_DATE_DIFF) {
+            $this->context->addViolation($constraint->deliveryDateExpiredMessage);
         }
 
         /**
@@ -56,10 +69,10 @@ class OrderDeliveryValidator extends ConstraintValidator
         /**
          * Проверка, что выбрана доступная доставка
          */
-        $deliveryMethods = $this->orderService->getDeliveries();
+        $deliveryMethods = $this->orderService->getDeliveries($entity);
         $delivery = null;
         foreach ($deliveryMethods as $deliveryMethod) {
-            if ($deliveryId === (int)$deliveryMethod->getData()['DELIVERY_ID']) {
+            if ($deliveryId === $deliveryMethod->getDeliveryId()) {
                 $delivery = $deliveryMethod;
                 break;
             }
@@ -85,15 +98,15 @@ class OrderDeliveryValidator extends ConstraintValidator
             }
 
             $intervalIndex = $entity->getDeliveryInterval();
-            $intervals = $delivery->getData()['DELIVERY_INTERVALS'];
+            $intervals = $delivery->getIntervals();
             if (!empty($intervals)) {
-                if (($intervalIndex < 1) || $intervalIndex > \count($intervals)) {
+                if (($intervalIndex < 1) || $intervalIndex > $intervals->count()) {
                     $this->context->addViolation($constraint->deliveryIntervalMessage);
                 }
             }
         } else {
             try {
-                $availableStores = $this->deliveryService->getStockResultByDelivery($delivery)->getStores();
+                $availableStores = $delivery->getStockResult()->getStores();
                 $storeXmlId = $entity->getDeliveryPlaceCode();
                 if (!isset($availableStores[$storeXmlId])) {
                     $this->context->addViolation($constraint->deliveryPlaceCodeMessage);
@@ -101,7 +114,7 @@ class OrderDeliveryValidator extends ConstraintValidator
                     return;
                 }
                 /* @todo проверка частичного получения заказа */
-            } catch (NotFoundException $e) {
+            } catch (DeliveryNotFoundException $e) {
                 $this->context->addViolation($constraint->deliveryPlaceCodeMessage);
             }
         }
