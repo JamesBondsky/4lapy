@@ -1059,50 +1059,46 @@ class Offer extends IblockElement
     }
 
     /**
-     * @param float $percent
-     * @param int   $quantity
+     *
+     *
+     * @param int $percent
+     * @param int $quantity
      *
      * @return float
-     * @throws NotSupportedException
-     * @throws LoaderException
-     * @throws ObjectNotFoundException
      */
-    public function getBonuses(float $percent = 3, int $quantity = 1): float
+    public function getBonusCount(int $percent, int $quantity = 1): float
     {
-        if ((int)$this->bonus === 0 && $percent > 0) {
-            $this->bonus = round($this->getPrice() * $quantity * $percent / 100, 2);
+        if (!$this->bonus) {
+            $this->bonus = \round($this->price * $quantity * $percent / 100, 2);
         }
 
         return $this->bonus;
     }
 
     /**
-     * @param float|int $percent
-     * @param int       $quantity
+     * @param int $percent
+     * @param int $quantity
      *
      * @return string
      */
-    public function getBonusFormattedText($percent = 3, int $quantity = 1): string
+    public function getBonusFormattedText(int $percent = 3, int $quantity = 1): string
     {
-        if(!\is_float($percent) && !\is_int($percent)){
-            $percent = 3;
-        }
         $bonusText = '';
-        try {
-            $bonus = $this->getBonuses($percent, $quantity);
-        } catch (\Exception $e) {
-            $bonus = 0;
+
+        $bonus = $this->getBonusCount($percent, $quantity);
+
+        if ($bonus <= 0) {
+            return $bonusText;
         }
-        if ($bonus > 0) {
-            $bonus = round($bonus, 2, PHP_ROUND_HALF_DOWN);
-            $ost = $bonus - floor($bonus) * 100;
-            ob_start(); ?>
-            + <?= WordHelper::numberFormat($bonus) ?>
-            <?= WordHelper::declension($ost > 0 ? $ost : floor($bonus),
-                ['бонус', 'бонуса', 'бонусов']) ?>
-            <?php $bonusText = ob_get_clean();
-        }
-        return $bonusText;
+
+        $div = $bonus - \floor($bonus) * 100;
+
+        return \sprintf(
+            '+ %d %s %s',
+            \round($bonus, 2, \PHP_ROUND_HALF_DOWN),
+            WordHelper::numberFormat($bonus),
+            WordHelper::declension($div ?: \floor($bonus), ['бонус', 'бонуса', 'бонусов'])
+        );
     }
 
     /**
@@ -1111,7 +1107,11 @@ class Offer extends IblockElement
     public function getLink(): string
     {
         if (!$this->link) {
-            $this->link = sprintf('%s?offer=%s', $this->getProduct()->getDetailPageUrl(), $this->getId());
+            $this->link = \sprintf(
+                '%s?offer=%s',
+                $this->getProduct()->getDetailPageUrl(),
+                $this->getId()
+            );
         }
 
         return $this->link;
@@ -1246,6 +1246,9 @@ class Offer extends IblockElement
         return $this->PROPERTY_PRICE_ACTION > 0 && $this->PROPERTY_COND_FOR_ACTION === self::SIMPLE_SHARE_SALE_CODE;
     }
 
+    /**
+     * @return bool
+     */
     public function hasAction(): bool
     {
         /**
@@ -1305,9 +1308,9 @@ class Offer extends IblockElement
         $basket = Basket::create(SITE_ID);
         $basket->setFUserId((int)Fuser::getId());
         $fields = [
-            'PRODUCT_ID'             => $this->getId(),
-            'QUANTITY'               => 1,
-            'MODULE'                 => 'catalog',
+            'PRODUCT_ID' => $this->getId(),
+            'QUANTITY' => 1,
+            'MODULE' => 'catalog',
             'PRODUCT_PROVIDER_CLASS' => CatalogProvider::class,
         ];
 

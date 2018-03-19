@@ -119,16 +119,19 @@ class ProfileController extends Controller
 
         try {
             $curUser = $this->currentUserProvider->getCurrentUser();
-        }
-        catch (NotAuthorizedException $e){
+        } catch (NotAuthorizedException $e) {
             return $this->ajaxMess->getNeedAuthError();
         } catch (InvalidIdentifierException|ConstraintDefinitionException $e) {
-            $logger = LoggerFactory::create('params');
-            $logger->error('Ошибка параметров - ' . $e->getMessage());
+            try {
+                $logger = LoggerFactory::create('params');
+                $logger->error('Ошибка параметров - ' . $e->getMessage());
+            } catch (\RuntimeException $e) {
+                /** оч. плохо - логи мы не получим */
+            }
             return $this->ajaxMess->getSystemError();
         }
 
-        if($id !== $curUser->getId()){
+        if ($id !== $curUser->getId()) {
             return $this->ajaxMess->getSecurityError();
         }
 
@@ -144,11 +147,15 @@ class ProfileController extends Controller
             if (!$this->currentUserProvider->getCurrentUser()->equalPassword($old_password)) {
                 return $this->ajaxMess->getNotEqualOldPasswordError();
             }
-        }catch (NotAuthorizedException $e) {
+        } catch (NotAuthorizedException $e) {
             return $this->ajaxMess->getNeedAuthError();
         } catch (InvalidIdentifierException|ConstraintDefinitionException $e) {
-            $logger = LoggerFactory::create('params');
-            $logger->error('Ошибка параметров - ' . $e->getMessage());
+            try {
+                $logger = LoggerFactory::create('params');
+                $logger->error('Ошибка параметров - ' . $e->getMessage());
+            } catch (\RuntimeException $e) {
+                /** оч. плохо - логи мы не получим */
+            }
         }
 
         if ($password !== $confirm_password) {
@@ -178,12 +185,10 @@ class ProfileController extends Controller
                     $logger = LoggerFactory::create('expertSender');
                     $logger->info('email ' . $user->getEmail() . ' не подтвержден');
                 }
-            }
-            catch (ExpertsenderServiceException $e) {
+            } catch (ExpertsenderServiceException $e) {
                 $logger = LoggerFactory::create('expertSender');
                 $logger->error('ES don`t work - ' . $e->getMessage());
-            }
-            catch (ValidationException|InvalidIdentifierException|ConstraintDefinitionException $e) {
+            } catch (ValidationException|InvalidIdentifierException|ConstraintDefinitionException $e) {
                 $logger = LoggerFactory::create('params');
                 $logger->error('Ошибка параметров - ' . $e->getMessage());
             } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
@@ -195,9 +200,13 @@ class ProfileController extends Controller
             return JsonSuccessResponse::create('Пароль обновлен');
         } catch (BitrixRuntimeException $e) {
             return $this->ajaxMess->getUpdateError($e->getMessage());
-        } catch (ConstraintDefinitionException $e) {
-            $logger = LoggerFactory::create('params');
-            $logger->error('Ошибка параметров - ' . $e->getMessage());
+        } catch (ConstraintDefinitionException|SystemException $e) {
+            try {
+                $logger = LoggerFactory::create('params');
+                $logger->error('Ошибка параметров - ' . $e->getMessage());
+            } catch (\RuntimeException $e) {
+                /** оч. плохо - логи мы не получим */
+            }
             /** скипаем для показа системной ошибки */
         }
 
@@ -211,7 +220,6 @@ class ProfileController extends Controller
      * @param Serializer $serializer
      *
      * @return JsonResponse
-
      */
     public function changeDataAction(Request $request, Serializer $serializer): JsonResponse
     {
@@ -221,13 +229,17 @@ class ProfileController extends Controller
         /** @var UserRepository $userRepository */
         $userRepository = $this->currentUserProvider->getUserRepository();
 
-        try{
+        try {
             $curUser = $this->currentUserProvider->getCurrentUser();
-        } catch (NotAuthorizedException $e){
+        } catch (NotAuthorizedException $e) {
             return $this->ajaxMess->getNeedAuthError();
         } catch (InvalidIdentifierException|ConstraintDefinitionException $e) {
-            $logger = LoggerFactory::create('params');
-            $logger->error('Ошибка параметров - ' . $e->getMessage());
+            try {
+                $logger = LoggerFactory::create('params');
+                $logger->error('Ошибка параметров - ' . $e->getMessage());
+            } catch (\RuntimeException $e) {
+                /** оч. плохо - логи мы не получим */
+            }
             return $this->ajaxMess->getSystemError();
         }
 
@@ -237,7 +249,7 @@ class ProfileController extends Controller
         /** @var User $user */
         $user = $serializer->fromArray($data, User::class);
 
-        if($user->getId() !== $curUser->getId()){
+        if ($user->getId() !== $curUser->getId()) {
             return $this->ajaxMess->getSecurityError();
         }
 
@@ -267,8 +279,7 @@ class ProfileController extends Controller
                 if ($curUser !== null && $curUser->getEmail() !== $user->getEmail()) {
                     $data['UF_EMAIL_CONFIRMED'] = false;
                 }
-            }
-            catch (ValidationException|InvalidIdentifierException|ConstraintDefinitionException $e) {
+            } catch (ValidationException|InvalidIdentifierException|ConstraintDefinitionException $e) {
                 $logger = LoggerFactory::create('params');
                 $logger->error('Ошибка параметров - ' . $e->getMessage());
                 return $this->ajaxMess->getSystemError();
@@ -283,6 +294,11 @@ class ProfileController extends Controller
             } catch (ValidationException|InvalidIdentifierException|ConstraintDefinitionException $e) {
                 $logger = LoggerFactory::create('params');
                 $logger->error('Ошибка параметров - ' . $e->getMessage());
+                return $this->ajaxMess->getUpdateError();
+            } catch (SystemException $e) {
+                $logger = LoggerFactory::create('system');
+                $logger->error('Системная ошибка - ' . $e->getMessage());
+                return $this->ajaxMess->getUpdateError();
             }
 
             if ($user->allowedEASend()) {
@@ -296,8 +312,12 @@ class ProfileController extends Controller
                     }
                 }
             } else {
-                $logger = LoggerFactory::create('expertsender');
-                $logger->info('email ' . $curUser->getEmail() . ' не подтвержден');
+                try {
+                    $logger = LoggerFactory::create('expertsender');
+                    $logger->info('email ' . $curUser->getEmail() . ' не подтвержден');
+                } catch (\RuntimeException $e) {
+                    /** оч. плохо - логи мы не получим */
+                }
             }
 
             /** @var ManzanaService $manzanaService */
