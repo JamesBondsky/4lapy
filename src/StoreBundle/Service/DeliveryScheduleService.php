@@ -112,6 +112,36 @@ class DeliveryScheduleService implements LoggerAwareInterface
     }
 
     /**
+     * @param StoreCollection $stores
+     * @return DeliveryScheduleCollection
+     */
+    public function findByReceivers(StoreCollection $stores): DeliveryScheduleCollection
+    {
+        $results = [];
+        /** @var Store $store */
+        foreach ($stores as $store) {
+            $results[] = $this->findByReceiver($store)->toArray();
+        }
+
+        return new DeliveryScheduleCollection(array_merge(...$results));
+    }
+
+    /**
+     * @param StoreCollection $stores
+     * @return DeliveryScheduleCollection
+     */
+    public function findBySenders(StoreCollection $stores): DeliveryScheduleCollection
+    {
+        $results = [];
+        /** @var Store $store */
+        foreach ($stores as $store) {
+            $results[] = $this->findBySender($store)->toArray();
+        }
+
+        return new DeliveryScheduleCollection(array_merge(...$results));
+    }
+
+    /**
      * @param string $xmlId
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
      * @return DeliverySchedule

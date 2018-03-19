@@ -447,8 +447,8 @@ class DeliverySchedule extends Base
      */
     public function getSender(): Store
     {
-        if (null === $this->receiver) {
-            $this->setReceiver($this->storeService->getByXmlId($this->getSenderCode()));
+        if (null === $this->sender) {
+            $this->setSender($this->storeService->getByXmlId($this->getSenderCode()));
         }
         return $this->sender;
     }
@@ -497,7 +497,7 @@ class DeliverySchedule extends Base
     public function getReceiverSchedules(): DeliveryScheduleCollection
     {
         if (null === $this->receiverSchedules) {
-            $this->setReceiverSchedules($this->scheduleService->findByReceiver($this->getReceiver()));
+            $this->setReceiverSchedules($this->scheduleService->findBySender($this->getReceiver()));
         }
         return $this->receiverSchedules;
     }
@@ -520,7 +520,7 @@ class DeliverySchedule extends Base
     public function getSenderSchedules(): DeliveryScheduleCollection
     {
         if (null === $this->senderSchedules) {
-            $this->setSenderSchedules($this->scheduleService->findBySender($this->getSender()));
+            $this->setSenderSchedules($this->scheduleService->findByReceiver($this->getSender()));
         }
 
         return $this->senderSchedules;
@@ -603,11 +603,12 @@ class DeliverySchedule extends Base
                 $weekNumbers[] = 0;
                 foreach ($weekNumbers as $weekNumber) {
                     $weekDate = clone $date;
-                    $weekDate->setISODate($date->format('Y'), $weekNumber);
-                    if ($weekDate < $from) {
+                    $weekDate->setISODate($date->format('Y'), $weekNumber - 1);
+                    if ($weekDate->format('W') < $from->format('W')) {
                         $weekDate->modify('+1 year');
                     }
-                    $weekDates[] = $weekDate;
+
+                    $weekDates[] = ($weekDate > $from) ? $weekDate : $from;
                 }
 
                 $result = !empty($weekDates) ? $getByDay(min($weekDates)) : null;
@@ -617,12 +618,10 @@ class DeliverySchedule extends Base
                 break;
         }
 
-        /** @todo нужна ли эта проверка? */
-        /*
+        /** Результат за пределами активности графика */
         if ($result && !$this->isActiveForDate($result)) {
             return null;
         }
-        */
 
         return $result;
     }

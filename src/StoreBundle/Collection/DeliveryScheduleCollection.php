@@ -68,7 +68,6 @@ class DeliveryScheduleCollection extends BaseCollection
      * Получение ближайшего графика поставок для указанной даты
      *
      * @param Store $receiver
-     * @param StoreCollection $senders
      * @param null|\DateTime $from
      * @throws \Bitrix\Main\ArgumentException
      * @throws \FourPaws\StoreBundle\Exception\NotFoundException
@@ -76,7 +75,6 @@ class DeliveryScheduleCollection extends BaseCollection
      */
     public function getNextDelivery(
         Store $receiver,
-        StoreCollection $senders,
         \DateTime $from = null
     ): ?DeliveryScheduleResult {
         if (!$from) {
@@ -85,9 +83,9 @@ class DeliveryScheduleCollection extends BaseCollection
 
         /** @var DeliveryScheduleResult $result */
         $result = null;
-        $senderSchedules = $this->getActive($from)->filterBySenders($senders);
-
+        $senderSchedules = $this->getActive($from);
         /** @var DeliverySchedule $senderSchedule */
+
         foreach ($senderSchedules as $senderSchedule) {
             if (!$date = $this->doGetNextDelivery($senderSchedule, $receiver, $from)) {
                 continue;
@@ -103,7 +101,6 @@ class DeliveryScheduleCollection extends BaseCollection
 
     /**
      * @param StoreCollection $receivers
-     * @param StoreCollection $senders
      * @param \DateTime|null $from
      * @return DeliveryScheduleResultCollection
      * @throws NotFoundException
@@ -111,7 +108,6 @@ class DeliveryScheduleCollection extends BaseCollection
      */
     public function getNextDeliveries(
         StoreCollection $receivers,
-        StoreCollection $senders,
         \DateTime $from = null
     ): DeliveryScheduleResultCollection {
         if (!$from) {
@@ -122,8 +118,8 @@ class DeliveryScheduleCollection extends BaseCollection
 
         /** @var Store $receiver */
         foreach ($receivers as $receiver) {
-            if ($r = $this->getNextDelivery($receiver, $senders, $from)) {
-                $result->add($r);
+            if ($res = $this->getNextDelivery($receiver, $from)) {
+                $result->add($res);
             }
         }
 
@@ -150,19 +146,24 @@ class DeliveryScheduleCollection extends BaseCollection
             return null;
         }
 
-        if ($senderSchedule->getReceiverCode() === $receiver->getXmlId()) {
-            return $senderSchedule->getNextDelivery($from);
+        if (!$nextDelivery = $senderSchedule->getNextDelivery($from)) {
+            return null;
         }
 
-        $results = [];
+        if ($senderSchedule->getReceiverCode() === $receiver->getXmlId()) {
+            return $nextDelivery;
+        }
 
-        $children = $senderSchedule->getReceiverSchedules();
+        $children = $senderSchedule->getReceiverSchedules()->getActive($nextDelivery);
         /** @var DeliverySchedule $child */
         foreach ($children as $child) {
             if ($child->getReceiverCode() === $receiver->getXmlId()) {
-                $results[] = $child->getNextDelivery($from);
+                $childFrom = $child->getNextDelivery($nextDelivery);
+                if ($childFrom) {
+                    $results[] = $childFrom;
+                }
             } else {
-                if ($childFrom = $child->getNextDelivery($from)) {
+                if ($childFrom = $child->getNextDelivery($nextDelivery)) {
                     $results[] = $this->doGetNextDelivery(
                         $child,
                         $receiver,

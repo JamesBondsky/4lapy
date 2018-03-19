@@ -17,6 +17,7 @@ use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
+use FourPaws\StoreBundle\Collection\DeliveryScheduleResultCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\DeliverySchedule;
 use FourPaws\StoreBundle\Entity\DeliveryScheduleResult;
@@ -451,7 +452,6 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             return $date;
         }
 
-
         $shipmentDay = 0;
         /**
          * Если есть товары под заказ
@@ -467,10 +467,10 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
                  * Если нет товаров из регулярного ассортимента, то находим скорейший маршрут
                  *  от складов поставщика до нужного склада/магазина
                  */
-                $scheduleResult = $scheduleService->findByReceiver($store)
+
+                $scheduleResult = $scheduleService->findBySenders($byRequestStores)
                     ->getNextDelivery(
                         $store,
-                        $byRequestStores,
                         $tmpDate
                     );
 
@@ -483,12 +483,11 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             } else {
                 /**
                  * Если есть товары из регулярного ассортимента, то находим маршруты
-                 * от складов поставщика до РЦ
+                 * от складов поставщика до складов, где есть требуемое кол-во данных товаров
                  */
-                $scheduleResults = $scheduleService->findByReceiver($store)
+                $scheduleResults = $scheduleService->findBySenders($byRequestStores)
                     ->getNextDeliveries(
                         $regularStores,
-                        $byRequestStores,
                         $tmpDate
                     );
                 if ($scheduleResults->isEmpty()) {
@@ -496,56 +495,42 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
                     return $date;
                 }
 
-                /** @var DeliveryScheduleResult $fastest */
-                $fastest = $scheduleResults->getFastest();
+                /** @var DeliveryScheduleResult $senderResult */
+                $collection = new DeliveryScheduleResultCollection();
+                foreach ($scheduleResults as $senderResult) {
+                    $schedules = $senderResult->getSchedule()->getReceiverSchedules();
+                    if ($schedules->isEmpty()) {
+                        continue;
+                    }
+                    if ($result = $schedules->getNextDelivery($store, $senderResult->getDate())) {
+                        $collection->add($result);
+                    }
+                }
 
-                $schedules = $scheduleService->findByReceiver($store);
-                if ($schedules->isEmpty()) {
+                if ($collection->isEmpty()) {
                     $this->addError(new Error('Нет доступных графиков поставок'));
                     return $date;
                 }
 
-                $day = $this->getShipmentDay($store, $fastest->getDate());
-                if (null !== $day) {
-                    $shipmentDay += $fastest->getDate()->diff($date)->days + $day;
-                } else {
-                    /** @var DeliveryScheduleResult $scheduleResult */
-                    $scheduleResult = null;
-                    /** @var DeliverySchedule $schedule */
-                    foreach ($schedules as $schedule) {
-                        $sender = $schedule->getSender();
-                        $tmpResult = $scheduleResults->findByReceiver($sender)->getFastest();
-                        if (null === $scheduleResult && $tmpResult && $scheduleResult->getDate() > $tmpResult->getDate()) {
-                            $scheduleResult = $tmpResult;
-                        }
-                    }
-
-                    if (null === $scheduleResult) {
-                        $this->addError(new Error('Нет доступных графиков поставок'));
-                        return $date;
-                    }
-
-                    $shipmentDay += $scheduleResult->getDate()->diff($date)->days;
-                }
+                /** @noinspection NullPointerExceptionInspection */
+                $shipmentDay += $collection->getFastest()->getDate()->diff($date)->days;
             }
-
             /**
              * Если есть только товары из регулярного ассортимента
              */
         } elseif (!$regularStores->isEmpty()) {
-            $day = $this->getShipmentDay($store, $date);
-            $schedules = $scheduleService->findByReceiver($store);
+            $schedules = $scheduleService->findBySenders($regularStores);
             if ($schedules->isEmpty()) {
                 $this->addError(new Error('Нет доступных графиков поставок'));
                 return $date;
             }
+            $day = $this->getShipmentDay($store, $date);
 
             if (null !== $day) {
                 $shipmentDay += $day;
             } else {
                 $scheduleResult = $schedules->getNextDelivery(
                     $store,
-                    $regularStores,
                     $date
                 );
                 if ($scheduleResult) {
@@ -651,7 +636,14 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
 
             $res = [];
             foreach ($days as $day) {
+                /**
+                 * Если текущий день является днем отгрузки
+                 */
                 if ($day === $currentDay) {
+                    /**
+                     * Если текущий час меньше времени окончания отгрузки,
+                     * то отгрузка в текущий день, иначе - через неделю
+                     */
                     if ($currentHour < $maxHour) {
                         $res[] = 0;
                     } else {
@@ -661,12 +653,18 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
                 }
 
                 $diff = $day - $currentDay;
+                /**
+                 * если diff < 0, то поставка на следующей неделе, соответственно, добавляем 7 дней
+                 */
                 $res[] = ($diff > 0) ? $diff : $diff + 7;
             }
 
             $results[] = min($res);
         }
 
+        /**
+         * Если найден результат, то добавляем к нему 1 день (по ТЗ)
+         */
         return empty($results) ? null : min($results) + 1;
     }
 

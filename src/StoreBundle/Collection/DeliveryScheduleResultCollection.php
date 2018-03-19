@@ -38,4 +38,36 @@ class DeliveryScheduleResultCollection extends BaseCollection
             return $result->getSchedule()->getReceiverCode() === $store->getXmlId();
         });
     }
+
+    /**
+     * @return StoreCollection
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     */
+    public function getReceivers(): StoreCollection
+    {
+        $result = new StoreCollection();
+        /** @var DeliveryScheduleResult $item */
+        foreach ($this->getIterator() as $item) {
+            $result->add($item->getSchedule()->getReceiver());
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return StoreCollection
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     */
+    public function getSenders(): StoreCollection
+    {
+        $result = new StoreCollection();
+        /** @var DeliveryScheduleResult $item */
+        foreach ($this->getIterator() as $item) {
+            $result->add($item->getSchedule()->getSender());
+        }
+
+        return $result;
+    }
 }
