@@ -66,9 +66,9 @@ class Adder extends BaseDiscountPostHandler implements AdderInterface
                                         'CUSTOM_PRICE' => 'Y', //надо как-то по-другому сделать
                                         'PROPS' => [
                                             [
-                                                'NAME' => 'DETACH',
-                                                'CODE' => 'DETACH',
-                                                'VALUE' => $applyResult['DISCOUNT_LIST'][$discount['DISCOUNT_ID']]['REAL_DISCOUNT_ID'],
+                                                'NAME' => 'Отделено от элемента корзины',
+                                                'CODE' => 'DETACH_FROM',
+                                                'VALUE' => $basketId,
                                                 'SORT' => 100,
                                             ],
                                         ]
