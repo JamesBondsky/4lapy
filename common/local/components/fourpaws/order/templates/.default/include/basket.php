@@ -52,11 +52,15 @@ if ($deliveryService->isPickup($selectedDelivery)) {
     $showPickupContainer = true;
 }
 
+/** @var \FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface $pickup */
 $pickup = $arResult['PICKUP'];
 if (null !== $pickup) {
     /** @var Store $selectedShop */
     $selectedShop = $arResult['SELECTED_SHOP'];
-    $stockResult = $pickup->getStockResult()->filterByStore($selectedShop);
+    $stockResult = $pickup->getStockResult();
+    if ($deliveryService->isInnerPickup($pickup)) {
+        $stockResult = $stockResult->filterByStore($selectedShop);
+    }
 
     $available = $stockResult->getAvailable();
     $availableWeight = 0;

@@ -86,8 +86,7 @@ class PickupResult extends BaseResult implements PickupResultInterface
         $storeData = [];
         /** @var Store $shop */
         foreach ($shops as $shop) {
-            $tmpPickup = (clone $this)->setSelectedStore($shop)
-                ->setStockResult($this->getStockResult()->filterByStore($shop));
+            $tmpPickup = (clone $this)->setSelectedStore($shop);
             $storeData[$shop->getXmlId()] = [
                 'RESULT' => $tmpPickup,
                 'AVAILABLE_PRICE' => $tmpPickup->getStockResult()->getAvailable()->getPrice()

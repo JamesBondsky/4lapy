@@ -330,7 +330,6 @@ class FourPawsOrderComponent extends \CBitrixComponent
             }
 
             $this->arResult['SELECTED_SHOP'] = $pickup->getSelectedStore();
-            $pickup->setStockResult($pickup->getStockResult()->filterByStore($pickup->getSelectedStore()));
         } catch (NotFoundException $e) {
             $this->logger->error(sprintf(
                     'Order has pickup delivery with no shops available. Delivery location: %s',

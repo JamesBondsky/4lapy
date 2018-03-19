@@ -369,21 +369,22 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
         $date = clone $this->getCurrentDate();
 
         if (null !== $this->stockResult) {
-            $stockResult = $this->getStockResult()->filterByStore($this->getSelectedStore());
+            $this->getSelectedStore();
+            $stockResult = $this->getStockResult()->filterByStore($this->selectedStore);
 
             /**
              * Если есть отложенные товары, то добавляем к дате доставки
              * срок поставки на склад по графику
              */
             if (!$stockResult->getDelayed()->isEmpty()) {
-                $date = $this->getStoreShipmentDate($this->getSelectedStore(), $stockResult->getDelayed());
+                $date = $this->getStoreShipmentDate($this->selectedStore, $stockResult->getDelayed());
             }
 
             /**
              * Если склад является магазином, то учитываем его график работы
              */
-            if ($this->getSelectedStore()->isShop()) {
-                $this->calculateWithStoreSchedule($date, $this->getSelectedStore());
+            if ($this->selectedStore->isShop()) {
+                $this->calculateWithStoreSchedule($date, $this->selectedStore);
             }
         }
 

@@ -237,13 +237,6 @@ class OrderService
             foreach ($deliveries as $delivery) {
                 if ($storage->getDeliveryId() === $delivery->getDeliveryId()) {
                     $selectedDelivery = clone $delivery;
-                    if ($this->deliveryService->isPickup($selectedDelivery)) {
-                        $selectedDelivery->setStockResult(
-                            $selectedDelivery->getStockResult()->filterByStore(
-                                $this->storeService->getByXmlId($storage->getDeliveryPlaceCode())
-                            )
-                        );
-                    }
                     break;
                 }
             }

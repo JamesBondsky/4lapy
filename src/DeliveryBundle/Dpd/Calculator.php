@@ -20,6 +20,7 @@ use FourPaws\DeliveryBundle\Handler\DeliveryHandlerBase;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\SaleBundle\Service\BasketService;
+use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Service\StoreService;
 use Ipolh\DPD\Delivery\DPD;
 
@@ -90,6 +91,7 @@ class Calculator extends DPD
         }
 
         $stockResult = null;
+        $terminals = new StoreCollection();
         if (!empty($arOrder['ITEMS'])) {
             $basket = $basketService->getBasket()->getOrderableItems();
             if ($offers = DeliveryHandlerBase::getOffers(
@@ -112,11 +114,6 @@ class Calculator extends DPD
                 if ($profileCode === DeliveryService::DPD_PICKUP_CODE) {
                     $shipment = self::makeShipment($arOrder);
                     $terminals = $shipment->getDpdTerminals();
-
-                    /** @var StockResult $item */
-                    foreach ($stockResult as $item) {
-                        $item->setStores($terminals);
-                    }
                 }
             }
         }
@@ -130,6 +127,7 @@ class Calculator extends DPD
         );
         /* @todo не хранить эти данные в сессии */
         $_SESSION['DPD_DATA'][$profileCode] = [
+            'TERMINALS'    => $terminals,
             'INTERVALS'    => $intervals,
             'DAYS_FROM'    => $result['DPD_TARIFF']['DAYS'],
             'STOCK_RESULT' => $stockResult,
