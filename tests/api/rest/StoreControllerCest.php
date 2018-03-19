@@ -8,41 +8,19 @@ use Codeception\Util\HttpCode;
 
 class StoreControllerCest
 {
-    protected $token;
-
-
-    /**
-     * @param ApiTester $I
-     *
-     * @throws Exception
-     */
-    public function _before(ApiTester $I)
-    {
-        $this->token = $I->createToken();
-    }
-
-    /**
-     * @param ApiTester $I
-     */
-    public function _after(ApiTester $I)
-    {
-        $I->deleteToken($this->token);
-    }
-
     /**
      * @param ApiTester            $I
      * @param \Codeception\Example $example
      *
      * @dataprovider validDataProvider
-     * @throws \_generated\Exception
      * @throws Exception
      */
-    public function testValidGet(ApiTester $I, \Codeception\Example $example)
+    public function testValidGet(ApiTester $I, \Codeception\Example $example): void
     {
         $I->wantTo('Test valid store data');
         $I->haveHttpHeader('Content-type', 'application/json');
         $params = $example['params'] ?? [];
-        $params['token'] = $this->token;
+        $params['token'] = $I->createToken();
 
         $I->sendGET('/shop_list/', $params);
         $I->seeResponseCodeIs(HttpCode::OK);
@@ -75,7 +53,10 @@ class StoreControllerCest
         }
     }
 
-    public function validDataProvider()
+    /**
+     * @return array
+     */
+    protected function validDataProvider(): array
     {
         return [
             [
@@ -113,15 +94,14 @@ class StoreControllerCest
      * @param \Codeception\Example $example
      *
      * @dataprovider invalidDataProvider
-     * @throws \_generated\Exception
      * @throws Exception
      */
-    public function testInvalidGet(ApiTester $I, \Codeception\Example $example)
+    public function testInvalidGet(ApiTester $I, \Codeception\Example $example): void
     {
         $I->wantTo('Test invalid store data');
         $I->haveHttpHeader('Content-type', 'application/json');
         $params = $example['params'] ?? [];
-        $params['token'] = $this->token;
+        $params['token'] = $I->createToken();
 
         $I->sendGET('/shop_list/', $params);
         $I->seeResponseCodeIs(HttpCode::OK);
@@ -137,7 +117,10 @@ class StoreControllerCest
         }
     }
 
-    public function invalidDataProvider()
+    /**
+     * @return array
+     */
+    protected function invalidDataProvider(): array
     {
         return [
             [
