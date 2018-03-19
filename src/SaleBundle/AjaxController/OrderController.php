@@ -108,8 +108,10 @@ class OrderController extends Controller
     /**
      * @Route("/store-search/", methods={"GET"})
      * @param Request $request
-     *
      * @return JsonResponse
+     * @throws \Bitrix\Main\SystemException
+     * @throws \Exception
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
     public function storeSearchAction(Request $request): JsonResponse
     {
@@ -131,14 +133,15 @@ class OrderController extends Controller
     /**
      * @Route("/delivery-intervals/", methods={"POST"})
      * @param Request $request
-     *
      * @return JsonResponse
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\NotSupportedException
      */
     public function deliveryIntervalsAction(Request $request): JsonResponse
     {
         $result = [];
         $date = (int)$request->get('deliveryDate', 0);
-        $deliveries = $this->orderService->getDeliveries();
+        $deliveries = $this->orderService->getDeliveries($this->orderStorageService->getStorage());
         $delivery = null;
         foreach ($deliveries as $deliveryItem) {
             if (!$this->deliveryService->isDelivery($deliveryItem)) {
@@ -172,9 +175,9 @@ class OrderController extends Controller
 
     /**
      * @Route("/validate/auth", methods={"POST"})
-     *
-     * @param \Symfony\Component\HttpFoundation\Request $request
-     *
+     * @param Request $request
+     * @return JsonResponse
+     * @throws \Bitrix\Main\SystemException
      * @return \FourPaws\App\Response\JsonResponse
      */
     public function validateAuthAction(Request $request): JsonResponse
