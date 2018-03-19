@@ -48,33 +48,27 @@ class Manager
                 /** @var Order $order */
                 $order = $event->getParameter('ENTITY');
                 if ($order instanceof Order) {
+                    $basketService = Application::getInstance()
+                        ->getContainer()
+                        ->get(BasketService::class);
 
                     // Автоматически добавляем подарки
-                    Application::getInstance()
-                        ->getContainer()
-                        ->get(BasketService::class)
+                    $basketService
                         ->getAdder('gift')
                         ->processOrder();
 
                     // Удаляем подарки, акции которых не выполнились
-                    Application::getInstance()
-                        ->getContainer()
-                        ->get(BasketService::class)
+                    $basketService
                         ->getCleaner('gift')
                         ->processOrder();
-                    ## индус
 
                     // Автоматически добавляем подарки
-                    Application::getInstance()
-                        ->getContainer()
-                        ->get(BasketService::class)
+                    $basketService
                         ->getAdder('detach')
                         ->processOrder();
 
                     // Удаляем подарки, акции которых не выполнились
-                    Application::getInstance()
-                        ->getContainer()
-                        ->get(BasketService::class)
+                    $basketService
                         ->getCleaner('detach')
                         ->processOrder();
                 }

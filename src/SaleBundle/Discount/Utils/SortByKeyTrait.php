@@ -11,6 +11,7 @@ namespace FourPaws\SaleBundle\Discount\Utils;
 
 /**
  * Trait SortByKeyTrait
+ * @todo вынести в хелпер
  * @package FourPaws\SaleBundle\Discount\Utils
  */
 trait SortByKeyTrait

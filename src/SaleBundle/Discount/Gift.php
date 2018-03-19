@@ -68,7 +68,6 @@ class Gift extends \CSaleActionGiftCtrlGroup
             'SELECT_CONTROL' => 'Выбрать условие'
         ];
 
-        //dump($description);
         return $description;
     }
 

@@ -231,7 +231,9 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
         //dump($arOneCondition, $arParams, $arControl, $arSubs);
         $result = '';
         if (
-            ////// todo Нормально сделай
+            /**
+             * @todo обработать все варианты параметров
+             */
             $arOneCondition['Filtration_operator'] === 'separate'
             && $arOneCondition['Count_operator'] === 'min'
             && \is_array($arSubs) && \count($arSubs) === 1

@@ -138,19 +138,19 @@ class BasketFilter extends \CSaleCondCtrlBasketGroup
                         $row['control'][] = $oneControl['ATOMS']['All'];
                         $row['control'][] = 'и';
                         $row['control'][] = $oneControl['ATOMS']['Value'];
-                        $row['control'][] = 'как минимум больше еденицы';
+                        $row['control'][] = 'как минимум больше единицы';
                         break;
                     case 'ADV:BasketFilterQuantityMore':
                         $row['control'][] = $oneControl['ATOMS']['All'];
                         $row['control'][] = 'больше';
                         $row['control'][] = $oneControl['ATOMS']['Value'];
-                        $row['control'][] = 'как минимум на одну еденицу';
+                        $row['control'][] = 'как минимум на одну единицу';
                         break;
                     case 'ADV:BasketFilterQuantityRatio':
                         $row['control'][] = $oneControl['ATOMS']['All'];
                         $row['control'][] = 'и';
                         $row['control'][] = $oneControl['ATOMS']['Value'];
-                        $row['control'][] = 'как минимум больше еденицы';
+                        $row['control'][] = 'как минимум больше единицы';
                         break;
                 }
                 if (!empty($row['control'])) {
