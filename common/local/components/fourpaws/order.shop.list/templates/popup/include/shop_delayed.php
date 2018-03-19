@@ -43,12 +43,6 @@ use FourPaws\Decorators\SvgDecorator;
                 </div>
             </div>
             <div class="b-input-line b-input-line--myself">
-                <div class="b-input-line__label-wrapper"><span class="b-input-line__label">Можно забрать {{pickup}}, кроме</span>
-                    <ol class="b-input-line__text-list">{{parts_delayed_html}}
-                    </ol>
-                </div>
-            </div>
-            <div class="b-input-line b-input-line--myself">
                 <div class="b-input-line__label-wrapper">
                     <span class="b-input-line__label">Полный заказ будет доступен</span>
                 </div>
