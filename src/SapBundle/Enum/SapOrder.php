@@ -1,7 +1,10 @@
 <?php
 
-namespace FourPaws\SapBundle\Enum;
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
 
+namespace FourPaws\SapBundle\Enum;
 
 final class SapOrder
 {
@@ -40,5 +43,7 @@ final class SapOrder
     public const PAYMENT_SYSTEM_ONLINE_ID = 3;
     
     public const UNIT_PTC_CODE = 'PCE';
-    
+
+    public const TEST_PHONE = '79060767386';
+    public const TEST_COMMENT = '!!! ТЕСТ';
 }

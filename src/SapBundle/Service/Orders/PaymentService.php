@@ -127,4 +127,11 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
 
         $this->outPath = $outPath;
     }
+
+    public function tryPaymentRefund(Order $order)
+    {
+        /**
+         * @todo refund
+         */
+    }
 }

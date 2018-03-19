@@ -2,6 +2,7 @@
 
 namespace FourPaws\StoreBundle\Entity;
 
+use DateTime;
 use FourPaws\App\Application;
 use FourPaws\StoreBundle\Collection\DeliveryScheduleCollection;
 use FourPaws\StoreBundle\Exception\NotFoundException;
@@ -9,8 +10,12 @@ use FourPaws\StoreBundle\Service\DeliveryScheduleService;
 use FourPaws\StoreBundle\Service\StoreService;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
-use DateTime;
 
+/**
+ * Class DeliverySchedule
+ *
+ * @package FourPaws\StoreBundle\Entity
+ */
 class DeliverySchedule extends Base
 {
     /**
@@ -30,14 +35,16 @@ class DeliverySchedule extends Base
 
     /**
      * @var int
+     *
      * @Serializer\Type("integer")
      * @Serializer\SerializedName("ID")
      * @Serializer\Groups(groups={"read","update","delete"})
+     *
      * @Assert\NotBlank(groups={"read","update","delete"})
      * @Assert\GreaterThanOrEqual(value="1",groups={"read","update","delete"})
      * @Assert\Blank(groups={"create"})
      */
-    protected $id = 0;
+    protected $id;
 
     /**
      * @var string
@@ -46,6 +53,14 @@ class DeliverySchedule extends Base
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
     protected $name = '';
+
+    /**
+     * @var string
+     * @Serializer\SerializedName("UF_XML_ID")
+     * @Serializer\Type("string")
+     * @Serializer\Groups(groups={"create","read","update","delete"})
+     */
+    protected $xmlId = '';
 
     /**
      * @var string
@@ -80,20 +95,12 @@ class DeliverySchedule extends Base
     protected $activeTo;
 
     /**
-     * @var bool
-     * @Serializer\SerializedName("UF_ACTIVE")
-     * @Serializer\Type("bool")
-     * @Serializer\Groups(groups={"create","read","update","delete"})
-     */
-    protected $active = true;
-
-    /**
      * @var array
      * @Serializer\SerializedName("UF_WEEK_NUMBER")
      * @Serializer\Type("array<int>")
      * @Serializer\Groups(groups={"create","read","update","delete"})
      */
-    protected $weekNumbers = [];
+    protected $weekNumbers;
 
     /**
      * @var array
@@ -265,26 +272,6 @@ class DeliverySchedule extends Base
     }
 
     /**
-     * @return bool
-     */
-    public function isActive(): bool
-    {
-        return $this->active;
-    }
-
-    /**
-     * @param bool $active
-     *
-     * @return DeliverySchedule
-     */
-    public function setActive(bool $active): DeliverySchedule
-    {
-        $this->active = $active;
-
-        return $this;
-    }
-
-    /**
      * @return string
      */
     public function getType(): string
@@ -294,11 +281,13 @@ class DeliverySchedule extends Base
 
     /**
      * @param string $type
+     *
      * @return DeliverySchedule
      */
     public function setType(string $type): DeliverySchedule
     {
         $this->type = $type;
+
         return $this;
     }
 
@@ -381,15 +370,13 @@ class DeliverySchedule extends Base
     }
 
     /**
+     * @noinspection MultipleReturnStatementsInspection
+     *
      * @param DateTime $date
      * @return bool
      */
     public function isActiveForDate(DateTime $date): bool
     {
-        if (!$this->isActive()) {
-            return false;
-        }
-
         if ($this->activeFrom && $this->activeFrom > $date) {
             return false;
         }
@@ -504,6 +491,26 @@ class DeliverySchedule extends Base
     public function setSenderSchedules(DeliveryScheduleCollection $senderSchedules): DeliverySchedule
     {
         $this->senderSchedules = $senderSchedules;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getXmlId(): string
+    {
+        return $this->xmlId;
+    }
+
+    /**
+     * @param string $xmlId
+     *
+     * @return DeliverySchedule
+     */
+    public function setXmlId(string $xmlId): DeliverySchedule
+    {
+        $this->xmlId = $xmlId;
+
         return $this;
     }
 }
