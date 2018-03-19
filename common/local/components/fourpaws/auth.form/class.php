@@ -16,6 +16,7 @@ use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Internals\FuserTable;
+use Bitrix\Sale\Order;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonResponse;
@@ -213,6 +214,13 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                     $fUserId = (int)FuserTable::query()->setFilter(['USER_ID' => $userId])->setSelect(['ID'])->setCacheTtl(360000)->exec()->fetch()['ID'];
                     if ($fUserId > 0) {
                         $userBasket = $basketService->getBasket(true, $fUserId);
+
+                        // привязывать к заказу нужно для расчета скидок
+                        if (null === $order = $userBasket->getOrder()) {
+                            $order = Order::create(SITE_ID);
+                            $order->setBasket($userBasket);
+                        }
+
                         if (!$curBasket->isEmpty() && !$userBasket->isEmpty()) {
                             $needConfirmBasket = true;
                             $delBasketIds = [];
@@ -220,7 +228,6 @@ class FourPawsAuthFormComponent extends \CBitrixComponent
                             foreach ($userBasket->getBasketItems() as $item) {
                                 $delBasketIds[] = $item->getId();
                             }
-                            /** @todo сумма корзины со скидкой */
                             $basketPrice = $userBasket->getPrice();
                         }
                     }
