@@ -35,7 +35,7 @@ use FourPaws\Enum\IblockCode;
 use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\BxCollection;
 use FourPaws\Helpers\DateHelper;
-use FourPaws\Location\LocationService;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\SaleBundle\Service\OrderService as BaseOrderService;
 use FourPaws\SapBundle\Dto\Base\Orders\DeliveryAddress;
 use FourPaws\SapBundle\Dto\In\Orders\Order as OrderDtoIn;
@@ -287,10 +287,9 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      */
     public function getFileName($order): string
     {
-        return sprintf(
-            '/%s/%s-%s%s.xml',
-            trim($this->outPath, '/'),
-            $order->getDateInsert()->format('Ymd'),
+        return \sprintf(
+            '/%s/%s%s.xml',
+            \trim($this->outPath, '/'),
             $this->outPrefix,
             $order->getId()
         );
@@ -581,11 +580,13 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 $this->intervalService->getIntervalByCode($orderDto->getDeliveryTimeInterval())
             );
         } catch (NotFoundException $e) {
-            $this->log()->error(sprintf(
-                'Интервал %s не найден для заказа %s',
-                $orderDto->getDeliveryTimeInterval(),
-                $orderDto->getId()
-            ));
+            $this->log()->error(
+                \sprintf(
+                    'Интервал %s не найден для заказа %s',
+                    $orderDto->getDeliveryTimeInterval(),
+                    $orderDto->getId()
+                )
+            );
         }
 
         if ($deliveryAddress) {
@@ -624,6 +625,9 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      */
     private function setPaymentFromDto(Order $order, OrderDtoIn $orderDto): void
     {
+        /**
+         * Мы не меняем платежную систему при смене статуса, только суммы
+         */
         $statusPayed = SapOrder::ORDER_PAYMENT_STATUS_NOT_PAYED === $orderDto->getPayStatus() ? 'N' : 'Y';
         $bonusPayedCount = $orderDto->getBonusPayedCount();
         $innerPayment = $order->getPaymentCollection()->getInnerPayment();
@@ -632,6 +636,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         if ($innerPayment && $bonusPayedCount) {
             $innerPayment->setPaid($statusPayed);
             $innerPayment->setField('PS_SUM', $bonusPayedCount);
+            /** @noinspection PhpInternalEntityUsedInspection */
             $innerPayment->setFieldNoDemand('SUM', $bonusPayedCount);
         }
 
@@ -652,6 +657,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
 
         $externalPayment->setPaid($statusPayed);
         $externalPayment->setField('PS_SUM', $orderDto->getTotalSum() - $bonusPayedCount);
+        /** @noinspection PhpInternalEntityUsedInspection */
         $externalPayment->setFieldNoDemand('SUM', $orderDto->getTotalSum() - $bonusPayedCount);
     }
 
@@ -662,9 +668,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     private function setDeliveryFromDto(Order $order, OrderDtoIn $orderDto): void
     {
         /**
-         * @todo
-         *
-         * Set order shipments from DTO
+         * Мы не меняем службу доставки при смене статуса
          */
     }
 
@@ -682,18 +686,18 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
          * @var BasketItem $basketItem
          */
         foreach ($basketCollection = $order->getBasket()->getBasketItems() as $basketItem) {
-            $article = substr(
+            $article = \substr(
                 $basketItem->getField('PRODUCT_XML_ID'),
-                (strpos($basketItem->getField('PRODUCT_XML_ID'), '#') + 1) ?: 0
+                (\strpos($basketItem->getField('PRODUCT_XML_ID'), '#') + 1) ?: 0
             );
-            $article = ltrim($article, '0');
+            $article = \ltrim($article, '0');
 
             $externalItem = $externalItems->filter(
                 function ($item) use ($article) {
                     /**
                      * @var OrderOfferIn $item
                      */
-                    return (string)$article === ltrim($item->getOfferXmlId());
+                    return $article === \ltrim($item->getOfferXmlId());
                 }
             )->first();
 
@@ -728,7 +732,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         try {
             $basketItem->setField('QUANTITY', $externalItem->getQuantity());
         } catch (ArgumentOutOfRangeException | Exception $e) {
-            $this->log()->error(sprintf('Ошибка обновления товара в корзине: %s', $e->getMessage()));
+            $this->log()->error(\sprintf('Ошибка обновления товара в корзине: %s', $e->getMessage()));
         }
     }
 
@@ -750,26 +754,31 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         $element = [];
 
         try {
+            /**
+             * @var array $element
+             */
             $element = (new Query(ElementTable::class))
                 ->setFilter([
                     'IBLOCK_ID' => IblockUtils::getIblockId(IblockType::CATALOG, IblockCode::OFFERS),
-                    'XML_ID'    => ltrim($externalItem->getOfferXmlId(), '0'),
+                    'XML_ID'    => \ltrim($externalItem->getOfferXmlId(), '0'),
                 ])
                 ->setLimit(1)
                 ->setSelect(['XML_ID', 'ID', 'NAME'])
                 ->exec()
                 ->fetch();
 
-            $itemId = $element['ID'];
-
-            if (!$itemId) {
-                throw new NotFoundProductException(sprintf(
-                    'Продукт с внешним кодом %s не найден.',
-                    $externalItem->getOfferXmlId()
-                ));
+            if (!\is_array($element)) {
+                throw new NotFoundProductException(
+                    \sprintf(
+                        'Продукт с внешним кодом %s не найден.',
+                        $externalItem->getOfferXmlId()
+                    )
+                );
             }
+
+            $itemId = $element['ID'];
         } catch (IblockNotFoundException | ArgumentException $e) {
-            $this->log()->error(sprintf('Ошибка добавления продукта: %s', $e->getMessage()));
+            $this->log()->error(\sprintf('Ошибка добавления продукта: %s', $e->getMessage()));
         }
 
         $context = [
@@ -795,11 +804,13 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
                 throw new CantCreateBasketItem(implode(', ', $result->getErrorMessages()));
             }
         } catch (CantCreateBasketItem | LoaderException | ObjectNotFoundException $e) {
-            $this->log()->error(sprintf(
-                'Ошибка добавления товара в корзину заказа #%s: %s',
-                $basket->getOrderId(),
-                $e->getMessage()
-            ));
+            $this->log()->error(
+                \sprintf(
+                    'Ошибка добавления товара в корзину заказа #%s: %s',
+                    $basket->getOrderId(),
+                    $e->getMessage()
+                )
+            );
         }
     }
 

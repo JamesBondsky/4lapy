@@ -1,10 +1,14 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace Sprint\Migration;
 
 use Adv\Bitrixtools\Migration\SprintMigrationBase;
 use Bitrix\Catalog\StoreTable;
-use FourPaws\Location\LocationService;
+use FourPaws\LocationBundle\LocationService;
 
 class Catalog_store_dc01_set_location20180205184306 extends SprintMigrationBase
 {

@@ -6,6 +6,6 @@
 
 namespace FourPaws\MobileApiBundle\Exception;
 
-class MetroByNoneMetroCityException extends RuntimeException
+class NoneMetroInCityException extends InvalidArgumentException
 {
 }

@@ -39,7 +39,9 @@ class BasketViewService
     public function getMiniBasketHtml(bool $isAjax = false): string
     {
         global $APPLICATION;
-        ob_start();
+
+        \ob_start();
+
         $APPLICATION->IncludeComponent(
             'fourpaws:basket',
             'header.basket',
@@ -53,7 +55,8 @@ class BasketViewService
             false,
             ['HIDE_ICONS' => 'Y']
         );
-        return ob_get_clean();
+
+        return \ob_get_clean();
     }
 
     /**
@@ -64,7 +67,9 @@ class BasketViewService
     public function getFastOrderHtml(bool $isAjax = false): string
     {
         global $APPLICATION;
-        ob_start();
+
+        \ob_start();
+
         $APPLICATION->IncludeComponent(
             'fourpaws:fast.order',
             '',
@@ -75,7 +80,8 @@ class BasketViewService
             null,
             ['HIDE_ICONS' => 'Y']
         );
-        return ob_get_clean();
+
+        return \ob_get_clean();
     }
 
     /**
@@ -88,7 +94,9 @@ class BasketViewService
     public function getBasketHtml(bool $isAjax = false): string
     {
         global $APPLICATION;
-        ob_start();
+
+        \ob_start();
+
         $APPLICATION->IncludeComponent(
             'fourpaws:basket',
             '',
@@ -99,6 +107,7 @@ class BasketViewService
             false,
             ['HIDE_ICONS' => 'Y']
         );
-        return ob_get_clean();
+
+        return \ob_get_clean();
     }
 }

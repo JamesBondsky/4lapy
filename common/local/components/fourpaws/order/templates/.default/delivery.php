@@ -3,15 +3,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+use Bitrix\Sale\Basket;
+use Bitrix\Sale\Delivery\CalculationResult;
 use FourPaws\App\Application;
-use FourPaws\Location\LocationService;
+use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\Helpers\CurrencyHelper;
-use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\StoreBundle\Entity\Store;
-use Bitrix\Sale\Delivery\CalculationResult;
-use Bitrix\Sale\Basket;
 
 /**
  * @var array $arParams
@@ -90,7 +90,8 @@ if ($pickup && $selectedDelivery->getData()['DELIVERY_CODE'] == $pickup->getData
                           id="order-step">
                         <input type="hidden" name="shopId" class="js-no-valid" value="<?= $selectedShopCode ?>">
                         <div class="b-choice-recovery b-choice-recovery--order-step">
-                            <?php if ($delivery) { ?>
+                            <?php if ($delivery) {
+    ?>
                                 <input class="b-choice-recovery__input js-recovery-telephone js-delivery"
                                        id="order-delivery-address"
                                        type="radio"
@@ -116,20 +117,21 @@ if ($pickup && $selectedDelivery->getData()['DELIVERY_CODE'] == $pickup->getData
                                         <?= DeliveryTimeHelper::showTime($delivery, null, ['SHORT' => true]) ?>
                                         , <?= CurrencyHelper::formatPrice($delivery->getPrice(), false) ?>
                                 </label>
-                            <?php } ?>
-                            <?php if ($pickup) { ?>
+                            <?php
+} ?>
+                            <?php if ($pickup) {
+        ?>
                                 <?php
                                 $stockResultByShop = $deliveryService->getStockResultByDelivery($pickup)
                                                                      ->filterByStore($selectedShop);
-                                $available = $stockResultByShop->getAvailable();
-                                if (!$available->isEmpty() && $storage->isPartialGet()) {
-                                    $price = $available->getPrice();
-                                    $date = $available->getDeliveryDate();
-                                } else {
-                                    $price = $stockResultByShop->getPrice();
-                                    $date = $stockResultByShop->getDeliveryDate();
-                                }
-                                ?>
+        $available = $stockResultByShop->getAvailable();
+        if (!$available->isEmpty() && $storage->isPartialGet()) {
+            $price = $available->getPrice();
+            $date = $available->getDeliveryDate();
+        } else {
+            $price = $stockResultByShop->getPrice();
+            $date = $stockResultByShop->getDeliveryDate();
+        } ?>
                                 <input class="b-choice-recovery__input js-recovery-email js-myself-shop js-delivery"
                                        id="order-delivery-pick-up"
                                        type="radio"
@@ -169,23 +171,28 @@ if ($pickup && $selectedDelivery->getData()['DELIVERY_CODE'] == $pickup->getData
                                         , <?= CurrencyHelper::formatPrice($pickup->getPrice(), false) ?>
                                     </span>
                                 </label>
-                            <?php } ?>
+                            <?php
+    } ?>
                         </div>
                         <ul class="b-radio-tab js-myself-shop">
-                            <?php if ($delivery) { ?>
+                            <?php if ($delivery) {
+        ?>
                                 <li class="b-radio-tab__tab js-telephone-recovery"
                                     <?= $selectedDeliveryId !== (int)$delivery->getData(
                                     )['DELIVERY_ID'] ? 'style="display:none"' : '' ?>>
                                     <?php include 'include/delivery.php' ?>
                                 </li>
-                            <?php } ?>
-                            <?php if ($pickup) { ?>
+                            <?php
+    } ?>
+                            <?php if ($pickup) {
+        ?>
                                 <li class="b-radio-tab__tab js-email-recovery"
                                     <?= $selectedDeliveryId !== (int)$pickup->getData(
                                     )['DELIVERY_ID'] ? 'style="display:none"' : '' ?>>
                                     <?php include 'include/pickup.php' ?>
                                 </li>
-                            <?php } ?>
+                            <?php
+    } ?>
                         </ul>
                     </form>
                 </article>

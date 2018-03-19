@@ -30,20 +30,16 @@ personal:
     type: annotation
     prefix: '/personal'
 
+location:
+    resource: "@FourPawsLocationBundle/AjaxController"
+    type: annotation
+    prefix: '/location'
+
 food.selection:
     resource: '@FourPawsFoodSelectionBundle/AjaxController'
     type: annotation
     prefix: '/food_selection'
 
-location.city.autocomplete:
-  path: /location/city/autocomplete
-  defaults: { _controller: '\FourPaws\Location\Controller\CityController::autocompleteAction' }
-  methods: [GET]
-
-location.city.list:
-  path: /location/city/list/
-  defaults: { _controller: '\FourPaws\Location\Controller\CityController::listAction' }
-  methods: [GET]
 
 autosort.property.hint:
   path: /autosort/property-hint/{propertyId}

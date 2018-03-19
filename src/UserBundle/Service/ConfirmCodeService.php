@@ -346,11 +346,11 @@ class ConfirmCodeService implements ConfirmCodeInterface, ConfirmCodeSmsInterfac
         if ($time === 0) {
             $time = time();
         }
-        if (!empty($_COOKIE[ToUpper($type) . '_ID'])) {
+        $cookieCode = ToUpper($type) . '_ID';
+        if (!empty($_COOKIE[$cookieCode])) {
             static::delCurrentCode($type);
         }
-        $lifeTime = \constant(static::getPrefixByType($type, true) . '_LIFE_TIME');
-        $cookieCode = ToUpper($type) . '_ID';
+        $lifeTime = \constant('static::'.static::getPrefixByType($type, true) . '_LIFE_TIME');
         $_COOKIE[$cookieCode] = $id = session_id() . '_' . $time;
         if (!setcookie($cookieCode, $id, $time + $lifeTime, '/')) {
             throw new \RuntimeException('ошибка установки куков');

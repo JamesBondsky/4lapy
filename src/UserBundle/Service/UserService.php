@@ -19,8 +19,8 @@ use FourPaws\External\Exception\ManzanaServiceContactSearchNullException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\Helpers\Exception\WrongPhoneNumberException;
-use FourPaws\Location\Exception\CityNotFoundException;
-use FourPaws\Location\LocationService;
+use FourPaws\LocationBundle\Exception\CityNotFoundException;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\PersonalBundle\Entity\UserBonus;
 use FourPaws\PersonalBundle\Service\BonusService;
 use FourPaws\UserBundle\Entity\User;
@@ -50,7 +50,6 @@ class UserService implements
     UserCitySelectInterface,
     UserAvatarAuthorizationInterface
 {
-
     public const BASE_DISCOUNT = 3;
     /**
      * @var \CAllUser|\CUser
@@ -173,7 +172,6 @@ class UserService implements
      *
      * @param User $user
      *
-     * @return User
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws RuntimeException
@@ -181,6 +179,7 @@ class UserService implements
      * @throws ValidationException
      * @throws SqlQueryException
      * @throws SystemException
+     * @return User
      */
     public function register(User $user): User
     {
@@ -250,8 +249,8 @@ class UserService implements
      * @throws CityNotFoundException
      * @throws NotAuthorizedException
      * @throws BitrixRuntimeException
-     * @return array|bool
      * @throws SystemException
+     * @return array|bool
      */
     public function setSelectedCity(string $code = '', string $name = '', string $parentName = '')
     {
@@ -501,7 +500,7 @@ class UserService implements
     /**
      * @param User           $user
      *
-     * @param UserBonus|null $userBonus
+     * @param null|UserBonus $userBonus
      *
      * @return int
      *
@@ -509,7 +508,7 @@ class UserService implements
      */
     public function getUserDiscount(User $user, ?UserBonus $userBonus = null): int
     {
-        if(!($userBonus instanceof UserBonus)) {
+        if (!($userBonus instanceof UserBonus)) {
             try {
                 $userBonus = BonusService::getManzanaBonusInfo($user);
             } catch (ManzanaServiceContactSearchMoreOneException $e) {
@@ -559,8 +558,8 @@ class UserService implements
     }
 
     /**
-     * @param User|null $user
-     * @param UserBonus|null $bonus
+     * @param null|User $user
+     * @param null|UserBonus $bonus
      *
      * @return bool
      *
