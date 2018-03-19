@@ -1,4 +1,8 @@
 <?php
+
+use Bitrix\Main\Application;
+use FourPaws\Decorators\FullHrefDecorator;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
@@ -8,7 +12,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @updated: 01.01.2018
  */
 
-?><div class="b-container">
+?>
+<div class="b-container">
     <div class="b-social-big">
         <p>Рассказать в соцсетях</p>
         <div class="ya-share2--wrapper">
@@ -16,8 +21,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
                  data-lang="en"
                  data-services="facebook,odnoklassniki,vkontakte"
                  data-url="<?= /** @noinspection PhpUnhandledExceptionInspection */
-                 new \FourPaws\Decorators\FullHrefDecorator(
-                     \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getRequestUri()
+                 new FullHrefDecorator(
+                     Application::getInstance()->getContext()->getRequest()->getRequestUri()
                  ) ?>"
                  data-title="<?php $APPLICATION->ShowTitle(false) ?>"
                  data-description="<?php $APPLICATION->ShowViewContent('social-share-description') ?>"
@@ -26,4 +31,4 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
             </div>
         </div>
     </div>
-</div><?php
+</div>

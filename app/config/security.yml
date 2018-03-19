@@ -4,7 +4,7 @@ security:
       id: FourPaws\UserBundle\Security\BitrixUserProvider
   firewalls:
     api:
-      pattern: ^/mobile_app_v2/
+      pattern: ^/api/
       stateless: true
       api_token: true
     main:
@@ -14,5 +14,6 @@ security:
         authenticators:
           - FourPaws\UserBundle\Security\BitrixAuthenticator
   access_control:
-    - { path: ^/mobile_app_v2/start, roles: ROLE_NO_TOKEN }
-    - { path: ^/mobile_app_v2(?!/start), roles: ROLE_API }
+    - { path: ^/api/start, roles: ROLE_NO_TOKEN }
+    - { path: ^/api/fake, roles: ROLE_NO_TOKEN }
+    - { path: ^/api(?!/start|?!/fake), roles: ROLE_API }

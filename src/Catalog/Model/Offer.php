@@ -6,8 +6,15 @@
 
 namespace FourPaws\Catalog\Model;
 
-use CCatalogDiscountSave;
-use CCatalogProduct;
+use Bitrix\Catalog\Product\Basket as BitrixBasket;
+use Bitrix\Catalog\Product\CatalogProvider;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Sale\Basket;
+use Bitrix\Sale\Fuser;
+use Bitrix\Sale\Order;
 use DateTimeImmutable;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\App\Application;
@@ -18,14 +25,17 @@ use FourPaws\BitrixOrm\Model\CatalogProduct;
 use FourPaws\BitrixOrm\Model\HlbReferenceItem;
 use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\BitrixOrm\Model\Image;
+use FourPaws\BitrixOrm\Model\Interfaces\ResizeImageInterface;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\BitrixOrm\Query\CatalogProductQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\Helpers\WordHelper;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Service\StoreService;
-use JMS\Serializer\Annotation\Accessor;
+use InvalidArgumentException;
 use JMS\Serializer\Annotation as Serializer;
+use JMS\Serializer\Annotation\Accessor;
 use JMS\Serializer\Annotation\Groups;
 use JMS\Serializer\Annotation\Type;
 use RuntimeException;
@@ -34,6 +44,9 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 class Offer extends IblockElement
 {
+    public const SIMPLE_SHARE_SALE_CODE = 'VKA0';
+    public const SIMPLE_SHARE_DISCOUNT_CODE = 'ZRBT';
+
     /**
      * @var bool
      * @Type("bool")
@@ -226,6 +239,25 @@ class Offer extends IblockElement
     protected $PROPERTY_BY_REQUEST = 0;
 
     /**
+     * Цена по акции - простая акция из SAP
+     *
+     * @var float
+     */
+    protected $PROPERTY_PRICE_ACTION = 0;
+
+    /**
+     * @var string
+     */
+    protected $PROPERTY_COND_FOR_ACTION = '';
+
+    /**
+     * Размер скидки на товар - простая акция из SAP
+     *
+     * @var float
+     */
+    protected $PROPERTY_COND_VALUE = 0;
+
+    /**
      * @Type("float")
      * @Groups({"elastic"})
      * @Accessor(getter="getPrice", setter="withPrice")
@@ -270,6 +302,34 @@ class Offer extends IblockElement
     protected $resizeImages;
 
     /**
+     * @var bool
+     * @Type("bool")
+     * @Groups({"elastic"})
+     */
+    protected $PROPERTY_IS_HIT = false;
+
+    /**
+     * @var bool
+     * @Type("bool")
+     * @Groups({"elastic"})
+     */
+    protected $PROPERTY_IS_NEW = false;
+
+    /**
+     * @var bool
+     * @Type("bool")
+     * @Groups({"elastic"})
+     */
+    protected $PROPERTY_IS_SALE = false;
+
+    /**
+     * @var bool
+     * @Type("bool")
+     * @Groups({"elastic"})
+     */
+    protected $PROPERTY_IS_POPULAR = false;
+
+    /**
      * @var string
      */
     protected $link = '';
@@ -278,6 +338,13 @@ class Offer extends IblockElement
      * @var StockCollection
      */
     protected $stocks;
+
+    /**
+     * @var bool
+     */
+    protected $isCounted = false;
+
+    protected $bonus = 0;
 
     public function __construct(array $fields = [])
     {
@@ -309,14 +376,20 @@ class Offer extends IblockElement
      * @param int $width
      * @param int $height
      *
-     * @return ResizeImageCollection
+     * @throws InvalidArgumentException
+     * @return Collection|ResizeImageInterface[]
+     *
      */
     public function getResizeImages(int $width = 0, int $height = 0): Collection
     {
         if ($this->resizeImages instanceof Collection) {
             if ($width) {
                 $this->resizeImages->forAll(
-                    function ($key, ResizeImageDecorator $image) use ($width) {
+                    function (
+                        /** @noinspection PhpUnusedParameterInspection */
+                        $key,
+                        ResizeImageDecorator $image
+                    ) use ($width) {
                         $image->setResizeWidth($width);
 
                         return true;
@@ -326,7 +399,11 @@ class Offer extends IblockElement
 
             if ($height) {
                 $this->resizeImages->forAll(
-                    function ($key, ResizeImageDecorator $image) use ($height) {
+                    function (
+                        /** @noinspection PhpUnusedParameterInspection */
+                        $key,
+                        ResizeImageDecorator $image
+                    ) use ($height) {
                         $image->setResizeHeight($height);
 
                         return true;
@@ -343,7 +420,7 @@ class Offer extends IblockElement
     }
 
     /**
-     * @throws \InvalidArgumentException
+     * @throws InvalidArgumentException
      * @return Collection|Image[]
      */
     public function getImages(): Collection
@@ -388,7 +465,7 @@ class Offer extends IblockElement
      *
      * @return $this
      */
-    public function withCml2Link(int $productId)
+    public function withCml2Link(int $productId): self
     {
         $this->PROPERTY_CML2_LINK = $productId;
         $this->product = null;
@@ -397,12 +474,13 @@ class Offer extends IblockElement
     }
 
     /**
+     * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
      * @return null|HlbReferenceItem
      */
-    public function getColor()
+    public function getColor(): ?HlbReferenceItem
     {
         if ((null === $this->colour) && $this->PROPERTY_COLOUR) {
             $this->colour = ReferenceUtils::getReference(
@@ -427,7 +505,7 @@ class Offer extends IblockElement
      *
      * @return $this
      */
-    public function withColourXmlId(string $xmlId)
+    public function withColourXmlId(string $xmlId): self
     {
         $this->PROPERTY_COLOUR = $xmlId;
         $this->colour = null;
@@ -436,12 +514,13 @@ class Offer extends IblockElement
     }
 
     /**
+     * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
      * @return null|HlbReferenceItem
      */
-    public function getVolumeReference()
+    public function getVolumeReference(): ?HlbReferenceItem
     {
         if ((null === $this->volumeReference) && $this->PROPERTY_VOLUME_REFERENCE) {
             $this->volumeReference =
@@ -467,7 +546,7 @@ class Offer extends IblockElement
      *
      * @return $this
      */
-    public function withVolumeReferenceXmlId(string $xmlId)
+    public function withVolumeReferenceXmlId(string $xmlId): self
     {
         $this->PROPERTY_VOLUME_REFERENCE = $xmlId;
         $this->volumeReference = null;
@@ -491,12 +570,13 @@ class Offer extends IblockElement
     }
 
     /**
+     * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
-     * @return null||HlbReferenceItem
+     * @return null|HlbReferenceItem
      */
-    public function getClothingSize()
+    public function getClothingSize(): ?HlbReferenceItem
     {
         if ((null === $this->clothingSize) && $this->PROPERTY_CLOTHING_SIZE) {
             $this->clothingSize =
@@ -537,7 +617,7 @@ class Offer extends IblockElement
      *
      * @return $this
      */
-    public function withBarcodes(array $barcodes)
+    public function withBarcodes(array $barcodes): self
     {
         $barcodes = array_filter(
             $barcodes,
@@ -551,12 +631,13 @@ class Offer extends IblockElement
     }
 
     /**
+     * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
      * @return null|HlbReferenceItem
      */
-    public function getKindOfPacking()
+    public function getKindOfPacking(): ?HlbReferenceItem
     {
         if ((null === $this->kindOfPacking) && $this->PROPERTY_KIND_OF_PACKING) {
             $this->kindOfPacking =
@@ -582,7 +663,7 @@ class Offer extends IblockElement
      *
      * @return $this
      */
-    public function withKindOfPackingXmlId(string $xmlId)
+    public function withKindOfPackingXmlId(string $xmlId): self
     {
         $this->kindOfPacking = null;
         $this->PROPERTY_KIND_OF_PACKING = $xmlId;
@@ -591,12 +672,13 @@ class Offer extends IblockElement
     }
 
     /**
+     * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
      * @return null|HlbReferenceItem
      */
-    public function getSeasonYear()
+    public function getSeasonYear(): ?HlbReferenceItem
     {
         if ((null === $this->seasonYear) && $this->PROPERTY_SEASON_YEAR) {
             $this->seasonYear = ReferenceUtils::getReference(
@@ -621,7 +703,7 @@ class Offer extends IblockElement
      *
      * @return $this
      */
-    public function withSeasonYearXmlId(string $xmlId)
+    public function withSeasonYearXmlId(string $xmlId): self
     {
         $this->seasonYear = null;
         $this->PROPERTY_SEASON_YEAR = $xmlId;
@@ -642,7 +724,7 @@ class Offer extends IblockElement
      *
      * @return $this
      */
-    public function withMultiplicity(int $multiplicity)
+    public function withMultiplicity(int $multiplicity): self
     {
         $this->PROPERTY_MULTIPLICITY = $multiplicity;
 
@@ -652,12 +734,13 @@ class Offer extends IblockElement
     /**
      * Возвращает тип вознаграждения для заводчика.
      *
+     * @throws ServiceNotFoundException
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
      * @return null|HlbReferenceItem
      */
-    public function getRewardType()
+    public function getRewardType(): ?HlbReferenceItem
     {
         if ((null === $this->rewardType) && $this->PROPERTY_REWARD_TYPE) {
             $this->rewardType =
@@ -683,7 +766,7 @@ class Offer extends IblockElement
      *
      * @return $this
      */
-    public function withRewardTypeXmlId(string $xmlId)
+    public function withRewardTypeXmlId(string $xmlId): self
     {
         $this->rewardType = null;
         $this->PROPERTY_REWARD_TYPE = $xmlId;
@@ -734,7 +817,7 @@ class Offer extends IblockElement
      *
      * @return $this
      */
-    public function withOldUrl(string $oldUrl)
+    public function withOldUrl(string $oldUrl): self
     {
         $this->PROPERTY_OLD_URL = $oldUrl;
 
@@ -759,13 +842,16 @@ class Offer extends IblockElement
     /**
      * @return string
      */
-    public function getSkuId()
+    public function getSkuId(): string
     {
         return $this->getXmlId();
     }
 
     /**
      * @return float
+     * @throws NotSupportedException
+     * @throws LoaderException
+     * @throws ObjectNotFoundException
      */
     public function getPrice(): float
     {
@@ -774,35 +860,94 @@ class Offer extends IblockElement
         return $this->price;
     }
 
-    protected function checkOptimalPrice()
+    /**
+     * @return bool
+     */
+    public function getPropertyIsHit(): bool
     {
-        CCatalogDiscountSave::Disable();
-        $optimalPrice = CCatalogProduct::GetOptimalPrice($this->getId());
-        CCatalogDiscountSave::Enable();
-
-        if (\is_array($optimalPrice)) {
-            /**
-             * @var array $optimalPrice
-             */
-            $resultPrice = $optimalPrice['RESULT_PRICE'] ?? [
-                    'PERCENT'        => 0,
-                    'BASE_PRICE'     => $this->price,
-                    'DISCOUNT_PRICE' => $this->price,
-                ];
-            $this->withDiscount(floor($resultPrice['PERCENT']));
-            if ($this->discount > 0) {
-                $this->withOldPrice($resultPrice['BASE_PRICE']);
-                $this->withPrice($resultPrice['DISCOUNT_PRICE']);
-            }
-        }
+        return $this->PROPERTY_IS_HIT;
     }
 
     /**
-     * @param int $discount
+     * @param bool $propertyHit
+     *
+     * @return Offer
+     */
+    public function setPropertyIsHit($propertyHit): Offer
+    {
+        $this->PROPERTY_IS_HIT = $propertyHit;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getPropertyIsNew(): bool
+    {
+        return $this->PROPERTY_IS_NEW;
+    }
+
+    /**
+     * @param bool $propertyNew
+     *
+     * @return Offer
+     */
+    public function setPropertyIsNew($propertyNew): Offer
+    {
+        $this->PROPERTY_IS_HIT = $propertyNew;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getPropertyIsSale(): bool
+    {
+        return $this->PROPERTY_IS_SALE;
+    }
+
+    /**
+     * @param bool $propertySale
+     *
+     * @return Offer
+     */
+    public function setPropertyIsSale($propertySale): Offer
+    {
+        $this->PROPERTY_IS_SALE = $propertySale;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getPropertyPopular(): bool
+    {
+        return $this->PROPERTY_IS_POPULAR;
+    }
+
+    /**
+     * @param bool $PROPERTY_IS_POPULAR
+     *
+     * @return Offer
+     */
+    public function setPropertyPopular(bool $PROPERTY_IS_POPULAR): Offer
+    {
+        $this->PROPERTY_IS_POPULAR = $PROPERTY_IS_POPULAR;
+
+        return $this;
+    }
+
+    /**
+     * размер скидки в процентах
+     *
+     * @param float $discount
      *
      * @return static
      */
-    public function withDiscount(int $discount)
+    public function withDiscount(float $discount)
     {
         $this->discount = $discount;
 
@@ -814,7 +959,7 @@ class Offer extends IblockElement
      *
      * @return $this
      */
-    public function withOldPrice(float $oldPrice)
+    public function withOldPrice(float $oldPrice): self
     {
         $this->oldPrice = $oldPrice;
 
@@ -867,6 +1012,9 @@ class Offer extends IblockElement
 
     /**
      * @return float
+     * @throws ObjectNotFoundException
+     * @throws NotSupportedException
+     * @throws LoaderException
      */
     public function getOldPrice(): float
     {
@@ -884,19 +1032,63 @@ class Offer extends IblockElement
     }
 
     /**
-     * @return int
+     * @return float
+     * @throws ObjectNotFoundException
+     * @throws NotSupportedException
+     * @throws LoaderException
      */
-    public function getDiscount(): int
+    public function getDiscount(): float
     {
         $this->checkOptimalPrice();
 
         return $this->discount;
     }
 
-    public function getBonuses()
+    /**
+     * @param float $percent
+     * @param int   $quantity
+     *
+     * @return float
+     * @throws NotSupportedException
+     * @throws LoaderException
+     * @throws ObjectNotFoundException
+     */
+    public function getBonuses(float $percent = 3, int $quantity = 1): float
     {
-        /** @todo расчет бонусов */
-        return 112;
+        if ((int)$this->bonus === 0 && $percent > 0) {
+            $this->bonus = round($this->getPrice() * $quantity * $percent / 100, 2);
+        }
+
+        return $this->bonus;
+    }
+
+    /**
+     * @param float|int $percent
+     * @param int       $quantity
+     *
+     * @return string
+     */
+    public function getBonusFormattedText($percent = 3, int $quantity = 1): string
+    {
+        if(!\is_float($percent) && !\is_int($percent)){
+            $percent = 3;
+        }
+        $bonusText = '';
+        try {
+            $bonus = $this->getBonuses($percent, $quantity);
+        } catch (\Exception $e) {
+            $bonus = 0;
+        }
+        if ($bonus > 0) {
+            $bonus = round($bonus, 2, PHP_ROUND_HALF_DOWN);
+            $ost = $bonus - floor($bonus) * 100;
+            ob_start(); ?>
+            + <?= WordHelper::numberFormat($bonus) ?>
+            <?= WordHelper::declension($ost > 0 ? $ost : floor($bonus),
+                ['бонус', 'бонуса', 'бонусов']) ?>
+            <?php $bonusText = ob_get_clean();
+        }
+        return $bonusText;
     }
 
     /**
@@ -932,12 +1124,13 @@ class Offer extends IblockElement
      *
      *
      * @param Product $product
-     * @throws \InvalidArgumentException
+     *
+     * @throws InvalidArgumentException
      */
-    public function setProduct(Product $product)
+    public function setProduct(Product $product): void
     {
         if ($product->getId() !== $this->getCml2Link()) {
-            throw new \InvalidArgumentException('Wrong product set');
+            throw new InvalidArgumentException('Wrong product set');
         }
 
         $this->product = $product;
@@ -952,6 +1145,7 @@ class Offer extends IblockElement
     }
 
     /**
+     * @throws ArgumentException
      * @throws ServiceNotFoundException
      * @throws \Exception
      * @throws ApplicationCreateException
@@ -964,6 +1158,7 @@ class Offer extends IblockElement
     }
 
     /**
+     * @throws ArgumentException
      * @throws ServiceNotFoundException
      * @throws \Exception
      * @throws ApplicationCreateException
@@ -993,5 +1188,106 @@ class Offer extends IblockElement
         $this->stocks = $stocks;
 
         return $this;
+    }
+
+    /**
+     * Участвует ли товар в акции "Скидка на товар"
+     */
+    public function isSimpleDiscountAction(): bool
+    {
+        return $this->PROPERTY_COND_VALUE > 0 && $this->PROPERTY_COND_FOR_ACTION === self::SIMPLE_SHARE_DISCOUNT_CODE;
+    }
+
+    /**
+     * Участвует ли товар в ации "Цена по акции"
+     */
+    public function isSimpleSaleAction(): bool
+    {
+        return $this->PROPERTY_PRICE_ACTION > 0 && $this->PROPERTY_COND_FOR_ACTION === self::SIMPLE_SHARE_SALE_CODE;
+    }
+
+    public function hasAction(): bool
+    {
+        /**
+         * @todo
+         */
+        return false;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isHit(): bool
+    {
+        return $this->getPropertyIsHit();
+    }
+
+    /**
+     * @return bool
+     */
+    public function isNew(): bool
+    {
+        return $this->getPropertyIsNew();
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSale(): bool
+    {
+        return $this->getPropertyIsSale();
+    }
+
+    /**
+     * Check and set optimal price, discount, old price with bitrix discount
+     *
+     * @throws LoaderException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     */
+    protected function checkOptimalPrice(): void
+    {
+        if ($this->isCounted) {
+            return;
+        }
+
+        global $USER;
+
+        static $order;
+        if (null === $order) {
+            $order = Order::create(SITE_ID);
+        }
+        $shipmentCollection = $order->getShipmentCollection();
+        foreach ($shipmentCollection as $i => $shipment) {
+            unset($shipmentCollection[$i]);
+        }
+        /** @var Basket $basket */
+        $basket = Basket::create(SITE_ID);
+        $basket->setFUserId((int)Fuser::getId());
+        $fields = [
+            'PRODUCT_ID'             => $this->getId(),
+            'QUANTITY'               => 1,
+            'MODULE'                 => 'catalog',
+            'PRODUCT_PROVIDER_CLASS' => CatalogProvider::class,
+        ];
+
+        BitrixBasket::addProductToBasket($basket, $fields, ['USER_ID' => $USER->GetID()]);
+
+        $order->setBasket($basket);
+        /** @var \Bitrix\Sale\BasketItem $basketItem */
+        foreach ($basket->getBasketItems() as $basketItem) {
+            if (
+                (int)$basketItem->getProductId() === $this->getId()
+                &&
+                $discountPercent = round(100 * ($basketItem->getDiscountPrice() / $basketItem->getBasePrice()))
+            ) {
+                $this
+                    ->withDiscount($discountPercent)
+                    ->withOldPrice($basketItem->getBasePrice())
+                    ->withPrice($basketItem->getPrice());
+            }
+        }
+
+        $this->isCounted = true;
     }
 }

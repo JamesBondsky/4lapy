@@ -24,6 +24,7 @@ use FourPaws\Migrator\Provider\Catalog as CatalogProvider;
 use FourPaws\Migrator\Provider\CityPhone as CityPhoneProvider;
 use FourPaws\Migrator\Provider\News as NewsProvider;
 use FourPaws\Migrator\Provider\Store as StoreProvider;
+use FourPaws\Migrator\Provider\StoreLocation as StoreLocationProvider;
 use Symfony\Component\Console\Exception\InvalidArgumentException;
 
 final class Factory
@@ -37,6 +38,7 @@ final class Factory
         'sale',
         'sale_base',
         'store',
+        'store_location',
         'user',
     ];
     
@@ -85,6 +87,9 @@ final class Factory
                 break;
             case 'store':
                 $client = new Store(new StoreProvider(new StoreEntity(Store::ENTITY_NAME)), $options);
+                break;
+            case 'store_location':
+                $client = new Store(new StoreLocationProvider(new StoreEntity(Store::ENTITY_NAME)), $options);
                 break;
             case 'user':
                 $client = new UserPull($options);

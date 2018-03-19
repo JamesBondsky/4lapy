@@ -22,8 +22,10 @@ parameters:
     key: ivaacmVjzakOzRLeYjKy
 
   manzana.guzzle.curl.timeout: 3
-  recaptcha.guzzle.curl.timeout: 3
+  recaptcha.guzzle.curl.timeout: 5
   callback.guzzle.curl.timeout: 3
+
+  metro.guzzle.url: https://api.hh.ru/metro/
 
   # See \Elastica\Client::$_config for more options
   elastica.client_options:
@@ -35,7 +37,9 @@ parameters:
     - retryOnConflict: 0
 
   # Sap directories
-  sap.directory: '/home/vagrant/project/common/upload/sap-exchange'
+  sap.directory: ''
+  sap.directory.out: ''
+
   sap.product.directory.in: '%sap.directory%'
   sap.product.directory.out: '%sap.directory%/ArchMat/'
   sap.product.directory.error: '%sap.directory%/ArchMat_Errors/'

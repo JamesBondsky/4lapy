@@ -6,6 +6,7 @@
 
 namespace FourPaws\PersonalBundle\Repository;
 
+use Bitrix\Main\ObjectPropertyException;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\AppBundle\Repository\BaseHlRepository;
 use FourPaws\PersonalBundle\Entity\Referral;
@@ -26,7 +27,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
  */
 class ReferralRepository extends BaseHlRepository
 {
-    const HL_NAME = 'Referral';
+    public const HL_NAME = 'Referral';
 
     /**
      * @var UserService
@@ -73,9 +74,9 @@ class ReferralRepository extends BaseHlRepository
     /**
      * @throws InvalidIdentifierException
      * @throws ServiceNotFoundException
-     * @throws \Exception
      * @throws NotAuthorizedException
-     * @return ArrayCollection
+     * @return ArrayCollection|Referral[]
+     * @throws ObjectPropertyException
      */
     public function findByCurUser(): ArrayCollection
     {

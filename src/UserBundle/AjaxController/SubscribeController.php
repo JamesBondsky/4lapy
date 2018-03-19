@@ -6,11 +6,24 @@
 
 namespace FourPaws\UserBundle\AjaxController;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use FourPaws\App\Application;
+use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\AppBundle\Service\AjaxMess;
+use FourPaws\External\Exception\ExpertsenderServiceException;
+use FourPaws\UserBundle\Entity\User;
+use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
+use FourPaws\UserBundle\Exception\InvalidArgumentException;
+use FourPaws\UserBundle\Exception\InvalidIdentifierException;
+use FourPaws\UserBundle\Exception\NotAuthorizedException;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -21,27 +34,114 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class SubscribeController extends Controller
 {
+
+    /** @var AjaxMess */
+    private $ajaxMess;
+
+    public function __construct(AjaxMess $ajaxMess)
+    {
+        $this->ajaxMess = $ajaxMess;
+    }
+
     /**
      * @Route("/subscribe/", methods={"POST"})
      * @param Request $request
      *
      * @return JsonErrorResponse
      */
-    public function subscribeAction(Request $request) : JsonResponse
+    public function subscribeAction(Request $request): JsonResponse
     {
-        $type  = $request->get('type', '');
+        $type = $request->get('type', '');
         $email = $request->get('email', '');
-        /** @todo получение подписок */
-        
+
+        try{
+            $container = Application::getInstance()->getContainer();
+        } catch (ApplicationCreateException $e) {
+            return $this->ajaxMess->getSystemError();
+        }
+
         if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
-            return JsonErrorResponse::create('Неверный email');
+            return $this->ajaxMess->getWrongEmailError();
         }
-        
-        /** @todo Добавление в ExpertSender */
-        if (1 === 2) {
-            return JsonSuccessResponse::create('Вы успешно подписаны');
+
+        $success = false;
+
+        if (\in_array('sale', $type, true)) {
+            /** @todo реализовать подписку на подарки */
+            $success = true;
+        } else {
+            if (!\in_array('skipSaleDelete', $type, true)) {
+                /** @todo удаление подписки на подарки */
+            }
         }
-        
-        return JsonErrorResponse::create('Неизвестаня ошибка');
+
+        /** В эксперт сендере только о новостях список есть */
+        if (\in_array('material', $type, true)) {
+            try {
+                try {
+                    $userService = $container->get(CurrentUserProviderInterface::class);
+                    $user = $userService->getCurrentUser();
+                } catch (NotAuthorizedException $e) {
+                    $user = new User();
+                }
+                $user->setEmail($email);
+                $expertSenderService = $container->get('expertsender.service');
+                if ($expertSenderService->sendEmailSubscribeNews($user)) {
+                    $success = true;
+                } else {
+                    $success = false;
+                }
+            } catch (ExpertsenderServiceException $e) {
+                $success = false;
+                $logger = LoggerFactory::create('expertSender');
+                $logger->critical('ES error - ' . $e->getMessage());
+            } catch (ServiceNotFoundException|ServiceCircularReferenceException $e) {
+                $success = false;
+                $logger = LoggerFactory::create('system');
+                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            } catch (\BadMethodCallException|InvalidIdentifierException|ConstraintDefinitionException|\InvalidArgumentException $e) {
+                $success = false;
+                $logger = LoggerFactory::create('params');
+                $logger->error('Ошибка параметров - ' . $e->getMessage());
+            } catch (\RuntimeException|\Exception $e) {
+                $success = false;
+                $logger = LoggerFactory::create('system');
+                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            }
+        } else {
+            /** @todo удаление из подписки */
+            try {
+                $user = new User();
+                $user->setEmail($email);
+                $expertSenderService = $container->get('expertsender.service');
+                if ($expertSenderService->sendEmailUnSubscribeNews($user)) {
+                    $success = true;
+                } else {
+                    $success = false;
+                }
+            } catch (ExpertsenderServiceException $e) {
+                $success = false;
+                $logger = LoggerFactory::create('expertSender');
+                $logger->critical('ES error - ' . $e->getMessage());
+            } catch (ServiceNotFoundException|ServiceCircularReferenceException $e) {
+                $success = false;
+                $logger = LoggerFactory::create('system');
+                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            } catch (\BadMethodCallException|InvalidIdentifierException|ConstraintDefinitionException|\InvalidArgumentException $e) {
+                $success = false;
+                $logger = LoggerFactory::create('params');
+                $logger->error('Ошибка параметров - ' . $e->getMessage());
+            } catch (\RuntimeException|\Exception $e) {
+                $success = false;
+                $logger = LoggerFactory::create('system');
+                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            }
+        }
+
+        if ($success) {
+            return JsonSuccessResponse::create('Ваша подписка успешно изменена');
+        }
+
+        return $this->ajaxMess->getSystemError();
     }
 }

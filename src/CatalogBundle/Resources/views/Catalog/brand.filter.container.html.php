@@ -8,13 +8,12 @@
  */
 
 use Bitrix\Main\Grid\Declension;
-use Bitrix\Main\Web\Uri;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
 use FourPaws\Catalog\Model\Filter\ActionsFilter;
 use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
-use FourPaws\CatalogBundle\ParamConverter\Catalog\AbstractCatalogRequestConverter;
 use FourPaws\Decorators\SvgDecorator;
+use FourPaws\Helpers\WordHelper;
 use FourPaws\Search\Model\ProductSearchResult;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Templating\PhpEngine;
@@ -27,8 +26,7 @@ global $APPLICATION;
 $category = $catalogRequest->getCategory();
 
 $filterCollection = $catalogRequest->getCategory()->getFilters();
-
-?>
+$count = $productSearchResult->getResultSet()->getTotalHits(); ?>
 <aside class="b-filter b-filter--popup js-filter-popup">
     <div class="b-filter__top">
         <a class="b-filter__close js-close-filter" href="javascript:void(0);" title=""></a>
@@ -61,7 +59,7 @@ $filterCollection = $catalogRequest->getCategory()->getFilters();
         </form>
     </div>
     <div class="b-filter__bottom"><a class="b-filter__button" href="javascript:void(0);" title="">
-            Показать 300 товаров
+            Показать <?= $count . ' ' . WordHelper::declension($count, ['товар', 'товара', 'товаров']) ?>
         </a>
     </div>
 </aside>
@@ -78,14 +76,7 @@ $filterCollection = $catalogRequest->getCategory()->getFilters();
             <div class="b-line b-line--sort-desktop"></div>
             <div class="b-catalog-filter__row b-catalog-filter__row--sort">
                 <div class="b-catalog-filter__sort-part js-permutation-mobile-here">
-                    <?php
-                    
-                    $totalString = $productSearchResult->getResultSet()->getTotalHits();
-                    $totalString .= (new Declension(' товар', ' товара', ' товаров'))->get(
-                        $productSearchResult->getResultSet()->getTotalHits()
-                    );
-                    ?>
-                    <span class="b-catalog-filter__label b-catalog-filter__label--amount"><?= $totalString ?></span>
+                    <span class="b-catalog-filter__label b-catalog-filter__label--amount"><?= $count . (new Declension(' товар', ' товара', ' товаров'))->get($count) ?></span>
                     <?= $view->render(
                         'FourPawsCatalogBundle:Catalog:catalog.filter.sorts.html.php',
                         [
@@ -151,7 +142,11 @@ $filterCollection = $catalogRequest->getCategory()->getFilters();
             $APPLICATION->IncludeComponent(
                 'fourpaws:catalog.element.snippet',
                 '',
-                ['PRODUCT' => $product]
+                ['PRODUCT' => $product],
+                null,
+                [
+                    'HIDE_ICONS' => 'Y',
+                ]
             );
         }
         ?>
@@ -162,13 +157,13 @@ $filterCollection = $catalogRequest->getCategory()->getFilters();
         'bitrix:system.pagenavigation',
         'pagination',
         [
-            'NAV_TITLE'      => '',
-            'NAV_RESULT'     => $productSearchResult->getProductCollection()->getCdbResult(),
-            'SHOW_ALWAYS'    => false,
+            'NAV_TITLE' => '',
+            'NAV_RESULT' => $productSearchResult->getProductCollection()->getCdbResult(),
+            'SHOW_ALWAYS' => false,
             'PAGE_PARAMETER' => 'page',
-            'AJAX_MODE'      => 'Y'
+            'AJAX_MODE' => 'Y'
         ],
-        $component,
+        null,
         [
             'HIDE_ICONS' => 'Y',
         ]

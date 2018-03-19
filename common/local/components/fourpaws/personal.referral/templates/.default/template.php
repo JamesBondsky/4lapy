@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Main\UI\PageNavigation;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\PersonalBundle\Entity\Referral;
@@ -128,7 +129,7 @@ $items = $arResult['ITEMS'];
                         ?>
                     </ul>
                 </div>
-                <?php if (!empty($arResult['NAV'])) { ?>
+                <?php if ($arResult['NAV'] instanceof PageNavigation) { ?>
                     <div class="b-pagination b-pagination--referal">
                         <?php
                         $APPLICATION->IncludeComponent(
@@ -136,7 +137,8 @@ $items = $arResult['ITEMS'];
                             'pagination',
                             [
                                 'NAV_OBJECT' => $arResult['NAV'],
-                                'SEF_MODE'   => 'Y',
+                                'SEF_MODE'   => 'N',
+                                'AJAX_MODE'   => 'N',
                             ],
                             false
                         );
@@ -153,7 +155,7 @@ $items = $arResult['ITEMS'];
                         <a class="b-account-referal__link-phone"
                            href="tel:<?= preg_replace('~[^+\d]~', '', tplvar('phone_main')) ?>"
                        title="позвони"><?= tplvar('phone_main') ?></a> или
-                        <a class="b-account-referal__link" href="javascript:void(0);"
+                        <a class="b-account-referal__link" href="/company/partnership/"
                            title="сайт">на сайте.</a>
                     </p>
                 </div>

@@ -6,11 +6,15 @@
 
 namespace FourPaws\StoreBundle\AjaxController;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\ArgumentException;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\Response\JsonErrorResponse;
 use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
+use FourPaws\AppBundle\Service\AjaxMess;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
+use FourPaws\StoreBundle\Service\StoreService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -25,149 +29,175 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class StoreListController extends Controller
 {
+    /** @var AjaxMess */
+    private $ajaxMess;
+
+    /**@var StoreService */
+    protected $storeService;
+
+    public function __construct(StoreService $storeService, AjaxMess $ajaxMess)
+    {
+        $this->storeService = $storeService;
+        $this->ajaxMess = $ajaxMess;
+    }
+
     /**
      * @Route("/order/", methods={"GET"})
      * @param Request $request
      *
-     * @throws ServiceCircularReferenceException
-     * @throws ApplicationCreateException
-     * @throws ServiceNotFoundException
-     * @throws FileNotFoundException
-     * @throws \Exception
      * @return JsonResponse
      */
-    public function orderAction(Request $request) : JsonResponse
+    public function orderAction(Request $request): JsonResponse
     {
-        \CBitrixComponent::includeComponentClass('fourpaws:shop.list');
-        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-        $shopListClass = new \FourPawsShopListComponent();
-        
-        return JsonSuccessResponse::createWithData(
-            'Подгрузка успешна',
-            $shopListClass->getStores(
-                [
-                    'filter' => $shopListClass->getFilterByRequest($request),
-                    'order'  => $shopListClass->getOrderByRequest($request),
-                ]
-            )
-        );
+        try {
+            return JsonSuccessResponse::createWithData(
+                'Подгрузка успешна',
+                $this->storeService->getStores(
+                    [
+                        'filter' => $this->storeService->getFilterByRequest($request),
+                        'order'  => $this->storeService->getOrderByRequest($request),
+                    ]
+                )
+            );
+        } catch (FileNotFoundException $e) {
+            /** Ошибка не найденного файла возникать не должна */
+        } catch (ArgumentException $e) {
+            $logger = LoggerFactory::create('params');
+            $logger->error('Ошибка параметров - ' . $e->getMessage());
+        } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
+            $logger = LoggerFactory::create('system');
+            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+        }
+
+        return $this->ajaxMess->getSystemError();
     }
-    
+
     /**
      * @Route("/checkboxFilter/", methods={"GET"})
      * @param Request $request
      *
-     * @throws ServiceCircularReferenceException
-     * @throws ApplicationCreateException
-     * @throws ServiceNotFoundException
-     * @throws \Exception
-     * @throws FileNotFoundException
      * @return JsonResponse
      */
-    public function checkboxFilterAction(Request $request) : JsonResponse
+    public function checkboxFilterAction(Request $request): JsonResponse
     {
-        \CBitrixComponent::includeComponentClass('fourpaws:shop.list');
-        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-        $shopListClass = new \FourPawsShopListComponent();
-        
-        return JsonSuccessResponse::createWithData(
-            'Подгрузка успешна',
-            $shopListClass->getStores(
-                [
-                    'filter' => $shopListClass->getFilterByRequest($request),
-                    'order'  => $shopListClass->getOrderByRequest($request),
-                ]
-            )
-        );
+        try {
+            return JsonSuccessResponse::createWithData(
+                'Подгрузка успешна',
+                $this->storeService->getStores(
+                    [
+                        'filter' => $this->storeService->getFilterByRequest($request),
+                        'order'  => $this->storeService->getOrderByRequest($request),
+                    ]
+                )
+            );
+        } catch (FileNotFoundException $e) {
+            /** Ошибка не найденного файла возникать не должна */
+        } catch (ArgumentException $e) {
+            $logger = LoggerFactory::create('params');
+            $logger->error('Ошибка параметров - ' . $e->getMessage());
+        } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
+            $logger = LoggerFactory::create('system');
+            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+        }
+
+        return $this->ajaxMess->getSystemError();
     }
-    
+
     /**
      * @Route("/search/", methods={"GET"})
      * @param Request $request
      *
-     * @throws ServiceCircularReferenceException
-     * @throws ApplicationCreateException
-     * @throws ServiceNotFoundException
-     * @throws \Exception
-     * @throws FileNotFoundException
      * @return JsonResponse
      */
-    public function searchAction(Request $request) : JsonResponse
+    public function searchAction(Request $request): JsonResponse
     {
-        \CBitrixComponent::includeComponentClass('fourpaws:shop.list');
-        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-        $shopListClass = new \FourPawsShopListComponent();
-        
-        return JsonSuccessResponse::createWithData(
-            'Подгрузка успешна',
-            $shopListClass->getStores(
-                [
-                    'filter' => $shopListClass->getFilterByRequest($request),
-                    'order'  => $shopListClass->getOrderByRequest($request),
-                ]
-            )
-        );
+        try {
+            return JsonSuccessResponse::createWithData(
+                'Подгрузка успешна',
+                $this->storeService->getStores(
+                    [
+                        'filter' => $this->storeService->getFilterByRequest($request),
+                        'order'  => $this->storeService->getOrderByRequest($request),
+                    ]
+                )
+            );
+        } catch (FileNotFoundException $e) {
+            /** Ошибка не найденного файла возникать не должна */
+        } catch (ArgumentException $e) {
+            $logger = LoggerFactory::create('params');
+            $logger->error('Ошибка параметров - ' . $e->getMessage());
+        } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
+            $logger = LoggerFactory::create('system');
+            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+        }
+
+        return $this->ajaxMess->getSystemError();
     }
-    
+
     /**
      * @Route("/chooseCity/", methods={"GET"})
      * @param Request $request
      *
-     * @throws ServiceCircularReferenceException
-     * @throws ApplicationCreateException
-     * @throws ServiceNotFoundException
-     * @throws \Exception
-     * @throws FileNotFoundException
      * @return JsonResponse
      */
-    public function chooseCityAction(Request $request) : JsonResponse
+    public function chooseCityAction(Request $request): JsonResponse
     {
-        \CBitrixComponent::includeComponentClass('fourpaws:shop.list');
-        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-        $shopListClass = new \FourPawsShopListComponent();
-        
-        return JsonSuccessResponse::createWithData(
-            'Подгрузка успешна',
-            $shopListClass->getStores(
-                [
-                    'filter'               => $shopListClass->getFilterByRequest($request),
-                    'order'                => $shopListClass->getOrderByRequest($request),
-                    'returnActiveServices' => true,
-                    'returnSort'           => true,
-                    'sortVal'              => $request->get('sort'),
-                ]
-            )
-        );
+        try {
+            return JsonSuccessResponse::createWithData(
+                'Подгрузка успешна',
+                $this->storeService->getStores(
+                    [
+                        'filter'               => $this->storeService->getFilterByRequest($request),
+                        'order'                => $this->storeService->getOrderByRequest($request),
+                        'activeStoreId'        => $request->get('active_store_id', 0),
+                        'returnActiveServices' => true,
+                        'returnSort'           => true,
+                        'sortVal'              => $request->get('sort'),
+                    ]
+                )
+            );
+        } catch (FileNotFoundException $e) {
+            /** Ошибка не найденного файла возникать не должна */
+        } catch (ArgumentException $e) {
+            $logger = LoggerFactory::create('params');
+            $logger->error('Ошибка параметров - ' . $e->getMessage());
+        } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
+            $logger = LoggerFactory::create('system');
+            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+        }
+
+        return $this->ajaxMess->getSystemError();
     }
-    
+
     /**
      * @Route("/getByItem/", methods={"GET"})
      * @param Request $request
      *
-     * @throws ApplicationCreateException
-     * @throws ServiceCircularReferenceException
-     * @throws ServiceNotFoundException
-     * @throws \Exception
-     * @throws FileNotFoundException
      * @return JsonResponse
      */
-    public function getByItemAction(Request $request) : JsonResponse
+    public function getByItemAction(Request $request): JsonResponse
     {
         $offerId = $request->get('offer', 0);
-        
+
         if ((int)$offerId > 0) {
-            \CBitrixComponent::includeComponentClass('fourpaws:shop.list');
-            /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-            $shopListClass = new \FourPawsShopListComponent();
-            
-            return JsonSuccessResponse::createWithData(
-                'Подгрузка успешна',
-                $shopListClass->getFormatedStoreByCollection(
-                    ['storeCollection' => $shopListClass->getActiveStoresByProduct($offerId)]
-                )
-            );
+            try {
+                return JsonSuccessResponse::createWithData(
+                    'Подгрузка успешна',
+                    $this->storeService->getFormatedStoreByCollection(
+                        ['storeCollection' => $this->storeService->getActiveStoresByProduct($offerId)]
+                    )
+                );
+            } catch (FileNotFoundException $e) {
+                /** Ошибка не найденного файла возникать не должна */
+            } catch (ArgumentException $e) {
+                $logger = LoggerFactory::create('params');
+                $logger->error('Ошибка параметров - ' . $e->getMessage());
+            } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
+                $logger = LoggerFactory::create('system');
+                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            }
         }
-        
-        return JsonErrorResponse::create('Не указан id торгового предложения');
+
+        return $this->ajaxMess->getNotIdError(' торгового предложения');
     }
 }

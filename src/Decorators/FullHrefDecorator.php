@@ -32,7 +32,7 @@ class FullHrefDecorator
     /**
      * @param $path
      */
-    public function setPath($path)
+    public function setPath($path): void
     {
         $this->path = $path;
     }

@@ -40,7 +40,7 @@ class FormService
      *
      * @return bool
      */
-    public function validEmail($email) : bool
+    public function validEmail(string $email) : bool
     {
         return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
     }
@@ -50,7 +50,7 @@ class FormService
      *
      * @return bool
      */
-    public function addResult($data) : bool
+    public function addResult(array $data) : bool
     {
         if (isset($data['MAX_FILE_SIZE'])) {
             unset($data['MAX_FILE_SIZE']);
@@ -79,12 +79,12 @@ class FormService
      * @param $fileSizeMb
      * @param $valid_types
      *
-     * @throws \FourPaws\Form\Exception\FileSaveException
-     * @throws \FourPaws\Form\Exception\FileSizeException
-     * @throws \FourPaws\Form\Exception\FileTypeException
+     * @throws FileSaveException
+     * @throws FileSizeException
+     * @throws FileTypeException
      * @return array
      */
-    public function saveFile($fileCode, $fileSizeMb, $valid_types) : array
+    public function saveFile(string $fileCode, int $fileSizeMb, array $valid_types) : array
     {
         if (!empty($_FILES[$fileCode])) {
             $max_file_size = $fileSizeMb * 1024 * 1024;
@@ -114,7 +114,7 @@ class FormService
     /**
      * @param $form
      */
-    public function addForm($form)
+    public function addForm(array $form): void
     {
         $questions = [];
         if (isset($form['QUESTIONS'])) {
@@ -150,7 +150,7 @@ class FormService
      * @param int   $formId
      * @param array $statuses
      */
-    public function addStatuses(int $formId, array $statuses)
+    public function addStatuses(int $formId, array $statuses): void
     {
         if ($formId > 0 && !empty($statuses)) {
             $obFormStatus = new \CFormStatus();
@@ -165,7 +165,7 @@ class FormService
      * @param int   $formId
      * @param array $questions
      */
-    public function addQuestions(int $formId, array $questions)
+    public function addQuestions(int $formId, array $questions): void
     {
         if ($formId > 0 && !empty($questions)) {
             $obFormField = new \CFormField();
@@ -188,7 +188,7 @@ class FormService
      * @param array $answers
      * @param int   $questionId
      */
-    public function addAnswers(int $questionId, array $answers)
+    public function addAnswers(int $questionId, array $answers): void
     {
         if ($questionId > 0 && !empty($answers)) {
             $obFormAnswer = new \CFormAnswer();
@@ -203,7 +203,7 @@ class FormService
      * @param int    $formId
      * @param string $createEmail
      */
-    public function addMailTemplate(int $formId, string $createEmail = 'N')
+    public function addMailTemplate(int $formId, string $createEmail = 'N'): void
     {
         if ($createEmail === 'Y') {
             $arTemplates = \CForm::SetMailTemplate($formId, 'Y');
@@ -214,7 +214,7 @@ class FormService
     /**
      * @param $sid
      */
-    public function deleteForm($sid)
+    public function deleteForm(string $sid): void
     {
         $by    = 'ID';
         $order = 'ASC';

@@ -13,7 +13,7 @@ services:
         resource: '../../*'
         # you can exclude directories or files
         # but if a service is unused, it's removed anyway
-        exclude: '../../{Entity,Tests,Dto,Collection}'
+        exclude: '../../{Entity,Tests,Dto,Collection,EventController}'
 
     FourPaws\CatalogBundle\Controller\:
         resource: '../../Controller'
@@ -24,6 +24,10 @@ services:
         resource: '../../ParamConverter/*'
         tags: ['request.param_converter']
 
+    # Используется в компонентах (@todo private)
+    FourPaws\CatalogBundle\Service\MarkService:
+        public: true
+
     # Постараться спрятать за интерфейс
     # @see
     FourPaws\CatalogBundle\Service\FilterService:
@@ -32,4 +36,8 @@ services:
     FourPaws\CatalogBundle\Service\FilterHelper:
         class: FourPaws\CatalogBundle\Service\FilterHelper
         arguments: ['@bx.hlblock.filter']
+        public: true
+
+    FourPaws\CatalogBundle\Service\OftenSeekInterface:
+        class: FourPaws\CatalogBundle\Service\OftenSeekService
         public: true

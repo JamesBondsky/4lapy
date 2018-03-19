@@ -6,81 +6,121 @@
 
 namespace FourPaws\UserBundle\Service;
 
-use FourPaws\App\Exceptions\ApplicationCreateException;
-use FourPaws\External\Exception\SmsSendErrorException;
-use FourPaws\Helpers\Exception\WrongPhoneNumberException;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\DB\SqlQueryException;
 use FourPaws\UserBundle\Exception\ExpiredConfirmCodeException;
+use FourPaws\UserBundle\Exception\NotFoundConfirmedCodeException;
 use FourPaws\UserBundle\Model\ConfirmCode;
-use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
-use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
-use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 interface ConfirmCodeInterface
 {
     /**
-     * @throws \Exception
+     * @throws ArgumentException
+     * @throws SqlQueryException
      */
-    public static function delExpiredCodes();
-    
+    public static function delExpiredCodes(): void;
+
     /**
-     * @param string $phone
-     *
-     * @throws ServiceCircularReferenceException
-     * @throws \RuntimeException
-     * @throws ApplicationCreateException
-     * @throws ServiceNotFoundException
-     * @throws InvalidArgumentException
-     * @throws SmsSendErrorException
-     * @throws WrongPhoneNumberException
-     * @throws \Exception
-     * @return bool
-     */
-    public static function sendConfirmSms(string $phone) : bool;
-    
-    /**
-     * @param string $phone
-     *
-     * @return bool|string
-     */
-    public static function generateCode(string $phone);
-    
-    /**
-     * @param $phone
-     *
-     * @throws \Exception
-     */
-    public static function setGeneratedCode($phone);
-    
-    /**
-     * @throws \Exception
-     */
-    public static function delCurrentCode();
-    
-    /**
-     * @param string $phone
-     * @param string $confirmCode
-     *
-     * @throws ServiceNotFoundException
-     * @throws ExpiredConfirmCodeException
-     * @throws WrongPhoneNumberException
-     * @throws \Exception
-     * @return bool
-     */
-    public static function checkConfirmSms(string $phone, string $confirmCode) : bool;
-    
-    /**
-     *
-     * @throws ExpiredConfirmCodeException
-     * @throws \Exception
+     * @param string $text
      *
      * @return string
      */
-    public static function getGeneratedCode() : string;
-    
+    public static function generateCode(string $text): string;
+
+    /**
+     * @param string $text
+     * @param string $type
+     *
+     * @param int    $time
+     *
+     * @throws \RuntimeException
+     * @throws ArgumentException
+     * @throws \Exception
+     */
+    public static function setGeneratedCode(string $text, string $type = 'sms', int $time = 0): void;
+
+    /**
+     * @param string $type
+     *
+     * @throws \Exception
+     */
+    public static function delCurrentCode(string $type = 'sms'): void;
+
+    /**
+     * @param string $confirmCode
+     *
+     * @param string $type
+     *
+     * @return bool
+     * @throws ExpiredConfirmCodeException
+     * @throws NotFoundConfirmedCodeException
+     * @throws \Exception
+     */
+    public static function checkCode(string $confirmCode, string $type = 'sms'): bool;
+
+    /**
+     * @param string $type
+     *
+     * @return string
+     * @throws ExpiredConfirmCodeException
+     * @throws NotFoundConfirmedCodeException
+     * @throws \Exception
+     */
+    public static function getGeneratedCode(string $type = 'sms'): string;
+
     /**
      * @param ConfirmCode $confirmCode
      *
+     * @param string      $type
+     *
      * @return bool
      */
-    public static function isExpire(ConfirmCode $confirmCode) : bool;
+    public static function isExpire(ConfirmCode $confirmCode, string $type = 'sms'): bool;
+
+    /**
+     * @param string $text
+     *
+     * @param int    $time
+     *
+     * @return string
+     */
+    public static function getConfirmHash(string $text, int $time = 0): string;
+
+    /**
+     * @param $id
+     * @param $code
+     * @param $type
+     *
+     * @return bool
+     * @throws ArgumentException
+     * @throws \Exception
+     */
+    public static function writeGeneratedCode($id, $code, $type): bool;
+
+    /**
+     * @param string $code
+     * @param string $type
+     * @param int    $time
+     *
+     * @throws ArgumentException
+     * @throws \Exception
+     */
+    public static function setCode(string $code, string $type, int $time = 0): void;
+
+    /**
+     * @param  string $type
+     * @param int     $time
+     *
+     * @return string
+     * @throws \Exception
+     */
+    public static function setCookie(string $type, int $time = 0): string;
+
+    /**
+     * @param string $type
+     * @param bool   $upper
+     *
+     * @return string
+     */
+    public static function getPrefixByType(string $type, bool $upper = false): string;
 }

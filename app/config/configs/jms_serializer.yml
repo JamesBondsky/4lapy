@@ -1,0 +1,17 @@
+parameters:
+    jms_serializer.json_serialization_visitor.class: FourPaws\MobileApiBundle\SerializationVisitor\BlankSerializationVisitor
+    jms_serializer.datetime_handler.class: FourPaws\MobileApiBundle\Serialization\DateHandler
+
+services:
+    JMS\Serializer\SerializerInterface: '@jms_serializer'
+
+jms_serializer:
+  property_naming:
+    id: jms_serialized_name_annotation_strategy
+    enable_cache: true
+  metadata:
+      cache: file
+      debug: "%kernel.debug%"
+      file_cache:
+          dir: "%kernel.cache_dir%/serializer"
+      auto_detection: true

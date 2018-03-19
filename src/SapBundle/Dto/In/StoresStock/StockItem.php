@@ -45,6 +45,7 @@ class StockItem
     public function setOfferXmlId(string $offerXmlId): StockItem
     {
         $this->offerXmlId = $offerXmlId;
+
         return $this;
     }
 
@@ -64,6 +65,7 @@ class StockItem
     public function setStoreCode(string $storeCode): StockItem
     {
         $this->storeCode = $storeCode;
+
         return $this;
     }
 
@@ -83,6 +85,7 @@ class StockItem
     public function setStockValue(float $stockValue): StockItem
     {
         $this->stockValue = $stockValue;
+
         return $this;
     }
 }

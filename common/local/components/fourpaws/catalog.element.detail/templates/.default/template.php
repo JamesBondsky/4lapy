@@ -17,7 +17,7 @@ use FourPaws\Catalog\Model\Product;
 use FourPaws\Components\CatalogElementDetailComponent;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
-use FourPaws\Location\LocationService;
+use FourPaws\LocationBundle\LocationService;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -32,17 +32,12 @@ $locationService = Application::getInstance()->getContainer()->get('location.ser
  * @todo Разворачивать всю цепочку нужных элементов в result_modifier
  */
 
-$product      = $arResult['PRODUCT'];
-$offers       = $product->getOffers();
-$brand        = $product->getBrand();
+$product = $arResult['PRODUCT'];
+$offers = $product->getOffers();
+$brand = $product->getBrand();
 $currentOffer = $arResult['CURRENT_OFFER'];
 
-$mainCombinationType = '';
-if ($currentOffer->getClothingSize()) {
-    $mainCombinationType = 'SIZE';
-} else {
-    $mainCombinationType = 'VOLUME';
-}
+$mainCombinationType = $currentOffer->getClothingSize() ? 'SIZE' : 'VOLUME';
 
 $this->setFrameMode(true);
 
@@ -62,14 +57,14 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_SLIDER_VIEW);
             <div class="b-product-slider__list b-product-slider__list--main js-product-slider-for">
                 <?php
                 $mainImageIndex = [];
-                $iterator       = 0;
+                $iterator = 0;
                 /** @var Offer $offer */
                 foreach ($product->getOffers() as $offer) {
                     if (!$offer->getImagesIds()) {
                         continue;
                     }
-    
-                    $images         = $offer->getResizeImages(480, 480);
+
+                    $images = $offer->getResizeImages(480, 480);
                     $originalImages = $offer->getImages();
 
                     foreach ($images as $id => $image) {
@@ -91,7 +86,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_SLIDER_VIEW);
                                          alt="<?= $offer->getName() . ($id ? ' ' . $id : '') ?>"
                                          title="<?= $offer->getName() . ($id ? ' ' . $id : '') ?>"
                                          data-zoom-image="<?= $originalImages->get($id) ?>"
-                                         role="presentation" />
+                                         role="presentation"/>
                                 </a>
                             </div>
                         </div>
@@ -118,10 +113,11 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_SLIDER_VIEW);
                                      src="<?= $image ?>"
                                      alt="Превью <?= $offer->getName() . ($id ? ' ' . $id : '') ?>"
                                      title="Превью <?= $offer->getName() . ($id ? ' ' . $id : '') ?>"
-                                     role="presentation" />
+                                     role="presentation"/>
                             </div>
                         </div>
-                    <?php }
+                    <?php
+                    }
                 } ?>
             </div>
         </div>
@@ -132,49 +128,53 @@ $this->EndViewTarget();
 $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
 ?>
     <div class="b-product-card__option-product js-weight-default">
-        <?php if ($mainCombinationType && ($offers->count() > 1)) { ?>
-            <?php if ($mainCombinationType === 'SIZE') { ?>
+        <?php if ($mainCombinationType && ($offers->count() > 1)) {
+    ?>
+            <?php if ($mainCombinationType === 'SIZE') {
+        ?>
                 <div class="b-product-card__weight">Размеры</div>
-            <?php } else { ?>
+            <?php
+    } else {
+        ?>
                 <div class="b-product-card__weight">Варианты фасовки</div>
-            <?php } ?>
+            <?php
+    } ?>
             <div class="b-weight-container b-weight-container--product">
                 <ul class="b-weight-container__list b-weight-container__list--product">
                     <?php
                     $isCurrentOffer = false;
 
-                    foreach ($offers as $offer) {
-                        $isCurrentOffer = !$isCurrentOffer && $currentOffer->getId() === $offer->getId();
-                        
-                        $value = null;
-                        if ($mainCombinationType === 'SIZE') {
-                            if ($offer->getClothingSize()) {
-                                $value = $offer->getClothingSize()->getName();
-                            }
-                        } else {
-                            if ($offer->getVolumeReference()) {
-                                $value = $offer->getVolumeReference()->getName();
-                            } else {
-                                $value = WordHelper::showWeight($offer->getCatalogProduct()->getWeight());
-                            }
-                        }
-    
-                        if (!$value) {
-                            continue;
-                        }
-                        ?>
-                        <li class="b-weight-container__item b-weight-container__item--product<?= $isCurrentOffer ? ' active' : '' ?>">
+    foreach ($offers as $offer) {
+        $isCurrentOffer = !$isCurrentOffer && $currentOffer->getId() === $offer->getId();
+
+        $value = null;
+        if ($mainCombinationType === 'SIZE') {
+            if ($offer->getClothingSize()) {
+                $value = $offer->getClothingSize()->getName();
+            }
+        } else {
+            if ($offer->getVolumeReference()) {
+                $value = $offer->getVolumeReference()->getName();
+            } else {
+                $value = WordHelper::showWeight($offer->getCatalogProduct()->getWeight());
+            }
+        }
+
+        if (!$value) {
+            continue;
+        } ?>
+                        <li class="b -weight-container__item b-weight-container__item--product<?= $isCurrentOffer ? ' active' : '' ?>">
                             <a class="b-weight-container__link b-weight-container__link--product js-price-product<?= $isCurrentOffer ? ' active-link' : '' ?>"
                                href="<?= $offer->getLink() ?>"
                                data-weight=" <?= $value ?>"
-                               data-price="<?= $offer->getPrice() ?>"
+                               data-price="<?= ceil($offer->getPrice()) ?>"
                                data-image="<?= $mainImageIndex[$offer->getId()] ?>"
                                data-url="<?= $offer->getLink() ?>"
                                data-offerid="<?= $offer->getId() ?>">
                                 <span class="b-weight-container__line">
                                     <span class="b-weight-container__weight"><?= $value ?></span>
                                     <span class="b-weight-container__price">
-                                        <?= $offer->getPrice() ?> <span class="b-ruble b-ruble--weight">₽</span>
+                                        <?= ceil($offer->getPrice()) ?> <span class="b-ruble b-ruble--weight">₽</span>
                                     </span>
                                 </span>
                                 <span class="b-weight-container__line">
@@ -184,132 +184,155 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
                                 </span>
                             </a>
                         </li>
-                    <?php } ?>
+                    <?php
+    } ?>
                 </ul>
             </div>
-        <?php } ?>
+        <?php
+} ?>
     </div>
 <?php
 $this->EndViewTarget();
 
 $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
 ?>
-    
+
     <div class="b-product-card__info js-preloader-fix">
         <div class="b-product-information">
             <ul class="b-product-information__list">
-                <?php if ($currentOffer->getClothingSize()) { ?>
+                <?php if ($currentOffer->getClothingSize()) {
+    ?>
                     <li class="b-product-information__item">
                         <div class="b-product-information__title-info js-info-product">Размер</div>
                         <div class="b-product-information__value"><?= $currentOffer->getClothingSize()
-                                                                                   ->getName() ?></div>
+                                ->getName() ?></div>
                     </li>
-                <?php } elseif ($currentOffer->getVolumeReference()) { ?>
+                <?php
+} elseif ($currentOffer->getVolumeReference()) {
+                                    ?>
                     <li class="b-product-information__item">
                         <div class="b-product-information__title-info js-info-product">Объем</div>
                         <div class="b-product-information__value"><?= $currentOffer->getVolumeReference()
-                                                                                   ->getName() ?></div>
+                                ->getName() ?></div>
                     </li>
-                <?php } elseif ($currentOffer->getCatalogProduct()->getWeight()) { ?>
+                <?php
+                                } elseif ($currentOffer->getCatalogProduct()->getWeight()) {
+                                    ?>
                     <li class="b-product-information__item">
                         <div class="b-product-information__title-info js-info-product">Вес</div>
                         <div class="b-product-information__value">
                             <?= WordHelper::showWeight($currentOffer->getCatalogProduct()->getWeight()) ?>
                         </div>
                     </li>
-                <?php } ?>
+                <?php
+                                } ?>
                 <li class="b-product-information__item">
                     <div class="b-product-information__title-info">Цена</div>
                     <div class="b-product-information__value b-product-information__value--price">
-                        <?php if ($currentOffer->getOldPrice() > $currentOffer->getPrice()) { ?>
-                            <span class="b-product-information__old-price"><?= $currentOffer->getOldPrice() ?> </span>
+                        <?php if ($currentOffer->getOldPrice() > $currentOffer->getPrice()) {
+                                    ?>
+                            <span class="b-product-information__old-price"><?= ceil($currentOffer->getOldPrice()) ?> </span>
                             <span class="b-ruble b-ruble--old-price">₽</span>
-                        <?php } ?>
+                        <?php
+                                } ?>
                         <span class="b-product-information__price js-price-product">
-                            <?= $currentOffer->getPrice() ?>
+                            <?= ceil($currentOffer->getPrice()) ?>
                         </span>
                         <span class="b-ruble b-ruble--product-information">&nbsp;₽</span>
-                        <?php if ($currentOffer->getBonuses()) { ?>
-                            <span class="b-product-information__bonus">+<?= $currentOffer->getBonuses() ?>
-                                <?= WordHelper::declension($currentOffer->getBonuses(),
-                                                           [
-                                                               'бонус',
-                                                               'бонуса',
-                                                               'бонусов',
-                                                           ]) ?>
-                            </span>
-                        <?php } ?>
+                        <span class="b-product-information__bonus js-bonus-<?=$currentOffer->getId()?>"></span>
                     </div>
                 </li>
                 <?php if ($currentOffer->isByRequest()) {
-                    /**
-                     * @todo наличие по зоне
-                     */
+                                    /**
+                                     * @todo наличие по зоне
+                                     */
                     ?>
                     <li class="b-product-information__item">
                         <div class="b-product-information__title-info">Наличие</div>
                         <div class="b-product-information__value">Только под заказ</div>
                     </li>
-                <?php } ?>
+                <?php
+                                } ?>
                 <?php /* @todo сделать подгрузку инфо о доставках через ajax */ ?>
-                <?php $APPLICATION->IncludeComponent('fourpaws:catalog.product.delivery.info',
-                                                     'detail',
-                                                     [
-                                                         'OFFER'         => $currentOffer,
-                                                         'LOCATION_CODE' => $locationService->getCurrentLocation(),
-                                                     ],
-                                                     false,
-                                                     ['HIDE_ICONS' => 'Y']); ?>
-                
-                <?php /* todo вывод связанных товаров по цвету и вкусу  */ ?>
-                <?php if ($currentOffer->getFlavourCombination()) { ?>
-                    <li class="b-product-information__item">
-                        <div class="b-product-information__title-info">Вкус</div>
-                        <div class="b-product-information__value b-product-information__value--select">
-                            <div class="b-select b-select--product">
-                                <select class="b-select__block b-select__block--product js-select-link">
-                                    <option value="../product-card.html">Ягненок/яблоки, 6 кг</option>
-                                    <option value="../product-card-2-socks.html">Корова/арбуз, 6 кг</option>
-                                    <option value="../product-card-3-milprazon.html">Варан/авокадо, 6 кг
-                                    </option>
-                                </select>
+                <?php $APPLICATION->IncludeComponent(
+                        'fourpaws:catalog.product.delivery.info',
+                    'detail',
+                    [
+                        'OFFER'         => $currentOffer,
+                        'LOCATION_CODE' => $locationService->getCurrentLocation(),
+                    ],
+                    false,
+                    ['HIDE_ICONS' => 'Y']
+                    ); ?>
+
+                <?php if (!empty($currentOffer->getFlavourCombination())) {
+                        $unionOffers = $component->getOffersByUnion('flavour', $currentOffer->getFlavourCombination());
+                        if (!$unionOffers->isEmpty()) {
+                            ?>
+                        <li class="b-product-information__item">
+                            <div class="b-product-information__title-info">Вкус</div>
+                            <div class="b-product-information__value b-product-information__value--select">
+                                <div class="b-select b-select--product">
+                                    <select class="b-select__block b-select__block--product js-select-link">
+                                        <?php /** @var Offer $unionOffer */
+                                        foreach ($unionOffers as $unionOffer) {
+                                            ?>
+                                            <option value="<?=$unionOffer->getDetailPageUrl()?>" <?= $unionOffer->getId() === $currentOffer->getId() ? ' selected' : '' ?>>
+                                                <?=$unionOffer->getName()?>
+                                            </option>
+                                        <?php
+                                        } ?>
+                                    </select>
+                                </div>
                             </div>
-                        </div>
-                    </li>
-                <?php } ?>
-                <?php if ($currentOffer->getColourCombination()) { ?>
-                    <li class="b-product-information__item">
-                        <div class="b-product-information__title-info">Цвет
-                        </div>
-                        <div class="b-product-information__value b-product-information__value--select">
-                            <div class="b-select b-select--product">
-                                <select class="b-select__block b-select__block--product js-select-link">
-                                    <option value="../product-card.html">Черно-желтые, размер S</option>
-                                    <option value="../product-card-2-socks.html">Бело-красные, размер S</option>
-                                    <option value="../product-card-3-milprazon.html">Коричнево-голубые, размер S
-                                    </option>
-                                </select>
+                        </li>
+                    <?php
+                        }
+                    } ?>
+                <?php if (!empty($currentOffer->getColourCombination())) {
+                        $unionOffers = $component->getOffersByUnion('color', $currentOffer->getColourCombination());
+                        if (!$unionOffers->isEmpty()) {
+                            ?>
+                        <li class="b-product-information__item">
+                            <div class="b-product-information__title-info">Цвет
                             </div>
-                        </div>
-                    </li>
-                <?php } ?>
+                            <div class="b-product-information__value b-product-information__value--select">
+                                <div class="b-select b-select--product">
+                                    <select class="b-select__block b-select__block--product js-select-link">
+                                        <?php /** @var Offer $unionOffer */
+                                        foreach ($unionOffers as $unionOffer) {
+                                            ?>
+                                            <option value="<?=$unionOffer->getDetailPageUrl()?>" <?= $unionOffer->getId() === $currentOffer->getId() ? ' selected' : '' ?>>
+                                                <?=$unionOffer->getName()?>
+                                            </option>
+                                        <?php
+                                        } ?>
+                                    </select>
+                                </div>
+                            </div>
+                        </li>
+                    <?php
+                        }
+                    } ?>
 
             </ul>
         </div>
         <div class="b-counter-basket">
-            <div class="b-plus-minus b-plus-minus--half-mobile js-plus-minus-cont">
+            <div class="b-plus-minus b-plus-minus--half-mobile js-buy1click-ps js-plus-minus-cont">
                 <a class="b-plus-minus__minus js-minus" href="javascript:void(0);"></a>
-                <input class="b-plus-minus__count js-plus-minus-count" value="1" type="text" />
+                <input class="b-plus-minus__count js-plus-minus-count" value="1" type="text"/>
                 <a class="b-plus-minus__plus js-plus" href="javascript:void(0);"></a>
                 <span class="b-plus-minus__by-line">Количество</span>
             </div>
-            <?php if ($currentOffer->getMultiplicity() && ($currentOffer->getMultiplicity() > 1)) { ?>
+            <?php if ($currentOffer->getMultiplicity() && ($currentOffer->getMultiplicity() > 1)) {
+                        ?>
                 <a class="b-counter-basket__add-set js-add-set" href="javascript:void(0)" title=""
                    data-count="<?= $currentOffer->getMultiplicity() ?>">
                     Округлить до упаковки (<?= $currentOffer->getMultiplicity() ?> шт.)
                     <span>— скидка 3%</span>
                 </a>
-            <?php } ?>
+            <?php
+                    } ?>
             <a class="b-counter-basket__basket-link js-basket-add js-this-product"
                href="javascript:void(0)"
                title=""
@@ -318,25 +341,21 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                 <span class="b-counter-basket__basket-text">Добавить в корзину</span>
                 <span class="b-icon b-icon--advice"><?= new SvgDecorator('icon-cart', 20, 20) ?></span>
             </a>
-            <?php
-            /**
-             * @todo купить в 1 клик
-             */
-            ?>
-            <a class="b-link b-link--one-click" href="javascript:void(0)"
-               title="Купить в 1 клик">
-                <span class="b-link__text b-link__text--one-click">Купить в 1 клик</span>
+            <a class="b-link b-link--one-click js-open-popup js-open-popup--one-click" href="javascript:void(0)"
+               title="Купить в 1 клик" data-popup-id="buy-one-click" data-url="/ajax/sale/fast_order/load/"
+               data-offerId="<?= $currentOffer->getId() ?>" data-type="card">
+                <span class="b-link__text b-link__text--one-click js-open-popup">Купить в 1 клик</span>
             </a>
-            <hr class="b-counter-basket__hr" />
+            <hr class="b-counter-basket__hr"/>
             <?php
             /**
              * @todo Акции
              */
             ?>
             <p class="b-counter-basket__text b-counter-basket__text--red">Акция. 4+1 подарок при
-                                                                          покупке</p>
+                покупке</p>
             <p class="b-counter-basket__text">При покупке четырех кормов, пятый вы получите
-                                              бесплатно</p>
+                бесплатно</p>
             <p class="b-counter-basket__text">5 июня — 25 августа 2017</p>
             <?php ?>
         </div>
@@ -345,7 +364,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                 <img class="b-preloader__image"
                      src="/static/build/images/inhtml/spinner.svg"
                      alt="spinner"
-                     title="" />
+                     title=""/>
             </div>
         </div>
     </div>
@@ -367,15 +386,13 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB);
     <div class="b-tab-content__container active js-tab-content" data-tab-content="description">
         <div class="b-description-tab">
             <div class="b-description-tab__column">
-                <div class="b-description-tab__title">Описание</div>
-                <div class="b-description-tab__text">
-                    <p>
-                        <?= $product->getDetailText()->getText() ?>
-                    </p>
-                </div>
+                <h2>Описание</h2>
+                <p>
+                    <?= $product->getDetailText()->getText() ?>
+                </p>
             </div>
             <div class="b-description-tab__column b-description-tab__column--characteristics">
-                <div class="b-description-tab__title">Подробные характеристики</div>
+                <h2>Подробные характеристики</h2>
                 <div class="b-characteristics-tab">
                     <ul class="b-characteristics-tab__list">
                         <li class="b-characteristics-tab__item" <?= (!$currentOffer->getXmlId()) ? 'style="display:none"' : '' ?>>
@@ -411,7 +428,7 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB);
                             </div>
                             <div class="b-characteristics-tab__characteristics-value">
                                 <?= $currentOffer->getKindOfPacking() ? $currentOffer->getKindOfPacking()
-                                                                                     ->getName() : '' ?>
+                                    ->getName() : '' ?>
                             </div>
                         </li>
                         <li class="b-characteristics-tab__item" <?= (!$currentOffer->getMultiplicity()) ? 'style="display:none"' : '' ?>>
@@ -460,3 +477,4 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_DESCRIPTION_TAB);
     </div>
 <?php
 $this->EndViewTarget();
+$templateData['currentOffer'] = $currentOffer;

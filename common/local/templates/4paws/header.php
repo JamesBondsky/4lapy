@@ -33,6 +33,7 @@ $markup = PawsApplication::markup();
     <?php
     Asset::getInstance()->addCss($markup->getCssFile());
     Asset::getInstance()->addJs('https://api-maps.yandex.ru/2.1.56/?lang=ru_RU');
+    Asset::getInstance()->addJs('https://www.google.com/recaptcha/api.js');
     ?>
 </head>
 <body>
@@ -213,8 +214,7 @@ $markup = PawsApplication::markup();
                                     <div class="b-stores__top">
                                         <h1 class="b-title b-title--h1 b-title--stores-header"><?php $APPLICATION->ShowTitle(false) ?></h1>
                                         <div class="b-stores__info">
-                                            <p>Все магазины нашей сети работают без выходных и принимают банковские
-                                               карты к оплате</p>
+                                            <p><?= tplvar('shops_subtitle', true) ?></p>
                                         </div>
                                     </div>
 <?php }

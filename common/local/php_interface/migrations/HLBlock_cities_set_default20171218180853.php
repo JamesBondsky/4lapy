@@ -1,10 +1,14 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace Sprint\Migration;
 
 use Adv\Bitrixtools\Migration\SprintMigrationBase;
 use FourPaws\App\Application;
-use FourPaws\Location\LocationService;
+use FourPaws\LocationBundle\LocationService;
 
 class HLBlock_cities_set_default20171218180853 extends SprintMigrationBase
 {

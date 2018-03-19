@@ -2,25 +2,70 @@
 
 namespace FourPaws\Components;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Catalog\CatalogViewedProductTable;
 use Bitrix\Catalog\Product\Basket;
 use Bitrix\Iblock\Component\Tools;
 use Bitrix\Main\Analytics\Catalog;
 use Bitrix\Main\Analytics\Counter;
+use Bitrix\Main\Application as BitrixApplication;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\SystemException;
 use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Text\JsExpression;
+use CBitrixComponent;
+use FourPaws\App\Application as App;
+use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Model\Category;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Catalog\Query\CategoryQuery;
+use FourPaws\Catalog\Query\OfferQuery;
 use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use FourPaws\UserBundle\Service\UserAuthorizationInterface;
+use FourPaws\UserBundle\Service\UserService;
+use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
+use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
 /** @noinspection AutoloadingIssuesInspection */
 class CatalogElementDetailComponent extends \CBitrixComponent
 {
     const EXPAND_CLOSURES = 'EXPAND_CLOSURES';
-    
+
+    protected $unionOffers = [];
+
+    /**
+     * @var CurrentUserProviderInterface
+     */
+    private $currentUserProvider;
+
+    /** @var UserAuthorizationInterface */
+    private $authUserProvider;
+
+    /**
+     * CatalogElementDetailComponent constructor.
+     *
+     * @param CBitrixComponent|null $component
+     *
+     * @throws SystemException
+     */
+    public function __construct(?CBitrixComponent $component = null)
+    {
+        parent::__construct($component);
+        try {
+            $container = App::getInstance()->getContainer();
+            $this->currentUserProvider = $container->get(CurrentUserProviderInterface::class);
+            $this->authUserProvider = $container->get(UserAuthorizationInterface::class);
+        } catch (ApplicationCreateException|ServiceCircularReferenceException|ServiceNotFoundException $e) {
+            $logger = LoggerFactory::create('component');
+            $logger->error(sprintf('Component execute error: %s', $e->getMessage()));
+            /** @noinspection PhpUnhandledExceptionInspection */
+            throw new SystemException($e->getMessage(), $e->getCode(), $e->getFile(), $e->getLine(), $e);
+        }
+    }
+
     /**
      * @param $params
      *
@@ -31,12 +76,12 @@ class CatalogElementDetailComponent extends \CBitrixComponent
         if (!isset($params['CACHE_TIME'])) {
             $params['CACHE_TIME'] = 36000000;
         }
-    
-        $params['CODE']                    = $params['CODE'] ?? '';
-        $params['OFFER_ID']                = $params['OFFER_ID'] ?? 0;
-        $params['SET_TITLE']               = ($params['SET_TITLE'] === 'Y') ? $params['SET_TITLE'] : 'N';
+
+        $params['CODE'] = $params['CODE'] ?? '';
+        $params['OFFER_ID'] = $params['OFFER_ID'] ?? 0;
+        $params['SET_TITLE'] = ($params['SET_TITLE'] === 'Y') ? $params['SET_TITLE'] : 'N';
         $params['SET_VIEWED_IN_COMPONENT'] = $params['SET_VIEWED_IN_COMPONENT'] ?? 'Y';
-        
+
         return parent::onPrepareComponentParams($params);
     }
 
@@ -50,14 +95,14 @@ class CatalogElementDetailComponent extends \CBitrixComponent
             parent::executeComponent();
 
             /** @var Product $product */
-            $product      = $this->getProduct($this->arParams['CODE']);
+            $product = $this->getProduct($this->arParams['CODE']);
             $currentOffer = $this->getCurrentOffer($product);
 
             if (!$product) {
                 $this->abortResultCache();
                 Tools::process404([], true, true, true);
             }
-    
+
             $sectionId = (int)reset($product->getSectionsIdList());
 
             $this->arResult = [
@@ -72,6 +117,13 @@ class CatalogElementDetailComponent extends \CBitrixComponent
             ];
 
             $this->includeComponentTemplate();
+
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                $instance = BitrixApplication::getInstance();
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->registerTag('catalog:offer:' . $currentOffer->getId());
+                $tagCache->registerTag('catalog:product:' . $product->getId());
+            }
         }
 
         // bigdata
@@ -84,11 +136,42 @@ class CatalogElementDetailComponent extends \CBitrixComponent
     }
 
     /**
+     * @param string $type
+     * @param string $val
+     *
+     * @return OfferCollection
+     */
+    public function getOffersByUnion(string $type, string $val): OfferCollection
+    {
+        if (!isset($this->unionOffers[$type][$val])) {
+            switch ($type) {
+                case 'color':
+                    $offerCollection = (new OfferQuery())->withFilter(['PROPERTY_COLOUR_COMBINATION' => $val])->exec();
+                    break;
+                case 'flavour':
+                    $offerCollection = (new OfferQuery())->withFilter(['PROPERTY_FLAVOUR_COMBINATION' => $val])->exec();
+                    break;
+            }
+            $this->unionOffers[$type][$val] = $offerCollection;
+
+        }
+        return $this->unionOffers[$type][$val];
+    }
+
+    /**
+     * @return UserService
+     */
+    public function getCurrentUserService(): UserService
+    {
+        return $this->currentUserProvider;
+    }
+
+    /**
      * @param string $code
      *
      * @return Product
      */
-    protected function getProduct(string $code) : Product
+    protected function getProduct(string $code): Product
     {
         return (new ProductQuery())
             ->withFilterParameter('CODE', $code)
@@ -173,34 +256,35 @@ class CatalogElementDetailComponent extends \CBitrixComponent
         $categoryId = '';
         $categoryPath = [];
         if ($this->arResult['SECTION_CHAIN']) {
-            foreach ($this->arResult['SECTION_CHAIN'] as $cat)  {
+            foreach ($this->arResult['SECTION_CHAIN'] as $cat) {
                 $categoryPath[$cat['ID']] = $cat['NAME'];
                 $categoryId = $cat['ID'];
             }
         }
 
-        $counterData = array(
-            'product_id' => $product->getId(),
-            'iblock_id' => $product->getIblockId(),
+        $counterData = [
+            'product_id'    => $product->getId(),
+            'iblock_id'     => $product->getIblockId(),
             'product_title' => $product->getName(),
-            'category_id' => $categoryId,
-            'category' => $categoryPath
-        );
-    
-        $currentOffer            = $this->getCurrentOffer($product);
-        $counterData['price']    = $currentOffer ? $currentOffer->getPrice() : 0;
+            'category_id'   => $categoryId,
+            'category'      => $categoryPath,
+        ];
+
+        $currentOffer = $this->getCurrentOffer($product);
+        $counterData['price'] = $currentOffer ? $currentOffer->getPrice() : 0;
         $counterData['currency'] = $currentOffer ? $currentOffer->getCurrency() : '';
 
         // make sure it is in utf8
         $counterData = Encoding::convertEncoding($counterData, SITE_CHARSET, 'UTF-8');
 
         // pack value and protocol version
-        $rcmLogCookieName = Option::get('main', 'cookie_name', 'BITRIX_SM').'_'.\Bitrix\Main\Analytics\Catalog::getCookieLogName();
+        $rcmLogCookieName = Option::get('main', 'cookie_name',
+                'BITRIX_SM') . '_' . \Bitrix\Main\Analytics\Catalog::getCookieLogName();
 
         $this->arResult['counterDataSource'] = $counterData;
         $this->arResult['counterData'] = [
-            'item' => base64_encode(json_encode($counterData)),
-            'user_id' => new JsExpression(
+            'item'           => base64_encode(json_encode($counterData)),
+            'user_id'        => new JsExpression(
                 'function(){return BX.message("USER_ID") ? BX.message("USER_ID") : 0;}'
             ),
             'recommendation' => new JsExpression(
@@ -230,7 +314,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
                     return rcmId;
                 }'
             ),
-            'v' => '2'
+            'v'              => '2',
         ];
     }
 
@@ -241,32 +325,32 @@ class CatalogElementDetailComponent extends \CBitrixComponent
      */
     protected function sendCounters()
     {
-        if (isset($this->arResult['counterData']) && Catalog::isOn())  {
+        if (isset($this->arResult['counterData']) && Catalog::isOn()) {
             Counter::sendData('ct', $this->arResult['counterData']);
         }
     }
-    
+
     /**
      * @todo from inheritedProperties
      */
     protected function setMeta()
     {
         global $APPLICATION;
-        
+
         if ($this->arParams['SET_TITLE'] === 'Y') {
             $APPLICATION->SetTitle($this->arResult['PRODUCT']->getName());
         }
     }
-    
+
     /**
      * @param Product $product
      *
      * @return Offer
      */
-    protected function getCurrentOffer(Product $product) : Offer
+    protected function getCurrentOffer(Product $product): Offer
     {
         $offerId = (int)$this->arParams['OFFER_ID'];
-        
+
         if ($offerId) {
             foreach ($product->getOffers() as $offer) {
                 if ($offer->getId() === $offerId) {
@@ -274,7 +358,7 @@ class CatalogElementDetailComponent extends \CBitrixComponent
                 }
             }
         }
-        
+
         return $product->getOffers()->first();
     }
 }

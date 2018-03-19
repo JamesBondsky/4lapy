@@ -504,7 +504,7 @@ class Order extends BaseEntity
     /**
      * @param bool $manzana
      */
-    public function setManzana(bool $manzana)
+    public function setManzana(bool $manzana): void
     {
         $this->manzana = $manzana;
     }
@@ -516,12 +516,12 @@ class Order extends BaseEntity
 
     public function getFormatedDateInsert(): string
     {
-        return DateHelper::replaceRuMonth($this->getDateInsert()->format('d #n# Y'));
+        return DateHelper::replaceRuMonth($this->getDateInsert()->format('d #n# Y'), DateHelper::GENITIVE);
     }
 
     public function getFormatedDateStatus(): string
     {
-        return DateHelper::replaceRuMonth($this->getDateStatus()->format('d #n# Y'));
+        return DateHelper::replaceRuMonth($this->getDateStatus()->format('d #n# Y'),DateHelper::GENITIVE);
     }
 
     public function getFormatedPrice()
@@ -534,7 +534,7 @@ class Order extends BaseEntity
      */
     public function getAllWeight(): float
     {
-        return $this->allWeigh ?? 0;
+        return $this->allWeight ?? 0;
     }
 
     /**
@@ -568,15 +568,15 @@ class Order extends BaseEntity
     /**
      * @param float $itemsSum
      */
-    public function setItemsSum(float $itemsSum)
+    public function setItemsSum(float $itemsSum): void
     {
         $this->itemsSum = $itemsSum;
     }
 
     /**
-     * @return float
+     * @return string
      */
-    public function getFormatedItemsSum(): float
+    public function getFormattedItemsSum(): string
     {
         return number_format(round($this->getItemsSum(), 2), 2, '.', ' ');
     }
@@ -592,7 +592,7 @@ class Order extends BaseEntity
     /**
      * @param OrderPayment $payment
      */
-    public function setPayment(OrderPayment $payment)
+    public function setPayment(OrderPayment $payment): void
     {
         $this->payment = $payment;
     }
@@ -608,13 +608,14 @@ class Order extends BaseEntity
     /**
      * @param OrderDelivery $delivery
      */
-    public function setDelivery(OrderDelivery $delivery)
+    public function setDelivery(OrderDelivery $delivery): void
     {
         $this->delivery = $delivery;
     }
 
     /**
      * @return string
+     * @throws \Bitrix\Main\ObjectException
      */
     public function getDateDelivery(): string
     {
@@ -627,7 +628,7 @@ class Order extends BaseEntity
             $prop = $this->getProps()->get('DELIVERY_DATE');
             /** @var Date|null $date */
             $date = new Date($prop->getValue());
-            if ($date !== null && $date instanceof Date) {
+            if ($date instanceof Date) {
                 $formatedDate = DateHelper::replaceRuMonth($date->format('d #n# Y'), DateHelper::GENITIVE);
             }
         }
@@ -646,7 +647,7 @@ class Order extends BaseEntity
     /**
      * @param ArrayCollection $props
      */
-    public function setProps(ArrayCollection $props)
+    public function setProps(ArrayCollection $props): void
     {
         $this->props = $props;
     }
@@ -662,7 +663,7 @@ class Order extends BaseEntity
     /**
      * @param Store $store
      */
-    public function setStore(Store $store)
+    public function setStore(Store $store): void
     {
         $this->store = $store;
     }
@@ -678,7 +679,7 @@ class Order extends BaseEntity
     /**
      * @param array $statusLang
      */
-    public function setStatusLang(array $statusLang)
+    public function setStatusLang(array $statusLang): void
     {
         $this->statusLang = $statusLang;
     }
@@ -694,7 +695,7 @@ class Order extends BaseEntity
     /**
      * @param array $statusMain
      */
-    public function setStatusMain(array $statusMain)
+    public function setStatusMain(array $statusMain): void
     {
         $this->statusMain = $statusMain;
     }

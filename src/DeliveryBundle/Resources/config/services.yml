@@ -13,8 +13,12 @@ services:
         resource: '../../*'
         # you can exclude directories or files
         # but if a service is unused, it's removed anyway
-        exclude: '../../{Entity,Tests}'
+        exclude: '../../{Entity,Tests,EventController}'
 
     delivery.service:
        class: FourPaws\DeliveryBundle\Service\DeliveryService
+       public: true
+
+    FourPaws\DeliveryBundle\Service\IntervalService:
+       class: FourPaws\DeliveryBundle\Service\IntervalService
        public: true

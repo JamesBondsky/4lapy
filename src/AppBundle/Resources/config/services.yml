@@ -28,9 +28,22 @@ services:
         class: FourPaws\AppBundle\Callback\CallbackService
         arguments: ['%callback%']
 
+    ajax.mess:
+        class: FourPaws\AppBundle\Service\AjaxMess
+        public: true
+
     FourPaws\AppBundle\Serialization\:
         resource: '../../Serialization/*'
         tags: ['jms_serializer.subscribing_handler']
+
+    metro.guzzle:
+      class: GuzzleHttp\Client
+      arguments:
+        - base_uri: '%metro.guzzle.url%'
+
+    FourPaws\AppBundle\Command\HhImportMetro:
+      arguments:
+        $client: '@metro.guzzle'
 
 #    FourPaws\AppBundle\Controller\:
 #        resource: '../../Controller'

@@ -6,15 +6,20 @@
 
 namespace FourPaws\PersonalBundle\Service;
 
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
+use Bitrix\Main\Application;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\Security\SecurityException;
 use Doctrine\Common\Collections\ArrayCollection;
 use FourPaws\App\Application as App;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\AppBundle\Entity\BaseEntity;
 use FourPaws\AppBundle\Exception\EmptyEntityClass;
+use FourPaws\AppBundle\Exception\NotFoundException;
 use FourPaws\External\Exception\ManzanaServiceException;
 use FourPaws\External\Manzana\Model\Client;
 use FourPaws\External\ManzanaService;
 use FourPaws\PersonalBundle\Entity\Address;
-use FourPaws\PersonalBundle\Exception\NotFoundException;
 use FourPaws\PersonalBundle\Repository\AddressRepository;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
@@ -59,9 +64,9 @@ class AddressService
      * @param int    $userId
      * @param string $locationCode
      *
-     * @return ArrayCollection
+     * @return ArrayCollection|Address[]
+     * @throws ObjectPropertyException
      * @throws NotAuthorizedException
-     * @throws \Exception
      */
     public function getAddressesByUser(int $userId = 0, string $locationCode = ''): ArrayCollection
     {
@@ -71,8 +76,8 @@ class AddressService
     /**
      * @param int $id
      *
-     * @return Address
-     * @throws \Exception
+     * @return BaseEntity|Address
+     * @throws ObjectPropertyException
      * @throws NotFoundException
      */
     public function getById(int $id): Address
@@ -85,7 +90,7 @@ class AddressService
      *
      * @deprecated
      *
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ApplicationCreateException
      * @throws NotAuthorizedException
      * @throws EmptyEntityClass
      * @throws \RuntimeException
@@ -100,9 +105,9 @@ class AddressService
      */
     public function addFromArray(array $data): bool
     {
-        $address = $this->addressRepository->dataToEntity($data, Address::class);
-
-        return $this->add($address);
+        /** @var Address $entity */
+        $entity = $this->addressRepository->dataToEntity($data, Address::class);
+        return $this->add($entity);
     }
 
     /**
@@ -136,25 +141,31 @@ class AddressService
 
         $address->setCityLocationByEntity();
         $res = $this->addressRepository->setEntity($address)->create();
-        if ($res && $address->isMain()) {
-            /** @noinspection PhpParamsInspection */
-            $this->updateManzanaAddress($address);
+        if ($res) {
+            if ($address->isMain()
+            ) {
+                /** @noinspection PhpParamsInspection */
+                $this->updateManzanaAddress($address);
+            }
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                /** Очистка кеша */
+                $instance = Application::getInstance();
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->clearByTag('address_' . $address->getUserId());
+            }
         }
 
         return $res;
     }
 
-    /**
-     *
-     */
-    public function disableMainItem()
+    public function disableMainItem(): void
     {
         try {
             $addresses = $this->addressRepository->findBy(
                 [
                     'filter'      => [
                         'UF_USER_ID' => $this->currentUser->getCurrentUserId(),
-                        'UF_MAIN'    => 'Y',
+                        'UF_MAIN'    => true,
                     ],
                     'entityClass' => Address::class,
                 ]
@@ -164,47 +175,18 @@ class AddressService
                 $address->setMain(false);
                 $this->addressRepository->setEntity($address)->update();
             }
-        } catch (\Exception $e) {
+        } catch (ObjectPropertyException|\Exception $e) {
+            /** Ошибка не должна возникать */
+            $logger = LoggerFactory::create('params');
+            $logger->error('Ошибка снятии базового адреса доставки - ' . $e->getMessage());
         }
     }
 
     /**
-     * @param Address $address
-     *
-     * @throws NotAuthorizedException
-     * @throws ConstraintDefinitionException
-     * @throws InvalidIdentifierException
-     * @throws ServiceNotFoundException
-     * @throws ApplicationCreateException
-     * @throws ServiceCircularReferenceException
-     * @throws \RuntimeException
-     */
-    protected function updateManzanaAddress(Address $address)
-    {
-        $container = App::getInstance()->getContainer();
-        /** @var ManzanaService $manzanaService */
-        $manzanaService = $container->get('manzana.service');
-        $client = null;
-        try {
-            $contactId = $manzanaService->getContactIdByCurUser();
-            $client = new Client();
-            $client->contactId = $contactId;
-        } catch (ManzanaServiceException $e) {
-            $client = new Client();
-            $this->currentUser->setClientPersonalDataByCurUser($client);
-        }
-
-        if ($client instanceof Client) {
-            $this->setClientAddress($client, $address);
-            $manzanaService->updateContactAsync($client);
-        }
-    }
-
-    /**
-     * @param Client $client
+     * @param Client  $client
      * @param Address $address
      */
-    public function setClientAddress(&$client, Address $address)
+    public function setClientAddress(&$client, Address $address): void
     {
         /** неоткуда взять область для обновления
          * $client->addressStateOrProvince = '';*/
@@ -218,6 +200,9 @@ class AddressService
     /**
      * @param array $data
      *
+     * @throws ObjectPropertyException
+     * @throws NotFoundException
+     * @throws SecurityException
      * @throws NotAuthorizedException
      * @throws EmptyEntityClass
      * @throws \RuntimeException
@@ -233,17 +218,32 @@ class AddressService
      */
     public function update(array $data): bool
     {
-        if ($data['UF_MAIN'] === 'Y') {
+        /** @var Address $entity */
+        $entity = $this->addressRepository->dataToEntity($data, Address::class);
+
+        $updateEntity = $this->getById($entity->getId());
+        if ($updateEntity->getUserId() !== $this->currentUser->getCurrentUserId()) {
+            throw new SecurityException('не хватает прав доступа для совершения данной операции');
+        }
+
+        if ($entity->isMain()) {
             $this->disableMainItem();
         }
 
-        /** @var Address $entity */
-        $entity = $this->addressRepository->dataToEntity($data, Address::class);
         $entity->setCityLocationByEntity();
         $res = $this->addressRepository->setEntity($entity)->update();
-        if ($res && $data['UF_MAIN'] === 'Y') {
-            /** @noinspection PhpParamsInspection */
-            $this->updateManzanaAddress($this->addressRepository->dataToEntity($data, Address::class));
+        if ($res) {
+            if ($entity->isMain()
+            ) {
+                /** @noinspection PhpParamsInspection */
+                $this->updateManzanaAddress($entity);
+            }
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                /** Очистка кеша */
+                $instance = Application::getInstance();
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->clearByTag('address_' . $updateEntity->getUserId());
+            }
         }
 
         return $res;
@@ -252,6 +252,14 @@ class AddressService
     /**
      * @param int $id
      *
+     * @throws ObjectPropertyException
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws \RuntimeException
+     * @throws NotAuthorizedException
+     * @throws ApplicationCreateException
+     * @throws NotFoundException
+     * @throws SecurityException
      * @throws InvalidIdentifierException
      * @throws \Exception
      * @throws BitrixRuntimeException
@@ -260,6 +268,56 @@ class AddressService
      */
     public function delete(int $id): bool
     {
-        return $this->addressRepository->delete($id);
+        $deleteEntity = $this->getById($id);
+        if ($deleteEntity->getUserId() !== $this->currentUser->getCurrentUserId()) {
+            throw new SecurityException('не хватает прав доступа для совершения данной операции');
+        }
+
+        $res = $this->addressRepository->delete($id);
+        if ($res) {
+            if ($deleteEntity->isMain()) {
+                /** @noinspection PhpParamsInspection */
+                $this->updateManzanaAddress(new Address());
+            }
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                /** Очистка кеша */
+                $instance = Application::getInstance();
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->clearByTag('address_' . $deleteEntity->getUserId());
+            }
+        }
+        return $res;
+    }
+
+    /**
+     * @param Address $address
+     *
+     * @throws NotAuthorizedException
+     * @throws ConstraintDefinitionException
+     * @throws InvalidIdentifierException
+     * @throws ServiceNotFoundException
+     * @throws ApplicationCreateException
+     * @throws ServiceCircularReferenceException
+     * @throws \RuntimeException
+     */
+    protected function updateManzanaAddress(Address $address): void
+    {
+        $container = App::getInstance()->getContainer();
+        /** @var ManzanaService $manzanaService */
+        $manzanaService = $container->get('manzana.service');
+        $client = null;
+        try {
+            $contactId = $manzanaService->getContactIdByUser();
+            $client = new Client();
+            $client->contactId = $contactId;
+        } catch (ManzanaServiceException $e) {
+            $client = new Client();
+            $this->currentUser->setClientPersonalDataByCurUser($client);
+        }
+
+        if ($client instanceof Client) {
+            $this->setClientAddress($client, $address);
+            $manzanaService->updateContactAsync($client);
+        }
     }
 }

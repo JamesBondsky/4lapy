@@ -6,7 +6,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 
 use FourPaws\Decorators\SvgDecorator;
 
-/** @var string $name */ ?>
+/** @var string $name */
+$name = empty($name) ? $arResult['USER_NAME'] : '';?>
 <div class="b-registration__content">
     <div class="b-registration__text-block">
         <p class="b-registration__text"><?= $name ?>, спасибо за регистрацию!</p>

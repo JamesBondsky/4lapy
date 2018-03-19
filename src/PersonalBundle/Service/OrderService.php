@@ -20,6 +20,7 @@ use FourPaws\PersonalBundle\Entity\Order;
 use FourPaws\PersonalBundle\Entity\OrderDelivery;
 use FourPaws\PersonalBundle\Entity\OrderItem;
 use FourPaws\PersonalBundle\Entity\OrderPayment;
+use FourPaws\PersonalBundle\Entity\OrderProp;
 use FourPaws\PersonalBundle\Repository\OrderRepository;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException;
@@ -61,21 +62,22 @@ class OrderService
      */
     public function __construct(OrderRepository $orderRepository)
     {
+        $container = App::getInstance()->getContainer();
         $this->orderRepository = $orderRepository;
-        $this->currentUser = App::getInstance()->getContainer()->get(CurrentUserProviderInterface::class);
-        $this->manzanaService = App::getInstance()->getContainer()->get('manzana.service');
+        $this->currentUser = $container->get(CurrentUserProviderInterface::class);
+        $this->manzanaService = $container->get('manzana.service');
     }
 
     /**
-     * @return ArrayCollection
+     * @return ArrayCollection|Order[]
      * @throws \RuntimeException
-     * @throws \Exception
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws NotAuthorizedException
      * @throws InvalidIdentifierException
      * @throws ConstraintDefinitionException
      * @throws ApplicationCreateException
+     * @throws \Exception
      */
     public function getAllClosedOrders(): ArrayCollection
     {
@@ -92,7 +94,7 @@ class OrderService
      * @param array $closedSiteOrders
      * @param array $manzanaOrders
      *
-     * @return ArrayCollection
+     * @return ArrayCollection|Order[]
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws \RuntimeException
@@ -145,11 +147,12 @@ class OrderService
      * @throws ManzanaServiceContactSearchMoreOneException
      * @throws ManzanaServiceException
      * @throws ApplicationCreateException
+     * @return ArrayCollection|Order[]
      */
     public function getManzanaOrders(): ArrayCollection
     {
         $orders = new ArrayCollection();
-        $cheques = new ArrayCollection($this->manzanaService->getCheques($this->manzanaService->getContactIdByCurUser()));
+        $cheques = new ArrayCollection($this->manzanaService->getCheques($this->manzanaService->getContactIdByUser()));
         if (!$cheques->isEmpty()) {
             /** @var Cheque $cheque */
             foreach ($cheques as $cheque) {
@@ -179,7 +182,7 @@ class OrderService
                             if ((int)$chequeItem->number < 2000000) {
                                 $item = new OrderItem();
                                 if ((int)$chequeItem->number > 1000000) {
-                                    $item->setXmlId($chequeItem->number);
+                                    $item->setArticle($chequeItem->number);
                                 }
                                 $item->setBonus($chequeItem->bonus);
                                 $item->setPrice($chequeItem->price);
@@ -188,7 +191,7 @@ class OrderService
                                 $item->setName($chequeItem->name);
                                 $item->setHaveStock(false);
                                 $item->setWeight(0);
-                                $items[!empty($item->getXmlId()) ? $item->getXmlId() : $i] = $item;
+                                $items[!empty($item->getArticle()) ? $item->getArticle() : $i] = $item;
                             }
                         }
                     }
@@ -201,7 +204,17 @@ class OrderService
     }
 
     /**
-     * @return ArrayCollection
+     * @return ArrayCollection|Order[]
+     * @throws ServiceNotFoundException
+     * @throws ServiceCircularReferenceException
+     * @throws \RuntimeException
+     * @throws NotFoundException
+     * @throws ApplicationCreateException
+     * @throws EmptyEntityClass
+     * @throws SystemException
+     * @throws ArgumentException
+     * @throws IblockNotFoundException
+     * @throws NotFoundException
      * @throws \Exception
      */
     public function getActiveSiteOrders(): ArrayCollection
@@ -218,9 +231,10 @@ class OrderService
     /**
      * @param array $params
      *
-     * @return ArrayCollection
+     * @return ArrayCollection|Order[]
+     * @throws ServiceNotFoundException
      * @throws NotFoundException
-     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws ApplicationCreateException
      * @throws ServiceCircularReferenceException
      * @throws \RuntimeException
      * @throws ArgumentException
@@ -235,10 +249,9 @@ class OrderService
         if (!$orderCollection->isEmpty()) {
             /** @var Order $order */
             foreach ($orderCollection as &$order) {
-                /** @todo вынести все полученяи из цикла и сделать по феншую без запросов цикле */
+                /** @todo вынести все получения из цикла и сделать по феншую без запросов в цикле */
                 if (!$order->isManzana() && $order->getId() > 0) {
                     list($items, $allWeight, $itemsSum) = $this->getOrderItems($order->getId());
-                    var_dump($allWeight);
                     $order->setItems($items);
                     $order->setAllWeight((float)$allWeight);
                     $order->setItemsSum((float)$itemsSum);
@@ -318,7 +331,7 @@ class OrderService
     /**
      * @param int $orderId
      *
-     * @return ArrayCollection
+     * @return ArrayCollection|OrderProp[]
      * @throws EmptyEntityClass
      */
     public function getOrderProps(int $orderId): ArrayCollection
@@ -330,35 +343,71 @@ class OrderService
      * @param Order $order
      *
      * @return Store
+     * @throws ArgumentException
      * @throws ServiceNotFoundException
      * @throws ServiceCircularReferenceException
      * @throws ApplicationCreateException
-     * @throws \Exception
      * @throws NotFoundException
      */
     public function getStore(Order $order): Store
     {
-        //
+        /** @var OrderProp $prop */
         //CITY_CODE
         /** @todo может что сделать с dpd */
-        $storeXmlId = $order->getProps()->get('DELIVERY_PLACE_CODE')->getValue();
-        if (!empty($storeXmlId)) {
-            $storeService = App::getInstance()->getContainer()->get('store.service');
-            return $storeService->getByXmlId($storeXmlId);
+        $props = $order->getProps();
+        if (!$props->isEmpty()) {
+            $prop = $props->get('DELIVERY_PLACE_CODE');
+            if ($prop instanceof OrderProp) {
+                $storeXmlId = $prop->getValue();
+                if (!empty($storeXmlId)) {
+                    $storeService = App::getInstance()->getContainer()->get('store.service');
+                    return $storeService->getByXmlId($storeXmlId);
+                }
+            }
         }
 
         $store = new Store();
-        $props = $order->getProps();
-        $street = $props->get('STREET')->getValue() . ' ул.';
-        $house = ', д.' . $props->get('HOUSE')->getValue();
-        $building = !empty($props->get('BUILDING')->getValue()) ? ', корпус/строение ' . $props->get('BUILDING')->getValue() : '';
-        $porch = !empty($props->get('PORCH')->getValue()) ? ', подъезд. ' . $props->get('PORCH')->getValue() : '';
-        $apartment = !empty($props->get('APARTMENT')->getValue()) ? ', кв. ' . $props->get('APARTMENT')->getValue() : '';
-        $floor = !empty($props->get('FLOOR')->getValue()) ? ', этаж ' . $props->get('FLOOR')->getValue() : '';
-        $city = ', г. ' . $props->get('CITY')->getValue();
-        $store->setAddress($street . $house . $building . $porch . $apartment . $floor . $city);
-        $store->setActive(true);
-        $store->setIsShop(false);
+
+        if (!$props->isEmpty()) {
+            $street = '';
+            $prop = $props->get('STREET');
+            if ($prop instanceof OrderProp) {
+                $street = $prop->getValue() . ' ул.';
+            }
+            $house='';
+            $prop = $props->get('HOUSE');
+            if ($prop instanceof OrderProp) {
+                $house = ', д.' . $prop->getValue();
+            }
+            $building='';
+            $prop = $props->get('BUILDING');
+            if ($prop instanceof OrderProp) {
+                $building = !empty($prop->getValue()) ? ', корпус/строение ' . $prop->getValue() : '';
+            }
+            $porch='';
+            $prop = $props->get('PORCH');
+            if ($prop instanceof OrderProp) {
+                $porch = !empty($prop->getValue()) ? ', подъезд. ' . $prop->getValue() : '';
+            }
+            $apartment='';
+            $prop = $props->get('APARTMENT');
+            if ($prop instanceof OrderProp) {
+                $apartment = !empty($prop->getValue()) ? ', кв. ' . $prop->getValue() : '';
+            }
+            $floor='';
+            $prop = $props->get('FLOOR');
+            if ($prop instanceof OrderProp) {
+                $floor = !empty($prop->getValue()) ? ', этаж ' . $prop->getValue() : '';
+            }
+            $city='';
+            $prop = $props->get('CITY');
+            if ($prop instanceof OrderProp) {
+                $city = ', г. ' . $prop->getValue();
+            }
+            $store->setAddress($street . $house . $building . $porch . $apartment . $floor . $city);
+            $store->setActive(true);
+            $store->setIsShop(false);
+        }
         return $store;
     }
 }

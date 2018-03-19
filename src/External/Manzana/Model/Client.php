@@ -2,6 +2,7 @@
 
 namespace FourPaws\External\Manzana\Model;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use JMS\Serializer\Annotation\ExclusionPolicy;
 use JMS\Serializer\Annotation\SerializedName;
 use JMS\Serializer\Annotation\Type;
@@ -50,7 +51,7 @@ class Client
     public $lastName;
 
     /**
-     * @Type("DateTimeImmutable")
+     * @Type("manzana_date_time_short")
      * @SerializedName("birthdate")
      */
     public $birthDate;
@@ -152,7 +153,7 @@ class Client
     /**
      * @XmlElement(cdata=false)
      * @Type("string")
-     * @SerializedName("Address1_Line3")
+     * @SerializedName("address1_line3")
      */
     public $addressLine3;
 
@@ -241,7 +242,7 @@ class Client
     public $plShopsName;
 
     /**
-     * @Type("DateTimeImmutable")
+     * @Type("manzana_date_time_short")
      * @SerializedName("pl_registration_date")
      */
     public $plRegistrationDate;
@@ -336,7 +337,7 @@ class Client
     public $spousesName;
 
     /**
-     * @Type("DateTimeImmutable")
+     * @Type("manzana_date_time_short")
      * @SerializedName("Anniversary")
      */
     public $anniversary;
@@ -495,5 +496,25 @@ class Client
         $this->familyStatusCode = $isLoyaltyProgramContact ? 2 : 1;
 
         return $this;
+    }
+
+    /**
+     * @return ArrayCollection|Card
+     */
+    public function getCards(): ArrayCollection
+    {
+        return $this->cards;
+    }
+
+    /**
+     * @return string
+     */
+    public function getBirthDateFormated(): string
+    {
+        $date = '';
+        if($this->birthDate instanceof \DateTimeImmutable){
+            $date = $this->birthDate->format('d.m.Y');
+        }
+        return $date;
     }
 }

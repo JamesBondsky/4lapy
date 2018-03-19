@@ -6,6 +6,8 @@
 
 namespace FourPaws\SaleBundle\Service;
 
+use Adv\Bitrixtools\Tools\BitrixUtils;
+use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
@@ -18,16 +20,22 @@ use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PropertyValue;
+use Bitrix\Sale\Shipment;
 use Bitrix\Sale\ShipmentCollection;
-use Bitrix\Sale\ShipmentItemCollection;
+use FourPaws\Catalog\Collection\OfferCollection;
+use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\DeliveryBundle\Entity\Interval;
+use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundEXception;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\PersonalBundle\Entity\Address;
-use FourPaws\PersonalBundle\Exception\NotFoundException as AddressNotFoundException;
+use FourPaws\AppBundle\Exception\NotFoundException as AddressNotFoundException;
 use FourPaws\PersonalBundle\Service\AddressService;
-use FourPaws\SaleBundle\Entity\OrderProperty;
 use FourPaws\SaleBundle\Entity\OrderStorage;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
+use FourPaws\StoreBundle\Collection\StoreCollection;
+use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
+use FourPaws\StoreBundle\Service\StoreService;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ValidationException;
@@ -37,7 +45,6 @@ use FourPaws\UserBundle\Service\UserRegistrationProviderInterface;
 
 class OrderService
 {
-
     const PAYMENT_CASH = 'cash';
 
     const PAYMENT_CARD = 'card';
@@ -59,9 +66,24 @@ class OrderService
     const STATUS_NEW_PICKUP = 'N';
 
     /**
-     * Статус, в который заказ переходит при оплате
+     * Заказ доставляется ("Исполнен" для курьерской доставки)
      */
-    const STATUS_PAID = 'J';
+    const STATUS_DELIVERING = 'Y';
+
+    /**
+     * Заказ в пункте выдачи
+     */
+    const STATUS_ISSUING_POINT = 'F';
+
+    /**
+     * Заказ доставлен
+     */
+    const STATUS_DELIVERED = 'J';
+
+    /**
+     * 90% заказа можно оплатить бонусами
+     */
+    const MAX_BONUS_PAYMENT = 0.9;
 
     /**
      * @var AddressService
@@ -103,11 +125,29 @@ class OrderService
      */
     protected $userRegistrationProvider;
 
+    /**
+     * @var StoreService
+     */
+    protected $storeService;
+
+    /**
+     * OrderService constructor.
+     *
+     * @param AddressService $addressService
+     * @param BasketService $basketService
+     * @param CurrentUserProviderInterface $currentUserProvider
+     * @param DeliveryService $deliveryService
+     * @param StoreService $storeService
+     * @param OrderStorageService $orderStorageService
+     * @param UserCitySelectInterface $userCityProvider
+     * @param UserRegistrationProviderInterface $userRegistrationProvider
+     */
     public function __construct(
         AddressService $addressService,
         BasketService $basketService,
         CurrentUserProviderInterface $currentUserProvider,
         DeliveryService $deliveryService,
+        StoreService $storeService,
         OrderStorageService $orderStorageService,
         UserCitySelectInterface $userCityProvider,
         UserRegistrationProviderInterface $userRegistrationProvider
@@ -116,6 +156,7 @@ class OrderService
         $this->basketService = $basketService;
         $this->currentUserProvider = $currentUserProvider;
         $this->deliveryService = $deliveryService;
+        $this->storeService = $storeService;
         $this->orderStorageService = $orderStorageService;
         $this->userCityProvider = $userCityProvider;
         $this->userRegistrationProvider = $userRegistrationProvider;
@@ -159,6 +200,8 @@ class OrderService
 
     /**
      * @param OrderStorage $storage
+     * @param bool $save
+     * @param bool $fastOrder
      *
      * @throws \Exception
      * @throws OrderCreateException
@@ -173,7 +216,7 @@ class OrderService
      * @throws ObjectNotFoundException
      * @return Order
      */
-    public function createOrder(OrderStorage $storage): Order
+    public function createOrder(OrderStorage $storage, $save = true, bool $fastOrder = false): Order
     {
         $order = Order::create(SITE_ID);
         $selectedCity = $this->userCityProvider->getSelectedCity();
@@ -182,36 +225,31 @@ class OrderService
          * Привязываем корзину
          */
         /** @noinspection PhpParamsInspection */
-        $order->setBasket($this->basketService->getBasket()->getOrderableItems());
+        $order->setBasket($this->basketService->getBasket());
+        if ($order->getBasket()->getOrderableItems()->isEmpty()) {
+            throw new OrderCreateException('Корзина пуста');
+        }
 
-        /**
-         * Задание способов оплаты
-         */
-        if ($storage->getPaymentId()) {
-            $paymentCollection = $order->getPaymentCollection();
-            $sum = $order->getBasket()->getOrderableItems()->getPrice();
-
-            if ($storage->hasBonusPayment() && $storage->getBonusSum()) {
-                $innerPayment = $paymentCollection->getInnerPayment();
-                $innerPayment->setField('SUM', $storage->getBonusSum());
-                $sum -= $storage->getBonusSum();
+        $deliveries = $this->getDeliveries();
+        $selectedDelivery = current($deliveries);
+        if ($deliveryId = $storage->getDeliveryId()) {
+            /** @var CalculationResult $delivery */
+            foreach ($deliveries as $delivery) {
+                if ($deliveryId === (int)$delivery->getData()['DELIVERY_ID']) {
+                    $selectedDelivery = $delivery;
+                }
             }
+        }
 
-            $extPayment = $paymentCollection->createItem();
-            $extPayment->setField('SUM', $sum);
-            $extPayment->setField('PAY_SYSTEM_ID', $storage->getPaymentId());
-
-            /** @var \Bitrix\Sale\PaySystem\Service $paySystem */
-            $paySystem = $extPayment->getPaySystem();
-            $extPayment->setField('PAY_SYSTEM_NAME', $paySystem->getField('NAME'));
-        } else {
-            throw new OrderCreateException('Не выбран способ оплаты');
+        if (!$selectedDelivery) {
+            throw new OrderCreateException('Нет доступных доставок');
         }
 
         /**
          * Задание способов доставки
          */
-        if ($storage->getDeliveryId()) {
+        $propertyValueCollection = $order->getPropertyCollection();
+        if ($deliveryId) {
             $locationProp = $order->getPropertyCollection()->getDeliveryLocation();
             if (!$locationProp) {
                 throw new OrderCreateException('Отсутствует свойство привязки к местоположению');
@@ -229,14 +267,6 @@ class OrderService
             }
             /** @var ShipmentCollection $shipmentCollection */
             $shipmentCollection = $shipment->getCollection();
-            $deliveries = $this->getDeliveries();
-            $selectedDelivery = null;
-            /** @var CalculationResult $delivery */
-            foreach ($deliveries as $delivery) {
-                if ($storage->getDeliveryId() === (int)$delivery->getData()['DELIVERY_ID']) {
-                    $selectedDelivery = $delivery;
-                }
-            }
 
             if (null === $selectedDelivery) {
                 throw new OrderCreateException('Не выбрана доставка');
@@ -248,56 +278,23 @@ class OrderService
 
             $shipment->setFields(
                 [
-                    'DELIVERY_ID'   => $selectedDelivery->getData()['DELIVERY_ID'],
+                    'DELIVERY_ID' => $selectedDelivery->getData()['DELIVERY_ID'],
                     'DELIVERY_NAME' => $selectedDelivery->getData()['DELIVERY_NAME'],
-                    'CURRENCY'      => $order->getCurrency(),
+                    'CURRENCY' => $order->getCurrency(),
                 ]
             );
 
             $shipmentCollection->calculateDelivery();
-        } else {
-            throw new OrderCreateException('Не выбрана доставка');
-        }
 
-        /**
-         * Обработка полей заказа
-         */
-        if ($storage->getComment()) {
-            $order->setField('USER_DESCRIPTION', $storage->getComment());
-        }
+            $stockResult = $this->deliveryService->getStockResultByDelivery($selectedDelivery);
+            $deliveryDate = $stockResult->getDeliveryDate();
 
-        $address = null;
-        if ($storage->getAddressId()) {
-            try {
-                $address = $this->addressService->getById($storage->getAddressId());
-                $storage->setStreet($address->getStreet())
-                        ->setHouse($address->getHouse())
-                        ->setBuilding($address->getHousing())
-                        ->setFloor($address->getFloor())
-                        ->setApartment($address->getFlat())
-                        ->setPorch($address->getEntrance());
-            } catch (AddressNotFoundException $e) {
-            }
-        }
-
-        /**
-         * Обработка свойств заказа
-         */
-        $propertyValueCollection = $order->getPropertyCollection();
-        $arrayStorage = $this->orderStorageService->storageToArray($storage);
-        /** @var OrderProperty $orderProperty */
-
-        $deliveryDate = $this->deliveryService->getStockResultByDelivery($selectedDelivery)
-                                              ->getDeliveryDate();
-
-        /** @var PropertyValue $propertyValue */
-        foreach ($propertyValueCollection as $propertyValue) {
-            $code = $propertyValue->getProperty()['CODE'];
-            $key = 'PROPERTY_' . $code;
-
-            if (!empty($arrayStorage[$key])) {
-                $value = $arrayStorage[$key];
-            } else {
+            /**
+             * Задание свойств заказа, связанных с доставкой
+             */
+            /** @var PropertyValue $propertyValue */
+            foreach ($propertyValueCollection as $propertyValue) {
+                $code = $propertyValue->getProperty()['CODE'];
                 switch ($code) {
                     case 'DELIVERY_PLACE_CODE':
                         if (!$this->deliveryService->isInnerPickup($selectedDelivery)) {
@@ -331,14 +328,15 @@ class OrderService
                             if (($index = $storage->getDeliveryInterval() - 1) < 0) {
                                 continue 2;
                             }
+                            /** @var Interval $interval */
                             if (!$interval = $selectedDelivery->getData()['INTERVALS'][$index]) {
                                 continue 2;
                             }
 
                             $value = sprintf(
                                 '%s:00-%s:00',
-                                str_pad($interval['FROM'], 2, '0', STR_PAD_LEFT),
-                                str_pad($interval['TO'], 2, '0', STR_PAD_LEFT)
+                                str_pad($interval->getFrom(), 2, '0', STR_PAD_LEFT),
+                                str_pad($interval->getTo(), 2, '0', STR_PAD_LEFT)
                             );
                         } else {
                             $value = sprintf(
@@ -348,83 +346,251 @@ class OrderService
                         }
 
                         break;
+                    case 'REGION_COURIER_FROM_DC':
+                        $value = $stockResult->getDelayed()->isEmpty()
+                            ? BitrixUtils::BX_BOOL_FALSE
+                            : BitrixUtils::BX_BOOL_TRUE;
+                        break;
                     default:
                         continue 2;
                 }
-            }
 
-            $propertyValue->setValue($value);
-        }
-
-        /**
-         * Три ситуации:
-         * 1) Если юзер авторизован, то привязываем заказ к нему
-         * 2) Если не авторизован, но телефон совпадает с телефоном существующего пользователя,
-         *    то заказ привязывается к этому пользователю. Авторизации не происходит
-         * 3) Если не авторизован, а номер телефона отсутствует в базе,
-         *    то происходит регистрация. Авторизации не происходит
-         */
-        $needCreateAddress = false;
-        $addressUserId = null;
-        if ($storage->getUserId()) {
-            $order->setFieldNoDemand('USER_ID', $storage->getUserId());
-            $user = $this->currentUserProvider->getCurrentUser();
-            if (!$user->getEmail() && $storage->getEmail()) {
-                $user->setEmail($storage->getEmail());
-                $this->currentUserProvider->getUserRepository()->updateEmail(
-                    $user->getId(),
-                    $storage->getEmail()
-                );
+                $propertyValue->setValue($value);
             }
-            if (!$address) {
-                $needCreateAddress = true;
-                $addressUserId = $storage->getUserId();
-            }
-        } else {
-            $users = $this->currentUserProvider->getUserRepository()->findBy(
-                ['PERSONAL_PHONE' => $storage->getPhone()]
-            );
-            if ($user = reset($users)) {
-                $order->setFieldNoDemand('USER_ID', $user->getId());
-            } else {
-                $user = (new User())->setName($storage->getName())
-                                    ->setEmail($storage->getEmail())
-                                    ->setLogin($storage->getPhone())
-                                    ->setPassword(randString(6))
-                                    ->setPersonalPhone($storage->getPhone());
-                $this->userRegistrationProvider->register($user);
-                $order->setFieldNoDemand('USER_ID', $user->getId());
-                $addressUserId = $user->getId();
-                $needCreateAddress = true;
+        } elseif ($save) {
+            if (!$fastOrder) {
+                throw new OrderCreateException('Не выбрана доставка');
             }
         }
 
         /**
-         * Сохраняем адрес, если:
-         * 1) пользователь только что зарегистрирован
-         * 2) авторизованный пользователь задал новый адрес
+         * Задание способов оплаты
          */
-        if ($needCreateAddress) {
-            $address = (new Address())->setCity($storage->getCity())
-                                      ->setCityLocation($storage->getCityCode())
-                                      ->setUserId($addressUserId)
-                                      ->setStreet($storage->getStreet())
-                                      ->setHouse($storage->getHouse())
-                                      ->setHousing($storage->getBuilding())
-                                      ->setEntrance($storage->getPorch())
-                                      ->setFloor($storage->getFloor())
-                                      ->setFlat($storage->getApartment());
+        if ($storage->getPaymentId()) {
+            $paymentCollection = $order->getPaymentCollection();
+            $sum = $order->getBasket()->getOrderableItems()->getPrice();
+            $sum += $order->getDeliveryPrice();
 
-            $this->addressService->add($address);
+            /**
+             * Нужно для оплаты бонусами
+             */
+            if ($storage->getUserId()) {
+                $order->setFieldNoDemand('USER_ID', $storage->getUserId());
+            }
+
+            if ($storage->getBonus()) {
+                $innerPayment = $paymentCollection->getInnerPayment();
+                $innerPayment->setField('SUM', $storage->getBonus());
+                $innerPayment->setPaid('Y');
+                $sum -= $storage->getBonus();
+            }
+
+            $extPayment = $paymentCollection->createItem();
+            $extPayment->setField('SUM', $sum);
+            $extPayment->setField('PAY_SYSTEM_ID', $storage->getPaymentId());
+
+            /** @var \Bitrix\Sale\PaySystem\Service $paySystem */
+            $paySystem = $extPayment->getPaySystem();
+            $extPayment->setField('PAY_SYSTEM_NAME', $paySystem->getField('NAME'));
+        } elseif ($save) {
+            if (!$fastOrder) {
+                throw new OrderCreateException('Не выбран способ оплаты');
+            }
         }
+
+        /**
+         * Обработка полей заказа
+         */
+        if ($storage->getComment()) {
+            $order->setField('USER_DESCRIPTION', $storage->getComment());
+        }
+        else{
+            $order->setField('USER_DESCRIPTION', '');
+        }
+
+        $address = null;
+        if ($storage->getAddressId()) {
+            try {
+                $address = $this->addressService->getById($storage->getAddressId());
+                $storage->setStreet($address->getStreet())
+                    ->setHouse($address->getHouse())
+                    ->setBuilding($address->getHousing())
+                    ->setFloor($address->getFloor())
+                    ->setApartment($address->getFlat())
+                    ->setPorch($address->getEntrance());
+            } catch (AddressNotFoundException $e) {
+            }
+        }
+
+        /**
+         * Обработка свойств заказа
+         */
+        $arrayStorage = $this->orderStorageService->storageToArray($storage);
+
+        /** @var PropertyValue $propertyValue */
+        foreach ($propertyValueCollection as $propertyValue) {
+            $code = $propertyValue->getProperty()['CODE'];
+            $key = 'PROPERTY_' . $code;
+
+            $value = $arrayStorage[$key] ?? null;
+
+            /**
+             * Если у заказа самовывоз из магазина или курьерская доставка из зоны 2,
+             * и в наличии более 90% от суммы заказа, при этом в случае курьерской доставки имеются отложенные товары,
+             * то способ коммуникации изменяется на "Телефонный звонок (анализ)"
+             */
+            if ($selectedDelivery &&
+                $code === 'COM_WAY' &&
+                ($this->deliveryService->isInnerPickup($selectedDelivery) || $this->deliveryService->isInnerDelivery($selectedDelivery))
+            ) {
+                $changeCommunicationWay = false;
+                $stockResult = $this->deliveryService->getStockResultByDelivery($selectedDelivery);
+                if ($this->deliveryService->isInnerPickup($selectedDelivery)) {
+                    $changeCommunicationWay = true;
+                } elseif ($this->deliveryService->isInnerDelivery($selectedDelivery)) {
+                    if (($selectedDelivery->getData()['DELIVERY_ZONE'] === DeliveryService::ZONE_2) &&
+                        !$stockResult->getDelayed()->isEmpty()
+                    ) {
+                        $changeCommunicationWay = true;
+                    }
+                }
+                if ($changeCommunicationWay) {
+                    $totalPrice = $order->getBasket()->getOrderableItems()->getPrice();
+                    $availablePrice = $stockResult->getAvailable()->getPrice();
+                    if ($availablePrice > $totalPrice * 0.9) {
+                        $value = OrderPropertyService::COMMUNICATION_PHONE_ANALYSIS;
+                    }
+                }
+            }
+            if (null !== $value) {
+                $propertyValue->setValue($value);
+            }
+        }
+
         $order->doFinalAction(true);
 
-        $result = $order->save();
-        if (!$result->isSuccess()) {
-            throw new OrderCreateException(implode(', ', $result->getErrorMessages()));
-        }
+        if ($save) {
+            /**
+             * Три ситуации:
+             * 1) Если юзер авторизован, то привязываем заказ к нему
+             * 2) Если не авторизован, но телефон совпадает с телефоном существующего пользователя,
+             *    то заказ привязывается к этому пользователю. Авторизации не происходит
+             * 3) Если не авторизован, а номер телефона отсутствует в базе,
+             *    то происходит регистрация. Авторизации не происходит
+             */
+            $needCreateAddress = false;
+            $addressUserId = null;
+            $newUser = false;
+            if ($storage->getUserId()) {
+                $order->setFieldNoDemand('USER_ID', $storage->getUserId());
+                $user = $this->currentUserProvider->getCurrentUser();
+                if (!$user->getDiscountCardNumber() && $storage->getDiscountCardNumber()) {
+                    $this->currentUserProvider->getUserRepository()->updateDiscountCard(
+                        $user->getId(),
+                        $storage->getDiscountCardNumber()
+                    );
+                }
+                if (!$user->getEmail() && $storage->getEmail()) {
+                    $user->setEmail($storage->getEmail());
+                    $this->currentUserProvider->getUserRepository()->updateEmail(
+                        $user->getId(),
+                        $storage->getEmail()
+                    );
+                }
+                if (!$address) {
+                    $needCreateAddress = true;
+                    $addressUserId = $storage->getUserId();
+                }
+            } else {
+                $users = $this->currentUserProvider->getUserRepository()->findBy(
+                    ['LOGIC' => 'OR', ['=PERSONAL_PHONE' => $storage->getPhone()], ['=EMAIL' => $storage->getEmail()]]
+                );
 
-        $this->orderStorageService->clearStorage($storage);
+                $foundUser = null;
+                /** @var User $user */
+                foreach ($users as $user) {
+                    if ($user->getEmail() === $storage->getEmail()) {
+                        $foundUser = $user;
+                    } elseif ($user->getPersonalPhone() === $storage->getPhone()) {
+                        $foundUser = $user;
+                    }
+                }
+
+                if ($foundUser) {
+                    $order->setFieldNoDemand('USER_ID', $foundUser->getId());
+                } else {
+                    $password = randString(6);
+                    $user = (new User())
+                        ->setName($storage->getName())
+                        ->setEmail($storage->getEmail())
+                        ->setLogin($storage->getPhone())
+                        ->setPassword($password)
+                        ->setPersonalPhone($storage->getPhone());
+                    $_SESSION['MANZANA_UPDATE'] = true;
+                    $_SESSION['SEND_REGISTER_EMAIL'] = true;
+                    $user = $this->userRegistrationProvider->register($user);
+
+                    $order->setFieldNoDemand('USER_ID', $user->getId());
+                    $addressUserId = $user->getId();
+                    $needCreateAddress = true;
+                    $newUser = true;
+
+                    /* @todo вынести из сессии? */
+                    /* нужно для expertsender */
+                    /** пароль еще нужен для смс быстрого заказа */
+                    $_SESSION['NEW_USER'] = [
+                        'LOGIN' => $storage->getPhone(),
+                        'PASSWORD' => $password,
+                    ];
+                }
+            }
+
+            /** @var PropertyValue $propertyValue */
+            foreach ($propertyValueCollection as $propertyValue) {
+                $code = $propertyValue->getProperty()['CODE'];
+                if ($code !== 'USER_REGISTERED') {
+                    continue;
+                }
+                $propertyValue->setValue(
+                    $newUser ? BitrixUtils::BX_BOOL_FALSE : BitrixUtils::BX_BOOL_TRUE
+                );
+                break;
+            }
+
+            /**
+             * Сохраняем адрес, если:
+             * 1) пользователь только что зарегистрирован
+             * 2) авторизованный пользователь задал новый адрес
+             */
+            if ($needCreateAddress && $selectedDelivery && $this->deliveryService->isDelivery($selectedDelivery) && !$fastOrder) {
+                $address = (new Address())
+                    ->setCity($storage->getCity())
+                    ->setCityLocation($storage->getCityCode())
+                    ->setUserId($addressUserId)
+                    ->setStreet($storage->getStreet())
+                    ->setHouse($storage->getHouse())
+                    ->setHousing($storage->getBuilding())
+                    ->setEntrance($storage->getPorch())
+                    ->setFloor($storage->getFloor())
+                    ->setFlat($storage->getApartment());
+
+                $this->addressService->add($address);
+            }
+
+            $result = $order->save();
+            if (!$result->isSuccess()) {
+                throw new OrderCreateException(implode(', ', $result->getErrorMessages()));
+            }
+
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                /** Очистка кеша */
+                $instance = Application::getInstance();
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->clearByTag('order_' . $order->getField('USER_ID'));
+            }
+
+            $this->orderStorageService->clearStorage($storage);
+        }
 
         return $order;
     }
@@ -443,5 +609,195 @@ class OrderService
         }
 
         return $this->deliveries;
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @throws NotFoundException
+     * @return Payment
+     */
+    public function getOnlinePayment(Order $order): Payment
+    {
+        /** @var Payment $orderPayment */
+        foreach ($order->getPaymentCollection() as $orderPayment) {
+            if ($orderPayment->isInner()) {
+                continue;
+            }
+
+            if ($orderPayment->getPaySystem()->getField('CODE') === static::PAYMENT_ONLINE) {
+                return $orderPayment;
+            }
+        }
+
+        throw new NotFoundException('В данном заказе нет онлайн-оплаты');
+    }
+
+    /**
+     * @param Order $order
+     * @param string $code
+     *
+     * @throws NotFoundException
+     * @return PropertyValue
+     */
+    public function getOrderPropertyByCode(Order $order, string $code): PropertyValue
+    {
+        /** @var PropertyValue $propertyValue */
+        foreach ($order->getPropertyCollection() as $propertyValue) {
+            if ($propertyValue->getField('CODE') === $code) {
+                return $propertyValue;
+            }
+        }
+
+        throw new NotFoundException(sprintf('Свойство %s не найдено', $code));
+    }
+
+    /**
+     * @param Order $order
+     * @param string $code
+     * @param $value
+     */
+    public function setOrderPropertyByCode(Order $order, string $code, $value)
+    {
+        /** @var PropertyValue $propertyValue */
+        foreach ($order->getPropertyCollection() as $propertyValue) {
+            if ($propertyValue->getField('CODE') === $code) {
+                $propertyValue->setValue($value);
+            }
+        }
+    }
+
+    /**
+     * @param Order $order
+     * @param array $codes
+     *
+     * @return array
+     */
+    public function getOrderPropertiesByCode(Order $order, array $codes): array
+    {
+        $result = [];
+        /** @var PropertyValue $propertyValue */
+        foreach ($order->getPropertyCollection() as $propertyValue) {
+            $code = $propertyValue->getField('CODE');
+            if (\in_array($propertyValue->getField('CODE'), $codes, true)) {
+                $result[$code] = $propertyValue->getValue();
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @throws NotFoundException
+     * @return string
+     */
+    public function getOrderDeliveryCode(Order $order): string
+    {
+        try {
+            /** @var Shipment $shipment */
+            foreach ($order->getShipmentCollection() as $shipment) {
+                if ($shipment->isSystem()) {
+                    continue;
+                }
+
+                return $this->deliveryService->getDeliveryCodeById($shipment->getDeliveryId());
+            }
+        } catch (DeliveryNotFoundException $e) {
+        }
+
+        throw new NotFoundException('Не указан тип доставки');
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @return string
+     */
+    public function getOrderDeliveryAddress(Order $order): string
+    {
+        $properties = $this->getOrderPropertiesByCode(
+            $order,
+            [
+                'DPD_TERMINAL_CODE',
+                'DELIVERY_PLACE_CODE',
+                'CITY_CODE',
+                'CITY',
+                'STREET',
+                'HOUSE',
+                'BUILDING',
+                'PORCH',
+                'FLOOR',
+                'APARTMENT',
+            ]
+        );
+        $address = '';
+        if ($properties['DELIVERY_PLACE_CODE']) {
+            try {
+                $store = $this->storeService->getByXmlId($properties['DELIVERY_PLACE_CODE']);
+                $address = $store->getAddress();
+
+                if ($store->getMetro()) {
+                    /** @noinspection PhpUnusedLocalVariableInspection */
+                    list($services, $metro) = $this->storeService->getFullStoreInfo(new StoreCollection([$store]));
+
+                    if ($metro[$store->getMetro()]) {
+                        $address = 'м. ' . $metro[$store->getMetro()]['UF_NAME'] . ', ' . $address;
+                    }
+                }
+            } catch (StoreNotFoundException $e) {
+            }
+        } elseif ($properties['DELIVERY_PLACE_CODE'] && $properties['CITY_CODE']) {
+            $terminals = $this->deliveryService->getDpdTerminalsByLocation($properties['CITY_CODE']);
+            if ($terminal = $terminals[$properties['DPD_TERMINAL_CODE']]) {
+                $address = $terminal->getAddress();
+            }
+        } elseif ($properties['CITY'] && $properties['STREET']) {
+            $address = [
+                $properties['CITY'],
+                $properties['STREET'],
+            ];
+            if (isset($properties['HOUSE'])) {
+                $address[] = $properties['HOUSE'];
+            }
+            if (isset($properties['BUILDING'])) {
+                $address[] = 'корпус ' . $properties['BUILDING'];
+            }
+            if (isset($properties['PORCH'])) {
+                $address[] = 'подъезд ' . $properties['PORCH'];
+            }
+            if (isset($properties['FLOOR'])) {
+                $address[] = 'этаж ' . $properties['FLOOR'];
+            }
+            if (isset($properties['APARTMENT'])) {
+                $address[] = 'кв. ' . $properties['APARTMENT'];
+            }
+            $address = implode(', ', $address);
+        }
+
+        return $address;
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @throws NotFoundException
+     * @return OfferCollection
+     */
+    public function getOrderProducts(Order $order): OfferCollection
+    {
+        $basket = $order->getBasket();
+        $ids = [];
+        /** @var BasketItem $basketItem */
+        foreach ($basket as $basketItem) {
+            $ids[] = $basketItem->getProductId();
+        }
+
+        if (empty($ids)) {
+            throw new NotFoundException('Корзина заказа пуста');
+        }
+
+        return (new OfferQuery())->withFilterParameter('ID', $ids)->exec();
     }
 }

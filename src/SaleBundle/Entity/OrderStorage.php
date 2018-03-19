@@ -19,6 +19,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  * @SaleValidation\OrderDelivery(groups={"delivery","payment"})
  * @SaleValidation\OrderAddress(groups={"delivery","payment"})
  * @SaleValidation\OrderPaymentSystem(groups={"payment"})
+ * @SaleValidation\OrderBonusPayment(groups={"payment"})
  */
 class OrderStorage
 {
@@ -290,30 +291,29 @@ class OrderStorage
     protected $partialGet = true;
 
     /**
-     *
-     * @var bool
-     * @Serializer\Type("bool")
-     * @Serializer\SerializedName("BONUS_PAYMENT")
-     * @Serializer\Groups(groups={"read","update","delete"})
-     */
-    protected $bonusPayment = false;
-
-    /**
      * Сумма оплаты бонусами
      *
      * @var int
      * @Serializer\Type("int")
-     * @Serializer\SerializedName("BONUS_SUM")
+     * @Serializer\SerializedName("BONUS")
      * @Serializer\Groups(groups={"read","update","delete"})
      */
-    protected $bonusSum = 0;
+    protected $bonus = 0;
+
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\SerializedName("DISCOUNT_CARD_NUMBER")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     */
+    protected $discountCardNumber = '';
 
     /**
      * @return int
      */
     public function getFuserId(): int
     {
-        return $this->fuserId ?: 0;
+        return $this->fuserId ?? 0;
     }
 
     /**
@@ -333,7 +333,19 @@ class OrderStorage
      */
     public function getUserId(): int
     {
-        return $this->userId ?: 0;
+        return $this->userId ?? 0;
+    }
+
+    /**
+     * @param int $userId
+     *
+     * @return OrderStorage
+     */
+    public function setUserId(int $userId): OrderStorage
+    {
+        $this->userId = $userId;
+
+        return $this;
     }
 
     /**
@@ -341,7 +353,7 @@ class OrderStorage
      */
     public function isCaptchaFilled(): bool
     {
-        return $this->captchaFilled ?: false;
+        return $this->captchaFilled ?? false;
     }
 
     /**
@@ -361,7 +373,7 @@ class OrderStorage
      */
     public function getPaymentId(): int
     {
-        return $this->paymentId ?: 0;
+        return $this->paymentId ?? 0;
     }
 
     /**
@@ -381,7 +393,7 @@ class OrderStorage
      */
     public function getDeliveryId(): int
     {
-        return $this->deliveryId ?: 0;
+        return $this->deliveryId ?? 0;
     }
 
     /**
@@ -401,7 +413,7 @@ class OrderStorage
      */
     public function getComment(): string
     {
-        return $this->comment ?: '';
+        return $this->comment ?? '';
     }
 
     /**
@@ -421,7 +433,7 @@ class OrderStorage
      */
     public function getName(): string
     {
-        return $this->name ?: '';
+        return $this->name ?? '';
     }
 
     /**
@@ -441,7 +453,7 @@ class OrderStorage
      */
     public function getPhone(): string
     {
-        return $this->phone ?: '';
+        return $this->phone ?? '';
     }
 
     /**
@@ -464,7 +476,7 @@ class OrderStorage
      */
     public function getAltPhone(): string
     {
-        return $this->altPhone ?: '';
+        return $this->altPhone ?? '';
     }
 
     /**
@@ -487,7 +499,7 @@ class OrderStorage
      */
     public function getEmail(): string
     {
-        return $this->email ?: '';
+        return $this->email ?? '';
     }
 
     /**
@@ -507,7 +519,7 @@ class OrderStorage
      */
     public function getAddressId(): int
     {
-        return $this->addressId ?: 0;
+        return $this->addressId ?? 0;
     }
 
     /**
@@ -527,7 +539,7 @@ class OrderStorage
      */
     public function getStreet(): string
     {
-        return $this->street ?: '';
+        return $this->street ?? '';
     }
 
     /**
@@ -547,7 +559,7 @@ class OrderStorage
      */
     public function getHouse(): string
     {
-        return $this->house ?: '';
+        return $this->house ?? '';
     }
 
     /**
@@ -567,7 +579,7 @@ class OrderStorage
      */
     public function getBuilding(): string
     {
-        return $this->building ?: '';
+        return $this->building ?? '';
     }
 
     /**
@@ -587,7 +599,7 @@ class OrderStorage
      */
     public function getApartment(): string
     {
-        return $this->apartment ?: '';
+        return $this->apartment ?? '';
     }
 
     /**
@@ -607,7 +619,7 @@ class OrderStorage
      */
     public function getPorch(): string
     {
-        return $this->porch ?: '';
+        return $this->porch ?? '';
     }
 
     /**
@@ -627,7 +639,7 @@ class OrderStorage
      */
     public function getFloor(): string
     {
-        return $this->floor ?: '';
+        return $this->floor ?? '';
     }
 
     /**
@@ -647,7 +659,7 @@ class OrderStorage
      */
     public function getDeliveryDate(): int
     {
-        return $this->deliveryDate ?: 0;
+        return $this->deliveryDate ?? 0;
     }
 
     /**
@@ -667,7 +679,7 @@ class OrderStorage
      */
     public function getDeliveryInterval(): int
     {
-        return $this->deliveryInterval ?: 0;
+        return $this->deliveryInterval ?? 0;
     }
 
     /**
@@ -687,7 +699,7 @@ class OrderStorage
      */
     public function getDeliveryPlaceCode(): string
     {
-        return $this->deliveryPlaceCode ?: '';
+        return $this->deliveryPlaceCode ?? '';
     }
 
     /**
@@ -707,7 +719,7 @@ class OrderStorage
      */
     public function getCommunicationWay(): string
     {
-        return $this->communicationWay ?: '';
+        return $this->communicationWay ?? '';
     }
 
     /**
@@ -727,7 +739,7 @@ class OrderStorage
      */
     public function getSourceCode(): string
     {
-        return $this->sourceCode ?: '';
+        return $this->sourceCode ?? '';
     }
 
     /**
@@ -747,7 +759,7 @@ class OrderStorage
      */
     public function getPartnerCode(): string
     {
-        return $this->partnerCode ?: '';
+        return $this->partnerCode ?? '';
     }
 
     /**
@@ -767,7 +779,7 @@ class OrderStorage
      */
     public function getCity(): string
     {
-        return $this->city ?: '';
+        return $this->city ?? '';
     }
 
     /**
@@ -787,7 +799,7 @@ class OrderStorage
      */
     public function getCityCode(): string
     {
-        return $this->cityCode ?: '';
+        return $this->cityCode ?? '';
     }
 
     /**
@@ -807,7 +819,7 @@ class OrderStorage
      */
     public function isPartialGet(): bool
     {
-        return $this->partialGet ?: true;
+        return $this->partialGet ?? true;
     }
 
     /**
@@ -823,41 +835,41 @@ class OrderStorage
     }
 
     /**
-     * @return bool
+     * @return int
      */
-    public function hasBonusPayment(): bool
+    public function getBonus(): int
     {
-        return $this->bonusPayment ?: false;
+        return $this->bonus ?? 0;
     }
 
     /**
-     * @param bool $bonusPayment
+     * @param int $bonus
      *
      * @return OrderStorage
      */
-    public function setBonusPayment(bool $bonusPayment): OrderStorage
+    public function setBonus(int $bonus): OrderStorage
     {
-        $this->bonusPayment = $bonusPayment;
+        $this->bonus = $bonus;
 
         return $this;
     }
 
     /**
-     * @return int
+     * @return string
      */
-    public function getBonusSum(): int
+    public function getDiscountCardNumber(): string
     {
-        return $this->bonusSum ?: 0;
+        return $this->discountCardNumber;
     }
 
     /**
-     * @param int $bonusSum
+     * @param string $discountCardNumber
      *
      * @return OrderStorage
      */
-    public function setBonusSum(int $bonusSum): OrderStorage
+    public function setDiscountCardNumber(string $discountCardNumber): OrderStorage
     {
-        $this->bonusSum = $bonusSum;
+        $this->discountCardNumber = $discountCardNumber;
 
         return $this;
     }

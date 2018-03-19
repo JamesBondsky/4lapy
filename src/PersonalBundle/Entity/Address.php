@@ -8,8 +8,8 @@ namespace FourPaws\PersonalBundle\Entity;
 
 use FourPaws\App\Application;
 use FourPaws\AppBundle\Entity\BaseEntity;
-use FourPaws\Location\Exception\CityNotFoundException;
-use FourPaws\Location\LocationService;
+use FourPaws\LocationBundle\Exception\CityNotFoundException;
+use FourPaws\LocationBundle\LocationService;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -215,7 +215,7 @@ class Address extends BaseEntity
         $house = ', д. ' . $this->getHouse();
         
         $res =
-            $this->getStreet() . ' ул.' . $house . $housing . $entrance . $floor . $flat . $intercomCode . ' '
+            $this->getStreet() . ' ул.' . $house . $housing . $entrance . $floor . $flat . $intercomCode . ', '
             . $this->getCity();
         
         return $res;

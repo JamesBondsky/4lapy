@@ -129,7 +129,14 @@ class ExceptionHandler implements SubscribingHandlerInterface
         array $type,
         Context $context
     ): array {
-        return $visitor->visitArray($this->convertToArray($exception, $context), $type, $context);
+        return $visitor->getNavigator()->accept(
+            $this->convertToArray($exception, $context),
+            [
+                'name'   => 'array',
+                'params' => $type['params'],
+            ],
+            $context
+        );
     }
 
     /**
@@ -141,16 +148,23 @@ class ExceptionHandler implements SubscribingHandlerInterface
     protected function convertToArray(\Exception $exception, Context $context): array
     {
         $error = [
-            'message' => $this->getMessage($exception, $this->getStatusCode($context)),
-            'code'    => $this->exceptionDataMap->resolveCode($exception) ?: $this->getDefaultErrorCode(),
+            'title' => $this->getMessage($exception, $this->getStatusCode($context)),
+            'code'  => $this->exceptionDataMap->resolveCode($exception) ?: $this->getDefaultErrorCode(),
         ];
         if ($this->isDebug()) {
-            $error['trace'] = $exception->getTrace();
+            $error['exception'] = [
+                'type'  => get_class($exception),
+                'title' => $exception->getMessage(),
+                'file'  => $exception->getFile(),
+                'line'  => $exception->getLine(),
+                'code'  => $exception->getCode(),
+                'trace' => $exception->getTraceAsString(),
+            ];
         }
 
         return [
-            'data'   => null,
-            'errors' => [
+            'data'  => [],
+            'error' => [
                 $error,
             ],
         ];
@@ -176,10 +190,6 @@ class ExceptionHandler implements SubscribingHandlerInterface
 
     protected function getMessage(\Exception $exception, $statusCode = null)
     {
-        if ($this->isDebug()) {
-            return $exception->getMessage();
-        }
-
         if ($message = $this->exceptionDataMap->resolveMessage($exception)) {
             return $message;
         }

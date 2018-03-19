@@ -8,9 +8,16 @@ fos_rest:
       serialize_null: true
   format_listener:
     rules:
-      - { path: '^/mobile_app_v2',  priorities: ['json'], fallback_format: json, prefer_extension: true }
-      - { path: '^/', priorities: [ 'html', '*/*'], fallback_format: html, prefer_extension: true }
-  disable_csrf_role:    null
+      - { path: '^/api',  priorities: ['json'], fallback_format: json, prefer_extension: false }
+      - { path: '^/', stop: true }
+  zone:
+    - { path: '^/api' }
   exception:
     enabled: true
     exception_controller: FourPaws\MobileApiBundle\Controller\ExceptionController::showAction
+  versioning:
+    enabled: true
+    default_version: v0
+    resolvers:
+      custom_header: true
+  #todo: param_fetcher_listener, service

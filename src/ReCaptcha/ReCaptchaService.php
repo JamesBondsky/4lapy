@@ -29,7 +29,7 @@ class ReCaptchaService implements LoggerAwareInterface
     /** @noinspection SpellCheckingInspection */
 
     /**
-     * CallbackConsumerBase constructor.
+     * ReCaptchaService constructor.
      *
      * @param ClientInterface $guzzle
      *
@@ -46,13 +46,20 @@ class ReCaptchaService implements LoggerAwareInterface
     /**
      * @param string $additionalClass
      *
+     * @param bool   $isAjax
+     *
      * @return string
      */
-    public function getCaptcha(string $additionalClass = ''): string
+    public function getCaptcha(string $additionalClass = '', bool $isAjax = false): string
     {
-        $this->addJs();
+        if (!$isAjax) {
+            $script = '';
+            $this->addJs();
+        } else {
+            $script = $this->getJs();
+        }
 
-        return '<div class="g-recaptcha' . $additionalClass . '" data-sitekey="' . $this->parameters['key']
+        return $script . '<div class="g-recaptcha' . $additionalClass . '" data-sitekey="' . $this->parameters['key']
             . '"></div>';
     }
 
@@ -62,11 +69,18 @@ class ReCaptchaService implements LoggerAwareInterface
     }
 
     /**
+     * @return string
+     */
+    public function getJs(): string
+    {
+        return '<script data-skip-moving=true async src="https://www.google.com/recaptcha/api.js"></script>';
+    }
+
+    /**
      * @param string $recaptcha
      *
      * @throws \RuntimeException
      * @throws SystemException
-     * @throws GuzzleException
      * @return bool
      */
     public function checkCaptcha(string $recaptcha = ''): bool
@@ -85,7 +99,11 @@ class ReCaptchaService implements LoggerAwareInterface
             ]
         );
         if (!empty($recaptcha)) {
-            $res = $this->guzzle->request('get', $uri->getUri());
+            try {
+                $res = $this->guzzle->request('get', $uri->getUri());
+            } catch (GuzzleException $e) {
+                return false;
+            }
             if ($res->getStatusCode() === 200) {
                 $data = json_decode($res->getBody()->getContents());
                 if ($data && $data->success) {

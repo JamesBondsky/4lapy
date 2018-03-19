@@ -13,15 +13,21 @@ services:
         resource: '../../*'
         # you can exclude directories or files
         # but if a service is unused, it's removed anyway
-        exclude: '../../{Entity,Tests,Dto,Exception}'
+        exclude: '../../{Entity,Tests,Dto,Exception,EventController}'
 
     FourPaws\MobileApiBundle\Controller\:
         resource: '../../Controller'
         public: true
         tags: ['controller.service_arguments']
 
+    FourPaws\MobileApiBundle\TestController\:
+        resource: '../../TestController'
+        public: true
+        tags: ['controller.service_arguments']
+
     FourPaws\MobileApiBundle\Serialization\:
         resource: '../../Serialization/*'
+        exclude: '../../Serialization/{DateHandler.php}'
         tags: ['jms_serializer.subscribing_handler']
 
     FourPaws\MobileApiBundle\Services\Security\TokenGeneratorInterface:
@@ -37,11 +43,11 @@ services:
 
     FourPaws\MobileApiBundle\Security\ApiTokenListener:
         arguments: ['@security.token_storage', '@security.authentication.manager']
+        public: false
 
-    # Exception View
-    FourPaws\MobileApiBundle\EventListener\ExceptionListener:
-        arguments: ['FourPaws\MobileApiBundle\Controller\ExceptionController::showAction', null]
-        tags:
-          - {name: 'monolog.logger', channel: 'request'}
+    FourPaws\MobileApiBundle\Services\Session\SessionHandlerInterface:
+        class: FourPaws\MobileApiBundle\Services\Session\SessionHandler
+        public: true
 
-
+    FourPaws\MobileApiBundle\Services\Api\MetroService:
+        arguments: ['@bx.hlblock.metrostations', '@bx.hlblock.metroways']

@@ -20,6 +20,7 @@ use FourPaws\SaleBundle\Exception\InvalidArgumentException;
 /**
  * Class Gift
  * @package FourPaws\SaleBundle\Discount
+ * @todo переместить в соотвествующую папку и неймспейс
  */
 class Gift extends \CSaleActionGiftCtrlGroup
 {
@@ -36,6 +37,11 @@ class Gift extends \CSaleActionGiftCtrlGroup
             'CondBsktAmtBaseGroup'
         ];
         $controlDescr['SORT'] = 300;
+//        $controlDescr['ENTITY'] = 'ELEMENT_PROPERTY';
+//        $controlDescr['FIELD'] = 'PROPERTY_6_VALUE';
+//        $controlDescr['FIELD_TABLE'] = '3:6';
+//        $controlDescr['MODULE_ENTITY'] = 'catalog';
+
         return $controlDescr;
     }
 
@@ -63,6 +69,10 @@ class Gift extends \CSaleActionGiftCtrlGroup
 //        dump($description, $arAtoms);
         $description['label'] = 'Предоставить выбор подарка';
         $description['containsOneAction'] = false;
+        $description['mess'] = [
+            'ADD_CONTROL' => 'Добавить условие',
+            'SELECT_CONTROL' => 'Выбрать условие'
+        ];
 //        $description['defaultText'] = 'Список подарков';
 //        $description['control'] = [
 //            'Предоствить',
@@ -104,7 +114,7 @@ class Gift extends \CSaleActionGiftCtrlGroup
                 }
             }
             $subs = \json_encode($subs);
-            $result .= static::class . '::applyGift(' . $arParams['ORDER'] . ', \'' . $subs . '\', $this, $applyCount);$arOrder = $originalOrder;';
+            $result .= static::class . '::applyGift(' . $arParams['ORDER'] . ', \'' . $subs . '\', (isset($this) ? $this : null), $applyCount);$arOrder = $originalOrder;';
         }
 
         return $result;
@@ -121,7 +131,7 @@ class Gift extends \CSaleActionGiftCtrlGroup
      *
      */
     public static function applyGift(
-        $order,
+        array $order,
         $params,
         /** @noinspection PhpUnusedParameterInspection */
         Discount $callerObject = null,

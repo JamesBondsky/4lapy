@@ -2,6 +2,7 @@
 
 namespace FourPaws\External\Manzana\Dto;
 
+use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 
 /**
@@ -24,7 +25,7 @@ class SoftChequeResponse
      * @var \DateTimeImmutable
      */
     protected $proccessed;
-    
+
     /**
      * Код возврата
      * В случае ошибки отличен от нуля. Т.е. значение поля равное «ноль» означает, что ошибки не произошло.
@@ -36,7 +37,7 @@ class SoftChequeResponse
      * @var int
      */
     protected $returnCode = 0;
-    
+
     /**
      * Текстовое описание ошибки
      *
@@ -47,7 +48,7 @@ class SoftChequeResponse
      * @var string
      */
     protected $message = '';
-    
+
     /**
      * Баланс карты, деньги
      *
@@ -58,7 +59,7 @@ class SoftChequeResponse
      * @var float
      */
     protected $cardBalance = 0;
-    
+
     /**
      * Активный баланс карты, деньги
      *
@@ -69,7 +70,7 @@ class SoftChequeResponse
      * @var float
      */
     protected $cardActiveBalance = 0;
-    
+
     /**
      * Сумма без скидки по чеку, деньги
      *
@@ -80,7 +81,7 @@ class SoftChequeResponse
      * @var float
      */
     protected $summ = 0;
-    
+
     /**
      * Скидка по чеку, %
      *
@@ -91,7 +92,7 @@ class SoftChequeResponse
      * @var float
      */
     protected $discount = '';
-    
+
     /**
      * Сумма со скидкой по чеку, деньги
      *
@@ -102,7 +103,7 @@ class SoftChequeResponse
      * @var float
      */
     protected $summDiscounted = '';
-    
+
     /**
      * ?, деньги
      *
@@ -113,7 +114,7 @@ class SoftChequeResponse
      * @var float
      */
     protected $cardSumm = 0;
-    
+
     /**
      * ?, %
      *
@@ -124,7 +125,7 @@ class SoftChequeResponse
      * @var float
      */
     protected $cardDiscount = '';
-    
+
     /**
      * ?, деньги
      *
@@ -135,7 +136,7 @@ class SoftChequeResponse
      * @var float
      */
     protected $cardSummDiscounted = '';
-    
+
     /**
      * Сумма начисленного бонуса
      *
@@ -146,108 +147,146 @@ class SoftChequeResponse
      * @var float
      */
     protected $chargedBonus = '';
-    
+
+    /**
+     * Сумма бонусов, доступная для оплаты
+     *
+     * @Serializer\XmlElement(cdata=false)
+     * @Serializer\Type("float")
+     * @Serializer\SerializedName("AvailablePayment")
+     *
+     * @var float
+     */
+    protected $availablePayment = 0;
+
+    /**
+     * @Serializer\XmlList(inline=true)
+     * @Serializer\Type("ArrayCollection<FourPaws\External\Manzana\Dto\ChequePosition>")
+     * @Serializer\SerializedName("Item")
+     *
+     * @var Collection|ChequePosition[]
+     */
+    protected $items;
+
     /**
      * @return bool
      */
-    public function isErrorResponse() : bool
+    public function isErrorResponse(): bool
     {
         return $this->returnCode !== 0;
     }
-    
+
     /**
      * @return \DateTimeImmutable
      */
-    public function getProccessed() : \DateTimeImmutable
+    public function getProccessed(): \DateTimeImmutable
     {
         return $this->proccessed;
     }
-    
+
     /**
      * @return int
      */
-    public function getReturnCode() : int
+    public function getReturnCode(): int
     {
         return $this->returnCode;
     }
-    
+
     /**
      * @return string
      */
-    public function getMessage() : string
+    public function getMessage(): string
     {
         return $this->message;
     }
-    
+
     /**
      * @return float
      */
-    public function getCardBalance() : float
+    public function getCardBalance(): float
     {
         return $this->cardBalance;
     }
-    
+
     /**
      * @return float
      */
-    public function getCardActiveBalance() : float
+    public function getCardActiveBalance(): float
     {
         return $this->cardActiveBalance;
     }
-    
+
     /**
      * @return float
      */
-    public function getSumm() : float
+    public function getSumm(): float
     {
         return $this->summ;
     }
-    
+
     /**
      * @return float
      */
-    public function getDiscount() : float
+    public function getDiscount(): float
     {
         return $this->discount;
     }
-    
+
     /**
      * @return float
      */
-    public function getSummDiscounted() : float
+    public function getSummDiscounted(): float
     {
         return $this->summDiscounted;
     }
-    
+
     /**
      * @return float
      */
-    public function getCardSumm() : float
+    public function getCardSumm(): float
     {
         return $this->cardSumm;
     }
-    
+
     /**
      * @return float
      */
-    public function getCardDiscount() : float
+    public function getCardDiscount(): float
     {
         return $this->cardDiscount;
     }
-    
+
     /**
      * @return float
      */
-    public function getCardSummDiscounted() : float
+    public function getCardSummDiscounted(): float
     {
         return $this->cardSummDiscounted;
     }
-    
+
     /**
      * @return float
      */
-    public function getChargedBonus() : float
+    public function getChargedBonus(): float
     {
         return $this->chargedBonus;
+    }
+
+    /**
+     * @return float
+     */
+    public function getAvailablePayment(): float
+    {
+        return $this->availablePayment;
+    }
+
+    /**
+     * @param float $availablePayment
+     * @return SoftChequeResponse
+     */
+    public function setAvailablePayment(float $availablePayment): SoftChequeResponse
+    {
+        $this->availablePayment = $availablePayment;
+        return $this;
     }
 }

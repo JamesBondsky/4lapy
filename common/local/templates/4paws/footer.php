@@ -33,19 +33,11 @@ if ($template->hasMainWrapper()) {
     if ($template->hasHeaderPersonalContainer()) { ?>
         </main>
         </div>
-        <div class="b-preloader b-preloader--fixed">
-            <div class="b-preloader__spinner">
-                <img class="b-preloader__image" src="/static/build/images/inhtml/spinner.svg" alt="spinner" title=""/>
-            </div>
-        </div>
+        <?php include __DIR__ . '/blocks/preloader.php'; ?>
         </div>
     <?php }
-    /** Основной прелоадер из gui */?>
-    <div class="b-preloader b-preloader--fixed">
-        <div class="b-preloader__spinner">
-            <img class="b-preloader__image" src="/static/build/images/inhtml/spinner.svg" alt="spinner" title=""/>
-        </div>
-    </div>
+    /** Основной прелоадер из gui */ ?>
+    <?php include __DIR__ . '/blocks/preloader.php'; ?>
 <?php } ?>
 </main>
 <footer class="b-footer <?= $template->getFooterClass() ?>">
@@ -54,9 +46,9 @@ if ($template->hasMainWrapper()) {
             <div class="b-container">
                 <div class="b-footer__inner">
                     <div class="b-footer-communication">
-                        <?php require_once 'blocks/footer/communication_area.php' ?>
+                        <?php require_once __DIR__ . '/blocks/footer/communication_area.php' ?>
                     </div>
-                    <?php require_once 'blocks/footer/social_links.php' ?>
+                    <?php require_once __DIR__ . '/blocks/footer/social_links.php' ?>
                 </div>
             </div>
         </div>
@@ -70,18 +62,18 @@ if ($template->hasMainWrapper()) {
                             'bitrix:menu',
                             'footer.menu',
                             [
-                                'COMPONENT_TEMPLATE'   => 'footer.menu',
-                                'ROOT_MENU_TYPE'       => 'top',
-                                'MENU_CACHE_TYPE'      => 'A',
-                                'MENU_CACHE_TIME'      => '360000',
+                                'COMPONENT_TEMPLATE' => 'footer.menu',
+                                'ROOT_MENU_TYPE' => 'top',
+                                'MENU_CACHE_TYPE' => 'A',
+                                'MENU_CACHE_TIME' => '360000',
                                 'CACHE_SELECTED_ITEMS' => 'N',
-                                'TEMPLATE_NO_CACHE'    => 'N',
-                                'MENU_CACHE_GET_VARS'  => [],
-                                'MAX_LEVEL'            => '2',
-                                'CHILD_MENU_TYPE'      => 'left',
-                                'USE_EXT'              => 'N',
-                                'DELAY'                => 'N',
-                                'ALLOW_MULTI_SELECT'   => 'N',
+                                'TEMPLATE_NO_CACHE' => 'N',
+                                'MENU_CACHE_GET_VARS' => [],
+                                'MAX_LEVEL' => '2',
+                                'CHILD_MENU_TYPE' => 'left',
+                                'USE_EXT' => 'N',
+                                'DELAY' => 'N',
+                                'ALLOW_MULTI_SELECT' => 'N',
                             ],
                             false
                         ); ?>
@@ -93,15 +85,15 @@ if ($template->hasMainWrapper()) {
                             ['HIDE_ICONS' => 'Y']
                         ); ?>
                     </div>
-                    <?php require_once 'blocks/footer/application_links.php'; ?>
+                    <?php require_once __DIR__ . '/blocks/footer/application_links.php'; ?>
                 </div>
             <?php } ?>
             <div class="b-footer__line">
                 <div class="b-footer__column">
-                    <?php require_once 'blocks/footer/copyright.php' ?>
+                    <?php require_once __DIR__ . '/blocks/footer/copyright.php' ?>
                 </div>
                 <div class="b-footer__column b-footer__column--small">
-                    <?php require_once 'blocks/footer/creator.php' ?>
+                    <?php require_once __DIR__ . '/blocks/footer/creator.php' ?>
                 </div>
             </div>
         </div>
@@ -109,7 +101,7 @@ if ($template->hasMainWrapper()) {
 </footer>
 <div class="b-shadow b-shadow--popover js-open-shadow"></div>
 </div>
-<?php require_once 'blocks/footer/popups.php' ?>
+<?php require_once __DIR__ . '/blocks/footer/popups.php' ?>
 <script src="<?= $markup->getJsFile() ?>"></script>
 </body>
 </html>

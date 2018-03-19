@@ -30,8 +30,7 @@
                     <span class="b-icon b-icon--pet-edit">
                         <?= new SvgDecorator('icon-edit', 25, 25) ?>
                     </span>
-                    <img
-                            class="b-registration__image js-image-wrapper"
+                    <img class="b-registration__image js-image-wrapper"
                             src=""
                             alt=""
                             title="" />
@@ -52,16 +51,14 @@
                     </div>
                 </div>
             </div>
-            <label class="b-registration__label b-registration__label--subscribe-delivery" for="type-pet">Вид
-                                                                                                          питомца</label>
+            <label class="b-registration__label b-registration__label--subscribe-delivery" for="type-pet">Вид животного</label>
             <div class="b-select b-select--subscribe-delivery js-pet-view">
                 <select class="b-select__block b-select__block--subscribe-delivery js-pet-view"
                         id="type-pet"
                         name="UF_TYPE">
-                    <option value="" disabled="disabled" selected="selected">выберите</option>
+                    <option value="" disabled="disabled" selected="selected">Выберите вид</option>
                     <?php if (\is_array($arResult['PET_TYPES']) && !empty($arResult['PET_TYPES'])) {
-                        foreach ($arResult['PET_TYPES'] as $item) {
-                            ?>
+                        foreach ($arResult['PET_TYPES'] as $item) {?>
                             <option value="<?= $item['ID'] ?>"><?= $item['UF_NAME'] ?></option>
                             <?php
                         }

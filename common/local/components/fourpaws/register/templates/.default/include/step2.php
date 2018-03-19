@@ -4,8 +4,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
+use Bitrix\Main\Application;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\External\Manzana\Model\Client;
+
+$request = Application::getInstance()->getContext()->getRequest();
+$backUrl = $arResult['BACK_URL'] ?? $request->get('backurl');
 
 /** @var Client $manzanaItem
  * @var string $phone
@@ -19,6 +23,7 @@ use FourPaws\External\Manzana\Model\Client;
           method="post">
         <input type="hidden" name="action" value="register">
         <input type="hidden" name="PERSONAL_PHONE" value="<?= $phone ?>">
+        <input type="hidden" name="backurl" value="<?=$backUrl?>">
         <div class="b-input-line b-input-line--user-data js-hidden-valid-fields js-small-input-two">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="registration-surname">Фамилия</label>
@@ -79,7 +84,7 @@ use FourPaws\External\Manzana\Model\Client;
                        name="PERSONAL_BIRTHDAY"
                        data-text="3"
                        placeholder=""
-                       value="<?= $manzanaItem instanceof Client ? $manzanaItem->birthDate : '' ?>"/>
+                       value="<?= $manzanaItem instanceof Client ? $manzanaItem->getBirthDateFormated() : '' ?>"/>
                 <div class="b-error"><span class="js-message"></span>
                 </div>
             </div>
@@ -126,7 +131,7 @@ use FourPaws\External\Manzana\Model\Client;
                        id="registration-male"
                        value="M"
                        data-radio="0"
-                       checked="checked"/>
+                       <?=$manzanaItem instanceof Client && (int)$manzanaItem->genderCode === 1 ? 'checked="checked"' : ''?>/>
                 <label class="b-radio__label" for="registration-male"><span class="b-radio__text-label">мужской</span>
                 </label>
             </div>
@@ -136,7 +141,9 @@ use FourPaws\External\Manzana\Model\Client;
                        name="PERSONAL_GENDER"
                        id="registration-female"
                        value="F"
-                       data-radio="1"/>
+                       data-radio="1"
+                    <?=$manzanaItem instanceof Client && (int)$manzanaItem->genderCode === 2 ? 'checked="checked"' : ''?>
+                />
                 <label class="b-radio__label" for="registration-female"><span class="b-radio__text-label">женский</span>
                 </label>
             </div>
@@ -147,12 +154,14 @@ use FourPaws\External\Manzana\Model\Client;
                 <span class="b-checkbox__text-agree">Я ознакомлен(а) и соглашаюсь с условиями
                     <a class="b-checkbox__link-agree"
                        href="/company/user-agreement/"
-                       title="пользовательского соглашения">пользовательского соглашения.</a>
+                       title="пользовательского соглашения"
+                       target="_blank">пользовательского соглашения.</a>
                 </span>
                 <span class="b-checkbox__text-agree">Я даю согласие на
                     <a class="b-checkbox__link-agree"
                        href="/company/privacy-policy/"
-                       title="обработку персональных данных">обработку персональных данных.</a>
+                       title="обработку персональных данных"
+                       target="_blank">обработку персональных данных.</a>
                 </span>
             </label>
         </div>

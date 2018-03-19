@@ -8,17 +8,23 @@ namespace FourPaws\UserBundle\Service;
 
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
+use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
+use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\ValidationException;
 
 interface UserRegistrationProviderInterface
 {
     /**
-     * @param User $user
-     * @param bool $manzanaSave
+     * @todo remove manzanaSave parameter
+     * @todo return entity
      *
+     * @param User $user
+     *
+     * @throws InvalidIdentifierException
+     * @throws ConstraintDefinitionException
      * @throws ValidationException
      * @throws BitrixRuntimeException
-     * @return bool
+     * @return User
      */
-    public function register(User $user, bool $manzanaSave = true): bool;
+    public function register(User $user): User;
 }

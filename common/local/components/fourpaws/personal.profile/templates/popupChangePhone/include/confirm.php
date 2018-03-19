@@ -7,13 +7,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  */ ?>
 <form class="b-registration__form js-form-validation js-phone-change-two"
       method="post"
-      data-url="/ajax/personal/profile/changePhone/"
-      style="display:none">
+      data-url="/ajax/personal/profile/changePhone/">
     <input class="js-data-id js-no-valid" name="ID" value="<?= $arResult['CUR_USER']['ID'] ?>" type="hidden">
     <input type="hidden" name="action" value="confirmPhone">
     <input type="hidden" name="oldPhone" value="<?= $oldPhone ?>">
     <input type="hidden" name="phone" value="<?= $phone ?>">
-    <div class="b-registration__step b-registration__step--two js-two">
+    <div class="b-registration__step js-two">
         <div class="b-registration__text b-registration__text--phone" id="js-resend"
              data-url="/ajax/personal/profile/changePhone/"
              data-phone="<?= $phone ?>"

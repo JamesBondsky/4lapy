@@ -6,6 +6,7 @@ use Doctrine\Common\Collections\Collection;
 
 /**
  * Class StoresStock
+ *
  * @package FourPaws\SapBundle\Dto\In
  */
 class StoresStock

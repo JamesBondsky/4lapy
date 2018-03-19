@@ -11,7 +11,6 @@ use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Iblock\ElementTable;
 use Bitrix\Iblock\PropertyTable;
 use Bitrix\Iblock\SectionElementTable;
-use Bitrix\Iblock\SectionTable;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\ReferenceField;
@@ -35,7 +34,7 @@ class FoodSelectionRepository
      *
      * @return array
      */
-    public function getItems(array $params = []) : array
+    public function getItems(array $params = []): array
     {
         /** @var IblockElementQuery $query */
         try {
@@ -55,28 +54,28 @@ class FoodSelectionRepository
             if (!empty($params['order'])) {
                 $query->withOrder($params['order']);
             }
-            
+
             if (!empty($params['nav'])) {
                 $query->withNav($params['nav']);
             }
             if (!empty($params['group'])) {
                 $query->withGroup($params['group']);
             }
-            
+
             $res = $query->exec();
-            
+
             return $res->toArray();
         } catch (IblockNotFoundException $e) {
             return [];
         }
     }
-    
+
     /**
      * @param array $params
      *
      * @return array
      */
-    public function getSections(array $params = []) : array
+    public function getSections(array $params = []): array
     {
         /** @var IblockSectQuery $query */
         try {
@@ -96,16 +95,16 @@ class FoodSelectionRepository
             if (!empty($params['order'])) {
                 $query->withOrder($params['order']);
             }
-            
+
             if (!empty($params['nav'])) {
                 $query->withNav($params['nav']);
             }
             if (!empty($params['group'])) {
                 $query->withGroup($params['group']);
             }
-            
+
             $res = $query->exec();
-            
+
             return $res->toArray();
         } catch (IblockNotFoundException $e) {
             return [];
@@ -123,43 +122,38 @@ class FoodSelectionRepository
      * @throws ArgumentException
      * @throws SystemException
      */
-    public function getProductsBySections(array $sections, int $iblockId, array $exceptionItems = []) : array
+    public function getProductsBySections(array $sections, int $iblockId, array $exceptionItems = []): array
     {
         $countSections = \count($sections);
-        $propId        = PropertyTable::query()->setFilter(
+        $propId = PropertyTable::query()->setFilter(
             [
                 'IBLOCK_ID' => $iblockId,
                 'CODE'      => 'ITEM',
             ]
         )->setSelect(['ID'])->exec()->fetch()['ID'];
-        $dataManager   = IblockPropEntityConstructor::getDataClass($iblockId);
-        $query         = ElementTable::query();
+        $dataManager = IblockPropEntityConstructor::getDataClass($iblockId);
+
+        $query = ElementTable::query();
         $query->registerRuntimeField(
             new ReferenceField(
                 'PROP',
                 $dataManager::getEntity(),
                 ['=this.ID' => 'ref.IBLOCK_ELEMENT_ID']
             )
-        )->registerRuntimeField(
-            new ReferenceField(
-                'SECTION',
-                SectionElementTable::getEntity(),
-                ['=this.ID' => 'ref.IBLOCK_ELEMENT_ID']
-            )
         );
+        $query->where('ACTIVE', 'Y');
+        $query->where('IBLOCK_ID', $iblockId);
         $query->whereIn(
             'ID',
-            SectionElementTable::query()->setSelect(
-                [
-                    'IBLOCK_ELEMENT_ID',
-                ]
-            )->whereIn('IBLOCK_SECTION_ID', $sections)->where(
+            SectionElementTable::query()->setSelect(['IBLOCK_ELEMENT_ID'])
+                ->whereIn('IBLOCK_SECTION_ID', $sections)
+                ->where(
                     Query::expr()->count('IBLOCK_ELEMENT_ID'),
                     '>=',
                     $countSections
                 )->setGroup(['IBLOCK_ELEMENT_ID'])
         );
-        if(!empty($exceptionItems)){
+        if (!empty($exceptionItems)) {
             $query->whereNotIn('PROP.PROPERTY_' . $propId, $exceptionItems);
         }
         $query->setSelect(
@@ -167,20 +161,21 @@ class FoodSelectionRepository
                 'ITEM' => 'PROP.PROPERTY_' . $propId,
             ]
         );
-        $query->setGroup('ID');
-        
-        $res     = $query->exec();
+        $query->setGroup('ITEM');
+        $queryString = $query->getQuery();
+        $res = $query->exec();
         $itemIds = [];
         while ($item = $res->fetch()) {
             $itemIds[] = $item['ITEM'];
         }
+
         $products = [];
         if (!empty($itemIds)) {
-            $query    = new ProductQuery();
-            $res      = $query->withFilter(['=ID' => array_unique($itemIds)])->exec();
+            $query = new ProductQuery();
+            $res = $query->withFilter(['=ID' => array_unique($itemIds), 'ACTIVE'=>'Y'])->exec();
             $products = $res->toArray();
         }
-        
+
         return $products;
     }
 }

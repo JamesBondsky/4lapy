@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\Catalog\Model;
 
 use DateTimeImmutable;
@@ -358,13 +362,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     protected $PROPERTY_LOW_TEMPERATURE = false;
 
     /**
-     * @var bool
-     * @Type("bool")
-     * @Groups({"elastic"})
-     */
-    protected $PROPERTY_REFRIGERATED = false;
-
-    /**
      * @var string
      * @Type("string")
      * @Groups({"elastic"})
@@ -603,34 +600,19 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 
     public function __construct(array $fields = [])
     {
+        $fields['PROPERTY_SPECIFICATIONS_VALUE'] = $fields['~PROPERTY_SPECIFICATIONS_VALUE'] ?? [
+                'TYPE' => '',
+                'TEXT' => '',
+            ];
+        $fields['PROPERTY_COMPOSITION_VALUE'] = $fields['~PROPERTY_COMPOSITION_VALUE'] ?? [
+                'TYPE' => '',
+                'TEXT' => '',
+            ];
+        $fields['PROPERTY_NORMS_OF_USE_VALUE'] = $fields['~PROPERTY_NORMS_OF_USE_VALUE'] ?? [
+                'TYPE' => '',
+                'TEXT' => '',
+            ];
         parent::__construct($fields);
-        /**
-         * @todo отрефакторить нахрен
-         *
-         * Если свойство не заполнено, битрикс для его значения возвращает bool false. А если это заполненное свойство
-         * типа "HTML/текст", то его значение - массив из двух строк. Однако, mapping для Elasticsearch не может
-         * одновременно относиться к свойству и как к boolean и как к объекту.
-         */
-        if (false === $this->PROPERTY_SPECIFICATIONS) {
-            $this->PROPERTY_SPECIFICATIONS = [
-                'TYPE' => '',
-                'TEXT' => '',
-            ];
-        }
-    
-        if (false === $this->PROPERTY_COMPOSITION) {
-            $this->PROPERTY_COMPOSITION = [
-                'TYPE' => '',
-                'TEXT' => '',
-            ];
-        }
-    
-        if (false === $this->PROPERTY_NORMS_OF_USE) {
-            $this->PROPERTY_NORMS_OF_USE = [
-                'TYPE' => '',
-                'TEXT' => '',
-            ];
-        }
     }
 
     /**
@@ -1360,16 +1342,6 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
 
     /**
-     * Возвращает признак "Перевозить в холодильнике"
-     *
-     * @return bool
-     */
-    public function isRefrigerated()
-    {
-        return (bool)(int)$this->PROPERTY_REFRIGERATED;
-    }
-
-    /**
      * @throws ApplicationCreateException
      * @throws RuntimeException
      * @throws ServiceCircularReferenceException
@@ -1882,11 +1854,11 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     }
     
     /**
-     * @param ArrayCollection|array $offers
+     * @param array|ArrayCollection $offers
      */
     public function setOffers($offers)
     {
-        if(!($offers instanceof ArrayCollection) && \is_array($offers)){
+        if (!($offers instanceof ArrayCollection) && \is_array($offers)) {
             $offers = new ArrayCollection($offers);
         }
         $this->offers = $offers;
@@ -1936,7 +1908,7 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
     {
         // @todo учитывать региональные ограничения
         $result = [self::AVAILABILITY_PICKUP];
-        if (!($this->isLowTemperatureRequired() || $this->isRefrigerated())) {
+        if (!($this->isLowTemperatureRequired() || $this->isTransportOnlyRefrigerator())) {
             $result[] = self::AVAILABILITY_DELIVERY;
         }
         if ($this->isByRequest()) {
@@ -1944,6 +1916,30 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
         }
 
         return $result;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isDeliveryAvailable(): bool
+    {
+        return in_array(
+            self::AVAILABILITY_DELIVERY,
+            $this->getDeliveryAvailability(),
+            true
+        );
+    }
+
+    /**
+     * @return bool
+     */
+    public function isPickupAvailable(): bool
+    {
+        return in_array(
+            self::AVAILABILITY_PICKUP,
+            $this->getDeliveryAvailability(),
+            true
+        );
     }
 
     /**

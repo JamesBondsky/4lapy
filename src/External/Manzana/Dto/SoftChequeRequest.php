@@ -43,7 +43,7 @@ class SoftChequeRequest
      * Дата и время совершения операции
      * Дата не может быть больше текущей даты системы Manzana Loyalty
      *
-     * @Serializer\Type("DateTimeImmutable")
+     * @Serializer\Type("DateTimeImmutable<'Y-m-d\TH:i:s'>")
      * @Serializer\SerializedName("DateTime")
      *
      * @var \DateTimeImmutable
@@ -115,6 +115,7 @@ class SoftChequeRequest
     /**
      * @Serializer\XmlList(inline=true)
      * @Serializer\Type("ArrayCollection<FourPaws\External\Manzana\Dto\ChequePosition>")
+     * @Serializer\SerializedName("Item")
      *
      * @var Collection|ChequePosition[]
      */

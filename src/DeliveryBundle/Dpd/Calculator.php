@@ -10,17 +10,19 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\Loader;
-
 use FourPaws\App\Application;
+use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
+use FourPaws\DeliveryBundle\Handler\DeliveryHandlerBase;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
-use FourPaws\DeliveryBundle\Service\DeliveryServiceHandlerBase;
-use FourPaws\Location\LocationService;
+use FourPaws\LocationBundle\LocationService;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Service\StoreService;
+use Ipolh\DPD\Delivery\DPD;
 
 if (!Loader::includeModule('ipol.dpd')) {
     class Calculator
@@ -29,8 +31,6 @@ if (!Loader::includeModule('ipol.dpd')) {
 
     return;
 }
-
-use Ipolh\DPD\Delivery\DPD;
 
 class Calculator extends DPD
 {
@@ -63,7 +63,12 @@ class Calculator extends DPD
         }
 
         $arOrder['LOCATION_FROM'] = $arOrder['LOCATION_TO'];
-        $storesAvailable = $storeService->getByLocation($arOrder['LOCATION_TO'], StoreService::TYPE_STORE);
+        $storesAvailable = $storeService->getByLocation($arOrder['LOCATION_FROM'], StoreService::TYPE_STORE, true);
+        if ($storesAvailable->isEmpty()) {
+            $arOrder['LOCATION_FROM'] = LocationService::LOCATION_CODE_MOSCOW;
+            $storesAvailable = $storeService->getByLocation($arOrder['LOCATION_FROM'], StoreService::TYPE_STORE, true);
+        }
+
         $storesDelay = new StoreCollection();
 
         $result = parent::Calculate($profile, $arConfig, $arOrder, $STEP, $TEMP);
@@ -73,11 +78,11 @@ class Calculator extends DPD
 
         if (!empty($arOrder['ITEMS'])) {
             $basket = $basketService->getBasket()->getOrderableItems();
-            if ($offers = DeliveryServiceHandlerBase::getOffers(
+            if ($offers = DeliveryHandlerBase::getOffers(
                 $arOrder['LOCATION_FROM'],
                 $basket
             )) {
-                $stockResult = DeliveryServiceHandlerBase::getStocks($basket, $offers, $storesAvailable, $storesDelay);
+                $stockResult = DeliveryHandlerBase::getStocks($basket, $offers, $storesAvailable, $storesDelay);
                 if (!$stockResult->getUnavailable()->isEmpty()) {
                     $result = [
                         'RESULT' => 'ERROR',
@@ -98,14 +103,12 @@ class Calculator extends DPD
                  * Получаем пункты самовывоза DPD
                  */
                 if ($profileCode === DeliveryService::DPD_PICKUP_CODE) {
-                    $shipment = self::$shipment;
-                    if ($shipment instanceof Shipment) {
-                        $terminals = $shipment->getDpdTerminals();
+                    $shipment = self::makeShipment($arOrder);
+                    $terminals = $shipment->getDpdTerminals();
 
-                        /** @var StockResult $item */
-                        foreach ($stockResult as $item) {
-                            $item->setStores($terminals);
-                        }
+                    /** @var StockResult $item */
+                    foreach ($stockResult as $item) {
+                        $item->setStores($terminals);
                     }
                 }
             }
@@ -122,14 +125,14 @@ class Calculator extends DPD
             $result['DPD_TARIFF']['DAYS']++;
         }
 
+        $intervals = new IntervalCollection();
+        $intervals->add(
+            (new Interval())->setFrom($interval[0])
+                            ->setTo($interval[1])
+        );
         /* @todo не хранить эти данные в сессии */
         $_SESSION['DPD_DATA'][$profileCode] = [
-            'INTERVALS'    => [
-                [
-                    'FROM' => $interval[0],
-                    'TO'   => $interval[1],
-                ],
-            ],
+            'INTERVALS'    => $intervals,
             'DAYS_FROM'    => $result['DPD_TARIFF']['DAYS'],
             'DAYS_TO'      => $result['DPD_TARIFF']['DAYS'] + 10,
             'STOCK_RESULT' => $stockResult ?? new StockResultCollection(),
@@ -194,5 +197,22 @@ class Calculator extends DPD
         }
 
         return $profiles;
+    }
+}
+
+DPD::$needIncludeComponent = false;
+$eventManager = \Bitrix\Main\EventManager::getInstance();
+$events = [
+    'OnSaleComponentOrderOneStepDelivery',
+    'OnSaleComponentOrderOneStepPaySystem',
+    'OnSaleComponentOrderOneStepDelivery',
+];
+
+foreach ($events as $event) {
+    $handlers = $eventManager->findEventHandlers('sale', $event);
+    foreach ($handlers as $i => $handler) {
+        if (in_array('\\' . DPD::class, $handler['CALLBACK'], true)) {
+            $eventManager->removeEventHandler('sale', $event, $i);
+        }
     }
 }

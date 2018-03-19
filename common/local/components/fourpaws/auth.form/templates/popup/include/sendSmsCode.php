@@ -22,6 +22,7 @@ use FourPaws\ReCaptcha\ReCaptchaService;
           method="post">
         <input type="hidden" name="action" value="savePhone">
         <input type="hidden" name="phone" value="<?= $phone ?>">
+        <input type="hidden" name="backurl" value="<?=$backUrl?>" class="js-no-valid">
         <div class="b-input-line b-input-line--add-number js-phone3-resend js-resend">
             <div class="b-input-line__label-wrapper">
                 <label class="b-input-line__label" for="sms-code-3">SMS-код</label>
@@ -43,12 +44,14 @@ use FourPaws\ReCaptcha\ReCaptchaService;
                data-action="resendSms"
                title="Отправить снова">Отправить снова</a>
         </div>
-        <?php /** @var ReCaptchaService $recaptchaService */
-        try {
-            $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
-            echo $recaptchaService->getCaptcha(' b-registration__captcha');
-        } catch (ApplicationCreateException $e) {
-        } ?>
+        <?php
+        if($_SESSION['COUNT_AUTH_CONFIRM_CODE'] >= 3) {
+            try {
+                $recaptchaService = App::getInstance()->getContainer()->get('recaptcha.service');
+                echo $recaptchaService->getCaptcha('', true);
+            } catch (ApplicationCreateException $e) {
+            }
+        }?>
         <div><span class="b-registration__auth-error"></span></div>
         <button class="b-button b-button--social b-button--full-width">Подтвердить</button>
     </form>
