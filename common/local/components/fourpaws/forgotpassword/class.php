@@ -37,9 +37,9 @@ use Symfony\Component\HttpFoundation\Request;
 /** @noinspection AutoloadingIssuesInspection */
 class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
 {
-    const BASKET_BACK_URL = '/cart/';
+    public const BASKET_BACK_URL = '/cart/';
 
-    const PERSONAL_URL = '/personal/';
+    public const PERSONAL_URL = '/personal/';
 
     /**
      * @var CurrentUserProviderInterface
@@ -232,8 +232,12 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
         } catch (BitrixRuntimeException $e) {
             return $this->ajaxMess->getUpdateError($e->getMessage());
         } catch (\Exception $e) {
-            $logger = LoggerFactory::create('system');
-            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            try {
+                $logger = LoggerFactory::create('system');
+                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            } catch (\RuntimeException $e) {
+                /** оч. плохо - логи мы не получим */
+            }
             /** скипаем для показа системной ошибки */
         }
 
@@ -263,8 +267,12 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
         } catch (WrongPhoneNumberException $e) {
             return $this->ajaxMess->getWrongPhoneNumberException();
         } catch (\RuntimeException|\Exception $e) {
-            $logger = LoggerFactory::create('system');
-            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            try {
+                $logger = LoggerFactory::create('system');
+                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            } catch (\RuntimeException $e) {
+                /** оч. плохо - логи мы не получим */
+            }
             return $this->ajaxMess->getSystemError();
         }
 
@@ -348,8 +356,12 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                     } catch (NotFoundConfirmedCodeException $e) {
                         return $this->ajaxMess->getNotFoundConfirmedCodeException();
                     } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
-                        $logger = LoggerFactory::create('system');
-                        $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+                        try {
+                            $logger = LoggerFactory::create('system');
+                            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+                        } catch (\RuntimeException $e) {
+                            /** оч. плохо - логи мы не получим */
+                        }
                     }
                 }
 
@@ -402,8 +414,12 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
         } catch (WrongPhoneNumberException $e) {
             return $this->ajaxMess->getWrongPhoneNumberException();
         } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
-            $logger = LoggerFactory::create('system');
-            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            try {
+                $logger = LoggerFactory::create('system');
+                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            } catch (\RuntimeException $e) {
+                /** оч. плохо - логи мы не получим */
+            }
         }
 
         return $phone;
@@ -442,11 +458,19 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
                 $expertSenderService = App::getInstance()->getContainer()->get('expertsender.service');
                 return $expertSenderService->sendForgotPassword($curUser, $backUrl);
             } catch (ExpertsenderServiceException $e) {
-                $logger = LoggerFactory::create('expertSender');
-                $logger->critical('ES error - ' . $e->getMessage());
+                try {
+                    $logger = LoggerFactory::create('expertSender');
+                    $logger->critical('ES error - ' . $e->getMessage());
+                } catch (\RuntimeException $e) {
+                    /** оч. плохо - логи мы не получим */
+                }
             } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
-                $logger = LoggerFactory::create('system');
-                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+                try {
+                    $logger = LoggerFactory::create('system');
+                    $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+                } catch (\RuntimeException $e) {
+                    /** оч. плохо - логи мы не получим */
+                }
             }
             return false;
         }
@@ -465,8 +489,12 @@ class FourPawsForgotPasswordFormComponent extends \CBitrixComponent
             /** @var ConfirmCodeService $confirmService */
             $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
         } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
-            $logger = LoggerFactory::create('system');
-            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            try {
+                $logger = LoggerFactory::create('system');
+                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            } catch (\RuntimeException $e) {
+                /** оч. плохо - логи мы не получим */
+            }
             return $this->ajaxMess->getSystemError();
         }
 

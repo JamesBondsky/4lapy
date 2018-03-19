@@ -246,8 +246,12 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         } catch (WrongPhoneNumberException $e) {
             return $this->ajaxMess->getWrongPhoneNumberException();
         } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
-            $logger = LoggerFactory::create('system');
-            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            try {
+                $logger = LoggerFactory::create('system');
+                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            } catch (\RuntimeException $e) {
+                /** оч. плохо - логи мы не получим */
+            }
             return $this->ajaxMess->getSystemError();
         }
 
@@ -316,7 +320,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
 
                 try {
                     $confirmService = App::getInstance()->getContainer()->get(ConfirmCodeInterface::class);
-                    $confirmService::setGeneratedCode('confirm_'.$regUser->getId(), 'confirm_register');
+                    $confirmService::setGeneratedCode('confirm_' . $regUser->getId(), 'confirm_register');
                     $uri = new Uri('/personal/register/');
                     $uri->addParams([
                         'user_id' => $regUser->getId(),
@@ -383,8 +387,12 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 $recaptchaService = $container->get('recaptcha.service');
                 $checkedCaptcha = $recaptchaService->checkCaptcha();
             } catch (SystemException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
-                $logger = LoggerFactory::create('system');
-                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+                try {
+                    $logger = LoggerFactory::create('system');
+                    $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+                } catch (\RuntimeException $e) {
+                    /** оч. плохо - логи мы не получим */
+                }
                 return $this->ajaxMess->getSystemError();
             }
         }
@@ -407,10 +415,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                         ['phone' => $phone, 'newAction' => $newAction]
                     );
 
-                    return JsonSuccessResponse::createWithData(
-                        '',
-                        ['html' => $html]
-                    );
+                    return $this->ajaxMess->getWrongConfirmCode(['html' => $html]);
                 }
                 return $this->ajaxMess->getWrongConfirmCode();
             }
@@ -422,10 +427,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                     ['phone' => $phone, 'newAction' => $newAction]
                 );
 
-                return JsonSuccessResponse::createWithData(
-                    '',
-                    ['html' => $html]
-                );
+                return $this->ajaxMess->getExpiredConfirmCodeException(['html' => $html]);
             }
             return $this->ajaxMess->getExpiredConfirmCodeException();
         } catch (WrongPhoneNumberException $e) {
@@ -438,15 +440,16 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                     ['phone' => $phone, 'newAction' => $newAction]
                 );
 
-                return JsonSuccessResponse::createWithData(
-                    '',
-                    ['html' => $html]
-                );
+                return $this->ajaxMess->getNotFoundConfirmedCodeException(['html' => $html]);
             }
             return $this->ajaxMess->getNotFoundConfirmedCodeException();
         } catch (ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
-            $logger = LoggerFactory::create('system');
-            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            try {
+                $logger = LoggerFactory::create('system');
+                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            } catch (\RuntimeException $e) {
+                /** оч. плохо - логи мы не получим */
+            }
             return $this->ajaxMess->getSystemError();
         }
 
@@ -482,12 +485,20 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         } catch (BitrixRuntimeException $e) {
             return $this->ajaxMess->getUpdateError($e->getMessage());
         } catch (ValidationException|InvalidIdentifierException|ConstraintDefinitionException $e) {
-            $logger = LoggerFactory::create('params');
-            $logger->error('Ошибка параметров - ' . $e->getMessage());
+            try {
+                $logger = LoggerFactory::create('params');
+                $logger->error('Ошибка параметров - ' . $e->getMessage());
+            } catch (\RuntimeException $e) {
+                /** оч. плохо - логи мы не получим */
+            }
             return $this->ajaxMess->getSystemError();
         } catch (SystemException|ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException $e) {
-            $logger = LoggerFactory::create('system');
-            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            try {
+                $logger = LoggerFactory::create('system');
+                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            } catch (\RuntimeException $e) {
+                /** оч. плохо - логи мы не получим */
+            }
             return $this->ajaxMess->getSystemError();
         }
 
@@ -519,7 +530,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                     return $res;
                 }
                 /** @noinspection PhpUnusedLocalVariableInspection */
-                list($mess, $manzanaItem) = $res;
+                [$mess, $manzanaItem] = $res;
                 break;
             case 'sendSmsCode':
                 unset($_SESSION['COUNT_REGISTER_CONFIRM_CODE']);
@@ -554,8 +565,8 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         return JsonSuccessResponse::createWithData(
             $mess,
             [
-                'html' => $html,
-                'step' => $step,
+                'html'  => $html,
+                'step'  => $step,
                 'phone' => $phone ?? '',
             ]
         );
@@ -630,8 +641,12 @@ class FourPawsRegisterComponent extends \CBitrixComponent
         try {
             $container = App::getInstance()->getContainer();
         } catch (ApplicationCreateException $e) {
-            $logger = LoggerFactory::create('system');
-            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            try {
+                $logger = LoggerFactory::create('system');
+                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            } catch (\RuntimeException $e) {
+                /** оч. плохо - логи мы не получим */
+            }
             return $this->ajaxMess->getSystemError();
         }
 
@@ -660,8 +675,12 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                 $recaptchaService = $container->get('recaptcha.service');
                 $checkedCaptcha = $recaptchaService->checkCaptcha();
             } catch (SystemException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
-                $logger = LoggerFactory::create('system');
-                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+                try {
+                    $logger = LoggerFactory::create('system');
+                    $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+                } catch (\RuntimeException $e) {
+                    /** оч. плохо - логи мы не получим */
+                }
                 return $this->ajaxMess->getSystemError();
             }
         }
@@ -685,10 +704,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                         ['phone' => $phone, 'newAction' => $newAction]
                     );
 
-                    return JsonSuccessResponse::createWithData(
-                        '',
-                        ['html' => $html]
-                    );
+                    return $this->ajaxMess->getWrongConfirmCode(['html' => $html]);
                 }
                 return $this->ajaxMess->getWrongConfirmCode();
             }
@@ -700,10 +716,7 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                     ['phone' => $phone, 'newAction' => $newAction]
                 );
 
-                return JsonSuccessResponse::createWithData(
-                    '',
-                    ['html' => $html]
-                );
+                return $this->ajaxMess->getExpiredConfirmCodeException(['html' => $html]);
             }
             return $this->ajaxMess->getExpiredConfirmCodeException();
         } catch (WrongPhoneNumberException $e) {
@@ -716,15 +729,16 @@ class FourPawsRegisterComponent extends \CBitrixComponent
                     ['phone' => $phone, 'newAction' => $newAction]
                 );
 
-                return JsonSuccessResponse::createWithData(
-                    '',
-                    ['html' => $html]
-                );
+                return $this->ajaxMess->getNotFoundConfirmedCodeException(['html' => $html]);
             }
             return $this->ajaxMess->getNotFoundConfirmedCodeException();
         } catch (ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
-            $logger = LoggerFactory::create('system');
-            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            try {
+                $logger = LoggerFactory::create('system');
+                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            } catch (\RuntimeException $e) {
+                /** оч. плохо - логи мы не получим */
+            }
             return $this->ajaxMess->getSystemError();
         }
         unset($_SESSION['COUNT_REGISTER_CONFIRM_CODE']);
@@ -737,13 +751,21 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             /** @noinspection PhpUnusedLocalVariableInspection */
             $manzanaItem = $manzanaService->getContactByPhone(PhoneHelper::getManzanaPhone($phone));
         } catch (ManzanaServiceException $e) {
-            $logger = LoggerFactory::create('manzana');
-            $logger->critical('Ошибка manzana - ' . $e->getMessage());
+            try {
+                $logger = LoggerFactory::create('manzana');
+                $logger->critical('Ошибка manzana - ' . $e->getMessage());
+            } catch (\RuntimeException $e) {
+                /** оч. плохо - логи мы не получим */
+            }
         } catch (WrongPhoneNumberException $e) {
             return $this->ajaxMess->getWrongPhoneNumberException();
         } catch (ServiceNotFoundException|ServiceCircularReferenceException $e) {
-            $logger = LoggerFactory::create('system');
-            $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            try {
+                $logger = LoggerFactory::create('system');
+                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+            } catch (\RuntimeException $e) {
+                /** оч. плохо - логи мы не получим */
+            }
             return $this->ajaxMess->getSystemError();
         }
         return [$mess, $manzanaItem];
@@ -820,8 +842,12 @@ class FourPawsRegisterComponent extends \CBitrixComponent
             } catch (WrongPhoneNumberException $e) {
                 return $this->ajaxMess->getWrongPhoneNumberException();
             } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException|\RuntimeException|\Exception $e) {
-                $logger = LoggerFactory::create('system');
-                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+                try {
+                    $logger = LoggerFactory::create('system');
+                    $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
+                } catch (\RuntimeException $e) {
+                    /** оч. плохо - логи мы не получим */
+                }
                 return $this->ajaxMess->getSystemError();
             }
         }

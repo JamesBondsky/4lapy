@@ -102,27 +102,33 @@ class AjaxMess
     }
 
     /**
+     * @param array $additionalData
+     *
      * @return JsonResponse
      */
-    public function getNotFoundConfirmedCodeException(): JsonResponse
+    public function getNotFoundConfirmedCodeException(array $additionalData = []): JsonResponse
     {
-        return $this->getJsonError('notFoundConfirmCode', 'Код подтверждения не найден');
+        return $this->getJsonError('notFoundConfirmCode', 'Код подтверждения не найден', $additionalData);
     }
 
     /**
+     * @param array $additionalData
+     *
      * @return JsonResponse
      */
-    public function getExpiredConfirmCodeException(): JsonResponse
+    public function getExpiredConfirmCodeException(array $additionalData = []): JsonResponse
     {
-        return $this->getJsonError('expiredConfirmCode', 'Срок действия кода подтверждения истек');
+        return $this->getJsonError('expiredConfirmCode', 'Срок действия кода подтверждения истек', $additionalData);
     }
 
     /**
+     * @param array $additionalData
+     *
      * @return JsonResponse
      */
-    public function getWrongConfirmCode(): JsonResponse
+    public function getWrongConfirmCode(array $additionalData = []): JsonResponse
     {
-        return $this->getJsonError('wrongConfirmCode', 'Код подтверждения не соответствует');
+        return $this->getJsonError('wrongConfirmCode', 'Код подтверждения не соответствует', $additionalData);
     }
 
     /**
@@ -304,11 +310,13 @@ class AjaxMess
     }
 
     /**
+     * @param array $additionalData
+     *
      * @return JsonResponse
      */
-    public function getWrongPasswordError(): JsonResponse
+    public function getWrongPasswordError(array $additionalData = []): JsonResponse
     {
-        return $this->getJsonError('wrongPassword', 'Неверный логин или пароль');
+        return $this->getJsonError('wrongPassword', 'Неверный логин или пароль',$additionalData);
     }
 
     /**
@@ -375,13 +383,15 @@ class AjaxMess
      * @param string $code
      * @param string $mes
      *
+     * @param array  $additionalData
+     *
      * @return JsonResponse
      */
-    private function getJsonError(string $code, string $mes): JsonResponse
+    private function getJsonError(string $code, string $mes, array $additionalData = []): JsonResponse
     {
         return JsonErrorResponse::createWithData(
             $mes,
-            ['errors' => [$code => $mes]]
+            array_merge(['errors' => [$code => $mes]], $additionalData)
         );
     }
 }
