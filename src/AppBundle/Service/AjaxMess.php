@@ -198,7 +198,7 @@ class AjaxMess
     public function getNotActiveUserError(): JsonResponse
     {
         return $this->getJsonError('notActiveUser',
-            'Учетная запись есть на сайте, но она не активна, пожалуйста обратитесь к администрации сайта');
+            'Учетная запись есть на сайте, но она не активна, пожалуйста, обратитесь к администрации сайта');
     }
 
     /**
