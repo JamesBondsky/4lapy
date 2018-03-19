@@ -18,6 +18,8 @@ use FourPaws\DeliveryBundle\Collection\StockResultCollection;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Collection\StoreCollection;
+use FourPaws\StoreBundle\Entity\DeliverySchedule;
+use FourPaws\StoreBundle\Entity\DeliveryScheduleResult;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\DeliveryScheduleService;
@@ -409,9 +411,11 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
 
         /** @var DeliveryScheduleService $scheduleService */
         $scheduleService = Application::getInstance()->getContainer()->get(DeliveryScheduleService::class);
+        $regularStoresByOffer = [];
+        $byRequestStoresByOffer = [];
+        $hasRegular = false;
+        $hasByRequest = false;
 
-        $regularStores = [];
-        $byRequestStores = [];
         /** @var Offer $offer */
         foreach ($stockResult->getOffers() as $offer) {
             $neededAmount = $stockResult->filterByOffer($offer)->getAmount();
@@ -422,74 +426,125 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             $stores = $offer->getStocks()->getStores($neededAmount);
 
             if (!$offer->isByRequest()) {
-                $regularStores[$offer->getId()] = $stores;
+                $hasRegular = true;
+                $regularStoresByOffer[$offer->getId()] = $stores;
             } else {
-                $byRequestStores[$offer->getId()] = $stores;
+                $hasByRequest = true;
+                $byRequestStoresByOffer[$offer->getId()] = $stores;
             }
         }
+        $byRequestStores = empty($byRequestStoresByOffer)
+            ? new StoreCollection()
+            : $this->getStoreIntersection($byRequestStoresByOffer);
 
+        $regularStores = empty($regularStoresByOffer)
+            ? new StoreCollection()
+            : $this->getStoreIntersection($regularStoresByOffer);
+
+        if ($hasByRequest && $byRequestStores->isEmpty()) {
+            $this->addError(new Error('Не найдено складов для товаров под заказ'));
+            return $date;
+        }
+
+        if ($hasRegular && $regularStores->isEmpty()) {
+            $this->addError(new Error('Не найдено складов для товаров из регулярного ассортимента'));
+            return $date;
+        }
+
+
+        $shipmentDay = 0;
         /**
          * Если есть товары под заказ, то рассчитывается дата поставки на склад по графику
          */
-        $scheduleDay = 0;
-        if (!empty($byRequestStores)) {
-            $senderStores = $this->getStoreIntersection($byRequestStores);
-            if ($senderStores->isEmpty()) {
-                $this->addError(new Error('Не найдено складов для товаров под заказ'));
-            } else {
+        if (!$byRequestStores->isEmpty()) {
+            /**
+             * Для товаров под заказ добавляем +2 ко дню доставки
+             */
+            $tmpDate = (clone $date)->modify(sprintf('+%s days', 2));
+
+            if (!$hasRegular) {
                 /**
-                 * Для товаров под заказ добавляем +2 ко дню доставки
+                 * Если нет товаров из регулярного ассортимента, то находим скорейший маршрут
+                 *  от складов поставщика до нужного склада/магазина
                  */
-                $tmpDate = (clone $date)->modify(sprintf('+%s days', 2));
                 $scheduleResult = $scheduleService->findByReceiver($store)
                     ->getNextDelivery(
                         $store,
-                        $senderStores,
+                        $byRequestStores,
                         $tmpDate
                     );
+
+                if (null === $scheduleResult) {
+                    $this->addError(new Error('Нет доступных графиков поставок'));
+                    return $date;
+                }
+
+                $shipmentDay += $scheduleResult->getDate()->diff($date)->days;
+            } else {
+                /**
+                 * Если есть товары из регулярного ассортимента, то находим маршруты
+                 * от складов поставщика до РЦ
+                 */
+                $scheduleResults = $scheduleService->findByReceiver($store)
+                    ->getNextDeliveries(
+                        $regularStores,
+                        $byRequestStores,
+                        $tmpDate
+                    );
+                if ($scheduleResults->isEmpty()) {
+                    $this->addError(new Error('Нет доступных графиков поставок'));
+                    return $date;
+                }
+
+                /** @var DeliveryScheduleResult $fastest */
+                $fastest = $scheduleResults->getFastest();
+                $day = $this->getShipmentDay($store, $fastest->getDate());
+                if (null !== $day) {
+                    $shipmentDay += $fastest->getDate()->diff($date)->days + $day;
+                } else {
+                    $schedules = $scheduleService->findByReceiver($store);
+                    /** @var DeliveryScheduleResult $scheduleResult */
+                    $scheduleResult = null;
+                    /** @var DeliverySchedule $schedule */
+                    foreach ($schedules as $schedule) {
+                        $sender = $schedule->getSender();
+                        $tmpResult = $scheduleResults->findByReceiver($sender)->getFastest();
+                        if (null === $scheduleResult && $tmpResult && $scheduleResult->getDate() > $tmpResult->getDate()) {
+                            $scheduleResult = $tmpResult;
+                        }
+                    }
+
+                    if (null === $scheduleResult) {
+                        $this->addError(new Error('Нет доступных графиков поставок'));
+                        return $date;
+                    }
+
+                    $shipmentDay += $scheduleResult->getDate()->diff($date)->days;
+                }
+            }
+
+            /**
+             * Если есть товары из регулярного ассортимента, то рассчитываем их дату поставки
+             */
+        } elseif (!$regularStores->isEmpty()) {
+            $day = $this->getShipmentDay($store, $date);
+            if (null !== $day) {
+                $shipmentDay += $day;
+            } else {
+                $scheduleResult = $scheduleService->findByReceiver($store)->getNextDelivery(
+                    $store,
+                    $regularStores,
+                    $date
+                );
                 if ($scheduleResult) {
-                    $scheduleDay += $scheduleResult->getDate()->diff($date)->days;
+                    $shipmentDay = $scheduleResult->getDate()->diff($date)->days;
                 } else {
                     $this->addError(new Error('Нет доступных графиков поставок'));
                 }
             }
         }
 
-        /**
-         * Если есть товары из регулярного ассортимента, то рассчитываем их дату поставки
-         */
-        $shipmentDay = 0;
-        if (!empty($regularStores)) {
-            $senderStores = $this->getStoreIntersection($regularStores);
-            if ($senderStores->isEmpty()) {
-                $this->addError(new Error('Не найдено складов для товаров из регулярного ассортимента'));
-            } else {
-                $day = $this->getShipmentDay($store, $date);
-                /**
-                 * Если день поставки нашелся, то выполняем расчет,
-                 * иначе ищем по графику поставок
-                 */
-                if (null !== $day) {
-                    /**
-                     * По ТЗ мы должны добавить еще один день
-                     */
-                    $shipmentDay += $day + 1;
-                } else {
-                    $scheduleResult = $scheduleService->findByReceiver($store)->getNextDelivery(
-                        $store,
-                        $senderStores,
-                        $date
-                    );
-                    if ($scheduleResult) {
-                        $shipmentDay = $scheduleResult->getDate()->diff($date)->days;
-                    } else {
-                        $this->addError(new Error('Нет доступных графиков поставок'));
-                    }
-                }
-            }
-        }
-
-        $modifier += max([$shipmentDay, $scheduleDay]);
+        $modifier += $shipmentDay;
 
         /**
          * Добавляем "срок поставки" к дате доставки
@@ -600,7 +655,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             $results[] = min($res);
         }
 
-        return empty($results) ? null : min($results);
+        return empty($results) ? null : min($results) + 1;
     }
 
     /**

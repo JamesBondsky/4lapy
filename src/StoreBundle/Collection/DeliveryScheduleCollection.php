@@ -54,7 +54,7 @@ class DeliveryScheduleCollection extends BaseCollection
      * @param \DateTime|null $date
      * @return DeliveryScheduleCollection
      */
-    public function getActive(?\DateTime $date):DeliveryScheduleCollection
+    public function getActive(?\DateTime $date): DeliveryScheduleCollection
     {
         if (!$date instanceof \DateTime) {
             $date = new \DateTime();
@@ -99,7 +99,37 @@ class DeliveryScheduleCollection extends BaseCollection
         }
 
         return $result;
-    }/** @noinspection MoreThanThreeArgumentsInspection */
+    }
+
+    /**
+     * @param StoreCollection $receivers
+     * @param StoreCollection $senders
+     * @param \DateTime|null $from
+     * @return DeliveryScheduleResultCollection
+     * @throws NotFoundException
+     * @throws \Bitrix\Main\ArgumentException
+     */
+    public function getNextDeliveries(
+        StoreCollection $receivers,
+        StoreCollection $senders,
+        \DateTime $from = null
+    ): DeliveryScheduleResultCollection {
+        if (!$from) {
+            $from = new \DateTime();
+        }
+
+        $result = new DeliveryScheduleResultCollection();
+
+        /** @var Store $receiver */
+        foreach ($receivers as $receiver) {
+            if ($r = $this->getNextDelivery($receiver, $senders, $from)) {
+                $result->add($r);
+            }
+        }
+
+        return $result;
+    }
+    /** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
      * @param DeliverySchedule $senderSchedule
