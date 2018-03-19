@@ -130,7 +130,9 @@ abstract class DeliveryHandlerBase extends Base implements DeliveryHandlerInterf
 
         /** @var Offer $offer */
         foreach ($offers as $offer) {
-            $offer->withStocks($offer->getAllStocks()->filterByStores($stores));
+            if (!$offer->isByRequest()) {
+                $offer->withStocks($offer->getAllStocks()->filterByStores($stores));
+            }
         }
 
         return $offers;

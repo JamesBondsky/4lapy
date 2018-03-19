@@ -44,11 +44,6 @@ class DeliveryResult extends BaseResult
             }
         }
 
-        $currentDate = $this->getCurrentDate();
-        if ($this->deliveryDate->format('z') !== $currentDate->format('z')) {
-            return;
-        }
-
         if ($this->getIntervals()->isEmpty()) {
             return;
         }

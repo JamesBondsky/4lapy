@@ -454,7 +454,7 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
 
         $shipmentDay = 0;
         /**
-         * Если есть товары под заказ, то рассчитывается дата поставки на склад по графику
+         * Если есть товары под заказ
          */
         if (!$byRequestStores->isEmpty()) {
             /**
@@ -498,11 +498,17 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
 
                 /** @var DeliveryScheduleResult $fastest */
                 $fastest = $scheduleResults->getFastest();
+
+                $schedules = $scheduleService->findByReceiver($store);
+                if ($schedules->isEmpty()) {
+                    $this->addError(new Error('Нет доступных графиков поставок'));
+                    return $date;
+                }
+
                 $day = $this->getShipmentDay($store, $fastest->getDate());
                 if (null !== $day) {
                     $shipmentDay += $fastest->getDate()->diff($date)->days + $day;
                 } else {
-                    $schedules = $scheduleService->findByReceiver($store);
                     /** @var DeliveryScheduleResult $scheduleResult */
                     $scheduleResult = null;
                     /** @var DeliverySchedule $schedule */
@@ -524,14 +530,20 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
             }
 
             /**
-             * Если есть товары из регулярного ассортимента, то рассчитываем их дату поставки
+             * Если есть только товары из регулярного ассортимента
              */
         } elseif (!$regularStores->isEmpty()) {
             $day = $this->getShipmentDay($store, $date);
+            $schedules = $scheduleService->findByReceiver($store);
+            if ($schedules->isEmpty()) {
+                $this->addError(new Error('Нет доступных графиков поставок'));
+                return $date;
+            }
+
             if (null !== $day) {
                 $shipmentDay += $day;
             } else {
-                $scheduleResult = $scheduleService->findByReceiver($store)->getNextDelivery(
+                $scheduleResult = $schedules->getNextDelivery(
                     $store,
                     $regularStores,
                     $date
