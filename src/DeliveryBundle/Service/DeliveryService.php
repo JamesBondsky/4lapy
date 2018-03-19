@@ -161,6 +161,9 @@ class DeliveryService
      * @param Shipment $shipment
      * @param array $codes коды доставок
      *
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\NotSupportedException
+     * @throws \Exception
      * @return CalculationResult[]
      */
     public function calculateDeliveries(Shipment $shipment, array $codes = []): array
@@ -180,12 +183,17 @@ class DeliveryService
                 $name = $service->getName();
             }
             $service->getCode();
+            /**
+             * todo раскомментировать строчки, выключающие постобработку кастомных акций, либо расчитывать как-то по-другому
+             */
+            //\FourPaws\SaleBundle\Discount\Utils\Manager::disableProcessingFinalAction();
             $shipment->setFields(
                 [
                     'DELIVERY_ID'   => $service->getId(),
                     'DELIVERY_NAME' => $name,
                 ]
             );
+            //\FourPaws\SaleBundle\Discount\Utils\Manager::enableProcessingFinalAction();
             $calculationResult = $shipment->calculateDelivery();
             if ($calculationResult->isSuccess()) {
                 if (\in_array(
