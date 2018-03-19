@@ -292,7 +292,7 @@ class NotificationService implements LoggerAwareInterface
                 );
                 $result['shop'] = [
                     'address' => $shop->getAddress(),
-                    'schedule' => $shop->getSchedule(),
+                    'schedule' => $shop->getScheduleString(),
                 ];
             }
         } catch (\Exception $e) {

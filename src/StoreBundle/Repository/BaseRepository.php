@@ -3,12 +3,12 @@
 namespace FourPaws\StoreBundle\Repository;
 
 use Bitrix\Main\Entity\DataManager;
+use FourPaws\AppBundle\Construction\UnserializeObjectConstructor;
 use FourPaws\StoreBundle\Collection\BaseCollection;
 use FourPaws\StoreBundle\Entity\Base as BaseEntity;
 use FourPaws\StoreBundle\Exception\ConstraintDefinitionException;
 use FourPaws\StoreBundle\Exception\InvalidIdentifierException;
 use FourPaws\StoreBundle\Exception\BitrixRuntimeException;
-use FourPaws\StoreBundle\Exception\TableClassNotDefinedException;
 use FourPaws\StoreBundle\Exception\ValidationException;
 use JMS\Serializer\DeserializationContext;
 use Symfony\Component\Validator\Constraints\GreaterThanOrEqual;
@@ -36,9 +36,6 @@ abstract class BaseRepository implements RepositoryInterface
      */
     protected $table;
 
-    private $entity;
-    private $collection;
-
     abstract protected function getDataClass(): string;
 
     abstract protected function getCollectionClass(): string;
@@ -62,8 +59,6 @@ abstract class BaseRepository implements RepositoryInterface
 
         $dataClass = $this->getDataClass();
         $this->table = new $dataClass();
-        $this->entity = $this->getEntityClass();
-        $this->collection = $this->getCollectionClass();
     }
 
     /**
@@ -112,7 +107,7 @@ abstract class BaseRepository implements RepositoryInterface
         }
 
         return $result;
-    }
+    }/** @noinspection MoreThanThreeArgumentsInspection */
 
     /**
      * @param array $criteria
@@ -157,6 +152,7 @@ abstract class BaseRepository implements RepositoryInterface
                 $result,
                 sprintf('array<%s>', $this->getEntityClass()),
                 DeserializationContext::create()->setGroups(['read'])
+                    ->setAttribute(UnserializeObjectConstructor::CALL_CONSTRUCTOR, true)
             )
         );
     }

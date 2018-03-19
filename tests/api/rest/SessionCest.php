@@ -6,11 +6,10 @@
 
 class SessionCest
 {
-    public function createTest(ApiTester $I)
+    public function createTest(ApiTester $I): void
     {
-        $I->wantTo('Create token');
-        /** @noinspection PhpUnhandledExceptionInspection */
-        $token = $I->createToken();
-        $I->deleteToken($token);
+        /**
+         * @todo redo
+         */
     }
 }

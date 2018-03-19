@@ -39,14 +39,12 @@ class LocationCest
             'id'    => 'integer:>0',
             'title' => 'string:!empty',
         ], '$.data.metro[0]');
-
-        $apiTester->deleteToken($token);
     }
 
     /**
      * @return array
      */
-    public function goodMetroProvider(): array
+    protected function goodMetroProvider(): array
     {
         return [
             'Moscow' => [
@@ -86,7 +84,7 @@ class LocationCest
         ]);
     }
 
-    public function badMetroProvider(): array
+    protected function badMetroProvider(): array
     {
         return [
             [

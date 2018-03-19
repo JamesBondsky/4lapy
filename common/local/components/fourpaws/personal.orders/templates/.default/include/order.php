@@ -46,8 +46,8 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
                     м. <?= $arResult['METRO']->get($order->getStore()->getMetro())['UF_NAME'] ?>,
                 <?php } ?>
                 <?= $order->getStore()->getAddress() ?>
-                <?php if (!empty($order->getStore()->getSchedule())) { ?>
-                    <p class="b-adress-info__mode-operation"><?= $order->getStore()->getSchedule() ?></p>
+                <?php if (!empty($order->getStore()->getScheduleString())) { ?>
+                    <p class="b-adress-info__mode-operation"><?= $order->getStore()->getScheduleString() ?></p>
                 <?php } ?>
             </div>
         </div>

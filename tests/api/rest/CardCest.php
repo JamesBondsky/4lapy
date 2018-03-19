@@ -8,14 +8,16 @@ use Codeception\Util\HttpCode;
 
 class CardCest
 {
-    public function testActivatedCard(\ApiTester $apiTester)
+    /**
+     * @param ApiTester $apiTester
+     * @throws Exception
+     * @throws \Codeception\Exception\ModuleException
+     */
+    public function testActivatedCard(\ApiTester $apiTester): void
     {
         $token = $apiTester->createToken();
         $user = $apiTester->createDummyUser();
-        $card = $user['UF_DISCOUNT_CARD'] ?? null;
-        if (!$card) {
-            throw new RuntimeException('No card in user');
-        }
+        $card = $apiTester->getCard($user['ID']);
         $apiTester->haveHttpHeader('Content-type', 'application/json');
         $apiTester->sendGET('/card_activated/', [
             'token'  => $token,
@@ -38,12 +40,13 @@ class CardCest
                 ],
             ],
         ]);
-
-        $apiTester->deleteToken($token);
-        $apiTester->deleteDummyUser($user['ID']);
     }
 
-    public function testNotActiveCard(ApiTester $apiTester)
+    /**
+     * @param ApiTester $apiTester
+     * @throws Exception
+     */
+    public function testNotActiveCard(ApiTester $apiTester): void
     {
         $token = $apiTester->createToken();
 
@@ -64,7 +67,5 @@ class CardCest
                 'activated' => false,
             ],
         ]);
-
-        $apiTester->deleteToken($token);
     }
 }
