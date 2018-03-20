@@ -15,11 +15,9 @@ use FourPaws\App\Response\JsonResponse;
 use FourPaws\App\Response\JsonSuccessResponse;
 use FourPaws\AppBundle\Service\AjaxMess;
 use FourPaws\External\Exception\ExpertsenderServiceException;
-use FourPaws\External\Exception\ManzanaServiceException;
-use FourPaws\External\Manzana\Model\Client;
-use FourPaws\External\ManzanaService;
 use FourPaws\Helpers\DateHelper;
 use FourPaws\UserBundle\Entity\User;
+use FourPaws\UserBundle\EventController\Event;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\EmptyDateException;
@@ -29,7 +27,7 @@ use FourPaws\UserBundle\Exception\ValidationException;
 use FourPaws\UserBundle\Repository\UserRepository;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Service\UserAuthorizationInterface;
-use JMS\Serializer\Serializer;
+use JMS\Serializer\ArrayTransformerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
@@ -53,15 +51,19 @@ class ProfileController extends Controller
     private $ajaxMess;
     /** @var UserAuthorizationInterface */
     private $userAuthorization;
+    /** @var ArrayTransformerInterface */
+    private $serializer;
 
     public function __construct(
         UserAuthorizationInterface $userAuthorization,
         CurrentUserProviderInterface $currentUserProvider,
-        AjaxMess $ajaxMess
+        AjaxMess $ajaxMess,
+        ArrayTransformerInterface $serializer
     ) {
         $this->userAuthorization = $userAuthorization;
         $this->currentUserProvider = $currentUserProvider;
         $this->ajaxMess = $ajaxMess;
+        $this->serializer = $serializer;
     }
 
     /**
@@ -215,13 +217,11 @@ class ProfileController extends Controller
 
     /**
      * @Route("/changeData/", methods={"POST"})
-     * @param Request    $request
-     *
-     * @param Serializer $serializer
+     * @param Request $request
      *
      * @return JsonResponse
      */
-    public function changeDataAction(Request $request, Serializer $serializer): JsonResponse
+    public function changeDataAction(Request $request): JsonResponse
     {
         if (!$this->userAuthorization->isAuthorized()) {
             return $this->ajaxMess->getNeedAuthError();
@@ -243,17 +243,22 @@ class ProfileController extends Controller
             return $this->ajaxMess->getSystemError();
         }
 
+        $data = $request->request->all();
+
         if (!empty($data['ID'])) {
             $data['ID'] = (int)$data['ID'];
         }
         /** @var User $user */
-        $user = $serializer->fromArray($data, User::class);
+        $user = $this->serializer->fromArray($data, User::class);
+
+        if($user->getId() === 0){
+            return $this->ajaxMess->getSecurityError();
+        }
 
         if ($user->getId() !== $curUser->getId()) {
             return $this->ajaxMess->getSecurityError();
         }
 
-        $data = $request->request->all();
         if (!empty($data['EMAIL']) && filter_var($data['EMAIL'], FILTER_VALIDATE_EMAIL) === false) {
             return $this->ajaxMess->getWrongEmailError();
         }
@@ -274,18 +279,12 @@ class ProfileController extends Controller
             } catch (ApplicationCreateException $e) {
                 return $this->ajaxMess->getSystemError();
             }
-            try {
-                $curUser = $userRepository->find($user->getId());
-                if ($curUser !== null && $curUser->getEmail() !== $user->getEmail()) {
-                    $data['UF_EMAIL_CONFIRMED'] = false;
-                }
-            } catch (ValidationException|InvalidIdentifierException|ConstraintDefinitionException $e) {
-                $logger = LoggerFactory::create('params');
-                $logger->error('Ошибка параметров - ' . $e->getMessage());
-                return $this->ajaxMess->getSystemError();
+            if ($curUser !== null && $curUser->getEmail() !== $user->getEmail()) {
+                $data['UF_EMAIL_CONFIRMED'] = false;
             }
             try {
                 $res = $userRepository->updateData($user->getId(), $userRepository->prepareData($data));
+                /** обновление данных манзаны сработает на событии @see Event::updateManzana() */
                 if (!$res) {
                     return $this->ajaxMess->getUpdateError();
                 }
@@ -301,7 +300,7 @@ class ProfileController extends Controller
                 return $this->ajaxMess->getUpdateError();
             }
 
-            if ($user->allowedEASend()) {
+            if (!$curUser->hasEmail() || $curUser->allowedEASend()) {
                 if ($user->getEmail() !== $curUser->getEmail()) {
                     try {
                         $expertSenderService = $container->get('expertsender.service');
@@ -318,26 +317,6 @@ class ProfileController extends Controller
                 } catch (\RuntimeException $e) {
                     /** оч. плохо - логи мы не получим */
                 }
-            }
-
-            /** @var ManzanaService $manzanaService */
-            try {
-                $manzanaService = $container->get('manzana.service');
-                $client = null;
-                try {
-                    $contactId = $manzanaService->getContactIdByUser();
-                    $client = new Client();
-                    $client->contactId = $contactId;
-                } catch (ManzanaServiceException $e) {
-                    $client = new Client();
-                }
-
-                if ($client instanceof Client) {
-                    $this->currentUserProvider->setClientPersonalDataByCurUser($client);
-                    $manzanaService->updateContactAsync($client);
-                }
-            } catch (ApplicationCreateException $e) {
-                return $this->ajaxMess->getSystemError();
             }
 
             try {

@@ -25,9 +25,9 @@ use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\TooManyUserFoundException;
 use FourPaws\UserBundle\Exception\UsernameNotFoundException;
 use FourPaws\UserBundle\Exception\ValidationException;
+use JMS\Serializer\ArrayTransformerInterface;
 use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\SerializationContext;
-use JMS\Serializer\Serializer;
 use ProxyManager\Proxy\VirtualProxyInterface;
 use Symfony\Component\Validator\Constraints\GreaterThanOrEqual;
 use Symfony\Component\Validator\Constraints\NotBlank;
@@ -39,7 +39,7 @@ class UserRepository
 {
     public const FIELD_ID = 'ID';
 
-    /** @var Serializer $builder */
+    /** @var ArrayTransformerInterface $builder */
     protected $serializer;
 
     /**
@@ -69,12 +69,12 @@ class UserRepository
      *
      * @param LazyCallbackValueLoader $lazyCallbackValueLoader
      *
-     * @param Serializer              $serializer
+     * @param ArrayTransformerInterface              $serializer
      */
     public function __construct(
         ValidatorInterface $validator,
         LazyCallbackValueLoader $lazyCallbackValueLoader,
-        Serializer $serializer
+        ArrayTransformerInterface $serializer
     ) {
         $this->serializer = $serializer;
 
