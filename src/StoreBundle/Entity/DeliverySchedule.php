@@ -303,9 +303,9 @@ class DeliverySchedule extends Base
     /**
      * @return string
      */
-    public function getType(): string
+    public function getType(): ?string
     {
-        return $this->type;
+        return $this->type ;
     }
 
     /**
@@ -628,12 +628,13 @@ class DeliverySchedule extends Base
         return $result;
     }
 
-    /**
+    /** @noinspection PhpMissingParentCallCommonInspection
+     *
      * @return string
      */
     public function serialize(): string
     {
-        return serialize([
+        return \serialize([
             $this->id,
             $this->name,
             $this->xmlId,
@@ -649,7 +650,8 @@ class DeliverySchedule extends Base
         ]);
     }
 
-    /**
+    /** @noinspection PhpMissingParentCallCommonInspection
+     *
      * @param string $serialized
      * @throws ApplicationCreateException
      */
@@ -668,7 +670,8 @@ class DeliverySchedule extends Base
             $this->deliveryNumber,
             $this->deliveryDates,
             $this->type
-        ] = unserialize($serialized, ['allowed_classes' => true]);
+        ] = \unserialize($serialized, ['allowed_classes' => true]);
+
         $this->__construct();
     }
 }
