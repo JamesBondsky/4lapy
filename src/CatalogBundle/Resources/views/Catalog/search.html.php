@@ -14,8 +14,6 @@ use Symfony\Component\Templating\PhpEngine;
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 
-$APPLICATION->AddChainItem('Каталог', '/catalog/');
-
 global $APPLICATION;
 $APPLICATION->SetTitle($catalogRequest->getCategory()->getName());
 ?>

@@ -6,6 +6,7 @@
 
 namespace FourPaws\SapBundle\DependencyInjection;
 
+use RuntimeException;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
@@ -16,7 +17,7 @@ class Configuration implements ConfigurationInterface
     /**
      * Generates the configuration tree builder.
      *
-     * @throws \RuntimeException
+     * @throws RuntimeException
      * @return TreeBuilder The tree builder
      */
     public function getConfigTreeBuilder(): TreeBuilder
@@ -34,7 +35,7 @@ class Configuration implements ConfigurationInterface
     }
 
     /**
-     * @throws \RuntimeException
+     * @throws RuntimeException
      *
      * @return ArrayNodeDefinition|NodeDefinition
      */
@@ -73,7 +74,7 @@ class Configuration implements ConfigurationInterface
     }
     
     /**
-     * @throws \RuntimeException
+     * @throws RuntimeException
      *
      * @return ArrayNodeDefinition|NodeDefinition
      */
@@ -89,7 +90,7 @@ class Configuration implements ConfigurationInterface
     }
 
     /**
-     * @throws \RuntimeException
+     * @throws RuntimeException
      *
      * @return ArrayNodeDefinition|NodeDefinition
      */

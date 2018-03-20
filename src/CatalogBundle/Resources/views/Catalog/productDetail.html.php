@@ -17,8 +17,6 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 
 global $APPLICATION;
 
-$APPLICATION->AddChainItem('Каталог', '/catalog/');
-
 $offerId = $productDetailRequest->getOfferId();
 /** @var Product $product */
 $product = $APPLICATION->IncludeComponent(

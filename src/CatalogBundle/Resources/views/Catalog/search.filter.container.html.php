@@ -22,8 +22,6 @@ use Symfony\Component\Templating\PhpEngine;
 
 global $APPLICATION;
 
-$APPLICATION->AddChainItem('Каталог', '/catalog/');
-
 /**
  * @var Category $category
  */

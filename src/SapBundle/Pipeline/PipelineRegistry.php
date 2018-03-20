@@ -10,6 +10,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\SapBundle\Exception\NotFoundPipelineException;
 use FourPaws\SapBundle\Source\SourceMessage;
+use Generator;
 
 /**
  * Class PipelineRegistry
@@ -23,6 +24,9 @@ class PipelineRegistry
      */
     private $collection;
 
+    /**
+     * PipelineRegistry constructor.
+     */
     public function __construct()
     {
         $this->collection = new ArrayCollection();
@@ -50,14 +54,18 @@ class PipelineRegistry
      */
     public function get(string $code): Pipeline
     {
-        if ($result = $this->collection->get($code)) {
-            return $result;
+        $result = $this->collection->get($code);
+
+        if (!$result) {
+            throw new NotFoundPipelineException(
+                \sprintf(
+                    'Cant find reference repository for %s property',
+                    $code
+                )
+            );
         }
 
-        throw new NotFoundPipelineException(sprintf(
-            'Cant find reference repository for %s property',
-            $code
-        ));
+        return $result;
     }
 
     /**
@@ -83,9 +91,9 @@ class PipelineRegistry
      *
      * @throws NotFoundPipelineException
      *
-     * @return \Generator|SourceMessage[]
+     * @return Generator|SourceMessage[]
      */
-    public function generator($code): \Generator
+    public function generator($code): Generator
     {
         yield from $this->get($code)->generator();
     }

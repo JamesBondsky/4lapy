@@ -11,6 +11,7 @@ use Exception;
 use FourPaws\SapBundle\Pipeline\PipelineRegistry;
 use FourPaws\SapBundle\Service\SapService;
 use Psr\Log\LoggerAwareInterface;
+use RuntimeException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Exception\InvalidArgumentException;
 use Symfony\Component\Console\Exception\LogicException;
@@ -53,6 +54,7 @@ class ImportCommand extends Command implements LoggerAwareInterface
     {
         $this->pipelineRegistry = $pipelineRegistry;
         $this->sapService = $sapService;
+
         parent::__construct();
     }
 
@@ -66,9 +68,9 @@ class ImportCommand extends Command implements LoggerAwareInterface
             ->addArgument(
                 self::ARGUMENT_PIPELINE,
                 InputArgument::REQUIRED,
-                sprintf(
+                \sprintf(
                     'Pipeline. %s',
-                    implode(
+                    \implode(
                         ', ',
                         $this->pipelineRegistry->getCollection()->getKeys()
                     )
@@ -76,11 +78,12 @@ class ImportCommand extends Command implements LoggerAwareInterface
             );
     }
 
-    /**
+    /** @noinspection PhpMissingParentCallCommonInspection
+     *
      * @param InputInterface $input
      * @param OutputInterface $output
      *
-     * @throws \RuntimeException
+     * @throws RuntimeException
      * @throws InvalidArgumentException
      * @return void
      *
@@ -91,18 +94,19 @@ class ImportCommand extends Command implements LoggerAwareInterface
         $pipeline = $input->getArgument(self::ARGUMENT_PIPELINE);
 
         if (!\in_array($pipeline, $available, true)) {
-            throw new InvalidArgumentException(sprintf(
-                'Wrong pipeline %s, available: %s',
-                $pipeline,
-                implode(', ', $available)
+            throw new InvalidArgumentException(
+                \sprintf(
+                    'Wrong pipeline %s, available: %s',
+                    $pipeline,
+                    \implode(', ', $available)
             ));
         }
 
         try {
             $this->sapService->execute($pipeline);
-            $this->log()->info(sprintf('%s`s exchange is done.', $pipeline));
+            $this->log()->info(\sprintf('%s`s exchange is done.', $pipeline));
         } catch (\Exception $e) {
-            $this->log()->error(sprintf('Unknown error: %s', $e->getMessage()));
+            $this->log()->error(\sprintf('Unknown error: %s', $e->getMessage()));
         }
     }
 }
