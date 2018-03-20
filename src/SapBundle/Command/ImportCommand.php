@@ -51,9 +51,9 @@ class ImportCommand extends Command implements LoggerAwareInterface
      */
     public function __construct(SapService $sapService, PipelineRegistry $pipelineRegistry)
     {
-        parent::__construct();
         $this->pipelineRegistry = $pipelineRegistry;
         $this->sapService = $sapService;
+        parent::__construct();
     }
 
     /**
