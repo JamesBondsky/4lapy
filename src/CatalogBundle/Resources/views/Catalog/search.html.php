@@ -7,12 +7,14 @@
  * @var CMain $APPLICATION
  */
 
-use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
 use FourPaws\Catalog\Collection\CategoryCollection;
+use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
 use FourPaws\Search\Model\ProductSearchResult;
 use Symfony\Component\Templating\PhpEngine;
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
+
+$APPLICATION->AddChainItem('Каталог', '/catalog/');
 
 global $APPLICATION;
 $APPLICATION->SetTitle($catalogRequest->getCategory()->getName());

@@ -27,14 +27,6 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
  */
 class CatalogController extends Controller
 {
-    /**
-     * @Route("/")
-     */
-    public function rootAction()
-    {
-        return $this->redirect('/');
-    }
-
     /** @noinspection MoreThanThreeArgumentsInspection
      *
      * @Route("/search/")

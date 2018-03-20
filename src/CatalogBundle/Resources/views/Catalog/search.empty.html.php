@@ -9,14 +9,16 @@
  * @var CMain $APPLICATION
  */
 
-use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
 use FourPaws\Catalog\Collection\CategoryCollection;
 use FourPaws\Catalog\Model\Category;
+use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
 use FourPaws\Search\Model\ProductSearchResult;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Templating\PhpEngine;
 
 global $APPLICATION;
+
+$APPLICATION->AddChainItem('Каталог', '/catalog/');
 
 ?>
 <div class="b-container">

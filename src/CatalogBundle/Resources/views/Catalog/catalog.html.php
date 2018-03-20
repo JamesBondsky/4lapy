@@ -11,6 +11,8 @@ use FourPaws\Search\Model\ProductSearchResult;
 use Symfony\Component\Templating\PhpEngine;
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
+
+$APPLICATION->AddChainItem('Каталог', '/catalog/');
 ?>
     <div class="b-catalog js-preloader-fix">
         <div class="b-container b-container--catalog-filter">
