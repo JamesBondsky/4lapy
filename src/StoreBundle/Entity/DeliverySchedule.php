@@ -464,6 +464,14 @@ class DeliverySchedule extends Base
     }
 
     /**
+     * @return string
+     */
+    public function getXmlId(): string
+    {
+        return $this->xmlId;
+    }
+
+    /**
      * public function getXmlId(): string
      * {
      * return $this->xmlId;

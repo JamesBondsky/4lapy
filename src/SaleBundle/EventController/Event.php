@@ -5,6 +5,7 @@ namespace FourPaws\SaleBundle\EventController;
 use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\Event as BitrixEvent;
 use Bitrix\Main\EventManager;
+use Bitrix\Main\SystemException;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use FourPaws\App\Application;
@@ -25,6 +26,7 @@ use FourPaws\UserBundle\Exception\ConstraintDefinitionException;
 use FourPaws\UserBundle\Exception\InvalidIdentifierException;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
+use RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 
@@ -97,6 +99,9 @@ class Event implements ServiceHandlerInterface
 
     /**
      * @param array $user
+     *
+     * @throws SystemException
+     * @throws RuntimeException
      */
     public static function updateUserAccountBalance(array $user)
     {
@@ -108,22 +113,12 @@ class Event implements ServiceHandlerInterface
                 $userAccountService = $container->get(UserAccountService::class);
 
                 $userEntity = $userService->getUserRepository()->find($userId);
-                /* @todo по ТЗ должно выполняться в фоновом режиме */
-                [$res, $bonus] = $userAccountService->refreshUserBalance($userEntity);
+                list(, $bonus) = $userAccountService->refreshUserBalance($userEntity);
 
-                /** обновление скидки
-                 * @todo сделать обновление через очередь, не критично если какое-то время будет старая скидка, тем более в случае неактивности манзаны она не обновится все равно
-                 */
                 $userService->refreshUserBonusPercent($userEntity, $bonus);
-            } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException $e) {
+            } catch (ApplicationCreateException | ServiceNotFoundException | ServiceCircularReferenceException | ConstraintDefinitionException | InvalidIdentifierException | ValidationException | NotAuthorizedException $e) {
                 $logger = LoggerFactory::create('system');
-                $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
-            } catch (ConstraintDefinitionException|InvalidIdentifierException|ValidationException $e) {
-                $logger = LoggerFactory::create('params');
-                $logger->critical('Ошибка параметров - ' . $e->getMessage());
-            }
-            catch (NotAuthorizedException $e){
-                /** не выскочит */
+                $logger->critical('Что-то сломалось : ' . $e->getMessage());
             }
         }
     }
