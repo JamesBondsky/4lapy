@@ -63,7 +63,8 @@ if ($arParams['IS_AJAX']) {
                     foreach ($arResult['POSSIBLE_GIFT_GROUPS'] as $group) {
                         $group = current($group);
                         $disableClass = '';
-                        if (1 > $component->basketService->getAdder()->getExistGiftsQuantity($group, false)) {
+                        /** @noinspection PhpUndefinedMethodInspection */
+                        if (1 > $component->basketService->getAdder('gift')->getExistGiftsQuantity($group, false)) {
                             $disableClass = ' b-link-gift--disabled';
                         }
                         ?>
@@ -160,7 +161,7 @@ if ($arParams['IS_AJAX']) {
                     ?>
                 </section>
             <?php }
-            if (!$notAlowedItems->isEmpty()) { ?>
+            if ($notAlowedItems instanceof ArrayCollection && !$notAlowedItems->isEmpty()) { ?>
                 <section class="b-stock b-stock--shopping-cart b-stock--shopping-product js-section-remove-stock">
                     <h3 class="b-title b-title--h2-cart b-title--shopping-product">Под заказ</h3>
                     <?php foreach ($notAlowedItems as $basketItem) {

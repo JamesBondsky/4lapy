@@ -32,6 +32,7 @@ use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Query\ProductQuery;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\StoreBundle\Collection\StockCollection;
+use FourPaws\StoreBundle\Service\StockService;
 use FourPaws\StoreBundle\Service\StoreService;
 use InvalidArgumentException;
 use JMS\Serializer\Annotation as Serializer;
@@ -234,11 +235,6 @@ class Offer extends IblockElement
     protected $PROPERTY_OLD_URL = '';
 
     /**
-     * @var int
-     */
-    protected $PROPERTY_BY_REQUEST = 0;
-
-    /**
      * Цена по акции - простая акция из SAP
      *
      * @var float
@@ -269,6 +265,11 @@ class Offer extends IblockElement
      * @var float
      */
     protected $oldPrice = 0;
+
+    /**
+     * @var bool
+     */
+    protected $isByRequest;
 
     /**
      * @Type("string")
@@ -338,6 +339,11 @@ class Offer extends IblockElement
      * @var StockCollection
      */
     protected $stocks;
+
+    /**
+     * @var StockCollection
+     */
+    protected $allStocks;
 
     /**
      * @var bool
@@ -826,15 +832,23 @@ class Offer extends IblockElement
 
     /**
      * @return bool
+     * @throws ApplicationCreateException
      */
     public function isByRequest(): bool
     {
-        return (bool)$this->PROPERTY_BY_REQUEST;
+        if (null === $this->isByRequest) {
+            /** @var StoreService $storeService */
+            $storeService = Application::getInstance()->getContainer()->get('store.service');
+            $stores = $storeService->getSupplierStores();
+            $this->isByRequest = !$this->getAllStocks()->filterByStores($stores)->isEmpty();
+        }
+
+        return $this->isByRequest;
     }
 
     public function withByRequest(bool $byRequest)
     {
-        $this->PROPERTY_BY_REQUEST = $byRequest;
+        $this->isByRequest = $byRequest;
 
         return $this;
     }
@@ -1158,21 +1172,47 @@ class Offer extends IblockElement
     }
 
     /**
-     * @throws ArgumentException
      * @throws ServiceNotFoundException
-     * @throws \Exception
      * @throws ApplicationCreateException
-     * @throws ServiceCircularReferenceException
+     */
+    public function getAllStocks(): StockCollection
+    {
+        if (!$this->allStocks) {
+            /** @var StockService $stockService */
+            $stockService = Application::getInstance()->getContainer()->get(StockService::class);
+            $this->withAllStocks($stockService->getStocksByOffer($this));
+        }
+
+        return $this->allStocks;
+    }
+
+    /**
+     * @param StockCollection $allStocks
+     * @return Offer
+     */
+    public function withAllStocks(StockCollection $allStocks): Offer
+    {
+        $this->allStocks = $allStocks;
+
+        return $this;
+    }
+
+    /**
      * @return StockCollection
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
      */
     public function getStocks(): StockCollection
     {
         if (!$this->stocks) {
             /** @var StoreService $storeService */
             $storeService = Application::getInstance()->getContainer()->get('store.service');
-            $allStocks = $storeService->getStocksByOffer($this);
-            $stores = $storeService->getByCurrentLocation();
-            $this->withStocks($allStocks->filterByStores($stores));
+            if ($this->isByRequest()) {
+                $stores = $storeService->getSupplierStores();
+            } else {
+                $stores = $storeService->getByCurrentLocation();
+            }
+            $this->withStocks($this->getAllStocks()->filterByStores($stores));
         }
 
         return $this->stocks;

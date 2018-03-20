@@ -19,6 +19,7 @@ use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Service\OrderService;
 use FourPaws\SaleBundle\Service\UserAccountService;
 use FourPaws\StoreBundle\Service\StoreService;
+use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\UserBundle\Service\CurrentUserProviderInterface;
 use FourPaws\UserBundle\Exception\NotAuthorizedException;
@@ -204,14 +205,15 @@ class FourPawsOrderCompleteComponent extends \CBitrixComponent
             try {
                 $store = $this->storeService->getByXmlId($properties['DELIVERY_PLACE_CODE']);
                 $result['ADDRESS'] = $store->getAddress();
-                $result['SCHEDULE'] = $store->getSchedule();
+                $result['SCHEDULE'] = $store->getScheduleString();
             } catch (StoreNotFoundException $e) {
             }
         } elseif ($properties['DPD_TERMINAL_CODE']) {
             $terminals = $this->deliveryService->getDpdTerminalsByLocation($properties['CITY_CODE']);
+            /** @var Store $terminal */
             if ($terminal = $terminals[$properties['DPD_TERMINAL_CODE']]) {
                 $result['ADDRESS'] = $terminal->getAddress();
-                $result['SCHEDULE'] = $terminal->getSchedule();
+                $result['SCHEDULE'] = $terminal->getScheduleString();
             }
         } else {
             $result['ADDRESS'] = [

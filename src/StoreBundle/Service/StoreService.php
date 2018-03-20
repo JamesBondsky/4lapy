@@ -7,42 +7,47 @@
 namespace FourPaws\StoreBundle\Service;
 
 use Adv\Bitrixtools\Tools\HLBlock\HLBlockFactory;
+use Adv\Bitrixtools\Tools\Log\LoggerFactory;
 use Bitrix\Main\ArgumentException;
-use Bitrix\Sale\Delivery\CalculationResult;
-use Doctrine\Common\Collections\Collection;
 use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\BitrixOrm\Model\CropImageDecorator;
 use FourPaws\BitrixOrm\Model\Exceptions\FileNotFoundException;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Query\OfferQuery;
-use FourPaws\DeliveryBundle\Collection\StockResultCollection;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResultInterface;
 use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
 use FourPaws\LocationBundle\LocationService;
-use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
-use FourPaws\StoreBundle\Entity\Base as BaseEntity;
 use FourPaws\StoreBundle\Entity\Store;
-use FourPaws\StoreBundle\Exception\BaseException;
 use FourPaws\StoreBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Repository\StockRepository;
 use FourPaws\StoreBundle\Repository\StoreRepository;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 use WebArch\BitrixCache\BitrixCache;
 
-class StoreService
+class StoreService implements LoggerAwareInterface
 {
+    use LoggerAwareTrait;
     /**
-     * Все склады
+     * Все склады, исключая склады поставщиков
      */
     public const TYPE_ALL = 'TYPE_ALL';
 
     /**
-     * Склады, не являющиеся магазинами
+     * Все склады
+     */
+    public const TYPE_ALL_WITH_SUPPLIERS = 'TYPE_ALL_WITH_SUPPLIERS';
+
+    /**
+     * Склады, не являющиеся магазинами, исключая склады поставщиков
      */
     public const TYPE_STORE = 'TYPE_STORE';
 
@@ -50,6 +55,11 @@ class StoreService
      * Склады, являющиеся магазинами
      */
     public const TYPE_SHOP = 'TYPE_SHOP';
+
+    /**
+     * Склады поставщиков
+     */
+    public const TYPE_SUPPLIER = 'TYPE_SUPPLIER';
 
     /**
      * @var LocationService
@@ -66,7 +76,7 @@ class StoreService
      */
     protected $stockRepository;
 
-    /** @var  CalculationResult */
+    /** @var  CalculationResultInterface */
     protected $pickupDelivery;
 
     /** @var DeliveryService $deliveryService */
@@ -85,6 +95,7 @@ class StoreService
         $this->storeRepository = $storeRepository;
         $this->stockRepository = $stockRepository;
         $this->deliveryService = $deliveryService;
+        $this->setLogger(LoggerFactory::create('StoreService'));
     }
 
     /**
@@ -93,17 +104,25 @@ class StoreService
      * @param int $id
      *
      * @throws NotFoundException
-     * @return BaseEntity|bool|Store
+     * @return Store
      */
-    public function getById(int $id)
+    public function getById(int $id): Store
     {
-        $store = false;
+        $store = null;
+
+        $getStore = function () use ($id) {
+            return ['result' => $this->storeRepository->find($id)];
+        };
+
         try {
-            $store = $this->storeRepository->find($id);
-        } catch (BaseException $e) {
+            $store = (new BitrixCache())->withId(__METHOD__ . $id)->resultOf($getStore)['result'];
+        } catch (\Exception $e) {
+            $this->logger->error(
+                sprintf('failed to get store with id %s: %s', $id, $e->getMessage())
+            );
         }
 
-        if (!$store) {
+        if (!$store || !$store instanceof Store) {
             throw new NotFoundException('Склад с ID=' . $id . ' не найден');
         }
 
@@ -157,7 +176,7 @@ class StoreService
      *
      * @param string $locationCode
      * @param string $type
-     * @param bool   $strict
+     * @param bool $strict
      *
      * @throws ArgumentException
      * @throws \Exception
@@ -180,11 +199,21 @@ class StoreService
             return ['result' => $storeCollection];
         };
 
-        $result = (new BitrixCache())->withId(__METHOD__ . $locationCode . $type)->resultOf($getStores);
+        try {
+            $result = (new BitrixCache())->withId(__METHOD__ . $locationCode . $type)->resultOf($getStores);
 
-        /** @var StoreCollection $stores */
-        $stores = $result['result'];
-
+            /** @var StoreCollection $stores */
+            $stores = $result['result'];
+        } catch (\Exception $e) {
+            $this->logger->error(
+                sprintf(
+                    'failed to get stores for location: %s',
+                    $e->getMessage()
+                ),
+                ['location' => $locationCode, 'type' => $type]
+            );
+            $stores = new StoreCollection();
+        }
         /**
          * Если не нашлось ничего с типом "склад" для данного местоположения, то добавляем склады для Москвы
          */
@@ -201,6 +230,31 @@ class StoreService
     }
 
     /**
+     * @return StoreCollection
+     */
+    public function getSupplierStores(): StoreCollection
+    {
+        $getStores = function () {
+            $storeCollection = $this->storeRepository->findBy(
+                $this->getTypeFilter(self::TYPE_SUPPLIER)
+            );
+
+            return ['result' => $storeCollection];
+        };
+
+        try {
+            $result = (new BitrixCache())->withId(__METHOD__)->resultOf($getStores);
+            return $result['result'];
+        } catch (\Exception $e) {
+            $this->logger->error(
+                sprintf('failed to get supplier stores: %s', $e->getMessage())
+            );
+        }
+
+        return new StoreCollection();
+    }
+
+    /**
      * @param $type
      *
      * @return array
@@ -209,25 +263,16 @@ class StoreService
     {
         switch ($type) {
             case self::TYPE_SHOP:
-                return ['UF_IS_SHOP' => 1];
+                return ['UF_IS_SHOP' => 1, 'UF_IS_SUPPLIER' => 0];
             case self::TYPE_STORE:
-                return ['UF_IS_SHOP' => 0];
+                return ['UF_IS_SHOP' => 0, 'UF_IS_SUPPLIER' => 0];
+            case self::TYPE_ALL:
+                return ['UF_IS_SUPPLIER' => 0];
+            case self::TYPE_SUPPLIER:
+                return ['UF_IS_SUPPLIER' => 1];
         }
 
         return [];
-    }
-
-    /**
-     * Получить склады по массиву XML_ID
-     *
-     * @param array $codes
-     *
-     * @throws \Exception
-     * @return StoreCollection
-     */
-    public function getMultipleByXmlId(array $codes): StoreCollection
-    {
-        return $this->storeRepository->findBy(['XML_ID' => $codes]);
     }
 
     /**
@@ -274,14 +319,6 @@ class StoreService
     }
 
     /**
-     * @return LocationService
-     */
-    public function getLocationService(): LocationService
-    {
-        return $this->locationService;
-    }
-
-    /**
      * @param array $filter
      * @param array $select
      *
@@ -314,50 +351,6 @@ class StoreService
     }
 
     /**
-     * Получить наличие офферов на указанных складах
-     *
-     * @param Collection      $offers
-     * @param StoreCollection $stores
-     *
-     * @throws \Exception
-     */
-    public function getStocks(Collection $offers, StoreCollection $stores): void
-    {
-        foreach ($offers as $offer) {
-            $offer->withStocks(
-                $this->getStocksByOffer($offer)
-                    ->filterByStores($stores)
-            );
-        }
-    }
-
-    /**
-     * @param Offer $offer
-     *
-     * @throws \Exception
-     * @return StockCollection
-     */
-    public function getStocksByOffer(Offer $offer): StockCollection
-    {
-        $getStocks = function () use ($offer) {
-            return $this->stockRepository->findBy(
-                [
-                    'PRODUCT_ID' => $offer->getId(),
-                ]
-            );
-        };
-
-        $data = (new BitrixCache())
-            ->withId(__METHOD__ . '__' . $offer->getId())
-            ->withTag('catalog:stocks')
-            ->withTag('catalog:stocks:' . $offer->getId())
-            ->withTag('catalog:offer:' . $offer->getId())
-            ->resultOf($getStocks);
-
-        return $data['result'];
-    }
-
-    /**
      * @param array $params
      *
      * @throws ArgumentException
@@ -386,11 +379,11 @@ class StoreService
 
         return $this->getFormatedStoreByCollection(
             [
-                'storeCollection'      => $storeCollection,
+                'storeCollection' => $storeCollection,
                 'returnActiveServices' => $params['returnActiveServices'],
-                'returnSort'           => $params['returnSort'],
-                'sortVal'              => $params['sortVal'],
-                'activeStoreId'        => $params['activeStoreId'],
+                'returnSort' => $params['returnSort'],
+                'sortVal' => $params['sortVal'],
+                'activeStoreId' => $params['activeStoreId'],
             ]
         );
     }
@@ -429,12 +422,12 @@ class StoreService
         /** @var StoreCollection $storeCollection */
         $storeCollection = $params['storeCollection'];
         if (!$storeCollection->isEmpty()) {
-            list($servicesList, $metroList) = $this->getFullStoreInfo($storeCollection);
+            [$servicesList, $metroList] = $this->getFullStoreInfo($storeCollection);
 
             $stockResult = null;
             $storeAmount = 0;
             if ($this->pickupDelivery) {
-                $stockResult = $this->getStockResult($this->pickupDelivery);
+                $stockResult = $this->pickupDelivery->getStockResult();
                 $storeAmount = reset($this->offers)->getStocks()
                     ->filterByStores(
                         $this->getByCurrentLocation(
@@ -487,17 +480,17 @@ class StoreService
                 }
 
                 $item = [
-                    'id'         => $store->getXmlId(),
-                    'addr'       => $address,
-                    'adress'     => $store->getDescription(),
-                    'phone'      => $store->getPhone(),
-                    'schedule'   => $store->getSchedule(),
-                    'photo'      => $imageSrc,
-                    'metro'      => !empty($metro) ? 'м. ' . $metroList[$metro]['UF_NAME'] : '',
+                    'id' => $store->getXmlId(),
+                    'addr' => $address,
+                    'adress' => $store->getDescription(),
+                    'phone' => $store->getPhone(),
+                    'schedule' => $store->getScheduleString(),
+                    'photo' => $imageSrc,
+                    'metro' => !empty($metro) ? 'м. ' . $metroList[$metro]['UF_NAME'] : '',
                     'metroClass' => !empty($metro) ? '--' . $metroList[$metro]['BRANCH']['UF_CLASS'] : '',
-                    'services'   => $services,
-                    'gps_s'      => $gpsN, //revert $gpsS
-                    'gps_n'      => $gpsS, //revert $gpsN
+                    'services' => $services,
+                    'gps_s' => $gpsN, //revert $gpsS
+                    'gps_n' => $gpsS, //revert $gpsN
                 ];
 
                 if ($store->getId() === (int)$params['activeStoreId']) {
@@ -514,10 +507,9 @@ class StoreService
                     $item['amount'] = $amount > 5 ? 'много' : 'мало';
                     $item['pickup'] = DeliveryTimeHelper::showTime(
                         $this->pickupDelivery,
-                        $stockResultByStore->getDeliveryDate(),
                         [
                             'SHOW_TIME' => true,
-                            'SHORT'     => true,
+                            'SHORT' => true,
                         ]
                     );
                 }
@@ -543,6 +535,11 @@ class StoreService
     /**
      * @param int $offerId
      *
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\NotSupportedException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws \Bitrix\Sale\UserMessageException
      * @return StoreCollection
      */
     public function getActiveStoresByProduct(int $offerId): StoreCollection
@@ -553,7 +550,7 @@ class StoreService
         }
 
         try {
-            return $this->getStockResult($pickupDelivery)->getStores();
+            return $pickupDelivery->getStockResult()->getStores();
         } catch (DeliveryNotFoundException $e) {
             return new StoreCollection();
         }
@@ -614,8 +611,8 @@ class StoreService
         $search = $request->get('search');
         if (!empty($search)) {
             $result[] = [
-                'LOGIC'          => 'OR',
-                '%ADDRESS'       => $search,
+                'LOGIC' => 'OR',
+                '%ADDRESS' => $search,
                 '%METRO.UF_NAME' => $search,
             ];
         }
@@ -649,17 +646,6 @@ class StoreService
         return $result;
     }
 
-
-    /**
-     * @param CalculationResult $delivery
-     *
-     * @return bool|StockResultCollection
-     */
-    public function getStockResult(CalculationResult $delivery)
-    {
-        return $this->deliveryService->getStockResultByDelivery($delivery);
-    }
-
     /**
      * @todo Баг при getPickupDelivery
      * @param int $offerId
@@ -678,9 +664,14 @@ class StoreService
     }
 
     /**
-     * @return null|CalculationResult
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\LoaderException
+     * @throws \Bitrix\Main\NotSupportedException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws \Bitrix\Sale\UserMessageException
+     * @return PickupResultInterface|null
      */
-    protected function getPickupDelivery(): ?CalculationResult
+    protected function getPickupDelivery(): ?PickupResultInterface
     {
         if (!$this->pickupDelivery) {
             $deliveries = $this->deliveryService->getByProduct(reset($this->offers));
