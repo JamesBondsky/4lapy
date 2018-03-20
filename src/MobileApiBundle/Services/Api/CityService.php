@@ -36,7 +36,7 @@ class CityService implements LoggerAwareInterface
      * @return City[]|Collection
      * @todo change metro check by metroways
      */
-    public function search(string $query, ?int $limit = 50): Collection
+    public function search(string $query, ?int $limit = null): Collection
     {
         try {
             $locations = $this->locationService->findLocation($query, $limit);

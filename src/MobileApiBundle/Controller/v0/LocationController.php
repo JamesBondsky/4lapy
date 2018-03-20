@@ -57,6 +57,6 @@ class LocationController extends FOSRestController
      */
     public function citySearchAction(CityService $cityService, CitySearchRequest $request): Response
     {
-        return new Response($cityService->search($request->getQuery()));
+        return new Response($cityService->search($request->getQuery(), 50));
     }
 }
