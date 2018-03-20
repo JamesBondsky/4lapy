@@ -101,7 +101,7 @@ class LocationCest
             ],
             [
                 'city_id' => random_bytes(1024),
-                'error'   => 1001,
+                'error'   => 3,
             ],
         ];
     }
