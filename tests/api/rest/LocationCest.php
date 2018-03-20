@@ -42,18 +42,6 @@ class LocationCest
     }
 
     /**
-     * @return array
-     */
-    protected function goodMetroProvider(): array
-    {
-        return [
-            'Moscow' => [
-                'city_id' => '0000073738',
-            ],
-        ];
-    }
-
-    /**
      * @param \ApiTester $apiTester
      * @param Example    $example
      *
@@ -84,31 +72,10 @@ class LocationCest
         ]);
     }
 
-    protected function badMetroProvider(): array
-    {
-        return [
-            [
-                'city_id' => '',
-                'error'   => 3,
-            ],
-            [
-                'city_id' => -123,
-                'error'   => 3,
-            ],
-            [
-                'city_id' => '123123123',
-                'error'   => 44,
-            ],
-            [
-                'city_id' => random_bytes(1024),
-                'error'   => 3,
-            ],
-        ];
-    }
-
     /**
      * @param \ApiTester $apiTester
      * @param Example    $example
+     *
      * @dataprovider validCitySearchProvider
      * @throws \Exception
      */
@@ -124,7 +91,7 @@ class LocationCest
         $apiTester->seeResponseCodeIs(HttpCode::OK);
         $apiTester->seeResponseIsJson();
         $apiTester->seeResponseMatchesJsonType([
-            'data'  => 'array:!empty',
+            'data'  => 'array',
             'error' => 'array:empty',
         ]);
 
@@ -140,32 +107,21 @@ class LocationCest
 
             $apiTester->assertInternalType('boolean', $city['has_metro']);
             $apiTester->assertInternalType('array', $city['path']);
+
             if ($city['path']) {
                 foreach ((array)$city['path'] as $pathItem) {
                     $apiTester->assertInternalType('string', $pathItem);
                     $apiTester->assertNotEmpty($pathItem);
                 }
             }
-        }
-    }
 
-    protected function validCitySearchProvider(): array
-    {
-        return [
-            [
-                'query' => 'мос',
-            ],
-            [
-                'query' => 'Москва',
-            ],
-            [
-                'query' => 'Санкт',
-            ],
-        ];
+            $apiTester->isValidLocationType($city['id'], 3, 6);
+        }
     }
 
     /**
      * @param \ApiTester $apiTester
+     *
      * @throws \Exception
      */
     public function testEmptyCitySearch(\ApiTester $apiTester): void
@@ -194,6 +150,7 @@ class LocationCest
 
     /**
      * @param \ApiTester $apiTester
+     *
      * @throws \Exception
      */
     public function testInvalidCitySearch(\ApiTester $apiTester): void
@@ -211,5 +168,57 @@ class LocationCest
             'data'  => 'array:empty',
             'error' => 'array:empty',
         ]);
+    }
+
+    /**
+     * @return array
+     */
+    protected function goodMetroProvider(): array
+    {
+        return [
+            'Moscow' => [
+                'city_id' => '0000073738',
+            ],
+        ];
+    }
+
+    protected function badMetroProvider(): array
+    {
+        return [
+            [
+                'city_id' => '',
+                'error'   => 3,
+            ],
+            [
+                'city_id' => -123,
+                'error'   => 3,
+            ],
+            [
+                'city_id' => '123123123',
+                'error'   => 44,
+            ],
+            [
+                'city_id' => random_bytes(1024),
+                'error'   => 3,
+            ],
+        ];
+    }
+
+    protected function validCitySearchProvider(): array
+    {
+        return [
+            [
+                'query' => 'мос',
+            ],
+            [
+                'query' => 'Москва',
+            ],
+            [
+                'query' => 'Санкт',
+            ],
+            [
+                'query' => 'Серпуховская',
+            ],
+        ];
     }
 }

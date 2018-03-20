@@ -35,6 +35,47 @@ class Api extends Module
     }
 
     /**
+     * @param string $table
+     * @param array  $criteria
+     *
+     * @throws \Codeception\Exception\ModuleException
+     * @throws \Exception
+     * @return array
+     */
+    public function grabColumnsFromDatabase(string $table, array $criteria = []): array
+    {
+        $query = $this->getDb()->driver->select('*', $table, $criteria);
+        $parameters = array_values($criteria);
+        $this->debugSection('Query', $query);
+        if (!empty($parameters)) {
+            $this->debugSection('Parameters', $parameters);
+        }
+        $sth = $this->getDb()->driver->executeQuery($query, $parameters);
+
+        return $sth->fetch(\PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * @param string $code
+     * @param int    $minTypeId
+     * @param int    $maxTypeId
+     *
+     * @throws \Codeception\Exception\ModuleException
+     */
+    public function isValidLocationType(string $code, int $minTypeId, int $maxTypeId): void
+    {
+        $this->getDb()->seeNumRecords(
+            1,
+            'b_sale_location',
+            [
+                'CODE'       => $code,
+                'TYPE_ID >=' => $minTypeId,
+                'TYPE_ID <=' => $maxTypeId,
+            ]
+        );
+    }
+
+    /**
      * @throws \Codeception\Exception\ModuleException
      */
     protected function setTestsCookies()
@@ -61,25 +102,5 @@ class Api extends Module
     protected function getDb()
     {
         return $this->getModule('Db');
-    }
-
-    /**
-     * @param string $table
-     * @param array $criteria
-     * @throws \Codeception\Exception\ModuleException
-     * @throws \Exception
-     * @return array
-     */
-    public function grabColumnsFromDatabase(string $table, array $criteria = []): array
-    {
-        $query = $this->getDb()->driver->select('*', $table, $criteria);
-        $parameters = array_values($criteria);
-        $this->debugSection('Query', $query);
-        if (!empty($parameters)) {
-            $this->debugSection('Parameters', $parameters);
-        }
-        $sth = $this->getDb()->driver->executeQuery($query, $parameters);
-
-        return $sth->fetch(\PDO::FETCH_ASSOC);
     }
 }
