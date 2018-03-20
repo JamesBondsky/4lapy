@@ -19,7 +19,6 @@ use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException;
 use FourPaws\StoreBundle\Collection\DeliveryScheduleResultCollection;
 use FourPaws\StoreBundle\Collection\StoreCollection;
-use FourPaws\StoreBundle\Entity\DeliverySchedule;
 use FourPaws\StoreBundle\Entity\DeliveryScheduleResult;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
@@ -273,6 +272,42 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     }
 
     /**
+     * @param int $dateIndex
+     *
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
+     * @throws NotFoundException
+     * @throws StoreNotFoundException
+     * @return IntervalCollection
+     */
+    public function getAvailableIntervals(int $dateIndex = 0): IntervalCollection
+    {
+        $result = new IntervalCollection();
+        $date = clone $this->getDeliveryDate();
+        $diff = abs($this->getPeriodTo() - $this->getPeriodFrom());
+        if ($dateIndex < 0 || $dateIndex >= $diff) {
+            return $result;
+        }
+
+        if ($dateIndex > 0) {
+            $date->modify(sprintf('+%s days', $dateIndex));
+        }
+        $date->setTime(0, 0, 0, 0);
+
+        /** @var Interval $interval */
+        foreach ($this->getIntervals() as $interval) {
+            $tmpDelivery = clone $this;
+            $tmpDate = clone $tmpDelivery->setSelectedInterval($interval)->getDeliveryDate();
+            $tmpDate->setTime(0, 0, 0, 0);
+            if ($tmpDate <= $date) {
+                $result->add($interval);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
      * @return int
      */
     public function getFreeFrom(): int
@@ -335,8 +370,8 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
     }
 
     /**
-     * @return Store
      * @throws NotFoundException
+     * @return Store
      */
     public function getSelectedStore(): Store
     {
@@ -589,11 +624,11 @@ abstract class BaseResult extends CalculationResult implements CalculationResult
 
     /**
      * @param bool $internalCall
-     * @return bool
      * @throws ApplicationCreateException
      * @throws ArgumentException
      * @throws NotFoundException
      * @throws StoreNotFoundException
+     * @return bool
      */
     public function isSuccess($internalCall = false)
     {

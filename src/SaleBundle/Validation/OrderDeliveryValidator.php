@@ -44,6 +44,8 @@ class OrderDeliveryValidator extends ConstraintValidator
      * @throws DeliveryNotFoundException
      * @throws NotFoundException
      * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\NotSupportedException
      * @throws \FourPaws\App\Exceptions\ApplicationCreateException
      */
     public function validate($entity, Constraint $constraint)
@@ -98,7 +100,7 @@ class OrderDeliveryValidator extends ConstraintValidator
             }
 
             $intervalIndex = $entity->getDeliveryInterval();
-            $intervals = $delivery->getIntervals();
+            $intervals = $delivery->getAvailableIntervals($dateIndex);
             if (!empty($intervals)) {
                 if (($intervalIndex < 1) || $intervalIndex > $intervals->count()) {
                     $this->context->addViolation($constraint->deliveryIntervalMessage);

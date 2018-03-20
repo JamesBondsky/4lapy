@@ -26,10 +26,6 @@ class DeliveryResult extends BaseResult
         /** @var IntervalService $intervalService */
         $intervalService = Application::getInstance()->getContainer()->get(IntervalService::class);
 
-        if ($this->stockResult && !$this->stockResult->getDelayed()->isEmpty()) {
-            return;
-        }
-
         /**
          * Если интервал не выбран, подбираем наиболее подходящий (с минимальной датой доставки)
          */
