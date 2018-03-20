@@ -33,7 +33,7 @@ class FourPawsSapExtension extends ConfigurableExtension
      *
      * @throws \Exception
      */
-    protected function loadInternal(array $mergedConfig, ContainerBuilder $container)
+    protected function loadInternal(array $mergedConfig, ContainerBuilder $container): void
     {
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
         $loader->load('services.yml');
@@ -45,11 +45,17 @@ class FourPawsSapExtension extends ConfigurableExtension
         $this->configOrderService($mergedConfig['out'], $container);
     }
 
+    /**
+     * @param ContainerBuilder $container
+     */
     protected function registerConsumerTags(ContainerBuilder $container)
     {
         $container->registerForAutoconfiguration(ConsumerInterface::class)->addTag('sap.consumer');
     }
 
+    /**
+     * @param ContainerBuilder $container
+     */
     protected function registerSourceTags(ContainerBuilder $container)
     {
         $container->registerForAutoconfiguration(SourceInterface::class)->addTag('sap.source');
@@ -106,6 +112,9 @@ class FourPawsSapExtension extends ConfigurableExtension
     {
         $allSources = $container->findTaggedServiceIds('sap.source');
 
+        /**
+         * @var array $pipeline
+         */
         foreach ($pipelines as $name => $pipeline) {
             $definition =
                 $container->register('sap.pipeline.' . $name)
@@ -113,12 +122,12 @@ class FourPawsSapExtension extends ConfigurableExtension
                     ->addTag('sap.pipeline', ['name' => $name]);
 
             foreach ($pipeline as $pipelineSource) {
-                $source = array_filter(
+                $source = \array_filter(
                     $allSources,
                     function ($value) use ($pipelineSource) {
                         return $pipelineSource === $value[0]['type'];
                     },
-                    ARRAY_FILTER_USE_BOTH
+                    \ARRAY_FILTER_USE_BOTH
                 );
 
                 if (\is_array($source)) {

@@ -16,11 +16,7 @@ use FourPaws\Search\Model\ProductSearchResult;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Templating\PhpEngine;
 
-global $APPLICATION;
-
-$APPLICATION->AddChainItem('Каталог', '/catalog/');
-
-?>
+global $APPLICATION; ?>
 <div class="b-container">
     <div class="b-catalog__wrapper-title b-catalog__wrapper-title--filter">
         <h1 class="b-title b-title--h1 b-title--search"><?= $catalogRequest->getCategory()->getName() ?></h1>
