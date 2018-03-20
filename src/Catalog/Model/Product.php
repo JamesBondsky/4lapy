@@ -6,6 +6,9 @@
 
 namespace FourPaws\Catalog\Model;
 
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectNotFoundException;
 use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -1817,17 +1820,21 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
 
         return $result;
     }
-    
+
     /**
      * @internal Специально для Elasitcsearch храним коллецию без ключей, т.к. ассоциативный массив с торговыми
      * предложениями туда передавать нельзя: это будет объект, а не массив объектов.
      *
-     * @return Collection|Offer[]
+     * @param bool $skipZeroPrice
+     * @return Collection
+     * @throws LoaderException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
      */
-    public function getOffers(): Collection
+    public function getOffers($skipZeroPrice = true): Collection
     {
         if (null === $this->offers) {
-            $this->offers = new ArrayCollection(
+            $offers = new ArrayCollection(
                 array_values(
                     (new OfferQuery())->withFilterParameter('=PROPERTY_CML2_LINK', $this->getId())
                         ->withOrder(['CATALOG_WEIGHT' => 'ASC'])
@@ -1839,7 +1846,11 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
             /**
              * @var Offer $offer
              */
-            foreach ($this->offers as $offer) {
+            foreach ($offers as $i => $offer) {
+                if ($skipZeroPrice && !$offer->getPrice()) {
+                    unset($offers[$i]);
+                    continue;
+                }
                 try {
                     $offer->setProduct($this);
                 } catch (\InvalidArgumentException $e) {
@@ -1848,6 +1859,8 @@ class Product extends IblockElement implements HitMetaInfoAwareInterface
                      */
                 }
             }
+
+            $this->offers = $offers;
         }
 
         return $this->offers;
