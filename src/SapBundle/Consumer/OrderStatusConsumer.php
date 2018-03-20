@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Consumer;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
@@ -46,8 +50,8 @@ class OrderStatusConsumer implements ConsumerInterface, LoggerAwareInterface
      *
      * @param $order
      *
-     * @return bool
      * @throws RuntimeException
+     * @return bool
      */
     public function consume($order): bool
     {

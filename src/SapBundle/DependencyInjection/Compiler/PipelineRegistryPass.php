@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\DependencyInjection\Compiler;
 
 use FourPaws\SapBundle\Pipeline\PipelineRegistry;
@@ -20,11 +24,13 @@ class PipelineRegistryPass implements CompilerPassInterface
         $taggedServices = $container->findTaggedServiceIds('sap.pipeline');
         
         foreach ($taggedServices as $id => $tags) {
-            $registry->addMethodCall('register',
+            $registry->addMethodCall(
+                'register',
                                      [
                                          $tags[0]['name'],
                                          new Reference($id),
-                                     ]);
+                                     ]
+            );
         }
     }
 }

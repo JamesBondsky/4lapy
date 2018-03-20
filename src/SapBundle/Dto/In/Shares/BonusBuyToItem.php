@@ -1,9 +1,12 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Dto\In\Shares;
 
 use JMS\Serializer\Annotation as Serializer;
-
 
 /**
  * Class BonusBuyToItem

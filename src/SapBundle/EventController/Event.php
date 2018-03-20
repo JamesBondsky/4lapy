@@ -123,9 +123,9 @@ class Event implements ServiceHandlerInterface
     }
 
     /**
+     * @throws ApplicationCreateException
      * @return ConsumerRegistry
      *
-     * @throws ApplicationCreateException
      */
     public static function getConsumerRegistry(): ConsumerRegistry
     {

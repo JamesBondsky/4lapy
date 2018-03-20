@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Service\DeliverySchedule;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
@@ -55,9 +59,9 @@ class DeliveryScheduleService implements LoggerAwareInterface
     /**
      * @param DeliverySchedule $schedule
      *
+     * @throws NotFoundScheduleException
      * @return DeliveryScheduleEntity
      *
-     * @throws NotFoundScheduleException
      */
     public function findSchedule(DeliverySchedule $schedule): DeliveryScheduleEntity
     {
@@ -101,10 +105,10 @@ class DeliveryScheduleService implements LoggerAwareInterface
     /**
      * @param DeliverySchedule $schedule
      *
-     * @return bool
-     *
      * @throws RuntimeException
      * @throws Exception
+     * @return bool
+     *
      */
     public function tryDeleteSchedule(DeliverySchedule $schedule): bool
     {

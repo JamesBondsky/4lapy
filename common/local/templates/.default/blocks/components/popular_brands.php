@@ -8,12 +8,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
-/**
- * Блок "Популярные бренды" в каталоге
- *
- * @updated: 09.02.2018
- */
-
 /** @global $APPLICATION */
 /** @var array $arParams */
 
@@ -35,7 +29,8 @@ if (isset($arParams['categoryRequest'])) {
                 return $collectionItem instanceof \FourPaws\Catalog\Model\Filter\BrandFilter;
             }
         )->first();
-        if ($brandFilter->hasAvailableVariants()) {
+
+        if ($brandFilter && $brandFilter->hasAvailableVariants()) {
             $isFilterSet = true;
             $GLOBALS['arCatalogPopularBrandsFilterExt']['=CODE'] = [];
             foreach ($brandFilter->getAvailableVariants() as $item) {

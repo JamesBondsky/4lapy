@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Service\Orders;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
@@ -53,8 +57,7 @@ class PaymentService implements LoggerAwareInterface, SapOutInterface
         OrderService $orderService,
         SerializerInterface $serializer,
         Filesystem $filesystem
-    )
-    {
+    ) {
         $this->orderService = $orderService;
         $this->serializer = $serializer;
         $this->filesystem = $filesystem;

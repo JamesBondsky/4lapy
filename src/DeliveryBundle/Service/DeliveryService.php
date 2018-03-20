@@ -216,12 +216,17 @@ class DeliveryService implements LoggerAwareInterface
                 $name = $service->getName();
             }
             $service->getCode();
+            /**
+             * todo раскомментировать строчки, выключающие постобработку кастомных акций, либо расчитывать как-то по-другому
+             */
+            //\FourPaws\SaleBundle\Discount\Utils\Manager::disableProcessingFinalAction();
             $shipment->setFields(
                 [
                     'DELIVERY_ID' => $service->getId(),
                     'DELIVERY_NAME' => $name,
                 ]
             );
+            //\FourPaws\SaleBundle\Discount\Utils\Manager::enableProcessingFinalAction();
             $calculationResult = $shipment->calculateDelivery();
             $from = $from ?? new \DateTime();
 

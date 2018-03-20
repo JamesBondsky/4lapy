@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Service\Shares;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
@@ -34,7 +38,6 @@ class SharesService implements LoggerAwareInterface
 
     public function delete()
     {
-
     }
 
     /**

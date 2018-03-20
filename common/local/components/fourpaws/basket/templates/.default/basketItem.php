@@ -8,6 +8,15 @@ use Bitrix\Sale\BasketItem;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
+/** у отделнных скидками строчек нет айди, поэтому берем айди той строчки от которой отделили */
+if (!$basketItemId = $basketItem->getId()) {
+    if (
+        ($propertyValues = $basketItem->getPropertyCollection()->getPropertyValues())
+        && isset($propertyValues['DETACH_FROM'])
+    ) {
+        $basketItemId = (int)$propertyValues['DETACH_FROM']['VALUE'];
+    }
+}
 
 $image = $component->getImage($basketItem->getProductId());
 $offer = $component->getOffer((int)$basketItem->getProductId());
@@ -77,7 +86,7 @@ $useOffer = $offer instanceof Offer && $offer->getId() > 0; ?>
                        value="<?= WordHelper::numberFormat($basketItem->getQuantity(), 0) ?>"
                        data-one-price="<?= $basketItem->getPrice() ?>"
                        data-cont-max="<?= $maxQuantity ?>"
-                       data-basketid="<?= $basketItem->getId(); ?>" type="text"/>
+                       data-basketid="<?= $basketItemId; ?>" type="text"/>
 
                 <a class="b-plus-minus__plus js-plus" data-url="/ajax/sale/basket/update/"
                    href="javascript:void(0);"></a>
@@ -115,7 +124,7 @@ $useOffer = $offer instanceof Offer && $offer->getId() > 0; ?>
             </div>
         <?php } ?>
         <a class="b-item-shopping__delete js-cart-delete-item" href="javascript:void(0);" title=""
-           data-url="/ajax/sale/basket/delete/" data-basketId="<?= $basketItem->getId(); ?>">
+           data-url="/ajax/sale/basket/delete/" data-basketId="<?= $basketItemId; ?>">
         <span class="b-icon b-icon--delete b-icon--shopping">
             <?= new SvgDecorator('icon-delete-cart-product', 12, 14); ?>
         </span>

@@ -1,10 +1,13 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\SapBundle\Dto\In\Shares;
 
 use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
-
 
 /**
  * Class BonusBuyFrom
@@ -56,7 +59,7 @@ class BonusBuyFrom
      * @Serializer\Type("ArrayCollection<FourPaws\SapBundle\Dto\In\Shares\BonusBuyFromItem>")
      * @Serializer\SerializedName("PURCHASE_ITEM")
      *
-     * @var Collection|BonusBuyFromItem[]
+     * @var BonusBuyFromItem[]|Collection
      */
     protected $bonusBuyFromItems;
 
@@ -121,7 +124,7 @@ class BonusBuyFrom
     }
 
     /**
-     * @return Collection|BonusBuyFromItem[]
+     * @return BonusBuyFromItem[]|Collection
      */
     public function getBonusBuyFromItems(): Collection
     {
@@ -139,7 +142,8 @@ class BonusBuyFrom
      *
      * @return int
      */
-    public function getGroupQuantity(): int {
+    public function getGroupQuantity(): int
+    {
         $item = $this->bonusBuyFromItems->filter(function ($key, $item) {
             /**
              * @var $item BonusBuyFromItem
@@ -154,7 +158,7 @@ class BonusBuyFrom
     }
 
     /**
-     * @param Collection|BonusBuyFromItem[] $bonusBuyFromItems
+     * @param BonusBuyFromItem[]|Collection $bonusBuyFromItems
      *
      * @return BonusBuyFrom
      */
