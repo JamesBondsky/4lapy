@@ -48,13 +48,22 @@ class WordHelper
     }
 
     /**
-         * @param     $number
-         * @param int $decimals
-         *
-         * @return string
-         */
-        public static function numberFormat($number, int $decimals = 2): string
-        {
-            return number_format($number, $decimals, '.', ' ');
-        }
+     * @param     $number
+     * @param int $decimals
+     *
+     * @return string
+     */
+    public static function numberFormat($number, int $decimals = 2): string
+    {
+        return number_format($number, $decimals, '.', ' ');
     }
+
+    /**
+     * @param $string
+     * @return mixed
+     */
+    public static function clear($string)
+    {
+        return str_replace(["\r", PHP_EOL], '', strip_tags(html_entity_decode($string)));
+    }
+}
