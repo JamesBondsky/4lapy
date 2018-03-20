@@ -82,7 +82,7 @@ class Event implements ServiceHandlerInterface
             /**
              * ...и оплата не онлайн, отправляем в SAP
              */
-            if (in_array(SapOrder::PAYMENT_SYSTEM_ONLINE_ID, $order->getPaymentSystemId(), false)) {
+            if (\in_array(SapOrder::PAYMENT_SYSTEM_ONLINE_ID, $order->getPaymentSystemId(), false)) {
                 return;
             }
 
@@ -116,7 +116,6 @@ class Event implements ServiceHandlerInterface
              *
              * @var ConsumerRegistry $consumerRegistry
              */
-
             $order = Order::load($payment->getOrderId());
             self::getConsumerRegistry()->consume($order);
         }
@@ -132,6 +131,7 @@ class Event implements ServiceHandlerInterface
         try {
             return Application::getInstance()->getContainer()->get(ConsumerRegistry::class);
         } catch (ServiceNotFoundException | ServiceCircularReferenceException $e) {
+            /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
             return new ConsumerRegistry();
         }
     }

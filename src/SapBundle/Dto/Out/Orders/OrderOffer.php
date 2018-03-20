@@ -103,12 +103,13 @@ class OrderOffer
      * Начислять ли бонусы по позиции товара
      *
      * @Serializer\XmlAttribute()
-     * @Serializer\Type("bool")
+     * @Serializer\Type("int")
      * @Serializer\SerializedName("signcharge")
      *
      * @var bool
      */
-    protected $chargeBonus = false;
+    protected $chargeBonus = 0;
+
     /**
      * @return int
      */
@@ -247,7 +248,7 @@ class OrderOffer
      */
     public function isChargeBonus(): bool
     {
-        return $this->chargeBonus;
+        return $this->chargeBonus === 1;
     }
     
     /**
@@ -257,7 +258,8 @@ class OrderOffer
      */
     public function setChargeBonus(bool $chargeBonus): OrderOffer
     {
-        $this->chargeBonus = $chargeBonus;
+        $this->chargeBonus = $chargeBonus === true ? 1 : 0;
+
         return $this;
     }
 }
