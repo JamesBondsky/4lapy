@@ -17,6 +17,8 @@ require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
 
 global $APPLICATION;
 
+$APPLICATION->AddChainItem('Каталог', '/catalog/');
+
 $offerId = $productDetailRequest->getOfferId();
 /** @var Product $product */
 $product = $APPLICATION->IncludeComponent(
@@ -88,7 +90,7 @@ if (!($offer instanceof Offer)) {
                 /**
                  * @todo implement and remove
                  */
-                include 'tmp_action_set.html.php';
+                include  __DIR__ . 'tmp_action_set.html.php';
                 ?>
             </div>
             <div class="b-product-card__tab">
