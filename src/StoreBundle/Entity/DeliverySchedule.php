@@ -305,7 +305,7 @@ class DeliverySchedule extends Base
      */
     public function getType(): string
     {
-        return $this->type;
+        return $this->type ?? '';
     }
 
     /**
@@ -631,7 +631,7 @@ class DeliverySchedule extends Base
      */
     public function serialize(): string
     {
-        return serialize([
+        return \serialize([
             $this->id,
             $this->name,
             $this->xmlId,
