@@ -158,6 +158,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      * @throws NotFoundOrderPaySystemException
      * @throws NotFoundOrderShipmentException
      * @throws NotFoundOrderUserException
+     * @throws Exception
      */
     public function out(Order $order)
     {
@@ -174,6 +175,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
      * @throws ObjectNotFoundException
      * @throws NotFoundOrderUserException
      * @return SourceMessage
+     * @throws Exception
      */
     public function transformOrderToMessage(Order $order): SourceMessage
     {
@@ -186,11 +188,13 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         }
 
         if (null === $orderUser) {
-            throw new NotFoundOrderUserException(sprintf(
-                'Пользователь с id %s не найден, заказ #%s',
-                $order->getUserId(),
-                $order->getId()
-            ));
+            throw new NotFoundOrderUserException(
+                \sprintf(
+                    'Пользователь с id %s не найден, заказ #%s',
+                    $order->getUserId(),
+                    $order->getId()
+                )
+            );
         }
 
         /**
@@ -206,7 +210,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         $orderDto
             ->setId($order->getId())
             ->setDateInsert(DateHelper::convertToDateTime($order->getDateInsert()->toUserTime()))
-            ->setClientId($order->getId())
+            ->setClientId($order->getUserId())
             ->setClientFio($this->getPropertyValueByCode($order, 'NAME'))
             ->setClientPhone($this->getPropertyValueByCode($order, 'PHONE'))
             ->setClientOrderPhone($this->getPropertyValueByCode($order, 'PHONE_ALT'))
@@ -251,10 +255,12 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         $order = Order::load($orderDto->getId());
 
         if (null === $order) {
-            throw new NotFoundOrderException(sprintf(
-                'Заказ #%s не найден',
-                $orderDto->getId()
-            ));
+            throw new NotFoundOrderException(
+                \sprintf(
+                    'Заказ #%s не найден',
+                    $orderDto->getId()
+                )
+            );
         }
 
         $this->setPropertiesFromDto($order, $orderDto);
@@ -274,7 +280,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     public function getMessageId(Order $order): string
     {
         if (null === $this->messageId) {
-            $this->messageId = sprintf('order_%s_%s', $order->getId(), time());
+            $this->messageId = \sprintf('order_%s_%s', $order->getId(), \time());
         }
 
         return $this->messageId;
@@ -370,18 +376,19 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
 
     /**
      * @param OrderDtoOut $orderDto
-     * @param Order       $order
+     * @param Order $order
      *
      * @throws NotFoundOrderShipmentException
      * @throws NotFoundOrderDeliveryException
+     * @throws Exception
      */
     private function populateOrderDtoDelivery(OrderDtoOut $orderDto, Order $order): void
     {
         $deliveryTypeCode = $this->getDeliveryTypeCode($order);
         $contractorDeliveryTypeCode = '';
 
-        if (strpos($deliveryTypeCode, '_')) {
-            [$deliveryTypeCode, $contractorDeliveryTypeCode] = explode('_', $deliveryTypeCode);
+        if (\strpos($deliveryTypeCode, '_')) {
+            [$deliveryTypeCode, $contractorDeliveryTypeCode] = \explode('_', $deliveryTypeCode);
         }
 
         $deliveryPoint = '';
@@ -438,9 +445,9 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
         foreach ($order->getBasket() as $basketItem) {
             $xmlId = $basketItem->getField('PRODUCT_XML_ID');
 
-            if (strpos($xmlId, '#')) {
+            if (\strpos($xmlId, '#')) {
                 /** @noinspection ShortListSyntaxCanBeUsedInspection */
-                list(, $xmlId) = explode('#', $xmlId);
+                list(, $xmlId) = \explode('#', $xmlId);
             }
 
             $offer = (new OrderOffer())
@@ -464,16 +471,17 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
     }
 
     /**
-     * @param Order  $order
+     * @param Order $order
      * @param string $point
      *
      * @return DeliveryAddress|OutDeliveryAddress
+     * @throws Exception
      */
     private function getDeliveryAddress(Order $order, string $point = '')
     {
         $city = $this->getPropertyValueByCode($order, 'CITY_CODE');
         $regionCode = $this->locationService->getRegionCode($city);
-        $regionCode = preg_match('~\D~', '', $regionCode);
+        $regionCode = \preg_match('~\D~', '', $regionCode);
 
         return (new OutDeliveryAddress())
             ->setRegionCode($regionCode)
@@ -507,7 +515,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
 
         if (null === $shipment) {
             throw new NotFoundOrderShipmentException(
-                sprintf(
+                \sprintf(
                     'Отгрузка для заказа #%s не найдена',
                     $order->getId()
                 )
@@ -801,7 +809,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
             $result = CatalogBasket::addProductToBasket($basket, $fields, $context);
 
             if (!$result->isSuccess()) {
-                throw new CantCreateBasketItem(implode(', ', $result->getErrorMessages()));
+                throw new CantCreateBasketItem(\implode(', ', $result->getErrorMessages()));
             }
         } catch (CantCreateBasketItem | LoaderException | ObjectNotFoundException $e) {
             $this->log()->error(
@@ -830,7 +838,7 @@ class OrderService implements LoggerAwareInterface, SapOutInterface
 
         if (null === $shipment) {
             throw new NotFoundOrderShipmentException(
-                sprintf(
+                \sprintf(
                     'Отгрузка для заказа #%s не найдена',
                     $order->getId()
                 )

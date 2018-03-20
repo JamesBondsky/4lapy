@@ -20,6 +20,7 @@ use FourPaws\DeliveryBundle\Entity\StockResult;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundException;
 use FourPaws\DeliveryBundle\Helpers\DeliveryTimeHelper;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\Helpers\WordHelper;
 use FourPaws\LocationBundle\LocationService;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
@@ -450,7 +451,6 @@ class StoreService implements LoggerAwareInterface
             $haveMetro = false;
             foreach ($storeCollection as $store) {
                 $metro = $store->getMetro();
-                $address = $store->getAddress();
 
                 if (!empty($metro) && !$haveMetro) {
                     $haveMetro = true;
@@ -481,8 +481,8 @@ class StoreService implements LoggerAwareInterface
 
                 $item = [
                     'id' => $store->getXmlId(),
-                    'addr' => $address,
-                    'adress' => $store->getDescription(),
+                    'addr' => $store->getAddress(),
+                    'adress' => WordHelper::clear($store->getDescription()),
                     'phone' => $store->getPhone(),
                     'schedule' => $store->getScheduleString(),
                     'photo' => $imageSrc,

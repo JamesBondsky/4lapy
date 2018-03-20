@@ -82,11 +82,11 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
             'SELECT_CONTROL' => 'Выбрать условие'
         ];
         $description['control'] = [
-            'blah-blah',
+            'Предоставить скидку',
             $arAtoms['Value'],
-            '% blah-blah',
+            '% результаты фильтрации',
             $arAtoms['Filtration_operator'],
-            'blah-blah',
+            'количество применений',
             $arAtoms['Count_operator'],
         ];
 
@@ -228,7 +228,6 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
 
     public static function Generate($arOneCondition, $arParams, $arControl, $arSubs = false): string
     {
-        //dump($arOneCondition, $arParams, $arControl, $arSubs);
         $result = '';
         if (
             /**
@@ -243,7 +242,26 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
             $result .= static::class . '::apply(' . $arParams['ORDER'] . ', ';
             $result .= var_export($arOneCondition['Value'], true) . ',$applyCount);' . PHP_EOL;
             $result .= $arParams['ORDER'] . ' = $originalOrder;' . PHP_EOL;
+        } elseif (
+            $arOneCondition['Filtration_operator'] === 'separate'
+            && $arOneCondition['Count_operator'] === 'min'
+            && \is_array($arSubs) && \count($arSubs) > 1
+        ) {
+            $result = '$counts = []; $i = 0; $originalOrder = ' . $arParams['ORDER'] . ';' . PHP_EOL;
+            foreach ($arSubs as $sub) {
+                $result .= '$counts[$i][\'cnt\'] = ' . $sub . PHP_EOL;
+                $result .= '$counts[$i++][\'res\'] = ' . $arParams['ORDER'] . ';' . PHP_EOL;
+                $result .= $arParams['ORDER'] . ' = $originalOrder;' . PHP_EOL;
+            }
+            $result .= '$applyCount = min(array_column($counts, \'cnt\'));' . PHP_EOL;
+            $result .= 'foreach($counts as $k => $elem) {' . PHP_EOL;
+            $result .= '    ' . $arParams['ORDER'] . ' = $elem[\'res\'];' . PHP_EOL;
+            $result .= '    ' . static::class . '::apply(' . $arParams['ORDER'] . ', ';
+            $result .= var_export($arOneCondition['Value'], true) . ', $applyCount);' . PHP_EOL;
+            $result .= '}' . PHP_EOL;
+            $result .= $arParams['ORDER'] . ' = $originalOrder;' . PHP_EOL;
         }
+
         return $result;
     }
 
@@ -257,9 +275,10 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
      */
     public static function apply(array $order, float $discountValue, int $applyCount)
     {
+
         $applyBasket = null;
         $actionDescription = null;
-        if (!empty($order['BASKET_ITEMS']) and \is_array($order['BASKET_ITEMS'])) {
+        if (!empty($order['BASKET_ITEMS']) && \is_array($order['BASKET_ITEMS']) && $applyCount > 0) {
 
             $actionDescription = [
                 'ACTION_TYPE' => OrderDiscountManager::DESCR_TYPE_SIMPLE,
@@ -297,7 +316,7 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
                 'BASKET_CODE' => $basketRow['ID'],
             ];
             Actions::setActionResult(Actions::RESULT_ENTITY_BASKET, $rowActionDescription);
-            if($applyCount < 1) {
+            if ($applyCount < 1) {
                 break;
             }
         }

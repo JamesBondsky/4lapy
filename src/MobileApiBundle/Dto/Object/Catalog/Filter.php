@@ -1,7 +1,13 @@
 <?php
 
+/*
+ * @copyright Copyright (c) ADV/web-engineering co
+ */
+
 namespace FourPaws\MobileApiBundle\Dto\Object\Catalog;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 
 class Filter
@@ -27,10 +33,10 @@ class Filter
     /**
      * @Serializer\Groups(groups={"response"})
      * @Serializer\SerializedName("values")
-     * @Serializer\Type("array")
-     * @var array
+     * @Serializer\Type("ArrayCollection<FourPaws\MobileApiBundle\Dto\Object\Catalog\FilterVariant>")
+     * @var Collection|string[]
      */
-    protected $values = [];
+    protected $values;
 
     /**
      * Примененное значение
@@ -57,6 +63,11 @@ class Filter
      * @var int
      */
     protected $max = 0;
+
+    public function __construct()
+    {
+        $this->values = new ArrayCollection();
+    }
 
     /**
      * @return string
@@ -154,19 +165,19 @@ class Filter
     }
 
     /**
-     * @return array
+     * @return Collection
      */
-    public function getValues(): array
+    public function getValues(): Collection
     {
         return $this->values;
     }
 
     /**
-     * @param array $values
+     * @param Collection $values
      *
      * @return Filter
      */
-    public function setValues(array $values): Filter
+    public function setValues(Collection $values): Filter
     {
         $this->values = $values;
         return $this;
