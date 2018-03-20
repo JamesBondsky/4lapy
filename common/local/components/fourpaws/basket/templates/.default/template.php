@@ -27,7 +27,7 @@ $userAccount = $arResult['USER_ACCOUNT'];
 
 /** @var Basket $basket */
 $basket = $arResult['BASKET'];
-$orderableBasket = $basket->getOrderableItems();
+$orderableItems = $basket->getOrderableItems();
 
 /** @var ArrayCollection $notAlowedItems */
 $notAlowedItems = $arResult['NOT_ALOWED_ITEMS'];
@@ -45,7 +45,7 @@ if (!isset($arParams['IS_AJAX']) || $arParams['IS_AJAX'] !== true) {
     </div>
     <?php
 }
-if($arParams['IS_AJAX']) {
+if ($arParams['IS_AJAX']) {
     $user_discount = $component->getCurrentUserService()->getDiscount();
 }
 ?>
@@ -63,7 +63,8 @@ if($arParams['IS_AJAX']) {
                     foreach ($arResult['POSSIBLE_GIFT_GROUPS'] as $group) {
                         $group = current($group);
                         $disableClass = '';
-                        if (1 > $component->basketService->getAdder()->getExistGiftsQuantity($group, false)) {
+                        /** @noinspection PhpUndefinedMethodInspection */
+                        if (1 > $component->basketService->getAdder('gift')->getExistGiftsQuantity($group, false)) {
                             $disableClass = ' b-link-gift--disabled';
                         }
                         ?>
@@ -146,12 +147,12 @@ if($arParams['IS_AJAX']) {
                 </section>
                 <?php
             }
-            if (!$orderableBasket->isEmpty()) { ?>
+            if (!$orderableItems->isEmpty()) { ?>
                 <section class="b-stock b-stock--shopping-cart b-stock--shopping-product js-section-remove-stock">
                     <h3 class="b-title b-title--h2-cart b-title--shopping-product">Ваш заказ</h3>
                     <?php
                     /** @var BasketItem $basketItem */
-                    foreach ($orderableBasket as $basketItem) {
+                    foreach ($orderableItems as $basketItem) {
                         if (isset($basketItem->getPropertyCollection()->getPropertyValues()['IS_GIFT'])) {
                             continue;
                         }
@@ -160,7 +161,7 @@ if($arParams['IS_AJAX']) {
                     ?>
                 </section>
             <?php }
-            if (!$notAlowedItems->isEmpty()) { ?>
+            if ($notAlowedItems instanceof ArrayCollection && !$notAlowedItems->isEmpty()) { ?>
                 <section class="b-stock b-stock--shopping-cart b-stock--shopping-product js-section-remove-stock">
                     <h3 class="b-title b-title--h2-cart b-title--shopping-product">Под заказ</h3>
                     <?php foreach ($notAlowedItems as $basketItem) {
@@ -287,7 +288,7 @@ if($arParams['IS_AJAX']) {
          * Выгодная покупка
          */
         $productsIds = [];
-        foreach ($orderableBasket as $basketItem) {
+        foreach ($orderableItems as $basketItem) {
             $pId = (int)$basketItem->getProductId();
             $productInfo = CCatalogSku::GetProductInfo($pId);
             if ($productInfo) {

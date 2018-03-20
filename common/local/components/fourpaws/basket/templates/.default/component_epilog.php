@@ -1,7 +1,7 @@
 <?php
-
 use FourPaws\Catalog\Model\Offer;
-use FourPaws\Helpers\WordHelper;
+use FourPaws\Components\BasketComponent;
+/** @global BasketComponent $component */
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
@@ -12,7 +12,7 @@ if ($arParams['IS_AJAX']) {
 }
 $offers = $templateData['OFFERS'];
 if(\is_array($offers) && !empty($offers)){
-    $discount = $component->getCurrentUserService()->getDiscount();
+    $userDiscount = $component->getCurrentUserService()->getDiscount();
     foreach ($offers as $key => $offer) {
         if(!($offer instanceof Offer)){
             if(\is_array($offer) && !empty($offer)){
@@ -29,20 +29,8 @@ if(\is_array($offers) && !empty($offers)){
         $id = $explode[0];
         $quantity=(int)$explode[1];
         /** @var Offer $offer */
-        try {
-            $bonuses = $offer->getBonuses($discount, $quantity);
-        } catch (\Exception $e) {
-            $bonuses = 0;
-        }
-        if($bonuses > 0){
-            $bonuses = round($bonuses, 2, PHP_ROUND_HALF_DOWN);
-            $ost = $bonuses - floor($bonuses) * 100;
-            $bonus = '+'.$bonuses.' '.WordHelper::declension($ost > 0 ? $ost : floor($bonuses),
-                    [
-                        'бонус',
-                        'бонуса',
-                        'бонусов',
-                    ])?>
+        $bonus = $offer->getBonusFormattedText($userDiscount, $quantity);
+        if(!empty($bonus)){?>
             <script type="text/javascript">
                 $(function(){
                     $('.js-bonus-<?=$offer->getId()?>').html('<?=$bonus?>');

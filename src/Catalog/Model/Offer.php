@@ -30,7 +30,9 @@ use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\BitrixOrm\Query\CatalogProductQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\Helpers\WordHelper;
 use FourPaws\StoreBundle\Collection\StockCollection;
+use FourPaws\StoreBundle\Service\StockService;
 use FourPaws\StoreBundle\Service\StoreService;
 use InvalidArgumentException;
 use JMS\Serializer\Annotation as Serializer;
@@ -233,11 +235,6 @@ class Offer extends IblockElement
     protected $PROPERTY_OLD_URL = '';
 
     /**
-     * @var int
-     */
-    protected $PROPERTY_BY_REQUEST = 0;
-
-    /**
      * Цена по акции - простая акция из SAP
      *
      * @var float
@@ -268,6 +265,11 @@ class Offer extends IblockElement
      * @var float
      */
     protected $oldPrice = 0;
+
+    /**
+     * @var bool
+     */
+    protected $isByRequest;
 
     /**
      * @Type("string")
@@ -337,6 +339,11 @@ class Offer extends IblockElement
      * @var StockCollection
      */
     protected $stocks;
+
+    /**
+     * @var StockCollection
+     */
+    protected $allStocks;
 
     /**
      * @var bool
@@ -825,15 +832,23 @@ class Offer extends IblockElement
 
     /**
      * @return bool
+     * @throws ApplicationCreateException
      */
     public function isByRequest(): bool
     {
-        return (bool)$this->PROPERTY_BY_REQUEST;
+        if (null === $this->isByRequest) {
+            /** @var StoreService $storeService */
+            $storeService = Application::getInstance()->getContainer()->get('store.service');
+            $stores = $storeService->getSupplierStores();
+            $this->isByRequest = !$this->getAllStocks()->filterByStores($stores)->isEmpty();
+        }
+
+        return $this->isByRequest;
     }
 
     public function withByRequest(bool $byRequest)
     {
-        $this->PROPERTY_BY_REQUEST = $byRequest;
+        $this->isByRequest = $byRequest;
 
         return $this;
     }
@@ -940,60 +955,8 @@ class Offer extends IblockElement
     }
 
     /**
-     * Check and set optimal price, discount, old price with bitrix discount
-     *
-     * @throws LoaderException
-     * @throws NotSupportedException
-     * @throws ObjectNotFoundException
-     */
-    protected function checkOptimalPrice(): void
-    {
-        if ($this->isCounted) {
-            return;
-        }
-
-        global $USER;
-
-        static $order;
-        if (null === $order) {
-            $order = Order::create(SITE_ID);
-        }
-        $shipmentCollection = $order->getShipmentCollection();
-        foreach ($shipmentCollection as $i => $shipment) {
-            unset($shipmentCollection[$i]);
-        }
-        /** @var Basket $basket */
-        $basket = Basket::create(SITE_ID);
-        $basket->setFUserId((int)Fuser::getId());
-        $fields = [
-            'PRODUCT_ID' => $this->getId(),
-            'QUANTITY' => 1,
-            'MODULE' => 'catalog',
-            'PRODUCT_PROVIDER_CLASS' => CatalogProvider::class,
-        ];
-
-        BitrixBasket::addProductToBasket($basket, $fields, ['USER_ID' => $USER->GetID()]);
-
-        $order->setBasket($basket);
-        /** @var \Bitrix\Sale\BasketItem $basketItem */
-        foreach ($basket->getBasketItems() as $basketItem) {
-            if (
-                (int)$basketItem->getProductId() === $this->getId()
-                &&
-                $discountPercent = round(100 * ($basketItem->getDiscountPrice() / $basketItem->getBasePrice()))
-            ) {
-                $this
-                    ->withDiscount($discountPercent)
-                    ->withOldPrice($basketItem->getBasePrice())
-                    ->withPrice($basketItem->getPrice());
-            }
-        }
-
-        $this->isCounted = true;
-    }
-
-    /**
      * размер скидки в процентах
+     *
      * @param float $discount
      *
      * @return static
@@ -1096,21 +1059,46 @@ class Offer extends IblockElement
     }
 
     /**
-     * @param float $percent
-     * @param int   $quantity
+     *
+     *
+     * @param int $percent
+     * @param int $quantity
      *
      * @return float
-     * @throws NotSupportedException
-     * @throws LoaderException
-     * @throws ObjectNotFoundException
      */
-    public function getBonuses(float $percent = 3, int $quantity = 1): float
+    public function getBonusCount(int $percent, int $quantity = 1): float
     {
-        if ((int)$this->bonus === 0 && $percent > 0) {
-            $this->bonus = round($this->getPrice() * $quantity * $percent / 100, 2);
+        if (!$this->bonus) {
+            $this->bonus = \round($this->price * $quantity * $percent / 100, 2);
         }
 
         return $this->bonus;
+    }
+
+    /**
+     * @param int $percent
+     * @param int $quantity
+     *
+     * @return string
+     */
+    public function getBonusFormattedText(int $percent = 3, int $quantity = 1): string
+    {
+        $bonusText = '';
+
+        $bonus = $this->getBonusCount($percent, $quantity);
+
+        if ($bonus <= 0) {
+            return $bonusText;
+        }
+
+        $div = $bonus - \floor($bonus) * 100;
+
+        return \sprintf(
+            '+ %d %s %s',
+            \round($bonus, 2, \PHP_ROUND_HALF_DOWN),
+            WordHelper::numberFormat($bonus),
+            WordHelper::declension($div ?: \floor($bonus), ['бонус', 'бонуса', 'бонусов'])
+        );
     }
 
     /**
@@ -1119,7 +1107,11 @@ class Offer extends IblockElement
     public function getLink(): string
     {
         if (!$this->link) {
-            $this->link = sprintf('%s?offer=%s', $this->getProduct()->getDetailPageUrl(), $this->getId());
+            $this->link = \sprintf(
+                '%s?offer=%s',
+                $this->getProduct()->getDetailPageUrl(),
+                $this->getId()
+            );
         }
 
         return $this->link;
@@ -1180,21 +1172,47 @@ class Offer extends IblockElement
     }
 
     /**
-     * @throws ArgumentException
      * @throws ServiceNotFoundException
-     * @throws \Exception
      * @throws ApplicationCreateException
-     * @throws ServiceCircularReferenceException
+     */
+    public function getAllStocks(): StockCollection
+    {
+        if (!$this->allStocks) {
+            /** @var StockService $stockService */
+            $stockService = Application::getInstance()->getContainer()->get(StockService::class);
+            $this->withAllStocks($stockService->getStocksByOffer($this));
+        }
+
+        return $this->allStocks;
+    }
+
+    /**
+     * @param StockCollection $allStocks
+     * @return Offer
+     */
+    public function withAllStocks(StockCollection $allStocks): Offer
+    {
+        $this->allStocks = $allStocks;
+
+        return $this;
+    }
+
+    /**
      * @return StockCollection
+     * @throws ApplicationCreateException
+     * @throws ArgumentException
      */
     public function getStocks(): StockCollection
     {
         if (!$this->stocks) {
             /** @var StoreService $storeService */
             $storeService = Application::getInstance()->getContainer()->get('store.service');
-            $allStocks = $storeService->getStocksByOffer($this);
-            $stores = $storeService->getByCurrentLocation();
-            $this->withStocks($allStocks->filterByStores($stores));
+            if ($this->isByRequest()) {
+                $stores = $storeService->getSupplierStores();
+            } else {
+                $stores = $storeService->getByCurrentLocation();
+            }
+            $this->withStocks($this->getAllStocks()->filterByStores($stores));
         }
 
         return $this->stocks;
@@ -1228,6 +1246,9 @@ class Offer extends IblockElement
         return $this->PROPERTY_PRICE_ACTION > 0 && $this->PROPERTY_COND_FOR_ACTION === self::SIMPLE_SHARE_SALE_CODE;
     }
 
+    /**
+     * @return bool
+     */
     public function hasAction(): bool
     {
         /**
@@ -1258,5 +1279,58 @@ class Offer extends IblockElement
     public function isSale(): bool
     {
         return $this->getPropertyIsSale();
+    }
+
+    /**
+     * Check and set optimal price, discount, old price with bitrix discount
+     *
+     * @throws LoaderException
+     * @throws NotSupportedException
+     * @throws ObjectNotFoundException
+     */
+    protected function checkOptimalPrice(): void
+    {
+        if ($this->isCounted) {
+            return;
+        }
+
+        global $USER;
+
+        static $order;
+        if (null === $order) {
+            $order = Order::create(SITE_ID);
+        }
+        $shipmentCollection = $order->getShipmentCollection();
+        foreach ($shipmentCollection as $i => $shipment) {
+            unset($shipmentCollection[$i]);
+        }
+        /** @var Basket $basket */
+        $basket = Basket::create(SITE_ID);
+        $basket->setFUserId((int)Fuser::getId());
+        $fields = [
+            'PRODUCT_ID' => $this->getId(),
+            'QUANTITY' => 1,
+            'MODULE' => 'catalog',
+            'PRODUCT_PROVIDER_CLASS' => CatalogProvider::class,
+        ];
+
+        BitrixBasket::addProductToBasket($basket, $fields, ['USER_ID' => $USER->GetID()]);
+
+        $order->setBasket($basket);
+        /** @var \Bitrix\Sale\BasketItem $basketItem */
+        foreach ($basket->getBasketItems() as $basketItem) {
+            if (
+                (int)$basketItem->getProductId() === $this->getId()
+                &&
+                $discountPercent = round(100 * ($basketItem->getDiscountPrice() / $basketItem->getBasePrice()))
+            ) {
+                $this
+                    ->withDiscount($discountPercent)
+                    ->withOldPrice($basketItem->getBasePrice())
+                    ->withPrice($basketItem->getPrice());
+            }
+        }
+
+        $this->isCounted = true;
     }
 }

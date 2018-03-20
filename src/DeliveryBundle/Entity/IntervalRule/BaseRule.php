@@ -2,7 +2,8 @@
 
 namespace FourPaws\DeliveryBundle\Entity\IntervalRule;
 
-use Bitrix\Sale\Delivery\CalculationResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 
 abstract class BaseRule
 {
@@ -22,16 +23,16 @@ abstract class BaseRule
     }
 
     /**
-     * @param CalculationResult $result
+     * @param CalculationResultInterface $result
      *
      * @return bool
      */
-    abstract public function isSuitable(CalculationResult $result): bool;
+    abstract public function isSuitable(CalculationResultInterface $result): bool;
 
     /**
-     * @param CalculationResult $result
+     * @param CalculationResultInterface $result
      *
-     * @return CalculationResult
+     * @return CalculationResultInterface
      */
-    abstract public function apply(CalculationResult $result): CalculationResult;
+    abstract public function apply(CalculationResultInterface $result): CalculationResultInterface;
 }

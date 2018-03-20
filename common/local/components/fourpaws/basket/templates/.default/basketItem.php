@@ -8,6 +8,15 @@ use Bitrix\Sale\BasketItem;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Decorators\SvgDecorator;
 use FourPaws\Helpers\WordHelper;
+/** у отделнных скидками строчек нет айди, поэтому берем айди той строчки от которой отделили */
+if (!$basketItemId = $basketItem->getId()) {
+    if (
+        ($propertyValues = $basketItem->getPropertyCollection()->getPropertyValues())
+        && isset($propertyValues['DETACH_FROM'])
+    ) {
+        $basketItemId = (int)$propertyValues['DETACH_FROM']['VALUE'];
+    }
+}
 
 $image = $component->getImage($basketItem->getProductId());
 $offer = $component->getOffer((int)$basketItem->getProductId());
@@ -54,18 +63,10 @@ $useOffer = $offer instanceof Offer && $offer->getId() > 0; ?>
                     <?php }
                 } ?>
             </a>
-            <?php if ($useOffer) { ?>
+            <?php if ($useOffer && $offer->getQuantity() > 0 && !$offer->isByRequest()) { ?>
                 <span class="b-common-item__rank-text b-common-item__rank-text--red b-common-item__rank-text--shopping js-bonus-<?=$offer->getId()?>">
                     <?php if ($arParams['IS_AJAX']) {
-                        $bonus = $offer->getBonuses($user_discount, $basketItem->getQuantity());
-                        if ($bonus > 0) {
-                            $bonuses = round($bonuses, 2, PHP_ROUND_HALF_DOWN);
-                            $ost = $bonuses - floor($bonuses) * 100; ?>
-                            + <?= WordHelper::numberFormat($bonus,
-                                0) ?>
-                            <?= WordHelper::declension($ost > 0 ? $ost : floor($bonuses),
-                                ['бонус', 'бонуса', 'бонусов']) ?>
-                        <?php }
+                        echo $offer->getBonusFormattedText((int)$user_discount, $basketItem->getQuantity());
                     } ?>
                 </span>
             <?php } ?>
@@ -85,7 +86,7 @@ $useOffer = $offer instanceof Offer && $offer->getId() > 0; ?>
                        value="<?= WordHelper::numberFormat($basketItem->getQuantity(), 0) ?>"
                        data-one-price="<?= $basketItem->getPrice() ?>"
                        data-cont-max="<?= $maxQuantity ?>"
-                       data-basketid="<?= $basketItem->getId(); ?>" type="text"/>
+                       data-basketid="<?= $basketItemId; ?>" type="text"/>
 
                 <a class="b-plus-minus__plus js-plus" data-url="/ajax/sale/basket/update/"
                    href="javascript:void(0);"></a>
@@ -123,7 +124,7 @@ $useOffer = $offer instanceof Offer && $offer->getId() > 0; ?>
             </div>
         <?php } ?>
         <a class="b-item-shopping__delete js-cart-delete-item" href="javascript:void(0);" title=""
-           data-url="/ajax/sale/basket/delete/" data-basketId="<?= $basketItem->getId(); ?>">
+           data-url="/ajax/sale/basket/delete/" data-basketId="<?= $basketItemId; ?>">
         <span class="b-icon b-icon--delete b-icon--shopping">
             <?= new SvgDecorator('icon-delete-cart-product', 12, 14); ?>
         </span>

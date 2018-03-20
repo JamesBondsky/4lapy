@@ -12,6 +12,7 @@ use FourPaws\SaleBundle\Validation as SaleValidation;
 use JMS\Serializer\Annotation as Serializer;
 use Misd\PhoneNumberBundle\Validator\Constraints\PhoneNumber;
 use Symfony\Component\Validator\Constraints as Assert;
+use \DateTime;
 
 /**
  * Class OrderStorage
@@ -307,6 +308,14 @@ class OrderStorage
      * @Serializer\Groups(groups={"read","update","delete"})
      */
     protected $discountCardNumber = '';
+
+    /**
+     * @var DateTime
+     * @Serializer\Type("DateTime")
+     * @Serializer\SerializedName("CURRENT_DATE")
+     * @Serializer\Groups(groups={"read","update","delete"})
+     */
+    protected $currentDate;
 
     /**
      * @return int
@@ -871,6 +880,28 @@ class OrderStorage
     {
         $this->discountCardNumber = $discountCardNumber;
 
+        return $this;
+    }
+
+    /**
+     * @return DateTime
+     */
+    public function getCurrentDate(): DateTime
+    {
+        if (!$this->currentDate) {
+            $this->currentDate = new DateTime();
+        }
+
+        return $this->currentDate;
+    }
+
+    /**
+     * @param DateTime $currentDate
+     * @return OrderStorage
+     */
+    public function setCurrentDate(DateTime $currentDate): OrderStorage
+    {
+        $this->currentDate = $currentDate;
         return $this;
     }
 }

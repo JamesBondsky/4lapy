@@ -7,12 +7,11 @@
 namespace FourPaws\DeliveryBundle\Handler;
 
 use Bitrix\Main\Error;
-use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\Shipment;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\DeliveryBundle\Collection\StockResultCollection;
-use FourPaws\DeliveryBundle\Service\DeliveryService;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\PickupResult;
 use FourPaws\StoreBundle\Collection\StoreCollection;
 use FourPaws\StoreBundle\Entity\Store;
 use FourPaws\StoreBundle\Service\StoreService;
@@ -23,6 +22,13 @@ class InnerPickupHandler extends DeliveryHandlerBase
 
     protected $code = '4lapy_pickup';
 
+    /**
+     * InnerPickupHandler constructor.
+     * @param array $initParams
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentTypeException
+     * @throws \Bitrix\Main\SystemException
+     */
     public function __construct(array $initParams)
     {
         parent::__construct($initParams);
@@ -38,6 +44,11 @@ class InnerPickupHandler extends DeliveryHandlerBase
         return 'Обработчик самовывоза "Четыре лапы"';
     }
 
+    /**
+     * @param Shipment $shipment
+     * @return bool
+     * @throws \Bitrix\Main\ArgumentException
+     */
     public function isCompatible(Shipment $shipment)
     {
         if (!parent::isCompatible($shipment)) {
@@ -62,18 +73,29 @@ class InnerPickupHandler extends DeliveryHandlerBase
         return new IntervalCollection();
     }
 
+    /**
+     * @param Shipment $shipment
+     * @return \Bitrix\Sale\Delivery\CalculationResult|PickupResult
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectNotFoundException
+     * @throws \FourPaws\App\Exceptions\ApplicationCreateException
+     * @throws \FourPaws\StoreBundle\Exception\NotFoundException
+     */
     protected function calculateConcrete(Shipment $shipment)
     {
-        $result = parent::calculateConcrete($shipment);
-        if (!$result->isSuccess()) {
-            return $result;
+        $result = new PickupResult();
+
+        if (!$zone = $this->deliveryService->getDeliveryZoneCode($shipment)) {
+            $result->addError(new Error('Не указано местоположение доставки'));
+        } else {
+            $result->setDeliveryZone($zone);
         }
+
         $deliveryLocation = $this->deliveryService->getDeliveryLocation($shipment);
         $basket = $shipment->getParentOrder()->getBasket()->getOrderableItems();
 
         $storesAll = $this->storeService->getByLocation($deliveryLocation, StoreService::TYPE_ALL);
         $shops = $storesAll->getShops();
-        $stores = $storesAll->getStores();
 
         $shopCode = null;
         /* @var PropertyValue $prop */
@@ -101,38 +123,21 @@ class InnerPickupHandler extends DeliveryHandlerBase
         }
 
         if (!$offers = static::getOffers($deliveryLocation, $basket)) {
-            $result->setPeriodType(CalculationResult::PERIOD_TYPE_HOUR);
-            $result->setPeriodFrom(1);
-
+            /**
+             * Нужно для отображения списка доставок в хедере и на странице доставок
+             */
             return $result;
-        }
-
-        switch ($this->deliveryService->getDeliveryZoneCode($shipment)) {
-            case DeliveryService::ZONE_1:
-            case DeliveryService::ZONE_2:
-            case DeliveryService::ZONE_3:
-                /**
-                 * условие доставки в эту зону - наличие в магазине
-                 * условие отложенной доставки в эту зону - наличие на складе
-                 */
-                $delayStores = $stores;
-                break;
-            default:
-                $result->addError(new Error('Доставка не работает для этой зоны'));
-
-                return $result;
         }
 
         $stockResult = new StockResultCollection();
         /** @var Store $shop */
         foreach ($shops as $shop) {
             $availableStores = new StoreCollection([$shop]);
-            $stockResult = static::getStocks($basket, $offers, $availableStores, $delayStores, $stockResult);
+            $stockResult = static::getStocks($basket, $offers, $availableStores, $stockResult);
         }
 
-        $data['STOCK_RESULT'] = $stockResult;
-        $data['DELIVERY_ZONE'] = $this->deliveryService->getDeliveryZoneCode($shipment);
-        $result->setData($data);
+        $result->setStockResult($stockResult);
+        $result->setIntervals($this->getIntervals($shipment));
 
         if ($shopCode) {
             if (!$stockResult->getUnavailable()->isEmpty()) {
@@ -140,17 +145,6 @@ class InnerPickupHandler extends DeliveryHandlerBase
 
                 return $result;
             }
-
-            if ($stockResult->getDelayed()->isEmpty()) {
-                $result->setPeriodFrom(1);
-                $result->setPeriodType(CalculationResult::PERIOD_TYPE_HOUR);
-            } else {
-                $result->setPeriodFrom($stockResult->getDeliveryDate()->diff(new \DateTime())->days);
-                $result->setPeriodType(CalculationResult::PERIOD_TYPE_DAY);
-            }
-        } else {
-            $result->setPeriodFrom(1);
-            $result->setPeriodType(CalculationResult::PERIOD_TYPE_HOUR);
         }
 
         return $result;

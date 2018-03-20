@@ -29,9 +29,6 @@ class Manager
      *
      * @param Event|null $event
      *
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \FourPaws\SaleBundle\Exception\BitrixProxyException
-     * @throws \Bitrix\Main\LoaderException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
      * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
      * @throws \RuntimeException
@@ -42,7 +39,7 @@ class Manager
      * @throws \Bitrix\Main\ObjectNotFoundException
      * @throws \Bitrix\Main\NotSupportedException
      */
-    public static function OnAfterSaleOrderFinalAction(Event $event = null)
+    public static function OnAfterSaleOrderFinalAction(Event $event = null): void
     {
         static $execution;
         if (!$execution && self::$finalActionEnabled) {
@@ -51,19 +48,28 @@ class Manager
                 /** @var Order $order */
                 $order = $event->getParameter('ENTITY');
                 if ($order instanceof Order) {
+                    $basketService = Application::getInstance()
+                        ->getContainer()
+                        ->get(BasketService::class);
 
                     // Автоматически добавляем подарки
-                    Application::getInstance()
-                        ->getContainer()
-                        ->get(BasketService::class)
-                        ->getAdder()
+                    $basketService
+                        ->getAdder('gift')
                         ->processOrder();
 
                     // Удаляем подарки, акции которых не выполнились
-                    Application::getInstance()
-                        ->getContainer()
-                        ->get(BasketService::class)
-                        ->getCleaner()
+                    $basketService
+                        ->getCleaner('gift')
+                        ->processOrder();
+
+                    // Автоматически добавляем подарки
+                    $basketService
+                        ->getAdder('detach')
+                        ->processOrder();
+
+                    // Удаляем подарки, акции которых не выполнились
+                    $basketService
+                        ->getCleaner('detach')
                         ->processOrder();
                 }
             }
@@ -75,7 +81,7 @@ class Manager
      *
      *
      */
-    public static function disableProcessingFinalAction()
+    public static function disableProcessingFinalAction(): void
     {
         self::$finalActionEnabled = false;
     }
@@ -84,7 +90,7 @@ class Manager
      *
      *
      */
-    public static function enableProcessingFinalAction()
+    public static function enableProcessingFinalAction(): void
     {
         self::$finalActionEnabled = true;
     }

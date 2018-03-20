@@ -13,7 +13,7 @@ services:
         resource: '../../*'
         # you can exclude directories or files
         # but if a service is unused, it's removed anyway
-        exclude: '../../{Entity,Tests,EventController}'
+        exclude: '../../{Entity,Tests,Dto,Exception,EventController}'
 
     FourPaws\MobileApiBundle\Controller\:
         resource: '../../Controller'
@@ -27,6 +27,7 @@ services:
 
     FourPaws\MobileApiBundle\Serialization\:
         resource: '../../Serialization/*'
+        exclude: '../../Serialization/{DateHandler.php}'
         tags: ['jms_serializer.subscribing_handler']
 
     FourPaws\MobileApiBundle\Services\Security\TokenGeneratorInterface:
@@ -47,3 +48,6 @@ services:
     FourPaws\MobileApiBundle\Services\Session\SessionHandlerInterface:
         class: FourPaws\MobileApiBundle\Services\Session\SessionHandler
         public: true
+
+    FourPaws\MobileApiBundle\Services\Api\MetroService:
+        arguments: ['@bx.hlblock.metrostations', '@bx.hlblock.metroways']

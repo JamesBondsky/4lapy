@@ -13,6 +13,7 @@ use FourPaws\Catalog\Model\Filter\Abstraction\FilterBase;
 use FourPaws\Catalog\Model\Filter\ActionsFilter;
 use FourPaws\CatalogBundle\Dto\CatalogCategorySearchRequestInterface;
 use FourPaws\Decorators\SvgDecorator;
+use FourPaws\Helpers\WordHelper;
 use FourPaws\Search\Model\ProductSearchResult;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Templating\PhpEngine;
@@ -141,7 +142,11 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
             $APPLICATION->IncludeComponent(
                 'fourpaws:catalog.element.snippet',
                 '',
-                ['PRODUCT' => $product]
+                ['PRODUCT' => $product],
+                null,
+                [
+                    'HIDE_ICONS' => 'Y',
+                ]
             );
         }
         ?>
@@ -152,13 +157,13 @@ $count = $productSearchResult->getResultSet()->getTotalHits(); ?>
         'bitrix:system.pagenavigation',
         'pagination',
         [
-            'NAV_TITLE'      => '',
-            'NAV_RESULT'     => $productSearchResult->getProductCollection()->getCdbResult(),
-            'SHOW_ALWAYS'    => false,
+            'NAV_TITLE' => '',
+            'NAV_RESULT' => $productSearchResult->getProductCollection()->getCdbResult(),
+            'SHOW_ALWAYS' => false,
             'PAGE_PARAMETER' => 'page',
-            'AJAX_MODE'      => 'Y'
+            'AJAX_MODE' => 'Y'
         ],
-        $component,
+        null,
         [
             'HIDE_ICONS' => 'Y',
         ]

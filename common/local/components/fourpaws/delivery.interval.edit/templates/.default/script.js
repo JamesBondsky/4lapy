@@ -141,13 +141,13 @@ $(document).ready(function () {
         let ruleId = $this.closest('.delivery-intervals__list-item').attr('data-item');
         switch (action) {
             case 'add':
-                data[zoneIndex].RULES.push({FROM: 0, TO: 0});
+                data[zoneIndex].RULES.ADD_DAYS.push({FROM: 0, TO: 0});
                 for (let i = 0; i < data[zoneIndex].INTERVALS.length; i++) {
                     data[zoneIndex].INTERVALS[i].RULES.ADD_DAYS.push(0);
                 }
                 break;
             case 'delete':
-                data[zoneIndex].RULES.splice(ruleId, 1);
+                data[zoneIndex].RULES.ADD_DAYS.splice(ruleId, 1);
                 for (let i = 0; i < data[zoneIndex].INTERVALS.length; i++) {
                     data[zoneIndex].INTERVALS[i].RULES.ADD_DAYS.splice(ruleId, 1);
                 }

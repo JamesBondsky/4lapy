@@ -16,7 +16,6 @@ use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Sale\BasketItem;
-use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PropertyValue;
@@ -24,6 +23,7 @@ use Bitrix\Sale\Shipment;
 use Bitrix\Sale\ShipmentCollection;
 use FourPaws\Catalog\Collection\OfferCollection;
 use FourPaws\Catalog\Query\OfferQuery;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Exception\NotFoundException as DeliveryNotFoundEXception;
 use FourPaws\DeliveryBundle\Service\DeliveryService;
@@ -31,12 +31,11 @@ use FourPaws\PersonalBundle\Entity\Address;
 use FourPaws\AppBundle\Exception\NotFoundException as AddressNotFoundException;
 use FourPaws\PersonalBundle\Service\AddressService;
 use FourPaws\SaleBundle\Entity\OrderStorage;
-use FourPaws\SaleBundle\Exception\FastOrderCreateException;
 use FourPaws\SaleBundle\Exception\NotFoundException;
 use FourPaws\SaleBundle\Exception\OrderCreateException;
 use FourPaws\StoreBundle\Collection\StoreCollection;
-use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\StoreBundle\Service\StoreService;
+use FourPaws\StoreBundle\Exception\NotFoundException as StoreNotFoundException;
 use FourPaws\UserBundle\Entity\User;
 use FourPaws\UserBundle\Exception\BitrixRuntimeException;
 use FourPaws\UserBundle\Exception\ValidationException;
@@ -107,7 +106,7 @@ class OrderService
     protected $deliveryService;
 
     /**
-     * @var CalculationResult[]
+     * @var CalculationResultInterface[]
      */
     protected $deliveries;
 
@@ -204,7 +203,6 @@ class OrderService
      * @param bool $save
      * @param bool $fastOrder
      *
-     * @throws \FourPaws\SaleBundle\Exception\FastOrderCreateException
      * @throws \Exception
      * @throws OrderCreateException
      * @throws NotFoundException
@@ -232,31 +230,34 @@ class OrderService
             throw new OrderCreateException('Корзина пуста');
         }
 
-        $deliveries = $this->getDeliveries();
-        $selectedDelivery = null;
-        $deliveryId = $storage->getDeliveryId();
-        if ($fastOrder) {
-            /** устанавливаем самовывоз для быстрого заказа */
-            if (!empty($deliveries)) {
-                $selectedDelivery = current($deliveries);
-            } else {
-                throw new FastOrderCreateException('Оформление быстрого заказа невозможно, пожалуйста обратить к администратору или попробуйте полный процесс оформления');
-            }
-        }
-        if ($selectedDelivery === null && !empty($deliveries)) {
-            /** @var CalculationResult $delivery */
+        $deliveries = $this->getDeliveries($storage);
+        $selectedDelivery = current($deliveries);
+        if ($deliveryId = $storage->getDeliveryId()) {
+            /** @var CalculationResultInterface $delivery */
             foreach ($deliveries as $delivery) {
-                if ($deliveryId === (int)$delivery->getData()['DELIVERY_ID']) {
-                    $selectedDelivery = $delivery;
+                if ($storage->getDeliveryId() === $delivery->getDeliveryId()) {
+                    $selectedDelivery = clone $delivery;
+                    if ($this->deliveryService->isPickup($selectedDelivery)) {
+                        $selectedDelivery->setStockResult(
+                            $selectedDelivery->getStockResult()->filterByStore(
+                                $this->storeService->getByXmlId($storage->getDeliveryPlaceCode())
+                            )
+                        );
+                    }
+                    break;
                 }
             }
+        }
+
+        if (!$selectedDelivery) {
+            throw new OrderCreateException('Нет доступных доставок');
         }
 
         /**
          * Задание способов доставки
          */
         $propertyValueCollection = $order->getPropertyCollection();
-        if ($deliveryId) {
+        if ($storage->getDeliveryId()) {
             $locationProp = $order->getPropertyCollection()->getDeliveryLocation();
             if (!$locationProp) {
                 throw new OrderCreateException('Отсутствует свойство привязки к местоположению');
@@ -279,22 +280,23 @@ class OrderService
                 throw new OrderCreateException('Не выбрана доставка');
             }
 
-            if ($this->deliveryService->isDelivery($delivery)) {
+            if ($this->deliveryService->isDelivery($selectedDelivery)) {
                 $order->setFieldNoDemand('STATUS_ID', static::STATUS_NEW_COURIER);
             }
 
             $shipment->setFields(
                 [
-                    'DELIVERY_ID' => $selectedDelivery->getData()['DELIVERY_ID'],
-                    'DELIVERY_NAME' => $selectedDelivery->getData()['DELIVERY_NAME'],
-                    'CURRENCY' => $order->getCurrency(),
+                    'DELIVERY_ID'           => $selectedDelivery->getDeliveryId(),
+                    'DELIVERY_NAME'         => $selectedDelivery->getDeliveryName(),
+                    'CURRENCY'              => $order->getCurrency(),
+                    'PRICE_DELIVERY'        => $selectedDelivery->getPrice(),
+                    'CUSTOM_PRICE_DELIVERY' => 'Y',
                 ]
             );
 
             $shipmentCollection->calculateDelivery();
 
-            $stockResult = $this->deliveryService->getStockResultByDelivery($selectedDelivery);
-            $deliveryDate = $stockResult->getDeliveryDate();
+            $deliveryDate = $selectedDelivery->getDeliveryDate();
 
             /**
              * Задание свойств заказа, связанных с доставкой
@@ -335,8 +337,9 @@ class OrderService
                             if (($index = $storage->getDeliveryInterval() - 1) < 0) {
                                 continue 2;
                             }
+
                             /** @var Interval $interval */
-                            if (!$interval = $selectedDelivery->getData()['INTERVALS'][$index]) {
+                            if (!$interval = $selectedDelivery->getIntervals()[$index]) {
                                 continue 2;
                             }
 
@@ -354,7 +357,7 @@ class OrderService
 
                         break;
                     case 'REGION_COURIER_FROM_DC':
-                        $value = $stockResult->getDelayed()->isEmpty()
+                        $value = $selectedDelivery->getStockResult()->getDelayed()->isEmpty()
                             ? BitrixUtils::BX_BOOL_FALSE
                             : BitrixUtils::BX_BOOL_TRUE;
                         break;
@@ -451,11 +454,11 @@ class OrderService
                 ($this->deliveryService->isInnerPickup($selectedDelivery) || $this->deliveryService->isInnerDelivery($selectedDelivery))
             ) {
                 $changeCommunicationWay = false;
-                $stockResult = $this->deliveryService->getStockResultByDelivery($selectedDelivery);
+                $stockResult = $selectedDelivery->getStockResult();
                 if ($this->deliveryService->isInnerPickup($selectedDelivery)) {
                     $changeCommunicationWay = true;
                 } elseif ($this->deliveryService->isInnerDelivery($selectedDelivery)) {
-                    if (($selectedDelivery->getData()['DELIVERY_ZONE'] === DeliveryService::ZONE_2) &&
+                    if (($selectedDelivery->getDeliveryZone() === DeliveryService::ZONE_2) &&
                         !$stockResult->getDelayed()->isEmpty()
                     ) {
                         $changeCommunicationWay = true;
@@ -569,7 +572,11 @@ class OrderService
              * 1) пользователь только что зарегистрирован
              * 2) авторизованный пользователь задал новый адрес
              */
-            if ($needCreateAddress && $selectedDelivery && $this->deliveryService->isDelivery($selectedDelivery) && !$fastOrder) {
+            if ($needCreateAddress &&
+                $selectedDelivery &&
+                $this->deliveryService->isDelivery($selectedDelivery) &&
+                !$fastOrder
+            ) {
                 $address = (new Address())
                     ->setCity($storage->getCity())
                     ->setCityLocation($storage->getCityCode())
@@ -603,15 +610,20 @@ class OrderService
     }
 
     /**
+     * @param OrderStorage $storage
      * @param bool $reload
-     *
-     * @return CalculationResult[]
+     * @return CalculationResultInterface[]
+     * @throws ArgumentOutOfRangeException
+     * @throws NotSupportedException
      */
-    public function getDeliveries($reload = false): array
+    public function getDeliveries(OrderStorage $storage, $reload = false): array
     {
         if (null === $this->deliveries || $reload) {
             $this->deliveries = $this->deliveryService->getByBasket(
-                $this->basketService->getBasket()->getOrderableItems()
+                $this->basketService->getBasket()->getOrderableItems(),
+                '',
+                [],
+                $storage->getCurrentDate()
             );
         }
 
@@ -719,8 +731,8 @@ class OrderService
 
     /**
      * @param Order $order
-     *
      * @return string
+     * @throws ArgumentException
      */
     public function getOrderDeliveryAddress(Order $order): string
     {
@@ -802,9 +814,10 @@ class OrderService
         }
 
         if (empty($ids)) {
-            throw new NotFoundException('Корзина заказа пуста');
+            throw new NotFoundException('Basket is empty');
         }
 
+        /** @noinspection PhpIncompatibleReturnTypeInspection */
         return (new OfferQuery())->withFilterParameter('ID', $ids)->exec();
     }
 }

@@ -7,11 +7,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var array $arParams
  * @var array $arResult
  * @var OrderStorage $storage
- * @var CalculationResult $delivery
+ * @var \FourPaws\DeliveryBundle\Entity\CalculationResult\CalculationResultInterface $delivery
  */
 
-use Bitrix\Sale\Delivery\CalculationResult;
 use FourPaws\Decorators\SvgDecorator;
+use FourPaws\DeliveryBundle\Entity\CalculationResult\BaseResult;
 use FourPaws\DeliveryBundle\Entity\Interval;
 use FourPaws\DeliveryBundle\Collection\IntervalCollection;
 use FourPaws\PersonalBundle\Entity\Address;
@@ -195,12 +195,12 @@ if (!$addresses || $addresses->isEmpty()) {
         </div>
     </div>
 </div>
-<div class="b-input-line b-input-line--desired-date">
+<div class="b-input-line b-input-line--desired-date" data-url="<?= $arResult['URL']['DELIVERY_INTERVALS'] ?>">
     <div class="b-input-line__label-wrapper">
         <span class="b-input-line__label">Желаемая дата доставки</span>
     </div>
     <div class="b-select b-select--recall b-select--feedback-page">
-        <select class="b-select__block b-select__block--recall b-select__block--feedback-page js-select-recovery"
+        <select class="b-select__block b-select__block--recall b-select__block--feedback-page js-select-recovery js-change-date"
                 name="deliveryDate">
             <option value="" disabled="disabled" selected="selected">выберите
             </option>
@@ -220,9 +220,9 @@ if (!$addresses || $addresses->isEmpty()) {
         </select>
     </div>
 </div>
-<?php if (!empty($delivery->getData()['INTERVALS'])) {
+<?php if (!$delivery->getIntervals()->isEmpty()) {
     /** @var IntervalCollection $intervals */
-    $intervals = $delivery->getData()['INTERVALS'];
+    $intervals = $delivery->getIntervals();
     ?>
     <div class="b-input-line b-input-line--interval">
         <div class="b-input-line__label-wrapper b-input-line__label-wrapper--interval">
