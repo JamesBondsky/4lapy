@@ -548,7 +548,7 @@ class UserService implements
             }
         }
 
-        return $userBonus->isEmpty() ? static::BASE_DISCOUNT : $userBonus->getRealDiscount();
+        return $userBonus && !$userBonus->isEmpty() ? $userBonus->getRealDiscount() : static::BASE_DISCOUNT;
     }
 
     /**
