@@ -32,9 +32,11 @@ class CatalogSaleListComponent extends CBitrixComponent
         
         return parent::onPrepareComponentParams($params);
     }
-    
+
     /**
      * {@inheritdoc}
+     *
+     * @throws IblockNotFoundException
      */
     public function executeComponent()
     {
@@ -69,9 +71,9 @@ class CatalogSaleListComponent extends CBitrixComponent
             $this->filter = $this->arParams['PRODUCT_FILTER'];
         }
         
-        if ($this->arParams['OFFER_FILTER'] && is_array($this->arParams['OFFER_FILTER'])) {
+        if ($this->arParams['OFFER_FILTER'] && \is_array($this->arParams['OFFER_FILTER'])) {
             $this->filter['ID'] = \CIBlockElement::SubQuery('PROPERTY_CML2_LINK',
-                array_merge($this->arParams['OFFER_FILTER'], [
+                \array_merge($this->arParams['OFFER_FILTER'], [
                         'IBLOCK_ID' => IblockUtils::getIblockId(
                             IblockType::CATALOG,
                             IblockCode::OFFERS
@@ -95,7 +97,7 @@ class CatalogSaleListComponent extends CBitrixComponent
     /**
      * @return ProductCollection
      */
-    public function getProductCollection()
+    public function getProductCollection(): ?ProductCollection
     {
         return $this->arResult['products'];
     }

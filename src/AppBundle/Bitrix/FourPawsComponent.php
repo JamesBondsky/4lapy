@@ -32,6 +32,8 @@ abstract class FourPawsComponent extends \CBitrixComponent implements LoggerAwar
             )
         );
 
+        $params['return_result'] = $params['return_result'] === true || $params['return_result'] === 'Y';
+
         return parent::onPrepareComponentParams($params);
     }
 
@@ -39,8 +41,9 @@ abstract class FourPawsComponent extends \CBitrixComponent implements LoggerAwar
      * {@inheritdoc}
      *
      * @throws RuntimeException
+     * @return null|array
      */
-    public function executeComponent()
+    public function executeComponent(): ?array
     {
         if ($this->startResultCache()) {
 
@@ -48,14 +51,21 @@ abstract class FourPawsComponent extends \CBitrixComponent implements LoggerAwar
                 parent::executeComponent();
 
                 $this->prepareResult();
-                $this->doAction();
 
                 $this->includeComponentTemplate();
             } catch (\Exception $e) {
                 $this->log()->error($e->getMessage());
                 $this->abortResultCache();
             }
+
+            $this->setResultCacheKeys($this->getResultCacheKeys());
         }
+
+        if ($this->arParams['return_result']) {
+            return $this->arResult;
+        }
+
+        return null;
     }
 
     /**
@@ -64,7 +74,10 @@ abstract class FourPawsComponent extends \CBitrixComponent implements LoggerAwar
     abstract public function prepareResult(): void;
 
     /**
-     * Do something actions
+     * @return array
      */
-    abstract public function doAction(): void;
+    public function getResultCacheKeys(): array
+    {
+        return [];
+    }
 }
