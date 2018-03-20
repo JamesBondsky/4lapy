@@ -130,7 +130,9 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                  * @var Store $store
                  */
                 foreach ($bestShops as $xmlId => $store) {
-                    if (!$stores->exists(function ($key, Store $store2) use ($store) {
+                    if (!$stores->exists(function (
+                        /** @noinspection PhpUnusedParameterInspection */
+                        $key, Store $store2) use ($store) {
                         return $store2->getXmlId() === $store->getXmlId();
                     })) {
                         unset($bestShops[$xmlId]);
@@ -139,12 +141,16 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
             }
 
             /** @var Store $store */
+            $shopCount = 0;
             foreach ($bestShops as $store) {
-                $fullResult = (clone $pickupDelivery)->setSelectedStore($store)
-                    ->setStockResult($pickupDelivery->getStockResult()->filterByStore($store));
+                $fullResult = (clone $pickupDelivery)->setSelectedStore($store);
+                if ($this->deliveryService->isInnerPickup($fullResult)) {
+                    $fullResult->setStockResult($pickupDelivery->getStockResult()->filterByStore($store));
+                }
                 if (!$fullResult->isSuccess()) {
                     continue;
                 }
+                $shopCount++;
                 $partialResult = (clone $fullResult)->setStockResult($fullResult->getStockResult()->getAvailable());
 
                 $metro = $store->getMetro();
@@ -221,10 +227,9 @@ class FourPawsOrderShopListComponent extends FourPawsShopListComponent
                 $avgGpsN += $store->getLongitude();
                 $avgGpsS += $store->getLatitude();
             }
-            $countStores = count($stores);
 
-            $result['avg_gps_n'] = $avgGpsN / $countStores;
-            $result['avg_gps_s'] = $avgGpsS / $countStores;
+            $result['avg_gps_n'] = $avgGpsN / $shopCount;
+            $result['avg_gps_s'] = $avgGpsS / $shopCount;
         }
 
         return $result;
