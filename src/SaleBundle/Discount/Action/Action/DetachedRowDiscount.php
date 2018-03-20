@@ -82,11 +82,11 @@ class DetachedRowDiscount extends CSaleActionCtrlAction
             'SELECT_CONTROL' => 'Выбрать условие'
         ];
         $description['control'] = [
-            'blah-blah',
+            'Предоставить скидку',
             $arAtoms['Value'],
-            '% blah-blah',
+            '% результаты фильтрации',
             $arAtoms['Filtration_operator'],
-            'blah-blah',
+            'количество применений',
             $arAtoms['Count_operator'],
         ];
 
