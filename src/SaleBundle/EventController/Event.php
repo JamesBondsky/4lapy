@@ -12,11 +12,11 @@ use FourPaws\App\Exceptions\ApplicationCreateException;
 use FourPaws\App\ServiceHandlerInterface;
 use FourPaws\SaleBundle\Discount\Action\Action\DetachedRowDiscount;
 use FourPaws\SaleBundle\Discount\Action\Action\DiscountFromProperty;
-use FourPaws\SaleBundle\Discount\Action\Condition\BasketQuantity;
 use FourPaws\SaleBundle\Discount\Action\Condition\BasketFilter;
-use FourPaws\SaleBundle\Discount\Utils\Manager;
+use FourPaws\SaleBundle\Discount\Action\Condition\BasketQuantity;
 use FourPaws\SaleBundle\Discount\Gift;
 use FourPaws\SaleBundle\Discount\Gifter;
+use FourPaws\SaleBundle\Discount\Utils\Manager;
 use FourPaws\SaleBundle\Exception\ValidationException;
 use FourPaws\SaleBundle\Service\BasketService;
 use FourPaws\SaleBundle\Service\NotificationService;
@@ -114,7 +114,7 @@ class Event implements ServiceHandlerInterface
                 /** обновление скидки
                  * @todo сделать обновление через очередь, не критично если какое-то время будет старая скидка, тем более в случае неактивности манзаны она не обновится все равно
                  */
-                $userService->refreshUserDiscount($userEntity, $bonus);
+                $userService->refreshUserBonusPercent($userEntity, $bonus);
             } catch (ApplicationCreateException|ServiceNotFoundException|ServiceCircularReferenceException $e) {
                 $logger = LoggerFactory::create('system');
                 $logger->critical('Ошибка загрузки сервисов - ' . $e->getMessage());
