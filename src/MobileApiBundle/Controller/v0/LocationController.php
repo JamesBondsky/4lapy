@@ -52,11 +52,18 @@ class LocationController extends FOSRestController
      *
      * @param CityService       $cityService
      * @param CitySearchRequest $request
+     *
      * @throws SystemException
      * @return Response
      */
     public function citySearchAction(CityService $cityService, CitySearchRequest $request): Response
     {
-        return new Response($cityService->search($request->getQuery()));
+        return new Response(
+            $cityService->filterTypeId(
+                $cityService->search($request->getQuery(), 50),
+                3,
+                6
+            )
+        );
     }
 }
