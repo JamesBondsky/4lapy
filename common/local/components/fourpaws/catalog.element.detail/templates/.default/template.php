@@ -11,11 +11,13 @@
 
 use FourPaws\App\Application;
 use FourPaws\App\Templates\ViewsEnum;
+use FourPaws\BitrixOrm\Model\IblockElement;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\Catalog\Model\Offer;
 use FourPaws\Catalog\Model\Product;
 use FourPaws\Components\CatalogElementDetailComponent;
 use FourPaws\Decorators\SvgDecorator;
+use FourPaws\Helpers\DateHelper;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\LocationBundle\LocationService;
 
@@ -178,9 +180,9 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_OFFERS_VIEW);
                                     </span>
                                 </span>
                                 <span class="b-weight-container__line">
-                                    <?php /** @todo впилить акцию
-                                     * <span class="b-weight-container__action">Акция</span>
-                                     */ ?>
+                                    <?php if($offer->isShare()){ ?>
+                                        <span class="b-weight-container__action">Акция</span>
+                                    <?php }?>
                                 </span>
                             </a>
                         </li>
@@ -347,17 +349,16 @@ $this->SetViewTarget(ViewsEnum::PRODUCT_DETAIL_CURRENT_OFFER_INFO);
                 <span class="b-link__text b-link__text--one-click js-open-popup">Купить в 1 клик</span>
             </a>
             <hr class="b-counter-basket__hr"/>
-            <?php
-            /**
-             * @todo Акции
-             */
-            ?>
-            <p class="b-counter-basket__text b-counter-basket__text--red">Акция. 4+1 подарок при
-                покупке</p>
-            <p class="b-counter-basket__text">При покупке четырех кормов, пятый вы получите
-                бесплатно</p>
-            <p class="b-counter-basket__text">5 июня — 25 августа 2017</p>
-            <?php ?>
+            <?php if($currentOffer->isShare()){
+                /** @var IblockElement $share */
+                foreach ($currentOffer->getShare() as $share) {?>
+                    <p class="b-counter-basket__text b-counter-basket__text--red"><?=$share->getName()?></p>
+                    <?php if(!empty($share->getPreviewText()->getText())){?>
+                        <p class="b-counter-basket__text"><?=$share->getPreviewText()->getText()?></p>
+                    <?php }?>
+                    <p class="b-counter-basket__text"><?= DateHelper::replaceRuMonth($share->getDateActiveFrom()->format('d #n#'))?> — <?= DateHelper::replaceRuMonth($share->getDateActiveTo()->format('d #n# Y'))?></p>
+                <?php }
+            }?>
         </div>
         <div class="b-preloader">
             <div class="b-preloader__spinner">
