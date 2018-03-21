@@ -49,6 +49,10 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
     /** @var UserAuthorizationInterface */
     private $currentUserProvider;
 
+    public const STATUS_IN_POINT_ISSUE = 'F';
+    public const STATUS_IN_ASSEMBLY_1 = 'H';
+    public const STATUS_IN_ASSEMBLY_2 = 'W';
+
     /**
      * AutoloadingIssuesInspection constructor.
      *
@@ -143,15 +147,18 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
             $result = $cache->getVars();
             $manzanaOrders = $result['manzanaOrders'];
         } elseif ($cache->startDataCache()) {
+            $tagCache = null;
+            if (\defined('BX_COMP_MANAGED_CACHE')) {
+                $tagCache = $instance->getTaggedCache();
+                $tagCache->startTagCache($this->getPath());
+            }
             try {
                 $manzanaOrders = $this->orderService->getManzanaOrders();
             } catch (ManzanaServiceException $e) {
                 $manzanaOrders = new ArrayCollection();
             }
 
-            if (\defined('BX_COMP_MANAGED_CACHE')) {
-                $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($this->getPath());
+            if (\defined('BX_COMP_MANAGED_CACHE') && $tagCache instanceof Main\Data\TaggedCache) {
                 $tagCache->registerTag(sprintf('user_order_%s', $userId));
                 $tagCache->registerTag(sprintf('order_%s', $userId));
                 $tagCache->endTagCache();
@@ -204,11 +211,9 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
 
             if (\defined('BX_COMP_MANAGED_CACHE')) {
                 $tagCache = $instance->getTaggedCache();
-                $tagCache->startTagCache($this->getPath());
                 $tagCache->registerTag(sprintf('user_order_%s', $userId));
                 $tagCache->registerTag(sprintf('order_%s', $userId));
                 $tagCache->registerTag(sprintf('user_%s', $userId));
-                $tagCache->endTagCache();
             }
         }
 

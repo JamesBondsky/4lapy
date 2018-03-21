@@ -1,4 +1,6 @@
-<?php /** @var Order $order */
+<?php /** @var Order $order
+ * @global FourPawsPersonalCabinetOrdersComponent $component
+ */
 
 use Bitrix\Main\Application;
 use Bitrix\Main\Web\Uri;
@@ -34,7 +36,12 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
         <div class="b-accordion-order-item__adress">
             <div class="b-accordion-order-item__date b-accordion-order-item__date--new">
                 <?= $order->getStatus() ?>
-                <span><?= $order->getStatus() !== 'Y' ? 'с ' : '' ?><?= $order->getFormatedDateStatus() ?></span>
+                <?php /** предлог "с" только для статусов "В пунке выдачи" и "В сборке" */ ?>
+                <span><?= \in_array($order->getStatus(), [
+                        $component::STATUS_IN_ASSEMBLY_1,
+                        $component::STATUS_IN_ASSEMBLY_2,
+                        $component::STATUS_IN_POINT_ISSUE,
+                    ], true) ? 'с ' : '' ?><?= $order->getFormatedDateStatus() ?></span>
             </div>
             <div class="b-accordion-order-item__date b-accordion-order-item__date--pickup">
                 <?= $order->getDelivery()->getDeliveryName() ?>
@@ -99,7 +106,6 @@ use FourPaws\PersonalBundle\Entity\OrderItem;
                     </div>
                     <div class="b-list-order__wrapper">
                         <div class="b-list-order__info">
-                            <?php /** @todo акционный товар */ ?>
                             <?php if ($item->isHaveStock()) { ?>
                                 <div class="b-list-order__action">Сейчас
                                     участвует в акции
