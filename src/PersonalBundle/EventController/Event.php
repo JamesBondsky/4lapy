@@ -35,7 +35,7 @@ class Event implements ServiceHandlerInterface
         foreach ($entity as $prefix) {
             /** @todo при обновлении может не быть нужных полей, скорее всего придется их перетягивать - только вот сущность не получить - придется плодить милион событий */
             self::initHandler($prefix.'OnBeforeUpdate', [static::class, 'clearCache']);
-            self::initHandler($prefix.'OnBeforeAdd', [static::class, 'clearCache']);
+            self::initHandler($prefix.'OnAfterAdd', [static::class, 'clearCache']);
 
             self::initHandler($prefix.'OnBeforeDelete', [static::class, 'clearCacheDelete']);
         }
