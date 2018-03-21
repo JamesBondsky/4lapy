@@ -6,6 +6,8 @@
 
 namespace FourPaws\Catalog\Model;
 
+use Adv\Bitrixtools\Exception\IblockNotFoundException;
+use Adv\Bitrixtools\Tools\Iblock\IblockUtils;
 use Bitrix\Catalog\Product\Basket as BitrixBasket;
 use Bitrix\Catalog\Product\CatalogProvider;
 use Bitrix\Main\ArgumentException;
@@ -16,9 +18,11 @@ use Bitrix\Sale\Basket;
 use Bitrix\Sale\Fuser;
 use Bitrix\Sale\Order;
 use DateTimeImmutable;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use FourPaws\App\Application;
 use FourPaws\App\Exceptions\ApplicationCreateException;
+use FourPaws\BitrixOrm\Collection\IblockElementCollection;
 use FourPaws\BitrixOrm\Collection\ImageCollection;
 use FourPaws\BitrixOrm\Collection\ResizeImageCollection;
 use FourPaws\BitrixOrm\Model\CatalogProduct;
@@ -28,8 +32,11 @@ use FourPaws\BitrixOrm\Model\Image;
 use FourPaws\BitrixOrm\Model\Interfaces\ResizeImageInterface;
 use FourPaws\BitrixOrm\Model\ResizeImageDecorator;
 use FourPaws\BitrixOrm\Query\CatalogProductQuery;
+use FourPaws\BitrixOrm\Query\IblockElementQuery;
 use FourPaws\BitrixOrm\Utils\ReferenceUtils;
 use FourPaws\Catalog\Query\ProductQuery;
+use FourPaws\Enum\IblockCode;
+use FourPaws\Enum\IblockType;
 use FourPaws\Helpers\WordHelper;
 use FourPaws\StoreBundle\Collection\StockCollection;
 use FourPaws\StoreBundle\Service\StockService;
@@ -351,6 +358,9 @@ class Offer extends IblockElement
     protected $isCounted = false;
 
     protected $bonus = 0;
+
+    /** @var IblockElementCollection */
+    protected $share;
 
     public function __construct(array $fields = [])
     {
@@ -1091,13 +1101,14 @@ class Offer extends IblockElement
             return $bonusText;
         }
 
-        $div = $bonus - \floor($bonus) * 100;
+        $bonus = \round($bonus, 2, \PHP_ROUND_HALF_DOWN);
+        $floorBonus = \floor($bonus);
+        $div = ($bonus - $floorBonus) * 100;
 
         return \sprintf(
-            '+ %d %s %s',
-            \round($bonus, 2, \PHP_ROUND_HALF_DOWN),
+            '+ %s %s',
             WordHelper::numberFormat($bonus),
-            WordHelper::declension($div ?: \floor($bonus), ['бонус', 'бонуса', 'бонусов'])
+            WordHelper::declension($div ?: $floorBonus, ['бонус', 'бонуса', 'бонусов'])
         );
     }
 
@@ -1188,6 +1199,7 @@ class Offer extends IblockElement
 
     /**
      * @param StockCollection $allStocks
+     *
      * @return Offer
      */
     public function withAllStocks(StockCollection $allStocks): Offer
@@ -1282,6 +1294,35 @@ class Offer extends IblockElement
     }
 
     /**
+     * @return bool
+     */
+    public function isShare(): bool
+    {
+        return !$this->getShare()->isEmpty();
+    }
+
+    /**
+     * @return IblockElementCollection
+     */
+    public function getShare(): IblockElementCollection
+    {
+        if ($this->share === null) {
+            try {
+                $this->share = (new IblockElementQuery())->withOrder(['SORT'=>'ASC','ACTIVE_FROM'=>'DESC'])->withFilter([
+                    'IBLOCK_ID'         => IblockUtils::getIblockId(IblockType::PUBLICATION,
+                        IblockCode::SHARES),
+                    'ACTIVE'            => 'Y',
+                    'ACTIVE_DATE'       => 'Y',
+                    'PROPERTY_PRODUCTS' => $this->getXmlId(),
+                ])->exec();
+            } catch (IblockNotFoundException $e) {
+                $this->share = new IblockElementCollection(new \CDBResult());
+            }
+        }
+        return $this->share;
+    }
+
+    /**
      * Check and set optimal price, discount, old price with bitrix discount
      *
      * @throws LoaderException
@@ -1308,9 +1349,9 @@ class Offer extends IblockElement
         $basket = Basket::create(SITE_ID);
         $basket->setFUserId((int)Fuser::getId());
         $fields = [
-            'PRODUCT_ID' => $this->getId(),
-            'QUANTITY' => 1,
-            'MODULE' => 'catalog',
+            'PRODUCT_ID'             => $this->getId(),
+            'QUANTITY'               => 1,
+            'MODULE'                 => 'catalog',
             'PRODUCT_PROVIDER_CLASS' => CatalogProvider::class,
         ];
 
