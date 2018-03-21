@@ -310,6 +310,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
      */
     public function ajaxGet(Request $request): JsonResponse
     {
+        $userId = (int)$request->get('ID', 0);
         $phone = $request->get('phone', '');
         $step = $request->get('step', '');
         /** @noinspection PhpUnusedLocalVariableInspection */
@@ -326,7 +327,7 @@ class FourPawsPersonalCabinetProfileComponent extends CBitrixComponent
         }
         switch ($step) {
             case 'confirm':
-                $mess = $this->ajaxGetConfirm($phone, (int)$request->get('ID', 0));
+                $mess = $this->ajaxGetConfirm($phone, $userId);
                 if ($mess instanceof JsonResponse) {
                     return $mess;
                 }
