@@ -360,7 +360,7 @@ class Offer extends IblockElement
     protected $bonus = 0;
 
     /** @var IblockElementCollection */
-    private $share;
+    protected $share;
 
     public function __construct(array $fields = [])
     {
