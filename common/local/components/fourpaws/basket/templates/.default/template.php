@@ -231,7 +231,7 @@ if ($arParams['IS_AJAX']) {
                         </div>
                     </div>
                     <?php
-                    if ($arResult['TOTAL_DISCOUNT'] > 0.01) {
+                    if ($arResult['TOTAL_DISCOUNT'] >= 0.01) {
                         ?>
                         <div class="b-information-order__order">
                             <div class="b-information-order__order-price">Общая скидка

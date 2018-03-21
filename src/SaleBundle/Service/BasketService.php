@@ -349,9 +349,13 @@ class BasketService
     }
 
     /**
+     * @todo Избавиться от этих двух методов, перенеся их непосредственно в обработчики акций, однако необходимо отделить общую часть от проектной
+     */
+    /**
      *
      *
      * @param string $type
+     * @param bool $renew
      *
      * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
      * @throws \Bitrix\Main\NotSupportedException
@@ -359,16 +363,33 @@ class BasketService
      *
      * @return AdderInterface
      */
-    public function getAdder(string $type): AdderInterface
+    public function getAdder(string $type, bool $renew = false): AdderInterface
     {
+        static $storage;
+        if (null === $storage || $renew) {
+            $storage = [
+                'gift' => null,
+                'detach' => null
+            ];
+        }
         if (null === $order = $this->getBasket()->getOrder()) {
             $order = Order::create(SITE_ID);
             $order->setBasket($this->getBasket());
         }
         if ($type === 'gift') {
-            $adder = new Utils\Gift\Adder($order, $this);
+            if (null === $storage[$type]) {
+                $adder = new Utils\Gift\Adder($order, $this);
+                $storage[$type] = $adder;
+            } else {
+                $adder = $storage[$type];
+            }
         } elseif ($type === 'detach') {
-            $adder = new Utils\Detach\Adder($order, $this);
+            if (null === $storage[$type]) {
+                $adder = new Utils\Detach\Adder($order, $this);
+                $storage[$type] = $adder;
+            } else {
+                $adder = $storage[$type];
+            }
         } else {
             throw new InvalidArgumentException('Передан неверный тип');
         }
@@ -380,6 +401,7 @@ class BasketService
      *
      *
      * @param string $type
+     * @param bool $renew
      *
      * @throws \FourPaws\SaleBundle\Exception\InvalidArgumentException
      * @throws \Bitrix\Main\NotSupportedException
@@ -387,16 +409,33 @@ class BasketService
      *
      * @return CleanerInterface
      */
-    public function getCleaner(string $type): CleanerInterface
+    public function getCleaner(string $type, bool $renew = false): CleanerInterface
     {
+        static $storage;
+        if (null === $storage || $renew) {
+            $storage = [
+                'gift' => null,
+                'detach' => null
+            ];
+        }
         if (null === $order = $this->getBasket()->getOrder()) {
             $order = Order::create(SITE_ID);
             $order->setBasket($this->getBasket());
         }
         if ($type === 'gift') {
-            $cleaner = new Utils\Gift\Cleaner($order, $this);
+            if (null === $storage[$type]) {
+                $cleaner = new Utils\Gift\Cleaner($order, $this);
+                $storage[$type] = $cleaner;
+            } else {
+                $cleaner = $storage[$type];
+            }
         } elseif ($type === 'detach') {
-            $cleaner = new Utils\Detach\Cleaner($order, $this);
+            if (null === $storage[$type]) {
+                $cleaner = new Utils\Detach\Cleaner($order, $this);
+                $storage[$type] = $cleaner;
+            } else {
+                $cleaner = $storage[$type];
+            }
         } else {
             throw new InvalidArgumentException('Передан неверный тип');
         }
@@ -413,9 +452,9 @@ class BasketService
         try {
             try {
                 $cardNumber = $this->currentUserProvider->getCurrentUser()->getDiscountCardNumber();
-            } catch (NotAuthorizedException $e){
+            } catch (NotAuthorizedException $e) {
                 /** запрашиваем без карты */
-            } catch (InvalidIdentifierException|ConstraintDefinitionException $e){
+            } catch (InvalidIdentifierException|ConstraintDefinitionException $e) {
                 $logger = LoggerFactory::create('params');
                 $logger->error($e->getMessage());
                 /** запрашиваем без карты */
