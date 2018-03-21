@@ -294,7 +294,7 @@ class FourPawsOrderComponent extends \CBitrixComponent
                     $chequeRequest->setPaidByBonus($basket->getPrice());
 
                     $cheque = $this->manzanaPosService->processCheque($chequeRequest);
-                    $this->arResult['MAX_BONUS_SUM'] = $cheque->getAvailablePayment();
+                    $this->arResult['MAX_BONUS_SUM'] = floor($cheque->getAvailablePayment());
                 } catch (ExecuteException $e) {
                     /* @todo выводить клиенту сообщение о невозможности оплаты бонусами? */
                     $this->logger->error($e->getMessage());

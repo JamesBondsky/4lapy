@@ -143,6 +143,8 @@ class DeliveryScheduleRepository extends BaseRepository
      */
     protected function getDefaultFilter(): array
     {
-        return [];
+        return [
+            '!UF_TYPE' => false
+        ];
     }
 }

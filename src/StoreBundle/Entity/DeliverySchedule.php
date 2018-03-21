@@ -466,18 +466,12 @@ class DeliverySchedule extends Base
     /**
      * @return string
      */
-    public function getXmlId(): string
-    {
+     public function getXmlId(): string
+     {
         return $this->xmlId;
-    }
+     }
 
     /**
-     * public function getXmlId(): string
-     * {
-     * return $this->xmlId;
-     * }
-     *
-     * /**
      * @param string $xmlId
      *
      * @return DeliverySchedule
@@ -494,7 +488,7 @@ class DeliverySchedule extends Base
      */
     public function getTypeCode(): ?string
     {
-        return $this->scheduleService->getTypeCode((int)$this->getType());
+        return $this->scheduleService->getTypeCodeById((int)$this->getType());
     }
 
     /**
