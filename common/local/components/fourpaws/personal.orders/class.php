@@ -157,7 +157,7 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
                 $manzanaOrders = new ArrayCollection();
             }
 
-            if (\defined('BX_COMP_MANAGED_CACHE') && $tagCache instanceof Main\Data\TaggedCache) {
+            if ($tagCache !== null) {
                 $tagCache->registerTag(sprintf('user_order_%s', $userId));
                 $tagCache->registerTag(sprintf('order_%s', $userId));
                 $tagCache->endTagCache();
@@ -184,9 +184,7 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
                 $nav->setRecordCount($allClosedOrders->count());
                 $this->arResult['CLOSED_ORDERS'] = $closedOrders = new ArrayCollection(array_slice($allClosedOrdersList,
                     $nav->getOffset(), $nav->getPageSize(), true));
-                if ($nav instanceof PageNavigation) {
-                    $this->arResult['NAV'] = $nav;
-                }
+                $this->arResult['NAV'] = $nav;
             } catch (NotAuthorizedException $e) {
                 /** запрашиваем авторизацию */
                 \define('NEED_AUTH', true);
@@ -274,7 +272,7 @@ class FourPawsPersonalCabinetOrdersComponent extends CBitrixComponent
 
             $oldOrder = Sale\Order::load($id);
 
-            if($oldOrder instanceof Order) {
+            if($oldOrder !== null) {
                 $oldBasket = $oldOrder->getBasket();
                 $oldBasketItems = $oldBasket->getBasketItems();
 
