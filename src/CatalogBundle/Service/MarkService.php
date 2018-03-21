@@ -33,7 +33,7 @@ final class MarkService
     public function getMark(Offer $offer, $content = ''): string
     {
         /**
-         * @todo get content from shares
+         * @todo get content from promo actions
          */
         
         if (!$content) {
@@ -41,12 +41,17 @@ final class MarkService
         }
         
         if ($content) {
-            return sprintf($this->getMarkTemplate($offer), $content);
+            return \sprintf($this->getMarkTemplate($offer), $content);
         }
         
         return '';
     }
 
+    /**
+     * @param Offer $offer
+     *
+     * @return string
+     */
     private function getMarkImage(Offer $offer): string
     {
         if ($offer->isHit()) {
@@ -73,7 +78,7 @@ final class MarkService
      *
      * @return string
      */
-    private function getMarkTemplate(Offer $offer)
+    private function getMarkTemplate(Offer $offer): string
     {
         if ($offer->isNew()) {
             return self::GREEN_TEMPLATE;
@@ -84,12 +89,5 @@ final class MarkService
         }
 
         return self::DEFAULT_TEMPLATE;
-    }
-
-    public function __construct()
-    {
-        /**
-         * @todo mark repository
-         */
     }
 }
