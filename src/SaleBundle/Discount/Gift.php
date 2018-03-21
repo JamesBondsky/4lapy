@@ -122,7 +122,7 @@ class Gift extends \CSaleActionGiftCtrlGroup
     ) {
         $applyBasket = null;
         $actionDescription = null;
-        if (!empty($order['BASKET_ITEMS']) and \is_array($order['BASKET_ITEMS'])) {
+        if (!empty($order['BASKET_ITEMS']) && \is_array($order['BASKET_ITEMS']) && $applyCount) {
             if (!empty($params) && ($params = json_decode($params, true)) && \is_array($params)) {
                 foreach ($params as &$param) {
                     $param['count'] *= $applyCount;

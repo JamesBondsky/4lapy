@@ -166,13 +166,15 @@ class BasketComponent extends \CBitrixComponent
      */
     public function getOffer(int $id): ?Offer
     {
+        $result = null;
         /** @var Offer $item */
         foreach ($this->offerCollection as $item) {
             if ($item->getId() === $id) {
-                return $item;
+                $result = $item;
+                break;
             }
         }
-        return null;
+        return $result;
     }
 
     /**

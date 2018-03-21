@@ -2,8 +2,12 @@
 
 namespace FourPaws\Enum;
 
+/**
+ * Class Form
+ * @package FourPaws\Enum
+ */
 class Form
 {
-    const FEEDBACK     = 'feedback';
-    const CALLBACK     = 'callback';
+    public const FEEDBACK = 'feedback';
+    public const CALLBACK = 'callback';
 }

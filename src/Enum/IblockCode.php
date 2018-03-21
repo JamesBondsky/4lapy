@@ -2,27 +2,31 @@
 
 namespace FourPaws\Enum;
 
+/**
+ * Class IblockCode
+ * @package FourPaws\Enum
+ */
 class IblockCode
 {
-    const ARTICLES  = 'articles';
-    
-    const BRANDS    = 'brands';
-    
-    const BANNERS   = 'banners';
-    
-    const CITIES    = 'cities';
-    
-    const MAIN_MENU = 'main_menu';
-    
-    const NEWS      = 'news';
-    
-    const OFFERS    = 'offers';
-    
-    const PRODUCTS  = 'products';
-    
-    const SHARES    = 'shares';
-    
-    const FOOD_SELECTION    = 'food_selection';
+    public const ARTICLES = 'articles';
 
-    const RELATED_LINKS    = 'related_links';
+    public const BRANDS = 'brands';
+
+    public const BANNERS = 'banners';
+
+    public const CITIES = 'cities';
+
+    public const MAIN_MENU = 'main_menu';
+
+    public const NEWS = 'news';
+
+    public const OFFERS = 'offers';
+
+    public const PRODUCTS = 'products';
+
+    public const SHARES = 'shares';
+
+    public const FOOD_SELECTION = 'food_selection';
+
+    public const RELATED_LINKS = 'related_links';
 }
