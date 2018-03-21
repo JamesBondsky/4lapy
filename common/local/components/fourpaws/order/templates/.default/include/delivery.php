@@ -81,7 +81,7 @@ if (!$addresses || $addresses->isEmpty()) {
     </div>
     <?php
 } ?>
-<div class="b-radio-tab__new-address js-form-new-address js-hidden-valid-fields" <?= $showNewAddressForm ? 'style="display:block"' : '' ?>>
+<div class="b-radio-tab__new-address js-form-new-address" <?= $showNewAddressForm ? 'style="display:block"' : '' ?>>
     <div class="b-input-line b-input-line--new-address">
         <div class="b-input-line__label-wrapper b-input-line__label-wrapper--back-arrow">
             <?php if ($showNewAddressFormHeader) {
