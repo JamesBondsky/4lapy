@@ -7,6 +7,7 @@
 namespace FourPaws\MobileApiBundle\Services\Api;
 
 use Adv\Bitrixtools\Tools\Log\LazyLoggerAwareTrait;
+use Bitrix\Sale\Location\DefaultSiteTable;
 use Bitrix\Sale\Location\LocationTable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -55,15 +56,7 @@ class CityService implements LoggerAwareInterface
             $this->log()->error($e->getMessage(), ['query' => $query]);
             throw new SystemException($e->getMessage(), $e->getCode(), $e);
         }
-        return (new ArrayCollection($locations))
-            ->filter(function ($data) {
-                return
-                    $data &&
-                    \is_array($data) &&
-                    $data['NAME'] &&
-                    $data['CODE'];
-            })
-            ->map(\Closure::fromCallable([$this, 'map']));
+        return $this->mapLocations($locations);
     }
 
     /**
@@ -99,6 +92,59 @@ class CityService implements LoggerAwareInterface
         return $cities->filter(function (City $city) use ($goodCities) {
             return \in_array($city->getId(), $goodCities, true);
         });
+    }
+
+    /**
+     * @throws \FourPaws\MobileApiBundle\Exception\SystemException
+     * @return City[]|Collection
+     */
+    public function getDefaultCity()
+    {
+        $defaultCities = DefaultSiteTable::query()
+            ->addSelect('LOCATION_CODE')
+            ->setCacheTtl(604800)
+            ->exec()
+            ->fetchAll();
+        $defaultCities = array_map(function ($city) {
+            return $city['LOCATION_CODE'];
+        }, $defaultCities);
+
+        $locations = [];
+        if ($defaultCities) {
+            try {
+                $locations = $this->locationService->findLocation(
+                    '',
+                    null,
+                    false,
+                    [
+                        'CODE' => $defaultCities,
+                    ]
+                );
+            } catch (CityNotFoundException $e) {
+                dump($e);
+                die();
+            } catch (\Exception $e) {
+                throw new SystemException($e->getMessage(), $e->getCode(), $e);
+            }
+        }
+        return $this->mapLocations($locations);
+    }
+
+    /**
+     * @param array $locations
+     * @return City[]|Collection
+     */
+    protected function mapLocations(array $locations): Collection
+    {
+        return (new ArrayCollection($locations))
+            ->filter(function ($data) {
+                return
+                    $data &&
+                    \is_array($data) &&
+                    $data['NAME'] &&
+                    $data['CODE'];
+            })
+            ->map(\Closure::fromCallable([$this, 'map']));
     }
 
     /**
